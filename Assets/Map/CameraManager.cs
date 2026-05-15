@@ -23,6 +23,13 @@ public class CameraManager : MonoBehaviour
     public float cameraShakeRotation = 2f;
     public float cameraShakeFrequency = 48f;
     public float cameraShakeZoom = 1.04f;
+    [Header("Map Room Buttons")]
+    public bool allowMapButtonsToSwitchCameraViews = true;
+    public bool blinkMapButtonWhenClicked = true;
+    [Header("Startup")]
+    public bool useStartupCameraOnStart = true;
+    public CameraAreaController startupCamera;
+    public bool useAnchoredAnimationCameraAsStartup = true;
     [Header("Room Look")]
     public bool panRoomWithMouseEdges = true;
     [Range(0.01f, 0.5f)]
@@ -122,7 +129,7 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        SetCameraBackground(cameraBackground.texture);
+        SetCameraBackground(GetStartupBackgroundTexture());
         ApplyPinnedUiLayout();
     }
 
@@ -158,8 +165,17 @@ public class CameraManager : MonoBehaviour
             lastSelected.StopBlinking();
         }
 
-        selected.StartBlinking();
+        if (blinkMapButtonWhenClicked)
+        {
+            selected.StartBlinking();
+        }
+
         lastSelected = selected;
+
+        if (!allowMapButtonsToSwitchCameraViews)
+        {
+            return;
+        }
 
         if (cameraSwitchSound != null)
         {
@@ -258,6 +274,28 @@ public class CameraManager : MonoBehaviour
         }
 
         SetCameraBackground(texture);
+    }
+
+    private Texture GetStartupBackgroundTexture()
+    {
+        if (!useStartupCameraOnStart)
+        {
+            return cameraBackground.texture;
+        }
+
+        if (startupCamera != null && startupCamera.roomBackgroundTexture != null)
+        {
+            return startupCamera.roomBackgroundTexture;
+        }
+
+        if (useAnchoredAnimationCameraAsStartup &&
+            anchoredAnimationCamera != null &&
+            anchoredAnimationCamera.roomBackgroundTexture != null)
+        {
+            return anchoredAnimationCamera.roomBackgroundTexture;
+        }
+
+        return cameraBackground.texture;
     }
 
     private void SetCameraBackground(Texture texture)

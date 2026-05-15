@@ -19,6 +19,9 @@ public class MapAnimator : MonoBehaviour
     public float mapWidthPercent = 0.32f;
     public float minMapScale = 3.25f;
     public float maxMapScale = 6.5f;
+    [Header("Keyboard")]
+    public bool toggleWithKey = true;
+    public KeyCode toggleKey = KeyCode.M;
 
     [Header("Power")]
     public PowerManager powerManager;
@@ -98,6 +101,11 @@ public class MapAnimator : MonoBehaviour
 
     private void Update()
     {
+        if (toggleWithKey && Input.GetKeyDown(toggleKey))
+        {
+            ToggleMap();
+        }
+
         if (!useResponsiveLayout || mapPanel == null)
         {
             return;

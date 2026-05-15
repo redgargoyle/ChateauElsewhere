@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbc070e2317b8dfd088947e285e93156, type: 3}
+  m_Name: RoomVisualCatalog
+  m_EditorClassIdentifier: 
+  rooms:
+  - roomName: Entrance
+    backgroundTexture: {fileID: 2800000, guid: 4dc0507db77824fae8060fd804f02fb2, type: 3}
+  - roomName: Hallway
+    backgroundTexture: {fileID: 2800000, guid: cefff258bb8cb80e6b46312968304919, type: 3}
+  - roomName: Bathroom
+    backgroundTexture: {fileID: 2800000, guid: 0617ac81d96f74835b00e422a6c500a1, type: 3}
+  - roomName: Kitchen
+    backgroundTexture: {fileID: 2800000, guid: 220a77c4801a4a533b5668693d372030, type: 3}
+  - roomName: StorageCloset
+    backgroundTexture: {fileID: 2800000, guid: 18b5499af5c852ea68f4a0a45bd1c067, type: 3}
+  - roomName: Ballroom
+    backgroundTexture: {fileID: 2800000, guid: f233ee9a18ce3e78bb0a642637f2d2d0, type: 3}

@@ -1,0 +1,20 @@
+# Placeholder room data. Replace this file with Hamza's final floorplan data.
+# Format:
+# Current Room:
+# DoorId: Destination Room
+
+Kitchen:
+K1: Ballroom
+K2: Hallway
+
+Study:
+S1: Ballroom
+S2: Kitchen
+
+Ballroom:
+B1: Kitchen
+B2: Study
+
+Hallway:
+H1: Kitchen
+H2: Study

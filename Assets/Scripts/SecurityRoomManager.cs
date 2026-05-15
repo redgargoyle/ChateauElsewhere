@@ -38,6 +38,7 @@ public class SecurityRoomManager : MonoBehaviour
     [Header("Startup")]
     [SerializeField] private bool controlsEnabled = true;
     [SerializeField] private bool redrawInitialFrameOnStart = true;
+    [SerializeField] private bool onlyApplyWhenCurrentBackgroundIsSecurityRoomFrame = true;
 
     private int currentFrameIndex;
     private bool lightsOn;
@@ -65,6 +66,13 @@ public class SecurityRoomManager : MonoBehaviour
     private void Start()
     {
         ResolveReferences();
+
+        if (!CanAffectCurrentBackground())
+        {
+            RefreshButtonInteractability();
+            return;
+        }
+
         ConfigureButtons();
 
         if (redrawInitialFrameOnStart)
@@ -244,6 +252,11 @@ public class SecurityRoomManager : MonoBehaviour
 
         ResolveReferences();
 
+        if (!CanAffectCurrentBackground())
+        {
+            return;
+        }
+
         Texture2D frame = config.GetFrame(currentFrameIndex, lightsOn);
 
         if (frame != null && cameraManager != null)
@@ -399,7 +412,64 @@ public class SecurityRoomManager : MonoBehaviour
 
     private bool CanUseControls()
     {
-        return controlsEnabled && !powerOutLocked && (powerManager == null || !powerManager.IsPowerOut);
+        return controlsEnabled &&
+            !powerOutLocked &&
+            CanAffectCurrentBackground() &&
+            (powerManager == null || !powerManager.IsPowerOut);
+    }
+
+    private bool CanAffectCurrentBackground()
+    {
+        if (!onlyApplyWhenCurrentBackgroundIsSecurityRoomFrame)
+        {
+            return true;
+        }
+
+        if (config == null)
+        {
+            return false;
+        }
+
+        ResolveReferences();
+
+        Texture currentTexture = cameraManager != null && cameraManager.cameraBackground != null
+            ? cameraManager.cameraBackground.texture
+            : null;
+
+        return IsSecurityRoomTexture(currentTexture);
+    }
+
+    private bool IsSecurityRoomTexture(Texture texture)
+    {
+        if (texture == null || config == null)
+        {
+            return false;
+        }
+
+        if (texture == config.fallbackFrame)
+        {
+            return true;
+        }
+
+        return ContainsTexture(config.lightOffFrames, texture) || ContainsTexture(config.lightOnFrames, texture);
+    }
+
+    private static bool ContainsTexture(Texture2D[] frames, Texture texture)
+    {
+        if (frames == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < frames.Length; i++)
+        {
+            if (frames[i] == texture)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void SetDoorClosed(DoorSide side, bool closed)
