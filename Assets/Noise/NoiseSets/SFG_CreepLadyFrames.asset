@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f954595883d2d986bb8e306016525218, type: 3}
+  m_Name: SFG_CreepLadyFrames
+  m_EditorClassIdentifier: 
+  groupName: Creep Lady Frames
+  frames:
+  - {fileID: 2800000, guid: b3cf2fd36bc1bc16abb7f42738d872b9, type: 3}
+  - {fileID: 2800000, guid: 8f9ae9131dd298801931411052dc8f6a, type: 3}
+  - {fileID: 2800000, guid: b616de2624f2b4321ac36628d285792e, type: 3}
+  - {fileID: 2800000, guid: d2b987bef3883319c8d230221df4d0a7, type: 3}
+  - {fileID: 2800000, guid: e42138551ba1cf85fa338a36c0b8bc37, type: 3}
+  - {fileID: 2800000, guid: 956f79e38aa46068c822714a92e4bab8, type: 3}
+  - {fileID: 2800000, guid: b344f0a08dc18eebb8c40f3aa548bf27, type: 3}
+  - {fileID: 2800000, guid: 2a835a202fae55cf7a174edd5d7e3937, type: 3}
+  - {fileID: 2800000, guid: d21a8d85eb2d98b01a5f815f8d909591, type: 3}
+  - {fileID: 2800000, guid: 7121514890c3c41ccbe69c3f45eaf022, type: 3}
+  - {fileID: 2800000, guid: 8a586ae010c5aaea6af7aa619ee08894, type: 3}
+  - {fileID: 2800000, guid: 5b9493377895f8f8f965b9ac3a6fd63c, type: 3}
+  frameDuration: 0.083333336
+  shuffle: 0
+  minIntensity: 1
+  maxIntensity: 1
+  jitterIntensity: 0

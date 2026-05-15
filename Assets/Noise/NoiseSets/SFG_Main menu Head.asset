@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f954595883d2d986bb8e306016525218, type: 3}
+  m_Name: SFG_Main menu Head
+  m_EditorClassIdentifier: 
+  groupName: Main menu head animation
+  frames:
+  - {fileID: 2800000, guid: 32a55e014a4c48528bbcc57a5449f2ac, type: 3}
+  - {fileID: 2800000, guid: 16bf120f520a383f6a2b5c2b7859ef40, type: 3}
+  - {fileID: 2800000, guid: a8c9bfbf85987951e8d5c5a8f23befa7, type: 3}
+  - {fileID: 2800000, guid: 63f66cd5f90f2b4faa57c6c930ac4831, type: 3}
+  - {fileID: 2800000, guid: a98a55d77a9900e18a87831eed269d4d, type: 3}
+  - {fileID: 2800000, guid: 7a11814022d7fce1bafb41c3525e4c32, type: 3}
+  - {fileID: 2800000, guid: 3dd5597ee6a06d288b614ab14a53d4f1, type: 3}
+  - {fileID: 2800000, guid: b588b72500d7cc067b2b2eb5a3c447d2, type: 3}
+  - {fileID: 2800000, guid: f9023c3aa9d64e0abb60fdee60295416, type: 3}
+  - {fileID: 2800000, guid: 961883bd92fa3385a8699ce47f8e1530, type: 3}
+  - {fileID: 2800000, guid: d321d7c1c7cb2f9de8c1d8bd8d147175, type: 3}
+  - {fileID: 2800000, guid: dfd5f03acb4025fe4b81c8c5cfb8871b, type: 3}
+  - {fileID: 2800000, guid: b98c1486bc659471ea1a83b2e58ea6e5, type: 3}
+  - {fileID: 2800000, guid: 816f9083cd00ba56698e07b8e39c1528, type: 3}
+  - {fileID: 2800000, guid: a565f95f5d50f08ca947334cb1d4728c, type: 3}
+  - {fileID: 2800000, guid: 3cff507cb5b649777965c58221981ead, type: 3}
+  frameDuration: 0.15
+  shuffle: 0
+  minIntensity: 1
+  maxIntensity: 1
+  jitterIntensity: 0

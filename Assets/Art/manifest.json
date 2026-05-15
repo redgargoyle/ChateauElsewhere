@@ -1,0 +1,88 @@
+{
+  "source": "/mnt/data/decayed_animatronic_bunny_attack.png",
+  "source_canvas_size": [
+    956,
+    1645
+  ],
+  "notes": "Corrected major anatomical split. Only six component sprites: head, torso, left/right arm, left/right leg. No upper/lower limb fragments. Left/right are viewer-left/right.",
+  "parts": [
+    {
+      "name": "01_head",
+      "display_name": "Head + both ears",
+      "crop_box_xyxy": [
+        161,
+        5,
+        701,
+        608
+      ],
+      "aligned_full_canvas": "aligned_full_canvas/01_head.png",
+      "cropped_part": "cropped_parts/01_head.png",
+      "pivot_note": "Pivot suggestion: neck/lower head center."
+    },
+    {
+      "name": "02_left_arm_viewer_left",
+      "display_name": "Left arm, viewer-left \u2014 shoulder to fingers",
+      "crop_box_xyxy": [
+        8,
+        420,
+        384,
+        797
+      ],
+      "aligned_full_canvas": "aligned_full_canvas/02_left_arm_viewer_left.png",
+      "cropped_part": "cropped_parts/02_left_arm_viewer_left.png",
+      "pivot_note": "Pivot suggestion: shoulder socket at cropped upper-right."
+    },
+    {
+      "name": "03_right_arm_viewer_right",
+      "display_name": "Right arm, viewer-right \u2014 shoulder to fingers",
+      "crop_box_xyxy": [
+        555,
+        378,
+        952,
+        705
+      ],
+      "aligned_full_canvas": "aligned_full_canvas/03_right_arm_viewer_right.png",
+      "cropped_part": "cropped_parts/03_right_arm_viewer_right.png",
+      "pivot_note": "Pivot suggestion: shoulder socket at cropped upper-left."
+    },
+    {
+      "name": "06_torso",
+      "display_name": "Torso \u2014 chest, bowtie, abdomen, pelvis/waist",
+      "crop_box_xyxy": [
+        290,
+        567,
+        689,
+        1006
+      ],
+      "aligned_full_canvas": "aligned_full_canvas/06_torso.png",
+      "cropped_part": "cropped_parts/06_torso.png",
+      "pivot_note": "Pivot suggestion: lower center of waist/pelvis."
+    },
+    {
+      "name": "04_left_leg_viewer_left",
+      "display_name": "Left leg, viewer-left \u2014 hip to foot",
+      "crop_box_xyxy": [
+        161,
+        885,
+        488,
+        1629
+      ],
+      "aligned_full_canvas": "aligned_full_canvas/04_left_leg_viewer_left.png",
+      "cropped_part": "cropped_parts/04_left_leg_viewer_left.png",
+      "pivot_note": "Pivot suggestion: hip joint/top of thigh."
+    },
+    {
+      "name": "05_right_leg_viewer_right",
+      "display_name": "Right leg, viewer-right \u2014 hip to foot",
+      "crop_box_xyxy": [
+        579,
+        835,
+        800,
+        1451
+      ],
+      "aligned_full_canvas": "aligned_full_canvas/05_right_leg_viewer_right.png",
+      "cropped_part": "cropped_parts/05_right_leg_viewer_right.png",
+      "pivot_note": "Pivot suggestion: hip joint/top of thigh."
+    }
+  ]
+}

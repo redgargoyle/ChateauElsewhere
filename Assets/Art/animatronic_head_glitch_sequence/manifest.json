@@ -1,0 +1,40 @@
+{
+  "asset_name": "Animatronic Head Glitch Sequence",
+  "frame_count": 16,
+  "cropped_same_frame_dimensions_px": [
+    540,
+    603
+  ],
+  "aligned_full_canvas_dimensions_px": [
+    956,
+    1645
+  ],
+  "alpha_transparency": "true alpha PNG; no checkerboard background; alpha mask is identical across all frames in each folder",
+  "alpha_mask_identical_cropped": true,
+  "alpha_mask_identical_aligned_full_canvas": true,
+  "suggested_unity_animation_fps": 12,
+  "folders": {
+    "cropped_same_frame": "Use these as individual head-only sprites. All frames are the exact same size and the head stays in the same position.",
+    "aligned_full_canvas": "Use these if you want to drop the head frames over the original full-body split with no position adjustment.",
+    "spritesheets": "Transparent 4x4 spritesheets. Cell size equals the frame dimensions listed above.",
+    "preview": "Contact sheet preview on dark background only; not intended as a transparent game asset."
+  },
+  "frame_files": [
+    "head_glitch_00.png",
+    "head_glitch_01.png",
+    "head_glitch_02.png",
+    "head_glitch_03.png",
+    "head_glitch_04.png",
+    "head_glitch_05.png",
+    "head_glitch_06.png",
+    "head_glitch_07.png",
+    "head_glitch_08.png",
+    "head_glitch_09.png",
+    "head_glitch_10.png",
+    "head_glitch_11.png",
+    "head_glitch_12.png",
+    "head_glitch_13.png",
+    "head_glitch_14.png",
+    "head_glitch_15.png"
+  ]
+}
