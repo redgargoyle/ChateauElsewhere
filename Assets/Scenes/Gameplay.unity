@@ -178,7 +178,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &104442029
 RectTransform:
   m_ObjectHideFlags: 0
@@ -242,7 +242,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7d00dcf4c0afe00b8f2e24d53deb2d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roomBackgroundTexture: {fileID: 2800000, guid: 4dc0507db77824fae8060fd804f02fb2, type: 3}
+  roomBackgroundTexture: {fileID: 2800000, guid: 4c42346b153a0a952943422a29cdc487, type: 3}
   cameraButtonImage: {fileID: 1094257851}
   normalColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
   blinkColor: {r: 0.05724919, g: 1, b: 0, a: 1}
@@ -268,7 +268,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 4c42346b153a0a952943422a29cdc487, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -314,14 +314,14 @@ RectTransform:
   m_GameObject: {fileID: 109889176}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3.7622, y: 3.3748, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 567115834}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -6, y: 13}
   m_SizeDelta: {x: 120, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &109889178
@@ -342,7 +342,7 @@ MonoBehaviour:
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
-  cameraManager: {fileID: 0}
+  cameraManager: {fileID: 2050006783}
   image: {fileID: 109889179}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
@@ -351,11 +351,11 @@ MonoBehaviour:
   captureBackgroundAnchorAtRuntime: 1
   backgroundShaderUvRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
+    x: 0.44586715
+    y: 0.38052619
+    width: 0.105428606
+    height: 0.25286257
+  hasBackgroundShaderUvRect: 1
 --- !u!114 &109889179
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -538,14 +538,14 @@ RectTransform:
   m_GameObject: {fileID: 340611598}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.1625, y: 2.9123, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 567115834}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 180, y: 0}
+  m_AnchoredPosition: {x: 688, y: -9}
   m_SizeDelta: {x: 120, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &340611600
@@ -562,11 +562,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sourceRoom: Hallway
   doorName: H3
-  destinationRoom: StorageCloset
+  destinationRoom: Music
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
-  cameraManager: {fileID: 0}
+  cameraManager: {fileID: 2050006783}
   image: {fileID: 340611601}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
@@ -575,11 +575,11 @@ MonoBehaviour:
   captureBackgroundAnchorAtRuntime: 1
   backgroundShaderUvRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
+    x: 0.6505088
+    y: 0.38607877
+    width: 0.038677573
+    height: 0.21820903
+  hasBackgroundShaderUvRect: 1
 --- !u!114 &340611601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -923,12 +923,12 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: f233ee9a18ce3e78bb0a642637f2d2d0, type: 3}
+  m_Texture: {fileID: 1691701403}
   m_UVRect:
     serializedVersion: 2
-    x: 0.1565195
+    x: 0.11342129
     y: 0
-    width: 0.686961
+    width: 0.7731574
     height: 1
 --- !u!222 &540209525
 CanvasRenderer:
@@ -966,14 +966,14 @@ RectTransform:
   m_GameObject: {fileID: 552135202}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 2.7248, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 354156756}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 792, y: -58}
   m_SizeDelta: {x: 120, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &552135204
@@ -994,7 +994,7 @@ MonoBehaviour:
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
-  cameraManager: {fileID: 0}
+  cameraManager: {fileID: 2050006783}
   image: {fileID: 552135205}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
@@ -1003,11 +1003,11 @@ MonoBehaviour:
   captureBackgroundAnchorAtRuntime: 1
   backgroundShaderUvRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
+    x: 0.6366843
+    y: 0.36481738
+    width: 0.020138264
+    height: 0.20732176
+  hasBackgroundShaderUvRect: 1
 --- !u!114 &552135205
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1309,7 +1309,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 959, y: 146}
+  m_AnchoredPosition: {x: 289, y: -360}
   m_SizeDelta: {x: 100, y: 99}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &651316804
@@ -1368,6 +1368,8 @@ MonoBehaviour:
   hiddenPosition: {x: 289, y: -360}
   visiblePosition: {x: 289, y: 78}
   mapOpenSound: {fileID: 651316807}
+  startHidden: 1
+  normalizeTriggerScaleOnStart: 1
   useResponsiveLayout: 1
   visibleViewportPosition: {x: 0.82, y: 0.36}
   hiddenViewportPosition: {x: 0.82, y: -0.45}
@@ -1648,7 +1650,7 @@ MonoBehaviour:
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
-  cameraManager: {fileID: 0}
+  cameraManager: {fileID: 2050006783}
   image: {fileID: 802263368}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
@@ -1657,11 +1659,11 @@ MonoBehaviour:
   captureBackgroundAnchorAtRuntime: 1
   backgroundShaderUvRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
+    x: 0.584579
+    y: 0.5396739
+    width: 0.0136476755
+    height: 0.0380435
+  hasBackgroundShaderUvRect: 1
 --- !u!114 &802263368
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1945,7 +1947,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: c10cc2fa08cdebbaa98818f578c2a519, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3113,7 +3115,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7d00dcf4c0afe00b8f2e24d53deb2d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roomBackgroundTexture: {fileID: 2800000, guid: 18b5499af5c852ea68f4a0a45bd1c067, type: 3}
+  roomBackgroundTexture: {fileID: 2800000, guid: 91034e06967bf3e728bcc0c3d936fe62, type: 3}
   cameraButtonImage: {fileID: 1532345636}
   normalColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
   blinkColor: {r: 0.05724919, g: 1, b: 0, a: 1}
@@ -3134,7 +3136,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1326039944
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3172,7 +3174,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1332510633
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3182,14 +3184,14 @@ RectTransform:
   m_GameObject: {fileID: 1332510632}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.5, y: 2.3124, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 43637645}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 90, y: 0}
+  m_AnchoredPosition: {x: -12, y: 89}
   m_SizeDelta: {x: 120, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1332510634
@@ -3210,7 +3212,7 @@ MonoBehaviour:
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
-  cameraManager: {fileID: 0}
+  cameraManager: {fileID: 2050006783}
   image: {fileID: 1332510635}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
@@ -3219,11 +3221,11 @@ MonoBehaviour:
   captureBackgroundAnchorAtRuntime: 1
   backgroundShaderUvRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
+    x: 0.4816838
+    y: 0.46039784
+    width: 0.032318354
+    height: 0.1759435
+  hasBackgroundShaderUvRect: 1
 --- !u!114 &1332510635
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3290,7 +3292,7 @@ RectTransform:
   m_GameObject: {fileID: 1335488640}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5.5004, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 838677888}
@@ -3818,7 +3820,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1528234388
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3908,7 +3910,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: f233ee9a18ce3e78bb0a642637f2d2d0, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4325,6 +4327,44 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1625826076}
   m_CullTransparentMesh: 1
+--- !u!84 &1691701403
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Anchored Background Animation
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_ForcedFallbackFormat: 4
+  m_DownscaleFallback: 0
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 5
+  m_Width: 1916
+  m_Height: 821
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 0
+  m_ColorFormat: 4
+  m_MipMap: 0
+  m_GenerateMips: 0
+  m_SRGB: 1
+  m_UseDynamicScale: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
 --- !u!1 &1708724321
 GameObject:
   m_ObjectHideFlags: 0
@@ -4983,14 +5023,14 @@ RectTransform:
   m_GameObject: {fileID: 2101000001}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.8624, y: 7.5206056, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 567115834}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -232, y: -66}
+  m_AnchoredPosition: {x: -622, y: -2}
   m_SizeDelta: {x: 72, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2101000003
@@ -5049,7 +5089,7 @@ MonoBehaviour:
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
-  cameraManager: {fileID: 0}
+  cameraManager: {fileID: 2050006783}
   image: {fileID: 2101000004}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
@@ -5058,11 +5098,11 @@ MonoBehaviour:
   captureBackgroundAnchorAtRuntime: 1
   backgroundShaderUvRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
+    x: 0.3302202
+    y: 0.3580561
+    width: 0.035962433
+    height: 0.28174707
+  hasBackgroundShaderUvRect: 1
 --- !u!1 &2101000011
 GameObject:
   m_ObjectHideFlags: 0
@@ -5091,14 +5131,14 @@ RectTransform:
   m_GameObject: {fileID: 2101000011}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.6624, y: 5.9656253, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1541978211}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -399, y: -10}
+  m_AnchoredPosition: {x: -252, y: 162}
   m_SizeDelta: {x: 72, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2101000013
@@ -5157,7 +5197,7 @@ MonoBehaviour:
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
-  cameraManager: {fileID: 0}
+  cameraManager: {fileID: 2050006783}
   image: {fileID: 2101000014}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
@@ -5166,11 +5206,11 @@ MonoBehaviour:
   captureBackgroundAnchorAtRuntime: 1
   backgroundShaderUvRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
+    x: 0.44364682
+    y: 0.47456694
+    width: 0.021781623
+    height: 0.22695315
+  hasBackgroundShaderUvRect: 1
 --- !u!1 &2101000021
 GameObject:
   m_ObjectHideFlags: 0
@@ -5189,7 +5229,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2101000022
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5199,14 +5239,14 @@ RectTransform:
   m_GameObject: {fileID: 2101000021}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3.4123, y: 4.4497, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 43637645}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 336, y: 83}
+  m_AnchoredPosition: {x: 506, y: 83}
   m_SizeDelta: {x: 72, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2101000023
@@ -5265,7 +5305,7 @@ MonoBehaviour:
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
-  cameraManager: {fileID: 0}
+  cameraManager: {fileID: 2050006783}
   image: {fileID: 2101000024}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
@@ -5274,11 +5314,11 @@ MonoBehaviour:
   captureBackgroundAnchorAtRuntime: 1
   backgroundShaderUvRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
+    x: 0.5694914
+    y: 0.46046767
+    width: 0.04668665
+    height: 0.16928205
+  hasBackgroundShaderUvRect: 1
 --- !u!1 &2101000031
 GameObject:
   m_ObjectHideFlags: 0
@@ -5297,7 +5337,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2101000032
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5307,14 +5347,14 @@ RectTransform:
   m_GameObject: {fileID: 2101000031}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3.075, y: 4.2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1367921345}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 163, y: 70}
+  m_AnchoredPosition: {x: -1, y: -193}
   m_SizeDelta: {x: 72, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2101000033
@@ -5373,7 +5413,7 @@ MonoBehaviour:
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
-  cameraManager: {fileID: 0}
+  cameraManager: {fileID: 2050006783}
   image: {fileID: 2101000034}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
@@ -5382,11 +5422,11 @@ MonoBehaviour:
   captureBackgroundAnchorAtRuntime: 1
   backgroundShaderUvRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
+    x: 0.47993895
+    y: 0.31521738
+    width: 0.03976229
+    height: 0.15978262
+  hasBackgroundShaderUvRect: 1
 --- !u!1001 &1728605617872704686
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5406,6 +5446,26 @@ PrefabInstance:
     - target: {fileID: 7395335334794635519, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
       propertyPath: useCameraSequence
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7395335334794635519, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
+      propertyPath: backgroundShaderUvRect.x
+      value: 0.42085966
+      objectReference: {fileID: 0}
+    - target: {fileID: 7395335334794635519, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
+      propertyPath: backgroundShaderUvRect.y
+      value: 0.4755435
+      objectReference: {fileID: 0}
+    - target: {fileID: 7395335334794635519, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
+      propertyPath: hasBackgroundShaderUvRect
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7395335334794635519, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
+      propertyPath: backgroundShaderUvRect.width
+      value: 0.013377398
+      objectReference: {fileID: 0}
+    - target: {fileID: 7395335334794635519, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
+      propertyPath: backgroundShaderUvRect.height
+      value: 0.0380435
       objectReference: {fileID: 0}
     - target: {fileID: 7677448687720572211, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
       propertyPath: m_RaycastTarget
@@ -5445,11 +5505,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8836923247871708225, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 1.6624
       objectReference: {fileID: 0}
     - target: {fileID: 8836923247871708225, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 5.9656253
       objectReference: {fileID: 0}
     - target: {fileID: 8836923247871708225, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5481,11 +5541,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8836923247871708225, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -399
+      value: -252
       objectReference: {fileID: 0}
     - target: {fileID: 8836923247871708225, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -10
+      value: 162
       objectReference: {fileID: 0}
     - target: {fileID: 8836923247871708225, guid: 006acc238c9c2e26f8e9e7ec33e82a09, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5515,6 +5575,26 @@ PrefabInstance:
     - target: {fileID: 3779438870858577407, guid: a8335d5d820eabc44a82824f60fc64c6, type: 3}
       propertyPath: useCameraSequence
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3779438870858577407, guid: a8335d5d820eabc44a82824f60fc64c6, type: 3}
+      propertyPath: backgroundShaderUvRect.x
+      value: 0.584579
+      objectReference: {fileID: 0}
+    - target: {fileID: 3779438870858577407, guid: a8335d5d820eabc44a82824f60fc64c6, type: 3}
+      propertyPath: backgroundShaderUvRect.y
+      value: 0.5396739
+      objectReference: {fileID: 0}
+    - target: {fileID: 3779438870858577407, guid: a8335d5d820eabc44a82824f60fc64c6, type: 3}
+      propertyPath: hasBackgroundShaderUvRect
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3779438870858577407, guid: a8335d5d820eabc44a82824f60fc64c6, type: 3}
+      propertyPath: backgroundShaderUvRect.width
+      value: 0.0136476755
+      objectReference: {fileID: 0}
+    - target: {fileID: 3779438870858577407, guid: a8335d5d820eabc44a82824f60fc64c6, type: 3}
+      propertyPath: backgroundShaderUvRect.height
+      value: 0.0380435
       objectReference: {fileID: 0}
     - target: {fileID: 4475148995582310561, guid: a8335d5d820eabc44a82824f60fc64c6, type: 3}
       propertyPath: m_Name

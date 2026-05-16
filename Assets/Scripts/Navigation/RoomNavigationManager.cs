@@ -2,13 +2,18 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 public class RoomNavigationManager : MonoBehaviour
 {
+    private const string DoorButtonsRootName = "DoorButtons";
+    private const string DoorTriggerEditRootName = "RoomDoorTriggers_Edit";
+    private const string LegacyDoorTriggerRootName = "DoorTriggerParent";
+
     [Header("Data")]
     [SerializeField] private TextAsset doorDataFile;
     [SerializeField] private string doorDataResourcePath = "Navigation/doors";
-    [SerializeField] private string startingRoom = "StorageCloset";
+    [SerializeField] private string startingRoom = "Music";
     [SerializeField] private RoomVisualCatalog roomVisualCatalog;
     [SerializeField] private string roomVisualCatalogResourcePath = "Navigation/RoomVisualCatalog";
     [SerializeField] private DoorCameraSequence doorCameraSequence;
@@ -25,6 +30,7 @@ public class RoomNavigationManager : MonoBehaviour
     [SerializeField] private bool hideMapAfterDoorClick;
     [SerializeField] private bool applyStartingRoomVisualOnAwake;
     [SerializeField] private bool logNavigationWarnings = true;
+    [SerializeField] private bool runNavigationSelfCheck = true;
 
     [Header("Events")]
     [SerializeField] private RoomChangedEvent onCurrentRoomChanged = new RoomChangedEvent();
@@ -54,6 +60,16 @@ public class RoomNavigationManager : MonoBehaviour
         RefreshRoomContentCache();
         LoadLegacyDoorDataIfNeeded();
         SetCurrentRoom(GetInitialRoomName(), false, applyStartingRoomVisualOnAwake);
+    }
+
+    private void Start()
+    {
+        // Awake performs the first room change, but Start is a safer final pass
+        // for scene objects that were inactive during Awake. This makes the
+        // current room's trigger rectangles reachable before the player clicks.
+        ResolveReferences();
+        RefreshDoorButtonsForCurrentRoom();
+        RunNavigationSelfCheckForCurrentRoom();
     }
 
     private void OnDestroy()
@@ -212,7 +228,10 @@ public class RoomNavigationManager : MonoBehaviour
 
     private void LoadLegacyDoorDataIfNeeded()
     {
-        if (cachedDoorButtons.Length == 0)
+        // The original navigation system only had DoorButton objects, but the
+        // current scene uses DoorTriggerNavigation hitboxes. Either kind of door
+        // control means we need to load doors.txt before the first room is chosen.
+        if (cachedDoorButtons.Length == 0 && cachedDoorTriggers.Length == 0)
         {
             roomsByName = new Dictionary<string, RoomDefinition>(StringComparer.OrdinalIgnoreCase);
             routesByDoorId = new Dictionary<string, DoorRoute>(StringComparer.OrdinalIgnoreCase);
@@ -320,6 +339,7 @@ public class RoomNavigationManager : MonoBehaviour
 
         RefreshRoomContentForCurrentRoom();
         RefreshDoorButtonsForCurrentRoom();
+        RunNavigationSelfCheckForCurrentRoom();
 
         if (hideMapForNextRoomChange && mapAnimator != null)
         {
@@ -357,7 +377,7 @@ public class RoomNavigationManager : MonoBehaviour
         {
             CameraAreaController area = legacyAreas[i];
 
-            if (area == null || area.roomBackgroundTexture == null)
+            if (area == null)
             {
                 continue;
             }
@@ -366,8 +386,12 @@ public class RoomNavigationManager : MonoBehaviour
 
             if (SameName(areaRoomName, roomName))
             {
-                texture = area.roomBackgroundTexture;
-                return true;
+                texture = area.GetEffectiveRoomBackgroundTexture();
+
+                if (texture != null)
+                {
+                    return true;
+                }
             }
         }
 
@@ -382,6 +406,7 @@ public class RoomNavigationManager : MonoBehaviour
     private void RefreshDoorButtonsForCurrentRoom()
     {
         RefreshDoorButtonCache();
+        PrepareDoorControlLayerForRuntime();
         RefreshRoomGroups();
 
         for (int i = 0; i < cachedDoorButtons.Length; i++)
@@ -396,6 +421,8 @@ public class RoomNavigationManager : MonoBehaviour
             bool belongsToCurrentRoom = SameName(doorButton.RoomName, currentRoom);
             doorButton.gameObject.SetActive(belongsToCurrentRoom);
         }
+
+        int activeRouteTriggerCount = 0;
 
         for (int i = 0; i < cachedDoorTriggers.Length; i++)
         {
@@ -412,7 +439,7 @@ public class RoomNavigationManager : MonoBehaviour
                 bool sequenceTriggerBelongsToCurrentRoom = string.IsNullOrEmpty(sequenceSourceRoom)
                     ? doorCameraSequence == null || doorCameraSequence.ContainsRoom(currentRoom)
                     : SameName(sequenceSourceRoom, currentRoom);
-                doorTrigger.gameObject.SetActive(sequenceTriggerBelongsToCurrentRoom);
+                SetDoorTriggerActiveForRuntime(doorTrigger, sequenceTriggerBelongsToCurrentRoom);
                 continue;
             }
 
@@ -424,7 +451,18 @@ public class RoomNavigationManager : MonoBehaviour
             }
 
             bool belongsToCurrentRoom = SameName(sourceRoom, currentRoom);
-            doorTrigger.gameObject.SetActive(belongsToCurrentRoom);
+            SetDoorTriggerActiveForRuntime(doorTrigger, belongsToCurrentRoom);
+
+            if (belongsToCurrentRoom)
+            {
+                activeRouteTriggerCount++;
+            }
+        }
+
+        if (runNavigationSelfCheck && activeRouteTriggerCount == 0 && roomsByName.TryGetValue(currentRoom, out RoomDefinition roomDefinition) &&
+            roomDefinition.Doors.Count > 0)
+        {
+            Debug.LogError($"Navigation setup problem: room '{currentRoom}' has {roomDefinition.Doors.Count} door route(s) in doors.txt, but no DoorTriggerNavigation for that room was activated.", this);
         }
     }
 
@@ -483,16 +521,163 @@ public class RoomNavigationManager : MonoBehaviour
         }
     }
 
-    private string GetInitialRoomName()
+    private void PrepareDoorControlLayerForRuntime()
     {
-        if (!string.IsNullOrWhiteSpace(startingRoom))
+        if (doorButtonRoot == null)
         {
-            return startingRoom;
+            return;
         }
 
-        if (doorCameraSequence != null && !string.IsNullOrWhiteSpace(doorCameraSequence.StartingRoom))
+        // The door trigger root is the raycast layer. It must stay active and in
+        // front of the map/buttons so clicks land on the current room's trigger
+        // rectangles instead of unrelated UI from edit mode.
+        doorButtonRoot.gameObject.SetActive(true);
+
+        if (Application.isPlaying)
         {
-            return doorCameraSequence.StartingRoom;
+            doorButtonRoot.SetAsLastSibling();
+        }
+
+        RectTransform rootRect = doorButtonRoot as RectTransform;
+
+        if (rootRect != null)
+        {
+            rootRect.localScale = Vector3.one;
+        }
+
+        Canvas canvas = doorButtonRoot.GetComponentInParent<Canvas>(true);
+
+        if (canvas == null)
+        {
+            return;
+        }
+
+        canvas.gameObject.SetActive(true);
+
+        RectTransform canvasRect = canvas.transform as RectTransform;
+
+        if (canvasRect != null && IsNearlyZeroScale(canvasRect.localScale))
+        {
+            Debug.LogWarning($"Navigation repaired '{canvas.name}' because its scale was zero. A zero-scale canvas breaks UI raycasts.", canvas);
+            canvasRect.localScale = Vector3.one;
+        }
+    }
+
+    private void SetDoorTriggerActiveForRuntime(DoorTriggerNavigation doorTrigger, bool active)
+    {
+        if (doorTrigger == null)
+        {
+            return;
+        }
+
+        doorTrigger.gameObject.SetActive(active);
+
+        if (!active)
+        {
+            return;
+        }
+
+        // The trigger stores its rectangle in the same shader-space coordinates
+        // as the room image. Re-applying it immediately keeps the clickable area
+        // lined up with the visible door after room changes and preview edits.
+        doorTrigger.ApplyCapturedShaderAnchor(cameraManager);
+    }
+
+    private void RunNavigationSelfCheckForCurrentRoom()
+    {
+        if (!runNavigationSelfCheck || !Application.isPlaying)
+        {
+            return;
+        }
+
+        if (FindObjectOfType<EventSystem>() == null)
+        {
+            Debug.LogError("Navigation setup problem: no EventSystem exists in the scene, so UI door trigger clicks cannot be received.", this);
+        }
+
+        if (doorButtonRoot == null && cachedDoorTriggers.Length > 0)
+        {
+            Debug.LogWarning($"Navigation found {cachedDoorTriggers.Length} door trigger(s), but no '{DoorTriggerEditRootName}' or '{DoorButtonsRootName}' root. Runtime can still search globally, but the scene is more fragile.", this);
+        }
+
+        ValidateDoorRoutesHaveTriggers();
+        ValidateCurrentRoomHasReachableTriggers();
+    }
+
+    private void ValidateDoorRoutesHaveTriggers()
+    {
+        foreach (DoorRoute route in routesByDoorId.Values)
+        {
+            bool found = false;
+
+            for (int i = 0; i < cachedDoorTriggers.Length; i++)
+            {
+                DoorTriggerNavigation trigger = cachedDoorTriggers[i];
+
+                if (trigger != null && SameName(trigger.DoorName, route.DoorId))
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                Debug.LogError($"Navigation setup problem: doors.txt has '{route.DoorId}' in '{route.SourceRoom}', but the scene has no DoorTriggerNavigation with that door ID.", this);
+            }
+        }
+    }
+
+    private void ValidateCurrentRoomHasReachableTriggers()
+    {
+        if (!roomsByName.TryGetValue(currentRoom, out RoomDefinition roomDefinition) || roomDefinition.Doors.Count == 0)
+        {
+            return;
+        }
+
+        int reachableCount = 0;
+
+        for (int i = 0; i < cachedDoorTriggers.Length; i++)
+        {
+            DoorTriggerNavigation trigger = cachedDoorTriggers[i];
+
+            if (trigger == null || trigger.UsesCameraSequence || !SameName(trigger.SourceRoom, currentRoom))
+            {
+                continue;
+            }
+
+            if (trigger.gameObject.activeInHierarchy)
+            {
+                reachableCount++;
+            }
+        }
+
+        if (reachableCount == 0)
+        {
+            Debug.LogError($"Navigation setup problem: current room '{currentRoom}' has door data, but none of its DoorTriggerNavigation objects are active in the hierarchy. Check '{DoorTriggerEditRootName}' and Room_{currentRoom}.", this);
+        }
+    }
+
+    private string GetInitialRoomName()
+    {
+        string cleanStartingRoom = Clean(startingRoom);
+
+        if (!string.IsNullOrEmpty(cleanStartingRoom))
+        {
+            if (roomsByName.Count == 0 || roomsByName.ContainsKey(cleanStartingRoom))
+            {
+                return cleanStartingRoom;
+            }
+
+            Warn($"Starting room '{cleanStartingRoom}' is not in doors.txt. Falling back to the first room in the loaded door data.");
+        }
+
+        string sequenceStartingRoom = doorCameraSequence != null ? Clean(doorCameraSequence.StartingRoom) : string.Empty;
+
+        if (!string.IsNullOrEmpty(sequenceStartingRoom) &&
+            (roomsByName.Count == 0 || roomsByName.ContainsKey(sequenceStartingRoom)))
+        {
+            return sequenceStartingRoom;
         }
 
         foreach (KeyValuePair<string, RoomDefinition> pair in roomsByName)
@@ -512,12 +697,12 @@ public class RoomNavigationManager : MonoBehaviour
 
         if (cameraManager == null)
         {
-            cameraManager = FindObjectOfType<CameraManager>();
+            cameraManager = FindObjectOfType<CameraManager>(true);
         }
 
         if (mapAnimator == null)
         {
-            mapAnimator = FindObjectOfType<MapAnimator>();
+            mapAnimator = FindObjectOfType<MapAnimator>(true);
         }
 
         if (roomVisualCatalog == null && !string.IsNullOrWhiteSpace(roomVisualCatalogResourcePath))
@@ -532,7 +717,17 @@ public class RoomNavigationManager : MonoBehaviour
 
         if (doorButtonRoot == null)
         {
-            GameObject rootObject = GameObject.Find("DoorButtons");
+            GameObject rootObject = GameObject.Find(DoorTriggerEditRootName);
+
+            if (rootObject == null)
+            {
+                rootObject = GameObject.Find(DoorButtonsRootName);
+            }
+
+            if (rootObject == null)
+            {
+                rootObject = GameObject.Find(LegacyDoorTriggerRootName);
+            }
 
             if (rootObject != null)
             {
@@ -572,6 +767,11 @@ public class RoomNavigationManager : MonoBehaviour
     private static string Clean(string value)
     {
         return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private static bool IsNearlyZeroScale(Vector3 scale)
+    {
+        return Mathf.Abs(scale.x) < 0.0001f || Mathf.Abs(scale.y) < 0.0001f || Mathf.Abs(scale.z) < 0.0001f;
     }
 
     private static string ParseRoomNameFromCameraArea(string objectName)

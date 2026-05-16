@@ -9,7 +9,7 @@ M1: Hallway
 Hallway:
 H1: Entrance
 H2: Kitchen
-H3: StorageCloset
+H3: Music
 
 Kitchen:
 K1: Ballroom

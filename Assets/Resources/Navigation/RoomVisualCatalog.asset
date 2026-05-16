@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rooms:
   - roomName: Entrance
-    backgroundTexture: {fileID: 2800000, guid: 4dc0507db77824fae8060fd804f02fb2, type: 3}
+    backgroundTexture: {fileID: 2800000, guid: 4c42346b153a0a952943422a29cdc487, type: 3}
   - roomName: Hallway
-    backgroundTexture: {fileID: 2800000, guid: cefff258bb8cb80e6b46312968304919, type: 3}
+    backgroundTexture: {fileID: 2800000, guid: c10cc2fa08cdebbaa98818f578c2a519, type: 3}
   - roomName: Bathroom
     backgroundTexture: {fileID: 2800000, guid: 0617ac81d96f74835b00e422a6c500a1, type: 3}
   - roomName: Kitchen
     backgroundTexture: {fileID: 2800000, guid: 220a77c4801a4a533b5668693d372030, type: 3}
-  - roomName: StorageCloset
-    backgroundTexture: {fileID: 2800000, guid: 18b5499af5c852ea68f4a0a45bd1c067, type: 3}
+  - roomName: Music
+    backgroundTexture: {fileID: 2800000, guid: 91034e06967bf3e728bcc0c3d936fe62, type: 3}
   - roomName: Ballroom
     backgroundTexture: {fileID: 2800000, guid: f233ee9a18ce3e78bb0a642637f2d2d0, type: 3}

@@ -41,7 +41,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: f233ee9a18ce3e78bb0a642637f2d2d0, type: 3}
+        m_Texture: {fileID: 2800000, guid: 91034e06967bf3e728bcc0c3d936fe62, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskTex:
@@ -53,7 +53,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _background:
-        m_Texture: {fileID: 2800000, guid: 18b5499af5c852ea68f4a0a45bd1c067, type: 3}
+        m_Texture: {fileID: 2800000, guid: 91034e06967bf3e728bcc0c3d936fe62, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -72,7 +72,7 @@ Material:
     m_Floats:
     - _EnableExternalAlpha: 0
     - _camera: 0
-    - _camera_angle: 0.49117625
+    - _camera_angle: 0
     - _fov: 1
     - _margin: 0
     - _verticle_strength: 0

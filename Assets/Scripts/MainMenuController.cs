@@ -4,7 +4,9 @@ using UnityEngine.UI;
 
 public class MainMenuController : MonoBehaviour
 {
-    [SerializeField] private string newGameSceneName = "SampleScene";
+    private const string DefaultGameplaySceneName = "Gameplay";
+
+    [SerializeField] private string newGameSceneName = DefaultGameplaySceneName;
     [SerializeField] private string nightProgressKey = "Night";
     [SerializeField] private int startingNight = 1;
     [SerializeField] private bool resetNightProgressOnNewGame = true;
@@ -70,14 +72,12 @@ public class MainMenuController : MonoBehaviour
             PlayerPrefs.Save();
         }
 
-        StopMenuSoundscape();
-        SceneManager.LoadScene(newGameSceneName, LoadSceneMode.Single);
+        LoadGameScene("New Game");
     }
 
     public void ContinueGame()
     {
-        StopMenuSoundscape();
-        SceneManager.LoadScene(newGameSceneName, LoadSceneMode.Single);
+        LoadGameScene("Continue");
     }
 
     public void ExitGame()
@@ -180,6 +180,37 @@ public class MainMenuController : MonoBehaviour
         {
             menuSoundscapeSource.Stop();
         }
+    }
+
+    private void LoadGameScene(string menuAction)
+    {
+        string targetSceneName = string.IsNullOrWhiteSpace(newGameSceneName)
+            ? DefaultGameplaySceneName
+            : newGameSceneName.Trim();
+
+        // The menu used to point at "SampleScene", which does not exist in this
+        // project. If the serialized scene value ever gets stale again, fall back
+        // to the real gameplay scene instead of making the button look dead.
+        if (!Application.CanStreamedLevelBeLoaded(targetSceneName) &&
+            !string.Equals(targetSceneName, DefaultGameplaySceneName, System.StringComparison.Ordinal) &&
+            Application.CanStreamedLevelBeLoaded(DefaultGameplaySceneName))
+        {
+            Debug.LogWarning(
+                $"{menuAction} was configured to load '{targetSceneName}', but that scene is not in Build Settings. Loading '{DefaultGameplaySceneName}' instead.",
+                this);
+            targetSceneName = DefaultGameplaySceneName;
+        }
+
+        if (!Application.CanStreamedLevelBeLoaded(targetSceneName))
+        {
+            Debug.LogError(
+                $"{menuAction} could not load '{targetSceneName}'. Add the scene to File > Build Settings, or set MainMenuController to '{DefaultGameplaySceneName}'.",
+                this);
+            return;
+        }
+
+        StopMenuSoundscape();
+        SceneManager.LoadScene(targetSceneName, LoadSceneMode.Single);
     }
 
     private RectTransform FindRectTransform(string objectName)

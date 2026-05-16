@@ -69,6 +69,22 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
             }
         }
 
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            using (new EditorGUI.DisabledScope(cameraArea == null || cameraManager == null))
+            {
+                if (GUILayout.Button("Full Image Placement"))
+                {
+                    PreviewFullImagePlacement();
+                }
+
+                if (GUILayout.Button("Runtime Shader View"))
+                {
+                    PreviewSelectedRoom();
+                }
+            }
+        }
+
         EditorGUILayout.Space(8f);
         EditorGUILayout.LabelField("Shader View", EditorStyles.boldLabel);
 
@@ -219,12 +235,46 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
         NavigationEditorTools.PreviewCameraForDoorEditing(cameraArea);
         EnsureReferences();
 
-        if (cameraManager != null && cameraArea.roomBackgroundTexture != null)
+        Texture roomTexture = cameraArea.GetEffectiveRoomBackgroundTexture();
+
+        if (cameraManager != null && roomTexture != null)
         {
             Undo.RecordObject(cameraManager, "Preview Room Background");
-            cameraManager.PreviewRoomBackground(cameraArea.roomBackgroundTexture);
+            cameraManager.PreviewRoomBackground(roomTexture);
             ApplyPreviewLook();
         }
+    }
+
+    private void PreviewFullImagePlacement()
+    {
+        if (cameraArea == null)
+        {
+            return;
+        }
+
+        NavigationEditorTools.PreviewCameraForDoorEditing(cameraArea);
+        EnsureReferences();
+
+        Texture roomTexture = cameraArea.GetEffectiveRoomBackgroundTexture();
+
+        if (cameraManager == null || roomTexture == null)
+        {
+            return;
+        }
+
+        if (cameraManager.cameraBackground != null)
+        {
+            Undo.RecordObject(cameraManager.cameraBackground, "Preview Full Room Image");
+        }
+
+        Undo.RecordObject(cameraManager, "Preview Full Room Image");
+        cameraManager.PreviewFullRoomImageForDoorEditing(roomTexture);
+
+        // In full-image placement view, captured trigger anchors are source-image
+        // UV rectangles. Applying them here makes existing doors appear in the
+        // same full-image coordinate space you are editing.
+        ApplyCapturedTriggerAnchorsForCurrentRoom(false);
+        MarkSceneDirty(cameraManager.gameObject);
     }
 
     private void SetPreviewLook(float newHorizontalPan, float newVerticalPan, float newFov)
@@ -243,6 +293,7 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
         }
 
         Undo.RecordObject(cameraManager, "Preview Room Shader Look");
+        cameraManager.EndFullImagePlacementPreview();
         cameraManager.SetRoomLookForPreview(horizontalPan, verticalPan, fov);
 
         // Already-captured triggers have a saved shader-space rectangle. Moving

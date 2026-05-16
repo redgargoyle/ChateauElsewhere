@@ -3,6 +3,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif
+
+[ExecuteAlways]
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasRenderer))]
 [RequireComponent(typeof(Image))]
@@ -42,6 +48,17 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private RectTransform rectTransform;
 
+#if UNITY_EDITOR
+    private bool hasEditorRectSnapshot;
+    private Vector2 lastEditorAnchorMin;
+    private Vector2 lastEditorAnchorMax;
+    private Vector2 lastEditorPivot;
+    private Vector2 lastEditorAnchoredPosition;
+    private Vector2 lastEditorSizeDelta;
+    private Vector3 lastEditorLocalScale;
+    private Quaternion lastEditorLocalRotation;
+#endif
+
     private void Reset()
     {
         rectTransform = GetComponent<RectTransform>();
@@ -66,6 +83,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     private void LateUpdate()
     {
         FollowCameraBackgroundIfNeeded();
+    }
+
+    private void Update()
+    {
+#if UNITY_EDITOR
+        CaptureEditedRectAsShaderAnchorIfNeeded();
+#endif
     }
 
     private void OnValidate()
@@ -179,15 +203,22 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         // When a trigger is placed while the room image is panned in the shader,
         // its visible rectangle is not the same as its raw canvas coordinates.
-        // Store the shader-space rectangle so future pans can move this trigger
-        // with the picture instead of leaving it fixed on the screen.
-        if (!cameraManager.TryCaptureShaderAnchoredRect(rectTransform, out Rect capturedRect))
+        // Store the source-image UV rectangle so future pans can move this
+        // trigger with the picture instead of leaving it fixed on the screen.
+        bool captured = cameraManager.IsFullImagePlacementPreviewActive
+            ? cameraManager.TryCaptureFullImageAnchoredRect(rectTransform, out Rect capturedRect)
+            : cameraManager.TryCaptureShaderAnchoredRect(rectTransform, out capturedRect);
+
+        if (!captured)
         {
             return false;
         }
 
         backgroundShaderUvRect = capturedRect;
         hasBackgroundShaderUvRect = true;
+#if UNITY_EDITOR
+        CacheEditorRectSnapshot();
+#endif
         return true;
     }
 
@@ -210,8 +241,111 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return false;
         }
 
-        return cameraManager.TryApplyShaderAnchoredRect(rectTransform, backgroundShaderUvRect);
+        return cameraManager.IsFullImagePlacementPreviewActive
+            ? cameraManager.TryApplyFullImageAnchoredRect(rectTransform, backgroundShaderUvRect)
+            : cameraManager.TryApplyShaderAnchoredRect(rectTransform, backgroundShaderUvRect);
     }
+
+#if UNITY_EDITOR
+    private void CaptureEditedRectAsShaderAnchorIfNeeded()
+    {
+        if (Application.isPlaying)
+        {
+            return;
+        }
+
+        ResolveReferences();
+
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        if (!hasEditorRectSnapshot)
+        {
+            CacheEditorRectSnapshot();
+            return;
+        }
+
+        if (!EditorRectChanged())
+        {
+            return;
+        }
+
+        if (!followCameraBackground || !gameObject.activeInHierarchy || cameraManager == null)
+        {
+            CacheEditorRectSnapshot();
+            return;
+        }
+
+        // This is the important edit-mode save path: when you drag or resize a
+        // DoorTrigger_* rectangle, the shader-space anchor is updated right away.
+        // Switching cameras later can only restore this latest authored size,
+        // not an old default rectangle.
+        if (CaptureCurrentShaderAnchor(cameraManager))
+        {
+            EditorUtility.SetDirty(this);
+
+            if (gameObject.scene.IsValid())
+            {
+                EditorSceneManager.MarkSceneDirty(gameObject.scene);
+            }
+        }
+        else
+        {
+            CacheEditorRectSnapshot();
+        }
+    }
+
+    private bool EditorRectChanged()
+    {
+        return !Approximately(lastEditorAnchorMin, rectTransform.anchorMin) ||
+            !Approximately(lastEditorAnchorMax, rectTransform.anchorMax) ||
+            !Approximately(lastEditorPivot, rectTransform.pivot) ||
+            !Approximately(lastEditorAnchoredPosition, rectTransform.anchoredPosition) ||
+            !Approximately(lastEditorSizeDelta, rectTransform.sizeDelta) ||
+            !Approximately(lastEditorLocalScale, rectTransform.localScale) ||
+            !Approximately(lastEditorLocalRotation, rectTransform.localRotation);
+    }
+
+    private void CacheEditorRectSnapshot()
+    {
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        hasEditorRectSnapshot = true;
+        lastEditorAnchorMin = rectTransform.anchorMin;
+        lastEditorAnchorMax = rectTransform.anchorMax;
+        lastEditorPivot = rectTransform.pivot;
+        lastEditorAnchoredPosition = rectTransform.anchoredPosition;
+        lastEditorSizeDelta = rectTransform.sizeDelta;
+        lastEditorLocalScale = rectTransform.localScale;
+        lastEditorLocalRotation = rectTransform.localRotation;
+        rectTransform.hasChanged = false;
+    }
+
+    private static bool Approximately(Vector2 a, Vector2 b)
+    {
+        return Mathf.Approximately(a.x, b.x) && Mathf.Approximately(a.y, b.y);
+    }
+
+    private static bool Approximately(Vector3 a, Vector3 b)
+    {
+        return Mathf.Approximately(a.x, b.x) &&
+            Mathf.Approximately(a.y, b.y) &&
+            Mathf.Approximately(a.z, b.z);
+    }
+
+    private static bool Approximately(Quaternion a, Quaternion b)
+    {
+        return Mathf.Approximately(a.x, b.x) &&
+            Mathf.Approximately(a.y, b.y) &&
+            Mathf.Approximately(a.z, b.z) &&
+            Mathf.Approximately(a.w, b.w);
+    }
+#endif
 
     private void ResolveReferences()
     {
@@ -227,12 +361,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         if (navigationManager == null)
         {
-            navigationManager = FindObjectOfType<RoomNavigationManager>();
+            navigationManager = FindObjectOfType<RoomNavigationManager>(true);
         }
 
         if (cameraManager == null)
         {
-            cameraManager = FindObjectOfType<CameraManager>();
+            cameraManager = FindObjectOfType<CameraManager>(true);
         }
     }
 

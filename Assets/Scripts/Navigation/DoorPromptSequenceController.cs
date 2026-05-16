@@ -105,7 +105,7 @@ public class DoorPromptSequenceController : MonoBehaviour
 
         if (navigationManager == null)
         {
-            navigationManager = FindObjectOfType<RoomNavigationManager>();
+            navigationManager = FindObjectOfType<RoomNavigationManager>(true);
         }
 
         if (canvas == null)
@@ -193,18 +193,46 @@ public class DoorPromptSequenceController : MonoBehaviour
         }
 
         DoorTriggerNavigation hoveredTrigger = DoorTriggerNavigation.HoveredTrigger;
-        bool shouldShow = hoveredTrigger != null && hoveredTrigger.isActiveAndEnabled;
-
-        if (shouldShow && showOnlyWhenSequenceCanAdvance)
-        {
-            shouldShow = sequence != null &&
-                navigationManager != null &&
-                sequence.ContainsRoom(navigationManager.CurrentRoom);
-        }
+        bool shouldShow = hoveredTrigger != null && hoveredTrigger.isActiveAndEnabled && CanHoveredTriggerOpenDoor(hoveredTrigger);
 
         promptText.text = sequence != null ? sequence.PromptText : "Open Door";
         promptText.gameObject.SetActive(shouldShow);
         SetPromptAsLastSiblingIfNeeded();
+    }
+
+    private bool CanHoveredTriggerOpenDoor(DoorTriggerNavigation hoveredTrigger)
+    {
+        if (hoveredTrigger == null)
+        {
+            return false;
+        }
+
+        ResolveReferences();
+
+        if (hoveredTrigger.UsesCameraSequence)
+        {
+            if (!showOnlyWhenSequenceCanAdvance)
+            {
+                return true;
+            }
+
+            return sequence != null &&
+                navigationManager != null &&
+                sequence.ContainsRoom(navigationManager.CurrentRoom);
+        }
+
+        // The current door system is data-driven by doors.txt. The prompt should
+        // appear for a hovered trigger when that trigger's door ID is present in
+        // the loaded route table, not only when the old sequence asset contains
+        // the current room.
+        if (navigationManager != null &&
+            !string.IsNullOrWhiteSpace(hoveredTrigger.DoorName) &&
+            navigationManager.HasDoor(hoveredTrigger.DoorName))
+        {
+            return true;
+        }
+
+        return !string.IsNullOrWhiteSpace(hoveredTrigger.DestinationRoom);
     }
 
     private void SetPromptAsLastSiblingIfNeeded()
@@ -232,6 +260,6 @@ public class DoorPromptSequenceController : MonoBehaviour
             return foundCanvas;
         }
 
-        return FindObjectOfType<Canvas>();
+        return FindObjectOfType<Canvas>(true);
     }
 }

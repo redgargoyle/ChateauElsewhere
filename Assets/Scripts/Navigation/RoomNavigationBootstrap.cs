@@ -5,19 +5,28 @@ public static class RoomNavigationBootstrap
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void EnsureNavigationManagerExists()
     {
-        RoomNavigationManager navigationManager = Object.FindObjectOfType<RoomNavigationManager>();
-        DoorPromptSequenceController promptController = Object.FindObjectOfType<DoorPromptSequenceController>();
+        RoomNavigationManager navigationManager = Object.FindObjectOfType<RoomNavigationManager>(true);
+        DoorPromptSequenceController promptController = Object.FindObjectOfType<DoorPromptSequenceController>(true);
+        CameraManager cameraManager = Object.FindObjectOfType<CameraManager>(true);
 
         if (navigationManager != null && promptController != null)
         {
             return;
         }
 
-        bool sceneLooksNavigable =
+        bool sceneHasDoorControls =
             Object.FindObjectOfType<DoorButton>(true) != null ||
             Object.FindObjectOfType<DoorTriggerNavigation>(true) != null;
 
-        if (!sceneLooksNavigable)
+        if (!sceneHasDoorControls)
+        {
+            return;
+        }
+
+        // Door trigger objects can exist in non-gameplay scenes as disabled edit
+        // leftovers. Only bootstrap navigation in a scene that also has the
+        // camera background system, or already has a deliberate navigation manager.
+        if (cameraManager == null && navigationManager == null)
         {
             return;
         }

@@ -380,7 +380,7 @@ RectTransform:
   m_GameObject: {fileID: 148518475}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1443117314}
@@ -406,7 +406,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edb659fd3a16f84f796f1355971d6893, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  newGameSceneName: SampleScene
+  newGameSceneName: Gameplay
   nightProgressKey: Night
   startingNight: 1
   resetNightProgressOnNewGame: 1
@@ -1169,7 +1169,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &613547317
 RectTransform:
   m_ObjectHideFlags: 0

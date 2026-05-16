@@ -130,8 +130,14 @@ public static class NavigationEditorTools
         issueCount += AppendMessages(report, "Parser Warnings", parseResult.Warnings);
 
         issueCount += ValidateDestinations(report, parseResult);
-        issueCount += ValidateDoorButtons(report, parseResult, doorButtons);
+
+        if (doorButtons.Length > 0)
+        {
+            issueCount += ValidateDoorButtons(report, parseResult, doorButtons);
+        }
+
         issueCount += ValidateDoorTriggers(report, parseResult, doorTriggers);
+        issueCount += ValidateDoorTriggerRuntimeLayer(report, parseResult, doorTriggers);
         issueCount += ValidateRoomVisuals(report, parseResult, navigationManagers, visualCatalogs, cameraAreas);
         issueCount += ValidateStartingRooms(report, parseResult, navigationManagers);
 
@@ -319,6 +325,16 @@ public static class NavigationEditorTools
 
     public static void SyncDoorTriggersFromDoorData(bool logResult)
     {
+        if (!HasNavigationSceneContext())
+        {
+            if (logResult)
+            {
+                Debug.LogWarning("Door trigger sync skipped because no RoomNavigationManager is open. Open the Gameplay scene before syncing navigation triggers.");
+            }
+
+            return;
+        }
+
         TextAsset doorData = AssetDatabase.LoadAssetAtPath<TextAsset>(DoorDataAssetPath);
 
         if (doorData == null)
@@ -432,6 +448,7 @@ public static class NavigationEditorTools
             return;
         }
 
+        CaptureVisibleDoorTriggerAnchorsForCurrentPreview();
         SyncDoorTriggersFromDoorData(false);
 
         CameraAreaController[] cameraAreas = FindCameraAreasInSameEditingGroup(cameraArea);
@@ -467,6 +484,39 @@ public static class NavigationEditorTools
         MarkOpenScenesDirty();
         SceneView.RepaintAll();
         Debug.Log($"Previewing '{roomName}' on the full room background. Moved/prepared {editingInfo.PreparedTriggerCount} door trigger(s) under '{editingInfo.RoomGroupName}' for editing.");
+    }
+
+    private static void CaptureVisibleDoorTriggerAnchorsForCurrentPreview()
+    {
+        RawImage backgroundImage = FindCameraBackgroundImage();
+        CameraManager cameraManager = backgroundImage != null ? FindCameraManagerForBackground(backgroundImage) : null;
+
+        if (cameraManager == null)
+        {
+            return;
+        }
+
+        DoorTriggerNavigation[] doorTriggers = FindSceneObjects<DoorTriggerNavigation>();
+
+        for (int i = 0; i < doorTriggers.Length; i++)
+        {
+            DoorTriggerNavigation trigger = doorTriggers[i];
+
+            if (trigger == null || !trigger.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            Undo.RecordObject(trigger, "Save Door Trigger Edit Before Preview Switch");
+
+            // Before the preview tool hides the current room and shows another
+            // camera, save whatever rectangle is currently visible. That makes
+            // manual resize/move edits survive camera switches.
+            if (trigger.CaptureCurrentShaderAnchor(cameraManager))
+            {
+                EditorUtility.SetDirty(trigger);
+            }
+        }
     }
 
     private static int ValidateDestinations(StringBuilder report, DoorDataParseResult parseResult)
@@ -626,6 +676,121 @@ public static class NavigationEditorTools
         return issues;
     }
 
+    private static int ValidateDoorTriggerRuntimeLayer(
+        StringBuilder report,
+        DoorDataParseResult parseResult,
+        DoorTriggerNavigation[] doorTriggers)
+    {
+        int issues = 0;
+        Transform editRoot = FindSceneTransform(DoorTriggerEditRootName);
+
+        if (editRoot == null)
+        {
+            AppendIssue(report, $"No '{DoorTriggerEditRootName}' object exists. Runtime door triggers need this root so the navigation manager can activate the correct room layer.");
+            issues++;
+            return issues;
+        }
+
+        RectTransform editRootRect = editRoot as RectTransform;
+
+        if (editRootRect == null)
+        {
+            AppendIssue(report, $"'{DoorTriggerEditRootName}' should be a RectTransform under the background Canvas.");
+            issues++;
+        }
+        else if (IsNearlyZeroScale(editRootRect.localScale))
+        {
+            AppendIssue(report, $"'{DoorTriggerEditRootName}' has a zero scale, which makes its door triggers impossible to click.");
+            issues++;
+        }
+
+        Canvas canvas = editRoot.GetComponentInParent<Canvas>(true);
+
+        if (canvas == null)
+        {
+            AppendIssue(report, $"'{DoorTriggerEditRootName}' is not under a Canvas, so UI raycasts cannot reach the door triggers.");
+            issues++;
+        }
+        else
+        {
+            RectTransform canvasRect = canvas.transform as RectTransform;
+
+            if (canvasRect != null && IsNearlyZeroScale(canvasRect.localScale))
+            {
+                AppendIssue(report, $"Canvas '{canvas.name}' has a zero scale. This breaks door trigger raycasts in Play mode.");
+                issues++;
+            }
+
+            if (canvas.GetComponent<GraphicRaycaster>() == null)
+            {
+                AppendIssue(report, $"Canvas '{canvas.name}' has no GraphicRaycaster, so UI door trigger clicks cannot be received.");
+                issues++;
+            }
+        }
+
+        if (FindSceneObjects<UnityEngine.EventSystems.EventSystem>().Length == 0)
+        {
+            AppendIssue(report, "No EventSystem exists in the scene, so UI door trigger clicks cannot be received.");
+            issues++;
+        }
+
+        Dictionary<string, DoorTriggerNavigation> triggersByDoorId = IndexDoorTriggersByDoorId(doorTriggers);
+
+        foreach (RoomDefinition room in parseResult.RoomsByName.Values)
+        {
+            Transform roomGroup = editRoot.Find($"Room_{SafeObjectName(room.RoomName)}");
+
+            if (roomGroup == null)
+            {
+                AppendIssue(report, $"Room '{room.RoomName}' has door data, but '{DoorTriggerEditRootName}' has no child named 'Room_{SafeObjectName(room.RoomName)}'.");
+                issues++;
+                continue;
+            }
+
+            RectTransform roomGroupRect = roomGroup as RectTransform;
+
+            if (roomGroupRect != null && IsNearlyZeroScale(roomGroupRect.localScale))
+            {
+                AppendIssue(report, $"Door trigger room group '{roomGroup.name}' has a zero scale, which makes its triggers impossible to click.");
+                issues++;
+            }
+
+            for (int i = 0; i < room.Doors.Count; i++)
+            {
+                DoorRoute route = room.Doors[i];
+
+                if (!triggersByDoorId.TryGetValue(route.DoorId, out DoorTriggerNavigation trigger) || trigger == null)
+                {
+                    continue;
+                }
+
+                if (!IsChildOf(trigger.transform, roomGroup))
+                {
+                    AppendIssue(report, $"DoorTrigger '{trigger.name}' should be under '{roomGroup.name}' so room activation can make it clickable.");
+                    issues++;
+                }
+
+                RectTransform triggerRect = trigger.transform as RectTransform;
+
+                if (triggerRect == null || triggerRect.rect.width <= 0f || triggerRect.rect.height <= 0f || IsNearlyZeroScale(triggerRect.localScale))
+                {
+                    AppendIssue(report, $"DoorTrigger '{trigger.name}' has an unusable RectTransform size or scale.");
+                    issues++;
+                }
+
+                Image triggerImage = trigger.GetComponent<Image>();
+
+                if (triggerImage == null || !triggerImage.raycastTarget)
+                {
+                    AppendIssue(report, $"DoorTrigger '{trigger.name}' needs an Image with Raycast Target enabled.");
+                    issues++;
+                }
+            }
+        }
+
+        return issues;
+    }
+
     private static int ValidateRoomVisuals(
         StringBuilder report,
         DoorDataParseResult parseResult,
@@ -658,9 +823,9 @@ public static class NavigationEditorTools
 
         if (navigationManagers.Length == 0)
         {
-            if (!parseResult.RoomsByName.ContainsKey("StorageCloset"))
+            if (!parseResult.RoomsByName.ContainsKey("Music"))
             {
-                AppendIssue(report, "No scene RoomNavigationManager exists; runtime bootstrap will use default starting room 'StorageCloset', but doors.txt has no StorageCloset section.");
+                AppendIssue(report, "No scene RoomNavigationManager exists; runtime bootstrap will use default starting room 'Music', but doors.txt has no Music section.");
                 issues++;
             }
 
@@ -900,6 +1065,12 @@ public static class NavigationEditorTools
         return cameraManagers.Length > 0 ? cameraManagers[0] : null;
     }
 
+    private static bool HasNavigationSceneContext()
+    {
+        return FindSceneObjects<RoomNavigationManager>().Length > 0 ||
+            FindSceneObjects<CameraManager>().Length > 0;
+    }
+
     private static RawImage FindCameraBackgroundImage()
     {
         CameraManager[] cameraManagers = FindSceneObjects<CameraManager>();
@@ -1033,7 +1204,6 @@ public static class NavigationEditorTools
                 ApplyDoorTriggerPlaceholderRect(rectTransform, doorIndex, doorCount);
             }
 
-            rectTransform.localScale = Vector3.one;
             EditorUtility.SetDirty(rectTransform);
         }
 
@@ -1192,9 +1362,9 @@ public static class NavigationEditorTools
             if (triggerRect.sizeDelta.x <= 1f || triggerRect.sizeDelta.y <= 1f)
             {
                 triggerRect.sizeDelta = new Vector2(120f, 120f);
+                triggerRect.localScale = Vector3.one;
             }
 
-            triggerRect.localScale = Vector3.one;
             EditorUtility.SetDirty(triggerRect);
         }
 
@@ -1381,6 +1551,45 @@ public static class NavigationEditorTools
         }
 
         return sceneObjects.ToArray();
+    }
+
+    private static Transform FindSceneTransform(string objectName)
+    {
+        Transform[] transforms = FindSceneObjects<Transform>();
+
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            Transform candidate = transforms[i];
+
+            if (candidate != null && candidate.name == objectName)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsChildOf(Transform child, Transform possibleParent)
+    {
+        Transform current = child;
+
+        while (current != null)
+        {
+            if (current == possibleParent)
+            {
+                return true;
+            }
+
+            current = current.parent;
+        }
+
+        return false;
+    }
+
+    private static bool IsNearlyZeroScale(Vector3 scale)
+    {
+        return Mathf.Abs(scale.x) < 0.0001f || Mathf.Abs(scale.y) < 0.0001f || Mathf.Abs(scale.z) < 0.0001f;
     }
 
     private static string BuildDoorDataFromDoorButtons(DoorButton[] doorButtons)

@@ -92,12 +92,15 @@ public class CameraManager : MonoBehaviour
     private int anchoredAnimationFrameDirection = 1;
     private float anchoredAnimationFrameTimer;
     private Rect lastAnchoredAnimationRect = new Rect(float.MinValue, float.MinValue, float.MinValue, float.MinValue);
+    private Material materialBeforeFullImagePlacementPreview;
+    private bool fullImagePlacementPreviewActive;
     private readonly Vector3[] anchoredReferenceCorners = new Vector3[4];
     private readonly Vector3[] shaderAnchorCorners = new Vector3[4];
 
     public float CurrentRoomHorizontalPan => currentRoomPan;
     public float CurrentRoomVerticalPan => currentRoomVerticalPan;
     public float CurrentRoomFov => currentRoomFov;
+    public bool IsFullImagePlacementPreviewActive => fullImagePlacementPreviewActive;
 
     private void Reset()
     {
@@ -118,8 +121,11 @@ public class CameraManager : MonoBehaviour
         }
 
         InitializeRoomLook();
+        EnsureBackgroundCanvasVisible();
+        EnsureBackgroundMaterialAssigned();
         ConfigureCanvasScalers();
         HideAnchoredAnimationReferenceVisuals();
+        EnsureBackgroundCanvasVisible();
         ApplyBackgroundLayout();
     }
 
@@ -132,6 +138,7 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
+        EnsureBackgroundCanvasVisible();
         SetCameraBackground(GetStartupBackgroundTexture());
     }
 
@@ -153,7 +160,7 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        Texture texture = selected.roomBackgroundTexture;
+        Texture texture = selected.GetEffectiveRoomBackgroundTexture();
 
         if (texture == null)
         {
@@ -289,8 +296,92 @@ public class CameraManager : MonoBehaviour
         // Editor tools use the same background assignment path as Play mode so
         // the RawImage, crop UVs, and shader texture properties all match what
         // the player will actually see.
+        EndFullImagePlacementPreview();
+
+        if (cameraBackground.material == null)
+        {
+            cameraBackground.material = ResolveBackgroundMaterialForPreviewRestore();
+        }
+
         SetCameraBackground(texture);
         MarkBackgroundPreviewDirty();
+    }
+
+    public void PreviewFullRoomImageForDoorEditing(Texture texture)
+    {
+        if (texture == null || cameraBackground == null)
+        {
+            return;
+        }
+
+        if (!fullImagePlacementPreviewActive)
+        {
+            materialBeforeFullImagePlacementPreview = ResolveBackgroundMaterialForPreviewRestore();
+        }
+
+        // This is an editor placement view, not the runtime camera view. It
+        // deliberately bypasses the shader/crop material so the whole source
+        // image is visible and door rectangles can be placed on hidden edges.
+        fullImagePlacementPreviewActive = true;
+        currentBaseBackgroundTexture = texture;
+        cameraBackground.material = null;
+        cameraBackground.texture = texture;
+        cameraBackground.uvRect = new Rect(0f, 0f, 1f, 1f);
+        MarkBackgroundPreviewDirty();
+    }
+
+    public void EndFullImagePlacementPreview()
+    {
+        if (!fullImagePlacementPreviewActive || cameraBackground == null)
+        {
+            return;
+        }
+
+        fullImagePlacementPreviewActive = false;
+
+        Material restoreMaterial = materialBeforeFullImagePlacementPreview != null
+            ? materialBeforeFullImagePlacementPreview
+            : ResolveBackgroundMaterialForPreviewRestore();
+
+        if (restoreMaterial != null)
+        {
+            cameraBackground.material = restoreMaterial;
+        }
+
+        Texture texture = currentBaseBackgroundTexture != null ? currentBaseBackgroundTexture : cameraBackground.texture;
+
+        if (texture != null)
+        {
+            SetCameraBackground(texture);
+        }
+        else
+        {
+            MarkBackgroundPreviewDirty();
+        }
+    }
+
+    private Material ResolveBackgroundMaterialForPreviewRestore()
+    {
+        if (cameraBackground != null && cameraBackground.material != null)
+        {
+            return cameraBackground.material;
+        }
+
+#if UNITY_EDITOR
+        return UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Shader/BackgroundMaterial.mat");
+#else
+        return null;
+#endif
+    }
+
+    private void EnsureBackgroundMaterialAssigned()
+    {
+        if (cameraBackground == null || cameraBackground.material != null || fullImagePlacementPreviewActive)
+        {
+            return;
+        }
+
+        cameraBackground.material = ResolveBackgroundMaterialForPreviewRestore();
     }
 
     public void SetRoomLookForPreview(float horizontalPan, float verticalPan, float fov)
@@ -331,6 +422,40 @@ public class CameraManager : MonoBehaviour
             0f,
             ClampRoomFov(defaultRoomFov),
             0f);
+    }
+
+    public bool TryCaptureFullImageAnchoredRect(RectTransform sourceRect, out Rect imageUvRect)
+    {
+        imageUvRect = new Rect();
+
+        if (sourceRect == null || cameraBackground == null)
+        {
+            return false;
+        }
+
+        RectTransform backgroundTransform = cameraBackground.rectTransform;
+
+        if (backgroundTransform == null || !BackgroundRectIsUsable(backgroundTransform))
+        {
+            return false;
+        }
+
+        sourceRect.GetWorldCorners(shaderAnchorCorners);
+
+        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+
+        for (int i = 0; i < shaderAnchorCorners.Length; i++)
+        {
+            Vector2 backgroundLocalPoint = backgroundTransform.InverseTransformPoint(shaderAnchorCorners[i]);
+            Vector2 imageUv = BackgroundLocalPointToMeshUv(backgroundTransform, backgroundLocalPoint);
+
+            min = Vector2.Min(min, imageUv);
+            max = Vector2.Max(max, imageUv);
+        }
+
+        imageUvRect = NormalizeRect(Rect.MinMaxRect(min.x, min.y, max.x, max.y));
+        return imageUvRect.width > 0f && imageUvRect.height > 0f;
     }
 
     private bool TryCaptureShaderAnchoredRect(
@@ -441,6 +566,71 @@ public class CameraManager : MonoBehaviour
         return true;
     }
 
+    public bool TryApplyFullImageAnchoredRect(RectTransform targetRect, Rect imageUvRect)
+    {
+        if (targetRect == null || cameraBackground == null || targetRect.parent == null)
+        {
+            return false;
+        }
+
+        RectTransform backgroundTransform = cameraBackground.rectTransform;
+        RectTransform parentRect = targetRect.parent as RectTransform;
+
+        if (backgroundTransform == null || parentRect == null || !BackgroundRectIsUsable(backgroundTransform))
+        {
+            return false;
+        }
+
+        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+        Vector2 imageMin = imageUvRect.min;
+        Vector2 imageMax = imageUvRect.max;
+
+        Vector2[] imageCorners =
+        {
+            new Vector2(imageMin.x, imageMin.y),
+            new Vector2(imageMin.x, imageMax.y),
+            new Vector2(imageMax.x, imageMax.y),
+            new Vector2(imageMax.x, imageMin.y)
+        };
+
+        for (int i = 0; i < imageCorners.Length; i++)
+        {
+            Vector2 backgroundLocalPoint = MeshUvToBackgroundLocalPoint(backgroundTransform, imageCorners[i]);
+            Vector3 worldPoint = backgroundTransform.TransformPoint(backgroundLocalPoint);
+            Vector2 parentLocalPoint = parentRect.InverseTransformPoint(worldPoint);
+
+            min = Vector2.Min(min, parentLocalPoint);
+            max = Vector2.Max(max, parentLocalPoint);
+        }
+
+        Vector2 size = max - min;
+
+        if (size.x <= 0f || size.y <= 0f)
+        {
+            return false;
+        }
+
+        Vector2 center = (min + max) * 0.5f;
+        Vector2 anchor = new Vector2(0.5f, 0.5f);
+        Vector2 parentSize = parentRect.rect.size;
+        Vector2 anchorReference = new Vector2(
+            (anchor.x - parentRect.pivot.x) * parentSize.x,
+            (anchor.y - parentRect.pivot.y) * parentSize.y);
+
+        // Full-image placement uses source-image UVs directly. Runtime still
+        // uses TryApplyShaderAnchoredRect to convert these saved UVs through the
+        // shader camera math.
+        targetRect.anchorMin = anchor;
+        targetRect.anchorMax = anchor;
+        targetRect.pivot = new Vector2(0.5f, 0.5f);
+        targetRect.anchoredPosition = center - anchorReference;
+        targetRect.sizeDelta = size;
+        targetRect.localRotation = Quaternion.identity;
+        targetRect.localScale = Vector3.one;
+        return true;
+    }
+
     private Texture GetStartupBackgroundTexture()
     {
         if (!useStartupCameraOnStart)
@@ -448,19 +638,33 @@ public class CameraManager : MonoBehaviour
             return cameraBackground.texture;
         }
 
-        if (startupCamera != null && startupCamera.roomBackgroundTexture != null)
+        Texture startupTexture = GetCameraAreaBackgroundTexture(startupCamera);
+
+        if (startupTexture != null)
         {
-            return startupCamera.roomBackgroundTexture;
+            return startupTexture;
         }
 
-        if (useAnchoredAnimationCameraAsStartup &&
-            anchoredAnimationCamera != null &&
-            anchoredAnimationCamera.roomBackgroundTexture != null)
+        Texture anchoredStartupTexture = useAnchoredAnimationCameraAsStartup
+            ? GetCameraAreaBackgroundTexture(anchoredAnimationCamera)
+            : null;
+
+        if (anchoredStartupTexture != null)
         {
-            return anchoredAnimationCamera.roomBackgroundTexture;
+            return anchoredStartupTexture;
         }
 
         return cameraBackground.texture;
+    }
+
+    private Texture GetCameraAreaBackgroundTexture(CameraAreaController cameraArea)
+    {
+        if (cameraArea == null)
+        {
+            return null;
+        }
+
+        return cameraArea.GetEffectiveRoomBackgroundTexture();
     }
 
     private void NotifyRoomNavigation(CameraAreaController selected)
@@ -490,6 +694,7 @@ public class CameraManager : MonoBehaviour
 
         currentBaseBackgroundTexture = texture;
         cameraBackground.texture = texture;
+        EnsureBackgroundMaterialAssigned();
         ApplyBackgroundLayout();
 
         Texture displayTexture = GetBackgroundDisplayTexture(texture);
@@ -1093,6 +1298,56 @@ public class CameraManager : MonoBehaviour
             {
                 canvasRect.localScale = Vector3.one;
             }
+        }
+    }
+
+    private void EnsureBackgroundCanvasVisible()
+    {
+        if (cameraBackground == null)
+        {
+            return;
+        }
+
+        Canvas backgroundCanvas = cameraBackground.GetComponentInParent<Canvas>(true);
+
+        // Door-editing previews can leave the background canvas scaled down or
+        // hidden. The actual game view should recover every time Play starts.
+        Transform current = cameraBackground.transform;
+
+        while (current != null)
+        {
+            current.gameObject.SetActive(true);
+
+            if (backgroundCanvas != null && current == backgroundCanvas.transform)
+            {
+                break;
+            }
+
+            current = current.parent;
+        }
+
+        if (backgroundCanvas == null)
+        {
+            return;
+        }
+
+        RectTransform canvasRect = backgroundCanvas.transform as RectTransform;
+
+        if (canvasRect == null)
+        {
+            return;
+        }
+
+        canvasRect.localScale = Vector3.one;
+
+        if (backgroundCanvas.renderMode == RenderMode.ScreenSpaceOverlay ||
+            backgroundCanvas.renderMode == RenderMode.ScreenSpaceCamera)
+        {
+            canvasRect.anchorMin = Vector2.zero;
+            canvasRect.anchorMax = Vector2.one;
+            canvasRect.offsetMin = Vector2.zero;
+            canvasRect.offsetMax = Vector2.zero;
+            canvasRect.pivot = new Vector2(0.5f, 0.5f);
         }
     }
 

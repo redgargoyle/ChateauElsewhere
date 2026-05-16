@@ -16,6 +16,8 @@ public class CameraAreaController : MonoBehaviour
     private Graphic[] blinkGraphics;
     private Color[] originalColors;
 
+    public Texture EffectiveRoomBackgroundTexture => GetEffectiveRoomBackgroundTexture();
+
     private void Reset()
     {
         cameraButtonImage = FindCameraButtonImage();
@@ -30,12 +32,29 @@ public class CameraAreaController : MonoBehaviour
             cameraButtonImage = FindCameraButtonImage();
         }
 
+        RepairMissingRoomBackgroundTextureFromImage();
         CacheBlinkGraphics();
     }
 
     private void OnValidate()
     {
+        if (cameraButtonImage == null)
+        {
+            cameraButtonImage = FindCameraButtonImage();
+        }
+
+        RepairMissingRoomBackgroundTextureFromImage();
         ConfigureRaycastTargets();
+    }
+
+    public Texture GetEffectiveRoomBackgroundTexture()
+    {
+        if (roomBackgroundTexture != null)
+        {
+            return roomBackgroundTexture;
+        }
+
+        return FindRoomTextureFromButtonImage();
     }
 
     public void StartBlinking()
@@ -159,6 +178,39 @@ public class CameraAreaController : MonoBehaviour
         }
 
         return GetComponent<Image>();
+    }
+
+    private void RepairMissingRoomBackgroundTextureFromImage()
+    {
+        if (roomBackgroundTexture != null)
+        {
+            return;
+        }
+
+        Texture fallbackTexture = FindRoomTextureFromButtonImage();
+
+        if (fallbackTexture != null)
+        {
+            // The map button image and the room background are often the same
+            // imported picture. If the serialized Texture field loses its GUID,
+            // recover from the child Image sprite instead of rendering white.
+            roomBackgroundTexture = fallbackTexture;
+        }
+    }
+
+    private Texture FindRoomTextureFromButtonImage()
+    {
+        if (cameraButtonImage == null)
+        {
+            cameraButtonImage = FindCameraButtonImage();
+        }
+
+        if (cameraButtonImage == null || cameraButtonImage.sprite == null)
+        {
+            return null;
+        }
+
+        return cameraButtonImage.sprite.texture;
     }
 
     private void ConfigureRaycastTargets()

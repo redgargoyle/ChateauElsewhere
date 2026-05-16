@@ -12,6 +12,9 @@ public class MapAnimator : MonoBehaviour
     public Vector2 visiblePosition;
 
     public AudioSource mapOpenSound;
+    [Header("Startup")]
+    public bool startHidden = true;
+    public bool normalizeTriggerScaleOnStart = true;
     public bool useResponsiveLayout = true;
     public Vector2 visibleViewportPosition = new Vector2(0.82f, 0.36f);
     public Vector2 hiddenViewportPosition = new Vector2(0.82f, -0.45f);
@@ -61,6 +64,15 @@ public class MapAnimator : MonoBehaviour
         if (mapPanel != null)
         {
             originalMapScale = mapPanel.localScale;
+
+            if (startHidden)
+            {
+                // The editor tools let us drag the map around while placing door
+                // triggers, so the scene can easily be saved with the map visible.
+                // Play mode should always begin with the map tucked away.
+                mapVisible = false;
+                mapPanel.anchoredPosition = hiddenPosition;
+            }
         }
 
         if (arrow != null)
@@ -69,7 +81,15 @@ public class MapAnimator : MonoBehaviour
 
             if (triggerRect != null)
             {
-                originalTriggerScale = triggerRect.localScale;
+                // The trigger is a gameplay affordance, not an edit-mode canvas
+                // ruler. Normalize it so saved preview scale does not leak into
+                // Play mode and cover the room image.
+                originalTriggerScale = normalizeTriggerScaleOnStart ? Vector3.one : triggerRect.localScale;
+
+                if (normalizeTriggerScaleOnStart)
+                {
+                    triggerRect.localScale = Vector3.one;
+                }
             }
         }
     }
@@ -85,13 +105,19 @@ public class MapAnimator : MonoBehaviour
 
         if (useResponsiveLayout)
         {
-            RefreshResponsiveLayout(true);
+            RefreshResponsiveLayout(false);
         }
         else
         {
             visiblePosition = mapPanel.anchoredPosition;
-            mapPanel.anchoredPosition = hiddenPosition;
         }
+
+        if (startHidden)
+        {
+            mapVisible = false;
+        }
+
+        SnapMapToCurrentState();
 
         if (arrow != null)
         {
@@ -169,6 +195,10 @@ public class MapAnimator : MonoBehaviour
 
         mapVisible = true;
         StopAllCoroutines();
+        if (useResponsiveLayout)
+        {
+            RefreshResponsiveLayout(false);
+        }
         StartCoroutine(SlideTo(visiblePosition));
         if (mapOpenSound != null)
         {
@@ -181,11 +211,16 @@ public class MapAnimator : MonoBehaviour
     {
         if (!mapVisible)
         {
+            SnapMapToCurrentState();
             return;
         }
 
         mapVisible = false;
         StopAllCoroutines();
+        if (useResponsiveLayout)
+        {
+            RefreshResponsiveLayout(false);
+        }
         StartCoroutine(SlideTo(hiddenPosition));
 
         if (mapOpenSound != null)
@@ -199,6 +234,16 @@ public class MapAnimator : MonoBehaviour
     private void OnDisable()
     {
         RemovePowerDraw();
+    }
+
+    private void SnapMapToCurrentState()
+    {
+        if (mapPanel == null)
+        {
+            return;
+        }
+
+        mapPanel.anchoredPosition = mapVisible ? visiblePosition : hiddenPosition;
     }
 
     public IEnumerator SlideTo(Vector2 target)
@@ -218,6 +263,11 @@ public class MapAnimator : MonoBehaviour
 
     private void RefreshResponsiveLayout(bool snapToState)
     {
+        if (mapPanel == null)
+        {
+            return;
+        }
+
         RectTransform parent = mapPanel.parent as RectTransform;
 
         if (parent == null)
