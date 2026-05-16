@@ -337,9 +337,9 @@ public static class NavigationEditorTools
 
         if (navigationManagers.Length == 0)
         {
-            if (!parseResult.RoomsByName.ContainsKey("Kitchen"))
+            if (!parseResult.RoomsByName.ContainsKey("StorageCloset"))
             {
-                AppendIssue(report, "No scene RoomNavigationManager exists; runtime bootstrap will use default starting room 'Kitchen', but doors.txt has no Kitchen section.");
+                AppendIssue(report, "No scene RoomNavigationManager exists; runtime bootstrap will use default starting room 'StorageCloset', but doors.txt has no StorageCloset section.");
                 issues++;
             }
 

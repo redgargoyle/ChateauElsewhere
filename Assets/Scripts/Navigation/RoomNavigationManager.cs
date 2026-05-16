@@ -8,9 +8,11 @@ public class RoomNavigationManager : MonoBehaviour
     [Header("Data")]
     [SerializeField] private TextAsset doorDataFile;
     [SerializeField] private string doorDataResourcePath = "Navigation/doors";
-    [SerializeField] private string startingRoom = "Kitchen";
+    [SerializeField] private string startingRoom = "StorageCloset";
     [SerializeField] private RoomVisualCatalog roomVisualCatalog;
     [SerializeField] private string roomVisualCatalogResourcePath = "Navigation/RoomVisualCatalog";
+    [SerializeField] private DoorCameraSequence doorCameraSequence;
+    [SerializeField] private string doorCameraSequenceResourcePath = "Navigation/DoorCameraSequence";
 
     [Header("References")]
     [SerializeField] private CameraManager cameraManager;
@@ -29,11 +31,13 @@ public class RoomNavigationManager : MonoBehaviour
     private Dictionary<string, RoomDefinition> roomsByName = new Dictionary<string, RoomDefinition>(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, DoorRoute> routesByDoorId = new Dictionary<string, DoorRoute>(StringComparer.OrdinalIgnoreCase);
     private DoorButton[] cachedDoorButtons = new DoorButton[0];
+    private DoorTriggerNavigation[] cachedDoorTriggers = new DoorTriggerNavigation[0];
     private string currentRoom;
 
     public string CurrentRoom => currentRoom;
     public string StartingRoom => startingRoom;
     public RoomVisualCatalog VisualCatalog => roomVisualCatalog;
+    public DoorCameraSequence CameraSequence => doorCameraSequence;
     public IReadOnlyDictionary<string, RoomDefinition> RoomsByName => roomsByName;
     public IReadOnlyDictionary<string, DoorRoute> RoutesByDoorId => routesByDoorId;
     public RoomChangedEvent OnCurrentRoomChanged => onCurrentRoomChanged;
@@ -41,8 +45,8 @@ public class RoomNavigationManager : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
-        LoadDoorData();
         RefreshDoorButtonCache();
+        LoadLegacyDoorDataIfNeeded();
         SetCurrentRoom(GetInitialRoomName(), false, applyStartingRoomVisualOnAwake);
     }
 
@@ -95,6 +99,81 @@ public class RoomNavigationManager : MonoBehaviour
         return SetCurrentRoom(roomName, false, true);
     }
 
+    public bool OpenDoorFromCurrentRoom(string sourceRoom, string doorName, bool requirePlayerInSourceRoom)
+    {
+        string cleanSourceRoom = Clean(sourceRoom);
+        string cleanDoorName = Clean(doorName);
+
+        if (requirePlayerInSourceRoom &&
+            !string.IsNullOrEmpty(cleanSourceRoom) &&
+            !SameName(cleanSourceRoom, currentRoom))
+        {
+            Warn($"Door '{cleanDoorName}' belongs to '{cleanSourceRoom}', but the player is currently in '{currentRoom}'.");
+            return false;
+        }
+
+        if (doorCameraSequence == null)
+        {
+            Warn("No DoorCameraSequence is assigned or loadable from Resources/Navigation/DoorCameraSequence.asset.");
+            return false;
+        }
+
+        if (!doorCameraSequence.TryGetNextRoom(currentRoom, out string nextRoom))
+        {
+            Warn($"Door '{cleanDoorName}' could not find a next room after '{currentRoom}'.");
+            return false;
+        }
+
+        bool moved = SetCurrentRoom(nextRoom, false, true);
+
+        if (moved && hideMapAfterDoorClick && mapAnimator != null)
+        {
+            mapAnimator.HideMap();
+        }
+
+        return moved;
+    }
+
+    public bool SetCurrentRoomFromCameraArea(CameraAreaController cameraArea, bool applyRoomVisual)
+    {
+        if (cameraArea == null)
+        {
+            return false;
+        }
+
+        return SetCurrentRoom(ParseRoomNameFromCameraArea(cameraArea.name), false, applyRoomVisual);
+    }
+
+    public bool MoveThroughInspectorDoor(string sourceRoom, string doorName, string destinationRoom, bool requirePlayerInSourceRoom)
+    {
+        string cleanSourceRoom = Clean(sourceRoom);
+        string cleanDoorName = Clean(doorName);
+        string cleanDestinationRoom = Clean(destinationRoom);
+
+        if (string.IsNullOrEmpty(cleanDestinationRoom))
+        {
+            Warn($"Door '{cleanDoorName}' has no destination room.");
+            return false;
+        }
+
+        if (requirePlayerInSourceRoom &&
+            !string.IsNullOrEmpty(cleanSourceRoom) &&
+            !SameName(cleanSourceRoom, currentRoom))
+        {
+            Warn($"Door '{cleanDoorName}' belongs to '{cleanSourceRoom}', but the player is currently in '{currentRoom}'.");
+            return false;
+        }
+
+        bool moved = SetCurrentRoom(cleanDestinationRoom, false, true);
+
+        if (moved && hideMapAfterDoorClick && mapAnimator != null)
+        {
+            mapAnimator.HideMap();
+        }
+
+        return moved;
+    }
+
     public bool HasDoor(string doorId)
     {
         return routesByDoorId.ContainsKey(Clean(doorId));
@@ -116,10 +195,24 @@ public class RoomNavigationManager : MonoBehaviour
         if (doorButtonRoot != null)
         {
             cachedDoorButtons = doorButtonRoot.GetComponentsInChildren<DoorButton>(true);
+            cachedDoorTriggers = doorButtonRoot.GetComponentsInChildren<DoorTriggerNavigation>(true);
             return;
         }
 
         cachedDoorButtons = FindObjectsOfType<DoorButton>(true);
+        cachedDoorTriggers = FindObjectsOfType<DoorTriggerNavigation>(true);
+    }
+
+    private void LoadLegacyDoorDataIfNeeded()
+    {
+        if (cachedDoorButtons.Length == 0)
+        {
+            roomsByName = new Dictionary<string, RoomDefinition>(StringComparer.OrdinalIgnoreCase);
+            routesByDoorId = new Dictionary<string, DoorRoute>(StringComparer.OrdinalIgnoreCase);
+            return;
+        }
+
+        LoadDoorData();
     }
 
     private bool LoadDoorData()
@@ -164,11 +257,15 @@ public class RoomNavigationManager : MonoBehaviour
 
         if (!roomsByName.TryGetValue(cleanRoomName, out RoomDefinition roomDefinition))
         {
-            Warn($"Room '{cleanRoomName}' is not present in the loaded door data.");
-
             if (requireKnownRoom)
             {
+                Warn($"Room '{cleanRoomName}' is not present in the loaded door data.");
                 return false;
+            }
+
+            if (roomsByName.Count > 0)
+            {
+                Warn($"Room '{cleanRoomName}' is not present in the loaded door data.");
             }
         }
 
@@ -253,6 +350,34 @@ public class RoomNavigationManager : MonoBehaviour
             bool belongsToCurrentRoom = SameName(doorButton.RoomName, currentRoom);
             doorButton.gameObject.SetActive(belongsToCurrentRoom);
         }
+
+        for (int i = 0; i < cachedDoorTriggers.Length; i++)
+        {
+            DoorTriggerNavigation doorTrigger = cachedDoorTriggers[i];
+
+            if (doorTrigger == null)
+            {
+                continue;
+            }
+
+            if (doorTrigger.UsesCameraSequence)
+            {
+                bool sequenceHasCurrentRoom = doorCameraSequence == null ||
+                    doorCameraSequence.ContainsRoom(currentRoom);
+                doorTrigger.gameObject.SetActive(sequenceHasCurrentRoom);
+                continue;
+            }
+
+            string sourceRoom = doorTrigger.SourceRoom;
+
+            if (string.IsNullOrEmpty(sourceRoom))
+            {
+                continue;
+            }
+
+            bool belongsToCurrentRoom = SameName(sourceRoom, currentRoom);
+            doorTrigger.gameObject.SetActive(belongsToCurrentRoom);
+        }
     }
 
     private void RefreshRoomGroups()
@@ -283,6 +408,11 @@ public class RoomNavigationManager : MonoBehaviour
             return startingRoom;
         }
 
+        if (doorCameraSequence != null && !string.IsNullOrWhiteSpace(doorCameraSequence.StartingRoom))
+        {
+            return doorCameraSequence.StartingRoom;
+        }
+
         foreach (KeyValuePair<string, RoomDefinition> pair in roomsByName)
         {
             return pair.Value.RoomName;
@@ -311,6 +441,11 @@ public class RoomNavigationManager : MonoBehaviour
         if (roomVisualCatalog == null && !string.IsNullOrWhiteSpace(roomVisualCatalogResourcePath))
         {
             roomVisualCatalog = Resources.Load<RoomVisualCatalog>(roomVisualCatalogResourcePath);
+        }
+
+        if (doorCameraSequence == null && !string.IsNullOrWhiteSpace(doorCameraSequenceResourcePath))
+        {
+            doorCameraSequence = Resources.Load<DoorCameraSequence>(doorCameraSequenceResourcePath);
         }
 
         if (doorButtonRoot == null)

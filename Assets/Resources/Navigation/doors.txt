@@ -3,18 +3,21 @@
 # Current Room:
 # DoorId: Destination Room
 
+StorageCloset:
+SC1: Hallway
+
+Hallway:
+H1: Entrance
+H2: Kitchen
+H3: StorageCloset
+
 Kitchen:
 K1: Ballroom
 K2: Hallway
 
-Study:
-S1: Ballroom
-S2: Kitchen
-
 Ballroom:
 B1: Kitchen
-B2: Study
+B2: Hallway
 
-Hallway:
-H1: Kitchen
-H2: Study
+Entrance:
+E1: Hallway

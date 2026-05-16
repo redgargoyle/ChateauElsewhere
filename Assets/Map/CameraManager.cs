@@ -89,6 +89,7 @@ public class CameraManager : MonoBehaviour
     private Texture currentBaseBackgroundTexture;
     private RenderTexture anchoredAnimationTexture;
     private Material anchoredAnimationCompositeMaterial;
+    private RoomNavigationManager roomNavigationManager;
     private int anchoredAnimationFrameIndex = -1;
     private int anchoredAnimationFrameDirection = 1;
     private float anchoredAnimationFrameTimer;
@@ -176,6 +177,8 @@ public class CameraManager : MonoBehaviour
         {
             return;
         }
+
+        NotifyRoomNavigation(selected);
 
         if (cameraSwitchSound != null)
         {
@@ -296,6 +299,24 @@ public class CameraManager : MonoBehaviour
         }
 
         return cameraBackground.texture;
+    }
+
+    private void NotifyRoomNavigation(CameraAreaController selected)
+    {
+        if (selected == null)
+        {
+            return;
+        }
+
+        if (roomNavigationManager == null)
+        {
+            roomNavigationManager = FindObjectOfType<RoomNavigationManager>();
+        }
+
+        if (roomNavigationManager != null)
+        {
+            roomNavigationManager.SetCurrentRoomFromCameraArea(selected, false);
+        }
     }
 
     private void SetCameraBackground(Texture texture)

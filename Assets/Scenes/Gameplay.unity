@@ -1760,6 +1760,7 @@ GameObject:
   - component: {fileID: 964024800}
   - component: {fileID: 964024802}
   - component: {fileID: 964024803}
+  - component: {fileID: 964024804}
   m_Layer: 5
   m_Name: DoorTrigger
   m_TagString: Untagged
@@ -1774,16 +1775,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 964024799}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 5.170104, y: 5.371969, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1325400055}
+  m_Father: {fileID: 2092076913}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -81.6, y: 5}
+  m_AnchoredPosition: {x: -88.52111, y: -13.432587}
   m_SizeDelta: {x: 72, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &964024802
@@ -1807,8 +1808,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.75}
-  m_RaycastTarget: 0
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1824,6 +1825,28 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &964024804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964024799}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sourceRoom: StorageCloset
+  doorName: SC1
+  destinationRoom: Hallway
+  requirePlayerInSourceRoom: 1
+  useCameraSequence: 1
+  navigationManager: {fileID: 0}
+  image: {fileID: 964024803}
+  makeInvisibleAtRuntime: 0
+  runtimeColor: {r: 1, g: 1, b: 1, a: 0}
+  bringToFront: 1
 --- !u!1 &969106979
 GameObject:
   m_ObjectHideFlags: 0
@@ -2652,7 +2675,6 @@ RectTransform:
   - {fileID: 1532345635}
   - {fileID: 1237239558}
   - {fileID: 969106980}
-  - {fileID: 964024800}
   m_Father: {fileID: 651316803}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -4580,6 +4602,7 @@ RectTransform:
   - {fileID: 942526638}
   - {fileID: 1088223804}
   - {fileID: 1588559182}
+  - {fileID: 964024800}
   - {fileID: 1453967420}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
