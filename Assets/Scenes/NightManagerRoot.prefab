@@ -339,7 +339,6 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   cameraManager: {fileID: 0}
-  jumpScareSequence: {fileID: 0}
   gameOverController: {fileID: 0}
   powerManager: {fileID: 777100000000000004}
   securityRoomManager: {fileID: 777100000000000007}
@@ -354,9 +353,7 @@ MonoBehaviour:
   texSecurityRoomLitFace: {fileID: 0}
   breakerSwitch: {fileID: 0}
   generatorSlowDie: {fileID: 0}
-  animatronicLongWalk: {fileID: 0}
   powerOutageMusic: {fileID: 0}
-  animatronicLastSteps: {fileID: 0}
   powerOutagePugFrames: {fileID: 11400000, guid: b2d7e7c3f5e8468a9e1d91e5b72c0a44, type: 2}
   powerOutagePugImage: {fileID: 0}
   powerOutagePugDelay: 5
@@ -376,15 +373,12 @@ MonoBehaviour:
   startGameOverAfterPowerOut: 1
   powerOutageGameOverDelay: 10
   lowPitchedWhineDuration: 15
-  longWalkFallbackDuration: 4
   carnivalMusicDuration: 18
   faceFlickerDuration: 3
   faceFlickerMinInterval: 0.06
   faceFlickerMaxInterval: 0.28
   roomFlickerDuration: 4
   roomFlickerInterval: 0.18
-  finalFootstepsDuration: 4
-  jumpScareDelay: 0.15
   roomPowerOutOverlay: {r: 0, g: 0, b: 0, a: 0.72}
   blackOutOverlay: {r: 0, g: 0, b: 0, a: 1}
   onPowerOutStarted:
@@ -397,9 +391,6 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onRoomFlickerStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onJumpScareReady:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &777100000000000006
@@ -419,7 +410,6 @@ MonoBehaviour:
   powerRemainingText: {fileID: 0}
   usageLabel: {fileID: 0}
   batteryUsageBars: []
-  foxyButton: {fileID: 0}
   targetCanvas: {fileID: 0}
   createRuntimeHud: 1
   showPowerPercent: 1
@@ -428,10 +418,8 @@ MonoBehaviour:
   panelOffset: {x: 14, y: 14}
   barSize: {x: 13, y: 24}
   barSpacing: 4
-  hideWhenFoxyPressed: 1
   hideWhenKeyPressed: 1
   hideKey: 107
-  foxyButtonName: Button_Foxy
   panelColor: {r: 0, g: 0, b: 0, a: 0.45}
   labelColor: {r: 1, g: 1, b: 1, a: 1}
   powerFullColor: {r: 0.24, g: 1, b: 0.02, a: 1}

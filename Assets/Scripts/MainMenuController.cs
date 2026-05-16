@@ -21,7 +21,7 @@ public class MainMenuController : MonoBehaviour
     public Vector2 referenceResolution = new Vector2(1366f, 768f);
     [Range(0f, 1f)]
     public float matchWidthOrHeight = 0.5f;
-    public bool pinMenuLikeFoxyButton = true;
+    public bool pinMenuToTopLeft = true;
     public RectTransform menuPanel;
     public RectTransform title;
     public RectTransform newGameButton;
@@ -215,7 +215,7 @@ public class MainMenuController : MonoBehaviour
 
     private void ApplyPinnedMenuLayout()
     {
-        if (!pinMenuLikeFoxyButton)
+        if (!pinMenuToTopLeft)
         {
             return;
         }

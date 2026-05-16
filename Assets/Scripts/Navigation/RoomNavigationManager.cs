@@ -18,6 +18,7 @@ public class RoomNavigationManager : MonoBehaviour
     [SerializeField] private CameraManager cameraManager;
     [SerializeField] private MapAnimator mapAnimator;
     [SerializeField] private Transform doorButtonRoot;
+    [SerializeField] private Transform roomContentRoot;
 
     [Header("Behavior")]
     [SerializeField] private bool autoFindReferences = true;
@@ -32,7 +33,10 @@ public class RoomNavigationManager : MonoBehaviour
     private Dictionary<string, DoorRoute> routesByDoorId = new Dictionary<string, DoorRoute>(StringComparer.OrdinalIgnoreCase);
     private DoorButton[] cachedDoorButtons = new DoorButton[0];
     private DoorTriggerNavigation[] cachedDoorTriggers = new DoorTriggerNavigation[0];
+    private RoomContentGroup[] cachedRoomContentGroups = new RoomContentGroup[0];
     private string currentRoom;
+    private bool applyVisualForNextRoomChange;
+    private bool hideMapForNextRoomChange;
 
     public string CurrentRoom => currentRoom;
     public string StartingRoom => startingRoom;
@@ -45,9 +49,16 @@ public class RoomNavigationManager : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        RegisterBuiltInRoomChangeResponses();
         RefreshDoorButtonCache();
+        RefreshRoomContentCache();
         LoadLegacyDoorDataIfNeeded();
         SetCurrentRoom(GetInitialRoomName(), false, applyStartingRoomVisualOnAwake);
+    }
+
+    private void OnDestroy()
+    {
+        onCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
     }
 
     public bool ReloadDoorData()
@@ -84,14 +95,9 @@ public class RoomNavigationManager : MonoBehaviour
             return false;
         }
 
-        bool moved = SetCurrentRoom(route.DestinationRoom, true, true);
-
-        if (moved && hideMapAfterDoorClick && mapAnimator != null)
-        {
-            mapAnimator.HideMap();
-        }
-
-        return moved;
+        // The door data only translates a clicked door ID into a destination room.
+        // SetCurrentRoom owns the actual room-state change and broadcasts it.
+        return SetCurrentRoom(route.DestinationRoom, true, true, true);
     }
 
     public bool MoveToRoom(string roomName)
@@ -124,14 +130,9 @@ public class RoomNavigationManager : MonoBehaviour
             return false;
         }
 
-        bool moved = SetCurrentRoom(nextRoom, false, true);
-
-        if (moved && hideMapAfterDoorClick && mapAnimator != null)
-        {
-            mapAnimator.HideMap();
-        }
-
-        return moved;
+        // Camera-sequence doors compute the next room from the sequence, then use
+        // the same state-change path as every other room transition.
+        return SetCurrentRoom(nextRoom, false, true, true);
     }
 
     public bool SetCurrentRoomFromCameraArea(CameraAreaController cameraArea, bool applyRoomVisual)
@@ -164,14 +165,9 @@ public class RoomNavigationManager : MonoBehaviour
             return false;
         }
 
-        bool moved = SetCurrentRoom(cleanDestinationRoom, false, true);
-
-        if (moved && hideMapAfterDoorClick && mapAnimator != null)
-        {
-            mapAnimator.HideMap();
-        }
-
-        return moved;
+        // Inspector-driven doors already know their destination room, so they pass
+        // that room directly into the central room-state change.
+        return SetCurrentRoom(cleanDestinationRoom, false, true, true);
     }
 
     public bool HasDoor(string doorId)
@@ -201,6 +197,17 @@ public class RoomNavigationManager : MonoBehaviour
 
         cachedDoorButtons = FindObjectsOfType<DoorButton>(true);
         cachedDoorTriggers = FindObjectsOfType<DoorTriggerNavigation>(true);
+    }
+
+    public void RefreshRoomContentCache()
+    {
+        if (roomContentRoot != null)
+        {
+            cachedRoomContentGroups = roomContentRoot.GetComponentsInChildren<RoomContentGroup>(true);
+            return;
+        }
+
+        cachedRoomContentGroups = FindObjectsOfType<RoomContentGroup>(true);
     }
 
     private void LoadLegacyDoorDataIfNeeded()
@@ -245,7 +252,7 @@ public class RoomNavigationManager : MonoBehaviour
         return result.IsValid;
     }
 
-    private bool SetCurrentRoom(string roomName, bool requireKnownRoom, bool applyRoomVisual)
+    private bool SetCurrentRoom(string roomName, bool requireKnownRoom, bool applyRoomVisual, bool hideMapAfterRoomChange = false)
     {
         string cleanRoomName = Clean(roomName);
 
@@ -269,16 +276,55 @@ public class RoomNavigationManager : MonoBehaviour
             }
         }
 
+        // This assignment is the actual room change. Door triggers, buttons, music,
+        // animations, and visuals should not each maintain their own current-room
+        // state; they should react to this one value changing.
         currentRoom = roomDefinition != null ? roomDefinition.RoomName : cleanRoomName;
 
-        if (applyRoomVisual)
+        // These flags describe what this transition wants the built-in room systems
+        // to do when the room-changed event fires. Future systems can subscribe to
+        // OnCurrentRoomChanged instead of adding more work inside SetCurrentRoom.
+        applyVisualForNextRoomChange = applyRoomVisual;
+        hideMapForNextRoomChange = hideMapAfterRoomChange && hideMapAfterDoorClick;
+
+        try
         {
-            ApplyRoomVisual(currentRoom);
+            onCurrentRoomChanged.Invoke(currentRoom);
+        }
+        finally
+        {
+            applyVisualForNextRoomChange = false;
+            hideMapForNextRoomChange = false;
         }
 
-        RefreshDoorButtonsForCurrentRoom();
-        onCurrentRoomChanged.Invoke(currentRoom);
         return true;
+    }
+
+    private void RegisterBuiltInRoomChangeResponses()
+    {
+        // Keep registration idempotent so Reload/Bootstrap paths cannot add the
+        // same listener twice. This listener is the automatic "Option 2" response:
+        // one currentRoom change fans out to visuals, room objects, doors, and map UI.
+        onCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        onCurrentRoomChanged.AddListener(HandleCurrentRoomChanged);
+    }
+
+    private void HandleCurrentRoomChanged(string roomName)
+    {
+        ResolveReferences();
+
+        if (applyVisualForNextRoomChange)
+        {
+            ApplyRoomVisual(roomName);
+        }
+
+        RefreshRoomContentForCurrentRoom();
+        RefreshDoorButtonsForCurrentRoom();
+
+        if (hideMapForNextRoomChange && mapAnimator != null)
+        {
+            mapAnimator.HideMap();
+        }
     }
 
     private void ApplyRoomVisual(string roomName)
@@ -362,9 +408,11 @@ public class RoomNavigationManager : MonoBehaviour
 
             if (doorTrigger.UsesCameraSequence)
             {
-                bool sequenceHasCurrentRoom = doorCameraSequence == null ||
-                    doorCameraSequence.ContainsRoom(currentRoom);
-                doorTrigger.gameObject.SetActive(sequenceHasCurrentRoom);
+                string sequenceSourceRoom = doorTrigger.SourceRoom;
+                bool sequenceTriggerBelongsToCurrentRoom = string.IsNullOrEmpty(sequenceSourceRoom)
+                    ? doorCameraSequence == null || doorCameraSequence.ContainsRoom(currentRoom)
+                    : SameName(sequenceSourceRoom, currentRoom);
+                doorTrigger.gameObject.SetActive(sequenceTriggerBelongsToCurrentRoom);
                 continue;
             }
 
@@ -377,6 +425,40 @@ public class RoomNavigationManager : MonoBehaviour
 
             bool belongsToCurrentRoom = SameName(sourceRoom, currentRoom);
             doorTrigger.gameObject.SetActive(belongsToCurrentRoom);
+        }
+    }
+
+    private void RefreshRoomContentForCurrentRoom()
+    {
+        RefreshRoomContentCache();
+
+        for (int i = 0; i < cachedRoomContentGroups.Length; i++)
+        {
+            RoomContentGroup roomContentGroup = cachedRoomContentGroups[i];
+
+            if (roomContentGroup == null)
+            {
+                continue;
+            }
+
+            // RoomContentGroup belongs on the individual room objects, not on the
+            // navigation manager or the root that holds all rooms.
+            if (roomContentGroup.gameObject == gameObject || roomContentGroup.transform == roomContentRoot)
+            {
+                continue;
+            }
+
+            string roomName = roomContentGroup.RoomName;
+
+            if (string.IsNullOrEmpty(roomName))
+            {
+                continue;
+            }
+
+            // A RoomContentGroup is the optional "room object" layer: put room
+            // images, animators, audio sources, or other room-only objects under it,
+            // and the navigation manager will activate only the current room's group.
+            roomContentGroup.gameObject.SetActive(SameName(roomName, currentRoom));
         }
     }
 
@@ -455,6 +537,21 @@ public class RoomNavigationManager : MonoBehaviour
             if (rootObject != null)
             {
                 doorButtonRoot = rootObject.transform;
+            }
+        }
+
+        if (roomContentRoot == null)
+        {
+            GameObject rootObject = GameObject.Find("Rooms");
+
+            if (rootObject == null)
+            {
+                rootObject = GameObject.Find("RoomObjects");
+            }
+
+            if (rootObject != null)
+            {
+                roomContentRoot = rootObject.transform;
             }
         }
     }

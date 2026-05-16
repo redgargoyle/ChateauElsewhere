@@ -3,8 +3,8 @@
 # Current Room:
 # DoorId: Destination Room
 
-StorageCloset:
-SC1: Hallway
+Music:
+M1: Hallway
 
 Hallway:
 H1: Entrance

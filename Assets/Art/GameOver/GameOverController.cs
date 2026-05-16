@@ -18,7 +18,6 @@ public class GameOverController : MonoBehaviour
 
     [Header("Gameplay UI")]
     public GameObject mapToggleButton;
-    public GameObject foxyButton;
 
     [Header("Power Outage Cleanup")]
     public BlackOutController blackOutController;
@@ -39,7 +38,6 @@ public class GameOverController : MonoBehaviour
     private Coroutine gameOverRoutine;
     private bool gameOverActive;
     private bool mapToggleWasActive;
-    private bool foxyButtonWasActive;
 
     private void Reset()
     {
@@ -246,16 +244,10 @@ public class GameOverController : MonoBehaviour
     private void HideGameplayUi()
     {
         mapToggleWasActive = mapToggleButton != null && mapToggleButton.activeSelf;
-        foxyButtonWasActive = foxyButton != null && foxyButton.activeSelf;
 
         if (mapToggleButton != null)
         {
             mapToggleButton.SetActive(false);
-        }
-
-        if (foxyButton != null)
-        {
-            foxyButton.SetActive(false);
         }
     }
 
@@ -264,11 +256,6 @@ public class GameOverController : MonoBehaviour
         if (mapToggleButton != null)
         {
             mapToggleButton.SetActive(mapToggleWasActive);
-        }
-
-        if (foxyButton != null)
-        {
-            foxyButton.SetActive(foxyButtonWasActive);
         }
     }
 

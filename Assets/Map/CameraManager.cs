@@ -15,9 +15,6 @@ public class CameraManager : MonoBehaviour
     public Vector2 referenceResolution = new Vector2(1366f, 768f);
     [Range(0f, 1f)]
     public float matchWidthOrHeight = 0.5f;
-    public bool pinFoxyButtonToCorner = true;
-    public RectTransform foxyButton;
-    public Vector2 foxyButtonPadding = new Vector2(24f, 24f);
     public float cameraShakeDuration = 1.6f;
     public float cameraShakeMagnitude = 22f;
     public float cameraShakeRotation = 2f;
@@ -68,6 +65,7 @@ public class CameraManager : MonoBehaviour
     private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
     private static readonly int CameraAngleId = Shader.PropertyToID("_camera_angle");
     private static readonly int FovId = Shader.PropertyToID("_fov");
+    private static readonly int MarginId = Shader.PropertyToID("_margin");
     private static readonly int VerticalStrengthId = Shader.PropertyToID("_verticle_strength");
     private static readonly int OverlayTexId = Shader.PropertyToID("_OverlayTex");
     private static readonly int OverlayRectId = Shader.PropertyToID("_OverlayRect");
@@ -95,6 +93,11 @@ public class CameraManager : MonoBehaviour
     private float anchoredAnimationFrameTimer;
     private Rect lastAnchoredAnimationRect = new Rect(float.MinValue, float.MinValue, float.MinValue, float.MinValue);
     private readonly Vector3[] anchoredReferenceCorners = new Vector3[4];
+    private readonly Vector3[] shaderAnchorCorners = new Vector3[4];
+
+    public float CurrentRoomHorizontalPan => currentRoomPan;
+    public float CurrentRoomVerticalPan => currentRoomVerticalPan;
+    public float CurrentRoomFov => currentRoomFov;
 
     private void Reset()
     {
@@ -118,7 +121,6 @@ public class CameraManager : MonoBehaviour
         ConfigureCanvasScalers();
         HideAnchoredAnimationReferenceVisuals();
         ApplyBackgroundLayout();
-        ApplyPinnedUiLayout();
     }
 
     private void Start()
@@ -131,7 +133,6 @@ public class CameraManager : MonoBehaviour
         }
 
         SetCameraBackground(GetStartupBackgroundTexture());
-        ApplyPinnedUiLayout();
     }
 
     private void Update()
@@ -143,7 +144,6 @@ public class CameraManager : MonoBehaviour
 
         UpdateRoomLookFromInput();
         UpdateAnchoredBackgroundAnimation();
-        ApplyPinnedUiLayout();
     }
 
     public void SelectCamera(CameraAreaController selected)
@@ -277,6 +277,168 @@ public class CameraManager : MonoBehaviour
         }
 
         SetCameraBackground(texture);
+    }
+
+    public void PreviewRoomBackground(Texture texture)
+    {
+        if (texture == null || cameraBackground == null)
+        {
+            return;
+        }
+
+        // Editor tools use the same background assignment path as Play mode so
+        // the RawImage, crop UVs, and shader texture properties all match what
+        // the player will actually see.
+        SetCameraBackground(texture);
+        MarkBackgroundPreviewDirty();
+    }
+
+    public void SetRoomLookForPreview(float horizontalPan, float verticalPan, float fov)
+    {
+        // These values are normally driven by runtime mouse input. The door
+        // editing tools call this in Edit mode so we can inspect the same shader
+        // panning pipeline without pressing Play.
+        currentRoomPan = ClampHorizontalRoomPan(horizontalPan);
+        targetRoomPan = currentRoomPan;
+        currentRoomVerticalPan = ClampVerticalRoomPan(verticalPan);
+        targetRoomVerticalPan = currentRoomVerticalPan;
+        currentRoomFov = ClampRoomFov(fov);
+
+        ApplyRoomLookToMaterial();
+        MarkBackgroundPreviewDirty();
+    }
+
+    public void ResetRoomLookForPreview()
+    {
+        SetRoomLookForPreview(0f, 0f, defaultRoomFov);
+    }
+
+    public bool TryCaptureShaderAnchoredRect(RectTransform sourceRect, out Rect shaderUvRect)
+    {
+        return TryCaptureShaderAnchoredRect(
+            sourceRect,
+            out shaderUvRect,
+            ClampHorizontalRoomPan(currentRoomPan),
+            currentRoomFov,
+            ClampVerticalRoomPan(currentRoomVerticalPan));
+    }
+
+    public bool TryCaptureDefaultShaderAnchoredRect(RectTransform sourceRect, out Rect shaderUvRect)
+    {
+        return TryCaptureShaderAnchoredRect(
+            sourceRect,
+            out shaderUvRect,
+            0f,
+            ClampRoomFov(defaultRoomFov),
+            0f);
+    }
+
+    private bool TryCaptureShaderAnchoredRect(
+        RectTransform sourceRect,
+        out Rect shaderUvRect,
+        float cameraAngle,
+        float fov,
+        float verticalStrength)
+    {
+        shaderUvRect = new Rect();
+
+        if (sourceRect == null || cameraBackground == null)
+        {
+            return false;
+        }
+
+        RectTransform backgroundTransform = cameraBackground.rectTransform;
+
+        if (backgroundTransform == null || !BackgroundRectIsUsable(backgroundTransform))
+        {
+            return false;
+        }
+
+        sourceRect.GetWorldCorners(shaderAnchorCorners);
+
+        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+
+        for (int i = 0; i < shaderAnchorCorners.Length; i++)
+        {
+            Vector2 backgroundLocalPoint = backgroundTransform.InverseTransformPoint(shaderAnchorCorners[i]);
+            Vector2 meshUv = BackgroundLocalPointToMeshUv(backgroundTransform, backgroundLocalPoint);
+            Vector2 shaderUv = MeshUvToShaderUv(meshUv, cameraAngle, fov, verticalStrength);
+
+            min = Vector2.Min(min, shaderUv);
+            max = Vector2.Max(max, shaderUv);
+        }
+
+        shaderUvRect = NormalizeRect(Rect.MinMaxRect(min.x, min.y, max.x, max.y));
+        return shaderUvRect.width > 0f && shaderUvRect.height > 0f;
+    }
+
+    public bool TryApplyShaderAnchoredRect(RectTransform targetRect, Rect shaderUvRect)
+    {
+        if (targetRect == null || cameraBackground == null || targetRect.parent == null)
+        {
+            return false;
+        }
+
+        RectTransform backgroundTransform = cameraBackground.rectTransform;
+        RectTransform parentRect = targetRect.parent as RectTransform;
+
+        if (backgroundTransform == null || parentRect == null || !BackgroundRectIsUsable(backgroundTransform))
+        {
+            return false;
+        }
+
+        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+
+        Vector2 shaderMin = shaderUvRect.min;
+        Vector2 shaderMax = shaderUvRect.max;
+
+        Vector2[] shaderCorners =
+        {
+            new Vector2(shaderMin.x, shaderMin.y),
+            new Vector2(shaderMin.x, shaderMax.y),
+            new Vector2(shaderMax.x, shaderMax.y),
+            new Vector2(shaderMax.x, shaderMin.y)
+        };
+
+        for (int i = 0; i < shaderCorners.Length; i++)
+        {
+            Vector2 meshUv = ShaderUvToMeshUv(shaderCorners[i]);
+            Vector2 backgroundLocalPoint = MeshUvToBackgroundLocalPoint(backgroundTransform, meshUv);
+            Vector3 worldPoint = backgroundTransform.TransformPoint(backgroundLocalPoint);
+            Vector2 parentLocalPoint = parentRect.InverseTransformPoint(worldPoint);
+
+            min = Vector2.Min(min, parentLocalPoint);
+            max = Vector2.Max(max, parentLocalPoint);
+        }
+
+        Vector2 size = max - min;
+
+        if (size.x <= 0f || size.y <= 0f)
+        {
+            return false;
+        }
+
+        Vector2 center = (min + max) * 0.5f;
+        Vector2 anchor = new Vector2(0.5f, 0.5f);
+        Vector2 parentSize = parentRect.rect.size;
+        Vector2 anchorReference = new Vector2(
+            (anchor.x - parentRect.pivot.x) * parentSize.x,
+            (anchor.y - parentRect.pivot.y) * parentSize.y);
+
+        // The hitbox is a normal UI object, but its position comes from the same
+        // shader-space coordinates that the background image uses. That is the
+        // important bridge: the shader moves the picture; this moves the raycast
+        // rectangle to the picture's new on-screen position.
+        targetRect.anchorMin = anchor;
+        targetRect.anchorMax = anchor;
+        targetRect.pivot = new Vector2(0.5f, 0.5f);
+        targetRect.anchoredPosition = center - anchorReference;
+        targetRect.sizeDelta = size;
+        targetRect.localRotation = Quaternion.identity;
+        targetRect.localScale = Vector3.one;
+        return true;
     }
 
     private Texture GetStartupBackgroundTexture()
@@ -988,38 +1150,121 @@ public class CameraManager : MonoBehaviour
         cameraBackground.uvRect = uv;
     }
 
-    private void ApplyPinnedUiLayout()
+    private bool BackgroundRectIsUsable(RectTransform backgroundTransform)
     {
-        if (!pinFoxyButtonToCorner)
+        Rect rect = backgroundTransform.rect;
+
+        return rect.width > 0f && rect.height > 0f;
+    }
+
+    private Vector2 BackgroundLocalPointToMeshUv(RectTransform backgroundTransform, Vector2 localPoint)
+    {
+        Rect backgroundRect = backgroundTransform.rect;
+        Rect visibleUv = cameraBackground.uvRect;
+
+        float normalizedX = Mathf.InverseLerp(backgroundRect.xMin, backgroundRect.xMax, localPoint.x);
+        float normalizedY = Mathf.InverseLerp(backgroundRect.yMin, backgroundRect.yMax, localPoint.y);
+
+        return new Vector2(
+            visibleUv.x + normalizedX * visibleUv.width,
+            visibleUv.y + normalizedY * visibleUv.height);
+    }
+
+    private Vector2 MeshUvToBackgroundLocalPoint(RectTransform backgroundTransform, Vector2 meshUv)
+    {
+        Rect backgroundRect = backgroundTransform.rect;
+        Rect visibleUv = cameraBackground.uvRect;
+
+        float normalizedX = SafeInverseLerp(visibleUv.x, visibleUv.x + visibleUv.width, meshUv.x);
+        float normalizedY = SafeInverseLerp(visibleUv.y, visibleUv.y + visibleUv.height, meshUv.y);
+
+        return new Vector2(
+            Mathf.LerpUnclamped(backgroundRect.xMin, backgroundRect.xMax, normalizedX),
+            Mathf.LerpUnclamped(backgroundRect.yMin, backgroundRect.yMax, normalizedY));
+    }
+
+    private Vector2 MeshUvToShaderUv(Vector2 meshUv)
+    {
+        return MeshUvToShaderUv(
+            meshUv,
+            ClampHorizontalRoomPan(currentRoomPan),
+            currentRoomFov,
+            ClampVerticalRoomPan(currentRoomVerticalPan));
+    }
+
+    private Vector2 MeshUvToShaderUv(Vector2 meshUv, float cameraAngle, float fov, float verticalStrength)
+    {
+        cameraAngle = ClampHorizontalRoomPan(cameraAngle);
+        fov = Mathf.Max(0.0001f, ClampRoomFov(fov));
+        verticalStrength = ClampVerticalRoomPan(verticalStrength);
+        float margin = GetShaderMargin();
+
+        float sourceX = 0.2f + 0.6f *
+            (0.5f + Mathf.Tan(cameraAngle + (meshUv.x - 0.5f) * fov) / Mathf.Tan(fov));
+
+        float verticalScale = GetShaderVerticalScale(meshUv.x, verticalStrength);
+        float verticalT = 0.5f + (meshUv.y - 0.5f) * verticalScale;
+        float verticalMargin = margin * Mathf.Abs(verticalStrength);
+        float sourceY = Mathf.LerpUnclamped(verticalMargin, 1f - verticalMargin, verticalT);
+
+        return new Vector2(sourceX, sourceY);
+    }
+
+    private Vector2 ShaderUvToMeshUv(Vector2 shaderUv)
+    {
+        float fov = Mathf.Max(0.0001f, currentRoomFov);
+        float cameraAngle = ClampHorizontalRoomPan(currentRoomPan);
+        float verticalStrength = ClampVerticalRoomPan(currentRoomVerticalPan);
+        float margin = GetShaderMargin();
+        float tanFov = Mathf.Tan(fov);
+
+        float horizontalT = (shaderUv.x - 0.2f) / 0.6f;
+        float meshX = 0.5f + (Mathf.Atan((horizontalT - 0.5f) * tanFov) - cameraAngle) / fov;
+
+        float verticalMargin = margin * Mathf.Abs(verticalStrength);
+        float verticalT = SafeInverseLerp(verticalMargin, 1f - verticalMargin, shaderUv.y);
+        float verticalScale = GetShaderVerticalScale(meshX, verticalStrength);
+        float meshY = 0.5f + (verticalT - 0.5f) / Mathf.Max(0.0001f, verticalScale);
+
+        return new Vector2(meshX, meshY);
+    }
+
+    private float GetShaderVerticalScale(float meshX, float verticalStrength)
+    {
+        // This mirrors the vertical squash/stretch portion of Background.shadergraph.
+        // Door hitboxes need the same math because the background pixels move in
+        // shader UV space, not by physically moving the RawImage RectTransform.
+        float verticalCurve = 0.5f + 0.5f * Mathf.Cos(Mathf.PI * (meshX + 0.5f));
+        float curvedScale = Mathf.LerpUnclamped(1f, verticalCurve, Mathf.Abs(verticalStrength));
+
+        if (verticalStrength > 0f)
         {
-            return;
+            return curvedScale;
         }
 
-        if (foxyButton == null)
-        {
-            GameObject foxyButtonObject = GameObject.Find("Button_Foxy");
+        return 1.5f - curvedScale;
+    }
 
-            if (foxyButtonObject != null)
-            {
-                foxyButton = foxyButtonObject.transform as RectTransform;
-            }
+    private float GetShaderMargin()
+    {
+        Material material = cameraBackground != null ? cameraBackground.material : null;
+
+        if (material == null || !material.HasProperty(MarginId))
+        {
+            return 0f;
         }
 
-        if (foxyButton == null)
+        return Mathf.Clamp01(material.GetFloat(MarginId));
+    }
+
+    private float SafeInverseLerp(float from, float to, float value)
+    {
+        if (Mathf.Approximately(from, to))
         {
-            return;
+            return 0f;
         }
 
-        foxyButton.anchorMin = new Vector2(0f, 1f);
-        foxyButton.anchorMax = new Vector2(0f, 1f);
-        foxyButton.pivot = new Vector2(0f, 1f);
-        foxyButton.anchoredPosition = new Vector2(foxyButtonPadding.x, -foxyButtonPadding.y);
-        foxyButton.localScale = Vector3.one;
-
-        if (foxyButton.parent != null && foxyButton.GetSiblingIndex() != foxyButton.parent.childCount - 1)
-        {
-            foxyButton.SetAsLastSibling();
-        }
+        return (value - from) / (to - from);
     }
 
     private void SetTextureIfAvailable(Material material, int propertyId, Texture texture)
@@ -1036,5 +1281,24 @@ public class CameraManager : MonoBehaviour
         {
             material.SetFloat(propertyId, value);
         }
+    }
+
+    private void MarkBackgroundPreviewDirty()
+    {
+        if (cameraBackground == null)
+        {
+            return;
+        }
+
+        cameraBackground.SetMaterialDirty();
+        cameraBackground.SetVerticesDirty();
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            UnityEditor.EditorUtility.SetDirty(cameraBackground);
+            UnityEditor.SceneView.RepaintAll();
+        }
+#endif
     }
 }

@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-[ExecuteAlways]
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasRenderer))]
 [RequireComponent(typeof(Image))]
@@ -21,6 +20,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     [Header("References")]
     [SerializeField] private RoomNavigationManager navigationManager;
+    [SerializeField] private CameraManager cameraManager;
     [SerializeField] private Image image;
 
     [Header("Display")]
@@ -28,13 +28,23 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     [SerializeField] private Color runtimeColor = new Color(1f, 1f, 1f, 0f);
     [SerializeField] private bool bringToFront = true;
 
+    [Header("Background Tracking")]
+    [SerializeField] private bool followCameraBackground = true;
+    [SerializeField] private bool captureBackgroundAnchorAtRuntime = true;
+    [SerializeField] private Rect backgroundShaderUvRect;
+    [SerializeField] private bool hasBackgroundShaderUvRect;
+
     public string SourceRoom => GetEffectiveSourceRoom();
     public string DoorName => Clean(doorName);
     public string DestinationRoom => Clean(destinationRoom);
     public bool UsesCameraSequence => useCameraSequence;
+    public bool HasBackgroundShaderAnchor => hasBackgroundShaderUvRect;
+
+    private RectTransform rectTransform;
 
     private void Reset()
     {
+        rectTransform = GetComponent<RectTransform>();
         image = GetComponent<Image>();
         FillSourceRoomFromHierarchy();
         ConfigureImage();
@@ -45,6 +55,17 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         ResolveReferences();
         ConfigureImage();
         BringToFrontIfNeeded();
+    }
+
+    private void Start()
+    {
+        CaptureBackgroundAnchorIfNeeded();
+        FollowCameraBackgroundIfNeeded();
+    }
+
+    private void LateUpdate()
+    {
+        FollowCameraBackgroundIfNeeded();
     }
 
     private void OnValidate()
@@ -60,7 +81,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         ConfigureImage();
-        BringToFrontIfNeeded();
     }
 
     private void OnTransformParentChanged()
@@ -69,8 +89,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         {
             FillSourceRoomFromHierarchy();
         }
-
-        BringToFrontIfNeeded();
     }
 
     private void OnDisable()
@@ -111,7 +129,20 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         if (useCameraSequence)
         {
+            // The trigger does not load rooms itself. It asks the navigation
+            // manager for the next room in the sequence, and the manager changes
+            // the single current-room state that every room system reacts to.
             navigationManager.OpenDoorFromCurrentRoom(string.Empty, DoorName, false);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(DoorName) && navigationManager.HasDoor(DoorName))
+        {
+            // Door triggers created from doors.txt should navigate through the
+            // loaded door data. The serialized destination is still kept on the
+            // trigger so the scene is readable in the Inspector, but doors.txt is
+            // the source of truth at runtime.
+            navigationManager.TryMoveThroughDoor(DoorName);
             return;
         }
 
@@ -121,6 +152,9 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return;
         }
 
+        // Inspector-driven triggers send their destination room to the same central
+        // room-change path. Visuals, room objects, doors, and animations should all
+        // update from RoomNavigationManager.OnCurrentRoomChanged.
         navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom);
     }
 
@@ -129,8 +163,63 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         FillSourceRoomFromHierarchy();
     }
 
+    public bool CaptureCurrentShaderAnchor(CameraManager previewCameraManager = null)
+    {
+        if (previewCameraManager != null)
+        {
+            cameraManager = previewCameraManager;
+        }
+
+        ResolveReferences();
+
+        if (cameraManager == null || rectTransform == null)
+        {
+            return false;
+        }
+
+        // When a trigger is placed while the room image is panned in the shader,
+        // its visible rectangle is not the same as its raw canvas coordinates.
+        // Store the shader-space rectangle so future pans can move this trigger
+        // with the picture instead of leaving it fixed on the screen.
+        if (!cameraManager.TryCaptureShaderAnchoredRect(rectTransform, out Rect capturedRect))
+        {
+            return false;
+        }
+
+        backgroundShaderUvRect = capturedRect;
+        hasBackgroundShaderUvRect = true;
+        return true;
+    }
+
+    public bool ApplyCapturedShaderAnchor(CameraManager previewCameraManager = null)
+    {
+        if (!hasBackgroundShaderUvRect)
+        {
+            return false;
+        }
+
+        if (previewCameraManager != null)
+        {
+            cameraManager = previewCameraManager;
+        }
+
+        ResolveReferences();
+
+        if (cameraManager == null || rectTransform == null)
+        {
+            return false;
+        }
+
+        return cameraManager.TryApplyShaderAnchoredRect(rectTransform, backgroundShaderUvRect);
+    }
+
     private void ResolveReferences()
     {
+        if (rectTransform == null)
+        {
+            rectTransform = GetComponent<RectTransform>();
+        }
+
         if (image == null)
         {
             image = GetComponent<Image>();
@@ -139,6 +228,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         if (navigationManager == null)
         {
             navigationManager = FindObjectOfType<RoomNavigationManager>();
+        }
+
+        if (cameraManager == null)
+        {
+            cameraManager = FindObjectOfType<CameraManager>();
         }
     }
 
@@ -159,12 +253,65 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private void BringToFrontIfNeeded()
     {
-        if (!bringToFront || transform.parent == null)
+        if (!Application.isPlaying || !bringToFront || transform.parent == null)
         {
             return;
         }
 
         transform.SetAsLastSibling();
+    }
+
+    private void CaptureBackgroundAnchorIfNeeded()
+    {
+        if (!Application.isPlaying || !followCameraBackground || !captureBackgroundAnchorAtRuntime ||
+            hasBackgroundShaderUvRect)
+        {
+            return;
+        }
+
+        ResolveReferences();
+
+        if (cameraManager == null || rectTransform == null)
+        {
+            return;
+        }
+
+        // The door trigger starts as an ordinary UI rectangle placed over the door.
+        // We capture that rectangle as background shader UV space once, then stop
+        // trusting its static canvas position.
+        if (cameraManager.TryCaptureDefaultShaderAnchoredRect(rectTransform, out Rect capturedRect))
+        {
+            backgroundShaderUvRect = capturedRect;
+            hasBackgroundShaderUvRect = true;
+        }
+    }
+
+    private void FollowCameraBackgroundIfNeeded()
+    {
+        if (!Application.isPlaying || !followCameraBackground)
+        {
+            return;
+        }
+
+        CaptureBackgroundAnchorIfNeeded();
+
+        if (!hasBackgroundShaderUvRect)
+        {
+            return;
+        }
+
+        ResolveReferences();
+
+        if (cameraManager == null || rectTransform == null)
+        {
+            return;
+        }
+
+        // CameraManager knows the same pan/FOV values that are sent into the
+        // background shader. Applying the saved shader UV rect here makes the
+        // invisible raycast box move with the rendered picture.
+        cameraManager.TryApplyShaderAnchoredRect(rectTransform, backgroundShaderUvRect);
+        BringToFrontIfNeeded();
     }
 
     private static void SetHoveredTrigger(DoorTriggerNavigation trigger)

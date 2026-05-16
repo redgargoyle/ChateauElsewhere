@@ -13,7 +13,6 @@ public class PowerUI : MonoBehaviour
     [SerializeField] private TMP_Text powerRemainingText;
     [SerializeField] private TMP_Text usageLabel;
     [SerializeField] private Image[] batteryUsageBars;
-    [SerializeField] private Button foxyButton;
 
     [Header("Runtime HUD")]
     [SerializeField] private Canvas targetCanvas;
@@ -26,10 +25,8 @@ public class PowerUI : MonoBehaviour
     [SerializeField] private float barSpacing = 4f;
 
     [Header("Hide Triggers")]
-    [SerializeField] private bool hideWhenFoxyPressed = true;
     [SerializeField] private bool hideWhenKeyPressed = true;
     [SerializeField] private KeyCode hideKey = KeyCode.K;
-    [SerializeField] private string foxyButtonName = "Button_Foxy";
 
     [Header("Style")]
     [SerializeField] private Color panelColor = new Color(0f, 0f, 0f, 0.45f);
@@ -51,7 +48,6 @@ public class PowerUI : MonoBehaviour
     };
 
     private Image[] batteryUsageBackplates;
-    private bool subscribedToFoxyButton;
     private bool hudSuppressed;
 
     private void Awake()
@@ -62,7 +58,6 @@ public class PowerUI : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
-        SubscribeFoxyButton();
 
         if (powerManager == null)
         {
@@ -86,8 +81,6 @@ public class PowerUI : MonoBehaviour
 
     private void OnDisable()
     {
-        UnsubscribeFoxyButton();
-
         if (powerManager == null)
         {
             return;
@@ -229,11 +222,6 @@ public class PowerUI : MonoBehaviour
             batteryUsageBars = FindUsageBars();
         }
 
-        if (foxyButton == null)
-        {
-            foxyButton = FindButton(foxyButtonName);
-        }
-
         if (createRuntimeHud && (powerUIPanel == null || batteryUsageBars == null || batteryUsageBars.Length == 0))
         {
             EnsureRuntimeHud();
@@ -249,26 +237,6 @@ public class PowerUI : MonoBehaviour
             if (text.name == objectName)
             {
                 return text;
-            }
-        }
-
-        return null;
-    }
-
-    private Button FindButton(string objectName)
-    {
-        if (string.IsNullOrEmpty(objectName))
-        {
-            return null;
-        }
-
-        Button[] buttons = FindObjectsOfType<Button>(true);
-
-        foreach (Button button in buttons)
-        {
-            if (button.name == objectName)
-            {
-                return button;
             }
         }
 
@@ -502,28 +470,6 @@ public class PowerUI : MonoBehaviour
     {
         float totalWidth = UsageBarCount * barSize.x + (UsageBarCount - 1) * barSpacing;
         return panelSize.x - totalWidth - 12f;
-    }
-
-    private void SubscribeFoxyButton()
-    {
-        if (!hideWhenFoxyPressed || foxyButton == null || subscribedToFoxyButton)
-        {
-            return;
-        }
-
-        foxyButton.onClick.AddListener(HideHud);
-        subscribedToFoxyButton = true;
-    }
-
-    private void UnsubscribeFoxyButton()
-    {
-        if (foxyButton == null || !subscribedToFoxyButton)
-        {
-            return;
-        }
-
-        foxyButton.onClick.RemoveListener(HideHud);
-        subscribedToFoxyButton = false;
     }
 
     private void ConfigureBarRect(RectTransform rectTransform, float x, float y, Vector2 size)

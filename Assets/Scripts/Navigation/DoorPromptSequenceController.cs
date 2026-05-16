@@ -182,7 +182,7 @@ public class DoorPromptSequenceController : MonoBehaviour
         promptText.color = promptColor;
         promptText.alignment = TextAlignmentOptions.Center;
         promptText.raycastTarget = false;
-        promptText.gameObject.transform.SetAsLastSibling();
+        SetPromptAsLastSiblingIfNeeded();
     }
 
     private void RefreshPrompt()
@@ -204,7 +204,23 @@ public class DoorPromptSequenceController : MonoBehaviour
 
         promptText.text = sequence != null ? sequence.PromptText : "Open Door";
         promptText.gameObject.SetActive(shouldShow);
-        promptText.transform.SetAsLastSibling();
+        SetPromptAsLastSiblingIfNeeded();
+    }
+
+    private void SetPromptAsLastSiblingIfNeeded()
+    {
+        if (promptText == null || promptText.transform.parent == null)
+        {
+            return;
+        }
+
+        Transform promptTransform = promptText.transform;
+        Transform parent = promptTransform.parent;
+
+        if (promptTransform.GetSiblingIndex() < parent.childCount - 1)
+        {
+            promptTransform.SetAsLastSibling();
+        }
     }
 
     private Canvas FindPreferredCanvas()

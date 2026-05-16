@@ -7,7 +7,6 @@ public class BlackOutController : MonoBehaviour
 {
     [Header("Managers & Controllers")]
     [SerializeField] private CameraManager cameraManager;
-    [SerializeField] private JumpScareSequence jumpScareSequence;
     [SerializeField] private GameOverController gameOverController;
     [SerializeField] private PowerManager powerManager;
     [SerializeField] private SecurityRoomManager securityRoomManager;
@@ -28,9 +27,7 @@ public class BlackOutController : MonoBehaviour
     [Header("Optional Audio")]
     [SerializeField] private AudioSource breakerSwitch;
     [SerializeField] private AudioSource generatorSlowDie;
-    [SerializeField] private AudioSource animatronicLongWalk;
     [SerializeField] private AudioSource powerOutageMusic;
-    [SerializeField] private AudioSource animatronicLastSteps;
 
     [Header("Power Outage Pug Animation")]
     [SerializeField] private StaticFrameGroup powerOutagePugFrames;
@@ -56,15 +53,12 @@ public class BlackOutController : MonoBehaviour
     [SerializeField] private bool startGameOverAfterPowerOut = true;
     [SerializeField] private float powerOutageGameOverDelay = 10f;
     [SerializeField] private float lowPitchedWhineDuration = 15f;
-    [SerializeField] private float longWalkFallbackDuration = 4f;
     [SerializeField] private float carnivalMusicDuration = 18f;
     [SerializeField] private float faceFlickerDuration = 3f;
     [SerializeField] private float faceFlickerMinInterval = 0.06f;
     [SerializeField] private float faceFlickerMaxInterval = 0.28f;
     [SerializeField] private float roomFlickerDuration = 4f;
     [SerializeField] private float roomFlickerInterval = 0.18f;
-    [SerializeField] private float finalFootstepsDuration = 4f;
-    [SerializeField] private float jumpScareDelay = 0.15f;
 
     [Header("Overlay Colors")]
     [SerializeField] private Color roomPowerOutOverlay = new Color(0f, 0f, 0f, 0.72f);
@@ -75,7 +69,6 @@ public class BlackOutController : MonoBehaviour
     [SerializeField] private UnityEvent onDoorsOpenRequested;
     [SerializeField] private UnityEvent onFaceFlickerStarted;
     [SerializeField] private UnityEvent onRoomFlickerStarted;
-    [SerializeField] private UnityEvent onJumpScareReady;
 
     private Coroutine blackoutRoutine;
     private Coroutine powerOutagePugRoutine;
@@ -162,9 +155,6 @@ public class BlackOutController : MonoBehaviour
         PlayIfAssigned(generatorSlowDie);
         yield return WaitForAudioOrFallback(generatorSlowDie, lowPitchedWhineDuration);
 
-        PlayIfAssigned(animatronicLongWalk);
-        yield return WaitForAudioOrFallback(animatronicLongWalk, longWalkFallbackDuration);
-
         PlayIfAssigned(powerOutageMusic);
         yield return WaitForAudioOrFallback(powerOutageMusic, carnivalMusicDuration);
 
@@ -174,20 +164,17 @@ public class BlackOutController : MonoBehaviour
         onRoomFlickerStarted?.Invoke();
         yield return FlickerBetweenBlueAndBlack();
 
-        PlayIfAssigned(animatronicLastSteps);
-        yield return WaitForAudioOrFallback(animatronicLastSteps, finalFootstepsDuration);
-
-        onJumpScareReady?.Invoke();
         StopPowerOutagePugAnimation();
         StopPowerOutageStaticFlicker();
+        StopSequenceAudio();
         SetOverlayVisible(false);
         SetRoomTexture(texSecurityRoomLitFace);
 
-        yield return new WaitForSecondsRealtime(Mathf.Max(0f, jumpScareDelay));
-
-        if (jumpScareSequence != null)
+        // The blackout sequence now hands off directly
+        // to the normal game-over controller so the night still ends cleanly.
+        if (gameOverController != null)
         {
-            jumpScareSequence.Play();
+            gameOverController.StartGameOver();
         }
 
         blackoutRoutine = null;
@@ -219,18 +206,11 @@ public class BlackOutController : MonoBehaviour
 
     private void StartGameOverFromPowerOutage()
     {
-        onJumpScareReady?.Invoke();
         StopPowerOutagePugAnimation();
         StopPowerOutageStaticFlicker();
         StopSequenceAudio();
         SetLitFaceVisible(false);
         SetOverlayVisible(false);
-
-        if (jumpScareSequence != null)
-        {
-            jumpScareSequence.Play();
-            return;
-        }
 
         if (gameOverController != null)
         {
@@ -292,11 +272,6 @@ public class BlackOutController : MonoBehaviour
         if (cameraManager == null)
         {
             cameraManager = FindObjectOfType<CameraManager>();
-        }
-
-        if (jumpScareSequence == null)
-        {
-            jumpScareSequence = FindObjectOfType<JumpScareSequence>();
         }
 
         if (gameOverController == null)
@@ -796,9 +771,7 @@ public class BlackOutController : MonoBehaviour
     private void StopSequenceAudio()
     {
         StopIfAssigned(generatorSlowDie);
-        StopIfAssigned(animatronicLongWalk);
         StopIfAssigned(powerOutageMusic);
-        StopIfAssigned(animatronicLastSteps);
     }
 
     private void StopIfAssigned(AudioSource source)
