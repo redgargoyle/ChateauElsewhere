@@ -31,9 +31,13 @@ public class CameraManager : MonoBehaviour
     public bool panRoomWithMouseEdges = true;
     [Range(0.01f, 0.5f)]
     public float mouseEdgePanZone = 0.12f;
+    [Tooltip("The room camera only pans while the cursor is this close to the left or right screen edge.")]
+    public float edgePanActivationPixels = 24f;
     [Range(0f, 1f)]
     public float maxRoomPan = 0.55f;
     public float roomPanSpeed = 3.5f;
+    public float roomPanStartSpeed = 0.45f;
+    public float roomPanAccelerationTime = 1.25f;
     public bool returnRoomPanToCenter;
     public bool moveRoomVerticallyWithMouseEdges;
     [Range(0f, 1f)]
@@ -41,7 +45,7 @@ public class CameraManager : MonoBehaviour
     public bool invertVerticalRoomPan;
     public bool scrollRoomVerticallyWithMouseWheel = true;
     [Range(0f, 1f)]
-    public float defaultRoomFov = 1f;
+    public float defaultRoomFov = 0.8f;
     [Range(0f, 1f)]
     public float minRoomFov = 0.55f;
     [Range(0f, 1f)]
@@ -69,6 +73,8 @@ public class CameraManager : MonoBehaviour
     private static readonly int VerticalStrengthId = Shader.PropertyToID("_verticle_strength");
     private static readonly int OverlayTexId = Shader.PropertyToID("_OverlayTex");
     private static readonly int OverlayRectId = Shader.PropertyToID("_OverlayRect");
+    private const float SourceUvXMin = 0f;
+    private const float SourceUvXRange = 1f;
 
     private CameraAreaController lastSelected;
     private Coroutine cameraSwitchRoutine;
@@ -84,6 +90,8 @@ public class CameraManager : MonoBehaviour
     private float currentRoomVerticalPan;
     private float targetRoomVerticalPan;
     private float currentRoomFov = 1f;
+    private float horizontalEdgeHoldTime;
+    private int lastHorizontalEdgeDirection;
     private Texture currentBaseBackgroundTexture;
     private RenderTexture anchoredAnimationTexture;
     private Material anchoredAnimationCompositeMaterial;
@@ -151,6 +159,11 @@ public class CameraManager : MonoBehaviour
 
         UpdateRoomLookFromInput();
         UpdateAnchoredBackgroundAnimation();
+    }
+
+    private void OnDisable()
+    {
+        NavigationCursorController.SetEdgePanDirection(0);
     }
 
     public void SelectCamera(CameraAreaController selected)
@@ -1079,9 +1092,15 @@ public class CameraManager : MonoBehaviour
 
         if (panRoomWithMouseEdges)
         {
-            targetRoomPan = GetRoomHorizontalPanTargetFromMouse();
-            currentRoomPan = ClampHorizontalRoomPan(MoveValue(currentRoomPan, targetRoomPan, roomPanSpeed));
+            targetRoomPan = GetRoomHorizontalPanTargetFromMouse(out int edgeDirection);
+            currentRoomPan = ClampHorizontalRoomPan(MoveValue(currentRoomPan, targetRoomPan, GetCurrentHorizontalPanSpeed(edgeDirection)));
+            NavigationCursorController.SetEdgePanDirection(edgeDirection);
             shouldApply = true;
+        }
+        else
+        {
+            ResetHorizontalEdgeHold();
+            NavigationCursorController.SetEdgePanDirection(0);
         }
 
         if (moveRoomVerticallyWithMouseEdges)
@@ -1118,24 +1137,72 @@ public class CameraManager : MonoBehaviour
         }
     }
 
-    private float GetRoomHorizontalPanTargetFromMouse()
+    private float GetRoomHorizontalPanTargetFromMouse(out int edgeDirection)
     {
+        edgeDirection = 0;
+
         if (!TryGetMousePositionOnScreen(out Vector3 mousePosition))
-        {
-            return returnRoomPanToCenter ? 0f : currentRoomPan;
-        }
-
-        float edgePixels = Mathf.Max(1f, Screen.width * Mathf.Clamp(mouseEdgePanZone, 0.01f, 0.5f));
-        float leftAmount = Mathf.Clamp01((edgePixels - mousePosition.x) / edgePixels);
-        float rightAmount = Mathf.Clamp01((mousePosition.x - (Screen.width - edgePixels)) / edgePixels);
-        float pan = rightAmount - leftAmount;
-
-        if (Mathf.Approximately(pan, 0f) && !returnRoomPanToCenter)
         {
             return currentRoomPan;
         }
 
-        return ClampHorizontalRoomPan(pan);
+        edgeDirection = GetHorizontalEdgeDirection(mousePosition.x);
+
+        if (edgeDirection == 0)
+        {
+            ResetHorizontalEdgeHold();
+            return currentRoomPan;
+        }
+
+        // No recentering here: the room view only changes while the cursor is
+        // touching the left or right edge. Once the cursor leaves the edge, the
+        // current pan is held exactly where it is.
+        return ClampHorizontalRoomPan(edgeDirection * Mathf.Clamp01(maxRoomPan));
+    }
+
+    private int GetHorizontalEdgeDirection(float mouseX)
+    {
+        float edgePixels = Mathf.Max(1f, edgePanActivationPixels);
+
+        if (mouseX <= edgePixels)
+        {
+            return -1;
+        }
+
+        if (mouseX >= Screen.width - edgePixels)
+        {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private float GetCurrentHorizontalPanSpeed(int edgeDirection)
+    {
+        if (edgeDirection == 0)
+        {
+            return roomPanStartSpeed;
+        }
+
+        if (edgeDirection != lastHorizontalEdgeDirection)
+        {
+            horizontalEdgeHoldTime = 0f;
+            lastHorizontalEdgeDirection = edgeDirection;
+        }
+
+        horizontalEdgeHoldTime += Time.unscaledDeltaTime;
+        float accelerationTime = Mathf.Max(0.01f, roomPanAccelerationTime);
+        float acceleration = Mathf.Clamp01(horizontalEdgeHoldTime / accelerationTime);
+
+        // Panning starts gently for control, then ramps to the normal tutorial
+        // speed while the player keeps holding the cursor on the screen edge.
+        return Mathf.Lerp(Mathf.Max(0f, roomPanStartSpeed), Mathf.Max(0f, roomPanSpeed), acceleration);
+    }
+
+    private void ResetHorizontalEdgeHold()
+    {
+        horizontalEdgeHoldTime = 0f;
+        lastHorizontalEdgeDirection = 0;
     }
 
     private float GetRoomVerticalPanTargetFromMouse()
@@ -1197,9 +1264,21 @@ public class CameraManager : MonoBehaviour
 
     private float ClampHorizontalRoomPan(float pan)
     {
-        float safePanLimit = Mathf.Clamp01(maxRoomPan);
+        float safePanLimit = Mathf.Min(Mathf.Clamp01(maxRoomPan), GetSafeHorizontalPanLimit(currentRoomFov));
 
         return Mathf.Clamp(pan, -safePanLimit, safePanLimit);
+    }
+
+    private float GetSafeHorizontalPanLimit(float fov)
+    {
+        float safeFov = Mathf.Max(0.0001f, ClampRoomFov(fov));
+        float tanFov = Mathf.Tan(safeFov);
+        float maxHorizontalT = (1f - SourceUvXMin) / SourceUvXRange;
+
+        // Keep the shader sample inside the room image at the screen edges.
+        // This prevents the left/right streaks that happen when clamp sampling
+        // stretches the outermost pixels.
+        return Mathf.Max(0f, Mathf.Atan((maxHorizontalT - 0.5f) * tanFov) - safeFov * 0.5f);
     }
 
     private float ClampVerticalRoomPan(float pan)
@@ -1454,7 +1533,7 @@ public class CameraManager : MonoBehaviour
         verticalStrength = ClampVerticalRoomPan(verticalStrength);
         float margin = GetShaderMargin();
 
-        float sourceX = 0.2f + 0.6f *
+        float sourceX = SourceUvXMin + SourceUvXRange *
             (0.5f + Mathf.Tan(cameraAngle + (meshUv.x - 0.5f) * fov) / Mathf.Tan(fov));
 
         float verticalScale = GetShaderVerticalScale(meshUv.x, verticalStrength);
@@ -1473,7 +1552,7 @@ public class CameraManager : MonoBehaviour
         float margin = GetShaderMargin();
         float tanFov = Mathf.Tan(fov);
 
-        float horizontalT = (shaderUv.x - 0.2f) / 0.6f;
+        float horizontalT = (shaderUv.x - SourceUvXMin) / SourceUvXRange;
         float meshX = 0.5f + (Mathf.Atan((horizontalT - 0.5f) * tanFov) - cameraAngle) / fov;
 
         float verticalMargin = margin * Mathf.Abs(verticalStrength);
@@ -1555,5 +1634,243 @@ public class CameraManager : MonoBehaviour
             UnityEditor.SceneView.RepaintAll();
         }
 #endif
+    }
+}
+
+public static class NavigationCursorController
+{
+    private const int CursorSize = 32;
+    private static readonly Color Clear = new Color(0f, 0f, 0f, 0f);
+    private static readonly Color Ink = new Color(0.02f, 0.02f, 0.02f, 1f);
+    private static readonly Color Paper = new Color(1f, 1f, 1f, 1f);
+    private static readonly Vector2 ArrowHotspot = new Vector2(16f, 16f);
+    private static readonly Vector2 DoorHotspot = new Vector2(9f, 6f);
+
+    private static int edgePanDirection;
+    private static object doorHoverOwner;
+    private static Texture2D leftArrowCursor;
+    private static Texture2D rightArrowCursor;
+    private static Texture2D doorCursor;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void ResetForPlayMode()
+    {
+        edgePanDirection = 0;
+        doorHoverOwner = null;
+        ApplyCursor();
+    }
+
+    public static void SetEdgePanDirection(int direction)
+    {
+        int cleanDirection = direction < 0 ? -1 : direction > 0 ? 1 : 0;
+
+        if (edgePanDirection == cleanDirection)
+        {
+            return;
+        }
+
+        edgePanDirection = cleanDirection;
+        ApplyCursor();
+    }
+
+    public static void SetDoorHover(object owner, bool active)
+    {
+        if (active)
+        {
+            doorHoverOwner = owner;
+            ApplyCursor();
+            return;
+        }
+
+        ClearDoorHover(owner);
+    }
+
+    public static void ClearDoorHover(object owner)
+    {
+        if (doorHoverOwner != owner)
+        {
+            return;
+        }
+
+        doorHoverOwner = null;
+        ApplyCursor();
+    }
+
+    private static void ApplyCursor()
+    {
+        // Door hover wins over edge panning because clicking the door is the more
+        // specific action. When neither state is active, Unity's default cursor returns.
+        if (doorHoverOwner != null)
+        {
+            Cursor.SetCursor(GetDoorCursor(), DoorHotspot, CursorMode.Auto);
+            return;
+        }
+
+        if (edgePanDirection < 0)
+        {
+            Cursor.SetCursor(GetLeftArrowCursor(), ArrowHotspot, CursorMode.Auto);
+            return;
+        }
+
+        if (edgePanDirection > 0)
+        {
+            Cursor.SetCursor(GetRightArrowCursor(), ArrowHotspot, CursorMode.Auto);
+            return;
+        }
+
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+    }
+
+    private static Texture2D GetLeftArrowCursor()
+    {
+        if (leftArrowCursor == null)
+        {
+            leftArrowCursor = CreateArrowCursor("Cursor_LeftEdgeArrow", -1);
+        }
+
+        return leftArrowCursor;
+    }
+
+    private static Texture2D GetRightArrowCursor()
+    {
+        if (rightArrowCursor == null)
+        {
+            rightArrowCursor = CreateArrowCursor("Cursor_RightEdgeArrow", 1);
+        }
+
+        return rightArrowCursor;
+    }
+
+    private static Texture2D GetDoorCursor()
+    {
+        if (doorCursor == null)
+        {
+            doorCursor = CreateDoorCursor();
+        }
+
+        return doorCursor;
+    }
+
+    private static Texture2D CreateArrowCursor(string cursorName, int direction)
+    {
+        Texture2D texture = CreateBlankCursor(cursorName);
+        int tipX = direction < 0 ? 5 : 26;
+        int backX = direction < 0 ? 20 : 11;
+
+        DrawLine(texture, tipX, 16, backX, 5, Ink, 5);
+        DrawLine(texture, tipX, 16, backX, 27, Ink, 5);
+        DrawLine(texture, tipX, 16, direction < 0 ? 27 : 4, 16, Ink, 5);
+        DrawLine(texture, tipX, 16, backX, 5, Paper, 2);
+        DrawLine(texture, tipX, 16, backX, 27, Paper, 2);
+        DrawLine(texture, tipX, 16, direction < 0 ? 27 : 4, 16, Paper, 2);
+        texture.Apply();
+        return texture;
+    }
+
+    private static Texture2D CreateDoorCursor()
+    {
+        Texture2D texture = CreateBlankCursor("Cursor_OpenDoor");
+
+        // A tiny open-door icon: frame, swinging panel, and knob. It is generated
+        // in code so the cursor works even before custom art assets are imported.
+        FillRect(texture, 8, 5, 21, 28, Ink);
+        FillRect(texture, 10, 7, 19, 26, Paper);
+        DrawLine(texture, 10, 7, 24, 11, Ink, 3);
+        DrawLine(texture, 24, 11, 24, 25, Ink, 3);
+        DrawLine(texture, 24, 25, 10, 26, Ink, 3);
+        DrawLine(texture, 10, 7, 10, 26, Ink, 3);
+        DrawLine(texture, 12, 9, 22, 12, Paper, 1);
+        DrawLine(texture, 22, 12, 22, 24, Paper, 1);
+        DrawLine(texture, 22, 24, 12, 25, Paper, 1);
+        FillRect(texture, 18, 16, 21, 19, Ink);
+        texture.Apply();
+        return texture;
+    }
+
+    private static Texture2D CreateBlankCursor(string cursorName)
+    {
+        Texture2D texture = new Texture2D(CursorSize, CursorSize, TextureFormat.RGBA32, false)
+        {
+            name = cursorName,
+            filterMode = FilterMode.Point,
+            wrapMode = TextureWrapMode.Clamp
+        };
+
+        for (int y = 0; y < CursorSize; y++)
+        {
+            for (int x = 0; x < CursorSize; x++)
+            {
+                texture.SetPixel(x, y, Clear);
+            }
+        }
+
+        return texture;
+    }
+
+    private static void FillRect(Texture2D texture, int minX, int minY, int maxX, int maxY, Color color)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
+                SetPixelSafe(texture, x, y, color);
+            }
+        }
+    }
+
+    private static void DrawLine(Texture2D texture, int x0, int y0, int x1, int y1, Color color, int thickness)
+    {
+        int dx = Mathf.Abs(x1 - x0);
+        int dy = Mathf.Abs(y1 - y0);
+        int stepX = x0 < x1 ? 1 : -1;
+        int stepY = y0 < y1 ? 1 : -1;
+        int error = dx - dy;
+
+        while (true)
+        {
+            DrawThickPixel(texture, x0, y0, color, thickness);
+
+            if (x0 == x1 && y0 == y1)
+            {
+                break;
+            }
+
+            int doubledError = error * 2;
+
+            if (doubledError > -dy)
+            {
+                error -= dy;
+                x0 += stepX;
+            }
+
+            if (doubledError < dx)
+            {
+                error += dx;
+                y0 += stepY;
+            }
+        }
+    }
+
+    private static void DrawThickPixel(Texture2D texture, int centerX, int centerY, Color color, int thickness)
+    {
+        int radius = Mathf.Max(1, thickness) / 2;
+
+        for (int y = centerY - radius; y <= centerY + radius; y++)
+        {
+            for (int x = centerX - radius; x <= centerX + radius; x++)
+            {
+                SetPixelSafe(texture, x, y, color);
+            }
+        }
+    }
+
+    private static void SetPixelSafe(Texture2D texture, int x, int y, Color color)
+    {
+        if (x < 0 || y < 0 || x >= CursorSize || y >= CursorSize)
+        {
+            return;
+        }
+
+        texture.SetPixel(x, y, color);
     }
 }

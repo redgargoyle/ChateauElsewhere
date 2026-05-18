@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class RoomNavigationManager : MonoBehaviour
 {
@@ -32,6 +34,15 @@ public class RoomNavigationManager : MonoBehaviour
     [SerializeField] private bool logNavigationWarnings = true;
     [SerializeField] private bool runNavigationSelfCheck = true;
 
+    [Header("Status HUD")]
+    [SerializeField] private bool showCurrentRoomHud = true;
+    [SerializeField] private string currentRoomHudName = "Text_CurrentRoom";
+    [SerializeField] private string currentRoomHudPrefix = "Current Room: ";
+    [SerializeField] private Vector2 currentRoomHudSize = new Vector2(360f, 44f);
+    [SerializeField] private Vector2 currentRoomHudOffset = new Vector2(-22f, 18f);
+    [SerializeField] private float currentRoomHudFontSize = 24f;
+    [SerializeField] private Color currentRoomHudColor = Color.white;
+
     [Header("Events")]
     [SerializeField] private RoomChangedEvent onCurrentRoomChanged = new RoomChangedEvent();
 
@@ -43,6 +54,7 @@ public class RoomNavigationManager : MonoBehaviour
     private string currentRoom;
     private bool applyVisualForNextRoomChange;
     private bool hideMapForNextRoomChange;
+    private TMP_Text currentRoomHudText;
 
     public string CurrentRoom => currentRoom;
     public string StartingRoom => startingRoom;
@@ -69,6 +81,7 @@ public class RoomNavigationManager : MonoBehaviour
         // current room's trigger rectangles reachable before the player clicks.
         ResolveReferences();
         RefreshDoorButtonsForCurrentRoom();
+        UpdateCurrentRoomHud(currentRoom);
         RunNavigationSelfCheckForCurrentRoom();
     }
 
@@ -339,6 +352,7 @@ public class RoomNavigationManager : MonoBehaviour
 
         RefreshRoomContentForCurrentRoom();
         RefreshDoorButtonsForCurrentRoom();
+        UpdateCurrentRoomHud(roomName);
         RunNavigationSelfCheckForCurrentRoom();
 
         if (hideMapForNextRoomChange && mapAnimator != null)
@@ -401,6 +415,126 @@ public class RoomNavigationManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void UpdateCurrentRoomHud(string roomName)
+    {
+        if (!showCurrentRoomHud || !Application.isPlaying)
+        {
+            return;
+        }
+
+        EnsureCurrentRoomHud();
+
+        if (currentRoomHudText == null)
+        {
+            return;
+        }
+
+        // This text is a readout of the one true current-room value. Keeping it
+        // here prevents the HUD from drifting away from navigation state.
+        currentRoomHudText.text = $"{currentRoomHudPrefix}{Clean(roomName)}";
+        currentRoomHudText.gameObject.SetActive(true);
+        currentRoomHudText.transform.SetAsLastSibling();
+    }
+
+    private void EnsureCurrentRoomHud()
+    {
+        if (currentRoomHudText != null)
+        {
+            ConfigureCurrentRoomHudText();
+            return;
+        }
+
+        TMP_Text existingText = FindNamedComponent<TMP_Text>(currentRoomHudName);
+
+        if (existingText != null)
+        {
+            currentRoomHudText = existingText;
+            ConfigureCurrentRoomHudText();
+            return;
+        }
+
+        Canvas canvas = FindPreferredStatusCanvas();
+
+        if (canvas == null)
+        {
+            Warn("Could not create the current-room HUD because no Canvas exists in the Gameplay scene.");
+            return;
+        }
+
+        GameObject textObject = new GameObject(currentRoomHudName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(Shadow));
+        textObject.transform.SetParent(canvas.transform, false);
+        currentRoomHudText = textObject.GetComponent<TMP_Text>();
+        ConfigureCurrentRoomHudText();
+    }
+
+    private void ConfigureCurrentRoomHudText()
+    {
+        if (currentRoomHudText == null)
+        {
+            return;
+        }
+
+        RectTransform rectTransform = currentRoomHudText.transform as RectTransform;
+
+        if (rectTransform != null)
+        {
+            rectTransform.anchorMin = new Vector2(1f, 0f);
+            rectTransform.anchorMax = new Vector2(1f, 0f);
+            rectTransform.pivot = new Vector2(1f, 0f);
+            rectTransform.anchoredPosition = currentRoomHudOffset;
+            rectTransform.sizeDelta = currentRoomHudSize;
+            rectTransform.localScale = Vector3.one;
+        }
+
+        currentRoomHudText.fontSize = currentRoomHudFontSize;
+        currentRoomHudText.color = currentRoomHudColor;
+        currentRoomHudText.alignment = TextAlignmentOptions.BottomRight;
+        currentRoomHudText.raycastTarget = false;
+
+        Shadow shadow = currentRoomHudText.GetComponent<Shadow>();
+
+        if (shadow != null)
+        {
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.85f);
+            shadow.effectDistance = new Vector2(2f, -2f);
+            shadow.useGraphicAlpha = true;
+        }
+    }
+
+    private Canvas FindPreferredStatusCanvas()
+    {
+        GameObject backgroundCanvasObject = GameObject.Find("Canvas_Background");
+
+        if (backgroundCanvasObject != null && backgroundCanvasObject.TryGetComponent(out Canvas backgroundCanvas))
+        {
+            return backgroundCanvas;
+        }
+
+        return FindObjectOfType<Canvas>(true);
+    }
+
+    private static T FindNamedComponent<T>(string objectName) where T : Component
+    {
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return null;
+        }
+
+        T[] components = FindObjectsOfType<T>(true);
+
+        for (int i = 0; i < components.Length; i++)
+        {
+            T component = components[i];
+
+            if (component != null && component.name == objectName)
+            {
+                return component;
+            }
+        }
+
+        return null;
     }
 
     private void RefreshDoorButtonsForCurrentRoom()

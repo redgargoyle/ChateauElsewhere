@@ -28,11 +28,16 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private CameraManager cameraManager;
     [SerializeField] private Image image;
+    [SerializeField] private AudioSource doorOpenAudioSource;
 
     [Header("Display")]
     [SerializeField] private bool makeInvisibleAtRuntime = true;
     [SerializeField] private Color runtimeColor = new Color(1f, 1f, 1f, 0f);
     [SerializeField] private bool bringToFront = true;
+
+    [Header("Audio")]
+    [SerializeField] private bool playDoorOpenSound = true;
+    [SerializeField] private string doorOpenAudioObjectName = "Audio_DoorOpen";
 
     [Header("Background Tracking")]
     [SerializeField] private bool followCameraBackground = true;
@@ -121,11 +126,14 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         {
             SetHoveredTrigger(null);
         }
+
+        NavigationCursorController.ClearDoorHover(this);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         SetHoveredTrigger(this);
+        NavigationCursorController.SetDoorHover(this, true);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -134,6 +142,8 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         {
             SetHoveredTrigger(null);
         }
+
+        NavigationCursorController.SetDoorHover(this, false);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -156,7 +166,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             // The trigger does not load rooms itself. It asks the navigation
             // manager for the next room in the sequence, and the manager changes
             // the single current-room state that every room system reacts to.
-            navigationManager.OpenDoorFromCurrentRoom(string.Empty, DoorName, false);
+            PlayDoorOpenSoundIfSuccessful(navigationManager.OpenDoorFromCurrentRoom(string.Empty, DoorName, false));
             return;
         }
 
@@ -166,7 +176,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             // loaded door data. The serialized destination is still kept on the
             // trigger so the scene is readable in the Inspector, but doors.txt is
             // the source of truth at runtime.
-            navigationManager.TryMoveThroughDoor(DoorName);
+            PlayDoorOpenSoundIfSuccessful(navigationManager.TryMoveThroughDoor(DoorName));
             return;
         }
 
@@ -179,7 +189,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         // Inspector-driven triggers send their destination room to the same central
         // room-change path. Visuals, room objects, doors, and animations should all
         // update from RoomNavigationManager.OnCurrentRoomChanged.
-        navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom);
+        PlayDoorOpenSoundIfSuccessful(navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom));
     }
 
     public void RefreshInferredSourceRoom()
@@ -382,6 +392,44 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         if (makeInvisibleAtRuntime && Application.isPlaying)
         {
             image.color = runtimeColor;
+        }
+    }
+
+    private void PlayDoorOpenSoundIfSuccessful(bool didNavigate)
+    {
+        if (!didNavigate || !playDoorOpenSound)
+        {
+            return;
+        }
+
+        ResolveDoorOpenAudioSource();
+
+        if (doorOpenAudioSource == null)
+        {
+            return;
+        }
+
+        if (doorOpenAudioSource.clip != null)
+        {
+            doorOpenAudioSource.PlayOneShot(doorOpenAudioSource.clip);
+            return;
+        }
+
+        doorOpenAudioSource.Play();
+    }
+
+    private void ResolveDoorOpenAudioSource()
+    {
+        if (doorOpenAudioSource != null)
+        {
+            return;
+        }
+
+        GameObject audioObject = GameObject.Find(doorOpenAudioObjectName);
+
+        if (audioObject != null)
+        {
+            doorOpenAudioSource = audioObject.GetComponent<AudioSource>();
         }
     }
 
