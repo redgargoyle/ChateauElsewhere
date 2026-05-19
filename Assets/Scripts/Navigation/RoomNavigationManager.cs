@@ -348,13 +348,14 @@ public class RoomNavigationManager : MonoBehaviour
     private void HandleCurrentRoomChanged(string roomName)
     {
         ResolveReferences();
+        RefreshRoomContentForCurrentRoom();
+        SyncCameraRoomContent(roomName, false);
 
         if (applyVisualForNextRoomChange)
         {
             ApplyRoomVisual(roomName);
         }
 
-        RefreshRoomContentForCurrentRoom();
         RefreshDoorButtonsForCurrentRoom();
         UpdateCurrentRoomHud(roomName);
         RunNavigationSelfCheckForCurrentRoom();
@@ -374,15 +375,60 @@ public class RoomNavigationManager : MonoBehaviour
             return;
         }
 
+        RoomContentGroup roomContentGroup = FindRoomContentGroup(roomName);
+
+        if (roomContentGroup != null)
+        {
+            if (roomContentGroup.TryGetRoomBackgroundTexture(out Texture roomContentTexture) && roomContentTexture != null)
+            {
+                cameraManager.SetActiveRoomContent(roomContentGroup);
+                return;
+            }
+
+            cameraManager.SetActiveRoomContent(roomContentGroup, false);
+        }
+
         Texture texture;
 
         if (TryFindRoomTexture(roomName, out texture))
         {
+            if (roomContentGroup == null)
+            {
+                cameraManager.SetActiveRoomContent(null, false);
+            }
+
             cameraManager.SetRoomBackground(texture);
             return;
         }
 
         Warn($"No background texture found for room '{roomName}'. Assign it on Room_{roomName} or add it to a RoomVisualCatalog.");
+    }
+
+    private void SyncCameraRoomContent(string roomName, bool updateBackground)
+    {
+        if (cameraManager == null)
+        {
+            return;
+        }
+
+        cameraManager.SetActiveRoomContent(FindRoomContentGroup(roomName), updateBackground);
+    }
+
+    private RoomContentGroup FindRoomContentGroup(string roomName)
+    {
+        RefreshRoomContentCache();
+
+        for (int i = 0; i < cachedRoomContentGroups.Length; i++)
+        {
+            RoomContentGroup roomContentGroup = cachedRoomContentGroups[i];
+
+            if (roomContentGroup != null && SameName(roomContentGroup.RoomName, roomName))
+            {
+                return roomContentGroup;
+            }
+        }
+
+        return null;
     }
 
     private bool TryFindRoomTexture(string roomName, out Texture texture)
@@ -683,12 +729,12 @@ public class RoomNavigationManager : MonoBehaviour
             return;
         }
 
-        // The door trigger root is the raycast layer. It must stay active and in
-        // front of the map/buttons so clicks land on the current room's trigger
-        // rectangles instead of unrelated UI from edit mode.
+        // The room root is the playable scene layer. It must stay active for the
+        // current room, but it should keep its authored sibling order because it
+        // now contains both the room image and its hitboxes.
         doorButtonRoot.gameObject.SetActive(true);
 
-        if (Application.isPlaying)
+        if (Application.isPlaying && !string.Equals(doorButtonRoot.name, RoomRootName, StringComparison.OrdinalIgnoreCase))
         {
             doorButtonRoot.SetAsLastSibling();
         }
@@ -732,10 +778,8 @@ public class RoomNavigationManager : MonoBehaviour
             return;
         }
 
-        // The trigger's visible RectTransform is the authoring source of truth.
-        // Runtime projects that rectangle through the active camera shader so it
-        // stays over the painted door while the room view pans.
-        doorTrigger.ApplyAuthoredRectToCamera(cameraManager);
+        // Door hitboxes are children of the active room stage, so the same
+        // RectTransform that moves the painted room also moves every trigger.
     }
 
     private void RunNavigationSelfCheckForCurrentRoom()

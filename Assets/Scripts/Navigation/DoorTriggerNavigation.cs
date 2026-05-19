@@ -20,7 +20,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     [Header("References")]
     [SerializeField] private RoomNavigationManager navigationManager;
-    [SerializeField] private CameraManager cameraManager;
     [SerializeField] private Image image;
     [SerializeField] private AudioSource doorOpenAudioSource;
 
@@ -33,18 +32,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     [SerializeField] private bool playDoorOpenSound = true;
     [SerializeField] private string doorOpenAudioObjectName = "Audio_DoorOpen";
 
-    [Header("Runtime Projection")]
-    [SerializeField] private bool followCameraBackground = true;
-
     public string SourceRoom => GetEffectiveSourceRoom();
     public string DoorName => Clean(doorName);
     public string DestinationRoom => Clean(destinationRoom);
     public bool UsesCameraSequence => useCameraSequence;
 
     private RectTransform rectTransform;
-    private Rect runtimeSourceImageUvRect;
-    private bool hasRuntimeSourceImageUvRect;
-    private readonly Vector3[] authoringCorners = new Vector3[4];
 
     private void Reset()
     {
@@ -58,24 +51,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     {
         ResolveReferences();
         ConfigureImage();
-        CaptureAuthoredSourceImageRectIfNeeded();
         BringToFrontIfNeeded();
     }
 
     private void OnEnable()
     {
-        CaptureAuthoredSourceImageRectIfNeeded();
-        FollowCameraBackgroundIfNeeded();
-    }
-
-    private void Start()
-    {
-        FollowCameraBackgroundIfNeeded();
-    }
-
-    private void LateUpdate()
-    {
-        FollowCameraBackgroundIfNeeded();
+        BringToFrontIfNeeded();
     }
 
     private void OnValidate()
@@ -178,23 +159,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         FillSourceRoomFromHierarchy();
     }
 
-    public bool ApplyAuthoredRectToCamera(CameraManager previewCameraManager = null)
-    {
-        if (previewCameraManager != null)
-        {
-            cameraManager = previewCameraManager;
-        }
-
-        ResolveReferences();
-
-        if (cameraManager == null || rectTransform == null || !CaptureAuthoredSourceImageRectIfNeeded())
-        {
-            return false;
-        }
-
-        return cameraManager.TryApplySourceImageRect(rectTransform, runtimeSourceImageUvRect);
-    }
-
     private void ResolveReferences()
     {
         if (rectTransform == null)
@@ -210,11 +174,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         if (navigationManager == null)
         {
             navigationManager = FindObjectOfType<RoomNavigationManager>(true);
-        }
-
-        if (cameraManager == null)
-        {
-            cameraManager = FindObjectOfType<CameraManager>(true);
         }
     }
 
@@ -279,167 +238,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         transform.SetAsLastSibling();
-    }
-
-    private void FollowCameraBackgroundIfNeeded()
-    {
-        if (!Application.isPlaying || !followCameraBackground)
-        {
-            return;
-        }
-
-        ResolveReferences();
-
-        if (cameraManager == null || rectTransform == null)
-        {
-            return;
-        }
-
-        ApplyAuthoredRectToCamera(cameraManager);
-        BringToFrontIfNeeded();
-    }
-
-    private bool CaptureAuthoredSourceImageRectIfNeeded()
-    {
-        if (hasRuntimeSourceImageUvRect)
-        {
-            return true;
-        }
-
-        ResolveReferences();
-
-        if (rectTransform == null)
-        {
-            return false;
-        }
-
-        if (!TryCaptureAuthoredSourceImageRect(out runtimeSourceImageUvRect))
-        {
-            return false;
-        }
-
-        hasRuntimeSourceImageUvRect = true;
-        return true;
-    }
-
-    private bool TryCaptureAuthoredSourceImageRect(out Rect sourceImageUvRect)
-    {
-        sourceImageUvRect = new Rect();
-
-        RectTransform sourceSpace = FindAuthoringSourceSpace();
-
-        if (sourceSpace == null || !RectIsUsable(sourceSpace))
-        {
-            Canvas.ForceUpdateCanvases();
-            sourceSpace = FindAuthoringSourceSpace();
-        }
-
-        if (sourceSpace == null || !RectIsUsable(sourceSpace))
-        {
-            return false;
-        }
-
-        rectTransform.GetWorldCorners(authoringCorners);
-
-        Rect sourceRect = GetAuthoringSourceRect(sourceSpace);
-        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
-        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
-
-        for (int i = 0; i < authoringCorners.Length; i++)
-        {
-            Vector2 localPoint = sourceSpace.InverseTransformPoint(authoringCorners[i]);
-            Vector2 uv = new Vector2(
-                SafeInverseLerp(sourceRect.xMin, sourceRect.xMax, localPoint.x),
-                SafeInverseLerp(sourceRect.yMin, sourceRect.yMax, localPoint.y));
-
-            min = Vector2.Min(min, uv);
-            max = Vector2.Max(max, uv);
-        }
-
-        sourceImageUvRect = NormalizeRect(Rect.MinMaxRect(min.x, min.y, max.x, max.y));
-        return sourceImageUvRect.width > 0f && sourceImageUvRect.height > 0f;
-    }
-
-    private Rect GetAuthoringSourceRect(RectTransform sourceSpace)
-    {
-        if (TryGetAuthoringTexture(out Texture texture) && texture.width > 0 && texture.height > 0)
-        {
-            Vector2 size = new Vector2(texture.width, texture.height);
-            return new Rect(size * -0.5f, size);
-        }
-
-        return sourceSpace.rect;
-    }
-
-    private bool TryGetAuthoringTexture(out Texture texture)
-    {
-        texture = null;
-
-        RoomContentGroup roomContentGroup = GetComponentInParent<RoomContentGroup>(true);
-
-        if (roomContentGroup != null && roomContentGroup.TryGetRoomBackgroundTexture(out texture) && texture != null)
-        {
-            return true;
-        }
-
-        if (cameraManager != null && cameraManager.cameraBackground != null)
-        {
-            texture = cameraManager.cameraBackground.texture;
-        }
-
-        return texture != null;
-    }
-
-    private RectTransform FindAuthoringSourceSpace()
-    {
-        if (transform.parent is RectTransform parentRect && RectIsUsable(parentRect))
-        {
-            return parentRect;
-        }
-
-        RoomContentGroup roomContentGroup = GetComponentInParent<RoomContentGroup>(true);
-
-        if (roomContentGroup != null && roomContentGroup.transform is RectTransform roomRect && RectIsUsable(roomRect))
-        {
-            return roomRect;
-        }
-
-        return cameraManager != null && cameraManager.cameraBackground != null
-            ? cameraManager.cameraBackground.rectTransform
-            : null;
-    }
-
-    private static bool RectIsUsable(RectTransform rectTransform)
-    {
-        Rect rect = rectTransform.rect;
-        return rect.width > 0f && rect.height > 0f;
-    }
-
-    private static Rect NormalizeRect(Rect rect)
-    {
-        if (rect.width < 0f)
-        {
-            rect.x += rect.width;
-            rect.width = -rect.width;
-        }
-
-        if (rect.height < 0f)
-        {
-            rect.y += rect.height;
-            rect.height = -rect.height;
-        }
-
-        return rect;
-    }
-
-    private static float SafeInverseLerp(float from, float to, float value)
-    {
-        if (Mathf.Approximately(from, to))
-        {
-            return 0f;
-        }
-
-        return (value - from) / (to - from);
     }
 
     private static void SetHoveredTrigger(DoorTriggerNavigation trigger)

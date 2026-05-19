@@ -80,13 +80,9 @@ public class CameraManager : MonoBehaviour
     private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
     private static readonly int CameraAngleId = Shader.PropertyToID("_camera_angle");
     private static readonly int FovId = Shader.PropertyToID("_fov");
-    private static readonly int MarginId = Shader.PropertyToID("_margin");
     private static readonly int VerticalStrengthId = Shader.PropertyToID("_verticle_strength");
     private static readonly int OverlayTexId = Shader.PropertyToID("_OverlayTex");
     private static readonly int OverlayRectId = Shader.PropertyToID("_OverlayRect");
-    private const float SourceUvXMin = 0f;
-    private const float SourceUvXRange = 1f;
-
     private CameraAreaController lastSelected;
     private Coroutine cameraSwitchRoutine;
     private Coroutine cameraShakeRoutine;
@@ -118,6 +114,10 @@ public class CameraManager : MonoBehaviour
     private Material materialBeforeFullImagePlacementPreview;
     private bool fullImagePlacementPreviewActive;
     private Rect baseBackgroundUvRect = new Rect(0f, 0f, 1f, 1f);
+    private RectTransform activeRoomStage;
+    private RoomContentGroup activeRoomContentGroup;
+    private Transform originalBackgroundParent;
+    private int originalBackgroundSiblingIndex = -1;
     private readonly Vector3[] anchoredReferenceCorners = new Vector3[4];
 
     public float CurrentRoomHorizontalPan => currentRoomPan;
@@ -144,6 +144,7 @@ public class CameraManager : MonoBehaviour
             cameraSwitchSound = GetComponent<AudioSource>();
         }
 
+        RememberOriginalBackgroundParent();
         InitializeRoomLook();
         EnsureBackgroundCanvasVisible();
         EnsureBackgroundMaterialAssigned();
@@ -183,6 +184,7 @@ public class CameraManager : MonoBehaviour
     private void OnDisable()
     {
         NavigationCursorController.SetEdgePanDirection(0);
+        RestoreBackgroundParentIfNeeded();
     }
 
     public void SelectCamera(CameraAreaController selected)
@@ -286,7 +288,7 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        RectTransform target = cameraBackground.rectTransform;
+        RectTransform target = GetRoomViewTransform();
 
         if (target == null)
         {
@@ -316,6 +318,35 @@ public class CameraManager : MonoBehaviour
         }
 
         SetCameraBackground(texture);
+    }
+
+    public void SetActiveRoomContent(RoomContentGroup roomContentGroup, bool updateBackground = true)
+    {
+        bool roomStageChanged = activeRoomContentGroup != roomContentGroup;
+        activeRoomContentGroup = roomContentGroup;
+        activeRoomStage = roomContentGroup != null ? roomContentGroup.transform as RectTransform : null;
+
+        if (roomStageChanged)
+        {
+            ResetRoomLookForRoomChange();
+        }
+
+        if (activeRoomStage == null)
+        {
+            RestoreBackgroundParentIfNeeded();
+        }
+
+        if (updateBackground &&
+            roomContentGroup != null &&
+            roomContentGroup.TryGetRoomBackgroundTexture(out Texture roomTexture) &&
+            roomTexture != null)
+        {
+            SetCameraBackground(roomTexture);
+            return;
+        }
+
+        ApplyBackgroundLayout();
+        ApplyRoomLookToMaterial();
     }
 
     public void PreviewRoomBackground(Texture texture)
@@ -413,6 +444,13 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
+        if (UsesRoomStageLayout())
+        {
+            ReleaseRuntimeBackgroundMaterial();
+            cameraBackground.material = null;
+            return;
+        }
+
         Material sourceMaterial = cameraBackground.material != null
             ? cameraBackground.material
             : ResolveBackgroundMaterialForPreviewRestore();
@@ -462,73 +500,6 @@ public class CameraManager : MonoBehaviour
     public void ResetRoomLookForPreview()
     {
         SetRoomLookForPreview(0f, 0f, defaultRoomFov);
-    }
-
-    public bool TryApplySourceImageRect(RectTransform targetRect, Rect sourceImageUvRect)
-    {
-        if (targetRect == null || cameraBackground == null || targetRect.parent == null)
-        {
-            return false;
-        }
-
-        RectTransform backgroundTransform = cameraBackground.rectTransform;
-        RectTransform parentRect = targetRect.parent as RectTransform;
-
-        if (backgroundTransform == null || parentRect == null || !BackgroundRectIsUsable(backgroundTransform))
-        {
-            return false;
-        }
-
-        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
-        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
-
-        Vector2 sourceMin = sourceImageUvRect.min;
-        Vector2 sourceMax = sourceImageUvRect.max;
-
-        Vector2[] sourceCorners =
-        {
-            new Vector2(sourceMin.x, sourceMin.y),
-            new Vector2(sourceMin.x, sourceMax.y),
-            new Vector2(sourceMax.x, sourceMax.y),
-            new Vector2(sourceMax.x, sourceMin.y)
-        };
-
-        for (int i = 0; i < sourceCorners.Length; i++)
-        {
-            Vector2 meshUv = ShaderUvToMeshUv(sourceCorners[i]);
-            Vector2 backgroundLocalPoint = MeshUvToBackgroundLocalPoint(backgroundTransform, meshUv);
-            Vector3 worldPoint = backgroundTransform.TransformPoint(backgroundLocalPoint);
-            Vector2 parentLocalPoint = parentRect.InverseTransformPoint(worldPoint);
-
-            min = Vector2.Min(min, parentLocalPoint);
-            max = Vector2.Max(max, parentLocalPoint);
-        }
-
-        Vector2 size = max - min;
-
-        if (size.x <= 0f || size.y <= 0f)
-        {
-            return false;
-        }
-
-        Vector2 center = (min + max) * 0.5f;
-        Vector2 anchor = new Vector2(0.5f, 0.5f);
-        Vector2 parentSize = parentRect.rect.size;
-        Vector2 anchorReference = new Vector2(
-            (anchor.x - parentRect.pivot.x) * parentSize.x,
-            (anchor.y - parentRect.pivot.y) * parentSize.y);
-
-        // Door hitboxes are authored in full source-image UV space. Runtime uses
-        // the same inverse shader projection as the background material, so the
-        // visible UI raycast box follows the painted door during pan/FOV changes.
-        targetRect.anchorMin = anchor;
-        targetRect.anchorMax = anchor;
-        targetRect.pivot = new Vector2(0.5f, 0.5f);
-        targetRect.anchoredPosition = center - anchorReference;
-        targetRect.sizeDelta = size;
-        targetRect.localRotation = Quaternion.identity;
-        targetRect.localScale = Vector3.one;
-        return true;
     }
 
     private Texture GetStartupBackgroundTexture()
@@ -1287,9 +1258,10 @@ public class CameraManager : MonoBehaviour
 
     private void ApplyRoomLookToMaterial(Material material)
     {
-        SetFloatIfAvailable(material, CameraAngleId, GetShaderCameraAngle());
-        SetFloatIfAvailable(material, FovId, currentRoomFov);
-        SetFloatIfAvailable(material, VerticalStrengthId, ClampVerticalRoomPan(currentRoomVerticalPan));
+        bool roomStageOwnsMotion = UsesRoomStageLayout();
+        SetFloatIfAvailable(material, CameraAngleId, roomStageOwnsMotion ? 0f : GetShaderCameraAngle());
+        SetFloatIfAvailable(material, FovId, roomStageOwnsMotion ? 1f : currentRoomFov);
+        SetFloatIfAvailable(material, VerticalStrengthId, roomStageOwnsMotion ? 0f : ClampVerticalRoomPan(currentRoomVerticalPan));
     }
 
     private IEnumerator ShakeCameraView(RectTransform target, float duration, float magnitude, float rotation, float frequency, float zoom)
@@ -1428,6 +1400,11 @@ public class CameraManager : MonoBehaviour
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
         rectTransform.localScale = Vector3.one;
 
+        if (TryApplyRoomStageLayout(rectTransform))
+        {
+            return;
+        }
+
         if (fitBackgroundToRoomAspect && rectTransform.parent is RectTransform parentRect)
         {
             Vector2 fitSize = GetBackgroundFitSize(parentRect.rect.size);
@@ -1458,6 +1435,191 @@ public class CameraManager : MonoBehaviour
     {
         baseBackgroundUvRect = GetBaseBackgroundUvCrop(rectTransform);
         cameraBackground.uvRect = fitBackgroundToRoomAspect ? baseBackgroundUvRect : ApplyRoomZoomToUvRect(baseBackgroundUvRect);
+    }
+
+    private bool TryApplyRoomStageLayout(RectTransform backgroundRect)
+    {
+        if (!UsesRoomStageLayout() || backgroundRect == null)
+        {
+            return false;
+        }
+
+        RectTransform viewport = activeRoomStage.parent as RectTransform;
+
+        if (viewport == null)
+        {
+            return false;
+        }
+
+        Vector2 roomSize = GetActiveRoomNativeSize();
+
+        if (roomSize.x <= 0f || roomSize.y <= 0f)
+        {
+            return false;
+        }
+
+        if (Application.isPlaying)
+        {
+            AttachBackgroundToRoomStage(backgroundRect);
+        }
+
+        Vector2 viewportSize = GetUsableRectSize(viewport);
+        float fitScale = GetFitScale(viewportSize, roomSize);
+        float zoom = ClampRoomZoom(currentRoomZoom);
+        float stageScale = fitScale * zoom;
+        Vector2 scaledRoomSize = roomSize * stageScale;
+        Vector2 maxOffset = new Vector2(
+            Mathf.Max(0f, (scaledRoomSize.x - viewportSize.x) * 0.5f),
+            Mathf.Max(0f, (scaledRoomSize.y - viewportSize.y) * 0.5f));
+
+        // The room stage is the single moving surface. Background, doors, and
+        // future room props all share this transform, so they cannot drift apart.
+        activeRoomStage.anchorMin = new Vector2(0.5f, 0.5f);
+        activeRoomStage.anchorMax = new Vector2(0.5f, 0.5f);
+        activeRoomStage.pivot = new Vector2(0.5f, 0.5f);
+        activeRoomStage.sizeDelta = roomSize;
+        activeRoomStage.anchoredPosition = new Vector2(
+            -GetHorizontalPanAmount() * maxOffset.x,
+            -GetVerticalPanAmount() * maxOffset.y);
+        activeRoomStage.localRotation = Quaternion.identity;
+        activeRoomStage.localScale = new Vector3(stageScale, stageScale, 1f);
+
+        backgroundRect.anchorMin = new Vector2(0.5f, 0.5f);
+        backgroundRect.anchorMax = new Vector2(0.5f, 0.5f);
+        backgroundRect.pivot = new Vector2(0.5f, 0.5f);
+        backgroundRect.anchoredPosition = Vector2.zero;
+        backgroundRect.sizeDelta = roomSize;
+        backgroundRect.localRotation = Quaternion.identity;
+        backgroundRect.localScale = Vector3.one;
+
+        baseBackgroundUvRect = new Rect(0f, 0f, 1f, 1f);
+        cameraBackground.uvRect = baseBackgroundUvRect;
+        return true;
+    }
+
+    private bool UsesRoomStageLayout()
+    {
+        return activeRoomStage != null && activeRoomContentGroup != null;
+    }
+
+    private void RememberOriginalBackgroundParent()
+    {
+        if (cameraBackground == null || originalBackgroundParent != null)
+        {
+            return;
+        }
+
+        originalBackgroundParent = cameraBackground.transform.parent;
+        originalBackgroundSiblingIndex = cameraBackground.transform.GetSiblingIndex();
+    }
+
+    private void AttachBackgroundToRoomStage(RectTransform backgroundRect)
+    {
+        if (backgroundRect == null || activeRoomStage == null)
+        {
+            return;
+        }
+
+        if (originalBackgroundParent == null)
+        {
+            RememberOriginalBackgroundParent();
+        }
+
+        if (backgroundRect.parent != activeRoomStage)
+        {
+            backgroundRect.SetParent(activeRoomStage, false);
+        }
+
+        backgroundRect.SetAsFirstSibling();
+    }
+
+    private void RestoreBackgroundParentIfNeeded()
+    {
+        if (cameraBackground == null || originalBackgroundParent == null)
+        {
+            return;
+        }
+
+        if (cameraBackground.transform.parent == originalBackgroundParent)
+        {
+            return;
+        }
+
+        cameraBackground.transform.SetParent(originalBackgroundParent, false);
+
+        if (originalBackgroundSiblingIndex >= 0)
+        {
+            cameraBackground.transform.SetSiblingIndex(Mathf.Min(originalBackgroundSiblingIndex, originalBackgroundParent.childCount - 1));
+        }
+    }
+
+    private RectTransform GetRoomViewTransform()
+    {
+        if (UsesRoomStageLayout())
+        {
+            return activeRoomStage;
+        }
+
+        return cameraBackground != null ? cameraBackground.rectTransform : null;
+    }
+
+    private Vector2 GetActiveRoomNativeSize()
+    {
+        Texture texture = currentBaseBackgroundTexture;
+
+        if (texture == null && cameraBackground != null)
+        {
+            texture = cameraBackground.texture;
+        }
+
+        if (texture != null && texture.width > 0 && texture.height > 0)
+        {
+            return new Vector2(texture.width, texture.height);
+        }
+
+        if (activeRoomStage != null)
+        {
+            Rect rect = activeRoomStage.rect;
+
+            if (rect.width > 0f && rect.height > 0f)
+            {
+                return rect.size;
+            }
+        }
+
+        return referenceResolution;
+    }
+
+    private Vector2 GetUsableRectSize(RectTransform rectTransform)
+    {
+        Rect rect = rectTransform.rect;
+        Vector2 size = rect.size;
+
+        if (size.x > 0f && size.y > 0f)
+        {
+            return size;
+        }
+
+        Canvas.ForceUpdateCanvases();
+        rect = rectTransform.rect;
+        size = rect.size;
+
+        if (size.x > 0f && size.y > 0f)
+        {
+            return size;
+        }
+
+        return new Vector2(Mathf.Max(1f, Screen.width), Mathf.Max(1f, Screen.height));
+    }
+
+    private float GetFitScale(Vector2 viewportSize, Vector2 roomSize)
+    {
+        if (viewportSize.x <= 0f || viewportSize.y <= 0f || roomSize.x <= 0f || roomSize.y <= 0f)
+        {
+            return 1f;
+        }
+
+        return Mathf.Min(viewportSize.x / roomSize.x, viewportSize.y / roomSize.y);
     }
 
     private Rect GetBaseBackgroundUvCrop(RectTransform rectTransform)
@@ -1518,66 +1680,6 @@ public class CameraManager : MonoBehaviour
         return new Rect(x, y, zoomedWidth, zoomedHeight);
     }
 
-    private bool BackgroundRectIsUsable(RectTransform backgroundTransform)
-    {
-        Rect rect = backgroundTransform.rect;
-
-        return rect.width > 0f && rect.height > 0f;
-    }
-
-    private Vector2 MeshUvToBackgroundLocalPoint(RectTransform backgroundTransform, Vector2 meshUv)
-    {
-        Rect backgroundRect = backgroundTransform.rect;
-        Rect visibleUv = cameraBackground.uvRect;
-
-        float normalizedX = SafeInverseLerp(visibleUv.x, visibleUv.x + visibleUv.width, meshUv.x);
-        float normalizedY = SafeInverseLerp(visibleUv.y, visibleUv.y + visibleUv.height, meshUv.y);
-
-        return new Vector2(
-            Mathf.LerpUnclamped(backgroundRect.xMin, backgroundRect.xMax, normalizedX),
-            Mathf.LerpUnclamped(backgroundRect.yMin, backgroundRect.yMax, normalizedY));
-    }
-
-    private Vector2 ShaderUvToMeshUv(Vector2 shaderUv)
-    {
-        float fov = Mathf.Max(0.0001f, currentRoomFov);
-        float cameraAngle = GetShaderCameraAngle();
-        float verticalStrength = ClampVerticalRoomPan(currentRoomVerticalPan);
-        float margin = GetShaderMargin();
-        float tanFov = Mathf.Tan(fov);
-
-        float horizontalT = (shaderUv.x - SourceUvXMin) / SourceUvXRange;
-        float meshX = 0.5f + (Mathf.Atan((horizontalT - 0.5f) * tanFov) - cameraAngle) / fov;
-
-        float verticalMargin = margin * Mathf.Abs(verticalStrength);
-        float verticalT = SafeInverseLerp(verticalMargin, 1f - verticalMargin, shaderUv.y);
-        float verticalScale = GetShaderVerticalScale(meshX, verticalStrength);
-        float meshY = 0.5f + (verticalT - 0.5f) / Mathf.Max(0.0001f, verticalScale);
-
-        return new Vector2(meshX, meshY);
-    }
-
-    private float GetShaderVerticalScale(float meshX, float verticalStrength)
-    {
-        // This mirrors the vertical squash/stretch portion of Background.shadergraph.
-        // Door hitboxes need the same math because the background pixels move in
-        // shader UV space, not by physically moving the RawImage RectTransform.
-        float verticalCurve = 0.5f + 0.5f * Mathf.Cos(Mathf.PI * (meshX + 0.5f));
-        return Mathf.LerpUnclamped(1f, verticalCurve, Mathf.Abs(verticalStrength));
-    }
-
-    private float GetShaderMargin()
-    {
-        Material material = cameraBackground != null ? cameraBackground.material : null;
-
-        if (material == null || !material.HasProperty(MarginId))
-        {
-            return 0f;
-        }
-
-        return Mathf.Clamp01(material.GetFloat(MarginId));
-    }
-
     private Vector2 GetBackgroundFitSize(Vector2 parentSize)
     {
         if (parentSize.x <= 0f || parentSize.y <= 0f)
@@ -1629,16 +1731,6 @@ public class CameraManager : MonoBehaviour
     private float GetShaderCameraAngle()
     {
         return GetHorizontalPanAmount() * Mathf.Clamp(maxShaderPanAngle, 0f, 0.3f);
-    }
-
-    private float SafeInverseLerp(float from, float to, float value)
-    {
-        if (Mathf.Approximately(from, to))
-        {
-            return 0f;
-        }
-
-        return (value - from) / (to - from);
     }
 
     private void SetTextureIfAvailable(Material material, int propertyId, Texture texture)

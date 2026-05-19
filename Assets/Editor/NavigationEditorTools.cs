@@ -374,7 +374,8 @@ public static class NavigationEditorTools
         foreach (RoomDefinition room in parseResult.RoomsByName.Values)
         {
             RectTransform roomGroup = FindOrCreateRectChild(editRoot, $"Room_{SafeObjectName(room.RoomName)}");
-            StretchToParentWithUndo(roomGroup);
+            Texture roomTexture = TryFindRoomBackgroundTexture(room.RoomName, out Texture foundTexture) ? foundTexture : null;
+            FitToTextureWithUndo(roomGroup, roomTexture, "Fit Room Editing Layer To Source Image");
             SetActiveWithUndo(roomGroup.gameObject, true);
             EnsureRoomContentGroup(roomGroup, room.RoomName);
             RectTransform doorsRoot = FindOrCreateDoorsRoot(roomGroup);
@@ -1393,7 +1394,6 @@ public static class NavigationEditorTools
         serializedTrigger.FindProperty("makeInvisibleAtRuntime").boolValue = true;
         serializedTrigger.FindProperty("runtimeColor").colorValue = new Color(1f, 1f, 1f, 0f);
         serializedTrigger.FindProperty("bringToFront").boolValue = true;
-        serializedTrigger.FindProperty("followCameraBackground").boolValue = true;
         serializedTrigger.ApplyModifiedProperties();
         EditorUtility.SetDirty(trigger);
     }
