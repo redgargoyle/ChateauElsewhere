@@ -138,7 +138,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &43637645
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1213,7 +1213,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 7dabdfc97f536fe458e28ca413b0a0fa, type: 3}
+  m_Texture: {fileID: 2800000, guid: e73e44419d3782452bb6abd0e8edd452, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -6723,7 +6723,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000021
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8525,7 +8525,7 @@ GameObject:
   - component: {fileID: 2300000133}
   - component: {fileID: 2300000134}
   m_Layer: 5
-  m_Name: DoorTrigger_BilliardRoom_ServiceCorridor
+  m_Name: DoorTrigger_BilliardRoom_ButlersPantry
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8601,8 +8601,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sourceRoom: Billiard Room
-  doorName: BilliardRoom_ServiceCorridor
-  destinationRoom: Service Corridor
+  doorName: BilliardRoom_ButlersPantry
+  destinationRoom: Butlers Pantry
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
