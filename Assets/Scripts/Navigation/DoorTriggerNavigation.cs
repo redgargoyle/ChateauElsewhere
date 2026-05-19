@@ -3,12 +3,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-#if UNITY_EDITOR
-using UnityEditor;
-using UnityEditor.SceneManagement;
-#endif
-
-[ExecuteAlways]
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasRenderer))]
 [RequireComponent(typeof(Image))]
@@ -39,30 +33,18 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     [SerializeField] private bool playDoorOpenSound = true;
     [SerializeField] private string doorOpenAudioObjectName = "Audio_DoorOpen";
 
-    [Header("Background Tracking")]
+    [Header("Runtime Projection")]
     [SerializeField] private bool followCameraBackground = true;
-    [SerializeField] private bool captureBackgroundAnchorAtRuntime = true;
-    [SerializeField] private Rect backgroundShaderUvRect;
-    [SerializeField] private bool hasBackgroundShaderUvRect;
 
     public string SourceRoom => GetEffectiveSourceRoom();
     public string DoorName => Clean(doorName);
     public string DestinationRoom => Clean(destinationRoom);
     public bool UsesCameraSequence => useCameraSequence;
-    public bool HasBackgroundShaderAnchor => hasBackgroundShaderUvRect;
 
     private RectTransform rectTransform;
-
-#if UNITY_EDITOR
-    private bool hasEditorRectSnapshot;
-    private Vector2 lastEditorAnchorMin;
-    private Vector2 lastEditorAnchorMax;
-    private Vector2 lastEditorPivot;
-    private Vector2 lastEditorAnchoredPosition;
-    private Vector2 lastEditorSizeDelta;
-    private Vector3 lastEditorLocalScale;
-    private Quaternion lastEditorLocalRotation;
-#endif
+    private Rect runtimeSourceImageUvRect;
+    private bool hasRuntimeSourceImageUvRect;
+    private readonly Vector3[] authoringCorners = new Vector3[4];
 
     private void Reset()
     {
@@ -76,25 +58,24 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     {
         ResolveReferences();
         ConfigureImage();
+        CaptureAuthoredSourceImageRectIfNeeded();
         BringToFrontIfNeeded();
+    }
+
+    private void OnEnable()
+    {
+        CaptureAuthoredSourceImageRectIfNeeded();
+        FollowCameraBackgroundIfNeeded();
     }
 
     private void Start()
     {
-        CaptureBackgroundAnchorIfNeeded();
         FollowCameraBackgroundIfNeeded();
     }
 
     private void LateUpdate()
     {
         FollowCameraBackgroundIfNeeded();
-    }
-
-    private void Update()
-    {
-#if UNITY_EDITOR
-        CaptureEditedRectAsShaderAnchorIfNeeded();
-#endif
     }
 
     private void OnValidate()
@@ -197,7 +178,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         FillSourceRoomFromHierarchy();
     }
 
-    public bool CaptureCurrentShaderAnchor(CameraManager previewCameraManager = null)
+    public bool ApplyAuthoredRectToCamera(CameraManager previewCameraManager = null)
     {
         if (previewCameraManager != null)
         {
@@ -206,156 +187,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         ResolveReferences();
 
-        if (cameraManager == null || rectTransform == null)
+        if (cameraManager == null || rectTransform == null || !CaptureAuthoredSourceImageRectIfNeeded())
         {
             return false;
         }
 
-        // When a trigger is placed while the room image is panned in the shader,
-        // its visible rectangle is not the same as its raw canvas coordinates.
-        // Store the source-image UV rectangle so future pans can move this
-        // trigger with the picture instead of leaving it fixed on the screen.
-        bool captured = cameraManager.IsFullImagePlacementPreviewActive
-            ? cameraManager.TryCaptureFullImageAnchoredRect(rectTransform, out Rect capturedRect)
-            : cameraManager.TryCaptureShaderAnchoredRect(rectTransform, out capturedRect);
-
-        if (!captured)
-        {
-            return false;
-        }
-
-        backgroundShaderUvRect = capturedRect;
-        hasBackgroundShaderUvRect = true;
-#if UNITY_EDITOR
-        CacheEditorRectSnapshot();
-#endif
-        return true;
+        return cameraManager.TryApplySourceImageRect(rectTransform, runtimeSourceImageUvRect);
     }
-
-    public bool ApplyCapturedShaderAnchor(CameraManager previewCameraManager = null)
-    {
-        if (!hasBackgroundShaderUvRect)
-        {
-            return false;
-        }
-
-        if (previewCameraManager != null)
-        {
-            cameraManager = previewCameraManager;
-        }
-
-        ResolveReferences();
-
-        if (cameraManager == null || rectTransform == null)
-        {
-            return false;
-        }
-
-        return cameraManager.IsFullImagePlacementPreviewActive
-            ? cameraManager.TryApplyFullImageAnchoredRect(rectTransform, backgroundShaderUvRect)
-            : cameraManager.TryApplyShaderAnchoredRect(rectTransform, backgroundShaderUvRect);
-    }
-
-#if UNITY_EDITOR
-    private void CaptureEditedRectAsShaderAnchorIfNeeded()
-    {
-        if (Application.isPlaying)
-        {
-            return;
-        }
-
-        ResolveReferences();
-
-        if (rectTransform == null)
-        {
-            return;
-        }
-
-        if (!hasEditorRectSnapshot)
-        {
-            CacheEditorRectSnapshot();
-            return;
-        }
-
-        if (!EditorRectChanged())
-        {
-            return;
-        }
-
-        if (!followCameraBackground || !gameObject.activeInHierarchy || cameraManager == null)
-        {
-            CacheEditorRectSnapshot();
-            return;
-        }
-
-        // This is the important edit-mode save path: when you drag or resize a
-        // DoorTrigger_* rectangle, the shader-space anchor is updated right away.
-        // Switching cameras later can only restore this latest authored size,
-        // not an old default rectangle.
-        if (CaptureCurrentShaderAnchor(cameraManager))
-        {
-            EditorUtility.SetDirty(this);
-
-            if (gameObject.scene.IsValid())
-            {
-                EditorSceneManager.MarkSceneDirty(gameObject.scene);
-            }
-        }
-        else
-        {
-            CacheEditorRectSnapshot();
-        }
-    }
-
-    private bool EditorRectChanged()
-    {
-        return !Approximately(lastEditorAnchorMin, rectTransform.anchorMin) ||
-            !Approximately(lastEditorAnchorMax, rectTransform.anchorMax) ||
-            !Approximately(lastEditorPivot, rectTransform.pivot) ||
-            !Approximately(lastEditorAnchoredPosition, rectTransform.anchoredPosition) ||
-            !Approximately(lastEditorSizeDelta, rectTransform.sizeDelta) ||
-            !Approximately(lastEditorLocalScale, rectTransform.localScale) ||
-            !Approximately(lastEditorLocalRotation, rectTransform.localRotation);
-    }
-
-    private void CacheEditorRectSnapshot()
-    {
-        if (rectTransform == null)
-        {
-            return;
-        }
-
-        hasEditorRectSnapshot = true;
-        lastEditorAnchorMin = rectTransform.anchorMin;
-        lastEditorAnchorMax = rectTransform.anchorMax;
-        lastEditorPivot = rectTransform.pivot;
-        lastEditorAnchoredPosition = rectTransform.anchoredPosition;
-        lastEditorSizeDelta = rectTransform.sizeDelta;
-        lastEditorLocalScale = rectTransform.localScale;
-        lastEditorLocalRotation = rectTransform.localRotation;
-        rectTransform.hasChanged = false;
-    }
-
-    private static bool Approximately(Vector2 a, Vector2 b)
-    {
-        return Mathf.Approximately(a.x, b.x) && Mathf.Approximately(a.y, b.y);
-    }
-
-    private static bool Approximately(Vector3 a, Vector3 b)
-    {
-        return Mathf.Approximately(a.x, b.x) &&
-            Mathf.Approximately(a.y, b.y) &&
-            Mathf.Approximately(a.z, b.z);
-    }
-
-    private static bool Approximately(Quaternion a, Quaternion b)
-    {
-        return Mathf.Approximately(a.x, b.x) &&
-            Mathf.Approximately(a.y, b.y) &&
-            Mathf.Approximately(a.z, b.z) &&
-            Mathf.Approximately(a.w, b.w);
-    }
-#endif
 
     private void ResolveReferences()
     {
@@ -443,31 +281,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         transform.SetAsLastSibling();
     }
 
-    private void CaptureBackgroundAnchorIfNeeded()
-    {
-        if (!Application.isPlaying || !followCameraBackground || !captureBackgroundAnchorAtRuntime ||
-            hasBackgroundShaderUvRect)
-        {
-            return;
-        }
-
-        ResolveReferences();
-
-        if (cameraManager == null || rectTransform == null)
-        {
-            return;
-        }
-
-        // The door trigger starts as an ordinary UI rectangle placed over the door.
-        // We capture that rectangle as background shader UV space once, then stop
-        // trusting its static canvas position.
-        if (cameraManager.TryCaptureDefaultShaderAnchoredRect(rectTransform, out Rect capturedRect))
-        {
-            backgroundShaderUvRect = capturedRect;
-            hasBackgroundShaderUvRect = true;
-        }
-    }
-
     private void FollowCameraBackgroundIfNeeded()
     {
         if (!Application.isPlaying || !followCameraBackground)
@@ -475,13 +288,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return;
         }
 
-        CaptureBackgroundAnchorIfNeeded();
-
-        if (!hasBackgroundShaderUvRect)
-        {
-            return;
-        }
-
         ResolveReferences();
 
         if (cameraManager == null || rectTransform == null)
@@ -489,11 +295,121 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return;
         }
 
-        // CameraManager knows the same pan/FOV values that are sent into the
-        // background shader. Applying the saved shader UV rect here makes the
-        // invisible raycast box move with the rendered picture.
-        cameraManager.TryApplyShaderAnchoredRect(rectTransform, backgroundShaderUvRect);
+        ApplyAuthoredRectToCamera(cameraManager);
         BringToFrontIfNeeded();
+    }
+
+    private bool CaptureAuthoredSourceImageRectIfNeeded()
+    {
+        if (hasRuntimeSourceImageUvRect)
+        {
+            return true;
+        }
+
+        ResolveReferences();
+
+        if (rectTransform == null)
+        {
+            return false;
+        }
+
+        if (!TryCaptureAuthoredSourceImageRect(out runtimeSourceImageUvRect))
+        {
+            return false;
+        }
+
+        hasRuntimeSourceImageUvRect = true;
+        return true;
+    }
+
+    private bool TryCaptureAuthoredSourceImageRect(out Rect sourceImageUvRect)
+    {
+        sourceImageUvRect = new Rect();
+
+        RectTransform sourceSpace = FindAuthoringSourceSpace();
+
+        if (sourceSpace == null || !RectIsUsable(sourceSpace))
+        {
+            Canvas.ForceUpdateCanvases();
+            sourceSpace = FindAuthoringSourceSpace();
+        }
+
+        if (sourceSpace == null || !RectIsUsable(sourceSpace))
+        {
+            return false;
+        }
+
+        rectTransform.GetWorldCorners(authoringCorners);
+
+        Rect sourceRect = sourceSpace.rect;
+        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+
+        for (int i = 0; i < authoringCorners.Length; i++)
+        {
+            Vector2 localPoint = sourceSpace.InverseTransformPoint(authoringCorners[i]);
+            Vector2 uv = new Vector2(
+                SafeInverseLerp(sourceRect.xMin, sourceRect.xMax, localPoint.x),
+                SafeInverseLerp(sourceRect.yMin, sourceRect.yMax, localPoint.y));
+
+            min = Vector2.Min(min, uv);
+            max = Vector2.Max(max, uv);
+        }
+
+        sourceImageUvRect = NormalizeRect(Rect.MinMaxRect(min.x, min.y, max.x, max.y));
+        return sourceImageUvRect.width > 0f && sourceImageUvRect.height > 0f;
+    }
+
+    private RectTransform FindAuthoringSourceSpace()
+    {
+        if (transform.parent is RectTransform parentRect && RectIsUsable(parentRect))
+        {
+            return parentRect;
+        }
+
+        RoomContentGroup roomContentGroup = GetComponentInParent<RoomContentGroup>(true);
+
+        if (roomContentGroup != null && roomContentGroup.transform is RectTransform roomRect && RectIsUsable(roomRect))
+        {
+            return roomRect;
+        }
+
+        return cameraManager != null && cameraManager.cameraBackground != null
+            ? cameraManager.cameraBackground.rectTransform
+            : null;
+    }
+
+    private static bool RectIsUsable(RectTransform rectTransform)
+    {
+        Rect rect = rectTransform.rect;
+        return rect.width > 0f && rect.height > 0f;
+    }
+
+    private static Rect NormalizeRect(Rect rect)
+    {
+        if (rect.width < 0f)
+        {
+            rect.x += rect.width;
+            rect.width = -rect.width;
+        }
+
+        if (rect.height < 0f)
+        {
+            rect.y += rect.height;
+            rect.height = -rect.height;
+        }
+
+        return rect;
+    }
+
+    private static float SafeInverseLerp(float from, float to, float value)
+    {
+        if (Mathf.Approximately(from, to))
+        {
+            return 0f;
+        }
+
+        return (value - from) / (to - from);
     }
 
     private static void SetHoveredTrigger(DoorTriggerNavigation trigger)

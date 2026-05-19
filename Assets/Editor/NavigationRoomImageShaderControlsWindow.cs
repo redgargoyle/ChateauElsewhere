@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -10,7 +9,6 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
 
     private CameraManager cameraManager;
     private CameraAreaController cameraArea;
-    private bool followCapturedTriggerAnchors = true;
     private bool followSelection = true;
     private float horizontalPan;
     private float verticalPan;
@@ -46,7 +44,6 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
         cameraManager = (CameraManager)EditorGUILayout.ObjectField("Camera Manager", cameraManager, typeof(CameraManager), true);
         cameraArea = (CameraAreaController)EditorGUILayout.ObjectField("Room Camera", cameraArea, typeof(CameraAreaController), true);
         followSelection = EditorGUILayout.Toggle("Follow Selection", followSelection);
-        followCapturedTriggerAnchors = EditorGUILayout.Toggle("Move Captured Triggers", followCapturedTriggerAnchors);
 
         if (EditorGUI.EndChangeCheck())
         {
@@ -149,30 +146,6 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
                     float defaultFov = cameraManager != null ? cameraManager.defaultRoomFov : 1f;
                     SetPreviewLook(0f, 0f, defaultFov);
                 }
-
-                if (GUILayout.Button("Apply Captured Anchors"))
-                {
-                    ApplyCapturedTriggerAnchorsForCurrentRoom(true);
-                }
-            }
-        }
-
-        EditorGUILayout.Space(8f);
-        EditorGUILayout.LabelField("Door Trigger Anchors", EditorStyles.boldLabel);
-
-        using (new EditorGUI.DisabledScope(cameraManager == null))
-        {
-            if (GUILayout.Button("Capture Selected Trigger Anchor"))
-            {
-                CaptureSelectedTriggerAnchor();
-            }
-
-            using (new EditorGUI.DisabledScope(cameraArea == null))
-            {
-                if (GUILayout.Button("Capture All Room Trigger Anchors"))
-                {
-                    CaptureAllTriggerAnchorsForCurrentRoom();
-                }
             }
         }
     }
@@ -269,11 +242,6 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
 
         Undo.RecordObject(cameraManager, "Preview Full Room Image");
         cameraManager.PreviewFullRoomImageForDoorEditing(roomTexture);
-
-        // In full-image placement view, captured trigger anchors are source-image
-        // UV rectangles. Applying them here makes existing doors appear in the
-        // same full-image coordinate space you are editing.
-        ApplyCapturedTriggerAnchorsForCurrentRoom(false);
         MarkSceneDirty(cameraManager.gameObject);
     }
 
@@ -296,180 +264,7 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
         cameraManager.EndFullImagePlacementPreview();
         cameraManager.SetRoomLookForPreview(horizontalPan, verticalPan, fov);
 
-        // Already-captured triggers have a saved shader-space rectangle. Moving
-        // them here lets the Scene view prove that the hitboxes are attached to
-        // the picture, not to the static camera frame.
-        if (followCapturedTriggerAnchors)
-        {
-            ApplyCapturedTriggerAnchorsForCurrentRoom(false);
-        }
-
         MarkSceneDirty(cameraManager.gameObject);
-    }
-
-    private void CaptureSelectedTriggerAnchor()
-    {
-        DoorTriggerNavigation selectedTrigger = FindSelectedDoorTrigger();
-
-        if (selectedTrigger == null)
-        {
-            Debug.LogWarning("Select a DoorTrigger_* object before capturing a trigger anchor.");
-            return;
-        }
-
-        Undo.RecordObject(selectedTrigger, "Capture Door Trigger Shader Anchor");
-
-        if (!selectedTrigger.CaptureCurrentShaderAnchor(cameraManager))
-        {
-            Debug.LogWarning($"Could not capture a shader anchor for '{selectedTrigger.name}'. Make sure the room background is visible.", selectedTrigger);
-            return;
-        }
-
-        EditorUtility.SetDirty(selectedTrigger);
-        MarkSceneDirty(selectedTrigger.gameObject);
-        Debug.Log($"Captured shader anchor for '{selectedTrigger.name}'.");
-    }
-
-    private void CaptureAllTriggerAnchorsForCurrentRoom()
-    {
-        string roomName = GetCurrentRoomName();
-
-        if (string.IsNullOrEmpty(roomName))
-        {
-            Debug.LogWarning("Select or assign a Button_* object under Map before capturing room trigger anchors.");
-            return;
-        }
-
-        DoorTriggerNavigation[] triggers = FindDoorTriggersForRoom(roomName);
-        int capturedCount = 0;
-
-        for (int i = 0; i < triggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = triggers[i];
-
-            if (trigger == null || !trigger.gameObject.activeInHierarchy)
-            {
-                continue;
-            }
-
-            Undo.RecordObject(trigger, "Capture Room Door Trigger Shader Anchors");
-
-            if (trigger.CaptureCurrentShaderAnchor(cameraManager))
-            {
-                capturedCount++;
-                EditorUtility.SetDirty(trigger);
-            }
-        }
-
-        if (cameraManager != null)
-        {
-            MarkSceneDirty(cameraManager.gameObject);
-        }
-
-        Debug.Log($"Captured {capturedCount} door trigger anchor(s) for '{roomName}'.");
-    }
-
-    private void ApplyCapturedTriggerAnchorsForCurrentRoom(bool logResult)
-    {
-        string roomName = GetCurrentRoomName();
-
-        if (string.IsNullOrEmpty(roomName))
-        {
-            return;
-        }
-
-        DoorTriggerNavigation[] triggers = FindDoorTriggersForRoom(roomName);
-        int appliedCount = 0;
-
-        for (int i = 0; i < triggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = triggers[i];
-
-            if (trigger == null || !trigger.HasBackgroundShaderAnchor)
-            {
-                continue;
-            }
-
-            RectTransform triggerRect = trigger.transform as RectTransform;
-
-            if (triggerRect != null)
-            {
-                Undo.RecordObject(triggerRect, "Apply Door Trigger Shader Anchor");
-            }
-
-            if (trigger.ApplyCapturedShaderAnchor(cameraManager))
-            {
-                appliedCount++;
-                EditorUtility.SetDirty(trigger);
-
-                if (triggerRect != null)
-                {
-                    EditorUtility.SetDirty(triggerRect);
-                }
-            }
-        }
-
-        if (cameraManager != null)
-        {
-            MarkSceneDirty(cameraManager.gameObject);
-        }
-
-        if (logResult)
-        {
-            Debug.Log($"Applied {appliedCount} captured door trigger anchor(s) for '{roomName}'.");
-        }
-    }
-
-    private string GetCurrentRoomName()
-    {
-        if (cameraArea == null)
-        {
-            return string.Empty;
-        }
-
-        string cleanName = cameraArea.name;
-
-        if (cleanName.StartsWith("Button_", StringComparison.OrdinalIgnoreCase))
-        {
-            cleanName = cleanName.Substring("Button_".Length);
-        }
-        else if (cleanName.StartsWith("Cam_", StringComparison.OrdinalIgnoreCase))
-        {
-            cleanName = cleanName.Substring("Cam_".Length);
-        }
-
-        return cleanName.Replace('_', ' ').Trim();
-    }
-
-    private static DoorTriggerNavigation FindSelectedDoorTrigger()
-    {
-        GameObject selectedObject = Selection.activeGameObject;
-
-        if (selectedObject == null)
-        {
-            return null;
-        }
-
-        return selectedObject.GetComponentInParent<DoorTriggerNavigation>(true);
-    }
-
-    private static DoorTriggerNavigation[] FindDoorTriggersForRoom(string roomName)
-    {
-        DoorTriggerNavigation[] allTriggers = FindSceneObjects<DoorTriggerNavigation>();
-        List<DoorTriggerNavigation> roomTriggers = new List<DoorTriggerNavigation>();
-
-        for (int i = 0; i < allTriggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = allTriggers[i];
-
-            if (trigger != null &&
-                string.Equals(trigger.SourceRoom, roomName, StringComparison.OrdinalIgnoreCase))
-            {
-                roomTriggers.Add(trigger);
-            }
-        }
-
-        return roomTriggers.ToArray();
     }
 
     private static CameraManager FindSceneCameraManager()

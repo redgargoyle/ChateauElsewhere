@@ -975,14 +975,6 @@ MonoBehaviour:
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
   bringToFront: 1
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
 --- !u!114 &546825488
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1256,14 +1248,6 @@ MonoBehaviour:
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
   bringToFront: 1
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
 --- !u!114 &647800557
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1432,14 +1416,6 @@ MonoBehaviour:
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
   bringToFront: 1
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
 --- !u!114 &858579715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1540,14 +1516,6 @@ MonoBehaviour:
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
   bringToFront: 1
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
 --- !u!114 &903975195
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1648,14 +1616,6 @@ MonoBehaviour:
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
   bringToFront: 1
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
 --- !u!114 &1014660847
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2375,14 +2335,6 @@ MonoBehaviour:
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
   bringToFront: 1
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
 --- !u!114 &1313327246
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2616,14 +2568,6 @@ MonoBehaviour:
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
   bringToFront: 1
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
 --- !u!114 &1333093104
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2724,14 +2668,6 @@ MonoBehaviour:
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
   bringToFront: 1
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
 --- !u!114 &1374151622
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3478,14 +3414,6 @@ MonoBehaviour:
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
   bringToFront: 1
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
-  hasBackgroundShaderUvRect: 0
 --- !u!114 &1935071882
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -138,7 +138,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &43637645
 RectTransform:
   m_ObjectHideFlags: 0
@@ -304,7 +304,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &106972346
 RectTransform:
   m_ObjectHideFlags: 0
@@ -351,14 +351,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.89302635
-    y: 0.16444866
-    width: 0.105424285
-    height: 0.37705958
-  hasBackgroundShaderUvRect: 1
 --- !u!114 &106972348
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -415,7 +407,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &109889177
 RectTransform:
   m_ObjectHideFlags: 0
@@ -432,7 +424,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -614, y: -12}
+  m_AnchoredPosition: {x: -449, y: 22}
   m_SizeDelta: {x: 192.41534, y: 290.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &109889178
@@ -462,14 +454,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.12402984
-    y: 0.3006971
-    width: 0.10186092
-    height: 0.36818755
-  hasBackgroundShaderUvRect: 1
 --- !u!114 &109889179
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -557,12 +541,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1366, y: 768}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -642,7 +626,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &340611599
 RectTransform:
   m_ObjectHideFlags: 0
@@ -659,7 +643,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 599, y: -33}
+  m_AnchoredPosition: {x: 447, y: -8}
   m_SizeDelta: {x: 203.60864, y: 301}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &340611600
@@ -689,14 +673,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.76320577
-    y: 0.26742712
-    width: 0.10778648
-    height: 0.38149557
-  hasBackgroundShaderUvRect: 1
 --- !u!114 &340611601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1041,7 +1017,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 7dabdfc97f536fe458e28ca413b0a0fa, type: 3}
+  m_Texture: {fileID: 2800000, guid: be7b38f2cec9bee98bad55097937c9c6, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -1121,14 +1097,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.85158783
-    y: 0.21342076
-    width: 0.10465914
-    height: 0.494578
-  hasBackgroundShaderUvRect: 1
 --- !u!114 &552135205
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1183,7 +1151,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &567115834
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1794,14 +1762,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.50788456
-    y: 0.4112801
-    width: 0.031585813
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!114 &802263368
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2502,7 +2462,10 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2300000136}
+  - {fileID: 2300000141}
+  - {fileID: 2300000146}
   m_Father: {fileID: 1244333268}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3398,7 +3361,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1332510633
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3445,14 +3408,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.50788456
-    y: 0.4112801
-    width: 0.031585813
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!114 &1332510635
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4497,7 +4452,9 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2300000181}
+  - {fileID: 2300000186}
   m_Father: {fileID: 1557615905}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5215,12 +5172,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1366, y: 768}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -5296,7 +5253,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2101000002
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5381,14 +5338,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.46747816
-    y: 0.40383396
-    width: 0.061867416
-    height: 0.19740179
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2101000011
 GameObject:
   m_ObjectHideFlags: 0
@@ -5492,14 +5441,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.46052969
-    y: 0.4112801
-    width: 0.031585753
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2101000021
 GameObject:
   m_ObjectHideFlags: 0
@@ -5518,7 +5459,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2101000022
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5603,14 +5544,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.46052969
-    y: 0.4112801
-    width: 0.031585753
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2101000031
 GameObject:
   m_ObjectHideFlags: 0
@@ -5714,14 +5647,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.4367231
-    y: 0.4112801
-    width: 0.031714886
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!114 &2102000000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6669,10 +6594,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2300000136}
-  - {fileID: 2300000141}
-  - {fileID: 2300000146}
+  m_Children: []
   m_Father: {fileID: 2300000021}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -6936,9 +6858,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2300000181}
-  - {fileID: 2300000186}
+  m_Children: []
   m_Father: {fileID: 2300000036}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -7404,7 +7324,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000066
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7489,14 +7409,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0
-    y: 0.10614702
-    width: 0.10233505
-    height: 0.37705958
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000070
 GameObject:
   m_ObjectHideFlags: 0
@@ -7600,14 +7512,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.47754064
-    y: 0.42712295
-    width: 0.06821141
-    height: 0.23954374
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000075
 GameObject:
   m_ObjectHideFlags: 0
@@ -7711,14 +7615,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.0528337
-    y: 0.12658428
-    width: 0.12143689
-    height: 0.55671734
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000080
 GameObject:
   m_ObjectHideFlags: 0
@@ -7822,14 +7718,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.8478918
-    y: 0.18202534
-    width: 0.10463989
-    height: 0.46357927
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000085
 GameObject:
   m_ObjectHideFlags: 0
@@ -7933,14 +7821,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.03560873
-    y: 0.18537894
-    width: 0.11141885
-    height: 0.527848
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000090
 GameObject:
   m_ObjectHideFlags: 0
@@ -8044,14 +7924,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.531562
-    y: 0.4112801
-    width: 0.031714916
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000095
 GameObject:
   m_ObjectHideFlags: 0
@@ -8155,14 +8027,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.068840094
-    y: 0.33887833
-    width: 0.0947179
-    height: 0.4413815
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000100
 GameObject:
   m_ObjectHideFlags: 0
@@ -8266,14 +8130,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.78468716
-    y: 0.33365908
-    width: 0.13576066
-    height: 0.45688972
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000105
 GameObject:
   m_ObjectHideFlags: 0
@@ -8377,14 +8233,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.4367231
-    y: 0.4112801
-    width: 0.031714886
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000110
 GameObject:
   m_ObjectHideFlags: 0
@@ -8488,14 +8336,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.48422858
-    y: 0.4112801
-    width: 0.031542867
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000115
 GameObject:
   m_ObjectHideFlags: 0
@@ -8599,14 +8439,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.531562
-    y: 0.4112801
-    width: 0.031714916
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000120
 GameObject:
   m_ObjectHideFlags: 0
@@ -8710,14 +8542,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.43672314
-    y: 0.4112801
-    width: 0.031714857
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000125
 GameObject:
   m_ObjectHideFlags: 0
@@ -8821,14 +8645,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.48422852
-    y: 0.4112801
-    width: 0.031542927
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000130
 GameObject:
   m_ObjectHideFlags: 0
@@ -8932,14 +8748,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.531562
-    y: 0.4112801
-    width: 0.031714916
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000135
 GameObject:
   m_ObjectHideFlags: 0
@@ -8966,12 +8774,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2300000135}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2300000024}
+  m_Father: {fileID: 1005243303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -9043,14 +8851,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.4367231
-    y: 0.4112801
-    width: 0.031714886
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000140
 GameObject:
   m_ObjectHideFlags: 0
@@ -9077,12 +8877,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2300000140}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2300000024}
+  m_Father: {fileID: 1005243303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -9154,14 +8954,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.48422858
-    y: 0.4112801
-    width: 0.031542867
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000145
 GameObject:
   m_ObjectHideFlags: 0
@@ -9188,12 +8980,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2300000145}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2300000024}
+  m_Father: {fileID: 1005243303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -9265,14 +9057,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.531562
-    y: 0.4112801
-    width: 0.031714916
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000150
 GameObject:
   m_ObjectHideFlags: 0
@@ -9376,14 +9160,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.3885216
-    y: 0.4112801
-    width: 0.032238245
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000155
 GameObject:
   m_ObjectHideFlags: 0
@@ -9487,14 +9263,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.43672314
-    y: 0.4112801
-    width: 0.031714857
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000160
 GameObject:
   m_ObjectHideFlags: 0
@@ -9598,14 +9366,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.48422852
-    y: 0.4112801
-    width: 0.031542927
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000165
 GameObject:
   m_ObjectHideFlags: 0
@@ -9709,14 +9469,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.531562
-    y: 0.4112801
-    width: 0.031714916
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000170
 GameObject:
   m_ObjectHideFlags: 0
@@ -9820,14 +9572,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.57924014
-    y: 0.4112801
-    width: 0.032238245
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000175
 GameObject:
   m_ObjectHideFlags: 0
@@ -9931,14 +9675,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.48422858
-    y: 0.4112801
-    width: 0.031542867
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000180
 GameObject:
   m_ObjectHideFlags: 0
@@ -9965,12 +9701,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2300000180}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2300000039}
+  m_Father: {fileID: 1625094567}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -10042,14 +9778,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.46052969
-    y: 0.4112801
-    width: 0.031585753
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000185
 GameObject:
   m_ObjectHideFlags: 0
@@ -10076,12 +9804,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2300000185}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2300000039}
+  m_Father: {fileID: 1625094567}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -10153,14 +9881,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.50788456
-    y: 0.4112801
-    width: 0.031585813
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000190
 GameObject:
   m_ObjectHideFlags: 0
@@ -10264,14 +9984,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.44383037
-    y: 0.4112801
-    width: 0.020609349
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000195
 GameObject:
   m_ObjectHideFlags: 0
@@ -10375,14 +10087,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.47464323
-    y: 0.4112801
-    width: 0.02029404
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000200
 GameObject:
   m_ObjectHideFlags: 0
@@ -10486,14 +10190,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.5050627
-    y: 0.4112801
-    width: 0.02029413
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000205
 GameObject:
   m_ObjectHideFlags: 0
@@ -10597,14 +10293,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.5355603
-    y: 0.4112801
-    width: 0.02060932
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000210
 GameObject:
   m_ObjectHideFlags: 0
@@ -10708,14 +10396,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.48422852
-    y: 0.4112801
-    width: 0.031542927
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000215
 GameObject:
   m_ObjectHideFlags: 0
@@ -10819,14 +10499,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.43672314
-    y: 0.4112801
-    width: 0.031714857
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000220
 GameObject:
   m_ObjectHideFlags: 0
@@ -10930,14 +10602,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.48422852
-    y: 0.4112801
-    width: 0.031542927
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000225
 GameObject:
   m_ObjectHideFlags: 0
@@ -11041,14 +10705,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.531562
-    y: 0.4112801
-    width: 0.031714916
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000230
 GameObject:
   m_ObjectHideFlags: 0
@@ -11152,14 +10808,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.48422852
-    y: 0.4112801
-    width: 0.031542927
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1 &2300000235
 GameObject:
   m_ObjectHideFlags: 0
@@ -11263,14 +10911,6 @@ MonoBehaviour:
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
   followCameraBackground: 1
-  captureBackgroundAnchorAtRuntime: 1
-  backgroundShaderUvRect:
-    serializedVersion: 2
-    x: 0.48422852
-    y: 0.4112801
-    width: 0.031542927
-    height: 0.17743981
-  hasBackgroundShaderUvRect: 1
 --- !u!1001 &4847176794638743877
 PrefabInstance:
   m_ObjectHideFlags: 0

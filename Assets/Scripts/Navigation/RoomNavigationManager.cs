@@ -732,10 +732,10 @@ public class RoomNavigationManager : MonoBehaviour
             return;
         }
 
-        // The trigger stores its rectangle in the same shader-space coordinates
-        // as the room image. Re-applying it immediately keeps the clickable area
-        // lined up with the visible door after room changes and preview edits.
-        doorTrigger.ApplyCapturedShaderAnchor(cameraManager);
+        // The trigger's visible RectTransform is the authoring source of truth.
+        // Runtime projects that rectangle through the active camera shader so it
+        // stays over the painted door while the room view pans.
+        doorTrigger.ApplyAuthoredRectToCamera(cameraManager);
     }
 
     private void RunNavigationSelfCheckForCurrentRoom()

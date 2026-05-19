@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
@@ -9,9 +8,12 @@ public class NavigationRegressionTests
 {
     private const string DoorDataPath = "Assets/Resources/Navigation/doors.txt";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
+    private const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
     private const string NavigationManagerPath = "Assets/Scripts/Navigation/RoomNavigationManager.cs";
     private const string NavigationBootstrapPath = "Assets/Scripts/Navigation/RoomNavigationBootstrap.cs";
+    private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
+    private const string NavigationEditorToolsPath = "Assets/Editor/NavigationEditorTools.cs";
     private const string BackgroundShaderGraphPath = "Assets/Shader/Background.shadergraph";
     private const string BackgroundMaterialPath = "Assets/Shader/BackgroundMaterial.mat";
     private const string RoomPrefabPath = "Assets/Prefabs/Room.prefab";
@@ -24,16 +26,18 @@ public class NavigationRegressionTests
         DoorDataParseResult doorData = DoorDataParser.Parse(File.ReadAllText(DoorDataPath));
         Assert.That(doorData.Errors, Is.Empty, string.Join(Environment.NewLine, doorData.Errors));
 
-        Dictionary<string, SerializedDoorTrigger> triggersByDoorId = ReadDoorTriggersByDoorId(File.ReadAllText(GameplayScenePath));
+        Dictionary<string, List<SerializedDoorTrigger>> triggersByDoorId = ReadDoorTriggersByDoorId(File.ReadAllText(GameplayScenePath));
 
         foreach (DoorRoute route in doorData.RoutesByDoorId.Values)
         {
             Assert.That(triggersByDoorId.ContainsKey(route.DoorId), Is.True, $"Missing DoorTriggerNavigation for door '{route.DoorId}'.");
 
-            SerializedDoorTrigger trigger = triggersByDoorId[route.DoorId];
-            Assert.That(trigger.SourceRoom, Is.EqualTo(route.SourceRoom).IgnoreCase, $"Door '{route.DoorId}' source room drifted.");
-            Assert.That(trigger.DestinationRoom, Is.EqualTo(route.DestinationRoom).IgnoreCase, $"Door '{route.DoorId}' destination room drifted.");
-            Assert.That(trigger.UsesCameraSequence, Is.False, $"Door '{route.DoorId}' should use doors.txt navigation, not the old camera sequence.");
+            foreach (SerializedDoorTrigger trigger in triggersByDoorId[route.DoorId])
+            {
+                Assert.That(trigger.SourceRoom, Is.EqualTo(route.SourceRoom).IgnoreCase, $"Door '{route.DoorId}' source room drifted.");
+                Assert.That(trigger.DestinationRoom, Is.EqualTo(route.DestinationRoom).IgnoreCase, $"Door '{route.DoorId}' destination room drifted.");
+                Assert.That(trigger.UsesCameraSequence, Is.False, $"Door '{route.DoorId}' should use doors.txt navigation, not the old camera sequence.");
+            }
         }
     }
 
@@ -50,6 +54,8 @@ public class NavigationRegressionTests
         // A zero-scale UI transform is the exact regression that makes visible
         // door triggers stop receiving clicks, so keep it out of the gameplay scene.
         Assert.That(sceneText, Does.Not.Contain("m_LocalScale: {x: 0, y: 0, z: 0}"));
+        Assert.That(sceneText, Does.Not.Contain("m_UiScaleMode: 0"), "Gameplay canvases should scale consistently between Edit and Play mode.");
+        Assert.That(sceneText, Does.Not.Contain("m_ReferenceResolution: {x: 800, y: 600}"), "Gameplay canvases should use the project reference resolution, not Unity defaults.");
     }
 
     [Test]
@@ -131,6 +137,7 @@ public class NavigationRegressionTests
         Assert.That(cameraManagerText, Does.Not.Contain("return 1.5f - curvedScale"), "The old signed vertical projection jumped across zero on a single mouse-wheel tick.");
         Assert.That(shaderGraphText, Does.Not.Match(@"(?s)""m_OutputSlot""\s*:\s*\{\s*""m_Node""\s*:\s*\{\s*""m_Id"": ""f02995c1a6a74ca897aad1adcdadc881""\s*\}\s*,\s*""m_SlotId"": 2\s*\}\s*,\s*""m_InputSlot""\s*:\s*\{\s*""m_Node""\s*:\s*\{\s*""m_Id"": ""3b2c5930216346678c0347817b27b12a""\s*\}\s*,\s*""m_SlotId"": 2"), "The shader Step node must not switch vertical projection branches at zero.");
         Assert.That(backgroundMaterialText, Does.Contain("- _verticle_strength: 0"), "The shared background material should not save a warped zoom state.");
+        Assert.That(backgroundMaterialText, Does.Contain("- _MainTex:\n        m_Texture: {fileID: 2800000, guid: f233ee9a18ce3e78bb0a642637f2d2d0, type: 3}"), "The shared background material should keep its preview texture assigned.");
     }
 
     [Test]
@@ -157,30 +164,31 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void KitchenServiceCorridorDoorHasUsablePlacementAnchor()
+    public void DoorHitboxesUseVisibleRectTransformsAsSourceOfTruth()
     {
-        string sceneText = File.ReadAllText(GameplayScenePath);
-        string triggerBlock = FindDoorTriggerBlock(sceneText, "Kitchen_ServiceCorridor");
+        string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
+        string editorToolsText = File.ReadAllText(NavigationEditorToolsPath);
+        string gameplaySceneText = File.ReadAllText(GameplayScenePath);
+        string mainMenuSceneText = File.ReadAllText(MainMenuScenePath);
 
-        Assert.That(triggerBlock, Is.Not.Empty, "Missing Kitchen -> Service Corridor trigger.");
-        Assert.That(ReadSerializedString(triggerBlock, "sourceRoom"), Is.EqualTo("Kitchen"));
-        Assert.That(ReadSerializedString(triggerBlock, "destinationRoom"), Is.EqualTo("Service Corridor"));
-
-        float x = ReadSerializedFloat(triggerBlock, "x");
-        float y = ReadSerializedFloat(triggerBlock, "y");
-        float width = ReadSerializedFloat(triggerBlock, "width");
-        float height = ReadSerializedFloat(triggerBlock, "height");
-
-        Assert.That(x, Is.GreaterThan(0.65f), "Kitchen_ServiceCorridor should sit on the right-side service hallway doorway in source-image UV space.");
-        Assert.That(y, Is.InRange(0.2f, 0.35f), "Kitchen_ServiceCorridor vertical anchor should cover the service hallway opening.");
-        Assert.That(width, Is.GreaterThan(0.1f), "Kitchen_ServiceCorridor must not collapse back to the tiny accidental default.");
-        Assert.That(height, Is.GreaterThan(0.45f), "Kitchen_ServiceCorridor must cover enough of the doorway to be clickable.");
+        Assert.That(triggerText, Does.Not.Contain("[ExecuteAlways]"), "Door hitboxes should not run edit-mode scripts that silently rewrite placement.");
+        Assert.That(triggerText, Does.Not.Contain("backgroundShaderUvRect"), "Door hitboxes should not keep a second hidden placement coordinate.");
+        Assert.That(triggerText, Does.Not.Contain("CaptureCurrentShaderAnchor"), "Manual RectTransforms should be the authoring data, not captured anchors.");
+        Assert.That(triggerText, Does.Contain("TryCaptureAuthoredSourceImageRect"), "Runtime should derive source-image UVs from the visible RectTransform.");
+        Assert.That(triggerText, Does.Contain("TryApplySourceImageRect"), "Runtime should project authored hitboxes through the camera shader view.");
+        Assert.That(cameraManagerText, Does.Contain("TryApplySourceImageRect"), "CameraManager should keep the shader projection bridge for panning rooms.");
+        Assert.That(cameraManagerText, Does.Not.Contain("TryCaptureShaderAnchoredRect"), "CameraManager should not expose old capture APIs.");
+        Assert.That(editorToolsText, Does.Not.Contain("CaptureVisibleDoorTriggerAnchorsForCurrentPreview"), "Editor previews should not save hitbox locations as a side effect.");
+        Assert.That(editorToolsText, Does.Not.Contain("AutoSyncDoorTriggers"), "Door trigger sync should be an explicit menu action, not an automatic editor task.");
+        Assert.That(gameplaySceneText, Does.Not.Contain("backgroundShaderUvRect"), "Gameplay scene should not carry stale hidden hitbox anchors.");
+        Assert.That(mainMenuSceneText, Does.Not.Contain("backgroundShaderUvRect"), "MainMenu scene should not carry stale hidden hitbox anchors.");
     }
 
-    private static Dictionary<string, SerializedDoorTrigger> ReadDoorTriggersByDoorId(string sceneText)
+    private static Dictionary<string, List<SerializedDoorTrigger>> ReadDoorTriggersByDoorId(string sceneText)
     {
-        Dictionary<string, SerializedDoorTrigger> triggersByDoorId =
-            new Dictionary<string, SerializedDoorTrigger>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, List<SerializedDoorTrigger>> triggersByDoorId =
+            new Dictionary<string, List<SerializedDoorTrigger>>(StringComparer.OrdinalIgnoreCase);
         string[] blocks = Regex.Split(sceneText, @"(?m)^--- !u!114 ");
 
         for (int i = 0; i < blocks.Length; i++)
@@ -202,8 +210,13 @@ public class NavigationRegressionTests
 
             if (!string.IsNullOrWhiteSpace(trigger.DoorId))
             {
-                Assert.That(triggersByDoorId.ContainsKey(trigger.DoorId), Is.False, $"Duplicate DoorTriggerNavigation for door '{trigger.DoorId}'.");
-                triggersByDoorId.Add(trigger.DoorId, trigger);
+                if (!triggersByDoorId.TryGetValue(trigger.DoorId, out List<SerializedDoorTrigger> triggers))
+                {
+                    triggers = new List<SerializedDoorTrigger>();
+                    triggersByDoorId.Add(trigger.DoorId, triggers);
+                }
+
+                triggers.Add(trigger);
             }
         }
 
@@ -216,33 +229,9 @@ public class NavigationRegressionTests
         return match.Success ? match.Groups[1].Value.Trim() : string.Empty;
     }
 
-    private static float ReadSerializedFloat(string block, string fieldName)
-    {
-        string value = ReadSerializedString(block, fieldName);
-        Assert.That(value, Is.Not.Empty, $"Missing serialized float '{fieldName}'.");
-        return float.Parse(value, CultureInfo.InvariantCulture);
-    }
-
     private static bool ReadSerializedBool(string block, string fieldName)
     {
         return ReadSerializedString(block, fieldName) == "1";
-    }
-
-    private static string FindDoorTriggerBlock(string sceneText, string doorId)
-    {
-        string[] blocks = Regex.Split(sceneText, @"(?m)^--- !u!114 ");
-
-        for (int i = 0; i < blocks.Length; i++)
-        {
-            string block = blocks[i];
-
-            if (block.Contains(DoorTriggerNavigationGuid) && ReadSerializedString(block, "doorName") == doorId)
-            {
-                return block;
-            }
-        }
-
-        return string.Empty;
     }
 
     private static string SafeObjectName(string value)

@@ -116,7 +116,6 @@ public class CameraManager : MonoBehaviour
     private bool fullImagePlacementPreviewActive;
     private Rect baseBackgroundUvRect = new Rect(0f, 0f, 1f, 1f);
     private readonly Vector3[] anchoredReferenceCorners = new Vector3[4];
-    private readonly Vector3[] shaderAnchorCorners = new Vector3[4];
 
     public float CurrentRoomHorizontalPan => currentRoomPan;
     public float CurrentRoomVerticalPan => currentRoomVerticalPan;
@@ -462,101 +461,7 @@ public class CameraManager : MonoBehaviour
         SetRoomLookForPreview(0f, 0f, defaultRoomFov);
     }
 
-    public bool TryCaptureShaderAnchoredRect(RectTransform sourceRect, out Rect shaderUvRect)
-    {
-        return TryCaptureShaderAnchoredRect(
-            sourceRect,
-            out shaderUvRect,
-            ClampHorizontalRoomPan(currentRoomPan),
-            currentRoomFov,
-            ClampVerticalRoomPan(currentRoomVerticalPan));
-    }
-
-    public bool TryCaptureDefaultShaderAnchoredRect(RectTransform sourceRect, out Rect shaderUvRect)
-    {
-        return TryCaptureShaderAnchoredRect(
-            sourceRect,
-            out shaderUvRect,
-            0f,
-            ClampRoomFov(defaultRoomFov),
-            0f);
-    }
-
-    public bool TryCaptureFullImageAnchoredRect(RectTransform sourceRect, out Rect imageUvRect)
-    {
-        imageUvRect = new Rect();
-
-        if (sourceRect == null || cameraBackground == null)
-        {
-            return false;
-        }
-
-        RectTransform backgroundTransform = cameraBackground.rectTransform;
-
-        if (backgroundTransform == null || !BackgroundRectIsUsable(backgroundTransform))
-        {
-            return false;
-        }
-
-        sourceRect.GetWorldCorners(shaderAnchorCorners);
-
-        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
-        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
-
-        for (int i = 0; i < shaderAnchorCorners.Length; i++)
-        {
-            Vector2 backgroundLocalPoint = backgroundTransform.InverseTransformPoint(shaderAnchorCorners[i]);
-            Vector2 imageUv = BackgroundLocalPointToMeshUv(backgroundTransform, backgroundLocalPoint);
-
-            min = Vector2.Min(min, imageUv);
-            max = Vector2.Max(max, imageUv);
-        }
-
-        imageUvRect = NormalizeRect(Rect.MinMaxRect(min.x, min.y, max.x, max.y));
-        return imageUvRect.width > 0f && imageUvRect.height > 0f;
-    }
-
-    private bool TryCaptureShaderAnchoredRect(
-        RectTransform sourceRect,
-        out Rect shaderUvRect,
-        float cameraAngle,
-        float fov,
-        float verticalStrength)
-    {
-        shaderUvRect = new Rect();
-
-        if (sourceRect == null || cameraBackground == null)
-        {
-            return false;
-        }
-
-        RectTransform backgroundTransform = cameraBackground.rectTransform;
-
-        if (backgroundTransform == null || !BackgroundRectIsUsable(backgroundTransform))
-        {
-            return false;
-        }
-
-        sourceRect.GetWorldCorners(shaderAnchorCorners);
-
-        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
-        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
-
-        for (int i = 0; i < shaderAnchorCorners.Length; i++)
-        {
-            Vector2 backgroundLocalPoint = backgroundTransform.InverseTransformPoint(shaderAnchorCorners[i]);
-            Vector2 meshUv = BackgroundLocalPointToMeshUv(backgroundTransform, backgroundLocalPoint);
-            Vector2 shaderUv = MeshUvToShaderUv(meshUv, cameraAngle, fov, verticalStrength);
-
-            min = Vector2.Min(min, shaderUv);
-            max = Vector2.Max(max, shaderUv);
-        }
-
-        shaderUvRect = NormalizeRect(Rect.MinMaxRect(min.x, min.y, max.x, max.y));
-        return shaderUvRect.width > 0f && shaderUvRect.height > 0f;
-    }
-
-    public bool TryApplyShaderAnchoredRect(RectTransform targetRect, Rect shaderUvRect)
+    public bool TryApplySourceImageRect(RectTransform targetRect, Rect sourceImageUvRect)
     {
         if (targetRect == null || cameraBackground == null || targetRect.parent == null)
         {
@@ -574,20 +479,20 @@ public class CameraManager : MonoBehaviour
         Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
         Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
 
-        Vector2 shaderMin = shaderUvRect.min;
-        Vector2 shaderMax = shaderUvRect.max;
+        Vector2 sourceMin = sourceImageUvRect.min;
+        Vector2 sourceMax = sourceImageUvRect.max;
 
-        Vector2[] shaderCorners =
+        Vector2[] sourceCorners =
         {
-            new Vector2(shaderMin.x, shaderMin.y),
-            new Vector2(shaderMin.x, shaderMax.y),
-            new Vector2(shaderMax.x, shaderMax.y),
-            new Vector2(shaderMax.x, shaderMin.y)
+            new Vector2(sourceMin.x, sourceMin.y),
+            new Vector2(sourceMin.x, sourceMax.y),
+            new Vector2(sourceMax.x, sourceMax.y),
+            new Vector2(sourceMax.x, sourceMin.y)
         };
 
-        for (int i = 0; i < shaderCorners.Length; i++)
+        for (int i = 0; i < sourceCorners.Length; i++)
         {
-            Vector2 meshUv = ShaderUvToMeshUv(shaderCorners[i]);
+            Vector2 meshUv = ShaderUvToMeshUv(sourceCorners[i]);
             Vector2 backgroundLocalPoint = MeshUvToBackgroundLocalPoint(backgroundTransform, meshUv);
             Vector3 worldPoint = backgroundTransform.TransformPoint(backgroundLocalPoint);
             Vector2 parentLocalPoint = parentRect.InverseTransformPoint(worldPoint);
@@ -610,75 +515,9 @@ public class CameraManager : MonoBehaviour
             (anchor.x - parentRect.pivot.x) * parentSize.x,
             (anchor.y - parentRect.pivot.y) * parentSize.y);
 
-        // The hitbox is a normal UI object, but its position comes from the same
-        // shader-space coordinates that the background image uses. That is the
-        // important bridge: the shader moves the picture; this moves the raycast
-        // rectangle to the picture's new on-screen position.
-        targetRect.anchorMin = anchor;
-        targetRect.anchorMax = anchor;
-        targetRect.pivot = new Vector2(0.5f, 0.5f);
-        targetRect.anchoredPosition = center - anchorReference;
-        targetRect.sizeDelta = size;
-        targetRect.localRotation = Quaternion.identity;
-        targetRect.localScale = Vector3.one;
-        return true;
-    }
-
-    public bool TryApplyFullImageAnchoredRect(RectTransform targetRect, Rect imageUvRect)
-    {
-        if (targetRect == null || cameraBackground == null || targetRect.parent == null)
-        {
-            return false;
-        }
-
-        RectTransform backgroundTransform = cameraBackground.rectTransform;
-        RectTransform parentRect = targetRect.parent as RectTransform;
-
-        if (backgroundTransform == null || parentRect == null || !BackgroundRectIsUsable(backgroundTransform))
-        {
-            return false;
-        }
-
-        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
-        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
-        Vector2 imageMin = imageUvRect.min;
-        Vector2 imageMax = imageUvRect.max;
-
-        Vector2[] imageCorners =
-        {
-            new Vector2(imageMin.x, imageMin.y),
-            new Vector2(imageMin.x, imageMax.y),
-            new Vector2(imageMax.x, imageMax.y),
-            new Vector2(imageMax.x, imageMin.y)
-        };
-
-        for (int i = 0; i < imageCorners.Length; i++)
-        {
-            Vector2 backgroundLocalPoint = MeshUvToBackgroundLocalPoint(backgroundTransform, imageCorners[i]);
-            Vector3 worldPoint = backgroundTransform.TransformPoint(backgroundLocalPoint);
-            Vector2 parentLocalPoint = parentRect.InverseTransformPoint(worldPoint);
-
-            min = Vector2.Min(min, parentLocalPoint);
-            max = Vector2.Max(max, parentLocalPoint);
-        }
-
-        Vector2 size = max - min;
-
-        if (size.x <= 0f || size.y <= 0f)
-        {
-            return false;
-        }
-
-        Vector2 center = (min + max) * 0.5f;
-        Vector2 anchor = new Vector2(0.5f, 0.5f);
-        Vector2 parentSize = parentRect.rect.size;
-        Vector2 anchorReference = new Vector2(
-            (anchor.x - parentRect.pivot.x) * parentSize.x,
-            (anchor.y - parentRect.pivot.y) * parentSize.y);
-
-        // Full-image placement uses source-image UVs directly. Runtime still
-        // uses TryApplyShaderAnchoredRect to convert these saved UVs through the
-        // shader camera math.
+        // Door hitboxes are authored in full source-image UV space. Runtime uses
+        // the same inverse shader projection as the background material, so the
+        // visible UI raycast box follows the painted door during pan/FOV changes.
         targetRect.anchorMin = anchor;
         targetRect.anchorMax = anchor;
         targetRect.pivot = new Vector2(0.5f, 0.5f);
@@ -1675,19 +1514,6 @@ public class CameraManager : MonoBehaviour
         return rect.width > 0f && rect.height > 0f;
     }
 
-    private Vector2 BackgroundLocalPointToMeshUv(RectTransform backgroundTransform, Vector2 localPoint)
-    {
-        Rect backgroundRect = backgroundTransform.rect;
-        Rect visibleUv = cameraBackground.uvRect;
-
-        float normalizedX = Mathf.InverseLerp(backgroundRect.xMin, backgroundRect.xMax, localPoint.x);
-        float normalizedY = Mathf.InverseLerp(backgroundRect.yMin, backgroundRect.yMax, localPoint.y);
-
-        return new Vector2(
-            visibleUv.x + normalizedX * visibleUv.width,
-            visibleUv.y + normalizedY * visibleUv.height);
-    }
-
     private Vector2 MeshUvToBackgroundLocalPoint(RectTransform backgroundTransform, Vector2 meshUv)
     {
         Rect backgroundRect = backgroundTransform.rect;
@@ -1699,33 +1525,6 @@ public class CameraManager : MonoBehaviour
         return new Vector2(
             Mathf.LerpUnclamped(backgroundRect.xMin, backgroundRect.xMax, normalizedX),
             Mathf.LerpUnclamped(backgroundRect.yMin, backgroundRect.yMax, normalizedY));
-    }
-
-    private Vector2 MeshUvToShaderUv(Vector2 meshUv)
-    {
-        return MeshUvToShaderUv(
-            meshUv,
-            ClampHorizontalRoomPan(currentRoomPan),
-            currentRoomFov,
-            ClampVerticalRoomPan(currentRoomVerticalPan));
-    }
-
-    private Vector2 MeshUvToShaderUv(Vector2 meshUv, float cameraAngle, float fov, float verticalStrength)
-    {
-        cameraAngle = ClampHorizontalRoomPan(cameraAngle);
-        fov = Mathf.Max(0.0001f, ClampRoomFov(fov));
-        verticalStrength = ClampVerticalRoomPan(verticalStrength);
-        float margin = GetShaderMargin();
-
-        float sourceX = SourceUvXMin + SourceUvXRange *
-            (0.5f + Mathf.Tan(cameraAngle + (meshUv.x - 0.5f) * fov) / Mathf.Tan(fov));
-
-        float verticalScale = GetShaderVerticalScale(meshUv.x, verticalStrength);
-        float verticalT = 0.5f + (meshUv.y - 0.5f) * verticalScale;
-        float verticalMargin = margin * Mathf.Abs(verticalStrength);
-        float sourceY = Mathf.LerpUnclamped(verticalMargin, 1f - verticalMargin, verticalT);
-
-        return new Vector2(sourceX, sourceY);
     }
 
     private Vector2 ShaderUvToMeshUv(Vector2 shaderUv)

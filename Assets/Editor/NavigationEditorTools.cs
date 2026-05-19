@@ -12,7 +12,6 @@ public static class NavigationEditorTools
     private const string DoorDataAssetPath = "Assets/Resources/Navigation/doors.txt";
     private const string RoomVisualCatalogAssetPath = "Assets/Resources/Navigation/RoomVisualCatalog.asset";
     private const string AutoPreviewEditorPrefKey = "Dreadforge.Navigation.AutoPreviewSelectedCamera";
-    private const string AutoSyncDoorTriggersEditorPrefKey = "Dreadforge.Navigation.AutoSyncDoorTriggers";
     private const string RoomRootName = "Rooms";
     private const string LegacyDoorTriggerEditRootName = "RoomDoorTriggers_Edit";
 
@@ -74,21 +73,6 @@ public static class NavigationEditorTools
     private static bool ValidateToggleAutoPreviewSelectedCamera()
     {
         Menu.SetChecked("Dreadforge/Navigation/Auto Preview Selected Camera", AutoPreviewSelectedCamera);
-        return true;
-    }
-
-    [MenuItem("Dreadforge/Navigation/Auto Sync Door Triggers From Door Data")]
-    public static void ToggleAutoSyncDoorTriggers()
-    {
-        bool enabled = !AutoSyncDoorTriggers;
-        AutoSyncDoorTriggers = enabled;
-        Debug.Log($"Navigation door trigger auto sync is now {(enabled ? "ON" : "OFF")}.");
-    }
-
-    [MenuItem("Dreadforge/Navigation/Auto Sync Door Triggers From Door Data", true)]
-    private static bool ValidateToggleAutoSyncDoorTriggers()
-    {
-        Menu.SetChecked("Dreadforge/Navigation/Auto Sync Door Triggers From Door Data", AutoSyncDoorTriggers);
         return true;
     }
 
@@ -446,12 +430,6 @@ public static class NavigationEditorTools
         set => EditorPrefs.SetBool(AutoPreviewEditorPrefKey, value);
     }
 
-    public static bool AutoSyncDoorTriggers
-    {
-        get => EditorPrefs.GetBool(AutoSyncDoorTriggersEditorPrefKey, true);
-        set => EditorPrefs.SetBool(AutoSyncDoorTriggersEditorPrefKey, value);
-    }
-
     public static void PreviewCameraForDoorEditing(CameraAreaController cameraArea)
     {
         PreviewCameraForDoorEditing(cameraArea, true);
@@ -477,11 +455,8 @@ public static class NavigationEditorTools
             return;
         }
 
-        CaptureVisibleDoorTriggerAnchorsForCurrentPreview();
-
         int undoGroup = BeginNavigationPreviewUndo($"Preview {roomName} For Door Editing");
-        RawImage backgroundImage = PrepareRoomContentBackgroundForEditing(roomContentGroup);
-        CameraManager cameraManager = backgroundImage != null ? FindCameraManagerForBackground(backgroundImage) : FindSceneCameraManager();
+        PrepareRoomContentBackgroundForEditing(roomContentGroup);
 
         EnsureAncestorsActive(roomContentGroup.transform);
 
@@ -499,7 +474,7 @@ public static class NavigationEditorTools
             SetActiveWithUndo(otherRoomContentGroup.gameObject, otherRoomContentGroup == roomContentGroup);
         }
 
-        int preparedTriggerCount = PrepareDoorTriggersForRoomContentEditing(roomContentGroup, roomName, cameraManager);
+        int preparedTriggerCount = PrepareDoorTriggersForRoomContentEditing(roomContentGroup, roomName);
 
         if (pingRoom)
         {
@@ -526,9 +501,6 @@ public static class NavigationEditorTools
             Debug.LogWarning($"Could not infer a room name from '{cameraArea.name}'. Use Button_<RoomName> under the Map object.", cameraArea);
             return;
         }
-
-        CaptureVisibleDoorTriggerAnchorsForCurrentPreview();
-        SyncDoorTriggersFromDoorData(false);
 
         CameraAreaController[] cameraAreas = FindCameraAreasInSameEditingGroup(cameraArea);
         int undoGroup = BeginNavigationPreviewUndo($"Preview {cameraArea.name} For Door Editing");
@@ -563,75 +535,6 @@ public static class NavigationEditorTools
         MarkOpenScenesDirty();
         SceneView.RepaintAll();
         Debug.Log($"Previewing '{roomName}' on the full room background. Moved/prepared {editingInfo.PreparedTriggerCount} door trigger(s) under '{editingInfo.RoomGroupName}' for editing.");
-    }
-
-    private static void CaptureVisibleDoorTriggerAnchorsForCurrentPreview()
-    {
-        RawImage backgroundImage = FindCameraBackgroundImage();
-        CameraManager cameraManager = backgroundImage != null ? FindCameraManagerForBackground(backgroundImage) : null;
-
-        if (cameraManager == null)
-        {
-            return;
-        }
-
-        DoorTriggerNavigation[] doorTriggers = FindSceneObjects<DoorTriggerNavigation>();
-
-        if (HasMultipleActiveRoomTriggerSets(doorTriggers))
-        {
-            return;
-        }
-
-        for (int i = 0; i < doorTriggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = doorTriggers[i];
-
-            if (trigger == null || !trigger.gameObject.activeInHierarchy)
-            {
-                continue;
-            }
-
-            Undo.RecordObject(trigger, "Save Door Trigger Edit Before Preview Switch");
-
-            // Before the preview tool hides the current room and shows another
-            // camera, save whatever rectangle is currently visible. That makes
-            // manual resize/move edits survive camera switches.
-            if (trigger.CaptureCurrentShaderAnchor(cameraManager))
-            {
-                EditorUtility.SetDirty(trigger);
-            }
-        }
-    }
-
-    private static bool HasMultipleActiveRoomTriggerSets(DoorTriggerNavigation[] doorTriggers)
-    {
-        RoomContentGroup activeRoomContentGroup = null;
-
-        for (int i = 0; i < doorTriggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = doorTriggers[i];
-
-            if (trigger == null || !trigger.gameObject.activeInHierarchy)
-            {
-                continue;
-            }
-
-            RoomContentGroup parentRoomContentGroup = trigger.GetComponentInParent<RoomContentGroup>(true);
-
-            if (parentRoomContentGroup == null || !parentRoomContentGroup.gameObject.activeInHierarchy)
-            {
-                continue;
-            }
-
-            if (activeRoomContentGroup != null && activeRoomContentGroup != parentRoomContentGroup)
-            {
-                return true;
-            }
-
-            activeRoomContentGroup = parentRoomContentGroup;
-        }
-
-        return false;
     }
 
     private static int ValidateDestinations(StringBuilder report, DoorDataParseResult parseResult)
@@ -720,7 +623,6 @@ public static class NavigationEditorTools
     {
         int issues = 0;
         HashSet<string> triggerDoorIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        Dictionary<string, DoorTriggerNavigation> firstTriggerByDoorId = new Dictionary<string, DoorTriggerNavigation>(StringComparer.OrdinalIgnoreCase);
 
         for (int i = 0; i < doorTriggers.Length; i++)
         {
@@ -736,16 +638,7 @@ public static class NavigationEditorTools
                 continue;
             }
 
-            if (firstTriggerByDoorId.TryGetValue(doorId, out DoorTriggerNavigation firstTrigger))
-            {
-                AppendIssue(report, $"Duplicate DoorTrigger ID '{doorId}' on '{firstTrigger.name}' and '{trigger.name}'.");
-                issues++;
-            }
-            else
-            {
-                firstTriggerByDoorId.Add(doorId, trigger);
-                triggerDoorIds.Add(doorId);
-            }
+            triggerDoorIds.Add(doorId);
 
             if (!parseResult.RoutesByDoorId.TryGetValue(doorId, out DoorRoute route))
             {
@@ -754,9 +647,11 @@ public static class NavigationEditorTools
                 continue;
             }
 
-            if (!string.Equals(trigger.name, $"DoorTrigger_{SafeObjectName(route.DoorId)}", StringComparison.Ordinal))
+            string expectedTriggerNamePrefix = $"DoorTrigger_{SafeObjectName(route.DoorId)}";
+
+            if (!trigger.name.StartsWith(expectedTriggerNamePrefix, StringComparison.Ordinal))
             {
-                AppendIssue(report, $"DoorTrigger for '{route.DoorId}' should be named 'DoorTrigger_{SafeObjectName(route.DoorId)}', but is named '{trigger.name}'.");
+                AppendIssue(report, $"DoorTrigger for '{route.DoorId}' should be named '{expectedTriggerNamePrefix}' or use that as a prefix, but is named '{trigger.name}'.");
                 issues++;
             }
 
@@ -1390,7 +1285,7 @@ public static class NavigationEditorTools
 
             if (triggersByDoorId.ContainsKey(trigger.DoorName))
             {
-                Debug.LogWarning($"Duplicate door trigger ID '{trigger.DoorName}' found on '{trigger.name}'. The sync tool will update the first one it found.", trigger);
+                Debug.LogWarning($"Multiple hitboxes use door ID '{trigger.DoorName}'. This is allowed, but the sync tool will only refresh the first one it found.", trigger);
                 continue;
             }
 
@@ -1441,7 +1336,7 @@ public static class NavigationEditorTools
 
         string expectedName = $"DoorTrigger_{SafeObjectName(route.DoorId)}";
 
-        if (trigger.name != expectedName)
+        if (!trigger.name.StartsWith(expectedName, StringComparison.Ordinal))
         {
             Undo.RecordObject(trigger.gameObject, "Rename Door Trigger From Door Data");
             trigger.name = expectedName;
@@ -1496,10 +1391,6 @@ public static class NavigationEditorTools
         serializedTrigger.FindProperty("runtimeColor").colorValue = new Color(1f, 1f, 1f, 0f);
         serializedTrigger.FindProperty("bringToFront").boolValue = true;
         serializedTrigger.FindProperty("followCameraBackground").boolValue = true;
-        serializedTrigger.FindProperty("captureBackgroundAnchorAtRuntime").boolValue = true;
-        // Route sync owns the door ID/source/destination fields. It deliberately
-        // leaves the saved shader anchor alone because that is hand-authored
-        // placement data captured after lining a trigger up with the room image.
         serializedTrigger.ApplyModifiedProperties();
         EditorUtility.SetDirty(trigger);
     }
@@ -1728,8 +1619,7 @@ public static class NavigationEditorTools
 
     private static int PrepareDoorTriggersForRoomContentEditing(
         RoomContentGroup roomContentGroup,
-        string roomName,
-        CameraManager cameraManager)
+        string roomName)
     {
         RectTransform roomRect = roomContentGroup.transform as RectTransform;
 
@@ -1758,7 +1648,6 @@ public static class NavigationEditorTools
             }
 
             PrepareDoorTriggerForEditing(trigger, doorsRoot, roomName);
-            ApplyCapturedDoorTriggerAnchorForEditing(trigger, cameraManager);
             preparedCount++;
         }
 
@@ -1775,31 +1664,6 @@ public static class NavigationEditorTools
         }
 
         return string.Equals(Clean(trigger.SourceRoom), roomName, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static void ApplyCapturedDoorTriggerAnchorForEditing(DoorTriggerNavigation trigger, CameraManager cameraManager)
-    {
-        if (trigger == null || cameraManager == null || !trigger.HasBackgroundShaderAnchor)
-        {
-            return;
-        }
-
-        RectTransform triggerRect = trigger.transform as RectTransform;
-
-        if (triggerRect != null)
-        {
-            Undo.RecordObject(triggerRect, "Apply Door Trigger Shader Anchor");
-        }
-
-        if (trigger.ApplyCapturedShaderAnchor(cameraManager))
-        {
-            EditorUtility.SetDirty(trigger);
-
-            if (triggerRect != null)
-            {
-                EditorUtility.SetDirty(triggerRect);
-            }
-        }
     }
 
     private static int BeginNavigationPreviewUndo(string undoName)
@@ -2170,33 +2034,10 @@ public static class NavigationEditorTools
 public static class NavigationSelectionAutoPreview
 {
     private static bool isPreviewingSelection;
-    private static bool isSyncingDoorTriggers;
 
     static NavigationSelectionAutoPreview()
     {
         Selection.selectionChanged += HandleSelectionChanged;
-        EditorApplication.delayCall += SyncDoorTriggersAfterReload;
-    }
-
-    private static void SyncDoorTriggersAfterReload()
-    {
-        if (!NavigationEditorTools.AutoSyncDoorTriggers ||
-            isSyncingDoorTriggers ||
-            EditorApplication.isPlayingOrWillChangePlaymode)
-        {
-            return;
-        }
-
-        isSyncingDoorTriggers = true;
-
-        try
-        {
-            NavigationEditorTools.SyncDoorTriggersFromDoorData(false);
-        }
-        finally
-        {
-            isSyncingDoorTriggers = false;
-        }
     }
 
     private static void HandleSelectionChanged()
