@@ -1,23 +1,79 @@
-# Placeholder room data. Replace this file with Hamza's final floorplan data.
-# Format:
-# Current Room:
-# DoorId: Destination Room
+Grand Entrance Hall:
+GEH_Conservatory: Conservatory
+GEH_Library: Library
+GEH_BilliardRoom: Billiard Room
+GEH_UpperGallery: Upper Gallery
 
-Music:
-M1: Hallway
+Conservatory:
+Conservatory_GEH: Grand Entrance Hall
 
-Hallway:
-H1: Entrance
-H2: Kitchen
-H3: Music
+Library:
+Library_GEH: Grand Entrance Hall
+Library_MusicRoom: Music Room
+Library_Ballroom: Ballroom
 
-Kitchen:
-K1: Ballroom
-K2: Hallway
+Music Room:
+MusicRoom_Library: Library
+MusicRoom_DrawingRoom: Drawing Room
+MusicRoom_Ballroom: Ballroom
+
+Drawing Room:
+DrawingRoom_MusicRoom: Music Room
+DrawingRoom_GEH: Grand Entrance Hall
 
 Ballroom:
-B1: Kitchen
-B2: Hallway
+Ballroom_MusicRoom: Music Room
+Ballroom_Library: Library
 
-Entrance:
-E1: Hallway
+Dining Room:
+DiningRoom_GEH: Grand Entrance Hall
+DiningRoom_BilliardRoom: Billiard Room
+DiningRoom_ButlersPantry: Butler's Pantry
+
+Billiard Room:
+BilliardRoom_GEH: Grand Entrance Hall
+BilliardRoom_DiningRoom: Dining Room
+BilliardRoom_ServiceCorridor: Service Corridor
+
+Butler's Pantry:
+ButlersPantry_DiningRoom: Dining Room
+ButlersPantry_Kitchen: Kitchen
+ButlersPantry_ServiceCorridor: Service Corridor
+
+Kitchen:
+Kitchen_ButlersPantry: Butler's Pantry
+Kitchen_ServiceCorridor: Service Corridor
+
+Service Corridor:
+ServiceCorridor_ButlersPantry: Butler's Pantry
+ServiceCorridor_BilliardRoom: Billiard Room
+ServiceCorridor_Kitchen: Kitchen
+ServiceCorridor_Chapel: Chapel
+ServiceCorridor_SideStairMudroom: Side Stair & Mudroom
+
+Chapel:
+Chapel_ServiceCorridor: Service Corridor
+
+Side Stair & Mudroom:
+SideStairMudroom_ServiceCorridor: Service Corridor
+SideStairMudroom_UpperGallery: Upper Gallery
+
+Upper Gallery:
+UpperGallery_GEH: Grand Entrance Hall
+UpperGallery_SideStairMudroom: Side Stair & Mudroom
+UpperGallery_MasterBedroomSuite: Master Bedroom Suite
+UpperGallery_UpperSittingHall: Upper Sitting Hall
+
+Master Bedroom Suite:
+MasterBedroomSuite_UpperGallery: Upper Gallery
+
+Upper Sitting Hall:
+UpperSittingHall_UpperGallery: Upper Gallery
+UpperSittingHall_Nursery: Nursery
+UpperSittingHall_BlueBedroom: Blue Bedroom
+
+Nursery:
+Nursery_UpperSittingHall: Upper Sitting Hall
+
+Blue Bedroom:
+BlueBedroom_UpperSittingHall: Upper Sitting Hall

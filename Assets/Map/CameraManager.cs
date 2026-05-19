@@ -162,7 +162,9 @@ public class CameraManager : MonoBehaviour
         }
 
         EnsureBackgroundCanvasVisible();
-        SetCameraBackground(GetStartupBackgroundTexture());
+
+        Texture navigationStartupTexture = GetNavigationStartupBackgroundTexture();
+        SetCameraBackground(navigationStartupTexture != null ? navigationStartupTexture : GetStartupBackgroundTexture());
     }
 
     private void Update()
@@ -713,6 +715,21 @@ public class CameraManager : MonoBehaviour
         return cameraBackground.texture;
     }
 
+    private Texture GetNavigationStartupBackgroundTexture()
+    {
+        if (roomNavigationManager == null)
+        {
+            roomNavigationManager = FindObjectOfType<RoomNavigationManager>(true);
+        }
+
+        if (roomNavigationManager == null || string.IsNullOrWhiteSpace(roomNavigationManager.CurrentRoom))
+        {
+            return null;
+        }
+
+        return roomNavigationManager.FindRoomTexture(roomNavigationManager.CurrentRoom);
+    }
+
     private Texture GetCameraAreaBackgroundTexture(CameraAreaController cameraArea)
     {
         if (cameraArea == null)
@@ -745,6 +762,7 @@ public class CameraManager : MonoBehaviour
     {
         if (currentBaseBackgroundTexture != texture)
         {
+            ResetRoomLookForRoomChange();
             ResetAnchoredAnimationPlayback();
         }
 
@@ -1144,6 +1162,20 @@ public class CameraManager : MonoBehaviour
         currentRoomFov = ClampRoomFov(defaultRoomFov);
         currentRoomZoom = ClampRoomZoom(defaultRoomZoom);
         targetRoomZoom = currentRoomZoom;
+    }
+
+    private void ResetRoomLookForRoomChange()
+    {
+        targetRoomPan = 0f;
+        currentRoomPan = 0f;
+        targetRoomVerticalPan = 0f;
+        currentRoomVerticalPan = 0f;
+        currentRoomFov = ClampRoomFov(defaultRoomFov);
+        currentRoomZoom = ClampRoomZoom(defaultRoomZoom);
+        targetRoomZoom = currentRoomZoom;
+        roomZoomVelocity = 0f;
+        ResetHorizontalEdgeHold();
+        NavigationCursorController.SetEdgePanDirection(0);
     }
 
     private void UpdateRoomLookFromInput()

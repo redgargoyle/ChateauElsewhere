@@ -9,6 +9,7 @@ public class NavigationRegressionTests
 {
     private const string DoorDataPath = "Assets/Resources/Navigation/doors.txt";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
+    private const string NavigationManagerPath = "Assets/Scripts/Navigation/RoomNavigationManager.cs";
     private const string NavigationBootstrapPath = "Assets/Scripts/Navigation/RoomNavigationBootstrap.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string BackgroundShaderGraphPath = "Assets/Shader/Background.shadergraph";
@@ -70,19 +71,22 @@ public class NavigationRegressionTests
     public void GameplayRoomsOwnBackgroundsAndDoorGroups()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
+        string navigationManagerText = File.ReadAllText(NavigationManagerPath);
         string roomPrefabText = File.ReadAllText(RoomPrefabPath);
 
         Assert.That(sceneText, Does.Contain($"guid: {RoomContentGroupGuid}"), "Gameplay room objects should have RoomContentGroup components.");
         Assert.That(sceneText, Does.Contain("roomBackgroundTexture: {fileID: 2800000"), "RoomContentGroup should own each room background texture.");
-        Assert.That(sceneText, Does.Contain("m_Name: Button_Entrance"));
+        Assert.That(sceneText, Does.Contain("m_Name: Button_Grand_Entrance_Hall"));
+        Assert.That(sceneText, Does.Contain("m_Name: Button_Library"));
         Assert.That(sceneText, Does.Contain("m_Name: Button_Ballroom"));
-        Assert.That(Regex.Matches(sceneText, @"m_Name: Doors").Count, Is.GreaterThanOrEqualTo(5), "Each room object should have a Doors child.");
-        Assert.That(sceneText, Does.Not.Contain("m_Name: Cam_Entrance"));
-        Assert.That(sceneText, Does.Not.Contain("m_Name: Cam_Hallway"));
-        Assert.That(sceneText, Does.Not.Contain("m_Name: Cam_Kitchen"));
-        Assert.That(sceneText, Does.Not.Contain("m_Name: Cam_Music"));
-        Assert.That(sceneText, Does.Not.Contain("m_Name: Cam_Ballroom"));
+        Assert.That(Regex.Matches(sceneText, @"m_Name: Doors").Count, Is.GreaterThanOrEqualTo(18), "Each room object should have a Doors child.");
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Cam_"));
         Assert.That(sceneText, Does.Not.Contain("m_Name: MapButton_"));
+        Assert.That(sceneText, Does.Not.Contain("DoorTrigger_K1"));
+        Assert.That(sceneText, Does.Not.Contain("DoorTrigger_K2"));
+        Assert.That(sceneText, Does.Not.Contain("006acc238c9c2e26f8e9e7ec33e82a09"));
+        Assert.That(sceneText, Does.Not.Contain("a8335d5d820eabc44a82824f60fc64c6"));
+        Assert.That(navigationManagerText, Does.Contain("NormalizeComparableName"), "Clean hierarchy names still need to match display room names with apostrophes or ampersands.");
 
         Assert.That(roomPrefabText, Does.Contain("m_Name: Room_NewRoom"));
         Assert.That(roomPrefabText, Does.Contain("m_Name: Doors"));
@@ -121,6 +125,7 @@ public class NavigationRegressionTests
         Assert.That(cameraManagerText, Does.Contain("GetCurrentHorizontalPanSpeed"), "Edge panning should accelerate while the player holds the cursor at the edge.");
         Assert.That(cameraManagerText, Does.Contain("SmoothRoomZoom"), "Mouse-wheel zoom should be damped instead of stepping between crop values.");
         Assert.That(cameraManagerText, Does.Contain("ApplyRoomZoomToUvRect"), "Regular zoom should crop the RawImage UVs instead of distorting the shader vertically.");
+        Assert.That(cameraManagerText, Does.Contain("ResetRoomLookForRoomChange"), "Each new room should enter from a centered default view instead of inheriting the previous room's pan/zoom.");
         Assert.That(cameraManagerText, Does.Contain("Instantiate(sourceMaterial)"), "Runtime camera input should not dirty the shared background material asset.");
         Assert.That(cameraManagerText, Does.Contain("Mathf.LerpUnclamped(1f, verticalCurve, Mathf.Abs(verticalStrength))"), "The CPU hitbox projection must mirror the continuous shader zoom curve.");
         Assert.That(cameraManagerText, Does.Not.Contain("return 1.5f - curvedScale"), "The old signed vertical projection jumped across zero on a single mouse-wheel tick.");
@@ -152,24 +157,24 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void KitchenHallwayDoorHasUsablePlacementAnchor()
+    public void KitchenServiceCorridorDoorHasUsablePlacementAnchor()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
-        string triggerBlock = FindDoorTriggerBlock(sceneText, "K2");
+        string triggerBlock = FindDoorTriggerBlock(sceneText, "Kitchen_ServiceCorridor");
 
-        Assert.That(triggerBlock, Is.Not.Empty, "Missing Kitchen -> Hallway trigger K2.");
+        Assert.That(triggerBlock, Is.Not.Empty, "Missing Kitchen -> Service Corridor trigger.");
         Assert.That(ReadSerializedString(triggerBlock, "sourceRoom"), Is.EqualTo("Kitchen"));
-        Assert.That(ReadSerializedString(triggerBlock, "destinationRoom"), Is.EqualTo("Hallway"));
+        Assert.That(ReadSerializedString(triggerBlock, "destinationRoom"), Is.EqualTo("Service Corridor"));
 
         float x = ReadSerializedFloat(triggerBlock, "x");
         float y = ReadSerializedFloat(triggerBlock, "y");
         float width = ReadSerializedFloat(triggerBlock, "width");
         float height = ReadSerializedFloat(triggerBlock, "height");
 
-        Assert.That(x, Is.LessThan(0.2f), "K2 should sit on the left-side Kitchen doorway in source-image UV space.");
-        Assert.That(y, Is.InRange(0.2f, 0.4f), "K2 vertical anchor should cover the Kitchen hallway opening.");
-        Assert.That(width, Is.GreaterThan(0.1f), "K2 must not collapse back to the tiny accidental default.");
-        Assert.That(height, Is.GreaterThan(0.4f), "K2 must cover enough of the doorway to be clickable.");
+        Assert.That(x, Is.GreaterThan(0.65f), "Kitchen_ServiceCorridor should sit on the right-side service hallway doorway in source-image UV space.");
+        Assert.That(y, Is.InRange(0.2f, 0.35f), "Kitchen_ServiceCorridor vertical anchor should cover the service hallway opening.");
+        Assert.That(width, Is.GreaterThan(0.1f), "Kitchen_ServiceCorridor must not collapse back to the tiny accidental default.");
+        Assert.That(height, Is.GreaterThan(0.45f), "Kitchen_ServiceCorridor must cover enough of the doorway to be clickable.");
     }
 
     private static Dictionary<string, SerializedDoorTrigger> ReadDoorTriggersByDoorId(string sceneText)
@@ -195,8 +200,9 @@ public class NavigationRegressionTests
                 UsesCameraSequence = ReadSerializedBool(block, "useCameraSequence")
             };
 
-            if (!string.IsNullOrWhiteSpace(trigger.DoorId) && !triggersByDoorId.ContainsKey(trigger.DoorId))
+            if (!string.IsNullOrWhiteSpace(trigger.DoorId))
             {
+                Assert.That(triggersByDoorId.ContainsKey(trigger.DoorId), Is.False, $"Duplicate DoorTriggerNavigation for door '{trigger.DoorId}'.");
                 triggersByDoorId.Add(trigger.DoorId, trigger);
             }
         }
@@ -246,17 +252,8 @@ public class NavigationRegressionTests
             return "Unnamed";
         }
 
-        char[] chars = value.Trim().ToCharArray();
-
-        for (int i = 0; i < chars.Length; i++)
-        {
-            if (!char.IsLetterOrDigit(chars[i]))
-            {
-                chars[i] = '_';
-            }
-        }
-
-        return new string(chars);
+        string safeName = Regex.Replace(value.Trim().Replace("'", string.Empty), @"[^A-Za-z0-9]+", "_").Trim('_');
+        return string.IsNullOrWhiteSpace(safeName) ? "Unnamed" : safeName;
     }
 
     private struct SerializedDoorTrigger

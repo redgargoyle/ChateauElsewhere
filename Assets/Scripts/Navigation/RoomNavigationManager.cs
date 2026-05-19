@@ -17,7 +17,7 @@ public class RoomNavigationManager : MonoBehaviour
     [Header("Data")]
     [SerializeField] private TextAsset doorDataFile;
     [SerializeField] private string doorDataResourcePath = "Navigation/doors";
-    [SerializeField] private string startingRoom = "Music";
+    [SerializeField] private string startingRoom = "Grand Entrance Hall";
     [SerializeField] private RoomVisualCatalog roomVisualCatalog;
     [SerializeField] private string roomVisualCatalogResourcePath = "Navigation/RoomVisualCatalog";
     [SerializeField] private DoorCameraSequence doorCameraSequence;
@@ -32,7 +32,7 @@ public class RoomNavigationManager : MonoBehaviour
     [Header("Behavior")]
     [SerializeField] private bool autoFindReferences = true;
     [SerializeField] private bool hideMapAfterDoorClick;
-    [SerializeField] private bool applyStartingRoomVisualOnAwake;
+    [SerializeField] private bool applyStartingRoomVisualOnAwake = true;
     [SerializeField] private bool logNavigationWarnings = true;
     [SerializeField] private bool runNavigationSelfCheck = true;
 
@@ -926,12 +926,38 @@ public class RoomNavigationManager : MonoBehaviour
 
     private static bool SameName(string left, string right)
     {
-        return string.Equals(Clean(left), Clean(right), StringComparison.OrdinalIgnoreCase);
+        return string.Equals(NormalizeComparableName(left), NormalizeComparableName(right), StringComparison.OrdinalIgnoreCase);
     }
 
     private static string Clean(string value)
     {
         return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private static string NormalizeComparableName(string value)
+    {
+        string cleanValue = Clean(value);
+
+        if (string.IsNullOrEmpty(cleanValue))
+        {
+            return string.Empty;
+        }
+
+        char[] normalized = new char[cleanValue.Length];
+        int length = 0;
+
+        for (int i = 0; i < cleanValue.Length; i++)
+        {
+            char c = cleanValue[i];
+
+            if (char.IsLetterOrDigit(c))
+            {
+                normalized[length] = char.ToUpperInvariant(c);
+                length++;
+            }
+        }
+
+        return new string(normalized, 0, length);
     }
 
     private static bool IsNearlyZeroScale(Vector3 scale)
