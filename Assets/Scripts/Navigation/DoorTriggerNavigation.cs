@@ -66,20 +66,14 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             image = GetComponent<Image>();
         }
 
-        if (string.IsNullOrWhiteSpace(sourceRoom))
-        {
-            FillSourceRoomFromHierarchy();
-        }
+        FillSourceRoomFromHierarchy();
 
         ConfigureImage();
     }
 
     private void OnTransformParentChanged()
     {
-        if (string.IsNullOrWhiteSpace(sourceRoom))
-        {
-            FillSourceRoomFromHierarchy();
-        }
+        FillSourceRoomFromHierarchy();
     }
 
     private void OnDisable()
@@ -132,26 +126,14 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(DoorName) && navigationManager.HasDoor(DoorName))
+        if (!string.IsNullOrWhiteSpace(destinationRoom))
         {
-            // Door triggers created from doors.txt should navigate through the
-            // loaded door data. The serialized destination is still kept on the
-            // trigger so the scene is readable in the Inspector, but doors.txt is
-            // the source of truth at runtime.
-            PlayDoorOpenSoundIfSuccessful(navigationManager.TryMoveThroughDoor(DoorName));
+            // Manual room objects and Inspector fields are the source of truth.
+            PlayDoorOpenSoundIfSuccessful(navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom));
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(destinationRoom))
-        {
-            Debug.LogWarning($"Door trigger '{name}' has no destination room.", this);
-            return;
-        }
-
-        // Inspector-driven triggers send their destination room to the same central
-        // room-change path. Visuals, room objects, doors, and animations should all
-        // update from RoomNavigationManager.OnCurrentRoomChanged.
-        PlayDoorOpenSoundIfSuccessful(navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom));
+        Debug.LogWarning($"Door trigger '{name}' has no destination room.", this);
     }
 
     public void RefreshInferredSourceRoom()
@@ -253,12 +235,14 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private string GetEffectiveSourceRoom()
     {
-        if (!string.IsNullOrWhiteSpace(sourceRoom))
+        string hierarchySourceRoom = InferSourceRoomFromHierarchy(transform);
+
+        if (!string.IsNullOrWhiteSpace(hierarchySourceRoom))
         {
-            return sourceRoom.Trim();
+            return hierarchySourceRoom;
         }
 
-        return InferSourceRoomFromHierarchy(transform);
+        return Clean(sourceRoom);
     }
 
     private void FillSourceRoomFromHierarchy()

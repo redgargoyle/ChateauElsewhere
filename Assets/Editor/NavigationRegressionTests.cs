@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 
 public class NavigationRegressionTests
 {
-    private const string DoorDataPath = "Assets/Resources/Navigation/doors.txt";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
     private const string NavigationManagerPath = "Assets/Scripts/Navigation/RoomNavigationManager.cs";
@@ -17,28 +14,15 @@ public class NavigationRegressionTests
     private const string BackgroundShaderGraphPath = "Assets/Shader/Background.shadergraph";
     private const string BackgroundMaterialPath = "Assets/Shader/BackgroundMaterial.mat";
     private const string RoomPrefabPath = "Assets/Prefabs/Room.prefab";
-    private const string DoorTriggerNavigationGuid = "7e419b0f8f26d4f2d8d03e567fef4c52";
     private const string RoomContentGroupGuid = "d0ea47fd950844bcacb0fd5556a9d880";
 
     [Test]
-    public void GameplayDoorTriggersMatchDoorData()
+    public void DoorTriggersUseInspectorDestinationsOnly()
     {
-        DoorDataParseResult doorData = DoorDataParser.Parse(File.ReadAllText(DoorDataPath));
-        Assert.That(doorData.Errors, Is.Empty, string.Join(Environment.NewLine, doorData.Errors));
+        string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
 
-        Dictionary<string, List<SerializedDoorTrigger>> triggersByDoorId = ReadDoorTriggersByDoorId(File.ReadAllText(GameplayScenePath));
-
-        foreach (DoorRoute route in doorData.RoutesByDoorId.Values)
-        {
-            Assert.That(triggersByDoorId.ContainsKey(route.DoorId), Is.True, $"Missing DoorTriggerNavigation for door '{route.DoorId}'.");
-
-            foreach (SerializedDoorTrigger trigger in triggersByDoorId[route.DoorId])
-            {
-                Assert.That(trigger.SourceRoom, Is.EqualTo(route.SourceRoom).IgnoreCase, $"Door '{route.DoorId}' source room drifted.");
-                Assert.That(trigger.DestinationRoom, Is.EqualTo(route.DestinationRoom).IgnoreCase, $"Door '{route.DoorId}' destination room drifted.");
-                Assert.That(trigger.UsesCameraSequence, Is.False, $"Door '{route.DoorId}' should use doors.txt navigation, not the old camera sequence.");
-            }
-        }
+        Assert.That(triggerText, Does.Contain("MoveThroughInspectorDoor"), "Door triggers should navigate through their Inspector destination.");
+        Assert.That(triggerText, Does.Not.Contain("TryMoveThroughDoor"), "Door hitboxes should not consult doors.txt.");
     }
 
     [Test]
@@ -59,18 +43,13 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void GameplayHasRoomGroupsForEveryDoorDataRoom()
+    public void GameplayHasManualRoomStageRoot()
     {
-        DoorDataParseResult doorData = DoorDataParser.Parse(File.ReadAllText(DoorDataPath));
-        Assert.That(doorData.Errors, Is.Empty, string.Join(Environment.NewLine, doorData.Errors));
-
         string sceneText = File.ReadAllText(GameplayScenePath);
 
-        foreach (RoomDefinition room in doorData.RoomsByName.Values)
-        {
-            string expectedRoomGroupName = $"m_Name: Room_{SafeObjectName(room.RoomName)}";
-            Assert.That(sceneText, Does.Contain(expectedRoomGroupName), $"Missing door trigger room group for '{room.RoomName}'.");
-        }
+        Assert.That(sceneText, Does.Contain("m_Name: Rooms"));
+        Assert.That(sceneText, Does.Contain("m_Name: Room_Grand_Entrance_Hall"));
+        Assert.That(sceneText, Does.Contain("m_Name: Doors"));
     }
 
     [Test]
@@ -182,81 +161,17 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Not.Contain("CaptureCurrentShaderAnchor"), "Manual RectTransforms should be the authoring data, not captured anchors.");
         Assert.That(triggerText, Does.Not.Contain("TryCaptureAuthoredSourceImageRect"), "Runtime should not derive a second UV coordinate from the visible RectTransform.");
         Assert.That(triggerText, Does.Not.Contain("LateUpdate"), "Door hitboxes should not chase the camera every frame.");
+        Assert.That(triggerText, Does.Contain("InferSourceRoomFromHierarchy(transform)"), "Door source rooms should come from the Room_* hierarchy by default.");
         Assert.That(cameraManagerText, Does.Contain("AttachBackgroundToRoomStage"), "CameraManager should put the background under the same room stage as the hitboxes.");
         Assert.That(cameraManagerText, Does.Not.Contain("TryCaptureShaderAnchoredRect"), "CameraManager should not expose old capture APIs.");
         Assert.That(cameraManagerText, Does.Not.Contain("TryApplySourceImageRect"), "CameraManager should not expose a projection bridge for door hitboxes.");
         Assert.That(editorToolsText, Does.Not.Contain("CaptureVisibleDoorTriggerAnchorsForCurrentPreview"), "Editor previews should not save hitbox locations as a side effect.");
         Assert.That(editorToolsText, Does.Not.Contain("AutoSyncDoorTriggers"), "Door trigger sync should be an explicit menu action, not an automatic editor task.");
+        Assert.That(editorToolsText, Does.Contain("Door trigger sync from doors.txt is disabled"), "doors.txt must not be able to move or recreate hand-placed door triggers.");
+        Assert.That(editorToolsText, Does.Not.Contain("SetTransformParent(trigger.transform"), "Editor preview/sync code should not move existing door triggers between rooms.");
         Assert.That(editorToolsText, Does.Contain("FitToTextureWithUndo"), "Editor room previews should show the source image at native size so door placement matches runtime UVs.");
         Assert.That(gameplaySceneText, Does.Not.Contain("backgroundShaderUvRect"), "Gameplay scene should not carry stale hidden hitbox anchors.");
         Assert.That(mainMenuSceneText, Does.Not.Contain("backgroundShaderUvRect"), "MainMenu scene should not carry stale hidden hitbox anchors.");
     }
 
-    private static Dictionary<string, List<SerializedDoorTrigger>> ReadDoorTriggersByDoorId(string sceneText)
-    {
-        Dictionary<string, List<SerializedDoorTrigger>> triggersByDoorId =
-            new Dictionary<string, List<SerializedDoorTrigger>>(StringComparer.OrdinalIgnoreCase);
-        string[] blocks = Regex.Split(sceneText, @"(?m)^--- !u!114 ");
-
-        for (int i = 0; i < blocks.Length; i++)
-        {
-            string block = blocks[i];
-
-            if (!block.Contains(DoorTriggerNavigationGuid))
-            {
-                continue;
-            }
-
-            SerializedDoorTrigger trigger = new SerializedDoorTrigger
-            {
-                SourceRoom = ReadSerializedString(block, "sourceRoom"),
-                DoorId = ReadSerializedString(block, "doorName"),
-                DestinationRoom = ReadSerializedString(block, "destinationRoom"),
-                UsesCameraSequence = ReadSerializedBool(block, "useCameraSequence")
-            };
-
-            if (!string.IsNullOrWhiteSpace(trigger.DoorId))
-            {
-                if (!triggersByDoorId.TryGetValue(trigger.DoorId, out List<SerializedDoorTrigger> triggers))
-                {
-                    triggers = new List<SerializedDoorTrigger>();
-                    triggersByDoorId.Add(trigger.DoorId, triggers);
-                }
-
-                triggers.Add(trigger);
-            }
-        }
-
-        return triggersByDoorId;
-    }
-
-    private static string ReadSerializedString(string block, string fieldName)
-    {
-        Match match = Regex.Match(block, $@"(?m)^\s*{Regex.Escape(fieldName)}:\s*(.*)$");
-        return match.Success ? match.Groups[1].Value.Trim() : string.Empty;
-    }
-
-    private static bool ReadSerializedBool(string block, string fieldName)
-    {
-        return ReadSerializedString(block, fieldName) == "1";
-    }
-
-    private static string SafeObjectName(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return "Unnamed";
-        }
-
-        string safeName = Regex.Replace(value.Trim().Replace("'", string.Empty), @"[^A-Za-z0-9]+", "_").Trim('_');
-        return string.IsNullOrWhiteSpace(safeName) ? "Unnamed" : safeName;
-    }
-
-    private struct SerializedDoorTrigger
-    {
-        public string SourceRoom;
-        public string DoorId;
-        public string DestinationRoom;
-        public bool UsesCameraSequence;
-    }
 }

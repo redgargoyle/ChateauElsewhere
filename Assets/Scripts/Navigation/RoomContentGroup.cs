@@ -22,10 +22,7 @@ public class RoomContentGroup : MonoBehaviour
 
     private void OnValidate()
     {
-        if (string.IsNullOrWhiteSpace(roomName))
-        {
-            FillRoomNameFromObject();
-        }
+        FillRoomNameFromObject();
     }
 
     public void RefreshInferredRoomName()
@@ -35,6 +32,9 @@ public class RoomContentGroup : MonoBehaviour
 
     public void SetRoomName(string value)
     {
+        // The GameObject name is the source of truth. This field is only a
+        // readable cache in the Inspector so duplicated rooms cannot keep an old
+        // serialized name and steal another room's doors.
         roomName = string.IsNullOrWhiteSpace(value) ? ParseRoomNameFromObject(gameObject.name) : value.Trim();
     }
 
@@ -51,11 +51,6 @@ public class RoomContentGroup : MonoBehaviour
 
     private string GetEffectiveRoomName()
     {
-        if (!string.IsNullOrWhiteSpace(roomName))
-        {
-            return roomName.Trim();
-        }
-
         return ParseRoomNameFromObject(gameObject.name);
     }
 

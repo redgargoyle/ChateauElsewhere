@@ -121,31 +121,16 @@ public static class NavigationEditorTools
         }
 
         DoorDataParseResult parseResult = DoorDataParser.Parse(doorData.text);
-        DoorButton[] doorButtons = FindSceneObjects<DoorButton>();
-        DoorTriggerNavigation[] doorTriggers = FindSceneObjects<DoorTriggerNavigation>();
-        RoomNavigationManager[] navigationManagers = FindSceneObjects<RoomNavigationManager>();
-        RoomContentGroup[] roomContentGroups = FindSceneObjects<RoomContentGroup>();
-        CameraAreaController[] cameraAreas = FindSceneObjects<CameraAreaController>();
-        RoomVisualCatalog[] visualCatalogs = FindVisualCatalogAssets();
 
         StringBuilder report = new StringBuilder();
         int issueCount = 0;
 
         AppendHeader(report, "Door Data Validation");
+        report.AppendLine("Note: doors.txt is legacy/reference data. Scene DoorTriggerNavigation objects use their Inspector destinations and are not synced from this file.");
+        report.AppendLine();
         issueCount += AppendMessages(report, "Parser Errors", parseResult.Errors);
         issueCount += AppendMessages(report, "Parser Warnings", parseResult.Warnings);
-
         issueCount += ValidateDestinations(report, parseResult);
-
-        if (doorButtons.Length > 0)
-        {
-            issueCount += ValidateDoorButtons(report, parseResult, doorButtons);
-        }
-
-        issueCount += ValidateDoorTriggers(report, parseResult, doorTriggers);
-        issueCount += ValidateDoorTriggerRuntimeLayer(report, parseResult, doorTriggers);
-        issueCount += ValidateRoomVisuals(report, parseResult, navigationManagers, roomContentGroups, visualCatalogs, cameraAreas);
-        issueCount += ValidateStartingRooms(report, parseResult, navigationManagers);
 
         if (issueCount == 0)
         {
@@ -331,97 +316,9 @@ public static class NavigationEditorTools
 
     public static void SyncDoorTriggersFromDoorData(bool logResult)
     {
-        if (!HasNavigationSceneContext())
-        {
-            if (logResult)
-            {
-                Debug.LogWarning("Door trigger sync skipped because no RoomNavigationManager is open. Open the Gameplay scene before syncing navigation triggers.");
-            }
-
-            return;
-        }
-
-        TextAsset doorData = AssetDatabase.LoadAssetAtPath<TextAsset>(DoorDataAssetPath);
-
-        if (doorData == null)
-        {
-            Debug.LogError($"Door data file not found at {DoorDataAssetPath}.");
-            return;
-        }
-
-        DoorDataParseResult parseResult = DoorDataParser.Parse(doorData.text);
-
-        if (!parseResult.IsValid)
-        {
-            Debug.LogError("Cannot sync door triggers because doors.txt has parser errors. Run Dreadforge > Navigation > Validate Door Data.");
-            return;
-        }
-
-        RawImage backgroundImage = FindCameraBackgroundImage();
-        RectTransform editRoot = FindOrCreateDoorTriggerEditRoot(backgroundImage, null);
-
-        if (editRoot == null)
-        {
-            return;
-        }
-
-        int undoGroup = BeginNavigationPreviewUndo("Sync Door Triggers From Door Data");
-        Dictionary<string, DoorTriggerNavigation> triggersByDoorId = IndexDoorTriggersByDoorId(FindSceneObjects<DoorTriggerNavigation>());
-        HashSet<string> syncedDoorIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        int createdCount = 0;
-        int updatedCount = 0;
-
-        foreach (RoomDefinition room in parseResult.RoomsByName.Values)
-        {
-            RectTransform roomGroup = FindOrCreateRectChild(editRoot, $"Room_{SafeObjectName(room.RoomName)}");
-            Texture roomTexture = TryFindRoomBackgroundTexture(room.RoomName, out Texture foundTexture) ? foundTexture : null;
-            FitToTextureWithUndo(roomGroup, roomTexture, "Fit Room Editing Layer To Source Image");
-            SetActiveWithUndo(roomGroup.gameObject, true);
-            EnsureRoomContentGroup(roomGroup, room.RoomName);
-            RectTransform doorsRoot = FindOrCreateDoorsRoot(roomGroup);
-
-            for (int i = 0; i < room.Doors.Count; i++)
-            {
-                DoorRoute route = room.Doors[i];
-
-                if (!triggersByDoorId.TryGetValue(route.DoorId, out DoorTriggerNavigation trigger) || trigger == null)
-                {
-                    trigger = CreateDoorTrigger(route, doorsRoot, i, room.Doors.Count);
-                    createdCount++;
-                }
-                else
-                {
-                    updatedCount++;
-                }
-
-                ConfigureDoorTriggerFromRoute(trigger, route, doorsRoot, i, room.Doors.Count);
-                syncedDoorIds.Add(route.DoorId);
-            }
-        }
-
-        DoorTriggerNavigation[] allTriggers = FindSceneObjects<DoorTriggerNavigation>();
-        int unmatchedCount = 0;
-
-        for (int i = 0; i < allTriggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = allTriggers[i];
-
-            if (trigger == null || syncedDoorIds.Contains(trigger.DoorName))
-            {
-                continue;
-            }
-
-            unmatchedCount++;
-            Debug.LogWarning($"Door trigger '{trigger.name}' uses door ID '{trigger.DoorName}', but that ID is not in doors.txt.", trigger);
-        }
-
-        FinishNavigationPreviewUndo(undoGroup);
-        MarkOpenScenesDirty();
-        SceneView.RepaintAll();
-
         if (logResult)
         {
-            Debug.Log($"Synced door triggers from doors.txt. Created {createdCount}, updated {updatedCount}, unmatched {unmatchedCount}.");
+            Debug.LogWarning("Door trigger sync from doors.txt is disabled. Room_* objects and their DoorTrigger_* children are the source of truth; create and place doors manually in the selected room.");
         }
     }
 
@@ -536,7 +433,7 @@ public static class NavigationEditorTools
         FinishNavigationPreviewUndo(undoGroup);
         MarkOpenScenesDirty();
         SceneView.RepaintAll();
-        Debug.Log($"Previewing '{roomName}' on the full room background. Moved/prepared {editingInfo.PreparedTriggerCount} door trigger(s) under '{editingInfo.RoomGroupName}' for editing.");
+        Debug.Log($"Previewing '{roomName}' on the full room background. Showing {editingInfo.PreparedTriggerCount} existing door trigger(s) for editing.");
     }
 
     private static int ValidateDestinations(StringBuilder report, DoorDataParseResult parseResult)
@@ -553,372 +450,6 @@ public static class NavigationEditorTools
         }
 
         return issues;
-    }
-
-    private static int ValidateDoorButtons(StringBuilder report, DoorDataParseResult parseResult, DoorButton[] doorButtons)
-    {
-        int issues = 0;
-        HashSet<string> buttonDoorIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        Dictionary<string, DoorButton> firstButtonByDoorId = new Dictionary<string, DoorButton>(StringComparer.OrdinalIgnoreCase);
-
-        for (int i = 0; i < doorButtons.Length; i++)
-        {
-            DoorButton doorButton = doorButtons[i];
-            string doorId = Clean(doorButton.DoorId);
-            string roomName = Clean(doorButton.RoomName);
-
-            if (string.IsNullOrEmpty(doorId))
-            {
-                AppendIssue(report, $"DoorButton '{doorButton.name}' has no door ID.");
-                issues++;
-                continue;
-            }
-
-            if (string.IsNullOrEmpty(roomName))
-            {
-                AppendIssue(report, $"DoorButton '{doorButton.name}' has no room name. Put it under Room_<RoomName> or fill the field.");
-                issues++;
-            }
-
-            if (firstButtonByDoorId.TryGetValue(doorId, out DoorButton firstButton))
-            {
-                AppendIssue(report, $"Duplicate DoorButton ID '{doorId}' on '{firstButton.name}' and '{doorButton.name}'.");
-                issues++;
-            }
-            else
-            {
-                firstButtonByDoorId.Add(doorId, doorButton);
-                buttonDoorIds.Add(doorId);
-            }
-
-            if (!parseResult.RoutesByDoorId.ContainsKey(doorId))
-            {
-                AppendIssue(report, $"DoorButton '{doorButton.name}' uses '{doorId}', but that door is not in doors.txt.");
-                issues++;
-            }
-            else
-            {
-                DoorRoute route = parseResult.RoutesByDoorId[doorId];
-
-                if (!string.IsNullOrEmpty(roomName) &&
-                    !string.Equals(roomName, route.SourceRoom, StringComparison.OrdinalIgnoreCase))
-                {
-                    AppendIssue(report, $"DoorButton '{doorButton.name}' is in '{roomName}', but door '{doorId}' belongs to '{route.SourceRoom}'.");
-                    issues++;
-                }
-            }
-        }
-
-        foreach (DoorRoute route in parseResult.RoutesByDoorId.Values)
-        {
-            if (!buttonDoorIds.Contains(route.DoorId))
-            {
-                AppendIssue(report, $"Door data has '{route.DoorId}' in '{route.SourceRoom}', but no scene DoorButton uses that ID.");
-                issues++;
-            }
-        }
-
-        return issues;
-    }
-
-    private static int ValidateDoorTriggers(StringBuilder report, DoorDataParseResult parseResult, DoorTriggerNavigation[] doorTriggers)
-    {
-        int issues = 0;
-        HashSet<string> triggerDoorIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        for (int i = 0; i < doorTriggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = doorTriggers[i];
-            string doorId = Clean(trigger.DoorName);
-            string sourceRoom = Clean(trigger.SourceRoom);
-            string destinationRoom = Clean(trigger.DestinationRoom);
-
-            if (string.IsNullOrEmpty(doorId))
-            {
-                AppendIssue(report, $"DoorTrigger '{trigger.name}' has no door ID.");
-                issues++;
-                continue;
-            }
-
-            triggerDoorIds.Add(doorId);
-
-            if (!parseResult.RoutesByDoorId.TryGetValue(doorId, out DoorRoute route))
-            {
-                AppendIssue(report, $"DoorTrigger '{trigger.name}' uses '{doorId}', but that door is not in doors.txt.");
-                issues++;
-                continue;
-            }
-
-            string expectedTriggerNamePrefix = $"DoorTrigger_{SafeObjectName(route.DoorId)}";
-
-            if (!trigger.name.StartsWith(expectedTriggerNamePrefix, StringComparison.Ordinal))
-            {
-                AppendIssue(report, $"DoorTrigger for '{route.DoorId}' should be named '{expectedTriggerNamePrefix}' or use that as a prefix, but is named '{trigger.name}'.");
-                issues++;
-            }
-
-            if (!string.Equals(sourceRoom, route.SourceRoom, StringComparison.OrdinalIgnoreCase))
-            {
-                AppendIssue(report, $"DoorTrigger '{trigger.name}' source is '{sourceRoom}', but doors.txt says '{route.SourceRoom}'.");
-                issues++;
-            }
-
-            if (!string.Equals(destinationRoom, route.DestinationRoom, StringComparison.OrdinalIgnoreCase))
-            {
-                AppendIssue(report, $"DoorTrigger '{trigger.name}' destination is '{destinationRoom}', but doors.txt says '{route.DestinationRoom}'.");
-                issues++;
-            }
-
-            if (trigger.UsesCameraSequence)
-            {
-                AppendIssue(report, $"DoorTrigger '{trigger.name}' still uses camera-sequence navigation. Synced doors from doors.txt should have Use Camera Sequence off.");
-                issues++;
-            }
-        }
-
-        foreach (DoorRoute route in parseResult.RoutesByDoorId.Values)
-        {
-            if (!triggerDoorIds.Contains(route.DoorId))
-            {
-                AppendIssue(report, $"Door data has '{route.DoorId}' in '{route.SourceRoom}', but no scene DoorTrigger uses that ID.");
-                issues++;
-            }
-        }
-
-        return issues;
-    }
-
-    private static int ValidateDoorTriggerRuntimeLayer(
-        StringBuilder report,
-        DoorDataParseResult parseResult,
-        DoorTriggerNavigation[] doorTriggers)
-    {
-        int issues = 0;
-        Transform editRoot = FindSceneTransform(RoomRootName);
-
-        if (editRoot == null)
-        {
-            editRoot = FindSceneTransform(LegacyDoorTriggerEditRootName);
-        }
-
-        if (editRoot == null)
-        {
-            AppendIssue(report, $"No '{RoomRootName}' object exists. Runtime door triggers need this root so the navigation manager can activate the correct room layer.");
-            issues++;
-            return issues;
-        }
-
-        RectTransform editRootRect = editRoot as RectTransform;
-
-        if (editRootRect == null)
-        {
-            AppendIssue(report, $"'{editRoot.name}' should be a RectTransform under the background Canvas.");
-            issues++;
-        }
-        else if (IsNearlyZeroScale(editRootRect.localScale))
-        {
-            AppendIssue(report, $"'{editRoot.name}' has a zero scale, which makes its door triggers impossible to click.");
-            issues++;
-        }
-
-        Canvas canvas = editRoot.GetComponentInParent<Canvas>(true);
-
-        if (canvas == null)
-        {
-            AppendIssue(report, $"'{editRoot.name}' is not under a Canvas, so UI raycasts cannot reach the door triggers.");
-            issues++;
-        }
-        else
-        {
-            RectTransform canvasRect = canvas.transform as RectTransform;
-
-            if (canvasRect != null && IsNearlyZeroScale(canvasRect.localScale))
-            {
-                AppendIssue(report, $"Canvas '{canvas.name}' has a zero scale. This breaks door trigger raycasts in Play mode.");
-                issues++;
-            }
-
-            if (canvas.GetComponent<GraphicRaycaster>() == null)
-            {
-                AppendIssue(report, $"Canvas '{canvas.name}' has no GraphicRaycaster, so UI door trigger clicks cannot be received.");
-                issues++;
-            }
-        }
-
-        if (FindSceneObjects<UnityEngine.EventSystems.EventSystem>().Length == 0)
-        {
-            AppendIssue(report, "No EventSystem exists in the scene, so UI door trigger clicks cannot be received.");
-            issues++;
-        }
-
-        Dictionary<string, DoorTriggerNavigation> triggersByDoorId = IndexDoorTriggersByDoorId(doorTriggers);
-
-        foreach (RoomDefinition room in parseResult.RoomsByName.Values)
-        {
-            Transform roomGroup = editRoot.Find($"Room_{SafeObjectName(room.RoomName)}");
-
-            if (roomGroup == null)
-            {
-                AppendIssue(report, $"Room '{room.RoomName}' has door data, but '{editRoot.name}' has no child named 'Room_{SafeObjectName(room.RoomName)}'.");
-                issues++;
-                continue;
-            }
-
-            RectTransform roomGroupRect = roomGroup as RectTransform;
-
-            if (roomGroupRect != null && IsNearlyZeroScale(roomGroupRect.localScale))
-            {
-                AppendIssue(report, $"Door trigger room group '{roomGroup.name}' has a zero scale, which makes its triggers impossible to click.");
-                issues++;
-            }
-
-            for (int i = 0; i < room.Doors.Count; i++)
-            {
-                DoorRoute route = room.Doors[i];
-
-                if (!triggersByDoorId.TryGetValue(route.DoorId, out DoorTriggerNavigation trigger) || trigger == null)
-                {
-                    continue;
-                }
-
-                if (!IsChildOf(trigger.transform, roomGroup))
-                {
-                    AppendIssue(report, $"DoorTrigger '{trigger.name}' should be under '{roomGroup.name}' so room activation can make it clickable.");
-                    issues++;
-                }
-
-                RectTransform triggerRect = trigger.transform as RectTransform;
-
-                if (triggerRect == null || triggerRect.rect.width <= 0f || triggerRect.rect.height <= 0f || IsNearlyZeroScale(triggerRect.localScale))
-                {
-                    AppendIssue(report, $"DoorTrigger '{trigger.name}' has an unusable RectTransform size or scale.");
-                    issues++;
-                }
-
-                Image triggerImage = trigger.GetComponent<Image>();
-
-                if (triggerImage == null || !triggerImage.raycastTarget)
-                {
-                    AppendIssue(report, $"DoorTrigger '{trigger.name}' needs an Image with Raycast Target enabled.");
-                    issues++;
-                }
-            }
-        }
-
-        return issues;
-    }
-
-    private static int ValidateRoomVisuals(
-        StringBuilder report,
-        DoorDataParseResult parseResult,
-        RoomNavigationManager[] navigationManagers,
-        RoomContentGroup[] roomContentGroups,
-        RoomVisualCatalog[] visualCatalogs,
-        CameraAreaController[] cameraAreas)
-    {
-        int issues = 0;
-
-        foreach (RoomDefinition room in parseResult.RoomsByName.Values)
-        {
-            if (HasRoomVisual(room.RoomName, navigationManagers, roomContentGroups, visualCatalogs, cameraAreas))
-            {
-                continue;
-            }
-
-            AppendIssue(report, $"Room '{room.RoomName}' has no background texture on its RoomContentGroup, in a RoomVisualCatalog, or on a map button.");
-            issues++;
-        }
-
-        return issues;
-    }
-
-    private static int ValidateStartingRooms(
-        StringBuilder report,
-        DoorDataParseResult parseResult,
-        RoomNavigationManager[] navigationManagers)
-    {
-        int issues = 0;
-
-        if (navigationManagers.Length == 0)
-        {
-            if (!parseResult.RoomsByName.ContainsKey("Music"))
-            {
-                AppendIssue(report, "No scene RoomNavigationManager exists; runtime bootstrap will use default starting room 'Music', but doors.txt has no Music section.");
-                issues++;
-            }
-
-            return issues;
-        }
-
-        for (int i = 0; i < navigationManagers.Length; i++)
-        {
-            RoomNavigationManager manager = navigationManagers[i];
-
-            if (!parseResult.RoomsByName.ContainsKey(manager.StartingRoom))
-            {
-                AppendIssue(report, $"RoomNavigationManager '{manager.name}' starts in '{manager.StartingRoom}', but that room is not in doors.txt.");
-                issues++;
-            }
-        }
-
-        return issues;
-    }
-
-    private static bool HasRoomVisual(
-        string roomName,
-        RoomNavigationManager[] navigationManagers,
-        RoomContentGroup[] roomContentGroups,
-        RoomVisualCatalog[] visualCatalogs,
-        CameraAreaController[] cameraAreas)
-    {
-        for (int i = 0; i < navigationManagers.Length; i++)
-        {
-            Texture texture = navigationManagers[i].FindRoomTexture(roomName);
-
-            if (texture != null)
-            {
-                return true;
-            }
-        }
-
-        for (int i = 0; i < roomContentGroups.Length; i++)
-        {
-            RoomContentGroup group = roomContentGroups[i];
-
-            if (group != null &&
-                string.Equals(group.RoomName, roomName, StringComparison.OrdinalIgnoreCase) &&
-                group.RoomBackgroundTexture != null)
-            {
-                return true;
-            }
-        }
-
-        for (int i = 0; i < visualCatalogs.Length; i++)
-        {
-            Texture texture;
-
-            if (visualCatalogs[i] != null && visualCatalogs[i].TryGetRoomTexture(roomName, out texture))
-            {
-                return true;
-            }
-        }
-
-        for (int i = 0; i < cameraAreas.Length; i++)
-        {
-            CameraAreaController cameraArea = cameraAreas[i];
-
-            if (cameraArea == null || cameraArea.roomBackgroundTexture == null)
-            {
-                continue;
-            }
-
-            if (string.Equals(ParseRoomNameFromCameraArea(cameraArea.name), roomName, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static RoomVisualCatalog[] FindVisualCatalogAssets()
@@ -1242,12 +773,6 @@ public static class NavigationEditorTools
         return cameraManagers.Length > 0 ? cameraManagers[0] : null;
     }
 
-    private static bool HasNavigationSceneContext()
-    {
-        return FindSceneObjects<RoomNavigationManager>().Length > 0 ||
-            FindSceneObjects<CameraManager>().Length > 0;
-    }
-
     private static RawImage FindCameraBackgroundImage()
     {
         CameraManager[] cameraManagers = FindSceneObjects<CameraManager>();
@@ -1273,145 +798,6 @@ public static class NavigationEditorTools
         return images.Length > 0 ? images[0] : null;
     }
 
-    private static Dictionary<string, DoorTriggerNavigation> IndexDoorTriggersByDoorId(DoorTriggerNavigation[] doorTriggers)
-    {
-        Dictionary<string, DoorTriggerNavigation> triggersByDoorId =
-            new Dictionary<string, DoorTriggerNavigation>(StringComparer.OrdinalIgnoreCase);
-
-        for (int i = 0; i < doorTriggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = doorTriggers[i];
-
-            if (trigger == null || string.IsNullOrEmpty(trigger.DoorName))
-            {
-                continue;
-            }
-
-            if (triggersByDoorId.ContainsKey(trigger.DoorName))
-            {
-                Debug.LogWarning($"Multiple hitboxes use door ID '{trigger.DoorName}'. This is allowed, but the sync tool will only refresh the first one it found.", trigger);
-                continue;
-            }
-
-            triggersByDoorId.Add(trigger.DoorName, trigger);
-        }
-
-        return triggersByDoorId;
-    }
-
-    private static DoorTriggerNavigation CreateDoorTrigger(DoorRoute route, RectTransform roomGroup, int doorIndex, int doorCount)
-    {
-        GameObject triggerObject = new GameObject(
-            $"DoorTrigger_{SafeObjectName(route.DoorId)}",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image),
-            typeof(DoorTriggerNavigation));
-
-        Undo.RegisterCreatedObjectUndo(triggerObject, "Create Door Trigger From Door Data");
-        triggerObject.transform.SetParent(roomGroup, false);
-
-        RectTransform rectTransform = triggerObject.transform as RectTransform;
-
-        if (rectTransform != null)
-        {
-            ApplyDoorTriggerPlaceholderRect(rectTransform, doorIndex, doorCount);
-        }
-
-        return triggerObject.GetComponent<DoorTriggerNavigation>();
-    }
-
-    private static void ConfigureDoorTriggerFromRoute(
-        DoorTriggerNavigation trigger,
-        DoorRoute route,
-        RectTransform roomGroup,
-        int doorIndex,
-        int doorCount)
-    {
-        if (trigger == null || route == null || roomGroup == null)
-        {
-            return;
-        }
-
-        if (trigger.transform.parent != roomGroup)
-        {
-            Undo.SetTransformParent(trigger.transform, roomGroup, "Move Door Trigger To Synced Room Group");
-        }
-
-        string expectedName = $"DoorTrigger_{SafeObjectName(route.DoorId)}";
-
-        if (!trigger.name.StartsWith(expectedName, StringComparison.Ordinal))
-        {
-            Undo.RecordObject(trigger.gameObject, "Rename Door Trigger From Door Data");
-            trigger.name = expectedName;
-            EditorUtility.SetDirty(trigger.gameObject);
-        }
-
-        int uiLayer = LayerMask.NameToLayer("UI");
-
-        if (uiLayer >= 0 && trigger.gameObject.layer != uiLayer)
-        {
-            // Door triggers are UI raycast rectangles, so synced triggers should
-            // stay on the same UI layer as the hand-placed trigger objects.
-            Undo.RecordObject(trigger.gameObject, "Move Door Trigger To UI Layer");
-            trigger.gameObject.layer = uiLayer;
-            EditorUtility.SetDirty(trigger.gameObject);
-        }
-
-        SetActiveWithUndo(trigger.gameObject, true);
-
-        Image image = trigger.GetComponent<Image>();
-
-        if (image != null)
-        {
-            Undo.RecordObject(image, "Configure Door Trigger Image");
-            image.color = new Color(1f, 0f, 0f, 0.35f);
-            image.raycastTarget = true;
-            EditorUtility.SetDirty(image);
-        }
-
-        RectTransform rectTransform = trigger.transform as RectTransform;
-
-        if (rectTransform != null)
-        {
-            Undo.RecordObject(rectTransform, "Configure Door Trigger Rect");
-
-            if (rectTransform.sizeDelta.x <= 1f || rectTransform.sizeDelta.y <= 1f)
-            {
-                ApplyDoorTriggerPlaceholderRect(rectTransform, doorIndex, doorCount);
-            }
-
-            EditorUtility.SetDirty(rectTransform);
-        }
-
-        SerializedObject serializedTrigger = new SerializedObject(trigger);
-        serializedTrigger.FindProperty("sourceRoom").stringValue = route.SourceRoom;
-        serializedTrigger.FindProperty("doorName").stringValue = route.DoorId;
-        serializedTrigger.FindProperty("destinationRoom").stringValue = route.DestinationRoom;
-        serializedTrigger.FindProperty("requirePlayerInSourceRoom").boolValue = true;
-        serializedTrigger.FindProperty("useCameraSequence").boolValue = false;
-        serializedTrigger.FindProperty("image").objectReferenceValue = image;
-        serializedTrigger.FindProperty("makeInvisibleAtRuntime").boolValue = true;
-        serializedTrigger.FindProperty("runtimeColor").colorValue = new Color(1f, 1f, 1f, 0f);
-        serializedTrigger.FindProperty("bringToFront").boolValue = true;
-        serializedTrigger.ApplyModifiedProperties();
-        EditorUtility.SetDirty(trigger);
-    }
-
-    private static void ApplyDoorTriggerPlaceholderRect(RectTransform rectTransform, int doorIndex, int doorCount)
-    {
-        int safeDoorCount = Mathf.Max(1, doorCount);
-        float spacing = 180f;
-        float startX = -spacing * (safeDoorCount - 1) * 0.5f;
-
-        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        rectTransform.anchoredPosition = new Vector2(startX + spacing * doorIndex, 0f);
-        rectTransform.sizeDelta = new Vector2(120f, 140f);
-        rectTransform.localScale = Vector3.one;
-    }
-
     private static RoomDoorTriggerEditingInfo PrepareDoorTriggersForRoomEditing(
         CameraAreaController cameraArea,
         string roomName,
@@ -1429,7 +815,7 @@ public static class NavigationEditorTools
         FitToTextureWithUndo(roomGroup, roomTexture, "Fit Room Editing Layer To Source Image");
         SetActiveWithUndo(roomGroup.gameObject, true);
         EnsureRoomContentGroup(roomGroup, roomName);
-        RectTransform doorsRoot = FindOrCreateDoorsRoot(roomGroup);
+        FindOrCreateDoorsRoot(roomGroup);
 
         for (int i = 0; i < editRoot.childCount; i++)
         {
@@ -1469,7 +855,7 @@ public static class NavigationEditorTools
 
         for (int i = 0; i < triggers.Count; i++)
         {
-            PrepareDoorTriggerForEditing(triggers[i], doorsRoot, roomName);
+            PrepareDoorTriggerForEditing(triggers[i], roomName);
         }
 
         return new RoomDoorTriggerEditingInfo(roomGroup.name, triggers.Count);
@@ -1571,19 +957,14 @@ public static class NavigationEditorTools
         return false;
     }
 
-    private static void PrepareDoorTriggerForEditing(DoorTriggerNavigation trigger, RectTransform roomGroup, string roomName)
+    private static void PrepareDoorTriggerForEditing(DoorTriggerNavigation trigger, string roomName)
     {
-        if (trigger == null || roomGroup == null)
+        if (trigger == null)
         {
             return;
         }
 
         trigger.RefreshInferredSourceRoom();
-
-        if (trigger.transform.parent != roomGroup)
-        {
-            Undo.SetTransformParent(trigger.transform, roomGroup, "Move Door Trigger To Room Editing Layer");
-        }
 
         SetActiveWithUndo(trigger.gameObject, true);
 
@@ -1633,8 +1014,12 @@ public static class NavigationEditorTools
             FitToTextureWithUndo(roomRect, roomTexture, "Fit Room Editing Layer To Source Image");
         }
 
-        RectTransform doorsRoot = roomRect != null ? FindOrCreateDoorsRoot(roomRect) : null;
-        DoorTriggerNavigation[] doorTriggers = FindSceneObjects<DoorTriggerNavigation>();
+        if (roomRect != null)
+        {
+            FindOrCreateDoorsRoot(roomRect);
+        }
+
+        DoorTriggerNavigation[] doorTriggers = roomContentGroup.GetComponentsInChildren<DoorTriggerNavigation>(true);
         int preparedCount = 0;
 
         for (int i = 0; i < doorTriggers.Length; i++)
@@ -1646,29 +1031,11 @@ public static class NavigationEditorTools
                 continue;
             }
 
-            if (!IsDoorTriggerAssignedToRoom(trigger, roomContentGroup, roomName))
-            {
-                SetActiveWithUndo(trigger.gameObject, false);
-                continue;
-            }
-
-            PrepareDoorTriggerForEditing(trigger, doorsRoot, roomName);
+            PrepareDoorTriggerForEditing(trigger, roomName);
             preparedCount++;
         }
 
         return preparedCount;
-    }
-
-    private static bool IsDoorTriggerAssignedToRoom(DoorTriggerNavigation trigger, RoomContentGroup roomContentGroup, string roomName)
-    {
-        RoomContentGroup parentRoomContentGroup = trigger.GetComponentInParent<RoomContentGroup>(true);
-
-        if (parentRoomContentGroup == roomContentGroup)
-        {
-            return true;
-        }
-
-        return string.Equals(Clean(trigger.SourceRoom), roomName, StringComparison.OrdinalIgnoreCase);
     }
 
     private static int BeginNavigationPreviewUndo(string undoName)
@@ -1864,40 +1231,6 @@ public static class NavigationEditorTools
         }
 
         return sceneObjects.ToArray();
-    }
-
-    private static Transform FindSceneTransform(string objectName)
-    {
-        Transform[] transforms = FindSceneObjects<Transform>();
-
-        for (int i = 0; i < transforms.Length; i++)
-        {
-            Transform candidate = transforms[i];
-
-            if (candidate != null && candidate.name == objectName)
-            {
-                return candidate;
-            }
-        }
-
-        return null;
-    }
-
-    private static bool IsChildOf(Transform child, Transform possibleParent)
-    {
-        Transform current = child;
-
-        while (current != null)
-        {
-            if (current == possibleParent)
-            {
-                return true;
-            }
-
-            current = current.parent;
-        }
-
-        return false;
     }
 
     private static bool IsNearlyZeroScale(Vector3 scale)
