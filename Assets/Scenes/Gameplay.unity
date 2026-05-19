@@ -1213,7 +1213,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 3e163816317a638f5adedc338ec34d98, type: 3}
+  m_Texture: {fileID: 2800000, guid: 5987c5a8b3a09fc1ca848ac0ece03658, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -1345,7 +1345,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &567115834
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5798,7 +5798,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   roomName: Library
-  roomBackgroundTexture: {fileID: 2800000, guid: 026a78d50348582b498ca1495df589fb, type: 3}
+  roomBackgroundTexture: {fileID: 2800000, guid: 0a85e4fdd73e4714fabde63002a457e7, type: 3}
 --- !u!114 &2102000004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6447,7 +6447,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000011
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7621,7 +7621,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000076
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7722,7 +7722,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000081
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8429,7 +8429,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000121
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8501,7 +8501,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sourceRoom: Billiard Room
   doorName: BilliardRoom_GEH
-  destinationRoom: Grand Entrance Hall
+  destinationRoom: Grand Entrance Hall Rear View
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
@@ -8530,7 +8530,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000131
 RectTransform:
   m_ObjectHideFlags: 0
