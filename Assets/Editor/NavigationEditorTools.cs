@@ -42,6 +42,26 @@ public static class NavigationEditorTools
         return FindSelectedCameraArea() != null;
     }
 
+    [MenuItem("Dreadforge/Navigation/Preview Selected Room For Door Editing")]
+    public static void PreviewSelectedRoomForDoorEditing()
+    {
+        RoomContentGroup roomContentGroup = FindSelectedRoomContentGroup();
+
+        if (roomContentGroup == null)
+        {
+            Debug.LogWarning("Select a Room_* object, its Doors child, or one of its DoorTrigger_* children before previewing a room for door editing.");
+            return;
+        }
+
+        PreviewRoomForDoorEditing(roomContentGroup);
+    }
+
+    [MenuItem("Dreadforge/Navigation/Preview Selected Room For Door Editing", true)]
+    private static bool CanPreviewSelectedRoomForDoorEditing()
+    {
+        return FindSelectedRoomContentGroup() != null;
+    }
+
     [MenuItem("Dreadforge/Navigation/Auto Preview Selected Camera")]
     public static void ToggleAutoPreviewSelectedCamera()
     {
@@ -437,6 +457,61 @@ public static class NavigationEditorTools
         PreviewCameraForDoorEditing(cameraArea, true);
     }
 
+    public static void PreviewRoomForDoorEditing(RoomContentGroup roomContentGroup)
+    {
+        PreviewRoomForDoorEditing(roomContentGroup, true);
+    }
+
+    public static void PreviewRoomForDoorEditing(RoomContentGroup roomContentGroup, bool pingRoom)
+    {
+        if (roomContentGroup == null)
+        {
+            return;
+        }
+
+        string roomName = Clean(roomContentGroup.RoomName);
+
+        if (string.IsNullOrEmpty(roomName))
+        {
+            Debug.LogWarning($"Could not infer a room name from '{roomContentGroup.name}'. Set the RoomContentGroup room name before previewing.", roomContentGroup);
+            return;
+        }
+
+        CaptureVisibleDoorTriggerAnchorsForCurrentPreview();
+
+        int undoGroup = BeginNavigationPreviewUndo($"Preview {roomName} For Door Editing");
+        RawImage backgroundImage = PrepareRoomContentBackgroundForEditing(roomContentGroup);
+        CameraManager cameraManager = backgroundImage != null ? FindCameraManagerForBackground(backgroundImage) : FindSceneCameraManager();
+
+        EnsureAncestorsActive(roomContentGroup.transform);
+
+        RoomContentGroup[] roomContentGroups = FindRoomContentGroupsInSameEditingGroup(roomContentGroup);
+
+        for (int i = 0; i < roomContentGroups.Length; i++)
+        {
+            RoomContentGroup otherRoomContentGroup = roomContentGroups[i];
+
+            if (otherRoomContentGroup == null)
+            {
+                continue;
+            }
+
+            SetActiveWithUndo(otherRoomContentGroup.gameObject, otherRoomContentGroup == roomContentGroup);
+        }
+
+        int preparedTriggerCount = PrepareDoorTriggersForRoomContentEditing(roomContentGroup, roomName, cameraManager);
+
+        if (pingRoom)
+        {
+            EditorGUIUtility.PingObject(roomContentGroup.gameObject);
+        }
+
+        FinishNavigationPreviewUndo(undoGroup);
+        MarkOpenScenesDirty();
+        SceneView.RepaintAll();
+        Debug.Log($"Previewing '{roomName}' on the full room image. Showing {preparedTriggerCount} door trigger(s) under '{roomContentGroup.name}' for editing.");
+    }
+
     public static void PreviewCameraForDoorEditing(CameraAreaController cameraArea, bool pingCamera)
     {
         if (cameraArea == null)
@@ -502,6 +577,11 @@ public static class NavigationEditorTools
 
         DoorTriggerNavigation[] doorTriggers = FindSceneObjects<DoorTriggerNavigation>();
 
+        if (HasMultipleActiveRoomTriggerSets(doorTriggers))
+        {
+            return;
+        }
+
         for (int i = 0; i < doorTriggers.Length; i++)
         {
             DoorTriggerNavigation trigger = doorTriggers[i];
@@ -521,6 +601,37 @@ public static class NavigationEditorTools
                 EditorUtility.SetDirty(trigger);
             }
         }
+    }
+
+    private static bool HasMultipleActiveRoomTriggerSets(DoorTriggerNavigation[] doorTriggers)
+    {
+        RoomContentGroup activeRoomContentGroup = null;
+
+        for (int i = 0; i < doorTriggers.Length; i++)
+        {
+            DoorTriggerNavigation trigger = doorTriggers[i];
+
+            if (trigger == null || !trigger.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            RoomContentGroup parentRoomContentGroup = trigger.GetComponentInParent<RoomContentGroup>(true);
+
+            if (parentRoomContentGroup == null || !parentRoomContentGroup.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            if (activeRoomContentGroup != null && activeRoomContentGroup != parentRoomContentGroup)
+            {
+                return true;
+            }
+
+            activeRoomContentGroup = parentRoomContentGroup;
+        }
+
+        return false;
     }
 
     private static int ValidateDestinations(StringBuilder report, DoorDataParseResult parseResult)
@@ -988,6 +1099,79 @@ public static class NavigationEditorTools
         return null;
     }
 
+    public static RoomContentGroup FindSelectedRoomContentGroup()
+    {
+        GameObject selectedObject = Selection.activeGameObject;
+
+        if (selectedObject == null)
+        {
+            return null;
+        }
+
+        RoomContentGroup directRoomContentGroup = selectedObject.GetComponent<RoomContentGroup>();
+
+        if (directRoomContentGroup != null)
+        {
+            return directRoomContentGroup;
+        }
+
+        RoomContentGroup[] parentRoomContentGroups = selectedObject.GetComponentsInParent<RoomContentGroup>(true);
+
+        if (parentRoomContentGroups.Length > 0)
+        {
+            return parentRoomContentGroups[0];
+        }
+
+        DoorTriggerNavigation selectedDoorTrigger = selectedObject.GetComponentInParent<DoorTriggerNavigation>(true);
+
+        if (selectedDoorTrigger != null)
+        {
+            return FindRoomContentGroupForRoom(selectedDoorTrigger.SourceRoom);
+        }
+
+        return null;
+    }
+
+    private static RoomContentGroup[] FindRoomContentGroupsInSameEditingGroup(RoomContentGroup roomContentGroup)
+    {
+        if (roomContentGroup != null && roomContentGroup.transform.parent != null)
+        {
+            RoomContentGroup[] siblingRoomContentGroups = roomContentGroup.transform.parent.GetComponentsInChildren<RoomContentGroup>(true);
+
+            if (siblingRoomContentGroups.Length > 0)
+            {
+                return siblingRoomContentGroups;
+            }
+        }
+
+        return FindSceneObjects<RoomContentGroup>();
+    }
+
+    private static RoomContentGroup FindRoomContentGroupForRoom(string roomName)
+    {
+        string cleanRoomName = Clean(roomName);
+
+        if (string.IsNullOrEmpty(cleanRoomName))
+        {
+            return null;
+        }
+
+        RoomContentGroup[] roomContentGroups = FindSceneObjects<RoomContentGroup>();
+
+        for (int i = 0; i < roomContentGroups.Length; i++)
+        {
+            RoomContentGroup roomContentGroup = roomContentGroups[i];
+
+            if (roomContentGroup != null &&
+                string.Equals(Clean(roomContentGroup.RoomName), cleanRoomName, StringComparison.OrdinalIgnoreCase))
+            {
+                return roomContentGroup;
+            }
+        }
+
+        return null;
+    }
+
     private static CameraAreaController[] FindCameraAreasInSameEditingGroup(CameraAreaController cameraArea)
     {
         if (cameraArea != null && cameraArea.transform.parent != null)
@@ -1071,6 +1255,62 @@ public static class NavigationEditorTools
         return backgroundImage;
     }
 
+    private static RawImage PrepareRoomContentBackgroundForEditing(RoomContentGroup roomContentGroup)
+    {
+        RawImage backgroundImage = FindCameraBackgroundImage();
+
+        if (backgroundImage == null)
+        {
+            Debug.LogWarning("Could not find the CameraManager background RawImage. The room and door triggers were still shown, but no room image could be previewed.", roomContentGroup);
+            return null;
+        }
+
+        string roomName = Clean(roomContentGroup.RoomName);
+        Texture roomTexture = roomContentGroup.RoomBackgroundTexture;
+
+        if (roomTexture == null && TryFindRoomBackgroundTexture(roomName, out Texture catalogTexture))
+        {
+            roomTexture = catalogTexture;
+        }
+
+        if (roomTexture == null)
+        {
+            Debug.LogWarning($"Room '{roomName}' has no background texture assigned.", roomContentGroup);
+        }
+
+        EnsureAncestorsActive(backgroundImage.transform);
+        SetActiveWithUndo(backgroundImage.gameObject, true);
+        Undo.RecordObject(backgroundImage, "Preview Room Background");
+
+        CameraManager cameraManager = FindCameraManagerForBackground(backgroundImage);
+
+        if (cameraManager != null && roomTexture != null)
+        {
+            Undo.RecordObject(cameraManager, "Preview Full Room Image");
+            cameraManager.PreviewFullRoomImageForDoorEditing(roomTexture);
+        }
+        else
+        {
+            backgroundImage.texture = roomTexture;
+            backgroundImage.uvRect = new Rect(0f, 0f, 1f, 1f);
+        }
+
+        backgroundImage.color = Color.white;
+        backgroundImage.raycastTarget = false;
+        EditorUtility.SetDirty(backgroundImage);
+
+        RectTransform backgroundRect = backgroundImage.transform as RectTransform;
+
+        if (backgroundRect != null)
+        {
+            Undo.RecordObject(backgroundRect, "Stretch Room Background");
+            StretchToParent(backgroundRect);
+            EditorUtility.SetDirty(backgroundRect);
+        }
+
+        return backgroundImage;
+    }
+
     private static CameraManager FindCameraManagerForBackground(RawImage backgroundImage)
     {
         CameraManager[] cameraManagers = FindSceneObjects<CameraManager>();
@@ -1082,6 +1322,21 @@ public static class NavigationEditorTools
             if (cameraManager != null && cameraManager.cameraBackground == backgroundImage)
             {
                 return cameraManager;
+            }
+        }
+
+        return cameraManagers.Length > 0 ? cameraManagers[0] : null;
+    }
+
+    private static CameraManager FindSceneCameraManager()
+    {
+        CameraManager[] cameraManagers = FindSceneObjects<CameraManager>();
+
+        for (int i = 0; i < cameraManagers.Length; i++)
+        {
+            if (cameraManagers[i] != null && cameraManagers[i].cameraBackground != null)
+            {
+                return cameraManagers[i];
             }
         }
 
@@ -1469,6 +1724,82 @@ public static class NavigationEditorTools
         }
 
         EditorUtility.SetDirty(trigger);
+    }
+
+    private static int PrepareDoorTriggersForRoomContentEditing(
+        RoomContentGroup roomContentGroup,
+        string roomName,
+        CameraManager cameraManager)
+    {
+        RectTransform roomRect = roomContentGroup.transform as RectTransform;
+
+        if (roomRect != null)
+        {
+            StretchToParentWithUndo(roomRect);
+        }
+
+        RectTransform doorsRoot = roomRect != null ? FindOrCreateDoorsRoot(roomRect) : null;
+        DoorTriggerNavigation[] doorTriggers = FindSceneObjects<DoorTriggerNavigation>();
+        int preparedCount = 0;
+
+        for (int i = 0; i < doorTriggers.Length; i++)
+        {
+            DoorTriggerNavigation trigger = doorTriggers[i];
+
+            if (trigger == null)
+            {
+                continue;
+            }
+
+            if (!IsDoorTriggerAssignedToRoom(trigger, roomContentGroup, roomName))
+            {
+                SetActiveWithUndo(trigger.gameObject, false);
+                continue;
+            }
+
+            PrepareDoorTriggerForEditing(trigger, doorsRoot, roomName);
+            ApplyCapturedDoorTriggerAnchorForEditing(trigger, cameraManager);
+            preparedCount++;
+        }
+
+        return preparedCount;
+    }
+
+    private static bool IsDoorTriggerAssignedToRoom(DoorTriggerNavigation trigger, RoomContentGroup roomContentGroup, string roomName)
+    {
+        RoomContentGroup parentRoomContentGroup = trigger.GetComponentInParent<RoomContentGroup>(true);
+
+        if (parentRoomContentGroup == roomContentGroup)
+        {
+            return true;
+        }
+
+        return string.Equals(Clean(trigger.SourceRoom), roomName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void ApplyCapturedDoorTriggerAnchorForEditing(DoorTriggerNavigation trigger, CameraManager cameraManager)
+    {
+        if (trigger == null || cameraManager == null || !trigger.HasBackgroundShaderAnchor)
+        {
+            return;
+        }
+
+        RectTransform triggerRect = trigger.transform as RectTransform;
+
+        if (triggerRect != null)
+        {
+            Undo.RecordObject(triggerRect, "Apply Door Trigger Shader Anchor");
+        }
+
+        if (trigger.ApplyCapturedShaderAnchor(cameraManager))
+        {
+            EditorUtility.SetDirty(trigger);
+
+            if (triggerRect != null)
+            {
+                EditorUtility.SetDirty(triggerRect);
+            }
+        }
     }
 
     private static int BeginNavigationPreviewUndo(string undoName)
@@ -1874,6 +2205,32 @@ public static class NavigationSelectionAutoPreview
             isPreviewingSelection ||
             EditorApplication.isPlayingOrWillChangePlaymode)
         {
+            return;
+        }
+
+        RoomContentGroup roomContentGroup = NavigationEditorTools.FindSelectedRoomContentGroup();
+
+        if (roomContentGroup != null)
+        {
+            EditorApplication.delayCall += () =>
+            {
+                if (roomContentGroup == null || EditorApplication.isPlayingOrWillChangePlaymode)
+                {
+                    return;
+                }
+
+                isPreviewingSelection = true;
+
+                try
+                {
+                    NavigationEditorTools.PreviewRoomForDoorEditing(roomContentGroup, false);
+                }
+                finally
+                {
+                    isPreviewingSelection = false;
+                }
+            };
+
             return;
         }
 
