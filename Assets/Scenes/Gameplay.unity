@@ -424,7 +424,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -449, y: 22}
+  m_AnchoredPosition: {x: -554, y: -22}
   m_SizeDelta: {x: 192.41534, y: 290.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &109889178
@@ -643,7 +643,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 447, y: -8}
+  m_AnchoredPosition: {x: 532, y: -22}
   m_SizeDelta: {x: 203.60864, y: 301}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &340611600
@@ -992,10 +992,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2092076913}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 1672, y: 941}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &540209524
 MonoBehaviour:
@@ -1167,10 +1167,10 @@ RectTransform:
   - {fileID: 2103000021}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 1672, y: 941}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &609462627 stripped
 GameObject:
@@ -3616,10 +3616,10 @@ RectTransform:
   - {fileID: 2103000031}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 1672, y: 941}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1452909328
 GameObject:
@@ -5081,7 +5081,8 @@ MonoBehaviour:
   playStaticOnCameraSwitch: 1
   staticTransitionDuration: 1
   resizeBackgroundToScreen: 1
-  cropBackgroundToFill: 1
+  fitBackgroundToRoomAspect: 1
+  cropBackgroundToFill: 0
   configureCanvasScaling: 1
   referenceResolution: {x: 1366, y: 768}
   matchWidthOrHeight: 0.5
@@ -5110,12 +5111,13 @@ MonoBehaviour:
   defaultRoomFov: 0.8
   minRoomFov: 0.55
   maxRoomFov: 1
-  defaultRoomZoom: 1
-  maxRoomZoom: 1.14
+  defaultRoomZoom: 1.06
+  maxRoomZoom: 1.22
   mouseScrollZoomStep: 0.035
   roomZoomSmoothTime: 0.12
   roomZoomFocus: {x: 0.5, y: 0.56}
   maxMouseWheelStepsPerFrame: 1
+  maxShaderPanAngle: 0.08
   enableAnchoredBackgroundAnimation: 1
   anchoredAnimationCamera: {fileID: 836767213}
   anchoredAnimationFrames: {fileID: 11400000, guid: c0e133a71a4f4d3bb8b4a65e5a9f1c02, type: 2}
@@ -5270,8 +5272,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -3, y: 2}
-  m_SizeDelta: {x: 116.86755, y: 155.75}
+  m_AnchoredPosition: {x: -8.0913, y: 17.7482}
+  m_SizeDelta: {x: 106.685, y: 211.0096}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2101000003
 CanvasRenderer:
@@ -6195,10 +6197,10 @@ RectTransform:
   - {fileID: 2300000004}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 1672, y: 941}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2300000002
 MonoBehaviour:

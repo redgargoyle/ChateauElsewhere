@@ -10,6 +10,7 @@ public class CameraManager : MonoBehaviour
     public bool playStaticOnCameraSwitch = true;
     public float staticTransitionDuration = 1f;
     public bool resizeBackgroundToScreen = true;
+    public bool fitBackgroundToRoomAspect = true;
     public bool cropBackgroundToFill = true;
     public bool configureCanvasScaling = true;
     public Vector2 referenceResolution = new Vector2(1366f, 768f);
@@ -51,9 +52,9 @@ public class CameraManager : MonoBehaviour
     [Range(0f, 1f)]
     public float maxRoomFov = 1f;
     [Range(1f, 1.5f)]
-    public float defaultRoomZoom = 1f;
+    public float defaultRoomZoom = 1.06f;
     [Range(1f, 1.5f)]
-    public float maxRoomZoom = 1.14f;
+    public float maxRoomZoom = 1.22f;
     [Range(0.01f, 0.5f)]
     public float mouseScrollZoomStep = 0.035f;
     [Range(0.01f, 0.5f)]
@@ -61,6 +62,8 @@ public class CameraManager : MonoBehaviour
     public Vector2 roomZoomFocus = new Vector2(0.5f, 0.56f);
     [Range(0.1f, 5f)]
     public float maxMouseWheelStepsPerFrame = 1f;
+    [Range(0f, 0.3f)]
+    public float maxShaderPanAngle = 0.08f;
     [Header("Anchored Background Animation")]
     public bool enableAnchoredBackgroundAnimation = true;
     public CameraAreaController anchoredAnimationCamera;
@@ -1028,9 +1031,15 @@ public class CameraManager : MonoBehaviour
 
         if (panRoomWithMouseEdges)
         {
+            float previousPan = currentRoomPan;
             targetRoomPan = GetRoomHorizontalPanTargetFromMouse(out int edgeDirection);
             currentRoomPan = ClampHorizontalRoomPan(MoveValue(currentRoomPan, targetRoomPan, GetCurrentHorizontalPanSpeed(edgeDirection)));
             NavigationCursorController.SetEdgePanDirection(edgeDirection);
+            if (!Mathf.Approximately(previousPan, currentRoomPan))
+            {
+                ApplyBackgroundLayout();
+            }
+
             shouldApply = true;
         }
         else
@@ -1041,14 +1050,21 @@ public class CameraManager : MonoBehaviour
 
         if (moveRoomVerticallyWithMouseEdges)
         {
+            float previousVerticalPan = currentRoomVerticalPan;
             targetRoomVerticalPan = GetRoomVerticalPanTargetFromMouse();
             currentRoomVerticalPan = ClampVerticalRoomPan(MoveValue(currentRoomVerticalPan, targetRoomVerticalPan, roomPanSpeed));
+            if (!Mathf.Approximately(previousVerticalPan, currentRoomVerticalPan))
+            {
+                ApplyBackgroundLayout();
+            }
+
             shouldApply = true;
         }
         else if (!Mathf.Approximately(currentRoomVerticalPan, 0f) || !Mathf.Approximately(targetRoomVerticalPan, 0f))
         {
             targetRoomVerticalPan = 0f;
             currentRoomVerticalPan = 0f;
+            ApplyBackgroundLayout();
             shouldApply = true;
         }
 
@@ -1066,7 +1082,7 @@ public class CameraManager : MonoBehaviour
 
             if (!Mathf.Approximately(previousZoom, currentRoomZoom))
             {
-                ApplyCurrentBackgroundUvCrop();
+                ApplyBackgroundLayout();
             }
 
             shouldApply = true;
@@ -1077,7 +1093,7 @@ public class CameraManager : MonoBehaviour
             targetRoomZoom = ClampRoomZoom(defaultRoomZoom);
             currentRoomZoom = targetRoomZoom;
             roomZoomVelocity = 0f;
-            ApplyCurrentBackgroundUvCrop();
+            ApplyBackgroundLayout();
             shouldApply = true;
         }
 
@@ -1098,8 +1114,8 @@ public class CameraManager : MonoBehaviour
         float smoothTime = Mathf.Max(0.01f, roomZoomSmoothTime);
 
         // Mouse wheels and trackpads report discrete bursts. SmoothDamp turns
-        // those bursts into a small, continuous crop zoom instead of warping the
-        // painted room through the old vertical shader distortion.
+        // those bursts into a small, continuous zoom instead of stepping the
+        // painted room between visible sizes.
         return ClampRoomZoom(Mathf.SmoothDamp(
             currentValue,
             targetValue,
@@ -1244,21 +1260,9 @@ public class CameraManager : MonoBehaviour
 
     private float ClampHorizontalRoomPan(float pan)
     {
-        float safePanLimit = Mathf.Min(Mathf.Clamp01(maxRoomPan), GetSafeHorizontalPanLimit(currentRoomFov));
+        float safePanLimit = Mathf.Clamp01(maxRoomPan);
 
         return Mathf.Clamp(pan, -safePanLimit, safePanLimit);
-    }
-
-    private float GetSafeHorizontalPanLimit(float fov)
-    {
-        float safeFov = Mathf.Max(0.0001f, ClampRoomFov(fov));
-        float tanFov = Mathf.Tan(safeFov);
-        float maxHorizontalT = (1f - SourceUvXMin) / SourceUvXRange;
-
-        // Keep the shader sample inside the room image at the screen edges.
-        // This prevents the left/right streaks that happen when clamp sampling
-        // stretches the outermost pixels.
-        return Mathf.Max(0f, Mathf.Atan((maxHorizontalT - 0.5f) * tanFov) - safeFov * 0.5f);
     }
 
     private float ClampVerticalRoomPan(float pan)
@@ -1283,7 +1287,7 @@ public class CameraManager : MonoBehaviour
 
     private void ApplyRoomLookToMaterial(Material material)
     {
-        SetFloatIfAvailable(material, CameraAngleId, ClampHorizontalRoomPan(currentRoomPan));
+        SetFloatIfAvailable(material, CameraAngleId, GetShaderCameraAngle());
         SetFloatIfAvailable(material, FovId, currentRoomFov);
         SetFloatIfAvailable(material, VerticalStrengthId, ClampVerticalRoomPan(currentRoomVerticalPan));
     }
@@ -1421,12 +1425,31 @@ public class CameraManager : MonoBehaviour
         lastScreenHeight = Screen.height;
 
         RectTransform rectTransform = cameraBackground.rectTransform;
-        rectTransform.anchorMin = Vector2.zero;
-        rectTransform.anchorMax = Vector2.one;
-        rectTransform.offsetMin = Vector2.zero;
-        rectTransform.offsetMax = Vector2.zero;
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
         rectTransform.localScale = Vector3.one;
+
+        if (fitBackgroundToRoomAspect && rectTransform.parent is RectTransform parentRect)
+        {
+            Vector2 fitSize = GetBackgroundFitSize(parentRect.rect.size);
+            Vector2 zoomedSize = fitSize * ClampRoomZoom(currentRoomZoom);
+            Vector2 maxOffset = new Vector2(
+                Mathf.Max(0f, (zoomedSize.x - parentRect.rect.width) * 0.5f),
+                Mathf.Max(0f, (zoomedSize.y - parentRect.rect.height) * 0.5f));
+
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = new Vector2(
+                -GetHorizontalPanAmount() * maxOffset.x,
+                -GetVerticalPanAmount() * maxOffset.y);
+            rectTransform.sizeDelta = zoomedSize;
+        }
+        else
+        {
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+        }
 
         ApplyBackgroundUvCrop(rectTransform);
     }
@@ -1434,28 +1457,16 @@ public class CameraManager : MonoBehaviour
     private void ApplyBackgroundUvCrop(RectTransform rectTransform)
     {
         baseBackgroundUvRect = GetBaseBackgroundUvCrop(rectTransform);
-        cameraBackground.uvRect = ApplyRoomZoomToUvRect(baseBackgroundUvRect);
-    }
-
-    private void ApplyCurrentBackgroundUvCrop()
-    {
-        if (cameraBackground == null)
-        {
-            return;
-        }
-
-        RectTransform rectTransform = cameraBackground.rectTransform;
-
-        if (rectTransform == null)
-        {
-            return;
-        }
-
-        ApplyBackgroundUvCrop(rectTransform);
+        cameraBackground.uvRect = fitBackgroundToRoomAspect ? baseBackgroundUvRect : ApplyRoomZoomToUvRect(baseBackgroundUvRect);
     }
 
     private Rect GetBaseBackgroundUvCrop(RectTransform rectTransform)
     {
+        if (fitBackgroundToRoomAspect)
+        {
+            return new Rect(0f, 0f, 1f, 1f);
+        }
+
         if (!cropBackgroundToFill || cameraBackground.texture == null)
         {
             return new Rect(0f, 0f, 1f, 1f);
@@ -1530,7 +1541,7 @@ public class CameraManager : MonoBehaviour
     private Vector2 ShaderUvToMeshUv(Vector2 shaderUv)
     {
         float fov = Mathf.Max(0.0001f, currentRoomFov);
-        float cameraAngle = ClampHorizontalRoomPan(currentRoomPan);
+        float cameraAngle = GetShaderCameraAngle();
         float verticalStrength = ClampVerticalRoomPan(currentRoomVerticalPan);
         float margin = GetShaderMargin();
         float tanFov = Mathf.Tan(fov);
@@ -1565,6 +1576,59 @@ public class CameraManager : MonoBehaviour
         }
 
         return Mathf.Clamp01(material.GetFloat(MarginId));
+    }
+
+    private Vector2 GetBackgroundFitSize(Vector2 parentSize)
+    {
+        if (parentSize.x <= 0f || parentSize.y <= 0f)
+        {
+            return Vector2.zero;
+        }
+
+        float targetAspect = GetBackgroundTargetAspect();
+        float parentAspect = parentSize.x / parentSize.y;
+        float width = parentSize.x;
+        float height = parentSize.y;
+
+        if (parentAspect > targetAspect)
+        {
+            width = height * targetAspect;
+        }
+        else
+        {
+            height = width / targetAspect;
+        }
+
+        return new Vector2(width, height);
+    }
+
+    private float GetBackgroundTargetAspect()
+    {
+        Texture texture = cameraBackground != null ? cameraBackground.texture : null;
+
+        if (texture != null && texture.width > 0 && texture.height > 0)
+        {
+            return (float)texture.width / texture.height;
+        }
+
+        return referenceResolution.y > 0f ? Mathf.Max(0.01f, referenceResolution.x / referenceResolution.y) : 16f / 9f;
+    }
+
+    private float GetHorizontalPanAmount()
+    {
+        float maxPan = Mathf.Max(0.0001f, Mathf.Clamp01(maxRoomPan));
+        return Mathf.Clamp(ClampHorizontalRoomPan(currentRoomPan) / maxPan, -1f, 1f);
+    }
+
+    private float GetVerticalPanAmount()
+    {
+        float maxPan = Mathf.Max(0.0001f, Mathf.Clamp01(maxRoomVerticalPan));
+        return Mathf.Clamp(ClampVerticalRoomPan(currentRoomVerticalPan) / maxPan, -1f, 1f);
+    }
+
+    private float GetShaderCameraAngle()
+    {
+        return GetHorizontalPanAmount() * Mathf.Clamp(maxShaderPanAngle, 0f, 0.3f);
     }
 
     private float SafeInverseLerp(float from, float to, float value)

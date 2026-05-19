@@ -455,8 +455,9 @@ public static class NavigationEditorTools
             return;
         }
 
+        Texture roomTexture = FindRoomContentEditingTexture(roomContentGroup, roomName);
         int undoGroup = BeginNavigationPreviewUndo($"Preview {roomName} For Door Editing");
-        PrepareRoomContentBackgroundForEditing(roomContentGroup);
+        PrepareRoomContentBackgroundForEditing(roomContentGroup, roomTexture);
 
         EnsureAncestorsActive(roomContentGroup.transform);
 
@@ -474,7 +475,7 @@ public static class NavigationEditorTools
             SetActiveWithUndo(otherRoomContentGroup.gameObject, otherRoomContentGroup == roomContentGroup);
         }
 
-        int preparedTriggerCount = PrepareDoorTriggersForRoomContentEditing(roomContentGroup, roomName);
+        int preparedTriggerCount = PrepareDoorTriggersForRoomContentEditing(roomContentGroup, roomName, roomTexture);
 
         if (pingRoom)
         {
@@ -1122,15 +1123,16 @@ public static class NavigationEditorTools
         Undo.RecordObject(backgroundImage, "Preview Room Background");
 
         CameraManager cameraManager = FindCameraManagerForBackground(backgroundImage);
+        Texture roomTexture = cameraArea != null ? cameraArea.GetEffectiveRoomBackgroundTexture() : null;
 
-        if (cameraManager != null && cameraArea.roomBackgroundTexture != null)
+        if (cameraManager != null && roomTexture != null)
         {
             Undo.RecordObject(cameraManager, "Preview Room Background");
-            cameraManager.PreviewRoomBackground(cameraArea.roomBackgroundTexture);
+            cameraManager.PreviewRoomBackground(roomTexture);
         }
         else
         {
-            backgroundImage.texture = cameraArea.roomBackgroundTexture;
+            backgroundImage.texture = roomTexture;
             backgroundImage.uvRect = new Rect(0f, 0f, 1f, 1f);
         }
 
@@ -1142,15 +1144,13 @@ public static class NavigationEditorTools
 
         if (backgroundRect != null)
         {
-            Undo.RecordObject(backgroundRect, "Stretch Room Background");
-            StretchToParent(backgroundRect);
-            EditorUtility.SetDirty(backgroundRect);
+            FitToTextureWithUndo(backgroundRect, roomTexture, "Fit Room Background To Source Image");
         }
 
         return backgroundImage;
     }
 
-    private static RawImage PrepareRoomContentBackgroundForEditing(RoomContentGroup roomContentGroup)
+    private static RawImage PrepareRoomContentBackgroundForEditing(RoomContentGroup roomContentGroup, Texture roomTexture)
     {
         RawImage backgroundImage = FindCameraBackgroundImage();
 
@@ -1161,13 +1161,6 @@ public static class NavigationEditorTools
         }
 
         string roomName = Clean(roomContentGroup.RoomName);
-        Texture roomTexture = roomContentGroup.RoomBackgroundTexture;
-
-        if (roomTexture == null && TryFindRoomBackgroundTexture(roomName, out Texture catalogTexture))
-        {
-            roomTexture = catalogTexture;
-        }
-
         if (roomTexture == null)
         {
             Debug.LogWarning($"Room '{roomName}' has no background texture assigned.", roomContentGroup);
@@ -1198,12 +1191,22 @@ public static class NavigationEditorTools
 
         if (backgroundRect != null)
         {
-            Undo.RecordObject(backgroundRect, "Stretch Room Background");
-            StretchToParent(backgroundRect);
-            EditorUtility.SetDirty(backgroundRect);
+            FitToTextureWithUndo(backgroundRect, roomTexture, "Fit Room Background To Source Image");
         }
 
         return backgroundImage;
+    }
+
+    private static Texture FindRoomContentEditingTexture(RoomContentGroup roomContentGroup, string roomName)
+    {
+        Texture roomTexture = roomContentGroup != null ? roomContentGroup.RoomBackgroundTexture : null;
+
+        if (roomTexture == null && TryFindRoomBackgroundTexture(roomName, out Texture catalogTexture))
+        {
+            roomTexture = catalogTexture;
+        }
+
+        return roomTexture;
     }
 
     private static CameraManager FindCameraManagerForBackground(RawImage backgroundImage)
@@ -1421,8 +1424,9 @@ public static class NavigationEditorTools
             return new RoomDoorTriggerEditingInfo("(no editing layer)", 0);
         }
 
+        Texture roomTexture = cameraArea != null ? cameraArea.GetEffectiveRoomBackgroundTexture() : null;
         RectTransform roomGroup = FindOrCreateRectChild(editRoot, $"Room_{SafeObjectName(roomName)}");
-        StretchToParentWithUndo(roomGroup);
+        FitToTextureWithUndo(roomGroup, roomTexture, "Fit Room Editing Layer To Source Image");
         SetActiveWithUndo(roomGroup.gameObject, true);
         EnsureRoomContentGroup(roomGroup, roomName);
         RectTransform doorsRoot = FindOrCreateDoorsRoot(roomGroup);
@@ -1619,13 +1623,14 @@ public static class NavigationEditorTools
 
     private static int PrepareDoorTriggersForRoomContentEditing(
         RoomContentGroup roomContentGroup,
-        string roomName)
+        string roomName,
+        Texture roomTexture)
     {
         RectTransform roomRect = roomContentGroup.transform as RectTransform;
 
         if (roomRect != null)
         {
-            StretchToParentWithUndo(roomRect);
+            FitToTextureWithUndo(roomRect, roomTexture, "Fit Room Editing Layer To Source Image");
         }
 
         RectTransform doorsRoot = roomRect != null ? FindOrCreateDoorsRoot(roomRect) : null;
@@ -1716,6 +1721,29 @@ public static class NavigationEditorTools
 
         Undo.RecordObject(rectTransform, "Stretch Navigation UI Group");
         StretchToParent(rectTransform);
+        EditorUtility.SetDirty(rectTransform);
+    }
+
+    private static void FitToTextureWithUndo(RectTransform rectTransform, Texture texture, string undoName)
+    {
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        if (texture == null || texture.width <= 0 || texture.height <= 0)
+        {
+            StretchToParentWithUndo(rectTransform);
+            return;
+        }
+
+        Undo.RecordObject(rectTransform, undoName);
+        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.anchoredPosition = Vector2.zero;
+        rectTransform.sizeDelta = new Vector2(texture.width, texture.height);
+        rectTransform.localScale = Vector3.one;
         EditorUtility.SetDirty(rectTransform);
     }
 

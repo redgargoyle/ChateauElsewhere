@@ -341,7 +341,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         rectTransform.GetWorldCorners(authoringCorners);
 
-        Rect sourceRect = sourceSpace.rect;
+        Rect sourceRect = GetAuthoringSourceRect(sourceSpace);
         Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
         Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
 
@@ -358,6 +358,36 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         sourceImageUvRect = NormalizeRect(Rect.MinMaxRect(min.x, min.y, max.x, max.y));
         return sourceImageUvRect.width > 0f && sourceImageUvRect.height > 0f;
+    }
+
+    private Rect GetAuthoringSourceRect(RectTransform sourceSpace)
+    {
+        if (TryGetAuthoringTexture(out Texture texture) && texture.width > 0 && texture.height > 0)
+        {
+            Vector2 size = new Vector2(texture.width, texture.height);
+            return new Rect(size * -0.5f, size);
+        }
+
+        return sourceSpace.rect;
+    }
+
+    private bool TryGetAuthoringTexture(out Texture texture)
+    {
+        texture = null;
+
+        RoomContentGroup roomContentGroup = GetComponentInParent<RoomContentGroup>(true);
+
+        if (roomContentGroup != null && roomContentGroup.TryGetRoomBackgroundTexture(out texture) && texture != null)
+        {
+            return true;
+        }
+
+        if (cameraManager != null && cameraManager.cameraBackground != null)
+        {
+            texture = cameraManager.cameraBackground.texture;
+        }
+
+        return texture != null;
     }
 
     private RectTransform FindAuthoringSourceSpace()

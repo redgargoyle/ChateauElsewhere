@@ -120,17 +120,23 @@ public class NavigationRegressionTests
         Assert.That(sceneText, Does.Contain("edgePanActivationPixels: 24"), "Gameplay should use a tiny pixel edge zone, not broad screen regions.");
         Assert.That(sceneText, Does.Contain("zoomRoomWithMouseWheel: 1"), "Mouse wheel should use a regular image zoom, not the old vertical shader distortion.");
         Assert.That(sceneText, Does.Contain("defaultRoomFov: 0.8"), "Room art should start less cropped than the old tutorial placeholder framing.");
+        Assert.That(sceneText, Does.Contain("fitBackgroundToRoomAspect: 1"), "Room art should keep a stable aspect plane when the Game view is resized.");
+        Assert.That(sceneText, Does.Contain("cropBackgroundToFill: 0"), "Window resizing should letterbox the room plane instead of changing the visible source-image crop.");
         Assert.That(sceneText, Does.Contain("roomPanStartSpeed: 0.45"), "Edge panning should start gently before accelerating.");
-        Assert.That(sceneText, Does.Contain("maxRoomZoom: 1.14"), "Wheel zoom should stay subtle enough to feel like leaning forward, not teleporting.");
+        Assert.That(sceneText, Does.Contain("defaultRoomZoom: 1.06"), "The room should start slightly zoomed so edge panning has room to move.");
+        Assert.That(sceneText, Does.Contain("maxRoomZoom: 1.22"), "Wheel zoom should stay strong enough for panning but not feel like teleporting.");
+        Assert.That(sceneText, Does.Contain("maxShaderPanAngle: 0.08"), "The shader perspective pan should stay subtle while transform pan does the readable movement.");
         Assert.That(sceneText, Does.Contain("roomZoomFocus: {x: 0.5, y: 0.56}"), "Regular zoom should aim near the room vanishing point so it reads as stepping closer.");
+        Assert.That(sceneText, Does.Contain("m_Material: {fileID: 2100000, guid: 584cbbadc5848b80cbd5eb38917500cf, type: 2}"), "The background RawImage should have the room shader material assigned in the scene.");
         Assert.That(sceneText, Does.Not.Contain("scrollRoomVerticallyWithMouseWheel"), "Mouse wheel should not drive vertical shader strength; that smeared room art into stripes.");
         Assert.That(sceneText, Does.Not.Contain("scrollRoomFovWithMouseWheel"), "Mouse wheel should not drive FOV zoom; that caused the sideways drift regression.");
         Assert.That(cameraManagerText, Does.Contain("return currentRoomPan;"), "Leaving the edge should hold the current pan instead of recentering.");
         Assert.That(cameraManagerText, Does.Contain("NavigationCursorController.SetEdgePanDirection"), "Edge panning should update the cursor state.");
-        Assert.That(cameraManagerText, Does.Contain("GetSafeHorizontalPanLimit"), "Horizontal panning must clamp to the visible image to prevent edge streak artifacts.");
+        Assert.That(cameraManagerText, Does.Contain("GetBackgroundFitSize"), "The room plane should fit the texture aspect instead of stretching with the window.");
+        Assert.That(cameraManagerText, Does.Contain("GetShaderCameraAngle"), "The shader perspective pan should be derived from the same pan state as the image plane.");
         Assert.That(cameraManagerText, Does.Contain("GetCurrentHorizontalPanSpeed"), "Edge panning should accelerate while the player holds the cursor at the edge.");
         Assert.That(cameraManagerText, Does.Contain("SmoothRoomZoom"), "Mouse-wheel zoom should be damped instead of stepping between crop values.");
-        Assert.That(cameraManagerText, Does.Contain("ApplyRoomZoomToUvRect"), "Regular zoom should crop the RawImage UVs instead of distorting the shader vertically.");
+        Assert.That(cameraManagerText, Does.Contain("rectTransform.sizeDelta = zoomedSize"), "Regular zoom should scale the room plane so hitboxes and art share one transform.");
         Assert.That(cameraManagerText, Does.Contain("ResetRoomLookForRoomChange"), "Each new room should enter from a centered default view instead of inheriting the previous room's pan/zoom.");
         Assert.That(cameraManagerText, Does.Contain("Instantiate(sourceMaterial)"), "Runtime camera input should not dirty the shared background material asset.");
         Assert.That(cameraManagerText, Does.Contain("Mathf.LerpUnclamped(1f, verticalCurve, Mathf.Abs(verticalStrength))"), "The CPU hitbox projection must mirror the continuous shader zoom curve.");
@@ -181,6 +187,7 @@ public class NavigationRegressionTests
         Assert.That(cameraManagerText, Does.Not.Contain("TryCaptureShaderAnchoredRect"), "CameraManager should not expose old capture APIs.");
         Assert.That(editorToolsText, Does.Not.Contain("CaptureVisibleDoorTriggerAnchorsForCurrentPreview"), "Editor previews should not save hitbox locations as a side effect.");
         Assert.That(editorToolsText, Does.Not.Contain("AutoSyncDoorTriggers"), "Door trigger sync should be an explicit menu action, not an automatic editor task.");
+        Assert.That(editorToolsText, Does.Contain("FitToTextureWithUndo"), "Editor room previews should show the source image at native size so door placement matches runtime UVs.");
         Assert.That(gameplaySceneText, Does.Not.Contain("backgroundShaderUvRect"), "Gameplay scene should not carry stale hidden hitbox anchors.");
         Assert.That(mainMenuSceneText, Does.Not.Contain("backgroundShaderUvRect"), "MainMenu scene should not carry stale hidden hitbox anchors.");
     }
