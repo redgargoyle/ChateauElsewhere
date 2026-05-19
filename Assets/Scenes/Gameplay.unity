@@ -822,7 +822,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &354156756
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1213,7 +1213,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 0a85e4fdd73e4714fabde63002a457e7, type: 3}
+  m_Texture: {fileID: 2800000, guid: 028084782cdcf3d4ab3b596624c8b7c5, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -1256,14 +1256,14 @@ RectTransform:
   m_GameObject: {fileID: 552135202}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.95, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2103000011}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 763, y: -31}
+  m_AnchoredPosition: {x: 682, y: 4}
   m_SizeDelta: {x: 197.70117, y: 390.22205}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &552135204
@@ -3751,7 +3751,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1367921345
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5980,7 +5980,6 @@ RectTransform:
   m_Children:
   - {fileID: 552135203}
   - {fileID: 2300000086}
-  - {fileID: 2300000091}
   m_Father: {fileID: 354156756}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -7935,14 +7934,14 @@ RectTransform:
   m_GameObject: {fileID: 2300000085}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8625, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2103000011}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -772, y: -40}
+  m_AnchoredPosition: {x: -685, y: -36}
   m_SizeDelta: {x: 210.47021, y: 416.47205}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2300000087
@@ -8002,107 +8001,6 @@ MonoBehaviour:
   useCameraSequence: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000088}
-  doorOpenAudioSource: {fileID: 0}
-  makeInvisibleAtRuntime: 1
-  runtimeColor: {r: 1, g: 1, b: 1, a: 0}
-  bringToFront: 1
-  playDoorOpenSound: 1
-  doorOpenAudioObjectName: Audio_DoorOpen
---- !u!1 &2300000090
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2300000091}
-  - component: {fileID: 2300000092}
-  - component: {fileID: 2300000093}
-  - component: {fileID: 2300000094}
-  m_Layer: 5
-  m_Name: DoorTrigger_MusicRoom_Ballroom
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &2300000091
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2300000090}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2103000011}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 89.57529, y: 0}
-  m_SizeDelta: {x: 59.909485, y: 140}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &2300000092
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2300000090}
-  m_CullTransparentMesh: 1
---- !u!114 &2300000093
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2300000090}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.35}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!114 &2300000094
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2300000090}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sourceRoom: Music Room
-  doorName: MusicRoom_Ballroom
-  destinationRoom: Ballroom
-  requirePlayerInSourceRoom: 1
-  useCameraSequence: 0
-  navigationManager: {fileID: 0}
-  image: {fileID: 2300000093}
   doorOpenAudioSource: {fileID: 0}
   makeInvisibleAtRuntime: 1
   runtimeColor: {r: 1, g: 1, b: 1, a: 0}
