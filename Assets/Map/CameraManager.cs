@@ -43,16 +43,24 @@ public class CameraManager : MonoBehaviour
     [Range(0f, 1f)]
     public float maxRoomVerticalPan = 1f;
     public bool invertVerticalRoomPan;
-    public bool scrollRoomVerticallyWithMouseWheel = true;
+    public bool zoomRoomWithMouseWheel = true;
     [Range(0f, 1f)]
     public float defaultRoomFov = 0.8f;
     [Range(0f, 1f)]
     public float minRoomFov = 0.55f;
     [Range(0f, 1f)]
     public float maxRoomFov = 1f;
+    [Range(1f, 1.5f)]
+    public float defaultRoomZoom = 1f;
+    [Range(1f, 1.5f)]
+    public float maxRoomZoom = 1.14f;
     [Range(0.01f, 0.5f)]
-    public float mouseScrollVerticalStep = 0.08f;
-    public float roomVerticalScrollSpeed = 5f;
+    public float mouseScrollZoomStep = 0.035f;
+    [Range(0.01f, 0.5f)]
+    public float roomZoomSmoothTime = 0.12f;
+    public Vector2 roomZoomFocus = new Vector2(0.5f, 0.56f);
+    [Range(0.1f, 5f)]
+    public float maxMouseWheelStepsPerFrame = 1f;
     [Header("Anchored Background Animation")]
     public bool enableAnchoredBackgroundAnimation = true;
     public CameraAreaController anchoredAnimationCamera;
@@ -90,11 +98,15 @@ public class CameraManager : MonoBehaviour
     private float currentRoomVerticalPan;
     private float targetRoomVerticalPan;
     private float currentRoomFov = 1f;
+    private float currentRoomZoom = 1f;
+    private float targetRoomZoom = 1f;
+    private float roomZoomVelocity;
     private float horizontalEdgeHoldTime;
     private int lastHorizontalEdgeDirection;
     private Texture currentBaseBackgroundTexture;
     private RenderTexture anchoredAnimationTexture;
     private Material anchoredAnimationCompositeMaterial;
+    private Material runtimeBackgroundMaterial;
     private RoomNavigationManager roomNavigationManager;
     private int anchoredAnimationFrameIndex = -1;
     private int anchoredAnimationFrameDirection = 1;
@@ -102,12 +114,14 @@ public class CameraManager : MonoBehaviour
     private Rect lastAnchoredAnimationRect = new Rect(float.MinValue, float.MinValue, float.MinValue, float.MinValue);
     private Material materialBeforeFullImagePlacementPreview;
     private bool fullImagePlacementPreviewActive;
+    private Rect baseBackgroundUvRect = new Rect(0f, 0f, 1f, 1f);
     private readonly Vector3[] anchoredReferenceCorners = new Vector3[4];
     private readonly Vector3[] shaderAnchorCorners = new Vector3[4];
 
     public float CurrentRoomHorizontalPan => currentRoomPan;
     public float CurrentRoomVerticalPan => currentRoomVerticalPan;
     public float CurrentRoomFov => currentRoomFov;
+    public float CurrentRoomZoom => currentRoomZoom;
     public bool IsFullImagePlacementPreviewActive => fullImagePlacementPreviewActive;
 
     private void Reset()
@@ -135,6 +149,7 @@ public class CameraManager : MonoBehaviour
         HideAnchoredAnimationReferenceVisuals();
         EnsureBackgroundCanvasVisible();
         ApplyBackgroundLayout();
+        ApplyRoomLookToMaterial();
     }
 
     private void Start()
@@ -389,12 +404,36 @@ public class CameraManager : MonoBehaviour
 
     private void EnsureBackgroundMaterialAssigned()
     {
-        if (cameraBackground == null || cameraBackground.material != null || fullImagePlacementPreviewActive)
+        if (cameraBackground == null || fullImagePlacementPreviewActive)
         {
             return;
         }
 
-        cameraBackground.material = ResolveBackgroundMaterialForPreviewRestore();
+        Material sourceMaterial = cameraBackground.material != null
+            ? cameraBackground.material
+            : ResolveBackgroundMaterialForPreviewRestore();
+
+        if (sourceMaterial == null)
+        {
+            return;
+        }
+
+        if (!Application.isPlaying)
+        {
+            cameraBackground.material = sourceMaterial;
+            return;
+        }
+
+        // Room panning writes shader uniforms every frame, so Play mode needs a
+        // private material instead of editing the shared BackgroundMaterial asset.
+        if (runtimeBackgroundMaterial == null)
+        {
+            runtimeBackgroundMaterial = Instantiate(sourceMaterial);
+            runtimeBackgroundMaterial.name = $"{sourceMaterial.name} (Runtime)";
+            runtimeBackgroundMaterial.hideFlags = HideFlags.HideAndDontSave;
+        }
+
+        cameraBackground.material = runtimeBackgroundMaterial;
     }
 
     public void SetRoomLookForPreview(float horizontalPan, float verticalPan, float fov)
@@ -407,7 +446,11 @@ public class CameraManager : MonoBehaviour
         currentRoomVerticalPan = ClampVerticalRoomPan(verticalPan);
         targetRoomVerticalPan = currentRoomVerticalPan;
         currentRoomFov = ClampRoomFov(fov);
+        currentRoomZoom = ClampRoomZoom(defaultRoomZoom);
+        targetRoomZoom = currentRoomZoom;
+        roomZoomVelocity = 0f;
 
+        ApplyBackgroundLayout();
         ApplyRoomLookToMaterial();
         MarkBackgroundPreviewDirty();
     }
@@ -1055,6 +1098,7 @@ public class CameraManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        ReleaseRuntimeBackgroundMaterial();
         ReleaseAnchoredAnimationTexture();
 
         if (anchoredAnimationCompositeMaterial != null)
@@ -1076,9 +1120,30 @@ public class CameraManager : MonoBehaviour
         anchoredAnimationTexture = null;
     }
 
+    private void ReleaseRuntimeBackgroundMaterial()
+    {
+        if (runtimeBackgroundMaterial == null)
+        {
+            return;
+        }
+
+        if (Application.isPlaying)
+        {
+            Destroy(runtimeBackgroundMaterial);
+        }
+        else
+        {
+            DestroyImmediate(runtimeBackgroundMaterial);
+        }
+
+        runtimeBackgroundMaterial = null;
+    }
+
     private void InitializeRoomLook()
     {
         currentRoomFov = ClampRoomFov(defaultRoomFov);
+        currentRoomZoom = ClampRoomZoom(defaultRoomZoom);
+        targetRoomZoom = currentRoomZoom;
     }
 
     private void UpdateRoomLookFromInput()
@@ -1109,25 +1174,39 @@ public class CameraManager : MonoBehaviour
             currentRoomVerticalPan = ClampVerticalRoomPan(MoveValue(currentRoomVerticalPan, targetRoomVerticalPan, roomPanSpeed));
             shouldApply = true;
         }
-
-        if (scrollRoomVerticallyWithMouseWheel)
-        {
-            float scrollDelta = Input.mouseScrollDelta.y;
-
-            if (!Mathf.Approximately(scrollDelta, 0f))
-            {
-                float direction = invertVerticalRoomPan ? -1f : 1f;
-                targetRoomVerticalPan = ClampVerticalRoomPan(targetRoomVerticalPan + scrollDelta * mouseScrollVerticalStep * direction);
-            }
-
-            currentRoomVerticalPan = ClampVerticalRoomPan(MoveValue(currentRoomVerticalPan, targetRoomVerticalPan, roomVerticalScrollSpeed));
-            shouldApply = true;
-        }
-        else if (!moveRoomVerticallyWithMouseEdges &&
-            (!Mathf.Approximately(currentRoomVerticalPan, 0f) || !Mathf.Approximately(targetRoomVerticalPan, 0f)))
+        else if (!Mathf.Approximately(currentRoomVerticalPan, 0f) || !Mathf.Approximately(targetRoomVerticalPan, 0f))
         {
             targetRoomVerticalPan = 0f;
             currentRoomVerticalPan = 0f;
+            shouldApply = true;
+        }
+
+        if (zoomRoomWithMouseWheel)
+        {
+            float scrollDelta = ClampMouseWheelDelta(Input.mouseScrollDelta.y);
+
+            if (!Mathf.Approximately(scrollDelta, 0f))
+            {
+                targetRoomZoom = ClampRoomZoom(targetRoomZoom + scrollDelta * mouseScrollZoomStep);
+            }
+
+            float previousZoom = currentRoomZoom;
+            currentRoomZoom = SmoothRoomZoom(currentRoomZoom, targetRoomZoom);
+
+            if (!Mathf.Approximately(previousZoom, currentRoomZoom))
+            {
+                ApplyCurrentBackgroundUvCrop();
+            }
+
+            shouldApply = true;
+        }
+        else if (!Mathf.Approximately(currentRoomZoom, ClampRoomZoom(defaultRoomZoom)) ||
+            !Mathf.Approximately(targetRoomZoom, ClampRoomZoom(defaultRoomZoom)))
+        {
+            targetRoomZoom = ClampRoomZoom(defaultRoomZoom);
+            currentRoomZoom = targetRoomZoom;
+            roomZoomVelocity = 0f;
+            ApplyCurrentBackgroundUvCrop();
             shouldApply = true;
         }
 
@@ -1135,6 +1214,28 @@ public class CameraManager : MonoBehaviour
         {
             ApplyRoomLookToMaterial();
         }
+    }
+
+    private float ClampMouseWheelDelta(float scrollDelta)
+    {
+        float maxDelta = Mathf.Max(0.1f, maxMouseWheelStepsPerFrame);
+        return Mathf.Clamp(scrollDelta, -maxDelta, maxDelta);
+    }
+
+    private float SmoothRoomZoom(float currentValue, float targetValue)
+    {
+        float smoothTime = Mathf.Max(0.01f, roomZoomSmoothTime);
+
+        // Mouse wheels and trackpads report discrete bursts. SmoothDamp turns
+        // those bursts into a small, continuous crop zoom instead of warping the
+        // painted room through the old vertical shader distortion.
+        return ClampRoomZoom(Mathf.SmoothDamp(
+            currentValue,
+            targetValue,
+            ref roomZoomVelocity,
+            smoothTime,
+            Mathf.Infinity,
+            Time.unscaledDeltaTime));
     }
 
     private float GetRoomHorizontalPanTargetFromMouse(out int edgeDirection)
@@ -1260,6 +1361,14 @@ public class CameraManager : MonoBehaviour
         float maxFov = Mathf.Max(minRoomFov, maxRoomFov);
 
         return Mathf.Clamp(fov, minFov, maxFov);
+    }
+
+    private float ClampRoomZoom(float zoom)
+    {
+        float minZoom = Mathf.Max(1f, defaultRoomZoom);
+        float maxZoom = Mathf.Max(minZoom, maxRoomZoom);
+
+        return Mathf.Clamp(zoom, minZoom, maxZoom);
     }
 
     private float ClampHorizontalRoomPan(float pan)
@@ -1453,17 +1562,39 @@ public class CameraManager : MonoBehaviour
 
     private void ApplyBackgroundUvCrop(RectTransform rectTransform)
     {
+        baseBackgroundUvRect = GetBaseBackgroundUvCrop(rectTransform);
+        cameraBackground.uvRect = ApplyRoomZoomToUvRect(baseBackgroundUvRect);
+    }
+
+    private void ApplyCurrentBackgroundUvCrop()
+    {
+        if (cameraBackground == null)
+        {
+            return;
+        }
+
+        RectTransform rectTransform = cameraBackground.rectTransform;
+
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        ApplyBackgroundUvCrop(rectTransform);
+    }
+
+    private Rect GetBaseBackgroundUvCrop(RectTransform rectTransform)
+    {
         if (!cropBackgroundToFill || cameraBackground.texture == null)
         {
-            cameraBackground.uvRect = new Rect(0f, 0f, 1f, 1f);
-            return;
+            return new Rect(0f, 0f, 1f, 1f);
         }
 
         Rect rect = rectTransform.rect;
 
         if (rect.width <= 0f || rect.height <= 0f)
         {
-            return;
+            return baseBackgroundUvRect;
         }
 
         float rectAspect = rect.width / rect.height;
@@ -1481,7 +1612,28 @@ public class CameraManager : MonoBehaviour
             uv.x = (1f - uv.width) * 0.5f;
         }
 
-        cameraBackground.uvRect = uv;
+        return uv;
+    }
+
+    private Rect ApplyRoomZoomToUvRect(Rect uv)
+    {
+        float zoom = ClampRoomZoom(currentRoomZoom);
+
+        if (Mathf.Approximately(zoom, 1f))
+        {
+            return uv;
+        }
+
+        Vector2 focus = new Vector2(Mathf.Clamp01(roomZoomFocus.x), Mathf.Clamp01(roomZoomFocus.y));
+        float zoomedWidth = uv.width / zoom;
+        float zoomedHeight = uv.height / zoom;
+        float x = uv.x + (uv.width - zoomedWidth) * focus.x;
+        float y = uv.y + (uv.height - zoomedHeight) * focus.y;
+
+        x = Mathf.Clamp(x, uv.xMin, uv.xMax - zoomedWidth);
+        y = Mathf.Clamp(y, uv.yMin, uv.yMax - zoomedHeight);
+
+        return new Rect(x, y, zoomedWidth, zoomedHeight);
     }
 
     private bool BackgroundRectIsUsable(RectTransform backgroundTransform)
@@ -1569,14 +1721,7 @@ public class CameraManager : MonoBehaviour
         // Door hitboxes need the same math because the background pixels move in
         // shader UV space, not by physically moving the RawImage RectTransform.
         float verticalCurve = 0.5f + 0.5f * Mathf.Cos(Mathf.PI * (meshX + 0.5f));
-        float curvedScale = Mathf.LerpUnclamped(1f, verticalCurve, Mathf.Abs(verticalStrength));
-
-        if (verticalStrength > 0f)
-        {
-            return curvedScale;
-        }
-
-        return 1.5f - curvedScale;
+        return Mathf.LerpUnclamped(1f, verticalCurve, Mathf.Abs(verticalStrength));
     }
 
     private float GetShaderMargin()

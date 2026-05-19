@@ -13,7 +13,8 @@ public static class NavigationEditorTools
     private const string RoomVisualCatalogAssetPath = "Assets/Resources/Navigation/RoomVisualCatalog.asset";
     private const string AutoPreviewEditorPrefKey = "Dreadforge.Navigation.AutoPreviewSelectedCamera";
     private const string AutoSyncDoorTriggersEditorPrefKey = "Dreadforge.Navigation.AutoSyncDoorTriggers";
-    private const string DoorTriggerEditRootName = "RoomDoorTriggers_Edit";
+    private const string RoomRootName = "Rooms";
+    private const string LegacyDoorTriggerEditRootName = "RoomDoorTriggers_Edit";
 
     [MenuItem("Dreadforge/Navigation/Sync Door Triggers From Door Data")]
     public static void SyncDoorTriggersFromDoorData()
@@ -28,7 +29,7 @@ public static class NavigationEditorTools
 
         if (cameraArea == null)
         {
-            Debug.LogWarning("Select a Cam_* object, or one of its children, before previewing a camera for door editing.");
+            Debug.LogWarning("Select a Button_* object under Map, or one of its children, before previewing a room for door editing.");
             return;
         }
 
@@ -119,6 +120,7 @@ public static class NavigationEditorTools
         DoorButton[] doorButtons = FindSceneObjects<DoorButton>();
         DoorTriggerNavigation[] doorTriggers = FindSceneObjects<DoorTriggerNavigation>();
         RoomNavigationManager[] navigationManagers = FindSceneObjects<RoomNavigationManager>();
+        RoomContentGroup[] roomContentGroups = FindSceneObjects<RoomContentGroup>();
         CameraAreaController[] cameraAreas = FindSceneObjects<CameraAreaController>();
         RoomVisualCatalog[] visualCatalogs = FindVisualCatalogAssets();
 
@@ -138,7 +140,7 @@ public static class NavigationEditorTools
 
         issueCount += ValidateDoorTriggers(report, parseResult, doorTriggers);
         issueCount += ValidateDoorTriggerRuntimeLayer(report, parseResult, doorTriggers);
-        issueCount += ValidateRoomVisuals(report, parseResult, navigationManagers, visualCatalogs, cameraAreas);
+        issueCount += ValidateRoomVisuals(report, parseResult, navigationManagers, roomContentGroups, visualCatalogs, cameraAreas);
         issueCount += ValidateStartingRooms(report, parseResult, navigationManagers);
 
         if (issueCount == 0)
@@ -370,6 +372,8 @@ public static class NavigationEditorTools
             RectTransform roomGroup = FindOrCreateRectChild(editRoot, $"Room_{SafeObjectName(room.RoomName)}");
             StretchToParentWithUndo(roomGroup);
             SetActiveWithUndo(roomGroup.gameObject, true);
+            EnsureRoomContentGroup(roomGroup, room.RoomName);
+            RectTransform doorsRoot = FindOrCreateDoorsRoot(roomGroup);
 
             for (int i = 0; i < room.Doors.Count; i++)
             {
@@ -377,7 +381,7 @@ public static class NavigationEditorTools
 
                 if (!triggersByDoorId.TryGetValue(route.DoorId, out DoorTriggerNavigation trigger) || trigger == null)
                 {
-                    trigger = CreateDoorTrigger(route, roomGroup, i, room.Doors.Count);
+                    trigger = CreateDoorTrigger(route, doorsRoot, i, room.Doors.Count);
                     createdCount++;
                 }
                 else
@@ -385,7 +389,7 @@ public static class NavigationEditorTools
                     updatedCount++;
                 }
 
-                ConfigureDoorTriggerFromRoute(trigger, route, roomGroup, i, room.Doors.Count);
+                ConfigureDoorTriggerFromRoute(trigger, route, doorsRoot, i, room.Doors.Count);
                 syncedDoorIds.Add(route.DoorId);
             }
         }
@@ -444,7 +448,7 @@ public static class NavigationEditorTools
 
         if (string.IsNullOrEmpty(roomName))
         {
-            Debug.LogWarning($"Could not infer a room name from '{cameraArea.name}'. Use the Cam_<RoomName> naming pattern.", cameraArea);
+            Debug.LogWarning($"Could not infer a room name from '{cameraArea.name}'. Use Button_<RoomName> under the Map object.", cameraArea);
             return;
         }
 
@@ -682,11 +686,16 @@ public static class NavigationEditorTools
         DoorTriggerNavigation[] doorTriggers)
     {
         int issues = 0;
-        Transform editRoot = FindSceneTransform(DoorTriggerEditRootName);
+        Transform editRoot = FindSceneTransform(RoomRootName);
 
         if (editRoot == null)
         {
-            AppendIssue(report, $"No '{DoorTriggerEditRootName}' object exists. Runtime door triggers need this root so the navigation manager can activate the correct room layer.");
+            editRoot = FindSceneTransform(LegacyDoorTriggerEditRootName);
+        }
+
+        if (editRoot == null)
+        {
+            AppendIssue(report, $"No '{RoomRootName}' object exists. Runtime door triggers need this root so the navigation manager can activate the correct room layer.");
             issues++;
             return issues;
         }
@@ -695,12 +704,12 @@ public static class NavigationEditorTools
 
         if (editRootRect == null)
         {
-            AppendIssue(report, $"'{DoorTriggerEditRootName}' should be a RectTransform under the background Canvas.");
+            AppendIssue(report, $"'{editRoot.name}' should be a RectTransform under the background Canvas.");
             issues++;
         }
         else if (IsNearlyZeroScale(editRootRect.localScale))
         {
-            AppendIssue(report, $"'{DoorTriggerEditRootName}' has a zero scale, which makes its door triggers impossible to click.");
+            AppendIssue(report, $"'{editRoot.name}' has a zero scale, which makes its door triggers impossible to click.");
             issues++;
         }
 
@@ -708,7 +717,7 @@ public static class NavigationEditorTools
 
         if (canvas == null)
         {
-            AppendIssue(report, $"'{DoorTriggerEditRootName}' is not under a Canvas, so UI raycasts cannot reach the door triggers.");
+            AppendIssue(report, $"'{editRoot.name}' is not under a Canvas, so UI raycasts cannot reach the door triggers.");
             issues++;
         }
         else
@@ -742,7 +751,7 @@ public static class NavigationEditorTools
 
             if (roomGroup == null)
             {
-                AppendIssue(report, $"Room '{room.RoomName}' has door data, but '{DoorTriggerEditRootName}' has no child named 'Room_{SafeObjectName(room.RoomName)}'.");
+                AppendIssue(report, $"Room '{room.RoomName}' has door data, but '{editRoot.name}' has no child named 'Room_{SafeObjectName(room.RoomName)}'.");
                 issues++;
                 continue;
             }
@@ -795,6 +804,7 @@ public static class NavigationEditorTools
         StringBuilder report,
         DoorDataParseResult parseResult,
         RoomNavigationManager[] navigationManagers,
+        RoomContentGroup[] roomContentGroups,
         RoomVisualCatalog[] visualCatalogs,
         CameraAreaController[] cameraAreas)
     {
@@ -802,12 +812,12 @@ public static class NavigationEditorTools
 
         foreach (RoomDefinition room in parseResult.RoomsByName.Values)
         {
-            if (HasRoomVisual(room.RoomName, navigationManagers, visualCatalogs, cameraAreas))
+            if (HasRoomVisual(room.RoomName, navigationManagers, roomContentGroups, visualCatalogs, cameraAreas))
             {
                 continue;
             }
 
-            AppendIssue(report, $"Room '{room.RoomName}' has no background texture in a RoomVisualCatalog or legacy Cam_<RoomName> button.");
+            AppendIssue(report, $"Room '{room.RoomName}' has no background texture on its RoomContentGroup, in a RoomVisualCatalog, or on a map button.");
             issues++;
         }
 
@@ -849,6 +859,7 @@ public static class NavigationEditorTools
     private static bool HasRoomVisual(
         string roomName,
         RoomNavigationManager[] navigationManagers,
+        RoomContentGroup[] roomContentGroups,
         RoomVisualCatalog[] visualCatalogs,
         CameraAreaController[] cameraAreas)
     {
@@ -857,6 +868,18 @@ public static class NavigationEditorTools
             Texture texture = navigationManagers[i].FindRoomTexture(roomName);
 
             if (texture != null)
+            {
+                return true;
+            }
+        }
+
+        for (int i = 0; i < roomContentGroups.Length; i++)
+        {
+            RoomContentGroup group = roomContentGroups[i];
+
+            if (group != null &&
+                string.Equals(group.RoomName, roomName, StringComparison.OrdinalIgnoreCase) &&
+                group.RoomBackgroundTexture != null)
             {
                 return true;
             }
@@ -1255,6 +1278,8 @@ public static class NavigationEditorTools
         RectTransform roomGroup = FindOrCreateRectChild(editRoot, $"Room_{SafeObjectName(roomName)}");
         StretchToParentWithUndo(roomGroup);
         SetActiveWithUndo(roomGroup.gameObject, true);
+        EnsureRoomContentGroup(roomGroup, roomName);
+        RectTransform doorsRoot = FindOrCreateDoorsRoot(roomGroup);
 
         for (int i = 0; i < editRoot.childCount; i++)
         {
@@ -1294,7 +1319,7 @@ public static class NavigationEditorTools
 
         for (int i = 0; i < triggers.Count; i++)
         {
-            PrepareDoorTriggerForEditing(triggers[i], roomGroup, roomName);
+            PrepareDoorTriggerForEditing(triggers[i], doorsRoot, roomName);
         }
 
         return new RoomDoorTriggerEditingInfo(roomGroup.name, triggers.Count);
@@ -1325,10 +1350,75 @@ public static class NavigationEditorTools
             return null;
         }
 
-        RectTransform editRoot = FindOrCreateRectChild(parent, DoorTriggerEditRootName);
+        RectTransform editRoot = FindOrCreateRectChild(parent, RoomRootName);
         StretchToParentWithUndo(editRoot);
         SetActiveWithUndo(editRoot.gameObject, true);
         return editRoot;
+    }
+
+    private static void EnsureRoomContentGroup(RectTransform roomGroup, string roomName)
+    {
+        if (roomGroup == null)
+        {
+            return;
+        }
+
+        RoomContentGroup contentGroup = roomGroup.GetComponent<RoomContentGroup>();
+
+        if (contentGroup == null)
+        {
+            contentGroup = Undo.AddComponent<RoomContentGroup>(roomGroup.gameObject);
+        }
+        else
+        {
+            Undo.RecordObject(contentGroup, "Configure Room Object");
+        }
+
+        contentGroup.SetRoomName(roomName);
+
+        if (contentGroup.RoomBackgroundTexture == null && TryFindRoomBackgroundTexture(roomName, out Texture texture))
+        {
+            contentGroup.SetRoomBackgroundTexture(texture);
+        }
+
+        EditorUtility.SetDirty(contentGroup);
+    }
+
+    private static RectTransform FindOrCreateDoorsRoot(RectTransform roomGroup)
+    {
+        RectTransform doorsRoot = FindOrCreateRectChild(roomGroup, "Doors");
+        StretchToParentWithUndo(doorsRoot);
+        SetActiveWithUndo(doorsRoot.gameObject, true);
+        return doorsRoot;
+    }
+
+    private static bool TryFindRoomBackgroundTexture(string roomName, out Texture texture)
+    {
+        texture = null;
+
+        CameraAreaController cameraArea = FindCameraAreaForRoom(roomName);
+
+        if (cameraArea != null)
+        {
+            texture = cameraArea.GetEffectiveRoomBackgroundTexture();
+
+            if (texture != null)
+            {
+                return true;
+            }
+        }
+
+        RoomVisualCatalog[] visualCatalogs = FindVisualCatalogAssets();
+
+        for (int i = 0; i < visualCatalogs.Length; i++)
+        {
+            if (visualCatalogs[i] != null && visualCatalogs[i].TryGetRoomTexture(roomName, out texture))
+            {
+                return texture != null;
+            }
+        }
+
+        return false;
     }
 
     private static void PrepareDoorTriggerForEditing(DoorTriggerNavigation trigger, RectTransform roomGroup, string roomName)
@@ -1720,7 +1810,11 @@ public static class NavigationEditorTools
 
         string cleanName = objectName.Trim();
 
-        if (cleanName.StartsWith("Cam_", StringComparison.OrdinalIgnoreCase))
+        if (cleanName.StartsWith("Button_", StringComparison.OrdinalIgnoreCase))
+        {
+            cleanName = cleanName.Substring("Button_".Length);
+        }
+        else if (cleanName.StartsWith("Cam_", StringComparison.OrdinalIgnoreCase))
         {
             cleanName = cleanName.Substring("Cam_".Length);
         }

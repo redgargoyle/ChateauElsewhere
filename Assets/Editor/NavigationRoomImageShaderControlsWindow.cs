@@ -336,7 +336,7 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
 
         if (string.IsNullOrEmpty(roomName))
         {
-            Debug.LogWarning("Select or assign a Cam_* room before capturing room trigger anchors.");
+            Debug.LogWarning("Select or assign a Button_* object under Map before capturing room trigger anchors.");
             return;
         }
 
@@ -429,7 +429,11 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
 
         string cleanName = cameraArea.name;
 
-        if (cleanName.StartsWith("Cam_", StringComparison.OrdinalIgnoreCase))
+        if (cleanName.StartsWith("Button_", StringComparison.OrdinalIgnoreCase))
+        {
+            cleanName = cleanName.Substring("Button_".Length);
+        }
+        else if (cleanName.StartsWith("Cam_", StringComparison.OrdinalIgnoreCase))
         {
             cleanName = cleanName.Substring("Cam_".Length);
         }

@@ -10,8 +10,10 @@ public class RoomContentGroup : MonoBehaviour
     // animators, sounds, and other preloaded content.
     [Header("Room")]
     [SerializeField] private string roomName;
+    [SerializeField] private Texture roomBackgroundTexture;
 
     public string RoomName => GetEffectiveRoomName();
+    public Texture RoomBackgroundTexture => roomBackgroundTexture;
 
     private void Reset()
     {
@@ -29,6 +31,22 @@ public class RoomContentGroup : MonoBehaviour
     public void RefreshInferredRoomName()
     {
         FillRoomNameFromObject();
+    }
+
+    public void SetRoomName(string value)
+    {
+        roomName = string.IsNullOrWhiteSpace(value) ? ParseRoomNameFromObject(gameObject.name) : value.Trim();
+    }
+
+    public void SetRoomBackgroundTexture(Texture texture)
+    {
+        roomBackgroundTexture = texture;
+    }
+
+    public bool TryGetRoomBackgroundTexture(out Texture texture)
+    {
+        texture = roomBackgroundTexture;
+        return texture != null;
     }
 
     private string GetEffectiveRoomName()
@@ -56,7 +74,8 @@ public class RoomContentGroup : MonoBehaviour
         string cleanName = objectName.Trim();
 
         // This lets a room object be named either "Room_StorageCloset" or just
-        // "StorageCloset". The manager only uses the final room name for matching.
+        // "StorageCloset". "Cam_" is accepted only for old scenes from before
+        // rooms were split away from map camera buttons.
         if (cleanName.StartsWith("Room_", StringComparison.OrdinalIgnoreCase))
         {
             cleanName = cleanName.Substring("Room_".Length);

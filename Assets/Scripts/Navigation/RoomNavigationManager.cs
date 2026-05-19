@@ -8,8 +8,10 @@ using UnityEngine.UI;
 
 public class RoomNavigationManager : MonoBehaviour
 {
+    private const string RoomRootName = "Rooms";
+    private const string LegacyRoomObjectsRootName = "RoomObjects";
     private const string DoorButtonsRootName = "DoorButtons";
-    private const string DoorTriggerEditRootName = "RoomDoorTriggers_Edit";
+    private const string LegacyDoorTriggerEditRootName = "RoomDoorTriggers_Edit";
     private const string LegacyDoorTriggerRootName = "DoorTriggerParent";
 
     [Header("Data")]
@@ -217,10 +219,12 @@ public class RoomNavigationManager : MonoBehaviour
 
     public void RefreshDoorButtonCache()
     {
-        if (doorButtonRoot != null)
+        Transform doorSearchRoot = doorButtonRoot != null ? doorButtonRoot : roomContentRoot;
+
+        if (doorSearchRoot != null)
         {
-            cachedDoorButtons = doorButtonRoot.GetComponentsInChildren<DoorButton>(true);
-            cachedDoorTriggers = doorButtonRoot.GetComponentsInChildren<DoorTriggerNavigation>(true);
+            cachedDoorButtons = doorSearchRoot.GetComponentsInChildren<DoorButton>(true);
+            cachedDoorTriggers = doorSearchRoot.GetComponentsInChildren<DoorTriggerNavigation>(true);
             return;
         }
 
@@ -378,12 +382,29 @@ public class RoomNavigationManager : MonoBehaviour
             return;
         }
 
-        Warn($"No background texture found for room '{roomName}'. Add it to a RoomVisualCatalog.");
+        Warn($"No background texture found for room '{roomName}'. Assign it on Room_{roomName} or add it to a RoomVisualCatalog.");
     }
 
     private bool TryFindRoomTexture(string roomName, out Texture texture)
     {
         texture = null;
+
+        RefreshRoomContentCache();
+
+        for (int i = 0; i < cachedRoomContentGroups.Length; i++)
+        {
+            RoomContentGroup roomContentGroup = cachedRoomContentGroups[i];
+
+            if (roomContentGroup == null || !SameName(roomContentGroup.RoomName, roomName))
+            {
+                continue;
+            }
+
+            if (roomContentGroup.TryGetRoomBackgroundTexture(out texture))
+            {
+                return true;
+            }
+        }
 
         CameraAreaController[] legacyAreas = FindObjectsOfType<CameraAreaController>(true);
 
@@ -731,7 +752,7 @@ public class RoomNavigationManager : MonoBehaviour
 
         if (doorButtonRoot == null && cachedDoorTriggers.Length > 0)
         {
-            Debug.LogWarning($"Navigation found {cachedDoorTriggers.Length} door trigger(s), but no '{DoorTriggerEditRootName}' or '{DoorButtonsRootName}' root. Runtime can still search globally, but the scene is more fragile.", this);
+            Debug.LogWarning($"Navigation found {cachedDoorTriggers.Length} door trigger(s), but no '{RoomRootName}' or '{DoorButtonsRootName}' root. Runtime can still search globally, but the scene is more fragile.", this);
         }
 
         ValidateDoorRoutesHaveTriggers();
@@ -788,7 +809,7 @@ public class RoomNavigationManager : MonoBehaviour
 
         if (reachableCount == 0)
         {
-            Debug.LogError($"Navigation setup problem: current room '{currentRoom}' has door data, but none of its DoorTriggerNavigation objects are active in the hierarchy. Check '{DoorTriggerEditRootName}' and Room_{currentRoom}.", this);
+            Debug.LogError($"Navigation setup problem: current room '{currentRoom}' has door data, but none of its DoorTriggerNavigation objects are active in the hierarchy. Check '{RoomRootName}/Room_{currentRoom}'.", this);
         }
     }
 
@@ -851,7 +872,12 @@ public class RoomNavigationManager : MonoBehaviour
 
         if (doorButtonRoot == null)
         {
-            GameObject rootObject = GameObject.Find(DoorTriggerEditRootName);
+            GameObject rootObject = GameObject.Find(RoomRootName);
+
+            if (rootObject == null)
+            {
+                rootObject = GameObject.Find(LegacyDoorTriggerEditRootName);
+            }
 
             if (rootObject == null)
             {
@@ -871,11 +897,16 @@ public class RoomNavigationManager : MonoBehaviour
 
         if (roomContentRoot == null)
         {
-            GameObject rootObject = GameObject.Find("Rooms");
+            GameObject rootObject = GameObject.Find(RoomRootName);
 
             if (rootObject == null)
             {
-                rootObject = GameObject.Find("RoomObjects");
+                rootObject = GameObject.Find(LegacyRoomObjectsRootName);
+            }
+
+            if (rootObject == null)
+            {
+                rootObject = GameObject.Find(LegacyDoorTriggerEditRootName);
             }
 
             if (rootObject != null)
@@ -917,7 +948,11 @@ public class RoomNavigationManager : MonoBehaviour
 
         string cleanName = objectName.Trim();
 
-        if (cleanName.StartsWith("Cam_", StringComparison.OrdinalIgnoreCase))
+        if (cleanName.StartsWith("Button_", StringComparison.OrdinalIgnoreCase))
+        {
+            cleanName = cleanName.Substring("Button_".Length);
+        }
+        else if (cleanName.StartsWith("Cam_", StringComparison.OrdinalIgnoreCase))
         {
             cleanName = cleanName.Substring("Cam_".Length);
         }
