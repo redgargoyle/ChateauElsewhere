@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public sealed class RoomLightingController : MonoBehaviour
 {
     private const string DefaultPresetResourcePath = "Lighting/RoomLightingPreset";
-    private const int HudSortingOrder = 4900;
+    private const int HudSortingOrder = 7000;
 
     [SerializeField] private string presetResourcePath = DefaultPresetResourcePath;
     [SerializeField] private RoomLightingPreset preset;
@@ -49,6 +49,7 @@ public sealed class RoomLightingController : MonoBehaviour
 
         if (preset == null)
         {
+            Debug.LogWarning("Room lighting could not load Resources/Lighting/RoomLightingPreset.asset.", this);
             enabled = false;
             return;
         }
@@ -128,6 +129,11 @@ public sealed class RoomLightingController : MonoBehaviour
             RoomLightOverlay overlay = CreateOverlay(roomGroup, light, i);
             overlays.Add(overlay);
         }
+
+        if (overlays.Count == 0)
+        {
+            Debug.LogWarning("Room lighting loaded, but no preset entries matched the room names in this scene.", this);
+        }
     }
 
     private RoomLightOverlay CreateOverlay(RoomContentGroup roomGroup, RoomLightDefinition definition, int index)
@@ -198,7 +204,7 @@ public sealed class RoomLightingController : MonoBehaviour
         canvasRect.offsetMin = Vector2.zero;
         canvasRect.offsetMax = Vector2.zero;
 
-        RectTransform buttonRect = CreateHudRect("Button_Lights", canvasRect, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(462f, -18f), new Vector2(112f, 32f));
+        RectTransform buttonRect = CreateHudRect("Button_Lights", canvasRect, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-18f, -18f), new Vector2(124f, 34f));
         Image buttonImage = buttonRect.gameObject.AddComponent<Image>();
         buttonImage.color = new Color(0.16f, 0.13f, 0.095f, 0.92f);
 

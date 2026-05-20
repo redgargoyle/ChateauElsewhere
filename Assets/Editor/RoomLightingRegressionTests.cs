@@ -4,6 +4,7 @@ using NUnit.Framework;
 
 public class RoomLightingRegressionTests
 {
+    private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string ControllerPath = "Assets/Scripts/Lighting/RoomLightingController.cs";
     private const string OverlayPath = "Assets/Scripts/Lighting/RoomLightOverlay.cs";
     private const string PresetPath = "Assets/Resources/Lighting/RoomLightingPreset.asset";
@@ -19,8 +20,22 @@ public class RoomLightingRegressionTests
         Assert.That(controllerText, Does.Contain("RoomContentGroup"), "Lighting should attach to the existing room roots.");
         Assert.That(controllerText, Does.Contain("Resources.Load<RoomLightingPreset>"), "Lighting should be driven by a simple editable preset asset.");
         Assert.That(controllerText, Does.Contain("Button_Lights"), "The player should have a small HUD control for lights.");
+        Assert.That(controllerText, Does.Contain("HudSortingOrder = 7000"), "The light toggle should appear above gameplay UI.");
         Assert.That(controllerText, Does.Contain("KeyCode.L"), "The player should be able to toggle lights quickly while testing.");
+        Assert.That(controllerText, Does.Contain("Debug.LogWarning"), "Lighting setup failures should show up in the Console.");
         Assert.That(overlayText, Does.Contain("raycastTarget = false"), "Light overlays must never block room doors or interactables.");
+    }
+
+    [Test]
+    public void GameplaySceneHasExplicitLightingController()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+
+        Assert.That(sceneText, Does.Contain("m_Name: RoomLightingController"), "Lighting should be a visible scene object, not only a hidden runtime bootstrap.");
+        Assert.That(sceneText, Does.Contain("guid: 1aeafe6c29b04bb5a9e6d98f06298e45"), "Gameplay should contain the RoomLightingController script.");
+        Assert.That(sceneText, Does.Contain("guid: e9fdf1d89f634985b8b38e991ae5a1d2"), "Gameplay should directly reference the editable lighting preset.");
+        Assert.That(sceneText, Does.Contain("toggleKey: 108"), "The L key should toggle lights in Play mode.");
+        Assert.That(sceneText, Does.Contain("showHud: 1"), "The Lights HUD button should be enabled.");
     }
 
     [Test]

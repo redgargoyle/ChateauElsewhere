@@ -2,6 +2,8 @@
 
 The current prototype uses soft UI overlays generated at runtime from `Resources/Lighting/RoomLightingPreset.asset`.
 
+`Gameplay.unity` has a visible `RoomLightingController` object. If the lights ever disappear, check that object first: it owns the preset reference, HUD toggle, and `L` key binding.
+
 ## Options We Considered
 
 1. **Soft overlay lights**: transparent radial glows placed over the prerendered room images. This is implemented first because it is small, fast to tune, and keeps every light in one editable preset.

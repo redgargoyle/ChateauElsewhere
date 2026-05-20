@@ -22,7 +22,7 @@ MonoBehaviour:
     size: {x: 560, y: 260}
     rotationDegrees: 0
     color: {r: 1, g: 0.72, b: 0.34, a: 1}
-    onAlpha: 0.18
+    onAlpha: 0.26
     offAlpha: 0
     flickerAmount: 0.04
     driftAmount: 0.12
@@ -35,7 +35,7 @@ MonoBehaviour:
     size: {x: 260, y: 310}
     rotationDegrees: -5
     color: {r: 1, g: 0.56, b: 0.23, a: 1}
-    onAlpha: 0.24
+    onAlpha: 0.36
     offAlpha: 0
     flickerAmount: 0.13
     driftAmount: 0.04
@@ -48,7 +48,7 @@ MonoBehaviour:
     size: {x: 260, y: 310}
     rotationDegrees: 5
     color: {r: 1, g: 0.58, b: 0.24, a: 1}
-    onAlpha: 0.22
+    onAlpha: 0.34
     offAlpha: 0
     flickerAmount: 0.15
     driftAmount: 0.04
@@ -61,7 +61,7 @@ MonoBehaviour:
     size: {x: 240, y: 250}
     rotationDegrees: 0
     color: {r: 0.92, g: 0.78, b: 0.47, a: 1}
-    onAlpha: 0.1
+    onAlpha: 0.16
     offAlpha: 0
     flickerAmount: 0.02
     driftAmount: 0.06
@@ -74,7 +74,7 @@ MonoBehaviour:
     size: {x: 360, y: 220}
     rotationDegrees: -8
     color: {r: 1, g: 0.66, b: 0.29, a: 1}
-    onAlpha: 0.24
+    onAlpha: 0.34
     offAlpha: 0
     flickerAmount: 0.09
     driftAmount: 0.03
@@ -87,7 +87,7 @@ MonoBehaviour:
     size: {x: 420, y: 300}
     rotationDegrees: 4
     color: {r: 0.95, g: 0.53, b: 0.22, a: 1}
-    onAlpha: 0.16
+    onAlpha: 0.26
     offAlpha: 0
     flickerAmount: 0.08
     driftAmount: 0.05
@@ -100,7 +100,7 @@ MonoBehaviour:
     size: {x: 560, y: 360}
     rotationDegrees: 0
     color: {r: 1, g: 0.43, b: 0.18, a: 1}
-    onAlpha: 0.28
+    onAlpha: 0.4
     offAlpha: 0
     flickerAmount: 0.14
     driftAmount: 0.08
@@ -113,7 +113,7 @@ MonoBehaviour:
     size: {x: 380, y: 220}
     rotationDegrees: 0
     color: {r: 1, g: 0.7, b: 0.36, a: 1}
-    onAlpha: 0.12
+    onAlpha: 0.2
     offAlpha: 0
     flickerAmount: 0.02
     driftAmount: 0.05
@@ -126,7 +126,7 @@ MonoBehaviour:
     size: {x: 340, y: 230}
     rotationDegrees: 0
     color: {r: 1, g: 0.61, b: 0.28, a: 1}
-    onAlpha: 0.3
+    onAlpha: 0.42
     offAlpha: 0
     flickerAmount: 0.2
     driftAmount: 0.02
@@ -139,7 +139,7 @@ MonoBehaviour:
     size: {x: 520, y: 300}
     rotationDegrees: 0
     color: {r: 0.74, g: 0.84, b: 0.92, a: 1}
-    onAlpha: 0.12
+    onAlpha: 0.18
     offAlpha: 0.02
     flickerAmount: 0.02
     driftAmount: 0.08
@@ -152,7 +152,7 @@ MonoBehaviour:
     size: {x: 860, y: 430}
     rotationDegrees: 0
     color: {r: 0.68, g: 0.93, b: 0.74, a: 1}
-    onAlpha: 0.11
+    onAlpha: 0.18
     offAlpha: 0.015
     flickerAmount: 0.01
     driftAmount: 0.09
@@ -165,7 +165,7 @@ MonoBehaviour:
     size: {x: 310, y: 200}
     rotationDegrees: -3
     color: {r: 1, g: 0.62, b: 0.3, a: 1}
-    onAlpha: 0.2
+    onAlpha: 0.3
     offAlpha: 0
     flickerAmount: 0.16
     driftAmount: 0.02
@@ -178,7 +178,7 @@ MonoBehaviour:
     size: {x: 780, y: 300}
     rotationDegrees: 0
     color: {r: 1, g: 0.74, b: 0.38, a: 1}
-    onAlpha: 0.16
+    onAlpha: 0.24
     offAlpha: 0
     flickerAmount: 0.03
     driftAmount: 0.1
