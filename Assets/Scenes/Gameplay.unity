@@ -1213,7 +1213,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: e73e44419d3782452bb6abd0e8edd452, type: 3}
+  m_Texture: {fileID: 2800000, guid: 788c4ce8a4f6e8b8580f808a95b41c05, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -4555,7 +4555,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1541978211
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6723,7 +6723,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2300000021
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9535,7 +9535,7 @@ GameObject:
   - component: {fileID: 2300000188}
   - component: {fileID: 2300000189}
   m_Layer: 5
-  m_Name: DoorTrigger_SideStairMudroom_UpperGallery
+  m_Name: DoorTrigger_SideStairMudroom_UpperSittingHall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9611,8 +9611,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sourceRoom: Side Stair Mudroom
-  doorName: SideStairMudroom_UpperGallery
-  destinationRoom: Upper Gallery
+  doorName: SideStairMudroom_UpperSittingHall
+  destinationRoom: Upper Sitting Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
   navigationManager: {fileID: 0}
