@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9688b4be97d24912b44c9495cae7e9c2, type: 3}
+  m_Name: DoorOpenSoundCatalog
+  m_EditorClassIdentifier:
+  clips:
+  - {fileID: 8300000, guid: a1b2828d82903aedfa4febbcd33f12fd, type: 3}
+  - {fileID: 8300000, guid: 999d7f24b0cd9335d982ef34c7d4d76a, type: 3}
+  - {fileID: 8300000, guid: c47e5ffe27e0c63b9b8d17a3fe5cee38, type: 3}
+  - {fileID: 8300000, guid: b337aba53e52ef7c18140f57ee4faa93, type: 3}
+  - {fileID: 8300000, guid: b4b7000b59187e681842ce176d3af8f1, type: 3}
+  - {fileID: 8300000, guid: f4956ecaf6e87b614986f660c1aec946, type: 3}
+  - {fileID: 8300000, guid: 49f61a323f4368579841779cab219288, type: 3}

@@ -9,6 +9,8 @@ public class NavigationRegressionTests
     private const string NavigationManagerPath = "Assets/Scripts/Navigation/RoomNavigationManager.cs";
     private const string NavigationBootstrapPath = "Assets/Scripts/Navigation/RoomNavigationBootstrap.cs";
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
+    private const string DoorOpenSoundCatalogPath = "Assets/Resources/Audio/DoorOpenSoundCatalog.asset";
+    private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string NavigationEditorToolsPath = "Assets/Editor/NavigationEditorTools.cs";
     private const string BackgroundShaderGraphPath = "Assets/Shader/Background.shadergraph";
@@ -26,6 +28,26 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void DoorTriggersPlayRandomWoodCreaksFromCatalog()
+    {
+        string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
+        string catalogText = File.ReadAllText(DoorOpenSoundCatalogPath);
+
+        Assert.That(triggerText, Does.Contain("DoorOpenSoundCatalog"), "Door triggers should use the shared randomized door sound catalog.");
+        Assert.That(triggerText, Does.Contain("TryGetRandomClip"), "Door clicks should pick one door-open clip at random.");
+        Assert.That(triggerText, Does.Contain("TryPlayDoorOpenSoundNow"), "Door sound should start immediately when the door is clicked, before navigation work finishes.");
+        Assert.That(triggerText, Does.Contain("StopCurrentDoorOpenSound"), "Starting a door creak should stop any previous door creak.");
+        Assert.That(triggerText, Does.Not.Contain("PlayDoorOpenSoundIfSuccessful"), "Door audio should not wait for the full navigation transition before starting.");
+        Assert.That(catalogText, Does.Not.Contain("a7718dd1d7db61a4490bf5be4b919568"), "The pot clang should not be part of door-open randomization.");
+        Assert.That(catalogText, Does.Not.Contain("2cda7eb569e05e4ae87de22b60ce4fcf"), "Wood tapping should not be part of door-open randomization.");
+        Assert.That(catalogText, Does.Not.Contain("95d9163c9d40da015a0afa4a2e8cb915"), "Typo-spaced @hamzak woodcreak files should not be part of door-open randomization.");
+        Assert.That(Regex.Matches(catalogText, "fileID: 8300000").Count, Is.EqualTo(7), "Door-open randomization should only use active @hamzak - woodcreak* clips.");
+
+        string[] woodClipMetaPaths = Directory.GetFiles("Assets/Audio/Sound Exports", "@hamzak - woodcreak*.wav.meta");
+        Assert.That(woodClipMetaPaths.Length, Is.EqualTo(7), "Flatline clips should stay outside the active door-open export folder.");
+    }
+
+    [Test]
     public void GameplayDoorTriggerLayerCanReceiveClicks()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
@@ -40,6 +62,34 @@ public class NavigationRegressionTests
         Assert.That(sceneText, Does.Not.Contain("m_LocalScale: {x: 0, y: 0, z: 0}"));
         Assert.That(sceneText, Does.Not.Contain("m_UiScaleMode: 0"), "Gameplay canvases should scale consistently between Edit and Play mode.");
         Assert.That(sceneText, Does.Not.Contain("m_ReferenceResolution: {x: 800, y: 600}"), "Gameplay canvases should use the project reference resolution, not Unity defaults.");
+    }
+
+    [Test]
+    public void StairwayTriggersUseStairwayNamesAndCursor()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
+        string promptText = File.ReadAllText(DoorPromptSequenceControllerPath);
+
+        Assert.That(Regex.Matches(sceneText, "m_Name: StairwayTrigger_").Count, Is.EqualTo(4), "Only the hand-placed hitboxes over visible stairs should be named StairwayTrigger.");
+        Assert.That(sceneText, Does.Contain("m_Name: StairwayTrigger_GEH_UpperGalleryLeft"));
+        Assert.That(sceneText, Does.Contain("m_Name: StairwayTrigger_GEH_UpperGalleryRight"));
+        Assert.That(sceneText, Does.Contain("m_Name: StairwayTrigger_UpperGallery_GEH"));
+        Assert.That(sceneText, Does.Contain("m_Name: StairwayTrigger_SideStairMudroom_UpperSittingHall"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: DoorTrigger_GEH_UpperGalleryLeft_entrance"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: DoorTrigger_GEH_UpperGalleryRight_entrance"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: DoorTrigger_UpperGallery_GEH"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: DoorTrigger_SideStairMudroom_UpperSittingHall"));
+        Assert.That(sceneText, Does.Contain("doorName: GEH_Stairway_UpperGalleryLeft"));
+        Assert.That(sceneText, Does.Contain("doorName: GEH_Stairway_UpperGalleryRight"));
+        Assert.That(sceneText, Does.Contain("doorName: UpperGallery_Stairway_GEH"));
+        Assert.That(sceneText, Does.Contain("doorName: SideStairMudroom_Stairway_UpperSittingHall"));
+
+        Assert.That(triggerText, Does.Contain("InteractionLabel"), "Stairway triggers should identify themselves to shared UI without a separate hitbox class.");
+        Assert.That(triggerText, Does.Contain("HoverIcon.Stairway"), "Stairway triggers should request the stairway cursor through the existing cursor controller.");
+        Assert.That(cameraManagerText, Does.Contain("CreateStairwayCursor"), "The cursor controller should generate a stairway cursor icon.");
+        Assert.That(promptText, Does.Contain("Use Stairway"), "Hover prompt text should match stairway interactions.");
     }
 
     [Test]

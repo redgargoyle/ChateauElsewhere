@@ -400,7 +400,7 @@ GameObject:
   - component: {fileID: 106972348}
   - component: {fileID: 106972347}
   m_Layer: 5
-  m_Name: DoorTrigger_GEH_UpperGalleryRight_entrance
+  m_Name: StairwayTrigger_GEH_UpperGalleryRight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -438,7 +438,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sourceRoom: Grand Entrance Hall
-  doorName: GEH_UpperGallery
+  doorName: GEH_Stairway_UpperGalleryRight
   destinationRoom: Upper Gallery
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
@@ -7719,7 +7719,7 @@ GameObject:
   - component: {fileID: 2300000068}
   - component: {fileID: 2300000069}
   m_Layer: 5
-  m_Name: DoorTrigger_GEH_UpperGalleryLeft_entrance
+  m_Name: StairwayTrigger_GEH_UpperGalleryLeft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7795,7 +7795,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sourceRoom: Grand Entrance Hall
-  doorName: GEH_UpperGallery
+  doorName: GEH_Stairway_UpperGalleryLeft
   destinationRoom: Upper Gallery
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
@@ -9739,7 +9739,7 @@ GameObject:
   - component: {fileID: 2300000188}
   - component: {fileID: 2300000189}
   m_Layer: 5
-  m_Name: DoorTrigger_SideStairMudroom_UpperSittingHall
+  m_Name: StairwayTrigger_SideStairMudroom_UpperSittingHall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9815,7 +9815,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sourceRoom: Side Stair Mudroom
-  doorName: SideStairMudroom_UpperSittingHall
+  doorName: SideStairMudroom_Stairway_UpperSittingHall
   destinationRoom: Upper Sitting Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
@@ -9840,7 +9840,7 @@ GameObject:
   - component: {fileID: 2300000193}
   - component: {fileID: 2300000194}
   m_Layer: 5
-  m_Name: DoorTrigger_UpperGallery_GEH
+  m_Name: StairwayTrigger_UpperGallery_GEH
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9916,7 +9916,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sourceRoom: Upper Gallery
-  doorName: UpperGallery_GEH
+  doorName: UpperGallery_Stairway_GEH
   destinationRoom: Grand Entrance Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0

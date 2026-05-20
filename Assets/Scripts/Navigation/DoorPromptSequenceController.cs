@@ -177,7 +177,7 @@ public class DoorPromptSequenceController : MonoBehaviour
             rectTransform.localScale = Vector3.one;
         }
 
-        promptText.text = sequence != null ? sequence.PromptText : "Open Door";
+        promptText.text = GetPromptText(null);
         promptText.fontSize = fontSize;
         promptText.color = promptColor;
         promptText.alignment = TextAlignmentOptions.Center;
@@ -195,9 +195,19 @@ public class DoorPromptSequenceController : MonoBehaviour
         DoorTriggerNavigation hoveredTrigger = DoorTriggerNavigation.HoveredTrigger;
         bool shouldShow = hoveredTrigger != null && hoveredTrigger.isActiveAndEnabled && CanHoveredTriggerOpenDoor(hoveredTrigger);
 
-        promptText.text = sequence != null ? sequence.PromptText : "Open Door";
+        promptText.text = GetPromptText(hoveredTrigger);
         promptText.gameObject.SetActive(shouldShow);
         SetPromptAsLastSiblingIfNeeded();
+    }
+
+    private string GetPromptText(DoorTriggerNavigation hoveredTrigger)
+    {
+        if (hoveredTrigger != null && hoveredTrigger.IsStairway)
+        {
+            return "Use Stairway";
+        }
+
+        return sequence != null ? sequence.PromptText : "Open Door";
     }
 
     private bool CanHoveredTriggerOpenDoor(DoorTriggerNavigation hoveredTrigger)

@@ -376,9 +376,10 @@ public class IdeaGameplayUI : MonoBehaviour
             return;
         }
 
+        string interactionLabel = trigger.InteractionLabel;
         string doorName = string.IsNullOrWhiteSpace(trigger.DoorName) ? trigger.name : trigger.DoorName;
         string destination = string.IsNullOrWhiteSpace(trigger.DestinationRoom) ? "unknown" : trigger.DestinationRoom;
-        selectionText.text = $"Door: {doorName} -> {destination}";
+        selectionText.text = $"{interactionLabel}: {doorName} -> {destination}";
     }
 
     private void RefreshIdeaUi()

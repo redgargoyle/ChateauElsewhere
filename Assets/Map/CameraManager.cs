@@ -1771,24 +1771,34 @@ public class CameraManager : MonoBehaviour
 
 public static class NavigationCursorController
 {
+    public enum HoverIcon
+    {
+        Door,
+        Stairway
+    }
+
     private const int CursorSize = 32;
     private static readonly Color Clear = new Color(0f, 0f, 0f, 0f);
     private static readonly Color Ink = new Color(0.02f, 0.02f, 0.02f, 1f);
     private static readonly Color Paper = new Color(1f, 1f, 1f, 1f);
     private static readonly Vector2 ArrowHotspot = new Vector2(16f, 16f);
     private static readonly Vector2 DoorHotspot = new Vector2(9f, 6f);
+    private static readonly Vector2 StairwayHotspot = new Vector2(10f, 7f);
 
     private static int edgePanDirection;
     private static object doorHoverOwner;
+    private static HoverIcon doorHoverIcon;
     private static Texture2D leftArrowCursor;
     private static Texture2D rightArrowCursor;
     private static Texture2D doorCursor;
+    private static Texture2D stairwayCursor;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void ResetForPlayMode()
     {
         edgePanDirection = 0;
         doorHoverOwner = null;
+        doorHoverIcon = HoverIcon.Door;
         ApplyCursor();
     }
 
@@ -1807,9 +1817,15 @@ public static class NavigationCursorController
 
     public static void SetDoorHover(object owner, bool active)
     {
+        SetDoorHover(owner, HoverIcon.Door, active);
+    }
+
+    public static void SetDoorHover(object owner, HoverIcon icon, bool active)
+    {
         if (active)
         {
             doorHoverOwner = owner;
+            doorHoverIcon = icon;
             ApplyCursor();
             return;
         }
@@ -1834,6 +1850,12 @@ public static class NavigationCursorController
         // specific action. When neither state is active, Unity's default cursor returns.
         if (doorHoverOwner != null)
         {
+            if (doorHoverIcon == HoverIcon.Stairway)
+            {
+                Cursor.SetCursor(GetStairwayCursor(), StairwayHotspot, CursorMode.Auto);
+                return;
+            }
+
             Cursor.SetCursor(GetDoorCursor(), DoorHotspot, CursorMode.Auto);
             return;
         }
@@ -1883,6 +1905,16 @@ public static class NavigationCursorController
         return doorCursor;
     }
 
+    private static Texture2D GetStairwayCursor()
+    {
+        if (stairwayCursor == null)
+        {
+            stairwayCursor = CreateStairwayCursor();
+        }
+
+        return stairwayCursor;
+    }
+
     private static Texture2D CreateArrowCursor(string cursorName, int direction)
     {
         Texture2D texture = CreateBlankCursor(cursorName);
@@ -1915,6 +1947,33 @@ public static class NavigationCursorController
         DrawLine(texture, 22, 12, 22, 24, Paper, 1);
         DrawLine(texture, 22, 24, 12, 25, Paper, 1);
         FillRect(texture, 18, 16, 21, 19, Ink);
+        texture.Apply();
+        return texture;
+    }
+
+    private static Texture2D CreateStairwayCursor()
+    {
+        Texture2D texture = CreateBlankCursor("Cursor_Stairway");
+
+        // A compact stair-step icon, generated like the door cursor so it does
+        // not need a separate imported texture to work in early builds.
+        DrawLine(texture, 8, 24, 24, 24, Ink, 5);
+        DrawLine(texture, 8, 24, 8, 19, Ink, 5);
+        DrawLine(texture, 8, 19, 12, 19, Ink, 5);
+        DrawLine(texture, 12, 19, 12, 15, Ink, 5);
+        DrawLine(texture, 12, 15, 16, 15, Ink, 5);
+        DrawLine(texture, 16, 15, 16, 11, Ink, 5);
+        DrawLine(texture, 16, 11, 21, 11, Ink, 5);
+        DrawLine(texture, 21, 11, 21, 7, Ink, 5);
+
+        DrawLine(texture, 8, 24, 24, 24, Paper, 2);
+        DrawLine(texture, 8, 24, 8, 19, Paper, 2);
+        DrawLine(texture, 8, 19, 12, 19, Paper, 2);
+        DrawLine(texture, 12, 19, 12, 15, Paper, 2);
+        DrawLine(texture, 12, 15, 16, 15, Paper, 2);
+        DrawLine(texture, 16, 15, 16, 11, Paper, 2);
+        DrawLine(texture, 16, 11, 21, 11, Paper, 2);
+        DrawLine(texture, 21, 11, 21, 7, Paper, 2);
         texture.Apply();
         return texture;
     }
