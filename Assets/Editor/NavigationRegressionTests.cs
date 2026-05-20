@@ -10,6 +10,7 @@ public class NavigationRegressionTests
     private const string NavigationBootstrapPath = "Assets/Scripts/Navigation/RoomNavigationBootstrap.cs";
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
     private const string DoorOpenSoundCatalogPath = "Assets/Resources/Audio/DoorOpenSoundCatalog.asset";
+    private const string StairwaySoundCatalogPath = "Assets/Resources/Audio/StairwaySoundCatalog.asset";
     private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string NavigationEditorToolsPath = "Assets/Editor/NavigationEditorTools.cs";
@@ -35,9 +36,10 @@ public class NavigationRegressionTests
 
         Assert.That(triggerText, Does.Contain("DoorOpenSoundCatalog"), "Door triggers should use the shared randomized door sound catalog.");
         Assert.That(triggerText, Does.Contain("TryGetRandomClip"), "Door clicks should pick one door-open clip at random.");
-        Assert.That(triggerText, Does.Contain("TryPlayDoorOpenSoundNow"), "Door sound should start immediately when the door is clicked, before navigation work finishes.");
-        Assert.That(triggerText, Does.Contain("StopCurrentDoorOpenSound"), "Starting a door creak should stop any previous door creak.");
+        Assert.That(triggerText, Does.Contain("TryPlayNavigationSoundNow"), "Door sound should start immediately when the door is clicked, before navigation work finishes.");
+        Assert.That(triggerText, Does.Contain("StopCurrentNavigationSound"), "Starting a door creak should stop any previous navigation sound.");
         Assert.That(triggerText, Does.Not.Contain("PlayDoorOpenSoundIfSuccessful"), "Door audio should not wait for the full navigation transition before starting.");
+        Assert.That(catalogText, Does.Not.Contain("a599035f4d65f7614a7cb90bfb65c96d"), "The stair climb noise should not be part of door-open randomization.");
         Assert.That(catalogText, Does.Not.Contain("a7718dd1d7db61a4490bf5be4b919568"), "The pot clang should not be part of door-open randomization.");
         Assert.That(catalogText, Does.Not.Contain("2cda7eb569e05e4ae87de22b60ce4fcf"), "Wood tapping should not be part of door-open randomization.");
         Assert.That(catalogText, Does.Not.Contain("95d9163c9d40da015a0afa4a2e8cb915"), "Typo-spaced @hamzak woodcreak files should not be part of door-open randomization.");
@@ -45,6 +47,22 @@ public class NavigationRegressionTests
 
         string[] woodClipMetaPaths = Directory.GetFiles("Assets/Audio/Sound Exports", "@hamzak - woodcreak*.wav.meta");
         Assert.That(woodClipMetaPaths.Length, Is.EqualTo(7), "Flatline clips should stay outside the active door-open export folder.");
+    }
+
+    [Test]
+    public void StairwayTriggersPlayStairwaySoundCatalog()
+    {
+        string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
+        string catalogText = File.ReadAllText(StairwaySoundCatalogPath);
+
+        Assert.That(triggerText, Does.Contain("DefaultStairwaySoundCatalogResourcePath"), "Stairways should load their own sound catalog.");
+        Assert.That(triggerText, Does.Contain("ResolveStairwaySoundCatalog"), "Stairway triggers should resolve stairway audio separately from door audio.");
+        Assert.That(triggerText, Does.Contain("lastStairwayClipIndex"), "Stairway randomization should not share door clip history.");
+        Assert.That(catalogText, Does.Contain("a599035f4d65f7614a7cb90bfb65c96d"), "The stairway catalog should use @hamzak - stair_climb_noise.wav.");
+        Assert.That(Regex.Matches(catalogText, "fileID: 8300000").Count, Is.EqualTo(1), "Only the active @hamzak - stair* clip should be in the stairway catalog.");
+
+        string[] stairClipMetaPaths = Directory.GetFiles("Assets/Audio/Sound Exports", "@hamzak - stair*.wav.meta");
+        Assert.That(stairClipMetaPaths.Length, Is.EqualTo(1), "Only exact-prefix @hamzak - stair* clips should be treated as stairway clips.");
     }
 
     [Test]

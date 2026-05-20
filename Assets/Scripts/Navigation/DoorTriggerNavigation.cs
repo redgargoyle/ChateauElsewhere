@@ -15,6 +15,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     }
 
     private const string DefaultDoorOpenSoundCatalogResourcePath = "Audio/DoorOpenSoundCatalog";
+    private const string DefaultStairwaySoundCatalogResourcePath = "Audio/StairwaySoundCatalog";
 
     public static event Action<DoorTriggerNavigation> HoveredTriggerChanged;
     public static DoorTriggerNavigation HoveredTrigger { get; private set; }
@@ -42,6 +43,8 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     [SerializeField] private string doorOpenAudioObjectName = "Audio_DoorOpen";
     [SerializeField] private DoorOpenSoundCatalog doorOpenSoundCatalog;
     [SerializeField] private string doorOpenSoundCatalogResourcePath = DefaultDoorOpenSoundCatalogResourcePath;
+    [SerializeField] private DoorOpenSoundCatalog stairwaySoundCatalog;
+    [SerializeField] private string stairwaySoundCatalogResourcePath = DefaultStairwaySoundCatalogResourcePath;
 
     public string SourceRoom => GetEffectiveSourceRoom();
     public string DoorName => Clean(doorName);
@@ -51,8 +54,9 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     public string InteractionLabel => IsStairway ? "Stairway" : "Door";
 
     private RectTransform rectTransform;
-    private static AudioSource activeDoorOpenAudioSource;
+    private static AudioSource activeNavigationAudioSource;
     private static int lastDoorOpenClipIndex = -1;
+    private static int lastStairwayClipIndex = -1;
 
     private void Reset()
     {
@@ -139,18 +143,18 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             // The trigger does not load rooms itself. It asks the navigation
             // manager for the next room in the sequence, and the manager changes
             // the single current-room state that every room system reacts to.
-            bool soundStarted = TryPlayDoorOpenSoundNow();
+            bool soundStarted = TryPlayNavigationSoundNow();
             bool didNavigate = navigationManager.OpenDoorFromCurrentRoom(string.Empty, DoorName, false);
-            StopDoorOpenSoundIfNavigationFailed(soundStarted, didNavigate);
+            StopNavigationSoundIfNavigationFailed(soundStarted, didNavigate);
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(destinationRoom))
         {
             // Manual room objects and Inspector fields are the source of truth.
-            bool soundStarted = TryPlayDoorOpenSoundNow();
+            bool soundStarted = TryPlayNavigationSoundNow();
             bool didNavigate = navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom);
-            StopDoorOpenSoundIfNavigationFailed(soundStarted, didNavigate);
+            StopNavigationSoundIfNavigationFailed(soundStarted, didNavigate);
             return;
         }
 
@@ -218,7 +222,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
     }
 
-    private bool TryPlayDoorOpenSoundNow()
+    private bool TryPlayNavigationSoundNow()
     {
         if (!playDoorOpenSound)
         {
@@ -232,40 +236,40 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return false;
         }
 
-        StopCurrentDoorOpenSound();
-        activeDoorOpenAudioSource = doorOpenAudioSource;
+        StopCurrentNavigationSound();
+        activeNavigationAudioSource = doorOpenAudioSource;
         doorOpenAudioSource.Stop();
 
-        if (TryGetDoorOpenClip(out AudioClip randomClip))
+        if (TryGetNavigationClip(out AudioClip randomClip))
         {
             doorOpenAudioSource.PlayOneShot(randomClip);
             return true;
         }
 
-        if (doorOpenAudioSource.clip != null)
+        if (!IsStairway && doorOpenAudioSource.clip != null)
         {
             doorOpenAudioSource.PlayOneShot(doorOpenAudioSource.clip);
             return true;
         }
 
-        activeDoorOpenAudioSource = null;
+        activeNavigationAudioSource = null;
         return false;
     }
 
-    private void StopDoorOpenSoundIfNavigationFailed(bool soundStarted, bool didNavigate)
+    private void StopNavigationSoundIfNavigationFailed(bool soundStarted, bool didNavigate)
     {
-        if (soundStarted && !didNavigate && activeDoorOpenAudioSource == doorOpenAudioSource)
+        if (soundStarted && !didNavigate && activeNavigationAudioSource == doorOpenAudioSource)
         {
-            StopCurrentDoorOpenSound();
+            StopCurrentNavigationSound();
         }
     }
 
-    private static void StopCurrentDoorOpenSound()
+    private static void StopCurrentNavigationSound()
     {
-        if (activeDoorOpenAudioSource != null)
+        if (activeNavigationAudioSource != null)
         {
-            activeDoorOpenAudioSource.Stop();
-            activeDoorOpenAudioSource = null;
+            activeNavigationAudioSource.Stop();
+            activeNavigationAudioSource = null;
         }
     }
 
@@ -284,9 +288,16 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
     }
 
-    private bool TryGetDoorOpenClip(out AudioClip clip)
+    private bool TryGetNavigationClip(out AudioClip clip)
     {
         clip = null;
+
+        if (IsStairway)
+        {
+            ResolveStairwaySoundCatalog();
+            return stairwaySoundCatalog != null && stairwaySoundCatalog.TryGetRandomClip(ref lastStairwayClipIndex, out clip);
+        }
+
         ResolveDoorOpenSoundCatalog();
 
         return doorOpenSoundCatalog != null && doorOpenSoundCatalog.TryGetRandomClip(ref lastDoorOpenClipIndex, out clip);
@@ -301,6 +312,18 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
                 : doorOpenSoundCatalogResourcePath.Trim();
 
             doorOpenSoundCatalog = Resources.Load<DoorOpenSoundCatalog>(resourcePath);
+        }
+    }
+
+    private void ResolveStairwaySoundCatalog()
+    {
+        if (stairwaySoundCatalog == null)
+        {
+            string resourcePath = string.IsNullOrWhiteSpace(stairwaySoundCatalogResourcePath)
+                ? DefaultStairwaySoundCatalogResourcePath
+                : stairwaySoundCatalogResourcePath.Trim();
+
+            stairwaySoundCatalog = Resources.Load<DoorOpenSoundCatalog>(resourcePath);
         }
     }
 
