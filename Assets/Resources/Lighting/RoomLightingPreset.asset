@@ -1,0 +1,186 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e26b37907904aac8d0f29cbf5a8401d, type: 3}
+  m_Name: RoomLightingPreset
+  m_EditorClassIdentifier:
+  startLightsOn: 1
+  toggleFadeSeconds: 0.65
+  lights:
+  - roomName: Grand Entrance Hall
+    lightName: GEH Chandelier Bloom
+    animationStyle: 1
+    anchoredPosition: {x: 0, y: 122}
+    size: {x: 560, y: 260}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.72, b: 0.34, a: 1}
+    onAlpha: 0.18
+    offAlpha: 0
+    flickerAmount: 0.04
+    driftAmount: 0.12
+    speed: 0.9
+    phase: 0.2
+  - roomName: Grand Entrance Hall
+    lightName: GEH Left Sconce Flicker
+    animationStyle: 0
+    anchoredPosition: {x: -510, y: 54}
+    size: {x: 260, y: 310}
+    rotationDegrees: -5
+    color: {r: 1, g: 0.56, b: 0.23, a: 1}
+    onAlpha: 0.24
+    offAlpha: 0
+    flickerAmount: 0.13
+    driftAmount: 0.04
+    speed: 1.4
+    phase: 1.1
+  - roomName: Grand Entrance Hall
+    lightName: GEH Right Sconce Flicker
+    animationStyle: 0
+    anchoredPosition: {x: 510, y: 54}
+    size: {x: 260, y: 310}
+    rotationDegrees: 5
+    color: {r: 1, g: 0.58, b: 0.24, a: 1}
+    onAlpha: 0.22
+    offAlpha: 0
+    flickerAmount: 0.15
+    driftAmount: 0.04
+    speed: 1.25
+    phase: 2.3
+  - roomName: Grand Entrance Hall
+    lightName: GEH Far Door Glow
+    animationStyle: 3
+    anchoredPosition: {x: 0, y: 18}
+    size: {x: 240, y: 250}
+    rotationDegrees: 0
+    color: {r: 0.92, g: 0.78, b: 0.47, a: 1}
+    onAlpha: 0.1
+    offAlpha: 0
+    flickerAmount: 0.02
+    driftAmount: 0.06
+    speed: 0.55
+    phase: 0.7
+  - roomName: Library
+    lightName: Library Reading Pool
+    animationStyle: 4
+    anchoredPosition: {x: -250, y: -48}
+    size: {x: 360, y: 220}
+    rotationDegrees: -8
+    color: {r: 1, g: 0.66, b: 0.29, a: 1}
+    onAlpha: 0.24
+    offAlpha: 0
+    flickerAmount: 0.09
+    driftAmount: 0.03
+    speed: 1.1
+    phase: 3.4
+  - roomName: Library
+    lightName: Library Shelf Amber
+    animationStyle: 0
+    anchoredPosition: {x: 330, y: 46}
+    size: {x: 420, y: 300}
+    rotationDegrees: 4
+    color: {r: 0.95, g: 0.53, b: 0.22, a: 1}
+    onAlpha: 0.16
+    offAlpha: 0
+    flickerAmount: 0.08
+    driftAmount: 0.05
+    speed: 0.82
+    phase: 4.1
+  - roomName: Kitchen
+    lightName: Kitchen Hearth Breath
+    animationStyle: 2
+    anchoredPosition: {x: 300, y: -74}
+    size: {x: 560, y: 360}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.43, b: 0.18, a: 1}
+    onAlpha: 0.28
+    offAlpha: 0
+    flickerAmount: 0.14
+    driftAmount: 0.08
+    speed: 0.75
+    phase: 1.7
+  - roomName: Kitchen
+    lightName: Kitchen Counter Glow
+    animationStyle: 3
+    anchoredPosition: {x: -260, y: -42}
+    size: {x: 380, y: 220}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.7, b: 0.36, a: 1}
+    onAlpha: 0.12
+    offAlpha: 0
+    flickerAmount: 0.02
+    driftAmount: 0.05
+    speed: 0.45
+    phase: 2.5
+  - roomName: Chapel
+    lightName: Chapel Candle Cluster
+    animationStyle: 4
+    anchoredPosition: {x: 0, y: -62}
+    size: {x: 340, y: 230}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.61, b: 0.28, a: 1}
+    onAlpha: 0.3
+    offAlpha: 0
+    flickerAmount: 0.2
+    driftAmount: 0.02
+    speed: 1.6
+    phase: 0.4
+  - roomName: Chapel
+    lightName: Chapel Window Haze
+    animationStyle: 3
+    anchoredPosition: {x: 0, y: 90}
+    size: {x: 520, y: 300}
+    rotationDegrees: 0
+    color: {r: 0.74, g: 0.84, b: 0.92, a: 1}
+    onAlpha: 0.12
+    offAlpha: 0.02
+    flickerAmount: 0.02
+    driftAmount: 0.08
+    speed: 0.36
+    phase: 1.3
+  - roomName: Conservatory
+    lightName: Conservatory Glass Breath
+    animationStyle: 3
+    anchoredPosition: {x: 0, y: 24}
+    size: {x: 860, y: 430}
+    rotationDegrees: 0
+    color: {r: 0.68, g: 0.93, b: 0.74, a: 1}
+    onAlpha: 0.11
+    offAlpha: 0.015
+    flickerAmount: 0.01
+    driftAmount: 0.09
+    speed: 0.3
+    phase: 5.2
+  - roomName: Music Room
+    lightName: Music Room Piano Candle
+    animationStyle: 4
+    anchoredPosition: {x: -160, y: -8}
+    size: {x: 310, y: 200}
+    rotationDegrees: -3
+    color: {r: 1, g: 0.62, b: 0.3, a: 1}
+    onAlpha: 0.2
+    offAlpha: 0
+    flickerAmount: 0.16
+    driftAmount: 0.02
+    speed: 1.35
+    phase: 2.9
+  - roomName: Ballroom
+    lightName: Ballroom Soft Chandeliers
+    animationStyle: 1
+    anchoredPosition: {x: 0, y: 116}
+    size: {x: 780, y: 300}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.74, b: 0.38, a: 1}
+    onAlpha: 0.16
+    offAlpha: 0
+    flickerAmount: 0.03
+    driftAmount: 0.1
+    speed: 0.7
+    phase: 4.8
