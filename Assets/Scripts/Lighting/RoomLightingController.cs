@@ -4,6 +4,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif
+
+[ExecuteAlways]
 [DefaultExecutionOrder(-40)]
 public sealed class RoomLightingController : MonoBehaviour
 {
@@ -14,36 +20,82 @@ public sealed class RoomLightingController : MonoBehaviour
     [SerializeField] private RoomLightingPreset preset;
     [SerializeField] private KeyCode toggleKey = KeyCode.L;
     [SerializeField] private bool showHud = true;
-    [SerializeField] private bool liveEditPreset = true;
+    [SerializeField] private bool createMissingLightsFromPreset = true;
 
     private readonly List<RoomLightOverlay> overlays = new List<RoomLightOverlay>();
 
-    private Sprite softLightSprite;
     private bool lightsOn = true;
     private float lightBlend = 1f;
     private TextMeshProUGUI hudText;
+    private bool initialized;
 
     public float LightBlend => lightBlend;
-    public bool LiveEditPreset => liveEditPreset;
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void CreateForGameplayRooms()
-    {
-        if (FindObjectOfType<RoomLightingController>() != null)
-        {
-            return;
-        }
-
-        if (FindObjectsOfType<RoomContentGroup>(true).Length == 0)
-        {
-            return;
-        }
-
-        GameObject controllerObject = new GameObject("RoomLightingController");
-        controllerObject.AddComponent<RoomLightingController>();
-    }
 
     private void Awake()
+    {
+        InitializeLighting();
+    }
+
+    private void OnEnable()
+    {
+        InitializeLighting();
+    }
+
+    private void OnValidate()
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            EditorApplication.delayCall += InitializeLightingIfAlive;
+        }
+#endif
+    }
+
+    [ContextMenu("Create Missing Scene Lights From Preset")]
+    public void CreateMissingSceneLightsFromPreset()
+    {
+        ResolvePreset();
+
+        if (preset == null)
+        {
+            Debug.LogWarning("Room lighting could not load Resources/Lighting/RoomLightingPreset.asset.", this);
+            return;
+        }
+
+        CreateMissingSceneLights();
+        RefreshOverlayCache();
+    }
+
+    private void Update()
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            lightBlend = 1f;
+            ApplyLightBlendToOverlays();
+            return;
+        }
+#endif
+
+        if (Input.GetKeyDown(toggleKey))
+        {
+            ToggleLights();
+        }
+
+        float targetBlend = lightsOn ? 1f : 0f;
+        float fadeSeconds = preset != null ? preset.ToggleFadeSeconds : 0.65f;
+        lightBlend = Mathf.MoveTowards(lightBlend, targetBlend, Time.deltaTime / fadeSeconds);
+        ApplyLightBlendToOverlays();
+        RefreshHud();
+    }
+
+    public void ToggleLights()
+    {
+        lightsOn = !lightsOn;
+        RefreshHud();
+    }
+
+    private void InitializeLighting()
     {
         ResolvePreset();
 
@@ -54,35 +106,38 @@ public sealed class RoomLightingController : MonoBehaviour
             return;
         }
 
-        lightsOn = preset.StartLightsOn;
-        lightBlend = lightsOn ? 1f : 0f;
-        softLightSprite = CreateSoftLightSprite();
-        BuildRoomLights();
+        if (!initialized)
+        {
+            lightsOn = preset.StartLightsOn;
+            lightBlend = lightsOn ? 1f : 0f;
+            initialized = true;
+        }
 
-        if (showHud)
+        if (createMissingLightsFromPreset)
+        {
+            CreateMissingSceneLights();
+        }
+
+        RefreshOverlayCache();
+        ApplyLightBlendToOverlays();
+
+        if (Application.isPlaying && showHud)
         {
             BuildHud();
         }
     }
 
-    private void Update()
+#if UNITY_EDITOR
+    private void InitializeLightingIfAlive()
     {
-        if (Input.GetKeyDown(toggleKey))
+        if (this == null || Application.isPlaying)
         {
-            ToggleLights();
+            return;
         }
 
-        float targetBlend = lightsOn ? 1f : 0f;
-        float fadeSeconds = preset != null ? preset.ToggleFadeSeconds : 0.65f;
-        lightBlend = Mathf.MoveTowards(lightBlend, targetBlend, Time.deltaTime / fadeSeconds);
-        RefreshHud();
+        InitializeLighting();
     }
-
-    public void ToggleLights()
-    {
-        lightsOn = !lightsOn;
-        RefreshHud();
-    }
+#endif
 
     private void ResolvePreset()
     {
@@ -98,10 +153,31 @@ public sealed class RoomLightingController : MonoBehaviour
         preset = Resources.Load<RoomLightingPreset>(resourcePath);
     }
 
-    private void BuildRoomLights()
+    private void RefreshOverlayCache()
     {
         overlays.Clear();
+        RoomContentGroup[] roomGroups = FindObjectsOfType<RoomContentGroup>(true);
 
+        for (int i = 0; i < roomGroups.Length; i++)
+        {
+            RoomContentGroup roomGroup = roomGroups[i];
+
+            if (roomGroup == null)
+            {
+                continue;
+            }
+
+            overlays.AddRange(roomGroup.GetComponentsInChildren<RoomLightOverlay>(true));
+        }
+
+        if (Application.isPlaying && overlays.Count == 0)
+        {
+            Debug.LogWarning("Room lighting loaded, but no RoomLightOverlay objects exist in this scene.", this);
+        }
+    }
+
+    private void CreateMissingSceneLights()
+    {
         RoomContentGroup[] roomGroups = FindObjectsOfType<RoomContentGroup>(true);
         Dictionary<string, RoomContentGroup> roomsByName = new Dictionary<string, RoomContentGroup>(System.StringComparer.OrdinalIgnoreCase);
 
@@ -115,7 +191,12 @@ public sealed class RoomLightingController : MonoBehaviour
             }
         }
 
-        IReadOnlyList<RoomLightDefinition> lights = preset.Lights;
+        IReadOnlyList<RoomLightDefinition> lights = preset != null ? preset.Lights : null;
+
+        if (lights == null)
+        {
+            return;
+        }
 
         for (int i = 0; i < lights.Count; i++)
         {
@@ -126,27 +207,38 @@ public sealed class RoomLightingController : MonoBehaviour
                 continue;
             }
 
-            RoomLightOverlay overlay = CreateOverlay(roomGroup, light, i);
-            overlays.Add(overlay);
-        }
-
-        if (overlays.Count == 0)
-        {
-            Debug.LogWarning("Room lighting loaded, but no preset entries matched the room names in this scene.", this);
+            CreateMissingSceneLight(roomGroup, light, i);
         }
     }
 
-    private RoomLightOverlay CreateOverlay(RoomContentGroup roomGroup, RoomLightDefinition definition, int index)
+    private void CreateMissingSceneLight(RoomContentGroup roomGroup, RoomLightDefinition definition, int index)
     {
         Transform lightingRoot = FindOrCreateLightingRoot(roomGroup.transform);
-        string lightName = string.IsNullOrWhiteSpace(definition.lightName) ? $"RoomLight_{index:00}" : $"RoomLight_{definition.lightName.Trim().Replace(' ', '_')}";
+        string lightName = GetSceneLightName(definition, index);
+        Transform existing = lightingRoot.Find(lightName);
 
-        GameObject lightObject = new GameObject(lightName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(RoomLightOverlay));
-        lightObject.transform.SetParent(lightingRoot, false);
+        if (existing != null && existing.GetComponent<RoomLightOverlay>() != null)
+        {
+            return;
+        }
 
-        RoomLightOverlay overlay = lightObject.GetComponent<RoomLightOverlay>();
-        overlay.Configure(definition, this, softLightSprite);
-        return overlay;
+        GameObject lightObject;
+
+        if (existing != null)
+        {
+            lightObject = existing.gameObject;
+            EnsureSceneComponent<CanvasRenderer>(lightObject);
+            EnsureSceneComponent<Image>(lightObject);
+        }
+        else
+        {
+            lightObject = CreateSceneGameObject(lightName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            lightObject.transform.SetParent(lightingRoot, false);
+        }
+
+        RoomLightOverlay overlay = EnsureSceneComponent<RoomLightOverlay>(lightObject);
+        overlay.ApplyDefinition(definition);
+        MarkSceneDirtyIfEditing(lightObject);
     }
 
     private static Transform FindOrCreateLightingRoot(Transform roomTransform)
@@ -158,7 +250,7 @@ public sealed class RoomLightingController : MonoBehaviour
             return existing;
         }
 
-        GameObject rootObject = new GameObject("Lighting", typeof(RectTransform));
+        GameObject rootObject = CreateSceneGameObject("Lighting", typeof(RectTransform));
         RectTransform root = rootObject.GetComponent<RectTransform>();
         root.SetParent(roomTransform, false);
         root.anchorMin = Vector2.zero;
@@ -174,11 +266,17 @@ public sealed class RoomLightingController : MonoBehaviour
             root.SetSiblingIndex(doors.GetSiblingIndex());
         }
 
+        MarkSceneDirtyIfEditing(rootObject);
         return root;
     }
 
     private void BuildHud()
     {
+        if (hudText != null)
+        {
+            return;
+        }
+
         if (FindObjectOfType<EventSystem>() == null)
         {
             GameObject eventSystemObject = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
@@ -227,6 +325,72 @@ public sealed class RoomLightingController : MonoBehaviour
         hudText.text = lightsOn ? "Lights On" : "Lights Off";
     }
 
+    private void ApplyLightBlendToOverlays()
+    {
+        for (int i = 0; i < overlays.Count; i++)
+        {
+            RoomLightOverlay overlay = overlays[i];
+
+            if (overlay != null)
+            {
+                overlay.SetLightBlend(lightBlend);
+            }
+        }
+    }
+
+    private static string GetSceneLightName(RoomLightDefinition definition, int index)
+    {
+        return string.IsNullOrWhiteSpace(definition.lightName)
+            ? $"RoomLight_{index:00}"
+            : $"RoomLight_{definition.lightName.Trim().Replace(' ', '_')}";
+    }
+
+    private static GameObject CreateSceneGameObject(string objectName, params System.Type[] components)
+    {
+        GameObject gameObject = new GameObject(objectName, components);
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            Undo.RegisterCreatedObjectUndo(gameObject, $"Create {objectName}");
+        }
+#endif
+
+        return gameObject;
+    }
+
+    private static T EnsureSceneComponent<T>(GameObject target) where T : Component
+    {
+        T component = target.GetComponent<T>();
+
+        if (component != null)
+        {
+            return component;
+        }
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            component = Undo.AddComponent<T>(target);
+            MarkSceneDirtyIfEditing(target);
+            return component;
+        }
+#endif
+
+        return target.AddComponent<T>();
+    }
+
+    private static void MarkSceneDirtyIfEditing(GameObject target)
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying && target != null && target.scene.IsValid())
+        {
+            EditorSceneManager.MarkSceneDirty(target.scene);
+            EditorUtility.SetDirty(target);
+        }
+#endif
+    }
+
     private static RectTransform CreateHudRect(string objectName, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPosition, Vector2 sizeDelta)
     {
         GameObject rectObject = new GameObject(objectName, typeof(RectTransform));
@@ -253,32 +417,6 @@ public sealed class RoomLightingController : MonoBehaviour
         text.color = new Color(0.95f, 0.88f, 0.68f, 1f);
         text.raycastTarget = false;
         return text;
-    }
-
-    private static Sprite CreateSoftLightSprite()
-    {
-        const int size = 128;
-        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        texture.name = "Generated_SoftRoomLight";
-        texture.wrapMode = TextureWrapMode.Clamp;
-        texture.filterMode = FilterMode.Bilinear;
-
-        float center = (size - 1) * 0.5f;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dx = (x - center) / center;
-                float dy = (y - center) / center;
-                float radius = Mathf.Sqrt(dx * dx + dy * dy);
-                float alpha = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.12f, 1f, radius));
-                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-            }
-        }
-
-        texture.Apply(false, true);
-        return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), size);
     }
 
 }

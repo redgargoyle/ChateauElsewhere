@@ -151,6 +151,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2501000085}
   - {fileID: 2103000001}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -214,6 +215,7 @@ MonoBehaviour:
   destinationRoom: Grand Entrance Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 70736572}
   doorOpenAudioSource: {fileID: 0}
@@ -222,6 +224,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &70736572
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -232,8 +238,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -312,8 +318,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Delegates:
   - eventID: 4
     callback:
@@ -328,7 +334,7 @@ MonoBehaviour:
             m_ObjectArgumentAssemblyTypeName: CameraAreaController, Assembly-CSharp
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument: 
+            m_StringArgument:
             m_BoolArgument: 0
           m_CallState: 2
 --- !u!114 &104442031
@@ -341,8 +347,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b7d00dcf4c0afe00b8f2e24d53deb2d7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomBackgroundTexture: {fileID: 2800000, guid: 026a78d50348582b498ca1495df589fb, type: 3}
   cameraButtonImage: {fileID: 1094257851}
   normalColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
@@ -359,8 +365,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
@@ -435,13 +441,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Grand Entrance Hall
   doorName: GEH_Stairway_UpperGalleryRight
   destinationRoom: Upper Gallery
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 106972348}
   doorOpenAudioSource: {fileID: 0}
@@ -450,6 +457,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &106972348
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -460,8 +471,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -536,13 +547,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Grand Entrance Hall
   doorName: GEH_Drawing_Room
   destinationRoom: Drawing Room
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 109889179}
   doorOpenAudioSource: {fileID: 0}
@@ -551,6 +563,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &109889179
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -561,8 +577,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -619,8 +635,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
   m_BlockingMask:
@@ -636,8 +652,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
@@ -753,13 +769,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Grand Entrance Hall
   doorName: GEH_DiningRoom
   destinationRoom: Dining Room
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 340611601}
   doorOpenAudioSource: {fileID: 0}
@@ -768,6 +785,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &340611601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -778,8 +799,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -835,6 +856,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2501000078}
   - {fileID: 2103000011}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -891,13 +913,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Grand Entrance Hall Rear view
   doorName: GEH_BilliardRoom
   destinationRoom: Billiard Room
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 357269800}
   doorOpenAudioSource: {fileID: 0}
@@ -906,6 +929,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &357269800
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -916,8 +943,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -991,8 +1018,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
   m_RaycastTarget: 0
@@ -1056,8 +1083,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
@@ -1203,8 +1230,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -1213,7 +1240,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 45a669872351e5ba0b2a6749ecc2065f, type: 3}
+  m_Texture: {fileID: 2800000, guid: b86ab0433400447849c3249e0a503052, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -1276,13 +1303,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Music Room
   doorName: MusicRoom_Library
   destinationRoom: Library
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 552135205}
   doorOpenAudioSource: {fileID: 0}
@@ -1291,6 +1319,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &552135205
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1301,8 +1333,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -1358,6 +1390,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2501000001}
   - {fileID: 2103000021}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1390,8 +1423,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9ec3b89548306a40294ac738ad5bb2d5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -1419,8 +1452,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_ComponentVersion: 1
   m_LightType: 4
   m_BlendStyleIndex: 0
@@ -1521,8 +1554,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.50980395, g: 0.50980395, b: 0.50980395, a: 1}
   m_RaycastTarget: 0
@@ -1604,8 +1637,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -1642,8 +1675,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f75460f9dd08f21dc9b2d180c0d7059b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   mapPanel: {fileID: 651316803}
   arrow: {fileID: 838677889}
   speed: 5
@@ -1862,8 +1895,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
   m_RaycastTarget: 0
@@ -1938,13 +1971,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Kitchen
   doorName: Kitchen_ServiceCorridor
   destinationRoom: Service Corridor
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 802263368}
   doorOpenAudioSource: {fileID: 0}
@@ -1953,6 +1987,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &802263368
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1963,8 +2001,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -2038,8 +2076,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -2179,8 +2217,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Delegates:
   - eventID: 4
     callback:
@@ -2195,7 +2233,7 @@ MonoBehaviour:
             m_ObjectArgumentAssemblyTypeName: CameraAreaController, Assembly-CSharp
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument: 
+            m_StringArgument:
             m_BoolArgument: 0
           m_CallState: 2
 --- !u!114 &836767213
@@ -2208,8 +2246,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b7d00dcf4c0afe00b8f2e24d53deb2d7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomBackgroundTexture: {fileID: 2800000, guid: be7b38f2cec9bee98bad55097937c9c6, type: 3}
   cameraButtonImage: {fileID: 436548018}
   normalColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
@@ -2226,8 +2264,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
@@ -2301,8 +2339,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -2376,8 +2414,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
   m_RaycastTarget: 0
@@ -2537,8 +2575,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -2673,8 +2711,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Grand Entrance Hall Rear view
   roomBackgroundTexture: {fileID: 2800000, guid: be7b38f2cec9bee98bad55097937c9c6, type: 3}
 --- !u!1 &1051017432
@@ -2729,8 +2767,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Delegates:
   - eventID: 4
     callback:
@@ -2745,7 +2783,7 @@ MonoBehaviour:
             m_ObjectArgumentAssemblyTypeName: CameraAreaController, Assembly-CSharp
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument: 
+            m_StringArgument:
             m_BoolArgument: 0
           m_CallState: 2
 --- !u!114 &1051017435
@@ -2758,8 +2796,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b7d00dcf4c0afe00b8f2e24d53deb2d7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomBackgroundTexture: {fileID: 2800000, guid: b245a56e464eec8979b576c1e2c58496, type: 3}
   cameraButtonImage: {fileID: 723664434}
   normalColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
@@ -2776,8 +2814,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
@@ -2852,13 +2890,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Nursery
   doorName: Nursery_BlueBedroom
   destinationRoom: Blue Bedroom
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 1084796963}
   doorOpenAudioSource: {fileID: 0}
@@ -2867,6 +2906,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &1084796963
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2877,8 +2920,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -2987,8 +3030,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
   m_RaycastTarget: 0
@@ -3063,13 +3106,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Grand Entrance Hall Rear view
   doorName: GEH_Conservatory
   destinationRoom: Conservatory
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 1119941195}
   doorOpenAudioSource: {fileID: 0}
@@ -3078,6 +3122,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &1119941195
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3088,8 +3136,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -3163,8 +3211,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -3299,8 +3347,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.50980395, g: 0.50980395, b: 0.50980395, a: 1}
   m_RaycastTarget: 0
@@ -3374,8 +3422,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.50980395, g: 0.50980395, b: 0.50980395, a: 1}
   m_RaycastTarget: 0
@@ -3449,8 +3497,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -3588,8 +3636,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
@@ -3626,8 +3674,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Delegates:
   - eventID: 4
     callback:
@@ -3642,7 +3690,7 @@ MonoBehaviour:
             m_ObjectArgumentAssemblyTypeName: CameraAreaController, Assembly-CSharp
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument: 
+            m_StringArgument:
             m_BoolArgument: 0
           m_CallState: 2
 --- !u!114 &1325400059
@@ -3655,8 +3703,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b7d00dcf4c0afe00b8f2e24d53deb2d7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomBackgroundTexture: {fileID: 2800000, guid: 028084782cdcf3d4ab3b596624c8b7c5, type: 3}
   cameraButtonImage: {fileID: 1532345636}
   normalColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
@@ -3747,8 +3795,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
@@ -3785,8 +3833,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Delegates:
   - eventID: 0
     callback:
@@ -3801,7 +3849,7 @@ MonoBehaviour:
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument: 
+            m_StringArgument:
             m_BoolArgument: 0
           m_CallState: 2
   - eventID: 1
@@ -3817,7 +3865,7 @@ MonoBehaviour:
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument: 
+            m_StringArgument:
             m_BoolArgument: 0
           m_CallState: 2
   - eventID: 4
@@ -3833,7 +3881,7 @@ MonoBehaviour:
             m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument: 
+            m_StringArgument:
             m_BoolArgument: 0
           m_CallState: 2
 --- !u!1 &1367921344
@@ -3865,6 +3913,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2501000029}
   - {fileID: 2103000031}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3920,8 +3969,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.50980395, g: 0.50980395, b: 0.50980395, a: 1}
   m_RaycastTarget: 0
@@ -4057,8 +4106,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -4087,8 +4136,8 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c514a4b9f2a4fb1b291fe23fde4e9ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   targetImage: {fileID: 1453967424}
   targetSpriteRenderer: {fileID: 1453967421}
   set: {fileID: 11400000, guid: ed7c27fb5f0b4d3cab8db1f6b4a6d901, type: 2}
@@ -4147,8 +4196,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -4284,13 +4333,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Blue Bedroom
   doorName: BlueBedroom_Nursery
   destinationRoom: Nursery
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 1498249207}
   doorOpenAudioSource: {fileID: 0}
@@ -4299,6 +4349,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &1498249207
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4309,8 +4363,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -4385,13 +4439,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Butlers Pantry
   doorName: Butlers_Pantry_BilliardRoom
   destinationRoom: Billiard Room
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 1505671647}
   doorOpenAudioSource: {fileID: 0}
@@ -4400,6 +4455,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &1505671647
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4410,8 +4469,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -4490,8 +4549,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Delegates:
   - eventID: 4
     callback:
@@ -4506,7 +4565,7 @@ MonoBehaviour:
             m_ObjectArgumentAssemblyTypeName: CameraAreaController, Assembly-CSharp
             m_IntArgument: 0
             m_FloatArgument: 0
-            m_StringArgument: 
+            m_StringArgument:
             m_BoolArgument: 0
           m_CallState: 2
 --- !u!114 &1528234390
@@ -4519,8 +4578,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b7d00dcf4c0afe00b8f2e24d53deb2d7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomBackgroundTexture: {fileID: 2800000, guid: 7dabdfc97f536fe458e28ca413b0a0fa, type: 3}
   cameraButtonImage: {fileID: 915560735}
   normalColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
@@ -4537,8 +4596,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
@@ -4612,8 +4671,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
   m_RaycastTarget: 0
@@ -4669,6 +4728,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2501000043}
   - {fileID: 2103000041}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -4725,8 +4785,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
@@ -4801,13 +4861,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Grand Entrance Hall Rear view
   doorName: GEH_Rear_Library
   destinationRoom: Library
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 1615236112}
   doorOpenAudioSource: {fileID: 0}
@@ -4816,6 +4877,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &1615236112
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4826,8 +4891,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -4901,8 +4966,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 0.50980395, g: 0.50980395, b: 0.50980395, a: 1}
   m_RaycastTarget: 0
@@ -4976,8 +5041,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -5093,8 +5158,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_SendPointerHoverToParent: 1
   m_HorizontalAxis: Horizontal
   m_VerticalAxis: Vertical
@@ -5113,8 +5178,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
   m_DragThreshold: 10
@@ -5180,8 +5245,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -5252,8 +5317,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -5389,13 +5454,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Grand Entrance Hall
   doorName: GEH_GEH_Rear
   destinationRoom: Grand Entrance Hall Rear View
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 1858342504}
   doorOpenAudioSource: {fileID: 0}
@@ -5404,6 +5470,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &1858342504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5414,8 +5484,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -5524,8 +5594,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2920149c006836783ade34def1ef34c6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   staticPanel: {fileID: 609462627}
   staticGroup: {fileID: 609462632}
   staticPlayer: {fileID: 609462633}
@@ -5686,13 +5756,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Upper Sitting Hall
   doorName: UpperSittingHall_SideStairMudroom
   destinationRoom: Side Stair Mudroom
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 1915714845}
   doorOpenAudioSource: {fileID: 0}
@@ -5701,6 +5772,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &1915714845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5711,8 +5786,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -5781,8 +5856,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e3c8ce10745e87c74bfcf89d573dfebf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   cameraBackground: {fileID: 540209524}
   cameraSwitchSound: {fileID: 0}
   staticScreen: {fileID: 609462633}
@@ -5863,8 +5938,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
   m_BlockingMask:
@@ -5880,8 +5955,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
@@ -6001,8 +6076,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -6031,13 +6106,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Ballroom
   doorName: Ballroom_Library
   destinationRoom: Library
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2101000024}
   doorOpenAudioSource: {fileID: 0}
@@ -6046,6 +6122,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!114 &2102000000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6056,8 +6136,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Ballroom
   roomBackgroundTexture: {fileID: 2800000, guid: 7dabdfc97f536fe458e28ca413b0a0fa, type: 3}
 --- !u!114 &2102000001
@@ -6070,8 +6150,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Music Room
   roomBackgroundTexture: {fileID: 2800000, guid: 028084782cdcf3d4ab3b596624c8b7c5, type: 3}
 --- !u!114 &2102000002
@@ -6084,8 +6164,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Grand Entrance Hall
   roomBackgroundTexture: {fileID: 2800000, guid: 3e163816317a638f5adedc338ec34d98, type: 3}
 --- !u!114 &2102000003
@@ -6098,8 +6178,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Library
   roomBackgroundTexture: {fileID: 2800000, guid: 0a85e4fdd73e4714fabde63002a457e7, type: 3}
 --- !u!114 &2102000004
@@ -6112,8 +6192,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Kitchen
   roomBackgroundTexture: {fileID: 2800000, guid: 788c4ce8a4f6e8b8580f808a95b41c05, type: 3}
 --- !u!1 &2103000000
@@ -6574,7 +6654,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000001
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6587,6 +6667,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2501000071}
   - {fileID: 2300000004}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6605,8 +6686,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Conservatory
   roomBackgroundTexture: {fileID: 2800000, guid: b86ab0433400447849c3249e0a503052, type: 3}
 --- !u!1 &2300000003
@@ -6692,8 +6773,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Drawing Room
   roomBackgroundTexture: {fileID: 2800000, guid: 28c74b6dea1ed8e2c9c7d612355f9734, type: 3}
 --- !u!1 &2300000008
@@ -6780,8 +6861,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Billiard Room
   roomBackgroundTexture: {fileID: 2800000, guid: 5987c5a8b3a09fc1ca848ac0ece03658, type: 3}
 --- !u!1 &2300000013
@@ -6868,8 +6949,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Dining Room
   roomBackgroundTexture: {fileID: 2800000, guid: 004ab4cca930d0387892725fe69b4f72, type: 3}
 --- !u!1 &2300000018
@@ -6956,8 +7037,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Butlers Pantry
   roomBackgroundTexture: {fileID: 2800000, guid: e73e44419d3782452bb6abd0e8edd452, type: 3}
 --- !u!1 &2300000023
@@ -7045,8 +7126,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Service Corridor
   roomBackgroundTexture: {fileID: 2800000, guid: 63139e8fe55e5e00f97b08fe5f2b145b, type: 3}
 --- !u!1 &2300000028
@@ -7118,6 +7199,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2501000057}
   - {fileID: 2300000034}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -7136,8 +7218,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Chapel
   roomBackgroundTexture: {fileID: 2800000, guid: d40ce95937763bcddb24975fe9c6ec20, type: 3}
 --- !u!1 &2300000033
@@ -7223,8 +7305,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Side Stair Mudroom
   roomBackgroundTexture: {fileID: 2800000, guid: 755ad9d5953d1f60cafbff7c71f5767f, type: 3}
 --- !u!1 &2300000038
@@ -7311,8 +7393,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Upper Gallery
   roomBackgroundTexture: {fileID: 2800000, guid: 1bbe0674f13938fcc9559b5fb933be83, type: 3}
 --- !u!1 &2300000043
@@ -7400,8 +7482,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Master Bedroom Suite
   roomBackgroundTexture: {fileID: 2800000, guid: 6169353da08ead53db8fa10441e9ae49, type: 3}
 --- !u!1 &2300000048
@@ -7456,7 +7538,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2300000051
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7487,8 +7569,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Upper Sitting Hall
   roomBackgroundTexture: {fileID: 2800000, guid: 45a669872351e5ba0b2a6749ecc2065f, type: 3}
 --- !u!1 &2300000053
@@ -7577,8 +7659,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Nursery
   roomBackgroundTexture: {fileID: 2800000, guid: 5e685bb9c8917582f977493e3feed036, type: 3}
 --- !u!1 &2300000058
@@ -7665,8 +7747,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Blue Bedroom
   roomBackgroundTexture: {fileID: 2800000, guid: 726529cec513ee83585fb467c7093cbe, type: 3}
 --- !u!1 &2300000063
@@ -7762,8 +7844,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -7792,13 +7874,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Grand Entrance Hall
   doorName: GEH_Stairway_UpperGalleryLeft
   destinationRoom: Upper Gallery
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000068}
   doorOpenAudioSource: {fileID: 0}
@@ -7807,6 +7890,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000070
 GameObject:
   m_ObjectHideFlags: 0
@@ -7863,8 +7950,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -7893,13 +7980,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Conservatory
   doorName: Conservatory_GEH_Rear_View
   destinationRoom: Grand Entrance Hall Rear View
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000073}
   doorOpenAudioSource: {fileID: 0}
@@ -7908,6 +7996,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000075
 GameObject:
   m_ObjectHideFlags: 0
@@ -7964,8 +8056,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -7994,13 +8086,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Library
   doorName: Library_MusicRoom
   destinationRoom: Music Room
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000078}
   doorOpenAudioSource: {fileID: 0}
@@ -8009,6 +8102,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000080
 GameObject:
   m_ObjectHideFlags: 0
@@ -8065,8 +8162,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -8095,13 +8192,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Library
   doorName: Library_Ballroom
   destinationRoom: Ballroom
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000083}
   doorOpenAudioSource: {fileID: 0}
@@ -8110,6 +8208,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000085
 GameObject:
   m_ObjectHideFlags: 0
@@ -8166,8 +8268,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -8196,13 +8298,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Music Room
   doorName: MusicRoom_DrawingRoom
   destinationRoom: Drawing Room
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000088}
   doorOpenAudioSource: {fileID: 0}
@@ -8211,6 +8314,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000095
 GameObject:
   m_ObjectHideFlags: 0
@@ -8267,8 +8374,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -8297,13 +8404,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Drawing Room
   doorName: DrawingRoom_MusicRoom
   destinationRoom: Music Room
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000098}
   doorOpenAudioSource: {fileID: 0}
@@ -8312,6 +8420,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000100
 GameObject:
   m_ObjectHideFlags: 0
@@ -8368,8 +8480,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -8398,13 +8510,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Drawing Room
   doorName: DrawingRoom_GEH
   destinationRoom: Grand Entrance Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000103}
   doorOpenAudioSource: {fileID: 0}
@@ -8413,6 +8526,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000105
 GameObject:
   m_ObjectHideFlags: 0
@@ -8469,8 +8586,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -8499,13 +8616,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Dining Room
   doorName: DiningRoom_GEH
   destinationRoom: Grand Entrance Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000108}
   doorOpenAudioSource: {fileID: 0}
@@ -8514,6 +8632,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000115
 GameObject:
   m_ObjectHideFlags: 0
@@ -8570,8 +8692,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -8600,13 +8722,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Dining Room
   doorName: DiningRoom_ButlersPantry
   destinationRoom: Butler's Pantry
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000118}
   doorOpenAudioSource: {fileID: 0}
@@ -8615,6 +8738,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000120
 GameObject:
   m_ObjectHideFlags: 0
@@ -8671,8 +8798,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -8701,13 +8828,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Billiard Room
   doorName: BilliardRoom_GEH
   destinationRoom: Grand Entrance Hall Rear View
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000123}
   doorOpenAudioSource: {fileID: 0}
@@ -8716,6 +8844,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000130
 GameObject:
   m_ObjectHideFlags: 0
@@ -8772,8 +8904,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -8802,13 +8934,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Billiard Room
   doorName: BilliardRoom_ButlersPantry
   destinationRoom: Butlers Pantry
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000133}
   doorOpenAudioSource: {fileID: 0}
@@ -8817,6 +8950,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000135
 GameObject:
   m_ObjectHideFlags: 0
@@ -8873,8 +9010,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -8903,13 +9040,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Butlers Pantry
   doorName: ButlersPantry_DiningRoom
   destinationRoom: Dining Room
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000138}
   doorOpenAudioSource: {fileID: 0}
@@ -8918,6 +9056,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000145
 GameObject:
   m_ObjectHideFlags: 0
@@ -8974,8 +9116,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9004,13 +9146,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Butlers Pantry
   doorName: ButlersPantry_ServiceCorridor
   destinationRoom: Service Corridor
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000148}
   doorOpenAudioSource: {fileID: 0}
@@ -9019,6 +9162,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000150
 GameObject:
   m_ObjectHideFlags: 0
@@ -9075,8 +9222,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9105,13 +9252,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Service Corridor
   doorName: ServiceCorridor_ButlersPantry
   destinationRoom: Butler's Pantry
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000153}
   doorOpenAudioSource: {fileID: 0}
@@ -9120,6 +9268,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000155
 GameObject:
   m_ObjectHideFlags: 0
@@ -9176,8 +9328,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9206,13 +9358,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Service Corridor
   doorName: ServiceCorridor_BilliardRoom
   destinationRoom: Billiard Room
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000158}
   doorOpenAudioSource: {fileID: 0}
@@ -9221,6 +9374,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000160
 GameObject:
   m_ObjectHideFlags: 0
@@ -9277,8 +9434,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9307,13 +9464,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Service Corridor
   doorName: ServiceCorridor_Kitchen
   destinationRoom: Kitchen
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000163}
   doorOpenAudioSource: {fileID: 0}
@@ -9322,6 +9480,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000165
 GameObject:
   m_ObjectHideFlags: 0
@@ -9378,8 +9540,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9408,13 +9570,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Service Corridor
   doorName: ServiceCorridor_Chapel
   destinationRoom: Chapel
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000168}
   doorOpenAudioSource: {fileID: 0}
@@ -9423,6 +9586,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000170
 GameObject:
   m_ObjectHideFlags: 0
@@ -9479,8 +9646,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9509,13 +9676,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Service Corridor
   doorName: ServiceCorridor_SideStairMudroom
   destinationRoom: Side Stair & Mudroom
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000173}
   doorOpenAudioSource: {fileID: 0}
@@ -9524,6 +9692,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000175
 GameObject:
   m_ObjectHideFlags: 0
@@ -9580,8 +9752,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9610,13 +9782,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Chapel
   doorName: Chapel_ServiceCorridor
   destinationRoom: Service Corridor
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000178}
   doorOpenAudioSource: {fileID: 0}
@@ -9625,6 +9798,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000180
 GameObject:
   m_ObjectHideFlags: 0
@@ -9681,8 +9858,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9711,13 +9888,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Side Stair Mudroom
   doorName: SideStairMudroom_ServiceCorridor
   destinationRoom: Service Corridor
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000183}
   doorOpenAudioSource: {fileID: 0}
@@ -9726,6 +9904,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000185
 GameObject:
   m_ObjectHideFlags: 0
@@ -9782,8 +9964,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9812,13 +9994,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Side Stair Mudroom
   doorName: SideStairMudroom_Stairway_UpperSittingHall
   destinationRoom: Upper Sitting Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000188}
   doorOpenAudioSource: {fileID: 0}
@@ -9827,6 +10010,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000190
 GameObject:
   m_ObjectHideFlags: 0
@@ -9883,8 +10070,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -9913,13 +10100,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Upper Gallery
   doorName: UpperGallery_Stairway_GEH
   destinationRoom: Grand Entrance Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000193}
   doorOpenAudioSource: {fileID: 0}
@@ -9928,6 +10116,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000200
 GameObject:
   m_ObjectHideFlags: 0
@@ -9984,8 +10176,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -10014,13 +10206,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Upper Gallery
   doorName: UpperGallery_MasterBedroomSuite
   destinationRoom: Master Bedroom Suite
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000203}
   doorOpenAudioSource: {fileID: 0}
@@ -10029,6 +10222,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000205
 GameObject:
   m_ObjectHideFlags: 0
@@ -10085,8 +10282,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -10115,13 +10312,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Upper Gallery
   doorName: UpperGallery_UpperSittingHall
   destinationRoom: Upper Sitting Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000208}
   doorOpenAudioSource: {fileID: 0}
@@ -10130,6 +10328,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000210
 GameObject:
   m_ObjectHideFlags: 0
@@ -10186,8 +10388,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -10216,13 +10418,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Master Bedroom Suite
   doorName: MasterBedroomSuite_UpperGallery
   destinationRoom: Upper Gallery
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000213}
   doorOpenAudioSource: {fileID: 0}
@@ -10231,6 +10434,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000215
 GameObject:
   m_ObjectHideFlags: 0
@@ -10287,8 +10494,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -10317,13 +10524,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Upper Sitting Hall
   doorName: UpperSittingHall_UpperGallery
   destinationRoom: Upper Gallery
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000218}
   doorOpenAudioSource: {fileID: 0}
@@ -10332,6 +10540,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000220
 GameObject:
   m_ObjectHideFlags: 0
@@ -10388,8 +10600,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -10418,13 +10630,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Upper Sitting Hall
   doorName: UpperSittingHall_Nursery
   destinationRoom: Nursery
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000223}
   doorOpenAudioSource: {fileID: 0}
@@ -10433,6 +10646,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000225
 GameObject:
   m_ObjectHideFlags: 0
@@ -10489,8 +10706,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -10519,13 +10736,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Upper Sitting Hall
   doorName: UpperSittingHall_BlueBedroom
   destinationRoom: Blue Bedroom
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000228}
   doorOpenAudioSource: {fileID: 0}
@@ -10534,6 +10752,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000230
 GameObject:
   m_ObjectHideFlags: 0
@@ -10590,8 +10812,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -10620,13 +10842,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Nursery
   doorName: Nursery_UpperSittingHall
   destinationRoom: Upper Sitting Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000233}
   doorOpenAudioSource: {fileID: 0}
@@ -10635,6 +10858,10 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
 --- !u!1 &2300000235
 GameObject:
   m_ObjectHideFlags: 0
@@ -10691,8 +10918,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 0.35}
   m_RaycastTarget: 1
@@ -10721,13 +10948,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   sourceRoom: Blue Bedroom
   doorName: BlueBedroom_UpperSittingHall
   destinationRoom: Upper Sitting Hall
   requirePlayerInSourceRoom: 1
   useCameraSequence: 0
+  triggerKind: 0
   navigationManager: {fileID: 0}
   image: {fileID: 2300000238}
   doorOpenAudioSource: {fileID: 0}
@@ -10736,6 +10964,59 @@ MonoBehaviour:
   bringToFront: 1
   playDoorOpenSound: 1
   doorOpenAudioObjectName: Audio_DoorOpen
+  doorOpenSoundCatalog: {fileID: 0}
+  doorOpenSoundCatalogResourcePath: Audio/DoorOpenSoundCatalog
+  stairwaySoundCatalog: {fileID: 0}
+  stairwaySoundCatalogResourcePath: Audio/StairwaySoundCatalog
+--- !u!1 &2401000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2401000002}
+  - component: {fileID: 2401000003}
+  m_Layer: 0
+  m_Name: RoomLightingController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2401000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2401000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2401000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2401000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aeafe6c29b04bb5a9e6d98f06298e45, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  presetResourcePath: Lighting/RoomLightingPreset
+  preset: {fileID: 11400000, guid: e9fdf1d89f634985b8b38e991ae5a1d2, type: 2}
+  toggleKey: 108
+  showHud: 1
+  createMissingLightsFromPreset: 1
 --- !u!1001 &4847176794638743877
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11128,7 +11409,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b1a00aa04e043945bb50a62ea5a4d968, type: 3}
---- !u!1 &2401000001
+--- !u!1 &2501000000
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -11136,47 +11417,1504 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2401000002}
-  - component: {fileID: 2401000003}
-  m_Layer: 0
-  m_Name: RoomLightingController
+  - component: {fileID: 2501000001}
+  m_Layer: 5
+  m_Name: Lighting
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2401000002
-Transform:
+--- !u!224 &2501000001
+RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2401000001}
-  serializedVersion: 2
+  m_GameObject: {fileID: 2501000000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2501000003}
+  - {fileID: 2501000010}
+  - {fileID: 2501000017}
+  - {fileID: 2501000024}
+  m_Father: {fileID: 567115834}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2501000002
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000003}
+  - component: {fileID: 2501000004}
+  - component: {fileID: 2501000005}
+  - component: {fileID: 2501000006}
+  m_Layer: 5
+  m_Name: RoomLight_GEH_Chandelier_Bloom
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000003
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000002}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 2501000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2401000003
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 122}
+  m_SizeDelta: {x: 560, y: 260}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000004
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000002}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000005
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2401000001}
+  m_GameObject: {fileID: 2501000002}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1aeafe6c29b04bb5a9e6d98f06298e45, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  presetResourcePath: Lighting/RoomLightingPreset
-  preset: {fileID: 11400000, guid: e9fdf1d89f634985b8b38e991ae5a1d2, type: 2}
-  toggleKey: 108
-  showHud: 1
-  liveEditPreset: 1
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.72, b: 0.34, a: 0.26}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 1
+  color: {r: 1, g: 0.72, b: 0.34, a: 1}
+  onAlpha: 0.26
+  offAlpha: 0
+  flickerAmount: 0.04
+  driftAmount: 0.12
+  speed: 0.9
+  phase: 0.2
+--- !u!1 &2501000009
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000010}
+  - component: {fileID: 2501000011}
+  - component: {fileID: 2501000012}
+  - component: {fileID: 2501000013}
+  m_Layer: 5
+  m_Name: RoomLight_GEH_Left_Sconce_Flicker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000010
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000009}
+  m_LocalRotation: {x: 0, y: 0, z: -0.04361939, w: 0.9990482}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -5}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -510, y: 54}
+  m_SizeDelta: {x: 260, y: 310}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000011
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000009}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.56, b: 0.23, a: 0.36}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 0
+  color: {r: 1, g: 0.56, b: 0.23, a: 1}
+  onAlpha: 0.36
+  offAlpha: 0
+  flickerAmount: 0.13
+  driftAmount: 0.04
+  speed: 1.4
+  phase: 1.1
+--- !u!1 &2501000016
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000017}
+  - component: {fileID: 2501000018}
+  - component: {fileID: 2501000019}
+  - component: {fileID: 2501000020}
+  m_Layer: 5
+  m_Name: RoomLight_GEH_Right_Sconce_Flicker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000017
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000016}
+  m_LocalRotation: {x: 0, y: 0, z: 0.04361939, w: 0.9990482}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 5}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 510, y: 54}
+  m_SizeDelta: {x: 260, y: 310}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000018
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000016}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.58, b: 0.24, a: 0.34}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 0
+  color: {r: 1, g: 0.58, b: 0.24, a: 1}
+  onAlpha: 0.34
+  offAlpha: 0
+  flickerAmount: 0.15
+  driftAmount: 0.04
+  speed: 1.25
+  phase: 2.3
+--- !u!1 &2501000023
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000024}
+  - component: {fileID: 2501000025}
+  - component: {fileID: 2501000026}
+  - component: {fileID: 2501000027}
+  m_Layer: 5
+  m_Name: RoomLight_GEH_Far_Door_Glow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000024
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000023}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 18}
+  m_SizeDelta: {x: 240, y: 250}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000025
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000023}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000023}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.92, g: 0.78, b: 0.47, a: 0.16}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000023}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 3
+  color: {r: 0.92, g: 0.78, b: 0.47, a: 1}
+  onAlpha: 0.16
+  offAlpha: 0
+  flickerAmount: 0.02
+  driftAmount: 0.06
+  speed: 0.55
+  phase: 0.7
+--- !u!1 &2501000028
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000029}
+  m_Layer: 5
+  m_Name: Lighting
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000029
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000028}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2501000031}
+  - {fileID: 2501000038}
+  m_Father: {fileID: 1367921345}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2501000030
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000031}
+  - component: {fileID: 2501000032}
+  - component: {fileID: 2501000033}
+  - component: {fileID: 2501000034}
+  m_Layer: 5
+  m_Name: RoomLight_Library_Reading_Pool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000031
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000030}
+  m_LocalRotation: {x: 0, y: 0, z: -0.06975647, w: 0.9975641}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000029}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -8}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -250, y: -48}
+  m_SizeDelta: {x: 360, y: 220}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000032
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000030}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.66, b: 0.29, a: 0.34}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 4
+  color: {r: 1, g: 0.66, b: 0.29, a: 1}
+  onAlpha: 0.34
+  offAlpha: 0
+  flickerAmount: 0.09
+  driftAmount: 0.03
+  speed: 1.1
+  phase: 3.4
+--- !u!1 &2501000037
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000038}
+  - component: {fileID: 2501000039}
+  - component: {fileID: 2501000040}
+  - component: {fileID: 2501000041}
+  m_Layer: 5
+  m_Name: RoomLight_Library_Shelf_Amber
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000038
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000037}
+  m_LocalRotation: {x: 0, y: 0, z: 0.0348995, w: 0.9993908}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000029}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 4}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 330, y: 46}
+  m_SizeDelta: {x: 420, y: 300}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000039
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000037}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000040
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000037}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.95, g: 0.53, b: 0.22, a: 0.26}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000037}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 0
+  color: {r: 0.95, g: 0.53, b: 0.22, a: 1}
+  onAlpha: 0.26
+  offAlpha: 0
+  flickerAmount: 0.08
+  driftAmount: 0.05
+  speed: 0.82
+  phase: 4.1
+--- !u!1 &2501000042
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000043}
+  m_Layer: 5
+  m_Name: Lighting
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000043
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000042}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2501000045}
+  - {fileID: 2501000052}
+  m_Father: {fileID: 1541978211}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2501000044
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000045}
+  - component: {fileID: 2501000046}
+  - component: {fileID: 2501000047}
+  - component: {fileID: 2501000048}
+  m_Layer: 5
+  m_Name: RoomLight_Kitchen_Hearth_Breath
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000045
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000044}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000043}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 300, y: -74}
+  m_SizeDelta: {x: 560, y: 360}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000046
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000044}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.43, b: 0.18, a: 0.4}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 2
+  color: {r: 1, g: 0.43, b: 0.18, a: 1}
+  onAlpha: 0.4
+  offAlpha: 0
+  flickerAmount: 0.14
+  driftAmount: 0.08
+  speed: 0.75
+  phase: 1.7
+--- !u!1 &2501000051
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000052}
+  - component: {fileID: 2501000053}
+  - component: {fileID: 2501000054}
+  - component: {fileID: 2501000055}
+  m_Layer: 5
+  m_Name: RoomLight_Kitchen_Counter_Glow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000052
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000051}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000043}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -260, y: -42}
+  m_SizeDelta: {x: 380, y: 220}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000053
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000051}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000054
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000051}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.7, b: 0.36, a: 0.2}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000051}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 3
+  color: {r: 1, g: 0.7, b: 0.36, a: 1}
+  onAlpha: 0.2
+  offAlpha: 0
+  flickerAmount: 0.02
+  driftAmount: 0.05
+  speed: 0.45
+  phase: 2.5
+--- !u!1 &2501000056
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000057}
+  m_Layer: 5
+  m_Name: Lighting
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000057
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000056}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2501000059}
+  - {fileID: 2501000066}
+  m_Father: {fileID: 2300000031}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2501000058
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000059}
+  - component: {fileID: 2501000060}
+  - component: {fileID: 2501000061}
+  - component: {fileID: 2501000062}
+  m_Layer: 5
+  m_Name: RoomLight_Chapel_Candle_Cluster
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000059
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000058}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000057}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -62}
+  m_SizeDelta: {x: 340, y: 230}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000060
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000058}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.61, b: 0.28, a: 0.42}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 4
+  color: {r: 1, g: 0.61, b: 0.28, a: 1}
+  onAlpha: 0.42
+  offAlpha: 0
+  flickerAmount: 0.2
+  driftAmount: 0.02
+  speed: 1.6
+  phase: 0.4
+--- !u!1 &2501000065
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000066}
+  - component: {fileID: 2501000067}
+  - component: {fileID: 2501000068}
+  - component: {fileID: 2501000069}
+  m_Layer: 5
+  m_Name: RoomLight_Chapel_Window_Haze
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000066
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000065}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000057}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 90}
+  m_SizeDelta: {x: 520, y: 300}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000067
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000065}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000065}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.74, g: 0.84, b: 0.92, a: 0.18}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000069
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000065}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 3
+  color: {r: 0.74, g: 0.84, b: 0.92, a: 1}
+  onAlpha: 0.18
+  offAlpha: 0.02
+  flickerAmount: 0.02
+  driftAmount: 0.08
+  speed: 0.36
+  phase: 1.3
+--- !u!1 &2501000070
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000071}
+  m_Layer: 5
+  m_Name: Lighting
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000071
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000070}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2501000073}
+  m_Father: {fileID: 2300000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2501000072
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000073}
+  - component: {fileID: 2501000074}
+  - component: {fileID: 2501000075}
+  - component: {fileID: 2501000076}
+  m_Layer: 5
+  m_Name: RoomLight_Conservatory_Glass_Breath
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000073
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000072}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000071}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 24}
+  m_SizeDelta: {x: 860, y: 430}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000074
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000072}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000075
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000072}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.92941177, g: 0.9205451, b: 0.6784314, a: 0.18}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000076
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000072}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 2
+  color: {r: 0.92941177, g: 0.9205451, b: 0.6784314, a: 1}
+  onAlpha: 0.18
+  offAlpha: 0.015
+  flickerAmount: 0.568
+  driftAmount: 0.901
+  speed: 0.3
+  phase: 5.2
+--- !u!1 &2501000077
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000078}
+  m_Layer: 5
+  m_Name: Lighting
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000078
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000077}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2501000080}
+  m_Father: {fileID: 354156756}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2501000079
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000080}
+  - component: {fileID: 2501000081}
+  - component: {fileID: 2501000082}
+  - component: {fileID: 2501000083}
+  m_Layer: 5
+  m_Name: RoomLight_Music_Room_Piano_Candle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000080
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000079}
+  m_LocalRotation: {x: 0, y: 0, z: -0.02617695, w: 0.9996573}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000078}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -3}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -160, y: -8}
+  m_SizeDelta: {x: 310, y: 200}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000081
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000079}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.62, b: 0.3, a: 0.3}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 4
+  color: {r: 1, g: 0.62, b: 0.3, a: 1}
+  onAlpha: 0.3
+  offAlpha: 0
+  flickerAmount: 0.16
+  driftAmount: 0.02
+  speed: 1.35
+  phase: 2.9
+--- !u!1 &2501000084
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000085}
+  m_Layer: 5
+  m_Name: Lighting
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000085
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000084}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2501000087}
+  m_Father: {fileID: 43637645}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2501000086
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2501000087}
+  - component: {fileID: 2501000088}
+  - component: {fileID: 2501000089}
+  - component: {fileID: 2501000090}
+  m_Layer: 5
+  m_Name: RoomLight_Ballroom_Soft_Chandeliers
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2501000087
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000086}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2501000085}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 116}
+  m_SizeDelta: {x: 780, y: 300}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2501000088
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000086}
+  m_CullTransparentMesh: 1
+--- !u!114 &2501000089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.74, b: 0.38, a: 0.24}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2501000090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2501000086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animationStyle: 1
+  color: {r: 1, g: 0.74, b: 0.38, a: 1}
+  onAlpha: 0.24
+  offAlpha: 0
+  flickerAmount: 0.03
+  driftAmount: 0.1
+  speed: 0.7
+  phase: 4.8
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -16,13 +16,18 @@ public class RoomLightingRegressionTests
         string controllerText = File.ReadAllText(ControllerPath);
         string overlayText = File.ReadAllText(OverlayPath);
 
-        Assert.That(controllerText, Does.Contain("RuntimeInitializeOnLoadMethod"), "Lighting should bootstrap itself in gameplay scenes.");
+        Assert.That(controllerText, Does.Contain("[ExecuteAlways]"), "Lighting should work in Edit mode, not only when Play mode starts.");
         Assert.That(controllerText, Does.Contain("RoomContentGroup"), "Lighting should attach to the existing room roots.");
         Assert.That(controllerText, Does.Contain("Resources.Load<RoomLightingPreset>"), "Lighting should be driven by a simple editable preset asset.");
+        Assert.That(controllerText, Does.Contain("Create Missing Scene Lights From Preset"), "Artists should have a simple explicit way to create missing scene light objects.");
+        Assert.That(controllerText, Does.Contain("CreateMissingSceneLight"), "The preset should create real scene children instead of runtime-only overlays.");
         Assert.That(controllerText, Does.Contain("Button_Lights"), "The player should have a small HUD control for lights.");
         Assert.That(controllerText, Does.Contain("HudSortingOrder = 7000"), "The light toggle should appear above gameplay UI.");
         Assert.That(controllerText, Does.Contain("KeyCode.L"), "The player should be able to toggle lights quickly while testing.");
         Assert.That(controllerText, Does.Contain("Debug.LogWarning"), "Lighting setup failures should show up in the Console.");
+        Assert.That(overlayText, Does.Contain("[ExecuteAlways]"), "Individual lights should preview while editing the scene.");
+        Assert.That(overlayText, Does.Contain("EditorApplication.update"), "Edit mode should repaint animated light previews.");
+        Assert.That(overlayText, Does.Contain("animationStyle"), "Each scene light should own its animation style.");
         Assert.That(overlayText, Does.Contain("raycastTarget = false"), "Light overlays must never block room doors or interactables.");
     }
 
@@ -36,6 +41,9 @@ public class RoomLightingRegressionTests
         Assert.That(sceneText, Does.Contain("guid: e9fdf1d89f634985b8b38e991ae5a1d2"), "Gameplay should directly reference the editable lighting preset.");
         Assert.That(sceneText, Does.Contain("toggleKey: 108"), "The L key should toggle lights in Play mode.");
         Assert.That(sceneText, Does.Contain("showHud: 1"), "The Lights HUD button should be enabled.");
+        Assert.That(sceneText, Does.Contain("createMissingLightsFromPreset: 1"), "Gameplay should create any missing editable scene lights from the preset.");
+        Assert.That(sceneText, Does.Contain("m_Name: Lighting"), "Rooms should contain visible Lighting children for edit-mode authoring.");
+        Assert.That(sceneText, Does.Contain("m_Name: RoomLight_"), "Gameplay should contain editable RoomLight scene objects.");
     }
 
     [Test]
