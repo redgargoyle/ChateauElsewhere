@@ -92,6 +92,9 @@ public class CameraManager : MonoBehaviour
     private Vector3 shakeBaseScale;
     private int lastScreenWidth;
     private int lastScreenHeight;
+    private Vector2 lastRoomViewportSize = new Vector2(-1f, -1f);
+    private bool roomLayoutDirty = true;
+    private bool applyingCanvasPreRenderLayout;
     private float currentRoomPan;
     private float targetRoomPan;
     private float currentRoomVerticalPan;
@@ -155,6 +158,13 @@ public class CameraManager : MonoBehaviour
         ApplyRoomLookToMaterial();
     }
 
+    private void OnEnable()
+    {
+        Canvas.willRenderCanvases -= HandleCanvasWillRender;
+        Canvas.willRenderCanvases += HandleCanvasWillRender;
+        MarkRoomLayoutDirty();
+    }
+
     private void Start()
     {
         if (cameraBackground == null)
@@ -165,6 +175,8 @@ public class CameraManager : MonoBehaviour
         }
 
         EnsureBackgroundCanvasVisible();
+        Canvas.ForceUpdateCanvases();
+        MarkRoomLayoutDirty();
 
         Texture navigationStartupTexture = GetNavigationStartupBackgroundTexture();
         SetCameraBackground(navigationStartupTexture != null ? navigationStartupTexture : GetStartupBackgroundTexture());
@@ -172,7 +184,7 @@ public class CameraManager : MonoBehaviour
 
     private void Update()
     {
-        if (Screen.width != lastScreenWidth || Screen.height != lastScreenHeight)
+        if (Screen.width != lastScreenWidth || Screen.height != lastScreenHeight || HasRoomViewportSizeChanged())
         {
             ApplyBackgroundLayout();
         }
@@ -181,8 +193,34 @@ public class CameraManager : MonoBehaviour
         UpdateAnchoredBackgroundAnimation();
     }
 
+    private void HandleCanvasWillRender()
+    {
+        if (!isActiveAndEnabled || cameraBackground == null || applyingCanvasPreRenderLayout)
+        {
+            return;
+        }
+
+        if (!roomLayoutDirty && !HasRoomViewportSizeChanged())
+        {
+            return;
+        }
+
+        applyingCanvasPreRenderLayout = true;
+
+        try
+        {
+            ApplyBackgroundLayout();
+            ApplyRoomLookToMaterial();
+        }
+        finally
+        {
+            applyingCanvasPreRenderLayout = false;
+        }
+    }
+
     private void OnDisable()
     {
+        Canvas.willRenderCanvases -= HandleCanvasWillRender;
         NavigationCursorController.SetEdgePanDirection(0);
         RestoreBackgroundParentIfNeeded();
     }
@@ -329,6 +367,7 @@ public class CameraManager : MonoBehaviour
         if (roomStageChanged)
         {
             ResetRoomLookForRoomChange();
+            MarkRoomLayoutDirty();
         }
 
         if (activeRoomStage == null)
@@ -336,6 +375,7 @@ public class CameraManager : MonoBehaviour
             RestoreBackgroundParentIfNeeded();
         }
 
+        EnsureBackgroundMaterialAssigned();
         if (updateBackground &&
             roomContentGroup != null &&
             roomContentGroup.TryGetRoomBackgroundTexture(out Texture roomTexture) &&
@@ -577,6 +617,7 @@ public class CameraManager : MonoBehaviour
         {
             ResetRoomLookForRoomChange();
             ResetAnchoredAnimationPlayback();
+            MarkRoomLayoutDirty();
         }
 
         currentBaseBackgroundTexture = texture;
@@ -929,6 +970,7 @@ public class CameraManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        Canvas.willRenderCanvases -= HandleCanvasWillRender;
         ReleaseRuntimeBackgroundMaterial();
         ReleaseAnchoredAnimationTexture();
 
@@ -975,6 +1017,7 @@ public class CameraManager : MonoBehaviour
         currentRoomFov = ClampRoomFov(defaultRoomFov);
         currentRoomZoom = ClampRoomZoom(defaultRoomZoom);
         targetRoomZoom = currentRoomZoom;
+        MarkRoomLayoutDirty();
     }
 
     private void ResetRoomLookForRoomChange()
@@ -989,6 +1032,7 @@ public class CameraManager : MonoBehaviour
         roomZoomVelocity = 0f;
         ResetHorizontalEdgeHold();
         NavigationCursorController.SetEdgePanDirection(0);
+        MarkRoomLayoutDirty();
     }
 
     private void UpdateRoomLookFromInput()
@@ -1402,6 +1446,7 @@ public class CameraManager : MonoBehaviour
 
         if (TryApplyRoomStageLayout(rectTransform))
         {
+            roomLayoutDirty = false;
             return;
         }
 
@@ -1429,6 +1474,7 @@ public class CameraManager : MonoBehaviour
         }
 
         ApplyBackgroundUvCrop(rectTransform);
+        roomLayoutDirty = false;
     }
 
     private void ApplyBackgroundUvCrop(RectTransform rectTransform)
@@ -1464,6 +1510,7 @@ public class CameraManager : MonoBehaviour
         }
 
         Vector2 viewportSize = GetUsableRectSize(viewport);
+        lastRoomViewportSize = viewportSize;
         float fitScale = GetFitScale(viewportSize, roomSize);
         float zoom = ClampRoomZoom(currentRoomZoom);
         float stageScale = fitScale * zoom;
@@ -1500,6 +1547,44 @@ public class CameraManager : MonoBehaviour
     private bool UsesRoomStageLayout()
     {
         return activeRoomStage != null && activeRoomContentGroup != null;
+    }
+
+    private void MarkRoomLayoutDirty()
+    {
+        roomLayoutDirty = true;
+        lastRoomViewportSize = new Vector2(-1f, -1f);
+    }
+
+    private bool HasRoomViewportSizeChanged()
+    {
+        if (!UsesRoomStageLayout())
+        {
+            return false;
+        }
+
+        RectTransform viewport = activeRoomStage.parent as RectTransform;
+
+        if (viewport == null)
+        {
+            return false;
+        }
+
+        Vector2 viewportSize = viewport.rect.size;
+
+        if (viewportSize.x <= 0f || viewportSize.y <= 0f)
+        {
+            return false;
+        }
+
+        return !ApproximatelySameLayoutSize(viewportSize, lastRoomViewportSize);
+    }
+
+    private bool ApproximatelySameLayoutSize(Vector2 a, Vector2 b)
+    {
+        const float layoutPixelTolerance = 0.5f;
+
+        return Mathf.Abs(a.x - b.x) <= layoutPixelTolerance &&
+            Mathf.Abs(a.y - b.y) <= layoutPixelTolerance;
     }
 
     private void RememberOriginalBackgroundParent()

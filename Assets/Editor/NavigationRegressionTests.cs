@@ -184,6 +184,9 @@ public class NavigationRegressionTests
         Assert.That(cameraManagerText, Does.Contain("SmoothRoomZoom"), "Mouse-wheel zoom should be damped instead of stepping between crop values.");
         Assert.That(cameraManagerText, Does.Contain("activeRoomStage.localScale = new Vector3(stageScale, stageScale, 1f)"), "Regular zoom should scale the whole room stage so hitboxes and art share one transform.");
         Assert.That(cameraManagerText, Does.Contain("ResetRoomLookForRoomChange"), "Each new room should enter from a centered default view instead of inheriting the previous room's pan/zoom.");
+        Assert.That(cameraManagerText, Does.Contain("Canvas.willRenderCanvases"), "Startup canvas layout must settle before the first rendered frame, not when the player first touches an edge.");
+        Assert.That(cameraManagerText, Does.Contain("HasRoomViewportSizeChanged"), "Room-stage layout should track canvas viewport changes even when Screen.width and Screen.height stay the same.");
+        Assert.That(cameraManagerText, Does.Contain("EnsureBackgroundMaterialAssigned();\n        if (updateBackground"), "Activating a room stage should immediately leave shader-only camera layout behind.");
         Assert.That(cameraManagerText, Does.Contain("roomStageOwnsMotion ? 0f"), "The shader must stay neutral when the room stage owns panning and zooming.");
         Assert.That(cameraManagerText, Does.Not.Contain("TryApplySourceImageRect"), "Door hitboxes should not be reprojected separately from the room image.");
         Assert.That(cameraManagerText, Does.Not.Contain("return 1.5f - curvedScale"), "The old signed vertical projection jumped across zero on a single mouse-wheel tick.");
