@@ -8,6 +8,8 @@ Ideas are the quest layer. The player does not go on a quest; they explore an Id
 - `IdeaDimension` belongs on an interactable root. Assign one neutral child root and one child root per Idea that should look or behave differently.
 - `IdeaEntryPoint` can be placed on a clickable object or called from a UnityEvent to start an Idea, enter Elsewhere, or clear the current Idea.
 - `IdeaWorldTint` belongs on a full-screen UI `Image` above the room art with raycasts disabled. It uses the current Idea color as a light filter.
+- `IdeaGameplayUI` creates the in-game Ideas overlay in Gameplay: active Idea, Ideas menu, selection readout, simple world-note placement, and the new-game tutorial.
+- `IdeaWorldObject` belongs on clickable world objects that should appear in the selection readout.
 
 ## Built-In Idea IDs
 
@@ -30,3 +32,14 @@ Portrait_Frame
 ```
 
 Put `IdeaDimension` on `Portrait_Frame`. Assign `Neutral` as the neutral root, then add variants with the Idea IDs above and assign each matching child root. Any Idea without a variant can fall back to the neutral root.
+
+## Gameplay UI
+
+New Game marks the Ideas tutorial as pending. When Gameplay loads, `IdeaGameplayUIBootstrap` creates the overlay only if the scene has both `CameraManager` and `Canvas_Background`.
+
+The overlay is intentionally small:
+
+- the top-left Ideas button opens the Ideas menu
+- the top-left status shows the active Idea or Elsewhere
+- the bottom readout shows the hovered door or selected `IdeaWorldObject`
+- Place Marker lets you click the current room image and leave a small selectable marker

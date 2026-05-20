@@ -1,10 +1,15 @@
 using System.Collections.Generic;
+using System.IO;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
 public class IdeaRegressionTests
 {
+    private const string MainMenuControllerPath = "Assets/Scripts/MainMenuController.cs";
+    private const string IdeaGameplayUiPath = "Assets/Scripts/Ideas/IdeaGameplayUI.cs";
+    private const string IdeaGameplayUiBootstrapPath = "Assets/Scripts/Ideas/IdeaGameplayUIBootstrap.cs";
+
     [Test]
     public void BuiltInIdeasIncludeElsewhereAndThreeExplorableIdeas()
     {
@@ -61,5 +66,35 @@ public class IdeaRegressionTests
         {
             Object.DestroyImmediate(root);
         }
+    }
+
+    [Test]
+    public void NewGameStartsTheIdeaTutorialFlow()
+    {
+        string mainMenuControllerText = File.ReadAllText(MainMenuControllerPath);
+
+        Assert.That(mainMenuControllerText, Does.Contain("IdeaGameFlow.MarkNewGameStarted()"));
+    }
+
+    [Test]
+    public void GameplayIdeasUiCoversCoreAuthoringNeeds()
+    {
+        string uiText = File.ReadAllText(IdeaGameplayUiPath);
+
+        Assert.That(uiText, Does.Contain("BuildIdeasPanel"), "The player needs a simple menu for discovering and starting Ideas.");
+        Assert.That(uiText, Does.Contain("DoorTriggerNavigation.HoveredTriggerChanged"), "Door hover should update the selection readout.");
+        Assert.That(uiText, Does.Contain("IdeaWorldObject.SelectedObjectChanged"), "World-object selection should update the selection readout.");
+        Assert.That(uiText, Does.Contain("PlaceItem("), "The Ideas menu should include a minimal world-placement path.");
+        Assert.That(uiText, Does.Contain("StartTutorial"), "New games should be able to launch the first Ideas tutorial.");
+    }
+
+    [Test]
+    public void GameplayIdeasUiBootstrapsOnlyInGameplay()
+    {
+        string bootstrapText = File.ReadAllText(IdeaGameplayUiBootstrapPath);
+
+        Assert.That(bootstrapText, Does.Contain("CameraManager"));
+        Assert.That(bootstrapText, Does.Contain("Canvas_Background"));
+        Assert.That(bootstrapText, Does.Not.Contain("DoorTriggerNavigation"), "MainMenu has legacy door triggers, so they must not be the bootstrap signal.");
     }
 }

@@ -72,6 +72,7 @@ public class MainMenuController : MonoBehaviour
             PlayerPrefs.Save();
         }
 
+        IdeaGameFlow.MarkNewGameStarted();
         LoadGameScene("New Game");
     }
 
