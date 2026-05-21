@@ -1643,14 +1643,14 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        if (!roomLayoutDirty && !HasRoomViewportSizeChanged())
-        {
-            return;
-        }
-
         applyingCanvasPreRenderLayout = true;
         try
         {
+            if (!roomLayoutDirty && !HasRoomViewportSizeChanged())
+            {
+                return;
+            }
+
             ApplyBackgroundLayout();
             ApplyRoomLookToMaterial();
         }
@@ -1758,13 +1758,16 @@ public class CameraManager : MonoBehaviour
             return size;
         }
 
-        Canvas.ForceUpdateCanvases();
-        rect = rectTransform.rect;
-        size = rect.size;
-
-        if (size.x > 0f && size.y > 0f)
+        if (!applyingCanvasPreRenderLayout)
         {
-            return size;
+            Canvas.ForceUpdateCanvases();
+            rect = rectTransform.rect;
+            size = rect.size;
+
+            if (size.x > 0f && size.y > 0f)
+            {
+                return size;
+            }
         }
 
         return new Vector2(Mathf.Max(1f, Screen.width), Mathf.Max(1f, Screen.height));

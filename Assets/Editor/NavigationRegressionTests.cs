@@ -186,6 +186,8 @@ public class NavigationRegressionTests
         Assert.That(cameraManagerText, Does.Contain("ResetRoomLookForRoomChange"), "Each new room should enter from a centered default view instead of inheriting the previous room's pan/zoom.");
         Assert.That(cameraManagerText, Does.Contain("Canvas.willRenderCanvases"), "The room stage must get a final pre-render layout pass after the Canvas resolves its true viewport size.");
         Assert.That(cameraManagerText, Does.Contain("HasRoomViewportSizeChanged"), "Room-stage layout must react to Canvas viewport changes, not only Screen.width and Screen.height.");
+        Assert.That(cameraManagerText, Does.Match(@"applyingCanvasPreRenderLayout = true;\r?\n\s*try\r?\n\s*\{\r?\n\s*if \(!roomLayoutDirty && !HasRoomViewportSizeChanged\(\)\)"), "The pre-render recursion guard must be active before viewport checks can force another canvas update.");
+        Assert.That(cameraManagerText, Does.Contain("if (!applyingCanvasPreRenderLayout)"), "GetUsableRectSize must not call Canvas.ForceUpdateCanvases from inside Canvas.willRenderCanvases.");
         Assert.That(cameraManagerText, Does.Match(@"EnsureBackgroundMaterialAssigned\(\);\r?\n\s*if \(updateBackground"), "Switching rooms should restore the correct background material before applying room-stage layout.");
         Assert.That(cameraManagerText, Does.Contain("roomStageOwnsMotion ? 0f"), "The shader must stay neutral when the room stage owns panning and zooming.");
         Assert.That(cameraManagerText, Does.Not.Contain("TryApplySourceImageRect"), "Door hitboxes should not be reprojected separately from the room image.");
