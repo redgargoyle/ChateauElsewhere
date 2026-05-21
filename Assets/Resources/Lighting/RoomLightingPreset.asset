@@ -184,3 +184,211 @@ MonoBehaviour:
     driftAmount: 0.1
     speed: 0.7
     phase: 4.8
+  - roomName: Kitchen
+    lightName: Kitchen Firebox Source
+    animationStyle: 5
+    anchoredPosition: {x: 302, y: -78}
+    size: {x: 178, y: 132}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.34, b: 0.11, a: 1}
+    onAlpha: 0.5
+    offAlpha: 0
+    flickerAmount: 0.42
+    driftAmount: 0.12
+    speed: 1.35
+    phase: 0.35
+  - roomName: Drawing Room
+    lightName: Drawing Fireplace Source
+    animationStyle: 5
+    anchoredPosition: {x: 0, y: -76}
+    size: {x: 168, y: 120}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.31, b: 0.09, a: 1}
+    onAlpha: 0.52
+    offAlpha: 0
+    flickerAmount: 0.5
+    driftAmount: 0.14
+    speed: 1.55
+    phase: 1.2
+  - roomName: Drawing Room
+    lightName: Drawing Fireplace Room Spill
+    animationStyle: 2
+    anchoredPosition: {x: -18, y: -34}
+    size: {x: 620, y: 360}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.45, b: 0.18, a: 1}
+    onAlpha: 0.25
+    offAlpha: 0
+    flickerAmount: 0.16
+    driftAmount: 0.18
+    speed: 0.68
+    phase: 2.1
+  - roomName: Dining Room
+    lightName: Dining Fireplace Source
+    animationStyle: 5
+    anchoredPosition: {x: 540, y: -92}
+    size: {x: 170, y: 128}
+    rotationDegrees: -2
+    color: {r: 1, g: 0.33, b: 0.1, a: 1}
+    onAlpha: 0.48
+    offAlpha: 0
+    flickerAmount: 0.46
+    driftAmount: 0.12
+    speed: 1.45
+    phase: 3.05
+  - roomName: Dining Room
+    lightName: Dining Hearth Sidewash
+    animationStyle: 2
+    anchoredPosition: {x: 434, y: -24}
+    size: {x: 520, y: 330}
+    rotationDegrees: -6
+    color: {r: 1, g: 0.48, b: 0.2, a: 1}
+    onAlpha: 0.21
+    offAlpha: 0
+    flickerAmount: 0.13
+    driftAmount: 0.16
+    speed: 0.62
+    phase: 3.8
+  - roomName: Dining Room
+    lightName: Dining Table Candle Line
+    animationStyle: 4
+    anchoredPosition: {x: -38, y: -86}
+    size: {x: 500, y: 180}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.63, b: 0.3, a: 1}
+    onAlpha: 0.27
+    offAlpha: 0
+    flickerAmount: 0.18
+    driftAmount: 0.03
+    speed: 1.5
+    phase: 0.9
+  - roomName: Master Bedroom Suite
+    lightName: Master Fireplace Source
+    animationStyle: 5
+    anchoredPosition: {x: -360, y: -84}
+    size: {x: 174, y: 128}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.34, b: 0.1, a: 1}
+    onAlpha: 0.5
+    offAlpha: 0
+    flickerAmount: 0.48
+    driftAmount: 0.12
+    speed: 1.4
+    phase: 4.4
+  - roomName: Master Bedroom Suite
+    lightName: Master Bedside Honey Lamps
+    animationStyle: 1
+    anchoredPosition: {x: 282, y: 4}
+    size: {x: 520, y: 300}
+    rotationDegrees: 3
+    color: {r: 1, g: 0.68, b: 0.34, a: 1}
+    onAlpha: 0.22
+    offAlpha: 0
+    flickerAmount: 0.04
+    driftAmount: 0.08
+    speed: 0.72
+    phase: 1.75
+  - roomName: Master Bedroom Suite
+    lightName: Master Window Moonwash
+    animationStyle: 3
+    anchoredPosition: {x: 8, y: 86}
+    size: {x: 520, y: 320}
+    rotationDegrees: 0
+    color: {r: 0.55, g: 0.74, b: 1, a: 1}
+    onAlpha: 0.12
+    offAlpha: 0.015
+    flickerAmount: 0.01
+    driftAmount: 0.08
+    speed: 0.24
+    phase: 2.6
+  - roomName: Billiard Room
+    lightName: Billiard Fireplace Source
+    animationStyle: 5
+    anchoredPosition: {x: -676, y: -92}
+    size: {x: 180, y: 136}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.32, b: 0.09, a: 1}
+    onAlpha: 0.5
+    offAlpha: 0
+    flickerAmount: 0.44
+    driftAmount: 0.12
+    speed: 1.5
+    phase: 5.1
+  - roomName: Billiard Room
+    lightName: Billiard Hearth Spill
+    animationStyle: 2
+    anchoredPosition: {x: -540, y: -48}
+    size: {x: 540, y: 340}
+    rotationDegrees: 4
+    color: {r: 1, g: 0.48, b: 0.2, a: 1}
+    onAlpha: 0.23
+    offAlpha: 0
+    flickerAmount: 0.14
+    driftAmount: 0.16
+    speed: 0.64
+    phase: 0.55
+  - roomName: Billiard Room
+    lightName: Billiard Table Green Shade
+    animationStyle: 3
+    anchoredPosition: {x: -20, y: -104}
+    size: {x: 760, y: 250}
+    rotationDegrees: 0
+    color: {r: 0.55, g: 0.88, b: 0.56, a: 1}
+    onAlpha: 0.16
+    offAlpha: 0
+    flickerAmount: 0.01
+    driftAmount: 0.06
+    speed: 0.32
+    phase: 4.2
+  - roomName: Blue Bedroom
+    lightName: Blue Bedroom Window Moonwash
+    animationStyle: 3
+    anchoredPosition: {x: 514, y: 72}
+    size: {x: 420, y: 390}
+    rotationDegrees: -7
+    color: {r: 0.5, g: 0.7, b: 1, a: 1}
+    onAlpha: 0.16
+    offAlpha: 0.02
+    flickerAmount: 0.01
+    driftAmount: 0.1
+    speed: 0.22
+    phase: 5.6
+  - roomName: Blue Bedroom
+    lightName: Blue Bedroom Bed Lamps
+    animationStyle: 1
+    anchoredPosition: {x: 270, y: 10}
+    size: {x: 560, y: 280}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.68, b: 0.35, a: 1}
+    onAlpha: 0.2
+    offAlpha: 0
+    flickerAmount: 0.03
+    driftAmount: 0.08
+    speed: 0.68
+    phase: 3.25
+  - roomName: Upper Gallery
+    lightName: Upper Gallery Oculus Moon
+    animationStyle: 3
+    anchoredPosition: {x: 0, y: 280}
+    size: {x: 720, y: 260}
+    rotationDegrees: 0
+    color: {r: 0.6, g: 0.78, b: 1, a: 1}
+    onAlpha: 0.12
+    offAlpha: 0.015
+    flickerAmount: 0.01
+    driftAmount: 0.09
+    speed: 0.2
+    phase: 0.15
+  - roomName: Upper Gallery
+    lightName: Upper Gallery Distant Fireplace
+    animationStyle: 2
+    anchoredPosition: {x: -710, y: 8}
+    size: {x: 300, y: 270}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.42, b: 0.16, a: 1}
+    onAlpha: 0.2
+    offAlpha: 0
+    flickerAmount: 0.16
+    driftAmount: 0.14
+    speed: 0.7
+    phase: 4.75

@@ -6,6 +6,28 @@ The current prototype uses soft UI overlays that live as editable scene objects 
 
 The preset at `Resources/Lighting/RoomLightingPreset.asset` is a starter/template. It creates missing `RoomLight_*` objects, but once a light exists, the scene object is the thing to move, resize, recolor, and tune.
 
+## Fireplace Source Pattern
+
+Hamza's fireplace idea works best as two separate overlays:
+
+1. **FireplaceSource**: a small, hotter core placed directly on the visible flames/embers. It flickers faster and uses a tighter generated sprite, so the room has an obvious light source.
+2. **HearthBreath**: a wider, slower spill over nearby walls, floors, and furniture. This is the piece that makes the room feel lit rather than just decorated.
+
+The first comparison set is in `Kitchen`, `Drawing Room`, `Dining Room`, `Master Bedroom Suite`, and `Billiard Room`. Each has a small source light paired with a larger spill so the source and room-lighting behavior can be judged independently.
+
+## Prototype Tour
+
+Use the map/doors to check these moods:
+
+- `Kitchen`: practical hearth plus counter warmth.
+- `Drawing Room`: central fireplace source and broad parlor spill.
+- `Dining Room`: right-side fireplace sidewash plus a low table candle line.
+- `Master Bedroom Suite`: fireplace warmth against soft lamp and moon-window layers.
+- `Billiard Room`: fireplace warmth competing with a cooler green table pool.
+- `Blue Bedroom`: cool moonwash plus calm bedside warmth.
+- `Upper Gallery`: cold oculus glow with distant fireplace warmth in the side room.
+- `Chapel` and `Conservatory`: existing candle/glass examples for sacred versus airy light.
+
 ## Options We Considered
 
 1. **Soft overlay lights**: transparent radial glows placed over the prerendered room images. This is implemented first because it is small, fast to tune, and keeps every light in one editable preset.

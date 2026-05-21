@@ -1,0 +1,26 @@
+Head-turn normalization report
+Canvas: 1024x1536
+Anchor: lower torso/coat/hands weighted centroid
+Target anchor: 520.37, 1025.12
+Playback order: 0..N-1, then N-2..1 through Unity ping-pong playback
+
+00: ChatGPT Image May 20, 2026, 02_53_45 PM (4).png -> headturn_00.png, anchor=(510.47,1029.57), shift=(10,-4), bounds=(110,121,793,1326)
+01: ChatGPT Image May 20, 2026, 02_53_45 PM (3).png -> headturn_01.png, anchor=(525.68,1025.00), shift=(-5,0), bounds=(124,111,795,1335)
+02: ChatGPT Image May 20, 2026, 02_53_44 PM (2).png -> headturn_02.png, anchor=(524.31,1027.60), shift=(-4,-2), bounds=(126,109,791,1341)
+03: ChatGPT Image May 20, 2026, 02_53_45 PM (5).png -> headturn_03.png, anchor=(510.99,1024.04), shift=(9,1), bounds=(120,120,775,1320)
+04: ChatGPT Image May 20, 2026, 02_53_46 PM (10).png -> headturn_04.png, anchor=(532.93,1029.17), shift=(-13,-4), bounds=(136,110,789,1342)
+05: ChatGPT Image May 20, 2026, 02_53_44 PM (1).png -> headturn_05.png, anchor=(516.43,1023.52), shift=(4,2), bounds=(117,101,794,1347)
+06: ChatGPT Image May 20, 2026, 02_53_45 PM (6).png -> headturn_06.png, anchor=(514.79,1005.24), shift=(6,20), bounds=(117,100,789,1321)
+07: ChatGPT Image May 20, 2026, 02_53_46 PM (8).png -> headturn_07.png, anchor=(511.06,1025.24), shift=(9,0), bounds=(113,112,790,1334)
+08: ChatGPT Image May 20, 2026, 02_53_46 PM (9).png -> headturn_08.png, anchor=(546.58,1021.41), shift=(-26,4), bounds=(144,114,800,1327)
+09: ChatGPT Image May 20, 2026, 02_53_45 PM (7).png -> headturn_09.png, anchor=(534.09,1030.67), shift=(-14,-6), bounds=(117,104,828,1354)
+headturn_00.png a3e950a4fa7248fe917ebe2e0d838f76
+headturn_01.png 1a070120a95446efb293eb51b28c20a9
+headturn_02.png 331fa903805f46e987201b499c220e31
+headturn_03.png 4e7bca670d0c49eb9a7fc55b71a8563d
+headturn_04.png 6cb39b88b2c64802b1eec79fa509eb5d
+headturn_05.png 60687d38b1294442ae5800500b39a73f
+headturn_06.png 947d3c324040437280c76a373a45ba87
+headturn_07.png 349c3a0081b249f2924e288d8c958f7c
+headturn_08.png 33cdbd98b7ab484787f340647003f906
+headturn_09.png d511f94ba23949caabe6d8e9f503e4a6

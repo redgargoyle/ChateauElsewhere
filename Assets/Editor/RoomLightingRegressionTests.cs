@@ -28,6 +28,8 @@ public class RoomLightingRegressionTests
         Assert.That(overlayText, Does.Contain("[ExecuteAlways]"), "Individual lights should preview while editing the scene.");
         Assert.That(overlayText, Does.Contain("EditorApplication.update"), "Edit mode should repaint animated light previews.");
         Assert.That(overlayText, Does.Contain("animationStyle"), "Each scene light should own its animation style.");
+        Assert.That(overlayText, Does.Contain("FireplaceSource"), "Fireplace sources should have a hotter animation distinct from the room spill.");
+        Assert.That(overlayText, Does.Contain("GetSourceLightSprite"), "Fireplace sources should use a tighter generated sprite than soft room spills.");
         Assert.That(overlayText, Does.Contain("raycastTarget = false"), "Light overlays must never block room doors or interactables.");
     }
 
@@ -58,14 +60,25 @@ public class RoomLightingRegressionTests
         Assert.That(presetText, Does.Contain("roomName: Kitchen"));
         Assert.That(presetText, Does.Contain("roomName: Chapel"));
         Assert.That(presetText, Does.Contain("roomName: Conservatory"));
+        Assert.That(presetText, Does.Contain("roomName: Drawing Room"));
+        Assert.That(presetText, Does.Contain("roomName: Dining Room"));
+        Assert.That(presetText, Does.Contain("roomName: Master Bedroom Suite"));
+        Assert.That(presetText, Does.Contain("roomName: Billiard Room"));
+        Assert.That(presetText, Does.Contain("roomName: Blue Bedroom"));
+        Assert.That(presetText, Does.Contain("roomName: Upper Gallery"));
         Assert.That(presetText, Does.Contain("animationStyle: 0"), "Sconce flicker should be represented.");
         Assert.That(presetText, Does.Contain("animationStyle: 1"), "Chandelier bloom should be represented.");
         Assert.That(presetText, Does.Contain("animationStyle: 2"), "Hearth breathing should be represented.");
         Assert.That(presetText, Does.Contain("animationStyle: 3"), "Window glow should be represented.");
         Assert.That(presetText, Does.Contain("animationStyle: 4"), "Candle cluster flicker should be represented.");
+        Assert.That(presetText, Does.Contain("animationStyle: 5"), "Fireplace source flicker should be represented.");
+        Assert.That(presetText, Does.Contain("lightName: Drawing Fireplace Source"), "The fireplace source/spill example should be easy to find.");
+        Assert.That(presetText, Does.Contain("lightName: Drawing Fireplace Room Spill"), "The fireplace source/spill example should be easy to compare.");
 
         Assert.That(readmeText, Does.Contain("Soft overlay lights"));
         Assert.That(readmeText, Does.Contain("Hand-painted frame swaps"));
         Assert.That(readmeText, Does.Contain("Mask/shader lighting"));
+        Assert.That(readmeText, Does.Contain("Fireplace Source Pattern"));
+        Assert.That(readmeText, Does.Contain("Prototype Tour"));
     }
 }

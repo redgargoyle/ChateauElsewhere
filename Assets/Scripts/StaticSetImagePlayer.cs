@@ -8,6 +8,7 @@ public class StaticSetImagePlayer : MonoBehaviour
     public Image targetImage;
     public SpriteRenderer targetSpriteRenderer;
     public StaticSet set;
+    public bool pingPong;
     public bool playOnEnable = true;
     public bool preserveAspect = false;
     public bool disableRaycastTarget = true;
@@ -61,6 +62,14 @@ public class StaticSetImagePlayer : MonoBehaviour
         if (playOnEnable)
         {
             Play();
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (bringImageToFront && targetImage != null && targetImage.transform.parent != null)
+        {
+            targetImage.transform.SetAsLastSibling();
         }
     }
 
@@ -125,7 +134,7 @@ public class StaticSetImagePlayer : MonoBehaviour
                     continue;
                 }
 
-                int[] order = BuildOrder(group.frames.Length, group.shuffle);
+                int[] order = BuildOrder(group.frames.Length, group.shuffle, pingPong);
 
                 for (int frameIndex = 0; frameIndex < order.Length; frameIndex++)
                 {
@@ -159,23 +168,42 @@ public class StaticSetImagePlayer : MonoBehaviour
         playRoutine = null;
     }
 
-    private int[] BuildOrder(int length, bool shuffle)
+    private int[] BuildOrder(int length, bool shuffle, bool usePingPong)
     {
-        int[] order = new int[length];
+        int[] forwardOrder = new int[length];
 
         for (int i = 0; i < length; i++)
         {
-            order[i] = i;
+            forwardOrder[i] = i;
         }
 
         if (shuffle)
         {
-            for (int i = 0; i < order.Length; i++)
+            for (int i = 0; i < forwardOrder.Length; i++)
             {
-                int randomIndex = Random.Range(i, order.Length);
-                int current = order[i];
-                order[i] = order[randomIndex];
-                order[randomIndex] = current;
+                int randomIndex = Random.Range(i, forwardOrder.Length);
+                int current = forwardOrder[i];
+                forwardOrder[i] = forwardOrder[randomIndex];
+                forwardOrder[randomIndex] = current;
+            }
+        }
+
+        int orderLength = usePingPong && length > 2 ? length * 2 - 2 : length;
+        int[] order = new int[orderLength];
+
+        for (int i = 0; i < length; i++)
+        {
+            order[i] = forwardOrder[i];
+        }
+
+        if (usePingPong && length > 2)
+        {
+            int writeIndex = length;
+
+            for (int i = length - 2; i > 0; i--)
+            {
+                order[writeIndex] = forwardOrder[i];
+                writeIndex++;
             }
         }
 
@@ -229,6 +257,7 @@ public class StaticSetImagePlayer : MonoBehaviour
             return;
         }
 
+        targetImage.enabled = true;
         targetImage.preserveAspect = preserveAspect;
 
         if (disableRaycastTarget)

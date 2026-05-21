@@ -38,5 +38,6 @@ public enum RoomLightAnimationStyle
     ChandelierBloom,
     HearthBreath,
     WindowGlow,
-    CandleCluster
+    CandleCluster,
+    FireplaceSource
 }

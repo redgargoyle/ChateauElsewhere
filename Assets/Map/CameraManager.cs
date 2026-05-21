@@ -900,7 +900,7 @@ public class CameraManager : MonoBehaviour
 
     private void HideAnchoredAnimationReferenceVisuals()
     {
-        if (!hideAnchoredAnimationReference || anchoredAnimationReference == null)
+        if (!enableAnchoredBackgroundAnimation || !hideAnchoredAnimationReference || anchoredAnimationReference == null)
         {
             return;
         }

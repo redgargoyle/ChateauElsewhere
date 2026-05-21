@@ -24,6 +24,7 @@ public sealed class RoomLightOverlay : MonoBehaviour
     [SerializeField] private float phase;
 
     private static Sprite sharedSoftLightSprite;
+    private static Sprite sharedSourceLightSprite;
 
     private RectTransform rectTransform;
     private Image image;
@@ -132,7 +133,9 @@ public sealed class RoomLightOverlay : MonoBehaviour
             return;
         }
 
-        image.sprite = GetSoftLightSprite();
+        image.sprite = animationStyle == RoomLightAnimationStyle.FireplaceSource
+            ? GetSourceLightSprite()
+            : GetSoftLightSprite();
         image.type = Image.Type.Simple;
         image.raycastTarget = false;
     }
@@ -190,6 +193,14 @@ public sealed class RoomLightOverlay : MonoBehaviour
                     new Vector2(1f + 0.06f * flicker * Mathf.Sin(t * 9.3f), 1f + 0.08f * flicker * Mathf.Sin(t * 6.4f + 0.8f)),
                     new Color(1f, 0.48f, 0.18f, 1f),
                     0.18f * flicker);
+
+            case RoomLightAnimationStyle.FireplaceSource:
+                float ember = Mathf.Sin(t * 11.5f) + 0.5f * Mathf.Sin(t * 19.7f + 0.4f) + 0.25f * Mathf.Sin(t * 31.3f + 2.1f);
+                return new LightFrame(
+                    ClampAnimation(0.82f + 0.34f * flicker * ember + 0.18f * drift * Wave(t * 1.1f)),
+                    new Vector2(0.96f + 0.12f * flicker * Mathf.Sin(t * 10.4f), 0.92f + 0.22f * flicker * Mathf.Sin(t * 7.8f + 1.1f)),
+                    new Color(1f, 0.24f, 0.06f, 1f),
+                    0.45f * Mathf.Max(flicker, drift));
 
             default:
                 float sconce = 0.7f * Mathf.Sin(t * 3.7f) + 0.35f * Mathf.Sin(t * 8.1f + 0.8f);
@@ -252,6 +263,40 @@ public sealed class RoomLightOverlay : MonoBehaviour
         texture.Apply(false, true);
         sharedSoftLightSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), size);
         return sharedSoftLightSprite;
+    }
+
+    private static Sprite GetSourceLightSprite()
+    {
+        if (sharedSourceLightSprite != null)
+        {
+            return sharedSourceLightSprite;
+        }
+
+        const int size = 96;
+        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        texture.name = "Generated_SourceRoomLight";
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+
+        float center = (size - 1) * 0.5f;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = (x - center) / center;
+                float dy = (y - center) / center;
+                float radius = Mathf.Sqrt(dx * dx + dy * dy);
+                float core = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0f, 0.32f, radius));
+                float glow = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.08f, 1f, radius));
+                float alpha = Mathf.Clamp01(0.62f * core + 0.46f * glow);
+                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+            }
+        }
+
+        texture.Apply(false, true);
+        sharedSourceLightSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), size);
+        return sharedSourceLightSprite;
     }
 
     private readonly struct LightFrame

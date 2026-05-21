@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ee0b76aa7b0ee882ad0323c147c3bfd, type: 3}
   m_Name: SS_CreepLadyLoop
   m_EditorClassIdentifier: 
-  setName: Creep Lady Loop
+  setName: Regal Portrait Head Turn
   groups:
   - {fileID: 11400000, guid: c0e133a71a4f4d3bb8b4a65e5a9f1c02, type: 2}
   loop: 1
