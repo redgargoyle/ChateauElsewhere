@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 public class CameraManager : MonoBehaviour
@@ -13,6 +14,8 @@ public class CameraManager : MonoBehaviour
     public bool fitBackgroundToRoomAspect = true;
     public bool cropBackgroundToFill = true;
     public bool configureCanvasScaling = true;
+    public bool enableCameraPostProcessing = true;
+    public bool renderBackgroundCanvasThroughCamera = true;
     public Vector2 referenceResolution = new Vector2(1366f, 768f);
     [Range(0f, 1f)]
     public float matchWidthOrHeight = 0.5f;
@@ -146,6 +149,7 @@ public class CameraManager : MonoBehaviour
 
         RememberOriginalBackgroundParent();
         InitializeRoomLook();
+        ConfigurePostProcessingRenderPath();
         EnsureBackgroundCanvasVisible();
         EnsureBackgroundMaterialAssigned();
         ConfigureCanvasScalers();
@@ -165,6 +169,7 @@ public class CameraManager : MonoBehaviour
         }
 
         EnsureBackgroundCanvasVisible();
+        ConfigurePostProcessingRenderPath();
 
         Texture navigationStartupTexture = GetNavigationStartupBackgroundTexture();
         SetCameraBackground(navigationStartupTexture != null ? navigationStartupTexture : GetStartupBackgroundTexture());
@@ -1384,6 +1389,68 @@ public class CameraManager : MonoBehaviour
             canvasRect.offsetMax = Vector2.zero;
             canvasRect.pivot = new Vector2(0.5f, 0.5f);
         }
+    }
+
+    private void ConfigurePostProcessingRenderPath()
+    {
+        Camera targetCamera = ResolveRenderCamera();
+
+        if (enableCameraPostProcessing && targetCamera != null)
+        {
+            targetCamera.allowHDR = true;
+
+            UniversalAdditionalCameraData cameraData = targetCamera.GetComponent<UniversalAdditionalCameraData>();
+
+            if (cameraData != null)
+            {
+                cameraData.renderPostProcessing = true;
+            }
+        }
+
+        if (!renderBackgroundCanvasThroughCamera || cameraBackground == null || targetCamera == null)
+        {
+            return;
+        }
+
+        Canvas backgroundCanvas = cameraBackground.GetComponentInParent<Canvas>(true);
+
+        if (backgroundCanvas == null)
+        {
+            return;
+        }
+
+        if (backgroundCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+        {
+            backgroundCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+        }
+
+        if (backgroundCanvas.renderMode != RenderMode.ScreenSpaceCamera)
+        {
+            return;
+        }
+
+        backgroundCanvas.worldCamera = targetCamera;
+
+        if (backgroundCanvas.planeDistance <= targetCamera.nearClipPlane ||
+            backgroundCanvas.planeDistance >= targetCamera.farClipPlane)
+        {
+            backgroundCanvas.planeDistance = Mathf.Clamp(
+                100f,
+                targetCamera.nearClipPlane + 0.01f,
+                targetCamera.farClipPlane - 0.01f);
+        }
+    }
+
+    private Camera ResolveRenderCamera()
+    {
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera != null)
+        {
+            return mainCamera;
+        }
+
+        return FindObjectOfType<Camera>();
     }
 
     private void ApplyBackgroundLayout()

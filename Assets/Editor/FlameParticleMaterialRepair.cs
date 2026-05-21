@@ -4,23 +4,13 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-[InitializeOnLoad]
 public static class FlameParticleMaterialRepair
 {
     private const string MaterialPath = "Assets/Art/Flame/M_FlameParticleVertexColor.mat";
-    private static bool repairQueued;
-
-    static FlameParticleMaterialRepair()
-    {
-        EditorApplication.delayCall += RepairOpenFlameParticles;
-        EditorApplication.hierarchyChanged += QueueRepair;
-    }
 
     [MenuItem("Dreadforge/Particles/Repair Flame Particle Materials")]
     public static void RepairOpenFlameParticles()
     {
-        repairQueued = false;
-
         if (EditorApplication.isPlayingOrWillChangePlaymode)
         {
             return;
@@ -88,17 +78,6 @@ public static class FlameParticleMaterialRepair
         }
 
         return false;
-    }
-
-    private static void QueueRepair()
-    {
-        if (repairQueued || EditorApplication.isPlayingOrWillChangePlaymode)
-        {
-            return;
-        }
-
-        repairQueued = true;
-        EditorApplication.delayCall += RepairOpenFlameParticles;
     }
 
     private static Material LoadMaterial()
@@ -203,7 +182,7 @@ public static class FlameParticleMaterialRepair
         velocityOverLifetime.space = ParticleSystemSimulationSpace.Local;
         velocityOverLifetime.x = new ParticleSystem.MinMaxCurve(-0.08f, 0.08f);
         velocityOverLifetime.y = new ParticleSystem.MinMaxCurve(0.45f, 1.2f);
-        velocityOverLifetime.z = new ParticleSystem.MinMaxCurve(0f);
+        velocityOverLifetime.z = new ParticleSystem.MinMaxCurve(0f, 0f);
 
         ParticleSystem.NoiseModule noise = particleSystem.noise;
         noise.enabled = true;
@@ -216,6 +195,8 @@ public static class FlameParticleMaterialRepair
         renderer.minParticleSize = 0f;
         renderer.maxParticleSize = 1f;
         renderer.sortingFudge = 0.1f;
+        renderer.sortingLayerName = SortingLayer.NameToID("Background") != 0 ? "Background" : "Default";
+        renderer.sortingOrder = 10;
 
         if (!Application.isPlaying)
         {
