@@ -18,7 +18,9 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
     [SerializeField] [Min(1)] private int frameCount = 8;
     [SerializeField] [Min(0.01f)] private float secondsPerFrame = 0.12f;
     [SerializeField] private bool previewInEditMode = true;
+    [SerializeField] private bool previewPathInEditMode;
     [SerializeField] private bool animateFrames = true;
+    [SerializeField] private bool snapToWholePixels = true;
     [SerializeField] private bool mirrorWhenWalkingLeft = true;
     [SerializeField] private Vector2[] pathPoints = new Vector2[0];
     [SerializeField] [Min(1f)] private float pixelsPerSecond = 95f;
@@ -98,7 +100,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
             return;
         }
 
-        Tick(Time.unscaledDeltaTime);
+        Tick(Time.deltaTime, true);
     }
 
     private void ResolveReferences()
@@ -140,7 +142,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
         }
     }
 
-    private void Tick(float deltaTime)
+    private void Tick(float deltaTime, bool moveAlongPath)
     {
         float safeDeltaTime = Mathf.Max(0f, deltaTime);
 
@@ -149,7 +151,11 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
             AdvanceFrame(safeDeltaTime);
         }
 
-        AdvanceAlongPath(safeDeltaTime);
+        if (moveAlongPath)
+        {
+            AdvanceAlongPath(safeDeltaTime);
+        }
+
         ApplyVisuals();
     }
 
@@ -200,7 +206,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
             }
         }
 
-        rectTransform.anchoredPosition = currentPosition;
+        rectTransform.anchoredPosition = GetRenderedPosition(currentPosition);
     }
 
     private void AdvancePathTarget()
@@ -288,6 +294,16 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
         return Color.Lerp(nearTint, farTint, GetDepth01());
     }
 
+    private Vector2 GetRenderedPosition(Vector2 position)
+    {
+        if (!snapToWholePixels)
+        {
+            return position;
+        }
+
+        return new Vector2(Mathf.Round(position.x), Mathf.Round(position.y));
+    }
+
 #if UNITY_EDITOR
     private void EditorTick()
     {
@@ -302,7 +318,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
         if (previewInEditMode)
         {
-            Tick(deltaTime);
+            Tick(deltaTime, previewPathInEditMode);
             SceneView.RepaintAll();
             return;
         }

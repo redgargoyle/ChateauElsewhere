@@ -21,6 +21,8 @@ public class CharacterRegressionTests
         Assert.That(walkerText, Does.Contain("[ExecuteAlways]"), "People should preview in Edit mode, like lights and oddities.");
         Assert.That(walkerText, Does.Contain("RawImage"), "Walkers should use atlas UVs without needing Unity sprite slicing.");
         Assert.That(walkerText, Does.Contain("Vector2[] pathPoints"), "Walk paths should be simple editable room-local points.");
+        Assert.That(walkerText, Does.Contain("previewPathInEditMode"), "Edit mode frame preview should not force people to walk while artists place them.");
+        Assert.That(walkerText, Does.Contain("snapToWholePixels"), "Whole-pixel rendering helps scaled atlas walkers avoid UI shimmer.");
         Assert.That(walkerText, Does.Contain("Mathf.InverseLerp(nearY, farY"), "Walkers should scale/tint from front to back of the painted room.");
         Assert.That(walkerText, Does.Contain("rectTransform.localScale = scale"), "Perspective scale should affect the whole character card.");
         Assert.That(walkerText, Does.Contain("targetImage.raycastTarget = false"), "Characters must not block door hitboxes.");
@@ -33,6 +35,10 @@ public class CharacterRegressionTests
         Assert.That(sceneText, Does.Contain("m_Name: People"));
         Assert.That(sceneText, Does.Contain("m_Name: Walker_GEH_GreenGentleman"));
         Assert.That(sceneText, Does.Contain("m_Name: Walker_GEH_GreenLady"));
+        Assert.That(sceneText, Does.Contain("previewPathInEditMode: 0"), "Scene-authored walkers should not move through their path just because the editor is open.");
+        Assert.That(sceneText, Does.Contain("snapToWholePixels: 1"), "The first walkers should render on stable whole pixels.");
+        Assert.That(sceneText, Does.Contain("m_Pivot: {x: 0.5, y: 0.035}"), "Walker cards should pivot close to the normalized foot baseline.");
+        Assert.That(sceneText, Does.Contain("farY: -90"), "The example people paths should stay on the Grand Entrance Hall floor plane.");
         Assert.That(sceneText, Does.Contain("guid: 1b45edb93a9b42e58fa4cad7d4de84ce"), "Gameplay walkers should use RoomPersonWalker2D.");
         Assert.That(sceneText, Does.Contain("guid: ca8806db799f4f2c92e6cc08b4287001"), "The gentleman atlas should be scene-referenced.");
         Assert.That(sceneText, Does.Contain("guid: ca8806db799f4f2c92e6cc08b4287002"), "The lady atlas should be scene-referenced.");
@@ -42,6 +48,7 @@ public class CharacterRegressionTests
 
         Assert.That(Directory.GetFiles(AtlasFolder, "*_atlas.png").Length, Is.EqualTo(8), "All generated character sheets should have project-owned transparent atlases.");
         Assert.That(Directory.GetFiles(SourceFolder, "*_source.png").Length, Is.EqualTo(8), "The original generated sheets should be kept for later reprocessing.");
+        Assert.That(readmeText, Does.Contain("foot baseline"));
         Assert.That(readmeText, Does.Contain("foreground occluder cards"));
         Assert.That(readmeText, Does.Contain("People > Walker_GEH_GreenGentleman"));
     }

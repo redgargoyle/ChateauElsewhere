@@ -9006,7 +9006,7 @@ RectTransform:
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -520, y: -285}
   m_SizeDelta: {x: 182, y: 272}
-  m_Pivot: {x: 0.5, y: 0.08}
+  m_Pivot: {x: 0.5, y: 0.035}
 --- !u!222 &2601000012
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9062,21 +9062,23 @@ MonoBehaviour:
   frameCount: 8
   secondsPerFrame: 0.12
   previewInEditMode: 1
+  previewPathInEditMode: 0
   animateFrames: 1
+  snapToWholePixels: 1
   mirrorWhenWalkingLeft: 1
   pathPoints:
   - {x: -520, y: -285}
-  - {x: -220, y: -185}
-  - {x: 180, y: -150}
-  - {x: 460, y: -300}
-  - {x: 60, y: 70}
-  pixelsPerSecond: 82
+  - {x: -310, y: -248}
+  - {x: -70, y: -188}
+  - {x: 150, y: -118}
+  - {x: 350, y: -248}
+  pixelsPerSecond: 70
   loopPath: 0
   pingPongPath: 1
-  nearY: -360
-  farY: 150
-  nearScale: 0.92
-  farScale: 0.38
+  nearY: -330
+  farY: -90
+  nearScale: 0.95
+  farScale: 0.48
   nearTint: {r: 0.92, g: 0.88, b: 0.78, a: 0.93}
   farTint: {r: 0.7, g: 0.72, b: 0.66, a: 0.72}
   disableRaycastTarget: 1
@@ -9117,7 +9119,7 @@ RectTransform:
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 520, y: -210}
   m_SizeDelta: {x: 194, y: 291}
-  m_Pivot: {x: 0.5, y: 0.08}
+  m_Pivot: {x: 0.5, y: 0.035}
 --- !u!222 &2601000022
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9173,20 +9175,23 @@ MonoBehaviour:
   frameCount: 8
   secondsPerFrame: 0.13
   previewInEditMode: 1
+  previewPathInEditMode: 0
   animateFrames: 1
+  snapToWholePixels: 1
   mirrorWhenWalkingLeft: 1
   pathPoints:
   - {x: 520, y: -210}
-  - {x: 220, y: -80}
-  - {x: -160, y: 20}
-  - {x: -520, y: -235}
-  pixelsPerSecond: 72
+  - {x: 280, y: -150}
+  - {x: 30, y: -105}
+  - {x: -230, y: -155}
+  - {x: -500, y: -245}
+  pixelsPerSecond: 64
   loopPath: 0
   pingPongPath: 1
-  nearY: -360
-  farY: 150
-  nearScale: 0.82
-  farScale: 0.34
+  nearY: -330
+  farY: -90
+  nearScale: 0.86
+  farScale: 0.42
   nearTint: {r: 0.9, g: 0.86, b: 0.76, a: 0.9}
   farTint: {r: 0.7, g: 0.72, b: 0.66, a: 0.7}
   disableRaycastTarget: 1
