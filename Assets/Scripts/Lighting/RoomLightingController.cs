@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 #if UNITY_EDITOR
@@ -21,6 +23,11 @@ public sealed class RoomLightingController : MonoBehaviour
     [SerializeField] private KeyCode toggleKey = KeyCode.L;
     [SerializeField] private bool showHud = true;
     [SerializeField] private bool createMissingLightsFromPreset = true;
+    [Header("Global Volume")]
+    [SerializeField] private bool driveGlobalBloomIntensity = true;
+    [SerializeField] private Volume globalVolume;
+    [SerializeField] private float lightsOnBloomIntensity = 20f;
+    [SerializeField] private float lightsOffBloomIntensity = 0f;
 
     private readonly List<RoomLightOverlay> overlays = new List<RoomLightOverlay>();
 
@@ -28,6 +35,8 @@ public sealed class RoomLightingController : MonoBehaviour
     private float lightBlend = 1f;
     private TextMeshProUGUI hudText;
     private bool initialized;
+    private Bloom globalBloom;
+    private float lastAppliedBloomIntensity = float.NaN;
 
     public float LightBlend => lightBlend;
 
@@ -86,12 +95,14 @@ public sealed class RoomLightingController : MonoBehaviour
         float fadeSeconds = preset != null ? preset.ToggleFadeSeconds : 0.65f;
         lightBlend = Mathf.MoveTowards(lightBlend, targetBlend, Time.deltaTime / fadeSeconds);
         ApplyLightBlendToOverlays();
+        ApplyGlobalBloomIntensity();
         RefreshHud();
     }
 
     public void ToggleLights()
     {
         lightsOn = !lightsOn;
+        ApplyGlobalBloomIntensity(true);
         RefreshHud();
     }
 
@@ -120,6 +131,7 @@ public sealed class RoomLightingController : MonoBehaviour
 
         RefreshOverlayCache();
         ApplyLightBlendToOverlays();
+        ApplyGlobalBloomIntensity(true);
 
         if (Application.isPlaying && showHud)
         {
@@ -336,6 +348,76 @@ public sealed class RoomLightingController : MonoBehaviour
                 overlay.SetLightBlend(lightBlend);
             }
         }
+    }
+
+    private void ApplyGlobalBloomIntensity(bool force = false)
+    {
+        if (!Application.isPlaying || !driveGlobalBloomIntensity)
+        {
+            return;
+        }
+
+        if (!ResolveGlobalBloom())
+        {
+            return;
+        }
+
+        float targetIntensity = lightsOn ? lightsOnBloomIntensity : lightsOffBloomIntensity;
+
+        if (!force && Mathf.Approximately(lastAppliedBloomIntensity, targetIntensity))
+        {
+            return;
+        }
+
+        globalBloom.active = true;
+        globalBloom.intensity.overrideState = true;
+        globalBloom.intensity.value = targetIntensity;
+        lastAppliedBloomIntensity = targetIntensity;
+    }
+
+    private bool ResolveGlobalBloom()
+    {
+        if (globalBloom != null)
+        {
+            return true;
+        }
+
+        if (globalVolume == null)
+        {
+            Volume[] volumes = FindObjectsOfType<Volume>(true);
+
+            for (int i = 0; i < volumes.Length; i++)
+            {
+                Volume volume = volumes[i];
+
+                if (volume != null && volume.isGlobal)
+                {
+                    globalVolume = volume;
+                    break;
+                }
+            }
+        }
+
+        if (globalVolume == null)
+        {
+            Debug.LogWarning("Room lighting could not find a Global Volume to drive bloom intensity.", this);
+            return false;
+        }
+
+        VolumeProfile profile = globalVolume.profile;
+
+        if (profile == null)
+        {
+            Debug.LogWarning("Room lighting found a Global Volume, but it has no profile.", globalVolume);
+            return false;
+        }
+
+        if (!profile.TryGet(out globalBloom))
+        {
+            globalBloom = profile.Add<Bloom>(true);
+        }
+
+        return globalBloom != null;
     }
 
     private static string GetSceneLightName(RoomLightDefinition definition, int index)

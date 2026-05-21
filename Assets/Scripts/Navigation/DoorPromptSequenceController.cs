@@ -121,6 +121,11 @@ public class DoorPromptSequenceController : MonoBehaviour
             promptText = FindNamedPrompt();
         }
 
+        if (promptText != null)
+        {
+            PostProcessSafeCanvasUtility.MoveToSafeCanvas(promptText);
+        }
+
         if (promptText == null)
         {
             CreatePromptText();
@@ -263,13 +268,7 @@ public class DoorPromptSequenceController : MonoBehaviour
 
     private Canvas FindPreferredCanvas()
     {
-        GameObject backgroundCanvas = GameObject.Find("Canvas_Background");
-
-        if (backgroundCanvas != null && backgroundCanvas.TryGetComponent(out Canvas foundCanvas))
-        {
-            return foundCanvas;
-        }
-
-        return FindObjectOfType<Canvas>(true);
+        Canvas safeCanvas = PostProcessSafeCanvasUtility.GetOrCreateCanvas();
+        return safeCanvas != null ? safeCanvas : FindObjectOfType<Canvas>(true);
     }
 }

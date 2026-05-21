@@ -11,6 +11,12 @@ public class RoomContentGroup : MonoBehaviour
     [Header("Room")]
     [SerializeField] private string roomName;
     [SerializeField] private Texture roomBackgroundTexture;
+    [Header("Child Renderer Defaults")]
+    [SerializeField] private bool applyVisibleDefaultsToChildRenderers = true;
+    [SerializeField] private string defaultSortingLayerName = "Background";
+    [SerializeField] private int defaultSpriteSortingOrder = 20;
+    [SerializeField] private int defaultParticleSortingOrder = 40;
+    [SerializeField] private bool onlyAdjustDefaultSorting = true;
 
     public string RoomName => GetEffectiveRoomName();
     public Texture RoomBackgroundTexture => roomBackgroundTexture;
@@ -23,6 +29,17 @@ public class RoomContentGroup : MonoBehaviour
     private void OnValidate()
     {
         FillRoomNameFromObject();
+        ApplyChildRendererVisibilityDefaults();
+    }
+
+    private void OnEnable()
+    {
+        ApplyChildRendererVisibilityDefaults();
+    }
+
+    private void OnTransformChildrenChanged()
+    {
+        ApplyChildRendererVisibilityDefaults();
     }
 
     public void RefreshInferredRoomName()
@@ -49,6 +66,70 @@ public class RoomContentGroup : MonoBehaviour
         return texture != null;
     }
 
+    public void ApplyChildRendererVisibilityDefaults()
+    {
+        if (!applyVisibleDefaultsToChildRenderers)
+        {
+            return;
+        }
+
+        SpriteRenderer[] spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = spriteRenderers[i];
+
+            if (spriteRenderer == null)
+            {
+                continue;
+            }
+
+            spriteRenderer.enabled = true;
+            ApplyDefaultSorting(spriteRenderer, defaultSpriteSortingOrder);
+        }
+
+        ParticleSystemRenderer[] particleRenderers = GetComponentsInChildren<ParticleSystemRenderer>(true);
+
+        for (int i = 0; i < particleRenderers.Length; i++)
+        {
+            ParticleSystemRenderer particleRenderer = particleRenderers[i];
+
+            if (particleRenderer == null)
+            {
+                continue;
+            }
+
+            particleRenderer.enabled = true;
+            ApplyDefaultSorting(particleRenderer, defaultParticleSortingOrder);
+        }
+
+        StaticSetImagePlayer[] imagePlayers = GetComponentsInChildren<StaticSetImagePlayer>(true);
+
+        for (int i = 0; i < imagePlayers.Length; i++)
+        {
+            StaticSetImagePlayer imagePlayer = imagePlayers[i];
+
+            if (imagePlayer == null)
+            {
+                continue;
+            }
+
+            imagePlayer.playOnEnable = true;
+            imagePlayer.overrideSpriteSorting = true;
+
+            if (string.IsNullOrWhiteSpace(imagePlayer.spriteSortingLayerName) ||
+                imagePlayer.spriteSortingLayerName == "Default")
+            {
+                imagePlayer.spriteSortingLayerName = GetVisibleSortingLayerName();
+            }
+
+            if (imagePlayer.spriteSortingOrder == 0)
+            {
+                imagePlayer.spriteSortingOrder = defaultSpriteSortingOrder;
+            }
+        }
+    }
+
     private string GetEffectiveRoomName()
     {
         return ParseRoomNameFromObject(gameObject.name);
@@ -57,6 +138,43 @@ public class RoomContentGroup : MonoBehaviour
     private void FillRoomNameFromObject()
     {
         roomName = ParseRoomNameFromObject(gameObject.name);
+    }
+
+    private void ApplyDefaultSorting(Renderer renderer, int sortingOrder)
+    {
+        if (renderer == null)
+        {
+            return;
+        }
+
+        if (onlyAdjustDefaultSorting && (renderer.sortingLayerID != 0 || renderer.sortingOrder != 0))
+        {
+            return;
+        }
+
+        renderer.sortingLayerName = GetVisibleSortingLayerName();
+        renderer.sortingOrder = sortingOrder;
+    }
+
+    private string GetVisibleSortingLayerName()
+    {
+        if (SortingLayerExists(defaultSortingLayerName))
+        {
+            return defaultSortingLayerName;
+        }
+
+        return "Default";
+    }
+
+    private static bool SortingLayerExists(string sortingLayerName)
+    {
+        if (string.IsNullOrWhiteSpace(sortingLayerName))
+        {
+            return false;
+        }
+
+        return string.Equals(sortingLayerName, "Default", StringComparison.OrdinalIgnoreCase) ||
+            SortingLayer.NameToID(sortingLayerName) != 0;
     }
 
     private static string ParseRoomNameFromObject(string objectName)

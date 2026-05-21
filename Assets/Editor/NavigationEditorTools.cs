@@ -358,6 +358,7 @@ public static class NavigationEditorTools
         PrepareRoomContentBackgroundForEditing(roomContentGroup, roomTexture);
 
         EnsureAncestorsActive(roomContentGroup.transform);
+        roomContentGroup.ApplyChildRendererVisibilityDefaults();
 
         RoomContentGroup[] roomContentGroups = FindRoomContentGroupsInSameEditingGroup(roomContentGroup);
 
@@ -1395,13 +1396,43 @@ public static class NavigationEditorTools
 public static class NavigationSelectionAutoPreview
 {
     private static bool isPreviewingSelection;
+    private static bool isHierarchyPreviewQueued;
 
     static NavigationSelectionAutoPreview()
     {
         Selection.selectionChanged += HandleSelectionChanged;
+        EditorApplication.hierarchyChanged += HandleHierarchyChanged;
     }
 
     private static void HandleSelectionChanged()
+    {
+        QueuePreviewForCurrentSelection();
+    }
+
+    private static void HandleHierarchyChanged()
+    {
+        if (!NavigationEditorTools.AutoPreviewSelectedCamera ||
+            isPreviewingSelection ||
+            EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            return;
+        }
+
+        if (isHierarchyPreviewQueued)
+        {
+            return;
+        }
+
+        isHierarchyPreviewQueued = true;
+
+        EditorApplication.delayCall += () =>
+        {
+            isHierarchyPreviewQueued = false;
+            QueuePreviewForCurrentSelection();
+        };
+    }
+
+    private static void QueuePreviewForCurrentSelection()
     {
         if (!NavigationEditorTools.AutoPreviewSelectedCamera ||
             isPreviewingSelection ||

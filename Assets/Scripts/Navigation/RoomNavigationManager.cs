@@ -516,6 +516,7 @@ public class RoomNavigationManager : MonoBehaviour
         if (existingText != null)
         {
             currentRoomHudText = existingText;
+            PostProcessSafeCanvasUtility.MoveToSafeCanvas(currentRoomHudText);
             ConfigureCurrentRoomHudText();
             return;
         }
@@ -570,14 +571,8 @@ public class RoomNavigationManager : MonoBehaviour
 
     private Canvas FindPreferredStatusCanvas()
     {
-        GameObject backgroundCanvasObject = GameObject.Find("Canvas_Background");
-
-        if (backgroundCanvasObject != null && backgroundCanvasObject.TryGetComponent(out Canvas backgroundCanvas))
-        {
-            return backgroundCanvas;
-        }
-
-        return FindObjectOfType<Canvas>(true);
+        Canvas safeCanvas = PostProcessSafeCanvasUtility.GetOrCreateCanvas();
+        return safeCanvas != null ? safeCanvas : FindObjectOfType<Canvas>(true);
     }
 
     private static T FindNamedComponent<T>(string objectName) where T : Component
