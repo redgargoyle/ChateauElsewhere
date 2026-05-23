@@ -105,7 +105,7 @@ public class DoorPromptSequenceController : MonoBehaviour
 
         if (navigationManager == null)
         {
-            navigationManager = FindObjectOfType<RoomNavigationManager>(true);
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         }
 
         if (canvas == null)
@@ -136,7 +136,7 @@ public class DoorPromptSequenceController : MonoBehaviour
 
     private TMP_Text FindNamedPrompt()
     {
-        TMP_Text[] texts = FindObjectsOfType<TMP_Text>(true);
+        TMP_Text[] texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include);
 
         for (int i = 0; i < texts.Length; i++)
         {
@@ -269,6 +269,6 @@ public class DoorPromptSequenceController : MonoBehaviour
     private Canvas FindPreferredCanvas()
     {
         Canvas safeCanvas = PostProcessSafeCanvasUtility.GetOrCreateCanvas();
-        return safeCanvas != null ? safeCanvas : FindObjectOfType<Canvas>(true);
+        return safeCanvas != null ? safeCanvas : FindAnyObjectByType<Canvas>(FindObjectsInactive.Include);
     }
 }

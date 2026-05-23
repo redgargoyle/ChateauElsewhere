@@ -24,12 +24,12 @@ public static class IdeaGameplayUIBootstrap
 
     private static void EnsureForLoadedScene()
     {
-        if (Object.FindObjectOfType<IdeaGameplayUI>(true) != null)
+        if (Object.FindAnyObjectByType<IdeaGameplayUI>(FindObjectsInactive.Include) != null)
         {
             return;
         }
 
-        CameraManager cameraManager = Object.FindObjectOfType<CameraManager>(true);
+        CameraManager cameraManager = Object.FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
         GameObject backgroundCanvas = GameObject.Find("Canvas_Background");
 
         if (cameraManager == null || backgroundCanvas == null)

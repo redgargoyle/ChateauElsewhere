@@ -294,7 +294,7 @@ public class GameOverController : MonoBehaviour
 
     private void CancelCameraTransitions()
     {
-        CameraManager cameraManager = FindObjectOfType<CameraManager>();
+        CameraManager cameraManager = FindAnyObjectByType<CameraManager>();
 
         if (cameraManager != null)
         {
@@ -306,7 +306,7 @@ public class GameOverController : MonoBehaviour
     {
         if (blackOutController == null)
         {
-            blackOutController = FindObjectOfType<BlackOutController>();
+            blackOutController = FindAnyObjectByType<BlackOutController>();
         }
     }
 

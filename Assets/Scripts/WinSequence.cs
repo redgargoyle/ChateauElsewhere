@@ -164,7 +164,7 @@ public class WinSequence : MonoBehaviour
 
         if (nightManager == null)
         {
-            nightManager = FindObjectOfType<NightManager>();
+            nightManager = FindAnyObjectByType<NightManager>();
         }
 
         if (rollOverAnimator == null)

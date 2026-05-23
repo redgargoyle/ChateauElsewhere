@@ -97,7 +97,7 @@ public static class PostProcessSafeCanvasUtility
             return backgroundScaler;
         }
 
-        return Object.FindObjectOfType<CanvasScaler>(true);
+        return Object.FindAnyObjectByType<CanvasScaler>(FindObjectsInactive.Include);
     }
 
     private static void CopyCanvasScalerSettings(CanvasScaler target, CanvasScaler source)

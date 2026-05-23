@@ -261,22 +261,22 @@ public class BlackOutController : MonoBehaviour
     {
         if (powerManager == null)
         {
-            powerManager = FindObjectOfType<PowerManager>();
+            powerManager = FindAnyObjectByType<PowerManager>();
         }
 
         if (securityRoomManager == null)
         {
-            securityRoomManager = FindObjectOfType<SecurityRoomManager>();
+            securityRoomManager = FindAnyObjectByType<SecurityRoomManager>();
         }
 
         if (cameraManager == null)
         {
-            cameraManager = FindObjectOfType<CameraManager>();
+            cameraManager = FindAnyObjectByType<CameraManager>();
         }
 
         if (gameOverController == null)
         {
-            gameOverController = FindObjectOfType<GameOverController>();
+            gameOverController = FindAnyObjectByType<GameOverController>();
         }
 
         ResolveOverlay();
@@ -644,7 +644,7 @@ public class BlackOutController : MonoBehaviour
 
     private Transform FindTargetCanvasTransform()
     {
-        Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
 
         foreach (Canvas canvas in canvases)
         {
@@ -720,7 +720,7 @@ public class BlackOutController : MonoBehaviour
 
     private void StopNightTimer()
     {
-        NightTimer timer = FindObjectOfType<NightTimer>();
+        NightTimer timer = FindAnyObjectByType<NightTimer>();
 
         if (timer != null)
         {

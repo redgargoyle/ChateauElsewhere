@@ -203,7 +203,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         if (navigationManager == null)
         {
-            navigationManager = FindObjectOfType<RoomNavigationManager>(true);
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         }
     }
 

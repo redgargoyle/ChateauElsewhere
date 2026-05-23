@@ -19,7 +19,7 @@ public static class UrpPostProcessingBootstrap
 
     private static void EnablePostProcessingOnCameras()
     {
-        Camera[] cameras = Object.FindObjectsOfType<Camera>();
+        Camera[] cameras = Object.FindObjectsByType<Camera>();
 
         foreach (Camera camera in cameras)
         {

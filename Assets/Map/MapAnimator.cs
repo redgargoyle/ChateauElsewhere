@@ -58,7 +58,7 @@ public class MapAnimator : MonoBehaviour
 
         if (powerManager == null)
         {
-            powerManager = FindObjectOfType<PowerManager>();
+            powerManager = FindAnyObjectByType<PowerManager>();
         }
 
         if (mapPanel != null)

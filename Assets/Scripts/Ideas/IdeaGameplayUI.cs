@@ -204,7 +204,7 @@ public class IdeaGameplayUI : MonoBehaviour
         SetRect(nameText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(12f, -9f), new Vector2(-110f, 24f));
 
         TextMeshProUGUI premiseText = CreateText(row, $"Text_{idea.Id}_Premise", idea.Premise, 12f, MutedTextColor, TextAlignmentOptions.TopLeft);
-        premiseText.enableWordWrapping = true;
+        premiseText.textWrappingMode = TextWrappingModes.Normal;
         SetRect(premiseText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(12f, -32f), new Vector2(-110f, 48f));
 
         string capturedIdeaId = idea.Id;
@@ -224,7 +224,7 @@ public class IdeaGameplayUI : MonoBehaviour
         SetRect(nameText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(12f, -9f), new Vector2(-112f, 24f));
 
         TextMeshProUGUI premiseText = CreateText(row, "Text_Elsewhere_Premise", "The Odd Place. A clean exit when an Idea starts to close around you.", 12f, MutedTextColor, TextAlignmentOptions.TopLeft);
-        premiseText.enableWordWrapping = true;
+        premiseText.textWrappingMode = TextWrappingModes.Normal;
         SetRect(premiseText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(12f, -32f), new Vector2(-112f, 36f));
 
         CreateButton(row, "Button_EnterElsewhere", "Enter", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-10f, -10f), new Vector2(82f, 30f), RedAccentColor, () => ideaManager.EnterElsewhere());
@@ -265,7 +265,7 @@ public class IdeaGameplayUI : MonoBehaviour
         SetRect(tutorialTitleText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(24f, -22f), new Vector2(-48f, 42f));
 
         tutorialBodyText = CreateText(panel, "Text_TutorialBody", string.Empty, 16f, MutedTextColor, TextAlignmentOptions.TopLeft);
-        tutorialBodyText.enableWordWrapping = true;
+        tutorialBodyText.textWrappingMode = TextWrappingModes.Normal;
         SetRect(tutorialBodyText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(24f, -82f), new Vector2(-48f, 112f));
 
         tutorialPrimaryButton = CreateButton(panel, "Button_TutorialPrimary", "Next", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 24f), new Vector2(128f, 34f), BlueAccentColor, AdvanceTutorial);
@@ -506,9 +506,9 @@ public class IdeaGameplayUI : MonoBehaviour
 
     private RectTransform FindPlacementRoot()
     {
-        RoomNavigationManager navigationManager = Object.FindObjectOfType<RoomNavigationManager>(true);
+        RoomNavigationManager navigationManager = Object.FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         string currentRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
-        RoomContentGroup[] roomGroups = Object.FindObjectsOfType<RoomContentGroup>(true);
+        RoomContentGroup[] roomGroups = Object.FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
         RectTransform activeRoom = null;
 
         for (int i = 0; i < roomGroups.Length; i++)
@@ -621,7 +621,7 @@ public class IdeaGameplayUI : MonoBehaviour
         label.fontSize = fontSize;
         label.color = color;
         label.alignment = alignment;
-        label.enableWordWrapping = false;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
         label.raycastTarget = false;
         return label;
     }

@@ -293,7 +293,7 @@ public class NightManager : MonoBehaviour
 
     private Canvas FindTargetCanvas()
     {
-        Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
 
         foreach (Canvas canvas in canvases)
         {

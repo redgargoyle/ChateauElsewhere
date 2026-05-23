@@ -528,12 +528,12 @@ public class SecurityRoomManager : MonoBehaviour
     {
         if (cameraManager == null)
         {
-            cameraManager = FindObjectOfType<CameraManager>();
+            cameraManager = FindAnyObjectByType<CameraManager>();
         }
 
         if (powerManager == null)
         {
-            powerManager = FindObjectOfType<PowerManager>();
+            powerManager = FindAnyObjectByType<PowerManager>();
         }
 
         if (targetCanvas == null)
@@ -567,7 +567,7 @@ public class SecurityRoomManager : MonoBehaviour
 
     private Canvas FindTargetCanvas()
     {
-        Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
 
         foreach (Canvas canvas in canvases)
         {

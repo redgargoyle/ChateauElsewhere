@@ -76,7 +76,7 @@ public class DoorButton : MonoBehaviour
 
         if (navigationManager == null)
         {
-            navigationManager = FindObjectOfType<RoomNavigationManager>();
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>();
         }
     }
 

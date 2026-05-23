@@ -168,7 +168,7 @@ public sealed class RoomLightingController : MonoBehaviour
     private void RefreshOverlayCache()
     {
         overlays.Clear();
-        RoomContentGroup[] roomGroups = FindObjectsOfType<RoomContentGroup>(true);
+        RoomContentGroup[] roomGroups = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
 
         for (int i = 0; i < roomGroups.Length; i++)
         {
@@ -190,7 +190,7 @@ public sealed class RoomLightingController : MonoBehaviour
 
     private void CreateMissingSceneLights()
     {
-        RoomContentGroup[] roomGroups = FindObjectsOfType<RoomContentGroup>(true);
+        RoomContentGroup[] roomGroups = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
         Dictionary<string, RoomContentGroup> roomsByName = new Dictionary<string, RoomContentGroup>(System.StringComparer.OrdinalIgnoreCase);
 
         for (int i = 0; i < roomGroups.Length; i++)
@@ -289,7 +289,7 @@ public sealed class RoomLightingController : MonoBehaviour
             return;
         }
 
-        if (FindObjectOfType<EventSystem>() == null)
+        if (FindAnyObjectByType<EventSystem>() == null)
         {
             GameObject eventSystemObject = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             eventSystemObject.transform.SetParent(transform, false);
@@ -384,7 +384,7 @@ public sealed class RoomLightingController : MonoBehaviour
 
         if (globalVolume == null)
         {
-            Volume[] volumes = FindObjectsOfType<Volume>(true);
+            Volume[] volumes = FindObjectsByType<Volume>(FindObjectsInactive.Include);
 
             for (int i = 0; i < volumes.Length; i++)
             {

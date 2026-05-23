@@ -121,12 +121,12 @@ public class NightTimer : MonoBehaviour
 
         if (nightManager == null)
         {
-            nightManager = FindObjectOfType<NightManager>();
+            nightManager = FindAnyObjectByType<NightManager>();
         }
 
         if (textClockHUD == null)
         {
-            TMP_Text[] texts = FindObjectsOfType<TMP_Text>(true);
+            TMP_Text[] texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include);
 
             foreach (TMP_Text text in texts)
             {

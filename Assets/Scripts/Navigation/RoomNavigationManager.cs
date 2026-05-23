@@ -228,8 +228,8 @@ public class RoomNavigationManager : MonoBehaviour
             return;
         }
 
-        cachedDoorButtons = FindObjectsOfType<DoorButton>(true);
-        cachedDoorTriggers = FindObjectsOfType<DoorTriggerNavigation>(true);
+        cachedDoorButtons = FindObjectsByType<DoorButton>(FindObjectsInactive.Include);
+        cachedDoorTriggers = FindObjectsByType<DoorTriggerNavigation>(FindObjectsInactive.Include);
     }
 
     public void RefreshRoomContentCache()
@@ -240,7 +240,7 @@ public class RoomNavigationManager : MonoBehaviour
             return;
         }
 
-        cachedRoomContentGroups = FindObjectsOfType<RoomContentGroup>(true);
+        cachedRoomContentGroups = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
     }
 
     private void LoadLegacyDoorDataIfNeeded()
@@ -450,7 +450,7 @@ public class RoomNavigationManager : MonoBehaviour
             }
         }
 
-        CameraAreaController[] legacyAreas = FindObjectsOfType<CameraAreaController>(true);
+        CameraAreaController[] legacyAreas = FindObjectsByType<CameraAreaController>(FindObjectsInactive.Include);
 
         for (int i = 0; i < legacyAreas.Length; i++)
         {
@@ -572,7 +572,7 @@ public class RoomNavigationManager : MonoBehaviour
     private Canvas FindPreferredStatusCanvas()
     {
         Canvas safeCanvas = PostProcessSafeCanvasUtility.GetOrCreateCanvas();
-        return safeCanvas != null ? safeCanvas : FindObjectOfType<Canvas>(true);
+        return safeCanvas != null ? safeCanvas : FindAnyObjectByType<Canvas>(FindObjectsInactive.Include);
     }
 
     private static T FindNamedComponent<T>(string objectName) where T : Component
@@ -582,7 +582,7 @@ public class RoomNavigationManager : MonoBehaviour
             return null;
         }
 
-        T[] components = FindObjectsOfType<T>(true);
+        T[] components = FindObjectsByType<T>(FindObjectsInactive.Include);
 
         for (int i = 0; i < components.Length; i++)
         {
@@ -769,7 +769,7 @@ public class RoomNavigationManager : MonoBehaviour
             return;
         }
 
-        if (FindObjectOfType<EventSystem>() == null)
+        if (FindAnyObjectByType<EventSystem>() == null)
         {
             Debug.LogError("Navigation setup problem: no EventSystem exists in the scene, so UI door trigger clicks cannot be received.", this);
         }
@@ -815,12 +815,12 @@ public class RoomNavigationManager : MonoBehaviour
 
         if (cameraManager == null)
         {
-            cameraManager = FindObjectOfType<CameraManager>(true);
+            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
         }
 
         if (mapAnimator == null)
         {
-            mapAnimator = FindObjectOfType<MapAnimator>(true);
+            mapAnimator = FindAnyObjectByType<MapAnimator>(FindObjectsInactive.Include);
         }
 
         if (roomVisualCatalog == null && !string.IsNullOrWhiteSpace(roomVisualCatalogResourcePath))

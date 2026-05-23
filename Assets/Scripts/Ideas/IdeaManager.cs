@@ -33,7 +33,7 @@ public class IdeaManager : MonoBehaviour
             return Instance;
         }
 
-        IdeaManager existingManager = UnityEngine.Object.FindObjectOfType<IdeaManager>(true);
+        IdeaManager existingManager = UnityEngine.Object.FindAnyObjectByType<IdeaManager>(FindObjectsInactive.Include);
 
         if (existingManager != null)
         {

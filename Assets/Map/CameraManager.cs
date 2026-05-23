@@ -134,7 +134,7 @@ public class CameraManager : MonoBehaviour
 
     private void Reset()
     {
-        cameraBackground = FindObjectOfType<RawImage>();
+        cameraBackground = FindAnyObjectByType<RawImage>();
         cameraSwitchSound = GetComponent<AudioSource>();
     }
 
@@ -142,7 +142,7 @@ public class CameraManager : MonoBehaviour
     {
         if (cameraBackground == null)
         {
-            cameraBackground = FindObjectOfType<RawImage>();
+            cameraBackground = FindAnyObjectByType<RawImage>();
         }
 
         if (cameraSwitchSound == null)
@@ -555,7 +555,7 @@ public class CameraManager : MonoBehaviour
     {
         if (roomNavigationManager == null)
         {
-            roomNavigationManager = FindObjectOfType<RoomNavigationManager>(true);
+            roomNavigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         }
 
         if (roomNavigationManager == null || string.IsNullOrWhiteSpace(roomNavigationManager.CurrentRoom))
@@ -585,7 +585,7 @@ public class CameraManager : MonoBehaviour
 
         if (roomNavigationManager == null)
         {
-            roomNavigationManager = FindObjectOfType<RoomNavigationManager>();
+            roomNavigationManager = FindAnyObjectByType<RoomNavigationManager>();
         }
 
         if (roomNavigationManager != null)
@@ -1345,7 +1345,7 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        CanvasScaler[] canvasScalers = FindObjectsOfType<CanvasScaler>();
+        CanvasScaler[] canvasScalers = FindObjectsByType<CanvasScaler>();
 
         foreach (CanvasScaler canvasScaler in canvasScalers)
         {
@@ -1472,7 +1472,7 @@ public class CameraManager : MonoBehaviour
             return mainCamera;
         }
 
-        return FindObjectOfType<Camera>();
+        return FindAnyObjectByType<Camera>();
     }
 
     private void ApplyBackgroundLayout()

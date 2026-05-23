@@ -175,7 +175,7 @@ public class PowerUI : MonoBehaviour
     {
         if (powerManager == null)
         {
-            powerManager = FindObjectOfType<PowerManager>();
+            powerManager = FindAnyObjectByType<PowerManager>();
         }
 
         if (targetCanvas == null)
@@ -230,7 +230,7 @@ public class PowerUI : MonoBehaviour
 
     private TMP_Text FindText(string objectName)
     {
-        TMP_Text[] texts = FindObjectsOfType<TMP_Text>(true);
+        TMP_Text[] texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include);
 
         foreach (TMP_Text text in texts)
         {
@@ -245,7 +245,7 @@ public class PowerUI : MonoBehaviour
 
     private Image[] FindUsageBars()
     {
-        Image[] images = FindObjectsOfType<Image>(true);
+        Image[] images = FindObjectsByType<Image>(FindObjectsInactive.Include);
         Image[] bars = new Image[UsageBarCount];
         int foundCount = 0;
 
@@ -335,7 +335,7 @@ public class PowerUI : MonoBehaviour
             return parentCanvas;
         }
 
-        Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
 
         foreach (Canvas canvas in canvases)
         {

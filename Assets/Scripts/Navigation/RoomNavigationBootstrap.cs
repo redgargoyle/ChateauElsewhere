@@ -26,9 +26,9 @@ public static class RoomNavigationBootstrap
 
     private static void EnsureNavigationManagerExistsForLoadedScene()
     {
-        RoomNavigationManager navigationManager = Object.FindObjectOfType<RoomNavigationManager>(true);
-        DoorPromptSequenceController promptController = Object.FindObjectOfType<DoorPromptSequenceController>(true);
-        CameraManager cameraManager = Object.FindObjectOfType<CameraManager>(true);
+        RoomNavigationManager navigationManager = Object.FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        DoorPromptSequenceController promptController = Object.FindAnyObjectByType<DoorPromptSequenceController>(FindObjectsInactive.Include);
+        CameraManager cameraManager = Object.FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
 
         if (navigationManager != null && promptController != null)
         {
@@ -36,8 +36,8 @@ public static class RoomNavigationBootstrap
         }
 
         bool sceneHasDoorControls =
-            Object.FindObjectOfType<DoorButton>(true) != null ||
-            Object.FindObjectOfType<DoorTriggerNavigation>(true) != null;
+            Object.FindAnyObjectByType<DoorButton>(FindObjectsInactive.Include) != null ||
+            Object.FindAnyObjectByType<DoorTriggerNavigation>(FindObjectsInactive.Include) != null;
 
         if (!sceneHasDoorControls)
         {
