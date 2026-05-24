@@ -7,6 +7,7 @@ public class CharacterRegressionTests
     private const string WalkerPath = "Assets/Scripts/Characters/RoomPersonWalker2D.cs";
     private const string OccluderPath = "Assets/Scripts/Characters/RoomForegroundOccluder.cs";
     private const string CharactersReadmePath = "Assets/Scripts/Characters/README.md";
+    private const string PlayerWalkUpClipPath = "Assets/Animation/Player_Walk_Up.anim";
     private const string AtlasFolder = "Assets/Art/Characters/Atlases";
     private const string SourceFolder = "Assets/Art/Characters/SourceSheets";
 
@@ -53,5 +54,17 @@ public class CharacterRegressionTests
         Assert.That(readmeText, Does.Contain("foot baseline"));
         Assert.That(readmeText, Does.Contain("foreground occluder cards"));
         Assert.That(readmeText, Does.Contain("People > Walker_GEH_GreenGentleman"));
+    }
+
+    [Test]
+    public void ButlerWalkUpUsesFullBackStride()
+    {
+        string walkUpText = File.ReadAllText(PlayerWalkUpClipPath);
+
+        Assert.That(walkUpText, Does.Contain("492e6bd14a7d45c985f22aebe6b7812a"), "Walk-up should include the back-facing neutral frame.");
+        Assert.That(walkUpText, Does.Contain("f3bd9ee8373040feae610350d5ea456a"), "Walk-up should include the first back stride frame.");
+        Assert.That(walkUpText, Does.Contain("5f1ad806fd3445738f9edcab6d346a4d"), "Walk-up should include the middle back stride frame.");
+        Assert.That(walkUpText, Does.Contain("46b92049a26a4c72b9ad03f464e169ae"), "Walk-up should include the opposite back stride frame.");
+        Assert.That(walkUpText, Does.Contain("m_StopTime: 0.8333334"), "Walk-up should run long enough to cycle through the full stride instead of a two-pose slide.");
     }
 }

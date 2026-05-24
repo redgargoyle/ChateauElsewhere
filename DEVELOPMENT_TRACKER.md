@@ -13,6 +13,7 @@ This file tracks the current practical pass so we do not lose the thread between
 - Added player-distance gating to door and stair triggers. A click only transitions rooms when the butler is close enough on screen.
 - Improved far door/stair clicks: when clicked from too far away, the butler now walks toward the closest reachable point near the trigger, then auto-uses it only if he ends close enough.
 - Added navigation regression coverage for proximity-gated door/stair use and player approach movement.
+- Fixed the butler walk-away animation by expanding `Player_Walk_Up.anim` from a two-frame slide into a full back-facing stride cycle.
 - Verified `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` both build with 0 warnings and 0 errors.
 
 ## Immediate Visual Checks In Unity
@@ -22,6 +23,7 @@ This file tracks the current practical pass so we do not lose the thread between
 - Click around the Grand Entrance Hall and confirm the butler remains inside `PlayerBoundary_Entrance`.
 - Watch the gentleman and lady for at least one full path direction change. They should move more smoothly, pause briefly at endpoints, and show subtle idle motion.
 - Try clicking a door or stairway while far away. The butler should walk toward it first, then navigate only if he is close enough. Close clicks should navigate immediately.
+- Click above the butler and watch him walk away from the camera. The back-facing walk should cycle through a full stride instead of holding one foot-forward pose.
 
 ## Next Focus
 
