@@ -1,0 +1,432 @@
+{
+  "source": "Assets/Art/SpriteSheets/maid_black_walk_cycle_generated.png",
+  "background": "alpha",
+  "sheet_size": [
+    1774,
+    887
+  ],
+  "layout": {
+    "mode": "components",
+    "rows": 1,
+    "cols": 8,
+    "component_count": 8,
+    "min_component_area": 1000,
+    "component_pad": 2,
+    "note": "Sprites were detected as connected transparent-background components, then sorted into rows and columns."
+  },
+  "anchor_mode": "cell-bottom-center",
+  "manual_anchor": null,
+  "alpha_threshold": 8,
+  "aligned_canvas_size": [
+    222,
+    458
+  ],
+  "aligned_anchor_from_top_left": [
+    111.0,
+    458.0
+  ],
+  "unity_normalized_pivot": [
+    0.5,
+    0.0
+  ],
+  "notes": [
+    "Use files in aligned/ for animation when you want transparent frames that stay registered.",
+    "All aligned frames share one canvas size and one root anchor.",
+    "The full_cells/ frames preserve source crops for debugging.",
+    "The trimmed/ frames are only safe by themselves if your runtime also uses the offsets in this metadata."
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "row": 0,
+      "col": 0,
+      "name": "maid_black_walk_cycle_01_r01_c01.png",
+      "source_rect": [
+        18,
+        204,
+        202,
+        659
+      ],
+      "component_bbox_in_source": [
+        20,
+        206,
+        200,
+        657
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        182,
+        453
+      ],
+      "source_anchor_in_full_cell": [
+        92.0,
+        455.0
+      ],
+      "aligned_path": "aligned/maid_black_walk_cycle_01_r01_c01.png",
+      "full_cell_path": "full_cells/maid_black_walk_cycle_01_r01_c01.png",
+      "trimmed_path": "trimmed/maid_black_walk_cycle_01_r01_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        184,
+        455
+      ],
+      "aligned_canvas_size": [
+        222,
+        458
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        458.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 1,
+      "row": 0,
+      "col": 1,
+      "name": "maid_black_walk_cycle_02_r01_c02.png",
+      "source_rect": [
+        236,
+        204,
+        444,
+        658
+      ],
+      "component_bbox_in_source": [
+        238,
+        206,
+        442,
+        656
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        206,
+        452
+      ],
+      "source_anchor_in_full_cell": [
+        104.0,
+        454.0
+      ],
+      "aligned_path": "aligned/maid_black_walk_cycle_02_r01_c02.png",
+      "full_cell_path": "full_cells/maid_black_walk_cycle_02_r01_c02.png",
+      "trimmed_path": "trimmed/maid_black_walk_cycle_02_r01_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        208,
+        454
+      ],
+      "aligned_canvas_size": [
+        222,
+        458
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        458.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 2,
+      "row": 0,
+      "col": 2,
+      "name": "maid_black_walk_cycle_03_r01_c03.png",
+      "source_rect": [
+        452,
+        204,
+        636,
+        660
+      ],
+      "component_bbox_in_source": [
+        454,
+        206,
+        634,
+        658
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        182,
+        454
+      ],
+      "source_anchor_in_full_cell": [
+        92.0,
+        456.0
+      ],
+      "aligned_path": "aligned/maid_black_walk_cycle_03_r01_c03.png",
+      "full_cell_path": "full_cells/maid_black_walk_cycle_03_r01_c03.png",
+      "trimmed_path": "trimmed/maid_black_walk_cycle_03_r01_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        184,
+        456
+      ],
+      "aligned_canvas_size": [
+        222,
+        458
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        458.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "col": 3,
+      "name": "maid_black_walk_cycle_04_r01_c04.png",
+      "source_rect": [
+        681,
+        204,
+        875,
+        659
+      ],
+      "component_bbox_in_source": [
+        683,
+        206,
+        873,
+        657
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        192,
+        453
+      ],
+      "source_anchor_in_full_cell": [
+        97.0,
+        455.0
+      ],
+      "aligned_path": "aligned/maid_black_walk_cycle_04_r01_c04.png",
+      "full_cell_path": "full_cells/maid_black_walk_cycle_04_r01_c04.png",
+      "trimmed_path": "trimmed/maid_black_walk_cycle_04_r01_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        194,
+        455
+      ],
+      "aligned_canvas_size": [
+        222,
+        458
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        458.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 4,
+      "row": 0,
+      "col": 4,
+      "name": "maid_black_walk_cycle_05_r01_c05.png",
+      "source_rect": [
+        902,
+        204,
+        1085,
+        659
+      ],
+      "component_bbox_in_source": [
+        904,
+        206,
+        1083,
+        657
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        181,
+        453
+      ],
+      "source_anchor_in_full_cell": [
+        91.5,
+        455.0
+      ],
+      "aligned_path": "aligned/maid_black_walk_cycle_05_r01_c05.png",
+      "full_cell_path": "full_cells/maid_black_walk_cycle_05_r01_c05.png",
+      "trimmed_path": "trimmed/maid_black_walk_cycle_05_r01_c05.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        183,
+        455
+      ],
+      "aligned_canvas_size": [
+        222,
+        458
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        458.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 5,
+      "row": 0,
+      "col": 5,
+      "name": "maid_black_walk_cycle_06_r01_c06.png",
+      "source_rect": [
+        1107,
+        204,
+        1325,
+        659
+      ],
+      "component_bbox_in_source": [
+        1109,
+        206,
+        1323,
+        657
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        216,
+        453
+      ],
+      "source_anchor_in_full_cell": [
+        109.0,
+        455.0
+      ],
+      "aligned_path": "aligned/maid_black_walk_cycle_06_r01_c06.png",
+      "full_cell_path": "full_cells/maid_black_walk_cycle_06_r01_c06.png",
+      "trimmed_path": "trimmed/maid_black_walk_cycle_06_r01_c06.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        218,
+        455
+      ],
+      "aligned_canvas_size": [
+        222,
+        458
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        458.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 6,
+      "row": 0,
+      "col": 6,
+      "name": "maid_black_walk_cycle_07_r01_c07.png",
+      "source_rect": [
+        1336,
+        204,
+        1524,
+        660
+      ],
+      "component_bbox_in_source": [
+        1338,
+        206,
+        1522,
+        658
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        186,
+        454
+      ],
+      "source_anchor_in_full_cell": [
+        94.0,
+        456.0
+      ],
+      "aligned_path": "aligned/maid_black_walk_cycle_07_r01_c07.png",
+      "full_cell_path": "full_cells/maid_black_walk_cycle_07_r01_c07.png",
+      "trimmed_path": "trimmed/maid_black_walk_cycle_07_r01_c07.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        188,
+        456
+      ],
+      "aligned_canvas_size": [
+        222,
+        458
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        458.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 7,
+      "row": 0,
+      "col": 7,
+      "name": "maid_black_walk_cycle_08_r01_c08.png",
+      "source_rect": [
+        1551,
+        204,
+        1735,
+        659
+      ],
+      "component_bbox_in_source": [
+        1553,
+        206,
+        1733,
+        657
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        182,
+        453
+      ],
+      "source_anchor_in_full_cell": [
+        92.0,
+        455.0
+      ],
+      "aligned_path": "aligned/maid_black_walk_cycle_08_r01_c08.png",
+      "full_cell_path": "full_cells/maid_black_walk_cycle_08_r01_c08.png",
+      "trimmed_path": "trimmed/maid_black_walk_cycle_08_r01_c08.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        184,
+        455
+      ],
+      "aligned_canvas_size": [
+        222,
+        458
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        458.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,824 @@
+{
+  "source": "Assets/Art/SpriteSheets/butler_classic_walk_sheet.png",
+  "background": "checker",
+  "sheet_size": [
+    1254,
+    1254
+  ],
+  "layout": {
+    "mode": "components",
+    "rows": 4,
+    "cols": 4,
+    "component_count": 16,
+    "min_component_area": 100,
+    "component_pad": 2,
+    "note": "Sprites were detected as connected transparent-background components, then sorted into rows and columns."
+  },
+  "anchor_mode": "cell-bottom-center",
+  "manual_anchor": null,
+  "alpha_threshold": 8,
+  "aligned_canvas_size": [
+    168,
+    299
+  ],
+  "aligned_anchor_from_top_left": [
+    84.0,
+    299.0
+  ],
+  "unity_normalized_pivot": [
+    0.5,
+    0.0
+  ],
+  "notes": [
+    "Use files in aligned/ for animation when you want transparent frames that stay registered.",
+    "All aligned frames share one canvas size and one root anchor.",
+    "The full_cells/ frames preserve source crops for debugging.",
+    "The trimmed/ frames are only safe by themselves if your runtime also uses the offsets in this metadata."
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "row": 0,
+      "col": 0,
+      "name": "butler_classic_walk_01_r01_c01.png",
+      "source_rect": [
+        184,
+        13,
+        277,
+        309
+      ],
+      "component_bbox_in_source": [
+        186,
+        15,
+        275,
+        307
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        91,
+        294
+      ],
+      "source_anchor_in_full_cell": [
+        46.5,
+        296.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_01_r01_c01.png",
+      "full_cell_path": "full_cells/butler_classic_walk_01_r01_c01.png",
+      "trimmed_path": "trimmed/butler_classic_walk_01_r01_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        93,
+        296
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 1,
+      "row": 0,
+      "col": 1,
+      "name": "butler_classic_walk_02_r01_c02.png",
+      "source_rect": [
+        447,
+        14,
+        564,
+        311
+      ],
+      "component_bbox_in_source": [
+        449,
+        16,
+        562,
+        309
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        115,
+        295
+      ],
+      "source_anchor_in_full_cell": [
+        58.5,
+        297.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_02_r01_c02.png",
+      "full_cell_path": "full_cells/butler_classic_walk_02_r01_c02.png",
+      "trimmed_path": "trimmed/butler_classic_walk_02_r01_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        117,
+        297
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 2,
+      "row": 0,
+      "col": 2,
+      "name": "butler_classic_walk_03_r01_c03.png",
+      "source_rect": [
+        694,
+        14,
+        824,
+        310
+      ],
+      "component_bbox_in_source": [
+        696,
+        16,
+        822,
+        308
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        128,
+        294
+      ],
+      "source_anchor_in_full_cell": [
+        65.0,
+        296.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_03_r01_c03.png",
+      "full_cell_path": "full_cells/butler_classic_walk_03_r01_c03.png",
+      "trimmed_path": "trimmed/butler_classic_walk_03_r01_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        130,
+        296
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "col": 3,
+      "name": "butler_classic_walk_04_r01_c04.png",
+      "source_rect": [
+        951,
+        14,
+        1079,
+        311
+      ],
+      "component_bbox_in_source": [
+        953,
+        16,
+        1077,
+        309
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        126,
+        295
+      ],
+      "source_anchor_in_full_cell": [
+        64.0,
+        297.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_04_r01_c04.png",
+      "full_cell_path": "full_cells/butler_classic_walk_04_r01_c04.png",
+      "trimmed_path": "trimmed/butler_classic_walk_04_r01_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        128,
+        297
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 4,
+      "row": 1,
+      "col": 0,
+      "name": "butler_classic_walk_05_r02_c01.png",
+      "source_rect": [
+        200,
+        319,
+        281,
+        611
+      ],
+      "component_bbox_in_source": [
+        202,
+        321,
+        279,
+        609
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        79,
+        290
+      ],
+      "source_anchor_in_full_cell": [
+        40.5,
+        292.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_05_r02_c01.png",
+      "full_cell_path": "full_cells/butler_classic_walk_05_r02_c01.png",
+      "trimmed_path": "trimmed/butler_classic_walk_05_r02_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        81,
+        292
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 5,
+      "row": 1,
+      "col": 1,
+      "name": "butler_classic_walk_06_r02_c02.png",
+      "source_rect": [
+        429,
+        321,
+        577,
+        608
+      ],
+      "component_bbox_in_source": [
+        431,
+        323,
+        575,
+        606
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        146,
+        285
+      ],
+      "source_anchor_in_full_cell": [
+        74.0,
+        287.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_06_r02_c02.png",
+      "full_cell_path": "full_cells/butler_classic_walk_06_r02_c02.png",
+      "trimmed_path": "trimmed/butler_classic_walk_06_r02_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        148,
+        287
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 6,
+      "row": 1,
+      "col": 2,
+      "name": "butler_classic_walk_07_r02_c03.png",
+      "source_rect": [
+        662,
+        322,
+        822,
+        608
+      ],
+      "component_bbox_in_source": [
+        664,
+        324,
+        820,
+        606
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        158,
+        284
+      ],
+      "source_anchor_in_full_cell": [
+        80.0,
+        286.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_07_r02_c03.png",
+      "full_cell_path": "full_cells/butler_classic_walk_07_r02_c03.png",
+      "trimmed_path": "trimmed/butler_classic_walk_07_r02_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        160,
+        286
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 7,
+      "row": 1,
+      "col": 3,
+      "name": "butler_classic_walk_08_r02_c04.png",
+      "source_rect": [
+        936,
+        323,
+        1076,
+        609
+      ],
+      "component_bbox_in_source": [
+        938,
+        325,
+        1074,
+        607
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        138,
+        284
+      ],
+      "source_anchor_in_full_cell": [
+        70.0,
+        286.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_08_r02_c04.png",
+      "full_cell_path": "full_cells/butler_classic_walk_08_r02_c04.png",
+      "trimmed_path": "trimmed/butler_classic_walk_08_r02_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        140,
+        286
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 8,
+      "row": 2,
+      "col": 0,
+      "name": "butler_classic_walk_09_r03_c01.png",
+      "source_rect": [
+        191,
+        625,
+        274,
+        915
+      ],
+      "component_bbox_in_source": [
+        193,
+        627,
+        272,
+        913
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        81,
+        288
+      ],
+      "source_anchor_in_full_cell": [
+        41.5,
+        290.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_09_r03_c01.png",
+      "full_cell_path": "full_cells/butler_classic_walk_09_r03_c01.png",
+      "trimmed_path": "trimmed/butler_classic_walk_09_r03_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        83,
+        290
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 9,
+      "row": 2,
+      "col": 1,
+      "name": "butler_classic_walk_10_r03_c02.png",
+      "source_rect": [
+        427,
+        629,
+        583,
+        913
+      ],
+      "component_bbox_in_source": [
+        429,
+        631,
+        581,
+        911
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        154,
+        282
+      ],
+      "source_anchor_in_full_cell": [
+        78.0,
+        284.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_10_r03_c02.png",
+      "full_cell_path": "full_cells/butler_classic_walk_10_r03_c02.png",
+      "trimmed_path": "trimmed/butler_classic_walk_10_r03_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        156,
+        284
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 10,
+      "row": 2,
+      "col": 2,
+      "name": "butler_classic_walk_11_r03_c03.png",
+      "source_rect": [
+        672,
+        629,
+        835,
+        912
+      ],
+      "component_bbox_in_source": [
+        674,
+        631,
+        833,
+        910
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        161,
+        281
+      ],
+      "source_anchor_in_full_cell": [
+        81.5,
+        283.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_11_r03_c03.png",
+      "full_cell_path": "full_cells/butler_classic_walk_11_r03_c03.png",
+      "trimmed_path": "trimmed/butler_classic_walk_11_r03_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        163,
+        283
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 11,
+      "row": 2,
+      "col": 3,
+      "name": "butler_classic_walk_12_r03_c04.png",
+      "source_rect": [
+        927,
+        629,
+        1078,
+        914
+      ],
+      "component_bbox_in_source": [
+        929,
+        631,
+        1076,
+        912
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        149,
+        283
+      ],
+      "source_anchor_in_full_cell": [
+        75.5,
+        285.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_12_r03_c04.png",
+      "full_cell_path": "full_cells/butler_classic_walk_12_r03_c04.png",
+      "trimmed_path": "trimmed/butler_classic_walk_12_r03_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        151,
+        285
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 12,
+      "row": 3,
+      "col": 0,
+      "name": "butler_classic_walk_13_r04_c01.png",
+      "source_rect": [
+        191,
+        924,
+        280,
+        1215
+      ],
+      "component_bbox_in_source": [
+        193,
+        926,
+        278,
+        1213
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        87,
+        289
+      ],
+      "source_anchor_in_full_cell": [
+        44.5,
+        291.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_13_r04_c01.png",
+      "full_cell_path": "full_cells/butler_classic_walk_13_r04_c01.png",
+      "trimmed_path": "trimmed/butler_classic_walk_13_r04_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        89,
+        291
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 13,
+      "row": 3,
+      "col": 1,
+      "name": "butler_classic_walk_14_r04_c02.png",
+      "source_rect": [
+        444,
+        924,
+        561,
+        1220
+      ],
+      "component_bbox_in_source": [
+        446,
+        926,
+        559,
+        1218
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        115,
+        294
+      ],
+      "source_anchor_in_full_cell": [
+        58.5,
+        296.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_14_r04_c02.png",
+      "full_cell_path": "full_cells/butler_classic_walk_14_r04_c02.png",
+      "trimmed_path": "trimmed/butler_classic_walk_14_r04_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        117,
+        296
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 14,
+      "row": 3,
+      "col": 2,
+      "name": "butler_classic_walk_15_r04_c03.png",
+      "source_rect": [
+        688,
+        924,
+        814,
+        1220
+      ],
+      "component_bbox_in_source": [
+        690,
+        926,
+        812,
+        1218
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        124,
+        294
+      ],
+      "source_anchor_in_full_cell": [
+        63.0,
+        296.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_15_r04_c03.png",
+      "full_cell_path": "full_cells/butler_classic_walk_15_r04_c03.png",
+      "trimmed_path": "trimmed/butler_classic_walk_15_r04_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        126,
+        296
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 15,
+      "row": 3,
+      "col": 3,
+      "name": "butler_classic_walk_16_r04_c04.png",
+      "source_rect": [
+        944,
+        924,
+        1060,
+        1219
+      ],
+      "component_bbox_in_source": [
+        946,
+        926,
+        1058,
+        1217
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        114,
+        293
+      ],
+      "source_anchor_in_full_cell": [
+        58.0,
+        295.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_16_r04_c04.png",
+      "full_cell_path": "full_cells/butler_classic_walk_16_r04_c04.png",
+      "trimmed_path": "trimmed/butler_classic_walk_16_r04_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        116,
+        295
+      ],
+      "aligned_canvas_size": [
+        168,
+        299
+      ],
+      "aligned_anchor_from_top_left": [
+        84.0,
+        299.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,432 @@
+{
+  "source": "Assets/Art/SpriteSheets/butler_classic_walk_cycle_generated.png",
+  "background": "alpha",
+  "sheet_size": [
+    1774,
+    887
+  ],
+  "layout": {
+    "mode": "components",
+    "rows": 1,
+    "cols": 8,
+    "component_count": 8,
+    "min_component_area": 1000,
+    "component_pad": 2,
+    "note": "Sprites were detected as connected transparent-background components, then sorted into rows and columns."
+  },
+  "anchor_mode": "cell-bottom-center",
+  "manual_anchor": null,
+  "alpha_threshold": 8,
+  "aligned_canvas_size": [
+    202,
+    457
+  ],
+  "aligned_anchor_from_top_left": [
+    101.0,
+    457.0
+  ],
+  "unity_normalized_pivot": [
+    0.5,
+    0.0
+  ],
+  "notes": [
+    "Use files in aligned/ for animation when you want transparent frames that stay registered.",
+    "All aligned frames share one canvas size and one root anchor.",
+    "The full_cells/ frames preserve source crops for debugging.",
+    "The trimmed/ frames are only safe by themselves if your runtime also uses the offsets in this metadata."
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "row": 0,
+      "col": 0,
+      "name": "butler_classic_walk_cycle_01_r01_c01.png",
+      "source_rect": [
+        40,
+        217,
+        209,
+        672
+      ],
+      "component_bbox_in_source": [
+        42,
+        219,
+        207,
+        670
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        167,
+        453
+      ],
+      "source_anchor_in_full_cell": [
+        84.5,
+        455.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_cycle_01_r01_c01.png",
+      "full_cell_path": "full_cells/butler_classic_walk_cycle_01_r01_c01.png",
+      "trimmed_path": "trimmed/butler_classic_walk_cycle_01_r01_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        169,
+        455
+      ],
+      "aligned_canvas_size": [
+        202,
+        457
+      ],
+      "aligned_anchor_from_top_left": [
+        101.0,
+        457.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 1,
+      "row": 0,
+      "col": 1,
+      "name": "butler_classic_walk_cycle_02_r01_c02.png",
+      "source_rect": [
+        269,
+        216,
+        404,
+        668
+      ],
+      "component_bbox_in_source": [
+        271,
+        218,
+        402,
+        666
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        133,
+        450
+      ],
+      "source_anchor_in_full_cell": [
+        67.5,
+        452.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_cycle_02_r01_c02.png",
+      "full_cell_path": "full_cells/butler_classic_walk_cycle_02_r01_c02.png",
+      "trimmed_path": "trimmed/butler_classic_walk_cycle_02_r01_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        135,
+        452
+      ],
+      "aligned_canvas_size": [
+        202,
+        457
+      ],
+      "aligned_anchor_from_top_left": [
+        101.0,
+        457.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 2,
+      "row": 0,
+      "col": 2,
+      "name": "butler_classic_walk_cycle_03_r01_c03.png",
+      "source_rect": [
+        467,
+        216,
+        647,
+        668
+      ],
+      "component_bbox_in_source": [
+        469,
+        218,
+        645,
+        666
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        178,
+        450
+      ],
+      "source_anchor_in_full_cell": [
+        90.0,
+        452.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_cycle_03_r01_c03.png",
+      "full_cell_path": "full_cells/butler_classic_walk_cycle_03_r01_c03.png",
+      "trimmed_path": "trimmed/butler_classic_walk_cycle_03_r01_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        180,
+        452
+      ],
+      "aligned_canvas_size": [
+        202,
+        457
+      ],
+      "aligned_anchor_from_top_left": [
+        101.0,
+        457.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "col": 3,
+      "name": "butler_classic_walk_cycle_04_r01_c04.png",
+      "source_rect": [
+        706,
+        216,
+        861,
+        668
+      ],
+      "component_bbox_in_source": [
+        708,
+        218,
+        859,
+        666
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        153,
+        450
+      ],
+      "source_anchor_in_full_cell": [
+        77.5,
+        452.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_cycle_04_r01_c04.png",
+      "full_cell_path": "full_cells/butler_classic_walk_cycle_04_r01_c04.png",
+      "trimmed_path": "trimmed/butler_classic_walk_cycle_04_r01_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        155,
+        452
+      ],
+      "aligned_canvas_size": [
+        202,
+        457
+      ],
+      "aligned_anchor_from_top_left": [
+        101.0,
+        457.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 4,
+      "row": 0,
+      "col": 4,
+      "name": "butler_classic_walk_cycle_05_r01_c05.png",
+      "source_rect": [
+        926,
+        217,
+        1105,
+        672
+      ],
+      "component_bbox_in_source": [
+        928,
+        219,
+        1103,
+        670
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        177,
+        453
+      ],
+      "source_anchor_in_full_cell": [
+        89.5,
+        455.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_cycle_05_r01_c05.png",
+      "full_cell_path": "full_cells/butler_classic_walk_cycle_05_r01_c05.png",
+      "trimmed_path": "trimmed/butler_classic_walk_cycle_05_r01_c05.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        179,
+        455
+      ],
+      "aligned_canvas_size": [
+        202,
+        457
+      ],
+      "aligned_anchor_from_top_left": [
+        101.0,
+        457.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 5,
+      "row": 0,
+      "col": 5,
+      "name": "butler_classic_walk_cycle_06_r01_c06.png",
+      "source_rect": [
+        1137,
+        219,
+        1334,
+        668
+      ],
+      "component_bbox_in_source": [
+        1139,
+        221,
+        1332,
+        666
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        195,
+        447
+      ],
+      "source_anchor_in_full_cell": [
+        98.5,
+        449.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_cycle_06_r01_c06.png",
+      "full_cell_path": "full_cells/butler_classic_walk_cycle_06_r01_c06.png",
+      "trimmed_path": "trimmed/butler_classic_walk_cycle_06_r01_c06.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        197,
+        449
+      ],
+      "aligned_canvas_size": [
+        202,
+        457
+      ],
+      "aligned_anchor_from_top_left": [
+        101.0,
+        457.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 6,
+      "row": 0,
+      "col": 6,
+      "name": "butler_classic_walk_cycle_07_r01_c07.png",
+      "source_rect": [
+        1356,
+        220,
+        1539,
+        669
+      ],
+      "component_bbox_in_source": [
+        1358,
+        222,
+        1537,
+        667
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        181,
+        447
+      ],
+      "source_anchor_in_full_cell": [
+        91.5,
+        449.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_cycle_07_r01_c07.png",
+      "full_cell_path": "full_cells/butler_classic_walk_cycle_07_r01_c07.png",
+      "trimmed_path": "trimmed/butler_classic_walk_cycle_07_r01_c07.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        183,
+        449
+      ],
+      "aligned_canvas_size": [
+        202,
+        457
+      ],
+      "aligned_anchor_from_top_left": [
+        101.0,
+        457.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 7,
+      "row": 0,
+      "col": 7,
+      "name": "butler_classic_walk_cycle_08_r01_c08.png",
+      "source_rect": [
+        1577,
+        220,
+        1747,
+        672
+      ],
+      "component_bbox_in_source": [
+        1579,
+        222,
+        1745,
+        670
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        168,
+        450
+      ],
+      "source_anchor_in_full_cell": [
+        85.0,
+        452.0
+      ],
+      "aligned_path": "aligned/butler_classic_walk_cycle_08_r01_c08.png",
+      "full_cell_path": "full_cells/butler_classic_walk_cycle_08_r01_c08.png",
+      "trimmed_path": "trimmed/butler_classic_walk_cycle_08_r01_c08.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        170,
+        452
+      ],
+      "aligned_canvas_size": [
+        202,
+        457
+      ],
+      "aligned_anchor_from_top_left": [
+        101.0,
+        457.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    }
+  ]
+}
