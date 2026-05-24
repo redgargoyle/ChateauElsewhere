@@ -26,6 +26,7 @@ public sealed class CharacterSelectionMenu : MonoBehaviour
 	private Animator playerAnimator;
 	private PointClickPlayerMovement playerMovement;
 	private SpriteRenderer playerSpriteRenderer;
+	private Vector2 scrollPosition;
 	private Rect windowRect;
 	private bool menuVisible;
 	private string selectedCharacterName = "Current";
@@ -91,6 +92,8 @@ public sealed class CharacterSelectionMenu : MonoBehaviour
 		}
 		else
 		{
+			float optionsHeight = Mathf.Max(80f, windowHeight - 105f);
+			scrollPosition = GUILayout.BeginScrollView(scrollPosition, GUILayout.Height(optionsHeight));
 			for (int i = 0; i < characterOptions.Length; i++)
 			{
 				CharacterOption option = characterOptions[i];
@@ -101,6 +104,7 @@ public sealed class CharacterSelectionMenu : MonoBehaviour
 				if (GUILayout.Button(label, GUILayout.Height(34f)))
 					SelectCharacter(i);
 			}
+			GUILayout.EndScrollView();
 		}
 
 		GUILayout.FlexibleSpace();

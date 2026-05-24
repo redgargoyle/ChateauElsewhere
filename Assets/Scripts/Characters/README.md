@@ -12,6 +12,8 @@ If a character's original sheet is side-only, add an explicit `directional/align
 
 `ButlerClassic` currently has the most complete player-facing setup: `Assets/Animation/ButlerClassic/ButlerClassic.controller` uses persistent `IsFacingUp`, `IsFacingDown`, `IsFacingLeft`, and `IsFacingRight` Animator parameters to pick one of four looping directional idle clips. The source idle frames live in `Assets/Characters/ButlerClassic/idle/aligned`.
 
+For idle style testing, `Assets/Animation/ButlerClassic/IdleVariants` contains five dedicated ButlerClassic controllers: `StillBreathe`, `StillWeightShift`, `PocketWatch`, `Smoke`, and `BeardScratch`. Each controller shares the same ButlerClassic walk clips, but swaps in its own four-direction idle clips generated from `Assets/Characters/ButlerClassic/idle_variants`. Use the Gameplay character selector to compare them in Play mode, then keep or hand-edit the best clips in Unity's Animation window.
+
 Foreground occlusion uses a simple 90s prerendered trick: `RoomForegroundOccluder` objects are editable `RawImage` crops of the room painting placed above the `People` layer. Put them over railings, table edges, and other foreground furniture so walkers can pass behind those objects without a 3D setup.
 
 Current examples:
@@ -19,7 +21,7 @@ Current examples:
 - `Gameplay.unity > Canvas_Background > Rooms > Room_Grand_Entrance_Hall > People > Walker_GEH_GreenGentleman`
 - `Gameplay.unity > Canvas_Background > Rooms > Room_Grand_Entrance_Hall > People > Walker_GEH_GreenLady`
 - `Gameplay.unity > Canvas_Background > Rooms > Room_Grand_Entrance_Hall > ForegroundOccluders`
-- `Gameplay.unity > UI_CharacterSelectionMenu` for swapping the controllable player between test character override controllers in Play mode.
+- `Gameplay.unity > UI_CharacterSelectionMenu` for swapping the controllable player between test character controllers in Play mode, including the five ButlerClassic idle variants.
 
 Useful tweaks:
 

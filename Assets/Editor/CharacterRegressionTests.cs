@@ -14,12 +14,13 @@ public class CharacterRegressionTests
     private const string PlayerWalkUpClipPath = "Assets/Animation/Player/Player_Walk_Up.anim";
     private const string ButlerClassicWalkDownClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Walk_Down.anim";
     private const string ButlerClassicControllerPath = "Assets/Animation/ButlerClassic/ButlerClassic.controller";
-    private const string ButlerClassicControllerMetaPath = "Assets/Animation/ButlerClassic/ButlerClassic.controller.meta";
     private const string ButlerClassicIdleFolder = "Assets/Characters/ButlerClassic/idle/aligned";
     private const string ButlerClassicIdleDownClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Down.anim";
     private const string ButlerClassicIdleLeftClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Left.anim";
     private const string ButlerClassicIdleRightClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Right.anim";
     private const string ButlerClassicIdleUpClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Up.anim";
+    private const string ButlerClassicIdleVariantsFolder = "Assets/Characters/ButlerClassic/idle_variants";
+    private const string ButlerClassicIdleVariantsAnimationFolder = "Assets/Animation/ButlerClassic/IdleVariants";
     private const string GentlemanBlackDirectionalFolder = "Assets/Characters/GentlemanBlack/directional/aligned";
     private const string GentlemanBlackIdleClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Idle.anim";
     private const string GentlemanBlackWalkDownClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Down.anim";
@@ -29,6 +30,33 @@ public class CharacterRegressionTests
     private const string AnimationFolder = "Assets/Animation";
     private const string AtlasFolder = "Assets/Art/Characters/Atlases";
     private const string SourceFolder = "Assets/Art/Characters/SourceSheets";
+
+    private static readonly string[] ButlerClassicIdleVariantFolders =
+    {
+        "still_breathe",
+        "still_weight_shift",
+        "action_pocket_watch",
+        "action_smoke",
+        "action_beard_scratch"
+    };
+
+    private static readonly string[] ButlerClassicIdleVariantNames =
+    {
+        "StillBreathe",
+        "StillWeightShift",
+        "PocketWatch",
+        "Smoke",
+        "BeardScratch"
+    };
+
+    private static readonly string[] ButlerClassicIdleVariantLabels =
+    {
+        "ButlerClassic Still Breath",
+        "ButlerClassic Still Shift",
+        "ButlerClassic Pocket Watch",
+        "ButlerClassic Smoke",
+        "ButlerClassic Beard Scratch"
+    };
 
     [Test]
     public void RoomPeopleAreEditableDepthScaledSceneObjects()
@@ -103,18 +131,26 @@ public class CharacterRegressionTests
         Assert.That(menuText, Does.Contain("playerAnimator.Rebind"), "Changing character controllers should immediately reset the Animator onto the selected clips.");
         Assert.That(menuText, Does.Contain("RefreshAnimatorParameters"), "Swapping controllers should refresh cached Animator parameters before directional idle is evaluated.");
         Assert.That(menuText, Does.Contain("IsBlockingGameplayInput"), "The selector should keep menu clicks from becoming floor or door clicks.");
+        Assert.That(menuText, Does.Contain("BeginScrollView"), "The selector should stay usable while testing several idle variants.");
 
         Assert.That(sceneText, Does.Contain("m_Name: UI_CharacterSelectionMenu"));
         Assert.That(sceneText, Does.Contain("guid: c4f61fdc7a9646f1b7f011b6b8d65a9d"), "Gameplay should include the character selector component.");
-        Assert.That(sceneText, Does.Contain("displayName: ButlerClassic"));
+        for (int i = 0; i < ButlerClassicIdleVariantLabels.Length; i++)
+        {
+            string controllerMetaPath = $"{ButlerClassicIdleVariantsAnimationFolder}/ButlerClassic_{ButlerClassicIdleVariantNames[i]}.controller.meta";
+            string rightSpriteMetaPath = $"{ButlerClassicIdleVariantsFolder}/{ButlerClassicIdleVariantFolders[i]}/aligned/butler_classic_{ButlerClassicIdleVariantFolders[i]}_right_01.png.meta";
+            Assert.That(sceneText, Does.Contain($"displayName: {ButlerClassicIdleVariantLabels[i]}"));
+            Assert.That(sceneText, Does.Contain($"animatorController: {{fileID: 9100000, guid: {ReadGuidFromMeta(controllerMetaPath)}, type: 2}}"), $"{ButlerClassicIdleVariantLabels[i]} should use a dedicated directional-idle Animator controller.");
+            Assert.That(sceneText, Does.Contain(ReadGuidFromMeta(rightSpriteMetaPath)), $"{ButlerClassicIdleVariantLabels[i]} should start on its right-facing idle sprite.");
+        }
+
         Assert.That(sceneText, Does.Contain("displayName: ButlerYoung"));
         Assert.That(sceneText, Does.Contain("displayName: GentlemanBlack"));
-        Assert.That(sceneText, Does.Contain($"animatorController: {{fileID: 9100000, guid: {ReadGuidFromMeta(ButlerClassicControllerMetaPath)}, type: 2}}"), "ButlerClassic should use its dedicated directional-idle Animator controller.");
-        Assert.That(sceneText, Does.Contain(ReadGuidFromMeta($"{ButlerClassicIdleFolder}/butler_classic_idle_right_01.png.meta")), "ButlerClassic should start on the right-facing idle sprite that matches the player's initial facing direction.");
         Assert.That(sceneText, Does.Contain("guid: badec0a2b39e42d9822349537505d13b"), "ButlerYoung should use its generated override controller.");
         Assert.That(sceneText, Does.Contain("guid: bfcadf76b04b4b9081d862b0afcd8024"), "GentlemanBlack should use its generated override controller.");
         Assert.That(sceneText, Does.Contain(ReadGuidFromMeta($"{GentlemanBlackDirectionalFolder}/gentleman_black_directional_01_r01_c01.png.meta")), "GentlemanBlack should start on the directional front-facing sprite, not the old side-only frame.");
         Assert.That(sceneText, Does.Contain("showOnStart: 1"), "The selector should appear immediately in Play mode for testing.");
+        Assert.That(sceneText, Does.Contain("windowHeight: 420"), "The selector should be tall enough for the idle experiment list.");
 
         Assert.That(clipText, Does.Contain("classID: 114"), "Generated clips should animate UI Images for room NPCs.");
         Assert.That(clipText, Does.Contain("classID: 212"), "Generated clips should also animate SpriteRenderers for the controllable player selector.");
@@ -150,6 +186,32 @@ public class CharacterRegressionTests
         AssertDirectionalIdleClip(leftClipText, "left");
         AssertDirectionalIdleClip(rightClipText, "right");
         AssertDirectionalIdleClip(upClipText, "up");
+    }
+
+    [Test]
+    public void ButlerClassicHasFiveSelectableIdleVariantControllers()
+    {
+        Assert.That(Directory.GetFiles(ButlerClassicIdleVariantsFolder, "*.png", SearchOption.AllDirectories).Length, Is.EqualTo(80), "Five ButlerClassic idle variants should each provide four directions with four frames.");
+        Assert.That(Directory.GetFiles(ButlerClassicIdleVariantsAnimationFolder, "*.anim", SearchOption.TopDirectoryOnly).Length, Is.EqualTo(20), "Each idle variant should have editable Unity clips for all four directions.");
+        Assert.That(Directory.GetFiles(ButlerClassicIdleVariantsAnimationFolder, "*.controller", SearchOption.TopDirectoryOnly).Length, Is.EqualTo(5), "Each idle variant should have its own selectable Animator controller.");
+
+        for (int i = 0; i < ButlerClassicIdleVariantFolders.Length; i++)
+        {
+            string folder = ButlerClassicIdleVariantFolders[i];
+            string name = ButlerClassicIdleVariantNames[i];
+            string controllerPath = $"{ButlerClassicIdleVariantsAnimationFolder}/ButlerClassic_{name}.controller";
+            string controllerText = File.ReadAllText(controllerPath);
+
+            Assert.That(controllerText, Does.Contain($"m_Name: ButlerClassic_{name}"));
+            Assert.That(controllerText, Does.Contain("IsFacingRight"));
+            Assert.That(controllerText, Does.Contain("m_DefaultState: {fileID: 1500000000000000003}"), $"{name} should start facing right like the player movement component.");
+            Assert.That(controllerText, Does.Contain(ReadGuidFromMeta("Assets/Animation/ButlerClassic/ButlerClassic_Walk_Right.anim.meta")), $"{name} should reuse the polished ButlerClassic walk cycle.");
+
+            AssertIdleVariantClip(folder, name, "down");
+            AssertIdleVariantClip(folder, name, "left");
+            AssertIdleVariantClip(folder, name, "right");
+            AssertIdleVariantClip(folder, name, "up");
+        }
     }
 
     [Test]
@@ -217,6 +279,24 @@ public class CharacterRegressionTests
         {
             string framePath = $"{ButlerClassicIdleFolder}/butler_classic_idle_{direction}_{i:00}.png.meta";
             Assert.That(clipText, Does.Contain(ReadGuidFromMeta(framePath)), $"Idle {direction} should include frame {i}.");
+        }
+    }
+
+    private static void AssertIdleVariantClip(string variantFolder, string variantName, string direction)
+    {
+        string directionPascal = char.ToUpperInvariant(direction[0]) + direction.Substring(1);
+        string clipPath = $"{ButlerClassicIdleVariantsAnimationFolder}/ButlerClassic_{variantName}_Idle_{directionPascal}.anim";
+        string clipText = File.ReadAllText(clipPath);
+
+        Assert.That(clipText, Does.Contain("classID: 114"), $"{variantName} {direction} idle should animate UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), $"{variantName} {direction} idle should animate SpriteRenderers for the player.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 4"), $"{variantName} {direction} idle should move at idle speed, not walk speed.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 1"), $"{variantName} {direction} idle should loop over a full one-second cycle.");
+
+        for (int i = 1; i <= 4; i++)
+        {
+            string framePath = $"{ButlerClassicIdleVariantsFolder}/{variantFolder}/aligned/butler_classic_{variantFolder}_{direction}_{i:00}.png.meta";
+            Assert.That(clipText, Does.Contain(ReadGuidFromMeta(framePath)), $"{variantName} {direction} idle should include frame {i}.");
         }
     }
 }

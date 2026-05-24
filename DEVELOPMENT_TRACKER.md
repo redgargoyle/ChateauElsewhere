@@ -26,6 +26,7 @@ This file tracks the current practical pass so we do not lose the thread between
 - Added a Gameplay IMGUI animation test selector for `ButlerClassic`, `ButlerYoung`, and `GentlemanBlack`; it swaps the player Animator override controller and initial sprite without adding another Canvas.
 - Fixed the `GentlemanBlack` test character so it no longer maps every movement state to the same side-only walk cycle. It now has an explicit directional source folder, mirrored left-facing frames, right-facing 8-frame cycle, and front/back fallback rows matching the butler controller layout.
 - Added a dedicated `ButlerClassic` Animator controller with four directional idle states. The shared driver now writes persistent facing booleans so ButlerClassic idles up/down/left/right with a subtle breathing cycle after movement stops.
+- Added five selectable ButlerClassic idle variant controllers for aesthetic testing: two mostly-still natural idles and three action idles for pocket watch, smoke, and beard scratch. Each variant has four directional idle clips and reuses the ButlerClassic walk cycles.
 - Verified `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` both build with 0 warnings and 0 errors; `dotnet test Assembly-CSharp-Editor.csproj --no-build` exits successfully.
 
 ## Immediate Visual Checks In Unity
@@ -35,9 +36,9 @@ This file tracks the current practical pass so we do not lose the thread between
 - Click around the Grand Entrance Hall and confirm the butler remains inside `PlayerBoundary_Entrance`.
 - Watch the gentleman and lady for at least one full path direction change. They should move more smoothly, pause briefly at endpoints, and show subtle idle motion.
 - Inspect `Assets/Animation/GentlemanGreen` and `Assets/Animation/LadyGreen` in Unity. The room walkers should now be driven by editable clips through Animator override controllers.
-- Start Gameplay and use the opening character selector to test `ButlerClassic`, `ButlerYoung`, and `GentlemanBlack` against the same player movement/animation parameters.
+- Start Gameplay and use the opening character selector to compare the five `ButlerClassic` idle variants, then test `ButlerYoung` and `GentlemanBlack` against the same player movement/animation parameters.
 - With `GentlemanBlack` selected, walk left and right to confirm the character faces the travel direction, then walk toward/away from camera to confirm those states no longer show a sideways walk cycle.
-- With `ButlerClassic` selected, stop after walking in all four directions and confirm he holds the last facing direction while playing the small idle motion.
+- With each ButlerClassic idle variant selected, stop after walking in all four directions and confirm he holds the last facing direction while playing that variant's idle motion.
 - Try clicking a door or stairway while far away. The butler should walk toward it first, then navigate only if he is close enough. Close clicks should navigate immediately.
 - Hover walkable floor, unreachable floor, and already-current floor. The cursor should show feet for movement and feet with an X when clicking would not move.
 - Click above the butler and watch him walk away from the camera. The back-facing walk should cycle through a full stride instead of holding one foot-forward pose.

@@ -16749,9 +16749,21 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   playerObjectName: Player
   characterOptions:
-  - displayName: ButlerClassic
-    animatorController: {fileID: 9100000, guid: 21672a5f3a3f4e9a9aa21ecefd0cebf3, type: 2}
-    initialSprite: {fileID: 21300000, guid: 84611d9071f7494484efa37dcfc05cbe, type: 3}
+  - displayName: ButlerClassic Still Breath
+    animatorController: {fileID: 9100000, guid: e80f381a9e3cfe1ca8aee34a94cff880, type: 2}
+    initialSprite: {fileID: 21300000, guid: 1b93c8c0cf994dfeb88491fd97c35749, type: 3}
+  - displayName: ButlerClassic Still Shift
+    animatorController: {fileID: 9100000, guid: 5fda1dd5bd87b964df46afa7896af4b9, type: 2}
+    initialSprite: {fileID: 21300000, guid: e9dcbc6948cb41a1b4f25e641e13787d, type: 3}
+  - displayName: ButlerClassic Pocket Watch
+    animatorController: {fileID: 9100000, guid: 6f73b3b6e581a09dc2a3f8646f09e510, type: 2}
+    initialSprite: {fileID: 21300000, guid: 03bab0027ad64d97988e218fe56714b1, type: 3}
+  - displayName: ButlerClassic Smoke
+    animatorController: {fileID: 9100000, guid: 183956f0f28a2a21687aa49c05df76bd, type: 2}
+    initialSprite: {fileID: 21300000, guid: 8892f0a14b894fcdbd26f4357bf4e197, type: 3}
+  - displayName: ButlerClassic Beard Scratch
+    animatorController: {fileID: 9100000, guid: 74affdec6927957fbf945335a86060a1, type: 2}
+    initialSprite: {fileID: 21300000, guid: ef7749c644ac4148a871c303f1224b8f, type: 3}
   - displayName: ButlerYoung
     animatorController: {fileID: 22100000, guid: badec0a2b39e42d9822349537505d13b, type: 2}
     initialSprite: {fileID: 21300000, guid: 486bfb59e1854255b22ff8f68f2d9f1b, type: 3}
@@ -16760,7 +16772,7 @@ MonoBehaviour:
     initialSprite: {fileID: 21300000, guid: 4bd24e92dbd04f1798e1e372d68e3b9f, type: 3}
   showOnStart: 1
   windowWidth: 420
-  windowHeight: 235
+  windowHeight: 420
   changeButtonRect:
     serializedVersion: 2
     x: 16
