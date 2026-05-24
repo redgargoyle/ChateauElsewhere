@@ -32,11 +32,19 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private Image image;
     [SerializeField] private AudioSource doorOpenAudioSource;
+    [SerializeField] private Transform player;
 
     [Header("Display")]
     [SerializeField] private bool makeInvisibleAtRuntime = true;
     [SerializeField] private Color runtimeColor = new Color(1f, 1f, 1f, 0f);
     [SerializeField] private bool bringToFront = true;
+
+    [Header("Player Proximity")]
+    [SerializeField] private bool requirePlayerProximity = true;
+    [SerializeField] private bool walkPlayerToTriggerWhenFar = true;
+    [SerializeField] private bool autoActivateAfterApproach = true;
+    [SerializeField] private string playerObjectName = "Player";
+    [SerializeField] private float maxPlayerScreenDistance = 145f;
 
     [Header("Audio")]
     [SerializeField] private bool playDoorOpenSound = true;
@@ -54,6 +62,9 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     public string InteractionLabel => IsStairway ? "Stairway" : "Door";
 
     private RectTransform rectTransform;
+    private readonly Vector3[] triggerWorldCorners = new Vector3[4];
+    private PointClickPlayerMovement pendingApproachPlayer;
+    private static DoorTriggerNavigation pendingApproachTrigger;
     private static AudioSource activeNavigationAudioSource;
     private static int lastDoorOpenClipIndex = -1;
     private static int lastStairwayClipIndex = -1;
@@ -88,6 +99,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         FillSourceRoomFromHierarchy();
+        maxPlayerScreenDistance = Mathf.Max(1f, maxPlayerScreenDistance);
 
         ConfigureImage();
     }
@@ -104,6 +116,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             SetHoveredTrigger(null);
         }
 
+        CancelPendingPlayerApproach();
         NavigationCursorController.ClearDoorHover(this);
     }
 
@@ -130,6 +143,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void ActivateDoor()
     {
+        ActivateDoor(true);
+    }
+
+    private void ActivateDoor(bool allowPlayerApproach)
+    {
         ResolveReferences();
 
         if (navigationManager == null)
@@ -137,6 +155,19 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             Debug.LogWarning($"Door trigger '{name}' could not find a RoomNavigationManager.", this);
             return;
         }
+
+        if (!IsPlayerCloseEnough())
+        {
+            if (allowPlayerApproach && TryStartPlayerApproach())
+            {
+                return;
+            }
+
+            Debug.Log($"Move closer to the {InteractionLabel.ToLowerInvariant()} before using it.", this);
+            return;
+        }
+
+        CancelPendingPlayerApproach();
 
         if (useCameraSequence)
         {
@@ -159,6 +190,174 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         Debug.LogWarning($"Door trigger '{name}' has no destination room.", this);
+    }
+
+    private bool TryStartPlayerApproach()
+    {
+        if (!walkPlayerToTriggerWhenFar)
+        {
+            return false;
+        }
+
+        ResolvePlayerReference();
+        PointClickPlayerMovement playerMovement = player != null ? player.GetComponent<PointClickPlayerMovement>() : null;
+        if (playerMovement == null)
+        {
+            return false;
+        }
+
+        CancelAnyPendingApproach();
+
+        Vector2 approachScreenPoint = GetClosestTriggerScreenPoint(GetPlayerScreenPosition());
+        if (!playerMovement.TrySetDestinationFromScreenPoint(approachScreenPoint, true))
+        {
+            return false;
+        }
+
+        if (!playerMovement.HasDestination)
+        {
+            if (!IsPlayerCloseEnough())
+            {
+                return false;
+            }
+
+            ActivateDoor(false);
+            return true;
+        }
+
+        pendingApproachTrigger = this;
+        pendingApproachPlayer = playerMovement;
+        pendingApproachPlayer.MovementStopped += HandlePlayerApproachStopped;
+        return true;
+    }
+
+    private void HandlePlayerApproachStopped()
+    {
+        CancelPendingPlayerApproach();
+
+        if (autoActivateAfterApproach && isActiveAndEnabled && IsPlayerCloseEnough())
+        {
+            ActivateDoor(false);
+        }
+    }
+
+    private bool IsPlayerCloseEnough()
+    {
+        if (!requirePlayerProximity)
+        {
+            return true;
+        }
+
+        ResolvePlayerReference();
+
+        if (player == null)
+        {
+            Debug.LogWarning($"Door trigger '{name}' requires player proximity but could not find a player transform.", this);
+            return true;
+        }
+
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null || rectTransform == null)
+        {
+            return true;
+        }
+
+        Vector2 playerScreenPosition = GetPlayerScreenPosition();
+        Vector2 triggerScreenPosition = GetClosestTriggerScreenPoint(playerScreenPosition);
+        return Vector2.Distance(playerScreenPosition, triggerScreenPosition) <= Mathf.Max(1f, maxPlayerScreenDistance);
+    }
+
+    private Vector2 GetPlayerScreenPosition()
+    {
+        Camera mainCamera = Camera.main;
+        return mainCamera != null && player != null
+            ? RectTransformUtility.WorldToScreenPoint(mainCamera, player.position)
+            : Vector2.zero;
+    }
+
+    private Vector2 GetClosestTriggerScreenPoint(Vector2 screenPosition)
+    {
+        Camera canvasCamera = GetCanvasCamera();
+        rectTransform.GetWorldCorners(triggerWorldCorners);
+
+        Vector2 firstCorner = RectTransformUtility.WorldToScreenPoint(canvasCamera, triggerWorldCorners[0]);
+        float minX = firstCorner.x;
+        float maxX = firstCorner.x;
+        float minY = firstCorner.y;
+        float maxY = firstCorner.y;
+
+        for (int i = 1; i < triggerWorldCorners.Length; i++)
+        {
+            Vector2 corner = RectTransformUtility.WorldToScreenPoint(canvasCamera, triggerWorldCorners[i]);
+            minX = Mathf.Min(minX, corner.x);
+            maxX = Mathf.Max(maxX, corner.x);
+            minY = Mathf.Min(minY, corner.y);
+            maxY = Mathf.Max(maxY, corner.y);
+        }
+
+        return new Vector2(
+            Mathf.Clamp(screenPosition.x, minX, maxX),
+            Mathf.Clamp(screenPosition.y, minY, maxY));
+    }
+
+    private void ResolvePlayerReference()
+    {
+        if (player != null)
+        {
+            return;
+        }
+
+        PointClickPlayerMovement playerMovement = FindAnyObjectByType<PointClickPlayerMovement>();
+        if (playerMovement != null)
+        {
+            player = playerMovement.transform;
+            return;
+        }
+
+        string cleanPlayerObjectName = Clean(playerObjectName);
+        if (string.IsNullOrEmpty(cleanPlayerObjectName))
+        {
+            return;
+        }
+
+        GameObject playerObject = GameObject.Find(cleanPlayerObjectName);
+        if (playerObject != null)
+        {
+            player = playerObject.transform;
+        }
+    }
+
+    private Camera GetCanvasCamera()
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+        {
+            return null;
+        }
+
+        return canvas.worldCamera;
+    }
+
+    private static void CancelAnyPendingApproach()
+    {
+        if (pendingApproachTrigger != null)
+        {
+            pendingApproachTrigger.CancelPendingPlayerApproach();
+        }
+    }
+
+    private void CancelPendingPlayerApproach()
+    {
+        if (pendingApproachPlayer != null)
+        {
+            pendingApproachPlayer.MovementStopped -= HandlePlayerApproachStopped;
+            pendingApproachPlayer = null;
+        }
+
+        if (pendingApproachTrigger == this)
+        {
+            pendingApproachTrigger = null;
+        }
     }
 
     public void RefreshInferredSourceRoom()

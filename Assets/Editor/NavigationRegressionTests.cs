@@ -9,6 +9,7 @@ public class NavigationRegressionTests
     private const string NavigationManagerPath = "Assets/Scripts/Navigation/RoomNavigationManager.cs";
     private const string NavigationBootstrapPath = "Assets/Scripts/Navigation/RoomNavigationBootstrap.cs";
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
+    private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string DoorOpenSoundCatalogPath = "Assets/Resources/Audio/DoorOpenSoundCatalog.asset";
     private const string StairwaySoundCatalogPath = "Assets/Resources/Audio/StairwaySoundCatalog.asset";
     private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
@@ -108,6 +109,20 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("HoverIcon.Stairway"), "Stairway triggers should request the stairway cursor through the existing cursor controller.");
         Assert.That(cameraManagerText, Does.Contain("CreateStairwayCursor"), "The cursor controller should generate a stairway cursor icon.");
         Assert.That(promptText, Does.Contain("Use Stairway"), "Hover prompt text should match stairway interactions.");
+    }
+
+    [Test]
+    public void DoorAndStairwayTriggersRequirePlayerApproach()
+    {
+        string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+
+        Assert.That(triggerText, Does.Contain("requirePlayerProximity"), "Door and stairway triggers should check player distance before navigating.");
+        Assert.That(triggerText, Does.Contain("walkPlayerToTriggerWhenFar"), "Far trigger clicks should walk the player toward the trigger instead of instantly navigating.");
+        Assert.That(triggerText, Does.Contain("TryStartPlayerApproach"), "Door triggers should share one approach flow for doors and stairways.");
+        Assert.That(triggerText, Does.Contain("GetClosestTriggerScreenPoint"), "Wide hitboxes should measure to the closest trigger edge, not only the center.");
+        Assert.That(triggerText, Does.Contain("MovementStopped"), "Pending door approaches should clean up whether the player arrives or gets blocked.");
+        Assert.That(playerText, Does.Contain("TrySetDestinationFromScreenPoint"), "Navigation triggers need a public way to ask the player to walk toward a screen-space hitbox.");
     }
 
     [Test]

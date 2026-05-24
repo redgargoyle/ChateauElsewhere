@@ -26,10 +26,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private string playerSortingLayerName = "People";
 	[SerializeField] private int playerSortingOrderBase = 1000;
 	[SerializeField] private float playerSortingOrderPerYUnit = 100f;
+	[SerializeField, Range(0.25f, 1f)] private float verticalMovementSpeedMultiplier = 0.7f;
 	[SerializeField] private float nearY = -4.25f;
 	[SerializeField] private float farY = -2.25f;
-	[SerializeField] private float nearScale = 0.85f;
-	[SerializeField] private float farScale = 0.48f;
+	[SerializeField] private float nearScale = 1f;
+	[SerializeField] private float farScale = 0.58f;
 	[SerializeField] private float runningAnimationSpeed = 40f;
 	[SerializeField] private bool disablePlatformMovement = true;
 
@@ -45,7 +46,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private Animator animator;
 	private SpriteRenderer spriteRenderer;
 	private SpriteRenderer[] spriteRenderers;
+	private CameraManager cameraManager;
 	private Vector2 destination;
+	private Vector2 logicalPosition;
+	private Vector3 currentVisualOffset;
 	private WalkDirection walkDirection = WalkDirection.Right;
 	private bool hasDestination;
 	private bool isReady;
@@ -57,6 +61,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private bool hasWalkingDownParameter = true;
 	private bool hasWalkingLeftParameter = true;
 	private bool hasWalkingRightParameter = true;
+
+	public event Action ArrivedAtDestination;
+	public event Action MovementStopped;
+	public Vector2 LogicalPosition => logicalPosition;
+	public bool HasDestination => hasDestination;
 
 	private void Awake()
 	{
@@ -94,6 +103,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 
 		MoveTowardDestination();
+	}
+
+	private void LateUpdate()
+	{
+		if (!isReady)
+			return;
+
+		ApplyVisualPosition();
 		ApplyPerspectiveScale();
 		ApplyPlayerSorting();
 	}
@@ -114,6 +131,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		if (spriteRenderers == null || spriteRenderers.Length == 0)
 			spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
+
+		if (cameraManager == null)
+			cameraManager = FindAnyObjectByType<CameraManager>();
 	}
 
 	private void CacheAnimatorParameters()
@@ -178,8 +198,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 		body.linearVelocity = Vector2.zero;
 		body.angularVelocity = 0f;
 
-		Vector2 startPosition = ClampToWalkableArea(body.position);
-		body.position = startPosition;
+		Vector2 startPosition = ClampToWalkableArea(transform.position);
+		logicalPosition = startPosition;
 		destination = startPosition;
 		walkDirection = WalkDirection.Right;
 		isReady = true;
@@ -192,6 +212,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		SetAnimatorBool(IsWalkingLeftHash, false, hasWalkingLeftParameter);
 		SetAnimatorBool(IsWalkingRightHash, false, hasWalkingRightParameter);
 		ApplySpriteMirror();
+		ApplyVisualPosition();
 		ApplyPerspectiveScale();
 		ApplyPlayerSorting();
 	}
@@ -203,17 +224,50 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryGetPrimaryPointerDown(out Vector2 screenPosition))
 			return false;
 
-		Camera mainCamera = Camera.main;
-		if (mainCamera == null)
+		if (!TryGetLogicalPointFromScreen(screenPosition, out clickPosition))
 			return false;
-
-		Vector3 worldPosition = mainCamera.ScreenToWorldPoint(screenPosition);
-		clickPosition = worldPosition;
 
 		if (IsPickupObjectAtPoint(clickPosition))
 			return false;
 
 		return IsPointWalkable(clickPosition);
+	}
+
+	public bool TrySetDestinationFromScreenPoint(Vector2 screenPosition, bool clampToWalkableArea = false)
+	{
+		if (!isReady || !TryGetLogicalPointFromScreen(screenPosition, out Vector2 targetPosition))
+			return false;
+
+		return TrySetDestination(targetPosition, clampToWalkableArea);
+	}
+
+	public bool TrySetDestination(Vector2 targetPosition, bool clampToWalkableArea = false)
+	{
+		if (!isReady)
+			return false;
+
+		if (clampToWalkableArea)
+			targetPosition = ClampToWalkableArea(targetPosition);
+
+		if (!IsPointWalkable(targetPosition))
+			return false;
+
+		SetDestination(targetPosition);
+		return true;
+	}
+
+	private bool TryGetLogicalPointFromScreen(Vector2 screenPosition, out Vector2 logicalPoint)
+	{
+		logicalPoint = Vector2.zero;
+
+		Camera mainCamera = Camera.main;
+		if (mainCamera == null)
+			return false;
+
+		UpdateVisualOffset(mainCamera);
+		Vector3 worldPosition = mainCamera.ScreenToWorldPoint(screenPosition);
+		logicalPoint = worldPosition - currentVisualOffset;
+		return true;
 	}
 
 	private static bool TryGetPrimaryPointerDown(out Vector2 screenPosition)
@@ -262,7 +316,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private void SetDestination(Vector2 clickPosition)
 	{
 		destination = clickPosition;
-		Vector2 movement = destination - body.position;
+		Vector2 movement = destination - logicalPosition;
 		hasDestination = movement.magnitude > stopDistance;
 		if (hasDestination)
 			UpdateWalkDirection(movement);
@@ -279,8 +333,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 		}
 
-		Vector2 currentPosition = body.position;
-		Vector2 nextPosition = Vector2.MoveTowards(currentPosition, destination, moveSpeed * Time.fixedDeltaTime);
+		Vector2 currentPosition = logicalPosition;
+		Vector2 nextPosition = MoveLogicalPositionToward(currentPosition, destination, moveSpeed * Time.fixedDeltaTime);
 		Vector2 movement = nextPosition - currentPosition;
 
 		if (!IsPointWalkable(nextPosition))
@@ -288,18 +342,21 @@ public class PointClickPlayerMovement : MonoBehaviour
 			hasDestination = false;
 			isWalking = false;
 			ApplySpriteMirror();
+			MovementStopped?.Invoke();
 			return;
 		}
 
-		body.MovePosition(nextPosition);
+		logicalPosition = nextPosition;
 		UpdateWalkDirection(movement);
 
 		if (Vector2.Distance(nextPosition, destination) <= stopDistance)
 		{
-			body.MovePosition(destination);
+			logicalPosition = destination;
 			hasDestination = false;
 			isWalking = false;
 			ApplySpriteMirror();
+			ArrivedAtDestination?.Invoke();
+			MovementStopped?.Invoke();
 		}
 		else
 		{
@@ -309,7 +366,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void ApplyPerspectiveScale()
 	{
-		float depth = Mathf.InverseLerp(nearY, farY, transform.position.y);
+		float depth = Mathf.InverseLerp(nearY, farY, logicalPosition.y);
 		float scale = Mathf.Lerp(nearScale, farScale, depth);
 		transform.localScale = new Vector3(scale, scale, transform.localScale.z);
 	}
@@ -349,10 +406,51 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return movement.y >= 0f ? WalkDirection.Up : WalkDirection.Down;
 	}
 
+	private Vector2 MoveLogicalPositionToward(Vector2 currentPosition, Vector2 targetPosition, float maxDistance)
+	{
+		Vector2 movement = targetPosition - currentPosition;
+		if (movement.magnitude <= stopDistance)
+			return targetPosition;
+
+		Vector2 direction = movement.normalized;
+		direction.y *= Mathf.Clamp(verticalMovementSpeedMultiplier, 0.25f, 1f);
+
+		Vector2 step = direction * maxDistance;
+		if (step.sqrMagnitude >= movement.sqrMagnitude)
+			return targetPosition;
+
+		return currentPosition + step;
+	}
+
 	private void ApplySpriteMirror()
 	{
 		if (spriteRenderer != null)
 			spriteRenderer.flipX = false;
+	}
+
+	private void ApplyVisualPosition()
+	{
+		UpdateVisualOffset(Camera.main);
+		Vector3 visualPosition = new Vector3(
+			logicalPosition.x + currentVisualOffset.x,
+			logicalPosition.y + currentVisualOffset.y,
+			transform.position.z);
+
+		transform.position = visualPosition;
+
+		if (body != null)
+			body.position = visualPosition;
+	}
+
+	private void UpdateVisualOffset(Camera mainCamera)
+	{
+		currentVisualOffset = Vector3.zero;
+
+		if (cameraManager == null)
+			cameraManager = FindAnyObjectByType<CameraManager>();
+
+		if (cameraManager != null && cameraManager.TryGetRoomStageWorldOffset(mainCamera, out Vector3 roomOffset))
+			currentVisualOffset = roomOffset;
 	}
 
 	private bool IsPointWalkable(Vector2 point)
@@ -395,7 +493,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 
 		string sortingLayerName = GetSortingLayerName(playerSortingLayerName);
-		int sortingOrder = playerSortingOrderBase - Mathf.RoundToInt(transform.position.y * playerSortingOrderPerYUnit);
+		int sortingOrder = playerSortingOrderBase - Mathf.RoundToInt(logicalPosition.y * playerSortingOrderPerYUnit);
 
 		for (int i = 0; i < spriteRenderers.Length; i++)
 		{

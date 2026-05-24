@@ -18,5 +18,6 @@ Useful tweaks:
 - Resize the `RawImage` RectTransform to change character height.
 - Adjust `Near Y`, `Far Y`, `Near Scale`, and `Far Scale` for perspective.
 - Keep `Preview Path In Edit Mode` off while placing people. The animation frames still preview, but the scene object will not quietly walk away while you edit.
-- Leave `Snap To Whole Pixels` on unless a specific character needs smoother subpixel motion.
+- Keep `Snap To Whole Pixels` off for scaled room walkers unless a specific character needs crunchy pixel locking. Subpixel motion reads smoother while the room stage pans and zooms.
+- Use the motion polish fields for tiny stride bob, sway, endpoint pauses, and idle breathing. These are only offsets on the card; the path points remain the stable foot positions.
 - Add foreground occluder cards whenever a walker should disappear behind painted furniture.

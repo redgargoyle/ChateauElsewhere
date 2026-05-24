@@ -15889,7 +15889,17 @@ MonoBehaviour:
   previewInEditMode: 1
   previewPathInEditMode: 0
   animateFrames: 1
-  snapToWholePixels: 1
+  snapToWholePixels: 0
+  addStepMotion: 1
+  pixelsPerWalkCycle: 68
+  walkBobPixels: 3
+  walkSwayPixels: 1
+  animateIdlePose: 1
+  idleBobPixels: 1.1
+  idleSwayPixels: 0.45
+  idleCycleSeconds: 2.5
+  pointPauseSeconds: 0
+  endpointPauseSeconds: 0.75
   mirrorWhenWalkingLeft: 1
   pathPoints:
   - {x: -520, y: -285}
@@ -15902,8 +15912,8 @@ MonoBehaviour:
   pingPongPath: 1
   nearY: -330
   farY: -90
-  nearScale: 0.95
-  farScale: 0.48
+  nearScale: 1.08
+  farScale: 0.58
   nearTint: {r: 0.92, g: 0.88, b: 0.78, a: 0.93}
   farTint: {r: 0.7, g: 0.72, b: 0.66, a: 0.72}
   disableRaycastTarget: 1
@@ -16002,7 +16012,17 @@ MonoBehaviour:
   previewInEditMode: 1
   previewPathInEditMode: 0
   animateFrames: 1
-  snapToWholePixels: 1
+  snapToWholePixels: 0
+  addStepMotion: 1
+  pixelsPerWalkCycle: 66
+  walkBobPixels: 2.7
+  walkSwayPixels: 0.9
+  animateIdlePose: 1
+  idleBobPixels: 1
+  idleSwayPixels: 0.4
+  idleCycleSeconds: 2.35
+  pointPauseSeconds: 0
+  endpointPauseSeconds: 0.75
   mirrorWhenWalkingLeft: 1
   pathPoints:
   - {x: 520, y: -210}
@@ -16015,8 +16035,8 @@ MonoBehaviour:
   pingPongPath: 1
   nearY: -330
   farY: -90
-  nearScale: 0.86
-  farScale: 0.42
+  nearScale: 0.98
+  farScale: 0.52
   nearTint: {r: 0.9, g: 0.86, b: 0.76, a: 0.9}
   farTint: {r: 0.7, g: 0.72, b: 0.66, a: 0.7}
   disableRaycastTarget: 1

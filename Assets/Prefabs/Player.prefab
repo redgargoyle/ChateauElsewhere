@@ -210,9 +210,10 @@ MonoBehaviour:
   playerSortingLayerName: People
   playerSortingOrderBase: 1000
   playerSortingOrderPerYUnit: 100
+  verticalMovementSpeedMultiplier: 0.7
   nearY: -4.25
   farY: -2.25
-  nearScale: 0.85
-  farScale: 0.48
+  nearScale: 1
+  farScale: 0.58
   runningAnimationSpeed: 40
   disablePlatformMovement: 1

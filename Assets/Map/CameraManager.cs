@@ -132,6 +132,43 @@ public class CameraManager : MonoBehaviour
     public float CurrentRoomZoom => currentRoomZoom;
     public bool IsFullImagePlacementPreviewActive => fullImagePlacementPreviewActive;
 
+    public bool TryGetRoomStageWorldOffset(Camera worldCamera, out Vector3 worldOffset)
+    {
+        worldOffset = Vector3.zero;
+
+        if (!UsesRoomStageLayout() || activeRoomStage == null || worldCamera == null)
+        {
+            return false;
+        }
+
+        RectTransform viewport = activeRoomStage.parent as RectTransform;
+        if (viewport == null)
+        {
+            return false;
+        }
+
+        Canvas canvas = activeRoomStage.GetComponentInParent<Canvas>();
+        Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+
+        Vector2 stageCenter = RectTransformUtility.WorldToScreenPoint(canvasCamera, activeRoomStage.TransformPoint(Vector3.zero));
+        Vector2 viewportCenter = RectTransformUtility.WorldToScreenPoint(canvasCamera, viewport.TransformPoint(Vector3.zero));
+        Vector2 screenOffset = stageCenter - viewportCenter;
+
+        if (screenOffset.sqrMagnitude <= 0.0001f)
+        {
+            return true;
+        }
+
+        float depth = Mathf.Abs(worldCamera.transform.position.z);
+        Vector3 worldCenter = worldCamera.ScreenToWorldPoint(new Vector3(viewportCenter.x, viewportCenter.y, depth));
+        Vector3 shiftedWorldCenter = worldCamera.ScreenToWorldPoint(new Vector3(viewportCenter.x + screenOffset.x, viewportCenter.y + screenOffset.y, depth));
+        worldOffset = shiftedWorldCenter - worldCenter;
+        worldOffset.z = 0f;
+        return true;
+    }
+
     private void Reset()
     {
         cameraBackground = FindAnyObjectByType<RawImage>();

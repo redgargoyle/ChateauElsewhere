@@ -10,6 +10,8 @@ using UnityEditor;
 [RequireComponent(typeof(RectTransform))]
 public sealed class RoomPersonWalker2D : MonoBehaviour
 {
+    private const float FullCycle = 6.28318530718f;
+
     [SerializeField] private RawImage targetImage;
     [SerializeField] private Texture2D spriteAtlas;
     [SerializeField] [Min(1)] private int columns = 4;
@@ -20,7 +22,18 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
     [SerializeField] private bool previewInEditMode = true;
     [SerializeField] private bool previewPathInEditMode;
     [SerializeField] private bool animateFrames = true;
-    [SerializeField] private bool snapToWholePixels = true;
+    [SerializeField] private bool snapToWholePixels;
+    [Header("Motion Polish")]
+    [SerializeField] private bool addStepMotion = true;
+    [SerializeField] [Min(1f)] private float pixelsPerWalkCycle = 72f;
+    [SerializeField] [Min(0f)] private float walkBobPixels = 2.6f;
+    [SerializeField] [Min(0f)] private float walkSwayPixels = 0.9f;
+    [SerializeField] private bool animateIdlePose = true;
+    [SerializeField] [Min(0f)] private float idleBobPixels = 0.9f;
+    [SerializeField] [Min(0f)] private float idleSwayPixels = 0.35f;
+    [SerializeField] [Min(0.1f)] private float idleCycleSeconds = 2.4f;
+    [SerializeField] [Min(0f)] private float pointPauseSeconds = 0f;
+    [SerializeField] [Min(0f)] private float endpointPauseSeconds = 0.65f;
     [SerializeField] private bool mirrorWhenWalkingLeft = true;
     [SerializeField] private Vector2[] pathPoints = new Vector2[0];
     [SerializeField] [Min(1f)] private float pixelsPerSecond = 95f;
@@ -42,6 +55,10 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
     private int pathDirection = 1;
     private Vector2 currentPosition;
     private int facingSign = 1;
+    private float walkCycle;
+    private float idleCycle;
+    private float pauseTimer;
+    private bool movingAlongPath;
 
 #if UNITY_EDITOR
     private double lastEditorTime;
@@ -87,6 +104,14 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
         frameCount = Mathf.Max(1, frameCount);
         secondsPerFrame = Mathf.Max(0.01f, secondsPerFrame);
         pixelsPerSecond = Mathf.Max(1f, pixelsPerSecond);
+        pixelsPerWalkCycle = Mathf.Max(1f, pixelsPerWalkCycle);
+        walkBobPixels = Mathf.Max(0f, walkBobPixels);
+        walkSwayPixels = Mathf.Max(0f, walkSwayPixels);
+        idleBobPixels = Mathf.Max(0f, idleBobPixels);
+        idleSwayPixels = Mathf.Max(0f, idleSwayPixels);
+        idleCycleSeconds = Mathf.Max(0.1f, idleCycleSeconds);
+        pointPauseSeconds = Mathf.Max(0f, pointPauseSeconds);
+        endpointPauseSeconds = Mathf.Max(0f, endpointPauseSeconds);
         nearScale = Mathf.Max(0.01f, nearScale);
         farScale = Mathf.Max(0.01f, farScale);
         ResolveReferences();
@@ -145,6 +170,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
     private void Tick(float deltaTime, bool moveAlongPath)
     {
         float safeDeltaTime = Mathf.Max(0f, deltaTime);
+        float distanceMoved = 0f;
 
         if (animateFrames)
         {
@@ -153,9 +179,10 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
         if (moveAlongPath)
         {
-            AdvanceAlongPath(safeDeltaTime);
+            distanceMoved = AdvanceAlongPath(safeDeltaTime);
         }
 
+        AdvanceMotionCycles(safeDeltaTime, distanceMoved);
         ApplyVisuals();
     }
 
@@ -170,24 +197,40 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
         }
     }
 
-    private void AdvanceAlongPath(float deltaTime)
+    private float AdvanceAlongPath(float deltaTime)
     {
         if (pathPoints == null || pathPoints.Length < 2 || rectTransform == null)
         {
-            return;
+            movingAlongPath = false;
+            return 0f;
+        }
+
+        if (pauseTimer > 0f)
+        {
+            pauseTimer = Mathf.Max(0f, pauseTimer - deltaTime);
+            movingAlongPath = false;
+            return 0f;
         }
 
         float remainingDistance = pixelsPerSecond * deltaTime;
+        float movedDistance = 0f;
 
         while (remainingDistance > 0f)
         {
-            Vector2 target = pathPoints[Mathf.Clamp(targetPathIndex, 0, pathPoints.Length - 1)];
+            int arrivedPointIndex = Mathf.Clamp(targetPathIndex, 0, pathPoints.Length - 1);
+            Vector2 target = pathPoints[arrivedPointIndex];
             Vector2 toTarget = target - currentPosition;
             float distanceToTarget = toTarget.magnitude;
 
             if (distanceToTarget <= 0.01f)
             {
+                bool shouldPause = BeginPauseForPoint(arrivedPointIndex);
                 AdvancePathTarget();
+                if (shouldPause)
+                {
+                    break;
+                }
+
                 continue;
             }
 
@@ -199,14 +242,21 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
             float stepDistance = Mathf.Min(remainingDistance, distanceToTarget);
             currentPosition += toTarget / distanceToTarget * stepDistance;
             remainingDistance -= stepDistance;
+            movedDistance += stepDistance;
 
             if (stepDistance >= distanceToTarget - 0.01f)
             {
+                bool shouldPause = BeginPauseForPoint(arrivedPointIndex);
                 AdvancePathTarget();
+                if (shouldPause)
+                {
+                    break;
+                }
             }
         }
 
-        rectTransform.anchoredPosition = GetRenderedPosition(currentPosition);
+        movingAlongPath = movedDistance > 0.001f;
+        return movedDistance;
     }
 
     private void AdvancePathTarget()
@@ -242,6 +292,39 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
         }
     }
 
+    private bool BeginPauseForPoint(int pointIndex)
+    {
+        float pauseSeconds = IsEndpoint(pointIndex) ? endpointPauseSeconds : pointPauseSeconds;
+        if (pauseSeconds <= 0f)
+        {
+            return false;
+        }
+
+        pauseTimer = pauseSeconds;
+        return true;
+    }
+
+    private bool IsEndpoint(int pointIndex)
+    {
+        return pathPoints != null &&
+            pathPoints.Length > 1 &&
+            (pointIndex <= 0 || pointIndex >= pathPoints.Length - 1);
+    }
+
+    private void AdvanceMotionCycles(float deltaTime, float distanceMoved)
+    {
+        if (distanceMoved > 0.001f)
+        {
+            walkCycle = Mathf.Repeat(
+                walkCycle + (distanceMoved / Mathf.Max(1f, pixelsPerWalkCycle)) * FullCycle,
+                FullCycle);
+        }
+
+        idleCycle = Mathf.Repeat(
+            idleCycle + (deltaTime / Mathf.Max(0.1f, idleCycleSeconds)) * FullCycle,
+            FullCycle);
+    }
+
     private void ApplyVisuals()
     {
         ResolveReferences();
@@ -260,10 +343,37 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
         if (rectTransform != null)
         {
+            rectTransform.anchoredPosition = GetRenderedPosition(currentPosition + GetMotionOffset());
+
             Vector3 scale = Vector3.one * GetDepthScale();
             scale.x *= facingSign;
             rectTransform.localScale = scale;
         }
+    }
+
+    private Vector2 GetMotionOffset()
+    {
+        if (!Application.isPlaying)
+        {
+            return Vector2.zero;
+        }
+
+        if (movingAlongPath && addStepMotion)
+        {
+            float stride = Mathf.Sin(walkCycle);
+            return new Vector2(
+                stride * walkSwayPixels * facingSign,
+                Mathf.Abs(stride) * walkBobPixels);
+        }
+
+        if (!animateIdlePose)
+        {
+            return Vector2.zero;
+        }
+
+        return new Vector2(
+            Mathf.Sin(idleCycle * 0.7f) * idleSwayPixels,
+            Mathf.Sin(idleCycle) * idleBobPixels);
     }
 
     private Rect GetFrameUvRect()
@@ -280,8 +390,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
     private float GetDepth01()
     {
-        float y = rectTransform != null ? rectTransform.anchoredPosition.y : currentPosition.y;
-        return Mathf.Clamp01(Mathf.InverseLerp(nearY, farY, y));
+        return Mathf.Clamp01(Mathf.InverseLerp(nearY, farY, currentPosition.y));
     }
 
     private float GetDepthScale()

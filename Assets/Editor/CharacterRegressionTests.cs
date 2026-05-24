@@ -22,7 +22,8 @@ public class CharacterRegressionTests
         Assert.That(walkerText, Does.Contain("RawImage"), "Walkers should use atlas UVs without needing Unity sprite slicing.");
         Assert.That(walkerText, Does.Contain("Vector2[] pathPoints"), "Walk paths should be simple editable room-local points.");
         Assert.That(walkerText, Does.Contain("previewPathInEditMode"), "Edit mode frame preview should not force people to walk while artists place them.");
-        Assert.That(walkerText, Does.Contain("snapToWholePixels"), "Whole-pixel rendering helps scaled atlas walkers avoid UI shimmer.");
+        Assert.That(walkerText, Does.Contain("snapToWholePixels"), "Walkers can opt into whole-pixel snapping, but the shipped room people use smoother subpixel movement.");
+        Assert.That(walkerText, Does.Contain("GetMotionOffset"), "Walkers should have subtle stride and idle motion instead of sliding static cards.");
         Assert.That(walkerText, Does.Contain("Mathf.InverseLerp(nearY, farY"), "Walkers should scale/tint from front to back of the painted room.");
         Assert.That(walkerText, Does.Contain("rectTransform.localScale = scale"), "Perspective scale should affect the whole character card.");
         Assert.That(walkerText, Does.Contain("targetImage.raycastTarget = false"), "Characters must not block door hitboxes.");
@@ -36,7 +37,8 @@ public class CharacterRegressionTests
         Assert.That(sceneText, Does.Contain("m_Name: Walker_GEH_GreenGentleman"));
         Assert.That(sceneText, Does.Contain("m_Name: Walker_GEH_GreenLady"));
         Assert.That(sceneText, Does.Contain("previewPathInEditMode: 0"), "Scene-authored walkers should not move through their path just because the editor is open.");
-        Assert.That(sceneText, Does.Contain("snapToWholePixels: 1"), "The first walkers should render on stable whole pixels.");
+        Assert.That(sceneText, Does.Contain("snapToWholePixels: 0"), "The first walkers should use smooth subpixel motion while the room stage pans and scales.");
+        Assert.That(sceneText, Does.Contain("endpointPauseSeconds: 0.75"), "Example walkers should briefly idle at path endpoints.");
         Assert.That(sceneText, Does.Contain("m_Pivot: {x: 0.5, y: 0.035}"), "Walker cards should pivot close to the normalized foot baseline.");
         Assert.That(sceneText, Does.Contain("farY: -90"), "The example people paths should stay on the Grand Entrance Hall floor plane.");
         Assert.That(sceneText, Does.Contain("guid: 1b45edb93a9b42e58fa4cad7d4de84ce"), "Gameplay walkers should use RoomPersonWalker2D.");
