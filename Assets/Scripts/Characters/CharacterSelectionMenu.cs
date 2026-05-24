@@ -24,6 +24,7 @@ public sealed class CharacterSelectionMenu : MonoBehaviour
 	[SerializeField] private Rect changeButtonRect = new Rect(16f, 16f, 170f, 34f);
 
 	private Animator playerAnimator;
+	private PointClickPlayerMovement playerMovement;
 	private SpriteRenderer playerSpriteRenderer;
 	private Rect windowRect;
 	private bool menuVisible;
@@ -126,6 +127,7 @@ public sealed class CharacterSelectionMenu : MonoBehaviour
 		{
 			playerAnimator.runtimeAnimatorController = option.animatorController;
 			playerAnimator.Rebind();
+			playerMovement?.RefreshAnimatorParameters();
 			playerAnimator.Update(0f);
 		}
 		else
@@ -160,6 +162,9 @@ public sealed class CharacterSelectionMenu : MonoBehaviour
 
 		if (playerAnimator == null)
 			playerAnimator = playerObject.GetComponent<Animator>();
+
+		if (playerMovement == null)
+			playerMovement = playerObject.GetComponent<PointClickPlayerMovement>();
 
 		if (playerSpriteRenderer == null)
 			playerSpriteRenderer = playerObject.GetComponentInChildren<SpriteRenderer>();

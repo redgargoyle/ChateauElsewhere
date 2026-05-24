@@ -17,6 +17,10 @@ public static class CharacterAnimatorDriver
 	private static readonly int IsWalkingDownHash = Animator.StringToHash("IsWalkingDown");
 	private static readonly int IsWalkingLeftHash = Animator.StringToHash("IsWalkingLeft");
 	private static readonly int IsWalkingRightHash = Animator.StringToHash("IsWalkingRight");
+	private static readonly int IsFacingUpHash = Animator.StringToHash("IsFacingUp");
+	private static readonly int IsFacingDownHash = Animator.StringToHash("IsFacingDown");
+	private static readonly int IsFacingLeftHash = Animator.StringToHash("IsFacingLeft");
+	private static readonly int IsFacingRightHash = Animator.StringToHash("IsFacingRight");
 	private const float MovementEpsilon = 0.0001f;
 
 	public readonly struct ParameterCache
@@ -28,6 +32,10 @@ public static class CharacterAnimatorDriver
 		private readonly bool hasWalkingDown;
 		private readonly bool hasWalkingLeft;
 		private readonly bool hasWalkingRight;
+		private readonly bool hasFacingUp;
+		private readonly bool hasFacingDown;
+		private readonly bool hasFacingLeft;
+		private readonly bool hasFacingRight;
 
 		private ParameterCache(
 			bool hasSpeed,
@@ -36,7 +44,11 @@ public static class CharacterAnimatorDriver
 			bool hasWalkingUp,
 			bool hasWalkingDown,
 			bool hasWalkingLeft,
-			bool hasWalkingRight)
+			bool hasWalkingRight,
+			bool hasFacingUp,
+			bool hasFacingDown,
+			bool hasFacingLeft,
+			bool hasFacingRight)
 		{
 			this.hasSpeed = hasSpeed;
 			this.hasJumping = hasJumping;
@@ -45,6 +57,10 @@ public static class CharacterAnimatorDriver
 			this.hasWalkingDown = hasWalkingDown;
 			this.hasWalkingLeft = hasWalkingLeft;
 			this.hasWalkingRight = hasWalkingRight;
+			this.hasFacingUp = hasFacingUp;
+			this.hasFacingDown = hasFacingDown;
+			this.hasFacingLeft = hasFacingLeft;
+			this.hasFacingRight = hasFacingRight;
 		}
 
 		public static ParameterCache FromAnimator(Animator animator)
@@ -59,6 +75,10 @@ public static class CharacterAnimatorDriver
 			bool hasWalkingDown = false;
 			bool hasWalkingLeft = false;
 			bool hasWalkingRight = false;
+			bool hasFacingUp = false;
+			bool hasFacingDown = false;
+			bool hasFacingLeft = false;
+			bool hasFacingRight = false;
 
 			foreach (AnimatorControllerParameter parameter in animator.parameters)
 			{
@@ -76,6 +96,14 @@ public static class CharacterAnimatorDriver
 					hasWalkingLeft = true;
 				else if (parameter.nameHash == IsWalkingRightHash)
 					hasWalkingRight = true;
+				else if (parameter.nameHash == IsFacingUpHash)
+					hasFacingUp = true;
+				else if (parameter.nameHash == IsFacingDownHash)
+					hasFacingDown = true;
+				else if (parameter.nameHash == IsFacingLeftHash)
+					hasFacingLeft = true;
+				else if (parameter.nameHash == IsFacingRightHash)
+					hasFacingRight = true;
 			}
 
 			return new ParameterCache(
@@ -85,7 +113,11 @@ public static class CharacterAnimatorDriver
 				hasWalkingUp,
 				hasWalkingDown,
 				hasWalkingLeft,
-				hasWalkingRight);
+				hasWalkingRight,
+				hasFacingUp,
+				hasFacingDown,
+				hasFacingLeft,
+				hasFacingRight);
 		}
 
 		public void ApplyMovement(
@@ -104,6 +136,10 @@ public static class CharacterAnimatorDriver
 			SetBool(animator, IsWalkingDownHash, isWalking && direction == CharacterWalkDirection.Down, hasWalkingDown);
 			SetBool(animator, IsWalkingLeftHash, isWalking && direction == CharacterWalkDirection.Left, hasWalkingLeft);
 			SetBool(animator, IsWalkingRightHash, isWalking && direction == CharacterWalkDirection.Right, hasWalkingRight);
+			SetBool(animator, IsFacingUpHash, direction == CharacterWalkDirection.Up, hasFacingUp);
+			SetBool(animator, IsFacingDownHash, direction == CharacterWalkDirection.Down, hasFacingDown);
+			SetBool(animator, IsFacingLeftHash, direction == CharacterWalkDirection.Left, hasFacingLeft);
+			SetBool(animator, IsFacingRightHash, direction == CharacterWalkDirection.Right, hasFacingRight);
 		}
 
 		private static void SetFloat(Animator animator, int parameterHash, float value, bool hasParameter)

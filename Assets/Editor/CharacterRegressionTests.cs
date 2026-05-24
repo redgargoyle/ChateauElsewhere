@@ -13,6 +13,13 @@ public class CharacterRegressionTests
     private const string CharactersReadmePath = "Assets/Scripts/Characters/README.md";
     private const string PlayerWalkUpClipPath = "Assets/Animation/Player/Player_Walk_Up.anim";
     private const string ButlerClassicWalkDownClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Walk_Down.anim";
+    private const string ButlerClassicControllerPath = "Assets/Animation/ButlerClassic/ButlerClassic.controller";
+    private const string ButlerClassicControllerMetaPath = "Assets/Animation/ButlerClassic/ButlerClassic.controller.meta";
+    private const string ButlerClassicIdleFolder = "Assets/Characters/ButlerClassic/idle/aligned";
+    private const string ButlerClassicIdleDownClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Down.anim";
+    private const string ButlerClassicIdleLeftClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Left.anim";
+    private const string ButlerClassicIdleRightClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Right.anim";
+    private const string ButlerClassicIdleUpClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Up.anim";
     private const string GentlemanBlackDirectionalFolder = "Assets/Characters/GentlemanBlack/directional/aligned";
     private const string GentlemanBlackIdleClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Idle.anim";
     private const string GentlemanBlackWalkDownClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Down.anim";
@@ -44,6 +51,7 @@ public class CharacterRegressionTests
         Assert.That(walkerText, Does.Contain("GetMotionOffset"), "Walkers should have subtle stride and idle motion instead of sliding static cards.");
         Assert.That(walkerText, Does.Contain("CharacterAnimatorDriver"), "NPC walkers should feed the same Animator parameter protocol as the player.");
         Assert.That(animatorDriverText, Does.Contain("IsWalkingUp"), "The shared character animation driver should expose the same directional booleans as the player controller.");
+        Assert.That(animatorDriverText, Does.Contain("IsFacingUp"), "The shared character animation driver should also expose persistent facing booleans for directional idle states.");
         Assert.That(animatorDriverText, Does.Contain("DetermineDirection"), "Player and NPCs should share averaged direction selection.");
         Assert.That(walkerText, Does.Contain("Mathf.InverseLerp(nearY, farY"), "Walkers should scale/tint from front to back of the painted room.");
         Assert.That(walkerText, Does.Contain("rectTransform.localScale = scale"), "Perspective scale should affect the whole character card.");
@@ -93,6 +101,7 @@ public class CharacterRegressionTests
         Assert.That(menuText, Does.Contain("OnGUI"), "The test selector should be a lightweight IMGUI menu, not another gameplay Canvas layer.");
         Assert.That(menuText, Does.Contain("RuntimeAnimatorController"), "Selections should swap the player's Animator override controller.");
         Assert.That(menuText, Does.Contain("playerAnimator.Rebind"), "Changing character controllers should immediately reset the Animator onto the selected clips.");
+        Assert.That(menuText, Does.Contain("RefreshAnimatorParameters"), "Swapping controllers should refresh cached Animator parameters before directional idle is evaluated.");
         Assert.That(menuText, Does.Contain("IsBlockingGameplayInput"), "The selector should keep menu clicks from becoming floor or door clicks.");
 
         Assert.That(sceneText, Does.Contain("m_Name: UI_CharacterSelectionMenu"));
@@ -100,7 +109,8 @@ public class CharacterRegressionTests
         Assert.That(sceneText, Does.Contain("displayName: ButlerClassic"));
         Assert.That(sceneText, Does.Contain("displayName: ButlerYoung"));
         Assert.That(sceneText, Does.Contain("displayName: GentlemanBlack"));
-        Assert.That(sceneText, Does.Contain("guid: bb170a33867e4782b213ca8b19e98b17"), "ButlerClassic should use its generated override controller.");
+        Assert.That(sceneText, Does.Contain($"animatorController: {{fileID: 9100000, guid: {ReadGuidFromMeta(ButlerClassicControllerMetaPath)}, type: 2}}"), "ButlerClassic should use its dedicated directional-idle Animator controller.");
+        Assert.That(sceneText, Does.Contain(ReadGuidFromMeta($"{ButlerClassicIdleFolder}/butler_classic_idle_right_01.png.meta")), "ButlerClassic should start on the right-facing idle sprite that matches the player's initial facing direction.");
         Assert.That(sceneText, Does.Contain("guid: badec0a2b39e42d9822349537505d13b"), "ButlerYoung should use its generated override controller.");
         Assert.That(sceneText, Does.Contain("guid: bfcadf76b04b4b9081d862b0afcd8024"), "GentlemanBlack should use its generated override controller.");
         Assert.That(sceneText, Does.Contain(ReadGuidFromMeta($"{GentlemanBlackDirectionalFolder}/gentleman_black_directional_01_r01_c01.png.meta")), "GentlemanBlack should start on the directional front-facing sprite, not the old side-only frame.");
@@ -108,6 +118,38 @@ public class CharacterRegressionTests
 
         Assert.That(clipText, Does.Contain("classID: 114"), "Generated clips should animate UI Images for room NPCs.");
         Assert.That(clipText, Does.Contain("classID: 212"), "Generated clips should also animate SpriteRenderers for the controllable player selector.");
+    }
+
+    [Test]
+    public void ButlerClassicHasFourDirectionalIdleStates()
+    {
+        string controllerText = File.ReadAllText(ButlerClassicControllerPath);
+        string driverText = File.ReadAllText(CharacterAnimatorDriverPath);
+        string downClipText = File.ReadAllText(ButlerClassicIdleDownClipPath);
+        string leftClipText = File.ReadAllText(ButlerClassicIdleLeftClipPath);
+        string rightClipText = File.ReadAllText(ButlerClassicIdleRightClipPath);
+        string upClipText = File.ReadAllText(ButlerClassicIdleUpClipPath);
+
+        Assert.That(Directory.GetFiles(ButlerClassicIdleFolder, "*.png").Length, Is.EqualTo(16), "ButlerClassic should have a four-frame idle cycle for each direction.");
+        Assert.That(controllerText, Does.Contain("m_Name: ButlerClassic_Idle_Down"));
+        Assert.That(controllerText, Does.Contain("m_Name: ButlerClassic_Idle_Left"));
+        Assert.That(controllerText, Does.Contain("m_Name: ButlerClassic_Idle_Right"));
+        Assert.That(controllerText, Does.Contain("m_Name: ButlerClassic_Idle_Up"));
+        Assert.That(controllerText, Does.Contain("IsFacingDown"));
+        Assert.That(controllerText, Does.Contain("IsFacingLeft"));
+        Assert.That(controllerText, Does.Contain("IsFacingRight"));
+        Assert.That(controllerText, Does.Contain("IsFacingUp"));
+        Assert.That(controllerText, Does.Contain("m_DefaultState: {fileID: 1500000000000000003}"), "The ButlerClassic controller should begin facing right to match PointClickPlayerMovement.");
+
+        Assert.That(driverText, Does.Contain("direction == CharacterWalkDirection.Up, hasFacingUp"));
+        Assert.That(driverText, Does.Contain("direction == CharacterWalkDirection.Down, hasFacingDown"));
+        Assert.That(driverText, Does.Contain("direction == CharacterWalkDirection.Left, hasFacingLeft"));
+        Assert.That(driverText, Does.Contain("direction == CharacterWalkDirection.Right, hasFacingRight"));
+
+        AssertDirectionalIdleClip(downClipText, "down");
+        AssertDirectionalIdleClip(leftClipText, "left");
+        AssertDirectionalIdleClip(rightClipText, "right");
+        AssertDirectionalIdleClip(upClipText, "up");
     }
 
     [Test]
@@ -162,5 +204,19 @@ public class CharacterRegressionTests
         Match match = Regex.Match(File.ReadAllText(metaPath), @"^guid: ([a-f0-9]{32})$", RegexOptions.Multiline);
         Assert.That(match.Success, Is.True, $"Could not find a Unity guid in {metaPath}.");
         return match.Groups[1].Value;
+    }
+
+    private static void AssertDirectionalIdleClip(string clipText, string direction)
+    {
+        Assert.That(clipText, Does.Contain("classID: 114"), "Directional idle clips should animate UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), "Directional idle clips should animate SpriteRenderers for the player.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 4"), "Directional idle should breathe slowly, not step like a walk.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 1"), "Directional idle should loop over a full one-second breathing cycle.");
+
+        for (int i = 1; i <= 4; i++)
+        {
+            string framePath = $"{ButlerClassicIdleFolder}/butler_classic_idle_{direction}_{i:00}.png.meta";
+            Assert.That(clipText, Does.Contain(ReadGuidFromMeta(framePath)), $"Idle {direction} should include frame {i}.");
+        }
     }
 }

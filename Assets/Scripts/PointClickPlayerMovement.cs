@@ -49,6 +49,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public Vector2 LogicalPosition => logicalPosition;
 	public bool HasDestination => hasDestination;
 
+	public void RefreshAnimatorParameters()
+	{
+		CacheReferences();
+		CacheAnimatorParameters();
+	}
+
 	public readonly struct MovementTargetQuery
 	{
 		public MovementTargetQuery(

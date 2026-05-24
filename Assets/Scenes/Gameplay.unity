@@ -16750,8 +16750,8 @@ MonoBehaviour:
   playerObjectName: Player
   characterOptions:
   - displayName: ButlerClassic
-    animatorController: {fileID: 22100000, guid: bb170a33867e4782b213ca8b19e98b17, type: 2}
-    initialSprite: {fileID: 21300000, guid: 8dd1ffd798a8427f9ca20d083798aee8, type: 3}
+    animatorController: {fileID: 9100000, guid: 21672a5f3a3f4e9a9aa21ecefd0cebf3, type: 2}
+    initialSprite: {fileID: 21300000, guid: 84611d9071f7494484efa37dcfc05cbe, type: 3}
   - displayName: ButlerYoung
     animatorController: {fileID: 22100000, guid: badec0a2b39e42d9822349537505d13b, type: 2}
     initialSprite: {fileID: 21300000, guid: 486bfb59e1854255b22ff8f68f2d9f1b, type: 3}

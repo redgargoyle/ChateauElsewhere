@@ -25,6 +25,7 @@ This file tracks the current practical pass so we do not lose the thread between
 - Converted the two Grand Entrance Hall example walkers from `RawImage` atlas playback to UI `Image` plus `Animator` override controllers.
 - Added a Gameplay IMGUI animation test selector for `ButlerClassic`, `ButlerYoung`, and `GentlemanBlack`; it swaps the player Animator override controller and initial sprite without adding another Canvas.
 - Fixed the `GentlemanBlack` test character so it no longer maps every movement state to the same side-only walk cycle. It now has an explicit directional source folder, mirrored left-facing frames, right-facing 8-frame cycle, and front/back fallback rows matching the butler controller layout.
+- Added a dedicated `ButlerClassic` Animator controller with four directional idle states. The shared driver now writes persistent facing booleans so ButlerClassic idles up/down/left/right with a subtle breathing cycle after movement stops.
 - Verified `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` both build with 0 warnings and 0 errors; `dotnet test Assembly-CSharp-Editor.csproj --no-build` exits successfully.
 
 ## Immediate Visual Checks In Unity
@@ -36,6 +37,7 @@ This file tracks the current practical pass so we do not lose the thread between
 - Inspect `Assets/Animation/GentlemanGreen` and `Assets/Animation/LadyGreen` in Unity. The room walkers should now be driven by editable clips through Animator override controllers.
 - Start Gameplay and use the opening character selector to test `ButlerClassic`, `ButlerYoung`, and `GentlemanBlack` against the same player movement/animation parameters.
 - With `GentlemanBlack` selected, walk left and right to confirm the character faces the travel direction, then walk toward/away from camera to confirm those states no longer show a sideways walk cycle.
+- With `ButlerClassic` selected, stop after walking in all four directions and confirm he holds the last facing direction while playing the small idle motion.
 - Try clicking a door or stairway while far away. The butler should walk toward it first, then navigate only if he is close enough. Close clicks should navigate immediately.
 - Hover walkable floor, unreachable floor, and already-current floor. The cursor should show feet for movement and feet with an X when clicking would not move.
 - Click above the butler and watch him walk away from the camera. The back-facing walk should cycle through a full stride instead of holding one foot-forward pose.
