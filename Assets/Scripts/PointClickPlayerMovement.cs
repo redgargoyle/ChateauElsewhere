@@ -58,6 +58,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private readonly List<Vector2> movementPath = new List<Vector2>();
 	private readonly List<Vector2> movementQueryPath = new List<Vector2>();
 	private readonly List<Bounds> navigationObstacleBounds = new List<Bounds>();
+	private readonly List<Bounds> sortedObstacleBounds = new List<Bounds>();
+	private readonly List<Vector2> stackedGapPath = new List<Vector2>();
 	private readonly List<Vector2> navigationNodes = new List<Vector2>();
 	private readonly List<int> reversePath = new List<int>();
 
@@ -679,12 +681,117 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return true;
 		}
 
+		if (TryBuildStackedObstacleGapPath(startPosition, targetPosition, navigationObstacleBounds, path))
+		{
+			return true;
+		}
+
 		navigationNodes.Clear();
 		navigationNodes.Add(startPosition);
 		navigationNodes.Add(targetPosition);
 		AddObstacleNavigationNodes(navigationObstacleBounds, navigationNodes);
 
 		return TryFindPathThroughNodes(targetPosition, path);
+	}
+
+	private bool TryBuildStackedObstacleGapPath(Vector2 startPosition, Vector2 targetPosition, List<Bounds> obstacles, List<Vector2> path)
+	{
+		path.Clear();
+		stackedGapPath.Clear();
+		sortedObstacleBounds.Clear();
+
+		if (obstacles.Count < 2)
+		{
+			return false;
+		}
+
+		Vector2 pathAxis = targetPosition - startPosition;
+		if (pathAxis.sqrMagnitude <= MovementEpsilon)
+		{
+			return false;
+		}
+
+		pathAxis.Normalize();
+
+		for (int i = 0; i < obstacles.Count; i++)
+		{
+			Bounds bounds = obstacles[i];
+			float corridorWidth = Mathf.Max(bounds.extents.x, bounds.extents.y) + pathCornerPadding * 4f;
+
+			if (DistancePointToSegment(bounds.center, startPosition, targetPosition) <= corridorWidth)
+			{
+				sortedObstacleBounds.Add(bounds);
+			}
+		}
+
+		if (sortedObstacleBounds.Count < 2)
+		{
+			return false;
+		}
+
+		sortedObstacleBounds.Sort((first, second) =>
+			Vector2.Dot(first.center, pathAxis).CompareTo(Vector2.Dot(second.center, pathAxis)));
+
+		for (int i = 0; i < sortedObstacleBounds.Count - 1; i++)
+		{
+			if (!TryGetGapPointBetween(sortedObstacleBounds[i], sortedObstacleBounds[i + 1], out Vector2 gapPoint) ||
+				!IsNavigationPointUsable(gapPoint, obstacles))
+			{
+				continue;
+			}
+
+			AddGapPathPoint(stackedGapPath, gapPoint);
+		}
+
+		if (stackedGapPath.Count == 0)
+		{
+			return false;
+		}
+
+		Vector2 currentPoint = startPosition;
+		for (int i = 0; i < stackedGapPath.Count; i++)
+		{
+			Vector2 gapPoint = stackedGapPath[i];
+
+			if (Vector2.Distance(currentPoint, gapPoint) <= stopDistance)
+			{
+				continue;
+			}
+
+			if (!IsNavigationSegmentClear(currentPoint, gapPoint, obstacles))
+			{
+				return false;
+			}
+
+			path.Add(gapPoint);
+			currentPoint = gapPoint;
+		}
+
+		if (!IsNavigationSegmentClear(currentPoint, targetPosition, obstacles))
+		{
+			return false;
+		}
+
+		if (Vector2.Distance(currentPoint, targetPosition) > stopDistance)
+		{
+			path.Add(targetPosition);
+		}
+
+		return path.Count > 0;
+	}
+
+	private void AddGapPathPoint(List<Vector2> pathPoints, Vector2 gapPoint)
+	{
+		float mergeDistanceSquared = PathNodeMergeDistance * PathNodeMergeDistance;
+		for (int i = 0; i < pathPoints.Count; i++)
+		{
+			if (Vector2.SqrMagnitude(pathPoints[i] - gapPoint) <= mergeDistanceSquared)
+			{
+				return;
+			}
+		}
+
+		pathPoints.Add(gapPoint);
 	}
 
 	private bool TryFindPathThroughNodes(Vector2 targetPosition, List<Vector2> path)
@@ -830,6 +937,32 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void AddHorizontalGapNode(Bounds first, Bounds second, List<Vector2> nodes, List<Bounds> obstacles)
 	{
+		if (TryGetHorizontalGapPoint(first, second, out Vector2 gapPoint))
+		{
+			AddNavigationNode(nodes, gapPoint, obstacles);
+		}
+	}
+
+	private void AddVerticalGapNode(Bounds first, Bounds second, List<Vector2> nodes, List<Bounds> obstacles)
+	{
+		if (TryGetVerticalGapPoint(first, second, out Vector2 gapPoint))
+		{
+			AddNavigationNode(nodes, gapPoint, obstacles);
+		}
+	}
+
+	private bool TryGetGapPointBetween(Bounds first, Bounds second, out Vector2 gapPoint)
+	{
+		if (TryGetHorizontalGapPoint(first, second, out gapPoint))
+		{
+			return true;
+		}
+
+		return TryGetVerticalGapPoint(first, second, out gapPoint);
+	}
+
+	private bool TryGetHorizontalGapPoint(Bounds first, Bounds second, out Vector2 gapPoint)
+	{
 		Bounds left = first.center.x <= second.center.x ? first : second;
 		Bounds right = first.center.x <= second.center.x ? second : first;
 		float gapPadding = Mathf.Max(0.005f, Mathf.Min(0.04f, pathCornerPadding * 0.5f));
@@ -838,7 +971,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		if (gapMin > gapMax)
 		{
-			return;
+			gapPoint = default;
+			return false;
 		}
 
 		float yMin = Mathf.Max(left.min.y, right.min.y);
@@ -847,10 +981,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 			? (yMin + yMax) * 0.5f
 			: (left.center.y + right.center.y) * 0.5f;
 
-		AddNavigationNode(nodes, new Vector2((gapMin + gapMax) * 0.5f, y), obstacles);
+		gapPoint = new Vector2((gapMin + gapMax) * 0.5f, y);
+		return true;
 	}
 
-	private void AddVerticalGapNode(Bounds first, Bounds second, List<Vector2> nodes, List<Bounds> obstacles)
+	private bool TryGetVerticalGapPoint(Bounds first, Bounds second, out Vector2 gapPoint)
 	{
 		Bounds lower = first.center.y <= second.center.y ? first : second;
 		Bounds upper = first.center.y <= second.center.y ? second : first;
@@ -860,7 +995,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		if (gapMin > gapMax)
 		{
-			return;
+			gapPoint = default;
+			return false;
 		}
 
 		float xMin = Mathf.Max(lower.min.x, upper.min.x);
@@ -869,7 +1005,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 			? (xMin + xMax) * 0.5f
 			: (lower.center.x + upper.center.x) * 0.5f;
 
-		AddNavigationNode(nodes, new Vector2(x, (gapMin + gapMax) * 0.5f), obstacles);
+		gapPoint = new Vector2(x, (gapMin + gapMax) * 0.5f);
+		return true;
 	}
 
 	private void AddNavigationNode(List<Vector2> nodes, Vector2 candidate, List<Bounds> obstacles)

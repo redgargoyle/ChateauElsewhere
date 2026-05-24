@@ -176,6 +176,6 @@ MonoBehaviour:
   includeChildren: 1
   forcePivotSortPoint: 1
   sortSolidObstacleFromPhysicalBottom: 1
-  forceBehindPlayerInsidePhysicalBounds: 1
+  forceBehindPlayerInsidePhysicalBounds: 0
   behindPlayerSortingOffset: -1
   yReference: {fileID: 0}

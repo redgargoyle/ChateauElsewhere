@@ -12,7 +12,7 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
     [SerializeField] private bool includeChildren = true;
     [SerializeField] private bool forcePivotSortPoint = true;
     [SerializeField] private bool sortSolidObstacleFromPhysicalBottom = true;
-    [SerializeField] private bool forceBehindPlayerInsidePhysicalBounds = true;
+    [SerializeField] private bool forceBehindPlayerInsidePhysicalBounds;
     [SerializeField] private int behindPlayerSortingOffset = -1;
     [SerializeField] private Transform yReference;
 
@@ -127,7 +127,8 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
             return defaultSortingOrder;
         }
 
-        return player.CurrentSortingOrder + behindPlayerSortingOffset;
+        int highestOrderBehindPlayer = player.CurrentSortingOrder + behindPlayerSortingOffset;
+        return Mathf.Min(defaultSortingOrder, highestOrderBehindPlayer);
     }
 
     private float GetSortingY(Transform reference)
