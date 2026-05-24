@@ -1,0 +1,432 @@
+{
+  "source": "Assets/Art/SpriteSheets/maid_green_walk_sheet.png",
+  "background": "checker",
+  "sheet_size": [
+    1448,
+    1086
+  ],
+  "layout": {
+    "mode": "components",
+    "rows": 2,
+    "cols": 4,
+    "component_count": 8,
+    "min_component_area": 100,
+    "component_pad": 2,
+    "note": "Sprites were detected as connected transparent-background components, then sorted into rows and columns."
+  },
+  "anchor_mode": "cell-bottom-center",
+  "manual_anchor": null,
+  "alpha_threshold": 8,
+  "aligned_canvas_size": [
+    222,
+    453
+  ],
+  "aligned_anchor_from_top_left": [
+    111.0,
+    453.0
+  ],
+  "unity_normalized_pivot": [
+    0.5,
+    0.0
+  ],
+  "notes": [
+    "Use files in aligned/ for animation when you want transparent frames that stay registered.",
+    "All aligned frames share one canvas size and one root anchor.",
+    "The full_cells/ frames preserve source crops for debugging.",
+    "The trimmed/ frames are only safe by themselves if your runtime also uses the offsets in this metadata."
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "row": 0,
+      "col": 0,
+      "name": "maid_green_walk_01_r01_c01.png",
+      "source_rect": [
+        120,
+        13,
+        317,
+        464
+      ],
+      "component_bbox_in_source": [
+        122,
+        15,
+        315,
+        462
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        195,
+        449
+      ],
+      "source_anchor_in_full_cell": [
+        98.5,
+        451.0
+      ],
+      "aligned_path": "aligned/maid_green_walk_01_r01_c01.png",
+      "full_cell_path": "full_cells/maid_green_walk_01_r01_c01.png",
+      "trimmed_path": "trimmed/maid_green_walk_01_r01_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        197,
+        451
+      ],
+      "aligned_canvas_size": [
+        222,
+        453
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        453.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 1,
+      "row": 0,
+      "col": 1,
+      "name": "maid_green_walk_02_r01_c02.png",
+      "source_rect": [
+        448,
+        13,
+        665,
+        463
+      ],
+      "component_bbox_in_source": [
+        450,
+        15,
+        663,
+        461
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        215,
+        448
+      ],
+      "source_anchor_in_full_cell": [
+        108.5,
+        450.0
+      ],
+      "aligned_path": "aligned/maid_green_walk_02_r01_c02.png",
+      "full_cell_path": "full_cells/maid_green_walk_02_r01_c02.png",
+      "trimmed_path": "trimmed/maid_green_walk_02_r01_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        217,
+        450
+      ],
+      "aligned_canvas_size": [
+        222,
+        453
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        453.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 2,
+      "row": 0,
+      "col": 2,
+      "name": "maid_green_walk_03_r01_c03.png",
+      "source_rect": [
+        788,
+        13,
+        1000,
+        463
+      ],
+      "component_bbox_in_source": [
+        790,
+        15,
+        998,
+        461
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        210,
+        448
+      ],
+      "source_anchor_in_full_cell": [
+        106.0,
+        450.0
+      ],
+      "aligned_path": "aligned/maid_green_walk_03_r01_c03.png",
+      "full_cell_path": "full_cells/maid_green_walk_03_r01_c03.png",
+      "trimmed_path": "trimmed/maid_green_walk_03_r01_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        212,
+        450
+      ],
+      "aligned_canvas_size": [
+        222,
+        453
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        453.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "col": 3,
+      "name": "maid_green_walk_04_r01_c04.png",
+      "source_rect": [
+        1126,
+        13,
+        1342,
+        464
+      ],
+      "component_bbox_in_source": [
+        1128,
+        15,
+        1340,
+        462
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        214,
+        449
+      ],
+      "source_anchor_in_full_cell": [
+        108.0,
+        451.0
+      ],
+      "aligned_path": "aligned/maid_green_walk_04_r01_c04.png",
+      "full_cell_path": "full_cells/maid_green_walk_04_r01_c04.png",
+      "trimmed_path": "trimmed/maid_green_walk_04_r01_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        216,
+        451
+      ],
+      "aligned_canvas_size": [
+        222,
+        453
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        453.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 4,
+      "row": 1,
+      "col": 0,
+      "name": "maid_green_walk_05_r02_c01.png",
+      "source_rect": [
+        112,
+        544,
+        324,
+        992
+      ],
+      "component_bbox_in_source": [
+        114,
+        546,
+        322,
+        990
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        210,
+        446
+      ],
+      "source_anchor_in_full_cell": [
+        106.0,
+        448.0
+      ],
+      "aligned_path": "aligned/maid_green_walk_05_r02_c01.png",
+      "full_cell_path": "full_cells/maid_green_walk_05_r02_c01.png",
+      "trimmed_path": "trimmed/maid_green_walk_05_r02_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        212,
+        448
+      ],
+      "aligned_canvas_size": [
+        222,
+        453
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        453.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 5,
+      "row": 1,
+      "col": 1,
+      "name": "maid_green_walk_06_r02_c02.png",
+      "source_rect": [
+        442,
+        544,
+        648,
+        993
+      ],
+      "component_bbox_in_source": [
+        444,
+        546,
+        646,
+        991
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        204,
+        447
+      ],
+      "source_anchor_in_full_cell": [
+        103.0,
+        449.0
+      ],
+      "aligned_path": "aligned/maid_green_walk_06_r02_c02.png",
+      "full_cell_path": "full_cells/maid_green_walk_06_r02_c02.png",
+      "trimmed_path": "trimmed/maid_green_walk_06_r02_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        206,
+        449
+      ],
+      "aligned_canvas_size": [
+        222,
+        453
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        453.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 6,
+      "row": 1,
+      "col": 2,
+      "name": "maid_green_walk_07_r02_c03.png",
+      "source_rect": [
+        787,
+        544,
+        996,
+        994
+      ],
+      "component_bbox_in_source": [
+        789,
+        546,
+        994,
+        992
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        207,
+        448
+      ],
+      "source_anchor_in_full_cell": [
+        104.5,
+        450.0
+      ],
+      "aligned_path": "aligned/maid_green_walk_07_r02_c03.png",
+      "full_cell_path": "full_cells/maid_green_walk_07_r02_c03.png",
+      "trimmed_path": "trimmed/maid_green_walk_07_r02_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        209,
+        450
+      ],
+      "aligned_canvas_size": [
+        222,
+        453
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        453.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 7,
+      "row": 1,
+      "col": 3,
+      "name": "maid_green_walk_08_r02_c04.png",
+      "source_rect": [
+        1128,
+        545,
+        1339,
+        993
+      ],
+      "component_bbox_in_source": [
+        1130,
+        547,
+        1337,
+        991
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        209,
+        446
+      ],
+      "source_anchor_in_full_cell": [
+        105.5,
+        448.0
+      ],
+      "aligned_path": "aligned/maid_green_walk_08_r02_c04.png",
+      "full_cell_path": "full_cells/maid_green_walk_08_r02_c04.png",
+      "trimmed_path": "trimmed/maid_green_walk_08_r02_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        211,
+        448
+      ],
+      "aligned_canvas_size": [
+        222,
+        453
+      ],
+      "aligned_anchor_from_top_left": [
+        111.0,
+        453.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    }
+  ]
+}

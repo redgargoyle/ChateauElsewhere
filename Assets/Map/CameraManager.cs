@@ -1979,17 +1979,23 @@ public static class NavigationCursorController
     private static readonly Color Clear = new Color(0f, 0f, 0f, 0f);
     private static readonly Color Ink = new Color(0.02f, 0.02f, 0.02f, 1f);
     private static readonly Color Paper = new Color(1f, 1f, 1f, 1f);
+    private static readonly Color Warning = new Color(0.95f, 0.04f, 0.03f, 1f);
     private static readonly Vector2 ArrowHotspot = new Vector2(16f, 16f);
     private static readonly Vector2 DoorHotspot = new Vector2(9f, 6f);
     private static readonly Vector2 StairwayHotspot = new Vector2(10f, 7f);
+    private static readonly Vector2 WalkHotspot = new Vector2(13f, 24f);
 
     private static int edgePanDirection;
     private static object doorHoverOwner;
     private static HoverIcon doorHoverIcon;
+    private static object walkHoverOwner;
+    private static bool walkHoverCanMove;
     private static Texture2D leftArrowCursor;
     private static Texture2D rightArrowCursor;
     private static Texture2D doorCursor;
     private static Texture2D stairwayCursor;
+    private static Texture2D walkCursor;
+    private static Texture2D blockedWalkCursor;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void ResetForPlayMode()
@@ -1997,6 +2003,8 @@ public static class NavigationCursorController
         edgePanDirection = 0;
         doorHoverOwner = null;
         doorHoverIcon = HoverIcon.Door;
+        walkHoverOwner = null;
+        walkHoverCanMove = false;
         ApplyCursor();
     }
 
@@ -2042,10 +2050,45 @@ public static class NavigationCursorController
         ApplyCursor();
     }
 
+    public static void SetWalkHover(object owner, bool active, bool canMove)
+    {
+        if (!active)
+        {
+            ClearWalkHover(owner);
+            return;
+        }
+
+        if (owner == null)
+        {
+            return;
+        }
+
+        if (walkHoverOwner == owner && walkHoverCanMove == canMove)
+        {
+            return;
+        }
+
+        walkHoverOwner = owner;
+        walkHoverCanMove = canMove;
+        ApplyCursor();
+    }
+
+    public static void ClearWalkHover(object owner)
+    {
+        if (walkHoverOwner != owner)
+        {
+            return;
+        }
+
+        walkHoverOwner = null;
+        walkHoverCanMove = false;
+        ApplyCursor();
+    }
+
     private static void ApplyCursor()
     {
-        // Door hover wins over edge panning because clicking the door is the more
-        // specific action. When neither state is active, Unity's default cursor returns.
+        // Door hover wins because it is the most specific click action. Walk hover
+        // comes next so the cursor always answers what a click would do.
         if (doorHoverOwner != null)
         {
             if (doorHoverIcon == HoverIcon.Stairway)
@@ -2055,6 +2098,15 @@ public static class NavigationCursorController
             }
 
             Cursor.SetCursor(GetDoorCursor(), DoorHotspot, CursorMode.Auto);
+            return;
+        }
+
+        if (walkHoverOwner != null)
+        {
+            Cursor.SetCursor(
+                walkHoverCanMove ? GetWalkCursor() : GetBlockedWalkCursor(),
+                WalkHotspot,
+                CursorMode.Auto);
             return;
         }
 
@@ -2111,6 +2163,26 @@ public static class NavigationCursorController
         }
 
         return stairwayCursor;
+    }
+
+    private static Texture2D GetWalkCursor()
+    {
+        if (walkCursor == null)
+        {
+            walkCursor = CreateWalkCursor("Cursor_Walk", false);
+        }
+
+        return walkCursor;
+    }
+
+    private static Texture2D GetBlockedWalkCursor()
+    {
+        if (blockedWalkCursor == null)
+        {
+            blockedWalkCursor = CreateWalkCursor("Cursor_WalkBlocked", true);
+        }
+
+        return blockedWalkCursor;
     }
 
     private static Texture2D CreateArrowCursor(string cursorName, int direction)
@@ -2174,6 +2246,34 @@ public static class NavigationCursorController
         DrawLine(texture, 21, 11, 21, 7, Paper, 2);
         texture.Apply();
         return texture;
+    }
+
+    private static Texture2D CreateWalkCursor(string cursorName, bool blocked)
+    {
+        Texture2D texture = CreateBlankCursor(cursorName);
+
+        DrawFootprint(texture, 10, 8);
+        DrawFootprint(texture, 18, 16);
+
+        if (blocked)
+        {
+            DrawLine(texture, 5, 5, 27, 27, Ink, 5);
+            DrawLine(texture, 27, 5, 5, 27, Ink, 5);
+            DrawLine(texture, 5, 5, 27, 27, Warning, 3);
+            DrawLine(texture, 27, 5, 5, 27, Warning, 3);
+        }
+
+        texture.Apply();
+        return texture;
+    }
+
+    private static void DrawFootprint(Texture2D texture, int x, int y)
+    {
+        FillRect(texture, x - 3, y, x + 2, y + 9, Ink);
+        FillRect(texture, x - 2, y + 1, x + 1, y + 8, Paper);
+        FillRect(texture, x - 4, y + 8, x - 3, y + 10, Ink);
+        FillRect(texture, x - 1, y + 10, x, y + 12, Ink);
+        FillRect(texture, x + 2, y + 9, x + 3, y + 11, Ink);
     }
 
     private static Texture2D CreateBlankCursor(string cursorName)

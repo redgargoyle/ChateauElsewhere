@@ -1,0 +1,432 @@
+{
+  "source": "Assets/Art/SpriteSheets/lady_green_walk_sheet.png",
+  "background": "checker",
+  "sheet_size": [
+    1448,
+    1086
+  ],
+  "layout": {
+    "mode": "components",
+    "rows": 2,
+    "cols": 4,
+    "component_count": 8,
+    "min_component_area": 100,
+    "component_pad": 2,
+    "note": "Sprites were detected as connected transparent-background components, then sorted into rows and columns."
+  },
+  "anchor_mode": "cell-bottom-center",
+  "manual_anchor": null,
+  "alpha_threshold": 8,
+  "aligned_canvas_size": [
+    270,
+    479
+  ],
+  "aligned_anchor_from_top_left": [
+    135.0,
+    479.0
+  ],
+  "unity_normalized_pivot": [
+    0.5,
+    0.0
+  ],
+  "notes": [
+    "Use files in aligned/ for animation when you want transparent frames that stay registered.",
+    "All aligned frames share one canvas size and one root anchor.",
+    "The full_cells/ frames preserve source crops for debugging.",
+    "The trimmed/ frames are only safe by themselves if your runtime also uses the offsets in this metadata."
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "row": 0,
+      "col": 0,
+      "name": "lady_green_walk_01_r01_c01.png",
+      "source_rect": [
+        85,
+        20,
+        351,
+        497
+      ],
+      "component_bbox_in_source": [
+        87,
+        22,
+        349,
+        495
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        264,
+        475
+      ],
+      "source_anchor_in_full_cell": [
+        133.0,
+        477.0
+      ],
+      "aligned_path": "aligned/lady_green_walk_01_r01_c01.png",
+      "full_cell_path": "full_cells/lady_green_walk_01_r01_c01.png",
+      "trimmed_path": "trimmed/lady_green_walk_01_r01_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        266,
+        477
+      ],
+      "aligned_canvas_size": [
+        270,
+        479
+      ],
+      "aligned_anchor_from_top_left": [
+        135.0,
+        479.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 1,
+      "row": 0,
+      "col": 1,
+      "name": "lady_green_walk_02_r01_c02.png",
+      "source_rect": [
+        437,
+        21,
+        694,
+        497
+      ],
+      "component_bbox_in_source": [
+        439,
+        23,
+        692,
+        495
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        255,
+        474
+      ],
+      "source_anchor_in_full_cell": [
+        128.5,
+        476.0
+      ],
+      "aligned_path": "aligned/lady_green_walk_02_r01_c02.png",
+      "full_cell_path": "full_cells/lady_green_walk_02_r01_c02.png",
+      "trimmed_path": "trimmed/lady_green_walk_02_r01_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        257,
+        476
+      ],
+      "aligned_canvas_size": [
+        270,
+        479
+      ],
+      "aligned_anchor_from_top_left": [
+        135.0,
+        479.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 2,
+      "row": 0,
+      "col": 2,
+      "name": "lady_green_walk_03_r01_c03.png",
+      "source_rect": [
+        757,
+        21,
+        1008,
+        497
+      ],
+      "component_bbox_in_source": [
+        759,
+        23,
+        1006,
+        495
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        249,
+        474
+      ],
+      "source_anchor_in_full_cell": [
+        125.5,
+        476.0
+      ],
+      "aligned_path": "aligned/lady_green_walk_03_r01_c03.png",
+      "full_cell_path": "full_cells/lady_green_walk_03_r01_c03.png",
+      "trimmed_path": "trimmed/lady_green_walk_03_r01_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        251,
+        476
+      ],
+      "aligned_canvas_size": [
+        270,
+        479
+      ],
+      "aligned_anchor_from_top_left": [
+        135.0,
+        479.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "col": 3,
+      "name": "lady_green_walk_04_r01_c04.png",
+      "source_rect": [
+        1075,
+        21,
+        1326,
+        495
+      ],
+      "component_bbox_in_source": [
+        1077,
+        23,
+        1324,
+        493
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        249,
+        472
+      ],
+      "source_anchor_in_full_cell": [
+        125.5,
+        474.0
+      ],
+      "aligned_path": "aligned/lady_green_walk_04_r01_c04.png",
+      "full_cell_path": "full_cells/lady_green_walk_04_r01_c04.png",
+      "trimmed_path": "trimmed/lady_green_walk_04_r01_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        251,
+        474
+      ],
+      "aligned_canvas_size": [
+        270,
+        479
+      ],
+      "aligned_anchor_from_top_left": [
+        135.0,
+        479.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 4,
+      "row": 1,
+      "col": 0,
+      "name": "lady_green_walk_05_r02_c01.png",
+      "source_rect": [
+        81,
+        553,
+        340,
+        1027
+      ],
+      "component_bbox_in_source": [
+        83,
+        555,
+        338,
+        1025
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        257,
+        472
+      ],
+      "source_anchor_in_full_cell": [
+        129.5,
+        474.0
+      ],
+      "aligned_path": "aligned/lady_green_walk_05_r02_c01.png",
+      "full_cell_path": "full_cells/lady_green_walk_05_r02_c01.png",
+      "trimmed_path": "trimmed/lady_green_walk_05_r02_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        259,
+        474
+      ],
+      "aligned_canvas_size": [
+        270,
+        479
+      ],
+      "aligned_anchor_from_top_left": [
+        135.0,
+        479.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 5,
+      "row": 1,
+      "col": 1,
+      "name": "lady_green_walk_06_r02_c02.png",
+      "source_rect": [
+        410,
+        551,
+        672,
+        1027
+      ],
+      "component_bbox_in_source": [
+        412,
+        553,
+        670,
+        1025
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        260,
+        474
+      ],
+      "source_anchor_in_full_cell": [
+        131.0,
+        476.0
+      ],
+      "aligned_path": "aligned/lady_green_walk_06_r02_c02.png",
+      "full_cell_path": "full_cells/lady_green_walk_06_r02_c02.png",
+      "trimmed_path": "trimmed/lady_green_walk_06_r02_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        262,
+        476
+      ],
+      "aligned_canvas_size": [
+        270,
+        479
+      ],
+      "aligned_anchor_from_top_left": [
+        135.0,
+        479.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 6,
+      "row": 1,
+      "col": 2,
+      "name": "lady_green_walk_07_r02_c03.png",
+      "source_rect": [
+        750,
+        551,
+        1015,
+        1024
+      ],
+      "component_bbox_in_source": [
+        752,
+        553,
+        1013,
+        1022
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        263,
+        471
+      ],
+      "source_anchor_in_full_cell": [
+        132.5,
+        473.0
+      ],
+      "aligned_path": "aligned/lady_green_walk_07_r02_c03.png",
+      "full_cell_path": "full_cells/lady_green_walk_07_r02_c03.png",
+      "trimmed_path": "trimmed/lady_green_walk_07_r02_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        265,
+        473
+      ],
+      "aligned_canvas_size": [
+        270,
+        479
+      ],
+      "aligned_anchor_from_top_left": [
+        135.0,
+        479.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 7,
+      "row": 1,
+      "col": 3,
+      "name": "lady_green_walk_08_r02_c04.png",
+      "source_rect": [
+        1064,
+        552,
+        1326,
+        1027
+      ],
+      "component_bbox_in_source": [
+        1066,
+        554,
+        1324,
+        1025
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        260,
+        473
+      ],
+      "source_anchor_in_full_cell": [
+        131.0,
+        475.0
+      ],
+      "aligned_path": "aligned/lady_green_walk_08_r02_c04.png",
+      "full_cell_path": "full_cells/lady_green_walk_08_r02_c04.png",
+      "trimmed_path": "trimmed/lady_green_walk_08_r02_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        262,
+        475
+      ],
+      "aligned_canvas_size": [
+        270,
+        479
+      ],
+      "aligned_anchor_from_top_left": [
+        135.0,
+        479.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    }
+  ]
+}

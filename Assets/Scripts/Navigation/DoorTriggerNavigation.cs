@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasRenderer))]
@@ -16,6 +20,10 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private const string DefaultDoorOpenSoundCatalogResourcePath = "Audio/DoorOpenSoundCatalog";
     private const string DefaultStairwaySoundCatalogResourcePath = "Audio/StairwaySoundCatalog";
+    private const float ApproachTriggerDistanceWeight = 10f;
+    private const float ApproachPlayerDistanceWeight = 0.01f;
+    private const float ApproachExactPointPenalty = 25f;
+    private const float DuplicateApproachSampleDistance = 1f;
 
     public static event Action<DoorTriggerNavigation> HoveredTriggerChanged;
     public static DoorTriggerNavigation HoveredTrigger { get; private set; }
@@ -63,11 +71,30 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private RectTransform rectTransform;
     private readonly Vector3[] triggerWorldCorners = new Vector3[4];
+    private readonly List<Vector2> triggerScreenSamples = new List<Vector2>(16);
     private PointClickPlayerMovement pendingApproachPlayer;
+    private int lastPointerActivationFrame = -1;
+    private static readonly List<DoorTriggerNavigation> activeTriggers = new List<DoorTriggerNavigation>();
+    private static DoorTriggerNavigation fallbackHoveredTrigger;
     private static DoorTriggerNavigation pendingApproachTrigger;
+    private static int lastFallbackUpdateFrame = -1;
     private static AudioSource activeNavigationAudioSource;
     private static int lastDoorOpenClipIndex = -1;
     private static int lastStairwayClipIndex = -1;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStaticState()
+    {
+        HoveredTriggerChanged = null;
+        HoveredTrigger = null;
+        activeTriggers.Clear();
+        fallbackHoveredTrigger = null;
+        pendingApproachTrigger = null;
+        lastFallbackUpdateFrame = -1;
+        activeNavigationAudioSource = null;
+        lastDoorOpenClipIndex = -1;
+        lastStairwayClipIndex = -1;
+    }
 
     private void Reset()
     {
@@ -88,6 +115,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private void OnEnable()
     {
+        RegisterActiveTrigger(this);
         BringToFrontIfNeeded();
     }
 
@@ -111,6 +139,8 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private void OnDisable()
     {
+        UnregisterActiveTrigger(this);
+
         if (HoveredTrigger == this)
         {
             SetHoveredTrigger(null);
@@ -122,18 +152,15 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        SetHoveredTrigger(this);
-        NavigationCursorController.SetDoorHover(this, GetNavigationCursorIcon(), true);
+        SetActiveDoorHover(this);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         if (HoveredTrigger == this)
         {
-            SetHoveredTrigger(null);
+            ClearActiveDoorHover(this);
         }
-
-        NavigationCursorController.SetDoorHover(this, false);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -143,7 +170,18 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void ActivateDoor()
     {
+        if (Application.isPlaying && lastPointerActivationFrame == Time.frameCount)
+        {
+            return;
+        }
+
+        lastPointerActivationFrame = Time.frameCount;
         ActivateDoor(true);
+    }
+
+    private void Update()
+    {
+        UpdateFallbackPointerHoverAndClick();
     }
 
     private void ActivateDoor(bool allowPlayerApproach)
@@ -196,6 +234,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     {
         if (!walkPlayerToTriggerWhenFar)
         {
+            LogApproachFailure("automatic approach is disabled");
             return false;
         }
 
@@ -203,14 +242,21 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         PointClickPlayerMovement playerMovement = player != null ? player.GetComponent<PointClickPlayerMovement>() : null;
         if (playerMovement == null)
         {
+            LogApproachFailure("no PointClickPlayerMovement was found on the player");
             return false;
         }
 
         CancelAnyPendingApproach();
 
-        Vector2 approachScreenPoint = GetClosestTriggerScreenPoint(GetPlayerScreenPosition());
-        if (!playerMovement.TrySetDestinationFromScreenPoint(approachScreenPoint, true))
+        if (!TryFindBestApproachDestination(playerMovement, out Vector2 approachDestination))
         {
+            LogApproachFailure("no reachable walkable point could be found near the trigger");
+            return false;
+        }
+
+        if (!playerMovement.TrySetDestination(approachDestination))
+        {
+            LogApproachFailure("the selected approach point was rejected by the player movement boundary");
             return false;
         }
 
@@ -218,6 +264,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         {
             if (!IsPlayerCloseEnough())
             {
+                LogApproachFailure("the player is already at the closest reachable point but still not close enough");
                 return false;
             }
 
@@ -231,6 +278,68 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         return true;
     }
 
+    private bool TryFindBestApproachDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)
+    {
+        destination = Vector2.zero;
+
+        if (playerMovement == null || !TryGetTriggerScreenBounds(out Vector2 min, out Vector2 max))
+        {
+            return false;
+        }
+
+        Vector2 playerScreenPosition = GetPlayerScreenPosition();
+        CollectTriggerApproachSamples(playerScreenPosition, min, max);
+
+        bool foundDestination = false;
+        float bestScore = float.MaxValue;
+        Vector2 bestDestination = Vector2.zero;
+
+        for (int i = 0; i < triggerScreenSamples.Count; i++)
+        {
+            Vector2 samplePoint = triggerScreenSamples[i];
+            if (!playerMovement.TryEvaluateMovementAtScreenPoint(samplePoint, true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
+                !movementQuery.HasReachableDestination ||
+                !movementQuery.WouldMove)
+            {
+                continue;
+            }
+
+            if (!playerMovement.TryGetScreenPointFromLogicalPosition(movementQuery.Destination, out Vector2 destinationScreenPoint))
+            {
+                continue;
+            }
+
+            Vector2 closestTriggerPoint = GetClosestPointInTriggerBounds(destinationScreenPoint, min, max);
+            float triggerDistance = Vector2.Distance(destinationScreenPoint, closestTriggerPoint);
+            float playerDistance = Vector2.Distance(playerScreenPosition, destinationScreenPoint);
+            float score = triggerDistance * ApproachTriggerDistanceWeight +
+                playerDistance * ApproachPlayerDistanceWeight +
+                (movementQuery.ExactPointWalkable ? 0f : ApproachExactPointPenalty);
+
+            if (score >= bestScore)
+            {
+                continue;
+            }
+
+            bestScore = score;
+            bestDestination = movementQuery.Destination;
+            foundDestination = true;
+        }
+
+        if (!foundDestination)
+        {
+            return false;
+        }
+
+        destination = bestDestination;
+        return true;
+    }
+
+    private void LogApproachFailure(string reason)
+    {
+        Debug.Log($"Door trigger '{name}' could not start player approach because {reason}.", this);
+    }
+
     private void HandlePlayerApproachStopped()
     {
         CancelPendingPlayerApproach();
@@ -238,6 +347,14 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         if (autoActivateAfterApproach && isActiveAndEnabled && IsPlayerCloseEnough())
         {
             ActivateDoor(false);
+            return;
+        }
+
+        if (autoActivateAfterApproach && isActiveAndEnabled)
+        {
+            float distance = GetPlayerScreenDistanceToTrigger();
+            LogApproachFailure(
+                $"the player reached the closest approach point but is still {distance:0.#} screen pixels from the {InteractionLabel.ToLowerInvariant()} (limit {Mathf.Max(1f, maxPlayerScreenDistance):0.#})");
         }
     }
 
@@ -262,9 +379,14 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return true;
         }
 
+        return GetPlayerScreenDistanceToTrigger() <= Mathf.Max(1f, maxPlayerScreenDistance);
+    }
+
+    private float GetPlayerScreenDistanceToTrigger()
+    {
         Vector2 playerScreenPosition = GetPlayerScreenPosition();
         Vector2 triggerScreenPosition = GetClosestTriggerScreenPoint(playerScreenPosition);
-        return Vector2.Distance(playerScreenPosition, triggerScreenPosition) <= Mathf.Max(1f, maxPlayerScreenDistance);
+        return Vector2.Distance(playerScreenPosition, triggerScreenPosition);
     }
 
     private Vector2 GetPlayerScreenPosition()
@@ -277,27 +399,85 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private Vector2 GetClosestTriggerScreenPoint(Vector2 screenPosition)
     {
+        if (!TryGetTriggerScreenBounds(out Vector2 min, out Vector2 max))
+        {
+            return screenPosition;
+        }
+
+        return GetClosestPointInTriggerBounds(screenPosition, min, max);
+    }
+
+    private bool TryGetTriggerScreenBounds(out Vector2 min, out Vector2 max)
+    {
+        min = Vector2.zero;
+        max = Vector2.zero;
+
+        ResolveReferences();
+        if (rectTransform == null)
+        {
+            return false;
+        }
+
         Camera canvasCamera = GetCanvasCamera();
         rectTransform.GetWorldCorners(triggerWorldCorners);
 
         Vector2 firstCorner = RectTransformUtility.WorldToScreenPoint(canvasCamera, triggerWorldCorners[0]);
-        float minX = firstCorner.x;
-        float maxX = firstCorner.x;
-        float minY = firstCorner.y;
-        float maxY = firstCorner.y;
+        min = firstCorner;
+        max = firstCorner;
 
         for (int i = 1; i < triggerWorldCorners.Length; i++)
         {
             Vector2 corner = RectTransformUtility.WorldToScreenPoint(canvasCamera, triggerWorldCorners[i]);
-            minX = Mathf.Min(minX, corner.x);
-            maxX = Mathf.Max(maxX, corner.x);
-            minY = Mathf.Min(minY, corner.y);
-            maxY = Mathf.Max(maxY, corner.y);
+            min = Vector2.Min(min, corner);
+            max = Vector2.Max(max, corner);
         }
 
+        return true;
+    }
+
+    private void CollectTriggerApproachSamples(Vector2 playerScreenPosition, Vector2 min, Vector2 max)
+    {
+        triggerScreenSamples.Clear();
+
+        float centerX = (min.x + max.x) * 0.5f;
+        float centerY = (min.y + max.y) * 0.5f;
+        float lowerY = min.y;
+        float upperY = max.y;
+        float leftX = min.x;
+        float rightX = max.x;
+
+        AddUniqueApproachSample(GetClosestPointInTriggerBounds(playerScreenPosition, min, max));
+        AddUniqueApproachSample(new Vector2(centerX, lowerY));
+        AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.25f), lowerY));
+        AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.75f), lowerY));
+        AddUniqueApproachSample(new Vector2(leftX, lowerY));
+        AddUniqueApproachSample(new Vector2(rightX, lowerY));
+        AddUniqueApproachSample(new Vector2(centerX, centerY));
+        AddUniqueApproachSample(new Vector2(leftX, centerY));
+        AddUniqueApproachSample(new Vector2(rightX, centerY));
+        AddUniqueApproachSample(new Vector2(centerX, upperY));
+        AddUniqueApproachSample(new Vector2(leftX, upperY));
+        AddUniqueApproachSample(new Vector2(rightX, upperY));
+    }
+
+    private void AddUniqueApproachSample(Vector2 sample)
+    {
+        for (int i = 0; i < triggerScreenSamples.Count; i++)
+        {
+            if (Vector2.Distance(triggerScreenSamples[i], sample) <= DuplicateApproachSampleDistance)
+            {
+                return;
+            }
+        }
+
+        triggerScreenSamples.Add(sample);
+    }
+
+    private static Vector2 GetClosestPointInTriggerBounds(Vector2 screenPosition, Vector2 min, Vector2 max)
+    {
         return new Vector2(
-            Mathf.Clamp(screenPosition.x, minX, maxX),
-            Mathf.Clamp(screenPosition.y, minY, maxY));
+            Mathf.Clamp(screenPosition.x, min.x, max.x),
+            Mathf.Clamp(screenPosition.y, min.y, max.y));
     }
 
     private void ResolvePlayerReference()
@@ -338,6 +518,139 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         return canvas.worldCamera;
     }
 
+    private bool ContainsScreenPoint(Vector2 screenPosition)
+    {
+        ResolveReferences();
+        return rectTransform != null &&
+            RectTransformUtility.RectangleContainsScreenPoint(rectTransform, screenPosition, GetCanvasCamera());
+    }
+
+    private static void RegisterActiveTrigger(DoorTriggerNavigation trigger)
+    {
+        if (trigger != null && !activeTriggers.Contains(trigger))
+        {
+            activeTriggers.Add(trigger);
+        }
+    }
+
+    private static void UnregisterActiveTrigger(DoorTriggerNavigation trigger)
+    {
+        activeTriggers.Remove(trigger);
+
+        if (fallbackHoveredTrigger == trigger)
+        {
+            ClearActiveDoorHover(trigger);
+        }
+
+        if (pendingApproachTrigger == trigger)
+        {
+            pendingApproachTrigger = null;
+        }
+    }
+
+    private static void UpdateFallbackPointerHoverAndClick()
+    {
+        if (!Application.isPlaying || lastFallbackUpdateFrame == Time.frameCount)
+        {
+            return;
+        }
+
+        lastFallbackUpdateFrame = Time.frameCount;
+
+        if (!TryGetPointerPosition(out Vector2 screenPosition))
+        {
+            ClearActiveDoorHover(fallbackHoveredTrigger);
+            return;
+        }
+
+        if (CharacterSelectionMenu.IsBlockingGameplayInput(screenPosition))
+        {
+            ClearActiveDoorHover(fallbackHoveredTrigger);
+            return;
+        }
+
+        DoorTriggerNavigation triggerUnderPointer = FindTopmostTriggerAtScreenPoint(screenPosition);
+        SetActiveDoorHover(triggerUnderPointer);
+
+        if (triggerUnderPointer != null && TryGetPrimaryPointerDown())
+        {
+            triggerUnderPointer.ActivateDoor();
+        }
+    }
+
+    private static DoorTriggerNavigation FindTopmostTriggerAtScreenPoint(Vector2 screenPosition)
+    {
+        DoorTriggerNavigation bestTrigger = null;
+
+        for (int i = 0; i < activeTriggers.Count; i++)
+        {
+            DoorTriggerNavigation candidate = activeTriggers[i];
+            if (candidate == null || !candidate.isActiveAndEnabled || !candidate.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            if (candidate.ContainsScreenPoint(screenPosition))
+            {
+                bestTrigger = candidate;
+            }
+        }
+
+        return bestTrigger;
+    }
+
+    private static bool TryGetPointerPosition(out Vector2 screenPosition)
+    {
+        screenPosition = Vector2.zero;
+
+#if ENABLE_INPUT_SYSTEM
+        Mouse mouse = Mouse.current;
+        if (mouse != null)
+        {
+            screenPosition = mouse.position.ReadValue();
+            return true;
+        }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+        try
+        {
+            screenPosition = Input.mousePosition;
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+#else
+        return false;
+#endif
+    }
+
+    private static bool TryGetPrimaryPointerDown()
+    {
+#if ENABLE_INPUT_SYSTEM
+        Mouse mouse = Mouse.current;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+        {
+            return true;
+        }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+        try
+        {
+            return Input.GetMouseButtonDown(0);
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+#else
+        return false;
+#endif
+    }
+
     private static void CancelAnyPendingApproach()
     {
         if (pendingApproachTrigger != null)
@@ -358,6 +671,46 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         {
             pendingApproachTrigger = null;
         }
+    }
+
+    private static void SetActiveDoorHover(DoorTriggerNavigation trigger)
+    {
+        if (fallbackHoveredTrigger == trigger)
+        {
+            return;
+        }
+
+        ClearActiveDoorHover(fallbackHoveredTrigger);
+        fallbackHoveredTrigger = trigger;
+
+        if (trigger == null)
+        {
+            SetHoveredTrigger(null);
+            return;
+        }
+
+        SetHoveredTrigger(trigger);
+        NavigationCursorController.SetDoorHover(trigger, trigger.GetNavigationCursorIcon(), true);
+    }
+
+    private static void ClearActiveDoorHover(DoorTriggerNavigation trigger)
+    {
+        if (trigger == null)
+        {
+            return;
+        }
+
+        if (fallbackHoveredTrigger == trigger)
+        {
+            fallbackHoveredTrigger = null;
+        }
+
+        if (HoveredTrigger == trigger)
+        {
+            SetHoveredTrigger(null);
+        }
+
+        NavigationCursorController.SetDoorHover(trigger, false);
     }
 
     public void RefreshInferredSourceRoom()

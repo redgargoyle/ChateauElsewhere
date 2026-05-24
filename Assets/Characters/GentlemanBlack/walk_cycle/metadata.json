@@ -1,0 +1,432 @@
+{
+  "source": "Assets/Art/SpriteSheets/gentleman_black_walk_cycle_generated.png",
+  "background": "alpha",
+  "sheet_size": [
+    1774,
+    887
+  ],
+  "layout": {
+    "mode": "components",
+    "rows": 1,
+    "cols": 8,
+    "component_count": 8,
+    "min_component_area": 1000,
+    "component_pad": 2,
+    "note": "Sprites were detected as connected transparent-background components, then sorted into rows and columns."
+  },
+  "anchor_mode": "cell-bottom-center",
+  "manual_anchor": null,
+  "alpha_threshold": 8,
+  "aligned_canvas_size": [
+    228,
+    522
+  ],
+  "aligned_anchor_from_top_left": [
+    114.0,
+    522.0
+  ],
+  "unity_normalized_pivot": [
+    0.5,
+    0.0
+  ],
+  "notes": [
+    "Use files in aligned/ for animation when you want transparent frames that stay registered.",
+    "All aligned frames share one canvas size and one root anchor.",
+    "The full_cells/ frames preserve source crops for debugging.",
+    "The trimmed/ frames are only safe by themselves if your runtime also uses the offsets in this metadata."
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "row": 0,
+      "col": 0,
+      "name": "gentleman_black_walk_cycle_01_r01_c01.png",
+      "source_rect": [
+        36,
+        175,
+        230,
+        695
+      ],
+      "component_bbox_in_source": [
+        38,
+        177,
+        228,
+        693
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        192,
+        518
+      ],
+      "source_anchor_in_full_cell": [
+        97.0,
+        520.0
+      ],
+      "aligned_path": "aligned/gentleman_black_walk_cycle_01_r01_c01.png",
+      "full_cell_path": "full_cells/gentleman_black_walk_cycle_01_r01_c01.png",
+      "trimmed_path": "trimmed/gentleman_black_walk_cycle_01_r01_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        194,
+        520
+      ],
+      "aligned_canvas_size": [
+        228,
+        522
+      ],
+      "aligned_anchor_from_top_left": [
+        114.0,
+        522.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 1,
+      "row": 0,
+      "col": 1,
+      "name": "gentleman_black_walk_cycle_02_r01_c02.png",
+      "source_rect": [
+        247,
+        175,
+        417,
+        692
+      ],
+      "component_bbox_in_source": [
+        249,
+        177,
+        415,
+        690
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        168,
+        515
+      ],
+      "source_anchor_in_full_cell": [
+        85.0,
+        517.0
+      ],
+      "aligned_path": "aligned/gentleman_black_walk_cycle_02_r01_c02.png",
+      "full_cell_path": "full_cells/gentleman_black_walk_cycle_02_r01_c02.png",
+      "trimmed_path": "trimmed/gentleman_black_walk_cycle_02_r01_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        170,
+        517
+      ],
+      "aligned_canvas_size": [
+        228,
+        522
+      ],
+      "aligned_anchor_from_top_left": [
+        114.0,
+        522.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 2,
+      "row": 0,
+      "col": 2,
+      "name": "gentleman_black_walk_cycle_03_r01_c03.png",
+      "source_rect": [
+        468,
+        173,
+        662,
+        685
+      ],
+      "component_bbox_in_source": [
+        470,
+        175,
+        660,
+        683
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        192,
+        510
+      ],
+      "source_anchor_in_full_cell": [
+        97.0,
+        512.0
+      ],
+      "aligned_path": "aligned/gentleman_black_walk_cycle_03_r01_c03.png",
+      "full_cell_path": "full_cells/gentleman_black_walk_cycle_03_r01_c03.png",
+      "trimmed_path": "trimmed/gentleman_black_walk_cycle_03_r01_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        194,
+        512
+      ],
+      "aligned_canvas_size": [
+        228,
+        522
+      ],
+      "aligned_anchor_from_top_left": [
+        114.0,
+        522.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "col": 3,
+      "name": "gentleman_black_walk_cycle_04_r01_c04.png",
+      "source_rect": [
+        702,
+        178,
+        881,
+        694
+      ],
+      "component_bbox_in_source": [
+        704,
+        180,
+        879,
+        692
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        177,
+        514
+      ],
+      "source_anchor_in_full_cell": [
+        89.5,
+        516.0
+      ],
+      "aligned_path": "aligned/gentleman_black_walk_cycle_04_r01_c04.png",
+      "full_cell_path": "full_cells/gentleman_black_walk_cycle_04_r01_c04.png",
+      "trimmed_path": "trimmed/gentleman_black_walk_cycle_04_r01_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        179,
+        516
+      ],
+      "aligned_canvas_size": [
+        228,
+        522
+      ],
+      "aligned_anchor_from_top_left": [
+        114.0,
+        522.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 4,
+      "row": 0,
+      "col": 4,
+      "name": "gentleman_black_walk_cycle_05_r01_c05.png",
+      "source_rect": [
+        921,
+        175,
+        1114,
+        692
+      ],
+      "component_bbox_in_source": [
+        923,
+        177,
+        1112,
+        690
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        191,
+        515
+      ],
+      "source_anchor_in_full_cell": [
+        96.5,
+        517.0
+      ],
+      "aligned_path": "aligned/gentleman_black_walk_cycle_05_r01_c05.png",
+      "full_cell_path": "full_cells/gentleman_black_walk_cycle_05_r01_c05.png",
+      "trimmed_path": "trimmed/gentleman_black_walk_cycle_05_r01_c05.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        193,
+        517
+      ],
+      "aligned_canvas_size": [
+        228,
+        522
+      ],
+      "aligned_anchor_from_top_left": [
+        114.0,
+        522.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 5,
+      "row": 0,
+      "col": 5,
+      "name": "gentleman_black_walk_cycle_06_r01_c06.png",
+      "source_rect": [
+        1132,
+        178,
+        1352,
+        685
+      ],
+      "component_bbox_in_source": [
+        1134,
+        180,
+        1350,
+        683
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        220,
+        505
+      ],
+      "source_anchor_in_full_cell": [
+        110.0,
+        507.0
+      ],
+      "aligned_path": "aligned/gentleman_black_walk_cycle_06_r01_c06.png",
+      "full_cell_path": "full_cells/gentleman_black_walk_cycle_06_r01_c06.png",
+      "trimmed_path": "trimmed/gentleman_black_walk_cycle_06_r01_c06.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        220,
+        507
+      ],
+      "aligned_canvas_size": [
+        228,
+        522
+      ],
+      "aligned_anchor_from_top_left": [
+        114.0,
+        522.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 6,
+      "row": 0,
+      "col": 6,
+      "name": "gentleman_black_walk_cycle_07_r01_c07.png",
+      "source_rect": [
+        1349,
+        177,
+        1543,
+        687
+      ],
+      "component_bbox_in_source": [
+        1351,
+        179,
+        1541,
+        685
+      ],
+      "content_bbox_in_full_cell": [
+        0,
+        2,
+        192,
+        508
+      ],
+      "source_anchor_in_full_cell": [
+        97.0,
+        510.0
+      ],
+      "aligned_path": "aligned/gentleman_black_walk_cycle_07_r01_c07.png",
+      "full_cell_path": "full_cells/gentleman_black_walk_cycle_07_r01_c07.png",
+      "trimmed_path": "trimmed/gentleman_black_walk_cycle_07_r01_c07.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        194,
+        510
+      ],
+      "aligned_canvas_size": [
+        228,
+        522
+      ],
+      "aligned_anchor_from_top_left": [
+        114.0,
+        522.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 7,
+      "row": 0,
+      "col": 7,
+      "name": "gentleman_black_walk_cycle_08_r01_c08.png",
+      "source_rect": [
+        1564,
+        179,
+        1753,
+        695
+      ],
+      "component_bbox_in_source": [
+        1566,
+        181,
+        1751,
+        693
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        187,
+        514
+      ],
+      "source_anchor_in_full_cell": [
+        94.5,
+        516.0
+      ],
+      "aligned_path": "aligned/gentleman_black_walk_cycle_08_r01_c08.png",
+      "full_cell_path": "full_cells/gentleman_black_walk_cycle_08_r01_c08.png",
+      "trimmed_path": "trimmed/gentleman_black_walk_cycle_08_r01_c08.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        189,
+        516
+      ],
+      "aligned_canvas_size": [
+        228,
+        522
+      ],
+      "aligned_anchor_from_top_left": [
+        114.0,
+        522.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    }
+  ]
+}

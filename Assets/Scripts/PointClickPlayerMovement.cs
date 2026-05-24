@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -8,14 +9,9 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Animator))]
 public class PointClickPlayerMovement : MonoBehaviour
 {
-	private static readonly int SpeedHash = Animator.StringToHash("Speed");
-	private static readonly int IsJumpingHash = Animator.StringToHash("IsJumping");
-	private static readonly int IsCrouchingHash = Animator.StringToHash("IsCrouching");
-	private static readonly int IsWalkingUpHash = Animator.StringToHash("IsWalkingUp");
-	private static readonly int IsWalkingDownHash = Animator.StringToHash("IsWalkingDown");
-	private static readonly int IsWalkingLeftHash = Animator.StringToHash("IsWalkingLeft");
-	private static readonly int IsWalkingRightHash = Animator.StringToHash("IsWalkingRight");
 	private const float MovementEpsilon = 0.0001f;
+	private const float WalkableInsetStep = 0.015f;
+	private const int WalkableInsetAttempts = 12;
 
 	[SerializeField] private string walkableFloorName = "PlayerBoundary_Entrance";
 	[SerializeField] private Collider2D walkableFloor;
@@ -34,14 +30,6 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private float runningAnimationSpeed = 40f;
 	[SerializeField] private bool disablePlatformMovement = true;
 
-	private enum WalkDirection
-	{
-		Left,
-		Right,
-		Up,
-		Down
-	}
-
 	private Rigidbody2D body;
 	private Animator animator;
 	private SpriteRenderer spriteRenderer;
@@ -50,22 +38,42 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private Vector2 destination;
 	private Vector2 logicalPosition;
 	private Vector3 currentVisualOffset;
-	private WalkDirection walkDirection = WalkDirection.Right;
+	private CharacterWalkDirection walkDirection = CharacterWalkDirection.Right;
+	private CharacterAnimatorDriver.ParameterCache animatorParameters;
 	private bool hasDestination;
 	private bool isReady;
 	private bool isWalking;
-	private bool hasSpeedParameter = true;
-	private bool hasJumpingParameter = true;
-	private bool hasCrouchingParameter = true;
-	private bool hasWalkingUpParameter = true;
-	private bool hasWalkingDownParameter = true;
-	private bool hasWalkingLeftParameter = true;
-	private bool hasWalkingRightParameter = true;
 
 	public event Action ArrivedAtDestination;
 	public event Action MovementStopped;
 	public Vector2 LogicalPosition => logicalPosition;
 	public bool HasDestination => hasDestination;
+
+	public readonly struct MovementTargetQuery
+	{
+		public MovementTargetQuery(
+			Vector2 screenPosition,
+			Vector2 requestedLogicalPosition,
+			Vector2 destination,
+			bool exactPointWalkable,
+			bool hasReachableDestination,
+			bool wouldMove)
+		{
+			ScreenPosition = screenPosition;
+			RequestedLogicalPosition = requestedLogicalPosition;
+			Destination = destination;
+			ExactPointWalkable = exactPointWalkable;
+			HasReachableDestination = hasReachableDestination;
+			WouldMove = wouldMove;
+		}
+
+		public Vector2 ScreenPosition { get; }
+		public Vector2 RequestedLogicalPosition { get; }
+		public Vector2 Destination { get; }
+		public bool ExactPointWalkable { get; }
+		public bool HasReachableDestination { get; }
+		public bool WouldMove { get; }
+	}
 
 	private void Awake()
 	{
@@ -91,10 +99,17 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!isReady)
 			return;
 
+		UpdateWalkCursor();
+
 		if (TryGetFloorClick(out Vector2 clickPosition))
 			SetDestination(clickPosition);
 
 		UpdateAnimator();
+	}
+
+	private void OnDisable()
+	{
+		NavigationCursorController.ClearWalkHover(this);
 	}
 
 	private void FixedUpdate()
@@ -138,34 +153,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void CacheAnimatorParameters()
 	{
-		if (animator == null || animator.runtimeAnimatorController == null)
-			return;
-
-		hasSpeedParameter = false;
-		hasJumpingParameter = false;
-		hasCrouchingParameter = false;
-		hasWalkingUpParameter = false;
-		hasWalkingDownParameter = false;
-		hasWalkingLeftParameter = false;
-		hasWalkingRightParameter = false;
-
-		foreach (AnimatorControllerParameter parameter in animator.parameters)
-		{
-			if (parameter.nameHash == SpeedHash)
-				hasSpeedParameter = true;
-			else if (parameter.nameHash == IsJumpingHash)
-				hasJumpingParameter = true;
-			else if (parameter.nameHash == IsCrouchingHash)
-				hasCrouchingParameter = true;
-			else if (parameter.nameHash == IsWalkingUpHash)
-				hasWalkingUpParameter = true;
-			else if (parameter.nameHash == IsWalkingDownHash)
-				hasWalkingDownParameter = true;
-			else if (parameter.nameHash == IsWalkingLeftHash)
-				hasWalkingLeftParameter = true;
-			else if (parameter.nameHash == IsWalkingRightHash)
-				hasWalkingRightParameter = true;
-		}
+		animatorParameters = CharacterAnimatorDriver.ParameterCache.FromAnimator(animator);
 	}
 
 	private void FindWalkableFloor()
@@ -201,16 +189,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 		Vector2 startPosition = ClampToWalkableArea(transform.position);
 		logicalPosition = startPosition;
 		destination = startPosition;
-		walkDirection = WalkDirection.Right;
+		walkDirection = CharacterWalkDirection.Right;
 		isReady = true;
 		isWalking = false;
 
-		SetAnimatorBool(IsJumpingHash, false, hasJumpingParameter);
-		SetAnimatorBool(IsCrouchingHash, false, hasCrouchingParameter);
-		SetAnimatorBool(IsWalkingUpHash, false, hasWalkingUpParameter);
-		SetAnimatorBool(IsWalkingDownHash, false, hasWalkingDownParameter);
-		SetAnimatorBool(IsWalkingLeftHash, false, hasWalkingLeftParameter);
-		SetAnimatorBool(IsWalkingRightHash, false, hasWalkingRightParameter);
+		UpdateAnimator();
 		ApplySpriteMirror();
 		ApplyVisualPosition();
 		ApplyPerspectiveScale();
@@ -224,21 +207,30 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryGetPrimaryPointerDown(out Vector2 screenPosition))
 			return false;
 
-		if (!TryGetLogicalPointFromScreen(screenPosition, out clickPosition))
+		if (CharacterSelectionMenu.IsBlockingGameplayInput(screenPosition))
 			return false;
 
-		if (IsPickupObjectAtPoint(clickPosition))
+		if (IsPointerOverUi())
 			return false;
 
-		return IsPointWalkable(clickPosition);
+		if (!TryEvaluateMovementAtScreenPoint(screenPosition, true, out MovementTargetQuery movementQuery))
+			return false;
+
+		if (!movementQuery.HasReachableDestination || !movementQuery.WouldMove)
+			return false;
+
+		clickPosition = movementQuery.Destination;
+		return true;
 	}
 
 	public bool TrySetDestinationFromScreenPoint(Vector2 screenPosition, bool clampToWalkableArea = false)
 	{
-		if (!isReady || !TryGetLogicalPointFromScreen(screenPosition, out Vector2 targetPosition))
+		if (!TryEvaluateMovementAtScreenPoint(screenPosition, clampToWalkableArea, out MovementTargetQuery movementQuery) ||
+			!movementQuery.HasReachableDestination)
 			return false;
 
-		return TrySetDestination(targetPosition, clampToWalkableArea);
+		SetDestination(movementQuery.Destination);
+		return true;
 	}
 
 	public bool TrySetDestination(Vector2 targetPosition, bool clampToWalkableArea = false)
@@ -246,13 +238,76 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!isReady)
 			return false;
 
-		if (clampToWalkableArea)
-			targetPosition = ClampToWalkableArea(targetPosition);
-
-		if (!IsPointWalkable(targetPosition))
+		if (!TryEvaluateMovementTarget(targetPosition, clampToWalkableArea, out MovementTargetQuery movementQuery) ||
+			!movementQuery.HasReachableDestination)
 			return false;
 
-		SetDestination(targetPosition);
+		SetDestination(movementQuery.Destination);
+		return true;
+	}
+
+	public bool TryEvaluateMovementAtScreenPoint(Vector2 screenPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)
+	{
+		movementQuery = default;
+
+		if (!isReady || !TryGetLogicalPointFromScreen(screenPosition, out Vector2 targetPosition))
+			return false;
+
+		return TryEvaluateMovementTarget(targetPosition, clampToWalkableArea, screenPosition, out movementQuery);
+	}
+
+	public bool TryGetScreenPointFromLogicalPosition(Vector2 logicalPoint, out Vector2 screenPoint)
+	{
+		screenPoint = Vector2.zero;
+
+		Camera mainCamera = Camera.main;
+		if (mainCamera == null)
+			return false;
+
+		UpdateVisualOffset(mainCamera);
+		Vector3 visualPosition = new Vector3(
+			logicalPoint.x + currentVisualOffset.x,
+			logicalPoint.y + currentVisualOffset.y,
+			transform.position.z);
+
+		screenPoint = mainCamera.WorldToScreenPoint(visualPosition);
+		return true;
+	}
+
+	private bool TryEvaluateMovementTarget(Vector2 targetPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)
+	{
+		return TryEvaluateMovementTarget(targetPosition, clampToWalkableArea, Vector2.zero, out movementQuery);
+	}
+
+	private bool TryEvaluateMovementTarget(
+		Vector2 targetPosition,
+		bool clampToWalkableArea,
+		Vector2 screenPosition,
+		out MovementTargetQuery movementQuery)
+	{
+		movementQuery = default;
+
+		if (!isReady)
+			return false;
+
+		bool blockedByPickup = IsPickupObjectAtPoint(targetPosition);
+		bool exactPointWalkable = !blockedByPickup && IsPointWalkable(targetPosition);
+		Vector2 destinationPosition = targetPosition;
+
+		if (!exactPointWalkable && clampToWalkableArea && !blockedByPickup)
+			destinationPosition = ClampToWalkableArea(targetPosition, logicalPosition);
+
+		bool hasReachableDestination = !blockedByPickup && IsPointWalkable(destinationPosition);
+		bool wouldMove = hasReachableDestination &&
+			Vector2.Distance(logicalPosition, destinationPosition) > stopDistance;
+
+		movementQuery = new MovementTargetQuery(
+			screenPosition,
+			targetPosition,
+			destinationPosition,
+			exactPointWalkable,
+			hasReachableDestination,
+			wouldMove);
 		return true;
 	}
 
@@ -301,6 +356,43 @@ public class PointClickPlayerMovement : MonoBehaviour
 #endif
 	}
 
+	private static bool TryGetPrimaryPointerPosition(out Vector2 screenPosition)
+	{
+		screenPosition = Vector2.zero;
+
+#if ENABLE_INPUT_SYSTEM
+		Mouse mouse = Mouse.current;
+		if (mouse != null)
+		{
+			screenPosition = mouse.position.ReadValue();
+			return true;
+		}
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+		try
+		{
+			screenPosition = Input.mousePosition;
+			return true;
+		}
+		catch (InvalidOperationException)
+		{
+			return false;
+		}
+#else
+		return false;
+#endif
+	}
+
+	private static bool IsPointerOverUi()
+	{
+		EventSystem eventSystem = EventSystem.current;
+		if (eventSystem == null)
+			return false;
+
+		return eventSystem.IsPointerOverGameObject();
+	}
+
 	private static bool IsPickupObjectAtPoint(Vector2 point)
 	{
 		Collider2D[] hits = Physics2D.OverlapPointAll(point);
@@ -311,6 +403,25 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		return false;
+	}
+
+	private void UpdateWalkCursor()
+	{
+		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition) ||
+			CharacterSelectionMenu.IsBlockingGameplayInput(screenPosition) ||
+			IsPointerOverUi())
+		{
+			NavigationCursorController.ClearWalkHover(this);
+			return;
+		}
+
+		if (!TryEvaluateMovementAtScreenPoint(screenPosition, true, out MovementTargetQuery movementQuery))
+		{
+			NavigationCursorController.ClearWalkHover(this);
+			return;
+		}
+
+		NavigationCursorController.SetWalkHover(this, true, movementQuery.WouldMove);
 	}
 
 	private void SetDestination(Vector2 clickPosition)
@@ -373,13 +484,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void UpdateAnimator()
 	{
-		SetAnimatorFloat(SpeedHash, isWalking ? runningAnimationSpeed : 0f, hasSpeedParameter);
-		SetAnimatorBool(IsJumpingHash, false, hasJumpingParameter);
-		SetAnimatorBool(IsCrouchingHash, false, hasCrouchingParameter);
-		SetAnimatorBool(IsWalkingUpHash, isWalking && walkDirection == WalkDirection.Up, hasWalkingUpParameter);
-		SetAnimatorBool(IsWalkingDownHash, isWalking && walkDirection == WalkDirection.Down, hasWalkingDownParameter);
-		SetAnimatorBool(IsWalkingLeftHash, isWalking && walkDirection == WalkDirection.Left, hasWalkingLeftParameter);
-		SetAnimatorBool(IsWalkingRightHash, isWalking && walkDirection == WalkDirection.Right, hasWalkingRightParameter);
+		animatorParameters.ApplyMovement(animator, isWalking, walkDirection, runningAnimationSpeed);
 		ApplySpriteMirror();
 	}
 
@@ -391,19 +496,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 		walkDirection = DetermineWalkDirection(movement);
 	}
 
-	private WalkDirection DetermineWalkDirection(Vector2 movement)
+	private CharacterWalkDirection DetermineWalkDirection(Vector2 movement)
 	{
-		float horizontalMagnitude = Mathf.Abs(movement.x);
-		float verticalMagnitude = Mathf.Abs(movement.y);
-		float totalMagnitude = horizontalMagnitude + verticalMagnitude;
-
-		if (totalMagnitude <= MovementEpsilon)
-			return walkDirection;
-
-		if (horizontalMagnitude / totalMagnitude >= horizontalDirectionThreshold)
-			return movement.x < 0f ? WalkDirection.Left : WalkDirection.Right;
-
-		return movement.y >= 0f ? WalkDirection.Up : WalkDirection.Down;
+		return CharacterAnimatorDriver.DetermineDirection(movement, walkDirection, horizontalDirectionThreshold);
 	}
 
 	private Vector2 MoveLogicalPositionToward(Vector2 currentPosition, Vector2 targetPosition, float maxDistance)
@@ -460,10 +555,35 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private Vector2 ClampToWalkableArea(Vector2 point)
 	{
+		return ClampToWalkableArea(point, logicalPosition);
+	}
+
+	private Vector2 ClampToWalkableArea(Vector2 point, Vector2 preferredInsidePoint)
+	{
 		if (walkableFloor == null || walkableFloor.OverlapPoint(point))
 			return point;
 
-		return walkableFloor.ClosestPoint(point);
+		Vector2 closestPoint = walkableFloor.ClosestPoint(point);
+		if (walkableFloor.OverlapPoint(closestPoint))
+			return closestPoint;
+
+		Vector2 insetDirection = preferredInsidePoint - closestPoint;
+		if (insetDirection.sqrMagnitude <= MovementEpsilon || !walkableFloor.OverlapPoint(preferredInsidePoint))
+			insetDirection = (Vector2)walkableFloor.bounds.center - closestPoint;
+
+		if (insetDirection.sqrMagnitude <= MovementEpsilon)
+			return closestPoint;
+
+		insetDirection.Normalize();
+
+		for (int i = 1; i <= WalkableInsetAttempts; i++)
+		{
+			Vector2 insetPoint = closestPoint + insetDirection * (WalkableInsetStep * i);
+			if (walkableFloor.OverlapPoint(insetPoint))
+				return insetPoint;
+		}
+
+		return closestPoint;
 	}
 
 	private static Collider2D FindPlayerBoundaryCollider()
@@ -518,15 +638,4 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return "Default";
 	}
 
-	private void SetAnimatorFloat(int parameterHash, float value, bool hasParameter)
-	{
-		if (animator != null && hasParameter)
-			animator.SetFloat(parameterHash, value);
-	}
-
-	private void SetAnimatorBool(int parameterHash, bool value, bool hasParameter)
-	{
-		if (animator != null && hasParameter)
-			animator.SetBool(parameterHash, value);
-	}
 }

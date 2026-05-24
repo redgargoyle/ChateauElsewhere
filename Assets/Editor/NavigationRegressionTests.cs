@@ -121,8 +121,34 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("walkPlayerToTriggerWhenFar"), "Far trigger clicks should walk the player toward the trigger instead of instantly navigating.");
         Assert.That(triggerText, Does.Contain("TryStartPlayerApproach"), "Door triggers should share one approach flow for doors and stairways.");
         Assert.That(triggerText, Does.Contain("GetClosestTriggerScreenPoint"), "Wide hitboxes should measure to the closest trigger edge, not only the center.");
+        Assert.That(triggerText, Does.Contain("TryFindBestApproachDestination"), "Door approaches should sample the trigger and choose the closest reachable floor point.");
+        Assert.That(triggerText, Does.Contain("CollectTriggerApproachSamples"), "Door approaches should consider trigger edges and bottom points, not a single screen point.");
         Assert.That(triggerText, Does.Contain("MovementStopped"), "Pending door approaches should clean up whether the player arrives or gets blocked.");
+        Assert.That(triggerText, Does.Contain("ResetStaticState"), "Door trigger static state should reset between Play Mode sessions, including when domain reload is disabled.");
+        Assert.That(triggerText, Does.Contain("LogApproachFailure"), "Failed door approaches should leave a useful console reason.");
+        Assert.That(triggerText, Does.Contain("UpdateFallbackPointerHoverAndClick"), "Door triggers need a RectTransform fallback when UI pointer enter/click events are blocked.");
+        Assert.That(triggerText, Does.Contain("ContainsScreenPoint"), "The fallback should test the authored door hitbox rect directly.");
+        Assert.That(triggerText, Does.Contain("activeTriggers"), "The fallback should scan only active room triggers.");
+        Assert.That(triggerText, Does.Contain("CharacterSelectionMenu.IsBlockingGameplayInput"), "The test character selector should not click doors behind the IMGUI menu.");
         Assert.That(playerText, Does.Contain("TrySetDestinationFromScreenPoint"), "Navigation triggers need a public way to ask the player to walk toward a screen-space hitbox.");
+        Assert.That(playerText, Does.Contain("TryEvaluateMovementAtScreenPoint"), "Cursor feedback and door approaches should use the same movement reachability query.");
+        Assert.That(playerText, Does.Contain("TryGetScreenPointFromLogicalPosition"), "Door approaches need to score clamped floor points in screen space.");
+        Assert.That(playerText, Does.Contain("IsPointerOverUi"), "Door UI clicks should not be overwritten by the floor click handler on the same frame.");
+        Assert.That(playerText, Does.Contain("CharacterSelectionMenu.IsBlockingGameplayInput"), "The test character selector should not click the floor behind the IMGUI menu.");
+        Assert.That(playerText, Does.Contain("WalkableInsetAttempts"), "Clamped approach targets should move just inside the walkable polygon instead of sitting exactly on the collider edge.");
+    }
+
+    [Test]
+    public void PlayerCursorShowsWalkability()
+    {
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
+
+        Assert.That(playerText, Does.Contain("UpdateWalkCursor"), "The player movement script should continuously describe what a floor click would do.");
+        Assert.That(playerText, Does.Contain("SetWalkHover"), "Valid and invalid floor clicks should drive the shared cursor controller.");
+        Assert.That(playerText, Does.Contain("movementQuery.WouldMove"), "The blocked walk cursor should appear when clicking would not move the player.");
+        Assert.That(cameraManagerText, Does.Contain("CreateWalkCursor"), "The cursor controller should generate a walk cursor without needing imported art.");
+        Assert.That(cameraManagerText, Does.Contain("Cursor_WalkBlocked"), "Invalid movement should show a distinct blocked-walk cursor.");
     }
 
     [Test]

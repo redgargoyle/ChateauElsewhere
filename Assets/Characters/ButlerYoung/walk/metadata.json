@@ -1,0 +1,824 @@
+{
+  "source": "Assets/Art/SpriteSheets/butler_young_walk_sheet.png",
+  "background": "checker",
+  "sheet_size": [
+    1254,
+    1254
+  ],
+  "layout": {
+    "mode": "components",
+    "rows": 4,
+    "cols": 4,
+    "component_count": 16,
+    "min_component_area": 100,
+    "component_pad": 2,
+    "note": "Sprites were detected as connected transparent-background components, then sorted into rows and columns."
+  },
+  "anchor_mode": "cell-bottom-center",
+  "manual_anchor": null,
+  "alpha_threshold": 8,
+  "aligned_canvas_size": [
+    166,
+    297
+  ],
+  "aligned_anchor_from_top_left": [
+    83.0,
+    297.0
+  ],
+  "unity_normalized_pivot": [
+    0.5,
+    0.0
+  ],
+  "notes": [
+    "Use files in aligned/ for animation when you want transparent frames that stay registered.",
+    "All aligned frames share one canvas size and one root anchor.",
+    "The full_cells/ frames preserve source crops for debugging.",
+    "The trimmed/ frames are only safe by themselves if your runtime also uses the offsets in this metadata."
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "row": 0,
+      "col": 0,
+      "name": "butler_young_walk_01_r01_c01.png",
+      "source_rect": [
+        188,
+        14,
+        282,
+        309
+      ],
+      "component_bbox_in_source": [
+        190,
+        16,
+        280,
+        307
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        92,
+        293
+      ],
+      "source_anchor_in_full_cell": [
+        47.0,
+        295.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_01_r01_c01.png",
+      "full_cell_path": "full_cells/butler_young_walk_01_r01_c01.png",
+      "trimmed_path": "trimmed/butler_young_walk_01_r01_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        94,
+        295
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 1,
+      "row": 0,
+      "col": 1,
+      "name": "butler_young_walk_02_r01_c02.png",
+      "source_rect": [
+        448,
+        15,
+        566,
+        310
+      ],
+      "component_bbox_in_source": [
+        450,
+        17,
+        564,
+        308
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        116,
+        293
+      ],
+      "source_anchor_in_full_cell": [
+        59.0,
+        295.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_02_r01_c02.png",
+      "full_cell_path": "full_cells/butler_young_walk_02_r01_c02.png",
+      "trimmed_path": "trimmed/butler_young_walk_02_r01_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        118,
+        295
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 2,
+      "row": 0,
+      "col": 2,
+      "name": "butler_young_walk_03_r01_c03.png",
+      "source_rect": [
+        693,
+        15,
+        820,
+        309
+      ],
+      "component_bbox_in_source": [
+        695,
+        17,
+        818,
+        307
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        125,
+        292
+      ],
+      "source_anchor_in_full_cell": [
+        63.5,
+        294.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_03_r01_c03.png",
+      "full_cell_path": "full_cells/butler_young_walk_03_r01_c03.png",
+      "trimmed_path": "trimmed/butler_young_walk_03_r01_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        127,
+        294
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "col": 3,
+      "name": "butler_young_walk_04_r01_c04.png",
+      "source_rect": [
+        949,
+        15,
+        1074,
+        309
+      ],
+      "component_bbox_in_source": [
+        951,
+        17,
+        1072,
+        307
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        123,
+        292
+      ],
+      "source_anchor_in_full_cell": [
+        62.5,
+        294.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_04_r01_c04.png",
+      "full_cell_path": "full_cells/butler_young_walk_04_r01_c04.png",
+      "trimmed_path": "trimmed/butler_young_walk_04_r01_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        125,
+        294
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 4,
+      "row": 1,
+      "col": 0,
+      "name": "butler_young_walk_05_r02_c01.png",
+      "source_rect": [
+        202,
+        322,
+        278,
+        613
+      ],
+      "component_bbox_in_source": [
+        204,
+        324,
+        276,
+        611
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        74,
+        289
+      ],
+      "source_anchor_in_full_cell": [
+        38.0,
+        291.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_05_r02_c01.png",
+      "full_cell_path": "full_cells/butler_young_walk_05_r02_c01.png",
+      "trimmed_path": "trimmed/butler_young_walk_05_r02_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        76,
+        291
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 5,
+      "row": 1,
+      "col": 1,
+      "name": "butler_young_walk_06_r02_c02.png",
+      "source_rect": [
+        430,
+        323,
+        580,
+        610
+      ],
+      "component_bbox_in_source": [
+        432,
+        325,
+        578,
+        608
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        148,
+        285
+      ],
+      "source_anchor_in_full_cell": [
+        75.0,
+        287.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_06_r02_c02.png",
+      "full_cell_path": "full_cells/butler_young_walk_06_r02_c02.png",
+      "trimmed_path": "trimmed/butler_young_walk_06_r02_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        150,
+        287
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 6,
+      "row": 1,
+      "col": 2,
+      "name": "butler_young_walk_07_r02_c03.png",
+      "source_rect": [
+        666,
+        323,
+        823,
+        610
+      ],
+      "component_bbox_in_source": [
+        668,
+        325,
+        821,
+        608
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        155,
+        285
+      ],
+      "source_anchor_in_full_cell": [
+        78.5,
+        287.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_07_r02_c03.png",
+      "full_cell_path": "full_cells/butler_young_walk_07_r02_c03.png",
+      "trimmed_path": "trimmed/butler_young_walk_07_r02_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        157,
+        287
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 7,
+      "row": 1,
+      "col": 3,
+      "name": "butler_young_walk_08_r02_c04.png",
+      "source_rect": [
+        937,
+        323,
+        1081,
+        610
+      ],
+      "component_bbox_in_source": [
+        939,
+        325,
+        1079,
+        608
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        142,
+        285
+      ],
+      "source_anchor_in_full_cell": [
+        72.0,
+        287.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_08_r02_c04.png",
+      "full_cell_path": "full_cells/butler_young_walk_08_r02_c04.png",
+      "trimmed_path": "trimmed/butler_young_walk_08_r02_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        144,
+        287
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 8,
+      "row": 2,
+      "col": 0,
+      "name": "butler_young_walk_09_r03_c01.png",
+      "source_rect": [
+        198,
+        630,
+        271,
+        917
+      ],
+      "component_bbox_in_source": [
+        200,
+        632,
+        269,
+        915
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        71,
+        285
+      ],
+      "source_anchor_in_full_cell": [
+        36.5,
+        287.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_09_r03_c01.png",
+      "full_cell_path": "full_cells/butler_young_walk_09_r03_c01.png",
+      "trimmed_path": "trimmed/butler_young_walk_09_r03_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        73,
+        287
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 9,
+      "row": 2,
+      "col": 1,
+      "name": "butler_young_walk_10_r03_c02.png",
+      "source_rect": [
+        426,
+        632,
+        582,
+        913
+      ],
+      "component_bbox_in_source": [
+        428,
+        634,
+        580,
+        911
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        154,
+        279
+      ],
+      "source_anchor_in_full_cell": [
+        78.0,
+        281.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_10_r03_c02.png",
+      "full_cell_path": "full_cells/butler_young_walk_10_r03_c02.png",
+      "trimmed_path": "trimmed/butler_young_walk_10_r03_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        156,
+        281
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 10,
+      "row": 2,
+      "col": 2,
+      "name": "butler_young_walk_11_r03_c03.png",
+      "source_rect": [
+        675,
+        632,
+        836,
+        913
+      ],
+      "component_bbox_in_source": [
+        677,
+        634,
+        834,
+        911
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        159,
+        279
+      ],
+      "source_anchor_in_full_cell": [
+        80.5,
+        281.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_11_r03_c03.png",
+      "full_cell_path": "full_cells/butler_young_walk_11_r03_c03.png",
+      "trimmed_path": "trimmed/butler_young_walk_11_r03_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        161,
+        281
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 11,
+      "row": 2,
+      "col": 3,
+      "name": "butler_young_walk_12_r03_c04.png",
+      "source_rect": [
+        929,
+        632,
+        1079,
+        914
+      ],
+      "component_bbox_in_source": [
+        931,
+        634,
+        1077,
+        912
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        148,
+        280
+      ],
+      "source_anchor_in_full_cell": [
+        75.0,
+        282.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_12_r03_c04.png",
+      "full_cell_path": "full_cells/butler_young_walk_12_r03_c04.png",
+      "trimmed_path": "trimmed/butler_young_walk_12_r03_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        150,
+        282
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 12,
+      "row": 3,
+      "col": 0,
+      "name": "butler_young_walk_13_r04_c01.png",
+      "source_rect": [
+        191,
+        928,
+        280,
+        1215
+      ],
+      "component_bbox_in_source": [
+        193,
+        930,
+        278,
+        1213
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        87,
+        285
+      ],
+      "source_anchor_in_full_cell": [
+        44.5,
+        287.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_13_r04_c01.png",
+      "full_cell_path": "full_cells/butler_young_walk_13_r04_c01.png",
+      "trimmed_path": "trimmed/butler_young_walk_13_r04_c01.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        89,
+        287
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 13,
+      "row": 3,
+      "col": 1,
+      "name": "butler_young_walk_14_r04_c02.png",
+      "source_rect": [
+        445,
+        927,
+        556,
+        1219
+      ],
+      "component_bbox_in_source": [
+        447,
+        929,
+        554,
+        1217
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        109,
+        290
+      ],
+      "source_anchor_in_full_cell": [
+        55.5,
+        292.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_14_r04_c02.png",
+      "full_cell_path": "full_cells/butler_young_walk_14_r04_c02.png",
+      "trimmed_path": "trimmed/butler_young_walk_14_r04_c02.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        111,
+        292
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 14,
+      "row": 3,
+      "col": 2,
+      "name": "butler_young_walk_15_r04_c03.png",
+      "source_rect": [
+        688,
+        928,
+        809,
+        1219
+      ],
+      "component_bbox_in_source": [
+        690,
+        930,
+        807,
+        1217
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        119,
+        289
+      ],
+      "source_anchor_in_full_cell": [
+        60.5,
+        291.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_15_r04_c03.png",
+      "full_cell_path": "full_cells/butler_young_walk_15_r04_c03.png",
+      "trimmed_path": "trimmed/butler_young_walk_15_r04_c03.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        121,
+        291
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "index": 15,
+      "row": 3,
+      "col": 3,
+      "name": "butler_young_walk_16_r04_c04.png",
+      "source_rect": [
+        942,
+        928,
+        1057,
+        1219
+      ],
+      "component_bbox_in_source": [
+        944,
+        930,
+        1055,
+        1217
+      ],
+      "content_bbox_in_full_cell": [
+        2,
+        2,
+        113,
+        289
+      ],
+      "source_anchor_in_full_cell": [
+        57.5,
+        291.0
+      ],
+      "aligned_path": "aligned/butler_young_walk_16_r04_c04.png",
+      "full_cell_path": "full_cells/butler_young_walk_16_r04_c04.png",
+      "trimmed_path": "trimmed/butler_young_walk_16_r04_c04.png",
+      "trimmed_bbox_in_full_cell": [
+        0,
+        0,
+        115,
+        291
+      ],
+      "aligned_canvas_size": [
+        166,
+        297
+      ],
+      "aligned_anchor_from_top_left": [
+        83.0,
+        297.0
+      ],
+      "unity_normalized_pivot": [
+        0.5,
+        0.0
+      ]
+    }
+  ]
+}

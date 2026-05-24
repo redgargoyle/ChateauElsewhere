@@ -10,429 +10,383 @@ using UnityEditor;
 [RequireComponent(typeof(RectTransform))]
 public sealed class RoomPersonWalker2D : MonoBehaviour
 {
-    private const float FullCycle = 6.28318530718f;
+	private const float FullCycle = 6.28318530718f;
 
-    [SerializeField] private RawImage targetImage;
-    [SerializeField] private Texture2D spriteAtlas;
-    [SerializeField] [Min(1)] private int columns = 4;
-    [SerializeField] [Min(1)] private int rows = 2;
-    [SerializeField] [Min(0)] private int firstFrame;
-    [SerializeField] [Min(1)] private int frameCount = 8;
-    [SerializeField] [Min(0.01f)] private float secondsPerFrame = 0.12f;
-    [SerializeField] private bool previewInEditMode = true;
-    [SerializeField] private bool previewPathInEditMode;
-    [SerializeField] private bool animateFrames = true;
-    [SerializeField] private bool snapToWholePixels;
-    [Header("Motion Polish")]
-    [SerializeField] private bool addStepMotion = true;
-    [SerializeField] [Min(1f)] private float pixelsPerWalkCycle = 72f;
-    [SerializeField] [Min(0f)] private float walkBobPixels = 2.6f;
-    [SerializeField] [Min(0f)] private float walkSwayPixels = 0.9f;
-    [SerializeField] private bool animateIdlePose = true;
-    [SerializeField] [Min(0f)] private float idleBobPixels = 0.9f;
-    [SerializeField] [Min(0f)] private float idleSwayPixels = 0.35f;
-    [SerializeField] [Min(0.1f)] private float idleCycleSeconds = 2.4f;
-    [SerializeField] [Min(0f)] private float pointPauseSeconds = 0f;
-    [SerializeField] [Min(0f)] private float endpointPauseSeconds = 0.65f;
-    [SerializeField] private bool mirrorWhenWalkingLeft = true;
-    [SerializeField] private Vector2[] pathPoints = new Vector2[0];
-    [SerializeField] [Min(1f)] private float pixelsPerSecond = 95f;
-    [SerializeField] private bool loopPath = true;
-    [SerializeField] private bool pingPongPath;
-    [Header("Painted-Room Depth")]
-    [SerializeField] private float nearY = -360f;
-    [SerializeField] private float farY = 150f;
-    [SerializeField] [Min(0.01f)] private float nearScale = 1f;
-    [SerializeField] [Min(0.01f)] private float farScale = 0.42f;
-    [SerializeField] private Color nearTint = new Color(0.92f, 0.88f, 0.78f, 0.93f);
-    [SerializeField] private Color farTint = new Color(0.70f, 0.72f, 0.66f, 0.72f);
-    [SerializeField] private bool disableRaycastTarget = true;
+	[SerializeField] private Animator animator;
+	[SerializeField] private Graphic targetGraphic;
+	[SerializeField] private bool previewInEditMode = true;
+	[SerializeField] private bool previewPathInEditMode;
+	[SerializeField] private bool snapToWholePixels;
+	[SerializeField] [Min(0f)] private float animationSpeed = 40f;
+	[SerializeField] [Range(0.5f, 1f)] private float horizontalDirectionThreshold = 0.58f;
+	[Header("Motion Polish")]
+	[SerializeField] private bool addStepMotion = true;
+	[SerializeField] [Min(1f)] private float pixelsPerWalkCycle = 72f;
+	[SerializeField] [Min(0f)] private float walkBobPixels = 2.6f;
+	[SerializeField] [Min(0f)] private float walkSwayPixels = 0.9f;
+	[SerializeField] private bool animateIdlePose = true;
+	[SerializeField] [Min(0f)] private float idleBobPixels = 0.9f;
+	[SerializeField] [Min(0f)] private float idleSwayPixels = 0.35f;
+	[SerializeField] [Min(0.1f)] private float idleCycleSeconds = 2.4f;
+	[SerializeField] [Min(0f)] private float pointPauseSeconds = 0f;
+	[SerializeField] [Min(0f)] private float endpointPauseSeconds = 0.65f;
+	[SerializeField] private bool mirrorWhenWalkingLeft = true;
+	[SerializeField] private Vector2[] pathPoints = new Vector2[0];
+	[SerializeField] [Min(1f)] private float pixelsPerSecond = 95f;
+	[SerializeField] private bool loopPath = true;
+	[SerializeField] private bool pingPongPath;
+	[Header("Painted-Room Depth")]
+	[SerializeField] private float nearY = -360f;
+	[SerializeField] private float farY = 150f;
+	[SerializeField] [Min(0.01f)] private float nearScale = 1f;
+	[SerializeField] [Min(0.01f)] private float farScale = 0.42f;
+	[SerializeField] private Color nearTint = new Color(0.92f, 0.88f, 0.78f, 0.93f);
+	[SerializeField] private Color farTint = new Color(0.70f, 0.72f, 0.66f, 0.72f);
+	[SerializeField] private bool disableRaycastTarget = true;
 
-    private RectTransform rectTransform;
-    private int frameOffset;
-    private float frameTimer;
-    private int targetPathIndex = 1;
-    private int pathDirection = 1;
-    private Vector2 currentPosition;
-    private int facingSign = 1;
-    private float walkCycle;
-    private float idleCycle;
-    private float pauseTimer;
-    private bool movingAlongPath;
+	private RectTransform rectTransform;
+	private CharacterAnimatorDriver.ParameterCache animatorParameters;
+	private int targetPathIndex = 1;
+	private int pathDirection = 1;
+	private Vector2 currentPosition;
+	private CharacterWalkDirection walkDirection = CharacterWalkDirection.Right;
+	private int facingSign = 1;
+	private float walkCycle;
+	private float idleCycle;
+	private float pauseTimer;
+	private bool movingAlongPath;
 
 #if UNITY_EDITOR
-    private double lastEditorTime;
+	private double lastEditorTime;
 #endif
 
-    private void Reset()
-    {
-        ResolveReferences();
-        currentPosition = rectTransform != null ? rectTransform.anchoredPosition : Vector2.zero;
-    }
+	private void Reset()
+	{
+		ResolveReferences();
+		currentPosition = rectTransform != null ? rectTransform.anchoredPosition : Vector2.zero;
+	}
 
-    private void Awake()
-    {
-        ResolveReferences();
-        ResetPathPositionIfNeeded();
-        ApplyVisuals();
-    }
+	private void Awake()
+	{
+		ResolveReferences();
+		CacheAnimatorParameters();
+		ResetPathPositionIfNeeded();
+		ApplyVisuals();
+	}
 
-    private void OnEnable()
-    {
-        ResolveReferences();
-        ResetPathPositionIfNeeded();
-        ApplyVisuals();
+	private void OnEnable()
+	{
+		ResolveReferences();
+		CacheAnimatorParameters();
+		ResetPathPositionIfNeeded();
+		ApplyVisuals();
 
 #if UNITY_EDITOR
-        EditorApplication.update -= EditorTick;
-        EditorApplication.update += EditorTick;
-        lastEditorTime = EditorApplication.timeSinceStartup;
+		EditorApplication.update -= EditorTick;
+		EditorApplication.update += EditorTick;
+		lastEditorTime = EditorApplication.timeSinceStartup;
 #endif
-    }
+	}
 
-    private void OnDisable()
-    {
+	private void OnDisable()
+	{
 #if UNITY_EDITOR
-        EditorApplication.update -= EditorTick;
+		EditorApplication.update -= EditorTick;
 #endif
-    }
+	}
 
-    private void OnValidate()
-    {
-        columns = Mathf.Max(1, columns);
-        rows = Mathf.Max(1, rows);
-        frameCount = Mathf.Max(1, frameCount);
-        secondsPerFrame = Mathf.Max(0.01f, secondsPerFrame);
-        pixelsPerSecond = Mathf.Max(1f, pixelsPerSecond);
-        pixelsPerWalkCycle = Mathf.Max(1f, pixelsPerWalkCycle);
-        walkBobPixels = Mathf.Max(0f, walkBobPixels);
-        walkSwayPixels = Mathf.Max(0f, walkSwayPixels);
-        idleBobPixels = Mathf.Max(0f, idleBobPixels);
-        idleSwayPixels = Mathf.Max(0f, idleSwayPixels);
-        idleCycleSeconds = Mathf.Max(0.1f, idleCycleSeconds);
-        pointPauseSeconds = Mathf.Max(0f, pointPauseSeconds);
-        endpointPauseSeconds = Mathf.Max(0f, endpointPauseSeconds);
-        nearScale = Mathf.Max(0.01f, nearScale);
-        farScale = Mathf.Max(0.01f, farScale);
-        ResolveReferences();
-        ApplyVisuals();
-    }
+	private void OnValidate()
+	{
+		animationSpeed = Mathf.Max(0f, animationSpeed);
+		horizontalDirectionThreshold = Mathf.Clamp(horizontalDirectionThreshold, 0.5f, 1f);
+		pixelsPerSecond = Mathf.Max(1f, pixelsPerSecond);
+		pixelsPerWalkCycle = Mathf.Max(1f, pixelsPerWalkCycle);
+		walkBobPixels = Mathf.Max(0f, walkBobPixels);
+		walkSwayPixels = Mathf.Max(0f, walkSwayPixels);
+		idleBobPixels = Mathf.Max(0f, idleBobPixels);
+		idleSwayPixels = Mathf.Max(0f, idleSwayPixels);
+		idleCycleSeconds = Mathf.Max(0.1f, idleCycleSeconds);
+		pointPauseSeconds = Mathf.Max(0f, pointPauseSeconds);
+		endpointPauseSeconds = Mathf.Max(0f, endpointPauseSeconds);
+		nearScale = Mathf.Max(0.01f, nearScale);
+		farScale = Mathf.Max(0.01f, farScale);
+		ResolveReferences();
+		CacheAnimatorParameters();
+		ApplyVisuals();
+	}
 
-    private void Update()
-    {
-        if (!Application.isPlaying)
-        {
-            return;
-        }
+	private void Update()
+	{
+		if (!Application.isPlaying)
+			return;
 
-        Tick(Time.deltaTime, true);
-    }
+		Tick(Time.deltaTime, true);
+	}
 
-    private void ResolveReferences()
-    {
-        if (rectTransform == null)
-        {
-            rectTransform = transform as RectTransform;
-        }
+	private void ResolveReferences()
+	{
+		if (rectTransform == null)
+			rectTransform = transform as RectTransform;
 
-        if (targetImage == null)
-        {
-            targetImage = GetComponent<RawImage>();
-        }
-    }
+		if (animator == null)
+			animator = GetComponent<Animator>();
 
-    private void ResetPathPositionIfNeeded()
-    {
-        if (pathPoints == null || pathPoints.Length == 0)
-        {
-            currentPosition = rectTransform != null ? rectTransform.anchoredPosition : Vector2.zero;
-            return;
-        }
+		if (targetGraphic == null)
+			targetGraphic = GetComponent<Graphic>();
+	}
 
-        if (currentPosition == Vector2.zero || rectTransform == null)
-        {
-            currentPosition = pathPoints[0];
-        }
+	private void CacheAnimatorParameters()
+	{
+		animatorParameters = CharacterAnimatorDriver.ParameterCache.FromAnimator(animator);
+	}
 
-        if (rectTransform != null)
-        {
-            rectTransform.anchoredPosition = currentPosition;
-        }
+	private void ResetPathPositionIfNeeded()
+	{
+		if (pathPoints == null || pathPoints.Length == 0)
+		{
+			currentPosition = rectTransform != null ? rectTransform.anchoredPosition : Vector2.zero;
+			return;
+		}
 
-        targetPathIndex = Mathf.Clamp(targetPathIndex, 0, pathPoints.Length - 1);
+		if (currentPosition == Vector2.zero || rectTransform == null)
+			currentPosition = pathPoints[0];
 
-        if (pathPoints.Length > 1 && targetPathIndex == 0)
-        {
-            targetPathIndex = 1;
-        }
-    }
+		if (rectTransform != null)
+			rectTransform.anchoredPosition = currentPosition;
 
-    private void Tick(float deltaTime, bool moveAlongPath)
-    {
-        float safeDeltaTime = Mathf.Max(0f, deltaTime);
-        float distanceMoved = 0f;
+		targetPathIndex = Mathf.Clamp(targetPathIndex, 0, pathPoints.Length - 1);
 
-        if (animateFrames)
-        {
-            AdvanceFrame(safeDeltaTime);
-        }
+		if (pathPoints.Length > 1 && targetPathIndex == 0)
+			targetPathIndex = 1;
+	}
 
-        if (moveAlongPath)
-        {
-            distanceMoved = AdvanceAlongPath(safeDeltaTime);
-        }
+	private void Tick(float deltaTime, bool moveAlongPath)
+	{
+		float safeDeltaTime = Mathf.Max(0f, deltaTime);
+		Vector2 previousPosition = currentPosition;
+		float distanceMoved = 0f;
 
-        AdvanceMotionCycles(safeDeltaTime, distanceMoved);
-        ApplyVisuals();
-    }
+		if (moveAlongPath)
+			distanceMoved = AdvanceAlongPath(safeDeltaTime);
 
-    private void AdvanceFrame(float deltaTime)
-    {
-        frameTimer += deltaTime;
+		Vector2 movement = currentPosition - previousPosition;
+		UpdateWalkDirection(movement);
+		AdvanceMotionCycles(safeDeltaTime, distanceMoved);
+		ApplyVisuals();
+	}
 
-        while (frameTimer >= secondsPerFrame)
-        {
-            frameTimer -= secondsPerFrame;
-            frameOffset = (frameOffset + 1) % Mathf.Max(1, frameCount);
-        }
-    }
+	private float AdvanceAlongPath(float deltaTime)
+	{
+		if (pathPoints == null || pathPoints.Length < 2 || rectTransform == null)
+		{
+			movingAlongPath = false;
+			return 0f;
+		}
 
-    private float AdvanceAlongPath(float deltaTime)
-    {
-        if (pathPoints == null || pathPoints.Length < 2 || rectTransform == null)
-        {
-            movingAlongPath = false;
-            return 0f;
-        }
+		if (pauseTimer > 0f)
+		{
+			pauseTimer = Mathf.Max(0f, pauseTimer - deltaTime);
+			movingAlongPath = false;
+			return 0f;
+		}
 
-        if (pauseTimer > 0f)
-        {
-            pauseTimer = Mathf.Max(0f, pauseTimer - deltaTime);
-            movingAlongPath = false;
-            return 0f;
-        }
+		float remainingDistance = pixelsPerSecond * deltaTime;
+		float movedDistance = 0f;
 
-        float remainingDistance = pixelsPerSecond * deltaTime;
-        float movedDistance = 0f;
+		while (remainingDistance > 0f)
+		{
+			int arrivedPointIndex = Mathf.Clamp(targetPathIndex, 0, pathPoints.Length - 1);
+			Vector2 target = pathPoints[arrivedPointIndex];
+			Vector2 toTarget = target - currentPosition;
+			float distanceToTarget = toTarget.magnitude;
 
-        while (remainingDistance > 0f)
-        {
-            int arrivedPointIndex = Mathf.Clamp(targetPathIndex, 0, pathPoints.Length - 1);
-            Vector2 target = pathPoints[arrivedPointIndex];
-            Vector2 toTarget = target - currentPosition;
-            float distanceToTarget = toTarget.magnitude;
+			if (distanceToTarget <= 0.01f)
+			{
+				bool shouldPause = BeginPauseForPoint(arrivedPointIndex);
+				AdvancePathTarget();
+				if (shouldPause)
+					break;
 
-            if (distanceToTarget <= 0.01f)
-            {
-                bool shouldPause = BeginPauseForPoint(arrivedPointIndex);
-                AdvancePathTarget();
-                if (shouldPause)
-                {
-                    break;
-                }
+				continue;
+			}
 
-                continue;
-            }
+			float stepDistance = Mathf.Min(remainingDistance, distanceToTarget);
+			Vector2 step = toTarget / distanceToTarget * stepDistance;
+			currentPosition += step;
+			remainingDistance -= stepDistance;
+			movedDistance += stepDistance;
 
-            if (Mathf.Abs(toTarget.x) > 0.01f)
-            {
-                facingSign = toTarget.x < 0f && mirrorWhenWalkingLeft ? -1 : 1;
-            }
+			if (stepDistance >= distanceToTarget - 0.01f)
+			{
+				bool shouldPause = BeginPauseForPoint(arrivedPointIndex);
+				AdvancePathTarget();
+				if (shouldPause)
+					break;
+			}
+		}
 
-            float stepDistance = Mathf.Min(remainingDistance, distanceToTarget);
-            currentPosition += toTarget / distanceToTarget * stepDistance;
-            remainingDistance -= stepDistance;
-            movedDistance += stepDistance;
+		movingAlongPath = movedDistance > 0.001f;
+		return movedDistance;
+	}
 
-            if (stepDistance >= distanceToTarget - 0.01f)
-            {
-                bool shouldPause = BeginPauseForPoint(arrivedPointIndex);
-                AdvancePathTarget();
-                if (shouldPause)
-                {
-                    break;
-                }
-            }
-        }
+	private void AdvancePathTarget()
+	{
+		if (pathPoints == null || pathPoints.Length < 2)
+			return;
 
-        movingAlongPath = movedDistance > 0.001f;
-        return movedDistance;
-    }
+		if (pingPongPath)
+		{
+			targetPathIndex += pathDirection;
 
-    private void AdvancePathTarget()
-    {
-        if (pathPoints == null || pathPoints.Length < 2)
-        {
-            return;
-        }
+			if (targetPathIndex >= pathPoints.Length)
+			{
+				pathDirection = -1;
+				targetPathIndex = Mathf.Max(0, pathPoints.Length - 2);
+			}
+			else if (targetPathIndex < 0)
+			{
+				pathDirection = 1;
+				targetPathIndex = Mathf.Min(1, pathPoints.Length - 1);
+			}
 
-        if (pingPongPath)
-        {
-            targetPathIndex += pathDirection;
+			return;
+		}
 
-            if (targetPathIndex >= pathPoints.Length)
-            {
-                pathDirection = -1;
-                targetPathIndex = Mathf.Max(0, pathPoints.Length - 2);
-            }
-            else if (targetPathIndex < 0)
-            {
-                pathDirection = 1;
-                targetPathIndex = Mathf.Min(1, pathPoints.Length - 1);
-            }
+		targetPathIndex++;
 
-            return;
-        }
+		if (targetPathIndex >= pathPoints.Length)
+			targetPathIndex = loopPath ? 0 : pathPoints.Length - 1;
+	}
 
-        targetPathIndex++;
+	private bool BeginPauseForPoint(int pointIndex)
+	{
+		float pauseSeconds = IsEndpoint(pointIndex) ? endpointPauseSeconds : pointPauseSeconds;
+		if (pauseSeconds <= 0f)
+			return false;
 
-        if (targetPathIndex >= pathPoints.Length)
-        {
-            targetPathIndex = loopPath ? 0 : pathPoints.Length - 1;
-        }
-    }
+		pauseTimer = pauseSeconds;
+		return true;
+	}
 
-    private bool BeginPauseForPoint(int pointIndex)
-    {
-        float pauseSeconds = IsEndpoint(pointIndex) ? endpointPauseSeconds : pointPauseSeconds;
-        if (pauseSeconds <= 0f)
-        {
-            return false;
-        }
+	private bool IsEndpoint(int pointIndex)
+	{
+		return pathPoints != null &&
+			pathPoints.Length > 1 &&
+			(pointIndex <= 0 || pointIndex >= pathPoints.Length - 1);
+	}
 
-        pauseTimer = pauseSeconds;
-        return true;
-    }
+	private void UpdateWalkDirection(Vector2 movement)
+	{
+		if (movement.sqrMagnitude <= 0.0001f)
+			return;
 
-    private bool IsEndpoint(int pointIndex)
-    {
-        return pathPoints != null &&
-            pathPoints.Length > 1 &&
-            (pointIndex <= 0 || pointIndex >= pathPoints.Length - 1);
-    }
+		walkDirection = CharacterAnimatorDriver.DetermineDirection(
+			movement,
+			walkDirection,
+			horizontalDirectionThreshold);
 
-    private void AdvanceMotionCycles(float deltaTime, float distanceMoved)
-    {
-        if (distanceMoved > 0.001f)
-        {
-            walkCycle = Mathf.Repeat(
-                walkCycle + (distanceMoved / Mathf.Max(1f, pixelsPerWalkCycle)) * FullCycle,
-                FullCycle);
-        }
+		if (walkDirection == CharacterWalkDirection.Up || walkDirection == CharacterWalkDirection.Down)
+			facingSign = 1;
+		else if (movement.x < -0.01f && mirrorWhenWalkingLeft)
+			facingSign = -1;
+		else if (movement.x > 0.01f)
+			facingSign = 1;
+	}
 
-        idleCycle = Mathf.Repeat(
-            idleCycle + (deltaTime / Mathf.Max(0.1f, idleCycleSeconds)) * FullCycle,
-            FullCycle);
-    }
+	private void AdvanceMotionCycles(float deltaTime, float distanceMoved)
+	{
+		if (distanceMoved > 0.001f)
+		{
+			walkCycle = Mathf.Repeat(
+				walkCycle + (distanceMoved / Mathf.Max(1f, pixelsPerWalkCycle)) * FullCycle,
+				FullCycle);
+		}
 
-    private void ApplyVisuals()
-    {
-        ResolveReferences();
+		idleCycle = Mathf.Repeat(
+			idleCycle + (deltaTime / Mathf.Max(0.1f, idleCycleSeconds)) * FullCycle,
+			FullCycle);
+	}
 
-        if (targetImage != null)
-        {
-            targetImage.texture = spriteAtlas;
-            targetImage.uvRect = GetFrameUvRect();
-            targetImage.color = GetDepthTint();
+	private void ApplyVisuals()
+	{
+		ResolveReferences();
 
-            if (disableRaycastTarget)
-            {
-                targetImage.raycastTarget = false;
-            }
-        }
+		if (targetGraphic != null)
+		{
+			targetGraphic.color = GetDepthTint();
 
-        if (rectTransform != null)
-        {
-            rectTransform.anchoredPosition = GetRenderedPosition(currentPosition + GetMotionOffset());
+			if (disableRaycastTarget)
+				targetGraphic.raycastTarget = false;
+		}
 
-            Vector3 scale = Vector3.one * GetDepthScale();
-            scale.x *= facingSign;
-            rectTransform.localScale = scale;
-        }
-    }
+		if (rectTransform != null)
+		{
+			rectTransform.anchoredPosition = GetRenderedPosition(currentPosition + GetMotionOffset());
 
-    private Vector2 GetMotionOffset()
-    {
-        if (!Application.isPlaying)
-        {
-            return Vector2.zero;
-        }
+			Vector3 scale = Vector3.one * GetDepthScale();
+			scale.x *= facingSign;
+			rectTransform.localScale = scale;
+		}
 
-        if (movingAlongPath && addStepMotion)
-        {
-            float stride = Mathf.Sin(walkCycle);
-            return new Vector2(
-                stride * walkSwayPixels * facingSign,
-                Mathf.Abs(stride) * walkBobPixels);
-        }
+		animatorParameters.ApplyMovement(animator, movingAlongPath, walkDirection, animationSpeed);
+	}
 
-        if (!animateIdlePose)
-        {
-            return Vector2.zero;
-        }
+	private Vector2 GetMotionOffset()
+	{
+		if (!Application.isPlaying)
+			return Vector2.zero;
 
-        return new Vector2(
-            Mathf.Sin(idleCycle * 0.7f) * idleSwayPixels,
-            Mathf.Sin(idleCycle) * idleBobPixels);
-    }
+		if (movingAlongPath && addStepMotion)
+		{
+			float stride = Mathf.Sin(walkCycle);
+			return new Vector2(
+				stride * walkSwayPixels * facingSign,
+				Mathf.Abs(stride) * walkBobPixels);
+		}
 
-    private Rect GetFrameUvRect()
-    {
-        int totalFrames = Mathf.Max(1, columns * rows);
-        int frame = (firstFrame + frameOffset) % totalFrames;
-        int column = frame % columns;
-        int rowFromTop = frame / columns;
-        float width = 1f / columns;
-        float height = 1f / rows;
+		if (!animateIdlePose)
+			return Vector2.zero;
 
-        return new Rect(column * width, 1f - ((rowFromTop + 1) * height), width, height);
-    }
+		return new Vector2(
+			Mathf.Sin(idleCycle * 0.7f) * idleSwayPixels,
+			Mathf.Sin(idleCycle) * idleBobPixels);
+	}
 
-    private float GetDepth01()
-    {
-        return Mathf.Clamp01(Mathf.InverseLerp(nearY, farY, currentPosition.y));
-    }
+	private float GetDepth01()
+	{
+		return Mathf.Clamp01(Mathf.InverseLerp(nearY, farY, currentPosition.y));
+	}
 
-    private float GetDepthScale()
-    {
-        return Mathf.Lerp(nearScale, farScale, GetDepth01());
-    }
+	private float GetDepthScale()
+	{
+		return Mathf.Lerp(nearScale, farScale, GetDepth01());
+	}
 
-    private Color GetDepthTint()
-    {
-        return Color.Lerp(nearTint, farTint, GetDepth01());
-    }
+	private Color GetDepthTint()
+	{
+		return Color.Lerp(nearTint, farTint, GetDepth01());
+	}
 
-    private Vector2 GetRenderedPosition(Vector2 position)
-    {
-        if (!snapToWholePixels)
-        {
-            return position;
-        }
+	private Vector2 GetRenderedPosition(Vector2 position)
+	{
+		if (!snapToWholePixels)
+			return position;
 
-        return new Vector2(Mathf.Round(position.x), Mathf.Round(position.y));
-    }
+		return new Vector2(Mathf.Round(position.x), Mathf.Round(position.y));
+	}
 
 #if UNITY_EDITOR
-    private void EditorTick()
-    {
-        if (Application.isPlaying || this == null)
-        {
-            return;
-        }
+	private void EditorTick()
+	{
+		if (Application.isPlaying || this == null)
+			return;
 
-        double now = EditorApplication.timeSinceStartup;
-        float deltaTime = Mathf.Clamp((float)(now - lastEditorTime), 0f, 0.2f);
-        lastEditorTime = now;
+		double now = EditorApplication.timeSinceStartup;
+		float deltaTime = Mathf.Clamp((float)(now - lastEditorTime), 0f, 0.2f);
+		lastEditorTime = now;
 
-        if (previewInEditMode)
-        {
-            Tick(deltaTime, previewPathInEditMode);
-            SceneView.RepaintAll();
-            return;
-        }
-
-        ApplyVisuals();
-    }
+		if (previewInEditMode)
+			Tick(deltaTime, previewPathInEditMode);
+	}
 #endif
 }
