@@ -7,6 +7,11 @@ public class RoomLightingRegressionTests
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string ControllerPath = "Assets/Scripts/Lighting/RoomLightingController.cs";
     private const string OverlayPath = "Assets/Scripts/Lighting/RoomLightOverlay.cs";
+    private const string PresetScriptPath = "Assets/Scripts/Lighting/RoomLightingPreset.cs";
+    private const string BootstrapPath = "Assets/Scripts/UrpPostProcessingBootstrap.cs";
+    private const string NoPostLayerPath = "Assets/Scripts/Lighting/NoPostProcessRenderLayer.cs";
+    private const string BypassCameraPath = "Assets/Scripts/Lighting/PostProcessBypassCamera.cs";
+    private const string FlameToolPath = "Assets/Editor/FlameBloomSeparationTools.cs";
     private const string PresetPath = "Assets/Resources/Lighting/RoomLightingPreset.asset";
     private const string ReadmePath = "Assets/Scripts/Lighting/README.md";
 
@@ -15,6 +20,7 @@ public class RoomLightingRegressionTests
     {
         string controllerText = File.ReadAllText(ControllerPath);
         string overlayText = File.ReadAllText(OverlayPath);
+        string presetScriptText = File.ReadAllText(PresetScriptPath);
 
         Assert.That(controllerText, Does.Contain("[ExecuteAlways]"), "Lighting should work in Edit mode, not only when Play mode starts.");
         Assert.That(controllerText, Does.Contain("RoomContentGroup"), "Lighting should attach to the existing room roots.");
@@ -31,6 +37,32 @@ public class RoomLightingRegressionTests
         Assert.That(overlayText, Does.Contain("FireplaceSource"), "Fireplace sources should have a hotter animation distinct from the room spill.");
         Assert.That(overlayText, Does.Contain("GetSourceLightSprite"), "Fireplace sources should use a tighter generated sprite than soft room spills.");
         Assert.That(overlayText, Does.Contain("raycastTarget = false"), "Light overlays must never block room doors or interactables.");
+        Assert.That(overlayText, Does.Contain("CaptureAuthoringScale"), "Edit-mode light resizing should not be overwritten by flicker scale animation.");
+        Assert.That(overlayText, Does.Contain("if (!Application.isPlaying)"), "Transform scale animation should back off while artists resize scene lights in Edit mode.");
+        Assert.That(overlayText, Does.Contain("ColorUsage(false, true)"), "Room lights should allow HDR color values so bloom can react to source glows.");
+        Assert.That(presetScriptText, Does.Contain("ColorUsage(false, true)"), "Preset-authored room lights should also allow HDR color values.");
+    }
+
+    [Test]
+    public void FlameParticlesCanBypassGlobalBloomWhileRoomOverlaysDriveIt()
+    {
+        string bootstrapText = File.ReadAllText(BootstrapPath);
+        string layerText = File.ReadAllText(NoPostLayerPath);
+        string cameraText = File.ReadAllText(BypassCameraPath);
+        string toolText = File.ReadAllText(FlameToolPath);
+        string readmeText = File.ReadAllText(ReadmePath);
+
+        Assert.That(layerText, Does.Contain("NoPostProcessFlame"), "The flame particle should have a named layer that can be excluded from the post-processed camera.");
+        Assert.That(layerText, Does.Contain("GetComponentsInChildren<Transform>"), "The no-post-process layer must apply to nested particle objects.");
+        Assert.That(cameraText, Does.Contain("renderPostProcessing = false"), "The bypass camera must render without bloom/post-processing.");
+        Assert.That(cameraText, Does.Contain("CameraRenderType.Overlay"), "The bypass camera must be a stacked URP overlay camera so it cannot clear over the room render.");
+        Assert.That(cameraText, Does.Contain("cameraStack.Add(bypassCamera)"), "The bypass camera should render through the main camera stack.");
+        Assert.That(cameraText, Does.Contain("sourceCamera.cullingMask &= ~renderLayers.value"), "The main camera should not also render the no-post-process flame layer.");
+        Assert.That(bootstrapText, Does.Contain("PostProcessBypassCamera.EnsureForCamera"), "Runtime camera setup should survive scene loads.");
+        Assert.That(toolText, Does.Contain("Setup Selected Flame Bloom Separation"), "Artists should have a single menu action for separating flame particles from bloom drivers.");
+        Assert.That(toolText, Does.Contain("BloomDriver"), "The menu action should create a compact bloom driver overlay.");
+        Assert.That(toolText, Does.Contain("PaintedReflection"), "The menu action should create a broader painted reflection overlay.");
+        Assert.That(readmeText, Does.Contain("Flame Bloom Separation"), "The separation workflow should be documented for room-light tuning.");
     }
 
     [Test]

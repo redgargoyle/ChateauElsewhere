@@ -15,6 +15,19 @@ Hamza's fireplace idea works best as two separate overlays:
 
 The first comparison set is in `Kitchen`, `Drawing Room`, `Dining Room`, `Master Bedroom Suite`, and `Billiard Room`. Each has a small source light paired with a larger spill so the source and room-lighting behavior can be judged independently.
 
+## Flame Bloom Separation
+
+For real particle flames, keep the particle readable by rendering it after post-processing, then use editable room-light overlays to drive the bloom and painted reflection.
+
+Select the flame root or any child particle object and run `Dreadforge > Lighting > Setup Selected Flame Bloom Separation`. The command adds `NoPostProcessRenderLayer`, keeps the flame and its children on `NoPostProcessFlame`, and ensures `Camera_NoPostProcessFlame` renders that layer after the main camera with post-processing disabled.
+
+The same command creates two room-local overlays under the room's `Lighting` child when they do not already exist:
+
+- `*_BloomDriver`: a compact HDR source glow that global bloom can grab.
+- `*_PaintedReflection`: a broader warm spill for the surrounding painted wall, floor, furniture, or railing.
+
+Tune those `RoomLight_*` objects for the shine/reflection. Leave the particle on `NoPostProcessFlame` so global bloom shapes the room light instead of washing out the flame sprite.
+
 ## Prototype Tour
 
 Use the map/doors to check these moods:
@@ -36,7 +49,9 @@ Use the map/doors to check these moods:
 
 ## How To Tune
 
-Open `Gameplay.unity`, expand a room, then expand its `Lighting` child. Select a `RoomLight_*` object and adjust its RectTransform plus light fields directly in Edit mode. The glow previews immediately, and the animation styles also repaint in Edit mode.
+Open `Gameplay.unity`, expand a room, then expand its `Lighting` child. Select a `RoomLight_*` object and adjust its RectTransform plus light fields directly in Edit mode. The glow previews immediately, and the animation styles also repaint in Edit mode. The light color field supports HDR values, so values above 1 can be used when a glow needs to feed the global bloom volume.
+
+Edit mode does not animate the light object's transform scale, so resizing with the Rect/Scale tools should stick. In Play mode the flicker/breath styles animate around the scale saved on the scene object.
 
 Use the `RoomLightingController` context menu item `Create Missing Scene Lights From Preset` only when you add new preset entries and want matching scene objects created for them.
 

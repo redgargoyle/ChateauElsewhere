@@ -19,6 +19,18 @@ public static class UrpPostProcessingBootstrap
 
     private static void EnablePostProcessingOnCameras()
     {
+        int noPostProcessFlameLayer = LayerMask.NameToLayer(NoPostProcessRenderLayer.DefaultLayerName);
+        LayerMask bypassLayers = new LayerMask
+        {
+            value = noPostProcessFlameLayer >= 0 ? 1 << noPostProcessFlameLayer : 0
+        };
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera != null && bypassLayers.value != 0)
+        {
+            PostProcessBypassCamera.EnsureForCamera(mainCamera, bypassLayers);
+        }
+
         Camera[] cameras = Object.FindObjectsByType<Camera>();
 
         foreach (Camera camera in cameras)
@@ -35,6 +47,17 @@ public static class UrpPostProcessingBootstrap
             if (cameraData == null)
             {
                 cameraData = camera.gameObject.AddComponent<UniversalAdditionalCameraData>();
+            }
+
+            if (camera.GetComponent<PostProcessBypassCamera>() != null)
+            {
+                cameraData.renderPostProcessing = false;
+                continue;
+            }
+
+            if (bypassLayers.value != 0)
+            {
+                camera.cullingMask &= ~bypassLayers.value;
             }
 
             cameraData.renderPostProcessing = true;

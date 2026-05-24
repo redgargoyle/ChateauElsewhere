@@ -392,3 +392,172 @@ MonoBehaviour:
     driftAmount: 0.14
     speed: 0.7
     phase: 4.75
+  - roomName: Ballroom
+    lightName: Ballroom Window Silver Wash
+    animationStyle: 3
+    anchoredPosition: {x: 420, y: 46}
+    size: {x: 520, y: 340}
+    rotationDegrees: 0
+    color: {r: 0.58, g: 0.76, b: 1, a: 1}
+    onAlpha: 0.1
+    offAlpha: 0.01
+    flickerAmount: 0.01
+    driftAmount: 0.08
+    speed: 0.25
+    phase: 0
+  - roomName: Butlers Pantry
+    lightName: Butlers Pantry Chandelier Bloom
+    animationStyle: 1
+    anchoredPosition: {x: 14, y: 148}
+    size: {x: 680, y: 310}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.7, b: 0.33, a: 1}
+    onAlpha: 0.24
+    offAlpha: 0
+    flickerAmount: 0.04
+    driftAmount: 0.08
+    speed: 0.72
+    phase: 0
+  - roomName: Butlers Pantry
+    lightName: Butlers Pantry Glass Sparkle
+    animationStyle: 4
+    anchoredPosition: {x: -402, y: -8}
+    size: {x: 360, y: 250}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.62, b: 0.28, a: 1}
+    onAlpha: 0.18
+    offAlpha: 0
+    flickerAmount: 0.12
+    driftAmount: 0.03
+    speed: 1.25
+    phase: 0
+  - roomName: Grand Entrance Hall Rear view
+    lightName: Great Hall Rear Chandelier Bloom
+    animationStyle: 1
+    anchoredPosition: {x: 0, y: 128}
+    size: {x: 640, y: 300}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.7, b: 0.34, a: 1}
+    onAlpha: 0.24
+    offAlpha: 0
+    flickerAmount: 0.04
+    driftAmount: 0.08
+    speed: 0.7
+    phase: 0
+  - roomName: Grand Entrance Hall Rear view
+    lightName: Great Hall Rear Window Moonwash
+    animationStyle: 3
+    anchoredPosition: {x: 0, y: 58}
+    size: {x: 620, y: 380}
+    rotationDegrees: 0
+    color: {r: 0.58, g: 0.78, b: 1, a: 1}
+    onAlpha: 0.13
+    offAlpha: 0.01
+    flickerAmount: 0.01
+    driftAmount: 0.08
+    speed: 0.24
+    phase: 0
+  - roomName: Nursery
+    lightName: Nursery Chandelier Bloom
+    animationStyle: 1
+    anchoredPosition: {x: 0, y: 150}
+    size: {x: 560, y: 260}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.7, b: 0.36, a: 1}
+    onAlpha: 0.2
+    offAlpha: 0
+    flickerAmount: 0.03
+    driftAmount: 0.08
+    speed: 0.65
+    phase: 0
+  - roomName: Nursery
+    lightName: Nursery Dollhouse Glow
+    animationStyle: 4
+    anchoredPosition: {x: 506, y: -166}
+    size: {x: 320, y: 230}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.55, b: 0.26, a: 1}
+    onAlpha: 0.2
+    offAlpha: 0
+    flickerAmount: 0.16
+    driftAmount: 0.03
+    speed: 1.2
+    phase: 0
+  - roomName: Service Corridor
+    lightName: Service Corridor Hanging Lantern
+    animationStyle: 0
+    anchoredPosition: {x: 0, y: 156}
+    size: {x: 500, y: 300}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.64, b: 0.28, a: 1}
+    onAlpha: 0.24
+    offAlpha: 0
+    flickerAmount: 0.12
+    driftAmount: 0.04
+    speed: 1.15
+    phase: 0
+  - roomName: Service Corridor
+    lightName: Service Corridor Side Sconces
+    animationStyle: 4
+    anchoredPosition: {x: -520, y: 18}
+    size: {x: 360, y: 300}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.58, b: 0.25, a: 1}
+    onAlpha: 0.22
+    offAlpha: 0
+    flickerAmount: 0.18
+    driftAmount: 0.03
+    speed: 1.4
+    phase: 0
+  - roomName: Side Stair Mudroom
+    lightName: Side Stair Window Moonwash
+    animationStyle: 3
+    anchoredPosition: {x: 368, y: 152}
+    size: {x: 420, y: 360}
+    rotationDegrees: 0
+    color: {r: 0.55, g: 0.72, b: 1, a: 1}
+    onAlpha: 0.14
+    offAlpha: 0.01
+    flickerAmount: 0.01
+    driftAmount: 0.1
+    speed: 0.22
+    phase: 0
+  - roomName: Side Stair Mudroom
+    lightName: Side Stair Hall Lantern
+    animationStyle: 0
+    anchoredPosition: {x: -214, y: 112}
+    size: {x: 480, y: 300}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.62, b: 0.28, a: 1}
+    onAlpha: 0.2
+    offAlpha: 0
+    flickerAmount: 0.12
+    driftAmount: 0.04
+    speed: 1.05
+    phase: 0
+  - roomName: Upper Sitting Hall
+    lightName: Upper Sitting Hall Chandelier Bloom
+    animationStyle: 1
+    anchoredPosition: {x: 0, y: 150}
+    size: {x: 560, y: 260}
+    rotationDegrees: 0
+    color: {r: 1, g: 0.68, b: 0.32, a: 1}
+    onAlpha: 0.2
+    offAlpha: 0
+    flickerAmount: 0.04
+    driftAmount: 0.08
+    speed: 0.7
+    phase: 0
+  - roomName: Upper Sitting Hall
+    lightName: Upper Sitting Hall Far Door Glow
+    animationStyle: 3
+    anchoredPosition: {x: 214, y: 6}
+    size: {x: 420, y: 330}
+    rotationDegrees: 0
+    color: {r: 0.64, g: 0.78, b: 1, a: 1}
+    onAlpha: 0.12
+    offAlpha: 0.01
+    flickerAmount: 0.01
+    driftAmount: 0.07
+    speed: 0.28
+    phase: 0

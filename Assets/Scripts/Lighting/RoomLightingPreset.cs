@@ -23,7 +23,7 @@ public sealed class RoomLightDefinition
     public Vector2 anchoredPosition;
     public Vector2 size = new Vector2(240f, 180f);
     public float rotationDegrees;
-    public Color color = new Color(1f, 0.72f, 0.34f, 1f);
+    [ColorUsage(false, true)] public Color color = new Color(1f, 0.72f, 0.34f, 1f);
     [Range(0f, 1f)] public float onAlpha = 0.32f;
     [Range(0f, 1f)] public float offAlpha;
     [Range(0f, 1f)] public float flickerAmount = 0.16f;

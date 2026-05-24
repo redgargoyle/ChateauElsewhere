@@ -13,7 +13,7 @@ public sealed class RoomLightOverlay : MonoBehaviour
 {
     [Header("Light")]
     [SerializeField] private RoomLightAnimationStyle animationStyle = RoomLightAnimationStyle.SconceFlicker;
-    [SerializeField] private Color color = new Color(1f, 0.72f, 0.34f, 1f);
+    [SerializeField, ColorUsage(false, true)] private Color color = new Color(1f, 0.72f, 0.34f, 1f);
     [SerializeField, Range(0f, 1f)] private float onAlpha = 0.32f;
     [SerializeField, Range(0f, 1f)] private float offAlpha;
 
@@ -29,6 +29,8 @@ public sealed class RoomLightOverlay : MonoBehaviour
     private RectTransform rectTransform;
     private Image image;
     private float lightBlend = 1f;
+    private Vector3 authoredLocalScale = Vector3.one;
+    private bool hasAuthoredLocalScale;
 
     public void ApplyDefinition(RoomLightDefinition definition)
     {
@@ -54,6 +56,7 @@ public sealed class RoomLightOverlay : MonoBehaviour
         rectTransform.sizeDelta = definition.size;
         rectTransform.localRotation = Quaternion.Euler(0f, 0f, definition.rotationDegrees);
         rectTransform.localScale = Vector3.one;
+        CaptureAuthoringScale();
 
         ConfigureImage();
         UpdateVisual(true);
@@ -67,6 +70,7 @@ public sealed class RoomLightOverlay : MonoBehaviour
     private void OnEnable()
     {
         CacheComponents();
+        CaptureAuthoringScale();
         ConfigureImage();
         UpdateVisual(true);
 
@@ -88,6 +92,7 @@ public sealed class RoomLightOverlay : MonoBehaviour
     private void OnValidate()
     {
         CacheComponents();
+        CaptureAuthoringScale();
         ConfigureImage();
         UpdateVisual(true);
     }
@@ -153,7 +158,39 @@ public sealed class RoomLightOverlay : MonoBehaviour
         animatedColor.a = Mathf.Clamp01(alpha);
 
         image.color = animatedColor;
-        rectTransform.localScale = new Vector3(frame.scale.x, frame.scale.y, 1f);
+        ApplyAnimatedScale(frame.scale);
+    }
+
+    private void CaptureAuthoringScale()
+    {
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        authoredLocalScale = rectTransform.localScale;
+        hasAuthoredLocalScale = true;
+    }
+
+    private void ApplyAnimatedScale(Vector2 animationScale)
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            CaptureAuthoringScale();
+            return;
+        }
+#endif
+
+        if (!hasAuthoredLocalScale)
+        {
+            CaptureAuthoringScale();
+        }
+
+        rectTransform.localScale = new Vector3(
+            authoredLocalScale.x * animationScale.x,
+            authoredLocalScale.y * animationScale.y,
+            authoredLocalScale.z);
     }
 
     private LightFrame EvaluateAnimation(float time)
