@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 #if ENABLE_INPUT_SYSTEM
@@ -12,6 +13,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private const float MovementEpsilon = 0.0001f;
 	private const float WalkableInsetStep = 0.015f;
 	private const int WalkableInsetAttempts = 12;
+	private const float PathNodeMergeDistance = 0.02f;
+	private const float PathStraightnessBias = 0.08f;
 
 	[SerializeField] private string walkableFloorName = "PlayerBoundary_Entrance";
 	[SerializeField] private Collider2D walkableFloor;
@@ -29,6 +32,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private float farScale = 0.58f;
 	[SerializeField] private float runningAnimationSpeed = 40f;
 	[SerializeField] private bool disablePlatformMovement = true;
+	[SerializeField] private bool sortPlayerByVisibleFeet = true;
+	[SerializeField] private float playerSortingYOffset;
+	[SerializeField] private bool avoidSolidObstacleFootprints = true;
+	[SerializeField] [Min(0f)] private float movementObstaclePadding = 0.02f;
+	[SerializeField] [Min(0f)] private float pathCornerPadding = 0.06f;
+	[SerializeField] [Min(0.03f)] private float pathProbeStep = 0.08f;
 
 	private Rigidbody2D body;
 	private Animator animator;
@@ -36,6 +45,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private SpriteRenderer[] spriteRenderers;
 	private CameraManager cameraManager;
 	private Vector2 destination;
+	private Vector2 finalDestination;
 	private Vector2 logicalPosition;
 	private Vector3 currentVisualOffset;
 	private CharacterWalkDirection walkDirection = CharacterWalkDirection.Right;
@@ -43,11 +53,19 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private bool hasDestination;
 	private bool isReady;
 	private bool isWalking;
+	private int currentSortingOrder;
+	private int movementPathIndex;
+	private readonly List<Vector2> movementPath = new List<Vector2>();
+	private readonly List<Vector2> movementQueryPath = new List<Vector2>();
+	private readonly List<Bounds> navigationObstacleBounds = new List<Bounds>();
+	private readonly List<Vector2> navigationNodes = new List<Vector2>();
+	private readonly List<int> reversePath = new List<int>();
 
 	public event Action ArrivedAtDestination;
 	public event Action MovementStopped;
 	public Vector2 LogicalPosition => logicalPosition;
 	public bool HasDestination => hasDestination;
+	public int CurrentSortingOrder => currentSortingOrder;
 
 	public void RefreshAnimatorParameters()
 	{
@@ -195,6 +213,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 		Vector2 startPosition = ClampToWalkableArea(transform.position);
 		logicalPosition = startPosition;
 		destination = startPosition;
+		finalDestination = startPosition;
+		movementPath.Clear();
+		movementPathIndex = 0;
 		walkDirection = CharacterWalkDirection.Right;
 		isReady = true;
 		isWalking = false;
@@ -297,13 +318,23 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return false;
 
 		bool blockedByPickup = IsPickupObjectAtPoint(targetPosition);
-		bool exactPointWalkable = !blockedByPickup && IsPointWalkable(targetPosition);
+		bool exactPointWalkable = !blockedByPickup &&
+			IsPointWalkable(targetPosition) &&
+			!IsMovementPointBlocked(targetPosition);
 		Vector2 destinationPosition = targetPosition;
 
 		if (!exactPointWalkable && clampToWalkableArea && !blockedByPickup)
+		{
 			destinationPosition = ClampToWalkableArea(targetPosition, logicalPosition);
+		}
 
-		bool hasReachableDestination = !blockedByPickup && IsPointWalkable(destinationPosition);
+		if (clampToWalkableArea && !IsPointWalkable(destinationPosition))
+		{
+			destinationPosition = ClampToWalkableArea(destinationPosition, logicalPosition);
+		}
+
+		bool hasReachableDestination = !blockedByPickup &&
+			TryBuildMovementPath(logicalPosition, destinationPosition, movementQueryPath);
 		bool wouldMove = hasReachableDestination &&
 			Vector2.Distance(logicalPosition, destinationPosition) > stopDistance;
 
@@ -432,7 +463,19 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void SetDestination(Vector2 clickPosition)
 	{
-		destination = clickPosition;
+		finalDestination = clickPosition;
+		movementPathIndex = 0;
+		movementPath.Clear();
+
+		if (!TryBuildMovementPath(logicalPosition, clickPosition, movementPath) || movementPath.Count == 0)
+		{
+			destination = logicalPosition;
+			hasDestination = false;
+			isWalking = false;
+			return;
+		}
+
+		destination = movementPath[0];
 		Vector2 movement = destination - logicalPosition;
 		hasDestination = movement.magnitude > stopDistance;
 		if (hasDestination)
@@ -454,8 +497,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 		Vector2 nextPosition = MoveLogicalPositionToward(currentPosition, destination, moveSpeed * Time.fixedDeltaTime);
 		Vector2 movement = nextPosition - currentPosition;
 
-		if (!IsPointWalkable(nextPosition))
+		if (!IsPointWalkable(nextPosition) || IsMovementSegmentBlocked(currentPosition, nextPosition))
 		{
+			if (TryRestartPathFrom(currentPosition))
+			{
+				isWalking = true;
+				return;
+			}
+
 			hasDestination = false;
 			isWalking = false;
 			ApplySpriteMirror();
@@ -469,16 +518,64 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (Vector2.Distance(nextPosition, destination) <= stopDistance)
 		{
 			logicalPosition = destination;
-			hasDestination = false;
-			isWalking = false;
-			ApplySpriteMirror();
-			ArrivedAtDestination?.Invoke();
-			MovementStopped?.Invoke();
+
+			if (TryAdvancePathWaypoint())
+			{
+				isWalking = true;
+				UpdateWalkDirection(destination - logicalPosition);
+			}
+			else
+			{
+				hasDestination = false;
+				isWalking = false;
+				finalDestination = logicalPosition;
+				movementPath.Clear();
+				movementPathIndex = 0;
+				ApplySpriteMirror();
+				ArrivedAtDestination?.Invoke();
+				MovementStopped?.Invoke();
+			}
 		}
 		else
 		{
 			isWalking = true;
 		}
+	}
+
+	private bool TryAdvancePathWaypoint()
+	{
+		movementPathIndex++;
+
+		while (movementPathIndex < movementPath.Count)
+		{
+			destination = movementPath[movementPathIndex];
+
+			if (Vector2.Distance(logicalPosition, destination) > stopDistance)
+			{
+				hasDestination = true;
+				return true;
+			}
+
+			logicalPosition = destination;
+			movementPathIndex++;
+		}
+
+		return false;
+	}
+
+	private bool TryRestartPathFrom(Vector2 currentPosition)
+	{
+		movementPathIndex = 0;
+		movementPath.Clear();
+
+		if (!TryBuildMovementPath(currentPosition, finalDestination, movementPath) || movementPath.Count == 0)
+		{
+			return false;
+		}
+
+		destination = movementPath[0];
+		UpdateWalkDirection(destination - currentPosition);
+		return true;
 	}
 
 	private void ApplyPerspectiveScale()
@@ -513,14 +610,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (movement.magnitude <= stopDistance)
 			return targetPosition;
 
-		Vector2 direction = movement.normalized;
-		direction.y *= Mathf.Clamp(verticalMovementSpeedMultiplier, 0.25f, 1f);
+		float verticalMultiplier = Mathf.Clamp(verticalMovementSpeedMultiplier, 0.25f, 1f);
+		Vector2 scaledMovement = new Vector2(movement.x, movement.y / verticalMultiplier);
+		float scaledDistance = scaledMovement.magnitude;
 
-		Vector2 step = direction * maxDistance;
-		if (step.sqrMagnitude >= movement.sqrMagnitude)
+		if (scaledDistance <= maxDistance)
 			return targetPosition;
 
-		return currentPosition + step;
+		return currentPosition + movement * (maxDistance / scaledDistance);
 	}
 
 	private void ApplySpriteMirror()
@@ -557,6 +654,412 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private bool IsPointWalkable(Vector2 point)
 	{
 		return walkableFloor == null || walkableFloor.OverlapPoint(point);
+	}
+
+	private bool TryBuildMovementPath(Vector2 startPosition, Vector2 targetPosition, List<Vector2> path)
+	{
+		path.Clear();
+		CollectMovementObstacleBounds(navigationObstacleBounds);
+
+		if (!IsPointWalkable(targetPosition) || IsMovementPointBlocked(targetPosition, navigationObstacleBounds))
+		{
+			return false;
+		}
+
+		if ((!avoidSolidObstacleFootprints || navigationObstacleBounds.Count == 0) &&
+			IsWalkableSegment(startPosition, targetPosition))
+		{
+			path.Add(targetPosition);
+			return true;
+		}
+
+		if (IsNavigationSegmentClear(startPosition, targetPosition, navigationObstacleBounds))
+		{
+			path.Add(targetPosition);
+			return true;
+		}
+
+		navigationNodes.Clear();
+		navigationNodes.Add(startPosition);
+		navigationNodes.Add(targetPosition);
+		AddObstacleNavigationNodes(navigationObstacleBounds, navigationNodes);
+
+		return TryFindPathThroughNodes(targetPosition, path);
+	}
+
+	private bool TryFindPathThroughNodes(Vector2 targetPosition, List<Vector2> path)
+	{
+		int nodeCount = navigationNodes.Count;
+		if (nodeCount < 2)
+		{
+			return false;
+		}
+
+		float[] pathCost = new float[nodeCount];
+		float[] estimatedCost = new float[nodeCount];
+		int[] previousNode = new int[nodeCount];
+		bool[] visited = new bool[nodeCount];
+
+		for (int i = 0; i < nodeCount; i++)
+		{
+			pathCost[i] = float.PositiveInfinity;
+			estimatedCost[i] = float.PositiveInfinity;
+			previousNode[i] = -1;
+		}
+
+		pathCost[0] = 0f;
+		estimatedCost[0] = Vector2.Distance(navigationNodes[0], targetPosition);
+
+		for (int step = 0; step < nodeCount; step++)
+		{
+			int currentNode = FindBestOpenPathNode(estimatedCost, visited);
+			if (currentNode < 0)
+			{
+				break;
+			}
+
+			if (currentNode == 1)
+			{
+				break;
+			}
+
+			visited[currentNode] = true;
+
+			for (int neighborNode = 0; neighborNode < nodeCount; neighborNode++)
+			{
+				if (neighborNode == currentNode || visited[neighborNode])
+				{
+					continue;
+				}
+
+				Vector2 currentPoint = navigationNodes[currentNode];
+				Vector2 neighborPoint = navigationNodes[neighborNode];
+
+				if (!IsNavigationSegmentClear(currentPoint, neighborPoint, navigationObstacleBounds))
+				{
+					continue;
+				}
+
+				float straightnessPenalty = DistancePointToSegment(neighborPoint, navigationNodes[0], targetPosition) * PathStraightnessBias;
+				float candidateCost = pathCost[currentNode] + Vector2.Distance(currentPoint, neighborPoint) + straightnessPenalty;
+				if (candidateCost + MovementEpsilon >= pathCost[neighborNode])
+				{
+					continue;
+				}
+
+				previousNode[neighborNode] = currentNode;
+				pathCost[neighborNode] = candidateCost;
+				estimatedCost[neighborNode] = candidateCost + Vector2.Distance(neighborPoint, targetPosition);
+			}
+		}
+
+		if (previousNode[1] < 0)
+		{
+			return false;
+		}
+
+		reversePath.Clear();
+		for (int node = 1; node > 0; node = previousNode[node])
+		{
+			reversePath.Add(node);
+		}
+
+		for (int i = reversePath.Count - 1; i >= 0; i--)
+		{
+			path.Add(navigationNodes[reversePath[i]]);
+		}
+
+		return path.Count > 0;
+	}
+
+	private static int FindBestOpenPathNode(float[] estimatedCost, bool[] visited)
+	{
+		int bestNode = -1;
+		float bestCost = float.PositiveInfinity;
+
+		for (int i = 0; i < estimatedCost.Length; i++)
+		{
+			if (visited[i] || estimatedCost[i] >= bestCost)
+			{
+				continue;
+			}
+
+			bestNode = i;
+			bestCost = estimatedCost[i];
+		}
+
+		return bestNode;
+	}
+
+	private void AddObstacleNavigationNodes(List<Bounds> obstacles, List<Vector2> nodes)
+	{
+		AddObstacleEdgeNodes(obstacles, nodes);
+		AddObstacleGapNodes(obstacles, nodes);
+	}
+
+	private void AddObstacleEdgeNodes(List<Bounds> obstacles, List<Vector2> nodes)
+	{
+		float cornerPadding = Mathf.Max(0.01f, pathCornerPadding);
+
+		for (int i = 0; i < obstacles.Count; i++)
+		{
+			Bounds bounds = obstacles[i];
+
+			AddNavigationNode(nodes, new Vector2(bounds.min.x - cornerPadding, bounds.min.y - cornerPadding), obstacles);
+			AddNavigationNode(nodes, new Vector2(bounds.min.x - cornerPadding, bounds.max.y + cornerPadding), obstacles);
+			AddNavigationNode(nodes, new Vector2(bounds.max.x + cornerPadding, bounds.min.y - cornerPadding), obstacles);
+			AddNavigationNode(nodes, new Vector2(bounds.max.x + cornerPadding, bounds.max.y + cornerPadding), obstacles);
+			AddNavigationNode(nodes, new Vector2(bounds.min.x - cornerPadding, bounds.center.y), obstacles);
+			AddNavigationNode(nodes, new Vector2(bounds.max.x + cornerPadding, bounds.center.y), obstacles);
+			AddNavigationNode(nodes, new Vector2(bounds.center.x, bounds.min.y - cornerPadding), obstacles);
+			AddNavigationNode(nodes, new Vector2(bounds.center.x, bounds.max.y + cornerPadding), obstacles);
+		}
+	}
+
+	private void AddObstacleGapNodes(List<Bounds> obstacles, List<Vector2> nodes)
+	{
+		for (int i = 0; i < obstacles.Count; i++)
+		{
+			for (int j = i + 1; j < obstacles.Count; j++)
+			{
+				AddHorizontalGapNode(obstacles[i], obstacles[j], nodes, obstacles);
+				AddVerticalGapNode(obstacles[i], obstacles[j], nodes, obstacles);
+			}
+		}
+	}
+
+	private void AddHorizontalGapNode(Bounds first, Bounds second, List<Vector2> nodes, List<Bounds> obstacles)
+	{
+		Bounds left = first.center.x <= second.center.x ? first : second;
+		Bounds right = first.center.x <= second.center.x ? second : first;
+		float gapPadding = Mathf.Max(0.005f, Mathf.Min(0.04f, pathCornerPadding * 0.5f));
+		float gapMin = left.max.x + gapPadding;
+		float gapMax = right.min.x - gapPadding;
+
+		if (gapMin > gapMax)
+		{
+			return;
+		}
+
+		float yMin = Mathf.Max(left.min.y, right.min.y);
+		float yMax = Mathf.Min(left.max.y, right.max.y);
+		float y = yMin <= yMax
+			? (yMin + yMax) * 0.5f
+			: (left.center.y + right.center.y) * 0.5f;
+
+		AddNavigationNode(nodes, new Vector2((gapMin + gapMax) * 0.5f, y), obstacles);
+	}
+
+	private void AddVerticalGapNode(Bounds first, Bounds second, List<Vector2> nodes, List<Bounds> obstacles)
+	{
+		Bounds lower = first.center.y <= second.center.y ? first : second;
+		Bounds upper = first.center.y <= second.center.y ? second : first;
+		float gapPadding = Mathf.Max(0.005f, Mathf.Min(0.04f, pathCornerPadding * 0.5f));
+		float gapMin = lower.max.y + gapPadding;
+		float gapMax = upper.min.y - gapPadding;
+
+		if (gapMin > gapMax)
+		{
+			return;
+		}
+
+		float xMin = Mathf.Max(lower.min.x, upper.min.x);
+		float xMax = Mathf.Min(lower.max.x, upper.max.x);
+		float x = xMin <= xMax
+			? (xMin + xMax) * 0.5f
+			: (lower.center.x + upper.center.x) * 0.5f;
+
+		AddNavigationNode(nodes, new Vector2(x, (gapMin + gapMax) * 0.5f), obstacles);
+	}
+
+	private void AddNavigationNode(List<Vector2> nodes, Vector2 candidate, List<Bounds> obstacles)
+	{
+		if (!IsNavigationPointUsable(candidate, obstacles))
+		{
+			return;
+		}
+
+		float mergeDistanceSquared = PathNodeMergeDistance * PathNodeMergeDistance;
+		for (int i = 0; i < nodes.Count; i++)
+		{
+			if (Vector2.SqrMagnitude(nodes[i] - candidate) <= mergeDistanceSquared)
+			{
+				return;
+			}
+		}
+
+		nodes.Add(candidate);
+	}
+
+	private bool IsNavigationPointUsable(Vector2 point, List<Bounds> obstacles)
+	{
+		return IsPointWalkable(point) && !IsMovementPointBlocked(point, obstacles);
+	}
+
+	private bool IsMovementPointBlocked(Vector2 point)
+	{
+		CollectMovementObstacleBounds(navigationObstacleBounds);
+		return IsMovementPointBlocked(point, navigationObstacleBounds);
+	}
+
+	private bool IsMovementSegmentBlocked(Vector2 startPosition, Vector2 endPosition)
+	{
+		if (!avoidSolidObstacleFootprints)
+		{
+			return false;
+		}
+
+		CollectMovementObstacleBounds(navigationObstacleBounds);
+		return IsSegmentBlockedByObstacle(startPosition, endPosition, navigationObstacleBounds);
+	}
+
+	private void CollectMovementObstacleBounds(List<Bounds> bounds)
+	{
+		bounds.Clear();
+		UpdateVisualOffset(Camera.main);
+
+		if (!avoidSolidObstacleFootprints)
+		{
+			return;
+		}
+
+#if UNITY_2023_1_OR_NEWER
+		YSortSolidObstacle2D[] obstacles = FindObjectsByType<YSortSolidObstacle2D>(FindObjectsInactive.Exclude);
+#else
+		YSortSolidObstacle2D[] obstacles = FindObjectsOfType<YSortSolidObstacle2D>();
+#endif
+
+		Vector3 logicalOffset = new Vector3(currentVisualOffset.x, currentVisualOffset.y, 0f);
+
+		for (int i = 0; i < obstacles.Length; i++)
+		{
+			YSortSolidObstacle2D obstacle = obstacles[i];
+
+			if (obstacle == null || !obstacle.TryGetMovementBounds(movementObstaclePadding, out Bounds obstacleBounds))
+			{
+				continue;
+			}
+
+			obstacleBounds.center -= logicalOffset;
+			bounds.Add(obstacleBounds);
+		}
+	}
+
+	private bool IsNavigationSegmentClear(Vector2 startPosition, Vector2 endPosition, List<Bounds> obstacles)
+	{
+		return IsWalkableSegment(startPosition, endPosition) &&
+			!IsSegmentBlockedByObstacle(startPosition, endPosition, obstacles);
+	}
+
+	private bool IsWalkableSegment(Vector2 startPosition, Vector2 endPosition)
+	{
+		float distance = Vector2.Distance(startPosition, endPosition);
+		int steps = Mathf.Max(1, Mathf.CeilToInt(distance / Mathf.Max(0.03f, pathProbeStep)));
+
+		for (int i = 1; i <= steps; i++)
+		{
+			Vector2 samplePoint = Vector2.Lerp(startPosition, endPosition, i / (float)steps);
+			if (!IsPointWalkable(samplePoint))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static bool IsMovementPointBlocked(Vector2 point, List<Bounds> obstacles)
+	{
+		for (int i = 0; i < obstacles.Count; i++)
+		{
+			if (BoundsContainsPoint2D(obstacles[i], point))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static bool IsSegmentBlockedByObstacle(Vector2 startPosition, Vector2 endPosition, List<Bounds> obstacles)
+	{
+		for (int i = 0; i < obstacles.Count; i++)
+		{
+			Bounds bounds = obstacles[i];
+
+			if (BoundsContainsPoint2D(bounds, endPosition))
+			{
+				return true;
+			}
+
+			if (BoundsContainsPoint2D(bounds, startPosition))
+			{
+				continue;
+			}
+
+			if (SegmentIntersectsBounds2D(startPosition, endPosition, bounds))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static bool SegmentIntersectsBounds2D(Vector2 startPosition, Vector2 endPosition, Bounds bounds)
+	{
+		float tMin = 0f;
+		float tMax = 1f;
+		Vector2 delta = endPosition - startPosition;
+
+		return ClipSegmentAxis(startPosition.x, delta.x, bounds.min.x, bounds.max.x, ref tMin, ref tMax) &&
+			ClipSegmentAxis(startPosition.y, delta.y, bounds.min.y, bounds.max.y, ref tMin, ref tMax);
+	}
+
+	private static bool ClipSegmentAxis(float start, float delta, float min, float max, ref float tMin, ref float tMax)
+	{
+		if (Mathf.Abs(delta) <= MovementEpsilon)
+		{
+			return start >= min && start <= max;
+		}
+
+		float inverseDelta = 1f / delta;
+		float axisMin = (min - start) * inverseDelta;
+		float axisMax = (max - start) * inverseDelta;
+
+		if (axisMin > axisMax)
+		{
+			float swap = axisMin;
+			axisMin = axisMax;
+			axisMax = swap;
+		}
+
+		tMin = Mathf.Max(tMin, axisMin);
+		tMax = Mathf.Min(tMax, axisMax);
+		return tMin <= tMax;
+	}
+
+	private static float DistancePointToSegment(Vector2 point, Vector2 segmentStart, Vector2 segmentEnd)
+	{
+		Vector2 segment = segmentEnd - segmentStart;
+		float lengthSquared = segment.sqrMagnitude;
+
+		if (lengthSquared <= MovementEpsilon)
+		{
+			return Vector2.Distance(point, segmentStart);
+		}
+
+		float t = Mathf.Clamp01(Vector2.Dot(point - segmentStart, segment) / lengthSquared);
+		Vector2 closestPoint = segmentStart + segment * t;
+		return Vector2.Distance(point, closestPoint);
+	}
+
+	private static bool BoundsContainsPoint2D(Bounds bounds, Vector2 point)
+	{
+		return point.x >= bounds.min.x &&
+			point.x <= bounds.max.x &&
+			point.y >= bounds.min.y &&
+			point.y <= bounds.max.y;
 	}
 
 	private Vector2 ClampToWalkableArea(Vector2 point)
@@ -619,7 +1122,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 
 		string sortingLayerName = GetSortingLayerName(playerSortingLayerName);
-		int sortingOrder = playerSortingOrderBase - Mathf.RoundToInt(logicalPosition.y * playerSortingOrderPerYUnit);
+		float sortingY = GetPlayerSortingY();
+		int sortingOrder = playerSortingOrderBase - Mathf.RoundToInt(sortingY * playerSortingOrderPerYUnit);
+		currentSortingOrder = sortingOrder;
 
 		for (int i = 0; i < spriteRenderers.Length; i++)
 		{
@@ -630,6 +1135,37 @@ public class PointClickPlayerMovement : MonoBehaviour
 			targetRenderer.sortingLayerName = sortingLayerName;
 			targetRenderer.sortingOrder = sortingOrder;
 		}
+	}
+
+	private float GetPlayerSortingY()
+	{
+		float sortingY = logicalPosition.y;
+
+		if (sortPlayerByVisibleFeet)
+		{
+			bool foundRendererBounds = false;
+			float lowestVisibleY = float.PositiveInfinity;
+
+			for (int i = 0; i < spriteRenderers.Length; i++)
+			{
+				SpriteRenderer targetRenderer = spriteRenderers[i];
+
+				if (targetRenderer == null || !targetRenderer.enabled || targetRenderer.sprite == null)
+				{
+					continue;
+				}
+
+				lowestVisibleY = Mathf.Min(lowestVisibleY, targetRenderer.bounds.min.y);
+				foundRendererBounds = true;
+			}
+
+			if (foundRendererBounds)
+			{
+				sortingY = lowestVisibleY;
+			}
+		}
+
+		return sortingY + playerSortingYOffset;
 	}
 
 	private static string GetSortingLayerName(string requestedLayerName)
