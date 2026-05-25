@@ -10,9 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2805806092392944804}
   - component: {fileID: 7411912546728492910}
-  - component: {fileID: 3527589470912476180}
-  - component: {fileID: 4518802344069025187}
-  - component: {fileID: 6068537125012096452}
   m_Layer: 0
   m_Name: mushroom_0
   m_TagString: Untagged
@@ -29,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 4361155583942327054}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.24, y: -3.15, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -82,7 +79,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 4180722781
   m_SortingLayer: 2
-  m_SortingOrder: 1315
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 357749872346554099, guid: e51b07ffc55c2dc9ba6e7ab0eb48fd5b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -94,88 +91,3 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
---- !u!61 &3527589470912476180
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4361155583942327054}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.55}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0}
-    oldSize: {x: 6.4, y: 5.66}
-    newSize: {x: 6.4, y: 6.4}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 2.4, y: 1.1}
-  m_EdgeRadius: 0
---- !u!114 &4518802344069025187
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4361155583942327054}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e89a7a6e329b4106a50461f13559b2e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  physicalBounds: {fileID: 3527589470912476180}
-  blockPlayerMovement: 1
-  movementPadding: 0.02
-  disableOcclusionWhilePlayerInside: 1
-  occlusionPadding: 0.28
---- !u!114 &6068537125012096452
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4361155583942327054}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75f090bb68ab450d9703d9581c5c543a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sortingLayerName: People
-  sortingOrderBase: 1000
-  sortingOrderPerYUnit: 100
-  sortingOrderOffset: 0
-  includeChildren: 1
-  forcePivotSortPoint: 1
-  sortSolidObstacleFromPhysicalBottom: 1
-  forceBehindPlayerInsidePhysicalBounds: 0
-  behindPlayerSortingOffset: -1
-  yReference: {fileID: 0}
