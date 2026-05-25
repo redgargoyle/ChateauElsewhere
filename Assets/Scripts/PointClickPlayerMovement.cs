@@ -18,6 +18,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	[SerializeField] private string walkableFloorName = "PlayerBoundary_Entrance";
 	[SerializeField] private Collider2D walkableFloor;
+	[SerializeField] private bool useCurrentRoomBoundary = true;
+	[SerializeField] private string roomBoundaryNamePrefix = "PlayerBoundary";
 	[SerializeField] private float moveSpeed = 3.2f;
 	[SerializeField] private float stopDistance = 0.04f;
 	[SerializeField, Range(0.5f, 1f)] private float horizontalDirectionThreshold = 0.58f;
@@ -44,12 +46,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private SpriteRenderer spriteRenderer;
 	private SpriteRenderer[] spriteRenderers;
 	private CameraManager cameraManager;
+	private RoomNavigationManager navigationManager;
 	private Vector2 destination;
 	private Vector2 finalDestination;
 	private Vector2 logicalPosition;
 	private Vector3 currentVisualOffset;
 	private CharacterWalkDirection walkDirection = CharacterWalkDirection.Right;
 	private CharacterAnimatorDriver.ParameterCache animatorParameters;
+	private string currentWalkableBoundaryRoom;
 	private bool hasDestination;
 	private bool isReady;
 	private bool isWalking;
@@ -110,6 +114,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private void Start()
 	{
 		FindWalkableFloor();
+		RefreshWalkableFloorForCurrentRoom();
 
 		if (walkableFloor == null && !allowMovementWithoutWalkableFloor)
 		{
@@ -125,6 +130,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!isReady)
 			return;
 
+		RefreshWalkableFloorForCurrentRoom();
 		UpdateWalkCursor();
 
 		if (TryGetFloorClick(out Vector2 clickPosition))
@@ -175,6 +181,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		if (cameraManager == null)
 			cameraManager = FindAnyObjectByType<CameraManager>();
+
+		if (navigationManager == null)
+			navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
 	}
 
 	private void CacheAnimatorParameters()
@@ -193,6 +202,45 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		if (walkableFloor == null)
 			walkableFloor = FindPlayerBoundaryCollider();
+	}
+
+	private void RefreshWalkableFloorForCurrentRoom()
+	{
+		if (!useCurrentRoomBoundary)
+			return;
+
+		if (navigationManager == null)
+			navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+
+		string currentRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
+		if (string.IsNullOrWhiteSpace(currentRoom))
+			return;
+
+		string cleanRoom = CleanRoomName(currentRoom);
+		if (string.Equals(currentWalkableBoundaryRoom, cleanRoom, StringComparison.OrdinalIgnoreCase) &&
+			walkableFloor != null &&
+			walkableFloor.enabled &&
+			walkableFloor.gameObject.activeInHierarchy)
+		{
+			return;
+		}
+
+		if (!TryFindPlayerBoundaryForRoom(currentRoom, out Collider2D roomBoundary))
+			return;
+
+		walkableFloor = roomBoundary;
+		currentWalkableBoundaryRoom = cleanRoom;
+
+		if (!isReady)
+			return;
+
+		logicalPosition = ClampToWalkableArea(logicalPosition);
+		destination = logicalPosition;
+		finalDestination = logicalPosition;
+		movementPath.Clear();
+		movementPathIndex = 0;
+		hasDestination = false;
+		isWalking = false;
 	}
 
 	private void ConfigurePointAndClickMovement()
@@ -1251,6 +1299,109 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		return null;
+	}
+
+	private bool TryFindPlayerBoundaryForRoom(string roomName, out Collider2D boundary)
+	{
+		boundary = null;
+
+		if (string.IsNullOrWhiteSpace(roomName))
+			return false;
+
+#if UNITY_2023_1_OR_NEWER
+		RoomContentGroup[] rooms = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
+#else
+		RoomContentGroup[] rooms = FindObjectsOfType<RoomContentGroup>(true);
+#endif
+
+		for (int i = 0; i < rooms.Length; i++)
+		{
+			RoomContentGroup room = rooms[i];
+			if (room == null || !SameRoomName(room.RoomName, roomName))
+				continue;
+
+			return TryFindPlayerBoundaryInRoom(room, roomName, out boundary);
+		}
+
+		return false;
+	}
+
+	private bool TryFindPlayerBoundaryInRoom(RoomContentGroup room, string roomName, out Collider2D boundary)
+	{
+		boundary = null;
+
+		if (room == null)
+			return false;
+
+		Collider2D fallback = null;
+		Collider2D[] colliders = room.GetComponentsInChildren<Collider2D>(true);
+		string prefixKey = NormalizeBoundaryName(roomBoundaryNamePrefix);
+		string roomKey = NormalizeBoundaryName(roomName);
+		string firstRoomWordKey = NormalizeBoundaryName(GetFirstWord(roomName));
+
+		for (int i = 0; i < colliders.Length; i++)
+		{
+			Collider2D candidate = colliders[i];
+			if (candidate == null || !candidate.enabled)
+				continue;
+
+			string candidateKey = NormalizeBoundaryName(candidate.name);
+			if (!candidateKey.StartsWith(prefixKey, StringComparison.OrdinalIgnoreCase))
+				continue;
+
+			if (fallback == null)
+				fallback = candidate;
+
+			if (candidateKey == prefixKey ||
+				candidateKey == prefixKey + roomKey ||
+				(!string.IsNullOrEmpty(firstRoomWordKey) && candidateKey == prefixKey + firstRoomWordKey))
+			{
+				boundary = candidate;
+				return true;
+			}
+		}
+
+		boundary = fallback;
+		return boundary != null;
+	}
+
+	private static bool SameRoomName(string first, string second)
+	{
+		return string.Equals(CleanRoomName(first), CleanRoomName(second), StringComparison.OrdinalIgnoreCase);
+	}
+
+	private static string CleanRoomName(string value)
+	{
+		return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+	}
+
+	private static string GetFirstWord(string value)
+	{
+		if (string.IsNullOrWhiteSpace(value))
+			return string.Empty;
+
+		string[] words = value.Trim().Split(new[] { ' ', '_' }, StringSplitOptions.RemoveEmptyEntries);
+		return words.Length > 0 ? words[0] : string.Empty;
+	}
+
+	private static string NormalizeBoundaryName(string value)
+	{
+		if (string.IsNullOrWhiteSpace(value))
+			return string.Empty;
+
+		char[] normalized = new char[value.Length];
+		int count = 0;
+		for (int i = 0; i < value.Length; i++)
+		{
+			char character = value[i];
+			if (!char.IsLetterOrDigit(character))
+				continue;
+
+			normalized[count] = char.ToLowerInvariant(character);
+			count++;
+		}
+
+		return new string(normalized, 0, count);
 	}
 
 	private void ApplyPlayerSorting()
