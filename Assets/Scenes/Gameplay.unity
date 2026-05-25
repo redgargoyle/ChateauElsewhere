@@ -293,7 +293,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.639712, b: 0.28, a: 0.24715}
+  m_Color: {r: 1, g: 0.639712, b: 0.28, a: 0.22497538}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2434,7 +2434,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.42776, b: 0.17865601, a: 0.33815837}
+  m_Color: {r: 1, g: 0.42776, b: 0.17865601, a: 0.36820447}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4047,7 +4047,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.9972, g: 0.70199996, b: 0.3664, a: 0.1594592}
+  m_Color: {r: 0.9972, g: 0.70199996, b: 0.3664, a: 0.15946363}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4435,7 +4435,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.616976, b: 0.27784, a: 0.17701879}
+  m_Color: {r: 1, g: 0.616976, b: 0.27784, a: 0.15034087}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -7889,9 +7889,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 1040854321
-  m_SortingLayer: 1
-  m_SortingOrder: 20
+  m_SortingLayerID: -114244515
+  m_SortingLayer: 2
+  m_SortingOrder: 1000
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: f37786d29146444891fb3ea5ba774e2b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -11901,7 +11901,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.3211, b: 0.100549996, a: 0.4013451}
+  m_Color: {r: 1, g: 0.3211, b: 0.100549996, a: 0.33685148}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -15159,9 +15159,9 @@ PolygonCollider2D:
     - - {x: 1.9830772, y: -0.29653433}
       - {x: 1.7190675, y: -0.22940111}
       - {x: 0.96185404, y: -0.1738803}
-      - {x: -0.08021188, y: 0.08155891}
-      - {x: -0.961781, y: -0.05257818}
-      - {x: -1.2530577, y: -0.1600393}
+      - {x: 0.036699727, y: 0.21348289}
+      - {x: -1.2029115, y: 0.23525599}
+      - {x: -1.5745649, y: -0.0041291565}
       - {x: -1.7751055, y: -0.1854135}
       - {x: -1.7670606, y: -0.362703}
       - {x: -1.8227621, y: -0.79481936}
@@ -21452,7 +21452,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.70192, b: 0.334288, a: 0.22303046}
+  m_Color: {r: 1, g: 0.70192, b: 0.334288, a: 0.22138834}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -25723,7 +25723,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.57676, b: 0.247732, a: 0.21660094}
+  m_Color: {r: 1, g: 0.57676, b: 0.247732, a: 0.17410263}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
