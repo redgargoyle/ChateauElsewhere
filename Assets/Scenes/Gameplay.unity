@@ -9072,7 +9072,6 @@ GameObject:
   m_Component:
   - component: {fileID: 764430749}
   - component: {fileID: 764430750}
-  - component: {fileID: 764430752}
   m_Layer: 0
   m_Name: writing_desk
   m_TagString: Untagged
@@ -9154,28 +9153,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
---- !u!114 &764430752
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 764430748}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75f090bb68ab450d9703d9581c5c543a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WorldYSortSpriteRenderer
-  sortingLayerName: People
-  sortingOrderBase: 1000
-  sortingOrderPerYUnit: 100
-  sortingOrderOffset: -277
-  includeChildren: 1
-  forcePivotSortPoint: 1
-  sortSolidObstacleFromPhysicalBottom: 0
-  forceBehindPlayerInsidePhysicalBounds: 0
-  behindPlayerSortingOffset: -1
-  yReference: {fileID: 0}
 --- !u!1 &780154650
 GameObject:
   m_ObjectHideFlags: 0
@@ -9723,7 +9700,6 @@ GameObject:
   m_Component:
   - component: {fileID: 834313925}
   - component: {fileID: 834313926}
-  - component: {fileID: 834313928}
   m_Layer: 0
   m_Name: globe
   m_TagString: Untagged
@@ -9805,28 +9781,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
---- !u!114 &834313928
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 834313924}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75f090bb68ab450d9703d9581c5c543a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WorldYSortSpriteRenderer
-  sortingLayerName: People
-  sortingOrderBase: 1000
-  sortingOrderPerYUnit: 100
-  sortingOrderOffset: -298
-  includeChildren: 1
-  forcePivotSortPoint: 1
-  sortSolidObstacleFromPhysicalBottom: 0
-  forceBehindPlayerInsidePhysicalBounds: 0
-  behindPlayerSortingOffset: -1
-  yReference: {fileID: 0}
 --- !u!1 &836061568
 GameObject:
   m_ObjectHideFlags: 0
@@ -13850,7 +13804,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1270131356}
   - component: {fileID: 1270131357}
-  - component: {fileID: 1270131359}
   m_Layer: 0
   m_Name: purple_chaise
   m_TagString: Untagged
@@ -13932,28 +13885,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
---- !u!114 &1270131359
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1270131355}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75f090bb68ab450d9703d9581c5c543a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WorldYSortSpriteRenderer
-  sortingLayerName: People
-  sortingOrderBase: 1000
-  sortingOrderPerYUnit: 100
-  sortingOrderOffset: -331
-  includeChildren: 1
-  forcePivotSortPoint: 1
-  sortSolidObstacleFromPhysicalBottom: 0
-  forceBehindPlayerInsidePhysicalBounds: 0
-  behindPlayerSortingOffset: -1
-  yReference: {fileID: 0}
 --- !u!1 &1273716243
 GameObject:
   m_ObjectHideFlags: 0
@@ -18943,7 +18874,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1653248473}
   - component: {fileID: 1653248474}
-  - component: {fileID: 1653248476}
   m_Layer: 0
   m_Name: lamp_table
   m_TagString: Untagged
@@ -19025,28 +18955,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
---- !u!114 &1653248476
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1653248472}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75f090bb68ab450d9703d9581c5c543a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WorldYSortSpriteRenderer
-  sortingLayerName: People
-  sortingOrderBase: 1000
-  sortingOrderPerYUnit: 100
-  sortingOrderOffset: -319
-  includeChildren: 1
-  forcePivotSortPoint: 1
-  sortSolidObstacleFromPhysicalBottom: 0
-  forceBehindPlayerInsidePhysicalBounds: 0
-  behindPlayerSortingOffset: -1
-  yReference: {fileID: 0}
 --- !u!1 &1660754337
 GameObject:
   m_ObjectHideFlags: 0
@@ -19811,7 +19719,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1762572057}
   - component: {fileID: 1762572058}
-  - component: {fileID: 1762572060}
   m_Layer: 0
   m_Name: potted_plant
   m_TagString: Untagged
@@ -19893,28 +19800,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
---- !u!114 &1762572060
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1762572056}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75f090bb68ab450d9703d9581c5c543a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WorldYSortSpriteRenderer
-  sortingLayerName: People
-  sortingOrderBase: 1000
-  sortingOrderPerYUnit: 100
-  sortingOrderOffset: -342
-  includeChildren: 1
-  forcePivotSortPoint: 1
-  sortSolidObstacleFromPhysicalBottom: 0
-  forceBehindPlayerInsidePhysicalBounds: 0
-  behindPlayerSortingOffset: -1
-  yReference: {fileID: 0}
 --- !u!1 &1767479372
 GameObject:
   m_ObjectHideFlags: 0
