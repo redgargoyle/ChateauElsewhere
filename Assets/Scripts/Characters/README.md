@@ -12,7 +12,11 @@ If a character's original sheet is side-only, add an explicit `directional/align
 
 `ButlerClassic` currently has the most complete player-facing setup: `Assets/Animation/ButlerClassic/ButlerClassic.controller` uses persistent `IsFacingUp`, `IsFacingDown`, `IsFacingLeft`, and `IsFacingRight` Animator parameters to pick one of four looping directional idle clips. The source idle frames live in `Assets/Characters/ButlerClassic/idle/aligned`.
 
-For idle style testing, `Assets/Animation/ButlerClassic/IdleVariants` contains five dedicated ButlerClassic controllers: `StillBreathe`, `StillWeightShift`, `PocketWatch`, `Smoke`, and `BeardScratch`. Each controller shares the same ButlerClassic walk clips, but swaps in its own four-direction idle clips generated from `Assets/Characters/ButlerClassic/idle_variants`. Use the Gameplay character selector to compare them in Play mode, then keep or hand-edit the best clips in Unity's Animation window.
+For idle style testing, `Assets/Animation/ButlerClassic/IdleVariants` contains five dedicated ButlerClassic controllers: `StillBreathe`, `StillWeightShift`, `PocketWatch`, `Smoke`, and `BeardScratch`/lapel-adjust. Each controller shares the same ButlerClassic walk clips, but swaps in its own four-direction idle clips generated from `Assets/Characters/ButlerClassic/idle_variants`. Use the Gameplay character selector to compare them in Play mode, then keep or hand-edit the best clips in Unity's Animation window.
+
+The ButlerClassic idle variants are now generated through a repeatable pipeline instead of one-off image edits. Run `python3 tools/character_animation/build_butler_classic_idle_variants.py` from the repo root to regenerate the eight-frame PNG loops and matching Unity clips/controllers. Inside Unity, use `Dreadforge > Characters > Rebuild ButlerClassic Idle Variant Assets` after changing PNGs if you only need to refresh the Animation clips/controllers.
+
+For final acting polish, hand-paint the exported PNGs in `Assets/Characters/ButlerClassic/idle_variants`. Keep the `168x299` canvas and foot position fixed, paint out the old resting arm before adding an action arm, then rebuild the clips from Unity. The exact manual-pass checklist lives in `tools/character_animation/README.md`.
 
 Foreground occlusion uses a simple 90s prerendered trick: `RoomForegroundOccluder` objects are editable `RawImage` crops of the room painting placed above the `People` layer. Put them over railings, table edges, and other foreground furniture so walkers can pass behind those objects without a 3D setup.
 
@@ -29,6 +33,7 @@ Useful tweaks:
 - Resize the `Image` RectTransform to change character height.
 - Fix frame timing, bad frames, or direction bugs in `Assets/Animation/<CharacterName>/*.anim`, not in `RoomPersonWalker2D`.
 - Use `Dreadforge > Characters > Rebuild Character Animation Assets` after changing source frame folders.
+- Use `Dreadforge > Characters > Rebuild ButlerClassic Idle Variant Assets` after changing ButlerClassic idle-variant PNGs.
 - Adjust `Near Y`, `Far Y`, `Near Scale`, and `Far Scale` for perspective.
 - Keep `Preview Path In Edit Mode` off while placing people. The animation frames still preview, but the scene object will not quietly walk away while you edit.
 - Keep `Snap To Whole Pixels` off for scaled room walkers unless a specific character needs crunchy pixel locking. Subpixel motion reads smoother while the room stage pans and zooms.

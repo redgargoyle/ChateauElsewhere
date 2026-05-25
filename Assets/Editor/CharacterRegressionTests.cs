@@ -9,6 +9,8 @@ public class CharacterRegressionTests
     private const string CharacterAnimatorDriverPath = "Assets/Scripts/Characters/CharacterAnimatorDriver.cs";
     private const string CharacterSelectionMenuPath = "Assets/Scripts/Characters/CharacterSelectionMenu.cs";
     private const string CharacterAnimationAssetBuilderPath = "Assets/Editor/CharacterAnimationAssetBuilder.cs";
+    private const string ButlerClassicIdleVariantAssetBuilderPath = "Assets/Editor/ButlerClassicIdleVariantAssetBuilder.cs";
+    private const string ButlerClassicIdleVariantToolPath = "tools/character_animation/build_butler_classic_idle_variants.py";
     private const string OccluderPath = "Assets/Scripts/Characters/RoomForegroundOccluder.cs";
     private const string CharactersReadmePath = "Assets/Scripts/Characters/README.md";
     private const string PlayerWalkUpClipPath = "Assets/Animation/Player/Player_Walk_Up.anim";
@@ -55,7 +57,7 @@ public class CharacterRegressionTests
         "ButlerClassic Still Shift",
         "ButlerClassic Pocket Watch",
         "ButlerClassic Smoke",
-        "ButlerClassic Beard Scratch"
+        "ButlerClassic Lapel Adjust"
     };
 
     [Test]
@@ -191,7 +193,17 @@ public class CharacterRegressionTests
     [Test]
     public void ButlerClassicHasFiveSelectableIdleVariantControllers()
     {
-        Assert.That(Directory.GetFiles(ButlerClassicIdleVariantsFolder, "*.png", SearchOption.AllDirectories).Length, Is.EqualTo(80), "Five ButlerClassic idle variants should each provide four directions with four frames.");
+        string toolText = File.ReadAllText(ButlerClassicIdleVariantToolPath);
+        string editorBuilderText = File.ReadAllText(ButlerClassicIdleVariantAssetBuilderPath);
+
+        Assert.That(toolText, Does.Contain("FRAME_COUNT = 8"), "ButlerClassic idle variants should be generated as eight-frame loops, not choppy four-frame placeholders.");
+        Assert.That(toolText, Does.Contain("action_body_base"), "Action idles should reuse painted Butler pixels instead of drawing detached synthetic arms.");
+        Assert.That(toolText, Does.Contain("draw_smoking_pipe"), "The smoke idle should include an explicit cigarette/smoke detail instead of just a floating smoke overlay.");
+        Assert.That(toolText, Does.Contain("pocket_watch_hand_position"), "The pocket-watch idle should have an explicit hand/watch pose recipe.");
+        Assert.That(toolText, Does.Contain("draw_lapel_adjust"), "The fifth action idle should use a restrained lapel-adjust detail instead of a fake beard-scratch arm.");
+        Assert.That(editorBuilderText, Does.Contain("Rebuild ButlerClassic Idle Variant Assets"), "Unity should expose a menu command for rebuilding editable idle clips/controllers from generated frames.");
+        Assert.That(editorBuilderText, Does.Contain("AnimationUtility.SetObjectReferenceCurve"), "The Unity rebuild path should produce normal editable sprite Animation clips.");
+        Assert.That(Directory.GetFiles(ButlerClassicIdleVariantsFolder, "*.png", SearchOption.AllDirectories).Length, Is.EqualTo(160), "Five ButlerClassic idle variants should each provide four directions with eight frames.");
         Assert.That(Directory.GetFiles(ButlerClassicIdleVariantsAnimationFolder, "*.anim", SearchOption.TopDirectoryOnly).Length, Is.EqualTo(20), "Each idle variant should have editable Unity clips for all four directions.");
         Assert.That(Directory.GetFiles(ButlerClassicIdleVariantsAnimationFolder, "*.controller", SearchOption.TopDirectoryOnly).Length, Is.EqualTo(5), "Each idle variant should have its own selectable Animator controller.");
 
@@ -204,7 +216,8 @@ public class CharacterRegressionTests
 
             Assert.That(controllerText, Does.Contain($"m_Name: ButlerClassic_{name}"));
             Assert.That(controllerText, Does.Contain("IsFacingRight"));
-            Assert.That(controllerText, Does.Contain("m_DefaultState: {fileID: 1500000000000000003}"), $"{name} should start facing right like the player movement component.");
+            Assert.That(controllerText, Does.Contain($"m_Name: ButlerClassic_{name}_Idle_Right"));
+            Assert.That(controllerText, Does.Contain("m_DefaultState: {fileID:"), $"{name} should have an explicit default idle state.");
             Assert.That(controllerText, Does.Contain(ReadGuidFromMeta("Assets/Animation/ButlerClassic/ButlerClassic_Walk_Right.anim.meta")), $"{name} should reuse the polished ButlerClassic walk cycle.");
 
             AssertIdleVariantClip(folder, name, "down");
@@ -290,10 +303,10 @@ public class CharacterRegressionTests
 
         Assert.That(clipText, Does.Contain("classID: 114"), $"{variantName} {direction} idle should animate UI Images for room-stage reuse.");
         Assert.That(clipText, Does.Contain("classID: 212"), $"{variantName} {direction} idle should animate SpriteRenderers for the player.");
-        Assert.That(clipText, Does.Contain("m_SampleRate: 4"), $"{variantName} {direction} idle should move at idle speed, not walk speed.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 8"), $"{variantName} {direction} idle should be smooth enough for action poses.");
         Assert.That(clipText, Does.Contain("m_StopTime: 1"), $"{variantName} {direction} idle should loop over a full one-second cycle.");
 
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 8; i++)
         {
             string framePath = $"{ButlerClassicIdleVariantsFolder}/{variantFolder}/aligned/butler_classic_{variantFolder}_{direction}_{i:00}.png.meta";
             Assert.That(clipText, Does.Contain(ReadGuidFromMeta(framePath)), $"{variantName} {direction} idle should include frame {i}.");

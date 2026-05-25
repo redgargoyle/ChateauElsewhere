@@ -16761,7 +16761,7 @@ MonoBehaviour:
   - displayName: ButlerClassic Smoke
     animatorController: {fileID: 9100000, guid: 183956f0f28a2a21687aa49c05df76bd, type: 2}
     initialSprite: {fileID: 21300000, guid: 8892f0a14b894fcdbd26f4357bf4e197, type: 3}
-  - displayName: ButlerClassic Beard Scratch
+  - displayName: ButlerClassic Lapel Adjust
     animatorController: {fileID: 9100000, guid: 74affdec6927957fbf945335a86060a1, type: 2}
     initialSprite: {fileID: 21300000, guid: ef7749c644ac4148a871c303f1224b8f, type: 3}
   - displayName: ButlerYoung
