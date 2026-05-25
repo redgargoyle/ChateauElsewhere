@@ -1367,7 +1367,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private static bool SameRoomName(string first, string second)
 	{
-		return string.Equals(CleanRoomName(first), CleanRoomName(second), StringComparison.OrdinalIgnoreCase);
+		return string.Equals(NormalizeBoundaryName(first), NormalizeBoundaryName(second), StringComparison.OrdinalIgnoreCase);
 	}
 
 	private static string CleanRoomName(string value)
