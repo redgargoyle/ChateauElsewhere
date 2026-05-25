@@ -4,6 +4,12 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class RoomContentGroup : MonoBehaviour
 {
+    private const string DynamicPropSortingLayerName = "People";
+    private const int DynamicPropSortingOrderBase = 1000;
+    private const float DynamicPropSortingOrderPerYUnit = 100f;
+    private SpriteRenderer[] childSpriteRenderers = Array.Empty<SpriteRenderer>();
+    private bool childSpriteRenderersDirty = true;
+
     // Attach this to one root GameObject per room. When RoomNavigationManager's
     // currentRoom changes, it activates the matching RoomContentGroup and
     // deactivates the others, so each room can carry its own images, doors,
@@ -30,16 +36,25 @@ public class RoomContentGroup : MonoBehaviour
     {
         FillRoomNameFromObject();
         ApplyChildRendererVisibilityDefaults();
+        ApplyDynamicPropSorting();
     }
 
     private void OnEnable()
     {
         ApplyChildRendererVisibilityDefaults();
+        ApplyDynamicPropSorting();
     }
 
     private void OnTransformChildrenChanged()
     {
+        childSpriteRenderersDirty = true;
         ApplyChildRendererVisibilityDefaults();
+        ApplyDynamicPropSorting();
+    }
+
+    private void LateUpdate()
+    {
+        ApplyDynamicPropSorting();
     }
 
     public void RefreshInferredRoomName()
@@ -73,7 +88,8 @@ public class RoomContentGroup : MonoBehaviour
             return;
         }
 
-        SpriteRenderer[] spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        RefreshChildSpriteRenderers();
+        SpriteRenderer[] spriteRenderers = childSpriteRenderers;
 
         for (int i = 0; i < spriteRenderers.Length; i++)
         {
@@ -128,6 +144,63 @@ public class RoomContentGroup : MonoBehaviour
                 imagePlayer.spriteSortingOrder = defaultSpriteSortingOrder;
             }
         }
+
+        ApplyDynamicPropSorting();
+    }
+
+    private void ApplyDynamicPropSorting()
+    {
+        if (childSpriteRenderersDirty || childSpriteRenderers == null)
+        {
+            RefreshChildSpriteRenderers();
+        }
+
+        SpriteRenderer[] spriteRenderers = childSpriteRenderers;
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = spriteRenderers[i];
+
+            if (!ShouldYSortRoomProp(spriteRenderer))
+            {
+                continue;
+            }
+
+            // Room prop sprites use the same y-depth rule as the controllable player.
+            float sortingY = spriteRenderer.bounds.min.y;
+            int sortingOrder = DynamicPropSortingOrderBase -
+                Mathf.RoundToInt(sortingY * DynamicPropSortingOrderPerYUnit);
+
+            spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            spriteRenderer.sortingOrder = sortingOrder;
+        }
+    }
+
+    private static bool ShouldYSortRoomProp(SpriteRenderer spriteRenderer)
+    {
+        if (spriteRenderer == null ||
+            !spriteRenderer.enabled ||
+            spriteRenderer.sprite == null)
+        {
+            return false;
+        }
+
+        if (!string.Equals(
+            spriteRenderer.sortingLayerName,
+            DynamicPropSortingLayerName,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return spriteRenderer.GetComponent<WorldYSortSpriteRenderer>() == null &&
+            spriteRenderer.GetComponentInParent<RoomPersonWalker2D>() == null;
+    }
+
+    private void RefreshChildSpriteRenderers()
+    {
+        childSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        childSpriteRenderersDirty = false;
     }
 
     private string GetEffectiveRoomName()
