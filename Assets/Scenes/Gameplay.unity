@@ -9140,9 +9140,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -114244515
+  m_SortingLayerID: 4180722781
   m_SortingLayer: 2
-  m_SortingOrder: 1702
+  m_SortingOrder: 1425
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: d77f1efab4584971afa5cefa0b1fb759, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -9169,7 +9169,7 @@ MonoBehaviour:
   sortingLayerName: People
   sortingOrderBase: 1000
   sortingOrderPerYUnit: 100
-  sortingOrderOffset: 0
+  sortingOrderOffset: -277
   includeChildren: 1
   forcePivotSortPoint: 1
   sortSolidObstacleFromPhysicalBottom: 0
@@ -9791,9 +9791,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -114244515
+  m_SortingLayerID: 4180722781
   m_SortingLayer: 2
-  m_SortingOrder: 1708
+  m_SortingOrder: 1410
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 0e1cb1247413412c9d428a168c04e5ae, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -9820,7 +9820,7 @@ MonoBehaviour:
   sortingLayerName: People
   sortingOrderBase: 1000
   sortingOrderPerYUnit: 100
-  sortingOrderOffset: 0
+  sortingOrderOffset: -298
   includeChildren: 1
   forcePivotSortPoint: 1
   sortSolidObstacleFromPhysicalBottom: 0
@@ -13918,9 +13918,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -114244515
+  m_SortingLayerID: 4180722781
   m_SortingLayer: 2
-  m_SortingOrder: 1781
+  m_SortingOrder: 1450
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: a3e5ae1764fe4d14b437000d45bb4d19, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -13947,7 +13947,7 @@ MonoBehaviour:
   sortingLayerName: People
   sortingOrderBase: 1000
   sortingOrderPerYUnit: 100
-  sortingOrderOffset: 0
+  sortingOrderOffset: -331
   includeChildren: 1
   forcePivotSortPoint: 1
   sortSolidObstacleFromPhysicalBottom: 0
@@ -19011,9 +19011,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -114244515
+  m_SortingLayerID: 4180722781
   m_SortingLayer: 2
-  m_SortingOrder: 1779
+  m_SortingOrder: 1460
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 2aa7148423e64fa09efd3867b6d5e2db, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -19040,7 +19040,7 @@ MonoBehaviour:
   sortingLayerName: People
   sortingOrderBase: 1000
   sortingOrderPerYUnit: 100
-  sortingOrderOffset: 0
+  sortingOrderOffset: -319
   includeChildren: 1
   forcePivotSortPoint: 1
   sortSolidObstacleFromPhysicalBottom: 0
@@ -19879,9 +19879,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -114244515
+  m_SortingLayerID: 4180722781
   m_SortingLayer: 2
-  m_SortingOrder: 1702
+  m_SortingOrder: 1360
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: ea7fe71364de4029ada28c12605733d7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -19908,7 +19908,7 @@ MonoBehaviour:
   sortingLayerName: People
   sortingOrderBase: 1000
   sortingOrderPerYUnit: 100
-  sortingOrderOffset: 0
+  sortingOrderOffset: -342
   includeChildren: 1
   forcePivotSortPoint: 1
   sortSolidObstacleFromPhysicalBottom: 0
