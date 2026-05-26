@@ -56,6 +56,7 @@ public class RoomLightingRegressionTests
 
         Assert.That(layerText, Does.Contain("NoPostProcessFlame"), "The flame particle should have a named layer that can be excluded from the post-processed camera.");
         Assert.That(layerText, Does.Contain("GetComponentsInChildren<Transform>"), "The no-post-process layer must apply to nested particle objects.");
+        Assert.That(layerText, Does.Contain("FlameLocalLight.LightObjectName"), "The no-post-process helper must not put the child Light2D on the bypass-only layer.");
         Assert.That(cameraText, Does.Contain("renderPostProcessing = false"), "The bypass camera must render without bloom/post-processing.");
         Assert.That(cameraText, Does.Contain("CameraRenderType.Overlay"), "The bypass camera must be a stacked URP overlay camera so it cannot clear over the room render.");
         Assert.That(cameraText, Does.Contain("cameraStack.Add(bypassCamera)"), "The bypass camera should render through the main camera stack.");
@@ -63,13 +64,19 @@ public class RoomLightingRegressionTests
         Assert.That(bootstrapText, Does.Contain("PostProcessBypassCamera.EnsureForCamera"), "Runtime camera setup should survive scene loads.");
         Assert.That(bootstrapText, Does.Contain("ConfigureSceneFlames"), "Runtime setup should find flame particles in every room, not only one room.");
         Assert.That(bootstrapText, Does.Contain("FlameLocalLight.EnsureFor"), "Flames should carry their own local light setup.");
+        Assert.That(bootstrapText, Does.Contain("SetLayerRecursivelyExceptLocalLight"), "Runtime fallback layer assignment must keep flame Light2D visible to the main camera.");
         Assert.That(flameLocalLightText, Does.Contain("Light2D"), "Flames should emit local URP 2D light.");
+        Assert.That(flameLocalLightText, Does.Contain("LocalFlameLight2D"), "The flame light should live on a child object that the main camera can render.");
+        Assert.That(flameLocalLightText, Does.Contain("DefaultTargetSortingLayerNames = \"Background,People\""), "Local flame light should target room backgrounds and prop/character sorting layers.");
         Assert.That(flameLocalLightText, Does.Contain("targetSortingLayers"), "Local flame light should target sorting layers instead of the global volume.");
         Assert.That(flameLocalLightText, Does.Contain("createRuntimeGlowSprite"), "Image-heavy rooms need a local glow fallback when sprites are not lit.");
         Assert.That(flameLocalLightText, Does.Contain("NoPostProcessFlame"), "The particle itself should bypass global post-processing.");
         Assert.That(toolText, Does.Contain("Setup Selected Flame Local Light"), "Artists should have a single menu action for flame-local lights.");
         Assert.That(toolText, Does.Contain("Undo.AddComponent<FlameLocalLight>"), "The menu action should make selected particles emit their own local light.");
+        Assert.That(toolText, Does.Contain("EnsureLight2D"), "The menu action should create the child Light2D object used by the runtime setup.");
+        Assert.That(toolText, Does.Contain("RemoveLegacyRootLight"), "The menu action should remove old same-object Light2D setup that would be hidden with the particles.");
         Assert.That(readmeText, Does.Contain("Flame Local Lights"), "The flame-local-light workflow should be documented for room-light tuning.");
+        Assert.That(readmeText, Does.Contain("every room"), "The docs should make the runtime all-room flame setup explicit.");
     }
 
     [Test]

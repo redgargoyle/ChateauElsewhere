@@ -44,6 +44,11 @@ public sealed class NoPostProcessRenderLayer : MonoBehaviour
 
             for (int i = 0; i < children.Length; i++)
             {
+                if (children[i] != null && children[i].name == FlameLocalLight.LightObjectName)
+                {
+                    continue;
+                }
+
                 children[i].gameObject.layer = layer;
             }
         }

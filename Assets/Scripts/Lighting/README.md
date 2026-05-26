@@ -19,9 +19,9 @@ The first comparison set is in `Kitchen`, `Drawing Room`, `Dining Room`, `Master
 
 For real particle flames, keep the particle readable by rendering it after post-processing, then let the particle carry its own local light/glow. This keeps fireplace light tight to the source instead of asking the global volume to bloom the whole room.
 
-Select the flame root or any child particle object and run `Dreadforge > Lighting > Setup Selected Flame Local Light`. The command adds `NoPostProcessRenderLayer`, keeps the flame and its children on `NoPostProcessFlame`, adds `FlameLocalLight`, and ensures `Camera_NoPostProcessFlame` renders that layer after the main camera with post-processing disabled.
+Select the flame root or any child particle object and run `Dreadforge > Lighting > Setup Selected Flame Local Light`. The command adds `NoPostProcessRenderLayer`, keeps the flame particles and local glow on `NoPostProcessFlame`, adds `FlameLocalLight`, creates a `LocalFlameLight2D` child on the normal camera layer, and ensures `Camera_NoPostProcessFlame` renders the particle layer after the main camera with post-processing disabled.
 
-`FlameLocalLight` configures a small URP `Light2D` for lit sprites and a tight local sprite glow fallback for image-heavy rooms. Tune the flame component first; use `RoomLight_*` overlays only for deliberate painted spill that should affect the room image.
+At runtime the bootstrap scans flame/fire/hearth particles in every room and applies the same setup automatically. `FlameLocalLight` configures a small URP `Light2D` for room/object sprites and a tight local sprite glow fallback for image-heavy rooms. Tune the flame component first; use `RoomLight_*` overlays only for deliberate painted spill that should affect the room image.
 
 ## Prototype Tour
 

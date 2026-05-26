@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -8,8 +9,10 @@ using UnityEngine.Rendering.Universal;
 public sealed class FlameLocalLight : MonoBehaviour
 {
     public const string GlowObjectName = "LocalFlameGlow";
+    public const string LightObjectName = "LocalFlameLight2D";
 
-    private const string DefaultTargetSortingLayerName = "Background";
+    private const string DefaultLightObjectLayerName = "Default";
+    private const string DefaultTargetSortingLayerNames = "Background,People";
     private const int AdditiveBlendStyleIndex = 1;
 
     [Header("Post Processing")]
@@ -23,7 +26,8 @@ public sealed class FlameLocalLight : MonoBehaviour
     [SerializeField, Min(0f)] private float innerRadius = 0.06f;
     [SerializeField, Min(0.01f)] private float outerRadius = 1.15f;
     [SerializeField, Range(0f, 1f)] private float falloffIntensity = 0.72f;
-    [SerializeField] private string targetSortingLayerName = DefaultTargetSortingLayerName;
+    [SerializeField] private string lightObjectLayerName = DefaultLightObjectLayerName;
+    [SerializeField] private string targetSortingLayerNames = DefaultTargetSortingLayerNames;
 
     [Header("Visible Glow")]
     [SerializeField] private bool createRuntimeGlowSprite = true;
@@ -42,6 +46,7 @@ public sealed class FlameLocalLight : MonoBehaviour
     private ParticleSystem particleSystemCache;
     private ParticleSystemRenderer particleRenderer;
     private Light2D localLight;
+    private Transform localLightTransform;
     private SpriteRenderer glowRenderer;
 
     public static FlameLocalLight EnsureFor(ParticleSystem particleSystem)
@@ -162,12 +167,24 @@ public sealed class FlameLocalLight : MonoBehaviour
 
         if (localLight == null)
         {
-            localLight = GetComponent<Light2D>();
+            Transform lightTransform = transform.Find(LightObjectName);
+
+            if (lightTransform != null)
+            {
+                localLight = lightTransform.GetComponent<Light2D>();
+            }
         }
 
         if (localLight == null && createRuntimeLight2D && Application.isPlaying)
         {
-            localLight = gameObject.AddComponent<Light2D>();
+            GameObject lightObject = new GameObject(LightObjectName);
+            lightObject.transform.SetParent(transform, false);
+            localLight = lightObject.AddComponent<Light2D>();
+        }
+
+        if (localLight != null)
+        {
+            localLightTransform = localLight.transform;
         }
 
         if (glowRenderer == null)
@@ -204,7 +221,8 @@ public sealed class FlameLocalLight : MonoBehaviour
             return;
         }
 
-        SetLayerRecursively(transform, layer);
+        SetLayerRecursivelyExceptLight(transform, layer);
+        ApplyMainCameraLightLayer();
     }
 
     private void Configure2DLight()
@@ -214,6 +232,9 @@ public sealed class FlameLocalLight : MonoBehaviour
             return;
         }
 
+        localLight.transform.localPosition = Vector3.zero;
+        localLight.transform.localRotation = Quaternion.identity;
+        localLight.transform.localScale = Vector3.one;
         localLight.lightType = Light2D.LightType.Point;
         localLight.blendStyleIndex = AdditiveBlendStyleIndex;
         localLight.color = lightColor;
@@ -245,7 +266,7 @@ public sealed class FlameLocalLight : MonoBehaviour
         }
         else
         {
-            glowRenderer.sortingLayerName = ResolveSortingLayerName(targetSortingLayerName);
+            glowRenderer.sortingLayerName = ResolveSortingLayerName(GetFirstTargetSortingLayerName());
             glowRenderer.sortingOrder = glowSortingOrderOffset;
         }
     }
@@ -277,34 +298,109 @@ public sealed class FlameLocalLight : MonoBehaviour
 
     private int[] ResolveTargetSortingLayers()
     {
-        string layerName = ResolveSortingLayerName(targetSortingLayerName);
-        int layerId = SortingLayer.NameToID(layerName);
+        List<int> layers = new List<int>();
+        AddSortingLayers(targetSortingLayerNames, layers);
 
-        if (SortingLayer.IsValid(layerId))
+        if (layers.Count == 0)
         {
-            return new[] { layerId };
+            AddSortingLayers(DefaultTargetSortingLayerNames, layers);
         }
 
-        return new[] { SortingLayer.NameToID(DefaultTargetSortingLayerName) };
+        if (layers.Count == 0)
+        {
+            int defaultLayer = SortingLayer.NameToID("Default");
+
+            if (SortingLayer.IsValid(defaultLayer))
+            {
+                layers.Add(defaultLayer);
+            }
+        }
+
+        return layers.ToArray();
     }
 
     private static string ResolveSortingLayerName(string requestedName)
     {
         string layerName = string.IsNullOrWhiteSpace(requestedName)
-            ? DefaultTargetSortingLayerName
+            ? "Background"
             : requestedName.Trim();
 
         int layerId = SortingLayer.NameToID(layerName);
         return SortingLayer.IsValid(layerId) ? layerName : "Default";
     }
 
-    private static void SetLayerRecursively(Transform root, int layer)
+    private void ApplyMainCameraLightLayer()
     {
+        if (localLightTransform == null)
+        {
+            return;
+        }
+
+        int layer = LayerMask.NameToLayer(string.IsNullOrWhiteSpace(lightObjectLayerName)
+            ? DefaultLightObjectLayerName
+            : lightObjectLayerName.Trim());
+
+        localLightTransform.gameObject.layer = layer >= 0 ? layer : 0;
+    }
+
+    private string GetFirstTargetSortingLayerName()
+    {
+        string layerNames = string.IsNullOrWhiteSpace(targetSortingLayerNames)
+            ? DefaultTargetSortingLayerNames
+            : targetSortingLayerNames;
+        string[] tokens = layerNames.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            string layerName = tokens[i].Trim();
+
+            if (SortingLayer.IsValid(SortingLayer.NameToID(layerName)))
+            {
+                return layerName;
+            }
+        }
+
+        return "Background";
+    }
+
+    private static void AddSortingLayers(string layerNames, List<int> layers)
+    {
+        if (layers == null)
+        {
+            return;
+        }
+
+        string safeLayerNames = string.IsNullOrWhiteSpace(layerNames)
+            ? DefaultTargetSortingLayerNames
+            : layerNames;
+        string[] tokens = safeLayerNames.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            string layerName = tokens[i].Trim();
+            int layerId = SortingLayer.NameToID(layerName);
+
+            if (!SortingLayer.IsValid(layerId) || layers.Contains(layerId))
+            {
+                continue;
+            }
+
+            layers.Add(layerId);
+        }
+    }
+
+    private static void SetLayerRecursivelyExceptLight(Transform root, int layer)
+    {
+        if (root == null || root.name == LightObjectName)
+        {
+            return;
+        }
+
         root.gameObject.layer = layer;
 
         for (int i = 0; i < root.childCount; i++)
         {
-            SetLayerRecursively(root.GetChild(i), layer);
+            SetLayerRecursivelyExceptLight(root.GetChild(i), layer);
         }
     }
 

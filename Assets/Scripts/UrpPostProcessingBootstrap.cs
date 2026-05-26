@@ -79,22 +79,27 @@ public static class UrpPostProcessingBootstrap
                 continue;
             }
 
-            FlameLocalLight.EnsureFor(particleSystem);
+            FlameLocalLight localLight = FlameLocalLight.EnsureFor(particleSystem);
 
-            if (layer >= 0)
+            if (localLight == null && layer >= 0)
             {
-                SetLayerRecursively(particleSystem.transform, layer);
+                SetLayerRecursivelyExceptLocalLight(particleSystem.transform, layer);
             }
         }
     }
 
-    private static void SetLayerRecursively(Transform root, int layer)
+    private static void SetLayerRecursivelyExceptLocalLight(Transform root, int layer)
     {
+        if (root == null || root.name == FlameLocalLight.LightObjectName)
+        {
+            return;
+        }
+
         root.gameObject.layer = layer;
 
         for (int i = 0; i < root.childCount; i++)
         {
-            SetLayerRecursively(root.GetChild(i), layer);
+            SetLayerRecursivelyExceptLocalLight(root.GetChild(i), layer);
         }
     }
 }

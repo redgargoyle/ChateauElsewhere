@@ -53,13 +53,8 @@ public static class FlameBloomSeparationTools
             localLight = Undo.AddComponent<FlameLocalLight>(particleSystem.gameObject);
         }
 
-        Light2D light2D = particleSystem.GetComponent<Light2D>();
-
-        if (light2D == null)
-        {
-            light2D = Undo.AddComponent<Light2D>(particleSystem.gameObject);
-        }
-
+        RemoveLegacyRootLight(particleSystem);
+        Light2D light2D = EnsureLight2D(particleSystem.transform);
         SpriteRenderer glowRenderer = EnsureGlowRenderer(particleSystem.transform);
 
         localLight.ConfigureNow();
@@ -89,7 +84,7 @@ public static class FlameBloomSeparationTools
         }
 
         MarkSceneDirty(flameRoot);
-        Debug.Log($"Configured local flame light for '{flameRoot.name}'. The particle renders on '{NoPostProcessRenderLayer.DefaultLayerName}' and carries its own Light2D plus tight local glow.");
+        Debug.Log($"Configured local flame light for '{flameRoot.name}'. The particle renders on '{NoPostProcessRenderLayer.DefaultLayerName}' while '{FlameLocalLight.LightObjectName}' stays on the main camera layer for room/object lighting.");
     }
 
     [MenuItem(MenuPath, true)]
@@ -144,6 +139,50 @@ public static class FlameBloomSeparationTools
         }
 
         return glowRenderer;
+    }
+
+    private static Light2D EnsureLight2D(Transform particleTransform)
+    {
+        Transform existing = particleTransform.Find(FlameLocalLight.LightObjectName);
+        GameObject lightObject;
+
+        if (existing != null)
+        {
+            lightObject = existing.gameObject;
+        }
+        else
+        {
+            lightObject = new GameObject(FlameLocalLight.LightObjectName);
+            Undo.RegisterCreatedObjectUndo(lightObject, "Create Local Flame Light2D");
+            Undo.SetTransformParent(lightObject.transform, particleTransform, "Parent Local Flame Light2D");
+            lightObject.transform.localPosition = Vector3.zero;
+            lightObject.transform.localRotation = Quaternion.identity;
+            lightObject.transform.localScale = Vector3.one;
+        }
+
+        int defaultLayer = LayerMask.NameToLayer("Default");
+        lightObject.layer = defaultLayer >= 0 ? defaultLayer : 0;
+
+        Light2D light2D = lightObject.GetComponent<Light2D>();
+
+        if (light2D == null)
+        {
+            light2D = Undo.AddComponent<Light2D>(lightObject);
+        }
+
+        return light2D;
+    }
+
+    private static void RemoveLegacyRootLight(ParticleSystem particleSystem)
+    {
+        Light2D legacyLight = particleSystem.GetComponent<Light2D>();
+
+        if (legacyLight == null)
+        {
+            return;
+        }
+
+        Undo.DestroyObjectImmediate(legacyLight);
     }
 
     private static void MarkSceneDirty(Object target)
