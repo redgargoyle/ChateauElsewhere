@@ -1598,16 +1598,17 @@ public class CameraManager : MonoBehaviour
         }
 
         lastRoomViewportSize = viewportSize;
-        float fitScale = GetFitScale(viewportSize, roomSize);
+        float viewportScale = GetRoomStageViewportScale(viewportSize, roomSize);
         float zoom = ClampRoomZoom(currentRoomZoom);
-        float stageScale = fitScale * zoom;
+        float stageScale = viewportScale * zoom;
         Vector2 scaledRoomSize = roomSize * stageScale;
         Vector2 maxOffset = new Vector2(
             Mathf.Max(0f, (scaledRoomSize.x - viewportSize.x) * 0.5f),
             Mathf.Max(0f, (scaledRoomSize.y - viewportSize.y) * 0.5f));
 
-        // The room stage is the single moving surface. Background, doors, and
-        // future room props all share this transform, so they cannot drift apart.
+        // The room stage is the single moving surface. It is sized from the room
+        // background texture, not child bounds, so props outside the painting do
+        // not change the camera frame.
         activeRoomStage.anchorMin = new Vector2(0.5f, 0.5f);
         activeRoomStage.anchorMax = new Vector2(0.5f, 0.5f);
         activeRoomStage.pivot = new Vector2(0.5f, 0.5f);
@@ -1810,14 +1811,21 @@ public class CameraManager : MonoBehaviour
         return new Vector2(Mathf.Max(1f, Screen.width), Mathf.Max(1f, Screen.height));
     }
 
-    private float GetFitScale(Vector2 viewportSize, Vector2 roomSize)
+    private float GetRoomStageViewportScale(Vector2 viewportSize, Vector2 roomSize)
     {
         if (viewportSize.x <= 0f || viewportSize.y <= 0f || roomSize.x <= 0f || roomSize.y <= 0f)
         {
             return 1f;
         }
 
-        return Mathf.Min(viewportSize.x / roomSize.x, viewportSize.y / roomSize.y);
+        float widthScale = viewportSize.x / roomSize.x;
+        float heightScale = viewportSize.y / roomSize.y;
+
+        // Runtime room stages should always cover the camera viewport. The
+        // legacy cropBackgroundToFill flag still applies to the fallback RawImage
+        // path, but active rooms use stage scaling so objects, doors, and the
+        // room painting stay locked together without exposing camera clear color.
+        return Mathf.Max(widthScale, heightScale);
     }
 
     private Rect GetBaseBackgroundUvCrop(RectTransform rectTransform)

@@ -209,7 +209,7 @@ public class NavigationRegressionTests
         Assert.That(sceneText, Does.Contain("zoomRoomWithMouseWheel: 1"), "Mouse wheel should use a regular image zoom, not the old vertical shader distortion.");
         Assert.That(sceneText, Does.Contain("defaultRoomFov: 0.8"), "Room art should start less cropped than the old tutorial placeholder framing.");
         Assert.That(sceneText, Does.Contain("fitBackgroundToRoomAspect: 1"), "Room art should keep a stable aspect plane when the Game view is resized.");
-        Assert.That(sceneText, Does.Contain("cropBackgroundToFill: 0"), "Window resizing should letterbox the room plane instead of changing the visible source-image crop.");
+        Assert.That(sceneText, Does.Contain("cropBackgroundToFill: 0"), "The legacy RawImage crop toggle can stay off because active room stages cover the viewport in code.");
         Assert.That(sceneText, Does.Contain("roomPanStartSpeed: 0.45"), "Edge panning should start gently before accelerating.");
         Assert.That(sceneText, Does.Contain("defaultRoomZoom: 1.06"), "The room should start slightly zoomed so edge panning has room to move.");
         Assert.That(sceneText, Does.Contain("maxRoomZoom: 1.22"), "Wheel zoom should stay strong enough for panning but not feel like teleporting.");
@@ -221,6 +221,8 @@ public class NavigationRegressionTests
         Assert.That(cameraManagerText, Does.Contain("SetActiveRoomContent"), "CameraManager should know which room stage owns the current background and hitboxes.");
         Assert.That(cameraManagerText, Does.Contain("TryApplyRoomStageLayout"), "Runtime panning must move the active room stage, not reproject door rectangles.");
         Assert.That(cameraManagerText, Does.Contain("AttachBackgroundToRoomStage"), "The background image should become a child of the active room stage in Play mode.");
+        Assert.That(cameraManagerText, Does.Contain("GetRoomStageViewportScale"), "Room-stage framing should be computed from the room image and viewport.");
+        Assert.That(cameraManagerText, Does.Contain("return Mathf.Max(widthScale, heightScale);"), "Room stages should always cover the whole Game view so no gray outline is visible.");
         Assert.That(cameraManagerText, Does.Contain("GetCurrentHorizontalPanSpeed"), "Edge panning should accelerate while the player holds the cursor at the edge.");
         Assert.That(cameraManagerText, Does.Contain("SmoothRoomZoom"), "Mouse-wheel zoom should be damped instead of stepping between crop values.");
         Assert.That(cameraManagerText, Does.Contain("activeRoomStage.localScale = new Vector3(stageScale, stageScale, 1f)"), "Regular zoom should scale the whole room stage so hitboxes and art share one transform.");
