@@ -86,6 +86,79 @@ def background_mask(
     return background
 
 
+def defringe_alpha_edges(
+    image: Image.Image,
+    *,
+    source_alpha: int = 248,
+    transparent_cutoff: int = 8,
+) -> Image.Image:
+    """Bleed object colors into transparent pixels to avoid white matte halos."""
+    image = image.convert("RGBA")
+    width, height = image.size
+    pixel_data = getattr(image, "get_flattened_data", image.getdata)
+    pixels = list(pixel_data())
+    total = width * height
+
+    visited = bytearray(total)
+    fill_r = bytearray(total)
+    fill_g = bytearray(total)
+    fill_b = bytearray(total)
+    queue: deque[int] = deque()
+
+    for index, (r, g, b, a) in enumerate(pixels):
+        if a >= source_alpha:
+            visited[index] = 1
+            fill_r[index] = r
+            fill_g[index] = g
+            fill_b[index] = b
+            queue.append(index)
+
+    if not queue:
+        return image
+
+    while queue:
+        index = queue.popleft()
+        x = index % width
+        y = index // width
+
+        neighbors = []
+        if x > 0:
+            neighbors.append(index - 1)
+        if x < width - 1:
+            neighbors.append(index + 1)
+        if y > 0:
+            neighbors.append(index - width)
+        if y < height - 1:
+            neighbors.append(index + width)
+
+        for neighbor in neighbors:
+            if visited[neighbor]:
+                continue
+            visited[neighbor] = 1
+            fill_r[neighbor] = fill_r[index]
+            fill_g[neighbor] = fill_g[index]
+            fill_b[neighbor] = fill_b[index]
+            queue.append(neighbor)
+
+    cleaned_pixels = []
+    for index, (r, g, b, a) in enumerate(pixels):
+        if a <= transparent_cutoff:
+            a = 0
+        elif a >= source_alpha:
+            a = 255
+
+        if a < 255:
+            r = fill_r[index]
+            g = fill_g[index]
+            b = fill_b[index]
+
+        cleaned_pixels.append((r, g, b, a))
+
+    cleaned = Image.new("RGBA", image.size)
+    cleaned.putdata(cleaned_pixels)
+    return cleaned
+
+
 def remove_background(
     source: Path,
     out_path: Path,
@@ -109,6 +182,8 @@ def remove_background(
     # Slight feathering avoids crunchy JPG halos without inventing extra logic.
     alpha = alpha.filter(ImageFilter.GaussianBlur(radius=0.35))
     image.putalpha(alpha)
+    image = defringe_alpha_edges(image)
+    alpha = image.getchannel("A")
 
     bbox = alpha.getbbox()
     if bbox:
