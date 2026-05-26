@@ -1006,7 +1006,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.29425, b: 0.08325, a: 0.43012264}
+  m_Color: {r: 1, g: 0.29425, b: 0.08325, a: 0.37806413}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1394,7 +1394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.682048, b: 0.35415998, a: 0.18446298}
+  m_Color: {r: 1, g: 0.682048, b: 0.35415998, a: 0.18509792}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3110,7 +3110,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.99216, g: 0.32652, b: 0.115480006, a: 0.6033345}
+  m_Color: {r: 0.99216, g: 0.32652, b: 0.115480006, a: 0.58968085}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3214,7 +3214,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1682
+  m_SortingOrder: 1657
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 36f350173f7f4f7089cf8bd0ef795a8e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -3964,7 +3964,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.55340004, g: 0.72360003, b: 1, a: 0.113563746}
+  m_Color: {r: 0.55340004, g: 0.72360003, b: 1, a: 0.10931431}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6690,7 +6690,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1719
+  m_SortingOrder: 1692
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 2aa7148423e64fa09efd3867b6d5e2db, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -6969,7 +6969,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1384
+  m_SortingOrder: 1369
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: e17d392a4d224d958dc559e1d2a19fff, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -7756,7 +7756,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 726529cec513ee83585fb467c7093cbe, type: 3}
+  m_Texture: {fileID: 2800000, guid: 755ad9d5953d1f60cafbff7c71f5767f, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -9225,7 +9225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.55204004, g: 0.88024, b: 0.56528, a: 0.12488792}
+  m_Color: {r: 0.55204004, g: 0.88024, b: 0.56528, a: 0.12704538}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -10977,7 +10977,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1565
+  m_SortingOrder: 1544
   m_MaskInteraction: 0
   m_Sprite: {fileID: -6677720335222025916, guid: 85f4f28c7a1e461a9a8ae029c83a41d3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -11445,7 +11445,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1678
+  m_SortingOrder: 1653
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: dfcaa33b0d194eb0a42a334d83b90fb8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -11837,7 +11837,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.62, b: 0.28, a: 0.20345293}
+  m_Color: {r: 1, g: 0.62, b: 0.28, a: 0.17794959}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -12901,7 +12901,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.58224, g: 0.76224, b: 1, a: 0.07800319}
+  m_Color: {r: 0.58224, g: 0.76224, b: 1, a: 0.08079685}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -17015,7 +17015,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.682048, b: 0.35415998, a: 0.18446298}
+  m_Color: {r: 1, g: 0.682048, b: 0.35415998, a: 0.18509792}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -20336,7 +20336,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.443952, b: 0.17697601, a: 0.2446313}
+  m_Color: {r: 1, g: 0.443952, b: 0.17697601, a: 0.23173028}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -23178,9 +23178,11 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 2.045788, y: -0.6854759}
-      - {x: 2.0770702, y: -0.6802781}
-      - {x: 1.3684226, y: -0.38951188}
+    - - {x: 2.0366914, y: -0.7526635}
+      - {x: 1.9815552, y: -0.6914762}
+      - {x: 1.5931938, y: -0.6459755}
+      - {x: 1.2365205, y: -0.6433318}
+      - {x: 1.0563748, y: -0.45692816}
       - {x: 0.50094515, y: -0.4125816}
       - {x: 0.44665176, y: -0.17347477}
       - {x: 0.056621, y: -0.17540942}
@@ -23196,7 +23198,7 @@ PolygonCollider2D:
       - {x: 0.15770616, y: -0.8845071}
       - {x: 0.7483442, y: -0.88464725}
       - {x: 2.0932655, y: -0.88168025}
-      - {x: 2.0408077, y: -0.6707544}
+      - {x: 2.0271626, y: -0.81632763}
   m_UseDelaunayMesh: 1
 --- !u!1 &1498249204
 GameObject:
@@ -24710,7 +24712,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.47327998, b: 0.196416, a: 0.19607231}
+  m_Color: {r: 1, g: 0.47327998, b: 0.196416, a: 0.2080234}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -27246,7 +27248,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1520
+  m_SortingOrder: 1501
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: a1de085d0f2a49fbbce5f3d7b85252c8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -29114,7 +29116,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1401
+  m_SortingOrder: 1386
   m_MaskInteraction: 0
   m_Sprite: {fileID: -331422749337887658, guid: f7384e5033b764ad2aa42fe6f6e3900c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -31581,10 +31583,10 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 1.8474026, y: -0.34865034}
-      - {x: 0.61583745, y: 0.013280153}
-      - {x: -0.8396192, y: -0.0327251}
-      - {x: -1.9848274, y: -0.42843112}
+    - - {x: 1.8114158, y: -0.41099778}
+      - {x: 0.69180983, y: -0.06547457}
+      - {x: -0.65168756, y: -0.068820976}
+      - {x: -1.9248492, y: -0.5334375}
       - {x: -2.0423346, y: -0.83789676}
       - {x: 0.58778536, y: -0.80901694}
       - {x: 1.8425543, y: -0.83654064}
@@ -32251,7 +32253,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1547
+  m_SortingOrder: 1526
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 8017e9546fbe40beaaa61662f1e8191a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -32449,7 +32451,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.5044, g: 0.704, b: 1, a: 0.12920368}
+  m_Color: {r: 0.5044, g: 0.704, b: 1, a: 0.12893318}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -32932,7 +32934,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.30416, b: 0.084060006, a: 0.694271}
+  m_Color: {r: 1, g: 0.30416, b: 0.084060006, a: 0.7681473}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -33528,7 +33530,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1485
+  m_SortingOrder: 1467
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 4e20e3fb3bc04151b509cb306c5d1050, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -35678,7 +35680,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000036
 RectTransform:
   m_ObjectHideFlags: 0
@@ -36183,7 +36185,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2300000061
 RectTransform:
   m_ObjectHideFlags: 0
@@ -40514,7 +40516,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8916758, g: 0.9168429, b: 0.7363781, a: 0.32774594}
+  m_Color: {r: 0.8916758, g: 0.9168429, b: 0.7363781, a: 0.30126604}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -40646,7 +40648,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.615968, b: 0.29654402, a: 0.24473794}
+  m_Color: {r: 1, g: 0.615968, b: 0.29654402, a: 0.25135273}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -40792,7 +40794,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.74208003, b: 0.38496, a: 0.22834079}
+  m_Color: {r: 1, g: 0.74208003, b: 0.38496, a: 0.23382944}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
