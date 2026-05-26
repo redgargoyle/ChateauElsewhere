@@ -9,6 +9,7 @@ public class RoomLightingRegressionTests
     private const string OverlayPath = "Assets/Scripts/Lighting/RoomLightOverlay.cs";
     private const string PresetScriptPath = "Assets/Scripts/Lighting/RoomLightingPreset.cs";
     private const string BootstrapPath = "Assets/Scripts/UrpPostProcessingBootstrap.cs";
+    private const string FlameLocalLightPath = "Assets/Scripts/Lighting/FlameLocalLight.cs";
     private const string NoPostLayerPath = "Assets/Scripts/Lighting/NoPostProcessRenderLayer.cs";
     private const string BypassCameraPath = "Assets/Scripts/Lighting/PostProcessBypassCamera.cs";
     private const string FlameToolPath = "Assets/Editor/FlameBloomSeparationTools.cs";
@@ -47,6 +48,7 @@ public class RoomLightingRegressionTests
     public void FlameParticlesCanBypassGlobalBloomWhileRoomOverlaysDriveIt()
     {
         string bootstrapText = File.ReadAllText(BootstrapPath);
+        string flameLocalLightText = File.ReadAllText(FlameLocalLightPath);
         string layerText = File.ReadAllText(NoPostLayerPath);
         string cameraText = File.ReadAllText(BypassCameraPath);
         string toolText = File.ReadAllText(FlameToolPath);
@@ -59,10 +61,15 @@ public class RoomLightingRegressionTests
         Assert.That(cameraText, Does.Contain("cameraStack.Add(bypassCamera)"), "The bypass camera should render through the main camera stack.");
         Assert.That(cameraText, Does.Contain("sourceCamera.cullingMask &= ~renderLayers.value"), "The main camera should not also render the no-post-process flame layer.");
         Assert.That(bootstrapText, Does.Contain("PostProcessBypassCamera.EnsureForCamera"), "Runtime camera setup should survive scene loads.");
-        Assert.That(toolText, Does.Contain("Setup Selected Flame Bloom Separation"), "Artists should have a single menu action for separating flame particles from bloom drivers.");
-        Assert.That(toolText, Does.Contain("BloomDriver"), "The menu action should create a compact bloom driver overlay.");
-        Assert.That(toolText, Does.Contain("PaintedReflection"), "The menu action should create a broader painted reflection overlay.");
-        Assert.That(readmeText, Does.Contain("Flame Bloom Separation"), "The separation workflow should be documented for room-light tuning.");
+        Assert.That(bootstrapText, Does.Contain("ConfigureSceneFlames"), "Runtime setup should find flame particles in every room, not only one room.");
+        Assert.That(bootstrapText, Does.Contain("FlameLocalLight.EnsureFor"), "Flames should carry their own local light setup.");
+        Assert.That(flameLocalLightText, Does.Contain("Light2D"), "Flames should emit local URP 2D light.");
+        Assert.That(flameLocalLightText, Does.Contain("targetSortingLayers"), "Local flame light should target sorting layers instead of the global volume.");
+        Assert.That(flameLocalLightText, Does.Contain("createRuntimeGlowSprite"), "Image-heavy rooms need a local glow fallback when sprites are not lit.");
+        Assert.That(flameLocalLightText, Does.Contain("NoPostProcessFlame"), "The particle itself should bypass global post-processing.");
+        Assert.That(toolText, Does.Contain("Setup Selected Flame Local Light"), "Artists should have a single menu action for flame-local lights.");
+        Assert.That(toolText, Does.Contain("Undo.AddComponent<FlameLocalLight>"), "The menu action should make selected particles emit their own local light.");
+        Assert.That(readmeText, Does.Contain("Flame Local Lights"), "The flame-local-light workflow should be documented for room-light tuning.");
     }
 
     [Test]
@@ -76,8 +83,11 @@ public class RoomLightingRegressionTests
         Assert.That(sceneText, Does.Contain("toggleKey: 108"), "The L key should toggle lights in Play mode.");
         Assert.That(sceneText, Does.Contain("showHud: 1"), "The Lights HUD button should be enabled.");
         Assert.That(sceneText, Does.Contain("createMissingLightsFromPreset: 1"), "Gameplay should create any missing editable scene lights from the preset.");
+        Assert.That(sceneText, Does.Contain("driveGlobalBloomIntensity: 1"), "Global volume should still affect rooms and non-flame objects.");
+        Assert.That(sceneText, Does.Contain("lightsOnBloomIntensity: 20"), "The room/object bloom intensity should stay enabled.");
         Assert.That(sceneText, Does.Contain("m_Name: Lighting"), "Rooms should contain visible Lighting children for edit-mode authoring.");
         Assert.That(sceneText, Does.Contain("m_Name: RoomLight_"), "Gameplay should contain editable RoomLight scene objects.");
+        Assert.That(sceneText, Does.Not.Match(@"(?s)m_Name: RoomLight_Billiard_Hearth_Spill.*renderAsSprite: 1"), "The Billiard fireplace spill must not render as a giant sorted sprite over the room.");
     }
 
     [Test]

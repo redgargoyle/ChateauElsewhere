@@ -138,6 +138,7 @@ public sealed class RoomLightOverlay : MonoBehaviour
             return;
         }
 
+        image.enabled = true;
         image.sprite = animationStyle == RoomLightAnimationStyle.FireplaceSource
             ? GetSourceLightSprite()
             : GetSoftLightSprite();

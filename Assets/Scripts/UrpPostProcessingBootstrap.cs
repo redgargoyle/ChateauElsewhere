@@ -20,6 +20,8 @@ public static class UrpPostProcessingBootstrap
     private static void EnablePostProcessingOnCameras()
     {
         int noPostProcessFlameLayer = LayerMask.NameToLayer(NoPostProcessRenderLayer.DefaultLayerName);
+        ConfigureSceneFlames(noPostProcessFlameLayer);
+
         LayerMask bypassLayers = new LayerMask
         {
             value = noPostProcessFlameLayer >= 0 ? 1 << noPostProcessFlameLayer : 0
@@ -31,7 +33,7 @@ public static class UrpPostProcessingBootstrap
             PostProcessBypassCamera.EnsureForCamera(mainCamera, bypassLayers);
         }
 
-        Camera[] cameras = Object.FindObjectsByType<Camera>();
+        Camera[] cameras = UnityEngine.Object.FindObjectsByType<Camera>();
 
         foreach (Camera camera in cameras)
         {
@@ -61,6 +63,38 @@ public static class UrpPostProcessingBootstrap
             }
 
             cameraData.renderPostProcessing = true;
+        }
+    }
+
+    private static void ConfigureSceneFlames(int layer)
+    {
+        ParticleSystem[] particleSystems = UnityEngine.Object.FindObjectsByType<ParticleSystem>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            ParticleSystem particleSystem = particleSystems[i];
+
+            if (!FlameLocalLight.IsLikelyFlame(particleSystem))
+            {
+                continue;
+            }
+
+            FlameLocalLight.EnsureFor(particleSystem);
+
+            if (layer >= 0)
+            {
+                SetLayerRecursively(particleSystem.transform, layer);
+            }
+        }
+    }
+
+    private static void SetLayerRecursively(Transform root, int layer)
+    {
+        root.gameObject.layer = layer;
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            SetLayerRecursively(root.GetChild(i), layer);
         }
     }
 }
