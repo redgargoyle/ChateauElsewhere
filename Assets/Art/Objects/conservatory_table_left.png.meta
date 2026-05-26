@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 660fb4bcd47e6041e9dd23d367a366eb
+guid: 85f4f28c7a1e461a9a8ae029c83a41d3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7572247830712452811
-    second: tutorialbackground_0
+      213: -6677720335222025916
+    second: conservatory_table_left_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: tutorialbackground_0
+      name: conservatory_table_left_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 736
-        height: 414
+        width: 349
+        height: 361
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bc686d45847061960800000000000000
-      internalID: 7572247830712452811
+      spriteID: 44150b53cb8f353a0800000000000000
+      internalID: -6677720335222025916
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      tutorialbackground_0: 7572247830712452811
+      conservatory_table_left_0: -6677720335222025916
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
