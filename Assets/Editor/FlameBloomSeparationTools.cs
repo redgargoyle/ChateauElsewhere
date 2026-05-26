@@ -84,7 +84,7 @@ public static class FlameBloomSeparationTools
         }
 
         MarkSceneDirty(flameRoot);
-        Debug.Log($"Configured local flame light for '{flameRoot.name}'. The particle renders on '{NoPostProcessRenderLayer.DefaultLayerName}' while '{FlameLocalLight.LightObjectName}' stays on the main camera layer for room/object lighting.");
+        Debug.Log($"Configured local flame light for '{flameRoot.name}'. The particle renders on '{NoPostProcessRenderLayer.DefaultLayerName}' while '{FlameLocalLight.LightObjectName}' stays on the main camera layer for background-only lighting.");
     }
 
     [MenuItem(MenuPath, true)]

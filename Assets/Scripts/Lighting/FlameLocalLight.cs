@@ -12,7 +12,8 @@ public sealed class FlameLocalLight : MonoBehaviour
     public const string LightObjectName = "LocalFlameLight2D";
 
     private const string DefaultLightObjectLayerName = "Default";
-    private const string DefaultTargetSortingLayerNames = "Background,People";
+    private const string DefaultTargetSortingLayerNames = "Background";
+    private const string ParticleShaderName = "Chateau/Particles/VertexColorUnlit";
     private const int AdditiveBlendStyleIndex = 1;
 
     [Header("Post Processing")]
@@ -42,6 +43,8 @@ public sealed class FlameLocalLight : MonoBehaviour
     [SerializeField] private float phase;
 
     private static Sprite sharedGlowSprite;
+    private static Texture2D sharedParticleTexture;
+    private static Material sharedParticleMaterial;
 
     private ParticleSystem particleSystemCache;
     private ParticleSystemRenderer particleRenderer;
@@ -127,6 +130,7 @@ public sealed class FlameLocalLight : MonoBehaviour
     public void ConfigureNow()
     {
         CacheComponents();
+        ConfigureParticleRenderer();
         ApplyNoPostProcessLayer();
         Configure2DLight();
         ConfigureGlowSprite();
@@ -202,6 +206,29 @@ public sealed class FlameLocalLight : MonoBehaviour
             GameObject glowObject = new GameObject(GlowObjectName);
             glowObject.transform.SetParent(transform, false);
             glowRenderer = glowObject.AddComponent<SpriteRenderer>();
+        }
+    }
+
+    private void ConfigureParticleRenderer()
+    {
+        if (particleRenderer == null)
+        {
+            return;
+        }
+
+        particleRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        particleRenderer.receiveShadows = false;
+
+        if (!Application.isPlaying || !NeedsRuntimeParticleMaterial(particleRenderer.sharedMaterial))
+        {
+            return;
+        }
+
+        Material material = GetParticleMaterial();
+
+        if (material != null)
+        {
+            particleRenderer.sharedMaterial = material;
         }
     }
 
@@ -327,6 +354,106 @@ public sealed class FlameLocalLight : MonoBehaviour
 
         int layerId = SortingLayer.NameToID(layerName);
         return SortingLayer.IsValid(layerId) ? layerName : "Default";
+    }
+
+    private static bool NeedsRuntimeParticleMaterial(Material material)
+    {
+        if (material == null || material.shader == null)
+        {
+            return true;
+        }
+
+        string materialName = material.name;
+        string shaderName = material.shader.name;
+
+        if (shaderName.Equals("Hidden/InternalErrorShader", StringComparison.Ordinal) ||
+            shaderName.StartsWith("Particles/", StringComparison.OrdinalIgnoreCase) ||
+            shaderName.StartsWith("Legacy Shaders/Particles/", StringComparison.OrdinalIgnoreCase) ||
+            materialName.IndexOf("Default-Particle", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            materialName.IndexOf("Default-Material", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            materialName.IndexOf("New Material", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            return true;
+        }
+
+        return material.HasProperty("_MainTex") && material.mainTexture == null;
+    }
+
+    private static Material GetParticleMaterial()
+    {
+        if (sharedParticleMaterial != null)
+        {
+            return sharedParticleMaterial;
+        }
+
+        Shader shader = Shader.Find(ParticleShaderName);
+
+        if (shader == null)
+        {
+            shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        }
+
+        if (shader == null)
+        {
+            shader = Shader.Find("Sprites/Default");
+        }
+
+        if (shader == null)
+        {
+            return null;
+        }
+
+        sharedParticleMaterial = new Material(shader)
+        {
+            name = "Generated_RuntimeFlameParticleMaterial",
+            hideFlags = HideFlags.HideAndDontSave,
+            mainTexture = GetParticleTexture()
+        };
+
+        if (sharedParticleMaterial.HasProperty("_Color"))
+        {
+            sharedParticleMaterial.SetColor("_Color", Color.white);
+        }
+
+        return sharedParticleMaterial;
+    }
+
+    private static Texture2D GetParticleTexture()
+    {
+        if (sharedParticleTexture != null)
+        {
+            return sharedParticleTexture;
+        }
+
+        const int size = 64;
+        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+        {
+            name = "Generated_RuntimeFlameParticle",
+            hideFlags = HideFlags.HideAndDontSave,
+            filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp
+        };
+
+        float center = (size - 1) * 0.5f;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = (x - center) / center;
+                float dy = (y - center) / center;
+                float radius = Mathf.Sqrt(dx * dx + dy * dy);
+                float core = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0f, 0.28f, radius));
+                float halo = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.08f, 1f, radius));
+                float alpha = Mathf.Clamp01(core + halo * 0.62f);
+                Color color = Color.Lerp(new Color(1f, 0.42f, 0.08f, alpha), new Color(1f, 0.96f, 0.48f, alpha), core);
+                texture.SetPixel(x, y, color);
+            }
+        }
+
+        texture.Apply(false, true);
+        sharedParticleTexture = texture;
+        return sharedParticleTexture;
     }
 
     private void ApplyMainCameraLightLayer()

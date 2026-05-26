@@ -67,7 +67,9 @@ public class RoomLightingRegressionTests
         Assert.That(bootstrapText, Does.Contain("SetLayerRecursivelyExceptLocalLight"), "Runtime fallback layer assignment must keep flame Light2D visible to the main camera.");
         Assert.That(flameLocalLightText, Does.Contain("Light2D"), "Flames should emit local URP 2D light.");
         Assert.That(flameLocalLightText, Does.Contain("LocalFlameLight2D"), "The flame light should live on a child object that the main camera can render.");
-        Assert.That(flameLocalLightText, Does.Contain("DefaultTargetSortingLayerNames = \"Background,People\""), "Local flame light should target room backgrounds and prop/character sorting layers.");
+        Assert.That(flameLocalLightText, Does.Contain("DefaultTargetSortingLayerNames = \"Background\""), "Local flame light should target the room background only for the 2.5D look.");
+        Assert.That(flameLocalLightText, Does.Contain("NeedsRuntimeParticleMaterial"), "Flame particles with missing/default materials should be repaired at runtime instead of rendering black.");
+        Assert.That(flameLocalLightText, Does.Contain("Generated_RuntimeFlameParticleMaterial"), "Runtime particle repair should use an explicit unlit flame material.");
         Assert.That(flameLocalLightText, Does.Contain("targetSortingLayers"), "Local flame light should target sorting layers instead of the global volume.");
         Assert.That(flameLocalLightText, Does.Contain("createRuntimeGlowSprite"), "Image-heavy rooms need a local glow fallback when sprites are not lit.");
         Assert.That(flameLocalLightText, Does.Contain("NoPostProcessFlame"), "The particle itself should bypass global post-processing.");
