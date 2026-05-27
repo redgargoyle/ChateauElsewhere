@@ -960,7 +960,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.29425, b: 0.08325, a: 0.49076438}
+  m_Color: {r: 1, g: 0.29425, b: 0.08325, a: 0.45773005}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3178,7 +3178,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.99216, g: 0.32652, b: 0.115480006, a: 0.60344994}
+  m_Color: {r: 0.99216, g: 0.32652, b: 0.115480006, a: 0.5957435}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6735,8 +6735,8 @@ Transform:
   m_GameObject: {fileID: 479527849}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -327.04523, y: -548.2388, z: -6570.105}
-  m_LocalScale: {x: 13.687719, y: 33.76304, z: 73.00117}
+  m_LocalPosition: {x: -317.22, y: -355.33, z: -6570.105}
+  m_LocalScale: {x: 89.486206, y: 95.3637, z: 73.00117}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2300000006}
@@ -6788,7 +6788,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1794
+  m_SortingOrder: 1629
   m_MaskInteraction: 0
   m_Sprite: {fileID: -6563792251403252432, guid: 40889a3372f4a4f5d8a61b96c058cc4a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -11112,7 +11112,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1596
+  m_SortingOrder: 1583
   m_MaskInteraction: 0
   m_Sprite: {fileID: -6677720335222025916, guid: 85f4f28c7a1e461a9a8ae029c83a41d3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16537,9 +16537,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: 1040854321
+  m_SortingLayer: 1
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3165609689112661986, guid: 3a8e099a27d8c99069da29516aa0a189, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16559,12 +16559,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1003858782}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.0039, y: 0.6235, z: 0}
-  m_LocalScale: {x: 1.3586, y: 1.4915, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -222.13336, y: 46.106777, z: -6655.3486}
+  m_LocalScale: {x: 100.46619, y: 110.293915, z: 73.94832}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 2300000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1015132425
 PrefabInstance:
@@ -20243,7 +20243,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.443952, b: 0.17697601, a: 0.22384058}
+  m_Color: {r: 1, g: 0.443952, b: 0.17697601, a: 0.24442391}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -26268,7 +26268,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1216
+  m_SortingOrder: 1212
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3728904171698388735, guid: 01499f8bec3d28b6e8beef189895afc6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -28655,7 +28655,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1423
+  m_SortingOrder: 1414
   m_MaskInteraction: 0
   m_Sprite: {fileID: -331422749337887658, guid: f7384e5033b764ad2aa42fe6f6e3900c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -31780,8 +31780,8 @@ Transform:
   m_GameObject: {fileID: 2022613167}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -484, y: -417, z: -6570.105}
-  m_LocalScale: {x: 32.6224, y: 25.239723, z: 73.00117}
+  m_LocalPosition: {x: -484, y: -287.94, z: -6570.105}
+  m_LocalScale: {x: 100.143974, y: 98.929825, z: 73.00117}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2300000006}
@@ -31833,9 +31833,9 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1564
+  m_SortingOrder: 1625
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 8017e9546fbe40beaaa61662f1e8191a, type: 3}
+  m_Sprite: {fileID: -4634885166212136465, guid: 353851a98d8c825dead3a8bdc3654973, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -33110,9 +33110,9 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1501
+  m_SortingOrder: 1483
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 4e20e3fb3bc04151b509cb306c5d1050, type: 3}
+  m_Sprite: {fileID: -7836622596164935206, guid: c9c9711a41d82097fbae9cb69d6b7e6d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -33131,8 +33131,8 @@ Transform:
   m_GameObject: {fileID: 2088426358}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -77.38123, y: -370.11594, z: -6570.105}
-  m_LocalScale: {x: 28.744207, y: 29.200468, z: 73.00117}
+  m_LocalPosition: {x: -77.23, y: -208.14, z: -6570.105}
+  m_LocalScale: {x: 94.75241, y: 101.43074, z: 73.00117}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2300000006}
@@ -34572,6 +34572,7 @@ RectTransform:
   - {fileID: 2501000071}
   - {fileID: 1811790424}
   - {fileID: 677594522}
+  - {fileID: 1003858784}
   - {fileID: 1671400690}
   - {fileID: 1960525757}
   - {fileID: 2300000004}
@@ -40192,7 +40193,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8916758, g: 0.9168429, b: 0.7363781, a: 0.39598107}
+  m_Color: {r: 0.8916758, g: 0.9168429, b: 0.7363781, a: 0.36346593}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -41343,4 +41344,3 @@ SceneRoots:
   - {fileID: 81962841}
   - {fileID: 1960686571}
   - {fileID: 2701000001}
-  - {fileID: 1003858784}
