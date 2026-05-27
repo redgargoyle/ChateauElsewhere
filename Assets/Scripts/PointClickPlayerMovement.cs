@@ -193,7 +193,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			walkableFloor = FindPlayerBoundaryCollider();
 	}
 
-	private void RefreshWalkableFloorForCurrentRoom()
+	public void RefreshWalkableFloorForCurrentRoom()
 	{
 		if (!useCurrentRoomBoundary)
 			return;
@@ -304,6 +304,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!isReady)
 			return false;
 
+		RefreshWalkableFloorForCurrentRoom();
+
 		if (!TryEvaluateMovementTarget(targetPosition, clampToWalkableArea, out MovementTargetQuery movementQuery) ||
 			!movementQuery.HasReachableDestination)
 			return false;
@@ -312,11 +314,33 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return true;
 	}
 
+	public bool TryWarpTo(Vector2 targetPosition, bool clampToWalkableArea = true)
+	{
+		if (!isReady)
+			return false;
+
+		RefreshWalkableFloorForCurrentRoom();
+
+		if (!TryEvaluateMovementTarget(targetPosition, clampToWalkableArea, out MovementTargetQuery movementQuery) ||
+			!movementQuery.HasReachableDestination)
+		{
+			return false;
+		}
+
+		StopImmediatelyAt(movementQuery.Destination);
+		return true;
+	}
+
 	public bool TryEvaluateMovementAtScreenPoint(Vector2 screenPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)
 	{
 		movementQuery = default;
 
-		if (!isReady || !TryGetLogicalPointFromScreen(screenPosition, out Vector2 targetPosition))
+		if (!isReady)
+			return false;
+
+		RefreshWalkableFloorForCurrentRoom();
+
+		if (!TryGetLogicalPointFromScreen(screenPosition, out Vector2 targetPosition))
 			return false;
 
 		return TryEvaluateMovementTarget(targetPosition, clampToWalkableArea, screenPosition, out movementQuery);
@@ -355,6 +379,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		if (!isReady)
 			return false;
+
+		RefreshWalkableFloorForCurrentRoom();
 
 		bool exactPointWalkable = IsPointWalkable(targetPosition);
 		Vector2 destinationPosition = targetPosition;
@@ -508,6 +534,29 @@ public class PointClickPlayerMovement : MonoBehaviour
 			UpdateWalkDirection(movement);
 
 		isWalking = hasDestination;
+	}
+
+	private void StopImmediatelyAt(Vector2 targetPosition)
+	{
+		logicalPosition = targetPosition;
+		destination = targetPosition;
+		finalDestination = targetPosition;
+		movementPath.Clear();
+		movementPathIndex = 0;
+		hasDestination = false;
+		isWalking = false;
+
+		if (body != null)
+		{
+			body.linearVelocity = Vector2.zero;
+			body.angularVelocity = 0f;
+		}
+
+		UpdateAnimator();
+		ApplySpriteMirror();
+		ApplyVisualPosition();
+		ApplyPerspectiveScale();
+		ApplyPlayerSorting();
 	}
 
 	private void MoveTowardDestination()

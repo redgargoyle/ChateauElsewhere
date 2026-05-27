@@ -4,11 +4,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class RoomContentGroup : MonoBehaviour
 {
-    private const string DynamicPropSortingLayerName = "People";
-    private const int DynamicPropSortingOrderBase = 1000;
-    private const float DynamicPropSortingOrderPerYUnit = 100f;
     private SpriteRenderer[] childSpriteRenderers = Array.Empty<SpriteRenderer>();
-    private bool childSpriteRenderersDirty = true;
 
     // Attach this to one root GameObject per room. When RoomNavigationManager's
     // currentRoom changes, it activates the matching RoomContentGroup and
@@ -23,6 +19,8 @@ public class RoomContentGroup : MonoBehaviour
     [SerializeField] private int defaultSpriteSortingOrder = 20;
     [SerializeField] private int defaultParticleSortingOrder = 40;
     [SerializeField] private bool onlyAdjustDefaultSorting = true;
+    [SerializeField] private bool flattenChildRendererDepthAtRuntime = true;
+    [SerializeField] private float runtimeChildRendererLocalZ;
 
     public string RoomName => GetEffectiveRoomName();
     public Texture RoomBackgroundTexture => roomBackgroundTexture;
@@ -36,25 +34,16 @@ public class RoomContentGroup : MonoBehaviour
     {
         FillRoomNameFromObject();
         ApplyChildRendererVisibilityDefaults();
-        ApplyDynamicPropSorting();
     }
 
     private void OnEnable()
     {
         ApplyChildRendererVisibilityDefaults();
-        ApplyDynamicPropSorting();
     }
 
     private void OnTransformChildrenChanged()
     {
-        childSpriteRenderersDirty = true;
         ApplyChildRendererVisibilityDefaults();
-        ApplyDynamicPropSorting();
-    }
-
-    private void LateUpdate()
-    {
-        ApplyDynamicPropSorting();
     }
 
     public void RefreshInferredRoomName()
@@ -83,11 +72,6 @@ public class RoomContentGroup : MonoBehaviour
 
     public void ApplyChildRendererVisibilityDefaults()
     {
-        if (!applyVisibleDefaultsToChildRenderers)
-        {
-            return;
-        }
-
         RefreshChildSpriteRenderers();
         SpriteRenderer[] spriteRenderers = childSpriteRenderers;
 
@@ -100,8 +84,13 @@ public class RoomContentGroup : MonoBehaviour
                 continue;
             }
 
-            spriteRenderer.enabled = true;
-            ApplyDefaultSorting(spriteRenderer, defaultSpriteSortingOrder);
+            NormalizeRendererDepth(spriteRenderer.transform);
+
+            if (applyVisibleDefaultsToChildRenderers)
+            {
+                spriteRenderer.enabled = true;
+                ApplyDefaultSorting(spriteRenderer, defaultSpriteSortingOrder);
+            }
         }
 
         ParticleSystemRenderer[] particleRenderers = GetComponentsInChildren<ParticleSystemRenderer>(true);
@@ -115,8 +104,18 @@ public class RoomContentGroup : MonoBehaviour
                 continue;
             }
 
-            particleRenderer.enabled = true;
-            ApplyDefaultSorting(particleRenderer, defaultParticleSortingOrder);
+            NormalizeRendererDepth(particleRenderer.transform);
+
+            if (applyVisibleDefaultsToChildRenderers)
+            {
+                particleRenderer.enabled = true;
+                ApplyDefaultSorting(particleRenderer, defaultParticleSortingOrder);
+            }
+        }
+
+        if (!applyVisibleDefaultsToChildRenderers)
+        {
+            return;
         }
 
         StaticSetImagePlayer[] imagePlayers = GetComponentsInChildren<StaticSetImagePlayer>(true);
@@ -144,63 +143,31 @@ public class RoomContentGroup : MonoBehaviour
                 imagePlayer.spriteSortingOrder = defaultSpriteSortingOrder;
             }
         }
-
-        ApplyDynamicPropSorting();
-    }
-
-    private void ApplyDynamicPropSorting()
-    {
-        if (childSpriteRenderersDirty || childSpriteRenderers == null)
-        {
-            RefreshChildSpriteRenderers();
-        }
-
-        SpriteRenderer[] spriteRenderers = childSpriteRenderers;
-
-        for (int i = 0; i < spriteRenderers.Length; i++)
-        {
-            SpriteRenderer spriteRenderer = spriteRenderers[i];
-
-            if (!ShouldYSortRoomProp(spriteRenderer))
-            {
-                continue;
-            }
-
-            // Room prop sprites use the same y-depth rule as the controllable player.
-            float sortingY = spriteRenderer.bounds.min.y;
-            int sortingOrder = DynamicPropSortingOrderBase -
-                Mathf.RoundToInt(sortingY * DynamicPropSortingOrderPerYUnit);
-
-            spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
-            spriteRenderer.sortingOrder = sortingOrder;
-        }
-    }
-
-    private static bool ShouldYSortRoomProp(SpriteRenderer spriteRenderer)
-    {
-        if (spriteRenderer == null ||
-            !spriteRenderer.enabled ||
-            spriteRenderer.sprite == null)
-        {
-            return false;
-        }
-
-        if (!string.Equals(
-            spriteRenderer.sortingLayerName,
-            DynamicPropSortingLayerName,
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return spriteRenderer.GetComponent<WorldYSortSpriteRenderer>() == null &&
-            spriteRenderer.GetComponentInParent<RoomPersonWalker2D>() == null;
     }
 
     private void RefreshChildSpriteRenderers()
     {
         childSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-        childSpriteRenderersDirty = false;
+    }
+
+    private void NormalizeRendererDepth(Transform rendererTransform)
+    {
+        if (!Application.isPlaying || !flattenChildRendererDepthAtRuntime || rendererTransform == null)
+        {
+            return;
+        }
+
+        // Room sprites are ordered by Sorting Layer/Order. Deep authored local Z
+        // values should not decide whether props render at a given viewport size.
+        Vector3 localPosition = rendererTransform.localPosition;
+
+        if (Mathf.Approximately(localPosition.z, runtimeChildRendererLocalZ))
+        {
+            return;
+        }
+
+        localPosition.z = runtimeChildRendererLocalZ;
+        rendererTransform.localPosition = localPosition;
     }
 
     private string GetEffectiveRoomName()

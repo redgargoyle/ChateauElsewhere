@@ -10,6 +10,7 @@ public class NavigationRegressionTests
     private const string NavigationBootstrapPath = "Assets/Scripts/Navigation/RoomNavigationBootstrap.cs";
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
+    private const string RoomContentGroupPath = "Assets/Scripts/Navigation/RoomContentGroup.cs";
     private const string DoorOpenSoundCatalogPath = "Assets/Resources/Audio/DoorOpenSoundCatalog.asset";
     private const string StairwaySoundCatalogPath = "Assets/Resources/Audio/StairwaySoundCatalog.asset";
     private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
@@ -141,6 +142,20 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void DoorTransitionsPlacePlayerAtDestinationDoor()
+    {
+        string navigationManagerText = File.ReadAllText(NavigationManagerPath);
+        string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+
+        Assert.That(navigationManagerText, Does.Contain("PlacePlayerAtDestinationDoor"), "Room transitions should move the player to the matching destination doorway.");
+        Assert.That(navigationManagerText, Does.Contain("FindArrivalDoorTrigger"), "Destination placement should use the reverse trigger already authored in the room.");
+        Assert.That(triggerText, Does.Contain("TryFindArrivalDestination"), "Door hitboxes should expose the same reachable floor sampling for arrivals.");
+        Assert.That(playerText, Does.Contain("TryWarpTo"), "Navigation needs an explicit non-walking placement path after a room change.");
+        Assert.That(playerText, Does.Contain("RefreshWalkableFloorForCurrentRoom"), "Door arrivals must refresh the active room boundary before evaluating placement.");
+    }
+
+    [Test]
     public void PlayerCursorShowsWalkability()
     {
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
@@ -169,6 +184,22 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Not.Contain("pathProbeStep"), "Movement should not sample a heavyweight path segment to reject floor clicks.");
         Assert.That(obstacleText, Does.Not.Contain("BlockPlayerMovement"), "Prop footprint components should not expose movement-blocking controls.");
         Assert.That(obstacleText, Does.Not.Contain("TryGetMovementBounds"), "Prop footprint components should not provide movement blockers.");
+    }
+
+    [Test]
+    public void RoomPropDepthDoesNotDependOnViewportBounds()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string roomContentGroupText = File.ReadAllText(RoomContentGroupPath);
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
+
+        Assert.That(roomContentGroupText, Does.Contain("flattenChildRendererDepthAtRuntime"), "Room renderers should be flattened at runtime instead of relying on deep authored Z values.");
+        Assert.That(roomContentGroupText, Does.Contain("NormalizeRendererDepth"), "Room renderer depth normalization should be centralized on RoomContentGroup.");
+        Assert.That(roomContentGroupText, Does.Not.Contain("ApplyDynamicPropSorting"), "Room prop sorting should stay authored, not recomputed from viewport-dependent renderer bounds.");
+        Assert.That(roomContentGroupText, Does.Not.Contain("spriteRenderer.bounds.min.y"), "Room prop sorting must not use world bounds that change with Free Aspect scaling.");
+        Assert.That(sceneText, Does.Contain("far clip plane: 1000"), "The camera should use a normal clip range; deep prop Z is fixed at the room renderer level.");
+        Assert.That(sceneText, Does.Not.Contain("minimumRoomRenderFarClipPlane"), "Room rendering should not depend on a giant far-clip workaround.");
+        Assert.That(cameraManagerText, Does.Not.Contain("EnsureRoomRenderCameraClipRange"), "CameraManager should not hide room prop depth bugs by stretching the far clip plane.");
     }
 
     [Test]
@@ -244,12 +275,9 @@ public class NavigationRegressionTests
         Assert.That(sceneText, Does.Contain("defaultRoomZoom: 1.06"), "The room should start slightly zoomed so edge panning has room to move.");
         Assert.That(sceneText, Does.Contain("maxRoomZoom: 1.22"), "Wheel zoom should stay strong enough for panning but not feel like teleporting.");
         Assert.That(sceneText, Does.Contain("roomZoomFocus: {x: 0.5, y: 0.56}"), "Regular zoom should aim near the room vanishing point so it reads as stepping closer.");
-        Assert.That(sceneText, Does.Contain("far clip plane: 100000"), "Gameplay camera must cover deep authored room prop Z values at every Game view aspect.");
-        Assert.That(sceneText, Does.Contain("minimumRoomRenderFarClipPlane: 100000"), "CameraManager should persist the same safe room render depth in the scene.");
         Assert.That(sceneText, Does.Not.Contain("scrollRoomVerticallyWithMouseWheel"), "Mouse wheel should not drive vertical shader strength; that smeared room art into stripes.");
         Assert.That(sceneText, Does.Not.Contain("scrollRoomFovWithMouseWheel"), "Mouse wheel should not drive FOV zoom; that caused the sideways drift regression.");
         Assert.That(cameraManagerText, Does.Contain("return currentRoomPan;"), "Leaving the edge should hold the current pan instead of recentering.");
-        Assert.That(cameraManagerText, Does.Contain("EnsureRoomRenderCameraClipRange"), "Runtime should reapply the safe room render depth if the camera is rebuilt or reset.");
         Assert.That(cameraManagerText, Does.Contain("NavigationCursorController.SetEdgePanDirection"), "Edge panning should update the cursor state.");
         Assert.That(cameraManagerText, Does.Contain("SetActiveRoomContent"), "CameraManager should know which room stage owns the current background and hitboxes.");
         Assert.That(cameraManagerText, Does.Contain("TryApplyRoomStageLayout"), "Runtime panning must move the active room stage, not reproject door rectangles.");

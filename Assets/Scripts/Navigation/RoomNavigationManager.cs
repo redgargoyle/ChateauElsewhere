@@ -128,7 +128,13 @@ public class RoomNavigationManager : MonoBehaviour
 
         // The door data only translates a clicked door ID into a destination room.
         // SetCurrentRoom owns the actual room-state change and broadcasts it.
-        return SetCurrentRoom(route.DestinationRoom, true, true, true);
+        if (!SetCurrentRoom(route.DestinationRoom, true, true, true))
+        {
+            return false;
+        }
+
+        PlacePlayerAtDestinationDoor(route.SourceRoom, cleanDoorId, route.DestinationRoom);
+        return true;
     }
 
     public bool MoveToRoom(string roomName)
@@ -161,9 +167,17 @@ public class RoomNavigationManager : MonoBehaviour
             return false;
         }
 
+        string transitionSourceRoom = string.IsNullOrEmpty(cleanSourceRoom) ? currentRoom : cleanSourceRoom;
+
         // Camera-sequence doors compute the next room from the sequence, then use
         // the same state-change path as every other room transition.
-        return SetCurrentRoom(nextRoom, false, true, true);
+        if (!SetCurrentRoom(nextRoom, false, true, true))
+        {
+            return false;
+        }
+
+        PlacePlayerAtDestinationDoor(transitionSourceRoom, cleanDoorName, nextRoom);
+        return true;
     }
 
     public bool SetCurrentRoomFromCameraArea(CameraAreaController cameraArea, bool applyRoomVisual)
@@ -196,9 +210,17 @@ public class RoomNavigationManager : MonoBehaviour
             return false;
         }
 
+        string transitionSourceRoom = string.IsNullOrEmpty(cleanSourceRoom) ? currentRoom : cleanSourceRoom;
+
         // Inspector-driven doors already know their destination room, so they pass
         // that room directly into the central room-state change.
-        return SetCurrentRoom(cleanDestinationRoom, false, true, true);
+        if (!SetCurrentRoom(cleanDestinationRoom, false, true, true))
+        {
+            return false;
+        }
+
+        PlacePlayerAtDestinationDoor(transitionSourceRoom, cleanDoorName, cleanDestinationRoom);
+        return true;
     }
 
     public bool HasDoor(string doorId)
@@ -332,6 +354,89 @@ public class RoomNavigationManager : MonoBehaviour
         }
 
         return true;
+    }
+
+    private void PlacePlayerAtDestinationDoor(string sourceRoom, string doorName, string destinationRoom)
+    {
+        string cleanSourceRoom = Clean(sourceRoom);
+        string cleanDestinationRoom = Clean(destinationRoom);
+
+        if (string.IsNullOrEmpty(cleanDestinationRoom))
+        {
+            return;
+        }
+
+        PointClickPlayerMovement playerMovement = FindAnyObjectByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+
+        if (playerMovement == null)
+        {
+            return;
+        }
+
+        playerMovement.RefreshWalkableFloorForCurrentRoom();
+
+        DoorTriggerNavigation arrivalTrigger = FindArrivalDoorTrigger(cleanSourceRoom, doorName, cleanDestinationRoom);
+
+        if (arrivalTrigger == null)
+        {
+            Warn($"No arrival trigger in '{cleanDestinationRoom}' points back to '{cleanSourceRoom}', so the player could not be placed at the destination door.");
+            return;
+        }
+
+        if (!arrivalTrigger.TryFindArrivalDestination(playerMovement, out Vector2 arrivalDestination))
+        {
+            Warn($"Arrival trigger '{arrivalTrigger.name}' could not find a reachable floor point for the player.");
+            return;
+        }
+
+        if (!playerMovement.TryWarpTo(arrivalDestination, false) &&
+            !playerMovement.TryWarpTo(arrivalDestination, true))
+        {
+            Warn($"Player rejected the arrival point selected by '{arrivalTrigger.name}'.");
+        }
+    }
+
+    private DoorTriggerNavigation FindArrivalDoorTrigger(string sourceRoom, string doorName, string destinationRoom)
+    {
+        RefreshDoorButtonCache();
+
+        DoorTriggerNavigation namedFallback = null;
+        DoorTriggerNavigation onlyDestinationRoomTrigger = null;
+        int destinationRoomTriggerCount = 0;
+
+        for (int i = 0; i < cachedDoorTriggers.Length; i++)
+        {
+            DoorTriggerNavigation candidate = cachedDoorTriggers[i];
+
+            if (candidate == null || !SameName(candidate.SourceRoom, destinationRoom))
+            {
+                continue;
+            }
+
+            destinationRoomTriggerCount++;
+            onlyDestinationRoomTrigger = candidate;
+
+            string candidateDestinationRoom = candidate.DestinationRoom;
+
+            if (!string.IsNullOrEmpty(sourceRoom) &&
+                !string.IsNullOrEmpty(candidateDestinationRoom) &&
+                SameName(candidateDestinationRoom, sourceRoom))
+            {
+                return candidate;
+            }
+
+            if (namedFallback == null && DoorNameReferencesRoom(candidate.DoorName, sourceRoom))
+            {
+                namedFallback = candidate;
+            }
+        }
+
+        if (namedFallback != null)
+        {
+            return namedFallback;
+        }
+
+        return destinationRoomTriggerCount == 1 ? onlyDestinationRoomTrigger : null;
     }
 
     private void RegisterBuiltInRoomChangeResponses()
@@ -890,6 +995,19 @@ public class RoomNavigationManager : MonoBehaviour
     private static bool SameName(string left, string right)
     {
         return string.Equals(NormalizeComparableName(left), NormalizeComparableName(right), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool DoorNameReferencesRoom(string doorName, string roomName)
+    {
+        string cleanDoorName = NormalizeComparableName(doorName);
+        string cleanRoomName = NormalizeComparableName(roomName);
+
+        if (string.IsNullOrEmpty(cleanDoorName) || string.IsNullOrEmpty(cleanRoomName))
+        {
+            return false;
+        }
+
+        return cleanDoorName.IndexOf(cleanRoomName, StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private static string Clean(string value)

@@ -248,7 +248,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         CancelAnyPendingApproach();
 
-        if (!TryFindBestApproachDestination(playerMovement, out Vector2 approachDestination))
+        if (!TryFindBestApproachDestination(playerMovement, true, out Vector2 approachDestination))
         {
             LogApproachFailure("no reachable walkable point could be found near the trigger");
             return false;
@@ -278,7 +278,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         return true;
     }
 
-    private bool TryFindBestApproachDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)
+    public bool TryFindArrivalDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)
+    {
+        ResolveReferences();
+        return TryFindBestApproachDestination(playerMovement, false, out destination);
+    }
+
+    private bool TryFindBestApproachDestination(PointClickPlayerMovement playerMovement, bool requireMovement, out Vector2 destination)
     {
         destination = Vector2.zero;
 
@@ -299,7 +305,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             Vector2 samplePoint = triggerScreenSamples[i];
             if (!playerMovement.TryEvaluateMovementAtScreenPoint(samplePoint, true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
                 !movementQuery.HasReachableDestination ||
-                !movementQuery.WouldMove)
+                (requireMovement && !movementQuery.WouldMove))
             {
                 continue;
             }
