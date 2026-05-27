@@ -14,10 +14,12 @@ public class NavigationRegressionTests
     private const string StairwaySoundCatalogPath = "Assets/Resources/Audio/StairwaySoundCatalog.asset";
     private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
+    private const string MapAnimatorPath = "Assets/Map/MapAnimator.cs";
     private const string NavigationEditorToolsPath = "Assets/Editor/NavigationEditorTools.cs";
     private const string BackgroundShaderGraphPath = "Assets/Shader/Background.shadergraph";
     private const string BackgroundMaterialPath = "Assets/Shader/BackgroundMaterial.mat";
     private const string RoomPrefabPath = "Assets/Prefabs/Room.prefab";
+    private const string YSortSolidObstaclePath = "Assets/Scripts/Characters/YSortSolidObstacle2D.cs";
     private const string RoomContentGroupGuid = "d0ea47fd950844bcacb0fd5556a9d880";
 
     [Test]
@@ -146,9 +148,37 @@ public class NavigationRegressionTests
 
         Assert.That(playerText, Does.Contain("UpdateWalkCursor"), "The player movement script should continuously describe what a floor click would do.");
         Assert.That(playerText, Does.Contain("SetWalkHover"), "Valid and invalid floor clicks should drive the shared cursor controller.");
-        Assert.That(playerText, Does.Contain("movementQuery.WouldMove"), "The blocked walk cursor should appear when clicking would not move the player.");
+        Assert.That(playerText, Does.Contain("movementQuery.ExactPointWalkable && movementQuery.HasReachableDestination"), "The walk cursor should describe exact floor validity, not the player's current distance from that point.");
         Assert.That(cameraManagerText, Does.Contain("CreateWalkCursor"), "The cursor controller should generate a walk cursor without needing imported art.");
         Assert.That(cameraManagerText, Does.Contain("Cursor_WalkBlocked"), "Invalid movement should show a distinct blocked-walk cursor.");
+        Assert.That(cameraManagerText, Does.Contain("private const int CursorSize = 48"), "Movement cursors should be large enough to read quickly.");
+        Assert.That(cameraManagerText, Does.Contain("ScaleCursorHotspot"), "Generated cursor art and hotspots should scale together.");
+    }
+
+    [Test]
+    public void PlayerMovementUsesOnlyFloorBoundaryForWalkability()
+    {
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+        string obstacleText = File.ReadAllText(YSortSolidObstaclePath);
+
+        Assert.That(playerText, Does.Contain("TryEvaluateMovementAtScreenPoint(screenPosition, false"), "Regular floor clicks should test the exact hovered floor point.");
+        Assert.That(playerText, Does.Contain("LogicalToWalkableWorldPoint"), "Walkability should follow the visible room stage while edge panning moves it.");
+        Assert.That(playerText, Does.Not.Contain("IsPickupObjectAtPoint"), "Pickup or prop colliders should not decide whether the floor is walkable.");
+        Assert.That(playerText, Does.Not.Contain("IsMovementPointBlocked"), "Object footprints should not block point-click movement.");
+        Assert.That(playerText, Does.Not.Contain("TryRestartPathFrom"), "Movement should not rebuild obstacle routes based on the butler's current position.");
+        Assert.That(playerText, Does.Not.Contain("pathProbeStep"), "Movement should not sample a heavyweight path segment to reject floor clicks.");
+        Assert.That(obstacleText, Does.Not.Contain("BlockPlayerMovement"), "Prop footprint components should not expose movement-blocking controls.");
+        Assert.That(obstacleText, Does.Not.Contain("TryGetMovementBounds"), "Prop footprint components should not provide movement blockers.");
+    }
+
+    [Test]
+    public void GameplayMapOpenerStartsTopRight()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string mapAnimatorText = File.ReadAllText(MapAnimatorPath);
+
+        Assert.That(sceneText, Does.Contain("triggerViewportPosition: {x: 0.95, y: 0.92}"));
+        Assert.That(mapAnimatorText, Does.Contain("triggerViewportPosition = new Vector2(0.95f, 0.92f)"));
     }
 
     [Test]

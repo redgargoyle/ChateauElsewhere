@@ -1983,15 +1983,16 @@ public static class NavigationCursorController
         Stairway
     }
 
-    private const int CursorSize = 32;
+    private const int CursorDesignSize = 32;
+    private const int CursorSize = 48;
     private static readonly Color Clear = new Color(0f, 0f, 0f, 0f);
     private static readonly Color Ink = new Color(0.02f, 0.02f, 0.02f, 1f);
     private static readonly Color Paper = new Color(1f, 1f, 1f, 1f);
     private static readonly Color Warning = new Color(0.95f, 0.04f, 0.03f, 1f);
-    private static readonly Vector2 ArrowHotspot = new Vector2(16f, 16f);
-    private static readonly Vector2 DoorHotspot = new Vector2(9f, 6f);
-    private static readonly Vector2 StairwayHotspot = new Vector2(10f, 7f);
-    private static readonly Vector2 WalkHotspot = new Vector2(13f, 24f);
+    private static readonly Vector2 ArrowHotspot = ScaleCursorHotspot(16f, 16f);
+    private static readonly Vector2 DoorHotspot = ScaleCursorHotspot(9f, 6f);
+    private static readonly Vector2 StairwayHotspot = ScaleCursorHotspot(10f, 7f);
+    private static readonly Vector2 WalkHotspot = ScaleCursorHotspot(13f, 24f);
 
     private static int edgePanDirection;
     private static object doorHoverOwner;
@@ -2306,9 +2307,14 @@ public static class NavigationCursorController
 
     private static void FillRect(Texture2D texture, int minX, int minY, int maxX, int maxY, Color color)
     {
-        for (int y = minY; y <= maxY; y++)
+        int scaledMinX = ScaleCursorCoordinate(Mathf.Min(minX, maxX));
+        int scaledMaxX = ScaleCursorCoordinate(Mathf.Max(minX, maxX));
+        int scaledMinY = ScaleCursorCoordinate(Mathf.Min(minY, maxY));
+        int scaledMaxY = ScaleCursorCoordinate(Mathf.Max(minY, maxY));
+
+        for (int y = scaledMinY; y <= scaledMaxY; y++)
         {
-            for (int x = minX; x <= maxX; x++)
+            for (int x = scaledMinX; x <= scaledMaxX; x++)
             {
                 SetPixelSafe(texture, x, y, color);
             }
@@ -2317,6 +2323,12 @@ public static class NavigationCursorController
 
     private static void DrawLine(Texture2D texture, int x0, int y0, int x1, int y1, Color color, int thickness)
     {
+        x0 = ScaleCursorCoordinate(x0);
+        y0 = ScaleCursorCoordinate(y0);
+        x1 = ScaleCursorCoordinate(x1);
+        y1 = ScaleCursorCoordinate(y1);
+        thickness = ScaleCursorThickness(thickness);
+
         int dx = Mathf.Abs(x1 - x0);
         int dy = Mathf.Abs(y1 - y0);
         int stepX = x0 < x1 ? 1 : -1;
@@ -2359,6 +2371,21 @@ public static class NavigationCursorController
                 SetPixelSafe(texture, x, y, color);
             }
         }
+    }
+
+    private static Vector2 ScaleCursorHotspot(float x, float y)
+    {
+        return new Vector2(x * CursorSize / CursorDesignSize, y * CursorSize / CursorDesignSize);
+    }
+
+    private static int ScaleCursorCoordinate(int value)
+    {
+        return Mathf.RoundToInt(value * (CursorSize - 1f) / (CursorDesignSize - 1f));
+    }
+
+    private static int ScaleCursorThickness(int thickness)
+    {
+        return Mathf.Max(1, Mathf.RoundToInt(thickness * CursorSize / (float)CursorDesignSize));
     }
 
     private static void SetPixelSafe(Texture2D texture, int x, int y, Color color)

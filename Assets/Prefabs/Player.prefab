@@ -219,7 +219,3 @@ MonoBehaviour:
   disablePlatformMovement: 1
   sortPlayerByVisibleFeet: 1
   playerSortingYOffset: 0
-  avoidSolidObstacleFootprints: 1
-  movementObstaclePadding: 0.02
-  pathCornerPadding: 0.06
-  pathProbeStep: 0.08

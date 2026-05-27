@@ -18,7 +18,7 @@ public class MapAnimator : MonoBehaviour
     public bool useResponsiveLayout = true;
     public Vector2 visibleViewportPosition = new Vector2(0.82f, 0.36f);
     public Vector2 hiddenViewportPosition = new Vector2(0.82f, -0.45f);
-    public Vector2 triggerViewportPosition = new Vector2(0.5f, 0.08f);
+    public Vector2 triggerViewportPosition = new Vector2(0.95f, 0.92f);
     public float mapWidthPercent = 0.32f;
     public float minMapScale = 3.25f;
     public float maxMapScale = 6.5f;
