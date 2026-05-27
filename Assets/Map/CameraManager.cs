@@ -16,6 +16,7 @@ public class CameraManager : MonoBehaviour
     public bool configureCanvasScaling = true;
     public bool enableCameraPostProcessing = true;
     public bool renderBackgroundCanvasThroughCamera = true;
+    public float minimumRoomRenderFarClipPlane = 100000f;
     public Vector2 referenceResolution = new Vector2(1366f, 768f);
     [Range(0f, 1f)]
     public float matchWidthOrHeight = 0.5f;
@@ -1453,6 +1454,7 @@ public class CameraManager : MonoBehaviour
     private void ConfigurePostProcessingRenderPath()
     {
         Camera targetCamera = ResolveRenderCamera();
+        EnsureRoomRenderCameraClipRange(targetCamera);
 
         if (enableCameraPostProcessing && targetCamera != null)
         {
@@ -1497,6 +1499,20 @@ public class CameraManager : MonoBehaviour
                 100f,
                 targetCamera.nearClipPlane + 0.01f,
                 targetCamera.farClipPlane - 0.01f);
+        }
+    }
+
+    private void EnsureRoomRenderCameraClipRange(Camera targetCamera)
+    {
+        if (targetCamera == null)
+        {
+            return;
+        }
+
+        float safeFarClip = Mathf.Max(1000f, minimumRoomRenderFarClipPlane);
+        if (targetCamera.farClipPlane < safeFarClip)
+        {
+            targetCamera.farClipPlane = safeFarClip;
         }
     }
 

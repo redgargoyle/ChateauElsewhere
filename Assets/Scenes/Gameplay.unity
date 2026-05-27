@@ -5681,7 +5681,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 100000
   field of view: 34
   orthographic: 1
   orthographic size: 5
@@ -25509,6 +25509,7 @@ MonoBehaviour:
   configureCanvasScaling: 1
   enableCameraPostProcessing: 1
   renderBackgroundCanvasThroughCamera: 1
+  minimumRoomRenderFarClipPlane: 100000
   referenceResolution: {x: 1366, y: 768}
   matchWidthOrHeight: 0.5
   cameraShakeDuration: 1.6
