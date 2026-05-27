@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 353851a98d8c825dead3a8bdc3654973
+guid: c19ed6f7fe405144f9b93978ebeab1c7
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4634885166212136465
-    second: drawingroomchair3_0
+      213: 6939058887295035288
+    second: drawingroomcouch_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: drawingroomchair3_0
+      name: drawingroomcouch_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 313
-        height: 352
+        width: 345
+        height: 221
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: fe1c23d7f749dafb0800000000000000
-      internalID: -4634885166212136465
+      spriteID: 897ecb41b4d7c4060800000000000000
+      internalID: 6939058887295035288
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      drawingroomchair3_0: -4634885166212136465
+      drawingroomcouch_0: 6939058887295035288
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
