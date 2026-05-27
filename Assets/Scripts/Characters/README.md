@@ -12,8 +12,6 @@ If a character's original sheet is side-only, add an explicit `directional/align
 
 `ButlerClassic` currently has the most complete player-facing setup: `Assets/Animation/ButlerClassic/ButlerClassic.controller` uses persistent `IsFacingUp`, `IsFacingDown`, `IsFacingLeft`, and `IsFacingRight` Animator parameters to pick one of four looping directional idle clips. The source idle frames live in `Assets/Characters/ButlerClassic/idle/aligned`.
 
-Foreground occlusion uses a simple 90s prerendered trick: `RoomForegroundOccluder` objects are editable `RawImage` crops of the room painting placed above the `People` layer. Put them over railings, table edges, and other foreground furniture so walkers can pass behind those objects without a 3D setup.
-
 World-space SpriteRenderer props use `WorldYSortSpriteRenderer` when they need to depth-sort against the controllable butler. It mirrors `PointClickPlayerMovement`'s player sorting rule: Sorting Layer `People`, order `1000 - y * 100`, and Sprite Sort Point `Pivot`. The player sorts from the bottom of the visible SpriteRenderer bounds, and props can sort from the bottom of an editable physical footprint. A copied tutorial prop will not y-sort just because its pivot is bottom-center; it also needs this dynamic sorting order.
 
 Props that need a custom base footprint can also use `YSortSolidObstacle2D` plus a 2D trigger collider around the base area. That footprint drives both sorting and simple point-click avoidance: when `Block Player Movement` is on, `PointClickPlayerMovement` routes around the footprint corners so the player can snake through gaps without walking through the prop. Keep the collider tight around the physical base, not the full painted sprite. Keep `Force Behind Player Inside Physical Bounds` off for grouped props like mushrooms so nearby props do not reorder while the player moves between them.
@@ -22,7 +20,6 @@ Current examples:
 
 - `Gameplay.unity > Canvas_Background > Rooms > Room_Grand_Entrance_Hall > People > Walker_GEH_GreenGentleman`
 - `Gameplay.unity > Canvas_Background > Rooms > Room_Grand_Entrance_Hall > People > Walker_GEH_GreenLady`
-- `Gameplay.unity > Canvas_Background > Rooms > Room_Grand_Entrance_Hall > ForegroundOccluders`
 - `Gameplay.unity > UI_CharacterSelectionMenu` for swapping the controllable player between test character override controllers in Play mode.
 
 Useful tweaks:
@@ -35,6 +32,5 @@ Useful tweaks:
 - Keep `Preview Path In Edit Mode` off while placing people. The animation frames still preview, but the scene object will not quietly walk away while you edit.
 - Keep `Snap To Whole Pixels` off for scaled room walkers unless a specific character needs crunchy pixel locking. Subpixel motion reads smoother while the room stage pans and zooms.
 - Use the motion polish fields for tiny stride bob, sway, endpoint pauses, and idle breathing. These are only offsets on the card; the path points remain the stable foot positions.
-- Add foreground occluder cards whenever a walker should disappear behind painted furniture.
 - Add `WorldYSortSpriteRenderer` to any world SpriteRenderer prop that should sort in front of or behind the butler by base/pivot Y.
 - Add `YSortSolidObstacle2D` to props that need an editable base footprint, then resize the trigger collider to the base area used for sorting and path avoidance.

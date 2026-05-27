@@ -2,11 +2,11 @@ using UnityEngine;
 
 public enum RoomEnvironmentItemKind
 {
-    ForegroundOccluder,
-    OverlayLight,
-    TrueParticleFire,
-    PrerenderedPatch,
-    AuthoringNote
+    None = 0,
+    OverlayLight = 1,
+    TrueParticleFire = 2,
+    PrerenderedPatch = 3,
+    AuthoringNote = 4
 }
 
 [DisallowMultipleComponent]

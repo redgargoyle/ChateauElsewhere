@@ -9,7 +9,6 @@ public class CharacterRegressionTests
     private const string CharacterAnimatorDriverPath = "Assets/Scripts/Characters/CharacterAnimatorDriver.cs";
     private const string CharacterSelectionMenuPath = "Assets/Scripts/Characters/CharacterSelectionMenu.cs";
     private const string CharacterAnimationAssetBuilderPath = "Assets/Editor/CharacterAnimationAssetBuilder.cs";
-    private const string OccluderPath = "Assets/Scripts/Characters/RoomForegroundOccluder.cs";
     private const string CharactersReadmePath = "Assets/Scripts/Characters/README.md";
     private const string PlayerWalkUpClipPath = "Assets/Animation/Player/Player_Walk_Up.anim";
     private const string ButlerClassicWalkDownClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Walk_Down.anim";
@@ -36,7 +35,6 @@ public class CharacterRegressionTests
         string sceneText = File.ReadAllText(GameplayScenePath);
         string walkerText = File.ReadAllText(WalkerPath);
         string animatorDriverText = File.ReadAllText(CharacterAnimatorDriverPath);
-        string occluderText = File.ReadAllText(OccluderPath);
         string readmeText = File.ReadAllText(CharactersReadmePath);
 
         Assert.That(walkerText, Does.Contain("[ExecuteAlways]"), "People should preview in Edit mode, like lights and oddities.");
@@ -57,11 +55,6 @@ public class CharacterRegressionTests
         Assert.That(walkerText, Does.Contain("rectTransform.localScale = scale"), "Perspective scale should affect the whole character card.");
         Assert.That(walkerText, Does.Contain("targetGraphic.raycastTarget = false"), "Characters must not block door hitboxes.");
 
-        Assert.That(occluderText, Does.Contain("[ExecuteAlways]"), "Foreground occluders should be tweakable in Edit mode.");
-        Assert.That(occluderText, Does.Contain("sourceUvRect"), "Occluders should be room-art crops, not hand-painted duplicate textures.");
-        Assert.That(occluderText, Does.Contain("targetImage.uvRect"), "Occluders should expose the exact crop rect.");
-        Assert.That(occluderText, Does.Contain("targetImage.raycastTarget = false"), "Occluders must not block door hitboxes.");
-
         Assert.That(sceneText, Does.Contain("m_Name: People"));
         Assert.That(sceneText, Does.Contain("m_Name: Walker_GEH_GreenGentleman"));
         Assert.That(sceneText, Does.Contain("m_Name: Walker_GEH_GreenLady"));
@@ -76,10 +69,6 @@ public class CharacterRegressionTests
         Assert.That(sceneText, Does.Contain("guid: 1b45edb93a9b42e58fa4cad7d4de84ce"), "Gameplay walkers should use RoomPersonWalker2D.");
         Assert.That(sceneText, Does.Contain("guid: 8f8728ad492a40d08efef615688bea56"), "The gentleman Image should start on a generated sprite frame.");
         Assert.That(sceneText, Does.Contain("guid: 5b37355315364217b2e5185b619c748d"), "The lady Image should start on a generated sprite frame.");
-        Assert.That(sceneText, Does.Contain("m_Name: ForegroundOccluders"));
-        Assert.That(sceneText, Does.Contain("m_Name: ForegroundOccluder_GEH_FrontRailingLeft"));
-        Assert.That(sceneText, Does.Contain("guid: c75cbf61393f4dbb8907c884b5237cc0"), "Gameplay occluders should use RoomForegroundOccluder.");
-
         Assert.That(Directory.GetFiles(AnimationFolder, "*.overrideController", SearchOption.AllDirectories).Length, Is.GreaterThanOrEqualTo(8), "Each character folder should have a generated Animator override controller.");
         Assert.That(Directory.GetFiles(AnimationFolder, "*_Walk_*.anim", SearchOption.AllDirectories).Length, Is.GreaterThanOrEqualTo(32), "Characters should expose editable directional walk clips under Assets/Animation.");
         Assert.That(Directory.GetFiles(AtlasFolder, "*_atlas.png").Length, Is.EqualTo(8), "All generated character sheets should have project-owned transparent atlases.");
@@ -87,7 +76,6 @@ public class CharacterRegressionTests
         Assert.That(readmeText, Does.Contain("Unity Animator"));
         Assert.That(readmeText, Does.Contain("SpriteRenderer"));
         Assert.That(readmeText, Does.Contain("foot baseline"));
-        Assert.That(readmeText, Does.Contain("foreground occluder cards"));
         Assert.That(readmeText, Does.Contain("People > Walker_GEH_GreenGentleman"));
     }
 
