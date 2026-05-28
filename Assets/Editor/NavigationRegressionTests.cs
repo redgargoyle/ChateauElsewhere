@@ -214,6 +214,30 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void BilliardRoomKeepsForegroundCutouts()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+
+        Assert.That(File.Exists("Assets/Art/Objects/green_armchair.png"), Is.True, "The billiard left armchair cutout should stay in the project.");
+        Assert.That(File.Exists("Assets/Art/Objects/round_lamp_table.png"), Is.True, "The billiard left lamp table cutout should stay in the project.");
+        AssertScenePropSorting(sceneText, "billiard_left_armchair", 1685);
+        AssertScenePropSprite(sceneText, "billiard_left_armchair", "8017e9546fbe40beaaa61662f1e8191a");
+        AssertScenePropSorting(sceneText, "billiard_left_lamp_table", 1695);
+        AssertScenePropSprite(sceneText, "billiard_left_lamp_table", "dfcaa33b0d194eb0a42a334d83b90fb8");
+    }
+
+    [Test]
+    public void DrawingRoomDoesNotKeepStaleGreenChairReference()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+
+        Assert.That(sceneText, Does.Not.Contain("353851a98d8c825dead3a8bdc3654973"), "The deleted drawingroomchair3 sprite should not remain in the scene.");
+        Assert.That(sceneText, Does.Not.Contain("m_Name: green_armchair"), "The stale duplicate Drawing Room chair object should stay removed.");
+        AssertScenePropSorting(sceneText, "drawingroomgreenchair_0", 1614);
+        AssertScenePropSprite(sceneText, "drawingroomgreenchair_0", "5d2f4c79f6c75e4c69dbbafeaff8b2c2");
+    }
+
+    [Test]
     public void ImportantRoomPropsKeepStableAuthoredSorting()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
@@ -381,6 +405,15 @@ public class NavigationRegressionTests
         string pattern = $@"m_Name: {escapedName}[\s\S]*?m_SortingLayer: 2[\s\S]*?m_SortingOrder: {sortingOrder}\b";
 
         Assert.That(sceneText, Does.Match(pattern), $"{propName} should keep its authored People-layer sorting order.");
+    }
+
+    private static void AssertScenePropSprite(string sceneText, string propName, string spriteGuid)
+    {
+        string escapedName = Regex.Escape(propName);
+        string escapedGuid = Regex.Escape(spriteGuid);
+        string pattern = $@"m_Name: {escapedName}[\s\S]*?m_Sprite: \{{fileID: [-\d]+, guid: {escapedGuid}, type: 3\}}";
+
+        Assert.That(sceneText, Does.Match(pattern), $"{propName} should keep its intended sprite asset.");
     }
 
 }
