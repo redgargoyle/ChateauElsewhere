@@ -63,7 +63,6 @@ public class MainMenuController : MonoBehaviour
 
     public void NewGame()
     {
-        IdeaGameFlow.MarkNewGameStarted();
         LoadGameScene("New Game");
     }
 

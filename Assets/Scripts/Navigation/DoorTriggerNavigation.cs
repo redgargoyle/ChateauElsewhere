@@ -569,12 +569,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return;
         }
 
-        if (CharacterSelectionMenu.IsBlockingGameplayInput(screenPosition))
-        {
-            ClearActiveDoorHover(fallbackHoveredTrigger);
-            return;
-        }
-
         DoorTriggerNavigation triggerUnderPointer = FindTopmostTriggerAtScreenPoint(screenPosition);
         SetActiveDoorHover(triggerUnderPointer);
 

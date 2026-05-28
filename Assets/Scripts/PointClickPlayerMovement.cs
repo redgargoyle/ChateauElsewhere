@@ -98,6 +98,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		CacheReferences();
 		CacheAnimatorParameters();
+		InitializeVisualStateFromTransform();
 	}
 
 	private void Start()
@@ -178,6 +179,15 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private void CacheAnimatorParameters()
 	{
 		animatorParameters = CharacterAnimatorDriver.ParameterCache.FromAnimator(animator);
+	}
+
+	private void InitializeVisualStateFromTransform()
+	{
+		logicalPosition = transform.position;
+		destination = logicalPosition;
+		finalDestination = logicalPosition;
+		ApplyPerspectiveScale();
+		ApplyPlayerSorting();
 	}
 
 	private void FindWalkableFloor()
@@ -271,9 +281,6 @@ public class PointClickPlayerMovement : MonoBehaviour
 		clickPosition = Vector2.zero;
 
 		if (!TryGetPrimaryPointerDown(out Vector2 screenPosition))
-			return false;
-
-		if (CharacterSelectionMenu.IsBlockingGameplayInput(screenPosition))
 			return false;
 
 		if (IsPointerOverUi())
@@ -493,9 +500,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void UpdateWalkCursor()
 	{
-		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition) ||
-			CharacterSelectionMenu.IsBlockingGameplayInput(screenPosition) ||
-			IsPointerOverUi())
+		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition) || IsPointerOverUi())
 		{
 			NavigationCursorController.ClearWalkHover(this);
 			return;

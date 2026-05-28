@@ -4,7 +4,7 @@ People are authored as real scene objects under each room's `People` child. They
 
 `RoomPersonWalker2D` now only owns room-local movement, depth scale/tint, tiny step/idle offsets, and Animator parameter updates. It does not choose animation frames. Character frames live in regular Unity Animator clips under `Assets/Animation/<CharacterName>`, using the same `Speed`, `IsWalkingUp`, `IsWalkingDown`, `IsWalkingLeft`, and `IsWalkingRight` parameter protocol as the controllable player.
 
-Room people use a UI `Image` plus an `Animator` override controller so they still live inside the painted room stage. The generated clips animate both the Image `m_Sprite` field and SpriteRenderer `m_Sprite` field, which lets the same character Animation folders drive NPCs and the controllable player test selector. This keeps the animation editable in Unity's Animation window while preserving the room-stage panning/zooming workflow.
+Room people use a UI `Image` plus an `Animator` override controller so they still live inside the painted room stage. The generated clips animate both the Image `m_Sprite` field and SpriteRenderer `m_Sprite` field. This keeps the animation editable in Unity's Animation window while preserving the room-stage panning/zooming workflow.
 
 The source character sheets in `Assets/Characters/<CharacterName>` are normalized to a shared foot baseline per frame. Use the aligned frame folders when rebuilding clips so animation frames do not make the character bounce around.
 
@@ -16,11 +16,7 @@ World-space SpriteRenderer props use `WorldYSortSpriteRenderer` when they need t
 
 Props that need a custom base footprint can also use `YSortSolidObstacle2D` plus a 2D trigger collider around the base area. That footprint drives sorting and optional occlusion safety only; player movement is intentionally controlled by the active `PlayerBoundary` floor collider. Keep the collider tight around the physical base, not the full painted sprite. Keep `Force Behind Player Inside Physical Bounds` off for grouped props like mushrooms so nearby props do not reorder while the player moves between them.
 
-Current examples:
-
-- `Gameplay.unity > Canvas_Background > Rooms > Room_Grand_Entrance_Hall > People > Walker_GEH_GreenGentleman`
-- `Gameplay.unity > Canvas_Background > Rooms > Room_Grand_Entrance_Hall > People > Walker_GEH_GreenLady`
-- `Gameplay.unity > UI_CharacterSelectionMenu` for swapping the controllable player between test character override controllers in Play mode.
+The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 
 Useful tweaks:
 

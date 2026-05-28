@@ -7,13 +7,10 @@ public class CharacterRegressionTests
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string WalkerPath = "Assets/Scripts/Characters/RoomPersonWalker2D.cs";
     private const string CharacterAnimatorDriverPath = "Assets/Scripts/Characters/CharacterAnimatorDriver.cs";
-    private const string CharacterSelectionMenuPath = "Assets/Scripts/Characters/CharacterSelectionMenu.cs";
     private const string CharacterAnimationAssetBuilderPath = "Assets/Editor/CharacterAnimationAssetBuilder.cs";
     private const string CharactersReadmePath = "Assets/Scripts/Characters/README.md";
     private const string PlayerWalkUpClipPath = "Assets/Animation/Player/Player_Walk_Up.anim";
-    private const string ButlerClassicWalkDownClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Walk_Down.anim";
     private const string ButlerClassicControllerPath = "Assets/Animation/ButlerClassic/ButlerClassic.controller";
-    private const string ButlerClassicControllerMetaPath = "Assets/Animation/ButlerClassic/ButlerClassic.controller.meta";
     private const string ButlerClassicIdleFolder = "Assets/Characters/ButlerClassic/idle/aligned";
     private const string ButlerClassicIdleDownClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Down.anim";
     private const string ButlerClassicIdleLeftClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Left.anim";
@@ -76,36 +73,7 @@ public class CharacterRegressionTests
         Assert.That(readmeText, Does.Contain("Unity Animator"));
         Assert.That(readmeText, Does.Contain("SpriteRenderer"));
         Assert.That(readmeText, Does.Contain("foot baseline"));
-        Assert.That(readmeText, Does.Contain("People > Walker_GEH_GreenGentleman"));
-    }
-
-    [Test]
-    public void GameplayHasCharacterAnimationTestSelector()
-    {
-        string sceneText = File.ReadAllText(GameplayScenePath);
-        string menuText = File.ReadAllText(CharacterSelectionMenuPath);
-        string clipText = File.ReadAllText(ButlerClassicWalkDownClipPath);
-
-        Assert.That(menuText, Does.Contain("OnGUI"), "The test selector should be a lightweight IMGUI menu, not another gameplay Canvas layer.");
-        Assert.That(menuText, Does.Contain("RuntimeAnimatorController"), "Selections should swap the player's Animator override controller.");
-        Assert.That(menuText, Does.Contain("playerAnimator.Rebind"), "Changing character controllers should immediately reset the Animator onto the selected clips.");
-        Assert.That(menuText, Does.Contain("RefreshAnimatorParameters"), "Swapping controllers should refresh cached Animator parameters before directional idle is evaluated.");
-        Assert.That(menuText, Does.Contain("IsBlockingGameplayInput"), "The selector should keep menu clicks from becoming floor or door clicks.");
-
-        Assert.That(sceneText, Does.Contain("m_Name: UI_CharacterSelectionMenu"));
-        Assert.That(sceneText, Does.Contain("guid: c4f61fdc7a9646f1b7f011b6b8d65a9d"), "Gameplay should include the character selector component.");
-        Assert.That(sceneText, Does.Contain("displayName: ButlerClassic"));
-        Assert.That(sceneText, Does.Contain("displayName: ButlerYoung"));
-        Assert.That(sceneText, Does.Contain("displayName: GentlemanBlack"));
-        Assert.That(sceneText, Does.Contain($"animatorController: {{fileID: 9100000, guid: {ReadGuidFromMeta(ButlerClassicControllerMetaPath)}, type: 2}}"), "ButlerClassic should use its dedicated directional-idle Animator controller.");
-        Assert.That(sceneText, Does.Contain(ReadGuidFromMeta($"{ButlerClassicIdleFolder}/butler_classic_idle_right_01.png.meta")), "ButlerClassic should start on the right-facing idle sprite that matches the player's initial facing direction.");
-        Assert.That(sceneText, Does.Contain("guid: badec0a2b39e42d9822349537505d13b"), "ButlerYoung should use its generated override controller.");
-        Assert.That(sceneText, Does.Contain("guid: bfcadf76b04b4b9081d862b0afcd8024"), "GentlemanBlack should use its generated override controller.");
-        Assert.That(sceneText, Does.Contain(ReadGuidFromMeta($"{GentlemanBlackDirectionalFolder}/gentleman_black_directional_01_r01_c01.png.meta")), "GentlemanBlack should start on the directional front-facing sprite, not the old side-only frame.");
-        Assert.That(sceneText, Does.Contain("showOnStart: 1"), "The selector should appear immediately in Play mode for testing.");
-
-        Assert.That(clipText, Does.Contain("classID: 114"), "Generated clips should animate UI Images for room NPCs.");
-        Assert.That(clipText, Does.Contain("classID: 212"), "Generated clips should also animate SpriteRenderers for the controllable player selector.");
+        Assert.That(readmeText, Does.Contain("prototype walking NPCs are currently disabled"));
     }
 
     [Test]

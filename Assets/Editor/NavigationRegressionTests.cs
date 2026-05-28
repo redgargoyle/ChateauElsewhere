@@ -132,12 +132,10 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("UpdateFallbackPointerHoverAndClick"), "Door triggers need a RectTransform fallback when UI pointer enter/click events are blocked.");
         Assert.That(triggerText, Does.Contain("ContainsScreenPoint"), "The fallback should test the authored door hitbox rect directly.");
         Assert.That(triggerText, Does.Contain("activeTriggers"), "The fallback should scan only active room triggers.");
-        Assert.That(triggerText, Does.Contain("CharacterSelectionMenu.IsBlockingGameplayInput"), "The test character selector should not click doors behind the IMGUI menu.");
         Assert.That(playerText, Does.Contain("TrySetDestinationFromScreenPoint"), "Navigation triggers need a public way to ask the player to walk toward a screen-space hitbox.");
         Assert.That(playerText, Does.Contain("TryEvaluateMovementAtScreenPoint"), "Cursor feedback and door approaches should use the same movement reachability query.");
         Assert.That(playerText, Does.Contain("TryGetScreenPointFromLogicalPosition"), "Door approaches need to score clamped floor points in screen space.");
         Assert.That(playerText, Does.Contain("IsPointerOverUi"), "Door UI clicks should not be overwritten by the floor click handler on the same frame.");
-        Assert.That(playerText, Does.Contain("CharacterSelectionMenu.IsBlockingGameplayInput"), "The test character selector should not click the floor behind the IMGUI menu.");
         Assert.That(playerText, Does.Contain("WalkableInsetAttempts"), "Clamped approach targets should move just inside the walkable polygon instead of sitting exactly on the collider edge.");
     }
 
