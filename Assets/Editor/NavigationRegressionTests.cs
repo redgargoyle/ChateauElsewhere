@@ -203,6 +203,30 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void ServiceCorridorKeepsAuthoredProps()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+
+        Assert.That(File.Exists("Assets/Art/Objects/service_corridor_left_table.png"), Is.True, "The service corridor left table sprite asset should stay in the project.");
+        Assert.That(File.Exists("Assets/Art/Objects/service_corridor_right_desk.png"), Is.True, "The service corridor right desk sprite asset should stay in the project.");
+        AssertScenePropSorting(sceneText, "service_corridor_left_table_0", 1480);
+        AssertScenePropSorting(sceneText, "service_corridor_right_desk_0", 1512);
+    }
+
+    [Test]
+    public void ImportantRoomPropsKeepStableAuthoredSorting()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+
+        AssertScenePropSorting(sceneText, "nursery_chair_0", 1517);
+        AssertScenePropSorting(sceneText, "nursery_chest_0", 1557);
+        AssertScenePropSorting(sceneText, "nursery_table_0", 1524);
+        AssertScenePropSorting(sceneText, "dog_toy_nursery_0", 1605);
+        AssertScenePropSorting(sceneText, "Grand_entrance_railing_left_0", 1601);
+        AssertScenePropSorting(sceneText, "grand_entrance_railing_right_0", 1616);
+    }
+
+    [Test]
     public void GameplayMapOpenerStartsTopRight()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
@@ -349,6 +373,14 @@ public class NavigationRegressionTests
         Assert.That(editorToolsText, Does.Contain("FitToTextureWithUndo"), "Editor room previews should show the source image at native size so door placement matches runtime UVs.");
         Assert.That(gameplaySceneText, Does.Not.Contain("backgroundShaderUvRect"), "Gameplay scene should not carry stale hidden hitbox anchors.");
         Assert.That(mainMenuSceneText, Does.Not.Contain("backgroundShaderUvRect"), "MainMenu scene should not carry stale hidden hitbox anchors.");
+    }
+
+    private static void AssertScenePropSorting(string sceneText, string propName, int sortingOrder)
+    {
+        string escapedName = Regex.Escape(propName);
+        string pattern = $@"m_Name: {escapedName}[\s\S]*?m_SortingLayer: 2[\s\S]*?m_SortingOrder: {sortingOrder}\b";
+
+        Assert.That(sceneText, Does.Match(pattern), $"{propName} should keep its authored People-layer sorting order.");
     }
 
 }
