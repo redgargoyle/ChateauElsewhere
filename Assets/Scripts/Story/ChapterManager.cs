@@ -17,7 +17,6 @@ public enum ChapterPhase
 [RequireComponent(typeof(ChapterClock))]
 [RequireComponent(typeof(ChapterEventScheduler))]
 [RequireComponent(typeof(ChapterIntroUI))]
-[RequireComponent(typeof(Chapter1ArrivalController))]
 public class ChapterManager : MonoBehaviour
 {
     public const string Chapter1Id = "chapter_01_arrivals";
@@ -364,6 +363,11 @@ public class ChapterManager : MonoBehaviour
         if (chapter1ArrivalController == null)
         {
             chapter1ArrivalController = GetComponent<Chapter1ArrivalController>();
+        }
+
+        if (chapter1ArrivalController == null)
+        {
+            chapter1ArrivalController = FindAnyObjectByType<Chapter1ArrivalController>(FindObjectsInactive.Include);
         }
 
         ResolvePlayerReference();

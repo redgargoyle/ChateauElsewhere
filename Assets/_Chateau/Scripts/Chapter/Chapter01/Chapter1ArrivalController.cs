@@ -686,9 +686,24 @@ public class Chapter1ArrivalController : MonoBehaviour
             chapterManager = GetComponent<ChapterManager>();
         }
 
+        if (chapterManager == null)
+        {
+            chapterManager = FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include);
+        }
+
         if (eventScheduler == null)
         {
             eventScheduler = GetComponent<ChapterEventScheduler>();
+        }
+
+        if (eventScheduler == null && chapterManager != null)
+        {
+            eventScheduler = chapterManager.EventScheduler;
+        }
+
+        if (eventScheduler == null)
+        {
+            eventScheduler = FindAnyObjectByType<ChapterEventScheduler>(FindObjectsInactive.Include);
         }
 
         if (navigationManager == null)
