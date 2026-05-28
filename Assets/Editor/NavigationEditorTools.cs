@@ -484,14 +484,6 @@ public static class NavigationEditorTools
             }
         }
 
-        for (int i = 0; i < canvases.Length; i++)
-        {
-            if (canvases[i].name == "Canvas_NightManager")
-            {
-                return canvases[i];
-            }
-        }
-
         return canvases.Length > 0 ? canvases[0] : null;
     }
 

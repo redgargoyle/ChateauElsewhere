@@ -7,9 +7,6 @@ public class MainMenuController : MonoBehaviour
     private const string DefaultGameplaySceneName = "Gameplay";
 
     [SerializeField] private string newGameSceneName = DefaultGameplaySceneName;
-    [SerializeField] private string nightProgressKey = "Night";
-    [SerializeField] private int startingNight = 1;
-    [SerializeField] private bool resetNightProgressOnNewGame = true;
 
     [Header("Menu Soundscape")]
     [SerializeField] private AudioSource menuSoundscapeSource;
@@ -66,12 +63,6 @@ public class MainMenuController : MonoBehaviour
 
     public void NewGame()
     {
-        if (resetNightProgressOnNewGame)
-        {
-            PlayerPrefs.SetInt(nightProgressKey, Mathf.Max(1, startingNight));
-            PlayerPrefs.Save();
-        }
-
         IdeaGameFlow.MarkNewGameStarted();
         LoadGameScene("New Game");
     }

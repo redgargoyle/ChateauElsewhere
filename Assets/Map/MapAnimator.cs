@@ -26,12 +26,6 @@ public class MapAnimator : MonoBehaviour
     public bool toggleWithKey = true;
     public KeyCode toggleKey = KeyCode.M;
 
-    [Header("Power")]
-    public PowerManager powerManager;
-    public bool drawPowerWhileOpen = true;
-    public string powerDrawId = "Map";
-    public float openPowerDrawRate = 0.25f;
-
     private bool mapVisible = false;
     private RectTransform triggerRect;
     private Vector3 originalMapScale = Vector3.one;
@@ -54,11 +48,6 @@ public class MapAnimator : MonoBehaviour
         if (mapOpenSound == null)
         {
             mapOpenSound = GetComponent<AudioSource>();
-        }
-
-        if (powerManager == null)
-        {
-            powerManager = FindAnyObjectByType<PowerManager>();
         }
 
         if (mapPanel != null)
@@ -205,7 +194,6 @@ public class MapAnimator : MonoBehaviour
             mapOpenSound.Play();
         }
 
-        AddPowerDraw();
     }
     public void HideMap()
     {
@@ -228,12 +216,6 @@ public class MapAnimator : MonoBehaviour
             mapOpenSound.Play();
         }
 
-        RemovePowerDraw();
-    }
-
-    private void OnDisable()
-    {
-        RemovePowerDraw();
     }
 
     private void SnapMapToCurrentState()
@@ -317,21 +299,4 @@ public class MapAnimator : MonoBehaviour
         return new Vector2(parentSize.x * viewportPosition.x, parentSize.y * viewportPosition.y);
     }
 
-    private void AddPowerDraw()
-    {
-        if (!drawPowerWhileOpen || powerManager == null)
-        {
-            return;
-        }
-
-        powerManager.AddDraw(powerDrawId, openPowerDrawRate);
-    }
-
-    private void RemovePowerDraw()
-    {
-        if (powerManager != null)
-        {
-            powerManager.RemoveDraw(powerDrawId);
-        }
-    }
 }

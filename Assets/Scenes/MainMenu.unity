@@ -407,9 +407,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   newGameSceneName: Gameplay
-  nightProgressKey: Night
-  startingNight: 1
-  resetNightProgressOnNewGame: 1
   menuSoundscapeSource: {fileID: 1309326792}
   menuSoundscapeClip: {fileID: 8300000, guid: 5cd6bd3d35aa8e1ebae11661918fd66a, type: 3}
   menuSoundscapePlaybackSpeed: 0.52
