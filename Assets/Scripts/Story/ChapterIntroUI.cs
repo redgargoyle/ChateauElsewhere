@@ -18,6 +18,11 @@ public class ChapterIntroUI : MonoBehaviour
     [SerializeField] private float titleFontSize = 72f;
     [SerializeField] private Color titleColor = Color.white;
 
+    [Header("Canvas Layer")]
+    [SerializeField] private bool useDedicatedOverlayCanvas = true;
+    [SerializeField] private string overlayCanvasObjectName = "Canvas_ChapterIntroOverlay";
+    [SerializeField] private int overlaySortingOrder = 12000;
+
     [Header("Fallback Creation")]
     [SerializeField] private bool createRuntimeFallbackIfMissing = true;
     [SerializeField] private string overlayObjectName = "ChapterIntroUI_Runtime";
@@ -139,10 +144,7 @@ public class ChapterIntroUI : MonoBehaviour
 
     private void EnsureUI()
     {
-        if (canvas == null)
-        {
-            canvas = PostProcessSafeCanvasUtility.GetOrCreateCanvas();
-        }
+        EnsureCanvasLayer();
 
         if (canvas == null)
         {
@@ -158,6 +160,8 @@ public class ChapterIntroUI : MonoBehaviour
         {
             overlayRoot = CreateOverlayRoot(canvas.transform);
         }
+
+        ConfigureOverlayRoot();
 
         if (fadeImage == null)
         {
@@ -175,6 +179,8 @@ public class ChapterIntroUI : MonoBehaviour
             }
         }
 
+        MoveComponentToOverlay(fadeImage);
+
         if (titleText == null)
         {
             titleText = FindNamedChild<TMP_Text>(titleObjectName);
@@ -191,14 +197,113 @@ public class ChapterIntroUI : MonoBehaviour
             }
         }
 
+        MoveComponentToOverlay(titleText);
+
         ConfigureFadeImage();
         ConfigureTitleText();
     }
 
+    private void EnsureCanvasLayer()
+    {
+        if (useDedicatedOverlayCanvas)
+        {
+            canvas = GetOrCreateIntroCanvas();
+        }
+        else if (canvas == null)
+        {
+            canvas = PostProcessSafeCanvasUtility.GetOrCreateCanvas();
+        }
+
+        if (canvas == null)
+        {
+            return;
+        }
+
+        ConfigureIntroCanvas(canvas);
+    }
+
+    private Canvas GetOrCreateIntroCanvas()
+    {
+        string canvasName = string.IsNullOrWhiteSpace(overlayCanvasObjectName)
+            ? "Canvas_ChapterIntroOverlay"
+            : overlayCanvasObjectName.Trim();
+
+        GameObject canvasObject = GameObject.Find(canvasName);
+
+        if (canvasObject == null)
+        {
+            canvasObject = new GameObject(
+                canvasName,
+                typeof(RectTransform),
+                typeof(Canvas),
+                typeof(CanvasScaler),
+                typeof(GraphicRaycaster));
+        }
+
+        return canvasObject.GetComponent<Canvas>();
+    }
+
+    private void ConfigureIntroCanvas(Canvas introCanvas)
+    {
+        if (introCanvas == null)
+        {
+            return;
+        }
+
+        GameObject canvasObject = introCanvas.gameObject;
+        canvasObject.SetActive(true);
+
+        int uiLayer = LayerMask.NameToLayer("UI");
+
+        if (uiLayer >= 0)
+        {
+            SetLayerRecursively(canvasObject, uiLayer);
+        }
+
+        introCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        introCanvas.overrideSorting = true;
+        introCanvas.sortingOrder = overlaySortingOrder;
+
+        CanvasScaler canvasScaler = canvasObject.GetComponent<CanvasScaler>();
+
+        if (canvasScaler == null)
+        {
+            canvasScaler = canvasObject.AddComponent<CanvasScaler>();
+        }
+
+        canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        canvasScaler.referenceResolution = new Vector2(1366f, 768f);
+        canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        canvasScaler.matchWidthOrHeight = 0.5f;
+
+        if (canvasObject.GetComponent<GraphicRaycaster>() == null)
+        {
+            canvasObject.AddComponent<GraphicRaycaster>();
+        }
+
+        StretchToParent(canvasObject.transform as RectTransform);
+    }
+
     private RectTransform FindOverlayRoot()
     {
-        GameObject existing = GameObject.Find(overlayObjectName);
-        return existing != null ? existing.transform as RectTransform : null;
+        if (canvas == null || string.IsNullOrWhiteSpace(overlayObjectName))
+        {
+            return null;
+        }
+
+        RectTransform[] rectTransforms = canvas.GetComponentsInChildren<RectTransform>(true);
+
+        for (int i = 0; i < rectTransforms.Length; i++)
+        {
+            RectTransform rectTransform = rectTransforms[i];
+
+            if (rectTransform != null && rectTransform.name == overlayObjectName)
+            {
+                return rectTransform;
+            }
+        }
+
+        return null;
     }
 
     private RectTransform CreateOverlayRoot(Transform parent)
@@ -209,6 +314,22 @@ public class ChapterIntroUI : MonoBehaviour
         RectTransform rectTransform = overlayObject.transform as RectTransform;
         StretchToParent(rectTransform);
         return rectTransform;
+    }
+
+    private void ConfigureOverlayRoot()
+    {
+        if (overlayRoot == null || canvas == null)
+        {
+            return;
+        }
+
+        if (overlayRoot.transform.parent != canvas.transform)
+        {
+            overlayRoot.transform.SetParent(canvas.transform, false);
+        }
+
+        StretchToParent(overlayRoot);
+        overlayRoot.SetAsLastSibling();
     }
 
     private Image CreateFadeImage(RectTransform parent)
@@ -229,12 +350,12 @@ public class ChapterIntroUI : MonoBehaviour
 
     private T FindNamedChild<T>(string objectName) where T : Component
     {
-        if (string.IsNullOrWhiteSpace(objectName))
+        if (overlayRoot == null || string.IsNullOrWhiteSpace(objectName))
         {
             return null;
         }
 
-        T[] components = FindObjectsByType<T>(FindObjectsInactive.Include);
+        T[] components = overlayRoot.GetComponentsInChildren<T>(true);
 
         for (int i = 0; i < components.Length; i++)
         {
@@ -247,6 +368,19 @@ public class ChapterIntroUI : MonoBehaviour
         }
 
         return null;
+    }
+
+    private void MoveComponentToOverlay(Component component)
+    {
+        if (component == null || overlayRoot == null)
+        {
+            return;
+        }
+
+        if (component.transform.parent != overlayRoot)
+        {
+            component.transform.SetParent(overlayRoot, false);
+        }
     }
 
     private void ConfigureFadeImage()
@@ -327,5 +461,20 @@ public class ChapterIntroUI : MonoBehaviour
         rectTransform.offsetMax = Vector2.zero;
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
         rectTransform.localScale = Vector3.one;
+    }
+
+    private static void SetLayerRecursively(GameObject target, int layer)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        target.layer = layer;
+
+        for (int i = 0; i < target.transform.childCount; i++)
+        {
+            SetLayerRecursively(target.transform.GetChild(i).gameObject, layer);
+        }
     }
 }
