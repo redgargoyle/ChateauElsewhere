@@ -9,6 +9,8 @@ public class ChapterEventScheduler : MonoBehaviour
     {
         public string EventId;
         public float FireAtElapsedSeconds;
+        public int FireAtGameTotalMinutes;
+        public bool UsesGameTime;
         public Action Callback;
         public bool Fired;
         public bool Completed;
@@ -38,9 +40,16 @@ public class ChapterEventScheduler : MonoBehaviour
         {
             ScheduledChapterEvent scheduledEvent = scheduledEvents[i];
 
-            if (scheduledEvent == null ||
-                scheduledEvent.Fired ||
-                elapsedSeconds < scheduledEvent.FireAtElapsedSeconds)
+            if (scheduledEvent == null || scheduledEvent.Fired)
+            {
+                continue;
+            }
+
+            bool shouldFire = scheduledEvent.UsesGameTime
+                ? chapterClock.CurrentTotalMinutes >= scheduledEvent.FireAtGameTotalMinutes
+                : elapsedSeconds >= scheduledEvent.FireAtElapsedSeconds;
+
+            if (!shouldFire)
             {
                 continue;
             }
@@ -66,6 +75,7 @@ public class ChapterEventScheduler : MonoBehaviour
         {
             EventId = cleanEventId,
             FireAtElapsedSeconds = elapsedSeconds + Mathf.Max(0f, delaySeconds),
+            UsesGameTime = false,
             Callback = callback,
             Fired = false,
             Completed = false
@@ -73,6 +83,34 @@ public class ChapterEventScheduler : MonoBehaviour
 
         scheduledEvents.Add(scheduledEvent);
         Debug.Log($"Chapter event scheduled: {cleanEventId} at {scheduledEvent.FireAtElapsedSeconds:0.00}s", this);
+        return true;
+    }
+
+    public bool ScheduleOneShotAtClockTime(string eventId, int hour, int minute, Action callback)
+    {
+        ResolveReferences();
+
+        string cleanEventId = string.IsNullOrWhiteSpace(eventId) ? "chapter_clock_event" : eventId.Trim();
+
+        if (HasPendingOrFiredEvent(cleanEventId))
+        {
+            Debug.LogWarning($"Chapter event '{cleanEventId}' was already scheduled or fired and will not be scheduled twice.", this);
+            return false;
+        }
+
+        int targetTotalMinutes = ChapterClock.ToTotalMinutes(hour, minute);
+        ScheduledChapterEvent scheduledEvent = new ScheduledChapterEvent
+        {
+            EventId = cleanEventId,
+            FireAtGameTotalMinutes = targetTotalMinutes,
+            UsesGameTime = true,
+            Callback = callback,
+            Fired = false,
+            Completed = false
+        };
+
+        scheduledEvents.Add(scheduledEvent);
+        Debug.Log($"Chapter event scheduled: {cleanEventId} at {ChapterClock.FormatTime(hour, minute)}", this);
         return true;
     }
 

@@ -43,6 +43,7 @@ public class ChapterManager : MonoBehaviour
     [SerializeField] private Chapter1ArrivalController chapter1ArrivalController;
 
     private Coroutine chapterRoutine;
+    private Coroutine chapterCompleteRoutine;
     private bool chapterStarted;
 
     public string CurrentChapterId => currentChapterId;
@@ -51,6 +52,7 @@ public class ChapterManager : MonoBehaviour
     public bool DebugFastMode => debugFastMode;
     public ChapterClock Clock => chapterClock;
     public ChapterEventScheduler EventScheduler => eventScheduler;
+    public GameObject PlayerButlerReference => playerButlerReference;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void BootstrapChapterManagerForGameplay()
@@ -201,6 +203,16 @@ public class ChapterManager : MonoBehaviour
         }
     }
 
+    public void CompleteChapterAndTriggerNextChapter(string nextChapterId)
+    {
+        if (chapterCompleteRoutine != null)
+        {
+            return;
+        }
+
+        chapterCompleteRoutine = StartCoroutine(CompleteChapterRoutine(nextChapterId));
+    }
+
     private IEnumerator RunChapter1Routine()
     {
         SetPlayerInputEnabled(false);
@@ -209,6 +221,7 @@ public class ChapterManager : MonoBehaviour
         {
             chapterClock.StopClock();
             chapterClock.ResetClock();
+            chapterClock.SetStartTime(17, 59);
         }
 
         if (eventScheduler != null)
@@ -289,6 +302,25 @@ public class ChapterManager : MonoBehaviour
         }
 
         return introUI != null ? introUI.FadeFromBlackSeconds : 1.5f;
+    }
+
+    private IEnumerator CompleteChapterRoutine(string nextChapterId)
+    {
+        SetPlayerInputEnabled(false);
+        SetPhase(ChapterPhase.Complete);
+
+        if (introUI != null)
+        {
+            yield return introUI.FadeToBlack(GetIntroFadeSeconds());
+        }
+
+        if (chapterClock != null)
+        {
+            chapterClock.StopClock();
+        }
+
+        string cleanNextChapterId = string.IsNullOrWhiteSpace(nextChapterId) ? "chapter_02_pending" : nextChapterId.Trim();
+        Debug.Log($"Chapter 2 trigger requested: {cleanNextChapterId}", this);
     }
 
     private void SetPlayerInputEnabled(bool enabled)
@@ -387,17 +419,7 @@ public class ChapterManager : MonoBehaviour
 
     private void ResolvePlayerReference()
     {
-        if (playerInput == null)
-        {
-            playerInput = FindAnyObjectByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
-        }
-
-        if (playerButlerReference == null && playerInput != null)
-        {
-            playerButlerReference = playerInput.gameObject;
-        }
-
-        if (playerButlerReference == null)
+        if (playerButlerReference == null || IsGuestObject(playerButlerReference))
         {
             GameObject namedPlayer = GameObject.Find("Player");
 
@@ -407,5 +429,58 @@ public class ChapterManager : MonoBehaviour
                 playerInput = namedPlayer.GetComponent<PointClickPlayerMovement>();
             }
         }
+
+        if (playerInput == null && playerButlerReference != null)
+        {
+            playerInput = playerButlerReference.GetComponent<PointClickPlayerMovement>();
+        }
+
+        if (playerInput == null)
+        {
+            playerInput = FindPlayerInput();
+        }
+
+        if ((playerButlerReference == null || IsGuestObject(playerButlerReference)) && playerInput != null)
+        {
+            playerButlerReference = playerInput.gameObject;
+        }
+    }
+
+    private static PointClickPlayerMovement FindPlayerInput()
+    {
+        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (candidate != null &&
+                candidate.gameObject.scene.IsValid() &&
+                !IsGuestObject(candidate.gameObject) &&
+                string.Equals(candidate.gameObject.name, "Player", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate;
+            }
+        }
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (candidate != null &&
+                candidate.gameObject.scene.IsValid() &&
+                !IsGuestObject(candidate.gameObject))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsGuestObject(GameObject target)
+    {
+        return target != null &&
+            target.name.IndexOf("Guest", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 }

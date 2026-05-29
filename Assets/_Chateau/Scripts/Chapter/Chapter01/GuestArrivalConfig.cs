@@ -41,6 +41,49 @@ public class GuestArrivalConfig
     public string CoatId => string.IsNullOrWhiteSpace(coatId) ? CoatDisplayName : coatId.Trim();
     public string CoatDisplayName => string.IsNullOrWhiteSpace(coatDisplayName) ? $"{GuestDisplayName} Coat" : coatDisplayName.Trim();
 
+    public void ConfigureRuntime(
+        string id,
+        string displayName,
+        GameObject runtimeGuestObject,
+        Transform runtimeFrontDoorArrivalPoint,
+        Transform runtimeDrawingRoomEntryPoint,
+        Transform runtimeAssignedSeat,
+        string runtimeGreetingLine,
+        IReadOnlyList<string> runtimeAmbientLines,
+        string runtimeCoatId)
+    {
+        guestId = id;
+        guestDisplayName = displayName;
+        guestObject = runtimeGuestObject;
+        actorState = runtimeGuestObject != null ? runtimeGuestObject.GetComponent<ActorRoomState>() : null;
+        frontDoorArrivalPoint = runtimeFrontDoorArrivalPoint;
+        drawingRoomEntryPoint = runtimeDrawingRoomEntryPoint;
+        assignedSeat = runtimeAssignedSeat;
+        greetingLine = runtimeGreetingLine;
+        coatId = runtimeCoatId;
+        coatDisplayName = string.IsNullOrWhiteSpace(runtimeCoatId) ? $"{GuestDisplayName} Coat" : runtimeCoatId;
+
+        ambientLines.Clear();
+
+        if (runtimeAmbientLines == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < runtimeAmbientLines.Count; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(runtimeAmbientLines[i]))
+            {
+                ambientLines.Add(runtimeAmbientLines[i]);
+            }
+        }
+    }
+
+    public void SetAssignedSeat(Transform value)
+    {
+        assignedSeat = value;
+    }
+
     public ActorRoomState ResolveActorState()
     {
         if (actorState == null && guestObject != null)
@@ -94,6 +137,7 @@ public enum GuestArrivalState
     Arriving,
     AwaitingGreeting,
     GreetingComplete,
+    CoatOffered,
     CoatTaken,
     MovingToDrawingRoom,
     Seated,

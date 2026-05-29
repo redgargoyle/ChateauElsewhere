@@ -7,10 +7,14 @@ public class NPCWaypointMover : MonoBehaviour
     [SerializeField] private float moveSpeed = 2.2f;
     [SerializeField] private float stopDistance = 0.03f;
     [SerializeField] private bool preserveStartingZ = true;
+    [SerializeField, Range(0.1f, 1f)] private float horizontalDirectionThreshold = 0.55f;
     [SerializeField] private RoomPersonWalker2D ambientWalker;
+    [SerializeField] private Animator animator;
 
     private Coroutine moveRoutine;
     private bool isMoving;
+    private CharacterAnimatorDriver.ParameterCache animatorParameters;
+    private CharacterWalkDirection walkDirection = CharacterWalkDirection.Down;
 
     public bool IsMoving => isMoving;
     public float MoveSpeed
@@ -49,6 +53,7 @@ public class NPCWaypointMover : MonoBehaviour
             StopCoroutine(moveRoutine);
         }
 
+        ResolveReferences();
         moveRoutine = StartCoroutine(MoveToRoutine(target));
         return moveRoutine;
     }
@@ -73,14 +78,18 @@ public class NPCWaypointMover : MonoBehaviour
 
         while (Vector2.Distance(transform.position, targetPosition) > stopDistance)
         {
-            transform.position = Vector3.MoveTowards(
+            Vector3 previousPosition = transform.position;
+            Vector3 nextPosition = Vector3.MoveTowards(
                 transform.position,
                 targetPosition,
                 moveSpeed * Time.deltaTime);
+            transform.position = nextPosition;
+            UpdateAnimator(nextPosition - previousPosition, true);
             yield return null;
         }
 
         transform.position = targetPosition;
+        UpdateAnimator(Vector2.zero, false);
         isMoving = false;
         moveRoutine = null;
     }
@@ -94,6 +103,7 @@ public class NPCWaypointMover : MonoBehaviour
         }
 
         isMoving = false;
+        UpdateAnimator(Vector2.zero, false);
     }
 
     public void SetAmbientWalkerEnabled(bool value)
@@ -124,5 +134,30 @@ public class NPCWaypointMover : MonoBehaviour
         {
             ambientWalker = GetComponent<RoomPersonWalker2D>();
         }
+
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>(true);
+        }
+
+        animatorParameters = CharacterAnimatorDriver.ParameterCache.FromAnimator(animator);
+    }
+
+    private void UpdateAnimator(Vector2 movement, bool isWalking)
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        if (movement.sqrMagnitude > 0.0001f)
+        {
+            walkDirection = CharacterAnimatorDriver.DetermineDirection(
+                movement,
+                walkDirection,
+                horizontalDirectionThreshold);
+        }
+
+        animatorParameters.ApplyMovement(animator, isWalking, walkDirection, moveSpeed);
     }
 }

@@ -116,6 +116,47 @@ public class ChapterIntroUI : MonoBehaviour
         HideOverlay();
     }
 
+    public IEnumerator FadeToBlack(float duration)
+    {
+        EnsureUI();
+
+        if (fadeImage == null)
+        {
+            yield break;
+        }
+
+        if (overlayRoot != null)
+        {
+            overlayRoot.gameObject.SetActive(true);
+            overlayRoot.SetAsLastSibling();
+        }
+
+        if (titleText != null)
+        {
+            titleText.gameObject.SetActive(false);
+        }
+
+        float safeDuration = Mathf.Max(0f, duration);
+
+        if (safeDuration <= 0f)
+        {
+            SetFadeAlpha(1f);
+            yield break;
+        }
+
+        float elapsed = 0f;
+
+        while (elapsed < safeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / safeDuration);
+            SetFadeAlpha(Mathf.Lerp(0f, 1f, progress));
+            yield return null;
+        }
+
+        SetFadeAlpha(1f);
+    }
+
     public void HideOverlay()
     {
         if (titleText != null)
@@ -391,7 +432,7 @@ public class ChapterIntroUI : MonoBehaviour
         }
 
         RectTransform rectTransform = fadeImage.transform as RectTransform;
-        StretchToParent(rectTransform);
+        CoverViewport(rectTransform);
         fadeImage.color = new Color(0f, 0f, 0f, fadeImage.color.a);
         fadeImage.raycastTarget = true;
     }
@@ -460,6 +501,21 @@ public class ChapterIntroUI : MonoBehaviour
         rectTransform.offsetMin = Vector2.zero;
         rectTransform.offsetMax = Vector2.zero;
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.localScale = Vector3.one;
+    }
+
+    private static void CoverViewport(RectTransform rectTransform)
+    {
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.anchoredPosition = Vector2.zero;
+        rectTransform.sizeDelta = new Vector2(10000f, 10000f);
         rectTransform.localScale = Vector3.one;
     }
 
