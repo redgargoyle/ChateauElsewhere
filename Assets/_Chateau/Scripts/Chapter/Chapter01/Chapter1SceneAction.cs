@@ -25,6 +25,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private int lastPerformedFrame = -1;
     private bool cursorHoverActive;
+    private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.Door;
     private PointClickPlayerMovement pendingFrontDoorApproachPlayer;
 
     public void Initialize(
@@ -49,9 +50,9 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (actionType == Chapter1SceneActionType.FrontDoor &&
+        if (UsesManualPointerPolling() &&
             TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
-            IsFrontDoorPointerHit(screenPosition))
+            IsPointerInsideActionBounds(screenPosition))
         {
             SetDoorCursorHover(true);
         }
@@ -75,7 +76,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void Update()
     {
-        if (actionType != Chapter1SceneActionType.FrontDoor)
+        if (!UsesManualPointerPolling())
         {
             return;
         }
@@ -87,7 +88,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         }
 
         bool pointerInsideAction = IsPointerInsideActionBounds(screenPosition);
-        SetDoorCursorHover(pointerInsideAction);
+        SetDoorCursorHover(pointerInsideAction && isActionAvailable);
 
         if (!TryGetPrimaryPointerDown())
         {
@@ -100,7 +101,10 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return;
         }
 
-        CancelPendingFrontDoorApproach();
+        if (actionType == Chapter1SceneActionType.FrontDoor)
+        {
+            CancelPendingFrontDoorApproach();
+        }
     }
 
     private void PerformAction()
@@ -328,18 +332,40 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void SetDoorCursorHover(bool active)
     {
-        if (actionType != Chapter1SceneActionType.FrontDoor)
+        if (!UsesManualPointerPolling())
         {
             active = false;
         }
 
-        if (cursorHoverActive == active)
+        NavigationCursorController.HoverIcon nextIcon = GetActionHoverIcon();
+
+        if (cursorHoverActive == active && cursorHoverIcon == nextIcon)
         {
             return;
         }
 
         cursorHoverActive = active;
-        NavigationCursorController.SetDoorHover(this, NavigationCursorController.HoverIcon.Door, active);
+        cursorHoverIcon = nextIcon;
+        NavigationCursorController.SetDoorHover(this, nextIcon, active);
+    }
+
+    private bool UsesManualPointerPolling()
+    {
+        return actionType == Chapter1SceneActionType.FrontDoor ||
+            actionType == Chapter1SceneActionType.CoatCloset;
+    }
+
+    private NavigationCursorController.HoverIcon GetActionHoverIcon()
+    {
+        if (actionType == Chapter1SceneActionType.CoatCloset)
+        {
+            ResolveReferences();
+            return arrivalController != null && arrivalController.ButlerCarryingCoat
+                ? NavigationCursorController.HoverIcon.Coat
+                : NavigationCursorController.HoverIcon.BlockedCoat;
+        }
+
+        return NavigationCursorController.HoverIcon.Door;
     }
 
     private static bool TryGetPrimaryPointerPosition(out Vector2 screenPosition)

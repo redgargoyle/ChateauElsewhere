@@ -117,16 +117,22 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Chapter1CoatPickup pendingCoatPickup;
     private GameObject carriedCoatVisual;
     private Sprite runtimeCoatSprite;
+    private Sprite runtimeWardrobeSprite;
     private Sprite runtimeGuestSprite;
     private bool subscribedToRoomChanges;
     private bool hasWorldDoorCenterPosition;
     private Vector3 worldDoorCenterPosition;
+    private bool hasEntranceDrawingRoomExitPosition;
+    private Vector3 entranceDrawingRoomExitPosition;
+    private bool pendingClosetStorage;
 
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
     private const float CoatPickupReadyScreenDistance = 90f;
+    private const float ClosetStorageReadyScreenDistance = 145f;
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
+    private static readonly Vector2 WardrobeColliderSize = new Vector2(0.9f, 1.6f);
     private static readonly string[][] ChapterGuestNameAliases =
     {
         new[] { "Guest1", "Guest 1" },
@@ -171,6 +177,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void OnDisable()
     {
         CancelPendingCoatPickup();
+        CancelPendingClosetStorage();
         UnsubscribeFromRoomChanges();
     }
 
@@ -518,6 +525,22 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        if (!IsButlerCloseToCloset())
+        {
+            WalkButlerToCloset();
+            return;
+        }
+
+        StoreCarriedCoatInCloset();
+    }
+
+    private void StoreCarriedCoatInCloset()
+    {
+        if (!butlerCarryingCoat)
+        {
+            return;
+        }
+
         if (coatCloset == null)
         {
             if (!autoStoreCoatIfClosetMissing)
@@ -532,6 +555,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (coatCloset != null)
         {
             coatCloset.StoreCoat(carriedCoatId);
+            Debug.Log($"[Chapter1] Coat {carriedCoatId} stored in wardrobe.", this);
         }
 
         if (carriedCoatGuest != null)
@@ -551,6 +575,127 @@ public class Chapter1ArrivalController : MonoBehaviour
         carriedCoatGuest = null;
         RefreshInteractionState();
         CheckActiveGroupsReadyForDrawingRoom();
+    }
+
+    private void WalkButlerToCloset()
+    {
+        ResolveReferences();
+        CancelPendingClosetStorage();
+
+        Camera mainCamera = Camera.main;
+        Transform target = GetClosetInteractionTransform();
+
+        if (playerMovement == null || mainCamera == null || target == null)
+        {
+            Debug.LogWarning("Wardrobe clicked, but the butler cannot walk to it because a required reference is missing.", this);
+            return;
+        }
+
+        Vector2 closetScreenPosition = mainCamera.WorldToScreenPoint(target.position);
+
+        if (!playerMovement.TryEvaluateMovementAtScreenPoint(closetScreenPosition, true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
+            !movementQuery.HasReachableDestination)
+        {
+            Debug.LogWarning("Wardrobe clicked, but the butler could not find a reachable wardrobe spot.", this);
+            return;
+        }
+
+        if (!playerMovement.TrySetDestination(movementQuery.Destination))
+        {
+            Debug.LogWarning("Wardrobe clicked, but the butler could not walk to the selected wardrobe spot.", this);
+            return;
+        }
+
+        pendingClosetStorage = true;
+        Debug.Log("[Chapter1] Butler walking to wardrobe.", this);
+
+        if (!playerMovement.HasDestination)
+        {
+            CompletePendingClosetStorage();
+            return;
+        }
+
+        playerMovement.MovementStopped += HandleClosetStorageMovementStopped;
+    }
+
+    private void HandleClosetStorageMovementStopped()
+    {
+        CompletePendingClosetStorage();
+    }
+
+    private void CompletePendingClosetStorage()
+    {
+        if (!pendingClosetStorage)
+        {
+            return;
+        }
+
+        CancelPendingClosetStorage();
+
+        if (!butlerCarryingCoat || !IsButlerCloseToCloset())
+        {
+            return;
+        }
+
+        Debug.Log("[Chapter1] Butler reached wardrobe.", this);
+        StoreCarriedCoatInCloset();
+    }
+
+    private void CancelPendingClosetStorage()
+    {
+        if (playerMovement != null)
+        {
+            playerMovement.MovementStopped -= HandleClosetStorageMovementStopped;
+        }
+
+        pendingClosetStorage = false;
+    }
+
+    private bool IsButlerCloseToCloset()
+    {
+        ResolveReferences();
+
+        if (playerMovement == null)
+        {
+            return false;
+        }
+
+        Camera mainCamera = Camera.main;
+        Transform target = GetClosetInteractionTransform();
+
+        if (mainCamera == null || target == null)
+        {
+            return false;
+        }
+
+        Vector2 closetScreenPosition = mainCamera.WorldToScreenPoint(target.position);
+
+        if (!playerMovement.TryGetScreenPointFromLogicalPosition(playerMovement.LogicalPosition, out Vector2 butlerScreenPosition))
+        {
+            if (playerButlerReference == null)
+            {
+                return false;
+            }
+
+            butlerScreenPosition = mainCamera.WorldToScreenPoint(playerButlerReference.transform.position);
+        }
+
+        return Vector2.Distance(butlerScreenPosition, closetScreenPosition) <= ClosetStorageReadyScreenDistance;
+    }
+
+    private Transform GetClosetInteractionTransform()
+    {
+        if (coatCloset != null && IsRuntimeEntranceCloset(coatCloset.gameObject))
+        {
+            return coatCloset.transform;
+        }
+
+        if (closetPoint != null && SameRoom(GetRoomForTransform(closetPoint), entryRoomId))
+        {
+            return closetPoint;
+        }
+
+        return coatCloset != null ? coatCloset.transform : null;
     }
 
     public void TryCompleteChapterFromDrawingRoomExit()
@@ -731,9 +876,12 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         carriedCoatVisual = null;
         CancelPendingCoatPickup();
+        CancelPendingClosetStorage();
         currentGuestIndex = -1;
         hasWorldDoorCenterPosition = false;
         worldDoorCenterPosition = Vector3.zero;
+        hasEntranceDrawingRoomExitPosition = false;
+        entranceDrawingRoomExitPosition = Vector3.zero;
         pendingGuestGroups.Clear();
         activeEntranceGroups.Clear();
         guestGroups.Clear();
@@ -1230,27 +1378,26 @@ public class Chapter1ArrivalController : MonoBehaviour
             Transform drawingRoomEntry = useWorldSafePlacement
                 ? CreateRuntimeAnchor($"DrawingRoomEntry_{guest.Config.GuestId}", GetWorldDrawingRoomEntryPosition(i, group.Guests.Count), null)
                 : guest.Config.GetDrawingRoomEntryPoint(drawingRoomEntryPoint);
-            Transform drawingRoomSeat = useWorldSafePlacement
-                ? CreateRuntimeAnchor($"DrawingRoomSeat_{guest.Config.GuestId}", GetWorldDrawingRoomSeatPosition(guest.GuestIndex), null)
-                : guest.Seat;
 
             SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
+            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to drawing room door.", this);
             yield return MoveGuestTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
-            yield return MoveGuestTo(guest, drawingRoomSeat, "assignedSeat");
 
             if (guest.ActorState != null)
             {
                 guest.ActorState.SetCurrentRoom(drawingRoomId);
                 guest.ActorState.SetInteractable(false);
                 guest.ActorState.SetSeated(true);
+                guest.ActorState.SetVisibleByChapterState(false);
             }
 
             guest.Seated = true;
             guest.Handled = true;
-            SetGuestState(guest, GuestArrivalState.Seated);
             DisableGuestMovement(guest);
-            StartAmbientConversation(guest);
+            SetGuestVisibleAfterDrawingRoomExit(guest, false);
+            SetGuestState(guest, GuestArrivalState.Seated);
             SetGuestState(guest, GuestArrivalState.Handled);
+            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} disappeared at drawing room door.", this);
         }
 
         group.Complete = true;
@@ -1736,6 +1883,16 @@ public class Chapter1ArrivalController : MonoBehaviour
         guestState.Mover.enabled = false;
     }
 
+    private static void SetGuestVisibleAfterDrawingRoomExit(GuestRuntimeState guestState, bool visible)
+    {
+        if (guestState == null || guestState.GuestObject == null)
+        {
+            return;
+        }
+
+        guestState.GuestObject.SetActive(visible);
+    }
+
     private void StartAmbientConversation(GuestRuntimeState guestState)
     {
         if (guestState == null || guestState.Config == null)
@@ -1842,9 +1999,28 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void EnsureSceneActionTargets()
     {
-        CreateClickTarget("Chapter1_ClickTarget_CoatCloset", closetPoint != null ? closetPoint : coatCloset != null ? coatCloset.transform : null, Chapter1SceneActionType.CoatCloset);
+        RemoveClickTarget("Chapter1_ClickTarget_CoatCloset");
         CreateClickTarget("Chapter1_ClickTarget_GrandfatherClock", grandfatherClock != null ? grandfatherClock.transform : null, Chapter1SceneActionType.GrandfatherClock);
         CreateClickTarget("Chapter1_ClickTarget_DrawingRoomExit", drawingRoomEntryPoint, Chapter1SceneActionType.DrawingRoomExit);
+    }
+
+    private void RemoveClickTarget(string objectName)
+    {
+        GameObject targetObject = GameObject.Find(objectName);
+
+        if (targetObject == null)
+        {
+            return;
+        }
+
+        if (Application.isPlaying)
+        {
+            Destroy(targetObject);
+        }
+        else
+        {
+            DestroyImmediate(targetObject);
+        }
     }
 
     private void EnsureDoorAnswerTriggerAction(bool createFallback)
@@ -2600,7 +2776,9 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         if (coatCloset != null && IsRuntimeEntranceCloset(coatCloset.gameObject))
         {
-            HideRuntimePlaceholderRenderers(coatCloset.gameObject);
+            ConfigureRuntimeWardrobeObject(coatCloset.gameObject);
+            closetPoint = coatCloset.transform;
+            return;
         }
 
         if (coatCloset != null && SameRoom(GetRoomForTransform(coatCloset.transform), entryRoomId))
@@ -2608,24 +2786,23 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        GameObject closetObject = GameObject.Find("CoatCloset_EntranceHall_Runtime");
+        GameObject closetObject = GameObject.Find("Wardrobe_EntranceHall_Runtime");
 
         if (closetObject == null)
         {
-            closetObject = new GameObject("CoatCloset_EntranceHall_Runtime");
-            Transform parent = frontDoorArrivalPoint != null && frontDoorArrivalPoint.parent != null ? frontDoorArrivalPoint.parent : transform;
-            closetObject.transform.SetParent(parent, true);
-            Vector3 fallbackPosition = butlerDoorSpot != null
-                ? butlerDoorSpot.position + new Vector3(-180f, 0f, 0f)
-                : transform.position;
-            closetObject.transform.position = closetPoint != null ? closetPoint.position : fallbackPosition;
-
-            BoxCollider2D collider = closetObject.AddComponent<BoxCollider2D>();
-            collider.size = new Vector2(8f, 8f);
-            collider.isTrigger = true;
+            closetObject = GameObject.Find("CoatCloset_EntranceHall_Runtime");
         }
 
-        HideRuntimePlaceholderRenderers(closetObject);
+        if (closetObject == null)
+        {
+            closetObject = new GameObject("Wardrobe_EntranceHall_Runtime");
+            Transform parent = frontDoorArrivalPoint != null && frontDoorArrivalPoint.parent != null ? frontDoorArrivalPoint.parent : transform;
+            closetObject.transform.SetParent(parent, true);
+        }
+
+        closetObject.name = "Wardrobe_EntranceHall_Runtime";
+        closetObject.transform.position = GetRuntimeWardrobePosition();
+        ConfigureRuntimeWardrobeObject(closetObject);
 
         coatCloset = closetObject.GetComponent<CoatCloset>();
 
@@ -2634,10 +2811,63 @@ public class Chapter1ArrivalController : MonoBehaviour
             coatCloset = closetObject.AddComponent<CoatCloset>();
         }
 
-        if (closetPoint == null)
+        if (closetPoint == null || !SameRoom(GetRoomForTransform(closetPoint), entryRoomId))
         {
             closetPoint = closetObject.transform;
         }
+    }
+
+    private Vector3 GetRuntimeWardrobePosition()
+    {
+        if (closetPoint != null && SameRoom(GetRoomForTransform(closetPoint), entryRoomId))
+        {
+            return closetPoint.position;
+        }
+
+        return GetWorldEntranceCenterPosition() + new Vector3(-1.75f, -0.55f, 0f);
+    }
+
+    private void ConfigureRuntimeWardrobeObject(GameObject wardrobeObject)
+    {
+        if (wardrobeObject == null)
+        {
+            return;
+        }
+
+        SpriteRenderer renderer = wardrobeObject.GetComponent<SpriteRenderer>();
+
+        if (renderer == null)
+        {
+            renderer = wardrobeObject.AddComponent<SpriteRenderer>();
+        }
+
+        renderer.sprite = GetRuntimeWardrobeSprite();
+        renderer.color = Color.white;
+        renderer.sortingLayerName = "People";
+        renderer.sortingOrder = 120;
+        renderer.enabled = true;
+
+        BoxCollider2D collider = wardrobeObject.GetComponent<BoxCollider2D>();
+
+        if (collider == null)
+        {
+            collider = wardrobeObject.AddComponent<BoxCollider2D>();
+        }
+
+        collider.size = WardrobeColliderSize;
+        collider.offset = new Vector2(0f, WardrobeColliderSize.y * 0.5f);
+        collider.isTrigger = true;
+        collider.enabled = true;
+
+        Chapter1SceneAction action = wardrobeObject.GetComponent<Chapter1SceneAction>();
+
+        if (action == null)
+        {
+            action = wardrobeObject.AddComponent<Chapter1SceneAction>();
+        }
+
+        action.Initialize(Chapter1SceneActionType.CoatCloset, this, grandfatherClock);
+        action.SetAvailable(true);
     }
 
     private Transform ResolveSeatForGuest(int index)
@@ -2738,9 +2968,64 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Vector3 GetWorldDrawingRoomEntryPosition(int indexInBatch, int batchCount)
     {
-        Vector3 basePosition = GetWorldDrawingRoomCenterPosition();
+        Vector3 basePosition = GetEntranceDrawingRoomExitPosition();
         Vector2 offset = GetWorldGuestGridOffset(indexInBatch, batchCount, worldDrawingRoomSeatSpacing);
-        return basePosition + new Vector3(offset.x, offset.y - worldDrawingRoomSeatSpacing * 1.5f, 0f);
+        return basePosition + new Vector3(offset.x, offset.y, 0f);
+    }
+
+    private Vector3 GetEntranceDrawingRoomExitPosition()
+    {
+        if (hasEntranceDrawingRoomExitPosition)
+        {
+            return entranceDrawingRoomExitPosition;
+        }
+
+        Vector3 basePosition = drawingRoomEntryPoint != null
+            ? drawingRoomEntryPoint.position
+            : GetWorldEntranceCenterPosition();
+
+        if (TryGetGrandEntranceDrawingRoomDoorX(out float doorX))
+        {
+            basePosition.x = doorX;
+        }
+        else
+        {
+            Vector3 centerPosition = GetWorldEntranceCenterPosition();
+            float distanceFromCenter = Mathf.Abs(basePosition.x - centerPosition.x);
+
+            if (distanceFromCenter > 0.01f && basePosition.x > centerPosition.x)
+            {
+                basePosition.x = centerPosition.x - distanceFromCenter;
+            }
+        }
+
+        entranceDrawingRoomExitPosition = basePosition;
+        hasEntranceDrawingRoomExitPosition = true;
+        return entranceDrawingRoomExitPosition;
+    }
+
+    private bool TryGetGrandEntranceDrawingRoomDoorX(out float doorX)
+    {
+        doorX = 0f;
+        DoorTriggerNavigation[] doorTriggers = FindObjectsByType<DoorTriggerNavigation>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < doorTriggers.Length; i++)
+        {
+            DoorTriggerNavigation doorTrigger = doorTriggers[i];
+
+            if (doorTrigger == null ||
+                !SameRoom(doorTrigger.SourceRoom, entryRoomId) ||
+                !SameRoom(doorTrigger.DestinationRoom, drawingRoomId))
+            {
+                continue;
+            }
+
+            RectTransform rectTransform = doorTrigger.transform as RectTransform;
+            doorX = rectTransform != null ? rectTransform.anchoredPosition.x : doorTrigger.transform.position.x;
+            return true;
+        }
+
+        return false;
     }
 
     private Vector3 GetWorldDrawingRoomSeatPosition(int guestIndex)
@@ -3048,6 +3333,16 @@ public class Chapter1ArrivalController : MonoBehaviour
         return runtimeCoatSprite;
     }
 
+    private Sprite GetRuntimeWardrobeSprite()
+    {
+        if (runtimeWardrobeSprite == null)
+        {
+            runtimeWardrobeSprite = CreateWardrobeSprite();
+        }
+
+        return runtimeWardrobeSprite;
+    }
+
     private Sprite GetRuntimeGuestSprite()
     {
         if (runtimeGuestSprite == null)
@@ -3056,6 +3351,50 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return runtimeGuestSprite;
+    }
+
+    private static Sprite CreateWardrobeSprite()
+    {
+        const int width = 72;
+        const int height = 112;
+        Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        Color clear = new Color(0f, 0f, 0f, 0f);
+        Color wood = new Color(0.28f, 0.16f, 0.09f, 1f);
+        Color trim = new Color(0.13f, 0.08f, 0.045f, 1f);
+        Color panel = new Color(0.40f, 0.24f, 0.13f, 1f);
+        Color knob = new Color(0.88f, 0.68f, 0.28f, 1f);
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                texture.SetPixel(x, y, clear);
+            }
+        }
+
+        for (int y = 6; y < height - 4; y++)
+        {
+            for (int x = 10; x < width - 10; x++)
+            {
+                bool border = x < 14 || x >= width - 14 || y < 10 || y >= height - 8;
+                bool centerLine = Mathf.Abs(x - width / 2) <= 1;
+                bool insetPanel = x > 17 && x < width - 17 && y > 18 && y < height - 18 && !centerLine;
+                texture.SetPixel(x, y, border || centerLine ? trim : insetPanel ? panel : wood);
+            }
+        }
+
+        for (int y = 53; y <= 58; y++)
+        {
+            for (int x = 31; x <= 40; x++)
+            {
+                texture.SetPixel(x, y, knob);
+            }
+        }
+
+        texture.Apply();
+        texture.name = "RuntimeWardrobeSprite";
+        texture.filterMode = FilterMode.Point;
+        return Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.05f), 64f);
     }
 
     private SpriteRenderer CreateRuntimeVisual(Transform parent, string objectName, Sprite sprite, float visualScale)
@@ -3122,7 +3461,8 @@ public class Chapter1ArrivalController : MonoBehaviour
     private static bool IsRuntimeEntranceCloset(GameObject target)
     {
         return target != null &&
-            string.Equals(target.name, "CoatCloset_EntranceHall_Runtime", StringComparison.OrdinalIgnoreCase);
+            (string.Equals(target.name, "Wardrobe_EntranceHall_Runtime", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(target.name, "CoatCloset_EntranceHall_Runtime", StringComparison.OrdinalIgnoreCase));
     }
 
     private void ResolveReferences()

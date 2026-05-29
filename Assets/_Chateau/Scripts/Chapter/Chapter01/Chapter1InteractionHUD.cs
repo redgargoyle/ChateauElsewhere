@@ -12,7 +12,6 @@ public class Chapter1InteractionHUD : MonoBehaviour
     private GrandfatherClockInteraction clockInteraction;
     private ChapterClock chapterClock;
     private Canvas canvas;
-    private Button hangCoatButton;
     private TMP_Text statusText;
 
     private void Update()
@@ -34,17 +33,11 @@ public class Chapter1InteractionHUD : MonoBehaviour
         chapterClock = clock;
         clockInteraction = clockView;
         EnsureUI();
-        SetHangCoatAvailable(false);
     }
 
     public void SetHangCoatAvailable(bool value)
     {
         EnsureUI();
-
-        if (hangCoatButton != null)
-        {
-            hangCoatButton.gameObject.SetActive(showButtonPrompts && value);
-        }
     }
 
     private void EnsureUI()
@@ -73,18 +66,7 @@ public class Chapter1InteractionHUD : MonoBehaviour
 
         SyncDebugActionButtons(root);
         RemoveDebugActionButton(root, "Button_AnswerFrontDoor");
-
-        if (showButtonPrompts)
-        {
-            hangCoatButton = FindOrCreateButton("Button_HangCoat", root, "Hang Coat", new Vector2(0.5f, 1f), new Vector2(0f, -42f), new Vector2(170f, 42f));
-            hangCoatButton.onClick.AddListener(() =>
-            {
-                if (arrivalController != null)
-                {
-                    arrivalController.HandleClosetClicked();
-                }
-            });
-        }
+        RemoveDebugActionButton(root, "Button_HangCoat");
 
         Transform existingStatus = root.Find("Text_Chapter1Status");
         statusText = existingStatus != null
@@ -97,44 +79,6 @@ public class Chapter1InteractionHUD : MonoBehaviour
         statusRect.pivot = new Vector2(0f, 1f);
         statusRect.anchoredPosition = new Vector2(18f, -18f);
         statusRect.sizeDelta = new Vector2(430f, 80f);
-    }
-
-    private Button FindOrCreateButton(string objectName, Transform parent, string label, Vector2 anchor, Vector2 position, Vector2 size)
-    {
-        Transform existingButton = parent.Find(objectName);
-
-        if (existingButton != null && existingButton.TryGetComponent(out Button button))
-        {
-            button.onClick.RemoveAllListeners();
-            return button;
-        }
-
-        return CreateButton(objectName, parent, label, anchor, position, size);
-    }
-
-    private Button CreateButton(string objectName, Transform parent, string label, Vector2 anchor, Vector2 position, Vector2 size)
-    {
-        GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-        RectTransform rect = buttonObject.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        rect.anchorMin = anchor;
-        rect.anchorMax = anchor;
-        rect.pivot = anchor;
-        rect.anchoredPosition = position;
-        rect.sizeDelta = size;
-
-        Image image = buttonObject.GetComponent<Image>();
-        image.color = new Color(0.08f, 0.075f, 0.065f, 0.92f);
-
-        TMP_Text text = CreateText("Text", rect, 20f, TextAlignmentOptions.Center);
-        RectTransform textRect = text.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.sizeDelta = Vector2.zero;
-        textRect.anchoredPosition = Vector2.zero;
-        text.text = label;
-
-        return buttonObject.GetComponent<Button>();
     }
 
     private static void RemoveDebugActionButton(Transform root, string objectName)
@@ -189,7 +133,6 @@ public class Chapter1InteractionHUD : MonoBehaviour
         RemoveDebugActionButton(root, "Button_AnswerFrontDoor");
         RemoveDebugActionButton(root, "Button_HangCoat");
         RemoveDebugActionButton(root, "Button_InspectClock");
-        hangCoatButton = null;
     }
 
     private TMP_Text CreateText(string objectName, Transform parent, float fontSize, TextAlignmentOptions alignment)
