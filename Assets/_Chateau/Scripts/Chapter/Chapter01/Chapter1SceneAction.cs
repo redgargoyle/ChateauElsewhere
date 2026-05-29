@@ -16,15 +16,16 @@ public enum Chapter1SceneActionType
 [DisallowMultipleComponent]
 public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
+    private const float FrontDoorClickScreenRadius = 90f;
+
     [SerializeField] private Chapter1SceneActionType actionType;
     [SerializeField] private Chapter1ArrivalController arrivalController;
     [SerializeField] private GrandfatherClockInteraction clockInteraction;
-    [SerializeField] private bool useManualWorldClickFallback = true;
-    [SerializeField] private float manualClickRadius = 220f;
     [SerializeField] private bool isActionAvailable = true;
 
     private int lastPerformedFrame = -1;
     private bool cursorHoverActive;
+    private PointClickPlayerMovement pendingFrontDoorApproachPlayer;
 
     public void Initialize(
         Chapter1SceneActionType nextActionType,
@@ -34,7 +35,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         actionType = nextActionType;
         arrivalController = controller;
         clockInteraction = clock;
-        manualClickRadius = GetDefaultClickRadius(nextActionType);
     }
 
     public void SetAvailable(bool value)
@@ -49,7 +49,12 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        SetDoorCursorHover(true);
+        if (actionType == Chapter1SceneActionType.FrontDoor &&
+            TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
+            IsFrontDoorPointerHit(screenPosition))
+        {
+            SetDoorCursorHover(true);
+        }
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -64,13 +69,13 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void OnDisable()
     {
+        CancelPendingFrontDoorApproach();
         SetDoorCursorHover(false);
     }
 
     private void Update()
     {
-        if (actionType != Chapter1SceneActionType.FrontDoor ||
-            !useManualWorldClickFallback)
+        if (actionType != Chapter1SceneActionType.FrontDoor)
         {
             return;
         }
@@ -95,23 +100,16 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return;
         }
 
-        Camera worldCamera = Camera.main;
-
-        if (worldCamera == null)
-        {
-            return;
-        }
-
-        Vector3 worldPosition = ScreenToWorldPointAtActionDepth(worldCamera, screenPosition);
-
-        if (Vector2.Distance(worldPosition, transform.position) <= manualClickRadius)
-        {
-            PerformAction();
-        }
+        CancelPendingFrontDoorApproach();
     }
 
     private void PerformAction()
     {
+        if (actionType == Chapter1SceneActionType.FrontDoor && !IsCurrentPointerOnFrontDoor())
+        {
+            return;
+        }
+
         if (lastPerformedFrame == Time.frameCount)
         {
             return;
@@ -129,10 +127,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         switch (actionType)
         {
             case Chapter1SceneActionType.FrontDoor:
-                if (arrivalController != null)
-                {
-                    arrivalController.AnswerFrontDoor();
-                }
+                StartFrontDoorApproach();
                 break;
             case Chapter1SceneActionType.CoatCloset:
                 if (arrivalController != null)
@@ -168,25 +163,82 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         }
     }
 
-    private static float GetDefaultClickRadius(Chapter1SceneActionType type)
+    private void StartFrontDoorApproach()
     {
-        switch (type)
+        ResolveReferences();
+
+        if (arrivalController == null)
         {
-            case Chapter1SceneActionType.FrontDoor:
-                return 180f;
-            case Chapter1SceneActionType.CoatCloset:
-                return 220f;
-            case Chapter1SceneActionType.GrandfatherClock:
-                return 180f;
-            case Chapter1SceneActionType.DrawingRoomExit:
-                return 240f;
-            default:
-                return 220f;
+            return;
         }
+
+        PointClickPlayerMovement playerMovement = FindAnyObjectByType<PointClickPlayerMovement>();
+
+        if (playerMovement == null)
+        {
+            Debug.LogWarning("Front door clicked, but no PointClickPlayerMovement was found for the butler.", this);
+            return;
+        }
+
+        CancelPendingFrontDoorApproach();
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null ||
+            !playerMovement.TryEvaluateMovementAtScreenPoint(mainCamera.WorldToScreenPoint(transform.position), true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
+            !movementQuery.HasReachableDestination)
+        {
+            Debug.LogWarning("Front door clicked, but the butler could not find a walkable spot at the door.", this);
+            return;
+        }
+
+        if (!playerMovement.TrySetDestination(movementQuery.Destination))
+        {
+            Debug.LogWarning("Front door clicked, but the butler could not walk to the selected door spot.", this);
+            return;
+        }
+
+        if (!playerMovement.HasDestination)
+        {
+            arrivalController.AnswerFrontDoor();
+            return;
+        }
+
+        pendingFrontDoorApproachPlayer = playerMovement;
+        pendingFrontDoorApproachPlayer.MovementStopped += HandleFrontDoorApproachStopped;
+    }
+
+    private void HandleFrontDoorApproachStopped()
+    {
+        PointClickPlayerMovement playerMovement = pendingFrontDoorApproachPlayer;
+        CancelPendingFrontDoorApproach();
+
+        if (playerMovement == null || arrivalController == null)
+        {
+            return;
+        }
+
+        arrivalController.AnswerFrontDoor();
+    }
+
+    private void CancelPendingFrontDoorApproach()
+    {
+        if (pendingFrontDoorApproachPlayer == null)
+        {
+            return;
+        }
+
+        pendingFrontDoorApproachPlayer.MovementStopped -= HandleFrontDoorApproachStopped;
+        pendingFrontDoorApproachPlayer = null;
     }
 
     private bool IsPointerInsideActionBounds(Vector2 screenPosition)
     {
+        if (actionType == Chapter1SceneActionType.FrontDoor)
+        {
+            return IsFrontDoorPointerHit(screenPosition);
+        }
+
         RectTransform rectTransform = transform as RectTransform;
 
         if (rectTransform != null)
@@ -239,6 +291,24 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         }
 
         return false;
+    }
+
+    private bool IsCurrentPointerOnFrontDoor()
+    {
+        return TryGetPrimaryPointerPosition(out Vector2 screenPosition) && IsFrontDoorPointerHit(screenPosition);
+    }
+
+    private bool IsFrontDoorPointerHit(Vector2 screenPosition)
+    {
+        Camera worldCamera = Camera.main;
+
+        if (worldCamera == null)
+        {
+            return false;
+        }
+
+        Vector2 doorScreenPosition = worldCamera.WorldToScreenPoint(transform.position);
+        return Vector2.Distance(screenPosition, doorScreenPosition) <= FrontDoorClickScreenRadius;
     }
 
     private Vector3 ScreenToWorldPointAtActionDepth(Camera worldCamera, Vector2 screenPosition)

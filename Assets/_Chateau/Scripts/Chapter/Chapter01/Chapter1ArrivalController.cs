@@ -113,6 +113,8 @@ public class Chapter1ArrivalController : MonoBehaviour
     private string carriedCoatId = string.Empty;
     private Chapter1SceneAction frontDoorSceneAction;
     private GuestRuntimeState carriedCoatGuest;
+    private GuestRuntimeState pendingCoatPickupGuest;
+    private Chapter1CoatPickup pendingCoatPickup;
     private Sprite runtimeCoatSprite;
     private Sprite runtimeGuestSprite;
     private bool subscribedToRoomChanges;
@@ -120,6 +122,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Vector3 worldDoorCenterPosition;
 
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
+    private const float CoatPickupReadyScreenDistance = 90f;
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
     private static readonly string[][] ChapterGuestNameAliases =
@@ -151,6 +154,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelPendingCoatPickup();
         UnsubscribeFromRoomChanges();
     }
 
@@ -242,7 +246,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (butlerCarryingCoat)
         {
-            Debug.Log($"The butler is already carrying coat '{carriedCoatId}'. Place it in the closet first.", this);
+            Debug.Log($"[Chapter1] Butler already holding coat {carriedCoatId}.", this);
             return;
         }
 
@@ -251,6 +255,27 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (guestState == null || !guestState.CoatOffered || guestState.CoatTaken || guestState.CoatStored)
         {
             Debug.Log("That coat is not ready to be taken.", this);
+            return;
+        }
+
+        if (!IsButlerCloseToCoat(coatPickup))
+        {
+            WalkButlerToCoat(guestState, coatPickup);
+            return;
+        }
+
+        TakeGuestCoat(guestState);
+    }
+
+    private void TakeGuestCoat(GuestRuntimeState guestState)
+    {
+        if (guestState == null || butlerCarryingCoat)
+        {
+            if (butlerCarryingCoat)
+            {
+                Debug.Log($"[Chapter1] Butler already holding coat {carriedCoatId}.", this);
+            }
+
             return;
         }
 
@@ -267,6 +292,126 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         Debug.Log($"Coat taken from guest: {carriedCoatId}", this);
         RefreshInteractionState();
+    }
+
+    private void WalkButlerToCoat(GuestRuntimeState guestState, Chapter1CoatPickup coatPickup)
+    {
+        if (guestState == null || coatPickup == null)
+        {
+            return;
+        }
+
+        ResolveReferences();
+        CancelPendingCoatPickup();
+
+        Camera mainCamera = Camera.main;
+
+        if (playerMovement == null || mainCamera == null)
+        {
+            Debug.LogWarning("Coat clicked, but the butler cannot walk to it because the player movement reference is missing.", this);
+            return;
+        }
+
+        Vector2 coatScreenPosition = mainCamera.WorldToScreenPoint(coatPickup.transform.position);
+
+        if (!playerMovement.TryEvaluateMovementAtScreenPoint(coatScreenPosition, true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
+            !movementQuery.HasReachableDestination)
+        {
+            Debug.LogWarning($"Coat clicked for guest {guestState.Config.GuestId}, but the butler could not find a reachable coat pickup spot.", this);
+            return;
+        }
+
+        if (!playerMovement.TrySetDestination(movementQuery.Destination))
+        {
+            Debug.LogWarning($"Coat clicked for guest {guestState.Config.GuestId}, but the butler could not walk to the selected coat pickup spot.", this);
+            return;
+        }
+
+        pendingCoatPickupGuest = guestState;
+        pendingCoatPickup = coatPickup;
+
+        Debug.Log($"[Chapter1] Butler walking to coat for guest {guestState.Config.GuestId}.", this);
+
+        if (!playerMovement.HasDestination)
+        {
+            CompletePendingCoatPickup();
+            return;
+        }
+
+        playerMovement.MovementStopped += HandleCoatPickupMovementStopped;
+    }
+
+    private void HandleCoatPickupMovementStopped()
+    {
+        CompletePendingCoatPickup();
+    }
+
+    private void CompletePendingCoatPickup()
+    {
+        GuestRuntimeState guestState = pendingCoatPickupGuest;
+        Chapter1CoatPickup coatPickup = pendingCoatPickup;
+        CancelPendingCoatPickup();
+
+        if (guestState == null || coatPickup == null)
+        {
+            return;
+        }
+
+        if (butlerCarryingCoat)
+        {
+            Debug.Log($"[Chapter1] Butler already holding coat {carriedCoatId}.", this);
+            return;
+        }
+
+        if (guestState.CoatTaken || guestState.CoatStored || !IsButlerCloseToCoat(coatPickup))
+        {
+            return;
+        }
+
+        Debug.Log($"[Chapter1] Butler reached coat for guest {guestState.Config.GuestId}.", this);
+        TakeGuestCoat(guestState);
+    }
+
+    private void CancelPendingCoatPickup()
+    {
+        if (playerMovement != null)
+        {
+            playerMovement.MovementStopped -= HandleCoatPickupMovementStopped;
+        }
+
+        pendingCoatPickupGuest = null;
+        pendingCoatPickup = null;
+    }
+
+    private bool IsButlerCloseToCoat(Chapter1CoatPickup coatPickup)
+    {
+        ResolveReferences();
+
+        if (coatPickup == null || playerMovement == null)
+        {
+            return false;
+        }
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
+        {
+            return false;
+        }
+
+        Vector2 coatScreenPosition = mainCamera.WorldToScreenPoint(coatPickup.transform.position);
+
+        if (!playerMovement.TryGetScreenPointFromLogicalPosition(playerMovement.LogicalPosition, out Vector2 butlerScreenPosition))
+        {
+            if (playerButlerReference == null)
+            {
+                return false;
+            }
+
+            butlerScreenPosition = mainCamera.WorldToScreenPoint(playerButlerReference.transform.position);
+        }
+
+        return Vector2.Distance(butlerScreenPosition, coatScreenPosition) <= CoatPickupReadyScreenDistance;
     }
 
     public void HandleClosetClicked()
@@ -478,6 +623,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         butlerCarryingCoat = false;
         carriedCoatId = string.Empty;
         carriedCoatGuest = null;
+        CancelPendingCoatPickup();
         currentGuestIndex = -1;
         hasWorldDoorCenterPosition = false;
         worldDoorCenterPosition = Vector3.zero;
@@ -841,16 +987,24 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Chapter1CoatPickup CreateCoatPickup(GuestRuntimeState guest)
     {
-        GameObject coatObject = new GameObject($"Coat_{guest.Config.GuestId}");
+        GameObject coatObject = FindVisibleGuestCoatObject(guest);
+        bool usingAuthoredCoatObject = coatObject != null;
+
+        if (coatObject == null)
+        {
+            coatObject = new GameObject($"Coat_{guest.Config.GuestId}");
+        }
+
+        coatObject.SetActive(true);
         bool useWorldSpaceCoat = IsWorldSpaceGuestObject(guest.GuestObject);
 
-        if (useWorldSpaceCoat && guest.GuestObject != null)
+        if (!usingAuthoredCoatObject && useWorldSpaceCoat && guest.GuestObject != null)
         {
             coatObject.transform.SetParent(guest.GuestObject.transform, false);
             coatObject.transform.localPosition = WorldCoatOffset;
             coatObject.transform.localRotation = Quaternion.identity;
         }
-        else
+        else if (!usingAuthoredCoatObject)
         {
             Transform parent = guest.GuestObject != null && guest.GuestObject.transform.parent != null
                 ? guest.GuestObject.transform.parent
@@ -859,16 +1013,83 @@ public class Chapter1ArrivalController : MonoBehaviour
             coatObject.transform.position = GetCoatPosition(guest);
         }
 
-        coatObject.transform.localScale = Vector3.one;
+        if (!usingAuthoredCoatObject)
+        {
+            coatObject.transform.localScale = Vector3.one;
+        }
+
         Debug.Log($"[Chapter1] Coat attached to guest {guest.Config.GuestId}.", this);
 
-        BoxCollider2D collider = coatObject.AddComponent<BoxCollider2D>();
-        collider.size = WorldCoatColliderSize;
+        BoxCollider2D collider = coatObject.GetComponent<BoxCollider2D>();
+
+        if (collider == null)
+        {
+            collider = coatObject.AddComponent<BoxCollider2D>();
+        }
+
+        collider.size = GetCoatClickColliderSize(coatObject, out Vector2 colliderOffset);
+        collider.offset = colliderOffset;
         collider.isTrigger = true;
 
-        Chapter1CoatPickup pickup = coatObject.AddComponent<Chapter1CoatPickup>();
+        Chapter1CoatPickup pickup = coatObject.GetComponent<Chapter1CoatPickup>();
+
+        if (pickup == null)
+        {
+            pickup = coatObject.AddComponent<Chapter1CoatPickup>();
+        }
+
         pickup.Initialize(this, guest.Config.GuestId, guest.Config.CoatId);
         return pickup;
+    }
+
+    private GameObject FindVisibleGuestCoatObject(GuestRuntimeState guest)
+    {
+        if (guest == null || guest.GuestObject == null)
+        {
+            return null;
+        }
+
+        Transform[] children = guest.GuestObject.GetComponentsInChildren<Transform>(true);
+
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+
+            if (child == null ||
+                child == guest.GuestObject.transform ||
+                child.name.IndexOf("coat", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                continue;
+            }
+
+            if (child.GetComponent<SpriteRenderer>() != null ||
+                child.GetComponent<Renderer>() != null ||
+                child.GetComponent<Graphic>() != null)
+            {
+                return child.gameObject;
+            }
+        }
+
+        return null;
+    }
+
+    private Vector2 GetCoatClickColliderSize(GameObject coatObject, out Vector2 colliderOffset)
+    {
+        colliderOffset = Vector2.zero;
+        SpriteRenderer spriteRenderer = coatObject != null ? coatObject.GetComponent<SpriteRenderer>() : null;
+
+        if (spriteRenderer != null)
+        {
+            Bounds localBounds = spriteRenderer.sprite != null ? spriteRenderer.sprite.bounds : default;
+
+            if (localBounds.size.x > 0f && localBounds.size.y > 0f)
+            {
+                colliderOffset = localBounds.center;
+                return localBounds.size;
+            }
+        }
+
+        return WorldCoatColliderSize;
     }
 
     private void CheckActiveGroupsReadyForDrawingRoom()
