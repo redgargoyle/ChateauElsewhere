@@ -84,6 +84,9 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private float entranceGuestSpacing = 95f;
     [SerializeField] private float drawingRoomSeatSpacing = 86f;
     [SerializeField] private float guestMoveSpeed = 180f;
+    [SerializeField] private float worldEntranceGuestSpacing = 0.65f;
+    [SerializeField] private float worldDrawingRoomSeatSpacing = 0.75f;
+    [SerializeField] private float worldGuestMoveSpeed = 2.2f;
 
     [Header("Interactions")]
     [SerializeField] private bool createRuntimeHud = true;
@@ -102,6 +105,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private readonly List<GuestGroupRuntimeState> pendingGuestGroups = new List<GuestGroupRuntimeState>();
     private readonly List<GuestGroupRuntimeState> activeEntranceGroups = new List<GuestGroupRuntimeState>();
     private readonly List<Transform> runtimeSeatAnchors = new List<Transform>();
+    private readonly HashSet<GameObject> runtimeGeneratedGuestObjects = new HashSet<GameObject>();
     private int currentGuestIndex = -1;
     private bool sequenceActive;
     private bool finalEmptyDoorbellOccurred;
@@ -111,14 +115,21 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Chapter1SceneAction frontDoorSceneAction;
     private GuestRuntimeState carriedCoatGuest;
     private Sprite runtimeCoatSprite;
+    private Sprite runtimeGuestSprite;
     private bool subscribedToRoomChanges;
 
     private const float RuntimeCoatVisualScale = 0.03f;
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
-    private static readonly string[][] FirstDoorSceneGuestNameAliases =
+    private static readonly string[][] ChapterGuestNameAliases =
     {
         new[] { "Guest1", "Guest 1" },
-        new[] { "Guest2", "Guest 2" }
+        new[] { "Guest2", "Guest 2" },
+        new[] { "Guest3", "Guest 3" },
+        new[] { "Guest4", "Guest 4" },
+        new[] { "Guest5", "Guest 5" },
+        new[] { "Guest6", "Guest 6" },
+        new[] { "Guest7", "Guest 7" },
+        new[] { "Guest8", "Guest 8" }
     };
     private static readonly string[] DoorAnswerTriggerNameAliases = { DoorAnswerTriggerName, "Door_Answer_Trigger", "DoorAnswerTrigger", "Door Answer Trigger" };
 
@@ -161,7 +172,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         ResolveReferences(true);
         EnsureRuntimeInteractionSystems();
         ResetGuestStates(false);
-        SetFirstDoorSceneGuestsActive(false);
+        SetChapterSceneGuestsActive(false);
     }
 
     [ContextMenu("Trigger Next Guest Group")]
@@ -196,8 +207,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             Debug.Log("Front door clicked, but Chapter 1 arrival sequence is not active.", this);
             return;
         }
-
-        ShowFirstDoorSceneGuestsImmediately();
 
         if (pendingGuestGroups.Count == 0)
         {
@@ -434,10 +443,16 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         int sceneGuestCandidateCount = useExistingSceneGuestsFirst ? FindSceneGuestCandidates().Count : 0;
         int configuredGuestObjectCount = CountConfiguredGuestObjects();
+        int requestedGuestCount = GetRequestedGuestCount();
 
         if (configuredGuestObjectCount == 0 && sceneGuestCandidateCount == 0 && guests == null)
         {
             Debug.LogWarning("Chapter1ArrivalController guest list is incomplete. Runtime placeholder guests will be created for testing.", this);
+        }
+
+        if (configuredGuestObjectCount + sceneGuestCandidateCount < requestedGuestCount)
+        {
+            Debug.LogWarning($"Chapter1ArrivalController needs {requestedGuestCount} guests for Chapter 1. Missing guests will be created at runtime.", this);
         }
 
         if (guests != null)
@@ -472,7 +487,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         ResetGuestStates(true);
-        SetFirstDoorSceneGuestsActive(false);
+        SetChapterSceneGuestsActive(false);
         BuildGuestGroups();
         MoveButlerToStart();
     }
@@ -502,7 +517,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             if (mover != null)
             {
-                mover.MoveSpeed = guestMoveSpeed;
+                mover.MoveSpeed = GetMoveSpeedForGuestObject(guestObject);
                 mover.enabled = true;
             }
 
@@ -546,9 +561,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void BuildGuestGroups()
     {
         int requiredGuestCount = GetRequiredGuestCountForCurrentRun();
-        int activeGuestGroupCount = requiredGuestCount > 0
-            ? Mathf.CeilToInt(requiredGuestCount / (float)Mathf.Max(1, guestsPerArrivalGroup))
-            : guestGroupCount;
+        int activeGuestGroupCount = Mathf.Max(1, guestGroupCount);
 
         for (int groupIndex = 0; groupIndex < activeGuestGroupCount; groupIndex++)
         {
@@ -717,11 +730,16 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         EnsureGuestHiddenBeforeArrival(guest);
-        bool useAuthoredEntrancePosition = snapGuestsIntoEntranceForFirstVisualPass && IsFirstDoorSceneGuest(guest.GuestObject);
+        bool useAuthoredEntrancePosition = snapGuestsIntoEntranceForFirstVisualPass && ShouldPreserveAuthoredEntrancePosition(guest.GuestObject);
+        bool useWorldSafePlacement = IsWorldSpaceGuestObject(guest.GuestObject);
 
         if (useAuthoredEntrancePosition)
         {
-            ActivateFirstDoorSceneGuestObject(guest.GuestObject, guest.ActorState, indexInDoorBatch, batchCount);
+            ActivateAuthoredChapterGuestObject(guest.GuestObject, guest.ActorState, indexInDoorBatch, batchCount);
+        }
+        else if (useWorldSafePlacement)
+        {
+            PlaceGuestAtPosition(guest, GetWorldDoorArrivalPosition(indexInDoorBatch, batchCount));
         }
         else
         {
@@ -746,14 +764,20 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
         else if (snapGuestsIntoEntranceForFirstVisualPass)
         {
-            Transform waitSpot = CreateRuntimeAnchor($"EntranceWait_{guest.Config.GuestId}", GetEntranceWaitPosition(indexInDoorBatch, batchCount), frontDoorArrivalPoint);
+            Vector3 waitPosition = useWorldSafePlacement
+                ? GetWorldEntranceWaitPosition(indexInDoorBatch, batchCount)
+                : GetEntranceWaitPosition(indexInDoorBatch, batchCount);
+            Transform waitSpot = CreateRuntimeAnchor($"EntranceWait_{guest.Config.GuestId}", waitPosition, useWorldSafePlacement ? null : frontDoorArrivalPoint);
             PlaceGuestAt(guest, waitSpot, "entrance waiting spot");
             ForceGuestVisibleForDoorFlow(guest);
             yield return null;
         }
         else
         {
-            Transform waitSpot = CreateRuntimeAnchor($"EntranceWait_{guest.Config.GuestId}", GetEntranceWaitPosition(indexInDoorBatch, batchCount), frontDoorArrivalPoint);
+            Vector3 waitPosition = useWorldSafePlacement
+                ? GetWorldEntranceWaitPosition(indexInDoorBatch, batchCount)
+                : GetEntranceWaitPosition(indexInDoorBatch, batchCount);
+            Transform waitSpot = CreateRuntimeAnchor($"EntranceWait_{guest.Config.GuestId}", waitPosition, useWorldSafePlacement ? null : frontDoorArrivalPoint);
             yield return MoveGuestTo(guest, waitSpot, "entrance waiting spot");
             ForceGuestVisibleForDoorFlow(guest);
         }
@@ -832,9 +856,17 @@ public class Chapter1ArrivalController : MonoBehaviour
         for (int i = 0; i < group.Guests.Count; i++)
         {
             GuestRuntimeState guest = group.Guests[i];
+            bool useWorldSafePlacement = IsWorldSpaceGuestObject(guest.GuestObject);
+            Transform drawingRoomEntry = useWorldSafePlacement
+                ? CreateRuntimeAnchor($"DrawingRoomEntry_{guest.Config.GuestId}", GetWorldDrawingRoomEntryPosition(i, group.Guests.Count), null)
+                : guest.Config.GetDrawingRoomEntryPoint(drawingRoomEntryPoint);
+            Transform drawingRoomSeat = useWorldSafePlacement
+                ? CreateRuntimeAnchor($"DrawingRoomSeat_{guest.Config.GuestId}", GetWorldDrawingRoomSeatPosition(guest.GuestIndex), null)
+                : guest.Seat;
+
             SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
-            yield return MoveGuestTo(guest, guest.Config.GetDrawingRoomEntryPoint(drawingRoomEntryPoint), "drawingRoomEntryPoint");
-            yield return MoveGuestTo(guest, guest.Seat, "assignedSeat");
+            yield return MoveGuestTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
+            yield return MoveGuestTo(guest, drawingRoomSeat, "assignedSeat");
 
             if (guest.ActorState != null)
             {
@@ -922,11 +954,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void EnsureGuestHiddenBeforeArrival(GuestRuntimeState guestState)
     {
-        if (snapGuestsIntoEntranceForFirstVisualPass && IsFirstDoorSceneGuest(guestState?.GuestObject))
-        {
-            return;
-        }
-
         if (guestState == null || guestState.ActorState == null)
         {
             return;
@@ -937,76 +964,52 @@ public class Chapter1ArrivalController : MonoBehaviour
         guestState.ActorState.SetInteractable(false);
     }
 
-    private void SetFirstDoorSceneGuestsActive(bool active)
+    private void SetChapterSceneGuestsActive(bool active)
     {
         if (active)
         {
-            SetNamedSceneGuestsActive(GetFirstDoorSceneGuestNames(), true);
+            SetNamedSceneGuestsActive(GetChapterSceneGuestNames(), true);
             return;
         }
 
-        SetFirstDoorSceneGuestAliasesActive(false);
+        SetChapterSceneGuestAliasesActive(false);
     }
 
-    private void ShowFirstDoorSceneGuestsImmediately()
-    {
-        string[] guestNames = GetFirstDoorSceneGuestNames();
-        HashSet<GameObject> activatedGuests = new HashSet<GameObject>();
-
-        for (int i = 0; i < guestStates.Count && i < guestNames.Length; i++)
-        {
-            GuestRuntimeState guestState = guestStates[i];
-
-            if (guestState == null ||
-                guestState.GuestObject == null ||
-                !MatchesSceneGuestName(guestState.GuestObject, guestNames))
-            {
-                continue;
-            }
-
-            ActivateFirstDoorSceneGuestObject(guestState.GuestObject, guestState.ActorState, i, guestNames.Length);
-            activatedGuests.Add(guestState.GuestObject);
-        }
-
-        for (int i = 0; i < guestNames.Length; i++)
-        {
-            GameObject guestObject = FindSceneObjectByExactName(guestNames[i]);
-
-            if (guestObject == null)
-            {
-                Debug.LogWarning($"Chapter1ArrivalController could not find scene guest '{guestNames[i]}'.", this);
-                continue;
-            }
-
-            if (activatedGuests.Contains(guestObject))
-            {
-                continue;
-            }
-
-            ActivateFirstDoorSceneGuestObject(guestObject, guestObject.GetComponent<ActorRoomState>(), i, guestNames.Length);
-        }
-    }
-
-    private bool IsFirstDoorSceneGuest(GameObject guestObject)
+    private bool IsChapterSceneGuest(GameObject guestObject)
     {
         if (guestObject == null)
         {
             return false;
         }
 
-        return MatchesAnyFirstDoorSceneGuestAlias(guestObject);
+        return MatchesAnyChapterGuestAlias(guestObject);
     }
 
-    private string[] GetFirstDoorSceneGuestNames()
+    private bool ShouldPreserveAuthoredEntrancePosition(GameObject guestObject)
     {
-        string[] guestNames = new string[FirstDoorSceneGuestNameAliases.Length];
+        return IsChapterSceneGuest(guestObject) && !runtimeGeneratedGuestObjects.Contains(guestObject);
+    }
 
-        for (int i = 0; i < FirstDoorSceneGuestNameAliases.Length; i++)
+    private string[] GetChapterSceneGuestNames()
+    {
+        string[] guestNames = new string[ChapterGuestNameAliases.Length];
+
+        for (int i = 0; i < ChapterGuestNameAliases.Length; i++)
         {
-            guestNames[i] = FindExistingSceneGuestName(FirstDoorSceneGuestNameAliases[i]) ?? FirstDoorSceneGuestNameAliases[i][0];
+            guestNames[i] = FindExistingSceneGuestName(ChapterGuestNameAliases[i]) ?? GetChapterGuestDisplayName(i);
         }
 
         return guestNames;
+    }
+
+    private string GetChapterGuestDisplayName(int index)
+    {
+        if (index >= 0 && index < ChapterGuestNameAliases.Length && ChapterGuestNameAliases[index].Length > 1)
+        {
+            return ChapterGuestNameAliases[index][1];
+        }
+
+        return $"Guest {index + 1}";
     }
 
     private string FindExistingSceneGuestName(string[] guestNameAliases)
@@ -1027,26 +1030,26 @@ public class Chapter1ArrivalController : MonoBehaviour
         return null;
     }
 
-    private bool IsUnselectedFirstDoorSceneGuestAlias(GameObject guestObject)
+    private bool IsUnselectedChapterSceneGuestAlias(GameObject guestObject)
     {
-        if (!IsFirstDoorSceneGuest(guestObject))
+        if (!IsChapterSceneGuest(guestObject))
         {
             return false;
         }
 
-        return !MatchesSceneGuestName(guestObject, GetFirstDoorSceneGuestNames());
+        return !MatchesSceneGuestName(guestObject, GetChapterSceneGuestNames());
     }
 
-    private bool MatchesAnyFirstDoorSceneGuestAlias(GameObject guestObject)
+    private bool MatchesAnyChapterGuestAlias(GameObject guestObject)
     {
         if (guestObject == null)
         {
             return false;
         }
 
-        for (int i = 0; i < FirstDoorSceneGuestNameAliases.Length; i++)
+        for (int i = 0; i < ChapterGuestNameAliases.Length; i++)
         {
-            if (MatchesSceneGuestName(guestObject, FirstDoorSceneGuestNameAliases[i]))
+            if (MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[i]))
             {
                 return true;
             }
@@ -1088,13 +1091,13 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
-    private void SetFirstDoorSceneGuestAliasesActive(bool active)
+    private void SetChapterSceneGuestAliasesActive(bool active)
     {
         HashSet<GameObject> handledGuests = new HashSet<GameObject>();
 
-        for (int i = 0; i < FirstDoorSceneGuestNameAliases.Length; i++)
+        for (int i = 0; i < ChapterGuestNameAliases.Length; i++)
         {
-            string[] aliases = FirstDoorSceneGuestNameAliases[i];
+            string[] aliases = ChapterGuestNameAliases[i];
 
             for (int aliasIndex = 0; aliasIndex < aliases.Length; aliasIndex++)
             {
@@ -1111,7 +1114,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
-    private void ActivateFirstDoorSceneGuestObject(GameObject guestObject, ActorRoomState actorState, int index, int batchCount)
+    private void ActivateAuthoredChapterGuestObject(GameObject guestObject, ActorRoomState actorState, int index, int batchCount)
     {
         if (guestObject == null)
         {
@@ -1123,7 +1126,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (guestObject.transform is RectTransform)
         {
-            PlaceFirstDoorSceneGuestAtEntrance(guestObject, index, batchCount);
+            PlaceChapterSceneGuestAtEntrance(guestObject, index, batchCount);
         }
 
         DisableAmbientWalkers(guestObject);
@@ -1152,7 +1155,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         Debug.Log($"Scene guest activated: {guestObject.name}", this);
     }
 
-    private void PlaceFirstDoorSceneGuestAtEntrance(GameObject guestObject, int index, int batchCount)
+    private void PlaceChapterSceneGuestAtEntrance(GameObject guestObject, int index, int batchCount)
     {
         if (guestObject == null)
         {
@@ -1203,6 +1206,27 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
+    private void PlaceGuestAtPosition(GuestRuntimeState guestState, Vector3 position)
+    {
+        if (guestState == null)
+        {
+            return;
+        }
+
+        if (guestState.GuestObject != null)
+        {
+            Vector3 targetPosition = position;
+            targetPosition.z = guestState.GuestObject.transform.position.z;
+            guestState.GuestObject.transform.position = targetPosition;
+            return;
+        }
+
+        if (guestState.ActorState != null)
+        {
+            guestState.ActorState.transform.position = position;
+        }
+    }
+
     private void ForceGuestVisibleForDoorFlow(GuestRuntimeState guestState)
     {
         if (guestState == null)
@@ -1233,7 +1257,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        if (IsFirstDoorSceneGuest(guestState.GuestObject))
+        if (IsChapterSceneGuest(guestState.GuestObject))
         {
             DisableAmbientWalkers(guestState.GuestObject);
         }
@@ -1321,7 +1345,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         mover.enabled = true;
-        mover.MoveSpeed = guestMoveSpeed;
+        mover.MoveSpeed = GetMoveSpeedForGuestObject(guestState.GuestObject);
         mover.MoveTo(target);
 
         while (mover != null && mover.IsMoving)
@@ -1629,11 +1653,17 @@ public class Chapter1ArrivalController : MonoBehaviour
         guests.RemoveAll(guest => guest == null);
         int namedSceneGuestCount = EnsureNamedSceneGuestsConfigured();
         int adoptedSceneGuestCount = AdoptExistingSceneGuests();
+        int runtimeGuestCount = EnsureRequiredGuestConfigs(createFallbacks);
         int totalSceneGuestCount = namedSceneGuestCount + adoptedSceneGuestCount;
 
         if (totalSceneGuestCount > 0)
         {
             Debug.Log($"Chapter 1 using {totalSceneGuestCount} existing scene guest object(s) for the arrival sequence.", this);
+        }
+
+        if (runtimeGuestCount > 0)
+        {
+            Debug.Log($"Chapter 1 created {runtimeGuestCount} runtime guest object(s) to reach the required eight guests.", this);
         }
     }
 
@@ -1641,7 +1671,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         int addedCount = 0;
         int insertIndex = 0;
-        string[] guestNames = GetFirstDoorSceneGuestNames();
+        string[] guestNames = GetChapterSceneGuestNames();
 
         for (int i = 0; i < guestNames.Length; i++)
         {
@@ -1694,6 +1724,142 @@ public class Chapter1ArrivalController : MonoBehaviour
         return addedCount;
     }
 
+    private int EnsureRequiredGuestConfigs(bool createFallbacks)
+    {
+        int requestedGuestCount = GetRequestedGuestCount();
+
+        if (!createFallbacks)
+        {
+            return 0;
+        }
+
+        int createdCount = 0;
+
+        for (int i = 0; i < requestedGuestCount; i++)
+        {
+            GameObject configuredObject = i < guests.Count && guests[i] != null
+                ? guests[i].ResolveGuestObject()
+                : null;
+
+            if (configuredObject != null && MatchesSceneGuestName(configuredObject, ChapterGuestNameAliases[i]))
+            {
+                continue;
+            }
+
+            GameObject guestObject = FindChapterGuestObjectByIndex(i);
+
+            if (guestObject == null)
+            {
+                guestObject = CreateRuntimeGuestObject(i);
+                createdCount++;
+            }
+
+            if (guestObject == null)
+            {
+                continue;
+            }
+
+            PrepareSceneGuestObject(guestObject, i);
+
+            GuestArrivalConfig config = new GuestArrivalConfig();
+            string guestId = MakeGuestId(guestObject.name, i);
+            config.ConfigureRuntime(
+                guestId,
+                guestObject.name,
+                guestObject,
+                frontDoorArrivalPoint,
+                drawingRoomEntryPoint,
+                ResolveSeatForGuest(i),
+                GetDefaultGreeting(i),
+                new[] { GetDefaultAmbientLine(i) },
+                $"{guestId}_coat");
+
+            if (i < guests.Count)
+            {
+                guests[i] = config;
+            }
+            else
+            {
+                guests.Add(config);
+            }
+        }
+
+        return createdCount;
+    }
+
+    private GameObject FindChapterGuestObjectByIndex(int index)
+    {
+        if (index < 0 || index >= ChapterGuestNameAliases.Length)
+        {
+            return null;
+        }
+
+        string[] aliases = ChapterGuestNameAliases[index];
+
+        for (int i = 0; i < aliases.Length; i++)
+        {
+            GameObject guestObject = FindSceneObjectByExactName(aliases[i]);
+
+            if (guestObject != null)
+            {
+                return guestObject;
+            }
+        }
+
+        return null;
+    }
+
+    private GameObject CreateRuntimeGuestObject(int index)
+    {
+        string guestName = GetChapterGuestDisplayName(index);
+        GameObject template = FindRuntimeGuestTemplate();
+        Vector3 startPosition = GetWorldEntranceWaitPosition(index % Mathf.Max(1, guestsPerArrivalGroup), Mathf.Max(1, guestsPerArrivalGroup));
+        GameObject guestObject;
+
+        if (template != null)
+        {
+            guestObject = Instantiate(template, startPosition, template.transform.rotation, template.transform.parent);
+            guestObject.transform.localScale = template.transform.localScale;
+            guestObject.name = guestName;
+        }
+        else
+        {
+            guestObject = new GameObject(guestName);
+            guestObject.transform.position = startPosition;
+            SpriteRenderer renderer = CreateRuntimeVisual(guestObject.transform, "Visual_Guest", GetRuntimeGuestSprite(), 0.03f);
+            renderer.sortingLayerName = "People";
+            renderer.sortingOrder = 9000 + index;
+
+            BoxCollider2D collider = guestObject.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(0.55f, 0.9f);
+            collider.isTrigger = true;
+        }
+
+        runtimeGeneratedGuestObjects.Add(guestObject);
+        guestObject.SetActive(false);
+        return guestObject;
+    }
+
+    private GameObject FindRuntimeGuestTemplate()
+    {
+        for (int i = 0; i < ChapterGuestNameAliases.Length; i++)
+        {
+            GameObject guestObject = FindChapterGuestObjectByIndex(i);
+
+            if (guestObject != null && !runtimeGeneratedGuestObjects.Contains(guestObject))
+            {
+                return guestObject;
+            }
+        }
+
+        if (playerButlerReference != null)
+        {
+            return playerButlerReference;
+        }
+
+        return null;
+    }
+
     private int AdoptExistingSceneGuests()
     {
         if (!useExistingSceneGuestsFirst)
@@ -1708,7 +1874,15 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             GameObject candidate = candidates[i];
 
-            if (candidate == null || HasGuestConfigForObject(candidate) || IsUnselectedFirstDoorSceneGuestAlias(candidate))
+            if (guests.Count >= GetRequestedGuestCount())
+            {
+                break;
+            }
+
+            if (candidate == null ||
+                HasGuestConfigForObject(candidate) ||
+                IsUnselectedChapterSceneGuestAlias(candidate) ||
+                !IsChapterSceneGuest(candidate))
             {
                 continue;
             }
@@ -1891,14 +2065,14 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private int GetRequiredGuestCountForCurrentRun()
     {
-        int requestedGuestCount = guestGroupCount * guestsPerArrivalGroup;
+        return GetRequestedGuestCount();
+    }
 
-        if (guestStates.Count > 0 && guestStates.Count < requestedGuestCount)
-        {
-            return guestStates.Count;
-        }
-
-        return requestedGuestCount;
+    private int GetRequestedGuestCount()
+    {
+        return Mathf.Min(
+            ChapterGuestNameAliases.Length,
+            Mathf.Max(1, guestGroupCount) * Mathf.Max(1, guestsPerArrivalGroup));
     }
 
     private void PrepareSceneGuestObject(GameObject guestObject, int index)
@@ -2151,6 +2325,18 @@ public class Chapter1ArrivalController : MonoBehaviour
         return anchorObject.transform;
     }
 
+    private bool IsWorldSpaceGuestObject(GameObject guestObject)
+    {
+        return guestObject != null && !(guestObject.transform is RectTransform);
+    }
+
+    private float GetMoveSpeedForGuestObject(GameObject guestObject)
+    {
+        return IsWorldSpaceGuestObject(guestObject)
+            ? Mathf.Max(0.01f, worldGuestMoveSpeed)
+            : Mathf.Max(0.01f, guestMoveSpeed);
+    }
+
     private Vector3 GetEntranceWaitPosition(int indexInBatch, int batchCount)
     {
         Vector3 basePosition = frontDoorArrivalPoint != null
@@ -2174,6 +2360,97 @@ public class Chapter1ArrivalController : MonoBehaviour
             ? new Vector3(centeredIndex * entranceGuestSpacing, entranceGuestSpacing * 0.65f, 0f)
             : new Vector3(centeredIndex * entranceGuestSpacing, -entranceGuestSpacing * 0.55f, 0f);
         return basePosition + offset;
+    }
+
+    private Vector3 GetWorldDoorArrivalPosition(int indexInBatch, int batchCount)
+    {
+        Vector3 basePosition = GetWorldEntranceCenterPosition();
+        Vector2 offset = GetWorldGuestGridOffset(indexInBatch, batchCount, worldEntranceGuestSpacing);
+        return basePosition + new Vector3(offset.x, offset.y - worldEntranceGuestSpacing * 1.5f, 0f);
+    }
+
+    private Vector3 GetWorldEntranceWaitPosition(int indexInBatch, int batchCount)
+    {
+        Vector3 basePosition = GetWorldEntranceCenterPosition();
+        Vector2 offset = GetWorldGuestGridOffset(indexInBatch, batchCount, worldEntranceGuestSpacing);
+        return basePosition + new Vector3(offset.x, offset.y, 0f);
+    }
+
+    private Vector3 GetWorldDrawingRoomEntryPosition(int indexInBatch, int batchCount)
+    {
+        Vector3 basePosition = GetWorldDrawingRoomCenterPosition();
+        Vector2 offset = GetWorldGuestGridOffset(indexInBatch, batchCount, worldDrawingRoomSeatSpacing);
+        return basePosition + new Vector3(offset.x, offset.y - worldDrawingRoomSeatSpacing * 1.5f, 0f);
+    }
+
+    private Vector3 GetWorldDrawingRoomSeatPosition(int guestIndex)
+    {
+        Vector3 basePosition = GetWorldDrawingRoomCenterPosition();
+        int columns = Mathf.Max(1, Mathf.Min(4, guestsPerArrivalGroup * 2));
+        int column = guestIndex % columns;
+        int row = guestIndex / columns;
+        float centeredColumn = column - (columns - 1) * 0.5f;
+        return basePosition + new Vector3(
+            centeredColumn * worldDrawingRoomSeatSpacing,
+            -row * worldDrawingRoomSeatSpacing * 0.8f,
+            0f);
+    }
+
+    private Vector2 GetWorldGuestGridOffset(int index, int count, float spacing)
+    {
+        int columns = Mathf.Max(1, Mathf.Min(4, count));
+        int column = index % columns;
+        int row = index / columns;
+        float centeredColumn = column - (columns - 1) * 0.5f;
+        return new Vector2(centeredColumn * spacing, -row * spacing * 0.8f);
+    }
+
+    private Vector3 GetWorldEntranceCenterPosition()
+    {
+        if (TryGetAverageAuthoredChapterGuestPosition(out Vector3 averagePosition))
+        {
+            return averagePosition;
+        }
+
+        if (playerButlerReference != null)
+        {
+            return playerButlerReference.transform.position + new Vector3(0f, 1.15f, 0f);
+        }
+
+        return transform.position;
+    }
+
+    private Vector3 GetWorldDrawingRoomCenterPosition()
+    {
+        return GetWorldEntranceCenterPosition() + new Vector3(0f, 0.35f, 0f);
+    }
+
+    private bool TryGetAverageAuthoredChapterGuestPosition(out Vector3 averagePosition)
+    {
+        Vector3 sum = Vector3.zero;
+        int count = 0;
+
+        for (int i = 0; i < ChapterGuestNameAliases.Length; i++)
+        {
+            GameObject guestObject = FindChapterGuestObjectByIndex(i);
+
+            if (guestObject == null || runtimeGeneratedGuestObjects.Contains(guestObject))
+            {
+                continue;
+            }
+
+            sum += guestObject.transform.position;
+            count++;
+        }
+
+        if (count == 0)
+        {
+            averagePosition = Vector3.zero;
+            return false;
+        }
+
+        averagePosition = sum / count;
+        return true;
     }
 
     private Vector2 GetEntranceWaitAnchoredPosition(int indexInBatch, int batchCount)
@@ -2201,7 +2478,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         if (snapGuestsIntoEntranceForFirstVisualPass &&
-            IsFirstDoorSceneGuest(guestState?.GuestObject) &&
+            IsChapterSceneGuest(guestState?.GuestObject) &&
             target.name.StartsWith("EntranceWait_", StringComparison.OrdinalIgnoreCase))
         {
             int indexInBatch = guestState != null ? guestState.GuestIndex % Mathf.Max(1, guestsPerArrivalGroup) : 0;
@@ -2392,6 +2669,16 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return runtimeCoatSprite;
+    }
+
+    private Sprite GetRuntimeGuestSprite()
+    {
+        if (runtimeGuestSprite == null)
+        {
+            runtimeGuestSprite = CreateSolidSprite("RuntimeGuestSprite", new Color(0.18f, 0.24f, 0.36f, 1f), 48, 96, new Vector2(0.5f, 0.08f), 2f);
+        }
+
+        return runtimeGuestSprite;
     }
 
     private SpriteRenderer CreateRuntimeVisual(Transform parent, string objectName, Sprite sprite, float visualScale)
