@@ -329,7 +329,8 @@ public class ChapterManager : MonoBehaviour
 
         if (playerInput != null)
         {
-            playerInput.enabled = enabled;
+            playerInput.enabled = true;
+            playerInput.SetInputEnabled(enabled);
         }
 
         if (playerButlerReference != null)

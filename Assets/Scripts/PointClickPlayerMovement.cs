@@ -51,6 +51,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private bool hasDestination;
 	private bool isReady;
 	private bool isWalking;
+	private bool inputEnabled = true;
 	private int currentSortingOrder;
 	private int movementPathIndex;
 	private readonly List<Vector2> movementPath = new List<Vector2>();
@@ -61,6 +62,17 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public Vector2 LogicalPosition => logicalPosition;
 	public bool HasDestination => hasDestination;
 	public int CurrentSortingOrder => currentSortingOrder;
+	public bool InputEnabled => inputEnabled;
+
+	public void SetInputEnabled(bool enabled)
+	{
+		inputEnabled = enabled;
+
+		if (!inputEnabled)
+		{
+			NavigationCursorController.ClearWalkHover(this);
+		}
+	}
 
 	public void RefreshAnimatorParameters()
 	{
@@ -121,10 +133,18 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 
 		RefreshWalkableFloorForCurrentRoom();
-		UpdateWalkCursor();
 
-		if (TryGetFloorClick(out Vector2 clickPosition))
-			SetDestination(clickPosition);
+		if (inputEnabled)
+		{
+			UpdateWalkCursor();
+
+			if (TryGetFloorClick(out Vector2 clickPosition))
+				SetDestination(clickPosition);
+		}
+		else
+		{
+			NavigationCursorController.ClearWalkHover(this);
+		}
 
 		UpdateAnimator();
 	}

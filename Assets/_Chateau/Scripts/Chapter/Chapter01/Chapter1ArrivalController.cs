@@ -91,7 +91,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     [Header("Interactions")]
     [SerializeField] private bool createRuntimeHud = true;
     [SerializeField] private bool createRuntimeClickTargets = true;
-    [SerializeField] private bool placeButlerAtDoorSpotOnStart = true;
     [SerializeField] private bool snapGuestsIntoEntranceForFirstVisualPass = true;
     [SerializeField] private bool autoStoreCoatIfClosetMissing = false;
     [SerializeField] private float coatOffsetX = 34f;
@@ -494,7 +493,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         ResetGuestStates(true);
         SetChapterSceneGuestsActive(false);
         BuildGuestGroups();
-        MoveButlerToStart();
     }
 
     private void ResetGuestStates(bool createFallbacks)
@@ -1680,16 +1678,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             frontDoorSceneAction = action;
             frontDoorSceneAction.SetAvailable(true);
         }
-    }
-
-    private void MoveButlerToStart()
-    {
-        if (!placeButlerAtDoorSpotOnStart || playerMovement == null || butlerDoorSpot == null)
-        {
-            return;
-        }
-
-        playerMovement.TryWarpTo(butlerDoorSpot.position, true);
     }
 
     private void EnsureGuestConfigs(bool createFallbacks)
