@@ -52,7 +52,8 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
     {
         if (UsesManualPointerPolling() &&
             TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
-            IsPointerInsideActionBounds(screenPosition))
+            IsPointerInsideActionBounds(screenPosition) &&
+            IsActionCurrentlyAvailable())
         {
             SetDoorCursorHover(true);
         }
@@ -88,7 +89,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         }
 
         bool pointerInsideAction = IsPointerInsideActionBounds(screenPosition);
-        SetDoorCursorHover(pointerInsideAction && isActionAvailable);
+        SetDoorCursorHover(pointerInsideAction && IsActionCurrentlyAvailable());
 
         if (!TryGetPrimaryPointerDown())
         {
@@ -121,7 +122,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
         lastPerformedFrame = Time.frameCount;
 
-        if (!isActionAvailable)
+        if (!IsActionCurrentlyAvailable())
         {
             return;
         }
@@ -176,6 +177,11 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return;
         }
 
+        if (!arrivalController.IsFrontDoorActionAvailable)
+        {
+            return;
+        }
+
         PointClickPlayerMovement playerMovement = FindAnyObjectByType<PointClickPlayerMovement>();
 
         if (playerMovement == null)
@@ -186,19 +192,15 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
         CancelPendingFrontDoorApproach();
 
-        Camera mainCamera = Camera.main;
-
-        if (mainCamera == null ||
-            !playerMovement.TryEvaluateMovementAtScreenPoint(mainCamera.WorldToScreenPoint(transform.position), true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
-            !movementQuery.HasReachableDestination)
+        if (!arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination))
         {
-            Debug.LogWarning("Front door clicked, but the butler could not find a walkable spot at the door.", this);
+            arrivalController.AnswerFrontDoor();
             return;
         }
 
-        if (!playerMovement.TrySetDestination(movementQuery.Destination))
+        if (!playerMovement.TrySetDestination(approachDestination))
         {
-            Debug.LogWarning("Front door clicked, but the butler could not walk to the selected door spot.", this);
+            arrivalController.AnswerFrontDoor();
             return;
         }
 
@@ -223,6 +225,22 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         }
 
         arrivalController.AnswerFrontDoor();
+    }
+
+    private bool IsActionCurrentlyAvailable()
+    {
+        if (!isActionAvailable)
+        {
+            return false;
+        }
+
+        if (actionType != Chapter1SceneActionType.FrontDoor)
+        {
+            return true;
+        }
+
+        ResolveReferences();
+        return arrivalController != null && arrivalController.IsFrontDoorActionAvailable;
     }
 
     private void CancelPendingFrontDoorApproach()

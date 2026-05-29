@@ -24,6 +24,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     private const float ApproachPlayerDistanceWeight = 0.01f;
     private const float ApproachExactPointPenalty = 25f;
     private const float DuplicateApproachSampleDistance = 1f;
+    private const float ApproachSampleMinimumOffset = 36f;
 
     public static event Action<DoorTriggerNavigation> HoveredTriggerChanged;
     public static DoorTriggerNavigation HoveredTrigger { get; private set; }
@@ -464,6 +465,27 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         AddUniqueApproachSample(new Vector2(centerX, upperY));
         AddUniqueApproachSample(new Vector2(leftX, upperY));
         AddUniqueApproachSample(new Vector2(rightX, upperY));
+
+        float width = Mathf.Max(1f, rightX - leftX);
+        float height = Mathf.Max(1f, upperY - lowerY);
+        float offset = Mathf.Max(ApproachSampleMinimumOffset, Mathf.Min(width, height) * 0.35f);
+
+        AddDoorEdgeApproachSamples(leftX, rightX, centerX, lowerY, -offset);
+        AddDoorEdgeApproachSamples(leftX, rightX, centerX, lowerY, -offset * 2f);
+        AddDoorEdgeApproachSamples(leftX, rightX, centerX, upperY, offset);
+        AddDoorEdgeApproachSamples(leftX, rightX, centerX, upperY, offset * 2f);
+        AddUniqueApproachSample(new Vector2(leftX - offset, centerY));
+        AddUniqueApproachSample(new Vector2(leftX - offset * 2f, centerY));
+        AddUniqueApproachSample(new Vector2(rightX + offset, centerY));
+        AddUniqueApproachSample(new Vector2(rightX + offset * 2f, centerY));
+    }
+
+    private void AddDoorEdgeApproachSamples(float leftX, float rightX, float centerX, float edgeY, float yOffset)
+    {
+        float sampleY = edgeY + yOffset;
+        AddUniqueApproachSample(new Vector2(centerX, sampleY));
+        AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.25f), sampleY));
+        AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.75f), sampleY));
     }
 
     private void AddUniqueApproachSample(Vector2 sample)

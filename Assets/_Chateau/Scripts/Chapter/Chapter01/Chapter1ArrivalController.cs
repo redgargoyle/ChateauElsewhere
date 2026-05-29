@@ -149,6 +149,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     public int CurrentGuestIndex => currentGuestIndex;
     public bool ButlerCarryingCoat => butlerCarryingCoat;
     public string CarriedCoatId => carriedCoatId;
+    public bool IsFrontDoorActionAvailable => IsFrontDoorActionAvailableNow();
 
     public bool CanTakeCoat(string coatId)
     {
@@ -237,6 +238,13 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        if (!IsPlayerInEntryRoom())
+        {
+            Debug.Log("Front door clicked, but the butler is not in the entrance hall.", this);
+            RefreshInteractionState();
+            return;
+        }
+
         if (pendingGuestGroups.Count == 0)
         {
             if (emptyDoorbellWaitingForAnswer)
@@ -258,6 +266,31 @@ public class Chapter1ArrivalController : MonoBehaviour
         doorbellSystem?.StopRinging();
         StartCoroutine(AdmitQueuedGuestGroups(groupsToAdmit));
         RefreshInteractionState();
+    }
+
+    public bool TryGetFrontDoorApproachDestination(PointClickPlayerMovement movement, out Vector2 destination)
+    {
+        destination = Vector2.zero;
+        ResolveReferences();
+
+        Camera mainCamera = Camera.main;
+
+        if (movement == null || mainCamera == null)
+        {
+            return false;
+        }
+
+        if (TryGetApproachDestinationForTransform(movement, mainCamera, frontDoorArrivalPoint, out destination))
+        {
+            return true;
+        }
+
+        GameObject triggerObject = FindDoorAnswerTriggerObject();
+        return TryGetApproachDestinationForTransform(
+            movement,
+            mainCamera,
+            triggerObject != null ? triggerObject.transform : null,
+            out destination);
     }
 
     public void HandleCoatClicked(Chapter1CoatPickup coatPickup)
@@ -2028,8 +2061,55 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (frontDoorSceneAction != null)
         {
-            frontDoorSceneAction.SetAvailable(true);
+            frontDoorSceneAction.SetAvailable(IsFrontDoorActionAvailableNow());
         }
+    }
+
+    private bool IsFrontDoorActionAvailableNow()
+    {
+        if (!sequenceActive || !IsPlayerInEntryRoom())
+        {
+            return false;
+        }
+
+        return pendingGuestGroups.Count > 0 || emptyDoorbellWaitingForAnswer;
+    }
+
+    private bool IsPlayerInEntryRoom()
+    {
+        if (navigationManager == null)
+        {
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+
+        return navigationManager == null ||
+            string.IsNullOrWhiteSpace(navigationManager.CurrentRoom) ||
+            SameRoom(navigationManager.CurrentRoom, entryRoomId);
+    }
+
+    private static bool TryGetApproachDestinationForTransform(
+        PointClickPlayerMovement movement,
+        Camera mainCamera,
+        Transform target,
+        out Vector2 destination)
+    {
+        destination = Vector2.zero;
+
+        if (movement == null || mainCamera == null || target == null)
+        {
+            return false;
+        }
+
+        Vector2 targetScreenPosition = mainCamera.WorldToScreenPoint(target.position);
+
+        if (!movement.TryEvaluateMovementAtScreenPoint(targetScreenPosition, true, out PointClickPlayerMovement.MovementTargetQuery query) ||
+            !query.HasReachableDestination)
+        {
+            return false;
+        }
+
+        destination = query.Destination;
+        return true;
     }
 
     private void EnsureRuntimeInteractionSystems()
@@ -3871,6 +3951,8 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void HandleRoomChanged(string roomName)
     {
+        RefreshInteractionState();
+
         if (SameRoom(roomName, drawingRoomId))
         {
             CheckChapterCompletionGate();

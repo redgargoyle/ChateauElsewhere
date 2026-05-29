@@ -13,6 +13,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private const float MovementEpsilon = 0.0001f;
 	private const float WalkableInsetStep = 0.015f;
 	private const int WalkableInsetAttempts = 12;
+	private const int WalkableInsetRadialSamples = 16;
 
 	[SerializeField] private string walkableFloorName = "PlayerBoundary_Entrance";
 	[SerializeField] private Collider2D walkableFloor;
@@ -784,6 +785,20 @@ public class PointClickPlayerMovement : MonoBehaviour
 			Vector2 insetPoint = closestPoint + insetDirection * (WalkableInsetStep * i);
 			if (walkableFloor.OverlapPoint(insetPoint))
 				return WalkableWorldToLogicalPoint(insetPoint);
+		}
+
+		for (int i = 1; i <= WalkableInsetAttempts; i++)
+		{
+			float radius = WalkableInsetStep * i;
+
+			for (int sample = 0; sample < WalkableInsetRadialSamples; sample++)
+			{
+				float angle = (Mathf.PI * 2f * sample) / WalkableInsetRadialSamples;
+				Vector2 radialPoint = closestPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+
+				if (walkableFloor.OverlapPoint(radialPoint))
+					return WalkableWorldToLogicalPoint(radialPoint);
+			}
 		}
 
 		return WalkableWorldToLogicalPoint(closestPoint);
