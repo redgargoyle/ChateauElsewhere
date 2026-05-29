@@ -114,7 +114,13 @@ public class Chapter1ArrivalController : MonoBehaviour
     private bool subscribedToRoomChanges;
 
     private const float RuntimeCoatVisualScale = 0.03f;
-    private static readonly string[] FirstDoorSceneGuestNames = { "Guest 1", "Guest 2" };
+    private const string DoorAnswerTriggerName = "Door_answer_trigger";
+    private static readonly string[][] FirstDoorSceneGuestNameAliases =
+    {
+        new[] { "Guest1", "Guest 1" },
+        new[] { "Guest2", "Guest 2" }
+    };
+    private static readonly string[] DoorAnswerTriggerNameAliases = { DoorAnswerTriggerName, "Door_Answer_Trigger", "DoorAnswerTrigger", "Door Answer Trigger" };
 
     public int CurrentGuestIndex => currentGuestIndex;
     public bool ButlerCarryingCoat => butlerCarryingCoat;
@@ -183,7 +189,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     public void AnswerFrontDoor()
     {
         ResolveReferences();
-        Debug.Log("Answer Door action received.", this);
+        Debug.Log("Front door action received.", this);
 
         if (!sequenceActive)
         {
@@ -711,8 +717,17 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         EnsureGuestHiddenBeforeArrival(guest);
-        Transform arrivalPoint = guest.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint);
-        PlaceGuestAt(guest, arrivalPoint, "frontDoorArrivalPoint");
+        bool useAuthoredEntrancePosition = snapGuestsIntoEntranceForFirstVisualPass && IsFirstDoorSceneGuest(guest.GuestObject);
+
+        if (useAuthoredEntrancePosition)
+        {
+            ActivateFirstDoorSceneGuestObject(guest.GuestObject, guest.ActorState, indexInDoorBatch, batchCount);
+        }
+        else
+        {
+            Transform arrivalPoint = guest.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint);
+            PlaceGuestAt(guest, arrivalPoint, "frontDoorArrivalPoint");
+        }
 
         if (guest.ActorState != null)
         {
@@ -723,16 +738,22 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         SetGuestState(guest, GuestArrivalState.Arriving);
-        Transform waitSpot = CreateRuntimeAnchor($"EntranceWait_{guest.Config.GuestId}", GetEntranceWaitPosition(indexInDoorBatch, batchCount), frontDoorArrivalPoint);
 
-        if (snapGuestsIntoEntranceForFirstVisualPass)
+        if (useAuthoredEntrancePosition)
         {
+            ForceGuestVisibleForDoorFlow(guest);
+            yield return null;
+        }
+        else if (snapGuestsIntoEntranceForFirstVisualPass)
+        {
+            Transform waitSpot = CreateRuntimeAnchor($"EntranceWait_{guest.Config.GuestId}", GetEntranceWaitPosition(indexInDoorBatch, batchCount), frontDoorArrivalPoint);
             PlaceGuestAt(guest, waitSpot, "entrance waiting spot");
             ForceGuestVisibleForDoorFlow(guest);
             yield return null;
         }
         else
         {
+            Transform waitSpot = CreateRuntimeAnchor($"EntranceWait_{guest.Config.GuestId}", GetEntranceWaitPosition(indexInDoorBatch, batchCount), frontDoorArrivalPoint);
             yield return MoveGuestTo(guest, waitSpot, "entrance waiting spot");
             ForceGuestVisibleForDoorFlow(guest);
         }
@@ -918,41 +939,51 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void SetFirstDoorSceneGuestsActive(bool active)
     {
-        for (int i = 0; i < FirstDoorSceneGuestNames.Length; i++)
+        if (active)
         {
-            GameObject guestObject = FindSceneObjectByExactName(FirstDoorSceneGuestNames[i]);
-
-            if (guestObject != null)
-            {
-                guestObject.SetActive(active);
-            }
+            SetNamedSceneGuestsActive(GetFirstDoorSceneGuestNames(), true);
+            return;
         }
+
+        SetFirstDoorSceneGuestAliasesActive(false);
     }
 
     private void ShowFirstDoorSceneGuestsImmediately()
     {
-        for (int i = 0; i < FirstDoorSceneGuestNames.Length; i++)
-        {
-            GameObject guestObject = FindSceneObjectByExactName(FirstDoorSceneGuestNames[i]);
+        string[] guestNames = GetFirstDoorSceneGuestNames();
+        HashSet<GameObject> activatedGuests = new HashSet<GameObject>();
 
-            if (guestObject == null)
+        for (int i = 0; i < guestStates.Count && i < guestNames.Length; i++)
+        {
+            GuestRuntimeState guestState = guestStates[i];
+
+            if (guestState == null ||
+                guestState.GuestObject == null ||
+                !MatchesSceneGuestName(guestState.GuestObject, guestNames))
             {
-                Debug.LogWarning($"Chapter1ArrivalController could not find scene guest '{FirstDoorSceneGuestNames[i]}'.", this);
                 continue;
             }
 
-            guestObject.SetActive(true);
-            guestObject.transform.position = GetEntranceWaitPosition(i, FirstDoorSceneGuestNames.Length);
+            ActivateFirstDoorSceneGuestObject(guestState.GuestObject, guestState.ActorState, i, guestNames.Length);
+            activatedGuests.Add(guestState.GuestObject);
+        }
 
-            ActorRoomState actorState = guestObject.GetComponent<ActorRoomState>();
+        for (int i = 0; i < guestNames.Length; i++)
+        {
+            GameObject guestObject = FindSceneObjectByExactName(guestNames[i]);
 
-            if (actorState != null)
+            if (guestObject == null)
             {
-                actorState.enabled = false;
+                Debug.LogWarning($"Chapter1ArrivalController could not find scene guest '{guestNames[i]}'.", this);
+                continue;
             }
 
-            ForceRenderersAndCollidersOn(guestObject);
-            Debug.Log($"Scene guest activated: {guestObject.name}", this);
+            if (activatedGuests.Contains(guestObject))
+            {
+                continue;
+            }
+
+            ActivateFirstDoorSceneGuestObject(guestObject, guestObject.GetComponent<ActorRoomState>(), i, guestNames.Length);
         }
     }
 
@@ -963,15 +994,180 @@ public class Chapter1ArrivalController : MonoBehaviour
             return false;
         }
 
-        for (int i = 0; i < FirstDoorSceneGuestNames.Length; i++)
+        return MatchesAnyFirstDoorSceneGuestAlias(guestObject);
+    }
+
+    private string[] GetFirstDoorSceneGuestNames()
+    {
+        string[] guestNames = new string[FirstDoorSceneGuestNameAliases.Length];
+
+        for (int i = 0; i < FirstDoorSceneGuestNameAliases.Length; i++)
         {
-            if (string.Equals(guestObject.name.Trim(), FirstDoorSceneGuestNames[i], StringComparison.OrdinalIgnoreCase))
+            guestNames[i] = FindExistingSceneGuestName(FirstDoorSceneGuestNameAliases[i]) ?? FirstDoorSceneGuestNameAliases[i][0];
+        }
+
+        return guestNames;
+    }
+
+    private string FindExistingSceneGuestName(string[] guestNameAliases)
+    {
+        if (guestNameAliases == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < guestNameAliases.Length; i++)
+        {
+            if (FindSceneObjectByExactName(guestNameAliases[i]) != null)
+            {
+                return guestNameAliases[i];
+            }
+        }
+
+        return null;
+    }
+
+    private bool IsUnselectedFirstDoorSceneGuestAlias(GameObject guestObject)
+    {
+        if (!IsFirstDoorSceneGuest(guestObject))
+        {
+            return false;
+        }
+
+        return !MatchesSceneGuestName(guestObject, GetFirstDoorSceneGuestNames());
+    }
+
+    private bool MatchesAnyFirstDoorSceneGuestAlias(GameObject guestObject)
+    {
+        if (guestObject == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < FirstDoorSceneGuestNameAliases.Length; i++)
+        {
+            if (MatchesSceneGuestName(guestObject, FirstDoorSceneGuestNameAliases[i]))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static bool MatchesSceneGuestName(GameObject guestObject, string[] guestNames)
+    {
+        if (guestObject == null || guestNames == null)
+        {
+            return false;
+        }
+
+        string cleanName = guestObject.name.Trim();
+
+        for (int i = 0; i < guestNames.Length; i++)
+        {
+            if (string.Equals(cleanName, guestNames[i], StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void SetNamedSceneGuestsActive(string[] guestNames, bool active)
+    {
+        for (int i = 0; i < guestNames.Length; i++)
+        {
+            GameObject guestObject = FindSceneObjectByExactName(guestNames[i]);
+
+            if (guestObject != null)
+            {
+                guestObject.SetActive(active);
+            }
+        }
+    }
+
+    private void SetFirstDoorSceneGuestAliasesActive(bool active)
+    {
+        HashSet<GameObject> handledGuests = new HashSet<GameObject>();
+
+        for (int i = 0; i < FirstDoorSceneGuestNameAliases.Length; i++)
+        {
+            string[] aliases = FirstDoorSceneGuestNameAliases[i];
+
+            for (int aliasIndex = 0; aliasIndex < aliases.Length; aliasIndex++)
+            {
+                GameObject guestObject = FindSceneObjectByExactName(aliases[aliasIndex]);
+
+                if (guestObject == null || handledGuests.Contains(guestObject))
+                {
+                    continue;
+                }
+
+                guestObject.SetActive(active);
+                handledGuests.Add(guestObject);
+            }
+        }
+    }
+
+    private void ActivateFirstDoorSceneGuestObject(GameObject guestObject, ActorRoomState actorState, int index, int batchCount)
+    {
+        if (guestObject == null)
+        {
+            return;
+        }
+
+        DisableAmbientWalkers(guestObject);
+        guestObject.SetActive(true);
+
+        if (guestObject.transform is RectTransform)
+        {
+            PlaceFirstDoorSceneGuestAtEntrance(guestObject, index, batchCount);
+        }
+
+        DisableAmbientWalkers(guestObject);
+
+        if (actorState == null)
+        {
+            actorState = guestObject.GetComponent<ActorRoomState>();
+        }
+
+        if (actorState != null)
+        {
+            actorState.enabled = true;
+            actorState.SetCurrentRoom(entryRoomId);
+            actorState.SetAvailableInCurrentChapter(true);
+            actorState.SetVisibleByChapterState(true);
+            actorState.SetInteractable(false);
+            actorState.ApplyState();
+
+            if (snapGuestsIntoEntranceForFirstVisualPass)
+            {
+                actorState.enabled = false;
+            }
+        }
+
+        ForceRenderersAndCollidersOn(guestObject);
+        Debug.Log($"Scene guest activated: {guestObject.name}", this);
+    }
+
+    private void PlaceFirstDoorSceneGuestAtEntrance(GameObject guestObject, int index, int batchCount)
+    {
+        if (guestObject == null)
+        {
+            return;
+        }
+
+        RectTransform rectTransform = guestObject.transform as RectTransform;
+
+        if (rectTransform != null)
+        {
+            rectTransform.anchoredPosition = GetEntranceWaitAnchoredPosition(index, batchCount);
+            return;
+        }
+
+        guestObject.transform.position = GetEntranceWaitPosition(index, batchCount);
     }
 
     private void PlaceGuestAt(GuestRuntimeState guestState, Transform target, string fieldName)
@@ -984,6 +1180,14 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (target == null)
         {
             Debug.LogWarning($"Chapter1ArrivalController missing required field: {fieldName}.", this);
+            return;
+        }
+
+        if (guestState.GuestObject != null &&
+            guestState.GuestObject.transform is RectTransform rectTransform &&
+            TryGetAnchoredPositionForGuestTarget(guestState, target, out Vector2 anchoredPosition))
+        {
+            rectTransform.anchoredPosition = anchoredPosition;
             return;
         }
 
@@ -1027,6 +1231,11 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (guestState.GuestObject == null)
         {
             return;
+        }
+
+        if (IsFirstDoorSceneGuest(guestState.GuestObject))
+        {
+            DisableAmbientWalkers(guestState.GuestObject);
         }
 
         ForceRenderersAndCollidersOn(guestState.GuestObject);
@@ -1205,17 +1414,14 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void RefreshInteractionState()
     {
-        bool doorAnswerAvailable = pendingGuestGroups.Count > 0 || emptyDoorbellWaitingForAnswer;
-
         if (interactionHUD != null)
         {
-            interactionHUD.SetDoorAnswerAvailable(doorAnswerAvailable);
             interactionHUD.SetHangCoatAvailable(butlerCarryingCoat);
         }
 
         if (frontDoorSceneAction != null)
         {
-            frontDoorSceneAction.SetAvailable(doorAnswerAvailable);
+            frontDoorSceneAction.SetAvailable(true);
         }
     }
 
@@ -1232,6 +1438,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             interactionHUD.Initialize(this, chapterClock, grandfatherClock);
         }
 
+        EnsureDoorAnswerTriggerAction(createRuntimeClickTargets);
+
         if (createRuntimeClickTargets)
         {
             EnsureSceneActionTargets();
@@ -1240,10 +1448,127 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void EnsureSceneActionTargets()
     {
-        CreateClickTarget("Chapter1_ClickTarget_FrontDoor", frontDoorArrivalPoint, Chapter1SceneActionType.FrontDoor);
         CreateClickTarget("Chapter1_ClickTarget_CoatCloset", closetPoint != null ? closetPoint : coatCloset != null ? coatCloset.transform : null, Chapter1SceneActionType.CoatCloset);
         CreateClickTarget("Chapter1_ClickTarget_GrandfatherClock", grandfatherClock != null ? grandfatherClock.transform : null, Chapter1SceneActionType.GrandfatherClock);
         CreateClickTarget("Chapter1_ClickTarget_DrawingRoomExit", drawingRoomEntryPoint, Chapter1SceneActionType.DrawingRoomExit);
+    }
+
+    private void EnsureDoorAnswerTriggerAction(bool createFallback)
+    {
+        GameObject targetObject = FindDoorAnswerTriggerObject();
+
+        if (targetObject == null && createFallback)
+        {
+            targetObject = CreateDoorAnswerTriggerFallback();
+        }
+
+        if (targetObject == null)
+        {
+            Debug.LogWarning($"Chapter1ArrivalController could not find '{DoorAnswerTriggerName}' for answering the front door.", this);
+            return;
+        }
+
+        targetObject.SetActive(true);
+        EnsureDoorAnswerTriggerCanReceiveClicks(targetObject);
+
+        Chapter1SceneAction action = targetObject.GetComponent<Chapter1SceneAction>();
+
+        if (action == null)
+        {
+            action = targetObject.AddComponent<Chapter1SceneAction>();
+        }
+
+        action.Initialize(Chapter1SceneActionType.FrontDoor, this, grandfatherClock);
+        frontDoorSceneAction = action;
+        frontDoorSceneAction.SetAvailable(true);
+    }
+
+    private GameObject FindDoorAnswerTriggerObject()
+    {
+        for (int i = 0; i < DoorAnswerTriggerNameAliases.Length; i++)
+        {
+            GameObject triggerObject = FindSceneObjectByExactName(DoorAnswerTriggerNameAliases[i]);
+
+            if (triggerObject != null)
+            {
+                return triggerObject;
+            }
+        }
+
+        return null;
+    }
+
+    private GameObject CreateDoorAnswerTriggerFallback()
+    {
+        if (frontDoorArrivalPoint == null)
+        {
+            return null;
+        }
+
+        GameObject triggerObject = new GameObject(DoorAnswerTriggerName);
+        triggerObject.transform.SetParent(frontDoorArrivalPoint.parent, true);
+        triggerObject.transform.position = frontDoorArrivalPoint.position;
+
+        SpriteRenderer renderer = triggerObject.AddComponent<SpriteRenderer>();
+        renderer.sprite = GetRuntimeCoatSprite();
+        renderer.color = new Color(0.16f, 0.42f, 1f, 0.35f);
+        renderer.sortingLayerName = "People";
+        renderer.sortingOrder = 6500;
+
+        BoxCollider2D collider = triggerObject.AddComponent<BoxCollider2D>();
+        collider.size = GetDoorAnswerTriggerColliderSize(triggerObject);
+        collider.isTrigger = true;
+        return triggerObject;
+    }
+
+    private void EnsureDoorAnswerTriggerCanReceiveClicks(GameObject targetObject)
+    {
+        if (targetObject == null)
+        {
+            return;
+        }
+
+        Graphic graphic = targetObject.GetComponent<Graphic>();
+
+        if (targetObject.transform is RectTransform && graphic == null)
+        {
+            Image image = targetObject.AddComponent<Image>();
+            image.color = new Color(0.16f, 0.42f, 1f, 0.35f);
+            image.raycastTarget = true;
+        }
+        else if (graphic != null)
+        {
+            graphic.raycastTarget = true;
+        }
+
+        if (targetObject.transform is RectTransform)
+        {
+            return;
+        }
+
+        if (targetObject.GetComponent<Collider2D>() == null && targetObject.GetComponent<Collider>() == null)
+        {
+            BoxCollider2D collider = targetObject.AddComponent<BoxCollider2D>();
+            collider.size = GetDoorAnswerTriggerColliderSize(targetObject);
+            collider.isTrigger = true;
+        }
+    }
+
+    private Vector2 GetDoorAnswerTriggerColliderSize(GameObject targetObject)
+    {
+        SpriteRenderer spriteRenderer = targetObject != null ? targetObject.GetComponent<SpriteRenderer>() : null;
+
+        if (spriteRenderer != null && spriteRenderer.sprite != null)
+        {
+            Vector2 spriteSize = spriteRenderer.sprite.bounds.size;
+
+            if (spriteSize.x > 0f && spriteSize.y > 0f)
+            {
+                return spriteSize;
+            }
+        }
+
+        return Vector2.one;
     }
 
     private void CreateClickTarget(string objectName, Transform target, Chapter1SceneActionType actionType)
@@ -1285,7 +1610,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (actionType == Chapter1SceneActionType.FrontDoor)
         {
             frontDoorSceneAction = action;
-            frontDoorSceneAction.SetAvailable(pendingGuestGroups.Count > 0 || emptyDoorbellWaitingForAnswer);
+            frontDoorSceneAction.SetAvailable(true);
         }
     }
 
@@ -1316,10 +1641,11 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         int addedCount = 0;
         int insertIndex = 0;
+        string[] guestNames = GetFirstDoorSceneGuestNames();
 
-        for (int i = 0; i < FirstDoorSceneGuestNames.Length; i++)
+        for (int i = 0; i < guestNames.Length; i++)
         {
-            GameObject guestObject = FindSceneObjectByExactName(FirstDoorSceneGuestNames[i]);
+            GameObject guestObject = FindSceneObjectByExactName(guestNames[i]);
 
             if (guestObject == null)
             {
@@ -1382,7 +1708,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             GameObject candidate = candidates[i];
 
-            if (candidate == null || HasGuestConfigForObject(candidate))
+            if (candidate == null || HasGuestConfigForObject(candidate) || IsUnselectedFirstDoorSceneGuestAlias(candidate))
             {
                 continue;
             }
@@ -1848,6 +2174,49 @@ public class Chapter1ArrivalController : MonoBehaviour
             ? new Vector3(centeredIndex * entranceGuestSpacing, entranceGuestSpacing * 0.65f, 0f)
             : new Vector3(centeredIndex * entranceGuestSpacing, -entranceGuestSpacing * 0.55f, 0f);
         return basePosition + offset;
+    }
+
+    private Vector2 GetEntranceWaitAnchoredPosition(int indexInBatch, int batchCount)
+    {
+        Vector2 basePosition = frontDoorArrivalPoint != null
+            ? new Vector2(frontDoorArrivalPoint.localPosition.x, frontDoorArrivalPoint.localPosition.y)
+            : butlerDoorSpot != null
+                ? new Vector2(butlerDoorSpot.localPosition.x, butlerDoorSpot.localPosition.y)
+                : Vector2.zero;
+
+        float centeredIndex = indexInBatch - (batchCount - 1) * 0.5f;
+        Vector2 offset = snapGuestsIntoEntranceForFirstVisualPass
+            ? new Vector2(centeredIndex * entranceGuestSpacing, entranceGuestSpacing * 0.65f)
+            : new Vector2(centeredIndex * entranceGuestSpacing, -entranceGuestSpacing * 0.55f);
+        return basePosition + offset;
+    }
+
+    private bool TryGetAnchoredPositionForGuestTarget(GuestRuntimeState guestState, Transform target, out Vector2 anchoredPosition)
+    {
+        anchoredPosition = Vector2.zero;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        if (snapGuestsIntoEntranceForFirstVisualPass &&
+            IsFirstDoorSceneGuest(guestState?.GuestObject) &&
+            target.name.StartsWith("EntranceWait_", StringComparison.OrdinalIgnoreCase))
+        {
+            int indexInBatch = guestState != null ? guestState.GuestIndex % Mathf.Max(1, guestsPerArrivalGroup) : 0;
+            anchoredPosition = GetEntranceWaitAnchoredPosition(indexInBatch, Mathf.Max(1, guestsPerArrivalGroup));
+            return true;
+        }
+
+        if (target is RectTransform targetRectTransform)
+        {
+            anchoredPosition = targetRectTransform.anchoredPosition;
+            return true;
+        }
+
+        anchoredPosition = new Vector2(target.localPosition.x, target.localPosition.y);
+        return true;
     }
 
     private Vector3 GetCoatPosition(GuestRuntimeState guest)

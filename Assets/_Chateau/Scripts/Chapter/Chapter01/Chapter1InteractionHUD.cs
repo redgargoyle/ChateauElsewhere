@@ -12,7 +12,6 @@ public class Chapter1InteractionHUD : MonoBehaviour
     private GrandfatherClockInteraction clockInteraction;
     private ChapterClock chapterClock;
     private Canvas canvas;
-    private Button answerDoorButton;
     private Button hangCoatButton;
     private TMP_Text statusText;
 
@@ -35,18 +34,7 @@ public class Chapter1InteractionHUD : MonoBehaviour
         chapterClock = clock;
         clockInteraction = clockView;
         EnsureUI();
-        SetDoorAnswerAvailable(false);
         SetHangCoatAvailable(false);
-    }
-
-    public void SetDoorAnswerAvailable(bool value)
-    {
-        EnsureUI();
-
-        if (answerDoorButton != null)
-        {
-            answerDoorButton.gameObject.SetActive(showButtonPrompts && value);
-        }
     }
 
     public void SetHangCoatAvailable(bool value)
@@ -84,24 +72,11 @@ public class Chapter1InteractionHUD : MonoBehaviour
         root.sizeDelta = Vector2.zero;
 
         SyncDebugActionButtons(root);
+        RemoveDebugActionButton(root, "Button_AnswerFrontDoor");
 
         if (showButtonPrompts)
         {
-            answerDoorButton = FindOrCreateButton("Button_AnswerFrontDoor", root, "Answer Door", new Vector2(0.5f, 1f), new Vector2(0f, -42f), new Vector2(190f, 42f));
-            answerDoorButton.onClick.AddListener(() =>
-            {
-                Debug.Log("Answer Door button clicked.", this);
-
-                if (arrivalController != null)
-                {
-                    arrivalController.AnswerFrontDoor();
-                    return;
-                }
-
-                Debug.LogWarning("Answer Door button clicked, but no Chapter1ArrivalController is assigned.", this);
-            });
-
-            hangCoatButton = FindOrCreateButton("Button_HangCoat", root, "Hang Coat", new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(170f, 42f));
+            hangCoatButton = FindOrCreateButton("Button_HangCoat", root, "Hang Coat", new Vector2(0.5f, 1f), new Vector2(0f, -42f), new Vector2(170f, 42f));
             hangCoatButton.onClick.AddListener(() =>
             {
                 if (arrivalController != null)
@@ -214,7 +189,6 @@ public class Chapter1InteractionHUD : MonoBehaviour
         RemoveDebugActionButton(root, "Button_AnswerFrontDoor");
         RemoveDebugActionButton(root, "Button_HangCoat");
         RemoveDebugActionButton(root, "Button_InspectClock");
-        answerDoorButton = null;
         hangCoatButton = null;
     }
 
