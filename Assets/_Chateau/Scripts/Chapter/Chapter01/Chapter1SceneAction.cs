@@ -194,19 +194,23 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
         if (!arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination))
         {
-            arrivalController.AnswerFrontDoor();
+            Debug.LogWarning("Front door clicked, but the butler could not find a walkable spot at the door.", this);
             return;
         }
 
         if (!playerMovement.TrySetDestination(approachDestination))
         {
-            arrivalController.AnswerFrontDoor();
+            Debug.LogWarning("Front door clicked, but the butler could not walk to the selected door spot.", this);
             return;
         }
 
         if (!playerMovement.HasDestination)
         {
-            arrivalController.AnswerFrontDoor();
+            if (arrivalController.IsButlerCloseToFrontDoor(playerMovement))
+            {
+                arrivalController.AnswerFrontDoor();
+            }
+
             return;
         }
 
@@ -224,7 +228,10 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return;
         }
 
-        arrivalController.AnswerFrontDoor();
+        if (arrivalController.IsButlerCloseToFrontDoor(playerMovement))
+        {
+            arrivalController.AnswerFrontDoor();
+        }
     }
 
     private bool IsActionCurrentlyAvailable()
