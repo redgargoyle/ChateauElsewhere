@@ -1381,7 +1381,17 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
             Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to drawing room door.", this);
-            yield return MoveGuestTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
+            BeginGuestMoveTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
+        }
+
+        while (IsAnyGroupGuestMoving(group))
+        {
+            yield return null;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            GuestRuntimeState guest = group.Guests[i];
 
             if (guest.ActorState != null)
             {
@@ -1869,6 +1879,52 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             yield return null;
         }
+    }
+
+    private void BeginGuestMoveTo(GuestRuntimeState guestState, Transform target, string fieldName)
+    {
+        if (guestState == null)
+        {
+            return;
+        }
+
+        if (target == null)
+        {
+            Debug.LogWarning($"Chapter1ArrivalController missing required field: {fieldName}.", this);
+            return;
+        }
+
+        NPCWaypointMover mover = guestState.Mover;
+
+        if (mover == null)
+        {
+            PlaceGuestAt(guestState, target, fieldName);
+            return;
+        }
+
+        mover.enabled = true;
+        mover.MoveSpeed = GetMoveSpeedForGuestObject(guestState.GuestObject);
+        mover.MoveTo(target);
+    }
+
+    private static bool IsAnyGroupGuestMoving(GuestGroupRuntimeState group)
+    {
+        if (group == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            NPCWaypointMover mover = group.Guests[i] != null ? group.Guests[i].Mover : null;
+
+            if (mover != null && mover.IsMoving)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void DisableGuestMovement(GuestRuntimeState guestState)
