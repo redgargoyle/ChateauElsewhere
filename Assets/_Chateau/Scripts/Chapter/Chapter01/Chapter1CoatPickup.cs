@@ -15,6 +15,7 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
     [SerializeField] private string coatId;
 
     private bool cursorHoverActive;
+    private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.Coat;
 
     public string GuestId => guestId;
     public string CoatId => coatId;
@@ -93,13 +94,35 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
 
     private void SetCoatCursorHover(bool active)
     {
-        if (cursorHoverActive == active)
+        NavigationCursorController.HoverIcon nextIcon = CanTakeThisCoat()
+            ? NavigationCursorController.HoverIcon.Coat
+            : NavigationCursorController.HoverIcon.BlockedCoat;
+
+        if (cursorHoverActive == active && (!active || cursorHoverIcon == nextIcon))
         {
             return;
         }
 
         cursorHoverActive = active;
-        NavigationCursorController.SetDoorHover(this, active);
+        cursorHoverIcon = nextIcon;
+
+        if (!active)
+        {
+            NavigationCursorController.SetDoorHover(this, false);
+            return;
+        }
+
+        NavigationCursorController.SetDoorHover(this, cursorHoverIcon, true);
+    }
+
+    private bool CanTakeThisCoat()
+    {
+        if (arrivalController == null)
+        {
+            arrivalController = FindAnyObjectByType<Chapter1ArrivalController>(FindObjectsInactive.Include);
+        }
+
+        return arrivalController != null && arrivalController.CanTakeCoat(coatId);
     }
 
     private bool IsPointerOverCoat(Vector2 screenPosition)

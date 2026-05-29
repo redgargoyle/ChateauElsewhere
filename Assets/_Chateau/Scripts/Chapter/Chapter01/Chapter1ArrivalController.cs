@@ -115,6 +115,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private GuestRuntimeState carriedCoatGuest;
     private GuestRuntimeState pendingCoatPickupGuest;
     private Chapter1CoatPickup pendingCoatPickup;
+    private GameObject carriedCoatVisual;
     private Sprite runtimeCoatSprite;
     private Sprite runtimeGuestSprite;
     private bool subscribedToRoomChanges;
@@ -124,6 +125,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
     private const float CoatPickupReadyScreenDistance = 90f;
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
+    private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
     private static readonly string[][] ChapterGuestNameAliases =
     {
@@ -141,6 +143,20 @@ public class Chapter1ArrivalController : MonoBehaviour
     public int CurrentGuestIndex => currentGuestIndex;
     public bool ButlerCarryingCoat => butlerCarryingCoat;
     public string CarriedCoatId => carriedCoatId;
+
+    public bool CanTakeCoat(string coatId)
+    {
+        if (butlerCarryingCoat)
+        {
+            return false;
+        }
+
+        GuestRuntimeState guestState = FindGuestByCoat(coatId);
+        return guestState != null &&
+            guestState.CoatOffered &&
+            !guestState.CoatTaken &&
+            !guestState.CoatStored;
+    }
 
     private void Awake()
     {
@@ -287,11 +303,89 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (guestState.CoatPickup != null)
         {
-            guestState.CoatPickup.gameObject.SetActive(false);
+            TransferCoatVisualToButler(guestState);
+            DisableCoatPickupInteraction(guestState.CoatPickup);
         }
 
         Debug.Log($"Coat taken from guest: {carriedCoatId}", this);
         RefreshInteractionState();
+    }
+
+    private void TransferCoatVisualToButler(GuestRuntimeState guestState)
+    {
+        ResolveReferences();
+
+        if (guestState == null || guestState.CoatPickup == null)
+        {
+            return;
+        }
+
+        Transform butlerTransform = playerButlerReference != null
+            ? playerButlerReference.transform
+            : playerMovement != null
+                ? playerMovement.transform
+                : null;
+
+        if (butlerTransform == null)
+        {
+            return;
+        }
+
+        GameObject coatObject = guestState.CoatPickup.gameObject;
+        coatObject.SetActive(true);
+        coatObject.transform.SetParent(butlerTransform, false);
+        coatObject.transform.localPosition = ButlerCarriedCoatOffset;
+        coatObject.transform.localRotation = Quaternion.identity;
+        BringCoatRenderersAboveButler(coatObject, butlerTransform);
+        carriedCoatVisual = coatObject;
+
+        Debug.Log($"[Chapter1] Coat transferred to butler from guest {guestState.Config.GuestId}.", this);
+    }
+
+    private static void BringCoatRenderersAboveButler(GameObject coatObject, Transform butlerTransform)
+    {
+        if (coatObject == null || butlerTransform == null)
+        {
+            return;
+        }
+
+        SpriteRenderer butlerRenderer = butlerTransform.GetComponentInChildren<SpriteRenderer>(true);
+        SpriteRenderer[] coatRenderers = coatObject.GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < coatRenderers.Length; i++)
+        {
+            SpriteRenderer coatRenderer = coatRenderers[i];
+
+            if (coatRenderer == null)
+            {
+                continue;
+            }
+
+            coatRenderer.enabled = true;
+
+            if (butlerRenderer != null)
+            {
+                coatRenderer.sortingLayerID = butlerRenderer.sortingLayerID;
+                coatRenderer.sortingOrder = butlerRenderer.sortingOrder + 1;
+            }
+        }
+    }
+
+    private void DisableCoatPickupInteraction(Chapter1CoatPickup coatPickup)
+    {
+        if (coatPickup == null)
+        {
+            return;
+        }
+
+        Collider2D collider = coatPickup.GetComponent<Collider2D>();
+
+        if (collider != null)
+        {
+            collider.enabled = false;
+        }
+
+        coatPickup.enabled = false;
     }
 
     private void WalkButlerToCoat(GuestRuntimeState guestState, Chapter1CoatPickup coatPickup)
@@ -444,6 +538,12 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             carriedCoatGuest.CoatStored = true;
             carriedCoatGuest.Handled = false;
+        }
+
+        if (carriedCoatVisual != null)
+        {
+            carriedCoatVisual.SetActive(false);
+            carriedCoatVisual = null;
         }
 
         butlerCarryingCoat = false;
@@ -623,6 +723,13 @@ public class Chapter1ArrivalController : MonoBehaviour
         butlerCarryingCoat = false;
         carriedCoatId = string.Empty;
         carriedCoatGuest = null;
+
+        if (carriedCoatVisual != null)
+        {
+            carriedCoatVisual.SetActive(false);
+        }
+
+        carriedCoatVisual = null;
         CancelPendingCoatPickup();
         currentGuestIndex = -1;
         hasWorldDoorCenterPosition = false;

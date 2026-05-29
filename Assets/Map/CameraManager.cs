@@ -1980,7 +1980,9 @@ public static class NavigationCursorController
     public enum HoverIcon
     {
         Door,
-        Stairway
+        Stairway,
+        Coat,
+        BlockedCoat
     }
 
     private const int CursorDesignSize = 32;
@@ -1992,6 +1994,7 @@ public static class NavigationCursorController
     private static readonly Vector2 ArrowHotspot = ScaleCursorHotspot(16f, 16f);
     private static readonly Vector2 DoorHotspot = ScaleCursorHotspot(9f, 6f);
     private static readonly Vector2 StairwayHotspot = ScaleCursorHotspot(10f, 7f);
+    private static readonly Vector2 CoatHotspot = ScaleCursorHotspot(10f, 9f);
     private static readonly Vector2 WalkHotspot = ScaleCursorHotspot(13f, 24f);
 
     private static int edgePanDirection;
@@ -2003,6 +2006,8 @@ public static class NavigationCursorController
     private static Texture2D rightArrowCursor;
     private static Texture2D doorCursor;
     private static Texture2D stairwayCursor;
+    private static Texture2D coatCursor;
+    private static Texture2D blockedCoatCursor;
     private static Texture2D walkCursor;
     private static Texture2D blockedWalkCursor;
 
@@ -2106,6 +2111,18 @@ public static class NavigationCursorController
                 return;
             }
 
+            if (doorHoverIcon == HoverIcon.Coat)
+            {
+                Cursor.SetCursor(GetCoatCursor(), CoatHotspot, CursorMode.Auto);
+                return;
+            }
+
+            if (doorHoverIcon == HoverIcon.BlockedCoat)
+            {
+                Cursor.SetCursor(GetBlockedCoatCursor(), CoatHotspot, CursorMode.Auto);
+                return;
+            }
+
             Cursor.SetCursor(GetDoorCursor(), DoorHotspot, CursorMode.Auto);
             return;
         }
@@ -2172,6 +2189,26 @@ public static class NavigationCursorController
         }
 
         return stairwayCursor;
+    }
+
+    private static Texture2D GetCoatCursor()
+    {
+        if (coatCursor == null)
+        {
+            coatCursor = CreateCoatCursor("Cursor_Coat", false);
+        }
+
+        return coatCursor;
+    }
+
+    private static Texture2D GetBlockedCoatCursor()
+    {
+        if (blockedCoatCursor == null)
+        {
+            blockedCoatCursor = CreateCoatCursor("Cursor_CoatBlocked", true);
+        }
+
+        return blockedCoatCursor;
     }
 
     private static Texture2D GetWalkCursor()
@@ -2263,6 +2300,39 @@ public static class NavigationCursorController
 
         DrawFootprint(texture, 10, 8);
         DrawFootprint(texture, 18, 16);
+
+        if (blocked)
+        {
+            DrawLine(texture, 5, 5, 27, 27, Ink, 5);
+            DrawLine(texture, 27, 5, 5, 27, Ink, 5);
+            DrawLine(texture, 5, 5, 27, 27, Warning, 3);
+            DrawLine(texture, 27, 5, 5, 27, Warning, 3);
+        }
+
+        texture.Apply();
+        return texture;
+    }
+
+    private static Texture2D CreateCoatCursor(string cursorName, bool blocked)
+    {
+        Texture2D texture = CreateBlankCursor(cursorName);
+
+        DrawLine(texture, 8, 18, 12, 11, Ink, 5);
+        DrawLine(texture, 12, 11, 17, 13, Ink, 5);
+        DrawLine(texture, 17, 13, 22, 10, Ink, 5);
+        DrawLine(texture, 22, 10, 25, 18, Ink, 5);
+        DrawLine(texture, 25, 18, 20, 24, Ink, 5);
+        DrawLine(texture, 20, 24, 12, 23, Ink, 5);
+        DrawLine(texture, 12, 23, 8, 18, Ink, 5);
+
+        DrawLine(texture, 9, 18, 13, 13, Paper, 2);
+        DrawLine(texture, 13, 13, 17, 15, Paper, 2);
+        DrawLine(texture, 17, 15, 21, 13, Paper, 2);
+        DrawLine(texture, 21, 13, 23, 18, Paper, 2);
+        DrawLine(texture, 23, 18, 19, 22, Paper, 2);
+        DrawLine(texture, 19, 22, 13, 21, Paper, 2);
+        DrawLine(texture, 13, 21, 9, 18, Paper, 2);
+        DrawLine(texture, 13, 16, 20, 20, Ink, 2);
 
         if (blocked)
         {
