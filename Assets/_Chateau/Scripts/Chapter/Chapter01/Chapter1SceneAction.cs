@@ -198,7 +198,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return;
         }
 
-        if (!playerMovement.TrySetDestination(approachDestination))
+        if (!playerMovement.TrySetDestination(approachDestination, true))
         {
             Debug.LogWarning("Front door clicked, but the butler could not walk to the selected door spot.", this);
             return;

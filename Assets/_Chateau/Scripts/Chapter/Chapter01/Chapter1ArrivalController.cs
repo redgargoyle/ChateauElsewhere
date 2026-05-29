@@ -124,6 +124,8 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Vector3 worldDoorCenterPosition;
     private bool hasEntranceDrawingRoomExitPosition;
     private Vector3 entranceDrawingRoomExitPosition;
+    private bool hasFrontDoorAnswerSpot;
+    private Vector2 frontDoorAnswerSpot;
     private bool pendingClosetStorage;
 
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
@@ -282,10 +284,33 @@ public class Chapter1ArrivalController : MonoBehaviour
         destination = Vector2.zero;
         ResolveReferences();
 
-        Camera mainCamera = Camera.main;
+        if (movement == null)
+        {
+            return false;
+        }
+
+        if (hasFrontDoorAnswerSpot)
+        {
+            destination = frontDoorAnswerSpot;
+            return true;
+        }
+
         Transform target = GetFrontDoorInteractionTransform();
 
-        if (movement == null || mainCamera == null || target == null)
+        if (target == null)
+        {
+            return false;
+        }
+
+        if (movement.TryFindClosestReachableDestinationToWorldPoint(target.position, out destination))
+        {
+            RememberFrontDoorAnswerSpot(destination);
+            return true;
+        }
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
         {
             return false;
         }
@@ -322,6 +347,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         destination = bestDestination;
+        RememberFrontDoorAnswerSpot(destination);
         return true;
     }
 
@@ -394,6 +420,12 @@ public class Chapter1ArrivalController : MonoBehaviour
         foundDestination = true;
         bestScore = score;
         bestDestination = query.Destination;
+    }
+
+    private void RememberFrontDoorAnswerSpot(Vector2 answerSpot)
+    {
+        frontDoorAnswerSpot = answerSpot;
+        hasFrontDoorAnswerSpot = true;
     }
 
     public void HandleCoatClicked(Chapter1CoatPickup coatPickup)
@@ -1018,6 +1050,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         worldDoorCenterPosition = Vector3.zero;
         hasEntranceDrawingRoomExitPosition = false;
         entranceDrawingRoomExitPosition = Vector3.zero;
+        hasFrontDoorAnswerSpot = false;
+        frontDoorAnswerSpot = Vector2.zero;
         pendingGuestGroups.Clear();
         activeEntranceGroups.Clear();
         guestGroups.Clear();

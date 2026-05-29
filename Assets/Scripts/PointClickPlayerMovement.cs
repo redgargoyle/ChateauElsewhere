@@ -14,6 +14,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private const float WalkableInsetStep = 0.015f;
 	private const int WalkableInsetAttempts = 12;
 	private const int WalkableInsetRadialSamples = 16;
+	private const int WalkableSearchRings = 36;
+	private const int WalkableSearchSamplesPerRing = 32;
 
 	[SerializeField] private string walkableFloorName = "PlayerBoundary_Entrance";
 	[SerializeField] private Collider2D walkableFloor;
@@ -357,6 +359,39 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		StopImmediatelyAt(movementQuery.Destination);
 		return true;
+	}
+
+	public bool TryFindClosestReachableDestinationToWorldPoint(Vector2 worldPoint, out Vector2 destination)
+	{
+		destination = Vector2.zero;
+
+		if (!isReady)
+			return false;
+
+		RefreshWalkableFloorForCurrentRoom();
+		UpdateVisualOffset(Camera.main);
+
+		Vector2 logicalPoint = WalkableWorldToLogicalPoint(worldPoint);
+
+		if (TryEvaluateMovementTarget(logicalPoint, true, out MovementTargetQuery movementQuery) &&
+			movementQuery.HasReachableDestination)
+		{
+			destination = movementQuery.Destination;
+			return true;
+		}
+
+		if (TryFindWalkableWorldPointNear(worldPoint, LogicalToWalkableWorldPoint(logicalPosition), out Vector2 walkableWorldPoint))
+		{
+			Vector2 walkableLogicalPoint = WalkableWorldToLogicalPoint(walkableWorldPoint);
+
+			if (TryBuildMovementPath(logicalPosition, walkableLogicalPoint, movementQueryPath))
+			{
+				destination = walkableLogicalPoint;
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public bool TryEvaluateMovementAtScreenPoint(Vector2 screenPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)
@@ -801,7 +836,108 @@ public class PointClickPlayerMovement : MonoBehaviour
 			}
 		}
 
+		if (TryFindWalkableWorldPointNear(worldPoint, preferredWorldPoint, out Vector2 searchedPoint))
+			return WalkableWorldToLogicalPoint(searchedPoint);
+
 		return WalkableWorldToLogicalPoint(closestPoint);
+	}
+
+	private bool TryFindWalkableWorldPointNear(Vector2 targetWorldPoint, Vector2 preferredWorldPoint, out Vector2 walkableWorldPoint)
+	{
+		walkableWorldPoint = Vector2.zero;
+
+		if (walkableFloor == null)
+		{
+			walkableWorldPoint = targetWorldPoint;
+			return true;
+		}
+
+		if (walkableFloor.OverlapPoint(targetWorldPoint))
+		{
+			walkableWorldPoint = targetWorldPoint;
+			return true;
+		}
+
+		Vector2 closestPoint = walkableFloor.ClosestPoint(targetWorldPoint);
+		bool foundPoint = false;
+		float bestSqrDistance = float.MaxValue;
+		Vector2 bestPoint = Vector2.zero;
+
+		TryAcceptWalkableWorldPoint(closestPoint, targetWorldPoint, ref foundPoint, ref bestSqrDistance, ref bestPoint);
+
+		Vector2 boundsCenter = walkableFloor.bounds.center;
+		TrySearchTowardWalkablePoint(closestPoint, preferredWorldPoint, targetWorldPoint, ref foundPoint, ref bestSqrDistance, ref bestPoint);
+		TrySearchTowardWalkablePoint(closestPoint, boundsCenter, targetWorldPoint, ref foundPoint, ref bestSqrDistance, ref bestPoint);
+		TryAcceptWalkableWorldPoint(boundsCenter, targetWorldPoint, ref foundPoint, ref bestSqrDistance, ref bestPoint);
+
+		Bounds bounds = walkableFloor.bounds;
+		float minExtent = Mathf.Max(0.1f, Mathf.Min(bounds.extents.x, bounds.extents.y));
+		float step = Mathf.Max(WalkableInsetStep, minExtent / WalkableSearchRings);
+
+		for (int ring = 1; ring <= WalkableSearchRings; ring++)
+		{
+			float radius = step * ring;
+
+			for (int sample = 0; sample < WalkableSearchSamplesPerRing; sample++)
+			{
+				float angle = (Mathf.PI * 2f * sample) / WalkableSearchSamplesPerRing;
+				Vector2 samplePoint = closestPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+				TryAcceptWalkableWorldPoint(samplePoint, targetWorldPoint, ref foundPoint, ref bestSqrDistance, ref bestPoint);
+			}
+
+			if (foundPoint)
+			{
+				walkableWorldPoint = bestPoint;
+				return true;
+			}
+		}
+
+		if (!foundPoint)
+			return false;
+
+		walkableWorldPoint = bestPoint;
+		return true;
+	}
+
+	private void TrySearchTowardWalkablePoint(
+		Vector2 startWorldPoint,
+		Vector2 directionTargetWorldPoint,
+		Vector2 distanceTargetWorldPoint,
+		ref bool foundPoint,
+		ref float bestSqrDistance,
+		ref Vector2 bestPoint)
+	{
+		Vector2 direction = directionTargetWorldPoint - startWorldPoint;
+
+		if (direction.sqrMagnitude <= MovementEpsilon)
+			return;
+
+		for (int i = 1; i <= WalkableSearchRings; i++)
+		{
+			float t = i / (float)WalkableSearchRings;
+			Vector2 samplePoint = Vector2.Lerp(startWorldPoint, directionTargetWorldPoint, t);
+			TryAcceptWalkableWorldPoint(samplePoint, distanceTargetWorldPoint, ref foundPoint, ref bestSqrDistance, ref bestPoint);
+		}
+	}
+
+	private void TryAcceptWalkableWorldPoint(
+		Vector2 candidateWorldPoint,
+		Vector2 targetWorldPoint,
+		ref bool foundPoint,
+		ref float bestSqrDistance,
+		ref Vector2 bestPoint)
+	{
+		if (!walkableFloor.OverlapPoint(candidateWorldPoint))
+			return;
+
+		float sqrDistance = (candidateWorldPoint - targetWorldPoint).sqrMagnitude;
+
+		if (foundPoint && sqrDistance >= bestSqrDistance)
+			return;
+
+		foundPoint = true;
+		bestSqrDistance = sqrDistance;
+		bestPoint = candidateWorldPoint;
 	}
 
 	private static Collider2D FindPlayerBoundaryCollider()
