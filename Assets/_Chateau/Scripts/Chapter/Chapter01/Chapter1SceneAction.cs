@@ -17,6 +17,7 @@ public enum Chapter1SceneActionType
 public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     private const float FrontDoorClickScreenRadius = 90f;
+    private const float FrontDoorReadyScreenDistance = 110f;
 
     [SerializeField] private Chapter1SceneActionType actionType;
     [SerializeField] private Chapter1ArrivalController arrivalController;
@@ -162,26 +163,34 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return;
         }
 
-        PointClickPlayerMovement playerMovement = FindAnyObjectByType<PointClickPlayerMovement>();
+        PointClickPlayerMovement playerMovement = FindButlerPlayerMovement();
 
         if (playerMovement == null)
         {
-            arrivalController.AnswerFrontDoor();
             return;
         }
 
         CancelPendingFrontDoorApproach();
 
-        if (!playerMovement.TryFindClosestReachableDestinationToWorldPoint(transform.position, out Vector2 approachDestination) ||
-            !playerMovement.TrySetDestination(approachDestination, true))
+        if (IsPlayerCloseToFrontDoor(playerMovement))
         {
             arrivalController.AnswerFrontDoor();
             return;
         }
 
+        if (!playerMovement.TryFindClosestReachableDestinationToWorldPoint(transform.position, out Vector2 approachDestination) ||
+            !playerMovement.TrySetDestination(approachDestination, true))
+        {
+            return;
+        }
+
         if (!playerMovement.HasDestination)
         {
-            arrivalController.AnswerFrontDoor();
+            if (IsPlayerCloseToFrontDoor(playerMovement))
+            {
+                arrivalController.AnswerFrontDoor();
+            }
+
             return;
         }
 
@@ -191,12 +200,63 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void HandleFrontDoorApproachStopped()
     {
+        PointClickPlayerMovement playerMovement = pendingFrontDoorApproachPlayer;
         CancelPendingFrontDoorApproach();
 
-        if (arrivalController != null && arrivalController.IsFrontDoorActionAvailable)
+        if (arrivalController != null &&
+            arrivalController.IsFrontDoorActionAvailable &&
+            IsPlayerCloseToFrontDoor(playerMovement))
         {
             arrivalController.AnswerFrontDoor();
         }
+    }
+
+    private bool IsPlayerCloseToFrontDoor(PointClickPlayerMovement playerMovement)
+    {
+        if (playerMovement == null ||
+            !playerMovement.TryGetScreenPointFromLogicalPosition(playerMovement.LogicalPosition, out Vector2 playerScreenPosition))
+        {
+            return false;
+        }
+
+        Camera worldCamera = Camera.main;
+
+        if (worldCamera == null)
+        {
+            return false;
+        }
+
+        Vector2 doorScreenPosition = worldCamera.WorldToScreenPoint(transform.position);
+        return Vector2.Distance(playerScreenPosition, doorScreenPosition) <= FrontDoorReadyScreenDistance;
+    }
+
+    private static PointClickPlayerMovement FindButlerPlayerMovement()
+    {
+        GameObject namedPlayer = GameObject.Find("Player");
+        PointClickPlayerMovement namedPlayerMovement = namedPlayer != null
+            ? namedPlayer.GetComponent<PointClickPlayerMovement>()
+            : null;
+
+        if (namedPlayerMovement != null)
+        {
+            return namedPlayerMovement;
+        }
+
+        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Exclude);
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (candidate != null &&
+                candidate.gameObject.activeInHierarchy &&
+                candidate.gameObject.name.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
     private void ResolveReferences()
