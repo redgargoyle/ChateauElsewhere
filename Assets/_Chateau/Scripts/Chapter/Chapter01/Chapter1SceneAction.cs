@@ -26,6 +26,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
     private int lastPerformedFrame = -1;
     private bool cursorHoverActive;
     private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.Door;
+    private PointClickPlayerMovement pendingFrontDoorApproachPlayer;
 
     public void Initialize(
         Chapter1SceneActionType nextActionType,
@@ -70,6 +71,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void OnDisable()
     {
+        CancelPendingFrontDoorApproach();
         SetDoorCursorHover(false);
     }
 
@@ -99,6 +101,11 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             PerformAction();
             return;
         }
+
+        if (actionType == Chapter1SceneActionType.FrontDoor)
+        {
+            CancelPendingFrontDoorApproach();
+        }
     }
 
     private void PerformAction()
@@ -125,10 +132,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         switch (actionType)
         {
             case Chapter1SceneActionType.FrontDoor:
-                if (arrivalController != null)
-                {
-                    arrivalController.AnswerFrontDoor();
-                }
+                StartFrontDoorApproach();
                 break;
             case Chapter1SceneActionType.CoatCloset:
                 if (arrivalController != null)
@@ -148,6 +152,50 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
                     arrivalController.TryCompleteChapterFromDrawingRoomExit();
                 }
                 break;
+        }
+    }
+
+    private void StartFrontDoorApproach()
+    {
+        if (arrivalController == null)
+        {
+            return;
+        }
+
+        PointClickPlayerMovement playerMovement = FindAnyObjectByType<PointClickPlayerMovement>();
+
+        if (playerMovement == null)
+        {
+            arrivalController.AnswerFrontDoor();
+            return;
+        }
+
+        CancelPendingFrontDoorApproach();
+
+        if (!playerMovement.TryFindClosestReachableDestinationToWorldPoint(transform.position, out Vector2 approachDestination) ||
+            !playerMovement.TrySetDestination(approachDestination, true))
+        {
+            arrivalController.AnswerFrontDoor();
+            return;
+        }
+
+        if (!playerMovement.HasDestination)
+        {
+            arrivalController.AnswerFrontDoor();
+            return;
+        }
+
+        pendingFrontDoorApproachPlayer = playerMovement;
+        pendingFrontDoorApproachPlayer.MovementStopped += HandleFrontDoorApproachStopped;
+    }
+
+    private void HandleFrontDoorApproachStopped()
+    {
+        CancelPendingFrontDoorApproach();
+
+        if (arrivalController != null && arrivalController.IsFrontDoorActionAvailable)
+        {
+            arrivalController.AnswerFrontDoor();
         }
     }
 
@@ -178,6 +226,17 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
         ResolveReferences();
         return arrivalController != null && arrivalController.IsFrontDoorActionAvailable;
+    }
+
+    private void CancelPendingFrontDoorApproach()
+    {
+        if (pendingFrontDoorApproachPlayer == null)
+        {
+            return;
+        }
+
+        pendingFrontDoorApproachPlayer.MovementStopped -= HandleFrontDoorApproachStopped;
+        pendingFrontDoorApproachPlayer = null;
     }
 
     private bool IsPointerInsideActionBounds(Vector2 screenPosition)
