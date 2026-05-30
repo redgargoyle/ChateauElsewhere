@@ -236,29 +236,15 @@ public class Chapter1ArrivalController : MonoBehaviour
         ResolveReferences();
         Debug.Log("Front door action received.", this);
 
-        if (!sequenceActive)
+        if (!sequenceActive && !HasDoorAnswerWaiting())
         {
             Debug.Log("Front door clicked, but Chapter 1 arrival sequence is not active.", this);
             return;
         }
 
-        if (!IsPlayerInEntryRoom())
-        {
-            Debug.Log("Front door clicked, but the butler is not in the entrance hall.", this);
-            RefreshInteractionState();
-            return;
-        }
-
-        if (!IsButlerCloseToFrontDoor(playerMovement))
-        {
-            Debug.Log("Front door clicked, but the butler is not close enough to answer it.", this);
-            RefreshInteractionState();
-            return;
-        }
-
         if (pendingGuestGroups.Count == 0)
         {
-            if (emptyDoorbellWaitingForAnswer)
+            if (emptyDoorbellWaitingForAnswer || IsDoorbellRinging())
             {
                 emptyDoorbellWaitingForAnswer = false;
                 doorbellSystem?.StopRinging();
@@ -2209,12 +2195,19 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private bool IsFrontDoorActionAvailableNow()
     {
-        if (!sequenceActive || !IsPlayerInEntryRoom())
-        {
-            return false;
-        }
+        return HasDoorAnswerWaiting();
+    }
 
-        return pendingGuestGroups.Count > 0 || emptyDoorbellWaitingForAnswer;
+    private bool HasDoorAnswerWaiting()
+    {
+        return pendingGuestGroups.Count > 0 ||
+            emptyDoorbellWaitingForAnswer ||
+            IsDoorbellRinging();
+    }
+
+    private bool IsDoorbellRinging()
+    {
+        return doorbellSystem != null && doorbellSystem.IsRinging;
     }
 
     private bool IsPlayerInEntryRoom()

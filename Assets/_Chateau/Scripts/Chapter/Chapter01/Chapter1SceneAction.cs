@@ -26,7 +26,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
     private int lastPerformedFrame = -1;
     private bool cursorHoverActive;
     private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.Door;
-    private PointClickPlayerMovement pendingFrontDoorApproachPlayer;
 
     public void Initialize(
         Chapter1SceneActionType nextActionType,
@@ -71,7 +70,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void OnDisable()
     {
-        CancelPendingFrontDoorApproach();
         SetDoorCursorHover(false);
     }
 
@@ -101,11 +99,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             PerformAction();
             return;
         }
-
-        if (actionType == Chapter1SceneActionType.FrontDoor)
-        {
-            CancelPendingFrontDoorApproach();
-        }
     }
 
     private void PerformAction()
@@ -132,7 +125,10 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         switch (actionType)
         {
             case Chapter1SceneActionType.FrontDoor:
-                StartFrontDoorApproach();
+                if (arrivalController != null)
+                {
+                    arrivalController.AnswerFrontDoor();
+                }
                 break;
             case Chapter1SceneActionType.CoatCloset:
                 if (arrivalController != null)
@@ -168,72 +164,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         }
     }
 
-    private void StartFrontDoorApproach()
-    {
-        ResolveReferences();
-
-        if (arrivalController == null)
-        {
-            return;
-        }
-
-        if (!arrivalController.IsFrontDoorActionAvailable)
-        {
-            return;
-        }
-
-        PointClickPlayerMovement playerMovement = FindAnyObjectByType<PointClickPlayerMovement>();
-
-        if (playerMovement == null)
-        {
-            Debug.LogWarning("Front door clicked, but no PointClickPlayerMovement was found for the butler.", this);
-            return;
-        }
-
-        CancelPendingFrontDoorApproach();
-
-        if (!arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination))
-        {
-            Debug.LogWarning("Front door clicked, but the butler could not find a walkable spot at the door.", this);
-            return;
-        }
-
-        if (!playerMovement.TrySetDestination(approachDestination, true))
-        {
-            Debug.LogWarning("Front door clicked, but the butler could not walk to the selected door spot.", this);
-            return;
-        }
-
-        if (!playerMovement.HasDestination)
-        {
-            if (arrivalController.IsButlerCloseToFrontDoor(playerMovement))
-            {
-                arrivalController.AnswerFrontDoor();
-            }
-
-            return;
-        }
-
-        pendingFrontDoorApproachPlayer = playerMovement;
-        pendingFrontDoorApproachPlayer.MovementStopped += HandleFrontDoorApproachStopped;
-    }
-
-    private void HandleFrontDoorApproachStopped()
-    {
-        PointClickPlayerMovement playerMovement = pendingFrontDoorApproachPlayer;
-        CancelPendingFrontDoorApproach();
-
-        if (playerMovement == null || arrivalController == null)
-        {
-            return;
-        }
-
-        if (arrivalController.IsButlerCloseToFrontDoor(playerMovement))
-        {
-            arrivalController.AnswerFrontDoor();
-        }
-    }
-
     private bool IsActionCurrentlyAvailable()
     {
         if (!isActionAvailable)
@@ -248,17 +178,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
         ResolveReferences();
         return arrivalController != null && arrivalController.IsFrontDoorActionAvailable;
-    }
-
-    private void CancelPendingFrontDoorApproach()
-    {
-        if (pendingFrontDoorApproachPlayer == null)
-        {
-            return;
-        }
-
-        pendingFrontDoorApproachPlayer.MovementStopped -= HandleFrontDoorApproachStopped;
-        pendingFrontDoorApproachPlayer = null;
     }
 
     private bool IsPointerInsideActionBounds(Vector2 screenPosition)
