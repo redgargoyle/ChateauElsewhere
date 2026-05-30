@@ -24,6 +24,7 @@ public class ChapterManager : MonoBehaviour
     [Header("Chapter")]
     [SerializeField] private string currentChapterId = Chapter1Id;
     [SerializeField] private string displayedTitle = "Act 1";
+    [SerializeField] private string completionTitle = "The House Is Satisfied\nChapter One Complete";
     [SerializeField] private ChapterPhase currentPhase = ChapterPhase.NotStarted;
 
     [Header("Debug Tools")]
@@ -319,8 +320,13 @@ public class ChapterManager : MonoBehaviour
             chapterClock.StopClock();
         }
 
+        if (introUI != null)
+        {
+            introUI.ShowTitle(completionTitle);
+        }
+
         string cleanNextChapterId = string.IsNullOrWhiteSpace(nextChapterId) ? "chapter_02_pending" : nextChapterId.Trim();
-        Debug.Log($"Chapter 2 trigger requested: {cleanNextChapterId}", this);
+        Debug.Log($"Chapter completion reached. Next chapter request: {cleanNextChapterId}", this);
     }
 
     private void SetPlayerInputEnabled(bool enabled)

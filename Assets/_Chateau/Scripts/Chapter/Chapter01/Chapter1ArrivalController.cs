@@ -93,6 +93,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private bool createRuntimeClickTargets = true;
     [SerializeField] private bool snapGuestsIntoEntranceForFirstVisualPass = true;
     [SerializeField] private bool autoStoreCoatIfClosetMissing = false;
+    [SerializeField] private float drawingRoomCompletionDelaySeconds = 1.25f;
     [SerializeField] private float coatOffsetX = 34f;
     [SerializeField] private float coatOffsetY = 42f;
 
@@ -127,6 +128,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private bool hasFrontDoorAnswerSpot;
     private Vector2 frontDoorAnswerSpot;
     private bool pendingClosetStorage;
+    private Coroutine chapterCompletionRoutine;
 
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
     private const float CoatPickupReadyScreenDistance = 90f;
@@ -183,6 +185,13 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         CancelPendingCoatPickup();
         CancelPendingClosetStorage();
+
+        if (chapterCompletionRoutine != null)
+        {
+            StopCoroutine(chapterCompletionRoutine);
+            chapterCompletionRoutine = null;
+        }
+
         UnsubscribeFromRoomChanges();
     }
 
@@ -1031,6 +1040,13 @@ public class Chapter1ArrivalController : MonoBehaviour
         carriedCoatVisual = null;
         CancelPendingCoatPickup();
         CancelPendingClosetStorage();
+
+        if (chapterCompletionRoutine != null)
+        {
+            StopCoroutine(chapterCompletionRoutine);
+            chapterCompletionRoutine = null;
+        }
+
         currentGuestIndex = -1;
         hasWorldDoorCenterPosition = false;
         worldDoorCenterPosition = Vector3.zero;
@@ -1548,21 +1564,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             GuestRuntimeState guest = group.Guests[i];
 
-            if (guest.ActorState != null)
-            {
-                guest.ActorState.SetCurrentRoom(drawingRoomId);
-                guest.ActorState.SetInteractable(false);
-                guest.ActorState.SetSeated(true);
-                guest.ActorState.SetVisibleByChapterState(false);
-            }
-
-            guest.Seated = true;
-            guest.Handled = true;
-            DisableGuestMovement(guest);
-            SetGuestVisibleAfterDrawingRoomExit(guest, false);
-            SetGuestState(guest, GuestArrivalState.Seated);
-            SetGuestState(guest, GuestArrivalState.Handled);
-            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} disappeared at drawing room door.", this);
+            PlaceGuestInDrawingRoomWaitingSpot(guest);
+            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} entered drawing room and is waiting at assigned spot.", this);
         }
 
         group.Complete = true;
@@ -1570,6 +1573,73 @@ public class Chapter1ArrivalController : MonoBehaviour
         Debug.Log($"Guest group {group.GroupIndex + 1} entered the drawing room.", this);
         RefreshInteractionState();
         CheckChapterCompletionGate();
+    }
+
+    private void PlaceGuestInDrawingRoomWaitingSpot(GuestRuntimeState guest)
+    {
+        if (guest == null)
+        {
+            return;
+        }
+
+        Transform seat = guest.Seat != null ? guest.Seat : ResolveSeatForGuest(guest.GuestIndex);
+        guest.Seat = seat;
+
+        if (guest.Config != null)
+        {
+            guest.Config.SetAssignedSeat(seat);
+        }
+
+        MoveGuestObjectToDrawingRoomParent(guest, seat);
+        SetGuestVisibleAfterDrawingRoomExit(guest, true);
+        PlaceGuestAt(guest, seat, "drawing room assigned spot");
+        DisableGuestMovement(guest);
+
+        if (guest.ActorState != null)
+        {
+            guest.ActorState.enabled = true;
+            guest.ActorState.SetCurrentRoom(drawingRoomId);
+            guest.ActorState.SetAvailableInCurrentChapter(true);
+            guest.ActorState.SetVisibleByChapterState(true);
+            guest.ActorState.SetInteractable(false);
+            guest.ActorState.SetSeated(true);
+            guest.ActorState.ApplyState();
+        }
+
+        guest.Seated = true;
+        guest.Handled = true;
+        SetGuestState(guest, GuestArrivalState.Seated);
+        SetGuestState(guest, GuestArrivalState.Handled);
+    }
+
+    private void MoveGuestObjectToDrawingRoomParent(GuestRuntimeState guest, Transform drawingRoomTarget)
+    {
+        if (guest == null || guest.GuestObject == null)
+        {
+            return;
+        }
+
+        Transform nextParent = GetDrawingRoomGuestParent(drawingRoomTarget);
+
+        if (nextParent != null && guest.GuestObject.transform.parent != nextParent)
+        {
+            guest.GuestObject.transform.SetParent(nextParent, true);
+        }
+    }
+
+    private Transform GetDrawingRoomGuestParent(Transform drawingRoomTarget)
+    {
+        if (drawingRoomTarget != null && drawingRoomTarget.parent != null)
+        {
+            return drawingRoomTarget.parent;
+        }
+
+        if (drawingRoomEntryPoint != null && drawingRoomEntryPoint.parent != null)
+        {
+            return drawingRoomEntryPoint.parent;
+        }
+
+        return null;
     }
 
     private void CheckChapterCompletionGate()
@@ -1585,8 +1655,34 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        if (chapterCompletionRoutine != null)
+        {
+            return;
+        }
+
+        chapterCompletionRoutine = StartCoroutine(CompleteChapterOneAfterDrawingRoomPause());
+    }
+
+    private IEnumerator CompleteChapterOneAfterDrawingRoomPause()
+    {
+        float delaySeconds = Mathf.Max(0f, drawingRoomCompletionDelaySeconds);
+
+        if (delaySeconds > 0f)
+        {
+            yield return new WaitForSeconds(delaySeconds);
+        }
+
+        chapterCompletionRoutine = null;
+
+        if (!CanCompleteChapterOne() ||
+            navigationManager == null ||
+            !SameRoom(navigationManager.CurrentRoom, drawingRoomId))
+        {
+            yield break;
+        }
+
         sequenceActive = false;
-        chapterManager?.CompleteChapterAndTriggerNextChapter("chapter_02_pending");
+        chapterManager?.CompleteChapterAndTriggerNextChapter("chapter_01_complete");
     }
 
     private bool CanCompleteChapterOne()
