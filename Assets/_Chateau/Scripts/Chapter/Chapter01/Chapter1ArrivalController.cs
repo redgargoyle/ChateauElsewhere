@@ -1465,6 +1465,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         pickup.Initialize(this, guest.Config.GuestId, guest.Config.CoatId);
+        RefreshCoatPickupVisibilityForCurrentRoom(guest);
         return pickup;
     }
 
@@ -1926,14 +1927,14 @@ public class Chapter1ArrivalController : MonoBehaviour
             actorState.SetVisibleByChapterState(true);
             actorState.SetInteractable(false);
             actorState.ApplyState();
-
-            if (snapGuestsIntoEntranceForFirstVisualPass)
-            {
-                actorState.enabled = false;
-            }
         }
 
-        ForceRenderersAndCollidersOn(guestObject);
+        if (actorState == null)
+        {
+            ForceRenderersAndCollidersOn(guestObject);
+        }
+
+        RefreshCoatPickupVisibilityForCurrentRoom(guestState);
         Debug.Log($"Scene guest activated: {guestObject.name}", this);
     }
 
@@ -2025,15 +2026,11 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (guestState.ActorState != null)
         {
+            guestState.ActorState.enabled = true;
             guestState.ActorState.SetCurrentRoom(entryRoomId);
             guestState.ActorState.SetAvailableInCurrentChapter(true);
             guestState.ActorState.SetVisibleByChapterState(true);
             guestState.ActorState.ApplyState();
-
-            if (snapGuestsIntoEntranceForFirstVisualPass)
-            {
-                guestState.ActorState.enabled = false;
-            }
         }
 
         if (guestState.GuestObject == null)
@@ -2046,7 +2043,112 @@ public class Chapter1ArrivalController : MonoBehaviour
             DisableAmbientWalkers(guestState.GuestObject);
         }
 
-        ForceRenderersAndCollidersOn(guestState.GuestObject);
+        if (guestState.ActorState == null)
+        {
+            ForceRenderersAndCollidersOn(guestState.GuestObject);
+        }
+
+        RefreshCoatPickupVisibilityForCurrentRoom(guestState);
+    }
+
+    private void RefreshAllGuestRoomVisibility()
+    {
+        for (int i = 0; i < guestStates.Count; i++)
+        {
+            GuestRuntimeState guestState = guestStates[i];
+
+            if (guestState == null)
+            {
+                continue;
+            }
+
+            if (guestState.ActorState != null)
+            {
+                guestState.ActorState.enabled = true;
+                guestState.ActorState.ApplyState();
+            }
+
+            RefreshCoatPickupVisibilityForCurrentRoom(guestState);
+        }
+    }
+
+    private void RefreshCoatPickupVisibilityForCurrentRoom(GuestRuntimeState guestState)
+    {
+        if (guestState == null || guestState.CoatPickup == null)
+        {
+            return;
+        }
+
+        bool coatIsWaitingOnGuest = guestState.CoatOffered && !guestState.CoatTaken && !guestState.CoatStored;
+        bool guestVisibleInCurrentRoom = IsGuestVisibleInCurrentRoom(guestState);
+        bool coatShouldBeVisibleAndClickable = coatIsWaitingOnGuest && guestVisibleInCurrentRoom;
+
+        if (coatIsWaitingOnGuest)
+        {
+            SetCoatPickupRenderersVisible(guestState.CoatPickup.gameObject, coatShouldBeVisibleAndClickable);
+        }
+
+        Collider2D collider = guestState.CoatPickup.GetComponent<Collider2D>();
+
+        if (collider != null)
+        {
+            collider.enabled = coatShouldBeVisibleAndClickable;
+        }
+
+        guestState.CoatPickup.enabled = coatShouldBeVisibleAndClickable;
+    }
+
+    private bool IsGuestVisibleInCurrentRoom(GuestRuntimeState guestState)
+    {
+        if (guestState == null)
+        {
+            return false;
+        }
+
+        if (guestState.ActorState != null)
+        {
+            return guestState.ActorState.IsVisibleInCurrentRoom;
+        }
+
+        if (navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom))
+        {
+            return true;
+        }
+
+        if (guestState.Seated)
+        {
+            return SameRoom(navigationManager.CurrentRoom, drawingRoomId);
+        }
+
+        return guestState.EnteredEntranceHall && SameRoom(navigationManager.CurrentRoom, entryRoomId);
+    }
+
+    private static void SetCoatPickupRenderersVisible(GameObject coatObject, bool visible)
+    {
+        if (coatObject == null)
+        {
+            return;
+        }
+
+        Renderer[] renderers = coatObject.GetComponentsInChildren<Renderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null)
+            {
+                renderers[i].enabled = visible;
+            }
+        }
+
+        Graphic[] graphics = coatObject.GetComponentsInChildren<Graphic>(true);
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            if (graphics[i] != null)
+            {
+                graphics[i].enabled = visible;
+            }
+        }
     }
 
     private void ForceRenderersAndCollidersOn(GameObject target)
@@ -4228,6 +4330,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void HandleRoomChanged(string roomName)
     {
         RefreshInteractionState();
+        RefreshAllGuestRoomVisibility();
 
         if (SameRoom(roomName, drawingRoomId))
         {
