@@ -6,6 +6,7 @@ public class CharacterRegressionTests
 {
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string WalkerPath = "Assets/Scripts/Characters/RoomPersonWalker2D.cs";
+    private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string CharacterAnimatorDriverPath = "Assets/Scripts/Characters/CharacterAnimatorDriver.cs";
     private const string CharacterAnimationAssetBuilderPath = "Assets/Editor/CharacterAnimationAssetBuilder.cs";
     private const string CharactersReadmePath = "Assets/Scripts/Characters/README.md";
@@ -22,6 +23,13 @@ public class CharacterRegressionTests
     private const string GentlemanBlackWalkLeftClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Left.anim";
     private const string GentlemanBlackWalkRightClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Right.anim";
     private const string GentlemanBlackWalkUpClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Up.anim";
+    private const string LadyDirectionalFolder = "Assets/Characters/Lady/walk/aligned";
+    private const string LadyOverrideControllerMetaPath = "Assets/Animation/Lady/Lady.overrideController.meta";
+    private const string LadyIdleClipPath = "Assets/Animation/Lady/Lady_Idle.anim";
+    private const string LadyWalkDownClipPath = "Assets/Animation/Lady/Lady_Walk_Down.anim";
+    private const string LadyWalkLeftClipPath = "Assets/Animation/Lady/Lady_Walk_Left.anim";
+    private const string LadyWalkRightClipPath = "Assets/Animation/Lady/Lady_Walk_Right.anim";
+    private const string LadyWalkUpClipPath = "Assets/Animation/Lady/Lady_Walk_Up.anim";
     private const string AnimationFolder = "Assets/Animation";
     private const string AtlasFolder = "Assets/Art/Characters/Atlases";
     private const string SourceFolder = "Assets/Art/Characters/SourceSheets";
@@ -74,6 +82,39 @@ public class CharacterRegressionTests
         Assert.That(readmeText, Does.Contain("SpriteRenderer"));
         Assert.That(readmeText, Does.Contain("foot baseline"));
         Assert.That(readmeText, Does.Contain("prototype walking NPCs are currently disabled"));
+    }
+
+    [Test]
+    public void FirstChapterGuestUsesLadyDirectionalAnimation()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string arrivalControllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string guestOneBlock = FindPrefabInstanceBlock(sceneText, "value: Guest 1");
+        string guestTwoBlock = FindPrefabInstanceBlock(sceneText, "value: Guest 2");
+        string firstLadyFrameGuid = ReadGuidFromMeta($"{LadyDirectionalFolder}/lady_walk_01_r01_c01.png.meta");
+        string ladyControllerGuid = ReadGuidFromMeta(LadyOverrideControllerMetaPath);
+
+        Assert.That(guestOneBlock, Is.Not.Null, "Guest 1 should remain a named scene prefab instance.");
+        Assert.That(guestOneBlock, Does.Contain(firstLadyFrameGuid), "Guest 1 should preview with the root Lady frame instead of the player butler sprite.");
+        Assert.That(guestOneBlock, Does.Contain(ladyControllerGuid), "Guest 1 should use the Lady override controller so the player-style direction booleans drive her frames.");
+        Assert.That(guestTwoBlock, Is.Not.Null, "Guest 2 should remain available as the butler template for the first pair.");
+        Assert.That(guestTwoBlock, Does.Not.Contain(ladyControllerGuid), "Guest 2 should not inherit the Lady override.");
+        Assert.That(guestTwoBlock, Does.Not.Contain(firstLadyFrameGuid), "Guest 2 should not inherit the Lady preview sprite.");
+
+        Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredLadyGuestAnimation"), "Runtime guest setup should have an explicit first-guest Lady exception.");
+        Assert.That(arrivalControllerText, Does.Contain("index == 0 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[0])"), "Only the authored Guest 1 object should keep Lady animation.");
+        Assert.That(arrivalControllerText, Does.Contain("for (int i = 1; i < ChapterGuestNameAliases.Length; i++)"), "Runtime guests should clone a non-Lady guest template before falling back to Guest 1.");
+        Assert.That(arrivalControllerText, Does.Contain("guestAnimator.runtimeAnimatorController = sourceAnimator.runtimeAnimatorController"), "Non-Lady guests should be forced back to the butler controller.");
+        Assert.That(arrivalControllerText, Does.Contain("FindCharacterSpriteRenderer(guestObject)"), "Non-Lady guests should only reset the character sprite so coat sprites remain intact.");
+        Assert.That(arrivalControllerText, Does.Contain("!IsCoatVisualTransform(renderer.transform)"), "Character sprite lookup should ignore coat renderers.");
+        Assert.That(arrivalControllerText, Does.Not.Contain("guestRenderers[i].sprite = sourceRenderer.sprite"), "The butler reset must not overwrite every guest SpriteRenderer, or coats collapse to a tiny transparent corner.");
+
+        AssertLadyFramesUseSingleSpriteImports();
+        Assert.That(File.ReadAllText(LadyIdleClipPath), Does.Contain(firstLadyFrameGuid), "Lady idle should start on the same down-facing root Lady frame.");
+        AssertClipUsesLadyRow(File.ReadAllText(LadyWalkDownClipPath), 1, "down");
+        AssertClipUsesLadyRow(File.ReadAllText(LadyWalkLeftClipPath), 2, "left");
+        AssertClipUsesLadyRow(File.ReadAllText(LadyWalkRightClipPath), 3, "right");
+        AssertClipUsesLadyRow(File.ReadAllText(LadyWalkUpClipPath), 4, "up");
     }
 
     [Test]
@@ -160,6 +201,43 @@ public class CharacterRegressionTests
         Match match = Regex.Match(File.ReadAllText(metaPath), @"^guid: ([a-f0-9]{32})$", RegexOptions.Multiline);
         Assert.That(match.Success, Is.True, $"Could not find a Unity guid in {metaPath}.");
         return match.Groups[1].Value;
+    }
+
+    private static string FindPrefabInstanceBlock(string sceneText, string marker)
+    {
+        foreach (Match match in Regex.Matches(sceneText, @"PrefabInstance:[\s\S]*?(?=\n--- !u!|\z)"))
+        {
+            if (match.Value.Contains(marker))
+            {
+                return match.Value;
+            }
+        }
+
+        return null;
+    }
+
+    private static void AssertClipUsesLadyRow(string clipText, int row, string direction)
+    {
+        for (int column = 1; column <= 4; column++)
+        {
+            int frame = (row - 1) * 4 + column;
+            string frameGuid = ReadGuidFromMeta($"{LadyDirectionalFolder}/lady_walk_{frame:00}_r{row:00}_c{column:00}.png.meta");
+            Assert.That(clipText, Does.Contain(frameGuid), $"Lady walk {direction} should include frame row {row}, column {column}.");
+        }
+    }
+
+    private static void AssertLadyFramesUseSingleSpriteImports()
+    {
+        for (int frame = 1; frame <= 16; frame++)
+        {
+            int row = ((frame - 1) / 4) + 1;
+            int column = ((frame - 1) % 4) + 1;
+            string metaText = File.ReadAllText($"{LadyDirectionalFolder}/lady_walk_{frame:00}_r{row:00}_c{column:00}.png.meta");
+
+            Assert.That(metaText, Does.Contain("spriteMode: 1"), $"Lady frame {frame} should import as a single sprite for Animator clip references.");
+            Assert.That(metaText, Does.Contain("alignment: 0"), $"Lady frame {frame} should use the same importer alignment as the butler frames.");
+            Assert.That(metaText, Does.Contain("spritePivot: {x: 0.5, y: 0.0}"), $"Lady frame {frame} should serialize the same sprite pivot as the butler frames.");
+        }
     }
 
     private static void AssertDirectionalIdleClip(string clipText, string direction)

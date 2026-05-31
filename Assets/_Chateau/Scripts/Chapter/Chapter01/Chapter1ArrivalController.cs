@@ -1476,7 +1476,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             if (child == null ||
                 child == guest.GuestObject.transform ||
-                child.name.IndexOf("coat", StringComparison.OrdinalIgnoreCase) < 0)
+                !HasCoatVisualName(child))
             {
                 continue;
             }
@@ -2757,7 +2757,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private GameObject FindRuntimeGuestTemplate()
     {
-        for (int i = 0; i < ChapterGuestNameAliases.Length; i++)
+        for (int i = 1; i < ChapterGuestNameAliases.Length; i++)
         {
             GameObject guestObject = FindChapterGuestObjectByIndex(i);
 
@@ -2770,6 +2770,13 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (playerButlerReference != null)
         {
             return playerButlerReference;
+        }
+
+        GameObject firstGuestObject = FindChapterGuestObjectByIndex(0);
+
+        if (firstGuestObject != null && !runtimeGeneratedGuestObjects.Contains(firstGuestObject))
+        {
+            return firstGuestObject;
         }
 
         return null;
@@ -3000,7 +3007,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         DisablePlayerOnlyComponents(guestObject);
         DisableAmbientWalkers(guestObject);
         ConfigureGuestPhysicsForScriptedMovement(guestObject);
-        EnsureGuestAnimatorUsesButlerController(guestObject);
+        ConfigureGuestAnimatorForIndex(guestObject, index);
 
         ActorRoomState actorState = guestObject.GetComponent<ActorRoomState>();
 
@@ -3102,10 +3109,28 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
+    private void ConfigureGuestAnimatorForIndex(GameObject guestObject, int index)
+    {
+        if (ShouldUseAuthoredLadyGuestAnimation(guestObject, index))
+        {
+            return;
+        }
+
+        EnsureGuestAnimatorUsesButlerController(guestObject);
+    }
+
+    private bool ShouldUseAuthoredLadyGuestAnimation(GameObject guestObject, int index)
+    {
+        return index == 0 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[0]);
+    }
+
     private void EnsureGuestAnimatorUsesButlerController(GameObject guestObject)
     {
         Animator sourceAnimator = playerButlerReference != null
             ? playerButlerReference.GetComponentInChildren<Animator>(true)
+            : null;
+        SpriteRenderer sourceRenderer = playerButlerReference != null
+            ? playerButlerReference.GetComponentInChildren<SpriteRenderer>(true)
             : null;
 
         if (sourceAnimator == null || sourceAnimator.runtimeAnimatorController == null)
@@ -3120,12 +3145,66 @@ public class Chapter1ArrivalController : MonoBehaviour
             guestAnimator = guestObject.AddComponent<Animator>();
         }
 
-        if (guestAnimator.runtimeAnimatorController != null)
+        guestAnimator.runtimeAnimatorController = sourceAnimator.runtimeAnimatorController;
+
+        if (sourceRenderer == null || sourceRenderer.sprite == null)
         {
             return;
         }
 
-        guestAnimator.runtimeAnimatorController = sourceAnimator.runtimeAnimatorController;
+        SpriteRenderer guestRenderer = FindCharacterSpriteRenderer(guestObject);
+
+        if (guestRenderer != null)
+        {
+            guestRenderer.sprite = sourceRenderer.sprite;
+        }
+    }
+
+    private static SpriteRenderer FindCharacterSpriteRenderer(GameObject guestObject)
+    {
+        if (guestObject == null)
+        {
+            return null;
+        }
+
+        SpriteRenderer rootRenderer = guestObject.GetComponent<SpriteRenderer>();
+
+        if (rootRenderer != null)
+        {
+            return rootRenderer;
+        }
+
+        SpriteRenderer[] renderers = guestObject.GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+
+            if (renderer != null && !IsCoatVisualTransform(renderer.transform))
+            {
+                return renderer;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsCoatVisualTransform(Transform target)
+    {
+        for (Transform current = target; current != null; current = current.parent)
+        {
+            if (HasCoatVisualName(current))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasCoatVisualName(Transform target)
+    {
+        return target != null && target.name.IndexOf("coat", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private string MakeGuestId(string objectName, int index)
