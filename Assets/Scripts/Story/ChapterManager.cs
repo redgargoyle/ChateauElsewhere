@@ -20,6 +20,7 @@ public enum ChapterPhase
 public class ChapterManager : MonoBehaviour
 {
     public const string Chapter1Id = "chapter_01_arrivals";
+    public const string Chapter2Id = "chapter_02_guest_search";
 
     [Header("Chapter")]
     [SerializeField] private string currentChapterId = Chapter1Id;
@@ -41,6 +42,7 @@ public class ChapterManager : MonoBehaviour
     [SerializeField] private ChapterEventScheduler eventScheduler;
     [SerializeField] private ChapterIntroUI introUI;
     [SerializeField] private Chapter1ArrivalController chapter1ArrivalController;
+    [SerializeField] private Chapter2Controller chapter2Controller;
 
     private Coroutine chapterRoutine;
     private Coroutine chapterCompleteRoutine;
@@ -74,6 +76,7 @@ public class ChapterManager : MonoBehaviour
         managerObject.AddComponent<ChapterEventScheduler>();
         managerObject.AddComponent<ChapterIntroUI>();
         managerObject.AddComponent<Chapter1ArrivalController>();
+        managerObject.AddComponent<Chapter2Controller>();
         managerObject.AddComponent<ChapterManager>();
     }
 
@@ -213,6 +216,11 @@ public class ChapterManager : MonoBehaviour
         chapterCompleteRoutine = StartCoroutine(CompleteChapterRoutine(nextChapterId));
     }
 
+    public void SetChapterPlayerInputEnabled(bool enabled)
+    {
+        SetPlayerInputEnabled(enabled);
+    }
+
     private IEnumerator RunChapter1Routine()
     {
         SetPlayerInputEnabled(false);
@@ -319,8 +327,60 @@ public class ChapterManager : MonoBehaviour
             chapterClock.StopClock();
         }
 
-        string cleanNextChapterId = string.IsNullOrWhiteSpace(nextChapterId) ? "chapter_02_pending" : nextChapterId.Trim();
-        Debug.Log($"Chapter 2 trigger requested: {cleanNextChapterId}", this);
+        string cleanNextChapterId = NormalizeNextChapterId(nextChapterId);
+
+        if (IsChapter2Request(cleanNextChapterId))
+        {
+            currentChapterId = Chapter2Id;
+            chapterCompleteRoutine = null;
+            chapter2Controller = ResolveChapter2Controller(true);
+
+            if (chapter2Controller != null)
+            {
+                chapter2Controller.BeginChapter2(this);
+            }
+            else
+            {
+                Debug.LogWarning("Chapter 2 requested, but Chapter2Controller could not be resolved.", this);
+            }
+
+            yield break;
+        }
+
+        Debug.Log($"Next chapter requested: {cleanNextChapterId}", this);
+        chapterCompleteRoutine = null;
+    }
+
+    private static string NormalizeNextChapterId(string nextChapterId)
+    {
+        return string.IsNullOrWhiteSpace(nextChapterId) ? "chapter_02_pending" : nextChapterId.Trim();
+    }
+
+    private static bool IsChapter2Request(string nextChapterId)
+    {
+        return string.Equals(nextChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(nextChapterId, "chapter_02_pending", System.StringComparison.OrdinalIgnoreCase) ||
+            nextChapterId.StartsWith("chapter_02", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private Chapter2Controller ResolveChapter2Controller(bool createIfMissing)
+    {
+        if (chapter2Controller == null)
+        {
+            chapter2Controller = GetComponent<Chapter2Controller>();
+        }
+
+        if (chapter2Controller == null)
+        {
+            chapter2Controller = FindAnyObjectByType<Chapter2Controller>(FindObjectsInactive.Include);
+        }
+
+        if (chapter2Controller == null && createIfMissing)
+        {
+            chapter2Controller = gameObject.AddComponent<Chapter2Controller>();
+        }
+
+        return chapter2Controller;
     }
 
     private void SetPlayerInputEnabled(bool enabled)
@@ -402,6 +462,8 @@ public class ChapterManager : MonoBehaviour
         {
             chapter1ArrivalController = FindAnyObjectByType<Chapter1ArrivalController>(FindObjectsInactive.Include);
         }
+
+        ResolveChapter2Controller(false);
 
         ResolvePlayerReference();
 

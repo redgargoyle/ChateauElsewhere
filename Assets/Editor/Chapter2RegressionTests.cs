@@ -1,0 +1,114 @@
+using System.IO;
+using System.Text.RegularExpressions;
+using NUnit.Framework;
+
+public class Chapter2RegressionTests
+{
+    private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
+    private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string Chapter2DirectoryPath = "Assets/_Chateau/Scripts/Chapter/Chapter02";
+    private const string Chapter2ControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs";
+    private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
+
+    [Test]
+    public void Chapter2ScriptSpecExists()
+    {
+        Assert.That(File.Exists(Chapter2ScriptPath), Is.True, "Chapter 2 should have a markdown implementation script.");
+    }
+
+    [Test]
+    public void Chapter1ArrivalControllerDoesNotOwnChapter2()
+    {
+        string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
+
+        Assert.That(chapter1Text, Does.Not.Contain("Chapter2Controller"));
+        Assert.That(chapter1Text, Does.Not.Contain("Chapter2GuestSearchController"));
+        Assert.That(chapter1Text, Does.Not.Contain("Chapter2MonsterStingerController"));
+        Assert.That(chapter1Text, Does.Not.Contain("Chapter2InteractionHUD"));
+        Assert.That(chapter1Text, Does.Not.Contain("chapter_03_dinner_pending"));
+    }
+
+    [Test]
+    public void Chapter2ControllerExistsAndDeclaresExpectedHandoff()
+    {
+        Assert.That(File.Exists(Chapter2ControllerPath), Is.True, "Chapter 2 should have a dedicated controller.");
+
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        string[] expectedPhases =
+        {
+            "NotStarted",
+            "FadeInDrawingRoom",
+            "AwaitingAddressPrompt",
+            "ButlerSpeech",
+            "MonsterStinger",
+            "GuestSearch",
+            "DiningRoomObjective",
+            "DiningRoomReveal",
+            "Complete"
+        };
+
+        Assert.That(controllerText, Does.Match(@"\bBeginChapter2\s*\("), "Chapter2Controller should expose BeginChapter2.");
+
+        for (int i = 0; i < expectedPhases.Length; i++)
+        {
+            Assert.That(controllerText, Does.Match(@"\b" + Regex.Escape(expectedPhases[i]) + @"\b"), $"Missing Chapter 2 phase: {expectedPhases[i]}.");
+        }
+    }
+
+    [Test]
+    public void ChapterManagerHandsOffToChapter2Controller()
+    {
+        string managerText = File.ReadAllText(ChapterManagerPath);
+
+        Assert.That(managerText, Does.Contain("Chapter2Controller"), "ChapterManager should reference the Chapter 2 controller.");
+        Assert.That(managerText, Does.Contain("Chapter2Id"), "ChapterManager should expose the canonical Chapter 2 id.");
+        Assert.That(managerText, Does.Contain("chapter_02_guest_search"), "ChapterManager should normalize Chapter 2 requests to the guest-search chapter id.");
+        Assert.That(managerText, Does.Match(@"\.BeginChapter2\s*\(\s*this\s*\)"), "ChapterManager should begin Chapter 2 after the Chapter 1 fade-to-black.");
+    }
+
+    [Test]
+    public void Chapter2DoesNotUseHeavySystems()
+    {
+        if (!Directory.Exists(Chapter2DirectoryPath))
+        {
+            return;
+        }
+
+        string[] chapter2Files = Directory.GetFiles(Chapter2DirectoryPath, "*.cs", SearchOption.AllDirectories);
+        string[] forbiddenTerms =
+        {
+            "NavMeshAgent",
+            "UnityEngine.AI",
+            "BehaviorTree",
+            "QuestSystem",
+            "DialogueEditor",
+            "InventorySystem",
+            "SaveGame"
+        };
+
+        for (int i = 0; i < chapter2Files.Length; i++)
+        {
+            string fileText = File.ReadAllText(chapter2Files[i]);
+
+            for (int termIndex = 0; termIndex < forbiddenTerms.Length; termIndex++)
+            {
+                Assert.That(
+                    fileText,
+                    Does.Not.Contain(forbiddenTerms[termIndex]),
+                    $"{chapter2Files[i]} should not use {forbiddenTerms[termIndex]}.");
+            }
+        }
+    }
+
+    [Test]
+    public void Chapter2AnchorNamingConventionIsDocumented()
+    {
+        string scriptText = File.ReadAllText(Chapter2ScriptPath);
+
+        Assert.That(scriptText, Does.Match(Regex.Escape("Ch2_ButlerSpeechSpot")));
+        Assert.That(scriptText, Does.Match(Regex.Escape("Ch2_MonsterRunStart")));
+        Assert.That(scriptText, Does.Match(Regex.Escape("Ch2_MonsterFreezeTarget")));
+        Assert.That(scriptText, Does.Match(Regex.Escape("Ch2_Hide_")));
+        Assert.That(scriptText, Does.Match(Regex.Escape("Ch2_DiningSeat_")));
+    }
+}
