@@ -510,29 +510,87 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private void ResolvePlayerReference()
     {
-        if (player != null)
+        if (IsUsablePlayerTransform(player))
         {
             return;
         }
 
-        PointClickPlayerMovement playerMovement = FindAnyObjectByType<PointClickPlayerMovement>();
-        if (playerMovement != null)
-        {
-            player = playerMovement.transform;
-            return;
-        }
+        player = null;
 
         string cleanPlayerObjectName = Clean(playerObjectName);
-        if (string.IsNullOrEmpty(cleanPlayerObjectName))
+
+        if (!string.IsNullOrEmpty(cleanPlayerObjectName))
         {
-            return;
+            GameObject playerObject = GameObject.Find(cleanPlayerObjectName);
+
+            if (TryGetUsablePlayerMovement(playerObject, out PointClickPlayerMovement namedPlayerMovement))
+            {
+                player = namedPlayerMovement.transform;
+                return;
+            }
         }
 
-        GameObject playerObject = GameObject.Find(cleanPlayerObjectName);
-        if (playerObject != null)
+        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Exclude);
+
+        for (int i = 0; i < candidates.Length; i++)
         {
-            player = playerObject.transform;
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (candidate != null &&
+                string.Equals(candidate.gameObject.name, cleanPlayerObjectName, StringComparison.OrdinalIgnoreCase) &&
+                IsUsablePlayerMovement(candidate))
+            {
+                player = candidate.transform;
+                return;
+            }
         }
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (IsUsablePlayerMovement(candidate))
+            {
+                player = candidate.transform;
+                return;
+            }
+        }
+    }
+
+    private static bool TryGetUsablePlayerMovement(GameObject candidateObject, out PointClickPlayerMovement playerMovement)
+    {
+        playerMovement = candidateObject != null ? candidateObject.GetComponent<PointClickPlayerMovement>() : null;
+        return IsUsablePlayerMovement(playerMovement);
+    }
+
+    private static bool IsUsablePlayerTransform(Transform candidate)
+    {
+        return candidate != null &&
+            TryGetUsablePlayerMovement(candidate.gameObject, out _);
+    }
+
+    private static bool IsUsablePlayerMovement(PointClickPlayerMovement candidate)
+    {
+        if (candidate == null ||
+            !candidate.enabled ||
+            !candidate.gameObject.activeInHierarchy ||
+            IsLikelyChapterGuest(candidate.gameObject))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsLikelyChapterGuest(GameObject candidateObject)
+    {
+        if (candidateObject == null)
+        {
+            return false;
+        }
+
+        string candidateName = candidateObject.name.Trim();
+        return candidateName.StartsWith("Guest", StringComparison.OrdinalIgnoreCase);
     }
 
     private Camera GetCanvasCamera()

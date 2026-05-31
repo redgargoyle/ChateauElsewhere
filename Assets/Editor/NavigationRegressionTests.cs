@@ -132,6 +132,8 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("UpdateFallbackPointerHoverAndClick"), "Door triggers need a RectTransform fallback when UI pointer enter/click events are blocked.");
         Assert.That(triggerText, Does.Contain("ContainsScreenPoint"), "The fallback should test the authored door hitbox rect directly.");
         Assert.That(triggerText, Does.Contain("activeTriggers"), "The fallback should scan only active room triggers.");
+        Assert.That(triggerText, Does.Match(@"GameObject\.Find\(cleanPlayerObjectName\)[\s\S]*FindObjectsByType<PointClickPlayerMovement>"), "Door triggers should prefer the named Player before scanning fallback movement components from guest clones.");
+        Assert.That(triggerText, Does.Contain("IsLikelyChapterGuest"), "Door triggers should not cache active Chapter 1 guests as the player.");
         Assert.That(playerText, Does.Contain("TrySetDestinationFromScreenPoint"), "Navigation triggers need a public way to ask the player to walk toward a screen-space hitbox.");
         Assert.That(playerText, Does.Contain("TryEvaluateMovementAtScreenPoint"), "Cursor feedback and door approaches should use the same movement reachability query.");
         Assert.That(playerText, Does.Contain("TryGetScreenPointFromLogicalPosition"), "Door approaches need to score clamped floor points in screen space.");
