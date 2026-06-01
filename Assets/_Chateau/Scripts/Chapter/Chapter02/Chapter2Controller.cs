@@ -23,6 +23,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private ChapterIntroUI introUI;
     [SerializeField] private ChapterClock chapterClock;
     [SerializeField] private PointClickPlayerMovement playerMovement;
+    [SerializeField] private Chapter2InteractionHUD interactionHUD;
 
     [Header("Rooms")]
     [SerializeField] private string drawingRoomId = "Drawing Room";
@@ -52,6 +53,7 @@ public class Chapter2Controller : MonoBehaviour
         SetPlayerInputEnabled(false);
         MoveToDrawingRoom();
         SetChapter2Clock();
+        InitializeInteractionHUD();
 
         if (introUI != null)
         {
@@ -68,6 +70,22 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         Debug.Log("Chapter 2 started", this);
+    }
+
+    public void HandleAddressGuestsPrompt()
+    {
+        if (currentPhase != Chapter2Phase.AwaitingAddressPrompt)
+        {
+            return;
+        }
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearPrimaryAction();
+        }
+
+        SetPhase(Chapter2Phase.ButlerSpeech);
+        Debug.Log("Butler begins addressing the guests.", this);
     }
 
     private IEnumerator FadeInDrawingRoomRoutine()
@@ -141,6 +159,29 @@ public class Chapter2Controller : MonoBehaviour
         {
             playerMovement = FindAnyObjectByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
         }
+
+        if (interactionHUD == null)
+        {
+            interactionHUD = GetComponent<Chapter2InteractionHUD>();
+        }
+
+        if (interactionHUD == null)
+        {
+            interactionHUD = FindAnyObjectByType<Chapter2InteractionHUD>(FindObjectsInactive.Include);
+        }
+
+        if (interactionHUD == null)
+        {
+            interactionHUD = gameObject.AddComponent<Chapter2InteractionHUD>();
+        }
+    }
+
+    private void InitializeInteractionHUD()
+    {
+        if (interactionHUD != null)
+        {
+            interactionHUD.Initialize(this, chapterClock);
+        }
     }
 
     private void SetPlayerInputEnabled(bool enabled)
@@ -203,5 +244,27 @@ public class Chapter2Controller : MonoBehaviour
 
         currentPhase = nextPhase;
         Debug.Log($"Chapter 2 phase changed: {currentPhase}", this);
+
+        if (currentPhase == Chapter2Phase.AwaitingAddressPrompt)
+        {
+            ShowAddressGuestsPrompt();
+        }
+    }
+
+    private void ShowAddressGuestsPrompt()
+    {
+        if (interactionHUD == null)
+        {
+            ResolveReferences();
+            InitializeInteractionHUD();
+        }
+
+        if (interactionHUD == null)
+        {
+            return;
+        }
+
+        interactionHUD.SetObjective("Address the guests.");
+        interactionHUD.SetPrimaryAction("Address Guests", HandleAddressGuestsPrompt);
     }
 }

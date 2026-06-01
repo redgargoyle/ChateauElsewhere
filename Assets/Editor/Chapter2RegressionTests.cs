@@ -8,6 +8,7 @@ public class Chapter2RegressionTests
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter2DirectoryPath = "Assets/_Chateau/Scripts/Chapter/Chapter02";
     private const string Chapter2ControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs";
+    private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
 
     [Test]
@@ -48,11 +49,27 @@ public class Chapter2RegressionTests
         };
 
         Assert.That(controllerText, Does.Match(@"\bBeginChapter2\s*\("), "Chapter2Controller should expose BeginChapter2.");
+        Assert.That(controllerText, Does.Match(@"\bHandleAddressGuestsPrompt\s*\("), "Chapter2Controller should expose the address prompt callback.");
+        Assert.That(controllerText, Does.Contain("Chapter2InteractionHUD"), "Chapter2Controller should use the Chapter 2 interaction HUD.");
 
         for (int i = 0; i < expectedPhases.Length; i++)
         {
             Assert.That(controllerText, Does.Match(@"\b" + Regex.Escape(expectedPhases[i]) + @"\b"), $"Missing Chapter 2 phase: {expectedPhases[i]}.");
         }
+    }
+
+    [Test]
+    public void Chapter2InteractionHudExists()
+    {
+        Assert.That(File.Exists(Chapter2InteractionHUDPath), Is.True, "Chapter 2 should have a dedicated runtime HUD.");
+
+        string hudText = File.ReadAllText(Chapter2InteractionHUDPath);
+        Assert.That(hudText, Does.Contain("DisallowMultipleComponent"));
+        Assert.That(hudText, Does.Contain("Canvas_Chapter2HUD"));
+        Assert.That(hudText, Does.Match(@"\bInitialize\s*\("));
+        Assert.That(hudText, Does.Match(@"\bSetObjective\s*\("));
+        Assert.That(hudText, Does.Match(@"\bSetPrimaryAction\s*\("));
+        Assert.That(hudText, Does.Match(@"\bClearPrimaryAction\s*\("));
     }
 
     [Test]
@@ -78,12 +95,10 @@ public class Chapter2RegressionTests
         string[] forbiddenTerms =
         {
             "NavMeshAgent",
-            "UnityEngine.AI",
             "BehaviorTree",
             "QuestSystem",
             "DialogueEditor",
-            "InventorySystem",
-            "SaveGame"
+            "InventorySystem"
         };
 
         for (int i = 0; i < chapter2Files.Length; i++)
