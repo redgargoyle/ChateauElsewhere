@@ -24,6 +24,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private ChapterClock chapterClock;
     [SerializeField] private PointClickPlayerMovement playerMovement;
     [SerializeField] private Chapter2InteractionHUD interactionHUD;
+    [SerializeField] private Chapter2MonsterStingerController monsterStinger;
 
     [Header("Rooms")]
     [SerializeField] private string drawingRoomId = "Drawing Room";
@@ -43,6 +44,7 @@ public class Chapter2Controller : MonoBehaviour
 
     private Coroutine fadeInRoutine;
     private Coroutine openingSpeechRoutine;
+    private Coroutine monsterStingerRoutine;
 
     public Chapter2Phase CurrentPhase => currentPhase;
     public string DrawingRoomId => drawingRoomId;
@@ -131,7 +133,6 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         openingSpeechRoutine = null;
-        SetPhase(Chapter2Phase.MonsterStinger);
 
         if (interactionHUD != null)
         {
@@ -139,6 +140,8 @@ public class Chapter2Controller : MonoBehaviour
             interactionHUD.ClearStatus();
             interactionHUD.SetObjective("A terrible sound cuts through the room...");
         }
+
+        SetPhase(Chapter2Phase.MonsterStinger);
     }
 
     private IEnumerator FadeInDrawingRoomRoutine()
@@ -227,6 +230,16 @@ public class Chapter2Controller : MonoBehaviour
         {
             interactionHUD = gameObject.AddComponent<Chapter2InteractionHUD>();
         }
+
+        if (monsterStinger == null)
+        {
+            monsterStinger = GetComponent<Chapter2MonsterStingerController>();
+        }
+
+        if (monsterStinger == null)
+        {
+            monsterStinger = gameObject.AddComponent<Chapter2MonsterStingerController>();
+        }
     }
 
     private void InitializeInteractionHUD()
@@ -234,6 +247,52 @@ public class Chapter2Controller : MonoBehaviour
         if (interactionHUD != null)
         {
             interactionHUD.Initialize(this, chapterClock);
+        }
+    }
+
+    private void StartMonsterStingerRoutine()
+    {
+        if (monsterStingerRoutine != null)
+        {
+            return;
+        }
+
+        if (monsterStinger == null)
+        {
+            ResolveReferences();
+        }
+
+        SetPlayerInputEnabled(false);
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective("A terrible sound cuts through the room...");
+        }
+
+        monsterStingerRoutine = StartCoroutine(RunMonsterStingerRoutine());
+    }
+
+    private IEnumerator RunMonsterStingerRoutine()
+    {
+        if (monsterStinger != null)
+        {
+            yield return monsterStinger.PlayStinger();
+        }
+        else
+        {
+            Debug.LogWarning("Chapter 2 monster stinger requested, but Chapter2MonsterStingerController is missing.", this);
+        }
+
+        monsterStingerRoutine = null;
+        SetPhase(Chapter2Phase.GuestSearch);
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective("The guests scatter into the house.");
         }
     }
 
@@ -311,6 +370,10 @@ public class Chapter2Controller : MonoBehaviour
         if (currentPhase == Chapter2Phase.AwaitingAddressPrompt)
         {
             ShowAddressGuestsPrompt();
+        }
+        else if (currentPhase == Chapter2Phase.MonsterStinger)
+        {
+            StartMonsterStingerRoutine();
         }
     }
 

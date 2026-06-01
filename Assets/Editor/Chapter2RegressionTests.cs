@@ -9,6 +9,7 @@ public class Chapter2RegressionTests
     private const string Chapter2DirectoryPath = "Assets/_Chateau/Scripts/Chapter/Chapter02";
     private const string Chapter2ControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
+    private const string Chapter2MonsterStingerControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs";
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
 
     [Test]
@@ -51,6 +52,7 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Match(@"\bBeginChapter2\s*\("), "Chapter2Controller should expose BeginChapter2.");
         Assert.That(controllerText, Does.Match(@"\bHandleAddressGuestsPrompt\s*\("), "Chapter2Controller should expose the address prompt callback.");
         Assert.That(controllerText, Does.Contain("Chapter2InteractionHUD"), "Chapter2Controller should use the Chapter 2 interaction HUD.");
+        Assert.That(controllerText, Does.Contain("Chapter2MonsterStingerController"), "Chapter2Controller should use the Chapter 2 monster stinger controller.");
         Assert.That(controllerText, Does.Match(@"\bRunOpeningSpeechRoutine\s*\("), "Chapter2Controller should run the Butler opening speech from a coroutine.");
 
         for (int i = 0; i < expectedPhases.Length; i++)
@@ -68,6 +70,32 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Contain("speechLineSeconds = 1.75f"));
         Assert.That(controllerText, Does.Match(@"(?s)\bRunOpeningSpeechRoutine\s*\([^)]*\)\s*\{.*SetPhase\s*\(\s*Chapter2Phase\.MonsterStinger\s*\)"), "Opening speech should advance to the MonsterStinger phase.");
         Assert.That(controllerText, Does.Contain("A terrible sound cuts through the room..."));
+    }
+
+    [Test]
+    public void Chapter2MonsterStingerControllerExists()
+    {
+        Assert.That(File.Exists(Chapter2MonsterStingerControllerPath), Is.True, "Chapter 2 should have a dedicated scripted monster stinger controller.");
+
+        string stingerText = File.ReadAllText(Chapter2MonsterStingerControllerPath);
+        Assert.That(stingerText, Does.Contain("DisallowMultipleComponent"));
+        Assert.That(stingerText, Does.Contain("AudioSource"));
+        Assert.That(stingerText, Does.Match(@"\bBeginStinger\s*\("));
+        Assert.That(stingerText, Does.Match(@"\bStopStinger\s*\("));
+        Assert.That(stingerText, Does.Contain("runSeconds = 1.0f"));
+        Assert.That(stingerText, Does.Contain("freezeSeconds = 2.5f"));
+        Assert.That(stingerText, Does.Contain("violinsolo"));
+        Assert.That(stingerText, Does.Contain(".loop = loopViolinAudio"));
+    }
+
+    [Test]
+    public void Chapter2ControllerRunsMonsterStingerBeforeGuestSearch()
+    {
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+
+        Assert.That(controllerText, Does.Match(@"\bRunMonsterStingerRoutine\s*\("));
+        Assert.That(controllerText, Does.Match(@"(?s)\bRunMonsterStingerRoutine\s*\([^)]*\)\s*\{.*PlayStinger\s*\(.*SetPhase\s*\(\s*Chapter2Phase\.GuestSearch\s*\)"), "Monster stinger should complete before Chapter 2 enters GuestSearch.");
+        Assert.That(controllerText, Does.Contain("The guests scatter into the house."));
     }
 
     [Test]
@@ -107,6 +135,8 @@ public class Chapter2RegressionTests
         string[] forbiddenTerms =
         {
             "NavMeshAgent",
+            "UnityEngine.AI",
+            "ChaseTarget",
             "BehaviorTree",
             "QuestSystem",
             "DialogueEditor",
