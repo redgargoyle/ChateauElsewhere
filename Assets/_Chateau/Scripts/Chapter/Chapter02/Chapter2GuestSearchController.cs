@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class Chapter2GuestSearchController : MonoBehaviour
@@ -26,6 +27,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private string hideRoomId = "Ballroom";
     [SerializeField] private string diningSeatPrefix = "Ch2_DiningSeat_";
     [SerializeField] private int foundOrderCounter;
+    [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
 
     private Chapter2Controller chapter2Controller;
 
@@ -64,6 +66,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
         AutoAssignHideAnchorsIfNeeded();
         foundOrderCounter = 0;
 
+        if (foundGuestIdsInOrder == null)
+        {
+            foundGuestIdsInOrder = new List<string>();
+        }
+
+        foundGuestIdsInOrder.Clear();
+
         for (int i = 0; i < guests.Count; i++)
         {
             GuestSearchEntry guest = guests[i];
@@ -89,6 +98,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             }
 
             EnsureGuestUsesPersistentActorRoot(guest);
+            EnsureGuestFindAction(guest);
 
             guest.actorState.enabled = true;
             guest.actorState.PlaceAt(guest.hideAnchor.transform);
@@ -172,11 +182,35 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return false;
         }
 
-        if (!guest.found)
+        if (guest.found)
         {
-            foundOrderCounter++;
-            guest.found = true;
-            guest.foundOrder = foundOrderCounter;
+            return true;
+        }
+
+        foundOrderCounter++;
+        guest.found = true;
+        guest.foundOrder = foundOrderCounter;
+
+        if (foundGuestIdsInOrder == null)
+        {
+            foundGuestIdsInOrder = new List<string>();
+        }
+
+        foundGuestIdsInOrder.Add(GetGuestIdForOrderList(guest));
+        FillDefaultPreferences(guest);
+
+        if (guest.actorState != null)
+        {
+            guest.actorState.SetInteractable(false);
+            guest.actorState.ApplyState();
+        }
+
+        DisableGuestFindAction(guest);
+        LogGuestFound(guest);
+
+        if (AllGuestsFound && chapter2Controller != null)
+        {
+            chapter2Controller.HandleAllGuestsFound();
         }
 
         return true;
@@ -184,6 +218,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     public List<string> GetFoundGuestIdsInOrder()
     {
+        if (foundGuestIdsInOrder != null && foundGuestIdsInOrder.Count > 0)
+        {
+            return new List<string>(foundGuestIdsInOrder);
+        }
+
         List<GuestSearchEntry> foundGuests = GetFoundGuestsInOrder();
         List<string> foundGuestIds = new List<string>(foundGuests.Count);
 
@@ -210,6 +249,183 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         return foundActors;
+    }
+
+    public void SeatFoundGuestsInDiningRoom()
+    {
+        SeatGuestsInDiningRoom(GetFoundGuestsInOrder());
+    }
+
+    public void SeatGuestsInDiningRoom()
+    {
+        SeatGuestsInDiningRoom(GetGuestsInDiningSeatOrder());
+    }
+
+    private void SeatGuestsInDiningRoom(List<GuestSearchEntry> guestsToSeat)
+    {
+        RoomAnchor[] diningSeats = FindDiningSeatAnchors();
+
+        for (int i = 0; i < guestsToSeat.Count; i++)
+        {
+            GuestSearchEntry guest = guestsToSeat[i];
+
+            if (guest == null || guest.actorState == null)
+            {
+                continue;
+            }
+
+            if (i >= diningSeats.Length || diningSeats[i] == null)
+            {
+                Debug.LogWarning($"Chapter 2 guest search has no dining seat for guest '{GetGuestIdForOrderList(guest)}'.", this);
+                continue;
+            }
+
+            RoomAnchor diningSeat = diningSeats[i];
+            EnsureGuestUsesPersistentActorRoot(guest);
+            DisableGuestFindAction(guest);
+
+            guest.actorState.enabled = true;
+            HideGuestForDiningRoomTransfer(guest);
+            guest.actorState.PlaceAt(diningSeat.transform);
+            guest.actorState.SetCurrentRoom(diningSeat.RoomId);
+            guest.actorState.SetAvailableInCurrentChapter(true);
+            guest.actorState.SetVisibleByChapterState(true);
+            guest.actorState.SetInteractable(false);
+            guest.actorState.SetSeated(true);
+            guest.actorState.ApplyState();
+        }
+    }
+
+    private void HideGuestForDiningRoomTransfer(GuestSearchEntry guest)
+    {
+        if (guest == null || guest.actorState == null)
+        {
+            return;
+        }
+
+        guest.actorState.SetInteractable(false);
+        guest.actorState.SetVisibleByChapterState(false);
+        guest.actorState.ApplyState();
+    }
+
+    private void EnsureGuestFindAction(GuestSearchEntry guest)
+    {
+        if (!Application.isPlaying || guest == null || guest.actorState == null || guest.actorState.gameObject == null)
+        {
+            return;
+        }
+
+        GameObject actorObject = guest.actorState.gameObject;
+        Chapter2GuestFindAction findAction = actorObject.GetComponent<Chapter2GuestFindAction>();
+
+        if (findAction == null)
+        {
+            findAction = actorObject.AddComponent<Chapter2GuestFindAction>();
+        }
+
+        findAction.Initialize(GetGuestIdForOrderList(guest), this);
+        EnsureRuntimeClickTarget(actorObject);
+    }
+
+    private void EnsureRuntimeClickTarget(GameObject actorObject)
+    {
+        if (actorObject == null ||
+            actorObject.GetComponentInChildren<Collider>(true) != null ||
+            actorObject.GetComponentInChildren<Collider2D>(true) != null ||
+            actorObject.GetComponentInChildren<Graphic>(true) != null)
+        {
+            return;
+        }
+
+        if (actorObject.transform is RectTransform &&
+            actorObject.GetComponentInParent<Canvas>(true) != null)
+        {
+            Debug.LogWarning($"Chapter 2 guest search could not add a safe click target to UI guest '{actorObject.name}'.", this);
+            return;
+        }
+
+        BoxCollider2D clickCollider = actorObject.AddComponent<BoxCollider2D>();
+        clickCollider.isTrigger = true;
+        clickCollider.size = GetFallbackClickSize(actorObject);
+    }
+
+    private static Vector2 GetFallbackClickSize(GameObject actorObject)
+    {
+        SpriteRenderer spriteRenderer = actorObject.GetComponentInChildren<SpriteRenderer>(true);
+
+        if (spriteRenderer != null)
+        {
+            Vector3 size = spriteRenderer.bounds.size;
+            return new Vector2(Mathf.Max(0.5f, size.x), Mathf.Max(0.5f, size.y));
+        }
+
+        return new Vector2(1f, 2f);
+    }
+
+    private void FillDefaultPreferences(GuestSearchEntry guest)
+    {
+        if (guest == null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(guest.mealPreference))
+        {
+            guest.mealPreference = guest.foundOrder % 2 == 1
+                ? "fresh monte genellion de plink"
+                : "thyme with Lillums";
+        }
+
+        if (string.IsNullOrWhiteSpace(guest.smokingPreference))
+        {
+            int smokingIndex = (guest.foundOrder - 1) % 3;
+
+            if (smokingIndex == 0)
+            {
+                guest.smokingPreference = "pipe";
+            }
+            else if (smokingIndex == 1)
+            {
+                guest.smokingPreference = "cigar";
+            }
+            else
+            {
+                guest.smokingPreference = "none, thank you";
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(guest.spiritBottle))
+        {
+            guest.spiritBottle = $"{GetGuestDisplayName(guest)}'s bottle of spirits";
+        }
+    }
+
+    private void DisableGuestFindAction(GuestSearchEntry guest)
+    {
+        if (guest == null || guest.actorState == null || guest.actorState.gameObject == null)
+        {
+            return;
+        }
+
+        Chapter2GuestFindAction findAction = guest.actorState.gameObject.GetComponent<Chapter2GuestFindAction>();
+
+        if (findAction != null)
+        {
+            findAction.SetAvailable(false);
+            findAction.enabled = false;
+        }
+    }
+
+    private void LogGuestFound(GuestSearchEntry guest)
+    {
+        string guestName = GetGuestDisplayName(guest);
+
+        Debug.Log(
+            $"Butler to {guestName}: Dinner will be served at 7:00 PM sharp...\n" +
+            $"Meal preference: {guest.mealPreference}\n" +
+            $"Smoking preference: {guest.smokingPreference}\n" +
+            $"Spirits: {guest.spiritBottle}",
+            this);
     }
 
     private void EnsureGuestUsesPersistentActorRoot(GuestSearchEntry guest)
@@ -305,6 +521,28 @@ public class Chapter2GuestSearchController : MonoBehaviour
         return foundGuests;
     }
 
+    private List<GuestSearchEntry> GetGuestsInDiningSeatOrder()
+    {
+        List<GuestSearchEntry> orderedGuests = GetFoundGuestsInOrder();
+
+        if (guests == null)
+        {
+            return orderedGuests;
+        }
+
+        for (int i = 0; i < guests.Count; i++)
+        {
+            GuestSearchEntry guest = guests[i];
+
+            if (guest != null && !orderedGuests.Contains(guest))
+            {
+                orderedGuests.Add(guest);
+            }
+        }
+
+        return orderedGuests;
+    }
+
     private RoomAnchor[] FindHideAnchors()
     {
         RoomAnchor[] anchors = FindObjectsByType<RoomAnchor>(FindObjectsInactive.Include);
@@ -330,6 +568,31 @@ public class Chapter2GuestSearchController : MonoBehaviour
         return hideAnchors.ToArray();
     }
 
+    private RoomAnchor[] FindDiningSeatAnchors()
+    {
+        RoomAnchor[] anchors = FindObjectsByType<RoomAnchor>(FindObjectsInactive.Include);
+        List<RoomAnchor> diningSeats = new List<RoomAnchor>();
+
+        for (int i = 0; i < anchors.Length; i++)
+        {
+            RoomAnchor anchor = anchors[i];
+
+            if (anchor == null)
+            {
+                continue;
+            }
+
+            if (StartsWithPrefix(anchor.name, diningSeatPrefix) ||
+                StartsWithPrefix(anchor.AnchorId, diningSeatPrefix))
+            {
+                diningSeats.Add(anchor);
+            }
+        }
+
+        diningSeats.Sort(CompareAnchorName);
+        return diningSeats.ToArray();
+    }
+
     private string GetGuestHideRoomId(RoomAnchor hideAnchor)
     {
         if (!string.IsNullOrWhiteSpace(hideRoomId))
@@ -338,6 +601,46 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         return hideAnchor != null ? hideAnchor.RoomId : string.Empty;
+    }
+
+    private static string GetGuestIdForOrderList(GuestSearchEntry guest)
+    {
+        if (guest == null)
+        {
+            return string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(guest.guestId))
+        {
+            return guest.guestId.Trim();
+        }
+
+        if (guest.actorState != null && !string.IsNullOrWhiteSpace(guest.actorState.ActorId))
+        {
+            return guest.actorState.ActorId.Trim();
+        }
+
+        return GetGuestDisplayName(guest);
+    }
+
+    private static string GetGuestDisplayName(GuestSearchEntry guest)
+    {
+        if (guest == null)
+        {
+            return "Guest";
+        }
+
+        if (!string.IsNullOrWhiteSpace(guest.displayName))
+        {
+            return guest.displayName.Trim();
+        }
+
+        if (guest.actorState != null && guest.actorState.gameObject != null)
+        {
+            return guest.actorState.gameObject.name;
+        }
+
+        return string.IsNullOrWhiteSpace(guest.guestId) ? "Guest" : guest.guestId.Trim();
     }
 
     private static bool IsLikelyChapterGuest(ActorRoomState actorState)

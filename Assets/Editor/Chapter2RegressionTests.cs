@@ -6,12 +6,14 @@ public class Chapter2RegressionTests
 {
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ChapterIntroUIPath = "Assets/Scripts/Story/ChapterIntroUI.cs";
+    private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter2DirectoryPath = "Assets/_Chateau/Scripts/Chapter/Chapter02";
     private const string Chapter2ControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
     private const string Chapter2MonsterStingerControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs";
     private const string Chapter2GuestSearchControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs";
+    private const string Chapter2GuestFindActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs";
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
 
     [Test]
@@ -71,6 +73,7 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Contain("Chapter2MonsterStingerController"), "Chapter2Controller should use the Chapter 2 monster stinger controller.");
         Assert.That(controllerText, Does.Contain("Chapter2GuestSearchController"), "Chapter2Controller should use the Chapter 2 guest search controller.");
         Assert.That(controllerText, Does.Match(@"\bRunOpeningSpeechRoutine\s*\("), "Chapter2Controller should run the Butler opening speech from a coroutine.");
+        Assert.That(controllerText, Does.Match(@"\bHandleAllGuestsFound\s*\("), "Chapter2Controller should handle the all-guests-found transition.");
 
         for (int i = 0; i < expectedPhases.Length; i++)
         {
@@ -135,6 +138,92 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Contain("Ch2_DiningSeat_"));
         Assert.That(guestSearchText, Does.Match(@"\bBeginSearch\s*\("));
         Assert.That(guestSearchText, Does.Match(@"\bMarkGuestFound\s*\("));
+    }
+
+    [Test]
+    public void Chapter2GuestFindActionMarksGuestsFound()
+    {
+        Assert.That(File.Exists(Chapter2GuestFindActionPath), Is.True, "Chapter 2 should have a dedicated guest find click action.");
+
+        string actionText = File.ReadAllText(Chapter2GuestFindActionPath);
+        Assert.That(actionText, Does.Contain("DisallowMultipleComponent"));
+        Assert.That(actionText, Does.Contain("IPointerClickHandler"));
+        Assert.That(actionText, Does.Contain("OnMouseDown"));
+        Assert.That(actionText, Does.Contain("MarkGuestFound(guestId)"));
+    }
+
+    [Test]
+    public void Chapter2GuestSearchRecordsFoundOrderAndPreferences()
+    {
+        string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+
+        Assert.That(guestSearchText, Does.Contain("foundGuestIdsInOrder"));
+        Assert.That(guestSearchText, Does.Contain("foundOrderCounter++"));
+        Assert.That(guestSearchText, Does.Contain("guest.foundOrder = foundOrderCounter"));
+        Assert.That(guestSearchText, Does.Contain("mealPreference"));
+        Assert.That(guestSearchText, Does.Contain("fresh monte genellion de plink"));
+        Assert.That(guestSearchText, Does.Contain("thyme with Lillums"));
+        Assert.That(guestSearchText, Does.Contain("smokingPreference"));
+        Assert.That(guestSearchText, Does.Contain("pipe"));
+        Assert.That(guestSearchText, Does.Contain("cigar"));
+        Assert.That(guestSearchText, Does.Contain("none, thank you"));
+        Assert.That(guestSearchText, Does.Contain("spiritBottle"));
+        Assert.That(guestSearchText, Does.Contain("bottle of spirits"));
+        Assert.That(guestSearchText, Does.Contain("HandleAllGuestsFound()"));
+    }
+
+    [Test]
+    public void Chapter2SeatsFoundGuestsBeforeDiningRoomFade()
+    {
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+
+        Assert.That(guestSearchText, Does.Match(@"\bSeatFoundGuestsInDiningRoom\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bSeatGuestsInDiningRoom\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bGetGuestsInDiningSeatOrder\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bFindDiningSeatAnchors\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bHideGuestForDiningRoomTransfer\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bHideGuestForDiningRoomTransfer\s*\([^)]*\)\s*\{.*SetVisibleByChapterState\(false\).*ApplyState\(\)"), "Guests should be hidden from the Ballroom before being moved to Dining Room seats.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*HideGuestForDiningRoomTransfer\(guest\).*PlaceAt\(diningSeat\.transform\).*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*ApplyState\(\)"), "Dining seating should hide, move, assign Dining Room, then restore visibility through ActorRoomState.");
+        Assert.That(guestSearchText, Does.Contain("SetCurrentRoom(diningSeat.RoomId)"));
+        Assert.That(guestSearchText, Does.Contain("SetSeated(true)"));
+        Assert.That(controllerText, Does.Contain("SeatGuestsInDiningRoom()"));
+        Assert.That(controllerText, Does.Contain("guestSearch.SeatGuestsInDiningRoom()"));
+        Assert.That(controllerText, Does.Contain("diningRoomFadeDelayGameMinutes = 5f"));
+        Assert.That(controllerText, Does.Contain("ShouldWatchDinnerTime()"));
+        Assert.That(controllerText, Does.Contain("currentPhase == Chapter2Phase.GuestSearch"));
+        Assert.That(controllerText, Does.Contain("TrySeatDinnerGuestsAtDinnerTime()"));
+        Assert.That(controllerText, Does.Contain("HasReachedDinnerTime()"));
+        Assert.That(controllerText, Does.Contain("chapterClock.HasReachedTime(dinnerHour, dinnerMinute)"));
+        Assert.That(controllerText, Does.Contain("StartChapter2Clock()"));
+        Assert.That(controllerText, Does.Contain("chapterClock.StartClock()"));
+        Assert.That(controllerText, Does.Contain("HasReachedDiningRoomFadeTime()"));
+        Assert.That(controllerText, Does.Contain("GetDinnerTotalMinutes() + Mathf.CeilToInt"));
+        Assert.That(controllerText, Does.Contain("IsCurrentRoom(diningRoomId)"));
+        Assert.That(controllerText, Does.Contain("CompleteChapterAndTriggerNextChapter(\"chapter_03_dinner_pending\")"));
+        Assert.That(controllerText, Does.Not.Contain("SetStartTime(19, 0)"));
+    }
+
+    [Test]
+    public void Chapter2HideAnchorsAreAuthoredInBallroom()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        Match ballroomTransformMatch = Regex.Match(sceneText, @"(?s)m_Name: Room_Ballroom.*?--- !u!224 &(?<transformId>\d+)\s+RectTransform:");
+
+        Assert.That(ballroomTransformMatch.Success, Is.True, "Gameplay scene should contain a Room_Ballroom RectTransform.");
+
+        string ballroomTransformId = ballroomTransformMatch.Groups["transformId"].Value;
+
+        for (int guestNumber = 1; guestNumber <= 8; guestNumber++)
+        {
+            string guestAnchorName = $"Ch2_Hide_Guest{guestNumber:00}";
+            string anchorPattern =
+                $@"(?s)m_Name: {Regex.Escape(guestAnchorName)}.*?" +
+                $@"m_Father: \{{fileID: {Regex.Escape(ballroomTransformId)}\}}.*?" +
+                $@"anchorId: {Regex.Escape(guestAnchorName)}\s+roomId: Ballroom";
+
+            Assert.That(sceneText, Does.Match(anchorPattern), $"{guestAnchorName} should be parented under Room_Ballroom and marked as Ballroom.");
+        }
     }
 
     [Test]

@@ -37,6 +37,9 @@ public class Chapter2Controller : MonoBehaviour
     [Header("State")]
     [SerializeField] private Chapter2Phase currentPhase = Chapter2Phase.NotStarted;
     [SerializeField] private bool debugFastMode;
+    [SerializeField, Range(0, 23)] private int dinnerHour = 19;
+    [SerializeField, Range(0, 59)] private int dinnerMinute;
+    [SerializeField] private float diningRoomFadeDelayGameMinutes = 5f;
 
     [Header("Speech")]
     [SerializeField] private float speechLineSeconds = 1.75f;
@@ -49,6 +52,9 @@ public class Chapter2Controller : MonoBehaviour
     private Coroutine fadeInRoutine;
     private Coroutine openingSpeechRoutine;
     private Coroutine monsterStingerRoutine;
+    private Coroutine diningRoomCompletionRoutine;
+    private bool allGuestsFoundHandled;
+    private bool dinnerSeatingHandled;
 
     public Chapter2Phase CurrentPhase => currentPhase;
     public string DrawingRoomId => drawingRoomId;
@@ -63,6 +69,9 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         chapterManager = manager;
+        allGuestsFoundHandled = false;
+        dinnerSeatingHandled = false;
+        diningRoomCompletionRoutine = null;
         ResolveReferences();
         SetPhase(Chapter2Phase.FadeInDrawingRoom);
         SetPlayerInputEnabled(false);
@@ -85,6 +94,21 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         Debug.Log("Chapter 2 started", this);
+    }
+
+    private void Update()
+    {
+        if (!ShouldWatchDinnerTime())
+        {
+            return;
+        }
+
+        TrySeatDinnerGuestsAtDinnerTime();
+
+        if (dinnerSeatingHandled && IsCurrentRoom(diningRoomId))
+        {
+            StartDiningRoomCompletionRoutine();
+        }
     }
 
     public void HandleAddressGuestsPrompt()
@@ -110,6 +134,61 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         openingSpeechRoutine = StartCoroutine(RunOpeningSpeechRoutine());
+    }
+
+    public void HandleAllGuestsFound()
+    {
+        if (allGuestsFoundHandled)
+        {
+            return;
+        }
+
+        allGuestsFoundHandled = true;
+        SetPhase(Chapter2Phase.DiningRoomObjective);
+        StartChapter2Clock();
+        TrySeatDinnerGuestsAtDinnerTime();
+
+        SetPlayerInputEnabled(true);
+        UpdateDiningRoomObjective();
+
+        if (dinnerSeatingHandled && IsCurrentRoom(diningRoomId))
+        {
+            StartDiningRoomCompletionRoutine();
+        }
+    }
+
+    private void TrySeatDinnerGuestsAtDinnerTime()
+    {
+        if (dinnerSeatingHandled || !HasReachedDinnerTime())
+        {
+            return;
+        }
+
+        allGuestsFoundHandled = true;
+        dinnerSeatingHandled = true;
+        SeatGuestsInDiningRoom();
+        SetPhase(Chapter2Phase.DiningRoomObjective);
+        SetPlayerInputEnabled(true);
+        UpdateDiningRoomObjective();
+    }
+
+    private void UpdateDiningRoomObjective()
+    {
+        if (interactionHUD == null)
+        {
+            return;
+        }
+
+        interactionHUD.ClearPrimaryAction();
+        interactionHUD.ClearStatus();
+
+        if (dinnerSeatingHandled)
+        {
+            interactionHUD.SetObjective("The clock strikes 7:00. Go to the Dining Room.");
+            return;
+        }
+
+        interactionHUD.SetObjective("All guests found. Go to the Dining Room before 7:00 PM.");
     }
 
     private IEnumerator RunOpeningSpeechRoutine()
@@ -306,6 +385,7 @@ public class Chapter2Controller : MonoBehaviour
         monsterStingerRoutine = null;
         StartGuestSearch();
         SetPhase(Chapter2Phase.GuestSearch);
+        StartChapter2Clock();
         SetPlayerInputEnabled(true);
 
         if (interactionHUD != null)
@@ -331,6 +411,62 @@ public class Chapter2Controller : MonoBehaviour
 
         guestSearch.Initialize(this);
         guestSearch.BeginSearch();
+    }
+
+    private void SeatGuestsInDiningRoom()
+    {
+        if (guestSearch == null)
+        {
+            ResolveReferences();
+        }
+
+        if (guestSearch != null)
+        {
+            guestSearch.SeatGuestsInDiningRoom();
+        }
+    }
+
+    private void StartDiningRoomCompletionRoutine()
+    {
+        if (diningRoomCompletionRoutine != null)
+        {
+            return;
+        }
+
+        diningRoomCompletionRoutine = StartCoroutine(RunDiningRoomCompletionRoutine());
+    }
+
+    private IEnumerator RunDiningRoomCompletionRoutine()
+    {
+        SetPhase(Chapter2Phase.DiningRoomReveal);
+        StartChapter2Clock();
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective("Dinner is served.");
+        }
+
+        if (chapterClock != null)
+        {
+            while (!HasReachedDiningRoomFadeTime())
+            {
+                yield return null;
+            }
+        }
+        else
+        {
+            yield return new WaitForSeconds(GetFallbackDiningRoomFadeSeconds());
+        }
+
+        diningRoomCompletionRoutine = null;
+        SetPhase(Chapter2Phase.Complete);
+
+        if (chapterManager != null)
+        {
+            chapterManager.CompleteChapterAndTriggerNextChapter("chapter_03_dinner_pending");
+        }
     }
 
     private void SetPlayerInputEnabled(bool enabled)
@@ -363,6 +499,19 @@ public class Chapter2Controller : MonoBehaviour
         navigationManager.MoveToRoom(drawingRoomId);
     }
 
+    private bool IsCurrentRoom(string roomId)
+    {
+        return navigationManager != null &&
+            !string.IsNullOrWhiteSpace(roomId) &&
+            string.Equals(navigationManager.CurrentRoom, roomId, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool ShouldWatchDinnerTime()
+    {
+        return currentPhase == Chapter2Phase.GuestSearch ||
+            currentPhase == Chapter2Phase.DiningRoomObjective;
+    }
+
     private void SetChapter2Clock()
     {
         if (chapterClock == null)
@@ -372,6 +521,14 @@ public class Chapter2Controller : MonoBehaviour
 
         chapterClock.StopClock();
         chapterClock.SetStartTime(18, 5);
+    }
+
+    private void StartChapter2Clock()
+    {
+        if (chapterClock != null && !chapterClock.IsRunning)
+        {
+            chapterClock.StartClock();
+        }
     }
 
     private float GetFadeSeconds()
@@ -402,6 +559,46 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         return Mathf.Max(0f, speechLineSeconds);
+    }
+
+    private float GetFallbackDiningRoomFadeSeconds()
+    {
+        if (debugFastMode || (chapterManager != null && chapterManager.DebugFastMode))
+        {
+            return 0.15f;
+        }
+
+        return Mathf.Max(0f, diningRoomFadeDelayGameMinutes);
+    }
+
+    private bool HasReachedDinnerTime()
+    {
+        if (chapterClock == null)
+        {
+            return true;
+        }
+
+        return chapterClock.HasReachedTime(dinnerHour, dinnerMinute);
+    }
+
+    private bool HasReachedDiningRoomFadeTime()
+    {
+        if (chapterClock == null)
+        {
+            return true;
+        }
+
+        return chapterClock.CurrentTotalMinutes >= GetDiningRoomFadeTotalMinutes();
+    }
+
+    private int GetDiningRoomFadeTotalMinutes()
+    {
+        return GetDinnerTotalMinutes() + Mathf.CeilToInt(Mathf.Max(0f, diningRoomFadeDelayGameMinutes));
+    }
+
+    private int GetDinnerTotalMinutes()
+    {
+        return ChapterClock.ToTotalMinutes(dinnerHour, dinnerMinute);
     }
 
     private void SetPhase(Chapter2Phase nextPhase)
