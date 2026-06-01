@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -10,6 +12,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private const string CanvasName = "Canvas_Chapter2HUD";
     private const string ObjectiveTextName = "Text_Chapter2Objective";
     private const string StatusTextName = "Text_Chapter2Status";
+    private const string FoundListTextName = "Text_Chapter2FoundList";
     private const string PrimaryButtonName = "Button_Chapter2PrimaryAction";
     private const string PrimaryButtonLabelName = "Text_Chapter2PrimaryAction";
 
@@ -18,6 +21,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private Canvas canvas;
     private TMP_Text objectiveText;
     private TMP_Text statusText;
+    private TMP_Text foundListText;
     private Button primaryButton;
     private TMP_Text primaryButtonLabel;
     private Action primaryActionCallback;
@@ -90,6 +94,48 @@ public class Chapter2InteractionHUD : MonoBehaviour
         }
     }
 
+    public void SetFoundGuests(IReadOnlyList<string> names, int foundCount, int totalCount)
+    {
+        EnsureUI();
+
+        if (foundListText == null)
+        {
+            return;
+        }
+
+        if (totalCount <= 0)
+        {
+            foundListText.text = string.Empty;
+            foundListText.gameObject.SetActive(false);
+            return;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.Append("Guests Found ");
+        builder.Append(Mathf.Clamp(foundCount, 0, totalCount));
+        builder.Append('/');
+        builder.Append(totalCount);
+
+        if (names != null)
+        {
+            for (int i = 0; i < names.Count; i++)
+            {
+                if (string.IsNullOrWhiteSpace(names[i]))
+                {
+                    continue;
+                }
+
+                builder.AppendLine();
+                builder.Append(i + 1);
+                builder.Append(". ");
+                builder.Append(names[i].Trim());
+            }
+        }
+
+        foundListText.text = builder.ToString();
+        foundListText.gameObject.SetActive(true);
+    }
+
     private void HandlePrimaryActionClicked()
     {
         primaryActionCallback?.Invoke();
@@ -134,6 +180,14 @@ public class Chapter2InteractionHUD : MonoBehaviour
         statusRect.pivot = new Vector2(0f, 1f);
         statusRect.anchoredPosition = new Vector2(18f, -18f);
         statusRect.sizeDelta = new Vector2(500f, 90f);
+
+        foundListText = FindOrCreateText(root, FoundListTextName, 18f, TextAlignmentOptions.TopRight);
+        RectTransform foundListRect = foundListText.GetComponent<RectTransform>();
+        foundListRect.anchorMin = new Vector2(1f, 1f);
+        foundListRect.anchorMax = new Vector2(1f, 1f);
+        foundListRect.pivot = new Vector2(1f, 1f);
+        foundListRect.anchoredPosition = new Vector2(-24f, -150f);
+        foundListRect.sizeDelta = new Vector2(360f, 220f);
 
         primaryButton = FindOrCreatePrimaryButton(root);
         RectTransform buttonRect = primaryButton.GetComponent<RectTransform>();

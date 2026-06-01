@@ -24,7 +24,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     [SerializeField] private List<GuestSearchEntry> guests = new List<GuestSearchEntry>();
     [SerializeField] private string hideAnchorPrefix = "Ch2_Hide_";
-    [SerializeField] private string hideRoomId = "Ballroom";
     [SerializeField] private string diningSeatPrefix = "Ch2_DiningSeat_";
     [SerializeField] private int foundOrderCounter;
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
@@ -32,7 +31,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private Chapter2Controller chapter2Controller;
 
     public string DiningSeatPrefix => diningSeatPrefix;
-    public string HideRoomId => hideRoomId;
+    public int GuestCount => CountGuests();
+    public int FoundGuestCount => CountFoundGuests();
 
     public bool AllGuestsFound
     {
@@ -102,7 +102,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
             guest.actorState.enabled = true;
             guest.actorState.PlaceAt(guest.hideAnchor.transform);
-            guest.actorState.SetCurrentRoom(GetGuestHideRoomId(guest.hideAnchor));
+            guest.actorState.SetCurrentRoom(guest.hideAnchor.RoomId);
             guest.actorState.SetAvailableInCurrentChapter(true);
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(true);
@@ -152,6 +152,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         RoomAnchor[] hideAnchors = FindHideAnchors();
         int anchorIndex = 0;
+        guests.Sort(CompareGuestIdentity);
 
         for (int i = 0; i < guests.Count; i++)
         {
@@ -208,6 +209,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
         DisableGuestFindAction(guest);
         LogGuestFound(guest);
 
+        if (chapter2Controller != null)
+        {
+            chapter2Controller.HandleGuestSearchProgressChanged();
+        }
+
         if (AllGuestsFound && chapter2Controller != null)
         {
             chapter2Controller.HandleAllGuestsFound();
@@ -235,6 +241,19 @@ public class Chapter2GuestSearchController : MonoBehaviour
         return foundGuestIds;
     }
 
+    public List<string> GetFoundGuestDisplayNamesInOrder()
+    {
+        List<GuestSearchEntry> foundGuests = GetFoundGuestsInOrder();
+        List<string> displayNames = new List<string>(foundGuests.Count);
+
+        for (int i = 0; i < foundGuests.Count; i++)
+        {
+            displayNames.Add(GetGuestDisplayName(foundGuests[i]));
+        }
+
+        return displayNames;
+    }
+
     public List<ActorRoomState> GetFoundActorsInOrder()
     {
         List<GuestSearchEntry> foundGuests = GetFoundGuestsInOrder();
@@ -259,6 +278,28 @@ public class Chapter2GuestSearchController : MonoBehaviour
     public void SeatGuestsInDiningRoom()
     {
         SeatGuestsInDiningRoom(GetGuestsInDiningSeatOrder());
+    }
+
+    public void PrepareGuestsForDiningTransfer()
+    {
+        if (guests == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < guests.Count; i++)
+        {
+            GuestSearchEntry guest = guests[i];
+
+            if (guest == null || guest.actorState == null)
+            {
+                continue;
+            }
+
+            EnsureGuestUsesPersistentActorRoot(guest);
+            DisableGuestFindAction(guest);
+            HideGuestForDiningRoomTransfer(guest);
+        }
     }
 
     private void SeatGuestsInDiningRoom(List<GuestSearchEntry> guestsToSeat)
@@ -593,16 +634,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
         return diningSeats.ToArray();
     }
 
-    private string GetGuestHideRoomId(RoomAnchor hideAnchor)
-    {
-        if (!string.IsNullOrWhiteSpace(hideRoomId))
-        {
-            return hideRoomId.Trim();
-        }
-
-        return hideAnchor != null ? hideAnchor.RoomId : string.Empty;
-    }
-
     private static string GetGuestIdForOrderList(GuestSearchEntry guest)
     {
         if (guest == null)
@@ -674,6 +705,51 @@ public class Chapter2GuestSearchController : MonoBehaviour
         int leftOrder = left != null ? left.foundOrder : int.MaxValue;
         int rightOrder = right != null ? right.foundOrder : int.MaxValue;
         return leftOrder.CompareTo(rightOrder);
+    }
+
+    private static int CompareGuestIdentity(GuestSearchEntry left, GuestSearchEntry right)
+    {
+        return string.Compare(GetGuestIdForOrderList(left), GetGuestIdForOrderList(right), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private int CountGuests()
+    {
+        if (guests == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+
+        for (int i = 0; i < guests.Count; i++)
+        {
+            if (guests[i] != null)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private int CountFoundGuests()
+    {
+        if (guests == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+
+        for (int i = 0; i < guests.Count; i++)
+        {
+            if (guests[i] != null && guests[i].found)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     private static bool StartsWithPrefix(string value, string prefix)

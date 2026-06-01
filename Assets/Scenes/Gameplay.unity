@@ -1207,14 +1207,6 @@ RectTransform:
   - {fileID: 2501000085}
   - {fileID: 2103000001}
   - {fileID: 234229601}
-  - {fileID: 3601000001}
-  - {fileID: 3601000011}
-  - {fileID: 3601000021}
-  - {fileID: 3601000031}
-  - {fileID: 3601000041}
-  - {fileID: 3601000051}
-  - {fileID: 3601000061}
-  - {fileID: 3601000071}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -4762,6 +4754,7 @@ RectTransform:
   - {fileID: 898630984}
   - {fileID: 598810695}
   - {fileID: 1055422819}
+  - {fileID: 3601000011}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -18136,6 +18129,7 @@ RectTransform:
   - {fileID: 1178311781}
   - {fileID: 31657297}
   - {fileID: 1199634577}
+  - {fileID: 3601000001}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -20199,6 +20193,7 @@ RectTransform:
   - {fileID: 2103000041}
   - {fileID: 1145086437}
   - {fileID: 618835547}
+  - {fileID: 3601000041}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -29003,6 +28998,7 @@ RectTransform:
   - {fileID: 1671400690}
   - {fileID: 1960525757}
   - {fileID: 2300000004}
+  - {fileID: 3601000031}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -29218,6 +29214,7 @@ RectTransform:
   - {fileID: 1690104634}
   - {fileID: 21640001}
   - {fileID: 21640005}
+  - {fileID: 3601000021}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -29633,6 +29630,7 @@ RectTransform:
   - {fileID: 501669349}
   - {fileID: 816966937}
   - {fileID: 2300000034}
+  - {fileID: 3601000051}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -29835,6 +29833,7 @@ RectTransform:
   - {fileID: 722591740}
   - {fileID: 1181162049}
   - {fileID: 2300000044}
+  - {fileID: 3601000061}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -30243,6 +30242,7 @@ RectTransform:
   - {fileID: 745402552}
   - {fileID: 1595660949}
   - {fileID: 234018330}
+  - {fileID: 3601000071}
   m_Father: {fileID: 668915133}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -36347,7 +36347,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 43637645}
+  m_Father: {fileID: 1367921345}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -36367,7 +36367,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anchorId: Ch2_Hide_Guest01
-  roomId: Ballroom
+  roomId: Library
 --- !u!1 &3601000010
 GameObject:
   m_ObjectHideFlags: 0
@@ -36397,7 +36397,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 43637645}
+  m_Father: {fileID: 354156756}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -36417,7 +36417,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anchorId: Ch2_Hide_Guest02
-  roomId: Ballroom
+  roomId: Music Room
 --- !u!1 &3601000020
 GameObject:
   m_ObjectHideFlags: 0
@@ -36447,7 +36447,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 43637645}
+  m_Father: {fileID: 2300000011}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -36467,7 +36467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anchorId: Ch2_Hide_Guest03
-  roomId: Ballroom
+  roomId: Billiard Room
 --- !u!1 &3601000030
 GameObject:
   m_ObjectHideFlags: 0
@@ -36497,7 +36497,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 43637645}
+  m_Father: {fileID: 2300000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -36517,7 +36517,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anchorId: Ch2_Hide_Guest04
-  roomId: Ballroom
+  roomId: Conservatory
 --- !u!1 &3601000040
 GameObject:
   m_ObjectHideFlags: 0
@@ -36547,7 +36547,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 43637645}
+  m_Father: {fileID: 1541978211}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -36567,7 +36567,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anchorId: Ch2_Hide_Guest05
-  roomId: Ballroom
+  roomId: Kitchen
 --- !u!1 &3601000050
 GameObject:
   m_ObjectHideFlags: 0
@@ -36597,7 +36597,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 43637645}
+  m_Father: {fileID: 2300000031}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -36617,7 +36617,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anchorId: Ch2_Hide_Guest06
-  roomId: Ballroom
+  roomId: Chapel
 --- !u!1 &3601000060
 GameObject:
   m_ObjectHideFlags: 0
@@ -36647,7 +36647,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 43637645}
+  m_Father: {fileID: 2300000041}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -36667,7 +36667,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anchorId: Ch2_Hide_Guest07
-  roomId: Ballroom
+  roomId: Upper Gallery
 --- !u!1 &3601000070
 GameObject:
   m_ObjectHideFlags: 0
@@ -36697,7 +36697,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 43637645}
+  m_Father: {fileID: 2300000061}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -36717,7 +36717,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anchorId: Ch2_Hide_Guest08
-  roomId: Ballroom
+  roomId: Blue Bedroom
 --- !u!1 &3602000000
 GameObject:
   m_ObjectHideFlags: 0

@@ -39,7 +39,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private bool debugFastMode;
     [SerializeField, Range(0, 23)] private int dinnerHour = 19;
     [SerializeField, Range(0, 59)] private int dinnerMinute;
-    [SerializeField] private float diningRoomFadeDelayGameMinutes = 5f;
+    [SerializeField] private float diningRoomRevealSeconds = 5f;
 
     [Header("Speech")]
     [SerializeField] private float speechLineSeconds = 1.75f;
@@ -98,14 +98,13 @@ public class Chapter2Controller : MonoBehaviour
 
     private void Update()
     {
-        if (!ShouldWatchDinnerTime())
+        if (currentPhase == Chapter2Phase.GuestSearch && HasReachedDinnerTime())
         {
+            BeginDiningRoomObjective();
             return;
         }
 
-        TrySeatDinnerGuestsAtDinnerTime();
-
-        if (dinnerSeatingHandled && IsCurrentRoom(diningRoomId))
+        if (currentPhase == Chapter2Phase.DiningRoomObjective && IsCurrentRoom(diningRoomId))
         {
             StartDiningRoomCompletionRoutine();
         }
@@ -138,38 +137,33 @@ public class Chapter2Controller : MonoBehaviour
 
     public void HandleAllGuestsFound()
     {
+        BeginDiningRoomObjective();
+    }
+
+    public void HandleGuestSearchProgressChanged()
+    {
+        UpdateFoundGuestsHud();
+    }
+
+    private void BeginDiningRoomObjective()
+    {
         if (allGuestsFoundHandled)
         {
             return;
         }
 
         allGuestsFoundHandled = true;
+        SetDinnerClockAndStop();
+        PrepareGuestsForDiningTransfer();
         SetPhase(Chapter2Phase.DiningRoomObjective);
-        StartChapter2Clock();
-        TrySeatDinnerGuestsAtDinnerTime();
-
         SetPlayerInputEnabled(true);
+        UpdateFoundGuestsHud();
         UpdateDiningRoomObjective();
 
-        if (dinnerSeatingHandled && IsCurrentRoom(diningRoomId))
+        if (IsCurrentRoom(diningRoomId))
         {
             StartDiningRoomCompletionRoutine();
         }
-    }
-
-    private void TrySeatDinnerGuestsAtDinnerTime()
-    {
-        if (dinnerSeatingHandled || !HasReachedDinnerTime())
-        {
-            return;
-        }
-
-        allGuestsFoundHandled = true;
-        dinnerSeatingHandled = true;
-        SeatGuestsInDiningRoom();
-        SetPhase(Chapter2Phase.DiningRoomObjective);
-        SetPlayerInputEnabled(true);
-        UpdateDiningRoomObjective();
     }
 
     private void UpdateDiningRoomObjective()
@@ -181,14 +175,7 @@ public class Chapter2Controller : MonoBehaviour
 
         interactionHUD.ClearPrimaryAction();
         interactionHUD.ClearStatus();
-
-        if (dinnerSeatingHandled)
-        {
-            interactionHUD.SetObjective("The clock strikes 7:00. Go to the Dining Room.");
-            return;
-        }
-
-        interactionHUD.SetObjective("All guests found. Go to the Dining Room before 7:00 PM.");
+        interactionHUD.SetObjective("The clock strikes 7:00. Go to the Dining Room.");
     }
 
     private IEnumerator RunOpeningSpeechRoutine()
@@ -411,10 +398,16 @@ public class Chapter2Controller : MonoBehaviour
 
         guestSearch.Initialize(this);
         guestSearch.BeginSearch();
+        UpdateFoundGuestsHud();
     }
 
     private void SeatGuestsInDiningRoom()
     {
+        if (dinnerSeatingHandled)
+        {
+            return;
+        }
+
         if (guestSearch == null)
         {
             ResolveReferences();
@@ -423,6 +416,21 @@ public class Chapter2Controller : MonoBehaviour
         if (guestSearch != null)
         {
             guestSearch.SeatGuestsInDiningRoom();
+        }
+
+        dinnerSeatingHandled = true;
+    }
+
+    private void PrepareGuestsForDiningTransfer()
+    {
+        if (guestSearch == null)
+        {
+            ResolveReferences();
+        }
+
+        if (guestSearch != null)
+        {
+            guestSearch.PrepareGuestsForDiningTransfer();
         }
     }
 
@@ -439,7 +447,7 @@ public class Chapter2Controller : MonoBehaviour
     private IEnumerator RunDiningRoomCompletionRoutine()
     {
         SetPhase(Chapter2Phase.DiningRoomReveal);
-        StartChapter2Clock();
+        SeatGuestsInDiningRoom();
 
         if (interactionHUD != null)
         {
@@ -448,17 +456,7 @@ public class Chapter2Controller : MonoBehaviour
             interactionHUD.SetObjective("Dinner is served.");
         }
 
-        if (chapterClock != null)
-        {
-            while (!HasReachedDiningRoomFadeTime())
-            {
-                yield return null;
-            }
-        }
-        else
-        {
-            yield return new WaitForSeconds(GetFallbackDiningRoomFadeSeconds());
-        }
+        yield return new WaitForSeconds(GetDiningRoomRevealSeconds());
 
         diningRoomCompletionRoutine = null;
         SetPhase(Chapter2Phase.Complete);
@@ -506,12 +504,6 @@ public class Chapter2Controller : MonoBehaviour
             string.Equals(navigationManager.CurrentRoom, roomId, System.StringComparison.OrdinalIgnoreCase);
     }
 
-    private bool ShouldWatchDinnerTime()
-    {
-        return currentPhase == Chapter2Phase.GuestSearch ||
-            currentPhase == Chapter2Phase.DiningRoomObjective;
-    }
-
     private void SetChapter2Clock()
     {
         if (chapterClock == null)
@@ -529,6 +521,17 @@ public class Chapter2Controller : MonoBehaviour
         {
             chapterClock.StartClock();
         }
+    }
+
+    private void SetDinnerClockAndStop()
+    {
+        if (chapterClock == null)
+        {
+            return;
+        }
+
+        chapterClock.StopClock();
+        chapterClock.SetStartTime(dinnerHour, dinnerMinute);
     }
 
     private float GetFadeSeconds()
@@ -561,14 +564,14 @@ public class Chapter2Controller : MonoBehaviour
         return Mathf.Max(0f, speechLineSeconds);
     }
 
-    private float GetFallbackDiningRoomFadeSeconds()
+    private float GetDiningRoomRevealSeconds()
     {
         if (debugFastMode || (chapterManager != null && chapterManager.DebugFastMode))
         {
             return 0.15f;
         }
 
-        return Mathf.Max(0f, diningRoomFadeDelayGameMinutes);
+        return Mathf.Max(0f, diningRoomRevealSeconds);
     }
 
     private bool HasReachedDinnerTime()
@@ -579,26 +582,6 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         return chapterClock.HasReachedTime(dinnerHour, dinnerMinute);
-    }
-
-    private bool HasReachedDiningRoomFadeTime()
-    {
-        if (chapterClock == null)
-        {
-            return true;
-        }
-
-        return chapterClock.CurrentTotalMinutes >= GetDiningRoomFadeTotalMinutes();
-    }
-
-    private int GetDiningRoomFadeTotalMinutes()
-    {
-        return GetDinnerTotalMinutes() + Mathf.CeilToInt(Mathf.Max(0f, diningRoomFadeDelayGameMinutes));
-    }
-
-    private int GetDinnerTotalMinutes()
-    {
-        return ChapterClock.ToTotalMinutes(dinnerHour, dinnerMinute);
     }
 
     private void SetPhase(Chapter2Phase nextPhase)
@@ -636,5 +619,18 @@ public class Chapter2Controller : MonoBehaviour
 
         interactionHUD.SetObjective("Address the guests.");
         interactionHUD.SetPrimaryAction("Address Guests", HandleAddressGuestsPrompt);
+    }
+
+    private void UpdateFoundGuestsHud()
+    {
+        if (interactionHUD == null || guestSearch == null)
+        {
+            return;
+        }
+
+        interactionHUD.SetFoundGuests(
+            guestSearch.GetFoundGuestDisplayNamesInOrder(),
+            guestSearch.FoundGuestCount,
+            guestSearch.GuestCount);
     }
 }
