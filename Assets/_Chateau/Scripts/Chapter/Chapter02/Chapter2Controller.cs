@@ -98,12 +98,6 @@ public class Chapter2Controller : MonoBehaviour
 
     private void Update()
     {
-        if (currentPhase == Chapter2Phase.GuestSearch && HasReachedDinnerTime())
-        {
-            BeginDiningRoomObjective();
-            return;
-        }
-
         if (currentPhase == Chapter2Phase.DiningRoomObjective && IsCurrentRoom(diningRoomId))
         {
             StartDiningRoomCompletionRoutine();
@@ -372,7 +366,6 @@ public class Chapter2Controller : MonoBehaviour
         monsterStingerRoutine = null;
         StartGuestSearch();
         SetPhase(Chapter2Phase.GuestSearch);
-        StartChapter2Clock();
         SetPlayerInputEnabled(true);
 
         if (interactionHUD != null)
@@ -515,14 +508,6 @@ public class Chapter2Controller : MonoBehaviour
         chapterClock.SetStartTime(18, 5);
     }
 
-    private void StartChapter2Clock()
-    {
-        if (chapterClock != null && !chapterClock.IsRunning)
-        {
-            chapterClock.StartClock();
-        }
-    }
-
     private void SetDinnerClockAndStop()
     {
         if (chapterClock == null)
@@ -572,16 +557,6 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         return Mathf.Max(0f, diningRoomRevealSeconds);
-    }
-
-    private bool HasReachedDinnerTime()
-    {
-        if (chapterClock == null)
-        {
-            return true;
-        }
-
-        return chapterClock.HasReachedTime(dinnerHour, dinnerMinute);
     }
 
     private void SetPhase(Chapter2Phase nextPhase)

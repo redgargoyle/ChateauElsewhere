@@ -15,12 +15,16 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     [SerializeField] private string drawingRoomId = "Drawing Room";
     [SerializeField] private AudioSource violinAudioSource;
     [SerializeField] private AudioClip violinAudioClip;
-    [SerializeField] private string fallbackViolinClipName = "violinsolo";
-    [SerializeField] private bool loopViolinAudio = true;
+    [SerializeField] private string fallbackViolinClipName = "violinscreech";
+    [SerializeField] private bool loopViolinAudio;
+    [SerializeField] private bool forceMonsterToFront = true;
+    [SerializeField] private string monsterSortingLayerName = "People";
+    [SerializeField] private int monsterSortingOrder = 9999;
+    [SerializeField] private int monsterOverlaySortingOrder = 10000;
     [SerializeField] private float runSeconds = 1.0f;
     [SerializeField] private float freezeSeconds = 2.5f;
     [SerializeField] private float maxVisibleSeconds = 7f;
-    [SerializeField] private int cyclesBeforeComplete = 3;
+    [SerializeField] private int cyclesBeforeComplete = 1;
     [SerializeField] private bool createPlaceholderMonsterIfMissing = true;
 
     private Coroutine stingerRoutine;
@@ -81,7 +85,15 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         ResolveReferences();
         SubscribeToRoomChanges();
 
-        int cycleCount = Mathf.Max(0, cyclesBeforeComplete);
+        if (monsterObject != null && runStart != null)
+        {
+            monsterObject.transform.position = runStart.position;
+        }
+
+        ApplyMonsterRoomVisibility();
+        PlayViolinAudioIfVisible(true);
+
+        int cycleCount = cyclesBeforeComplete > 0 ? 1 : 0;
 
         for (int i = 0; i < cycleCount && HasVisibleTimeRemaining(); i++)
         {
@@ -407,6 +419,11 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             monsterObject.SetActive(shouldShow);
         }
 
+        if (shouldShow)
+        {
+            BringMonsterToFront();
+        }
+
         if (!shouldShow)
         {
             StopViolinAudio();
@@ -446,9 +463,87 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         }
     }
 
-    private void PlayViolinAudioIfVisible()
+    private void BringMonsterToFront()
     {
-        if (CanShowMonster() && violinAudioSource != null && !violinAudioSource.isPlaying)
+        if (!forceMonsterToFront || monsterObject == null)
+        {
+            return;
+        }
+
+        monsterObject.transform.SetAsLastSibling();
+        EnsureMonsterOverlayCanvas();
+
+        Renderer[] renderers = monsterObject.GetComponentsInChildren<Renderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer targetRenderer = renderers[i];
+
+            if (targetRenderer == null)
+            {
+                continue;
+            }
+
+            if (HasSortingLayer(monsterSortingLayerName))
+            {
+                targetRenderer.sortingLayerName = monsterSortingLayerName;
+            }
+
+            targetRenderer.sortingOrder = monsterSortingOrder;
+        }
+    }
+
+    private void EnsureMonsterOverlayCanvas()
+    {
+        Canvas monsterCanvas = monsterObject.GetComponent<Canvas>();
+
+        if (monsterCanvas == null)
+        {
+            monsterCanvas = monsterObject.AddComponent<Canvas>();
+        }
+
+        monsterCanvas.overrideSorting = true;
+        monsterCanvas.sortingOrder = monsterOverlaySortingOrder;
+
+        if (HasSortingLayer(monsterSortingLayerName))
+        {
+            monsterCanvas.sortingLayerName = monsterSortingLayerName;
+        }
+    }
+
+    private static bool HasSortingLayer(string sortingLayerName)
+    {
+        if (string.IsNullOrWhiteSpace(sortingLayerName))
+        {
+            return false;
+        }
+
+        SortingLayer[] layers = SortingLayer.layers;
+
+        for (int i = 0; i < layers.Length; i++)
+        {
+            if (string.Equals(layers[i].name, sortingLayerName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void PlayViolinAudioIfVisible(bool restart = false)
+    {
+        if (!CanShowMonster() || violinAudioSource == null || violinAudioSource.clip == null)
+        {
+            return;
+        }
+
+        if (restart)
+        {
+            violinAudioSource.Stop();
+        }
+
+        if (!violinAudioSource.isPlaying)
         {
             violinAudioSource.Play();
         }

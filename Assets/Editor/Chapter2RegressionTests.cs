@@ -104,12 +104,19 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Match(@"\bStopStinger\s*\("));
         Assert.That(stingerText, Does.Contain("runSeconds = 1.0f"));
         Assert.That(stingerText, Does.Contain("freezeSeconds = 2.5f"));
-        Assert.That(stingerText, Does.Contain("violinsolo"));
+        Assert.That(stingerText, Does.Contain("cyclesBeforeComplete = 1"));
+        Assert.That(stingerText, Does.Contain("cyclesBeforeComplete > 0 ? 1 : 0"));
+        Assert.That(stingerText, Does.Contain("violinscreech"));
+        Assert.That(stingerText, Does.Contain("loopViolinAudio;"));
         Assert.That(stingerText, Does.Contain(".loop = loopViolinAudio"));
         Assert.That(stingerText, Does.Contain("drawingRoomId = \"Drawing Room\""));
         Assert.That(stingerText, Does.Contain("maxVisibleSeconds = 7f"));
         Assert.That(stingerText, Does.Contain("OnCurrentRoomChanged"));
         Assert.That(stingerText, Does.Contain("SetActive(false)"));
+        Assert.That(stingerText, Does.Contain("SetAsLastSibling"));
+        Assert.That(stingerText, Does.Contain("monsterSortingOrder = 9999"));
+        Assert.That(stingerText, Does.Contain("monsterOverlaySortingOrder = 10000"));
+        Assert.That(stingerText, Does.Contain("overrideSorting = true"));
     }
 
     [Test]
@@ -199,13 +206,14 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Contain("SeatGuestsInDiningRoom()"));
         Assert.That(controllerText, Does.Contain("guestSearch.SeatGuestsInDiningRoom()"));
         Assert.That(controllerText, Does.Contain("diningRoomRevealSeconds = 5f"));
-        Assert.That(controllerText, Does.Contain("currentPhase == Chapter2Phase.GuestSearch && HasReachedDinnerTime()"));
+        Assert.That(controllerText, Does.Match(@"(?s)\bHandleAllGuestsFound\s*\([^)]*\)\s*\{.*BeginDiningRoomObjective\s*\(\s*\)"), "Finding all guests should be the only path that makes the clock strike 7.");
         Assert.That(controllerText, Does.Contain("currentPhase == Chapter2Phase.DiningRoomObjective && IsCurrentRoom(diningRoomId)"));
-        Assert.That(controllerText, Does.Contain("HasReachedDinnerTime()"));
-        Assert.That(controllerText, Does.Contain("chapterClock.HasReachedTime(dinnerHour, dinnerMinute)"));
         Assert.That(controllerText, Does.Contain("chapterClock.SetStartTime(dinnerHour, dinnerMinute)"));
-        Assert.That(controllerText, Does.Contain("StartChapter2Clock()"));
-        Assert.That(controllerText, Does.Contain("chapterClock.StartClock()"));
+        Assert.That(controllerText, Does.Not.Contain("currentPhase == Chapter2Phase.GuestSearch && HasReachedDinnerTime()"));
+        Assert.That(controllerText, Does.Not.Contain("HasReachedDinnerTime()"));
+        Assert.That(controllerText, Does.Not.Contain("chapterClock.HasReachedTime(dinnerHour, dinnerMinute)"));
+        Assert.That(controllerText, Does.Not.Contain("StartChapter2Clock()"));
+        Assert.That(controllerText, Does.Not.Contain("chapterClock.StartClock()"));
         Assert.That(controllerText, Does.Contain("IsCurrentRoom(diningRoomId)"));
         Assert.That(controllerText, Does.Match(@"(?s)\bRunDiningRoomCompletionRoutine\s*\([^)]*\)\s*\{.*SetPhase\s*\(\s*Chapter2Phase\.DiningRoomReveal\s*\).*SeatGuestsInDiningRoom\s*\(\).*WaitForSeconds\s*\(\s*GetDiningRoomRevealSeconds\s*\(\s*\)\s*\).*CompleteChapterAndTriggerNextChapter\(""chapter_03_dinner_pending""\)"), "Guests should be seated on Dining Room reveal, then fade after a short realtime hold.");
         Assert.That(controllerText, Does.Contain("CompleteChapterAndTriggerNextChapter(\"chapter_03_dinner_pending\")"));
