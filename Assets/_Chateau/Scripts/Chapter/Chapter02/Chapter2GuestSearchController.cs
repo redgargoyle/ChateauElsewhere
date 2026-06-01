@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -34,6 +35,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private string cigarPreference = "cigar";
     [SerializeField] private string pipePreference = "pipe";
     [SerializeField] private string noSmokingPreference = "none, thank you";
+    [SerializeField] private float guestExitSeconds = 0.85f;
+    [SerializeField] private float guestExitDistance = 0.75f;
 
     private Chapter2Controller chapter2Controller;
     private GuestSearchEntry activeConversationGuest;
@@ -216,6 +219,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         DisableGuestFindAction(guest);
         LogGuestFound(guest);
+        SendGuestToDiningRoomAfterConversation(guest);
 
         if (chapter2Controller != null)
         {
@@ -370,7 +374,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetAvailableInCurrentChapter(true);
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(false);
-            guest.actorState.SetSeated(true);
+            guest.actorState.SetSeated(false);
             guest.actorState.ApplyState();
         }
     }
@@ -505,6 +509,67 @@ public class Chapter2GuestSearchController : MonoBehaviour
             $"Smoking preference: {guest.smokingPreference}\n" +
             $"Spirits: {guest.spiritBottle}",
             this);
+    }
+
+    private void SendGuestToDiningRoomAfterConversation(GuestSearchEntry guest)
+    {
+        if (guest == null || guest.actorState == null)
+        {
+            return;
+        }
+
+        if (Application.isPlaying && isActiveAndEnabled)
+        {
+            StartCoroutine(RunGuestExitToDiningRoomRoutine(guest));
+            return;
+        }
+
+        StageGuestForDiningRoomReveal(guest);
+    }
+
+    private IEnumerator RunGuestExitToDiningRoomRoutine(GuestSearchEntry guest)
+    {
+        ActorRoomState actorState = guest != null ? guest.actorState : null;
+
+        if (actorState == null || actorState.gameObject == null)
+        {
+            yield break;
+        }
+
+        Transform actorTransform = actorState.gameObject.transform;
+        Vector3 startPosition = actorTransform.position;
+        Vector3 exitPosition = startPosition + new Vector3(guestExitDistance, 0f, 0f);
+        float duration = Mathf.Max(0.01f, guestExitSeconds);
+        float elapsed = 0f;
+
+        while (elapsed < duration && actorState != null && actorState.IsVisibleInCurrentRoom)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            actorTransform.position = Vector3.Lerp(startPosition, exitPosition, t);
+            yield return null;
+        }
+
+        StageGuestForDiningRoomReveal(guest);
+    }
+
+    private void StageGuestForDiningRoomReveal(GuestSearchEntry guest)
+    {
+        if (guest == null || guest.actorState == null)
+        {
+            return;
+        }
+
+        string targetRoom = chapter2Controller != null && !string.IsNullOrWhiteSpace(chapter2Controller.DiningRoomId)
+            ? chapter2Controller.DiningRoomId
+            : "Dining Room";
+
+        guest.actorState.SetInteractable(false);
+        guest.actorState.SetCurrentRoom(targetRoom);
+        guest.actorState.SetAvailableInCurrentChapter(true);
+        guest.actorState.SetVisibleByChapterState(false);
+        guest.actorState.SetSeated(false);
+        guest.actorState.ApplyState();
     }
 
     private void ShowDinnerAnnouncement(GuestSearchEntry guest)
