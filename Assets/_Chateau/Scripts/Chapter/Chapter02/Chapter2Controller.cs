@@ -33,7 +33,16 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private Chapter2Phase currentPhase = Chapter2Phase.NotStarted;
     [SerializeField] private bool debugFastMode;
 
+    [Header("Speech")]
+    [SerializeField] private float speechLineSeconds = 1.75f;
+    [SerializeField]
+    private string[] openingSpeechLines =
+    {
+        "Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"
+    };
+
     private Coroutine fadeInRoutine;
+    private Coroutine openingSpeechRoutine;
 
     public Chapter2Phase CurrentPhase => currentPhase;
     public string DrawingRoomId => drawingRoomId;
@@ -79,6 +88,8 @@ public class Chapter2Controller : MonoBehaviour
             return;
         }
 
+        SetPlayerInputEnabled(false);
+
         if (interactionHUD != null)
         {
             interactionHUD.ClearPrimaryAction();
@@ -86,6 +97,48 @@ public class Chapter2Controller : MonoBehaviour
 
         SetPhase(Chapter2Phase.ButlerSpeech);
         Debug.Log("Butler begins addressing the guests.", this);
+
+        if (openingSpeechRoutine != null)
+        {
+            StopCoroutine(openingSpeechRoutine);
+        }
+
+        openingSpeechRoutine = StartCoroutine(RunOpeningSpeechRoutine());
+    }
+
+    private IEnumerator RunOpeningSpeechRoutine()
+    {
+        if (openingSpeechLines != null)
+        {
+            for (int i = 0; i < openingSpeechLines.Length; i++)
+            {
+                string line = openingSpeechLines[i];
+
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    continue;
+                }
+
+                if (interactionHUD != null)
+                {
+                    interactionHUD.SetObjective(line);
+                    interactionHUD.SetStatus(line);
+                }
+
+                Debug.Log($"Butler: {line}", this);
+                yield return new WaitForSeconds(GetSpeechLineSeconds());
+            }
+        }
+
+        openingSpeechRoutine = null;
+        SetPhase(Chapter2Phase.MonsterStinger);
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective("A terrible sound cuts through the room...");
+        }
     }
 
     private IEnumerator FadeInDrawingRoomRoutine()
@@ -233,6 +286,16 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         return introUI != null ? introUI.FadeFromBlackSeconds : 1.5f;
+    }
+
+    private float GetSpeechLineSeconds()
+    {
+        if (debugFastMode || (chapterManager != null && chapterManager.DebugFastMode))
+        {
+            return 0.15f;
+        }
+
+        return Mathf.Max(0f, speechLineSeconds);
     }
 
     private void SetPhase(Chapter2Phase nextPhase)

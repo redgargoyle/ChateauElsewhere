@@ -21,6 +21,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private Button primaryButton;
     private TMP_Text primaryButtonLabel;
     private Action primaryActionCallback;
+    private string statusOverrideText;
 
     private void Update()
     {
@@ -44,6 +45,19 @@ public class Chapter2InteractionHUD : MonoBehaviour
             objectiveText.text = text ?? string.Empty;
             objectiveText.gameObject.SetActive(!string.IsNullOrWhiteSpace(objectiveText.text));
         }
+    }
+
+    public void SetStatus(string text)
+    {
+        EnsureUI();
+        statusOverrideText = text;
+        UpdateStatusText();
+    }
+
+    public void ClearStatus()
+    {
+        statusOverrideText = null;
+        UpdateStatusText();
     }
 
     public void SetPrimaryAction(string label, Action callback)
@@ -111,7 +125,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
         objectiveRect.anchorMax = new Vector2(0.5f, 0f);
         objectiveRect.pivot = new Vector2(0.5f, 0f);
         objectiveRect.anchoredPosition = new Vector2(0f, 104f);
-        objectiveRect.sizeDelta = new Vector2(620f, 44f);
+        objectiveRect.sizeDelta = new Vector2(900f, 76f);
 
         statusText = FindOrCreateText(root, StatusTextName, 18f, TextAlignmentOptions.Left);
         RectTransform statusRect = statusText.GetComponent<RectTransform>();
@@ -119,7 +133,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
         statusRect.anchorMax = new Vector2(0f, 1f);
         statusRect.pivot = new Vector2(0f, 1f);
         statusRect.anchoredPosition = new Vector2(18f, -18f);
-        statusRect.sizeDelta = new Vector2(360f, 60f);
+        statusRect.sizeDelta = new Vector2(500f, 90f);
 
         primaryButton = FindOrCreatePrimaryButton(root);
         RectTransform buttonRect = primaryButton.GetComponent<RectTransform>();
@@ -139,6 +153,12 @@ public class Chapter2InteractionHUD : MonoBehaviour
     {
         if (statusText == null)
         {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(statusOverrideText))
+        {
+            statusText.text = statusOverrideText;
             return;
         }
 
@@ -167,6 +187,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
         text.fontSize = fontSize;
         text.color = Color.white;
         text.alignment = alignment;
+        text.textWrappingMode = TextWrappingModes.Normal;
         text.raycastTarget = false;
         return text;
     }

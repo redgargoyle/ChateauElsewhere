@@ -51,11 +51,23 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Match(@"\bBeginChapter2\s*\("), "Chapter2Controller should expose BeginChapter2.");
         Assert.That(controllerText, Does.Match(@"\bHandleAddressGuestsPrompt\s*\("), "Chapter2Controller should expose the address prompt callback.");
         Assert.That(controllerText, Does.Contain("Chapter2InteractionHUD"), "Chapter2Controller should use the Chapter 2 interaction HUD.");
+        Assert.That(controllerText, Does.Match(@"\bRunOpeningSpeechRoutine\s*\("), "Chapter2Controller should run the Butler opening speech from a coroutine.");
 
         for (int i = 0; i < expectedPhases.Length; i++)
         {
             Assert.That(controllerText, Does.Match(@"\b" + Regex.Escape(expectedPhases[i]) + @"\b"), $"Missing Chapter 2 phase: {expectedPhases[i]}.");
         }
+    }
+
+    [Test]
+    public void Chapter2OpeningSpeechStopsAtMonsterStinger()
+    {
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+
+        Assert.That(controllerText, Does.Contain("Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"));
+        Assert.That(controllerText, Does.Contain("speechLineSeconds = 1.75f"));
+        Assert.That(controllerText, Does.Match(@"(?s)\bRunOpeningSpeechRoutine\s*\([^)]*\)\s*\{.*SetPhase\s*\(\s*Chapter2Phase\.MonsterStinger\s*\)"), "Opening speech should advance to the MonsterStinger phase.");
+        Assert.That(controllerText, Does.Contain("A terrible sound cuts through the room..."));
     }
 
     [Test]
