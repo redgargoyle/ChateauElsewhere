@@ -107,6 +107,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private readonly HashSet<GameObject> runtimeGeneratedGuestObjects = new HashSet<GameObject>();
     private int currentGuestIndex = -1;
     private bool sequenceActive;
+    private bool chapterCompletionRequested;
     private bool finalEmptyDoorbellOccurred;
     private bool emptyDoorbellWaitingForAnswer;
     private bool butlerCarryingCoat;
@@ -177,7 +178,10 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void OnEnable()
     {
-        SubscribeToRoomChanges();
+        if (sequenceActive && !chapterCompletionRequested)
+        {
+            SubscribeToRoomChanges();
+        }
     }
 
     private void OnDisable()
@@ -1025,6 +1029,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void ResetChapterRuntime()
     {
+        chapterCompletionRequested = false;
         finalEmptyDoorbellOccurred = false;
         emptyDoorbellWaitingForAnswer = false;
         butlerCarryingCoat = false;
@@ -1607,6 +1612,11 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void CheckChapterCompletionGate()
     {
+        if (!sequenceActive || chapterCompletionRequested)
+        {
+            return;
+        }
+
         if (!CanCompleteChapterOne())
         {
             return;
@@ -1618,7 +1628,9 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        chapterCompletionRequested = true;
         sequenceActive = false;
+        UnsubscribeFromRoomChanges();
         chapterManager?.CompleteChapterAndTriggerNextChapter("chapter_02_pending");
     }
 
@@ -4264,6 +4276,11 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void HandleRoomChanged(string roomName)
     {
+        if (!sequenceActive || chapterCompletionRequested)
+        {
+            return;
+        }
+
         RefreshInteractionState();
         RefreshAllGuestRoomVisibility();
         QueueDeferredGuestRoomVisibilityRefresh();

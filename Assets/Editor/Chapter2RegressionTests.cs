@@ -266,6 +266,21 @@ public class Chapter2RegressionTests
     }
 
     [Test]
+    public void Chapter1CannotRetriggerChapter2AfterHandoff()
+    {
+        string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string managerText = File.ReadAllText(ChapterManagerPath);
+
+        Assert.That(chapter1Text, Does.Contain("chapterCompletionRequested"), "Chapter 1 should remember that its Chapter 2 handoff already fired.");
+        Assert.That(chapter1Text, Does.Match(@"(?s)\bCheckChapterCompletionGate\s*\([^)]*\)\s*\{.*!sequenceActive \|\| chapterCompletionRequested"), "Chapter 1 completion gate should not run after Chapter 1 has ended.");
+        Assert.That(chapter1Text, Does.Match(@"(?s)chapterCompletionRequested = true;.*sequenceActive = false;.*UnsubscribeFromRoomChanges\(\);.*CompleteChapterAndTriggerNextChapter\(""chapter_02_pending""\)"), "Chapter 1 should unsubscribe before requesting Chapter 2.");
+        Assert.That(chapter1Text, Does.Match(@"(?s)\bHandleRoomChanged\s*\([^)]*\)\s*\{.*!sequenceActive \|\| chapterCompletionRequested"), "Re-entering Drawing Room after Chapter 1 should not call the completion gate.");
+
+        Assert.That(managerText, Does.Contain("IsDuplicateChapter2Request"), "ChapterManager should reject duplicate Chapter 2 handoff requests before fading.");
+        Assert.That(managerText, Does.Contain("Chapter 2 request ignored because Chapter 2 is already active."));
+    }
+
+    [Test]
     public void Chapter2DoesNotUseHeavySystems()
     {
         if (!Directory.Exists(Chapter2DirectoryPath))

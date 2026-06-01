@@ -225,12 +225,20 @@ public class ChapterManager : MonoBehaviour
 
     public void CompleteChapterAndTriggerNextChapter(string nextChapterId)
     {
+        string cleanNextChapterId = NormalizeNextChapterId(nextChapterId);
+
+        if (IsDuplicateChapter2Request(cleanNextChapterId))
+        {
+            Debug.Log("Chapter 2 request ignored because Chapter 2 is already active.", this);
+            return;
+        }
+
         if (chapterCompleteRoutine != null)
         {
             return;
         }
 
-        chapterCompleteRoutine = StartCoroutine(CompleteChapterRoutine(nextChapterId));
+        chapterCompleteRoutine = StartCoroutine(CompleteChapterRoutine(cleanNextChapterId));
     }
 
     public void SetChapterPlayerInputEnabled(bool enabled)
@@ -423,6 +431,19 @@ public class ChapterManager : MonoBehaviour
         return string.Equals(nextChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
             string.Equals(nextChapterId, "chapter_02_pending", System.StringComparison.OrdinalIgnoreCase) ||
             nextChapterId.StartsWith("chapter_02", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsDuplicateChapter2Request(string nextChapterId)
+    {
+        if (!IsChapter2Request(nextChapterId))
+        {
+            return false;
+        }
+
+        ResolveChapter2Controller(false);
+
+        return string.Equals(currentChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
+            (chapter2Controller != null && chapter2Controller.CurrentPhase != Chapter2Phase.NotStarted);
     }
 
     private Chapter2Controller ResolveChapter2Controller(bool createIfMissing)
