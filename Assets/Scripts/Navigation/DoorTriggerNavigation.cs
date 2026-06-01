@@ -282,7 +282,71 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     public bool TryFindArrivalDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)
     {
         ResolveReferences();
-        return TryFindBestApproachDestination(playerMovement, false, out destination);
+
+        if (TryFindBestApproachDestination(playerMovement, false, out destination))
+        {
+            return true;
+        }
+
+        return TryFindClosestReachableArrivalDestination(playerMovement, out destination);
+    }
+
+    private bool TryFindClosestReachableArrivalDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)
+    {
+        destination = Vector2.zero;
+
+        if (playerMovement == null || rectTransform == null)
+        {
+            return false;
+        }
+
+        Camera canvasCamera = GetCanvasCamera();
+        rectTransform.GetWorldCorners(triggerWorldCorners);
+
+        bool foundDestination = false;
+        float bestScore = float.MaxValue;
+        Vector2 bestDestination = Vector2.zero;
+
+        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[0] + triggerWorldCorners[2]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[0] + triggerWorldCorners[3]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[1] + triggerWorldCorners[2]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, triggerWorldCorners[0], canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, triggerWorldCorners[3], canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+
+        if (!foundDestination)
+        {
+            return false;
+        }
+
+        destination = bestDestination;
+        return true;
+    }
+
+    private void TryScoreArrivalWorldPoint(
+        PointClickPlayerMovement playerMovement,
+        Vector3 triggerWorldPoint,
+        Camera canvasCamera,
+        ref bool foundDestination,
+        ref float bestScore,
+        ref Vector2 bestDestination)
+    {
+        if (!playerMovement.TryFindClosestReachableDestinationToWorldPoint(triggerWorldPoint, out Vector2 candidateDestination) ||
+            !playerMovement.TryGetScreenPointFromLogicalPosition(candidateDestination, out Vector2 candidateScreenPoint))
+        {
+            return;
+        }
+
+        Vector2 triggerScreenPoint = RectTransformUtility.WorldToScreenPoint(canvasCamera, triggerWorldPoint);
+        float score = Vector2.SqrMagnitude(candidateScreenPoint - triggerScreenPoint);
+
+        if (foundDestination && score >= bestScore)
+        {
+            return;
+        }
+
+        foundDestination = true;
+        bestScore = score;
+        bestDestination = candidateDestination;
     }
 
     private bool TryFindBestApproachDestination(PointClickPlayerMovement playerMovement, bool requireMovement, out Vector2 destination)

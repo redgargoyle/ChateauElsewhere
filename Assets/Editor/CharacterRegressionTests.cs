@@ -47,6 +47,7 @@ public class CharacterRegressionTests
         Assert.That(walkerText, Does.Contain("CharacterAnimatorDriver"), "NPC walkers should feed the same Animator parameter protocol as the player.");
         Assert.That(animatorDriverText, Does.Contain("IsWalkingUp"), "The shared character animation driver should expose the same directional booleans as the player controller.");
         Assert.That(animatorDriverText, Does.Contain("IsFacingUp"), "The shared character animation driver should also expose persistent facing booleans for directional idle states.");
+        Assert.That(animatorDriverText, Does.Contain("!Application.isPlaying && !animator.isInitialized"), "Edit-time validation must not query Animator parameters before Unity initializes the Animator.");
         Assert.That(animatorDriverText, Does.Contain("DetermineDirection"), "Player and NPCs should share averaged direction selection.");
         Assert.That(walkerText, Does.Contain("Mathf.InverseLerp(nearY, farY"), "Walkers should scale/tint from front to back of the painted room.");
         Assert.That(walkerText, Does.Contain("rectTransform.localScale = scale"), "Perspective scale should affect the whole character card.");

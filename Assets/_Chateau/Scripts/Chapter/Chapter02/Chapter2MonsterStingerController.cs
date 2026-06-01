@@ -8,6 +8,7 @@ using UnityEditor;
 public class Chapter2MonsterStingerController : MonoBehaviour
 {
     [SerializeField] private GameObject monsterObject;
+    [SerializeField] private string monsterObjectName = "Ch2_Monster";
     [SerializeField] private Transform runStart;
     [SerializeField] private Transform runTarget;
     [SerializeField] private RoomNavigationManager navigationManager;
@@ -185,6 +186,11 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             runTarget = FindRoomAnchor("Ch2_MonsterFreezeTarget");
         }
 
+        if (monsterObject == null)
+        {
+            monsterObject = FindSceneMonsterObject(monsterObjectName);
+        }
+
         if (monsterObject == null && createPlaceholderMonsterIfMissing)
         {
             monsterObject = CreatePlaceholderMonster();
@@ -301,6 +307,29 @@ public class Chapter2MonsterStingerController : MonoBehaviour
                 string.Equals(anchor.name, anchorName, System.StringComparison.OrdinalIgnoreCase))
             {
                 return anchor.transform;
+            }
+        }
+
+        return null;
+    }
+
+    private static GameObject FindSceneMonsterObject(string objectName)
+    {
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return null;
+        }
+
+        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            Transform candidate = transforms[i];
+
+            if (candidate != null &&
+                string.Equals(candidate.name, objectName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate.gameObject;
             }
         }
 

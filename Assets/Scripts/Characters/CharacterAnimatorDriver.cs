@@ -68,6 +68,9 @@ public static class CharacterAnimatorDriver
 			if (animator == null || animator.runtimeAnimatorController == null)
 				return default;
 
+			if (!Application.isPlaying && !animator.isInitialized)
+				return default;
+
 			bool hasSpeed = false;
 			bool hasJumping = false;
 			bool hasCrouching = false;
