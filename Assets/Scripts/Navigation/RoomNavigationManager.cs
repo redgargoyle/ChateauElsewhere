@@ -351,7 +351,7 @@ public class RoomNavigationManager : MonoBehaviour
             return;
         }
 
-        PointClickPlayerMovement playerMovement = FindAnyObjectByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+        PointClickPlayerMovement playerMovement = FindPlayerMovement();
 
         if (playerMovement == null)
         {
@@ -422,6 +422,66 @@ public class RoomNavigationManager : MonoBehaviour
         }
 
         return destinationRoomTriggerCount == 1 ? onlyDestinationRoomTrigger : null;
+    }
+
+    private static PointClickPlayerMovement FindPlayerMovement()
+    {
+        GameObject playerObject = GameObject.Find("Player");
+
+        if (TryGetUsablePlayerMovement(playerObject, out PointClickPlayerMovement namedPlayerMovement))
+        {
+            return namedPlayerMovement;
+        }
+
+        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Exclude);
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (candidate != null &&
+                string.Equals(candidate.gameObject.name, "Player", StringComparison.OrdinalIgnoreCase) &&
+                IsUsablePlayerMovement(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (IsUsablePlayerMovement(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryGetUsablePlayerMovement(GameObject candidateObject, out PointClickPlayerMovement playerMovement)
+    {
+        playerMovement = candidateObject != null ? candidateObject.GetComponent<PointClickPlayerMovement>() : null;
+        return IsUsablePlayerMovement(playerMovement);
+    }
+
+    private static bool IsUsablePlayerMovement(PointClickPlayerMovement candidate)
+    {
+        return candidate != null &&
+            candidate.enabled &&
+            candidate.gameObject.activeInHierarchy &&
+            !IsLikelyChapterGuest(candidate.gameObject);
+    }
+
+    private static bool IsLikelyChapterGuest(GameObject candidateObject)
+    {
+        if (candidateObject == null)
+        {
+            return false;
+        }
+
+        return candidateObject.name.Trim().StartsWith("Guest", StringComparison.OrdinalIgnoreCase);
     }
 
     private void RegisterBuiltInRoomChangeResponses()

@@ -283,12 +283,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     {
         ResolveReferences();
 
-        if (TryFindClosestReachableArrivalDestination(playerMovement, out destination))
+        if (TryFindBestApproachDestination(playerMovement, false, out destination))
         {
             return true;
         }
 
-        return TryFindBestApproachDestination(playerMovement, false, out destination);
+        return TryFindClosestReachableArrivalDestination(playerMovement, out destination);
     }
 
     private bool TryFindClosestReachableArrivalDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)

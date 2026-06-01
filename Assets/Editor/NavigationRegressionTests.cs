@@ -188,7 +188,10 @@ public class NavigationRegressionTests
 
         Assert.That(navigationManagerText, Does.Contain("PlacePlayerAtDestinationDoor"), "Room transitions should move the player to the matching destination doorway.");
         Assert.That(navigationManagerText, Does.Contain("FindArrivalDoorTrigger"), "Destination placement should use the reverse trigger already authored in the room.");
+        Assert.That(navigationManagerText, Does.Match(@"GameObject\.Find\(\""Player\""\)[\s\S]*FindObjectsByType<PointClickPlayerMovement>"), "Room transitions should prefer the named butler Player before scanning movement components.");
+        Assert.That(navigationManagerText, Does.Contain("IsLikelyChapterGuest"), "Room transitions should not accidentally warp Chapter guest clones that carry PointClickPlayerMovement.");
         Assert.That(triggerText, Does.Contain("TryFindArrivalDestination"), "Door hitboxes should expose the same reachable floor sampling for arrivals.");
+        Assert.That(triggerText, Does.Match(@"(?s)TryFindArrivalDestination\s*\([^)]*\)\s*\{.*TryFindBestApproachDestination\(playerMovement,\s*false,\s*out destination\).*return TryFindClosestReachableArrivalDestination\(playerMovement,\s*out destination\)"), "Door arrivals should prefer the doorway approach sampler before falling back to raw trigger proximity.");
         Assert.That(triggerText, Does.Contain("TryFindClosestReachableArrivalDestination"), "Door arrivals should fall back to the nearest reachable floor point around the destination trigger.");
         Assert.That(triggerText, Does.Contain("TryFindClosestReachableDestinationToWorldPointTowardRoomCenter"), "Door arrivals should bias placement toward the destination room interior, not the player's stale pre-transition position.");
         Assert.That(triggerText, Does.Contain("TryFindClosestReachableDestinationToWorldPoint"), "Door arrivals should reuse the player movement boundary search when trigger screen samples miss the floor.");
