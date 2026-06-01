@@ -2391,7 +2391,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void EnsureSceneActionTargets()
     {
         RemoveClickTarget("Chapter1_ClickTarget_CoatCloset");
-        CreateClickTarget("Chapter1_ClickTarget_GrandfatherClock", grandfatherClock != null ? grandfatherClock.transform : null, Chapter1SceneActionType.GrandfatherClock);
+        RemoveClickTarget("Chapter1_ClickTarget_GrandfatherClock");
         CreateClickTarget("Chapter1_ClickTarget_DrawingRoomExit", drawingRoomEntryPoint, Chapter1SceneActionType.DrawingRoomExit);
     }
 

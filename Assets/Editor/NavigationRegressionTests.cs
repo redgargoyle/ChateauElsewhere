@@ -21,7 +21,9 @@ public class NavigationRegressionTests
     private const string RoomPrefabPath = "Assets/Prefabs/Room.prefab";
     private const string YSortSolidObstaclePath = "Assets/Scripts/Characters/YSortSolidObstacle2D.cs";
     private const string ChapterTimeSettingsUIPath = "Assets/Scripts/Story/ChapterTimeSettingsUI.cs";
+    private const string GrandfatherClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
+    private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter1InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
     private const string RoomContentGroupGuid = "d0ea47fd950844bcacb0fd5556a9d880";
@@ -106,6 +108,20 @@ public class NavigationRegressionTests
         Assert.That(chapter1HudText, Does.Not.Contain("BuildShortHudState(chapterClock.CurrentTimeLabel)"), "Chapter 1 status should not render a second clock label.");
         Assert.That(chapter2HudText, Does.Not.Contain("chapterClock.CurrentTimeLabel"), "Chapter 2 status should not render a second clock label.");
         Assert.That(chapter2HudText, Does.Not.Contain("$\"{timeLabel}\\n{phaseLabel}\""), "Chapter 2 status should not combine time and phase in the top-left HUD.");
+    }
+
+    [Test]
+    public void GrandfatherClockCloseUpDoesNotOpenOverGameplay()
+    {
+        string clockInteractionText = File.ReadAllText(GrandfatherClockInteractionPath);
+        string chapter1ArrivalText = File.ReadAllText(Chapter1ArrivalControllerPath);
+
+        Assert.That(clockInteractionText, Does.Contain("allowClockCloseUp = false"));
+        Assert.That(clockInteractionText, Does.Match(@"(?s)\bOpenCloseUp\s*\([^)]*\)\s*\{.*if \(!allowClockCloseUp\).*DisableCloseUpIfNeeded\(\).*return;"), "Clock close-up calls should be harmless unless explicitly enabled.");
+        Assert.That(clockInteractionText, Does.Contain("Canvas_GrandfatherClockCloseUp"));
+        Assert.That(clockInteractionText, Does.Contain("canvasObject.SetActive(false)"));
+        Assert.That(chapter1ArrivalText, Does.Contain("RemoveClickTarget(\"Chapter1_ClickTarget_GrandfatherClock\")"));
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("CreateClickTarget(\"Chapter1_ClickTarget_GrandfatherClock\""), "Chapter 1 should not create a clock click target that opens the old modal.");
     }
 
     [Test]
