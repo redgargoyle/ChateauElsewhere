@@ -23,6 +23,7 @@ public class NavigationRegressionTests
     private const string ChapterTimeSettingsUIPath = "Assets/Scripts/Story/ChapterTimeSettingsUI.cs";
     private const string GrandfatherClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
+    private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter1InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
@@ -229,6 +230,18 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Not.Contain("pathProbeStep"), "Movement should not sample a heavyweight path segment to reject floor clicks.");
         Assert.That(obstacleText, Does.Not.Contain("BlockPlayerMovement"), "Prop footprint components should not expose movement-blocking controls.");
         Assert.That(obstacleText, Does.Not.Contain("TryGetMovementBounds"), "Prop footprint components should not provide movement blockers.");
+    }
+
+    [Test]
+    public void ActorRoomStateCarriesWorldActorsWithRoomStagePan()
+    {
+        string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
+
+        Assert.That(actorRoomStateText, Does.Contain("followRoomStageMotion"), "Room-scoped actors should opt into following the active room stage pan.");
+        Assert.That(actorRoomStateText, Does.Contain("LateUpdate"), "Actor room-state visuals should be corrected after CameraManager updates the room stage.");
+        Assert.That(actorRoomStateText, Does.Contain("TryGetRoomStageWorldOffset"), "Actor room-state visuals should use the same stage offset source as player movement.");
+        Assert.That(actorRoomStateText, Does.Contain("lastRoomStageWorldOffset"), "Actor room-state visuals should apply pan deltas instead of overwriting authored placement.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("SetParent("), "Guests should not be fixed by reparenting them under room presentation roots.");
     }
 
     [Test]

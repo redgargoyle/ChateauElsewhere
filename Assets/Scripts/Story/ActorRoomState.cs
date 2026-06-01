@@ -19,12 +19,16 @@ public class ActorRoomState : MonoBehaviour
     [Header("Room Visibility")]
     [SerializeField] private bool restrictVisibilityToCurrentRoom = true;
     [SerializeField] private RoomNavigationManager navigationManager;
+    [SerializeField] private bool followRoomStageMotion = true;
 
     private Renderer[] renderers = new Renderer[0];
     private Graphic[] graphics = new Graphic[0];
     private Collider[] colliders3D = new Collider[0];
     private Collider2D[] colliders2D = new Collider2D[0];
     private CanvasGroup[] canvasGroups = new CanvasGroup[0];
+    private CameraManager cameraManager;
+    private Vector3 lastRoomStageWorldOffset;
+    private bool hasRoomStageWorldOffset;
     private bool subscribedToRoomChanges;
 
     public string ActorId => string.IsNullOrWhiteSpace(actorId) ? name : actorId;
@@ -60,6 +64,7 @@ public class ActorRoomState : MonoBehaviour
     private void OnDisable()
     {
         UnsubscribeFromRoomChanges();
+        ClearRoomStageMotionBaseline();
     }
 
     private void OnValidate()
@@ -82,7 +87,14 @@ public class ActorRoomState : MonoBehaviour
 
     public void SetCurrentRoom(string roomId)
     {
-        currentRoomId = string.IsNullOrWhiteSpace(roomId) ? string.Empty : roomId.Trim();
+        string cleanRoomId = string.IsNullOrWhiteSpace(roomId) ? string.Empty : roomId.Trim();
+
+        if (!SameRoom(currentRoomId, cleanRoomId))
+        {
+            ClearRoomStageMotionBaseline();
+        }
+
+        currentRoomId = cleanRoomId;
         ApplyState();
     }
 
@@ -119,6 +131,7 @@ public class ActorRoomState : MonoBehaviour
 
         Transform targetTransform = actorObject != null ? actorObject.transform : transform;
         targetTransform.position = target.position;
+        RegisterRoomStageMotionBaseline();
     }
 
     public void ApplyState()
@@ -172,6 +185,20 @@ public class ActorRoomState : MonoBehaviour
             canvasGroups[i].interactable = shouldBeInteractable;
             canvasGroups[i].blocksRaycasts = shouldBeInteractable;
         }
+
+        if (shouldBeVisible)
+        {
+            RegisterRoomStageMotionBaselineIfMissing();
+        }
+        else
+        {
+            ClearRoomStageMotionBaseline();
+        }
+    }
+
+    private void LateUpdate()
+    {
+        ApplyRoomStageMotionDeltaIfNeeded();
     }
 
     private bool ShouldBeVisible()
@@ -206,6 +233,11 @@ public class ActorRoomState : MonoBehaviour
         if (navigationManager == null)
         {
             navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+
+        if (cameraManager == null)
+        {
+            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
         }
     }
 
@@ -252,7 +284,95 @@ public class ActorRoomState : MonoBehaviour
 
     private void HandleRoomChanged(string roomName)
     {
+        ClearRoomStageMotionBaseline();
         ApplyState();
+    }
+
+    private void ApplyRoomStageMotionDeltaIfNeeded()
+    {
+        if (!ShouldFollowRoomStageMotion())
+        {
+            ClearRoomStageMotionBaseline();
+            return;
+        }
+
+        if (!TryGetCurrentRoomStageWorldOffset(out Vector3 currentOffset))
+        {
+            ClearRoomStageMotionBaseline();
+            return;
+        }
+
+        if (!hasRoomStageWorldOffset)
+        {
+            lastRoomStageWorldOffset = currentOffset;
+            hasRoomStageWorldOffset = true;
+            return;
+        }
+
+        Vector3 delta = currentOffset - lastRoomStageWorldOffset;
+        delta.z = 0f;
+
+        if (delta.sqrMagnitude > 0.0000001f)
+        {
+            Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+
+            if (targetTransform != null)
+            {
+                targetTransform.position += delta;
+            }
+        }
+
+        lastRoomStageWorldOffset = currentOffset;
+    }
+
+    private void RegisterRoomStageMotionBaselineIfMissing()
+    {
+        if (hasRoomStageWorldOffset)
+        {
+            return;
+        }
+
+        RegisterRoomStageMotionBaseline();
+    }
+
+    private void RegisterRoomStageMotionBaseline()
+    {
+        if (!ShouldFollowRoomStageMotion() || !TryGetCurrentRoomStageWorldOffset(out Vector3 currentOffset))
+        {
+            ClearRoomStageMotionBaseline();
+            return;
+        }
+
+        lastRoomStageWorldOffset = currentOffset;
+        hasRoomStageWorldOffset = true;
+    }
+
+    private void ClearRoomStageMotionBaseline()
+    {
+        lastRoomStageWorldOffset = Vector3.zero;
+        hasRoomStageWorldOffset = false;
+    }
+
+    private bool ShouldFollowRoomStageMotion()
+    {
+        if (!Application.isPlaying || !followRoomStageMotion || !ShouldBeVisible())
+        {
+            return false;
+        }
+
+        Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+        return targetTransform != null && targetTransform is not RectTransform;
+    }
+
+    private bool TryGetCurrentRoomStageWorldOffset(out Vector3 offset)
+    {
+        offset = Vector3.zero;
+        ResolveReferences();
+
+        Camera mainCamera = Camera.main;
+        return cameraManager != null &&
+            mainCamera != null &&
+            cameraManager.TryGetRoomStageWorldOffset(mainCamera, out offset);
     }
 
     private static bool SameRoom(string left, string right)
