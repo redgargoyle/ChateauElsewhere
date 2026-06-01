@@ -25,6 +25,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private PointClickPlayerMovement playerMovement;
     [SerializeField] private Chapter2InteractionHUD interactionHUD;
     [SerializeField] private Chapter2MonsterStingerController monsterStinger;
+    [SerializeField] private Chapter2GuestSearchController guestSearch;
 
     [Header("Rooms")]
     [SerializeField] private string drawingRoomId = "Drawing Room";
@@ -240,6 +241,16 @@ public class Chapter2Controller : MonoBehaviour
         {
             monsterStinger = gameObject.AddComponent<Chapter2MonsterStingerController>();
         }
+
+        if (guestSearch == null)
+        {
+            guestSearch = GetComponent<Chapter2GuestSearchController>();
+        }
+
+        if (guestSearch == null)
+        {
+            guestSearch = gameObject.AddComponent<Chapter2GuestSearchController>();
+        }
     }
 
     private void InitializeInteractionHUD()
@@ -286,14 +297,33 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         monsterStingerRoutine = null;
+        StartGuestSearch();
         SetPhase(Chapter2Phase.GuestSearch);
+        SetPlayerInputEnabled(true);
 
         if (interactionHUD != null)
         {
             interactionHUD.ClearPrimaryAction();
             interactionHUD.ClearStatus();
-            interactionHUD.SetObjective("The guests scatter into the house.");
+            interactionHUD.SetObjective("Find the guests. Tell them dinner will be served at 7:00 PM sharp.");
         }
+    }
+
+    private void StartGuestSearch()
+    {
+        if (guestSearch == null)
+        {
+            ResolveReferences();
+        }
+
+        if (guestSearch == null)
+        {
+            Debug.LogWarning("Chapter 2 guest search requested, but Chapter2GuestSearchController is missing.", this);
+            return;
+        }
+
+        guestSearch.Initialize(this);
+        guestSearch.BeginSearch();
     }
 
     private void SetPlayerInputEnabled(bool enabled)
