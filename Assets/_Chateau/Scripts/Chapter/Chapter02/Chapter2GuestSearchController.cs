@@ -28,7 +28,15 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private int foundOrderCounter;
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
 
+    [Header("Conversation")]
+    [SerializeField] private string firstMealOption = "fresh monte genellion de plink";
+    [SerializeField] private string secondMealOption = "thyme with Lillums";
+    [SerializeField] private string cigarPreference = "cigar";
+    [SerializeField] private string pipePreference = "pipe";
+    [SerializeField] private string noSmokingPreference = "none, thank you";
+
     private Chapter2Controller chapter2Controller;
+    private GuestSearchEntry activeConversationGuest;
 
     public string DiningSeatPrefix => diningSeatPrefix;
     public int GuestCount => CountGuests();
@@ -219,6 +227,36 @@ public class Chapter2GuestSearchController : MonoBehaviour
             chapter2Controller.HandleAllGuestsFound();
         }
 
+        return true;
+    }
+
+    public bool TryStartGuestConversation(string guestId)
+    {
+        GuestSearchEntry guest = FindGuest(guestId);
+
+        if (guest == null || guest.found)
+        {
+            return false;
+        }
+
+        if (chapter2Controller != null && !chapter2Controller.IsGuestSearchActive)
+        {
+            return false;
+        }
+
+        if (activeConversationGuest != null && activeConversationGuest != guest)
+        {
+            return false;
+        }
+
+        activeConversationGuest = guest;
+
+        if (chapter2Controller != null)
+        {
+            chapter2Controller.SetGuestConversationInputEnabled(false);
+        }
+
+        ShowDinnerAnnouncement(guest);
         return true;
     }
 
@@ -413,8 +451,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
         if (string.IsNullOrWhiteSpace(guest.mealPreference))
         {
             guest.mealPreference = guest.foundOrder % 2 == 1
-                ? "fresh monte genellion de plink"
-                : "thyme with Lillums";
+                ? firstMealOption
+                : secondMealOption;
         }
 
         if (string.IsNullOrWhiteSpace(guest.smokingPreference))
@@ -423,15 +461,15 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
             if (smokingIndex == 0)
             {
-                guest.smokingPreference = "pipe";
+                guest.smokingPreference = pipePreference;
             }
             else if (smokingIndex == 1)
             {
-                guest.smokingPreference = "cigar";
+                guest.smokingPreference = cigarPreference;
             }
             else
             {
-                guest.smokingPreference = "none, thank you";
+                guest.smokingPreference = noSmokingPreference;
             }
         }
 
@@ -467,6 +505,117 @@ public class Chapter2GuestSearchController : MonoBehaviour
             $"Smoking preference: {guest.smokingPreference}\n" +
             $"Spirits: {guest.spiritBottle}",
             this);
+    }
+
+    private void ShowDinnerAnnouncement(GuestSearchEntry guest)
+    {
+        if (chapter2Controller == null)
+        {
+            MarkGuestFound(GetGuestIdForOrderList(guest));
+            return;
+        }
+
+        string guestName = GetGuestDisplayName(guest);
+        chapter2Controller.ShowGuestConversation(
+            "Butler",
+            $"I have found you, {guestName}. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            "Ask meal preference",
+            () => ShowMealPreferenceQuestion(guest));
+    }
+
+    private void ShowMealPreferenceQuestion(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
+        {
+            return;
+        }
+
+        chapter2Controller.ShowGuestConversation(
+            "Butler",
+            "For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?",
+            firstMealOption,
+            () => ChooseMealPreference(guest, firstMealOption),
+            secondMealOption,
+            () => ChooseMealPreference(guest, secondMealOption));
+    }
+
+    private void ChooseMealPreference(GuestSearchEntry guest, string preference)
+    {
+        if (!IsActiveConversationGuest(guest))
+        {
+            return;
+        }
+
+        guest.mealPreference = preference;
+        ShowSmokingPreferenceQuestion(guest);
+    }
+
+    private void ShowSmokingPreferenceQuestion(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
+        {
+            return;
+        }
+
+        chapter2Controller.ShowGuestConversation(
+            "Butler",
+            "After dinner, shall I prepare a cigar, a pipe, or no smoke at all?",
+            "Cigar",
+            () => ChooseSmokingPreference(guest, cigarPreference),
+            "Pipe",
+            () => ChooseSmokingPreference(guest, pipePreference),
+            "No smoke",
+            () => ChooseSmokingPreference(guest, noSmokingPreference));
+    }
+
+    private void ChooseSmokingPreference(GuestSearchEntry guest, string preference)
+    {
+        if (!IsActiveConversationGuest(guest))
+        {
+            return;
+        }
+
+        guest.smokingPreference = preference;
+        guest.spiritBottle = $"{GetGuestDisplayName(guest)}'s bottle of spirits";
+        ShowConversationComplete(guest);
+    }
+
+    private void ShowConversationComplete(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
+        {
+            return;
+        }
+
+        string guestName = GetGuestDisplayName(guest);
+        chapter2Controller.ShowGuestConversation(
+            guestName,
+            $"Very good. I shall present myself in the Dining Room and recover what dignity remains to us.",
+            "Very good",
+            () => FinishGuestConversation(guest));
+    }
+
+    private void FinishGuestConversation(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest))
+        {
+            return;
+        }
+
+        activeConversationGuest = null;
+
+        if (chapter2Controller != null)
+        {
+            chapter2Controller.ClearGuestConversation();
+            chapter2Controller.SetGuestConversationInputEnabled(true);
+        }
+
+        MarkGuestFound(GetGuestIdForOrderList(guest));
+    }
+
+    private bool IsActiveConversationGuest(GuestSearchEntry guest)
+    {
+        return guest != null && activeConversationGuest == guest && !guest.found;
     }
 
     private void EnsureGuestUsesPersistentActorRoot(GuestSearchEntry guest)

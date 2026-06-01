@@ -59,6 +59,7 @@ public class Chapter2Controller : MonoBehaviour
     public Chapter2Phase CurrentPhase => currentPhase;
     public string DrawingRoomId => drawingRoomId;
     public string DiningRoomId => diningRoomId;
+    public bool IsGuestSearchActive => currentPhase == Chapter2Phase.GuestSearch;
 
     public void BeginChapter2(ChapterManager manager)
     {
@@ -137,6 +138,52 @@ public class Chapter2Controller : MonoBehaviour
     public void HandleGuestSearchProgressChanged()
     {
         UpdateFoundGuestsHud();
+    }
+
+    public void SetGuestConversationInputEnabled(bool enabled)
+    {
+        SetPlayerInputEnabled(enabled);
+    }
+
+    public void ShowGuestConversation(
+        string speaker,
+        string line,
+        string firstChoice,
+        System.Action firstCallback,
+        string secondChoice = null,
+        System.Action secondCallback = null,
+        string thirdChoice = null,
+        System.Action thirdCallback = null)
+    {
+        if (interactionHUD == null)
+        {
+            ResolveReferences();
+            InitializeInteractionHUD();
+        }
+
+        if (interactionHUD == null)
+        {
+            return;
+        }
+
+        interactionHUD.SetDialogue(speaker, line);
+        interactionHUD.SetDialogueChoices(
+            firstChoice,
+            firstCallback,
+            secondChoice,
+            secondCallback,
+            thirdChoice,
+            thirdCallback);
+    }
+
+    public void ClearGuestConversation()
+    {
+        if (interactionHUD == null)
+        {
+            return;
+        }
+
+        interactionHUD.ClearDialogue();
     }
 
     private void BeginDiningRoomObjective()

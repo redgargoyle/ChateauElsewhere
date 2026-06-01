@@ -2,13 +2,14 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 [DisallowMultipleComponent]
-public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler
+public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private string guestId;
     [SerializeField] private Chapter2GuestSearchController searchController;
     [SerializeField] private bool isAvailable = true;
 
     private int lastClickFrame = -1;
+    private bool cursorHoverActive;
 
     public string GuestId => guestId;
     public bool IsAvailable => isAvailable;
@@ -24,19 +25,49 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler
     public void SetAvailable(bool value)
     {
         isAvailable = value;
+
+        if (!isAvailable)
+        {
+            SetTalkCursorHover(false);
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        TryMarkGuestFound();
+        TryStartGuestConversation();
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        SetTalkCursorHover(true);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        SetTalkCursorHover(false);
     }
 
     private void OnMouseDown()
     {
-        TryMarkGuestFound();
+        TryStartGuestConversation();
     }
 
-    private void TryMarkGuestFound()
+    private void OnMouseEnter()
+    {
+        SetTalkCursorHover(true);
+    }
+
+    private void OnMouseExit()
+    {
+        SetTalkCursorHover(false);
+    }
+
+    private void OnDisable()
+    {
+        SetTalkCursorHover(false);
+    }
+
+    private void TryStartGuestConversation()
     {
         if (!isAvailable || lastClickFrame == Time.frameCount)
         {
@@ -50,9 +81,30 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler
             searchController = FindAnyObjectByType<Chapter2GuestSearchController>(FindObjectsInactive.Include);
         }
 
-        if (searchController != null && searchController.MarkGuestFound(guestId))
+        if (searchController != null && searchController.TryStartGuestConversation(guestId))
         {
-            isAvailable = false;
+            SetTalkCursorHover(false);
+        }
+    }
+
+    private void SetTalkCursorHover(bool active)
+    {
+        bool nextActive = active && isAvailable && isActiveAndEnabled;
+
+        if (cursorHoverActive == nextActive)
+        {
+            return;
+        }
+
+        cursorHoverActive = nextActive;
+
+        if (nextActive)
+        {
+            NavigationCursorController.SetDoorHover(this, NavigationCursorController.HoverIcon.Talk, true);
+        }
+        else
+        {
+            NavigationCursorController.SetDoorHover(this, false);
         }
     }
 }

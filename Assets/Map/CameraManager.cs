@@ -1823,7 +1823,8 @@ public static class NavigationCursorController
         Door,
         Stairway,
         Coat,
-        BlockedCoat
+        BlockedCoat,
+        Talk
     }
 
     private const int CursorDesignSize = 32;
@@ -1836,6 +1837,7 @@ public static class NavigationCursorController
     private static readonly Vector2 DoorHotspot = ScaleCursorHotspot(9f, 6f);
     private static readonly Vector2 StairwayHotspot = ScaleCursorHotspot(10f, 7f);
     private static readonly Vector2 CoatHotspot = ScaleCursorHotspot(10f, 9f);
+    private static readonly Vector2 TalkHotspot = ScaleCursorHotspot(10f, 8f);
     private static readonly Vector2 WalkHotspot = ScaleCursorHotspot(13f, 24f);
 
     private static int edgePanDirection;
@@ -1849,6 +1851,7 @@ public static class NavigationCursorController
     private static Texture2D stairwayCursor;
     private static Texture2D coatCursor;
     private static Texture2D blockedCoatCursor;
+    private static Texture2D talkCursor;
     private static Texture2D walkCursor;
     private static Texture2D blockedWalkCursor;
 
@@ -1964,6 +1967,12 @@ public static class NavigationCursorController
                 return;
             }
 
+            if (doorHoverIcon == HoverIcon.Talk)
+            {
+                Cursor.SetCursor(GetTalkCursor(), TalkHotspot, CursorMode.Auto);
+                return;
+            }
+
             Cursor.SetCursor(GetDoorCursor(), DoorHotspot, CursorMode.Auto);
             return;
         }
@@ -2052,6 +2061,16 @@ public static class NavigationCursorController
         return blockedCoatCursor;
     }
 
+    private static Texture2D GetTalkCursor()
+    {
+        if (talkCursor == null)
+        {
+            talkCursor = CreateTalkCursor();
+        }
+
+        return talkCursor;
+    }
+
     private static Texture2D GetWalkCursor()
     {
         if (walkCursor == null)
@@ -2131,6 +2150,23 @@ public static class NavigationCursorController
         DrawLine(texture, 16, 15, 16, 11, Paper, 2);
         DrawLine(texture, 16, 11, 21, 11, Paper, 2);
         DrawLine(texture, 21, 11, 21, 7, Paper, 2);
+        texture.Apply();
+        return texture;
+    }
+
+    private static Texture2D CreateTalkCursor()
+    {
+        Texture2D texture = CreateBlankCursor("Cursor_Talk");
+
+        FillRect(texture, 7, 7, 25, 21, Ink);
+        FillRect(texture, 9, 9, 23, 19, Paper);
+        DrawLine(texture, 11, 22, 8, 27, Ink, 4);
+        DrawLine(texture, 11, 22, 15, 20, Ink, 4);
+        DrawLine(texture, 11, 22, 10, 25, Paper, 1);
+        DrawLine(texture, 11, 22, 14, 21, Paper, 1);
+        FillRect(texture, 12, 13, 14, 15, Ink);
+        FillRect(texture, 16, 13, 18, 15, Ink);
+        FillRect(texture, 20, 13, 22, 15, Ink);
         texture.Apply();
         return texture;
     }
