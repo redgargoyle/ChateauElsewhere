@@ -7,6 +7,8 @@ using UnityEditor;
 [DisallowMultipleComponent]
 public class Chapter2MonsterStingerController : MonoBehaviour
 {
+    private const float TimingEpsilon = 0.0001f;
+
     [SerializeField] private GameObject monsterObject;
     [SerializeField] private string monsterObjectName = "Ch2_Monster";
     [SerializeField] private Transform runStart;
@@ -16,15 +18,19 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     [SerializeField] private AudioSource violinAudioSource;
     [SerializeField] private AudioClip violinAudioClip;
     [SerializeField] private string fallbackViolinClipName = "violinscreech";
-    [SerializeField] private bool loopViolinAudio;
+    [SerializeField] private bool loopViolinAudio = true;
     [SerializeField] private bool forceMonsterToFront = true;
     [SerializeField] private string monsterSortingLayerName = "People";
     [SerializeField] private int monsterSortingOrder = 9999;
     [SerializeField] private int monsterOverlaySortingOrder = 10000;
-    [SerializeField] private float runSeconds = 1.0f;
-    [SerializeField] private float freezeSeconds = 2.5f;
+    [SerializeField, Min(0f)] private float minimumRunSeconds = 1f;
+    [SerializeField, Min(0f)] private float maximumRunSeconds = 2f;
+    [SerializeField, Min(0f)] private float minimumFreezeSeconds = 1f;
+    [SerializeField, Min(0f)] private float maximumFreezeSeconds = 2f;
+    [SerializeField, Min(1)] private int minimumCyclesBeforeComplete = 2;
+    [SerializeField, Min(1)] private int maximumCyclesBeforeComplete = 3;
+    [SerializeField, Min(0.1f)] private float fallbackRunRightDistance = 4f;
     [SerializeField] private float maxVisibleSeconds = 7f;
-    [SerializeField] private int cyclesBeforeComplete = 1;
     [SerializeField] private bool createPlaceholderMonsterIfMissing = true;
 
     private Coroutine stingerRoutine;
@@ -33,6 +39,18 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     private float visibleElapsedSeconds;
 
     public bool IsRunning => isRunning;
+
+    private struct StingerCycleTiming
+    {
+        public StingerCycleTiming(float runSeconds, float freezeSeconds)
+        {
+            RunSeconds = runSeconds;
+            FreezeSeconds = freezeSeconds;
+        }
+
+        public float RunSeconds;
+        public float FreezeSeconds;
+    }
 
     public Coroutine BeginStinger()
     {
@@ -90,12 +108,9 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             monsterObject.transform.position = runStart.position;
         }
 
-        ApplyMonsterRoomVisibility();
-        PlayViolinAudioIfVisible(true);
+        StingerCycleTiming[] cycleTimings = BuildCycleTimings();
 
-        int cycleCount = cyclesBeforeComplete > 0 ? 1 : 0;
-
-        for (int i = 0; i < cycleCount && HasVisibleTimeRemaining(); i++)
+        for (int i = 0; i < cycleTimings.Length && HasVisibleTimeRemaining(); i++)
         {
             if (monsterObject != null && runStart != null)
             {
@@ -103,21 +118,21 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             }
 
             ApplyMonsterRoomVisibility();
-            PlayViolinAudioIfVisible();
+            PlayViolinAudioIfVisible(true);
 
-            yield return MoveMonsterToFreezeTarget();
+            yield return MoveMonsterToFreezeTarget(cycleTimings[i].RunSeconds);
 
             StopViolinAudio();
 
-            if (monsterObject != null && runTarget != null)
+            if (monsterObject != null)
             {
-                monsterObject.transform.position = runTarget.position;
+                monsterObject.transform.position = GetRunTargetPosition(runStart != null ? runStart.position : monsterObject.transform.position);
                 ApplyMonsterRoomVisibility();
             }
 
-            if (freezeSeconds > 0f && HasVisibleTimeRemaining())
+            if (cycleTimings[i].FreezeSeconds > 0f && HasVisibleTimeRemaining())
             {
-                yield return WaitForFreezeSeconds();
+                yield return WaitForFreezeSeconds(cycleTimings[i].FreezeSeconds);
             }
         }
 
@@ -128,18 +143,18 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         stingerRoutine = null;
     }
 
-    private IEnumerator MoveMonsterToFreezeTarget()
+    private IEnumerator MoveMonsterToFreezeTarget(float duration)
     {
-        float duration = Mathf.Max(0f, runSeconds);
+        duration = Mathf.Max(0f, duration);
 
-        if (monsterObject == null || runStart == null || runTarget == null)
+        if (monsterObject == null || runStart == null)
         {
             yield return WaitForStingerSeconds(duration);
             yield break;
         }
 
         Vector3 startPosition = runStart.position;
-        Vector3 targetPosition = runTarget.position;
+        Vector3 targetPosition = GetRunTargetPosition(startPosition);
 
         if (duration <= 0f)
         {
@@ -163,9 +178,101 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         monsterObject.transform.position = targetPosition;
     }
 
-    private IEnumerator WaitForFreezeSeconds()
+    private IEnumerator WaitForFreezeSeconds(float duration)
     {
-        yield return WaitForStingerSeconds(freezeSeconds);
+        yield return WaitForStingerSeconds(duration);
+    }
+
+    private StingerCycleTiming[] BuildCycleTimings()
+    {
+        int cycleCount = GetRandomCycleCount();
+        StingerCycleTiming[] timings = new StingerCycleTiming[cycleCount];
+        float totalSeconds = 0f;
+
+        for (int i = 0; i < timings.Length; i++)
+        {
+            float runDuration = GetRandomDuration(minimumRunSeconds, maximumRunSeconds);
+            float freezeDuration = GetRandomDuration(minimumFreezeSeconds, maximumFreezeSeconds);
+            timings[i] = new StingerCycleTiming(runDuration, freezeDuration);
+            totalSeconds += runDuration + freezeDuration;
+        }
+
+        TrimCycleTimingsToVisibleBudget(timings, totalSeconds);
+        return timings;
+    }
+
+    private int GetRandomCycleCount()
+    {
+        int minimumCycles = Mathf.Max(1, Mathf.Min(minimumCyclesBeforeComplete, maximumCyclesBeforeComplete));
+        int maximumCycles = Mathf.Max(minimumCycles, Mathf.Max(minimumCyclesBeforeComplete, maximumCyclesBeforeComplete));
+        return Random.Range(minimumCycles, maximumCycles + 1);
+    }
+
+    private static float GetRandomDuration(float minimumSeconds, float maximumSeconds)
+    {
+        float minimum = Mathf.Max(0f, Mathf.Min(minimumSeconds, maximumSeconds));
+        float maximum = Mathf.Max(minimum, Mathf.Max(minimumSeconds, maximumSeconds));
+        return Mathf.Approximately(minimum, maximum) ? minimum : Random.Range(minimum, maximum);
+    }
+
+    private void TrimCycleTimingsToVisibleBudget(StingerCycleTiming[] timings, float totalSeconds)
+    {
+        float visibleBudget = Mathf.Max(0f, maxVisibleSeconds);
+
+        if (visibleBudget <= 0f || totalSeconds <= visibleBudget || timings == null || timings.Length == 0)
+        {
+            return;
+        }
+
+        float minimumRun = Mathf.Max(0f, Mathf.Min(minimumRunSeconds, maximumRunSeconds));
+        float minimumFreeze = Mathf.Max(0f, Mathf.Min(minimumFreezeSeconds, maximumFreezeSeconds));
+        float minimumTotal = timings.Length * (minimumRun + minimumFreeze);
+
+        if (minimumTotal > visibleBudget)
+        {
+            return;
+        }
+
+        float excessSeconds = totalSeconds - visibleBudget;
+
+        for (int i = timings.Length - 1; i >= 0 && excessSeconds > TimingEpsilon; i--)
+        {
+            StingerCycleTiming timing = timings[i];
+            float reducibleSeconds = Mathf.Max(0f, timing.FreezeSeconds - minimumFreeze);
+            float reductionSeconds = Mathf.Min(reducibleSeconds, excessSeconds);
+            timing.FreezeSeconds -= reductionSeconds;
+            excessSeconds -= reductionSeconds;
+            timings[i] = timing;
+        }
+
+        for (int i = timings.Length - 1; i >= 0 && excessSeconds > TimingEpsilon; i--)
+        {
+            StingerCycleTiming timing = timings[i];
+            float reducibleSeconds = Mathf.Max(0f, timing.RunSeconds - minimumRun);
+            float reductionSeconds = Mathf.Min(reducibleSeconds, excessSeconds);
+            timing.RunSeconds -= reductionSeconds;
+            excessSeconds -= reductionSeconds;
+            timings[i] = timing;
+        }
+    }
+
+    private Vector3 GetRunTargetPosition(Vector3 startPosition)
+    {
+        Vector3 targetPosition = runTarget != null ? runTarget.position : startPosition + Vector3.right * fallbackRunRightDistance;
+
+        if (targetPosition.x <= startPosition.x)
+        {
+            float rightDistance = Mathf.Abs(targetPosition.x - startPosition.x);
+
+            if (rightDistance < 0.1f)
+            {
+                rightDistance = fallbackRunRightDistance;
+            }
+
+            targetPosition.x = startPosition.x + rightDistance;
+        }
+
+        return targetPosition;
     }
 
     private IEnumerator WaitForStingerSeconds(float duration)
