@@ -21,6 +21,9 @@ public class NavigationRegressionTests
     private const string BackgroundMaterialPath = "Assets/Shader/BackgroundMaterial.mat";
     private const string RoomPrefabPath = "Assets/Prefabs/Room.prefab";
     private const string YSortSolidObstaclePath = "Assets/Scripts/Characters/YSortSolidObstacle2D.cs";
+    private const string ChapterTimeSettingsUIPath = "Assets/Scripts/Story/ChapterTimeSettingsUI.cs";
+    private const string Chapter1InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs";
+    private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
     private const string RoomContentGroupGuid = "d0ea47fd950844bcacb0fd5556a9d880";
 
     [Test]
@@ -84,6 +87,25 @@ public class NavigationRegressionTests
         Assert.That(sceneText, Does.Not.Contain("m_LocalScale: {x: 0, y: 0, z: 0}"));
         Assert.That(sceneText, Does.Not.Contain("m_UiScaleMode: 0"), "Gameplay canvases should scale consistently between Edit and Play mode.");
         Assert.That(sceneText, Does.Not.Contain("m_ReferenceResolution: {x: 800, y: 600}"), "Gameplay canvases should use the project reference resolution, not Unity defaults.");
+    }
+
+    [Test]
+    public void ChapterClockUsesSingleBottomLeftHudReadout()
+    {
+        string timeSettingsText = File.ReadAllText(ChapterTimeSettingsUIPath);
+        string chapter1HudText = File.ReadAllText(Chapter1InteractionHUDPath);
+        string chapter2HudText = File.ReadAllText(Chapter2InteractionHUDPath);
+
+        Assert.That(timeSettingsText, Does.Contain("Text_CurrentGameTime"));
+        Assert.That(timeSettingsText, Does.Contain("clockRect.anchorMin = new Vector2(0f, 0f)"));
+        Assert.That(timeSettingsText, Does.Contain("clockRect.anchorMax = new Vector2(0f, 0f)"));
+        Assert.That(timeSettingsText, Does.Contain("clockRect.pivot = new Vector2(0f, 0f)"));
+        Assert.That(timeSettingsText, Does.Contain("clockRect.anchoredPosition = new Vector2(18f, 18f)"));
+        Assert.That(timeSettingsText, Does.Contain("TextAlignmentOptions.BottomLeft"));
+
+        Assert.That(chapter1HudText, Does.Not.Contain("BuildShortHudState(chapterClock.CurrentTimeLabel)"), "Chapter 1 status should not render a second clock label.");
+        Assert.That(chapter2HudText, Does.Not.Contain("chapterClock.CurrentTimeLabel"), "Chapter 2 status should not render a second clock label.");
+        Assert.That(chapter2HudText, Does.Not.Contain("$\"{timeLabel}\\n{phaseLabel}\""), "Chapter 2 status should not combine time and phase in the top-left HUD.");
     }
 
     [Test]

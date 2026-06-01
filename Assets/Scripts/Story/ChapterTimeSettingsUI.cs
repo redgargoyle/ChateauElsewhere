@@ -103,7 +103,7 @@ public class ChapterTimeSettingsUI : MonoBehaviour
         panel.anchorMin = new Vector2(1f, 0f);
         panel.anchorMax = new Vector2(1f, 0f);
         panel.pivot = new Vector2(1f, 0f);
-        panel.sizeDelta = new Vector2(300f, 116f);
+        panel.sizeDelta = new Vector2(300f, 86f);
         panel.anchoredPosition = new Vector2(-16f, 16f);
         panelObject.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.38f);
 
@@ -136,13 +136,26 @@ public class ChapterTimeSettingsUI : MonoBehaviour
             }
         });
 
-        clockText = CreateText("Text_CurrentGameTime", panel, 22f, TextAlignmentOptions.Center);
+        clockText = CreateText("Text_CurrentGameTime", canvas.transform, 24f, TextAlignmentOptions.BottomLeft);
         RectTransform clockRect = clockText.GetComponent<RectTransform>();
         clockRect.anchorMin = new Vector2(0f, 0f);
-        clockRect.anchorMax = new Vector2(1f, 0f);
-        clockRect.pivot = new Vector2(0.5f, 0f);
-        clockRect.anchoredPosition = new Vector2(0f, 6f);
-        clockRect.sizeDelta = new Vector2(-20f, 28f);
+        clockRect.anchorMax = new Vector2(0f, 0f);
+        clockRect.pivot = new Vector2(0f, 0f);
+        clockRect.anchoredPosition = new Vector2(18f, 18f);
+        clockRect.sizeDelta = new Vector2(220f, 36f);
+
+        clockText.textWrappingMode = TextWrappingModes.NoWrap;
+        clockText.gameObject.transform.SetAsLastSibling();
+        Shadow clockShadow = clockText.GetComponent<Shadow>();
+
+        if (clockShadow == null)
+        {
+            clockShadow = clockText.gameObject.AddComponent<Shadow>();
+        }
+
+        clockShadow.effectColor = new Color(0f, 0f, 0f, 0.85f);
+        clockShadow.effectDistance = new Vector2(2f, -2f);
+        clockShadow.useGraphicAlpha = true;
     }
 
     private Slider CreateSlider(Transform parent)

@@ -16,12 +16,15 @@ public class Chapter1InteractionHUD : MonoBehaviour
 
     private void Update()
     {
-        if (chapterClock != null && statusText != null)
+        if (statusText == null)
         {
-            statusText.text = arrivalController != null
-                ? arrivalController.BuildShortHudState(chapterClock.CurrentTimeLabel)
-                : chapterClock.CurrentTimeLabel;
+            return;
         }
+
+        statusText.text = arrivalController != null
+            ? arrivalController.BuildShortHudState(string.Empty).TrimStart('\r', '\n')
+            : string.Empty;
+        statusText.gameObject.SetActive(!string.IsNullOrWhiteSpace(statusText.text));
     }
 
     public void Initialize(

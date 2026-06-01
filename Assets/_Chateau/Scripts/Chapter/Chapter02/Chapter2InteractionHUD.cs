@@ -159,12 +159,13 @@ public class Chapter2InteractionHUD : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(statusOverrideText))
         {
             statusText.text = statusOverrideText;
+            statusText.gameObject.SetActive(true);
             return;
         }
 
-        string timeLabel = chapterClock != null ? chapterClock.CurrentTimeLabel : "Chapter 2";
         string phaseLabel = controller != null ? controller.CurrentPhase.ToString() : string.Empty;
-        statusText.text = string.IsNullOrWhiteSpace(phaseLabel) ? timeLabel : $"{timeLabel}\n{phaseLabel}";
+        statusText.text = phaseLabel;
+        statusText.gameObject.SetActive(!string.IsNullOrWhiteSpace(phaseLabel));
     }
 
     private static TMP_Text FindOrCreateText(Transform root, string objectName, float fontSize, TextAlignmentOptions alignment)
