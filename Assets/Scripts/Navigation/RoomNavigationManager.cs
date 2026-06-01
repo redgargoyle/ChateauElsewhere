@@ -25,13 +25,11 @@ public class RoomNavigationManager : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private CameraManager cameraManager;
-    [SerializeField] private MapAnimator mapAnimator;
     [SerializeField] private Transform doorButtonRoot;
     [SerializeField] private Transform roomContentRoot;
 
     [Header("Behavior")]
     [SerializeField] private bool autoFindReferences = true;
-    [SerializeField] private bool hideMapAfterDoorClick;
     [SerializeField] private bool applyStartingRoomVisualOnAwake = true;
     [SerializeField] private bool logNavigationWarnings = true;
     [SerializeField] private bool runNavigationSelfCheck = true;
@@ -55,7 +53,6 @@ public class RoomNavigationManager : MonoBehaviour
     private RoomContentGroup[] cachedRoomContentGroups = new RoomContentGroup[0];
     private string currentRoom;
     private bool applyVisualForNextRoomChange;
-    private bool hideMapForNextRoomChange;
     private TMP_Text currentRoomHudText;
 
     public string CurrentRoom => currentRoom;
@@ -128,7 +125,7 @@ public class RoomNavigationManager : MonoBehaviour
 
         // The door data only translates a clicked door ID into a destination room.
         // SetCurrentRoom owns the actual room-state change and broadcasts it.
-        if (!SetCurrentRoom(route.DestinationRoom, true, true, true))
+        if (!SetCurrentRoom(route.DestinationRoom, true, true))
         {
             return false;
         }
@@ -171,23 +168,13 @@ public class RoomNavigationManager : MonoBehaviour
 
         // Camera-sequence doors compute the next room from the sequence, then use
         // the same state-change path as every other room transition.
-        if (!SetCurrentRoom(nextRoom, false, true, true))
+        if (!SetCurrentRoom(nextRoom, false, true))
         {
             return false;
         }
 
         PlacePlayerAtDestinationDoor(transitionSourceRoom, cleanDoorName, nextRoom);
         return true;
-    }
-
-    public bool SetCurrentRoomFromCameraArea(CameraAreaController cameraArea, bool applyRoomVisual)
-    {
-        if (cameraArea == null)
-        {
-            return false;
-        }
-
-        return SetCurrentRoom(ParseRoomNameFromCameraArea(cameraArea.name), false, applyRoomVisual);
     }
 
     public bool MoveThroughInspectorDoor(string sourceRoom, string doorName, string destinationRoom, bool requirePlayerInSourceRoom)
@@ -214,7 +201,7 @@ public class RoomNavigationManager : MonoBehaviour
 
         // Inspector-driven doors already know their destination room, so they pass
         // that room directly into the central room-state change.
-        if (!SetCurrentRoom(cleanDestinationRoom, false, true, true))
+        if (!SetCurrentRoom(cleanDestinationRoom, false, true))
         {
             return false;
         }
@@ -309,7 +296,7 @@ public class RoomNavigationManager : MonoBehaviour
         return result.IsValid;
     }
 
-    private bool SetCurrentRoom(string roomName, bool requireKnownRoom, bool applyRoomVisual, bool hideMapAfterRoomChange = false)
+    private bool SetCurrentRoom(string roomName, bool requireKnownRoom, bool applyRoomVisual)
     {
         string cleanRoomName = Clean(roomName);
 
@@ -341,7 +328,6 @@ public class RoomNavigationManager : MonoBehaviour
         // to do when the room-changed event fires. Future systems can subscribe to
         // OnCurrentRoomChanged instead of adding more work inside SetCurrentRoom.
         applyVisualForNextRoomChange = applyRoomVisual;
-        hideMapForNextRoomChange = hideMapAfterRoomChange && hideMapAfterDoorClick;
 
         try
         {
@@ -350,7 +336,6 @@ public class RoomNavigationManager : MonoBehaviour
         finally
         {
             applyVisualForNextRoomChange = false;
-            hideMapForNextRoomChange = false;
         }
 
         return true;
@@ -463,10 +448,6 @@ public class RoomNavigationManager : MonoBehaviour
         UpdateCurrentRoomHud(roomName);
         RunNavigationSelfCheckForCurrentRoom();
 
-        if (hideMapForNextRoomChange && mapAnimator != null)
-        {
-            mapAnimator.HideMap();
-        }
     }
 
     private void ApplyRoomVisual(string roomName)
@@ -552,30 +533,6 @@ public class RoomNavigationManager : MonoBehaviour
             if (roomContentGroup.TryGetRoomBackgroundTexture(out texture))
             {
                 return true;
-            }
-        }
-
-        CameraAreaController[] legacyAreas = FindObjectsByType<CameraAreaController>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < legacyAreas.Length; i++)
-        {
-            CameraAreaController area = legacyAreas[i];
-
-            if (area == null)
-            {
-                continue;
-            }
-
-            string areaRoomName = ParseRoomNameFromCameraArea(area.name);
-
-            if (SameName(areaRoomName, roomName))
-            {
-                texture = area.GetEffectiveRoomBackgroundTexture();
-
-                if (texture != null)
-                {
-                    return true;
-                }
             }
         }
 
@@ -923,11 +880,6 @@ public class RoomNavigationManager : MonoBehaviour
             cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
         }
 
-        if (mapAnimator == null)
-        {
-            mapAnimator = FindAnyObjectByType<MapAnimator>(FindObjectsInactive.Include);
-        }
-
         if (roomVisualCatalog == null && !string.IsNullOrWhiteSpace(roomVisualCatalogResourcePath))
         {
             roomVisualCatalog = Resources.Load<RoomVisualCatalog>(roomVisualCatalogResourcePath);
@@ -1046,26 +998,6 @@ public class RoomNavigationManager : MonoBehaviour
         return Mathf.Abs(scale.x) < 0.0001f || Mathf.Abs(scale.y) < 0.0001f || Mathf.Abs(scale.z) < 0.0001f;
     }
 
-    private static string ParseRoomNameFromCameraArea(string objectName)
-    {
-        if (string.IsNullOrWhiteSpace(objectName))
-        {
-            return string.Empty;
-        }
-
-        string cleanName = objectName.Trim();
-
-        if (cleanName.StartsWith("Button_", StringComparison.OrdinalIgnoreCase))
-        {
-            cleanName = cleanName.Substring("Button_".Length);
-        }
-        else if (cleanName.StartsWith("Cam_", StringComparison.OrdinalIgnoreCase))
-        {
-            cleanName = cleanName.Substring("Cam_".Length);
-        }
-
-        return cleanName.Replace('_', ' ').Trim();
-    }
 }
 
 [Serializable]

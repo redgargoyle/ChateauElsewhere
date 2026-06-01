@@ -8,7 +8,7 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
     private const string WindowTitle = "Room Image Shader Controls";
 
     private CameraManager cameraManager;
-    private CameraAreaController cameraArea;
+    private RoomContentGroup roomContentGroup;
     private bool followSelection = true;
     private float horizontalPan;
     private float verticalPan;
@@ -42,7 +42,7 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
         cameraManager = (CameraManager)EditorGUILayout.ObjectField("Camera Manager", cameraManager, typeof(CameraManager), true);
-        cameraArea = (CameraAreaController)EditorGUILayout.ObjectField("Room Camera", cameraArea, typeof(CameraAreaController), true);
+        roomContentGroup = (RoomContentGroup)EditorGUILayout.ObjectField("Room", roomContentGroup, typeof(RoomContentGroup), true);
         followSelection = EditorGUILayout.Toggle("Follow Selection", followSelection);
 
         if (EditorGUI.EndChangeCheck())
@@ -57,7 +57,7 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
                 RefreshReferencesFromSelection();
             }
 
-            using (new EditorGUI.DisabledScope(cameraArea == null))
+            using (new EditorGUI.DisabledScope(roomContentGroup == null))
             {
                 if (GUILayout.Button("Preview Room"))
                 {
@@ -68,7 +68,7 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            using (new EditorGUI.DisabledScope(cameraArea == null || cameraManager == null))
+            using (new EditorGUI.DisabledScope(roomContentGroup == null || cameraManager == null))
             {
                 if (GUILayout.Button("Full Image Placement"))
                 {
@@ -163,11 +163,11 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
 
     private void RefreshReferencesFromSelection()
     {
-        CameraAreaController selectedCameraArea = NavigationEditorTools.FindSelectedCameraArea();
+        RoomContentGroup selectedRoomContentGroup = NavigationEditorTools.FindSelectedRoomContentGroup();
 
-        if (selectedCameraArea != null)
+        if (selectedRoomContentGroup != null)
         {
-            cameraArea = selectedCameraArea;
+            roomContentGroup = selectedRoomContentGroup;
         }
 
         if (cameraManager == null)
@@ -200,15 +200,15 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
 
     private void PreviewSelectedRoom()
     {
-        if (cameraArea == null)
+        if (roomContentGroup == null)
         {
             return;
         }
 
-        NavigationEditorTools.PreviewCameraForDoorEditing(cameraArea);
+        NavigationEditorTools.PreviewRoomForDoorEditing(roomContentGroup);
         EnsureReferences();
 
-        Texture roomTexture = cameraArea.GetEffectiveRoomBackgroundTexture();
+        Texture roomTexture = GetRoomContentTexture(roomContentGroup);
 
         if (cameraManager != null && roomTexture != null)
         {
@@ -220,15 +220,15 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
 
     private void PreviewFullImagePlacement()
     {
-        if (cameraArea == null)
+        if (roomContentGroup == null)
         {
             return;
         }
 
-        NavigationEditorTools.PreviewCameraForDoorEditing(cameraArea);
+        NavigationEditorTools.PreviewRoomForDoorEditing(roomContentGroup);
         EnsureReferences();
 
-        Texture roomTexture = cameraArea.GetEffectiveRoomBackgroundTexture();
+        Texture roomTexture = GetRoomContentTexture(roomContentGroup);
 
         if (cameraManager == null || roomTexture == null)
         {
@@ -300,6 +300,16 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
         }
 
         return sceneObjects.ToArray();
+    }
+
+    private static Texture GetRoomContentTexture(RoomContentGroup selectedRoomContentGroup)
+    {
+        if (selectedRoomContentGroup != null && selectedRoomContentGroup.TryGetRoomBackgroundTexture(out Texture roomTexture))
+        {
+            return roomTexture;
+        }
+
+        return null;
     }
 
     private static void MarkSceneDirty(GameObject sceneObject)

@@ -15,13 +15,13 @@ public class NavigationRegressionTests
     private const string StairwaySoundCatalogPath = "Assets/Resources/Audio/StairwaySoundCatalog.asset";
     private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
-    private const string MapAnimatorPath = "Assets/Map/MapAnimator.cs";
     private const string NavigationEditorToolsPath = "Assets/Editor/NavigationEditorTools.cs";
     private const string BackgroundShaderGraphPath = "Assets/Shader/Background.shadergraph";
     private const string BackgroundMaterialPath = "Assets/Shader/BackgroundMaterial.mat";
     private const string RoomPrefabPath = "Assets/Prefabs/Room.prefab";
     private const string YSortSolidObstaclePath = "Assets/Scripts/Characters/YSortSolidObstacle2D.cs";
     private const string ChapterTimeSettingsUIPath = "Assets/Scripts/Story/ChapterTimeSettingsUI.cs";
+    private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string Chapter1InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
     private const string RoomContentGroupGuid = "d0ea47fd950844bcacb0fd5556a9d880";
@@ -275,13 +275,29 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void GameplayMapOpenerStartsTopRight()
+    public void GameplayDoesNotKeepMapDropdownUi()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
-        string mapAnimatorText = File.ReadAllText(MapAnimatorPath);
 
-        Assert.That(sceneText, Does.Contain("triggerViewportPosition: {x: 0.95, y: 0.92}"));
-        Assert.That(mapAnimatorText, Does.Contain("triggerViewportPosition = new Vector2(0.95f, 0.92f)"));
+        Assert.That(sceneText, Does.Not.Match(@"(?m)^\s*m_Name: Map$"), "Gameplay should not keep the old map dropdown panel.");
+        Assert.That(sceneText, Does.Not.Match(@"(?m)^\s*m_Name: MapTrigger$"), "Gameplay should not keep the old map dropdown opener.");
+        Assert.That(sceneText, Does.Not.Contain("MapAnimator"), "Gameplay should not reference the old map dropdown animator.");
+        Assert.That(sceneText, Does.Not.Contain("CameraAreaController"), "Gameplay should not reference old map camera-area buttons.");
+        Assert.That(File.Exists("Assets/Map/MapAnimator.cs"), Is.False, "The old map dropdown animator script should stay deleted.");
+        Assert.That(File.Exists("Assets/Map/CameraAreaController.cs"), Is.False, "The old map camera-area button script should stay deleted.");
+        Assert.That(File.Exists("Assets/Art/UI/map_labeled_transparent.png"), Is.False, "The old map dropdown art should stay deleted.");
+    }
+
+    [Test]
+    public void ChapterManagerHasChapter2DebugSkipButton()
+    {
+        string chapterManagerText = File.ReadAllText(ChapterManagerPath);
+
+        Assert.That(chapterManagerText, Does.Contain("showSkipToChapter2Button"));
+        Assert.That(chapterManagerText, Does.Contain("Button_SkipToChapter2"));
+        Assert.That(chapterManagerText, Does.Contain("SkipToChapter2ForTesting"));
+        Assert.That(chapterManagerText, Does.Contain("ResolveChapter2Controller(true)"));
+        Assert.That(chapterManagerText, Does.Contain("BeginChapter2(this)"));
     }
 
     [Test]
@@ -303,9 +319,9 @@ public class NavigationRegressionTests
 
         Assert.That(sceneText, Does.Contain($"guid: {RoomContentGroupGuid}"), "Gameplay room objects should have RoomContentGroup components.");
         Assert.That(sceneText, Does.Contain("roomBackgroundTexture: {fileID: 2800000"), "RoomContentGroup should own each room background texture.");
-        Assert.That(sceneText, Does.Contain("m_Name: Button_Grand_Entrance_Hall"));
-        Assert.That(sceneText, Does.Contain("m_Name: Button_Library"));
-        Assert.That(sceneText, Does.Contain("m_Name: Button_Ballroom"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Button_Grand_Entrance_Hall"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Button_Library"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Button_Ballroom"));
         Assert.That(Regex.Matches(sceneText, @"m_Name: Doors").Count, Is.GreaterThanOrEqualTo(18), "Each room object should have a Doors child.");
         Assert.That(sceneText, Does.Not.Contain("m_Name: Cam_"));
         Assert.That(sceneText, Does.Not.Contain("m_Name: MapButton_"));
