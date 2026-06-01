@@ -6,6 +6,7 @@ public class Chapter2RegressionTests
 {
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ChapterIntroUIPath = "Assets/Scripts/Story/ChapterIntroUI.cs";
+    private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter2DirectoryPath = "Assets/_Chateau/Scripts/Chapter/Chapter02";
@@ -166,10 +167,17 @@ public class Chapter2RegressionTests
         Assert.That(File.Exists(Chapter2GuestFindActionPath), Is.True, "Chapter 2 should have a dedicated guest find click action.");
 
         string actionText = File.ReadAllText(Chapter2GuestFindActionPath);
+        string cameraText = File.ReadAllText(CameraManagerPath);
         Assert.That(actionText, Does.Contain("DisallowMultipleComponent"));
         Assert.That(actionText, Does.Contain("IPointerClickHandler"));
+        Assert.That(actionText, Does.Contain("IPointerEnterHandler"));
+        Assert.That(actionText, Does.Contain("IPointerExitHandler"));
         Assert.That(actionText, Does.Contain("OnMouseDown"));
-        Assert.That(actionText, Does.Contain("MarkGuestFound(guestId)"));
+        Assert.That(actionText, Does.Contain("TryStartGuestConversation(guestId)"));
+        Assert.That(actionText, Does.Not.Contain("MarkGuestFound(guestId)"), "Clicking a hidden guest should start dialogue, not immediately increment the found count.");
+        Assert.That(actionText, Does.Contain("HoverIcon.Talk"));
+        Assert.That(cameraText, Does.Contain("Talk"));
+        Assert.That(cameraText, Does.Contain("CreateTalkCursor"));
     }
 
     [Test]
@@ -189,6 +197,13 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Contain("none, thank you"));
         Assert.That(guestSearchText, Does.Contain("spiritBottle"));
         Assert.That(guestSearchText, Does.Contain("bottle of spirits"));
+        Assert.That(guestSearchText, Does.Match(@"\bTryStartGuestConversation\s*\("));
+        Assert.That(guestSearchText, Does.Contain("Ask meal preference"));
+        Assert.That(guestSearchText, Does.Match(@"\bShowMealPreferenceQuestion\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bChooseMealPreference\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bChooseSmokingPreference\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bFinishGuestConversation\s*\("));
+        Assert.That(guestSearchText, Does.Contain("MarkGuestFound(GetGuestIdForOrderList(guest))"));
         Assert.That(guestSearchText, Does.Contain("HandleGuestSearchProgressChanged()"));
         Assert.That(guestSearchText, Does.Contain("HandleAllGuestsFound()"));
     }
@@ -204,13 +219,21 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Match(@"\bGetGuestsInDiningSeatOrder\s*\("));
         Assert.That(guestSearchText, Does.Match(@"\bFindDiningSeatAnchors\s*\("));
         Assert.That(guestSearchText, Does.Match(@"\bHideGuestForDiningRoomTransfer\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bRunGuestExitToDiningRoomRoutine\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bStageGuestForDiningRoomReveal\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bStageGuestForDiningRoomReveal\s*\([^)]*\)\s*\{.*SetCurrentRoom\(targetRoom\).*SetVisibleByChapterState\(false\).*ApplyState\(\)"), "Spoken-to guests should leave the search room and wait hidden for the Dining Room reveal.");
         Assert.That(guestSearchText, Does.Match(@"(?s)\bHideGuestForDiningRoomTransfer\s*\([^)]*\)\s*\{.*SetVisibleByChapterState\(false\).*ApplyState\(\)"), "Guests should be hidden from their search rooms before being moved to Dining Room seats.");
         Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*HideGuestForDiningRoomTransfer\(guest\).*PlaceAt\(diningSeat\.transform\).*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*ApplyState\(\)"), "Dining seating should hide, move, assign Dining Room, then restore visibility through ActorRoomState.");
         Assert.That(guestSearchText, Does.Contain("SetCurrentRoom(diningSeat.RoomId)"));
-        Assert.That(guestSearchText, Does.Contain("SetSeated(true)"));
+        Assert.That(guestSearchText, Does.Contain("SetSeated(false)"));
         Assert.That(controllerText, Does.Contain("BeginDiningRoomObjective()"));
+        Assert.That(controllerText, Does.Match(@"\bRunDiningObjectiveTransitionRoutine\s*\("));
         Assert.That(controllerText, Does.Contain("SetDinnerClockAndStop()"));
         Assert.That(controllerText, Does.Contain("PrepareGuestsForDiningTransfer()"));
+        Assert.That(controllerText, Does.Contain("ShowClockStrike"));
+        Assert.That(controllerText, Does.Contain("PlayClockStrikeDing"));
+        Assert.That(controllerText, Does.Contain("RuntimeChapter2ClockStrikeDing"));
+        Assert.That(controllerText, Does.Contain("ClearClockStrike"));
         Assert.That(controllerText, Does.Contain("SeatGuestsInDiningRoom()"));
         Assert.That(controllerText, Does.Contain("guestSearch.SeatGuestsInDiningRoom()"));
         Assert.That(controllerText, Does.Contain("diningRoomRevealSeconds = 5f"));
@@ -257,8 +280,15 @@ public class Chapter2RegressionTests
         Assert.That(hudText, Does.Match(@"\bSetObjective\s*\("));
         Assert.That(hudText, Does.Match(@"\bSetPrimaryAction\s*\("));
         Assert.That(hudText, Does.Match(@"\bClearPrimaryAction\s*\("));
+        Assert.That(hudText, Does.Match(@"\bSetDialogue\s*\("));
+        Assert.That(hudText, Does.Match(@"\bSetDialogueChoices\s*\("));
+        Assert.That(hudText, Does.Match(@"\bClearDialogue\s*\("));
+        Assert.That(hudText, Does.Match(@"\bShowClockStrike\s*\("));
+        Assert.That(hudText, Does.Match(@"\bClearClockStrike\s*\("));
         Assert.That(hudText, Does.Match(@"\bSetFoundGuests\s*\("));
         Assert.That(hudText, Does.Contain("Text_Chapter2FoundList"));
+        Assert.That(hudText, Does.Contain("Panel_Chapter2Dialogue"));
+        Assert.That(hudText, Does.Contain("Panel_Chapter2ClockStrike"));
         Assert.That(hudText, Does.Contain("IReadOnlyList<string>"));
     }
 
