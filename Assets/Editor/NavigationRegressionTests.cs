@@ -190,9 +190,11 @@ public class NavigationRegressionTests
         Assert.That(navigationManagerText, Does.Contain("FindArrivalDoorTrigger"), "Destination placement should use the reverse trigger already authored in the room.");
         Assert.That(triggerText, Does.Contain("TryFindArrivalDestination"), "Door hitboxes should expose the same reachable floor sampling for arrivals.");
         Assert.That(triggerText, Does.Contain("TryFindClosestReachableArrivalDestination"), "Door arrivals should fall back to the nearest reachable floor point around the destination trigger.");
+        Assert.That(triggerText, Does.Contain("TryFindClosestReachableDestinationToWorldPointTowardRoomCenter"), "Door arrivals should bias placement toward the destination room interior, not the player's stale pre-transition position.");
         Assert.That(triggerText, Does.Contain("TryFindClosestReachableDestinationToWorldPoint"), "Door arrivals should reuse the player movement boundary search when trigger screen samples miss the floor.");
         Assert.That(playerText, Does.Contain("TryWarpTo"), "Navigation needs an explicit non-walking placement path after a room change.");
         Assert.That(playerText, Does.Contain("RefreshWalkableFloorForCurrentRoom"), "Door arrivals must refresh the active room boundary before evaluating placement.");
+        Assert.That(playerText, Does.Contain("TryFindClosestReachableDestinationToWorldPointTowardRoomCenter"), "Player movement should offer a room-center-biased doorway placement path for arrivals.");
     }
 
     [Test]

@@ -363,6 +363,24 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	public bool TryFindClosestReachableDestinationToWorldPoint(Vector2 worldPoint, out Vector2 destination)
 	{
+		RefreshWalkableFloorForCurrentRoom();
+		UpdateVisualOffset(Camera.main);
+		return TryFindClosestReachableDestinationToWorldPoint(worldPoint, LogicalToWalkableWorldPoint(logicalPosition), out destination);
+	}
+
+	public bool TryFindClosestReachableDestinationToWorldPointTowardRoomCenter(Vector2 worldPoint, out Vector2 destination)
+	{
+		RefreshWalkableFloorForCurrentRoom();
+		UpdateVisualOffset(Camera.main);
+		Vector2 preferredWorldPoint = walkableFloor != null
+			? (Vector2)walkableFloor.bounds.center
+			: LogicalToWalkableWorldPoint(logicalPosition);
+
+		return TryFindClosestReachableDestinationToWorldPoint(worldPoint, preferredWorldPoint, out destination);
+	}
+
+	public bool TryFindClosestReachableDestinationToWorldPoint(Vector2 worldPoint, Vector2 preferredWorldPoint, out Vector2 destination)
+	{
 		destination = Vector2.zero;
 
 		if (!isReady)
@@ -372,15 +390,18 @@ public class PointClickPlayerMovement : MonoBehaviour
 		UpdateVisualOffset(Camera.main);
 
 		Vector2 logicalPoint = WalkableWorldToLogicalPoint(worldPoint);
+		Vector2 preferredLogicalPoint = WalkableWorldToLogicalPoint(preferredWorldPoint);
+		Vector2 candidateDestination = IsPointWalkable(logicalPoint)
+			? logicalPoint
+			: ClampToWalkableArea(logicalPoint, preferredLogicalPoint);
 
-		if (TryEvaluateMovementTarget(logicalPoint, true, out MovementTargetQuery movementQuery) &&
-			movementQuery.HasReachableDestination)
+		if (TryBuildMovementPath(logicalPosition, candidateDestination, movementQueryPath))
 		{
-			destination = movementQuery.Destination;
+			destination = candidateDestination;
 			return true;
 		}
 
-		if (TryFindWalkableWorldPointNear(worldPoint, LogicalToWalkableWorldPoint(logicalPosition), out Vector2 walkableWorldPoint))
+		if (TryFindWalkableWorldPointNear(worldPoint, preferredWorldPoint, out Vector2 walkableWorldPoint))
 		{
 			Vector2 walkableLogicalPoint = WalkableWorldToLogicalPoint(walkableWorldPoint);
 

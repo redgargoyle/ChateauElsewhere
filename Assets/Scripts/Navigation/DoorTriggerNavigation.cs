@@ -283,12 +283,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     {
         ResolveReferences();
 
-        if (TryFindBestApproachDestination(playerMovement, false, out destination))
+        if (TryFindClosestReachableArrivalDestination(playerMovement, out destination))
         {
             return true;
         }
 
-        return TryFindClosestReachableArrivalDestination(playerMovement, out destination);
+        return TryFindBestApproachDestination(playerMovement, false, out destination);
     }
 
     private bool TryFindClosestReachableArrivalDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)
@@ -330,7 +330,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         ref float bestScore,
         ref Vector2 bestDestination)
     {
-        if (!playerMovement.TryFindClosestReachableDestinationToWorldPoint(triggerWorldPoint, out Vector2 candidateDestination) ||
+        if (!playerMovement.TryFindClosestReachableDestinationToWorldPointTowardRoomCenter(triggerWorldPoint, out Vector2 candidateDestination) ||
             !playerMovement.TryGetScreenPointFromLogicalPosition(candidateDestination, out Vector2 candidateScreenPoint))
         {
             return;
