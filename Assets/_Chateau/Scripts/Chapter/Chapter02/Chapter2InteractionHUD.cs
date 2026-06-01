@@ -18,6 +18,8 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private const string DialogueLineTextName = "Text_Chapter2DialogueLine";
     private const string DialogueChoiceButtonNamePrefix = "Button_Chapter2DialogueChoice";
     private const string DialogueChoiceLabelName = "Text_Chapter2DialogueChoice";
+    private const string ClockStrikePanelName = "Panel_Chapter2ClockStrike";
+    private const string ClockStrikeTextName = "Text_Chapter2ClockStrike";
     private const string PrimaryButtonName = "Button_Chapter2PrimaryAction";
     private const string PrimaryButtonLabelName = "Text_Chapter2PrimaryAction";
     private const int DialogueChoiceCount = 3;
@@ -31,6 +33,8 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private GameObject dialoguePanel;
     private TMP_Text dialogueSpeakerText;
     private TMP_Text dialogueLineText;
+    private GameObject clockStrikePanel;
+    private TMP_Text clockStrikeText;
     private readonly Button[] dialogueChoiceButtons = new Button[DialogueChoiceCount];
     private readonly TMP_Text[] dialogueChoiceLabels = new TMP_Text[DialogueChoiceCount];
     private readonly Action[] dialogueChoiceCallbacks = new Action[DialogueChoiceCount];
@@ -164,6 +168,30 @@ public class Chapter2InteractionHUD : MonoBehaviour
         }
     }
 
+    public void ShowClockStrike(string timeLabel)
+    {
+        EnsureUI();
+
+        if (clockStrikePanel != null)
+        {
+            clockStrikePanel.SetActive(true);
+            clockStrikePanel.transform.SetAsLastSibling();
+        }
+
+        if (clockStrikeText != null)
+        {
+            clockStrikeText.text = string.IsNullOrWhiteSpace(timeLabel) ? "7:00 PM" : timeLabel.Trim();
+        }
+    }
+
+    public void ClearClockStrike()
+    {
+        if (clockStrikePanel != null)
+        {
+            clockStrikePanel.SetActive(false);
+        }
+    }
+
     public void SetFoundGuests(IReadOnlyList<string> names, int foundCount, int totalCount)
     {
         EnsureUI();
@@ -294,6 +322,23 @@ public class Chapter2InteractionHUD : MonoBehaviour
             choiceRect.sizeDelta = new Vector2(236f, 42f);
             dialogueChoiceButtons[i].gameObject.SetActive(false);
         }
+
+        clockStrikePanel = FindOrCreatePanel(root, ClockStrikePanelName, new Color(0f, 0f, 0f, 0.78f));
+        RectTransform clockStrikeRect = clockStrikePanel.GetComponent<RectTransform>();
+        clockStrikeRect.anchorMin = new Vector2(0.5f, 0.5f);
+        clockStrikeRect.anchorMax = new Vector2(0.5f, 0.5f);
+        clockStrikeRect.pivot = new Vector2(0.5f, 0.5f);
+        clockStrikeRect.anchoredPosition = Vector2.zero;
+        clockStrikeRect.sizeDelta = new Vector2(520f, 240f);
+
+        clockStrikeText = FindOrCreateText(clockStrikeRect, ClockStrikeTextName, 64f, TextAlignmentOptions.Center);
+        RectTransform clockStrikeTextRect = clockStrikeText.GetComponent<RectTransform>();
+        clockStrikeTextRect.anchorMin = Vector2.zero;
+        clockStrikeTextRect.anchorMax = Vector2.one;
+        clockStrikeTextRect.offsetMin = new Vector2(24f, 24f);
+        clockStrikeTextRect.offsetMax = new Vector2(-24f, -24f);
+        clockStrikeText.textWrappingMode = TextWrappingModes.NoWrap;
+        clockStrikePanel.SetActive(false);
 
         primaryButton = FindOrCreatePrimaryButton(root);
         RectTransform buttonRect = primaryButton.GetComponent<RectTransform>();

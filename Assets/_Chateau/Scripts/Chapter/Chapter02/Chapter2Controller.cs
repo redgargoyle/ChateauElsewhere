@@ -40,6 +40,8 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField, Range(0, 23)] private int dinnerHour = 19;
     [SerializeField, Range(0, 59)] private int dinnerMinute;
     [SerializeField] private float diningRoomRevealSeconds = 5f;
+    [SerializeField] private float clockStrikeCloseUpSeconds = 2.25f;
+    [SerializeField] private AudioSource clockStrikeAudioSource;
 
     [Header("Speech")]
     [SerializeField] private float speechLineSeconds = 1.75f;
@@ -52,7 +54,9 @@ public class Chapter2Controller : MonoBehaviour
     private Coroutine fadeInRoutine;
     private Coroutine openingSpeechRoutine;
     private Coroutine monsterStingerRoutine;
+    private Coroutine diningObjectiveTransitionRoutine;
     private Coroutine diningRoomCompletionRoutine;
+    private AudioClip runtimeClockStrikeClip;
     private bool allGuestsFoundHandled;
     private bool dinnerSeatingHandled;
 
@@ -72,6 +76,7 @@ public class Chapter2Controller : MonoBehaviour
         chapterManager = manager;
         allGuestsFoundHandled = false;
         dinnerSeatingHandled = false;
+        diningObjectiveTransitionRoutine = null;
         diningRoomCompletionRoutine = null;
         ResolveReferences();
         SetPhase(Chapter2Phase.FadeInDrawingRoom);
@@ -194,11 +199,36 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         allGuestsFoundHandled = true;
+        diningObjectiveTransitionRoutine = StartCoroutine(RunDiningObjectiveTransitionRoutine());
+    }
+
+    private IEnumerator RunDiningObjectiveTransitionRoutine()
+    {
+        SetPlayerInputEnabled(false);
         SetDinnerClockAndStop();
         PrepareGuestsForDiningTransfer();
+        UpdateFoundGuestsHud();
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearDialogue();
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective(string.Empty);
+            interactionHUD.ShowClockStrike(chapterClock != null ? chapterClock.CurrentTimeLabel : "7:00 PM");
+        }
+
+        PlayClockStrikeDing();
+        yield return new WaitForSeconds(GetClockStrikeCloseUpSeconds());
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearClockStrike();
+        }
+
+        diningObjectiveTransitionRoutine = null;
         SetPhase(Chapter2Phase.DiningRoomObjective);
         SetPlayerInputEnabled(true);
-        UpdateFoundGuestsHud();
         UpdateDiningRoomObjective();
 
         if (IsCurrentRoom(diningRoomId))
@@ -604,6 +634,64 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         return Mathf.Max(0f, diningRoomRevealSeconds);
+    }
+
+    private float GetClockStrikeCloseUpSeconds()
+    {
+        if (debugFastMode || (chapterManager != null && chapterManager.DebugFastMode))
+        {
+            return 0.15f;
+        }
+
+        return Mathf.Max(0f, clockStrikeCloseUpSeconds);
+    }
+
+    private void PlayClockStrikeDing()
+    {
+        if (clockStrikeAudioSource == null)
+        {
+            clockStrikeAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (clockStrikeAudioSource == null)
+        {
+            return;
+        }
+
+        if (clockStrikeAudioSource.clip == null)
+        {
+            clockStrikeAudioSource.clip = runtimeClockStrikeClip != null
+                ? runtimeClockStrikeClip
+                : CreateRuntimeClockStrikeClip();
+        }
+
+        clockStrikeAudioSource.playOnAwake = false;
+        clockStrikeAudioSource.loop = false;
+        clockStrikeAudioSource.spatialBlend = 0f;
+        clockStrikeAudioSource.volume = 0.75f;
+        clockStrikeAudioSource.Stop();
+        clockStrikeAudioSource.Play();
+    }
+
+    private AudioClip CreateRuntimeClockStrikeClip()
+    {
+        const int sampleRate = 44100;
+        const float durationSeconds = 1.25f;
+        int samples = Mathf.CeilToInt(sampleRate * durationSeconds);
+        float[] data = new float[samples];
+
+        for (int i = 0; i < samples; i++)
+        {
+            float time = i / (float)sampleRate;
+            float envelope = Mathf.Exp(-3.6f * time);
+            float bell = Mathf.Sin(2f * Mathf.PI * 784f * time) * 0.55f;
+            float lowBell = Mathf.Sin(2f * Mathf.PI * 392f * time) * 0.35f;
+            data[i] = (bell + lowBell) * envelope;
+        }
+
+        runtimeClockStrikeClip = AudioClip.Create("RuntimeChapter2ClockStrikeDing", samples, 1, sampleRate, false);
+        runtimeClockStrikeClip.SetData(data, 0);
+        return runtimeClockStrikeClip;
     }
 
     private void SetPhase(Chapter2Phase nextPhase)
