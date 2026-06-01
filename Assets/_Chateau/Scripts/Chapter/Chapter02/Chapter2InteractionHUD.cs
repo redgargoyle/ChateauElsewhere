@@ -13,8 +13,14 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private const string ObjectiveTextName = "Text_Chapter2Objective";
     private const string StatusTextName = "Text_Chapter2Status";
     private const string FoundListTextName = "Text_Chapter2FoundList";
+    private const string DialoguePanelName = "Panel_Chapter2Dialogue";
+    private const string DialogueSpeakerTextName = "Text_Chapter2DialogueSpeaker";
+    private const string DialogueLineTextName = "Text_Chapter2DialogueLine";
+    private const string DialogueChoiceButtonNamePrefix = "Button_Chapter2DialogueChoice";
+    private const string DialogueChoiceLabelName = "Text_Chapter2DialogueChoice";
     private const string PrimaryButtonName = "Button_Chapter2PrimaryAction";
     private const string PrimaryButtonLabelName = "Text_Chapter2PrimaryAction";
+    private const int DialogueChoiceCount = 3;
 
     private Chapter2Controller controller;
     private ChapterClock chapterClock;
@@ -22,6 +28,12 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private TMP_Text objectiveText;
     private TMP_Text statusText;
     private TMP_Text foundListText;
+    private GameObject dialoguePanel;
+    private TMP_Text dialogueSpeakerText;
+    private TMP_Text dialogueLineText;
+    private readonly Button[] dialogueChoiceButtons = new Button[DialogueChoiceCount];
+    private readonly TMP_Text[] dialogueChoiceLabels = new TMP_Text[DialogueChoiceCount];
+    private readonly Action[] dialogueChoiceCallbacks = new Action[DialogueChoiceCount];
     private Button primaryButton;
     private TMP_Text primaryButtonLabel;
     private Action primaryActionCallback;
@@ -91,6 +103,64 @@ public class Chapter2InteractionHUD : MonoBehaviour
         {
             primaryButton.onClick.RemoveAllListeners();
             primaryButton.gameObject.SetActive(false);
+        }
+    }
+
+    public void SetDialogue(string speaker, string line)
+    {
+        EnsureUI();
+
+        if (dialoguePanel != null)
+        {
+            dialoguePanel.SetActive(true);
+        }
+
+        if (dialogueSpeakerText != null)
+        {
+            dialogueSpeakerText.text = speaker ?? string.Empty;
+            dialogueSpeakerText.gameObject.SetActive(!string.IsNullOrWhiteSpace(dialogueSpeakerText.text));
+        }
+
+        if (dialogueLineText != null)
+        {
+            dialogueLineText.text = line ?? string.Empty;
+            dialogueLineText.gameObject.SetActive(!string.IsNullOrWhiteSpace(dialogueLineText.text));
+        }
+    }
+
+    public void SetDialogueChoices(
+        string firstLabel,
+        Action firstCallback,
+        string secondLabel = null,
+        Action secondCallback = null,
+        string thirdLabel = null,
+        Action thirdCallback = null)
+    {
+        EnsureUI();
+        SetDialogueChoice(0, firstLabel, firstCallback);
+        SetDialogueChoice(1, secondLabel, secondCallback);
+        SetDialogueChoice(2, thirdLabel, thirdCallback);
+    }
+
+    public void ClearDialogue()
+    {
+        for (int i = 0; i < dialogueChoiceCallbacks.Length; i++)
+        {
+            dialogueChoiceCallbacks[i] = null;
+        }
+
+        if (dialoguePanel != null)
+        {
+            dialoguePanel.SetActive(false);
+        }
+
+        for (int i = 0; i < dialogueChoiceButtons.Length; i++)
+        {
+            if (dialogueChoiceButtons[i] != null)
+            {
+                dialogueChoiceButtons[i].onClick.RemoveAllListeners();
+                dialogueChoiceButtons[i].gameObject.SetActive(false);
+            }
         }
     }
 
@@ -189,6 +259,42 @@ public class Chapter2InteractionHUD : MonoBehaviour
         foundListRect.anchoredPosition = new Vector2(-24f, -150f);
         foundListRect.sizeDelta = new Vector2(360f, 220f);
 
+        dialoguePanel = FindOrCreatePanel(root, DialoguePanelName, new Color(0.03f, 0.025f, 0.02f, 0.9f));
+        RectTransform dialogueRect = dialoguePanel.GetComponent<RectTransform>();
+        dialogueRect.anchorMin = new Vector2(0.5f, 0f);
+        dialogueRect.anchorMax = new Vector2(0.5f, 0f);
+        dialogueRect.pivot = new Vector2(0.5f, 0f);
+        dialogueRect.anchoredPosition = new Vector2(0f, 128f);
+        dialogueRect.sizeDelta = new Vector2(820f, 190f);
+
+        dialogueSpeakerText = FindOrCreateText(dialogueRect, DialogueSpeakerTextName, 20f, TextAlignmentOptions.Left);
+        RectTransform speakerRect = dialogueSpeakerText.GetComponent<RectTransform>();
+        speakerRect.anchorMin = new Vector2(0f, 1f);
+        speakerRect.anchorMax = new Vector2(1f, 1f);
+        speakerRect.pivot = new Vector2(0f, 1f);
+        speakerRect.offsetMin = new Vector2(24f, -42f);
+        speakerRect.offsetMax = new Vector2(-24f, -12f);
+
+        dialogueLineText = FindOrCreateText(dialogueRect, DialogueLineTextName, 18f, TextAlignmentOptions.TopLeft);
+        RectTransform lineRect = dialogueLineText.GetComponent<RectTransform>();
+        lineRect.anchorMin = new Vector2(0f, 0f);
+        lineRect.anchorMax = new Vector2(1f, 1f);
+        lineRect.pivot = new Vector2(0.5f, 0.5f);
+        lineRect.offsetMin = new Vector2(24f, 66f);
+        lineRect.offsetMax = new Vector2(-24f, -48f);
+
+        for (int i = 0; i < DialogueChoiceCount; i++)
+        {
+            dialogueChoiceButtons[i] = FindOrCreateDialogueButton(dialogueRect, i);
+            RectTransform choiceRect = dialogueChoiceButtons[i].GetComponent<RectTransform>();
+            choiceRect.anchorMin = new Vector2(0f, 0f);
+            choiceRect.anchorMax = new Vector2(0f, 0f);
+            choiceRect.pivot = new Vector2(0f, 0f);
+            choiceRect.anchoredPosition = new Vector2(24f + (i * 256f), 16f);
+            choiceRect.sizeDelta = new Vector2(236f, 42f);
+            dialogueChoiceButtons[i].gameObject.SetActive(false);
+        }
+
         primaryButton = FindOrCreatePrimaryButton(root);
         RectTransform buttonRect = primaryButton.GetComponent<RectTransform>();
         buttonRect.anchorMin = new Vector2(0.5f, 0f);
@@ -200,6 +306,11 @@ public class Chapter2InteractionHUD : MonoBehaviour
         if (primaryActionCallback == null)
         {
             primaryButton.gameObject.SetActive(false);
+        }
+
+        if (dialogueChoiceCallbacks[0] == null && dialoguePanel != null)
+        {
+            dialoguePanel.SetActive(false);
         }
     }
 
@@ -274,6 +385,118 @@ public class Chapter2InteractionHUD : MonoBehaviour
 
         primaryButtonLabel = FindOrCreateButtonLabel(button.transform);
         return button;
+    }
+
+    private Button FindOrCreateDialogueButton(Transform root, int index)
+    {
+        string objectName = DialogueChoiceButtonNamePrefix + (index + 1);
+        Transform existing = root.Find(objectName);
+        Button button = existing != null
+            ? existing.GetComponent<Button>()
+            : null;
+
+        if (button == null)
+        {
+            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
+            buttonRect.SetParent(root, false);
+
+            Image buttonImage = buttonObject.GetComponent<Image>();
+            buttonImage.color = new Color(0.12f, 0.1f, 0.08f, 0.95f);
+
+            button = buttonObject.GetComponent<Button>();
+            ColorBlock colors = button.colors;
+            colors.normalColor = new Color(0.12f, 0.1f, 0.08f, 0.95f);
+            colors.highlightedColor = new Color(0.2f, 0.16f, 0.12f, 1f);
+            colors.pressedColor = new Color(0.05f, 0.04f, 0.03f, 1f);
+            colors.selectedColor = colors.highlightedColor;
+            button.colors = colors;
+        }
+
+        dialogueChoiceLabels[index] = FindOrCreateDialogueButtonLabel(button.transform);
+        return button;
+    }
+
+    private TMP_Text FindOrCreateDialogueButtonLabel(Transform buttonRoot)
+    {
+        Transform existing = buttonRoot.Find(DialogueChoiceLabelName);
+        TMP_Text label = existing != null
+            ? existing.GetComponent<TMP_Text>()
+            : null;
+
+        if (label != null)
+        {
+            return label;
+        }
+
+        GameObject labelObject = new GameObject(DialogueChoiceLabelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+        labelRect.SetParent(buttonRoot, false);
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(10f, 0f);
+        labelRect.offsetMax = new Vector2(-10f, 0f);
+
+        label = labelObject.GetComponent<TMP_Text>();
+        label.fontSize = 16f;
+        label.color = Color.white;
+        label.alignment = TextAlignmentOptions.Center;
+        label.textWrappingMode = TextWrappingModes.Normal;
+        label.raycastTarget = false;
+        return label;
+    }
+
+    private static GameObject FindOrCreatePanel(Transform root, string objectName, Color color)
+    {
+        Transform existing = root.Find(objectName);
+
+        if (existing != null)
+        {
+            return existing.gameObject;
+        }
+
+        GameObject panelObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        RectTransform panelRect = panelObject.GetComponent<RectTransform>();
+        panelRect.SetParent(root, false);
+
+        Image image = panelObject.GetComponent<Image>();
+        image.color = color;
+        image.raycastTarget = false;
+        return panelObject;
+    }
+
+    private void SetDialogueChoice(int index, string label, Action callback)
+    {
+        if (index < 0 || index >= dialogueChoiceButtons.Length)
+        {
+            return;
+        }
+
+        dialogueChoiceCallbacks[index] = callback;
+        Button button = dialogueChoiceButtons[index];
+
+        if (button == null)
+        {
+            return;
+        }
+
+        button.onClick.RemoveAllListeners();
+
+        if (callback == null || string.IsNullOrWhiteSpace(label))
+        {
+            button.gameObject.SetActive(false);
+            return;
+        }
+
+        int callbackIndex = index;
+        button.onClick.AddListener(() => dialogueChoiceCallbacks[callbackIndex]?.Invoke());
+        button.interactable = true;
+        button.gameObject.SetActive(true);
+
+        if (dialogueChoiceLabels[index] != null)
+        {
+            dialogueChoiceLabels[index].text = label.Trim();
+        }
     }
 
     private static TMP_Text FindOrCreateButtonLabel(Transform buttonRoot)
