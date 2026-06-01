@@ -5,6 +5,7 @@ using NUnit.Framework;
 public class Chapter2RegressionTests
 {
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
+    private const string ChapterIntroUIPath = "Assets/Scripts/Story/ChapterIntroUI.cs";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter2DirectoryPath = "Assets/_Chateau/Scripts/Chapter/Chapter02";
     private const string Chapter2ControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs";
@@ -17,6 +18,20 @@ public class Chapter2RegressionTests
     public void Chapter2ScriptSpecExists()
     {
         Assert.That(File.Exists(Chapter2ScriptPath), Is.True, "Chapter 2 should have a markdown implementation script.");
+    }
+
+    [Test]
+    public void ChapterTitlesUseChapterLabels()
+    {
+        string managerText = File.ReadAllText(ChapterManagerPath);
+        string introText = File.ReadAllText(ChapterIntroUIPath);
+        string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
+
+        Assert.That(managerText, Does.Contain("Chapter1Title = \"Chapter 1\""));
+        Assert.That(managerText, Does.Contain("displayedTitle = Chapter1Title"));
+        Assert.That(introText, Does.Contain("defaultTitle = \"Chapter 1\""));
+        Assert.That(chapter2Text, Does.Contain("chapterTitle = \"Chapter 2\""));
+        Assert.That(chapter2Text, Does.Contain("ShowTitle(chapterTitle)"));
     }
 
     [Test]
@@ -88,6 +103,10 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("freezeSeconds = 2.5f"));
         Assert.That(stingerText, Does.Contain("violinsolo"));
         Assert.That(stingerText, Does.Contain(".loop = loopViolinAudio"));
+        Assert.That(stingerText, Does.Contain("drawingRoomId = \"Drawing Room\""));
+        Assert.That(stingerText, Does.Contain("maxVisibleSeconds = 7f"));
+        Assert.That(stingerText, Does.Contain("OnCurrentRoomChanged"));
+        Assert.That(stingerText, Does.Contain("SetActive(false)"));
     }
 
     [Test]

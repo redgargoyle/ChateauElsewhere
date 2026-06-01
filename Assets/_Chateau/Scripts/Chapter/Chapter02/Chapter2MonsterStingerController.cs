@@ -10,17 +10,22 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     [SerializeField] private GameObject monsterObject;
     [SerializeField] private Transform runStart;
     [SerializeField] private Transform runTarget;
+    [SerializeField] private RoomNavigationManager navigationManager;
+    [SerializeField] private string drawingRoomId = "Drawing Room";
     [SerializeField] private AudioSource violinAudioSource;
     [SerializeField] private AudioClip violinAudioClip;
     [SerializeField] private string fallbackViolinClipName = "violinsolo";
     [SerializeField] private bool loopViolinAudio = true;
     [SerializeField] private float runSeconds = 1.0f;
     [SerializeField] private float freezeSeconds = 2.5f;
+    [SerializeField] private float maxVisibleSeconds = 7f;
     [SerializeField] private int cyclesBeforeComplete = 3;
     [SerializeField] private bool createPlaceholderMonsterIfMissing = true;
 
     private Coroutine stingerRoutine;
     private bool isRunning;
+    private bool subscribedToRoomChanges;
+    private float visibleElapsedSeconds;
 
     public bool IsRunning => isRunning;
 
@@ -48,7 +53,19 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             violinAudioSource.Stop();
         }
 
+        HideMonster();
+        UnsubscribeFromRoomChanges();
         isRunning = false;
+    }
+
+    private void OnDisable()
+    {
+        StopStinger();
+    }
+
+    private void OnDestroy()
+    {
+        UnsubscribeFromRoomChanges();
     }
 
     public IEnumerator PlayStinger()
@@ -59,50 +76,41 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         }
 
         isRunning = true;
+        visibleElapsedSeconds = 0f;
         ResolveReferences();
+        SubscribeToRoomChanges();
 
         int cycleCount = Mathf.Max(0, cyclesBeforeComplete);
 
-        for (int i = 0; i < cycleCount; i++)
+        for (int i = 0; i < cycleCount && HasVisibleTimeRemaining(); i++)
         {
             if (monsterObject != null && runStart != null)
             {
                 monsterObject.transform.position = runStart.position;
             }
 
-            if (monsterObject != null)
-            {
-                monsterObject.SetActive(true);
-            }
-
-            if (violinAudioSource != null)
-            {
-                violinAudioSource.Play();
-            }
+            ApplyMonsterRoomVisibility();
+            PlayViolinAudioIfVisible();
 
             yield return MoveMonsterToFreezeTarget();
 
-            if (violinAudioSource != null)
-            {
-                violinAudioSource.Stop();
-            }
+            StopViolinAudio();
 
             if (monsterObject != null && runTarget != null)
             {
                 monsterObject.transform.position = runTarget.position;
+                ApplyMonsterRoomVisibility();
             }
 
-            if (freezeSeconds > 0f)
+            if (freezeSeconds > 0f && HasVisibleTimeRemaining())
             {
-                yield return new WaitForSeconds(freezeSeconds);
+                yield return WaitForFreezeSeconds();
             }
         }
 
-        if (violinAudioSource != null)
-        {
-            violinAudioSource.Stop();
-        }
-
+        StopViolinAudio();
+        HideMonster();
+        UnsubscribeFromRoomChanges();
         isRunning = false;
         stingerRoutine = null;
     }
@@ -113,11 +121,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
         if (monsterObject == null || runStart == null || runTarget == null)
         {
-            if (duration > 0f)
-            {
-                yield return new WaitForSeconds(duration);
-            }
-
+            yield return WaitForStingerSeconds(duration);
             yield break;
         }
 
@@ -132,19 +136,45 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
         float elapsed = 0f;
 
-        while (elapsed < duration)
+        while (elapsed < duration && HasVisibleTimeRemaining())
         {
             elapsed += Time.deltaTime;
             float progress = Mathf.Clamp01(elapsed / duration);
             monsterObject.transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
+            TickVisibleElapsed();
+            ApplyMonsterRoomVisibility();
+            PlayViolinAudioIfVisible();
             yield return null;
         }
 
         monsterObject.transform.position = targetPosition;
     }
 
+    private IEnumerator WaitForFreezeSeconds()
+    {
+        yield return WaitForStingerSeconds(freezeSeconds);
+    }
+
+    private IEnumerator WaitForStingerSeconds(float duration)
+    {
+        float elapsed = 0f;
+
+        while (elapsed < duration && HasVisibleTimeRemaining())
+        {
+            elapsed += Time.deltaTime;
+            TickVisibleElapsed();
+            ApplyMonsterRoomVisibility();
+            yield return null;
+        }
+    }
+
     private void ResolveReferences()
     {
+        if (navigationManager == null)
+        {
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+
         if (runStart == null)
         {
             runStart = FindRoomAnchor("Ch2_MonsterRunStart");
@@ -305,5 +335,101 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
         placeholder.SetActive(false);
         return placeholder;
+    }
+
+    private void SubscribeToRoomChanges()
+    {
+        if (navigationManager == null || subscribedToRoomChanges)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.AddListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = true;
+    }
+
+    private void UnsubscribeFromRoomChanges()
+    {
+        if (navigationManager == null || !subscribedToRoomChanges)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = false;
+    }
+
+    private void HandleCurrentRoomChanged(string roomName)
+    {
+        ApplyMonsterRoomVisibility();
+    }
+
+    private void ApplyMonsterRoomVisibility()
+    {
+        if (monsterObject == null)
+        {
+            return;
+        }
+
+        bool shouldShow = CanShowMonster();
+
+        if (monsterObject != gameObject)
+        {
+            monsterObject.SetActive(shouldShow);
+        }
+
+        if (!shouldShow)
+        {
+            StopViolinAudio();
+        }
+    }
+
+    private bool CanShowMonster()
+    {
+        return isRunning && HasVisibleTimeRemaining() && IsDrawingRoomCurrent();
+    }
+
+    private bool IsDrawingRoomCurrent()
+    {
+        if (navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom))
+        {
+            return true;
+        }
+
+        return string.Equals(navigationManager.CurrentRoom, drawingRoomId, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool HasVisibleTimeRemaining()
+    {
+        return visibleElapsedSeconds < Mathf.Max(0f, maxVisibleSeconds);
+    }
+
+    private void TickVisibleElapsed()
+    {
+        visibleElapsedSeconds += Time.deltaTime;
+    }
+
+    private void HideMonster()
+    {
+        if (monsterObject != null && monsterObject != gameObject)
+        {
+            monsterObject.SetActive(false);
+        }
+    }
+
+    private void PlayViolinAudioIfVisible()
+    {
+        if (CanShowMonster() && violinAudioSource != null && !violinAudioSource.isPlaying)
+        {
+            violinAudioSource.Play();
+        }
+    }
+
+    private void StopViolinAudio()
+    {
+        if (violinAudioSource != null)
+        {
+            violinAudioSource.Stop();
+        }
     }
 }

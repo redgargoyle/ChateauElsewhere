@@ -21,10 +21,11 @@ public class ChapterManager : MonoBehaviour
 {
     public const string Chapter1Id = "chapter_01_arrivals";
     public const string Chapter2Id = "chapter_02_guest_search";
+    private const string Chapter1Title = "Chapter 1";
 
     [Header("Chapter")]
     [SerializeField] private string currentChapterId = Chapter1Id;
-    [SerializeField] private string displayedTitle = "Act 1";
+    [SerializeField] private string displayedTitle = Chapter1Title;
     [SerializeField] private ChapterPhase currentPhase = ChapterPhase.NotStarted;
 
     [Header("Debug Tools")]
@@ -137,6 +138,7 @@ public class ChapterManager : MonoBehaviour
         ValidateRequiredReferences();
 
         currentChapterId = Chapter1Id;
+        displayedTitle = Chapter1Title;
         chapterStarted = true;
         Debug.Log("Chapter 1 started", this);
 
@@ -254,7 +256,7 @@ public class ChapterManager : MonoBehaviour
             introUI.ShowTitle(displayedTitle);
         }
 
-        Debug.Log("Act title shown", this);
+        Debug.Log("Chapter title shown", this);
 
         if (!skipIntro)
         {

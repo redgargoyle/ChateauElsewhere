@@ -31,6 +31,9 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private string drawingRoomId = "Drawing Room";
     [SerializeField] private string diningRoomId = "Dining Room";
 
+    [Header("Title")]
+    [SerializeField] private string chapterTitle = "Chapter 2";
+
     [Header("State")]
     [SerializeField] private Chapter2Phase currentPhase = Chapter2Phase.NotStarted;
     [SerializeField] private bool debugFastMode;
@@ -149,6 +152,10 @@ public class Chapter2Controller : MonoBehaviour
     {
         introUI.ShowBlack();
         yield return null;
+
+        introUI.ShowTitle(chapterTitle);
+        yield return new WaitForSeconds(GetChapterTitleHoldSeconds());
+
         yield return introUI.FadeFromBlack(GetFadeSeconds());
 
         fadeInRoutine = null;
@@ -375,6 +382,16 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         return introUI != null ? introUI.FadeFromBlackSeconds : 1.5f;
+    }
+
+    private float GetChapterTitleHoldSeconds()
+    {
+        if (debugFastMode || (chapterManager != null && chapterManager.DebugFastMode))
+        {
+            return 0.15f;
+        }
+
+        return introUI != null ? introUI.TitleHoldSeconds : 2f;
     }
 
     private float GetSpeechLineSeconds()
