@@ -32,15 +32,15 @@ A high-pitched screaming violin begins abruptly, cutting through the speech befo
 
 ### Beat 06 — Monster charge
 
-A long-haired arm-swinging beast on nine spider legs charges from `Ch2_MonsterRunStart` toward the Butler at `Ch2_MonsterFreezeTarget`.
+A long-haired arm-swinging beast on nine spider legs charges rightward from `Ch2_MonsterRunStart` for 1-2 random seconds while the screaming violin plays.
 
 ### Beat 07 — Monster freezes
 
-The monster freezes before reaching the Butler. The violin stops at the same moment, leaving sudden silence.
+The monster freezes for 1-2 random seconds. The violin stops at the same moment, leaving sudden silence.
 
-### Beat 08 — Repeat run/freeze/silence cycle
+### Beat 08 — Continue the run/freeze/silence cycle
 
-Repeat the run/freeze/silence cycle 2-3 times. Each cycle should feel slightly more impossible and alarming, but still be simple scripted behavior.
+Repeat until the monster has completed exactly three rightward runs and three freezes. Each run continues from the previous frozen position; the monster should not reset or move backward.
 
 ### Beat 09 — Guests scatter
 
