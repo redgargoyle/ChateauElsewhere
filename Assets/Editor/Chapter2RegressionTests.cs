@@ -16,6 +16,8 @@ public class Chapter2RegressionTests
     private const string Chapter2GuestSearchControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs";
     private const string Chapter2GuestFindActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs";
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
+    private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
+    private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
 
     [Test]
     public void Chapter2ScriptSpecExists()
@@ -181,6 +183,26 @@ public class Chapter2RegressionTests
     }
 
     [Test]
+    public void Chapter2GuestClickPriorityStartsConversationOnFirstClick()
+    {
+        string actionText = File.ReadAllText(Chapter2GuestFindActionPath);
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string doorTriggerText = File.ReadAllText(DoorTriggerNavigationPath);
+
+        Assert.That(actionText, Does.Contain("IsPointerOverAvailableGuestAction"), "Guest actions should expose a shared priority helper.");
+        Assert.That(actionText, Does.Contain("Physics2D.OverlapPointAll"), "The priority helper should check 2D colliders under the pointer.");
+        Assert.That(actionText, Does.Contain("GetComponentInParent<Chapter2GuestFindAction>()"), "Child colliders should resolve to their guest action parent.");
+        Assert.That(actionText, Does.Contain("lastSuccessfulClickFrame"), "Duplicate-frame suppression should only track successful starts.");
+        Assert.That(actionText, Does.Not.Contain("lastClickFrame"), "Rejected callbacks must not poison duplicate-frame handling.");
+        Assert.That(actionText, Does.Match(@"(?s)if\s*\(\s*searchController\.TryStartGuestConversation\(guestId\)\s*\)\s*\{.*lastSuccessfulClickFrame\s*=\s*Time\.frameCount"), "Duplicate-frame state should be set only after the search controller accepts the conversation.");
+
+        Assert.That(movementText, Does.Match(@"(?s)\bTryGetFloorClick\s*\([^)]*\)\s*\{.*IsPointerOverAvailableGuestAction\(screenPosition\).*return false;.*TryEvaluateMovementAtScreenPoint"), "Floor clicks should defer to available hidden guests before movement evaluation.");
+        Assert.That(movementText, Does.Match(@"(?s)\bUpdateWalkCursor\s*\([^)]*\)\s*\{.*IsPointerOverAvailableGuestAction\(screenPosition\).*ClearWalkHover\(this\).*return;.*TryEvaluateMovementAtScreenPoint"), "Walk hover should clear instead of overriding the talk cursor over available hidden guests.");
+
+        Assert.That(doorTriggerText, Does.Match(@"(?s)\bUpdateFallbackPointerHoverAndClick\s*\([^)]*\)\s*\{.*TryGetPointerPosition\(out Vector2 screenPosition\).*IsPointerOverAvailableGuestAction\(screenPosition\).*ClearActiveDoorHover\(fallbackHoveredTrigger\).*return;.*FindTopmostTriggerAtScreenPoint"), "Door fallback hover/click should defer to available hidden guests before setting door hover or activating a trigger.");
+    }
+
+    [Test]
     public void Chapter2GuestSearchRecordsFoundOrderAndPreferences()
     {
         string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
@@ -290,6 +312,7 @@ public class Chapter2RegressionTests
         Assert.That(hudText, Does.Contain("Panel_Chapter2Dialogue"));
         Assert.That(hudText, Does.Contain("Panel_Chapter2ClockStrike"));
         Assert.That(hudText, Does.Contain("IReadOnlyList<string>"));
+        Assert.That(hudText, Does.Match(@"(?s)\bSetDialogueChoices\s*\([^)]*\)\s*\{.*EnsureUI\s*\(\s*\).*dialoguePanel\.SetActive\(true\).*SetDialogueChoice\(0"), "The first visible guest dialogue should not be hidden by EnsureUI before choices are installed.");
     }
 
     [Test]

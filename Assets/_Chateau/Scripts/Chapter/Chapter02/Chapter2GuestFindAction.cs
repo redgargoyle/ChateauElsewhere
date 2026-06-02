@@ -13,11 +13,51 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
     [SerializeField] private Chapter2GuestSearchController searchController;
     [SerializeField] private bool isAvailable = true;
 
-    private int lastClickFrame = -1;
+    private int lastSuccessfulClickFrame = -1;
     private bool cursorHoverActive;
 
     public string GuestId => guestId;
     public bool IsAvailable => isAvailable;
+
+    public static bool IsPointerOverAvailableGuestAction(Vector2 screenPosition)
+    {
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
+        {
+            return false;
+        }
+
+        Vector3 worldPoint = mainCamera.ScreenToWorldPoint(new Vector3(
+            screenPosition.x,
+            screenPosition.y,
+            GetScreenToWorldDepth(mainCamera)));
+        Collider2D[] hits = Physics2D.OverlapPointAll(worldPoint);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+
+            if (hit == null)
+            {
+                continue;
+            }
+
+            Chapter2GuestFindAction action = hit.GetComponent<Chapter2GuestFindAction>();
+
+            if (action == null)
+            {
+                action = hit.GetComponentInParent<Chapter2GuestFindAction>();
+            }
+
+            if (action != null && action.enabled && action.gameObject.activeInHierarchy && action.IsAvailable)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public void Initialize(string id, Chapter2GuestSearchController controller)
     {
@@ -88,13 +128,11 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
             return;
         }
 
-        if (lastClickFrame == Time.frameCount)
+        if (lastSuccessfulClickFrame == Time.frameCount)
         {
             LogDiagnostic("TryStartGuestConversation fail", "reason=duplicate-frame");
             return;
         }
-
-        lastClickFrame = Time.frameCount;
 
         if (searchController == null)
         {
@@ -109,6 +147,7 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
 
         if (searchController.TryStartGuestConversation(guestId))
         {
+            lastSuccessfulClickFrame = Time.frameCount;
             LogDiagnostic("TryStartGuestConversation success");
             SetTalkCursorHover(false);
             return;
@@ -178,6 +217,13 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
     private static string FormatMouseScreenPosition()
     {
         return TryGetMouseScreenPosition(out Vector2 position) ? FormatVector(position) : "<unavailable>";
+    }
+
+    private static float GetScreenToWorldDepth(Camera mainCamera)
+    {
+        return mainCamera.orthographic
+            ? 0f
+            : Mathf.Abs(mainCamera.transform.position.z);
     }
 
     private static bool TryGetMouseScreenPosition(out Vector2 position)

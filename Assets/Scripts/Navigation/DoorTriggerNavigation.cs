@@ -715,6 +715,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return;
         }
 
+        if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
+        {
+            ClearActiveDoorHover(fallbackHoveredTrigger);
+            return;
+        }
+
         DoorTriggerNavigation triggerUnderPointer = FindTopmostTriggerAtScreenPoint(screenPosition);
         SetActiveDoorHover(triggerUnderPointer, screenPosition, true);
 

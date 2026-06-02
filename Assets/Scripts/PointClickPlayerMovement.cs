@@ -317,6 +317,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (pointerOverUi)
 			return false;
 
+		if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
+			return false;
+
 		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, out MovementTargetQuery movementQuery))
 			return false;
 
@@ -600,6 +603,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private void UpdateWalkCursor()
 	{
 		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition) || IsPointerOverUi())
+		{
+			NavigationCursorController.ClearWalkHover(this);
+			return;
+		}
+
+		if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
 		{
 			NavigationCursorController.ClearWalkHover(this);
 			return;

@@ -141,6 +141,12 @@ public class Chapter2InteractionHUD : MonoBehaviour
         Action thirdCallback = null)
     {
         EnsureUI();
+
+        if (dialoguePanel != null)
+        {
+            dialoguePanel.SetActive(true);
+        }
+
         SetDialogueChoice(0, firstLabel, firstCallback);
         SetDialogueChoice(1, secondLabel, secondCallback);
         SetDialogueChoice(2, thirdLabel, thirdCallback);
