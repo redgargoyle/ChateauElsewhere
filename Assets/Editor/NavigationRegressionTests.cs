@@ -15,12 +15,18 @@ public class NavigationRegressionTests
     private const string StairwaySoundCatalogPath = "Assets/Resources/Audio/StairwaySoundCatalog.asset";
     private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
-    private const string MapAnimatorPath = "Assets/Map/MapAnimator.cs";
     private const string NavigationEditorToolsPath = "Assets/Editor/NavigationEditorTools.cs";
     private const string BackgroundShaderGraphPath = "Assets/Shader/Background.shadergraph";
     private const string BackgroundMaterialPath = "Assets/Shader/BackgroundMaterial.mat";
     private const string RoomPrefabPath = "Assets/Prefabs/Room.prefab";
     private const string YSortSolidObstaclePath = "Assets/Scripts/Characters/YSortSolidObstacle2D.cs";
+    private const string ChapterTimeSettingsUIPath = "Assets/Scripts/Story/ChapterTimeSettingsUI.cs";
+    private const string GrandfatherClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
+    private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
+    private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
+    private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string Chapter1InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs";
+    private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
     private const string RoomContentGroupGuid = "d0ea47fd950844bcacb0fd5556a9d880";
 
     [Test]
@@ -87,6 +93,39 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void ChapterClockUsesSingleBottomLeftHudReadout()
+    {
+        string timeSettingsText = File.ReadAllText(ChapterTimeSettingsUIPath);
+        string chapter1HudText = File.ReadAllText(Chapter1InteractionHUDPath);
+        string chapter2HudText = File.ReadAllText(Chapter2InteractionHUDPath);
+
+        Assert.That(timeSettingsText, Does.Contain("Text_CurrentGameTime"));
+        Assert.That(timeSettingsText, Does.Contain("clockRect.anchorMin = new Vector2(0f, 0f)"));
+        Assert.That(timeSettingsText, Does.Contain("clockRect.anchorMax = new Vector2(0f, 0f)"));
+        Assert.That(timeSettingsText, Does.Contain("clockRect.pivot = new Vector2(0f, 0f)"));
+        Assert.That(timeSettingsText, Does.Contain("clockRect.anchoredPosition = new Vector2(18f, 18f)"));
+        Assert.That(timeSettingsText, Does.Contain("TextAlignmentOptions.BottomLeft"));
+
+        Assert.That(chapter1HudText, Does.Not.Contain("BuildShortHudState(chapterClock.CurrentTimeLabel)"), "Chapter 1 status should not render a second clock label.");
+        Assert.That(chapter2HudText, Does.Not.Contain("chapterClock.CurrentTimeLabel"), "Chapter 2 status should not render a second clock label.");
+        Assert.That(chapter2HudText, Does.Not.Contain("$\"{timeLabel}\\n{phaseLabel}\""), "Chapter 2 status should not combine time and phase in the top-left HUD.");
+    }
+
+    [Test]
+    public void GrandfatherClockCloseUpDoesNotOpenOverGameplay()
+    {
+        string clockInteractionText = File.ReadAllText(GrandfatherClockInteractionPath);
+        string chapter1ArrivalText = File.ReadAllText(Chapter1ArrivalControllerPath);
+
+        Assert.That(clockInteractionText, Does.Contain("allowClockCloseUp = false"));
+        Assert.That(clockInteractionText, Does.Match(@"(?s)\bOpenCloseUp\s*\([^)]*\)\s*\{.*if \(!allowClockCloseUp\).*DisableCloseUpIfNeeded\(\).*return;"), "Clock close-up calls should be harmless unless explicitly enabled.");
+        Assert.That(clockInteractionText, Does.Contain("Canvas_GrandfatherClockCloseUp"));
+        Assert.That(clockInteractionText, Does.Contain("canvasObject.SetActive(false)"));
+        Assert.That(chapter1ArrivalText, Does.Contain("RemoveClickTarget(\"Chapter1_ClickTarget_GrandfatherClock\")"));
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("CreateClickTarget(\"Chapter1_ClickTarget_GrandfatherClock\""), "Chapter 1 should not create a clock click target that opens the old modal.");
+    }
+
+    [Test]
     public void StairwayTriggersUseStairwayNamesAndCursor()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
@@ -137,7 +176,10 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("TrySetDestinationFromScreenPoint"), "Navigation triggers need a public way to ask the player to walk toward a screen-space hitbox.");
         Assert.That(playerText, Does.Contain("TryEvaluateMovementAtScreenPoint"), "Cursor feedback and door approaches should use the same movement reachability query.");
         Assert.That(playerText, Does.Contain("TryGetScreenPointFromLogicalPosition"), "Door approaches need to score clamped floor points in screen space.");
-        Assert.That(playerText, Does.Contain("IsPointerOverUi"), "Door UI clicks should not be overwritten by the floor click handler on the same frame.");
+        Assert.That(triggerText, Does.Contain("IsPointerOverActiveTrigger"), "Door triggers should expose active hitbox priority for floor input.");
+        Assert.That(playerText, Does.Contain("DoorTriggerNavigation.IsPointerOverActiveTrigger"), "Door UI clicks should not be overwritten by the floor click handler on the same frame.");
+        Assert.That(playerText, Does.Contain("IsPointerOverBlockingUi"), "Floor clicks should ignore passive room visuals instead of relying on broad EventSystem UI blocking.");
+        Assert.That(playerText, Does.Contain("GetComponentInParent<RoomContentGroup>()"), "Room-authored visual UI should not make a whole room unclickable.");
         Assert.That(playerText, Does.Contain("WalkableInsetAttempts"), "Clamped approach targets should move just inside the walkable polygon instead of sitting exactly on the collider edge.");
     }
 
@@ -150,9 +192,16 @@ public class NavigationRegressionTests
 
         Assert.That(navigationManagerText, Does.Contain("PlacePlayerAtDestinationDoor"), "Room transitions should move the player to the matching destination doorway.");
         Assert.That(navigationManagerText, Does.Contain("FindArrivalDoorTrigger"), "Destination placement should use the reverse trigger already authored in the room.");
+        Assert.That(navigationManagerText, Does.Match(@"GameObject\.Find\(\""Player\""\)[\s\S]*FindObjectsByType<PointClickPlayerMovement>"), "Room transitions should prefer the named butler Player before scanning movement components.");
+        Assert.That(navigationManagerText, Does.Contain("IsLikelyChapterGuest"), "Room transitions should not accidentally warp Chapter guest clones that carry PointClickPlayerMovement.");
         Assert.That(triggerText, Does.Contain("TryFindArrivalDestination"), "Door hitboxes should expose the same reachable floor sampling for arrivals.");
+        Assert.That(triggerText, Does.Match(@"(?s)TryFindArrivalDestination\s*\([^)]*\)\s*\{.*TryFindBestApproachDestination\(playerMovement,\s*false,\s*out destination\).*return TryFindClosestReachableArrivalDestination\(playerMovement,\s*out destination\)"), "Door arrivals should prefer the doorway approach sampler before falling back to raw trigger proximity.");
+        Assert.That(triggerText, Does.Contain("TryFindClosestReachableArrivalDestination"), "Door arrivals should fall back to the nearest reachable floor point around the destination trigger.");
+        Assert.That(triggerText, Does.Contain("TryFindClosestReachableDestinationToWorldPointTowardRoomCenter"), "Door arrivals should bias placement toward the destination room interior, not the player's stale pre-transition position.");
+        Assert.That(triggerText, Does.Contain("TryFindClosestReachableDestinationToWorldPoint"), "Door arrivals should reuse the player movement boundary search when trigger screen samples miss the floor.");
         Assert.That(playerText, Does.Contain("TryWarpTo"), "Navigation needs an explicit non-walking placement path after a room change.");
         Assert.That(playerText, Does.Contain("RefreshWalkableFloorForCurrentRoom"), "Door arrivals must refresh the active room boundary before evaluating placement.");
+        Assert.That(playerText, Does.Contain("TryFindClosestReachableDestinationToWorldPointTowardRoomCenter"), "Player movement should offer a room-center-biased doorway placement path for arrivals.");
     }
 
     [Test]
@@ -184,6 +233,18 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Not.Contain("pathProbeStep"), "Movement should not sample a heavyweight path segment to reject floor clicks.");
         Assert.That(obstacleText, Does.Not.Contain("BlockPlayerMovement"), "Prop footprint components should not expose movement-blocking controls.");
         Assert.That(obstacleText, Does.Not.Contain("TryGetMovementBounds"), "Prop footprint components should not provide movement blockers.");
+    }
+
+    [Test]
+    public void ActorRoomStateCarriesWorldActorsWithRoomStagePan()
+    {
+        string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
+
+        Assert.That(actorRoomStateText, Does.Contain("followRoomStageMotion"), "Room-scoped actors should opt into following the active room stage pan.");
+        Assert.That(actorRoomStateText, Does.Contain("LateUpdate"), "Actor room-state visuals should be corrected after CameraManager updates the room stage.");
+        Assert.That(actorRoomStateText, Does.Contain("TryGetRoomStageWorldOffset"), "Actor room-state visuals should use the same stage offset source as player movement.");
+        Assert.That(actorRoomStateText, Does.Contain("lastRoomStageWorldOffset"), "Actor room-state visuals should apply pan deltas instead of overwriting authored placement.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("SetParent("), "Guests should not be fixed by reparenting them under room presentation roots.");
     }
 
     [Test]
@@ -251,13 +312,31 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void GameplayMapOpenerStartsTopRight()
+    public void GameplayDoesNotKeepMapDropdownUi()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
-        string mapAnimatorText = File.ReadAllText(MapAnimatorPath);
 
-        Assert.That(sceneText, Does.Contain("triggerViewportPosition: {x: 0.95, y: 0.92}"));
-        Assert.That(mapAnimatorText, Does.Contain("triggerViewportPosition = new Vector2(0.95f, 0.92f)"));
+        Assert.That(sceneText, Does.Not.Match(@"(?m)^\s*m_Name: Map$"), "Gameplay should not keep the old map dropdown panel.");
+        Assert.That(sceneText, Does.Not.Match(@"(?m)^\s*m_Name: MapTrigger$"), "Gameplay should not keep the old map dropdown opener.");
+        Assert.That(sceneText, Does.Not.Contain("MapAnimator"), "Gameplay should not reference the old map dropdown animator.");
+        Assert.That(sceneText, Does.Not.Contain("CameraAreaController"), "Gameplay should not reference old map camera-area buttons.");
+        Assert.That(File.Exists("Assets/Map/MapAnimator.cs"), Is.False, "The old map dropdown animator script should stay deleted.");
+        Assert.That(File.Exists("Assets/Map/CameraAreaController.cs"), Is.False, "The old map camera-area button script should stay deleted.");
+        Assert.That(File.Exists("Assets/Art/UI/map_labeled_transparent.png"), Is.False, "The old map dropdown art should stay deleted.");
+    }
+
+    [Test]
+    public void ChapterManagerHasChapter2DebugSkipButton()
+    {
+        string chapterManagerText = File.ReadAllText(ChapterManagerPath);
+
+        Assert.That(chapterManagerText, Does.Contain("showSkipToChapter2Button"));
+        Assert.That(chapterManagerText, Does.Contain("Button_SkipToChapter2"));
+        Assert.That(chapterManagerText, Does.Contain("SkipToChapter2ForTesting"));
+        Assert.That(chapterManagerText, Does.Contain("ResolveChapter2Controller(true)"));
+        Assert.That(chapterManagerText, Does.Match(@"PrepareGuestsForChapter2Skip\s*\(\s*\)[\s\S]*BeginChapter2\(this\)"), "Skipping to Chapter 2 should stage Chapter 1 guests before Chapter 2 fades into the Drawing Room.");
+        Assert.That(chapterManagerText, Does.Match(@"BeginChapter2\(this\)[\s\S]*HideGuestCoatsForChapter2Skip\s*\(\s*\)"), "Skipping to Chapter 2 should hide guest coat visuals again after Chapter 2 moves to the Drawing Room.");
+        Assert.That(chapterManagerText, Does.Contain("BeginChapter2(this)"));
     }
 
     [Test]
@@ -279,9 +358,9 @@ public class NavigationRegressionTests
 
         Assert.That(sceneText, Does.Contain($"guid: {RoomContentGroupGuid}"), "Gameplay room objects should have RoomContentGroup components.");
         Assert.That(sceneText, Does.Contain("roomBackgroundTexture: {fileID: 2800000"), "RoomContentGroup should own each room background texture.");
-        Assert.That(sceneText, Does.Contain("m_Name: Button_Grand_Entrance_Hall"));
-        Assert.That(sceneText, Does.Contain("m_Name: Button_Library"));
-        Assert.That(sceneText, Does.Contain("m_Name: Button_Ballroom"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Button_Grand_Entrance_Hall"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Button_Library"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Button_Ballroom"));
         Assert.That(Regex.Matches(sceneText, @"m_Name: Doors").Count, Is.GreaterThanOrEqualTo(18), "Each room object should have a Doors child.");
         Assert.That(sceneText, Does.Not.Contain("m_Name: Cam_"));
         Assert.That(sceneText, Does.Not.Contain("m_Name: MapButton_"));

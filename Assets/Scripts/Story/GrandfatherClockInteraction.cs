@@ -14,6 +14,9 @@ public class GrandfatherClockInteraction : MonoBehaviour
     [Header("Audio")]
     [SerializeField, Range(0f, 1f)] private float tickingVolume = 0.28f;
 
+    [Header("Close-Up")]
+    [SerializeField] private bool allowClockCloseUp = false;
+
     private Canvas canvas;
     private RectTransform panel;
     private TMP_Text timeText;
@@ -22,6 +25,7 @@ public class GrandfatherClockInteraction : MonoBehaviour
     {
         ResolveReferences();
         StartTicking();
+        DisableCloseUpIfNeeded();
     }
 
     private void Update()
@@ -37,11 +41,18 @@ public class GrandfatherClockInteraction : MonoBehaviour
         chapterClock = clock != null ? clock : chapterClock;
         ResolveReferences();
         StartTicking();
+        DisableCloseUpIfNeeded();
     }
 
     [ContextMenu("Open Clock Close-Up")]
     public void OpenCloseUp()
     {
+        if (!allowClockCloseUp)
+        {
+            DisableCloseUpIfNeeded();
+            return;
+        }
+
         ResolveReferences();
         EnsureUI();
         RefreshTimeText();
@@ -92,6 +103,12 @@ public class GrandfatherClockInteraction : MonoBehaviour
 
     private void EnsureUI()
     {
+        if (!allowClockCloseUp)
+        {
+            DisableCloseUpIfNeeded();
+            return;
+        }
+
         if (panel != null)
         {
             return;
@@ -141,6 +158,26 @@ public class GrandfatherClockInteraction : MonoBehaviour
         closeButton.onClick.AddListener(CloseCloseUp);
 
         panel.gameObject.SetActive(false);
+    }
+
+    private void DisableCloseUpIfNeeded()
+    {
+        if (allowClockCloseUp)
+        {
+            return;
+        }
+
+        if (panel != null)
+        {
+            panel.gameObject.SetActive(false);
+        }
+
+        GameObject canvasObject = GameObject.Find("Canvas_GrandfatherClockCloseUp");
+
+        if (canvasObject != null)
+        {
+            canvasObject.SetActive(false);
+        }
     }
 
     private Canvas GetOrCreateCanvas()

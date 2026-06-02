@@ -12,7 +12,7 @@ public class ChapterIntroUI : MonoBehaviour
     [SerializeField] private TMP_Text titleText;
 
     [Header("Title")]
-    [SerializeField] private string defaultTitle = "Act 1";
+    [SerializeField] private string defaultTitle = "Chapter 1";
     [SerializeField] private float titleHoldSeconds = 2f;
     [SerializeField] private float fadeFromBlackSeconds = 1.5f;
     [SerializeField] private float titleFontSize = 72f;

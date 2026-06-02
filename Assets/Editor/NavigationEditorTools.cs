@@ -11,34 +11,12 @@ public static class NavigationEditorTools
 {
     private const string DoorDataAssetPath = "Assets/Resources/Navigation/doors.txt";
     private const string RoomVisualCatalogAssetPath = "Assets/Resources/Navigation/RoomVisualCatalog.asset";
-    private const string AutoPreviewEditorPrefKey = "Dreadforge.Navigation.AutoPreviewSelectedCamera";
-    private const string RoomRootName = "Rooms";
-    private const string LegacyDoorTriggerEditRootName = "RoomDoorTriggers_Edit";
+    private const string AutoPreviewEditorPrefKey = "Dreadforge.Navigation.AutoPreviewSelectedRoom";
 
     [MenuItem("Dreadforge/Navigation/Sync Door Triggers From Door Data")]
     public static void SyncDoorTriggersFromDoorData()
     {
         SyncDoorTriggersFromDoorData(true);
-    }
-
-    [MenuItem("Dreadforge/Navigation/Preview Selected Camera For Door Editing")]
-    public static void PreviewSelectedCameraForDoorEditing()
-    {
-        CameraAreaController cameraArea = FindSelectedCameraArea();
-
-        if (cameraArea == null)
-        {
-            Debug.LogWarning("Select a Button_* object under Map, or one of its children, before previewing a room for door editing.");
-            return;
-        }
-
-        PreviewCameraForDoorEditing(cameraArea);
-    }
-
-    [MenuItem("Dreadforge/Navigation/Preview Selected Camera For Door Editing", true)]
-    private static bool CanPreviewSelectedCameraForDoorEditing()
-    {
-        return FindSelectedCameraArea() != null;
     }
 
     [MenuItem("Dreadforge/Navigation/Preview Selected Room For Door Editing")]
@@ -61,52 +39,19 @@ public static class NavigationEditorTools
         return FindSelectedRoomContentGroup() != null;
     }
 
-    [MenuItem("Dreadforge/Navigation/Auto Preview Selected Camera")]
-    public static void ToggleAutoPreviewSelectedCamera()
+    [MenuItem("Dreadforge/Navigation/Auto Preview Selected Room")]
+    public static void ToggleAutoPreviewSelectedRoom()
     {
-        bool enabled = !AutoPreviewSelectedCamera;
-        AutoPreviewSelectedCamera = enabled;
-        Debug.Log($"Navigation camera auto preview is now {(enabled ? "ON" : "OFF")}.");
+        bool enabled = !AutoPreviewSelectedRoom;
+        AutoPreviewSelectedRoom = enabled;
+        Debug.Log($"Navigation room auto preview is now {(enabled ? "ON" : "OFF")}.");
     }
 
-    [MenuItem("Dreadforge/Navigation/Auto Preview Selected Camera", true)]
-    private static bool ValidateToggleAutoPreviewSelectedCamera()
+    [MenuItem("Dreadforge/Navigation/Auto Preview Selected Room", true)]
+    private static bool ValidateToggleAutoPreviewSelectedRoom()
     {
-        Menu.SetChecked("Dreadforge/Navigation/Auto Preview Selected Camera", AutoPreviewSelectedCamera);
+        Menu.SetChecked("Dreadforge/Navigation/Auto Preview Selected Room", AutoPreviewSelectedRoom);
         return true;
-    }
-
-    [MenuItem("Dreadforge/Navigation/Show All Cameras For Door Editing")]
-    public static void ShowAllCamerasForDoorEditing()
-    {
-        CameraAreaController[] cameraAreas = FindSceneObjects<CameraAreaController>();
-
-        if (cameraAreas.Length == 0)
-        {
-            Debug.LogWarning("No CameraAreaController objects were found in the open scene.");
-            return;
-        }
-
-        int undoGroup = BeginNavigationPreviewUndo("Show All Navigation Cameras");
-
-        for (int i = 0; i < cameraAreas.Length; i++)
-        {
-            CameraAreaController cameraArea = cameraAreas[i];
-
-            if (cameraArea == null)
-            {
-                continue;
-            }
-
-            EnsureAncestorsActive(cameraArea.transform);
-            SetActiveWithUndo(cameraArea.gameObject, true);
-            SetDoorTriggersActive(cameraArea.transform, true);
-        }
-
-        FinishNavigationPreviewUndo(undoGroup);
-        MarkOpenScenesDirty();
-        SceneView.RepaintAll();
-        Debug.Log($"Activated {cameraAreas.Length} navigation camera object(s) for editing.");
     }
 
     [MenuItem("Dreadforge/Navigation/Validate Door Data")]
@@ -169,13 +114,13 @@ public static class NavigationEditorTools
         Debug.Log($"Wrote placeholder door data to {DoorDataAssetPath}.");
     }
 
-    [MenuItem("Dreadforge/Navigation/Create Room Visual Catalog From Map Buttons")]
-    public static void CreateRoomVisualCatalogFromMapButtons()
+    [MenuItem("Dreadforge/Navigation/Create Room Visual Catalog From Rooms")]
+    public static void CreateRoomVisualCatalogFromRooms()
     {
         bool shouldWrite = !File.Exists(RoomVisualCatalogAssetPath) ||
             EditorUtility.DisplayDialog(
                 "Overwrite Room Visual Catalog?",
-                $"{RoomVisualCatalogAssetPath} already exists. Replace it with a catalog generated from current map buttons?",
+                $"{RoomVisualCatalogAssetPath} already exists. Replace it with a catalog generated from current room objects?",
                 "Replace",
                 "Cancel");
 
@@ -184,20 +129,22 @@ public static class NavigationEditorTools
             return;
         }
 
-        CameraAreaController[] cameraAreas = FindSceneObjects<CameraAreaController>();
+        RoomContentGroup[] roomContentGroups = FindSceneObjects<RoomContentGroup>();
         List<RoomVisualEntry> entries = new List<RoomVisualEntry>();
         HashSet<string> roomNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        for (int i = 0; i < cameraAreas.Length; i++)
+        for (int i = 0; i < roomContentGroups.Length; i++)
         {
-            CameraAreaController area = cameraAreas[i];
+            RoomContentGroup roomContentGroup = roomContentGroups[i];
 
-            if (area == null || area.roomBackgroundTexture == null)
+            if (roomContentGroup == null ||
+                !roomContentGroup.TryGetRoomBackgroundTexture(out Texture roomTexture) ||
+                roomTexture == null)
             {
                 continue;
             }
 
-            string roomName = ParseRoomNameFromCameraArea(area.name);
+            string roomName = Clean(roomContentGroup.RoomName);
 
             if (string.IsNullOrEmpty(roomName) || roomNames.Contains(roomName))
             {
@@ -208,7 +155,7 @@ public static class NavigationEditorTools
             entries.Add(new RoomVisualEntry
             {
                 roomName = roomName,
-                backgroundTexture = area.roomBackgroundTexture
+                backgroundTexture = roomTexture
             });
         }
 
@@ -322,15 +269,10 @@ public static class NavigationEditorTools
         }
     }
 
-    public static bool AutoPreviewSelectedCamera
+    public static bool AutoPreviewSelectedRoom
     {
         get => EditorPrefs.GetBool(AutoPreviewEditorPrefKey, true);
         set => EditorPrefs.SetBool(AutoPreviewEditorPrefKey, value);
-    }
-
-    public static void PreviewCameraForDoorEditing(CameraAreaController cameraArea)
-    {
-        PreviewCameraForDoorEditing(cameraArea, true);
     }
 
     public static void PreviewRoomForDoorEditing(RoomContentGroup roomContentGroup)
@@ -387,56 +329,6 @@ public static class NavigationEditorTools
         Debug.Log($"Previewing '{roomName}' on the full room image. Showing {preparedTriggerCount} door trigger(s) under '{roomContentGroup.name}' for editing.");
     }
 
-    public static void PreviewCameraForDoorEditing(CameraAreaController cameraArea, bool pingCamera)
-    {
-        if (cameraArea == null)
-        {
-            return;
-        }
-
-        string roomName = ParseRoomNameFromCameraArea(cameraArea.name);
-
-        if (string.IsNullOrEmpty(roomName))
-        {
-            Debug.LogWarning($"Could not infer a room name from '{cameraArea.name}'. Use Button_<RoomName> under the Map object.", cameraArea);
-            return;
-        }
-
-        CameraAreaController[] cameraAreas = FindCameraAreasInSameEditingGroup(cameraArea);
-        int undoGroup = BeginNavigationPreviewUndo($"Preview {cameraArea.name} For Door Editing");
-        RawImage backgroundImage = PrepareRoomBackgroundForEditing(cameraArea);
-
-        // A camera object can be selected while inactive in the hierarchy.
-        // Activating its ancestors first makes the selected room and its trigger
-        // rectangles visible in the Scene view.
-        EnsureAncestorsActive(cameraArea.transform);
-
-        for (int i = 0; i < cameraAreas.Length; i++)
-        {
-            CameraAreaController otherCameraArea = cameraAreas[i];
-
-            if (otherCameraArea == null)
-            {
-                continue;
-            }
-
-            bool shouldShow = otherCameraArea == cameraArea;
-            SetActiveWithUndo(otherCameraArea.gameObject, shouldShow);
-        }
-
-        RoomDoorTriggerEditingInfo editingInfo = PrepareDoorTriggersForRoomEditing(cameraArea, roomName, backgroundImage);
-
-        if (pingCamera)
-        {
-            EditorGUIUtility.PingObject(cameraArea.gameObject);
-        }
-
-        FinishNavigationPreviewUndo(undoGroup);
-        MarkOpenScenesDirty();
-        SceneView.RepaintAll();
-        Debug.Log($"Previewing '{roomName}' on the full room background. Showing {editingInfo.PreparedTriggerCount} existing door trigger(s) for editing.");
-    }
-
     private static int ValidateDestinations(StringBuilder report, DoorDataParseResult parseResult)
     {
         int issues = 0;
@@ -485,39 +377,6 @@ public static class NavigationEditorTools
         }
 
         return canvases.Length > 0 ? canvases[0] : null;
-    }
-
-    public static CameraAreaController FindSelectedCameraArea()
-    {
-        GameObject selectedObject = Selection.activeGameObject;
-
-        if (selectedObject == null)
-        {
-            return null;
-        }
-
-        CameraAreaController directCameraArea = selectedObject.GetComponent<CameraAreaController>();
-
-        if (directCameraArea != null)
-        {
-            return directCameraArea;
-        }
-
-        CameraAreaController[] parentCameraAreas = selectedObject.GetComponentsInParent<CameraAreaController>(true);
-
-        if (parentCameraAreas.Length > 0)
-        {
-            return parentCameraAreas[0];
-        }
-
-        DoorTriggerNavigation selectedDoorTrigger = selectedObject.GetComponentInParent<DoorTriggerNavigation>(true);
-
-        if (selectedDoorTrigger != null)
-        {
-            return FindCameraAreaForRoom(selectedDoorTrigger.SourceRoom);
-        }
-
-        return null;
     }
 
     public static RoomContentGroup FindSelectedRoomContentGroup()
@@ -591,88 +450,6 @@ public static class NavigationEditorTools
         }
 
         return null;
-    }
-
-    private static CameraAreaController[] FindCameraAreasInSameEditingGroup(CameraAreaController cameraArea)
-    {
-        if (cameraArea != null && cameraArea.transform.parent != null)
-        {
-            CameraAreaController[] siblingCameraAreas = cameraArea.transform.parent.GetComponentsInChildren<CameraAreaController>(true);
-
-            if (siblingCameraAreas.Length > 0)
-            {
-                return siblingCameraAreas;
-            }
-        }
-
-        return FindSceneObjects<CameraAreaController>();
-    }
-
-    private static CameraAreaController FindCameraAreaForRoom(string roomName)
-    {
-        string cleanRoomName = Clean(roomName);
-
-        if (string.IsNullOrEmpty(cleanRoomName))
-        {
-            return null;
-        }
-
-        CameraAreaController[] cameraAreas = FindSceneObjects<CameraAreaController>();
-
-        for (int i = 0; i < cameraAreas.Length; i++)
-        {
-            CameraAreaController cameraArea = cameraAreas[i];
-
-            if (cameraArea != null &&
-                string.Equals(ParseRoomNameFromCameraArea(cameraArea.name), cleanRoomName, StringComparison.OrdinalIgnoreCase))
-            {
-                return cameraArea;
-            }
-        }
-
-        return null;
-    }
-
-    private static RawImage PrepareRoomBackgroundForEditing(CameraAreaController cameraArea)
-    {
-        RawImage backgroundImage = FindCameraBackgroundImage();
-
-        if (backgroundImage == null)
-        {
-            Debug.LogWarning("Could not find the CameraManager background RawImage. The door triggers were still prepared, but no room image could be shown.", cameraArea);
-            return null;
-        }
-
-        EnsureAncestorsActive(backgroundImage.transform);
-        SetActiveWithUndo(backgroundImage.gameObject, true);
-        Undo.RecordObject(backgroundImage, "Preview Room Background");
-
-        CameraManager cameraManager = FindCameraManagerForBackground(backgroundImage);
-        Texture roomTexture = cameraArea != null ? cameraArea.GetEffectiveRoomBackgroundTexture() : null;
-
-        if (cameraManager != null && roomTexture != null)
-        {
-            Undo.RecordObject(cameraManager, "Preview Room Background");
-            cameraManager.PreviewRoomBackground(roomTexture);
-        }
-        else
-        {
-            backgroundImage.texture = roomTexture;
-            backgroundImage.uvRect = new Rect(0f, 0f, 1f, 1f);
-        }
-
-        backgroundImage.color = Color.white;
-        backgroundImage.raycastTarget = false;
-        EditorUtility.SetDirty(backgroundImage);
-
-        RectTransform backgroundRect = backgroundImage.transform as RectTransform;
-
-        if (backgroundRect != null)
-        {
-            FitToTextureWithUndo(backgroundRect, roomTexture, "Fit Room Background To Source Image");
-        }
-
-        return backgroundImage;
     }
 
     private static RawImage PrepareRoomContentBackgroundForEditing(RoomContentGroup roomContentGroup, Texture roomTexture)
@@ -791,128 +568,6 @@ public static class NavigationEditorTools
         return images.Length > 0 ? images[0] : null;
     }
 
-    private static RoomDoorTriggerEditingInfo PrepareDoorTriggersForRoomEditing(
-        CameraAreaController cameraArea,
-        string roomName,
-        RawImage backgroundImage)
-    {
-        RectTransform editRoot = FindOrCreateDoorTriggerEditRoot(backgroundImage, cameraArea);
-
-        if (editRoot == null)
-        {
-            return new RoomDoorTriggerEditingInfo("(no editing layer)", 0);
-        }
-
-        Texture roomTexture = cameraArea != null ? cameraArea.GetEffectiveRoomBackgroundTexture() : null;
-        RectTransform roomGroup = FindOrCreateRectChild(editRoot, $"Room_{SafeObjectName(roomName)}");
-        FitToTextureWithUndo(roomGroup, roomTexture, "Fit Room Editing Layer To Source Image");
-        SetActiveWithUndo(roomGroup.gameObject, true);
-        EnsureRoomContentGroup(roomGroup, roomName);
-        FindOrCreateDoorsRoot(roomGroup);
-
-        for (int i = 0; i < editRoot.childCount; i++)
-        {
-            Transform child = editRoot.GetChild(i);
-
-            if (child != null)
-            {
-                SetActiveWithUndo(child.gameObject, true);
-            }
-        }
-
-        List<DoorTriggerNavigation> triggers = new List<DoorTriggerNavigation>();
-        triggers.AddRange(cameraArea.GetComponentsInChildren<DoorTriggerNavigation>(true));
-        DoorTriggerNavigation[] existingTriggers = editRoot.GetComponentsInChildren<DoorTriggerNavigation>(true);
-
-        for (int i = 0; i < existingTriggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = existingTriggers[i];
-
-            if (trigger != null &&
-                string.Equals(trigger.SourceRoom, roomName, StringComparison.OrdinalIgnoreCase) &&
-                !triggers.Contains(trigger))
-            {
-                triggers.Add(trigger);
-            }
-        }
-
-        for (int i = 0; i < existingTriggers.Length; i++)
-        {
-            DoorTriggerNavigation trigger = existingTriggers[i];
-
-            if (trigger != null && !triggers.Contains(trigger))
-            {
-                SetActiveWithUndo(trigger.gameObject, false);
-            }
-        }
-
-        for (int i = 0; i < triggers.Count; i++)
-        {
-            PrepareDoorTriggerForEditing(triggers[i], roomName);
-        }
-
-        return new RoomDoorTriggerEditingInfo(roomGroup.name, triggers.Count);
-    }
-
-    private static RectTransform FindOrCreateDoorTriggerEditRoot(RawImage backgroundImage, CameraAreaController cameraArea)
-    {
-        Transform parent = null;
-
-        if (backgroundImage != null && backgroundImage.transform.parent != null)
-        {
-            parent = backgroundImage.transform.parent;
-        }
-        else if (cameraArea != null)
-        {
-            Canvas canvas = cameraArea.GetComponentInParent<Canvas>(true);
-            parent = canvas != null ? canvas.transform : cameraArea.transform.parent;
-        }
-
-        if (parent == null)
-        {
-            parent = FindPreferredCanvas()?.transform;
-        }
-
-        if (parent == null)
-        {
-            Debug.LogWarning("Could not find a Canvas for the room door trigger editing layer.");
-            return null;
-        }
-
-        RectTransform editRoot = FindOrCreateRectChild(parent, RoomRootName);
-        StretchToParentWithUndo(editRoot);
-        SetActiveWithUndo(editRoot.gameObject, true);
-        return editRoot;
-    }
-
-    private static void EnsureRoomContentGroup(RectTransform roomGroup, string roomName)
-    {
-        if (roomGroup == null)
-        {
-            return;
-        }
-
-        RoomContentGroup contentGroup = roomGroup.GetComponent<RoomContentGroup>();
-
-        if (contentGroup == null)
-        {
-            contentGroup = Undo.AddComponent<RoomContentGroup>(roomGroup.gameObject);
-        }
-        else
-        {
-            Undo.RecordObject(contentGroup, "Configure Room Object");
-        }
-
-        contentGroup.SetRoomName(roomName);
-
-        if (contentGroup.RoomBackgroundTexture == null && TryFindRoomBackgroundTexture(roomName, out Texture texture))
-        {
-            contentGroup.SetRoomBackgroundTexture(texture);
-        }
-
-        EditorUtility.SetDirty(contentGroup);
-    }
-
     private static RectTransform FindOrCreateDoorsRoot(RectTransform roomGroup)
     {
         RectTransform doorsRoot = FindOrCreateRectChild(roomGroup, "Doors");
@@ -924,18 +579,6 @@ public static class NavigationEditorTools
     private static bool TryFindRoomBackgroundTexture(string roomName, out Texture texture)
     {
         texture = null;
-
-        CameraAreaController cameraArea = FindCameraAreaForRoom(roomName);
-
-        if (cameraArea != null)
-        {
-            texture = cameraArea.GetEffectiveRoomBackgroundTexture();
-
-            if (texture != null)
-            {
-                return true;
-            }
-        }
 
         RoomVisualCatalog[] visualCatalogs = FindVisualCatalogAssets();
 
@@ -1049,26 +692,6 @@ public static class NavigationEditorTools
         {
             SetActiveWithUndo(transform.gameObject, true);
             transform = transform.parent;
-        }
-    }
-
-    private static void SetDoorTriggersActive(Transform root, bool active)
-    {
-        if (root == null)
-        {
-            return;
-        }
-
-        DoorTriggerNavigation[] doorTriggers = root.GetComponentsInChildren<DoorTriggerNavigation>(true);
-
-        for (int i = 0; i < doorTriggers.Length; i++)
-        {
-            DoorTriggerNavigation doorTrigger = doorTriggers[i];
-
-            if (doorTrigger != null)
-            {
-                SetActiveWithUndo(doorTrigger.gameObject, active);
-            }
         }
     }
 
@@ -1350,38 +973,6 @@ public static class NavigationEditorTools
         return cleanValue.Replace(' ', '_');
     }
 
-    private static string ParseRoomNameFromCameraArea(string objectName)
-    {
-        if (string.IsNullOrWhiteSpace(objectName))
-        {
-            return string.Empty;
-        }
-
-        string cleanName = objectName.Trim();
-
-        if (cleanName.StartsWith("Button_", StringComparison.OrdinalIgnoreCase))
-        {
-            cleanName = cleanName.Substring("Button_".Length);
-        }
-        else if (cleanName.StartsWith("Cam_", StringComparison.OrdinalIgnoreCase))
-        {
-            cleanName = cleanName.Substring("Cam_".Length);
-        }
-
-        return cleanName.Replace('_', ' ').Trim();
-    }
-
-    private readonly struct RoomDoorTriggerEditingInfo
-    {
-        public RoomDoorTriggerEditingInfo(string roomGroupName, int preparedTriggerCount)
-        {
-            RoomGroupName = roomGroupName;
-            PreparedTriggerCount = preparedTriggerCount;
-        }
-
-        public string RoomGroupName { get; }
-        public int PreparedTriggerCount { get; }
-    }
 }
 
 [InitializeOnLoad]
@@ -1403,7 +994,7 @@ public static class NavigationSelectionAutoPreview
 
     private static void HandleHierarchyChanged()
     {
-        if (!NavigationEditorTools.AutoPreviewSelectedCamera ||
+        if (!NavigationEditorTools.AutoPreviewSelectedRoom ||
             isPreviewingSelection ||
             EditorApplication.isPlayingOrWillChangePlaymode)
         {
@@ -1426,7 +1017,7 @@ public static class NavigationSelectionAutoPreview
 
     private static void QueuePreviewForCurrentSelection()
     {
-        if (!NavigationEditorTools.AutoPreviewSelectedCamera ||
+        if (!NavigationEditorTools.AutoPreviewSelectedRoom ||
             isPreviewingSelection ||
             EditorApplication.isPlayingOrWillChangePlaymode)
         {
@@ -1457,63 +1048,6 @@ public static class NavigationSelectionAutoPreview
             };
 
             return;
-        }
-
-        CameraAreaController cameraArea = NavigationEditorTools.FindSelectedCameraArea();
-
-        if (cameraArea == null)
-        {
-            return;
-        }
-
-        EditorApplication.delayCall += () =>
-        {
-            if (cameraArea == null || EditorApplication.isPlayingOrWillChangePlaymode)
-            {
-                return;
-            }
-
-            isPreviewingSelection = true;
-
-            try
-            {
-                NavigationEditorTools.PreviewCameraForDoorEditing(cameraArea, false);
-            }
-            finally
-            {
-                isPreviewingSelection = false;
-            }
-        };
-    }
-}
-
-[CustomEditor(typeof(CameraAreaController))]
-public class CameraAreaControllerEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        DrawDefaultInspector();
-
-        if (Application.isPlaying)
-        {
-            return;
-        }
-
-        EditorGUILayout.Space(8f);
-
-        if (GUILayout.Button("Preview This Camera For Door Editing"))
-        {
-            NavigationEditorTools.PreviewCameraForDoorEditing((CameraAreaController)target);
-        }
-
-        if (GUILayout.Button("Open Room Image Shader Controls"))
-        {
-            NavigationRoomImageShaderControlsWindow.OpenWindow();
-        }
-
-        if (GUILayout.Button("Show All Cameras For Door Editing"))
-        {
-            NavigationEditorTools.ShowAllCamerasForDoorEditing();
         }
     }
 }

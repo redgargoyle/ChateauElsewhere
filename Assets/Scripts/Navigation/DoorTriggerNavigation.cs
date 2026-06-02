@@ -12,6 +12,8 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Image))]
 public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
+    private const string DiagnosticPrefix = "[Ch2ClickDiag]";
+
     public enum NavigationTriggerKind
     {
         Door,
@@ -153,7 +155,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        SetActiveDoorHover(this);
+        if (IsPointerOverAvailableGuestAction(eventData))
+        {
+            ClearActiveDoorHover(this);
+            return;
+        }
+
+        SetActiveDoorHover(this, Vector2.zero, false);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -166,7 +174,18 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (IsPointerOverAvailableGuestAction(eventData))
+        {
+            ClearActiveDoorHover(this);
+            return;
+        }
+
         ActivateDoor();
+    }
+
+    public static bool IsPointerOverActiveTrigger(Vector2 screenPosition)
+    {
+        return FindTopmostTriggerAtScreenPoint(screenPosition) != null;
     }
 
     public void ActivateDoor()
@@ -282,7 +301,71 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     public bool TryFindArrivalDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)
     {
         ResolveReferences();
-        return TryFindBestApproachDestination(playerMovement, false, out destination);
+
+        if (TryFindBestApproachDestination(playerMovement, false, out destination))
+        {
+            return true;
+        }
+
+        return TryFindClosestReachableArrivalDestination(playerMovement, out destination);
+    }
+
+    private bool TryFindClosestReachableArrivalDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)
+    {
+        destination = Vector2.zero;
+
+        if (playerMovement == null || rectTransform == null)
+        {
+            return false;
+        }
+
+        Camera canvasCamera = GetCanvasCamera();
+        rectTransform.GetWorldCorners(triggerWorldCorners);
+
+        bool foundDestination = false;
+        float bestScore = float.MaxValue;
+        Vector2 bestDestination = Vector2.zero;
+
+        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[0] + triggerWorldCorners[2]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[0] + triggerWorldCorners[3]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[1] + triggerWorldCorners[2]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, triggerWorldCorners[0], canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, triggerWorldCorners[3], canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+
+        if (!foundDestination)
+        {
+            return false;
+        }
+
+        destination = bestDestination;
+        return true;
+    }
+
+    private void TryScoreArrivalWorldPoint(
+        PointClickPlayerMovement playerMovement,
+        Vector3 triggerWorldPoint,
+        Camera canvasCamera,
+        ref bool foundDestination,
+        ref float bestScore,
+        ref Vector2 bestDestination)
+    {
+        if (!playerMovement.TryFindClosestReachableDestinationToWorldPointTowardRoomCenter(triggerWorldPoint, out Vector2 candidateDestination) ||
+            !playerMovement.TryGetScreenPointFromLogicalPosition(candidateDestination, out Vector2 candidateScreenPoint))
+        {
+            return;
+        }
+
+        Vector2 triggerScreenPoint = RectTransformUtility.WorldToScreenPoint(canvasCamera, triggerWorldPoint);
+        float score = Vector2.SqrMagnitude(candidateScreenPoint - triggerScreenPoint);
+
+        if (foundDestination && score >= bestScore)
+        {
+            return;
+        }
+
+        foundDestination = true;
+        bestScore = score;
+        bestDestination = candidateDestination;
     }
 
     private bool TryFindBestApproachDestination(PointClickPlayerMovement playerMovement, bool requireMovement, out Vector2 destination)
@@ -649,11 +732,20 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return;
         }
 
-        DoorTriggerNavigation triggerUnderPointer = FindTopmostTriggerAtScreenPoint(screenPosition);
-        SetActiveDoorHover(triggerUnderPointer);
-
-        if (triggerUnderPointer != null && TryGetPrimaryPointerDown())
+        if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
         {
+            ClearActiveDoorHover(fallbackHoveredTrigger);
+            return;
+        }
+
+        DoorTriggerNavigation triggerUnderPointer = FindTopmostTriggerAtScreenPoint(screenPosition);
+        SetActiveDoorHover(triggerUnderPointer, screenPosition, true);
+
+        bool primaryPointerDown = TryGetPrimaryPointerDown();
+
+        if (triggerUnderPointer != null && primaryPointerDown)
+        {
+            triggerUnderPointer.LogDoorFallbackDiagnostic("hover/click", screenPosition, true, true);
             triggerUnderPointer.ActivateDoor();
         }
     }
@@ -677,6 +769,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         return bestTrigger;
+    }
+
+    private static bool IsPointerOverAvailableGuestAction(PointerEventData eventData)
+    {
+        return eventData != null &&
+            Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(eventData.position);
     }
 
     private static bool TryGetPointerPosition(out Vector2 screenPosition)
@@ -753,24 +851,34 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
     }
 
-    private static void SetActiveDoorHover(DoorTriggerNavigation trigger)
+    private static void SetActiveDoorHover(DoorTriggerNavigation trigger, Vector2 screenPosition, bool fromFallback)
     {
         if (fallbackHoveredTrigger == trigger)
         {
             return;
         }
 
+        DoorTriggerNavigation previousTrigger = fallbackHoveredTrigger;
         ClearActiveDoorHover(fallbackHoveredTrigger);
         fallbackHoveredTrigger = trigger;
 
         if (trigger == null)
         {
             SetHoveredTrigger(null);
+            if (fromFallback)
+            {
+                LogDoorFallbackHoverChange(previousTrigger, null, screenPosition);
+            }
             return;
         }
 
         SetHoveredTrigger(trigger);
         NavigationCursorController.SetDoorHover(trigger, trigger.GetNavigationCursorIcon(), true);
+
+        if (fromFallback)
+        {
+            LogDoorFallbackHoverChange(previousTrigger, trigger, screenPosition);
+        }
     }
 
     private static void ClearActiveDoorHover(DoorTriggerNavigation trigger)
@@ -791,6 +899,45 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         NavigationCursorController.SetDoorHover(trigger, false);
+    }
+
+    private static void LogDoorFallbackHoverChange(DoorTriggerNavigation previousTrigger, DoorTriggerNavigation nextTrigger, Vector2 screenPosition)
+    {
+        DoorTriggerNavigation logTrigger = nextTrigger != null ? nextTrigger : previousTrigger;
+
+        if (logTrigger == null)
+        {
+            return;
+        }
+
+        string previousName = previousTrigger != null ? previousTrigger.name : "<none>";
+        string nextName = nextTrigger != null ? nextTrigger.name : "<none>";
+        logTrigger.LogDoorFallbackDiagnostic(
+            $"hover-change previous={previousName} next={nextName}",
+            screenPosition,
+            false,
+            nextTrigger != null);
+    }
+
+    private void LogDoorFallbackDiagnostic(string eventName, Vector2 screenPosition, bool activating, bool setCursorHover)
+    {
+        Debug.Log(
+            $"{DiagnosticPrefix} DoorFallback {eventName} frame={Time.frameCount} " +
+            $"trigger={name} currentRoom={GetCurrentRoomForDiagnostic()} sourceRoom={SourceRoom} " +
+            $"screen={FormatDiagnosticVector(screenPosition)} activating={activating} setCursorHover={setCursorHover}",
+            this);
+    }
+
+    private string GetCurrentRoomForDiagnostic()
+    {
+        return navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom)
+            ? "<none>"
+            : navigationManager.CurrentRoom;
+    }
+
+    private static string FormatDiagnosticVector(Vector2 value)
+    {
+        return $"({value.x:0.##},{value.y:0.##})";
     }
 
     public void RefreshInferredSourceRoom()

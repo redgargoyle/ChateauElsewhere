@@ -6,10 +6,6 @@ using UnityEngine.UI;
 public class CameraManager : MonoBehaviour
 {
     public RawImage cameraBackground;
-    public AudioSource cameraSwitchSound;
-    public StaticNoisePlayer staticScreen;
-    public bool playStaticOnCameraSwitch = true;
-    public float staticTransitionDuration = 1f;
     public bool resizeBackgroundToScreen = true;
     public bool fitBackgroundToRoomAspect = true;
     public bool cropBackgroundToFill = true;
@@ -24,13 +20,6 @@ public class CameraManager : MonoBehaviour
     public float cameraShakeRotation = 2f;
     public float cameraShakeFrequency = 48f;
     public float cameraShakeZoom = 1.04f;
-    [Header("Map Room Buttons")]
-    public bool allowMapButtonsToSwitchCameraViews = true;
-    public bool blinkMapButtonWhenClicked = true;
-    [Header("Startup")]
-    public bool useStartupCameraOnStart = true;
-    public CameraAreaController startupCamera;
-    public bool useAnchoredAnimationCameraAsStartup = true;
     [Header("Room Look")]
     public bool panRoomWithMouseEdges = true;
     [Range(0.01f, 0.5f)]
@@ -69,7 +58,6 @@ public class CameraManager : MonoBehaviour
     public float maxShaderPanAngle = 0.08f;
     [Header("Anchored Background Animation")]
     public bool enableAnchoredBackgroundAnimation = true;
-    public CameraAreaController anchoredAnimationCamera;
     public StaticFrameGroup anchoredAnimationFrames;
     public RectTransform anchoredAnimationReference;
     public bool hideAnchoredAnimationReference = true;
@@ -86,8 +74,6 @@ public class CameraManager : MonoBehaviour
     private static readonly int VerticalStrengthId = Shader.PropertyToID("_verticle_strength");
     private static readonly int OverlayTexId = Shader.PropertyToID("_OverlayTex");
     private static readonly int OverlayRectId = Shader.PropertyToID("_OverlayRect");
-    private CameraAreaController lastSelected;
-    private Coroutine cameraSwitchRoutine;
     private Coroutine cameraShakeRoutine;
     private RectTransform activeShakeTarget;
     private Vector2 shakeBasePosition;
@@ -172,7 +158,6 @@ public class CameraManager : MonoBehaviour
     private void Reset()
     {
         cameraBackground = FindAnyObjectByType<RawImage>();
-        cameraSwitchSound = GetComponent<AudioSource>();
     }
 
     private void Awake()
@@ -180,11 +165,6 @@ public class CameraManager : MonoBehaviour
         if (cameraBackground == null)
         {
             cameraBackground = FindAnyObjectByType<RawImage>();
-        }
-
-        if (cameraSwitchSound == null)
-        {
-            cameraSwitchSound = GetComponent<AudioSource>();
         }
 
         RememberOriginalBackgroundParent();
@@ -221,7 +201,7 @@ public class CameraManager : MonoBehaviour
         MarkRoomLayoutDirty();
 
         Texture navigationStartupTexture = GetNavigationStartupBackgroundTexture();
-        SetCameraBackground(navigationStartupTexture != null ? navigationStartupTexture : GetStartupBackgroundTexture());
+        SetCameraBackground(navigationStartupTexture != null ? navigationStartupTexture : cameraBackground.texture);
     }
 
     private void Update()
@@ -242,90 +222,6 @@ public class CameraManager : MonoBehaviour
         Canvas.willRenderCanvases -= HandleCanvasWillRender;
         NavigationCursorController.SetEdgePanDirection(0);
         RestoreBackgroundParentIfNeeded();
-    }
-
-    public void SelectCamera(CameraAreaController selected)
-    {
-        if (selected == null || cameraBackground == null)
-        {
-            return;
-        }
-
-        Texture texture = selected.GetEffectiveRoomBackgroundTexture();
-
-        if (texture == null)
-        {
-            Debug.LogWarning("Selected camera has no room background texture assigned.", selected);
-            return;
-        }
-
-        if (lastSelected != null && lastSelected != selected)
-        {
-            lastSelected.StopBlinking();
-        }
-
-        if (blinkMapButtonWhenClicked)
-        {
-            selected.StartBlinking();
-        }
-
-        lastSelected = selected;
-
-        if (!allowMapButtonsToSwitchCameraViews)
-        {
-            return;
-        }
-
-        NotifyRoomNavigation(selected);
-
-        if (cameraSwitchSound != null)
-        {
-            cameraSwitchSound.Play();
-        }
-
-        if (cameraSwitchRoutine != null)
-        {
-            StopCoroutine(cameraSwitchRoutine);
-        }
-
-        if (playStaticOnCameraSwitch && staticScreen != null && staticScreen.CanPlay && staticTransitionDuration > 0f)
-        {
-            cameraSwitchRoutine = StartCoroutine(SwitchCameraAfterStatic(texture));
-        }
-        else
-        {
-            if (staticScreen != null)
-            {
-                staticScreen.Stop();
-            }
-
-            SetCameraBackground(texture);
-        }
-    }
-
-    private IEnumerator SwitchCameraAfterStatic(Texture texture)
-    {
-        staticScreen.Play();
-
-        yield return new WaitForSecondsRealtime(staticTransitionDuration);
-
-        SetCameraBackground(texture);
-        staticScreen.Stop();
-        cameraSwitchRoutine = null;
-    }
-
-    public void CancelCameraSwitchTransition()
-    {
-        if (cameraSwitchRoutine != null)
-        {
-            StopCoroutine(cameraSwitchRoutine);
-            cameraSwitchRoutine = null;
-        }
-
-        if (staticScreen != null)
-        {
-            staticScreen.Stop();
-        }
     }
 
     public void PlayCameraShake()
@@ -562,32 +458,6 @@ public class CameraManager : MonoBehaviour
         SetRoomLookForPreview(0f, 0f, defaultRoomFov);
     }
 
-    private Texture GetStartupBackgroundTexture()
-    {
-        if (!useStartupCameraOnStart)
-        {
-            return cameraBackground.texture;
-        }
-
-        Texture startupTexture = GetCameraAreaBackgroundTexture(startupCamera);
-
-        if (startupTexture != null)
-        {
-            return startupTexture;
-        }
-
-        Texture anchoredStartupTexture = useAnchoredAnimationCameraAsStartup
-            ? GetCameraAreaBackgroundTexture(anchoredAnimationCamera)
-            : null;
-
-        if (anchoredStartupTexture != null)
-        {
-            return anchoredStartupTexture;
-        }
-
-        return cameraBackground.texture;
-    }
-
     private Texture GetNavigationStartupBackgroundTexture()
     {
         if (roomNavigationManager == null)
@@ -601,34 +471,6 @@ public class CameraManager : MonoBehaviour
         }
 
         return roomNavigationManager.FindRoomTexture(roomNavigationManager.CurrentRoom);
-    }
-
-    private Texture GetCameraAreaBackgroundTexture(CameraAreaController cameraArea)
-    {
-        if (cameraArea == null)
-        {
-            return null;
-        }
-
-        return cameraArea.GetEffectiveRoomBackgroundTexture();
-    }
-
-    private void NotifyRoomNavigation(CameraAreaController selected)
-    {
-        if (selected == null)
-        {
-            return;
-        }
-
-        if (roomNavigationManager == null)
-        {
-            roomNavigationManager = FindAnyObjectByType<RoomNavigationManager>();
-        }
-
-        if (roomNavigationManager != null)
-        {
-            roomNavigationManager.SetCurrentRoomFromCameraArea(selected, false);
-        }
     }
 
     private void SetCameraBackground(Texture texture)
@@ -690,8 +532,7 @@ public class CameraManager : MonoBehaviour
             return false;
         }
 
-        return anchoredAnimationCamera == null ||
-            anchoredAnimationCamera.roomBackgroundTexture == texture;
+        return true;
     }
 
     private void UpdateAnchoredBackgroundAnimation()
@@ -1982,7 +1823,8 @@ public static class NavigationCursorController
         Door,
         Stairway,
         Coat,
-        BlockedCoat
+        BlockedCoat,
+        Talk
     }
 
     private const int CursorDesignSize = 32;
@@ -1995,6 +1837,7 @@ public static class NavigationCursorController
     private static readonly Vector2 DoorHotspot = ScaleCursorHotspot(9f, 6f);
     private static readonly Vector2 StairwayHotspot = ScaleCursorHotspot(10f, 7f);
     private static readonly Vector2 CoatHotspot = ScaleCursorHotspot(10f, 9f);
+    private static readonly Vector2 TalkHotspot = ScaleCursorHotspot(10f, 8f);
     private static readonly Vector2 WalkHotspot = ScaleCursorHotspot(13f, 24f);
 
     private static int edgePanDirection;
@@ -2008,6 +1851,7 @@ public static class NavigationCursorController
     private static Texture2D stairwayCursor;
     private static Texture2D coatCursor;
     private static Texture2D blockedCoatCursor;
+    private static Texture2D talkCursor;
     private static Texture2D walkCursor;
     private static Texture2D blockedWalkCursor;
 
@@ -2123,6 +1967,12 @@ public static class NavigationCursorController
                 return;
             }
 
+            if (doorHoverIcon == HoverIcon.Talk)
+            {
+                Cursor.SetCursor(GetTalkCursor(), TalkHotspot, CursorMode.Auto);
+                return;
+            }
+
             Cursor.SetCursor(GetDoorCursor(), DoorHotspot, CursorMode.Auto);
             return;
         }
@@ -2211,6 +2061,16 @@ public static class NavigationCursorController
         return blockedCoatCursor;
     }
 
+    private static Texture2D GetTalkCursor()
+    {
+        if (talkCursor == null)
+        {
+            talkCursor = CreateTalkCursor();
+        }
+
+        return talkCursor;
+    }
+
     private static Texture2D GetWalkCursor()
     {
         if (walkCursor == null)
@@ -2290,6 +2150,23 @@ public static class NavigationCursorController
         DrawLine(texture, 16, 15, 16, 11, Paper, 2);
         DrawLine(texture, 16, 11, 21, 11, Paper, 2);
         DrawLine(texture, 21, 11, 21, 7, Paper, 2);
+        texture.Apply();
+        return texture;
+    }
+
+    private static Texture2D CreateTalkCursor()
+    {
+        Texture2D texture = CreateBlankCursor("Cursor_Talk");
+
+        FillRect(texture, 7, 7, 25, 21, Ink);
+        FillRect(texture, 9, 9, 23, 19, Paper);
+        DrawLine(texture, 11, 22, 8, 27, Ink, 4);
+        DrawLine(texture, 11, 22, 15, 20, Ink, 4);
+        DrawLine(texture, 11, 22, 10, 25, Paper, 1);
+        DrawLine(texture, 11, 22, 14, 21, Paper, 1);
+        FillRect(texture, 12, 13, 14, 15, Ink);
+        FillRect(texture, 16, 13, 18, 15, Ink);
+        FillRect(texture, 20, 13, 22, 15, Ink);
         texture.Apply();
         return texture;
     }

@@ -1,6 +1,9 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public enum ChapterPhase
 {
@@ -20,16 +23,22 @@ public enum ChapterPhase
 public class ChapterManager : MonoBehaviour
 {
     public const string Chapter1Id = "chapter_01_arrivals";
+    public const string Chapter2Id = "chapter_02_guest_search";
+    private const string Chapter1Title = "Chapter 1";
+    private const string DebugCanvasName = "Canvas_ChapterDebug";
+    private const string SkipChapter2ButtonName = "Button_SkipToChapter2";
+    private const string SkipChapter2ButtonLabelName = "Text_SkipToChapter2";
 
     [Header("Chapter")]
     [SerializeField] private string currentChapterId = Chapter1Id;
-    [SerializeField] private string displayedTitle = "Act 1";
+    [SerializeField] private string displayedTitle = Chapter1Title;
     [SerializeField] private ChapterPhase currentPhase = ChapterPhase.NotStarted;
 
     [Header("Debug Tools")]
     [SerializeField] private bool autoStartChapter1 = true;
     [SerializeField] private bool skipIntro;
     [SerializeField] private bool debugFastMode;
+    [SerializeField] private bool showSkipToChapter2Button = true;
     [SerializeField] private bool triggerNextGuest;
     [SerializeField] private bool printChapterState;
 
@@ -41,10 +50,14 @@ public class ChapterManager : MonoBehaviour
     [SerializeField] private ChapterEventScheduler eventScheduler;
     [SerializeField] private ChapterIntroUI introUI;
     [SerializeField] private Chapter1ArrivalController chapter1ArrivalController;
+    [SerializeField] private Chapter2Controller chapter2Controller;
 
     private Coroutine chapterRoutine;
     private Coroutine chapterCompleteRoutine;
     private bool chapterStarted;
+    private Canvas debugCanvas;
+    private Button skipChapter2Button;
+    private TMP_Text skipChapter2ButtonLabel;
 
     public string CurrentChapterId => currentChapterId;
     public string DisplayedTitle => displayedTitle;
@@ -74,12 +87,14 @@ public class ChapterManager : MonoBehaviour
         managerObject.AddComponent<ChapterEventScheduler>();
         managerObject.AddComponent<ChapterIntroUI>();
         managerObject.AddComponent<Chapter1ArrivalController>();
+        managerObject.AddComponent<Chapter2Controller>();
         managerObject.AddComponent<ChapterManager>();
     }
 
     private void Awake()
     {
         ResolveReferences();
+        EnsureDebugSkipButton();
 
         if (autoStartChapter1)
         {
@@ -100,6 +115,8 @@ public class ChapterManager : MonoBehaviour
     private void Start()
     {
         ResolveReferences();
+        EnsureDebugSkipButton();
+        UpdateDebugSkipButtonVisibility();
 
         if (autoStartChapter1)
         {
@@ -109,6 +126,8 @@ public class ChapterManager : MonoBehaviour
 
     private void Update()
     {
+        UpdateDebugSkipButtonVisibility();
+
         if (triggerNextGuest)
         {
             triggerNextGuest = false;
@@ -134,6 +153,7 @@ public class ChapterManager : MonoBehaviour
         ValidateRequiredReferences();
 
         currentChapterId = Chapter1Id;
+        displayedTitle = Chapter1Title;
         chapterStarted = true;
         Debug.Log("Chapter 1 started", this);
 
@@ -205,12 +225,76 @@ public class ChapterManager : MonoBehaviour
 
     public void CompleteChapterAndTriggerNextChapter(string nextChapterId)
     {
+        string cleanNextChapterId = NormalizeNextChapterId(nextChapterId);
+
+        if (IsDuplicateChapter2Request(cleanNextChapterId))
+        {
+            Debug.Log("Chapter 2 request ignored because Chapter 2 is already active.", this);
+            return;
+        }
+
         if (chapterCompleteRoutine != null)
         {
             return;
         }
 
-        chapterCompleteRoutine = StartCoroutine(CompleteChapterRoutine(nextChapterId));
+        chapterCompleteRoutine = StartCoroutine(CompleteChapterRoutine(cleanNextChapterId));
+    }
+
+    public void SetChapterPlayerInputEnabled(bool enabled)
+    {
+        SetPlayerInputEnabled(enabled);
+    }
+
+    [ContextMenu("Skip To Chapter 2 For Testing")]
+    public void SkipToChapter2ForTesting()
+    {
+        ResolveReferences();
+
+        if (chapterRoutine != null)
+        {
+            StopCoroutine(chapterRoutine);
+            chapterRoutine = null;
+        }
+
+        if (chapterCompleteRoutine != null)
+        {
+            StopCoroutine(chapterCompleteRoutine);
+            chapterCompleteRoutine = null;
+        }
+
+        if (eventScheduler != null)
+        {
+            eventScheduler.Clear();
+        }
+
+        if (chapterClock != null)
+        {
+            chapterClock.StopClock();
+        }
+
+        SetPlayerInputEnabled(false);
+        currentChapterId = Chapter2Id;
+        chapterStarted = true;
+        SetPhase(ChapterPhase.Complete);
+        UpdateDebugSkipButtonVisibility();
+
+        if (chapter1ArrivalController != null)
+        {
+            chapter1ArrivalController.PrepareGuestsForChapter2Skip();
+        }
+
+        chapter2Controller = ResolveChapter2Controller(true);
+
+        if (chapter2Controller != null)
+        {
+            chapter2Controller.BeginChapter2(this);
+            chapter1ArrivalController?.HideGuestCoatsForChapter2Skip();
+        }
+        else
+        {
+            Debug.LogWarning("Skip to Chapter 2 requested, but Chapter2Controller could not be resolved.", this);
+        }
     }
 
     private IEnumerator RunChapter1Routine()
@@ -246,7 +330,7 @@ public class ChapterManager : MonoBehaviour
             introUI.ShowTitle(displayedTitle);
         }
 
-        Debug.Log("Act title shown", this);
+        Debug.Log("Chapter title shown", this);
 
         if (!skipIntro)
         {
@@ -319,8 +403,73 @@ public class ChapterManager : MonoBehaviour
             chapterClock.StopClock();
         }
 
-        string cleanNextChapterId = string.IsNullOrWhiteSpace(nextChapterId) ? "chapter_02_pending" : nextChapterId.Trim();
-        Debug.Log($"Chapter 2 trigger requested: {cleanNextChapterId}", this);
+        string cleanNextChapterId = NormalizeNextChapterId(nextChapterId);
+
+        if (IsChapter2Request(cleanNextChapterId))
+        {
+            currentChapterId = Chapter2Id;
+            chapterCompleteRoutine = null;
+            chapter2Controller = ResolveChapter2Controller(true);
+
+            if (chapter2Controller != null)
+            {
+                chapter2Controller.BeginChapter2(this);
+            }
+            else
+            {
+                Debug.LogWarning("Chapter 2 requested, but Chapter2Controller could not be resolved.", this);
+            }
+
+            yield break;
+        }
+
+        Debug.Log($"Next chapter requested: {cleanNextChapterId}", this);
+        chapterCompleteRoutine = null;
+    }
+
+    private static string NormalizeNextChapterId(string nextChapterId)
+    {
+        return string.IsNullOrWhiteSpace(nextChapterId) ? "chapter_02_pending" : nextChapterId.Trim();
+    }
+
+    private static bool IsChapter2Request(string nextChapterId)
+    {
+        return string.Equals(nextChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(nextChapterId, "chapter_02_pending", System.StringComparison.OrdinalIgnoreCase) ||
+            nextChapterId.StartsWith("chapter_02", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsDuplicateChapter2Request(string nextChapterId)
+    {
+        if (!IsChapter2Request(nextChapterId))
+        {
+            return false;
+        }
+
+        ResolveChapter2Controller(false);
+
+        return string.Equals(currentChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
+            (chapter2Controller != null && chapter2Controller.CurrentPhase != Chapter2Phase.NotStarted);
+    }
+
+    private Chapter2Controller ResolveChapter2Controller(bool createIfMissing)
+    {
+        if (chapter2Controller == null)
+        {
+            chapter2Controller = GetComponent<Chapter2Controller>();
+        }
+
+        if (chapter2Controller == null)
+        {
+            chapter2Controller = FindAnyObjectByType<Chapter2Controller>(FindObjectsInactive.Include);
+        }
+
+        if (chapter2Controller == null && createIfMissing)
+        {
+            chapter2Controller = gameObject.AddComponent<Chapter2Controller>();
+        }
+
+        return chapter2Controller;
     }
 
     private void SetPlayerInputEnabled(bool enabled)
@@ -348,6 +497,136 @@ public class ChapterManager : MonoBehaviour
                 legacyController.enabled = false;
             }
         }
+    }
+
+    private void EnsureDebugSkipButton()
+    {
+        if (!showSkipToChapter2Button)
+        {
+            return;
+        }
+
+        GameObject canvasObject = GameObject.Find(DebugCanvasName);
+
+        if (canvasObject == null)
+        {
+            canvasObject = new GameObject(DebugCanvasName, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        }
+
+        debugCanvas = canvasObject.GetComponent<Canvas>();
+        debugCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        debugCanvas.sortingOrder = 9400;
+        EnsureEventSystem();
+
+        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1366f, 768f);
+        scaler.matchWidthOrHeight = 0.5f;
+
+        RectTransform root = canvasObject.GetComponent<RectTransform>();
+        root.anchorMin = Vector2.zero;
+        root.anchorMax = Vector2.one;
+        root.sizeDelta = Vector2.zero;
+
+        Transform existing = root.Find(SkipChapter2ButtonName);
+        skipChapter2Button = existing != null ? existing.GetComponent<Button>() : null;
+
+        if (skipChapter2Button == null)
+        {
+            GameObject buttonObject = new GameObject(SkipChapter2ButtonName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
+            buttonRect.SetParent(root, false);
+            buttonRect.anchorMin = new Vector2(0.5f, 1f);
+            buttonRect.anchorMax = new Vector2(0.5f, 1f);
+            buttonRect.pivot = new Vector2(0.5f, 1f);
+            buttonRect.anchoredPosition = new Vector2(0f, -18f);
+            buttonRect.sizeDelta = new Vector2(220f, 40f);
+
+            Image buttonImage = buttonObject.GetComponent<Image>();
+            buttonImage.color = new Color(0.05f, 0.05f, 0.06f, 0.82f);
+
+            skipChapter2Button = buttonObject.GetComponent<Button>();
+            ColorBlock colors = skipChapter2Button.colors;
+            colors.normalColor = new Color(0.05f, 0.05f, 0.06f, 0.82f);
+            colors.highlightedColor = new Color(0.16f, 0.16f, 0.18f, 0.95f);
+            colors.pressedColor = new Color(0.02f, 0.02f, 0.03f, 1f);
+            colors.selectedColor = colors.highlightedColor;
+            skipChapter2Button.colors = colors;
+        }
+
+        RectTransform rect = skipChapter2Button.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 1f);
+        rect.anchorMax = new Vector2(0.5f, 1f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchoredPosition = new Vector2(0f, -18f);
+        rect.sizeDelta = new Vector2(220f, 40f);
+
+        skipChapter2ButtonLabel = FindOrCreateDebugButtonLabel(skipChapter2Button.transform);
+        skipChapter2ButtonLabel.text = "Skip to Chapter 2";
+        skipChapter2Button.onClick.RemoveAllListeners();
+        skipChapter2Button.onClick.AddListener(SkipToChapter2ForTesting);
+    }
+
+    private void UpdateDebugSkipButtonVisibility()
+    {
+        if (!showSkipToChapter2Button)
+        {
+            if (skipChapter2Button != null)
+            {
+                skipChapter2Button.gameObject.SetActive(false);
+            }
+
+            return;
+        }
+
+        if (skipChapter2Button == null)
+        {
+            EnsureDebugSkipButton();
+        }
+
+        if (skipChapter2Button == null)
+        {
+            return;
+        }
+
+        bool shouldShow = !string.Equals(currentChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase);
+        skipChapter2Button.gameObject.SetActive(shouldShow);
+    }
+
+    private static TMP_Text FindOrCreateDebugButtonLabel(Transform buttonRoot)
+    {
+        Transform existing = buttonRoot.Find(SkipChapter2ButtonLabelName);
+        TMP_Text label = existing != null ? existing.GetComponent<TMP_Text>() : null;
+
+        if (label != null)
+        {
+            return label;
+        }
+
+        GameObject labelObject = new GameObject(SkipChapter2ButtonLabelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+        labelRect.SetParent(buttonRoot, false);
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(10f, 0f);
+        labelRect.offsetMax = new Vector2(-10f, 0f);
+
+        label = labelObject.GetComponent<TMP_Text>();
+        label.fontSize = 17f;
+        label.color = Color.white;
+        label.alignment = TextAlignmentOptions.Center;
+        label.raycastTarget = false;
+        return label;
+    }
+
+    private static void EnsureEventSystem()
+    {
+        if (FindAnyObjectByType<EventSystem>(FindObjectsInactive.Include) != null)
+        {
+            return;
+        }
+
+        new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
     }
 
     private void ValidateRequiredReferences()
@@ -402,6 +681,8 @@ public class ChapterManager : MonoBehaviour
         {
             chapter1ArrivalController = FindAnyObjectByType<Chapter1ArrivalController>(FindObjectsInactive.Include);
         }
+
+        ResolveChapter2Controller(false);
 
         ResolvePlayerReference();
 

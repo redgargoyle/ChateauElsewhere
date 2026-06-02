@@ -107,6 +107,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private readonly HashSet<GameObject> runtimeGeneratedGuestObjects = new HashSet<GameObject>();
     private int currentGuestIndex = -1;
     private bool sequenceActive;
+    private bool chapterCompletionRequested;
     private bool finalEmptyDoorbellOccurred;
     private bool emptyDoorbellWaitingForAnswer;
     private bool butlerCarryingCoat;
@@ -134,6 +135,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float ClosetStorageReadyScreenDistance = 145f;
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
+    private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
@@ -177,7 +179,10 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void OnEnable()
     {
-        SubscribeToRoomChanges();
+        if (sequenceActive && !chapterCompletionRequested)
+        {
+            SubscribeToRoomChanges();
+        }
     }
 
     private void OnDisable()
@@ -215,6 +220,63 @@ public class Chapter1ArrivalController : MonoBehaviour
         EnsureRuntimeInteractionSystems();
         ResetGuestStates(false);
         SetChapterSceneGuestsActive(false);
+    }
+
+    public void PrepareGuestsForChapter2Skip()
+    {
+        ResolveReferences(true);
+
+        StopAllCoroutines();
+        guestRoomVisibilityRefreshRoutine = null;
+        UnsubscribeFromRoomChanges();
+        DisableAllChapter1CoatPickupsForChapter2Skip();
+
+        sequenceActive = false;
+        chapterCompletionRequested = true;
+        finalEmptyDoorbellOccurred = true;
+        emptyDoorbellWaitingForAnswer = false;
+        butlerCarryingCoat = false;
+        carriedCoatId = string.Empty;
+        carriedCoatGuest = null;
+        currentGuestIndex = -1;
+
+        if (carriedCoatVisual != null)
+        {
+            carriedCoatVisual.SetActive(false);
+            carriedCoatVisual = null;
+        }
+
+        CancelPendingCoatPickup();
+        CancelPendingClosetStorage();
+        doorbellSystem?.StopRinging();
+        pendingGuestGroups.Clear();
+        activeEntranceGroups.Clear();
+        guestGroups.Clear();
+
+        ResetGuestStates(true);
+        coatCloset?.ClearStoredCoats();
+
+        int stagedGuestCount = Mathf.Min(GetRequiredGuestCountForCurrentRun(), guestStates.Count);
+
+        for (int i = 0; i < stagedGuestCount; i++)
+        {
+            StageGuestInDrawingRoomForChapter2Skip(guestStates[i]);
+        }
+
+        RefreshInteractionState();
+        RefreshAllGuestRoomVisibility();
+        HideGuestCoatsForChapter2Skip();
+        Debug.Log($"Chapter 2 skip staged {stagedGuestCount} guest(s) in the Drawing Room.", this);
+    }
+
+    public void HideGuestCoatsForChapter2Skip()
+    {
+        for (int i = 0; i < guestStates.Count; i++)
+        {
+            HideGuestCoatVisualsForChapter2Skip(guestStates[i]);
+        }
+
+        HideAllGuestCoatVisualsForChapter2Skip();
     }
 
     [ContextMenu("Trigger Next Guest Group")]
@@ -1025,6 +1087,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void ResetChapterRuntime()
     {
+        chapterCompletionRequested = false;
         finalEmptyDoorbellOccurred = false;
         emptyDoorbellWaitingForAnswer = false;
         butlerCarryingCoat = false;
@@ -1587,11 +1650,189 @@ public class Chapter1ArrivalController : MonoBehaviour
         CheckChapterCompletionGate();
     }
 
+    private void StageGuestInDrawingRoomForChapter2Skip(GuestRuntimeState guest)
+    {
+        if (guest == null)
+        {
+            return;
+        }
+
+        Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
+
+        SetGuestVisibleAfterDrawingRoomExit(guest, true);
+        PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
+        DisableGuestMovement(guest);
+
+        if (guest.CoatPickup != null)
+        {
+            DisableChapter1CoatPickupForChapter2Skip(guest.CoatPickup);
+        }
+
+        if (guest.ActorState != null)
+        {
+            guest.ActorState.enabled = true;
+            guest.ActorState.SetCurrentRoom(drawingRoomId);
+            guest.ActorState.SetAvailableInCurrentChapter(true);
+            guest.ActorState.SetInteractable(false);
+            guest.ActorState.SetSeated(true);
+            guest.ActorState.SetVisibleByChapterState(true);
+            guest.ActorState.ApplyState();
+        }
+
+        HideGuestCoatVisualsForChapter2Skip(guest);
+
+        guest.WaitingOutside = false;
+        guest.EnteredEntranceHall = true;
+        guest.Annoyed = false;
+        guest.CoatOffered = true;
+        guest.CoatTaken = true;
+        StoreGuestCoatForChapter2Skip(guest);
+        guest.CoatStored = true;
+        guest.Seated = true;
+        guest.Handled = true;
+        SetGuestState(guest, GuestArrivalState.Seated);
+        SetGuestState(guest, GuestArrivalState.Handled);
+    }
+
+    private void HideGuestCoatVisualsForChapter2Skip(GuestRuntimeState guest)
+    {
+        if (guest == null || guest.GuestObject == null)
+        {
+            return;
+        }
+
+        Transform[] children = guest.GuestObject.GetComponentsInChildren<Transform>(true);
+
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+
+            if (child == null ||
+                child == guest.GuestObject.transform ||
+                child.name.IndexOf("coat", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                continue;
+            }
+
+            HideCoatVisualObjectForChapter2Skip(child.gameObject);
+        }
+    }
+
+    private void HideAllGuestCoatVisualsForChapter2Skip()
+    {
+        GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+
+        for (int i = 0; i < allObjects.Length; i++)
+        {
+            GameObject candidate = allObjects[i];
+
+            if (!IsChapter2SkipCoatVisualObject(candidate))
+            {
+                continue;
+            }
+
+            HideCoatVisualObjectForChapter2Skip(candidate);
+        }
+    }
+
+    private static bool IsChapter2SkipCoatVisualObject(GameObject candidate)
+    {
+        if (candidate == null || !candidate.scene.IsValid())
+        {
+            return false;
+        }
+
+        if (candidate.GetComponent<Chapter1CoatPickup>() != null)
+        {
+            return true;
+        }
+
+        string objectName = candidate.name;
+
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return false;
+        }
+
+        return objectName.IndexOf("coatcutout", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            objectName.StartsWith("Coat_", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void HideCoatVisualObjectForChapter2Skip(GameObject coatObject)
+    {
+        if (coatObject == null)
+        {
+            return;
+        }
+
+        Chapter1CoatPickup coatPickup = coatObject.GetComponent<Chapter1CoatPickup>();
+
+        if (coatPickup != null)
+        {
+            coatPickup.enabled = false;
+        }
+
+        Collider2D[] colliders = coatObject.GetComponentsInChildren<Collider2D>(true);
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null)
+            {
+                colliders[i].enabled = false;
+            }
+        }
+
+        SetCoatPickupRenderersVisible(coatObject, false);
+        coatObject.SetActive(false);
+    }
+
+    private void StoreGuestCoatForChapter2Skip(GuestRuntimeState guest)
+    {
+        if (guest == null || guest.Config == null || coatCloset == null)
+        {
+            return;
+        }
+
+        string coatId = guest.Config.CoatId;
+
+        if (!coatCloset.ContainsCoat(coatId))
+        {
+            coatCloset.StoreCoat(coatId);
+        }
+    }
+
+    private void DisableAllChapter1CoatPickupsForChapter2Skip()
+    {
+        Chapter1CoatPickup[] coatPickups = FindObjectsByType<Chapter1CoatPickup>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < coatPickups.Length; i++)
+        {
+            DisableChapter1CoatPickupForChapter2Skip(coatPickups[i]);
+        }
+    }
+
+    private void DisableChapter1CoatPickupForChapter2Skip(Chapter1CoatPickup coatPickup)
+    {
+        if (coatPickup == null)
+        {
+            return;
+        }
+
+        HideCoatVisualObjectForChapter2Skip(coatPickup.gameObject);
+    }
+
     private Transform ResolveDrawingRoomSpotForGuest(GuestRuntimeState guest)
     {
         if (guest == null)
         {
             return drawingRoomEntryPoint;
+        }
+
+        Transform editableGuestPoint = FindDrawingRoomGuestPoint(guest.GuestIndex);
+
+        if (editableGuestPoint != null)
+        {
+            return editableGuestPoint;
         }
 
         if (IsWorldSpaceGuestObject(guest.GuestObject))
@@ -1607,6 +1848,11 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void CheckChapterCompletionGate()
     {
+        if (!sequenceActive || chapterCompletionRequested)
+        {
+            return;
+        }
+
         if (!CanCompleteChapterOne())
         {
             return;
@@ -1618,7 +1864,9 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        chapterCompletionRequested = true;
         sequenceActive = false;
+        UnsubscribeFromRoomChanges();
         chapterManager?.CompleteChapterAndTriggerNextChapter("chapter_02_pending");
     }
 
@@ -1911,6 +2159,13 @@ public class Chapter1ArrivalController : MonoBehaviour
             TryGetAnchoredPositionForGuestTarget(guestState, target, out Vector2 anchoredPosition))
         {
             rectTransform.anchoredPosition = anchoredPosition;
+            return;
+        }
+
+        if (guestState.GuestObject != null &&
+            TryGetWorldPositionForGuestTarget(guestState.GuestObject.transform, target, out Vector3 worldPosition))
+        {
+            guestState.GuestObject.transform.position = worldPosition;
             return;
         }
 
@@ -2379,7 +2634,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void EnsureSceneActionTargets()
     {
         RemoveClickTarget("Chapter1_ClickTarget_CoatCloset");
-        CreateClickTarget("Chapter1_ClickTarget_GrandfatherClock", grandfatherClock != null ? grandfatherClock.transform : null, Chapter1SceneActionType.GrandfatherClock);
+        RemoveClickTarget("Chapter1_ClickTarget_GrandfatherClock");
         CreateClickTarget("Chapter1_ClickTarget_DrawingRoomExit", drawingRoomEntryPoint, Chapter1SceneActionType.DrawingRoomExit);
     }
 
@@ -3330,6 +3585,13 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Transform ResolveSeatForGuest(int index)
     {
+        Transform editableGuestPoint = FindDrawingRoomGuestPoint(index);
+
+        if (editableGuestPoint != null)
+        {
+            return editableGuestPoint;
+        }
+
         switch (index)
         {
             case 0:
@@ -3356,6 +3618,25 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return runtimeSeatAnchors[index];
+    }
+
+    private Transform FindDrawingRoomGuestPoint(int guestIndex)
+    {
+        if (guestIndex < 0)
+        {
+            return null;
+        }
+
+        string pointName = $"{DrawingRoomGuestPointPrefix}{guestIndex + 1:00}";
+        Transform roomAnchor = FindAnchor(pointName, drawingRoomId);
+
+        if (roomAnchor != null)
+        {
+            return roomAnchor;
+        }
+
+        GameObject pointObject = FindSceneObjectByExactName(pointName);
+        return pointObject != null ? pointObject.transform : null;
     }
 
     private Transform CreateRuntimeAnchor(string objectName, Vector3 position, Transform siblingAnchor)
@@ -3670,6 +3951,26 @@ public class Chapter1ArrivalController : MonoBehaviour
             return false;
         }
 
+        RectTransform guestRectTransform = guestState != null && guestState.GuestObject != null
+            ? guestState.GuestObject.transform as RectTransform
+            : null;
+        RectTransform guestParentRect = guestRectTransform != null ? guestRectTransform.parent as RectTransform : null;
+
+        if (guestParentRect != null &&
+            TryGetTargetScreenPosition(target, out Vector2 screenPosition))
+        {
+            Camera guestCanvasCamera = GetCanvasCamera(guestParentRect.GetComponentInParent<Canvas>(true));
+
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                guestParentRect,
+                screenPosition,
+                guestCanvasCamera,
+                out anchoredPosition))
+            {
+                return true;
+            }
+        }
+
         if (target is RectTransform targetRectTransform)
         {
             anchoredPosition = targetRectTransform.anchoredPosition;
@@ -3678,6 +3979,82 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         anchoredPosition = new Vector2(target.localPosition.x, target.localPosition.y);
         return true;
+    }
+
+    private bool TryGetWorldPositionForGuestTarget(Transform guestTransform, Transform target, out Vector3 worldPosition)
+    {
+        worldPosition = Vector3.zero;
+
+        if (guestTransform == null || target == null || target.GetComponentInParent<Canvas>(true) == null)
+        {
+            return false;
+        }
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null || !TryGetTargetScreenPosition(target, out Vector2 screenPosition))
+        {
+            return false;
+        }
+
+        float depth = guestTransform.position.z - mainCamera.transform.position.z;
+
+        if (depth <= 0.01f)
+        {
+            depth = Mathf.Abs(depth);
+        }
+
+        if (depth <= 0.01f)
+        {
+            depth = Mathf.Abs(transform.position.z - mainCamera.transform.position.z);
+        }
+
+        if (depth <= 0.01f)
+        {
+            depth = 10f;
+        }
+
+        worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, depth));
+        worldPosition.z = guestTransform.position.z;
+        return true;
+    }
+
+    private bool TryGetTargetScreenPosition(Transform target, out Vector2 screenPosition)
+    {
+        screenPosition = Vector2.zero;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        Canvas targetCanvas = target.GetComponentInParent<Canvas>(true);
+
+        if (targetCanvas != null)
+        {
+            screenPosition = RectTransformUtility.WorldToScreenPoint(GetCanvasCamera(targetCanvas), target.position);
+            return true;
+        }
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
+        {
+            return false;
+        }
+
+        screenPosition = mainCamera.WorldToScreenPoint(target.position);
+        return true;
+    }
+
+    private static Camera GetCanvasCamera(Canvas canvas)
+    {
+        if (canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+        {
+            return null;
+        }
+
+        return canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
     }
 
     private Vector3 GetCoatPosition(GuestRuntimeState guest)
@@ -4343,6 +4720,11 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void HandleRoomChanged(string roomName)
     {
+        if (!sequenceActive || chapterCompletionRequested)
+        {
+            return;
+        }
+
         RefreshInteractionState();
         RefreshAllGuestRoomVisibility();
         QueueDeferredGuestRoomVisibilityRefresh();

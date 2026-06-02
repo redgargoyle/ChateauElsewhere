@@ -10,6 +10,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Animator))]
 public class PointClickPlayerMovement : MonoBehaviour
 {
+	private const string DiagnosticPrefix = "[Ch2ClickDiag]";
 	private const float MovementEpsilon = 0.0001f;
 	private const float WalkableInsetStep = 0.015f;
 	private const int WalkableInsetAttempts = 12;
@@ -59,6 +60,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private int movementPathIndex;
 	private readonly List<Vector2> movementPath = new List<Vector2>();
 	private readonly List<Vector2> movementQueryPath = new List<Vector2>();
+	private static readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
 
 	public event Action ArrivedAtDestination;
 	public event Action MovementStopped;
@@ -141,8 +143,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 		{
 			UpdateWalkCursor();
 
-			if (TryGetFloorClick(out Vector2 clickPosition))
+			if (TryGetFloorClick(out Vector2 clickPosition, out Vector2 screenPosition, out bool pointerOverUi))
+			{
 				SetDestination(clickPosition);
+				LogAcceptedFloorClick(screenPosition, pointerOverUi, clickPosition, hasDestination);
+			}
 		}
 		else
 		{
@@ -299,14 +304,24 @@ public class PointClickPlayerMovement : MonoBehaviour
 		ApplyPlayerSorting();
 	}
 
-	private bool TryGetFloorClick(out Vector2 clickPosition)
+	private bool TryGetFloorClick(out Vector2 clickPosition, out Vector2 screenPosition, out bool pointerOverUi)
 	{
 		clickPosition = Vector2.zero;
+		screenPosition = Vector2.zero;
+		pointerOverUi = false;
 
-		if (!TryGetPrimaryPointerDown(out Vector2 screenPosition))
+		if (!TryGetPrimaryPointerDown(out screenPosition))
 			return false;
 
-		if (IsPointerOverUi())
+		if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
+			return false;
+
+		if (DoorTriggerNavigation.IsPointerOverActiveTrigger(screenPosition))
+			return false;
+
+		pointerOverUi = IsPointerOverBlockingUi(screenPosition);
+
+		if (pointerOverUi)
 			return false;
 
 		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, out MovementTargetQuery movementQuery))
@@ -317,6 +332,20 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		clickPosition = movementQuery.Destination;
 		return true;
+	}
+
+	private void LogAcceptedFloorClick(Vector2 screenPosition, bool pointerOverUi, Vector2 destination, bool movementStarted)
+	{
+		Debug.Log(
+			$"{DiagnosticPrefix} PlayerMovement accepted floor click frame={Time.frameCount} " +
+			$"screen={FormatDiagnosticVector(screenPosition)} pointerOverUi={pointerOverUi} " +
+			$"destination={FormatDiagnosticVector(destination)} movementStarted={movementStarted}",
+			this);
+	}
+
+	private static string FormatDiagnosticVector(Vector2 value)
+	{
+		return $"({value.x:0.##},{value.y:0.##})";
 	}
 
 	public bool TrySetDestinationFromScreenPoint(Vector2 screenPosition, bool clampToWalkableArea = false)
@@ -363,6 +392,24 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	public bool TryFindClosestReachableDestinationToWorldPoint(Vector2 worldPoint, out Vector2 destination)
 	{
+		RefreshWalkableFloorForCurrentRoom();
+		UpdateVisualOffset(Camera.main);
+		return TryFindClosestReachableDestinationToWorldPoint(worldPoint, LogicalToWalkableWorldPoint(logicalPosition), out destination);
+	}
+
+	public bool TryFindClosestReachableDestinationToWorldPointTowardRoomCenter(Vector2 worldPoint, out Vector2 destination)
+	{
+		RefreshWalkableFloorForCurrentRoom();
+		UpdateVisualOffset(Camera.main);
+		Vector2 preferredWorldPoint = walkableFloor != null
+			? (Vector2)walkableFloor.bounds.center
+			: LogicalToWalkableWorldPoint(logicalPosition);
+
+		return TryFindClosestReachableDestinationToWorldPoint(worldPoint, preferredWorldPoint, out destination);
+	}
+
+	public bool TryFindClosestReachableDestinationToWorldPoint(Vector2 worldPoint, Vector2 preferredWorldPoint, out Vector2 destination)
+	{
 		destination = Vector2.zero;
 
 		if (!isReady)
@@ -372,15 +419,18 @@ public class PointClickPlayerMovement : MonoBehaviour
 		UpdateVisualOffset(Camera.main);
 
 		Vector2 logicalPoint = WalkableWorldToLogicalPoint(worldPoint);
+		Vector2 preferredLogicalPoint = WalkableWorldToLogicalPoint(preferredWorldPoint);
+		Vector2 candidateDestination = IsPointWalkable(logicalPoint)
+			? logicalPoint
+			: ClampToWalkableArea(logicalPoint, preferredLogicalPoint);
 
-		if (TryEvaluateMovementTarget(logicalPoint, true, out MovementTargetQuery movementQuery) &&
-			movementQuery.HasReachableDestination)
+		if (TryBuildMovementPath(logicalPosition, candidateDestination, movementQueryPath))
 		{
-			destination = movementQuery.Destination;
+			destination = candidateDestination;
 			return true;
 		}
 
-		if (TryFindWalkableWorldPointNear(worldPoint, LogicalToWalkableWorldPoint(logicalPosition), out Vector2 walkableWorldPoint))
+		if (TryFindWalkableWorldPointNear(worldPoint, preferredWorldPoint, out Vector2 walkableWorldPoint))
 		{
 			Vector2 walkableLogicalPoint = WalkableWorldToLogicalPoint(walkableWorldPoint);
 
@@ -545,18 +595,54 @@ public class PointClickPlayerMovement : MonoBehaviour
 #endif
 	}
 
-	private static bool IsPointerOverUi()
+	private static bool IsPointerOverBlockingUi(Vector2 screenPosition)
 	{
 		EventSystem eventSystem = EventSystem.current;
 		if (eventSystem == null)
 			return false;
 
-		return eventSystem.IsPointerOverGameObject();
+		PointerEventData pointerEventData = new PointerEventData(eventSystem)
+		{
+			position = screenPosition
+		};
+
+		uiRaycastResults.Clear();
+		eventSystem.RaycastAll(pointerEventData, uiRaycastResults);
+
+		for (int i = 0; i < uiRaycastResults.Count; i++)
+		{
+			GameObject hitObject = uiRaycastResults[i].gameObject;
+
+			if (hitObject == null || IsPassiveRoomUi(hitObject))
+				continue;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private static bool IsPassiveRoomUi(GameObject hitObject)
+	{
+		return hitObject.GetComponentInParent<DoorTriggerNavigation>() != null ||
+			hitObject.GetComponentInParent<RoomContentGroup>() != null;
 	}
 
 	private void UpdateWalkCursor()
 	{
-		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition) || IsPointerOverUi())
+		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition))
+		{
+			NavigationCursorController.ClearWalkHover(this);
+			return;
+		}
+
+		if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
+		{
+			NavigationCursorController.ClearWalkHover(this);
+			return;
+		}
+
+		if (DoorTriggerNavigation.IsPointerOverActiveTrigger(screenPosition) || IsPointerOverBlockingUi(screenPosition))
 		{
 			NavigationCursorController.ClearWalkHover(this);
 			return;

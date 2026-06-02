@@ -5,6 +5,8 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class ActorRoomState : MonoBehaviour
 {
+    private const string DiagnosticPrefix = "[Ch2ClickDiag]";
+
     [Header("Actor")]
     [SerializeField] private string actorId;
     [SerializeField] private GameObject actorObject;
@@ -19,13 +21,20 @@ public class ActorRoomState : MonoBehaviour
     [Header("Room Visibility")]
     [SerializeField] private bool restrictVisibilityToCurrentRoom = true;
     [SerializeField] private RoomNavigationManager navigationManager;
+    [SerializeField] private bool followRoomStageMotion = true;
 
     private Renderer[] renderers = new Renderer[0];
     private Graphic[] graphics = new Graphic[0];
     private Collider[] colliders3D = new Collider[0];
     private Collider2D[] colliders2D = new Collider2D[0];
     private CanvasGroup[] canvasGroups = new CanvasGroup[0];
+    private CameraManager cameraManager;
+    private Vector3 lastRoomStageWorldOffset;
+    private bool hasRoomStageWorldOffset;
     private bool subscribedToRoomChanges;
+    private bool hasDiagnosticApplyState;
+    private bool lastDiagnosticShouldBeVisible;
+    private bool lastDiagnosticShouldBeInteractable;
 
     public string ActorId => string.IsNullOrWhiteSpace(actorId) ? name : actorId;
     public string CurrentRoomId => currentRoomId;
@@ -60,6 +69,7 @@ public class ActorRoomState : MonoBehaviour
     private void OnDisable()
     {
         UnsubscribeFromRoomChanges();
+        ClearRoomStageMotionBaseline();
     }
 
     private void OnValidate()
@@ -82,7 +92,14 @@ public class ActorRoomState : MonoBehaviour
 
     public void SetCurrentRoom(string roomId)
     {
-        currentRoomId = string.IsNullOrWhiteSpace(roomId) ? string.Empty : roomId.Trim();
+        string cleanRoomId = string.IsNullOrWhiteSpace(roomId) ? string.Empty : roomId.Trim();
+
+        if (!SameRoom(currentRoomId, cleanRoomId))
+        {
+            ClearRoomStageMotionBaseline();
+        }
+
+        currentRoomId = cleanRoomId;
         ApplyState();
     }
 
@@ -119,6 +136,7 @@ public class ActorRoomState : MonoBehaviour
 
         Transform targetTransform = actorObject != null ? actorObject.transform : transform;
         targetTransform.position = target.position;
+        RegisterRoomStageMotionBaseline();
     }
 
     public void ApplyState()
@@ -172,6 +190,22 @@ public class ActorRoomState : MonoBehaviour
             canvasGroups[i].interactable = shouldBeInteractable;
             canvasGroups[i].blocksRaycasts = shouldBeInteractable;
         }
+
+        LogGuestApplyStateChangeIfNeeded(shouldBeVisible, shouldBeInteractable);
+
+        if (shouldBeVisible)
+        {
+            RegisterRoomStageMotionBaselineIfMissing();
+        }
+        else
+        {
+            ClearRoomStageMotionBaseline();
+        }
+    }
+
+    private void LateUpdate()
+    {
+        ApplyRoomStageMotionDeltaIfNeeded();
     }
 
     private bool ShouldBeVisible()
@@ -207,6 +241,11 @@ public class ActorRoomState : MonoBehaviour
         {
             navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         }
+
+        if (cameraManager == null)
+        {
+            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
+        }
     }
 
     private void RefreshComponentCache()
@@ -218,6 +257,74 @@ public class ActorRoomState : MonoBehaviour
         colliders3D = root.GetComponentsInChildren<Collider>(true);
         colliders2D = root.GetComponentsInChildren<Collider2D>(true);
         canvasGroups = root.GetComponentsInChildren<CanvasGroup>(true);
+    }
+
+    private void LogGuestApplyStateChangeIfNeeded(bool shouldBeVisible, bool shouldBeInteractable)
+    {
+        if (!IsGuestDiagnosticActor())
+        {
+            return;
+        }
+
+        if (hasDiagnosticApplyState &&
+            lastDiagnosticShouldBeVisible == shouldBeVisible &&
+            lastDiagnosticShouldBeInteractable == shouldBeInteractable)
+        {
+            return;
+        }
+
+        hasDiagnosticApplyState = true;
+        lastDiagnosticShouldBeVisible = shouldBeVisible;
+        lastDiagnosticShouldBeInteractable = shouldBeInteractable;
+
+        Debug.Log(
+            $"{DiagnosticPrefix} ActorRoomState ApplyState result-changed frame={Time.frameCount} " +
+            $"actor={ActorId} currentRoomId={FormatDiagnosticValue(currentRoomId)} " +
+            $"navigationCurrentRoom={GetNavigationCurrentRoomForDiagnostic()} " +
+            $"available={isAvailableInCurrentChapter} visibleByChapter={isVisibleByChapterState} " +
+            $"interactable={isInteractable} shouldBeVisible={shouldBeVisible} " +
+            $"shouldBeInteractable={shouldBeInteractable} enabledCollider2DCount={CountEnabledCollider2D()}",
+            this);
+    }
+
+    private bool IsGuestDiagnosticActor()
+    {
+        return ContainsGuest(ActorId) ||
+            ContainsGuest(name) ||
+            (actorObject != null && ContainsGuest(actorObject.name));
+    }
+
+    private static bool ContainsGuest(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private int CountEnabledCollider2D()
+    {
+        int count = 0;
+
+        for (int i = 0; i < colliders2D.Length; i++)
+        {
+            if (colliders2D[i] != null && colliders2D[i].enabled)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private string GetNavigationCurrentRoomForDiagnostic()
+    {
+        return navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom)
+            ? "<none>"
+            : navigationManager.CurrentRoom;
+    }
+
+    private static string FormatDiagnosticValue(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "<empty>" : value.Trim();
     }
 
     private void SubscribeToRoomChanges()
@@ -252,7 +359,95 @@ public class ActorRoomState : MonoBehaviour
 
     private void HandleRoomChanged(string roomName)
     {
+        ClearRoomStageMotionBaseline();
         ApplyState();
+    }
+
+    private void ApplyRoomStageMotionDeltaIfNeeded()
+    {
+        if (!ShouldFollowRoomStageMotion())
+        {
+            ClearRoomStageMotionBaseline();
+            return;
+        }
+
+        if (!TryGetCurrentRoomStageWorldOffset(out Vector3 currentOffset))
+        {
+            ClearRoomStageMotionBaseline();
+            return;
+        }
+
+        if (!hasRoomStageWorldOffset)
+        {
+            lastRoomStageWorldOffset = currentOffset;
+            hasRoomStageWorldOffset = true;
+            return;
+        }
+
+        Vector3 delta = currentOffset - lastRoomStageWorldOffset;
+        delta.z = 0f;
+
+        if (delta.sqrMagnitude > 0.0000001f)
+        {
+            Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+
+            if (targetTransform != null)
+            {
+                targetTransform.position += delta;
+            }
+        }
+
+        lastRoomStageWorldOffset = currentOffset;
+    }
+
+    private void RegisterRoomStageMotionBaselineIfMissing()
+    {
+        if (hasRoomStageWorldOffset)
+        {
+            return;
+        }
+
+        RegisterRoomStageMotionBaseline();
+    }
+
+    private void RegisterRoomStageMotionBaseline()
+    {
+        if (!ShouldFollowRoomStageMotion() || !TryGetCurrentRoomStageWorldOffset(out Vector3 currentOffset))
+        {
+            ClearRoomStageMotionBaseline();
+            return;
+        }
+
+        lastRoomStageWorldOffset = currentOffset;
+        hasRoomStageWorldOffset = true;
+    }
+
+    private void ClearRoomStageMotionBaseline()
+    {
+        lastRoomStageWorldOffset = Vector3.zero;
+        hasRoomStageWorldOffset = false;
+    }
+
+    private bool ShouldFollowRoomStageMotion()
+    {
+        if (!Application.isPlaying || !followRoomStageMotion || !ShouldBeVisible())
+        {
+            return false;
+        }
+
+        Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+        return targetTransform != null && targetTransform is not RectTransform;
+    }
+
+    private bool TryGetCurrentRoomStageWorldOffset(out Vector3 offset)
+    {
+        offset = Vector3.zero;
+        ResolveReferences();
+
+        Camera mainCamera = Camera.main;
+        return cameraManager != null &&
+            mainCamera != null &&
+            cameraManager.TryGetRoomStageWorldOffset(mainCamera, out offset);
     }
 
     private static bool SameRoom(string left, string right)
