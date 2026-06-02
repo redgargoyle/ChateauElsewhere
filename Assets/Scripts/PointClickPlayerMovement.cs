@@ -10,6 +10,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Animator))]
 public class PointClickPlayerMovement : MonoBehaviour
 {
+	private const string DiagnosticPrefix = "[Ch2ClickDiag]";
 	private const float MovementEpsilon = 0.0001f;
 	private const float WalkableInsetStep = 0.015f;
 	private const int WalkableInsetAttempts = 12;
@@ -141,8 +142,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 		{
 			UpdateWalkCursor();
 
-			if (TryGetFloorClick(out Vector2 clickPosition))
+			if (TryGetFloorClick(out Vector2 clickPosition, out Vector2 screenPosition, out bool pointerOverUi))
+			{
 				SetDestination(clickPosition);
+				LogAcceptedFloorClick(screenPosition, pointerOverUi, clickPosition, hasDestination);
+			}
 		}
 		else
 		{
@@ -299,14 +303,18 @@ public class PointClickPlayerMovement : MonoBehaviour
 		ApplyPlayerSorting();
 	}
 
-	private bool TryGetFloorClick(out Vector2 clickPosition)
+	private bool TryGetFloorClick(out Vector2 clickPosition, out Vector2 screenPosition, out bool pointerOverUi)
 	{
 		clickPosition = Vector2.zero;
+		screenPosition = Vector2.zero;
+		pointerOverUi = false;
 
-		if (!TryGetPrimaryPointerDown(out Vector2 screenPosition))
+		if (!TryGetPrimaryPointerDown(out screenPosition))
 			return false;
 
-		if (IsPointerOverUi())
+		pointerOverUi = IsPointerOverUi();
+
+		if (pointerOverUi)
 			return false;
 
 		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, out MovementTargetQuery movementQuery))
@@ -317,6 +325,20 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		clickPosition = movementQuery.Destination;
 		return true;
+	}
+
+	private void LogAcceptedFloorClick(Vector2 screenPosition, bool pointerOverUi, Vector2 destination, bool movementStarted)
+	{
+		Debug.Log(
+			$"{DiagnosticPrefix} PlayerMovement accepted floor click frame={Time.frameCount} " +
+			$"screen={FormatDiagnosticVector(screenPosition)} pointerOverUi={pointerOverUi} " +
+			$"destination={FormatDiagnosticVector(destination)} movementStarted={movementStarted}",
+			this);
+	}
+
+	private static string FormatDiagnosticVector(Vector2 value)
+	{
+		return $"({value.x:0.##},{value.y:0.##})";
 	}
 
 	public bool TrySetDestinationFromScreenPoint(Vector2 screenPosition, bool clampToWalkableArea = false)

@@ -5,6 +5,8 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class ActorRoomState : MonoBehaviour
 {
+    private const string DiagnosticPrefix = "[Ch2ClickDiag]";
+
     [Header("Actor")]
     [SerializeField] private string actorId;
     [SerializeField] private GameObject actorObject;
@@ -30,6 +32,9 @@ public class ActorRoomState : MonoBehaviour
     private Vector3 lastRoomStageWorldOffset;
     private bool hasRoomStageWorldOffset;
     private bool subscribedToRoomChanges;
+    private bool hasDiagnosticApplyState;
+    private bool lastDiagnosticShouldBeVisible;
+    private bool lastDiagnosticShouldBeInteractable;
 
     public string ActorId => string.IsNullOrWhiteSpace(actorId) ? name : actorId;
     public string CurrentRoomId => currentRoomId;
@@ -186,6 +191,8 @@ public class ActorRoomState : MonoBehaviour
             canvasGroups[i].blocksRaycasts = shouldBeInteractable;
         }
 
+        LogGuestApplyStateChangeIfNeeded(shouldBeVisible, shouldBeInteractable);
+
         if (shouldBeVisible)
         {
             RegisterRoomStageMotionBaselineIfMissing();
@@ -250,6 +257,74 @@ public class ActorRoomState : MonoBehaviour
         colliders3D = root.GetComponentsInChildren<Collider>(true);
         colliders2D = root.GetComponentsInChildren<Collider2D>(true);
         canvasGroups = root.GetComponentsInChildren<CanvasGroup>(true);
+    }
+
+    private void LogGuestApplyStateChangeIfNeeded(bool shouldBeVisible, bool shouldBeInteractable)
+    {
+        if (!IsGuestDiagnosticActor())
+        {
+            return;
+        }
+
+        if (hasDiagnosticApplyState &&
+            lastDiagnosticShouldBeVisible == shouldBeVisible &&
+            lastDiagnosticShouldBeInteractable == shouldBeInteractable)
+        {
+            return;
+        }
+
+        hasDiagnosticApplyState = true;
+        lastDiagnosticShouldBeVisible = shouldBeVisible;
+        lastDiagnosticShouldBeInteractable = shouldBeInteractable;
+
+        Debug.Log(
+            $"{DiagnosticPrefix} ActorRoomState ApplyState result-changed frame={Time.frameCount} " +
+            $"actor={ActorId} currentRoomId={FormatDiagnosticValue(currentRoomId)} " +
+            $"navigationCurrentRoom={GetNavigationCurrentRoomForDiagnostic()} " +
+            $"available={isAvailableInCurrentChapter} visibleByChapter={isVisibleByChapterState} " +
+            $"interactable={isInteractable} shouldBeVisible={shouldBeVisible} " +
+            $"shouldBeInteractable={shouldBeInteractable} enabledCollider2DCount={CountEnabledCollider2D()}",
+            this);
+    }
+
+    private bool IsGuestDiagnosticActor()
+    {
+        return ContainsGuest(ActorId) ||
+            ContainsGuest(name) ||
+            (actorObject != null && ContainsGuest(actorObject.name));
+    }
+
+    private static bool ContainsGuest(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private int CountEnabledCollider2D()
+    {
+        int count = 0;
+
+        for (int i = 0; i < colliders2D.Length; i++)
+        {
+            if (colliders2D[i] != null && colliders2D[i].enabled)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private string GetNavigationCurrentRoomForDiagnostic()
+    {
+        return navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom)
+            ? "<none>"
+            : navigationManager.CurrentRoom;
+    }
+
+    private static string FormatDiagnosticValue(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "<empty>" : value.Trim();
     }
 
     private void SubscribeToRoomChanges()

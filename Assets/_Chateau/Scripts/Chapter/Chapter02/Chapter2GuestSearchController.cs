@@ -8,6 +8,7 @@ using UnityEngine.UI;
 public class Chapter2GuestSearchController : MonoBehaviour
 {
     private const string PersistentActorRootName = "ChapterActors_Runtime";
+    private const string DiagnosticPrefix = "[Ch2ClickDiag]";
 
     [Serializable]
     public class GuestSearchEntry
@@ -238,21 +239,31 @@ public class Chapter2GuestSearchController : MonoBehaviour
     {
         GuestSearchEntry guest = FindGuest(guestId);
 
-        if (guest == null || guest.found)
+        if (guest == null)
         {
+            LogTryStartGuestConversationDiagnostic("rejected", guestId, null, "guest-not-found");
+            return false;
+        }
+
+        if (guest.found)
+        {
+            LogTryStartGuestConversationDiagnostic("rejected", guestId, guest, "guest-already-found");
             return false;
         }
 
         if (chapter2Controller != null && !chapter2Controller.IsGuestSearchActive)
         {
+            LogTryStartGuestConversationDiagnostic("rejected", guestId, guest, "search-inactive");
             return false;
         }
 
         if (activeConversationGuest != null && activeConversationGuest != guest)
         {
+            LogTryStartGuestConversationDiagnostic("rejected", guestId, guest, "active-conversation-blocks-guest");
             return false;
         }
 
+        LogTryStartGuestConversationDiagnostic("accepted", guestId, guest, "accepted");
         activeConversationGuest = guest;
 
         if (chapter2Controller != null)
@@ -262,6 +273,33 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         ShowDinnerAnnouncement(guest);
         return true;
+    }
+
+    private void LogTryStartGuestConversationDiagnostic(string result, string requestedGuestId, GuestSearchEntry guest, string reason)
+    {
+        ActorRoomState actorState = guest != null ? guest.actorState : null;
+        string actorCurrentRoom = actorState != null && !string.IsNullOrWhiteSpace(actorState.CurrentRoomId)
+            ? actorState.CurrentRoomId
+            : "<none>";
+        string activeConversation = activeConversationGuest != null
+            ? $"{GetGuestIdForOrderList(activeConversationGuest)}/{GetGuestDisplayName(activeConversationGuest)}"
+            : "<none>";
+        string phase = chapter2Controller != null
+            ? chapter2Controller.CurrentPhase.ToString()
+            : "<none>";
+        bool isGuestSearchActive = chapter2Controller != null && chapter2Controller.IsGuestSearchActive;
+        string actorVisible = actorState != null ? actorState.IsVisibleInCurrentRoom.ToString() : "<none>";
+        string actorInteractable = actorState != null ? actorState.IsInteractable.ToString() : "<none>";
+        string guestFound = guest != null ? guest.found.ToString() : "<none>";
+
+        Debug.Log(
+            $"{DiagnosticPrefix} GuestSearch TryStartGuestConversation {result} frame={Time.frameCount} " +
+            $"requestedGuest={FormatDiagnosticValue(requestedGuestId)} reason={reason} " +
+            $"phase={phase} isGuestSearchActive={isGuestSearchActive} " +
+            $"activeConversationGuest={activeConversation} guestFound={guestFound} " +
+            $"actorCurrentRoom={actorCurrentRoom} actorVisibleInCurrentRoom={actorVisible} " +
+            $"actorInteractable={actorInteractable}",
+            this);
     }
 
     public List<string> GetFoundGuestIdsInOrder()
@@ -976,6 +1014,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private static bool SameId(string left, string right)
     {
         return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string FormatDiagnosticValue(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "<empty>" : value.Trim();
     }
 
     private static bool ContainsAny(string value, params string[] fragments)

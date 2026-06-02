@@ -12,6 +12,8 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Image))]
 public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
+    private const string DiagnosticPrefix = "[Ch2ClickDiag]";
+
     public enum NavigationTriggerKind
     {
         Door,
@@ -153,7 +155,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        SetActiveDoorHover(this);
+        SetActiveDoorHover(this, Vector2.zero, false);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -714,10 +716,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         DoorTriggerNavigation triggerUnderPointer = FindTopmostTriggerAtScreenPoint(screenPosition);
-        SetActiveDoorHover(triggerUnderPointer);
+        SetActiveDoorHover(triggerUnderPointer, screenPosition, true);
 
-        if (triggerUnderPointer != null && TryGetPrimaryPointerDown())
+        bool primaryPointerDown = TryGetPrimaryPointerDown();
+
+        if (triggerUnderPointer != null && primaryPointerDown)
         {
+            triggerUnderPointer.LogDoorFallbackDiagnostic("hover/click", screenPosition, true, true);
             triggerUnderPointer.ActivateDoor();
         }
     }
@@ -817,24 +822,34 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
     }
 
-    private static void SetActiveDoorHover(DoorTriggerNavigation trigger)
+    private static void SetActiveDoorHover(DoorTriggerNavigation trigger, Vector2 screenPosition, bool fromFallback)
     {
         if (fallbackHoveredTrigger == trigger)
         {
             return;
         }
 
+        DoorTriggerNavigation previousTrigger = fallbackHoveredTrigger;
         ClearActiveDoorHover(fallbackHoveredTrigger);
         fallbackHoveredTrigger = trigger;
 
         if (trigger == null)
         {
             SetHoveredTrigger(null);
+            if (fromFallback)
+            {
+                LogDoorFallbackHoverChange(previousTrigger, null, screenPosition);
+            }
             return;
         }
 
         SetHoveredTrigger(trigger);
         NavigationCursorController.SetDoorHover(trigger, trigger.GetNavigationCursorIcon(), true);
+
+        if (fromFallback)
+        {
+            LogDoorFallbackHoverChange(previousTrigger, trigger, screenPosition);
+        }
     }
 
     private static void ClearActiveDoorHover(DoorTriggerNavigation trigger)
@@ -855,6 +870,45 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         NavigationCursorController.SetDoorHover(trigger, false);
+    }
+
+    private static void LogDoorFallbackHoverChange(DoorTriggerNavigation previousTrigger, DoorTriggerNavigation nextTrigger, Vector2 screenPosition)
+    {
+        DoorTriggerNavigation logTrigger = nextTrigger != null ? nextTrigger : previousTrigger;
+
+        if (logTrigger == null)
+        {
+            return;
+        }
+
+        string previousName = previousTrigger != null ? previousTrigger.name : "<none>";
+        string nextName = nextTrigger != null ? nextTrigger.name : "<none>";
+        logTrigger.LogDoorFallbackDiagnostic(
+            $"hover-change previous={previousName} next={nextName}",
+            screenPosition,
+            false,
+            nextTrigger != null);
+    }
+
+    private void LogDoorFallbackDiagnostic(string eventName, Vector2 screenPosition, bool activating, bool setCursorHover)
+    {
+        Debug.Log(
+            $"{DiagnosticPrefix} DoorFallback {eventName} frame={Time.frameCount} " +
+            $"trigger={name} currentRoom={GetCurrentRoomForDiagnostic()} sourceRoom={SourceRoom} " +
+            $"screen={FormatDiagnosticVector(screenPosition)} activating={activating} setCursorHover={setCursorHover}",
+            this);
+    }
+
+    private string GetCurrentRoomForDiagnostic()
+    {
+        return navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom)
+            ? "<none>"
+            : navigationManager.CurrentRoom;
+    }
+
+    private static string FormatDiagnosticVector(Vector2 value)
+    {
+        return $"({value.x:0.##},{value.y:0.##})";
     }
 
     public void RefreshInferredSourceRoom()
