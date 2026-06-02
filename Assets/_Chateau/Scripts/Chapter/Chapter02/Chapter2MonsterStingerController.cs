@@ -27,6 +27,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     [SerializeField, Min(0f)] private float maximumRunSeconds = 2f;
     [SerializeField, Min(0f)] private float minimumFreezeSeconds = 1f;
     [SerializeField, Min(0f)] private float maximumFreezeSeconds = 2f;
+    [SerializeField, Range(0.1f, 1f)] private float runSegmentDistanceScale = 0.65f;
     [SerializeField, Min(0.1f)] private float fallbackRunRightDistance = 4f;
     [SerializeField] private float maxVisibleSeconds = 12f;
     [SerializeField] private bool createPlaceholderMonsterIfMissing = true;
@@ -210,7 +211,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             rightDistance = Mathf.Abs(runTarget.position.x - startPosition.x);
         }
 
-        return Mathf.Max(0.1f, rightDistance);
+        return Mathf.Max(0.1f, rightDistance * runSegmentDistanceScale);
     }
 
     private IEnumerator WaitForStingerSeconds(float duration)

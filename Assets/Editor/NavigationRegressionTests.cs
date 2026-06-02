@@ -176,7 +176,10 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("TrySetDestinationFromScreenPoint"), "Navigation triggers need a public way to ask the player to walk toward a screen-space hitbox.");
         Assert.That(playerText, Does.Contain("TryEvaluateMovementAtScreenPoint"), "Cursor feedback and door approaches should use the same movement reachability query.");
         Assert.That(playerText, Does.Contain("TryGetScreenPointFromLogicalPosition"), "Door approaches need to score clamped floor points in screen space.");
-        Assert.That(playerText, Does.Contain("IsPointerOverUi"), "Door UI clicks should not be overwritten by the floor click handler on the same frame.");
+        Assert.That(triggerText, Does.Contain("IsPointerOverActiveTrigger"), "Door triggers should expose active hitbox priority for floor input.");
+        Assert.That(playerText, Does.Contain("DoorTriggerNavigation.IsPointerOverActiveTrigger"), "Door UI clicks should not be overwritten by the floor click handler on the same frame.");
+        Assert.That(playerText, Does.Contain("IsPointerOverBlockingUi"), "Floor clicks should ignore passive room visuals instead of relying on broad EventSystem UI blocking.");
+        Assert.That(playerText, Does.Contain("GetComponentInParent<RoomContentGroup>()"), "Room-authored visual UI should not make a whole room unclickable.");
         Assert.That(playerText, Does.Contain("WalkableInsetAttempts"), "Clamped approach targets should move just inside the walkable polygon instead of sitting exactly on the collider edge.");
     }
 
@@ -331,6 +334,8 @@ public class NavigationRegressionTests
         Assert.That(chapterManagerText, Does.Contain("Button_SkipToChapter2"));
         Assert.That(chapterManagerText, Does.Contain("SkipToChapter2ForTesting"));
         Assert.That(chapterManagerText, Does.Contain("ResolveChapter2Controller(true)"));
+        Assert.That(chapterManagerText, Does.Match(@"PrepareGuestsForChapter2Skip\s*\(\s*\)[\s\S]*BeginChapter2\(this\)"), "Skipping to Chapter 2 should stage Chapter 1 guests before Chapter 2 fades into the Drawing Room.");
+        Assert.That(chapterManagerText, Does.Match(@"BeginChapter2\(this\)[\s\S]*HideGuestCoatsForChapter2Skip\s*\(\s*\)"), "Skipping to Chapter 2 should hide guest coat visuals again after Chapter 2 moves to the Drawing Room.");
         Assert.That(chapterManagerText, Does.Contain("BeginChapter2(this)"));
     }
 

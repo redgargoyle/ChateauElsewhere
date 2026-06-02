@@ -279,11 +279,17 @@ public class ChapterManager : MonoBehaviour
         SetPhase(ChapterPhase.Complete);
         UpdateDebugSkipButtonVisibility();
 
+        if (chapter1ArrivalController != null)
+        {
+            chapter1ArrivalController.PrepareGuestsForChapter2Skip();
+        }
+
         chapter2Controller = ResolveChapter2Controller(true);
 
         if (chapter2Controller != null)
         {
             chapter2Controller.BeginChapter2(this);
+            chapter1ArrivalController?.HideGuestCoatsForChapter2Skip();
         }
         else
         {

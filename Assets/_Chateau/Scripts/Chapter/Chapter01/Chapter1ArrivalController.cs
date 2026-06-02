@@ -221,6 +221,63 @@ public class Chapter1ArrivalController : MonoBehaviour
         SetChapterSceneGuestsActive(false);
     }
 
+    public void PrepareGuestsForChapter2Skip()
+    {
+        ResolveReferences(true);
+
+        StopAllCoroutines();
+        guestRoomVisibilityRefreshRoutine = null;
+        UnsubscribeFromRoomChanges();
+        DisableAllChapter1CoatPickupsForChapter2Skip();
+
+        sequenceActive = false;
+        chapterCompletionRequested = true;
+        finalEmptyDoorbellOccurred = true;
+        emptyDoorbellWaitingForAnswer = false;
+        butlerCarryingCoat = false;
+        carriedCoatId = string.Empty;
+        carriedCoatGuest = null;
+        currentGuestIndex = -1;
+
+        if (carriedCoatVisual != null)
+        {
+            carriedCoatVisual.SetActive(false);
+            carriedCoatVisual = null;
+        }
+
+        CancelPendingCoatPickup();
+        CancelPendingClosetStorage();
+        doorbellSystem?.StopRinging();
+        pendingGuestGroups.Clear();
+        activeEntranceGroups.Clear();
+        guestGroups.Clear();
+
+        ResetGuestStates(true);
+        coatCloset?.ClearStoredCoats();
+
+        int stagedGuestCount = Mathf.Min(GetRequiredGuestCountForCurrentRun(), guestStates.Count);
+
+        for (int i = 0; i < stagedGuestCount; i++)
+        {
+            StageGuestInDrawingRoomForChapter2Skip(guestStates[i]);
+        }
+
+        RefreshInteractionState();
+        RefreshAllGuestRoomVisibility();
+        HideGuestCoatsForChapter2Skip();
+        Debug.Log($"Chapter 2 skip staged {stagedGuestCount} guest(s) in the Drawing Room.", this);
+    }
+
+    public void HideGuestCoatsForChapter2Skip()
+    {
+        for (int i = 0; i < guestStates.Count; i++)
+        {
+            HideGuestCoatVisualsForChapter2Skip(guestStates[i]);
+        }
+
+        HideAllGuestCoatVisualsForChapter2Skip();
+    }
+
     [ContextMenu("Trigger Next Guest Group")]
     public void TriggerNextGuest()
     {
@@ -1590,6 +1647,177 @@ public class Chapter1ArrivalController : MonoBehaviour
         Debug.Log($"Guest group {group.GroupIndex + 1} entered the drawing room.", this);
         RefreshInteractionState();
         CheckChapterCompletionGate();
+    }
+
+    private void StageGuestInDrawingRoomForChapter2Skip(GuestRuntimeState guest)
+    {
+        if (guest == null)
+        {
+            return;
+        }
+
+        Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
+
+        SetGuestVisibleAfterDrawingRoomExit(guest, true);
+        PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
+        DisableGuestMovement(guest);
+
+        if (guest.CoatPickup != null)
+        {
+            DisableChapter1CoatPickupForChapter2Skip(guest.CoatPickup);
+        }
+
+        if (guest.ActorState != null)
+        {
+            guest.ActorState.enabled = true;
+            guest.ActorState.SetCurrentRoom(drawingRoomId);
+            guest.ActorState.SetAvailableInCurrentChapter(true);
+            guest.ActorState.SetInteractable(false);
+            guest.ActorState.SetSeated(true);
+            guest.ActorState.SetVisibleByChapterState(true);
+            guest.ActorState.ApplyState();
+        }
+
+        HideGuestCoatVisualsForChapter2Skip(guest);
+
+        guest.WaitingOutside = false;
+        guest.EnteredEntranceHall = true;
+        guest.Annoyed = false;
+        guest.CoatOffered = true;
+        guest.CoatTaken = true;
+        StoreGuestCoatForChapter2Skip(guest);
+        guest.CoatStored = true;
+        guest.Seated = true;
+        guest.Handled = true;
+        SetGuestState(guest, GuestArrivalState.Seated);
+        SetGuestState(guest, GuestArrivalState.Handled);
+    }
+
+    private void HideGuestCoatVisualsForChapter2Skip(GuestRuntimeState guest)
+    {
+        if (guest == null || guest.GuestObject == null)
+        {
+            return;
+        }
+
+        Transform[] children = guest.GuestObject.GetComponentsInChildren<Transform>(true);
+
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+
+            if (child == null ||
+                child == guest.GuestObject.transform ||
+                child.name.IndexOf("coat", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                continue;
+            }
+
+            HideCoatVisualObjectForChapter2Skip(child.gameObject);
+        }
+    }
+
+    private void HideAllGuestCoatVisualsForChapter2Skip()
+    {
+        GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+
+        for (int i = 0; i < allObjects.Length; i++)
+        {
+            GameObject candidate = allObjects[i];
+
+            if (!IsChapter2SkipCoatVisualObject(candidate))
+            {
+                continue;
+            }
+
+            HideCoatVisualObjectForChapter2Skip(candidate);
+        }
+    }
+
+    private static bool IsChapter2SkipCoatVisualObject(GameObject candidate)
+    {
+        if (candidate == null || !candidate.scene.IsValid())
+        {
+            return false;
+        }
+
+        if (candidate.GetComponent<Chapter1CoatPickup>() != null)
+        {
+            return true;
+        }
+
+        string objectName = candidate.name;
+
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return false;
+        }
+
+        return objectName.IndexOf("coatcutout", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            objectName.StartsWith("Coat_", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void HideCoatVisualObjectForChapter2Skip(GameObject coatObject)
+    {
+        if (coatObject == null)
+        {
+            return;
+        }
+
+        Chapter1CoatPickup coatPickup = coatObject.GetComponent<Chapter1CoatPickup>();
+
+        if (coatPickup != null)
+        {
+            coatPickup.enabled = false;
+        }
+
+        Collider2D[] colliders = coatObject.GetComponentsInChildren<Collider2D>(true);
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null)
+            {
+                colliders[i].enabled = false;
+            }
+        }
+
+        SetCoatPickupRenderersVisible(coatObject, false);
+        coatObject.SetActive(false);
+    }
+
+    private void StoreGuestCoatForChapter2Skip(GuestRuntimeState guest)
+    {
+        if (guest == null || guest.Config == null || coatCloset == null)
+        {
+            return;
+        }
+
+        string coatId = guest.Config.CoatId;
+
+        if (!coatCloset.ContainsCoat(coatId))
+        {
+            coatCloset.StoreCoat(coatId);
+        }
+    }
+
+    private void DisableAllChapter1CoatPickupsForChapter2Skip()
+    {
+        Chapter1CoatPickup[] coatPickups = FindObjectsByType<Chapter1CoatPickup>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < coatPickups.Length; i++)
+        {
+            DisableChapter1CoatPickupForChapter2Skip(coatPickups[i]);
+        }
+    }
+
+    private void DisableChapter1CoatPickupForChapter2Skip(Chapter1CoatPickup coatPickup)
+    {
+        if (coatPickup == null)
+        {
+            return;
+        }
+
+        HideCoatVisualObjectForChapter2Skip(coatPickup.gameObject);
     }
 
     private Transform ResolveDrawingRoomSpotForGuest(GuestRuntimeState guest)

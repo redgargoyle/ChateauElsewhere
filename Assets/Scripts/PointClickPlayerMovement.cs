@@ -60,6 +60,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private int movementPathIndex;
 	private readonly List<Vector2> movementPath = new List<Vector2>();
 	private readonly List<Vector2> movementQueryPath = new List<Vector2>();
+	private static readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
 
 	public event Action ArrivedAtDestination;
 	public event Action MovementStopped;
@@ -312,12 +313,15 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryGetPrimaryPointerDown(out screenPosition))
 			return false;
 
-		pointerOverUi = IsPointerOverUi();
-
-		if (pointerOverUi)
+		if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
 			return false;
 
-		if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
+		if (DoorTriggerNavigation.IsPointerOverActiveTrigger(screenPosition))
+			return false;
+
+		pointerOverUi = IsPointerOverBlockingUi(screenPosition);
+
+		if (pointerOverUi)
 			return false;
 
 		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, out MovementTargetQuery movementQuery))
@@ -591,24 +595,54 @@ public class PointClickPlayerMovement : MonoBehaviour
 #endif
 	}
 
-	private static bool IsPointerOverUi()
+	private static bool IsPointerOverBlockingUi(Vector2 screenPosition)
 	{
 		EventSystem eventSystem = EventSystem.current;
 		if (eventSystem == null)
 			return false;
 
-		return eventSystem.IsPointerOverGameObject();
+		PointerEventData pointerEventData = new PointerEventData(eventSystem)
+		{
+			position = screenPosition
+		};
+
+		uiRaycastResults.Clear();
+		eventSystem.RaycastAll(pointerEventData, uiRaycastResults);
+
+		for (int i = 0; i < uiRaycastResults.Count; i++)
+		{
+			GameObject hitObject = uiRaycastResults[i].gameObject;
+
+			if (hitObject == null || IsPassiveRoomUi(hitObject))
+				continue;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private static bool IsPassiveRoomUi(GameObject hitObject)
+	{
+		return hitObject.GetComponentInParent<DoorTriggerNavigation>() != null ||
+			hitObject.GetComponentInParent<RoomContentGroup>() != null;
 	}
 
 	private void UpdateWalkCursor()
 	{
-		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition) || IsPointerOverUi())
+		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition))
 		{
 			NavigationCursorController.ClearWalkHover(this);
 			return;
 		}
 
 		if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
+		{
+			NavigationCursorController.ClearWalkHover(this);
+			return;
+		}
+
+		if (DoorTriggerNavigation.IsPointerOverActiveTrigger(screenPosition) || IsPointerOverBlockingUi(screenPosition))
 		{
 			NavigationCursorController.ClearWalkHover(this);
 			return;

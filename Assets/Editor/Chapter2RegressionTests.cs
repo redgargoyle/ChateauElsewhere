@@ -117,6 +117,8 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("Vector3 startPosition = monsterObject.transform.position"));
         Assert.That(stingerText, Does.Contain("GetForwardRunTargetPosition"));
         Assert.That(stingerText, Does.Contain("GetRunSegmentDistance"));
+        Assert.That(stingerText, Does.Contain("runSegmentDistanceScale = 0.65f"));
+        Assert.That(stingerText, Does.Contain("rightDistance * runSegmentDistanceScale"));
         Assert.That(stingerText, Does.Contain("return startPosition + Vector3.right * GetRunSegmentDistance(startPosition);"));
         Assert.That(stingerText, Does.Contain("Vector3.right"));
         Assert.That(stingerText, Does.Contain("PlayViolinAudioIfVisible(true)"));
@@ -206,6 +208,7 @@ public class Chapter2RegressionTests
         Assert.That(movementText, Does.Match(@"(?s)\bTryGetFloorClick\s*\([^)]*\)\s*\{.*IsPointerOverAvailableGuestAction\(screenPosition\).*return false;.*TryEvaluateMovementAtScreenPoint"), "Floor clicks should defer to available hidden guests before movement evaluation.");
         Assert.That(movementText, Does.Match(@"(?s)\bUpdateWalkCursor\s*\([^)]*\)\s*\{.*IsPointerOverAvailableGuestAction\(screenPosition\).*ClearWalkHover\(this\).*return;.*TryEvaluateMovementAtScreenPoint"), "Walk hover should clear instead of overriding the talk cursor over available hidden guests.");
 
+        Assert.That(doorTriggerText, Does.Match(@"(?s)\bOnPointerClick\s*\(\s*PointerEventData\s+eventData\s*\)\s*\{.*IsPointerOverAvailableGuestAction\(eventData\).*return;.*ActivateDoor\(\)"), "Door UI callbacks should defer to available hidden guests before activating.");
         Assert.That(doorTriggerText, Does.Match(@"(?s)\bUpdateFallbackPointerHoverAndClick\s*\([^)]*\)\s*\{.*TryGetPointerPosition\(out Vector2 screenPosition\).*IsPointerOverAvailableGuestAction\(screenPosition\).*ClearActiveDoorHover\(fallbackHoveredTrigger\).*return;.*FindTopmostTriggerAtScreenPoint"), "Door fallback hover/click should defer to available hidden guests before setting door hover or activating a trigger.");
     }
 

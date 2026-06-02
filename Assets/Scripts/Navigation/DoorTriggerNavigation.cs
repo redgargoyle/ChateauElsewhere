@@ -155,6 +155,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (IsPointerOverAvailableGuestAction(eventData))
+        {
+            ClearActiveDoorHover(this);
+            return;
+        }
+
         SetActiveDoorHover(this, Vector2.zero, false);
     }
 
@@ -168,7 +174,18 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (IsPointerOverAvailableGuestAction(eventData))
+        {
+            ClearActiveDoorHover(this);
+            return;
+        }
+
         ActivateDoor();
+    }
+
+    public static bool IsPointerOverActiveTrigger(Vector2 screenPosition)
+    {
+        return FindTopmostTriggerAtScreenPoint(screenPosition) != null;
     }
 
     public void ActivateDoor()
@@ -752,6 +769,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         return bestTrigger;
+    }
+
+    private static bool IsPointerOverAvailableGuestAction(PointerEventData eventData)
+    {
+        return eventData != null &&
+            Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(eventData.position);
     }
 
     private static bool TryGetPointerPosition(out Vector2 screenPosition)
