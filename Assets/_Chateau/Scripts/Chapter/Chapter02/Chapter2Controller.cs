@@ -140,6 +140,45 @@ public class Chapter2Controller : MonoBehaviour
         BeginDiningRoomObjective();
     }
 
+    public void DebugSkipToChapter3ForTesting(ChapterManager manager)
+    {
+        chapterManager = manager != null ? manager : chapterManager;
+        ResolveReferences();
+        StopChapter2Coroutines();
+        SetPlayerInputEnabled(false);
+        SetDinnerClockAndStop();
+        InitializeInteractionHUD();
+
+        if (introUI != null)
+        {
+            introUI.HideOverlay();
+        }
+
+        MoveToDiningRoomForDebugSkip();
+
+        if (guestSearch != null)
+        {
+            guestSearch.Initialize(this);
+            guestSearch.DebugStageAllGuestsFoundForChapter3Skip();
+        }
+
+        allGuestsFoundHandled = true;
+        dinnerSeatingHandled = true;
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearDialogue();
+            interactionHUD.ClearClockStrike();
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective("Dinner is served.");
+        }
+
+        UpdateFoundGuestsHud();
+        SetPhase(Chapter2Phase.Complete);
+        SetPlayerInputEnabled(true);
+    }
+
     public void HandleGuestSearchProgressChanged()
     {
         UpdateFoundGuestsHud();
@@ -405,6 +444,39 @@ public class Chapter2Controller : MonoBehaviour
         }
     }
 
+    private void StopChapter2Coroutines()
+    {
+        if (fadeInRoutine != null)
+        {
+            StopCoroutine(fadeInRoutine);
+            fadeInRoutine = null;
+        }
+
+        if (openingSpeechRoutine != null)
+        {
+            StopCoroutine(openingSpeechRoutine);
+            openingSpeechRoutine = null;
+        }
+
+        if (monsterStingerRoutine != null)
+        {
+            StopCoroutine(monsterStingerRoutine);
+            monsterStingerRoutine = null;
+        }
+
+        if (diningObjectiveTransitionRoutine != null)
+        {
+            StopCoroutine(diningObjectiveTransitionRoutine);
+            diningObjectiveTransitionRoutine = null;
+        }
+
+        if (diningRoomCompletionRoutine != null)
+        {
+            StopCoroutine(diningRoomCompletionRoutine);
+            diningRoomCompletionRoutine = null;
+        }
+    }
+
     private void StartMonsterStingerRoutine()
     {
         if (monsterStingerRoutine != null)
@@ -565,6 +637,24 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         navigationManager.MoveToRoom(drawingRoomId);
+    }
+
+    private void MoveToDiningRoomForDebugSkip()
+    {
+        if (navigationManager == null)
+        {
+            return;
+        }
+
+        if (IsCurrentRoom(diningRoomId))
+        {
+            return;
+        }
+
+        if (!navigationManager.DebugTeleportToRoom(diningRoomId))
+        {
+            navigationManager.MoveToRoom(diningRoomId);
+        }
     }
 
     private bool IsCurrentRoom(string roomId)

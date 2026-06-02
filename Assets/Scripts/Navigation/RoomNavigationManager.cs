@@ -54,6 +54,7 @@ public class RoomNavigationManager : MonoBehaviour
     private string currentRoom;
     private bool applyVisualForNextRoomChange;
     private TMP_Text currentRoomHudText;
+    private RuntimeSettingsMenu runtimeSettingsMenu;
 
     public string CurrentRoom => currentRoom;
     public string StartingRoom => startingRoom;
@@ -81,6 +82,7 @@ public class RoomNavigationManager : MonoBehaviour
         ResolveReferences();
         RefreshDoorButtonsForCurrentRoom();
         UpdateCurrentRoomHud(currentRoom);
+        EnsureRuntimeSettingsMenu();
         RunNavigationSelfCheckForCurrentRoom();
     }
 
@@ -137,6 +139,84 @@ public class RoomNavigationManager : MonoBehaviour
     public bool MoveToRoom(string roomName)
     {
         return SetCurrentRoom(roomName, false, true);
+    }
+
+    public List<string> GetKnownRoomNames()
+    {
+        ResolveReferences();
+        RefreshRoomContentCache();
+        RefreshDoorButtonCache();
+
+        SortedSet<string> roomNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (KeyValuePair<string, RoomDefinition> pair in roomsByName)
+        {
+            AddRoomName(roomNames, pair.Value != null ? pair.Value.RoomName : pair.Key);
+        }
+
+        if (roomVisualCatalog != null && roomVisualCatalog.rooms != null)
+        {
+            for (int i = 0; i < roomVisualCatalog.rooms.Length; i++)
+            {
+                RoomVisualEntry entry = roomVisualCatalog.rooms[i];
+                AddRoomName(roomNames, entry != null ? entry.roomName : null);
+            }
+        }
+
+        if (doorCameraSequence != null && doorCameraSequence.roomOrder != null)
+        {
+            for (int i = 0; i < doorCameraSequence.roomOrder.Length; i++)
+            {
+                AddRoomName(roomNames, doorCameraSequence.roomOrder[i]);
+            }
+        }
+
+        for (int i = 0; i < cachedRoomContentGroups.Length; i++)
+        {
+            RoomContentGroup roomContentGroup = cachedRoomContentGroups[i];
+            AddRoomName(roomNames, roomContentGroup != null ? roomContentGroup.RoomName : null);
+        }
+
+        for (int i = 0; i < cachedDoorTriggers.Length; i++)
+        {
+            DoorTriggerNavigation doorTrigger = cachedDoorTriggers[i];
+
+            if (doorTrigger == null)
+            {
+                continue;
+            }
+
+            AddRoomName(roomNames, doorTrigger.SourceRoom);
+            AddRoomName(roomNames, doorTrigger.DestinationRoom);
+        }
+
+        return new List<string>(roomNames);
+    }
+
+    public bool DebugTeleportToRoom(string roomName)
+    {
+        string cleanRoomName = Clean(roomName);
+
+        if (string.IsNullOrEmpty(cleanRoomName))
+        {
+            Warn("Debug teleport ignored an empty room name.");
+            return false;
+        }
+
+        if (SameName(cleanRoomName, currentRoom))
+        {
+            return true;
+        }
+
+        string previousRoom = currentRoom;
+
+        if (!SetCurrentRoom(cleanRoomName, false, true))
+        {
+            return false;
+        }
+
+        PlacePlayerAtDebugArrival(previousRoom, cleanRoomName);
+        return true;
     }
 
     public bool OpenDoorFromCurrentRoom(string sourceRoom, string doorName, bool requirePlayerInSourceRoom)
@@ -381,6 +461,50 @@ public class RoomNavigationManager : MonoBehaviour
         }
     }
 
+    private void PlacePlayerAtDebugArrival(string sourceRoom, string destinationRoom)
+    {
+        string cleanDestinationRoom = Clean(destinationRoom);
+
+        if (string.IsNullOrEmpty(cleanDestinationRoom))
+        {
+            return;
+        }
+
+        PointClickPlayerMovement playerMovement = FindPlayerMovement();
+
+        if (playerMovement == null)
+        {
+            return;
+        }
+
+        playerMovement.RefreshWalkableFloorForCurrentRoom();
+
+        DoorTriggerNavigation arrivalTrigger = FindArrivalDoorTrigger(Clean(sourceRoom), string.Empty, cleanDestinationRoom);
+
+        if (arrivalTrigger == null)
+        {
+            arrivalTrigger = FindAnyDoorTriggerInRoom(cleanDestinationRoom);
+        }
+
+        if (arrivalTrigger == null)
+        {
+            Warn($"Debug teleport could not find an arrival door trigger in '{cleanDestinationRoom}'. The room state changed normally, but the player was not repositioned.");
+            return;
+        }
+
+        if (!arrivalTrigger.TryFindArrivalDestination(playerMovement, out Vector2 arrivalDestination))
+        {
+            Warn($"Debug teleport arrival trigger '{arrivalTrigger.name}' could not find a reachable floor point for the player.");
+            return;
+        }
+
+        if (!playerMovement.TryWarpTo(arrivalDestination, false) &&
+            !playerMovement.TryWarpTo(arrivalDestination, true))
+        {
+            Warn($"Player rejected the debug teleport arrival point selected by '{arrivalTrigger.name}'.");
+        }
+    }
+
     private DoorTriggerNavigation FindArrivalDoorTrigger(string sourceRoom, string doorName, string destinationRoom)
     {
         RefreshDoorButtonCache();
@@ -422,6 +546,30 @@ public class RoomNavigationManager : MonoBehaviour
         }
 
         return destinationRoomTriggerCount == 1 ? onlyDestinationRoomTrigger : null;
+    }
+
+    private DoorTriggerNavigation FindAnyDoorTriggerInRoom(string roomName)
+    {
+        string cleanRoomName = Clean(roomName);
+
+        if (string.IsNullOrEmpty(cleanRoomName))
+        {
+            return null;
+        }
+
+        RefreshDoorButtonCache();
+
+        for (int i = 0; i < cachedDoorTriggers.Length; i++)
+        {
+            DoorTriggerNavigation candidate = cachedDoorTriggers[i];
+
+            if (candidate != null && SameName(candidate.SourceRoom, cleanRoomName))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
     private static PointClickPlayerMovement FindPlayerMovement()
@@ -903,6 +1051,24 @@ public class RoomNavigationManager : MonoBehaviour
 
     }
 
+    private void EnsureRuntimeSettingsMenu()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        if (runtimeSettingsMenu == null)
+        {
+            runtimeSettingsMenu = RuntimeSettingsMenu.FindOrCreate(this);
+        }
+
+        if (runtimeSettingsMenu != null)
+        {
+            runtimeSettingsMenu.Initialize(this);
+        }
+    }
+
     private string GetInitialRoomName()
     {
         string cleanStartingRoom = Clean(startingRoom);
@@ -1020,6 +1186,16 @@ public class RoomNavigationManager : MonoBehaviour
         }
 
         return cleanDoorName.IndexOf(cleanRoomName, StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static void AddRoomName(ISet<string> roomNames, string roomName)
+    {
+        string cleanRoomName = Clean(roomName);
+
+        if (!string.IsNullOrEmpty(cleanRoomName))
+        {
+            roomNames.Add(cleanRoomName);
+        }
     }
 
     private static string Clean(string value)
