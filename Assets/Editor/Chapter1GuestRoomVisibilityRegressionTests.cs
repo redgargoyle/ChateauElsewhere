@@ -6,6 +6,7 @@ using NUnit.Framework;
 public class Chapter1GuestRoomVisibilityRegressionTests
 {
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
 
     [Test]
     public void MoveGroupToDrawingRoomDoesNotHideGuestsAtDoor()
@@ -92,6 +93,32 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(entryMethodBody, Does.Contain("GetWorldEntranceCenterPosition()"), "World-space guest exit movement should stay in the world-space coordinate system.");
         Assert.That(entryMethodBody, Does.Not.Contain("GetEntranceDrawingRoomExitPosition"), "World-space guest movement must not chase a UI/RectTransform Drawing Room door coordinate.");
         Assert.That(spotMethodBody, Does.Contain("GetWorldDrawingRoomSeatPosition"), "World-space guests should receive world-space Drawing Room waiting spots.");
+    }
+
+    [Test]
+    public void DrawingRoomGuestMovementUsesEditableScenePoints()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string spotMethodBody = ExtractMethodBody(controllerText, "ResolveDrawingRoomSpotForGuest");
+        string seatMethodBody = ExtractMethodBody(controllerText, "ResolveSeatForGuest");
+        string placeMethodBody = ExtractMethodBody(controllerText, "PlaceGuestAt");
+
+        Assert.That(controllerText, Does.Contain("DrawingRoomGuestPointPrefix"), "Chapter 1 should name editable Drawing Room guest points consistently.");
+        Assert.That(spotMethodBody, Does.Match(@"FindDrawingRoomGuestPoint\(guest\.GuestIndex\)[\s\S]*IsWorldSpaceGuestObject"), "Guests should prefer editable Drawing Room points before generated world-space seats.");
+        Assert.That(seatMethodBody, Does.Match(@"FindDrawingRoomGuestPoint\(index\)[\s\S]*drawingRoomSeat01"), "Assigned seats should prefer editable Drawing Room points before old fallback seats.");
+        Assert.That(controllerText, Does.Match(@"FindDrawingRoomGuestPoint\s*\([^)]*\)\s*\{[\s\S]*FindAnchor\(pointName, drawingRoomId\)[\s\S]*FindSceneObjectByExactName\(pointName\)"), "Editable guest points should fall back to the physical scene object name if RoomAnchor data is stale.");
+        Assert.That(placeMethodBody, Does.Match(@"TryGetWorldPositionForGuestTarget[\s\S]*ActorState\.PlaceAt"), "World-space guests should convert UI room-stage points before falling back to raw Transform placement.");
+        Assert.That(controllerText, Does.Contain("RectTransformUtility.ScreenPointToLocalPointInRectangle"), "UI guests should convert Drawing Room points into their parent RectTransform space.");
+        Assert.That(controllerText, Does.Contain("RectTransformUtility.WorldToScreenPoint"), "Drawing Room points should be interpreted by their visible screen position.");
+        Assert.That(controllerText, Does.Contain("mainCamera.ScreenToWorldPoint"), "World-space guests should receive a camera-world position for visible room-stage points.");
+
+        for (int i = 1; i <= 8; i++)
+        {
+            string anchorName = $"DrawingRoomGuestPoint_{i:00}";
+            Assert.That(sceneText, Does.Contain($"m_Name: {anchorName}"), $"Gameplay should contain editable scene object {anchorName}.");
+            Assert.That(sceneText, Does.Contain($"anchorId: {anchorName}"), $"{anchorName} should have a RoomAnchor id.");
+        }
     }
 
     private static string ExtractMethodBody(string sourceText, string methodName)

@@ -135,6 +135,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float ClosetStorageReadyScreenDistance = 145f;
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
+    private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
@@ -1827,6 +1828,13 @@ public class Chapter1ArrivalController : MonoBehaviour
             return drawingRoomEntryPoint;
         }
 
+        Transform editableGuestPoint = FindDrawingRoomGuestPoint(guest.GuestIndex);
+
+        if (editableGuestPoint != null)
+        {
+            return editableGuestPoint;
+        }
+
         if (IsWorldSpaceGuestObject(guest.GuestObject))
         {
             return CreateRuntimeAnchor(
@@ -2151,6 +2159,13 @@ public class Chapter1ArrivalController : MonoBehaviour
             TryGetAnchoredPositionForGuestTarget(guestState, target, out Vector2 anchoredPosition))
         {
             rectTransform.anchoredPosition = anchoredPosition;
+            return;
+        }
+
+        if (guestState.GuestObject != null &&
+            TryGetWorldPositionForGuestTarget(guestState.GuestObject.transform, target, out Vector3 worldPosition))
+        {
+            guestState.GuestObject.transform.position = worldPosition;
             return;
         }
 
@@ -3491,6 +3506,13 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Transform ResolveSeatForGuest(int index)
     {
+        Transform editableGuestPoint = FindDrawingRoomGuestPoint(index);
+
+        if (editableGuestPoint != null)
+        {
+            return editableGuestPoint;
+        }
+
         switch (index)
         {
             case 0:
@@ -3517,6 +3539,25 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return runtimeSeatAnchors[index];
+    }
+
+    private Transform FindDrawingRoomGuestPoint(int guestIndex)
+    {
+        if (guestIndex < 0)
+        {
+            return null;
+        }
+
+        string pointName = $"{DrawingRoomGuestPointPrefix}{guestIndex + 1:00}";
+        Transform roomAnchor = FindAnchor(pointName, drawingRoomId);
+
+        if (roomAnchor != null)
+        {
+            return roomAnchor;
+        }
+
+        GameObject pointObject = FindSceneObjectByExactName(pointName);
+        return pointObject != null ? pointObject.transform : null;
     }
 
     private Transform CreateRuntimeAnchor(string objectName, Vector3 position, Transform siblingAnchor)
@@ -3831,6 +3872,26 @@ public class Chapter1ArrivalController : MonoBehaviour
             return false;
         }
 
+        RectTransform guestRectTransform = guestState != null && guestState.GuestObject != null
+            ? guestState.GuestObject.transform as RectTransform
+            : null;
+        RectTransform guestParentRect = guestRectTransform != null ? guestRectTransform.parent as RectTransform : null;
+
+        if (guestParentRect != null &&
+            TryGetTargetScreenPosition(target, out Vector2 screenPosition))
+        {
+            Camera guestCanvasCamera = GetCanvasCamera(guestParentRect.GetComponentInParent<Canvas>(true));
+
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                guestParentRect,
+                screenPosition,
+                guestCanvasCamera,
+                out anchoredPosition))
+            {
+                return true;
+            }
+        }
+
         if (target is RectTransform targetRectTransform)
         {
             anchoredPosition = targetRectTransform.anchoredPosition;
@@ -3839,6 +3900,82 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         anchoredPosition = new Vector2(target.localPosition.x, target.localPosition.y);
         return true;
+    }
+
+    private bool TryGetWorldPositionForGuestTarget(Transform guestTransform, Transform target, out Vector3 worldPosition)
+    {
+        worldPosition = Vector3.zero;
+
+        if (guestTransform == null || target == null || target.GetComponentInParent<Canvas>(true) == null)
+        {
+            return false;
+        }
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null || !TryGetTargetScreenPosition(target, out Vector2 screenPosition))
+        {
+            return false;
+        }
+
+        float depth = guestTransform.position.z - mainCamera.transform.position.z;
+
+        if (depth <= 0.01f)
+        {
+            depth = Mathf.Abs(depth);
+        }
+
+        if (depth <= 0.01f)
+        {
+            depth = Mathf.Abs(transform.position.z - mainCamera.transform.position.z);
+        }
+
+        if (depth <= 0.01f)
+        {
+            depth = 10f;
+        }
+
+        worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, depth));
+        worldPosition.z = guestTransform.position.z;
+        return true;
+    }
+
+    private bool TryGetTargetScreenPosition(Transform target, out Vector2 screenPosition)
+    {
+        screenPosition = Vector2.zero;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        Canvas targetCanvas = target.GetComponentInParent<Canvas>(true);
+
+        if (targetCanvas != null)
+        {
+            screenPosition = RectTransformUtility.WorldToScreenPoint(GetCanvasCamera(targetCanvas), target.position);
+            return true;
+        }
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
+        {
+            return false;
+        }
+
+        screenPosition = mainCamera.WorldToScreenPoint(target.position);
+        return true;
+    }
+
+    private static Camera GetCanvasCamera(Canvas canvas)
+    {
+        if (canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+        {
+            return null;
+        }
+
+        return canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
     }
 
     private Vector3 GetCoatPosition(GuestRuntimeState guest)
