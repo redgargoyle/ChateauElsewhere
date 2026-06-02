@@ -9,6 +9,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
 {
     private const string PersistentActorRootName = "ChapterActors_Runtime";
     private const string DiagnosticPrefix = "[Ch2ClickDiag]";
+    private const string GuestClickDiagnosticPrefix = "[Chapter2GuestClick]";
+    private const string ClickTargetName = "Ch2_ClickTarget";
+    private const float ClickTargetWidthPadding = 1.15f;
+    private const float ClickTargetHeightPadding = 1.15f;
+    private static readonly Vector2 MinimumClickTargetSize = new Vector2(1f, 2f);
+    private static readonly Vector2 FallbackClickTargetOffset = new Vector2(0f, 1f);
+    private static readonly Vector2 FallbackClickTargetSize = new Vector2(1f, 2f);
 
     [Serializable]
     public class GuestSearchEntry
@@ -41,6 +48,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     private Chapter2Controller chapter2Controller;
     private GuestSearchEntry activeConversationGuest;
+    private readonly HashSet<string> guestsWithFallbackClickBounds = new HashSet<string>();
 
     public string DiningSeatPrefix => diningSeatPrefix;
     public int GuestCount => CountGuests();
@@ -110,8 +118,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
             }
 
             EnsureGuestUsesPersistentActorRoot(guest);
-            EnsureGuestFindAction(guest);
-
             guest.actorState.enabled = true;
             guest.actorState.PlaceAt(guest.hideAnchor.transform);
             guest.actorState.SetCurrentRoom(guest.hideAnchor.RoomId);
@@ -119,7 +125,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(true);
             guest.actorState.SetSeated(false);
+            EnsureGuestFindAction(guest);
             guest.actorState.ApplyState();
+
+            if (Application.isPlaying)
+            {
+                Physics2D.SyncTransforms();
+            }
         }
     }
 
@@ -437,50 +449,268 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         GameObject actorObject = guest.actorState.gameObject;
-        Chapter2GuestFindAction findAction = actorObject.GetComponent<Chapter2GuestFindAction>();
+        Chapter2GuestFindAction clickTargetAction = EnsureRuntimeClickTarget(actorObject, GetGuestIdForOrderList(guest));
+
+        if (clickTargetAction == null)
+        {
+            return;
+        }
+
+        DisableCompetingGuestFindActions(actorObject, clickTargetAction);
+    }
+
+    private Chapter2GuestFindAction EnsureRuntimeClickTarget(GameObject actorObject, string guestId)
+    {
+        if (actorObject == null)
+        {
+            return null;
+        }
+
+        Transform targetTransform = FindClickTargetTransform(actorObject.transform);
+        bool createdTarget = false;
+
+        if (targetTransform == null)
+        {
+            GameObject targetObject = new GameObject(ClickTargetName);
+            targetTransform = targetObject.transform;
+            createdTarget = true;
+        }
+
+        targetTransform.name = ClickTargetName;
+        targetTransform.SetParent(actorObject.transform, false);
+        targetTransform.localPosition = Vector3.zero;
+        targetTransform.localRotation = Quaternion.identity;
+        targetTransform.localScale = Vector3.one;
+        targetTransform.gameObject.SetActive(true);
+
+        BoxCollider2D clickCollider = targetTransform.GetComponent<BoxCollider2D>();
+
+        if (clickCollider == null)
+        {
+            clickCollider = targetTransform.gameObject.AddComponent<BoxCollider2D>();
+            createdTarget = true;
+        }
+
+        clickCollider.isTrigger = true;
+
+        Chapter2GuestFindAction findAction = targetTransform.GetComponent<Chapter2GuestFindAction>();
 
         if (findAction == null)
         {
-            findAction = actorObject.AddComponent<Chapter2GuestFindAction>();
+            findAction = targetTransform.gameObject.AddComponent<Chapter2GuestFindAction>();
         }
 
-        findAction.Initialize(GetGuestIdForOrderList(guest), this);
-        EnsureRuntimeClickTarget(actorObject);
+        findAction.Initialize(guestId, this);
+        ResizeRuntimeClickTarget(actorObject, targetTransform, clickCollider, guestId);
+
+        if (createdTarget)
+        {
+            Debug.Log($"{GuestClickDiagnosticPrefix} Created {ClickTargetName} for guest '{FormatDiagnosticValue(guestId)}' on actor '{actorObject.name}'.", this);
+        }
+
+        return findAction;
     }
 
-    private void EnsureRuntimeClickTarget(GameObject actorObject)
+    private void ResizeRuntimeClickTarget(GameObject actorObject, Transform targetTransform, BoxCollider2D clickCollider, string guestId)
     {
-        if (actorObject == null ||
-            actorObject.GetComponentInChildren<Collider>(true) != null ||
-            actorObject.GetComponentInChildren<Collider2D>(true) != null ||
-            actorObject.GetComponentInChildren<Graphic>(true) != null)
+        Vector2 nextOffset = FallbackClickTargetOffset;
+        Vector2 nextSize = FallbackClickTargetSize;
+        bool usedRendererBounds = TryGetGuestRendererBounds(actorObject, targetTransform, out Bounds rendererBounds);
+
+        if (usedRendererBounds)
+        {
+            nextOffset = targetTransform.InverseTransformPoint(rendererBounds.center);
+            nextSize = GetLocalBoundsSize(targetTransform, rendererBounds);
+            nextSize = new Vector2(
+                Mathf.Max(MinimumClickTargetSize.x, nextSize.x * ClickTargetWidthPadding),
+                Mathf.Max(MinimumClickTargetSize.y, nextSize.y * ClickTargetHeightPadding));
+        }
+        else
+        {
+            LogFallbackClickBoundsOnce(actorObject, guestId);
+        }
+
+        bool changed =
+            !Approximately(clickCollider.offset, nextOffset) ||
+            !Approximately(clickCollider.size, nextSize);
+
+        clickCollider.offset = nextOffset;
+        clickCollider.size = nextSize;
+
+        if (changed)
+        {
+            Debug.Log(
+                $"{GuestClickDiagnosticPrefix} Resized {ClickTargetName} for guest '{FormatDiagnosticValue(guestId)}' " +
+                $"offset={FormatDiagnosticVector(nextOffset)} size={FormatDiagnosticVector(nextSize)} " +
+                $"source={(usedRendererBounds ? "renderer-bounds" : "fallback")}.",
+                this);
+        }
+    }
+
+    private static Transform FindClickTargetTransform(Transform actorTransform)
+    {
+        if (actorTransform == null)
+        {
+            return null;
+        }
+
+        Transform[] childTransforms = actorTransform.GetComponentsInChildren<Transform>(true);
+
+        for (int i = 0; i < childTransforms.Length; i++)
+        {
+            Transform childTransform = childTransforms[i];
+
+            if (childTransform != null &&
+                childTransform != actorTransform &&
+                childTransform.name == ClickTargetName)
+            {
+                return childTransform;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryGetGuestRendererBounds(GameObject actorObject, Transform clickTarget, out Bounds combinedBounds)
+    {
+        combinedBounds = default;
+
+        if (actorObject == null)
+        {
+            return false;
+        }
+
+        HashSet<Renderer> visitedRenderers = new HashSet<Renderer>();
+        SpriteRenderer[] spriteRenderers = actorObject.GetComponentsInChildren<SpriteRenderer>(true);
+        Renderer[] renderers = actorObject.GetComponentsInChildren<Renderer>(true);
+        bool hasBounds = false;
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            hasBounds |= TryEncapsulateRendererBounds(spriteRenderers[i], clickTarget, visitedRenderers, ref combinedBounds, hasBounds);
+        }
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            hasBounds |= TryEncapsulateRendererBounds(renderers[i], clickTarget, visitedRenderers, ref combinedBounds, hasBounds);
+        }
+
+        return hasBounds && IsUsableBounds(combinedBounds);
+    }
+
+    private static bool TryEncapsulateRendererBounds(Renderer renderer, Transform clickTarget, HashSet<Renderer> visitedRenderers, ref Bounds combinedBounds, bool hasBounds)
+    {
+        if (renderer == null ||
+            visitedRenderers.Contains(renderer) ||
+            IsUnderClickTarget(renderer.transform, clickTarget))
+        {
+            return false;
+        }
+
+        visitedRenderers.Add(renderer);
+        Bounds rendererBounds = renderer.bounds;
+
+        if (!IsUsableBounds(rendererBounds))
+        {
+            return false;
+        }
+
+        if (!hasBounds)
+        {
+            combinedBounds = rendererBounds;
+        }
+        else
+        {
+            combinedBounds.Encapsulate(rendererBounds);
+        }
+
+        return true;
+    }
+
+    private static bool IsUnderClickTarget(Transform candidate, Transform clickTarget)
+    {
+        return candidate != null && clickTarget != null &&
+            (candidate == clickTarget || candidate.IsChildOf(clickTarget));
+    }
+
+    private static bool IsUsableBounds(Bounds bounds)
+    {
+        Vector3 size = bounds.size;
+        return size.x > 0.001f && size.y > 0.001f;
+    }
+
+    private static Vector2 GetLocalBoundsSize(Transform targetTransform, Bounds worldBounds)
+    {
+        Vector3 min = worldBounds.min;
+        Vector3 max = worldBounds.max;
+        Vector3[] worldCorners =
+        {
+            new Vector3(min.x, min.y, worldBounds.center.z),
+            new Vector3(min.x, max.y, worldBounds.center.z),
+            new Vector3(max.x, min.y, worldBounds.center.z),
+            new Vector3(max.x, max.y, worldBounds.center.z)
+        };
+
+        Vector2 localMin = targetTransform.InverseTransformPoint(worldCorners[0]);
+        Vector2 localMax = localMin;
+
+        for (int i = 1; i < worldCorners.Length; i++)
+        {
+            Vector2 localPoint = targetTransform.InverseTransformPoint(worldCorners[i]);
+            localMin = Vector2.Min(localMin, localPoint);
+            localMax = Vector2.Max(localMax, localPoint);
+        }
+
+        return localMax - localMin;
+    }
+
+    private void LogFallbackClickBoundsOnce(GameObject actorObject, string guestId)
+    {
+        string key = !string.IsNullOrWhiteSpace(guestId)
+            ? guestId.Trim()
+            : actorObject != null ? actorObject.name : string.Empty;
+
+        if (!guestsWithFallbackClickBounds.Add(key))
         {
             return;
         }
 
-        if (actorObject.transform is RectTransform &&
-            actorObject.GetComponentInParent<Canvas>(true) != null)
+        Debug.LogWarning(
+            $"{GuestClickDiagnosticPrefix} Using fallback {ClickTargetName} bounds for guest '{FormatDiagnosticValue(guestId)}'.",
+            this);
+    }
+
+    private static bool Approximately(Vector2 left, Vector2 right)
+    {
+        return Mathf.Approximately(left.x, right.x) && Mathf.Approximately(left.y, right.y);
+    }
+
+    private static string FormatDiagnosticVector(Vector2 value)
+    {
+        return $"({value.x:0.##},{value.y:0.##})";
+    }
+
+    private static void DisableCompetingGuestFindActions(GameObject actorObject, Chapter2GuestFindAction activeAction)
+    {
+        if (actorObject == null || activeAction == null)
         {
-            Debug.LogWarning($"Chapter 2 guest search could not add a safe click target to UI guest '{actorObject.name}'.", this);
             return;
         }
 
-        BoxCollider2D clickCollider = actorObject.AddComponent<BoxCollider2D>();
-        clickCollider.isTrigger = true;
-        clickCollider.size = GetFallbackClickSize(actorObject);
-    }
+        Chapter2GuestFindAction[] findActions = actorObject.GetComponentsInChildren<Chapter2GuestFindAction>(true);
 
-    private static Vector2 GetFallbackClickSize(GameObject actorObject)
-    {
-        SpriteRenderer spriteRenderer = actorObject.GetComponentInChildren<SpriteRenderer>(true);
-
-        if (spriteRenderer != null)
+        for (int i = 0; i < findActions.Length; i++)
         {
-            Vector3 size = spriteRenderer.bounds.size;
-            return new Vector2(Mathf.Max(0.5f, size.x), Mathf.Max(0.5f, size.y));
-        }
+            Chapter2GuestFindAction findAction = findActions[i];
 
-        return new Vector2(1f, 2f);
+            if (findAction == null || findAction == activeAction)
+            {
+                continue;
+            }
+
+            findAction.SetAvailable(false);
+            findAction.enabled = false;
+        }
     }
 
     private void FillDefaultPreferences(GuestSearchEntry guest)
@@ -528,10 +758,17 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
-        Chapter2GuestFindAction findAction = guest.actorState.gameObject.GetComponent<Chapter2GuestFindAction>();
+        Chapter2GuestFindAction[] findActions = guest.actorState.gameObject.GetComponentsInChildren<Chapter2GuestFindAction>(true);
 
-        if (findAction != null)
+        for (int i = 0; i < findActions.Length; i++)
         {
+            Chapter2GuestFindAction findAction = findActions[i];
+
+            if (findAction == null)
+            {
+                continue;
+            }
+
             findAction.SetAvailable(false);
             findAction.enabled = false;
         }

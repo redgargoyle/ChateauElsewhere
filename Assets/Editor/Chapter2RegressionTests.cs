@@ -200,8 +200,13 @@ public class Chapter2RegressionTests
 
         Assert.That(actionText, Does.Contain("IsPointerOverAvailableGuestAction"), "Guest actions should expose a shared priority helper.");
         Assert.That(actionText, Does.Contain("Physics2D.OverlapPointAll"), "The priority helper should check 2D colliders under the pointer.");
+        Assert.That(actionText, Does.Contain("Physics2D.SyncTransforms()"), "Guest pointer checks should sync moved 2D colliders before querying.");
         Assert.That(actionText, Does.Contain("GetComponentInParent<Chapter2GuestFindAction>()"), "Child colliders should resolve to their guest action parent.");
+        Assert.That(actionText, Does.Contain("GetComponentInChildren<Chapter2GuestFindAction>(true)"), "Existing actor colliders should be able to resolve to the dedicated child action.");
         Assert.That(actionText, Does.Contain("lastSuccessfulClickFrame"), "Duplicate-frame suppression should only track successful starts.");
+        Assert.That(actionText, Does.Contain("UpdateManualPointerHandling"), "Guest actions should have a manual pointer fallback when Unity OnMouse callbacks miss moved 2D colliders.");
+        Assert.That(actionText, Does.Contain("ManualPointerClick"), "The manual pointer fallback should start dialogue on the first pointer-down frame.");
+        Assert.That(actionText, Does.Contain("SetManualHoveredAction"), "The manual pointer fallback should own talk cursor hover state.");
         Assert.That(actionText, Does.Not.Contain("lastClickFrame"), "Rejected callbacks must not poison duplicate-frame handling.");
         Assert.That(actionText, Does.Match(@"(?s)if\s*\(\s*searchController\.TryStartGuestConversation\(guestId\)\s*\)\s*\{.*lastSuccessfulClickFrame\s*=\s*Time\.frameCount"), "Duplicate-frame state should be set only after the search controller accepts the conversation.");
 
@@ -210,6 +215,55 @@ public class Chapter2RegressionTests
 
         Assert.That(doorTriggerText, Does.Match(@"(?s)\bOnPointerClick\s*\(\s*PointerEventData\s+eventData\s*\)\s*\{.*IsPointerOverAvailableGuestAction\(eventData\).*return;.*ActivateDoor\(\)"), "Door UI callbacks should defer to available hidden guests before activating.");
         Assert.That(doorTriggerText, Does.Match(@"(?s)\bUpdateFallbackPointerHoverAndClick\s*\([^)]*\)\s*\{.*TryGetPointerPosition\(out Vector2 screenPosition\).*IsPointerOverAvailableGuestAction\(screenPosition\).*ClearActiveDoorHover\(fallbackHoveredTrigger\).*return;.*FindTopmostTriggerAtScreenPoint"), "Door fallback hover/click should defer to available hidden guests before setting door hover or activating a trigger.");
+    }
+
+    [Test]
+    public void Chapter2GuestSearchCreatesDedicatedRuntimeClickTargets()
+    {
+        string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string doorTriggerText = File.ReadAllText(DoorTriggerNavigationPath);
+
+        Assert.That(guestSearchText, Does.Contain("ClickTargetName = \"Ch2_ClickTarget\""), "Hidden guests should use a named dedicated child click target.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bFindClickTargetTransform\s*\([^)]*\).*GetComponentsInChildren<Transform>\(true\).*childTransform\.name == ClickTargetName"), "Guest setup should reuse an existing Ch2_ClickTarget child.");
+        Assert.That(guestSearchText, Does.Contain("new GameObject(ClickTargetName)"), "Guest setup should create Ch2_ClickTarget when it is missing.");
+        Assert.That(guestSearchText, Does.Contain("targetTransform.SetParent(actorObject.transform, false)"), "The click target should be parented directly under the guest actor root.");
+        Assert.That(guestSearchText, Does.Contain("targetTransform.localPosition = Vector3.zero"));
+        Assert.That(guestSearchText, Does.Contain("targetTransform.localRotation = Quaternion.identity"));
+        Assert.That(guestSearchText, Does.Contain("targetTransform.localScale = Vector3.one"));
+
+        Assert.That(guestSearchText, Does.Contain("targetTransform.GetComponent<BoxCollider2D>()"), "The click target should own the BoxCollider2D.");
+        Assert.That(guestSearchText, Does.Contain("targetTransform.gameObject.AddComponent<BoxCollider2D>()"));
+        Assert.That(guestSearchText, Does.Contain("clickCollider.isTrigger = true"));
+        Assert.That(guestSearchText, Does.Contain("targetTransform.GetComponent<Chapter2GuestFindAction>()"), "The click target should own the guest action.");
+        Assert.That(guestSearchText, Does.Contain("targetTransform.gameObject.AddComponent<Chapter2GuestFindAction>()"));
+        Assert.That(guestSearchText, Does.Contain("findAction.Initialize(guestId, this)"));
+
+        Assert.That(guestSearchText, Does.Not.Contain("GetComponentInChildren<Collider>(true) != null"), "Existing 3D colliders must not make EnsureRuntimeClickTarget return early.");
+        Assert.That(guestSearchText, Does.Not.Contain("GetComponentInChildren<Collider2D>(true) != null"), "Existing 2D colliders must not make EnsureRuntimeClickTarget return early.");
+        Assert.That(guestSearchText, Does.Not.Contain("GetComponentInChildren<Graphic>(true) != null"), "Existing graphics must not make EnsureRuntimeClickTarget return early.");
+
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bDisableGuestFindAction\s*\([^)]*\)\s*\{.*GetComponentsInChildren<Chapter2GuestFindAction>\(true\).*SetAvailable\(false\).*enabled = false"), "Disabling a guest should disable child click-target actions too.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bDisableCompetingGuestFindActions\s*\([^)]*\)\s*\{.*GetComponentsInChildren<Chapter2GuestFindAction>\(true\).*findAction == activeAction.*SetAvailable\(false\).*enabled = false"), "Legacy/root guest actions should be left unavailable when the child target is active.");
+
+        Assert.That(guestSearchText, Does.Contain("TryGetGuestRendererBounds"), "Collider sizing should inspect the guest renderers.");
+        Assert.That(guestSearchText, Does.Contain("GetComponentsInChildren<SpriteRenderer>(true)"));
+        Assert.That(guestSearchText, Does.Contain("GetComponentsInChildren<Renderer>(true)"));
+        Assert.That(guestSearchText, Does.Contain("targetTransform.InverseTransformPoint(rendererBounds.center)"));
+        Assert.That(guestSearchText, Does.Contain("GetLocalBoundsSize(targetTransform, rendererBounds)"));
+        Assert.That(guestSearchText, Does.Contain("ClickTargetWidthPadding"));
+        Assert.That(guestSearchText, Does.Contain("ClickTargetHeightPadding"));
+        Assert.That(guestSearchText, Does.Contain("MinimumClickTargetSize"));
+        Assert.That(guestSearchText, Does.Contain("FallbackClickTargetOffset"));
+        Assert.That(guestSearchText, Does.Contain("FallbackClickTargetSize"));
+        Assert.That(guestSearchText, Does.Contain("LogFallbackClickBoundsOnce"));
+        Assert.That(guestSearchText, Does.Contain("clickCollider.offset = nextOffset"));
+        Assert.That(guestSearchText, Does.Contain("clickCollider.size = nextSize"));
+
+        Assert.That(guestSearchText, Does.Match(@"(?s)EnsureGuestUsesPersistentActorRoot\(guest\).*PlaceAt\(guest\.hideAnchor\.transform\).*SetCurrentRoom\(guest\.hideAnchor\.RoomId\).*SetAvailableInCurrentChapter\(true\).*SetVisibleByChapterState\(true\).*SetInteractable\(true\).*SetSeated\(false\).*EnsureGuestFindAction\(guest\).*ApplyState\(\).*Physics2D\.SyncTransforms\(\)"), "BeginSearch should create the click target before the final ApplyState/Physics2D sync.");
+        Assert.That(movementText, Does.Contain("Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition)"), "Movement should keep deferring to hidden guest click targets.");
+        Assert.That(doorTriggerText, Does.Contain("Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition)"), "Door fallback navigation should keep deferring to hidden guest click targets.");
+        Assert.That(doorTriggerText, Does.Contain("Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(eventData.position)"), "Door UI navigation should keep deferring to hidden guest click targets.");
     }
 
     [Test]

@@ -15,18 +15,30 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
 
     private int lastSuccessfulClickFrame = -1;
     private bool cursorHoverActive;
+    private static Chapter2GuestFindAction manualHoveredAction;
+    private static int lastManualPointerFrame = -1;
+    private static int lastManualClickFrame = -1;
+    private static int lastPhysicsSyncFrame = -1;
 
     public string GuestId => guestId;
     public bool IsAvailable => isAvailable;
 
     public static bool IsPointerOverAvailableGuestAction(Vector2 screenPosition)
     {
+        return TryGetAvailableGuestActionAtScreenPosition(screenPosition, out _);
+    }
+
+    private static bool TryGetAvailableGuestActionAtScreenPosition(Vector2 screenPosition, out Chapter2GuestFindAction action)
+    {
         Camera mainCamera = Camera.main;
+        action = null;
 
         if (mainCamera == null)
         {
             return false;
         }
+
+        SyncPhysicsTransformsForPointerQuery();
 
         Vector3 worldPoint = mainCamera.ScreenToWorldPoint(new Vector3(
             screenPosition.x,
@@ -43,20 +55,42 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
                 continue;
             }
 
-            Chapter2GuestFindAction action = hit.GetComponent<Chapter2GuestFindAction>();
-
-            if (action == null)
-            {
-                action = hit.GetComponentInParent<Chapter2GuestFindAction>();
-            }
-
-            if (action != null && action.enabled && action.gameObject.activeInHierarchy && action.IsAvailable)
+            if (TryUseAvailableAction(hit.GetComponent<Chapter2GuestFindAction>(), out action) ||
+                TryUseAvailableAction(hit.GetComponentInParent<Chapter2GuestFindAction>(), out action) ||
+                TryUseAvailableAction(hit.GetComponentInChildren<Chapter2GuestFindAction>(true), out action))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static bool TryUseAvailableAction(Chapter2GuestFindAction candidate, out Chapter2GuestFindAction action)
+    {
+        action = null;
+
+        if (candidate == null ||
+            !candidate.enabled ||
+            !candidate.gameObject.activeInHierarchy ||
+            !candidate.IsAvailable)
+        {
+            return false;
+        }
+
+        action = candidate;
+        return true;
+    }
+
+    private static void SyncPhysicsTransformsForPointerQuery()
+    {
+        if (lastPhysicsSyncFrame == Time.frameCount)
+        {
+            return;
+        }
+
+        lastPhysicsSyncFrame = Time.frameCount;
+        Physics2D.SyncTransforms();
     }
 
     public void Initialize(string id, Chapter2GuestSearchController controller)
@@ -95,6 +129,16 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
         SetTalkCursorHover(false);
     }
 
+    private void Update()
+    {
+        if (!Application.isPlaying || !isAvailable)
+        {
+            return;
+        }
+
+        UpdateManualPointerHandling();
+    }
+
     private void OnMouseDown()
     {
         LogDiagnostic("OnMouseDown");
@@ -115,7 +159,65 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
 
     private void OnDisable()
     {
+        if (manualHoveredAction == this)
+        {
+            manualHoveredAction = null;
+        }
+
         SetTalkCursorHover(false);
+    }
+
+    private static void UpdateManualPointerHandling()
+    {
+        if (lastManualPointerFrame == Time.frameCount)
+        {
+            return;
+        }
+
+        lastManualPointerFrame = Time.frameCount;
+
+        if (!TryGetMouseScreenPosition(out Vector2 screenPosition))
+        {
+            SetManualHoveredAction(null);
+            return;
+        }
+
+        if (!TryGetAvailableGuestActionAtScreenPosition(screenPosition, out Chapter2GuestFindAction action))
+        {
+            SetManualHoveredAction(null);
+            return;
+        }
+
+        SetManualHoveredAction(action);
+
+        if (lastManualClickFrame == Time.frameCount || !TryGetPrimaryPointerDown())
+        {
+            return;
+        }
+
+        lastManualClickFrame = Time.frameCount;
+        action.LogDiagnostic("ManualPointerClick", $"eventMouse={FormatVector(screenPosition)}");
+        action.TryStartGuestConversation();
+    }
+
+    private static void SetManualHoveredAction(Chapter2GuestFindAction action)
+    {
+        if (manualHoveredAction == action)
+        {
+            return;
+        }
+
+        if (manualHoveredAction != null)
+        {
+            manualHoveredAction.SetTalkCursorHover(false);
+        }
+
+        manualHoveredAction = action;
+
+        if (manualHoveredAction != null)
+        {
+            manualHoveredAction.SetTalkCursorHover(true);
+        }
     }
 
     private void TryStartGuestConversation()
@@ -244,6 +346,30 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
         {
             position = Input.mousePosition;
             return true;
+        }
+        catch (System.InvalidOperationException)
+        {
+            return false;
+        }
+#else
+        return false;
+#endif
+    }
+
+    private static bool TryGetPrimaryPointerDown()
+    {
+#if ENABLE_INPUT_SYSTEM
+        Mouse mouse = Mouse.current;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+        {
+            return true;
+        }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+        try
+        {
+            return Input.GetMouseButtonDown(0);
         }
         catch (System.InvalidOperationException)
         {
