@@ -30,6 +30,13 @@ public class CharacterRegressionTests
     private const string LadyWalkLeftClipPath = "Assets/Animation/Lady/Lady_Walk_Left.anim";
     private const string LadyWalkRightClipPath = "Assets/Animation/Lady/Lady_Walk_Right.anim";
     private const string LadyWalkUpClipPath = "Assets/Animation/Lady/Lady_Walk_Up.anim";
+    private const string ButlerGuestSpriteMetaPath = "Assets/Art/Characters/butlersprite.png.meta";
+    private const string ButlerGuestOverrideControllerMetaPath = "Assets/Animation/ButlerGuest/ButlerGuest.overrideController.meta";
+    private const string ButlerGuestIdleClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Idle.anim";
+    private const string ButlerGuestWalkDownClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Down.anim";
+    private const string ButlerGuestWalkLeftClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Left.anim";
+    private const string ButlerGuestWalkRightClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Right.anim";
+    private const string ButlerGuestWalkUpClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Up.anim";
     private const string AnimationFolder = "Assets/Animation";
     private const string AtlasFolder = "Assets/Art/Characters/Atlases";
     private const string SourceFolder = "Assets/Art/Characters/SourceSheets";
@@ -116,6 +123,29 @@ public class CharacterRegressionTests
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkLeftClipPath), 2, "left");
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkRightClipPath), 3, "right");
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkUpClipPath), 4, "up");
+    }
+
+    [Test]
+    public void SecondChapterGuestUsesButlerSheetDirectionalAnimation()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string arrivalControllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string guestTwoBlock = FindPrefabInstanceBlock(sceneText, "value: Guest 2");
+        string butlerSheetGuid = ReadGuidFromMeta(ButlerGuestSpriteMetaPath);
+        string butlerControllerGuid = ReadGuidFromMeta(ButlerGuestOverrideControllerMetaPath);
+
+        Assert.That(guestTwoBlock, Is.Not.Null, "Guest 2 should remain a named scene prefab instance.");
+        Assert.That(guestTwoBlock, Does.Contain(butlerSheetGuid), "Guest 2 should preview with the new butler sheet instead of the player sprite.");
+        Assert.That(guestTwoBlock, Does.Contain(butlerControllerGuid), "Guest 2 should use the ButlerGuest override controller.");
+
+        Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredButlerGuestAnimation"), "Runtime guest setup should preserve Guest 2's authored butler animation.");
+        Assert.That(arrivalControllerText, Does.Contain("index == 1 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[1])"), "Only the authored Guest 2 object should keep this butler animation.");
+
+        Assert.That(File.ReadAllText(ButlerGuestIdleClipPath), Does.Contain("-8411666499919982919"), "Guest 2 idle should start on the forward-facing butler root frame.");
+        AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkDownClipPath), 0, 7, "forward");
+        AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkLeftClipPath), 8, 15, "left");
+        AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkRightClipPath), 16, 23, "right");
+        AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkUpClipPath), 24, 31, "away");
     }
 
     [Test]
@@ -239,6 +269,26 @@ public class CharacterRegressionTests
             Assert.That(metaText, Does.Contain("alignment: 0"), $"Lady frame {frame} should use the same importer alignment as the butler frames.");
             Assert.That(metaText, Does.Contain("spritePivot: {x: 0.5, y: 0.0}"), $"Lady frame {frame} should serialize the same sprite pivot as the butler frames.");
         }
+    }
+
+    private static void AssertClipUsesButlerSheetSprites(string clipText, int firstSprite, int lastSprite, string direction)
+    {
+        for (int i = firstSprite; i <= lastSprite; i++)
+        {
+            string spriteFileId = ReadSpriteFileIdFromMeta(ButlerGuestSpriteMetaPath, $"butlersprite_{i}");
+            Assert.That(clipText, Does.Contain(spriteFileId), $"Guest 2 walk {direction} should include butlersprite_{i}.");
+        }
+
+        Assert.That(clipText, Does.Contain("classID: 114"), "Guest 2 clips should animate UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), "Guest 2 clips should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 0.666666667"), $"Guest 2 walk {direction} should play the full eight-frame row.");
+    }
+
+    private static string ReadSpriteFileIdFromMeta(string metaPath, string spriteName)
+    {
+        Match match = Regex.Match(File.ReadAllText(metaPath), $@"^\s+{Regex.Escape(spriteName)}: (-?\d+)$", RegexOptions.Multiline);
+        Assert.That(match.Success, Is.True, $"Could not find sprite fileID for {spriteName} in {metaPath}.");
+        return match.Groups[1].Value;
     }
 
     private static void AssertDirectionalIdleClip(string clipText, string direction)

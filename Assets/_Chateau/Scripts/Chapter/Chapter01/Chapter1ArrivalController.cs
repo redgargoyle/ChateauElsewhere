@@ -3465,7 +3465,8 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void ConfigureGuestAnimatorForIndex(GameObject guestObject, int index)
     {
-        if (ShouldUseAuthoredLadyGuestAnimation(guestObject, index))
+        if (ShouldUseAuthoredLadyGuestAnimation(guestObject, index) ||
+            ShouldUseAuthoredButlerGuestAnimation(guestObject, index))
         {
             return;
         }
@@ -3476,6 +3477,11 @@ public class Chapter1ArrivalController : MonoBehaviour
     private bool ShouldUseAuthoredLadyGuestAnimation(GameObject guestObject, int index)
     {
         return index == 0 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[0]);
+    }
+
+    private bool ShouldUseAuthoredButlerGuestAnimation(GameObject guestObject, int index)
+    {
+        return index == 1 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[1]);
     }
 
     private void EnsureGuestAnimatorUsesButlerController(GameObject guestObject)

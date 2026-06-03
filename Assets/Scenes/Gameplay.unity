@@ -468,6 +468,10 @@ PrefabInstance:
       propertyPath: m_SortingOrder
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 4029971063387630145, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}
+      propertyPath: m_Sprite
+      value:
+      objectReference: {fileID: -8411666499919982919, guid: 99ac428fb7f220d4b9905390a49afb1a, type: 3}
     - target: {fileID: 5236250058300121345, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}
       propertyPath: m_Name
       value: Guest 2
@@ -480,6 +484,10 @@ PrefabInstance:
       propertyPath: walkableFloor
       value: 
       objectReference: {fileID: 551531667}
+    - target: {fileID: 7729875168790718856, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}
+      propertyPath: m_Controller
+      value:
+      objectReference: {fileID: 22100000, guid: 2eb06e218dd34f4282739a7df11e671e, type: 2}
     - target: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.17
