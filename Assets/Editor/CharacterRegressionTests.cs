@@ -142,6 +142,7 @@ public class CharacterRegressionTests
         Assert.That(arrivalControllerText, Does.Contain("index == 1 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[1])"), "Only the authored Guest 2 object should keep this butler animation.");
 
         Assert.That(File.ReadAllText(ButlerGuestIdleClipPath), Does.Contain("-8411666499919982919"), "Guest 2 idle should start on the forward-facing butler root frame.");
+        Assert.That(File.ReadAllText(ButlerGuestSpriteMetaPath), Does.Contain("spritePixelsToUnits: 73.44827"), "Guest 2 butler sheet should import large enough to match Guest 1 Lady's visible height.");
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkDownClipPath), 0, 7, "forward");
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkLeftClipPath), 8, 15, "left");
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkRightClipPath), 16, 23, "right");
