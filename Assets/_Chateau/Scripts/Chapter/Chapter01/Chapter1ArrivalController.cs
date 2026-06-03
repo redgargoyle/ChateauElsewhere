@@ -20,6 +20,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public bool CoatOffered;
         public bool CoatTaken;
         public bool CoatStored;
+        public bool MovingToDrawingRoom;
         public bool Seated;
         public bool Handled;
         public float QueuedAtGameMinute;
@@ -38,7 +39,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         public bool EmptyRing;
         public bool QueuedOutside;
         public bool EnteredEntranceHall;
-        public bool ExitingToDrawingRoom;
         public bool Complete;
         public float QueuedAtGameMinute;
         public readonly List<GuestRuntimeState> Guests = new List<GuestRuntimeState>();
@@ -540,6 +540,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         Debug.Log($"Coat taken from guest: {carriedCoatId}", this);
         RefreshInteractionState();
+        CheckActiveGroupsReadyForDrawingRoom();
     }
 
     private void TransferCoatVisualToButler(GuestRuntimeState guestState)
@@ -799,6 +800,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         carriedCoatGuest = null;
         RefreshInteractionState();
         CheckActiveGroupsReadyForDrawingRoom();
+        CheckChapterCompletionGate();
     }
 
     private void WalkButlerToCloset()
@@ -1409,6 +1411,11 @@ public class Chapter1ArrivalController : MonoBehaviour
             coatOfferedBeforeWaitMovement = true;
             Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to entrance wait spot.", this);
             yield return MoveGuestTo(guest, waitSpot, "entrance waiting spot");
+            if (guest.CoatTaken || guest.MovingToDrawingRoom || guest.Seated)
+            {
+                yield break;
+            }
+
             ForceGuestVisibleForDoorFlow(guest);
             Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance wait spot.", this);
         }
@@ -1580,74 +1587,135 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             GuestGroupRuntimeState group = activeEntranceGroups[i];
 
-            if (group == null || group.ExitingToDrawingRoom || group.Complete)
+            if (group == null || group.Complete)
             {
                 continue;
             }
 
-            if (!AreAllGroupCoatsStored(group))
+            for (int guestIndex = 0; guestIndex < group.Guests.Count; guestIndex++)
             {
-                continue;
-            }
+                GuestRuntimeState guest = group.Guests[guestIndex];
 
-            StartCoroutine(MoveGroupToDrawingRoom(group));
+                if (CanMoveGuestToDrawingRoom(guest))
+                {
+                    StartCoroutine(MoveGuestToDrawingRoom(guest, group));
+                }
+            }
         }
     }
 
-    private IEnumerator MoveGroupToDrawingRoom(GuestGroupRuntimeState group)
+    private bool CanMoveGuestToDrawingRoom(GuestRuntimeState guest)
     {
-        group.ExitingToDrawingRoom = true;
+        return guest != null &&
+            guest.CoatTaken &&
+            !guest.MovingToDrawingRoom &&
+            !guest.Seated;
+    }
 
-        for (int i = 0; i < group.Guests.Count; i++)
+    private IEnumerator MoveGuestToDrawingRoom(GuestRuntimeState guest, GuestGroupRuntimeState group)
+    {
+        if (!CanMoveGuestToDrawingRoom(guest))
         {
-            GuestRuntimeState guest = group.Guests[i];
-            bool useWorldSafePlacement = IsWorldSpaceGuestObject(guest.GuestObject);
-            Transform drawingRoomEntry = useWorldSafePlacement
-                ? CreateRuntimeAnchor($"DrawingRoomEntry_{guest.Config.GuestId}", GetWorldDrawingRoomEntryPosition(i, group.Guests.Count), null)
-                : guest.Config.GetDrawingRoomEntryPoint(drawingRoomEntryPoint);
-
-            SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
-            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to drawing room door.", this);
-            BeginGuestMoveTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
+            yield break;
         }
 
-        while (IsAnyGroupGuestMoving(group))
+        guest.MovingToDrawingRoom = true;
+        Transform drawingRoomEntry = ResolveDrawingRoomEntryPointForGuest(guest, group);
+
+        SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
+        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to drawing room door.", this);
+        BeginGuestMoveTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
+
+        while (guest.Mover != null && guest.Mover.IsMoving)
         {
             yield return null;
         }
 
+        Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
+
+        SetGuestVisibleAfterDrawingRoomExit(guest, true);
+        PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
+        DisableGuestMovement(guest);
+
+        if (guest.ActorState != null)
+        {
+            guest.ActorState.enabled = true;
+            guest.ActorState.SetCurrentRoom(drawingRoomId);
+            guest.ActorState.SetAvailableInCurrentChapter(true);
+            guest.ActorState.SetInteractable(false);
+            guest.ActorState.SetSeated(true);
+            guest.ActorState.SetVisibleByChapterState(true);
+            guest.ActorState.ApplyState();
+        }
+
+        guest.MovingToDrawingRoom = false;
+        guest.Seated = true;
+        guest.Handled = true;
+        SetGuestState(guest, GuestArrivalState.Seated);
+        SetGuestState(guest, GuestArrivalState.Handled);
+        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} entered the drawing room and is waiting there.", this);
+
+        TryCompleteEntranceGroup(group);
+        RefreshInteractionState();
+        CheckChapterCompletionGate();
+    }
+
+    private Transform ResolveDrawingRoomEntryPointForGuest(GuestRuntimeState guest, GuestGroupRuntimeState group)
+    {
+        if (guest == null)
+        {
+            return drawingRoomEntryPoint;
+        }
+
+        if (!IsWorldSpaceGuestObject(guest.GuestObject))
+        {
+            return guest.Config.GetDrawingRoomEntryPoint(drawingRoomEntryPoint);
+        }
+
+        GetDrawingRoomGroupSlot(guest, group, out int slotInGroup, out int groupSize);
+        return CreateRuntimeAnchor(
+            $"DrawingRoomEntry_{guest.Config.GuestId}",
+            GetWorldDrawingRoomEntryPosition(slotInGroup, groupSize),
+            null);
+    }
+
+    private void GetDrawingRoomGroupSlot(
+        GuestRuntimeState guest,
+        GuestGroupRuntimeState group,
+        out int slotInGroup,
+        out int groupSize)
+    {
+        groupSize = group != null && group.Guests.Count > 0
+            ? group.Guests.Count
+            : Mathf.Max(1, guestsPerArrivalGroup);
+        slotInGroup = group != null ? group.Guests.IndexOf(guest) : -1;
+
+        if (slotInGroup < 0)
+        {
+            slotInGroup = guest != null ? guest.GuestIndex % groupSize : 0;
+        }
+    }
+
+    private void TryCompleteEntranceGroup(GuestGroupRuntimeState group)
+    {
+        if (group == null || group.Complete)
+        {
+            return;
+        }
+
         for (int i = 0; i < group.Guests.Count; i++)
         {
             GuestRuntimeState guest = group.Guests[i];
-            Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
 
-            SetGuestVisibleAfterDrawingRoomExit(guest, true);
-            PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
-            DisableGuestMovement(guest);
-
-            if (guest.ActorState != null)
+            if (guest == null || !guest.Seated)
             {
-                guest.ActorState.enabled = true;
-                guest.ActorState.SetCurrentRoom(drawingRoomId);
-                guest.ActorState.SetAvailableInCurrentChapter(true);
-                guest.ActorState.SetInteractable(false);
-                guest.ActorState.SetSeated(true);
-                guest.ActorState.SetVisibleByChapterState(true);
-                guest.ActorState.ApplyState();
+                return;
             }
-
-            guest.Seated = true;
-            guest.Handled = true;
-            SetGuestState(guest, GuestArrivalState.Seated);
-            SetGuestState(guest, GuestArrivalState.Handled);
-            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} entered the drawing room and is waiting there.", this);
         }
 
         group.Complete = true;
         activeEntranceGroups.Remove(group);
         Debug.Log($"Guest group {group.GroupIndex + 1} entered the drawing room.", this);
-        RefreshInteractionState();
-        CheckChapterCompletionGate();
     }
 
     private void StageGuestInDrawingRoomForChapter2Skip(GuestRuntimeState guest)
@@ -1686,6 +1754,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         guest.Annoyed = false;
         guest.CoatOffered = true;
         guest.CoatTaken = true;
+        guest.MovingToDrawingRoom = false;
         StoreGuestCoatForChapter2Skip(guest);
         guest.CoatStored = true;
         guest.Seated = true;
@@ -1895,24 +1964,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return pendingGuestGroups.Count == 0 && !butlerCarryingCoat;
-    }
-
-    private bool AreAllGroupCoatsStored(GuestGroupRuntimeState group)
-    {
-        if (group == null || group.Guests.Count == 0)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < group.Guests.Count; i++)
-        {
-            if (!group.Guests[i].CoatStored)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private void EnsureGuestHiddenBeforeArrival(GuestRuntimeState guestState)
@@ -2454,26 +2505,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         mover.enabled = true;
         mover.MoveSpeed = GetMoveSpeedForGuestObject(guestState.GuestObject);
         mover.MoveTo(target);
-    }
-
-    private static bool IsAnyGroupGuestMoving(GuestGroupRuntimeState group)
-    {
-        if (group == null)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < group.Guests.Count; i++)
-        {
-            NPCWaypointMover mover = group.Guests[i] != null ? group.Guests[i].Mover : null;
-
-            if (mover != null && mover.IsMoving)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void DisableGuestMovement(GuestRuntimeState guestState)
@@ -3737,7 +3768,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Vector3 GetWorldDrawingRoomEntryPosition(int indexInBatch, int batchCount)
     {
-        Vector3 basePosition = GetWorldEntranceCenterPosition() + new Vector3(-1.35f, -0.2f, 0f);
+        Vector3 basePosition = GetEntranceDrawingRoomExitPosition();
         Vector2 offset = GetWorldGuestGridOffset(indexInBatch, batchCount, worldDrawingRoomSeatSpacing);
         return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
