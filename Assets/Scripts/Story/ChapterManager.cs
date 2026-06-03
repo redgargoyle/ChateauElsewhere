@@ -32,6 +32,9 @@ public class ChapterManager : MonoBehaviour
     [SerializeField] private string displayedTitle = Chapter1Title;
     [SerializeField] private ChapterPhase currentPhase = ChapterPhase.NotStarted;
 
+    [Header("Timing")]
+    [SerializeField] private float chapter1CompletionFadeOutDelaySeconds = 2f;
+
     [Header("Debug Tools")]
     [SerializeField] private bool autoStartChapter1 = true;
     [SerializeField] private bool skipIntro;
@@ -439,7 +442,18 @@ public class ChapterManager : MonoBehaviour
     private IEnumerator CompleteChapterRoutine(string nextChapterId)
     {
         SetPlayerInputEnabled(false);
+        bool delayBeforeFadeOut = IsCurrentChapter(Chapter1Id);
         SetPhase(ChapterPhase.Complete);
+
+        if (delayBeforeFadeOut)
+        {
+            float delaySeconds = Mathf.Max(0f, chapter1CompletionFadeOutDelaySeconds);
+
+            if (delaySeconds > 0f)
+            {
+                yield return new WaitForSeconds(delaySeconds);
+            }
+        }
 
         if (introUI != null)
         {
@@ -485,6 +499,12 @@ public class ChapterManager : MonoBehaviour
         return string.Equals(nextChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
             string.Equals(nextChapterId, "chapter_02_pending", System.StringComparison.OrdinalIgnoreCase) ||
             nextChapterId.StartsWith("chapter_02", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsCurrentChapter(string chapterId)
+    {
+        return !string.IsNullOrWhiteSpace(chapterId) &&
+            string.Equals(currentChapterId, chapterId, System.StringComparison.OrdinalIgnoreCase);
     }
 
     private bool IsDuplicateChapter2Request(string nextChapterId)
