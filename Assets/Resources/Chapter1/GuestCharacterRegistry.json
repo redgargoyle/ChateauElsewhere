@@ -1,0 +1,234 @@
+{
+  "generated_from": "User-attached high-quality guest sprite sheets",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "unity_pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "row_protocol": {
+    "walk_r01": "down/toward camera",
+    "walk_r02": "left",
+    "walk_r03": "right",
+    "walk_r04": "up/away from camera"
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "guests": [
+        "LordAmbroseVeil",
+        "LadySabineMarrow"
+      ],
+      "display_names": [
+        "Lord Ambrose Veil",
+        "Lady Sabine Marrow"
+      ]
+    },
+    {
+      "pair": 2,
+      "guests": [
+        "MisterFlorianKnell",
+        "CountessElowenDusk"
+      ],
+      "display_names": [
+        "Mister Florian Knell",
+        "Countess Elowen Dusk"
+      ]
+    },
+    {
+      "pair": 3,
+      "guests": [
+        "ProfessorLucienVale",
+        "MadameCoralieThread"
+      ],
+      "display_names": [
+        "Professor Lucien Vale",
+        "Madame Coralie Thread"
+      ]
+    },
+    {
+      "pair": 4,
+      "guests": [
+        "BaronHectorGlass",
+        "MissIsoldeWren"
+      ],
+      "display_names": [
+        "Baron Hector Glass",
+        "Miss Isolde Wren"
+      ]
+    }
+  ],
+  "guests": [
+    {
+      "character": "LordAmbroseVeil",
+      "display_name": "Lord Ambrose Veil",
+      "character_folder": "Assets/Characters/LordAmbroseVeil",
+      "animation_folder": "Assets/Animation/LordAmbroseVeil",
+      "override_controller": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil.overrideController",
+      "generic_idle_clip": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Idle.anim",
+      "walk_clips": {
+        "down": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Walk_Down.anim",
+        "left": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Walk_Left.anim",
+        "right": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Walk_Right.anim",
+        "up": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Walk_Up.anim"
+      },
+      "idle_clips": {
+        "down": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Idle_Down.anim",
+        "left": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Idle_Left.anim",
+        "right": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Idle_Right.anim",
+        "up": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Idle_Up.anim"
+      },
+      "coat_prop": "Assets/Characters/LordAmbroseVeil/props/lord_ambrose_veil_coat_prop.png"
+    },
+    {
+      "character": "LadySabineMarrow",
+      "display_name": "Lady Sabine Marrow",
+      "character_folder": "Assets/Characters/LadySabineMarrow",
+      "animation_folder": "Assets/Animation/LadySabineMarrow",
+      "override_controller": "Assets/Animation/LadySabineMarrow/LadySabineMarrow.overrideController",
+      "generic_idle_clip": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Idle.anim",
+      "walk_clips": {
+        "down": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Walk_Down.anim",
+        "left": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Walk_Left.anim",
+        "right": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Walk_Right.anim",
+        "up": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Walk_Up.anim"
+      },
+      "idle_clips": {
+        "down": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Idle_Down.anim",
+        "left": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Idle_Left.anim",
+        "right": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Idle_Right.anim",
+        "up": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Idle_Up.anim"
+      },
+      "coat_prop": "Assets/Characters/LadySabineMarrow/props/lady_sabine_marrow_coat_prop.png"
+    },
+    {
+      "character": "CountessElowenDusk",
+      "display_name": "Countess Elowen Dusk",
+      "character_folder": "Assets/Characters/CountessElowenDusk",
+      "animation_folder": "Assets/Animation/CountessElowenDusk",
+      "override_controller": "Assets/Animation/CountessElowenDusk/CountessElowenDusk.overrideController",
+      "generic_idle_clip": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle.anim",
+      "walk_clips": {
+        "down": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Down.anim",
+        "left": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Left.anim",
+        "right": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Right.anim",
+        "up": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Up.anim"
+      },
+      "idle_clips": {
+        "down": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Down.anim",
+        "left": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Left.anim",
+        "right": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Right.anim",
+        "up": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Up.anim"
+      },
+      "coat_prop": "Assets/Characters/CountessElowenDusk/props/countess_elowen_dusk_coat_prop.png"
+    },
+    {
+      "character": "MisterFlorianKnell",
+      "display_name": "Mister Florian Knell",
+      "character_folder": "Assets/Characters/MisterFlorianKnell",
+      "animation_folder": "Assets/Animation/MisterFlorianKnell",
+      "override_controller": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell.overrideController",
+      "generic_idle_clip": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle.anim",
+      "walk_clips": {
+        "down": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Down.anim",
+        "left": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Left.anim",
+        "right": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Right.anim",
+        "up": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Up.anim"
+      },
+      "idle_clips": {
+        "down": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Down.anim",
+        "left": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Left.anim",
+        "right": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Right.anim",
+        "up": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Up.anim"
+      },
+      "coat_prop": "Assets/Characters/MisterFlorianKnell/props/mister_florian_knell_coat_prop.png"
+    },
+    {
+      "character": "ProfessorLucienVale",
+      "display_name": "Professor Lucien Vale",
+      "character_folder": "Assets/Characters/ProfessorLucienVale",
+      "animation_folder": "Assets/Animation/ProfessorLucienVale",
+      "override_controller": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale.overrideController",
+      "generic_idle_clip": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Idle.anim",
+      "walk_clips": {
+        "down": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Walk_Down.anim",
+        "left": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Walk_Left.anim",
+        "right": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Walk_Right.anim",
+        "up": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Walk_Up.anim"
+      },
+      "idle_clips": {
+        "down": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Idle_Down.anim",
+        "left": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Idle_Left.anim",
+        "right": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Idle_Right.anim",
+        "up": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Idle_Up.anim"
+      },
+      "coat_prop": "Assets/Characters/ProfessorLucienVale/props/professor_lucien_vale_coat_prop.png"
+    },
+    {
+      "character": "MadameCoralieThread",
+      "display_name": "Madame Coralie Thread",
+      "character_folder": "Assets/Characters/MadameCoralieThread",
+      "animation_folder": "Assets/Animation/MadameCoralieThread",
+      "override_controller": "Assets/Animation/MadameCoralieThread/MadameCoralieThread.overrideController",
+      "generic_idle_clip": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Idle.anim",
+      "walk_clips": {
+        "down": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Walk_Down.anim",
+        "left": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Walk_Left.anim",
+        "right": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Walk_Right.anim",
+        "up": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Walk_Up.anim"
+      },
+      "idle_clips": {
+        "down": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Idle_Down.anim",
+        "left": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Idle_Left.anim",
+        "right": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Idle_Right.anim",
+        "up": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Idle_Up.anim"
+      },
+      "coat_prop": "Assets/Characters/MadameCoralieThread/props/madame_coralie_thread_coat_prop.png"
+    },
+    {
+      "character": "BaronHectorGlass",
+      "display_name": "Baron Hector Glass",
+      "character_folder": "Assets/Characters/BaronHectorGlass",
+      "animation_folder": "Assets/Animation/BaronHectorGlass",
+      "override_controller": "Assets/Animation/BaronHectorGlass/BaronHectorGlass.overrideController",
+      "generic_idle_clip": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Idle.anim",
+      "walk_clips": {
+        "down": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Walk_Down.anim",
+        "left": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Walk_Left.anim",
+        "right": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Walk_Right.anim",
+        "up": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Walk_Up.anim"
+      },
+      "idle_clips": {
+        "down": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Idle_Down.anim",
+        "left": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Idle_Left.anim",
+        "right": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Idle_Right.anim",
+        "up": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Idle_Up.anim"
+      },
+      "coat_prop": "Assets/Characters/BaronHectorGlass/props/baron_hector_glass_coat_prop.png"
+    },
+    {
+      "character": "MissIsoldeWren",
+      "display_name": "Miss Isolde Wren",
+      "character_folder": "Assets/Characters/MissIsoldeWren",
+      "animation_folder": "Assets/Animation/MissIsoldeWren",
+      "override_controller": "Assets/Animation/MissIsoldeWren/MissIsoldeWren.overrideController",
+      "generic_idle_clip": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Idle.anim",
+      "walk_clips": {
+        "down": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Walk_Down.anim",
+        "left": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Walk_Left.anim",
+        "right": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Walk_Right.anim",
+        "up": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Walk_Up.anim"
+      },
+      "idle_clips": {
+        "down": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Idle_Down.anim",
+        "left": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Idle_Left.anim",
+        "right": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Idle_Right.anim",
+        "up": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Idle_Up.anim"
+      },
+      "coat_prop": "Assets/Characters/MissIsoldeWren/props/miss_isolde_wren_coat_prop.png"
+    }
+  ]
+}

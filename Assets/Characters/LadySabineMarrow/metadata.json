@@ -1,0 +1,32 @@
+{
+  "character_name": "LadySabineMarrow",
+  "display_name": "Lady Sabine Marrow",
+  "source_sheet": "ChatGPT Image May 31, 2026, 01_54_48 PM (2).png",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "scale_from_source": 1.2972972972972974,
+  "walk_frame_counts": {
+    "down": 8,
+    "left": 8,
+    "right": 8,
+    "up": 8
+  },
+  "idle_frame_counts": {
+    "down": 4,
+    "left": 4,
+    "right": 4,
+    "up": 4
+  },
+  "notes": [
+    "These frames were extracted from the user's attached finished high-quality sprite sheet, not procedurally assembled from primitive shapes.",
+    "Walk rows follow the project's butler row protocol: down, left, right, up.",
+    "Idle right is mirrored from the supplied idle-left row because the source sheets provide three idle rows: front, side, back."
+  ],
+  "prop": "Assets/Characters/LadySabineMarrow/props/lady_sabine_marrow_coat_prop.png"
+}

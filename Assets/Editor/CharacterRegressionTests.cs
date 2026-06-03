@@ -37,6 +37,12 @@ public class CharacterRegressionTests
     private const string ButlerGuestWalkLeftClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Left.anim";
     private const string ButlerGuestWalkRightClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Right.anim";
     private const string ButlerGuestWalkUpClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Up.anim";
+    private const string CountessWalkFolder = "Assets/Characters/CountessElowenDusk/walk/aligned";
+    private const string CountessOverrideControllerMetaPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk.overrideController.meta";
+    private const string CountessWalkDownClipPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Down.anim";
+    private const string CountessWalkLeftClipPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Left.anim";
+    private const string CountessWalkRightClipPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Right.anim";
+    private const string CountessWalkUpClipPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Up.anim";
     private const string AnimationFolder = "Assets/Animation";
     private const string AtlasFolder = "Assets/Art/Characters/Atlases";
     private const string SourceFolder = "Assets/Art/Characters/SourceSheets";
@@ -147,6 +153,28 @@ public class CharacterRegressionTests
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkLeftClipPath), 8, 15, "left");
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkRightClipPath), 16, 23, "right");
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkUpClipPath), 24, 31, "away");
+    }
+
+    [Test]
+    public void FourthChapterGuestUsesCountessDirectionalAnimation()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string arrivalControllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string guestFourBlock = FindPrefabInstanceBlock(sceneText, "value: Guest 4");
+        string firstCountessFrameGuid = ReadGuidFromMeta($"{CountessWalkFolder}/countess_elowen_dusk_walk_01_r01_c01.png.meta");
+        string countessControllerGuid = ReadGuidFromMeta(CountessOverrideControllerMetaPath);
+
+        Assert.That(guestFourBlock, Is.Not.Null, "Guest 4 should remain a named scene prefab instance.");
+        Assert.That(guestFourBlock, Does.Contain(firstCountessFrameGuid), "Guest 4 should preview with the forward-facing Countess frame.");
+        Assert.That(guestFourBlock, Does.Contain(countessControllerGuid), "Guest 4 should use the Countess override controller.");
+
+        Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredCountessGuestAnimation"), "Runtime guest setup should preserve Guest 4's authored Countess animation.");
+        Assert.That(arrivalControllerText, Does.Contain("index == 3 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[3])"), "Only the authored Guest 4 object should keep Countess animation.");
+
+        AssertClipUsesCountessRow(File.ReadAllText(CountessWalkDownClipPath), 1, "down");
+        AssertClipUsesCountessRow(File.ReadAllText(CountessWalkLeftClipPath), 2, "left");
+        AssertClipUsesCountessRow(File.ReadAllText(CountessWalkRightClipPath), 3, "right");
+        AssertClipUsesCountessRow(File.ReadAllText(CountessWalkUpClipPath), 4, "up");
     }
 
     [Test]
@@ -283,6 +311,19 @@ public class CharacterRegressionTests
         Assert.That(clipText, Does.Contain("classID: 114"), "Guest 2 clips should animate UI Images for room-stage reuse.");
         Assert.That(clipText, Does.Contain("classID: 212"), "Guest 2 clips should animate SpriteRenderers for prefab-stage reuse.");
         Assert.That(clipText, Does.Contain("m_StopTime: 0.666666667"), $"Guest 2 walk {direction} should play the full eight-frame row.");
+    }
+
+    private static void AssertClipUsesCountessRow(string clipText, int row, string direction)
+    {
+        for (int column = 1; column <= 8; column++)
+        {
+            string frameGuid = ReadGuidFromMeta($"{CountessWalkFolder}/countess_elowen_dusk_walk_{column:00}_r{row:00}_c{column:00}.png.meta");
+            Assert.That(clipText, Does.Contain(frameGuid), $"Countess walk {direction} should include frame row {row}, column {column}.");
+        }
+
+        Assert.That(clipText, Does.Contain("classID: 114"), "Countess clips should animate UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), "Countess clips should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 0.666666667"), $"Countess walk {direction} should play the full eight-frame row.");
     }
 
     private static string ReadSpriteFileIdFromMeta(string metaPath, string spriteName)
