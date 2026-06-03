@@ -217,6 +217,32 @@ public class CharacterRegressionTests
     }
 
     [Test]
+    public void RemainingNamedGuestAnimationAssetsUseStillIdleAndDirectionalWalks()
+    {
+        AssertNamedGuestAnimationAssets("Baron Hector Glass", "BaronHectorGlass", "baron_hector_glass");
+        AssertNamedGuestAnimationAssets("Lady Sabine Marrow", "LadySabineMarrow", "lady_sabine_marrow");
+        AssertNamedGuestAnimationAssets("Lord Ambrose Veil", "LordAmbroseVeil", "lord_ambrose_veil");
+        AssertNamedGuestAnimationAssets("Madame Coralie Thread", "MadameCoralieThread", "madame_coralie_thread");
+        AssertNamedGuestAnimationAssets("Miss Isolde Wren", "MissIsoldeWren", "miss_isolde_wren");
+        AssertNamedGuestAnimationAssets("Professor Lucien Vale", "ProfessorLucienVale", "professor_lucien_vale");
+    }
+
+    [Test]
+    public void LaterChapterGuestsUseAuthoredNamedAnimations()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string arrivalControllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+
+        AssertSceneGuestUsesNamedAnimation(sceneText, 5, "Baron Hector Glass", "BaronHectorGlass", "baron_hector_glass");
+        AssertSceneGuestUsesNamedAnimation(sceneText, 6, "Lady Sabine Marrow", "LadySabineMarrow", "lady_sabine_marrow");
+        AssertSceneGuestUsesNamedAnimation(sceneText, 7, "Lord Ambrose Veil", "LordAmbroseVeil", "lord_ambrose_veil");
+        AssertSceneGuestUsesNamedAnimation(sceneText, 8, "Madame Coralie Thread", "MadameCoralieThread", "madame_coralie_thread");
+
+        Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredLaterGuestAnimation"), "Runtime guest setup should preserve the authored Guest 5-8 animations.");
+        Assert.That(arrivalControllerText, Does.Contain("index >= 4 && index <= 7 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[index])"), "Only authored Guest 5-8 scene objects should keep their named animation.");
+    }
+
+    [Test]
     public void ButlerClassicHasFourDirectionalIdleStates()
     {
         string controllerText = File.ReadAllText(ButlerClassicControllerPath);
@@ -377,6 +403,59 @@ public class CharacterRegressionTests
         Assert.That(Regex.Matches(clipText, Regex.Escape(spriteKey)).Count, Is.EqualTo(2), $"{characterName} idle should use the same forward-facing walk frame as the scene preview.");
         Assert.That(Regex.Matches(clipText, Regex.Escape(spriteMapping)).Count, Is.EqualTo(2), $"{characterName} idle should only map the still frame for both sprite bindings.");
         Assert.That(clipText, Does.Contain("m_StopTime: 0.083333333"), $"{characterName} idle should be a still one-frame clip, not a multi-frame idle sequence.");
+    }
+
+    private static void AssertSceneGuestUsesNamedAnimation(string sceneText, int guestNumber, string displayName, string assetName, string filePrefix)
+    {
+        string walkFolder = $"Assets/Characters/{assetName}/walk/aligned";
+        string animationFolder = $"Assets/Animation/{assetName}";
+        string guestBlock = FindPrefabInstanceBlock(sceneText, $"value: Guest {guestNumber}");
+        string firstFrameGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_01_r01_c01.png.meta");
+        string controllerGuid = ReadGuidFromMeta($"{animationFolder}/{assetName}.overrideController.meta");
+
+        Assert.That(guestBlock, Is.Not.Null, $"Guest {guestNumber} should exist as a named scene prefab instance for {displayName}.");
+        Assert.That(guestBlock, Does.Contain(firstFrameGuid), $"Guest {guestNumber} should preview with the forward-facing {displayName} frame.");
+        Assert.That(guestBlock, Does.Contain(controllerGuid), $"Guest {guestNumber} should use the {displayName} override controller.");
+        Assert.That(guestBlock, Does.Contain("propertyPath: m_IsActive"), $"Guest {guestNumber} should keep the inactive scene-authored arrival setup.");
+        Assert.That(guestBlock, Does.Contain("propertyPath: walkableFloor"), $"Guest {guestNumber} should keep the same walkable floor binding as earlier guests.");
+        Assert.That(guestBlock, Does.Contain("objectReference: {fileID: 551531667}"), $"Guest {guestNumber} should use the same walkable floor object as earlier guests.");
+        Assert.That(guestBlock, Does.Contain("propertyPath: m_LocalScale.x"), $"Guest {guestNumber} should keep the same root scale treatment as Guest 3 and Guest 4.");
+        Assert.That(guestBlock, Does.Contain("m_AddedGameObjects:"), $"Guest {guestNumber} should keep the carried-coat child visual setup.");
+    }
+
+    private static void AssertNamedGuestAnimationAssets(string displayName, string assetName, string filePrefix)
+    {
+        string walkFolder = $"Assets/Characters/{assetName}/walk/aligned";
+        string animationFolder = $"Assets/Animation/{assetName}";
+        string overrideText = File.ReadAllText($"{animationFolder}/{assetName}.overrideController");
+        string firstFrameGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_01_r01_c01.png.meta");
+        string idleClipGuid = ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle.anim.meta");
+
+        Assert.That(Directory.GetFiles(walkFolder, "*.png").Length, Is.EqualTo(32), $"{displayName} should keep eight walk frames for each of four directions.");
+        Assert.That(overrideText, Does.Contain(idleClipGuid), $"{displayName} override controller should wire generic idle states to the still idle clip.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Down.anim.meta")), $"{displayName} should not wire the animated down idle sequence yet.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Left.anim.meta")), $"{displayName} should not wire the animated left idle sequence yet.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Right.anim.meta")), $"{displayName} should not wire the animated right idle sequence yet.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Up.anim.meta")), $"{displayName} should not wire the animated up idle sequence yet.");
+
+        AssertStillIdleClip(File.ReadAllText($"{animationFolder}/{assetName}_Idle.anim"), firstFrameGuid, displayName);
+        AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Down.anim"), walkFolder, filePrefix, 1, "down", displayName);
+        AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Left.anim"), walkFolder, filePrefix, 2, "left", displayName);
+        AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Right.anim"), walkFolder, filePrefix, 3, "right", displayName);
+        AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Up.anim"), walkFolder, filePrefix, 4, "up", displayName);
+    }
+
+    private static void AssertNamedGuestWalkRow(string clipText, string walkFolder, string filePrefix, int row, string direction, string displayName)
+    {
+        for (int column = 1; column <= 8; column++)
+        {
+            string frameGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_{column:00}_r{row:00}_c{column:00}.png.meta");
+            Assert.That(clipText, Does.Contain(frameGuid), $"{displayName} walk {direction} should include frame row {row}, column {column}.");
+        }
+
+        Assert.That(clipText, Does.Contain("classID: 114"), $"{displayName} walk {direction} should animate UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), $"{displayName} walk {direction} should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 0.666666667"), $"{displayName} walk {direction} should play the full eight-frame row.");
     }
 
     private static void AssertClipUsesCountessRow(string clipText, int row, string direction)
