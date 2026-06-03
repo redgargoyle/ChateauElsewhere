@@ -76,6 +76,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!inputEnabled)
 		{
 			NavigationCursorController.ClearWalkHover(this);
+			CancelDestination();
 		}
 	}
 
@@ -348,8 +349,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return $"({value.x:0.##},{value.y:0.##})";
 	}
 
-	public bool TrySetDestinationFromScreenPoint(Vector2 screenPosition, bool clampToWalkableArea = false)
+	public bool TrySetDestinationFromScreenPoint(Vector2 screenPosition, bool clampToWalkableArea = false, bool ignoreInputEnabled = false)
 	{
+		if (!ignoreInputEnabled && !inputEnabled)
+			return false;
+
 		if (!TryEvaluateMovementAtScreenPoint(screenPosition, clampToWalkableArea, out MovementTargetQuery movementQuery) ||
 			!movementQuery.HasReachableDestination)
 			return false;
@@ -358,8 +362,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return true;
 	}
 
-	public bool TrySetDestination(Vector2 targetPosition, bool clampToWalkableArea = false)
+	public bool TrySetDestination(Vector2 targetPosition, bool clampToWalkableArea = false, bool ignoreInputEnabled = false)
 	{
+		if (!ignoreInputEnabled && !inputEnabled)
+			return false;
+
 		if (!isReady)
 			return false;
 
@@ -704,6 +711,32 @@ public class PointClickPlayerMovement : MonoBehaviour
 		ApplyVisualPosition();
 		ApplyPerspectiveScale();
 		ApplyPlayerSorting();
+	}
+
+	private void CancelDestination()
+	{
+		bool wasMoving = hasDestination || isWalking || movementPath.Count > 0;
+
+		destination = logicalPosition;
+		finalDestination = logicalPosition;
+		movementPath.Clear();
+		movementPathIndex = 0;
+		hasDestination = false;
+		isWalking = false;
+
+		if (body != null)
+		{
+			body.linearVelocity = Vector2.zero;
+			body.angularVelocity = 0f;
+		}
+
+		UpdateAnimator();
+		ApplySpriteMirror();
+
+		if (wasMoving)
+		{
+			MovementStopped?.Invoke();
+		}
 	}
 
 	private void MoveTowardDestination()

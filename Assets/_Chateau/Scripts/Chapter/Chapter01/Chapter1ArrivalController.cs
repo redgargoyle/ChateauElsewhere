@@ -256,17 +256,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         ResetGuestStates(true);
         coatCloset?.ClearStoredCoats();
 
-        int stagedGuestCount = Mathf.Min(GetRequiredGuestCountForCurrentRun(), guestStates.Count);
-
-        for (int i = 0; i < stagedGuestCount; i++)
-        {
-            StageGuestInDrawingRoomForChapter2Skip(guestStates[i]);
-        }
-
-        RefreshInteractionState();
-        RefreshAllGuestRoomVisibility();
-        HideGuestCoatsForChapter2Skip();
-        Debug.Log($"Chapter 2 skip staged {stagedGuestCount} guest(s) in the Drawing Room.", this);
+        StageRequiredGuestsInDrawingRoomForChapter2();
     }
 
     public void HideGuestCoatsForChapter2Skip()
@@ -1628,14 +1618,47 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         while (guest.Mover != null && guest.Mover.IsMoving)
         {
+            if (ShouldFinishDrawingRoomMoveOffscreen(guest))
+            {
+                break;
+            }
+
             yield return null;
+        }
+
+        CompleteGuestDrawingRoomArrival(guest, group);
+    }
+
+    private bool ShouldFinishDrawingRoomMoveOffscreen(GuestRuntimeState guest)
+    {
+        if (guest == null || guest.GuestObject == null)
+        {
+            return true;
+        }
+
+        if (!guest.GuestObject.activeInHierarchy)
+        {
+            return true;
+        }
+
+        return navigationManager != null &&
+            !string.IsNullOrWhiteSpace(navigationManager.CurrentRoom) &&
+            !SameRoom(navigationManager.CurrentRoom, entryRoomId);
+    }
+
+    private void CompleteGuestDrawingRoomArrival(GuestRuntimeState guest, GuestGroupRuntimeState group)
+    {
+        if (guest == null || (guest.Seated && !guest.MovingToDrawingRoom))
+        {
+            return;
         }
 
         Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
 
+        DisableGuestMovement(guest);
+        MoveGuestObjectToRoomContent(guest, drawingRoomId);
         SetGuestVisibleAfterDrawingRoomExit(guest, true);
         PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
-        DisableGuestMovement(guest);
 
         if (guest.ActorState != null)
         {
@@ -1718,7 +1741,50 @@ public class Chapter1ArrivalController : MonoBehaviour
         Debug.Log($"Guest group {group.GroupIndex + 1} entered the drawing room.", this);
     }
 
-    private void StageGuestInDrawingRoomForChapter2Skip(GuestRuntimeState guest)
+    private void CompleteOffscreenDrawingRoomMoves(string currentRoomName)
+    {
+        if (SameRoom(currentRoomName, entryRoomId))
+        {
+            return;
+        }
+
+        for (int groupIndex = activeEntranceGroups.Count - 1; groupIndex >= 0; groupIndex--)
+        {
+            GuestGroupRuntimeState group = activeEntranceGroups[groupIndex];
+
+            if (group == null)
+            {
+                continue;
+            }
+
+            for (int guestIndex = 0; guestIndex < group.Guests.Count; guestIndex++)
+            {
+                GuestRuntimeState guest = group.Guests[guestIndex];
+
+                if (guest != null && guest.MovingToDrawingRoom)
+                {
+                    CompleteGuestDrawingRoomArrival(guest, group);
+                }
+            }
+        }
+    }
+
+    private void StageRequiredGuestsInDrawingRoomForChapter2()
+    {
+        int stagedGuestCount = Mathf.Min(GetRequiredGuestCountForCurrentRun(), guestStates.Count);
+
+        for (int i = 0; i < stagedGuestCount; i++)
+        {
+            StageGuestInDrawingRoomForChapter2(guestStates[i]);
+        }
+
+        RefreshInteractionState();
+        RefreshAllGuestRoomVisibility();
+        HideGuestCoatsForChapter2Skip();
+        Debug.Log($"Chapter 2 staged {stagedGuestCount} guest(s) in the Drawing Room.", this);
+    }
+
+    private void StageGuestInDrawingRoomForChapter2(GuestRuntimeState guest)
     {
         if (guest == null)
         {
@@ -1727,6 +1793,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
 
+        MoveGuestObjectToRoomContent(guest, drawingRoomId);
         SetGuestVisibleAfterDrawingRoomExit(guest, true);
         PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
         DisableGuestMovement(guest);
@@ -1935,6 +2002,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         chapterCompletionRequested = true;
         sequenceActive = false;
+        StageRequiredGuestsInDrawingRoomForChapter2();
         UnsubscribeFromRoomChanges();
         chapterManager?.CompleteChapterAndTriggerNextChapter("chapter_02_pending");
     }
@@ -4716,6 +4784,52 @@ public class Chapter1ArrivalController : MonoBehaviour
         return room != null ? room.RoomName : string.Empty;
     }
 
+    private void MoveGuestObjectToRoomContent(GuestRuntimeState guest, string roomId)
+    {
+        if (guest == null || guest.GuestObject == null)
+        {
+            return;
+        }
+
+        RoomContentGroup roomContent = FindRoomContentGroup(roomId);
+
+        if (roomContent == null)
+        {
+            return;
+        }
+
+        Transform guestTransform = guest.GuestObject.transform;
+
+        if (guestTransform == null || guestTransform.IsChildOf(roomContent.transform))
+        {
+            return;
+        }
+
+        guestTransform.SetParent(roomContent.transform, true);
+    }
+
+    private RoomContentGroup FindRoomContentGroup(string roomId)
+    {
+        if (string.IsNullOrWhiteSpace(roomId))
+        {
+            return null;
+        }
+
+        RoomContentGroup[] roomContentGroups = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < roomContentGroups.Length; i++)
+        {
+            RoomContentGroup roomContent = roomContentGroups[i];
+
+            if (roomContent != null && SameRoom(roomContent.RoomName, roomId))
+            {
+                return roomContent;
+            }
+        }
+
+        return null;
+    }
+
     private void SubscribeToRoomChanges()
     {
         if (subscribedToRoomChanges)
@@ -4752,6 +4866,13 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void HandleRoomChanged(string roomName)
     {
         if (!sequenceActive || chapterCompletionRequested)
+        {
+            return;
+        }
+
+        CompleteOffscreenDrawingRoomMoves(roomName);
+
+        if (chapterCompletionRequested)
         {
             return;
         }

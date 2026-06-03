@@ -155,7 +155,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (IsPointerOverAvailableGuestAction(eventData))
+        if (IsPointerOverAvailableGuestAction(eventData) || IsPlayerInputLocked())
         {
             ClearActiveDoorHover(this);
             return;
@@ -175,6 +175,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     public void OnPointerClick(PointerEventData eventData)
     {
         if (IsPointerOverAvailableGuestAction(eventData))
+        {
+            ClearActiveDoorHover(this);
+            return;
+        }
+
+        if (IsPlayerInputLocked())
         {
             ClearActiveDoorHover(this);
             return;
@@ -207,6 +213,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     private void ActivateDoor(bool allowPlayerApproach)
     {
         ResolveReferences();
+
+        if (IsPlayerInputLocked())
+        {
+            CancelPendingPlayerApproach();
+            ClearActiveDoorHover(this);
+            return;
+        }
 
         if (navigationManager == null)
         {
@@ -263,6 +276,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         if (playerMovement == null)
         {
             LogApproachFailure("no PointClickPlayerMovement was found on the player");
+            return false;
+        }
+
+        if (!playerMovement.InputEnabled)
+        {
+            LogApproachFailure("player input is disabled");
             return false;
         }
 
@@ -739,6 +758,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         DoorTriggerNavigation triggerUnderPointer = FindTopmostTriggerAtScreenPoint(screenPosition);
+        if (triggerUnderPointer != null && triggerUnderPointer.IsPlayerInputLocked())
+        {
+            triggerUnderPointer = null;
+        }
+
         SetActiveDoorHover(triggerUnderPointer, screenPosition, true);
 
         bool primaryPointerDown = TryGetPrimaryPointerDown();
@@ -775,6 +799,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     {
         return eventData != null &&
             Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(eventData.position);
+    }
+
+    private bool IsPlayerInputLocked()
+    {
+        ResolvePlayerReference();
+        PointClickPlayerMovement playerMovement = player != null ? player.GetComponent<PointClickPlayerMovement>() : null;
+        return playerMovement != null && !playerMovement.InputEnabled;
     }
 
     private static bool TryGetPointerPosition(out Vector2 screenPosition)
