@@ -37,6 +37,14 @@ public class CharacterRegressionTests
     private const string ButlerGuestWalkLeftClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Left.anim";
     private const string ButlerGuestWalkRightClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Right.anim";
     private const string ButlerGuestWalkUpClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Up.anim";
+    private const string MisterFlorianWalkFolder = "Assets/Characters/MisterFlorianKnell/walk/aligned";
+    private const string MisterFlorianOverrideControllerPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell.overrideController";
+    private const string MisterFlorianOverrideControllerMetaPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell.overrideController.meta";
+    private const string MisterFlorianIdleClipPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle.anim";
+    private const string MisterFlorianWalkDownClipPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Down.anim";
+    private const string MisterFlorianWalkLeftClipPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Left.anim";
+    private const string MisterFlorianWalkRightClipPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Right.anim";
+    private const string MisterFlorianWalkUpClipPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Up.anim";
     private const string CountessWalkFolder = "Assets/Characters/CountessElowenDusk/walk/aligned";
     private const string CountessOverrideControllerMetaPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk.overrideController.meta";
     private const string CountessWalkDownClipPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Down.anim";
@@ -153,6 +161,37 @@ public class CharacterRegressionTests
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkLeftClipPath), 8, 15, "left");
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkRightClipPath), 16, 23, "right");
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkUpClipPath), 24, 31, "away");
+    }
+
+    [Test]
+    public void ThirdChapterGuestUsesMisterFlorianDirectionalAnimation()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string arrivalControllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string misterFlorianOverrideControllerText = File.ReadAllText(MisterFlorianOverrideControllerPath);
+        string guestThreeBlock = FindPrefabInstanceBlock(sceneText, "value: Guest 3");
+        string firstMisterFlorianFrameGuid = ReadGuidFromMeta($"{MisterFlorianWalkFolder}/mister_florian_knell_walk_01_r01_c01.png.meta");
+        string misterFlorianControllerGuid = ReadGuidFromMeta(MisterFlorianOverrideControllerMetaPath);
+        string misterFlorianIdleClipGuid = ReadGuidFromMeta($"{MisterFlorianIdleClipPath}.meta");
+
+        Assert.That(guestThreeBlock, Is.Not.Null, "Guest 3 should remain a named scene prefab instance.");
+        Assert.That(guestThreeBlock, Does.Contain(firstMisterFlorianFrameGuid), "Guest 3 should preview with the forward-facing Mister Florian frame.");
+        Assert.That(guestThreeBlock, Does.Contain(misterFlorianControllerGuid), "Guest 3 should use the Mister Florian override controller.");
+        Assert.That(guestThreeBlock, Does.Contain("propertyPath: m_LocalScale.x"), "Guest 3 should keep the same root scale treatment as Guest 4.");
+
+        Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredMisterFlorianGuestAnimation"), "Runtime guest setup should preserve Guest 3's authored Mister Florian animation.");
+        Assert.That(arrivalControllerText, Does.Contain("index == 2 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[2])"), "Only the authored Guest 3 object should keep Mister Florian animation.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Contain(misterFlorianIdleClipGuid), "Mister Florian idle states should use the still idle clip.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Down.anim.meta")), "Mister Florian should not wire the animated down idle sequence yet.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Left.anim.meta")), "Mister Florian should not wire the animated left idle sequence yet.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Right.anim.meta")), "Mister Florian should not wire the animated right idle sequence yet.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Up.anim.meta")), "Mister Florian should not wire the animated up idle sequence yet.");
+
+        AssertStillIdleClip(File.ReadAllText(MisterFlorianIdleClipPath), firstMisterFlorianFrameGuid, "Mister Florian");
+        AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkDownClipPath), 1, "down");
+        AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkLeftClipPath), 2, "left");
+        AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkRightClipPath), 3, "right");
+        AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkUpClipPath), 4, "up");
     }
 
     [Test]
@@ -311,6 +350,33 @@ public class CharacterRegressionTests
         Assert.That(clipText, Does.Contain("classID: 114"), "Guest 2 clips should animate UI Images for room-stage reuse.");
         Assert.That(clipText, Does.Contain("classID: 212"), "Guest 2 clips should animate SpriteRenderers for prefab-stage reuse.");
         Assert.That(clipText, Does.Contain("m_StopTime: 0.666666667"), $"Guest 2 walk {direction} should play the full eight-frame row.");
+    }
+
+    private static void AssertClipUsesMisterFlorianRow(string clipText, int row, string direction)
+    {
+        for (int column = 1; column <= 7; column++)
+        {
+            string frameGuid = ReadGuidFromMeta($"{MisterFlorianWalkFolder}/mister_florian_knell_walk_{column:00}_r{row:00}_c{column:00}.png.meta");
+            Assert.That(clipText, Does.Contain(frameGuid), $"Mister Florian walk {direction} should include frame row {row}, column {column}.");
+        }
+
+        Assert.That(clipText, Does.Contain("classID: 114"), "Mister Florian clips should animate UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), "Mister Florian clips should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 0.583333333"), $"Mister Florian walk {direction} should play the full seven-frame row.");
+    }
+
+    private static void AssertStillIdleClip(string clipText, string frameGuid, string characterName)
+    {
+        string spriteKey = $"value: {{fileID: 21300000, guid: {frameGuid}, type: 3}}";
+        string spriteMapping = $"- {{fileID: 21300000, guid: {frameGuid}, type: 3}}";
+
+        Assert.That(clipText, Does.Contain("classID: 114"), $"{characterName} idle should bind UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), $"{characterName} idle should bind SpriteRenderers for prefab-stage reuse.");
+        Assert.That(Regex.Matches(clipText, @"value: \{fileID: 21300000").Count, Is.EqualTo(2), $"{characterName} idle should have one sprite key each for Image and SpriteRenderer.");
+        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: 21300000, guid: [0-9a-f]{32}, type: 3\}$", RegexOptions.Multiline).Count, Is.EqualTo(2), $"{characterName} idle should only keep two sprite pointer mappings.");
+        Assert.That(Regex.Matches(clipText, Regex.Escape(spriteKey)).Count, Is.EqualTo(2), $"{characterName} idle should use the same forward-facing walk frame as the scene preview.");
+        Assert.That(Regex.Matches(clipText, Regex.Escape(spriteMapping)).Count, Is.EqualTo(2), $"{characterName} idle should only map the still frame for both sprite bindings.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 0.083333333"), $"{characterName} idle should be a still one-frame clip, not a multi-frame idle sequence.");
     }
 
     private static void AssertClipUsesCountessRow(string clipText, int row, string direction)
