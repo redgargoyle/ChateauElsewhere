@@ -2285,6 +2285,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             TryGetWorldPositionForGuestTarget(guestState.GuestObject.transform, target, out Vector3 worldPosition))
         {
             guestState.GuestObject.transform.position = worldPosition;
+            BindGuestToRoomStagePoint(guestState, target);
             return;
         }
 
@@ -2296,7 +2297,10 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (guestState.GuestObject != null)
         {
-            guestState.GuestObject.transform.position = target.position;
+            Vector3 targetPosition = target.position;
+            targetPosition.z = guestState.GuestObject.transform.position.z;
+            guestState.GuestObject.transform.position = targetPosition;
+            BindGuestToRoomStagePoint(guestState, target);
         }
     }
 
@@ -2312,13 +2316,37 @@ public class Chapter1ArrivalController : MonoBehaviour
             Vector3 targetPosition = position;
             targetPosition.z = guestState.GuestObject.transform.position.z;
             guestState.GuestObject.transform.position = targetPosition;
+            ClearGuestRoomStagePointBinding(guestState);
             return;
         }
 
         if (guestState.ActorState != null)
         {
             guestState.ActorState.transform.position = position;
+            guestState.ActorState.ClearRoomStagePointBinding();
         }
+    }
+
+    private void BindGuestToRoomStagePoint(GuestRuntimeState guestState, Transform target)
+    {
+        if (guestState == null ||
+            guestState.ActorState == null ||
+            !IsWorldSpaceGuestObject(guestState.GuestObject))
+        {
+            return;
+        }
+
+        guestState.ActorState.BindToRoomStagePoint(target);
+    }
+
+    private void ClearGuestRoomStagePointBinding(GuestRuntimeState guestState)
+    {
+        if (guestState == null || guestState.ActorState == null)
+        {
+            return;
+        }
+
+        guestState.ActorState.ClearRoomStagePointBinding();
     }
 
     private void ForceGuestVisibleForDoorFlow(GuestRuntimeState guestState)
@@ -2547,6 +2575,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             yield return null;
         }
+
+        BindGuestToRoomStagePoint(guestState, target);
     }
 
     private void BeginGuestMoveTo(GuestRuntimeState guestState, Transform target, string fieldName)

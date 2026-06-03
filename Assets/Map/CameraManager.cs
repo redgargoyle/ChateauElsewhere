@@ -174,6 +174,31 @@ public class CameraManager : MonoBehaviour
         return true;
     }
 
+    public bool TryGetActiveRoomStageWorldPoint(Vector2 roomStageLocalPoint, float worldDepth, out Vector3 worldPoint)
+    {
+        worldPoint = Vector3.zero;
+
+        Camera mainCamera = Camera.main;
+        if (!UsesRoomStageLayout() || activeRoomStage == null || mainCamera == null)
+        {
+            return false;
+        }
+
+        Canvas canvas = activeRoomStage.GetComponentInParent<Canvas>();
+        Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+        Vector3 stageWorldPoint = activeRoomStage.TransformPoint(new Vector3(
+            roomStageLocalPoint.x,
+            roomStageLocalPoint.y,
+            0f));
+        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(canvasCamera, stageWorldPoint);
+
+        float safeDepth = Mathf.Max(0.01f, worldDepth);
+        worldPoint = mainCamera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, safeDepth));
+        return true;
+    }
+
     private void Reset()
     {
         cameraBackground = FindAnyObjectByType<RawImage>();

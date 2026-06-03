@@ -32,6 +32,10 @@ public class ActorRoomState : MonoBehaviour
     private Vector2 lastRoomStageScreenCenter;
     private float lastRoomStageScreenScale = 1f;
     private bool hasRoomStageScreenTransform;
+    private bool hasRoomStageLocalBinding;
+    private Vector2 roomStageLocalPoint;
+    private float boundWorldZ;
+    private string boundRoomId;
     private bool subscribedToRoomChanges;
     private bool hasDiagnosticApplyState;
     private bool lastDiagnosticShouldBeVisible;
@@ -136,8 +140,61 @@ public class ActorRoomState : MonoBehaviour
         }
 
         Transform targetTransform = actorObject != null ? actorObject.transform : transform;
-        targetTransform.position = target.position;
-        RegisterRoomStageMotionBaseline();
+        Vector3 targetPosition = target.position;
+        targetPosition.z = targetTransform.position.z;
+        targetTransform.position = targetPosition;
+        BindToRoomStagePoint(target);
+
+        if (!hasRoomStageLocalBinding)
+        {
+            RegisterRoomStageMotionBaseline();
+            return;
+        }
+
+        TryApplyRoomStageLocalBindingIfNeeded();
+    }
+
+    public void BindToRoomStagePoint(Transform roomTarget)
+    {
+        ResolveReferences();
+
+        Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+
+        if (targetTransform == null || targetTransform is RectTransform)
+        {
+            return;
+        }
+
+        if (roomTarget == null)
+        {
+            ClearRoomStagePointBinding();
+            return;
+        }
+
+        RoomContentGroup roomContentGroup = roomTarget.GetComponentInParent<RoomContentGroup>(true);
+        RectTransform roomStage = roomContentGroup != null ? roomContentGroup.transform as RectTransform : null;
+
+        if (roomStage == null)
+        {
+            ClearRoomStagePointBinding();
+            return;
+        }
+
+        Vector3 localPoint = roomStage.InverseTransformPoint(roomTarget.position);
+        roomStageLocalPoint = new Vector2(localPoint.x, localPoint.y);
+        boundWorldZ = targetTransform.position.z;
+        boundRoomId = roomContentGroup.RoomName;
+        hasRoomStageLocalBinding = true;
+        ClearRoomStageMotionBaseline();
+    }
+
+    public void ClearRoomStagePointBinding()
+    {
+        hasRoomStageLocalBinding = false;
+        roomStageLocalPoint = Vector2.zero;
+        boundWorldZ = 0f;
+        boundRoomId = string.Empty;
+        ClearRoomStageMotionBaseline();
     }
 
     public void ApplyState()
@@ -372,6 +429,16 @@ public class ActorRoomState : MonoBehaviour
             return;
         }
 
+        if (hasRoomStageLocalBinding)
+        {
+            if (TryApplyRoomStageLocalBindingIfNeeded())
+            {
+                ClearRoomStageMotionBaseline();
+            }
+
+            return;
+        }
+
         Camera mainCamera = Camera.main;
 
         if (!TryGetCurrentRoomStageScreenTransform(out Vector2 currentCenter, out float currentScale) ||
@@ -455,7 +522,67 @@ public class ActorRoomState : MonoBehaviour
         }
 
         Transform targetTransform = actorObject != null ? actorObject.transform : transform;
-        return targetTransform != null && targetTransform is not RectTransform;
+        return targetTransform != null &&
+            targetTransform is not RectTransform &&
+            !IsActorUnderRoomStage(targetTransform);
+    }
+
+    private bool TryApplyRoomStageLocalBindingIfNeeded()
+    {
+        if (!hasRoomStageLocalBinding)
+        {
+            return false;
+        }
+
+        Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+
+        if (targetTransform == null ||
+            targetTransform is RectTransform ||
+            IsActorUnderRoomStage(targetTransform) ||
+            (!string.IsNullOrWhiteSpace(boundRoomId) && !SameRoom(currentRoomId, boundRoomId)))
+        {
+            return false;
+        }
+
+        ResolveReferences();
+
+        Camera mainCamera = Camera.main;
+        if (cameraManager == null || mainCamera == null)
+        {
+            return false;
+        }
+
+        float depth = boundWorldZ - mainCamera.transform.position.z;
+
+        if (depth <= 0.01f)
+        {
+            depth = Mathf.Abs(targetTransform.position.z - mainCamera.transform.position.z);
+        }
+
+        if (depth <= 0.01f)
+        {
+            depth = Mathf.Abs(transform.position.z - mainCamera.transform.position.z);
+        }
+
+        if (depth <= 0.01f)
+        {
+            depth = 10f;
+        }
+
+        if (!cameraManager.TryGetActiveRoomStageWorldPoint(roomStageLocalPoint, depth, out Vector3 worldPoint))
+        {
+            return false;
+        }
+
+        worldPoint.z = boundWorldZ;
+        targetTransform.position = worldPoint;
+        return true;
+    }
+
+    private static bool IsActorUnderRoomStage(Transform targetTransform)
+    {
+        return targetTransform != null &&
+            targetTransform.GetComponentInParent<RoomContentGroup>(true) != null;
     }
 
     private bool TryGetCurrentRoomStageScreenTransform(out Vector2 stageCenter, out float stageScale)
