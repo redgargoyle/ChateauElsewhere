@@ -49,9 +49,15 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private Vector2 finalDestination;
 	private Vector2 logicalPosition;
 	private Vector3 currentVisualOffset;
+	private Vector3 currentRoomStageWorldCenter;
+	private Vector3 roomStageReferenceWorldCenter;
+	private float roomStageReferenceScale = 1f;
+	private float currentRoomStageScaleRatio = 1f;
 	private CharacterWalkDirection walkDirection = CharacterWalkDirection.Right;
 	private CharacterAnimatorDriver.ParameterCache animatorParameters;
 	private string currentWalkableBoundaryRoom;
+	private string roomStageVisualReferenceRoom;
+	private bool hasRoomStageVisualReference;
 	private bool hasDestination;
 	private bool isReady;
 	private bool isWalking;
@@ -258,6 +264,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		walkableFloor = roomBoundary;
 		currentWalkableBoundaryRoom = cleanRoom;
+		ResetRoomStageVisualReference();
 
 		if (!isReady)
 			return;
@@ -475,10 +482,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return false;
 
 		UpdateVisualOffset(mainCamera);
-		Vector3 visualPosition = new Vector3(
-			logicalPoint.x + currentVisualOffset.x,
-			logicalPoint.y + currentVisualOffset.y,
-			transform.position.z);
+		Vector2 visualPoint = LogicalToWalkableWorldPoint(logicalPoint);
+		Vector3 visualPosition = new Vector3(visualPoint.x, visualPoint.y, transform.position.z);
 
 		screenPoint = mainCamera.WorldToScreenPoint(visualPosition);
 		return true;
@@ -538,8 +543,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return false;
 
 		UpdateVisualOffset(mainCamera);
-		Vector3 worldPosition = mainCamera.ScreenToWorldPoint(screenPosition);
-		logicalPoint = worldPosition - currentVisualOffset;
+		float depth = GetVisualWorldDepth(mainCamera);
+		Vector3 worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, depth));
+		logicalPoint = WalkableWorldToLogicalPoint(worldPosition);
 		return true;
 	}
 
@@ -805,8 +811,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void ApplyPerspectiveScale()
 	{
+		UpdateVisualOffset(Camera.main);
 		float depth = Mathf.InverseLerp(nearY, farY, logicalPosition.y);
-		float scale = Mathf.Lerp(nearScale, farScale, depth);
+		float scale = Mathf.Lerp(nearScale, farScale, depth) * currentRoomStageScaleRatio;
 		transform.localScale = new Vector3(scale, scale, transform.localScale.z);
 	}
 
@@ -854,10 +861,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private void ApplyVisualPosition()
 	{
 		UpdateVisualOffset(Camera.main);
-		Vector3 visualPosition = new Vector3(
-			logicalPosition.x + currentVisualOffset.x,
-			logicalPosition.y + currentVisualOffset.y,
-			transform.position.z);
+		Vector2 visualPoint = LogicalToWalkableWorldPoint(logicalPosition);
+		Vector3 visualPosition = new Vector3(visualPoint.x, visualPoint.y, transform.position.z);
 
 		transform.position = visualPosition;
 
@@ -868,12 +873,74 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private void UpdateVisualOffset(Camera mainCamera)
 	{
 		currentVisualOffset = Vector3.zero;
+		currentRoomStageScaleRatio = 1f;
 
 		if (cameraManager == null)
 			cameraManager = FindAnyObjectByType<CameraManager>();
 
-		if (cameraManager != null && cameraManager.TryGetRoomStageWorldOffset(mainCamera, out Vector3 roomOffset))
+		if (navigationManager == null)
+			navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+
+		if (cameraManager == null || mainCamera == null)
+		{
+			hasRoomStageVisualReference = false;
+			return;
+		}
+
+		float depth = GetVisualWorldDepth(mainCamera);
+
+		if (cameraManager.TryGetActiveRoomStageWorldPoint(
+			Vector2.zero,
+			depth,
+			out Vector3 stageWorldCenter,
+			out float stageScale))
+		{
+			string currentRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
+
+			if (!hasRoomStageVisualReference ||
+				!SameRoomName(roomStageVisualReferenceRoom, currentRoom))
+			{
+				roomStageReferenceWorldCenter = stageWorldCenter;
+				roomStageReferenceScale = Mathf.Max(0.0001f, stageScale);
+				roomStageVisualReferenceRoom = currentRoom;
+				hasRoomStageVisualReference = true;
+			}
+
+			currentRoomStageWorldCenter = stageWorldCenter;
+			currentRoomStageScaleRatio = stageScale / Mathf.Max(0.0001f, roomStageReferenceScale);
+			currentVisualOffset = currentRoomStageWorldCenter - roomStageReferenceWorldCenter;
+			currentVisualOffset.z = 0f;
+			return;
+		}
+
+		hasRoomStageVisualReference = false;
+
+		if (cameraManager.TryGetRoomStageWorldOffset(mainCamera, out Vector3 roomOffset))
 			currentVisualOffset = roomOffset;
+	}
+
+	private void ResetRoomStageVisualReference()
+	{
+		hasRoomStageVisualReference = false;
+		roomStageVisualReferenceRoom = string.Empty;
+		roomStageReferenceWorldCenter = Vector3.zero;
+		currentRoomStageWorldCenter = Vector3.zero;
+		roomStageReferenceScale = 1f;
+		currentRoomStageScaleRatio = 1f;
+		currentVisualOffset = Vector3.zero;
+	}
+
+	private float GetVisualWorldDepth(Camera mainCamera)
+	{
+		if (mainCamera == null)
+			return 10f;
+
+		float depth = transform.position.z - mainCamera.transform.position.z;
+
+		if (depth <= 0.01f)
+			depth = Mathf.Abs(depth);
+
+		return depth > 0.01f ? depth : 10f;
 	}
 
 	private bool IsPointWalkable(Vector2 point)
@@ -897,11 +964,24 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private Vector2 LogicalToWalkableWorldPoint(Vector2 logicalPoint)
 	{
+		if (hasRoomStageVisualReference)
+		{
+			Vector2 referenceOffset = logicalPoint - (Vector2)roomStageReferenceWorldCenter;
+			return (Vector2)currentRoomStageWorldCenter + referenceOffset * currentRoomStageScaleRatio;
+		}
+
 		return logicalPoint + new Vector2(currentVisualOffset.x, currentVisualOffset.y);
 	}
 
 	private Vector2 WalkableWorldToLogicalPoint(Vector2 worldPoint)
 	{
+		if (hasRoomStageVisualReference)
+		{
+			float safeScaleRatio = Mathf.Max(0.0001f, currentRoomStageScaleRatio);
+			Vector2 currentOffset = worldPoint - (Vector2)currentRoomStageWorldCenter;
+			return (Vector2)roomStageReferenceWorldCenter + currentOffset / safeScaleRatio;
+		}
+
 		return worldPoint - new Vector2(currentVisualOffset.x, currentVisualOffset.y);
 	}
 

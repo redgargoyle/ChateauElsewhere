@@ -35,6 +35,8 @@ public class ActorRoomState : MonoBehaviour
     private bool hasRoomStageLocalBinding;
     private Vector2 roomStageLocalPoint;
     private float boundWorldZ;
+    private Vector3 boundLocalScale = Vector3.one;
+    private float boundRoomStageScale = 1f;
     private string boundRoomId;
     private bool subscribedToRoomChanges;
     private bool hasDiagnosticApplyState;
@@ -183,6 +185,8 @@ public class ActorRoomState : MonoBehaviour
         Vector3 localPoint = roomStage.InverseTransformPoint(roomTarget.position);
         roomStageLocalPoint = new Vector2(localPoint.x, localPoint.y);
         boundWorldZ = targetTransform.position.z;
+        boundLocalScale = targetTransform.localScale;
+        boundRoomStageScale = Mathf.Max(0.0001f, roomStage.lossyScale.x);
         boundRoomId = roomContentGroup.RoomName;
         hasRoomStageLocalBinding = true;
         ClearRoomStageMotionBaseline();
@@ -193,6 +197,8 @@ public class ActorRoomState : MonoBehaviour
         hasRoomStageLocalBinding = false;
         roomStageLocalPoint = Vector2.zero;
         boundWorldZ = 0f;
+        boundLocalScale = Vector3.one;
+        boundRoomStageScale = 1f;
         boundRoomId = string.Empty;
         ClearRoomStageMotionBaseline();
     }
@@ -477,6 +483,11 @@ public class ActorRoomState : MonoBehaviour
                 correctedWorldPosition.z = targetTransform.position.z;
                 targetTransform.position = correctedWorldPosition;
             }
+
+            if (!Mathf.Approximately(scaleRatio, 1f))
+            {
+                targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio);
+            }
         }
 
         lastRoomStageScreenCenter = currentCenter;
@@ -569,13 +580,18 @@ public class ActorRoomState : MonoBehaviour
             depth = 10f;
         }
 
-        if (!cameraManager.TryGetActiveRoomStageWorldPoint(roomStageLocalPoint, depth, out Vector3 worldPoint))
+        if (!cameraManager.TryGetActiveRoomStageWorldPoint(
+            roomStageLocalPoint,
+            depth,
+            out Vector3 worldPoint,
+            out float currentStageScale))
         {
             return false;
         }
 
         worldPoint.z = boundWorldZ;
         targetTransform.position = worldPoint;
+        targetTransform.localScale = ScaleXY(boundLocalScale, currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale));
         return true;
     }
 
@@ -583,6 +599,11 @@ public class ActorRoomState : MonoBehaviour
     {
         return targetTransform != null &&
             targetTransform.GetComponentInParent<RoomContentGroup>(true) != null;
+    }
+
+    private static Vector3 ScaleXY(Vector3 scale, float ratio)
+    {
+        return new Vector3(scale.x * ratio, scale.y * ratio, scale.z);
     }
 
     private bool TryGetCurrentRoomStageScreenTransform(out Vector2 stageCenter, out float stageScale)

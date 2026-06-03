@@ -176,7 +176,17 @@ public class CameraManager : MonoBehaviour
 
     public bool TryGetActiveRoomStageWorldPoint(Vector2 roomStageLocalPoint, float worldDepth, out Vector3 worldPoint)
     {
+        return TryGetActiveRoomStageWorldPoint(roomStageLocalPoint, worldDepth, out worldPoint, out _);
+    }
+
+    public bool TryGetActiveRoomStageWorldPoint(
+        Vector2 roomStageLocalPoint,
+        float worldDepth,
+        out Vector3 worldPoint,
+        out float stageScale)
+    {
         worldPoint = Vector3.zero;
+        stageScale = 1f;
 
         Camera mainCamera = Camera.main;
         if (!UsesRoomStageLayout() || activeRoomStage == null || mainCamera == null)
@@ -196,6 +206,7 @@ public class CameraManager : MonoBehaviour
 
         float safeDepth = Mathf.Max(0.01f, worldDepth);
         worldPoint = mainCamera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, safeDepth));
+        stageScale = Mathf.Max(0.0001f, activeRoomStage.lossyScale.x);
         return true;
     }
 
