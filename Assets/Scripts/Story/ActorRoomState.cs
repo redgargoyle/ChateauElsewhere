@@ -29,8 +29,9 @@ public class ActorRoomState : MonoBehaviour
     private Collider2D[] colliders2D = new Collider2D[0];
     private CanvasGroup[] canvasGroups = new CanvasGroup[0];
     private CameraManager cameraManager;
-    private Vector3 lastRoomStageWorldOffset;
-    private bool hasRoomStageWorldOffset;
+    private Vector2 lastRoomStageScreenCenter;
+    private float lastRoomStageScreenScale = 1f;
+    private bool hasRoomStageScreenTransform;
     private bool subscribedToRoomChanges;
     private bool hasDiagnosticApplyState;
     private bool lastDiagnosticShouldBeVisible;
@@ -371,38 +372,53 @@ public class ActorRoomState : MonoBehaviour
             return;
         }
 
-        if (!TryGetCurrentRoomStageWorldOffset(out Vector3 currentOffset))
+        Camera mainCamera = Camera.main;
+
+        if (!TryGetCurrentRoomStageScreenTransform(out Vector2 currentCenter, out float currentScale) ||
+            mainCamera == null)
         {
             ClearRoomStageMotionBaseline();
             return;
         }
 
-        if (!hasRoomStageWorldOffset)
+        if (!hasRoomStageScreenTransform)
         {
-            lastRoomStageWorldOffset = currentOffset;
-            hasRoomStageWorldOffset = true;
+            lastRoomStageScreenCenter = currentCenter;
+            lastRoomStageScreenScale = currentScale;
+            hasRoomStageScreenTransform = true;
             return;
         }
 
-        Vector3 delta = currentOffset - lastRoomStageWorldOffset;
-        delta.z = 0f;
+        Transform targetTransform = actorObject != null ? actorObject.transform : transform;
 
-        if (delta.sqrMagnitude > 0.0000001f)
+        if (targetTransform != null)
         {
-            Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+            Vector3 actorScreen = mainCamera.WorldToScreenPoint(targetTransform.position);
+            Vector2 previousActorScreenPosition = new Vector2(actorScreen.x, actorScreen.y);
+            Vector2 previousRoomLocalScreenOffset = previousActorScreenPosition - lastRoomStageScreenCenter;
+            float scaleRatio = currentScale / Mathf.Max(0.0001f, lastRoomStageScreenScale);
+            Vector2 currentActorScreenPosition = currentCenter + previousRoomLocalScreenOffset * scaleRatio;
+            Vector2 screenDelta = currentActorScreenPosition - previousActorScreenPosition;
 
-            if (targetTransform != null)
+            if (screenDelta.sqrMagnitude > 0.0001f)
             {
-                targetTransform.position += delta;
+                Vector3 correctedWorldPosition = mainCamera.ScreenToWorldPoint(new Vector3(
+                    currentActorScreenPosition.x,
+                    currentActorScreenPosition.y,
+                    actorScreen.z));
+
+                correctedWorldPosition.z = targetTransform.position.z;
+                targetTransform.position = correctedWorldPosition;
             }
         }
 
-        lastRoomStageWorldOffset = currentOffset;
+        lastRoomStageScreenCenter = currentCenter;
+        lastRoomStageScreenScale = currentScale;
     }
 
     private void RegisterRoomStageMotionBaselineIfMissing()
     {
-        if (hasRoomStageWorldOffset)
+        if (hasRoomStageScreenTransform)
         {
             return;
         }
@@ -412,20 +428,23 @@ public class ActorRoomState : MonoBehaviour
 
     private void RegisterRoomStageMotionBaseline()
     {
-        if (!ShouldFollowRoomStageMotion() || !TryGetCurrentRoomStageWorldOffset(out Vector3 currentOffset))
+        if (!ShouldFollowRoomStageMotion() ||
+            !TryGetCurrentRoomStageScreenTransform(out Vector2 currentCenter, out float currentScale))
         {
             ClearRoomStageMotionBaseline();
             return;
         }
 
-        lastRoomStageWorldOffset = currentOffset;
-        hasRoomStageWorldOffset = true;
+        lastRoomStageScreenCenter = currentCenter;
+        lastRoomStageScreenScale = currentScale;
+        hasRoomStageScreenTransform = true;
     }
 
     private void ClearRoomStageMotionBaseline()
     {
-        lastRoomStageWorldOffset = Vector3.zero;
-        hasRoomStageWorldOffset = false;
+        lastRoomStageScreenCenter = Vector2.zero;
+        lastRoomStageScreenScale = 1f;
+        hasRoomStageScreenTransform = false;
     }
 
     private bool ShouldFollowRoomStageMotion()
@@ -439,15 +458,14 @@ public class ActorRoomState : MonoBehaviour
         return targetTransform != null && targetTransform is not RectTransform;
     }
 
-    private bool TryGetCurrentRoomStageWorldOffset(out Vector3 offset)
+    private bool TryGetCurrentRoomStageScreenTransform(out Vector2 stageCenter, out float stageScale)
     {
-        offset = Vector3.zero;
+        stageCenter = Vector2.zero;
+        stageScale = 1f;
         ResolveReferences();
 
-        Camera mainCamera = Camera.main;
         return cameraManager != null &&
-            mainCamera != null &&
-            cameraManager.TryGetRoomStageWorldOffset(mainCamera, out offset);
+            cameraManager.TryGetRoomStageScreenTransform(out _, out stageCenter, out stageScale);
     }
 
     private static bool SameRoom(string left, string right)

@@ -122,7 +122,37 @@ public class CameraManager : MonoBehaviour
     {
         worldOffset = Vector3.zero;
 
-        if (!UsesRoomStageLayout() || activeRoomStage == null || worldCamera == null)
+        if (worldCamera == null ||
+            !TryGetRoomStageScreenTransform(out Vector2 viewportCenter, out Vector2 stageCenter, out _))
+        {
+            return false;
+        }
+
+        Vector2 screenOffset = stageCenter - viewportCenter;
+
+        if (screenOffset.sqrMagnitude <= 0.0001f)
+        {
+            return true;
+        }
+
+        float depth = Mathf.Abs(worldCamera.transform.position.z);
+        Vector3 worldCenter = worldCamera.ScreenToWorldPoint(new Vector3(viewportCenter.x, viewportCenter.y, depth));
+        Vector3 shiftedWorldCenter = worldCamera.ScreenToWorldPoint(new Vector3(viewportCenter.x + screenOffset.x, viewportCenter.y + screenOffset.y, depth));
+        worldOffset = shiftedWorldCenter - worldCenter;
+        worldOffset.z = 0f;
+        return true;
+    }
+
+    public bool TryGetRoomStageScreenTransform(
+        out Vector2 viewportCenter,
+        out Vector2 stageCenter,
+        out float stageScale)
+    {
+        viewportCenter = Vector2.zero;
+        stageCenter = Vector2.zero;
+        stageScale = 1f;
+
+        if (!UsesRoomStageLayout() || activeRoomStage == null)
         {
             return false;
         }
@@ -138,20 +168,9 @@ public class CameraManager : MonoBehaviour
             ? canvas.worldCamera
             : null;
 
-        Vector2 stageCenter = RectTransformUtility.WorldToScreenPoint(canvasCamera, activeRoomStage.TransformPoint(Vector3.zero));
-        Vector2 viewportCenter = RectTransformUtility.WorldToScreenPoint(canvasCamera, viewport.TransformPoint(Vector3.zero));
-        Vector2 screenOffset = stageCenter - viewportCenter;
-
-        if (screenOffset.sqrMagnitude <= 0.0001f)
-        {
-            return true;
-        }
-
-        float depth = Mathf.Abs(worldCamera.transform.position.z);
-        Vector3 worldCenter = worldCamera.ScreenToWorldPoint(new Vector3(viewportCenter.x, viewportCenter.y, depth));
-        Vector3 shiftedWorldCenter = worldCamera.ScreenToWorldPoint(new Vector3(viewportCenter.x + screenOffset.x, viewportCenter.y + screenOffset.y, depth));
-        worldOffset = shiftedWorldCenter - worldCenter;
-        worldOffset.z = 0f;
+        stageCenter = RectTransformUtility.WorldToScreenPoint(canvasCamera, activeRoomStage.TransformPoint(Vector3.zero));
+        viewportCenter = RectTransformUtility.WorldToScreenPoint(canvasCamera, viewport.TransformPoint(Vector3.zero));
+        stageScale = Mathf.Max(0.0001f, activeRoomStage.lossyScale.x);
         return true;
     }
 

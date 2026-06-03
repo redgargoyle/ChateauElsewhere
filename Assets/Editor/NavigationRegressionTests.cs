@@ -236,14 +236,17 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void ActorRoomStateCarriesWorldActorsWithRoomStagePan()
+    public void ActorRoomStateCarriesWorldActorsWithRoomStagePanAndZoom()
     {
         string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
 
         Assert.That(actorRoomStateText, Does.Contain("followRoomStageMotion"), "Room-scoped actors should opt into following the active room stage pan.");
         Assert.That(actorRoomStateText, Does.Contain("LateUpdate"), "Actor room-state visuals should be corrected after CameraManager updates the room stage.");
-        Assert.That(actorRoomStateText, Does.Contain("TryGetRoomStageWorldOffset"), "Actor room-state visuals should use the same stage offset source as player movement.");
-        Assert.That(actorRoomStateText, Does.Contain("lastRoomStageWorldOffset"), "Actor room-state visuals should apply pan deltas instead of overwriting authored placement.");
+        Assert.That(actorRoomStateText, Does.Contain("TryGetRoomStageScreenTransform"), "Actor room-state visuals should use the room stage's screen transform, not only world pan.");
+        Assert.That(actorRoomStateText, Does.Contain("lastRoomStageScreenScale"), "Actor room-state visuals must apply room zoom scale as well as pan.");
+        Assert.That(actorRoomStateText, Does.Contain("mainCamera.ScreenToWorldPoint"), "Actor room-state visuals should convert the corrected screen position back to world space.");
+        Assert.That(cameraManagerText, Does.Contain("TryGetRoomStageScreenTransform"), "CameraManager should expose the complete room-stage transform for world actors.");
         Assert.That(actorRoomStateText, Does.Not.Contain("SetParent("), "Guests should not be fixed by reparenting them under room presentation roots.");
     }
 
