@@ -19,7 +19,10 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private const string DialogueChoiceButtonNamePrefix = "Button_Chapter2DialogueChoice";
     private const string DialogueChoiceLabelName = "Text_Chapter2DialogueChoice";
     private const string ClockStrikePanelName = "Panel_Chapter2ClockStrike";
+    private const string ClockStrikeImageName = "Image_Chapter2ClockStrikeFace";
     private const string ClockStrikeTextName = "Text_Chapter2ClockStrike";
+    private const string SevenOClockClockFaceAssetPath = "Assets/Art/clockcutout7oclock.png";
+    private const string SevenOClockClockFaceResourceName = "clockcutout7oclock";
     private const string PrimaryButtonName = "Button_Chapter2PrimaryAction";
     private const string PrimaryButtonLabelName = "Text_Chapter2PrimaryAction";
     private const int DialogueChoiceCount = 3;
@@ -34,6 +37,8 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private TMP_Text dialogueSpeakerText;
     private TMP_Text dialogueLineText;
     private GameObject clockStrikePanel;
+    [SerializeField] private Sprite clockStrikeClockFaceSprite;
+    private Image clockStrikeImage;
     private TMP_Text clockStrikeText;
     private readonly Button[] dialogueChoiceButtons = new Button[DialogueChoiceCount];
     private readonly TMP_Text[] dialogueChoiceLabels = new TMP_Text[DialogueChoiceCount];
@@ -177,6 +182,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
     public void ShowClockStrike(string timeLabel)
     {
         EnsureUI();
+        Sprite clockFaceSprite = ResolveClockStrikeClockFaceSprite();
 
         if (clockStrikePanel != null)
         {
@@ -184,9 +190,16 @@ public class Chapter2InteractionHUD : MonoBehaviour
             clockStrikePanel.transform.SetAsLastSibling();
         }
 
+        if (clockStrikeImage != null)
+        {
+            clockStrikeImage.sprite = clockFaceSprite;
+            clockStrikeImage.gameObject.SetActive(clockFaceSprite != null);
+        }
+
         if (clockStrikeText != null)
         {
             clockStrikeText.text = string.IsNullOrWhiteSpace(timeLabel) ? "7:00 PM" : timeLabel.Trim();
+            ApplyClockStrikeTextLayout(clockFaceSprite != null);
         }
     }
 
@@ -335,14 +348,21 @@ public class Chapter2InteractionHUD : MonoBehaviour
         clockStrikeRect.anchorMax = new Vector2(0.5f, 0.5f);
         clockStrikeRect.pivot = new Vector2(0.5f, 0.5f);
         clockStrikeRect.anchoredPosition = Vector2.zero;
-        clockStrikeRect.sizeDelta = new Vector2(520f, 240f);
+        clockStrikeRect.sizeDelta = new Vector2(660f, 560f);
+
+        clockStrikeImage = FindOrCreateImage(clockStrikeRect, ClockStrikeImageName);
+        RectTransform clockStrikeImageRect = clockStrikeImage.rectTransform;
+        clockStrikeImageRect.anchorMin = new Vector2(0.5f, 0.5f);
+        clockStrikeImageRect.anchorMax = new Vector2(0.5f, 0.5f);
+        clockStrikeImageRect.pivot = new Vector2(0.5f, 0.5f);
+        clockStrikeImageRect.anchoredPosition = new Vector2(0f, 44f);
+        clockStrikeImageRect.sizeDelta = new Vector2(580f, 430f);
+        clockStrikeImage.preserveAspect = true;
+        clockStrikeImage.color = Color.white;
+        clockStrikeImage.gameObject.SetActive(false);
 
         clockStrikeText = FindOrCreateText(clockStrikeRect, ClockStrikeTextName, 64f, TextAlignmentOptions.Center);
-        RectTransform clockStrikeTextRect = clockStrikeText.GetComponent<RectTransform>();
-        clockStrikeTextRect.anchorMin = Vector2.zero;
-        clockStrikeTextRect.anchorMax = Vector2.one;
-        clockStrikeTextRect.offsetMin = new Vector2(24f, 24f);
-        clockStrikeTextRect.offsetMax = new Vector2(-24f, -24f);
+        ApplyClockStrikeTextLayout(clockStrikeImage.sprite != null);
         clockStrikeText.textWrappingMode = TextWrappingModes.NoWrap;
         clockStrikePanel.SetActive(false);
 
@@ -384,6 +404,142 @@ public class Chapter2InteractionHUD : MonoBehaviour
         statusText.gameObject.SetActive(!string.IsNullOrWhiteSpace(phaseLabel));
     }
 
+    private void ApplyClockStrikeTextLayout(bool hasClockFaceSprite)
+    {
+        if (clockStrikeText == null)
+        {
+            return;
+        }
+
+        RectTransform textRect = clockStrikeText.GetComponent<RectTransform>();
+
+        if (textRect == null)
+        {
+            return;
+        }
+
+        if (hasClockFaceSprite)
+        {
+            textRect.anchorMin = new Vector2(0f, 0f);
+            textRect.anchorMax = new Vector2(1f, 0f);
+            textRect.pivot = new Vector2(0.5f, 0f);
+            textRect.anchoredPosition = new Vector2(0f, 24f);
+            textRect.sizeDelta = new Vector2(-48f, 58f);
+            clockStrikeText.fontSize = 34f;
+            clockStrikeText.alignment = TextAlignmentOptions.Center;
+            return;
+        }
+
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.pivot = new Vector2(0.5f, 0.5f);
+        textRect.offsetMin = new Vector2(24f, 24f);
+        textRect.offsetMax = new Vector2(-24f, -24f);
+        clockStrikeText.fontSize = 64f;
+        clockStrikeText.alignment = TextAlignmentOptions.Center;
+    }
+
+    private Sprite ResolveClockStrikeClockFaceSprite()
+    {
+        if (clockStrikeClockFaceSprite != null)
+        {
+            return clockStrikeClockFaceSprite;
+        }
+
+        clockStrikeClockFaceSprite = FindClockStrikeSpriteInResources();
+
+        if (clockStrikeClockFaceSprite != null)
+        {
+            return clockStrikeClockFaceSprite;
+        }
+
+#if UNITY_EDITOR
+        clockStrikeClockFaceSprite = FindClockStrikeSpriteInEditorAsset();
+
+        if (clockStrikeClockFaceSprite != null)
+        {
+            return clockStrikeClockFaceSprite;
+        }
+#endif
+
+        clockStrikeClockFaceSprite = FindLoadedClockStrikeSprite();
+        return clockStrikeClockFaceSprite;
+    }
+
+    private static Sprite FindClockStrikeSpriteInResources()
+    {
+        Sprite directSprite = Resources.Load<Sprite>(SevenOClockClockFaceResourceName);
+
+        if (directSprite != null)
+        {
+            return directSprite;
+        }
+
+        Sprite[] sprites = Resources.LoadAll<Sprite>(SevenOClockClockFaceResourceName);
+        return FindMatchingClockStrikeSprite(sprites);
+    }
+
+#if UNITY_EDITOR
+    private static Sprite FindClockStrikeSpriteInEditorAsset()
+    {
+        UnityEngine.Object[] assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(SevenOClockClockFaceAssetPath);
+
+        for (int i = 0; i < assets.Length; i++)
+        {
+            if (assets[i] is Sprite sprite && IsSevenOClockClockFaceSprite(sprite))
+            {
+                return sprite;
+            }
+        }
+
+        return null;
+    }
+#endif
+
+    private static Sprite FindLoadedClockStrikeSprite()
+    {
+        Sprite[] loadedSprites = Resources.FindObjectsOfTypeAll<Sprite>();
+        return FindMatchingClockStrikeSprite(loadedSprites);
+    }
+
+    private static Sprite FindMatchingClockStrikeSprite(Sprite[] sprites)
+    {
+        if (sprites == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            if (IsSevenOClockClockFaceSprite(sprites[i]))
+            {
+                return sprites[i];
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsSevenOClockClockFaceSprite(Sprite sprite)
+    {
+        if (sprite == null)
+        {
+            return false;
+        }
+
+        string spriteName = sprite.name ?? string.Empty;
+        string textureName = sprite.texture != null ? sprite.texture.name : string.Empty;
+        return ContainsIgnoreCase(spriteName, SevenOClockClockFaceResourceName) ||
+            ContainsIgnoreCase(textureName, SevenOClockClockFaceResourceName);
+    }
+
+    private static bool ContainsIgnoreCase(string value, string expected)
+    {
+        return !string.IsNullOrEmpty(value) &&
+            !string.IsNullOrEmpty(expected) &&
+            value.IndexOf(expected, StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
     private static TMP_Text FindOrCreateText(Transform root, string objectName, float fontSize, TextAlignmentOptions alignment)
     {
         Transform existing = root.Find(objectName);
@@ -407,6 +563,27 @@ public class Chapter2InteractionHUD : MonoBehaviour
         text.textWrappingMode = TextWrappingModes.Normal;
         text.raycastTarget = false;
         return text;
+    }
+
+    private static Image FindOrCreateImage(Transform root, string objectName)
+    {
+        Transform existing = root.Find(objectName);
+        Image image = existing != null
+            ? existing.GetComponent<Image>()
+            : null;
+
+        if (image != null)
+        {
+            return image;
+        }
+
+        GameObject imageObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        RectTransform rect = imageObject.GetComponent<RectTransform>();
+        rect.SetParent(root, false);
+
+        image = imageObject.GetComponent<Image>();
+        image.raycastTarget = false;
+        return image;
     }
 
     private Button FindOrCreatePrimaryButton(Transform root)
