@@ -6,11 +6,11 @@ People are authored as real scene objects under each room's `People` child. They
 
 Room people use a UI `Image` plus an `Animator` override controller so they still live inside the painted room stage. The generated clips animate both the Image `m_Sprite` field and SpriteRenderer `m_Sprite` field. This keeps the animation editable in Unity's Animation window while preserving the room-stage panning/zooming workflow.
 
-The source character sheets in `Assets/Characters/<CharacterName>` are normalized to a shared foot baseline per frame. Use the aligned frame folders when rebuilding clips so animation frames do not make the character bounce around.
+The current Chapter 1 guest and butler animation sprites live in `Assets/Art/Characters/guest1` through `Assets/Art/Characters/guest8` and `Assets/Art/Characters/butler`. Keep frames normalized to a shared foot baseline, and move each `.png.meta` with its `.png` so Unity Animator clips keep the same sprite GUID references. Older prototype character sources may still live in `Assets/Characters/<CharacterName>`.
 
 If a character's original sheet is side-only, add an explicit `directional/aligned` folder before rebuilding. Rows are interpreted like the butler controller: row 1 walks down/toward camera, row 2 walks left, row 3 walks right, and row 4 walks up/away. `GentlemanBlack` uses this folder because its original sheets did not contain authored front/back rows.
 
-`ButlerClassic` currently has the most complete player-facing setup: `Assets/Animation/ButlerClassic/ButlerClassic.controller` uses persistent `IsFacingUp`, `IsFacingDown`, `IsFacingLeft`, and `IsFacingRight` Animator parameters to pick one of four looping directional idle clips. The source idle frames live in `Assets/Characters/ButlerClassic/idle/aligned`.
+`ButlerClassic` currently has the most complete player-facing setup: `Assets/Animation/ButlerClassic/ButlerClassic.controller` uses persistent `IsFacingUp`, `IsFacingDown`, `IsFacingLeft`, and `IsFacingRight` Animator parameters to pick one of four looping directional idle clips. Its source idle and walk frames live in `Assets/Art/Characters/butler`.
 
 World-space SpriteRenderer props use `WorldYSortSpriteRenderer` when they need to depth-sort against the controllable butler. It mirrors `PointClickPlayerMovement`'s player sorting rule: Sorting Layer `People`, order `1000 - y * 100`, and Sprite Sort Point `Pivot`. The player sorts from the bottom of the visible SpriteRenderer bounds, and props can sort from the bottom of an editable physical footprint. A copied tutorial prop will not y-sort just because its pivot is bottom-center; it also needs this dynamic sorting order.
 
@@ -23,7 +23,7 @@ Useful tweaks:
 - Move path points on `RoomPersonWalker2D` to change where a person walks.
 - Resize the `Image` RectTransform to change character height.
 - Fix frame timing, bad frames, or direction bugs in `Assets/Animation/<CharacterName>/*.anim`, not in `RoomPersonWalker2D`.
-- Use `Dreadforge > Characters > Rebuild Character Animation Assets` after changing source frame folders.
+- Use `Dreadforge > Characters > Rebuild Character Animation Assets` after changing legacy source frame folders under `Assets/Characters`; use character-specific rebuild menu items when they exist.
 - Adjust `Near Y`, `Far Y`, `Near Scale`, and `Far Scale` for perspective.
 - Keep `Preview Path In Edit Mode` off while placing people. The animation frames still preview, but the scene object will not quietly walk away while you edit.
 - Keep `Snap To Whole Pixels` off for scaled room walkers unless a specific character needs crunchy pixel locking. Subpixel motion reads smoother while the room stage pans and zooms.

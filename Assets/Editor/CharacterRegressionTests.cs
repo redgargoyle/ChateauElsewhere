@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
@@ -12,9 +13,10 @@ public class CharacterRegressionTests
     private const string CharacterAnimatorDriverPath = "Assets/Scripts/Characters/CharacterAnimatorDriver.cs";
     private const string CharacterAnimationAssetBuilderPath = "Assets/Editor/CharacterAnimationAssetBuilder.cs";
     private const string CharactersReadmePath = "Assets/Scripts/Characters/README.md";
+    private const string CharacterArtRoot = "Assets/Art/Characters";
     private const string PlayerWalkUpClipPath = "Assets/Animation/Player/Player_Walk_Up.anim";
     private const string ButlerClassicControllerPath = "Assets/Animation/ButlerClassic/ButlerClassic.controller";
-    private const string ButlerClassicIdleFolder = "Assets/Characters/ButlerClassic/idle/aligned";
+    private const string ButlerClassicIdleFolder = "Assets/Art/Characters/butler";
     private const string ButlerClassicIdleDownClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Down.anim";
     private const string ButlerClassicIdleLeftClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Left.anim";
     private const string ButlerClassicIdleRightClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Right.anim";
@@ -25,25 +27,25 @@ public class CharacterRegressionTests
     private const string GentlemanBlackWalkLeftClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Left.anim";
     private const string GentlemanBlackWalkRightClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Right.anim";
     private const string GentlemanBlackWalkUpClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Up.anim";
-    private const string LadyDirectionalFolder = "Assets/Characters/Lady/walk/aligned";
-    private const string LadyIdleFramePrefix = "Assets/Characters/Lady/idle/aligned/lady_idle_down";
+    private const string LadyDirectionalFolder = "Assets/Art/Characters/guest1";
+    private const string LadyIdleFramePrefix = "Assets/Art/Characters/guest1/lady_idle_down";
     private const string LadyOverrideControllerMetaPath = "Assets/Animation/Lady/Lady.overrideController.meta";
     private const string LadyIdleClipPath = "Assets/Animation/Lady/Lady_Idle.anim";
     private const string LadyWalkDownClipPath = "Assets/Animation/Lady/Lady_Walk_Down.anim";
     private const string LadyWalkLeftClipPath = "Assets/Animation/Lady/Lady_Walk_Left.anim";
     private const string LadyWalkRightClipPath = "Assets/Animation/Lady/Lady_Walk_Right.anim";
     private const string LadyWalkUpClipPath = "Assets/Animation/Lady/Lady_Walk_Up.anim";
-    private const string ButlerGuestSpriteMetaPath = "Assets/Art/Characters/butlersprite.png.meta";
-    private const string ButlerGuestStandingSidePath = "Assets/Art/Characters/butler_guest_standing_arms_side_same_angle.png";
-    private const string ButlerGuestStandingSideLeftPath = "Assets/Art/Characters/butler_guest_standing_arms_side_same_angle_left.png";
-    private const string ButlerGuestIdleFramePrefix = "Assets/Art/Characters/butler_guest_idle_down";
+    private const string ButlerGuestSpriteMetaPath = "Assets/Art/Characters/guest2/butlersprite.png.meta";
+    private const string ButlerGuestStandingSidePath = "Assets/Art/Characters/guest2/butler_guest_standing_arms_side_same_angle.png";
+    private const string ButlerGuestStandingSideLeftPath = "Assets/Art/Characters/guest2/butler_guest_standing_arms_side_same_angle_left.png";
+    private const string ButlerGuestIdleFramePrefix = "Assets/Art/Characters/guest2/butler_guest_idle_down";
     private const string ButlerGuestOverrideControllerMetaPath = "Assets/Animation/ButlerGuest/ButlerGuest.overrideController.meta";
     private const string ButlerGuestIdleClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Idle.anim";
     private const string ButlerGuestWalkDownClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Down.anim";
     private const string ButlerGuestWalkLeftClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Left.anim";
     private const string ButlerGuestWalkRightClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Right.anim";
     private const string ButlerGuestWalkUpClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Up.anim";
-    private const string MisterFlorianWalkFolder = "Assets/Characters/MisterFlorianKnell/walk/aligned";
+    private const string MisterFlorianWalkFolder = "Assets/Art/Characters/guest3";
     private const string MisterFlorianOverrideControllerPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell.overrideController";
     private const string MisterFlorianOverrideControllerMetaPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell.overrideController.meta";
     private const string MisterFlorianIdleClipPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle.anim";
@@ -51,15 +53,13 @@ public class CharacterRegressionTests
     private const string MisterFlorianWalkLeftClipPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Left.anim";
     private const string MisterFlorianWalkRightClipPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Right.anim";
     private const string MisterFlorianWalkUpClipPath = "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Walk_Up.anim";
-    private const string CountessWalkFolder = "Assets/Characters/CountessElowenDusk/walk/aligned";
+    private const string CountessWalkFolder = "Assets/Art/Characters/guest4";
     private const string CountessOverrideControllerMetaPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk.overrideController.meta";
     private const string CountessWalkDownClipPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Down.anim";
     private const string CountessWalkLeftClipPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Left.anim";
     private const string CountessWalkRightClipPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Right.anim";
     private const string CountessWalkUpClipPath = "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Up.anim";
     private const string AnimationFolder = "Assets/Animation";
-    private const string AtlasFolder = "Assets/Art/Characters/Atlases";
-    private const string SourceFolder = "Assets/Art/Characters/SourceSheets";
 
     [Test]
     public void RoomPeopleAreEditableDepthScaledSceneObjects()
@@ -104,8 +104,7 @@ public class CharacterRegressionTests
         Assert.That(sceneText, Does.Contain("guid: 5b37355315364217b2e5185b619c748d"), "The lady Image should start on a generated sprite frame.");
         Assert.That(Directory.GetFiles(AnimationFolder, "*.overrideController", SearchOption.AllDirectories).Length, Is.GreaterThanOrEqualTo(8), "Each character folder should have a generated Animator override controller.");
         Assert.That(Directory.GetFiles(AnimationFolder, "*_Walk_*.anim", SearchOption.AllDirectories).Length, Is.GreaterThanOrEqualTo(32), "Characters should expose editable directional walk clips under Assets/Animation.");
-        Assert.That(Directory.GetFiles(AtlasFolder, "*_atlas.png").Length, Is.EqualTo(8), "All generated character sheets should have project-owned transparent atlases.");
-        Assert.That(Directory.GetFiles(SourceFolder, "*_source.png").Length, Is.EqualTo(8), "The original generated sheets should be kept for later reprocessing.");
+        AssertCharacterArtRootIsGuestAndButlerFoldersOnly();
         Assert.That(readmeText, Does.Contain("Unity Animator"));
         Assert.That(readmeText, Does.Contain("SpriteRenderer"));
         Assert.That(readmeText, Does.Contain("foot baseline"));
@@ -195,9 +194,9 @@ public class CharacterRegressionTests
         Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Right.anim.meta")), "Mister Florian should not wire the directional right idle clip.");
         Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Up.anim.meta")), "Mister Florian should not wire the directional up idle clip.");
 
-        AssertForwardIdleClip(File.ReadAllText(MisterFlorianIdleClipPath), "Assets/Characters/MisterFlorianKnell/idle/aligned/mister_florian_knell_idle_down", "Mister Florian", 166, 297, "100", "0.5");
-        AssertForwardIdleMatchesWalkScale($"{MisterFlorianWalkFolder}/mister_florian_knell_walk_01_r01_c01.png", "Assets/Characters/MisterFlorianKnell/idle/aligned/mister_florian_knell_idle_down", "Mister Florian");
-        Assert.That(Directory.GetFiles(MisterFlorianWalkFolder, "mister_florian_knell_walk_*.png").Length, Is.EqualTo(28), "Mister Florian should keep seven generated walk frames for each of four directions.");
+        AssertForwardIdleClip(File.ReadAllText(MisterFlorianIdleClipPath), "Assets/Art/Characters/guest3/mister_florian_knell_idle_down", "Mister Florian", 166, 297, "100", "0.5");
+        AssertForwardIdleMatchesWalkScale($"{MisterFlorianWalkFolder}/mister_florian_knell_walk_01_r01_c01.png", "Assets/Art/Characters/guest3/mister_florian_knell_idle_down", "Mister Florian");
+        Assert.That(Directory.GetFiles(MisterFlorianWalkFolder, "mister_florian_knell_walk_*.png").Length, Is.EqualTo(18), "Guest 3 should keep only the Mister Florian walk frames used by the shipped clips.");
         AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkDownClipPath), 1, "down");
         AssertCustomSideWalkSequence(File.ReadAllText(MisterFlorianWalkLeftClipPath), MisterFlorianWalkFolder, "mister_florian_knell", "left", "Mister Florian");
         AssertCustomSideWalkSequence(File.ReadAllText(MisterFlorianWalkRightClipPath), MisterFlorianWalkFolder, "mister_florian_knell", "right", "Mister Florian");
@@ -220,8 +219,8 @@ public class CharacterRegressionTests
         Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredCountessGuestAnimation"), "Runtime guest setup should preserve Guest 4's authored Countess animation.");
         Assert.That(arrivalControllerText, Does.Contain("index == 3 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[3])"), "Only the authored Guest 4 object should keep Countess animation.");
 
-        AssertForwardIdleClip(File.ReadAllText("Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle.anim"), "Assets/Characters/CountessElowenDusk/idle/aligned/countess_elowen_dusk_idle_down", "Countess", 166, 297, "100", "0.5");
-        AssertForwardIdleMatchesWalkScale($"{CountessWalkFolder}/countess_elowen_dusk_walk_01_r01_c01.png", "Assets/Characters/CountessElowenDusk/idle/aligned/countess_elowen_dusk_idle_down", "Countess");
+        AssertForwardIdleClip(File.ReadAllText("Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle.anim"), "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down", "Countess", 166, 297, "100", "0.5");
+        AssertForwardIdleMatchesWalkScale($"{CountessWalkFolder}/countess_elowen_dusk_walk_01_r01_c01.png", "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down", "Countess");
         AssertClipUsesCountessRow(File.ReadAllText(CountessWalkDownClipPath), 1, "down");
         AssertClipUsesCountessRow(File.ReadAllText(CountessWalkLeftClipPath), 2, "left");
         AssertClipUsesCountessRow(File.ReadAllText(CountessWalkRightClipPath), 3, "right");
@@ -231,8 +230,8 @@ public class CharacterRegressionTests
     [Test]
     public void CustomMaleSideStandingFramesMatchWalkScale()
     {
-        const string baronHectorWalkFolder = "Assets/Characters/BaronHectorGlass/walk/aligned";
-        const string lordAmbroseWalkFolder = "Assets/Characters/LordAmbroseVeil/walk/aligned";
+        const string baronHectorWalkFolder = "Assets/Art/Characters/guest5";
+        const string lordAmbroseWalkFolder = "Assets/Art/Characters/guest7";
 
         AssertCustomSideStandingFrameMatchesWalkScale(MisterFlorianWalkFolder, "mister_florian_knell", "left", "Mister Florian");
         AssertCustomSideStandingFrameMatchesWalkScale(MisterFlorianWalkFolder, "mister_florian_knell", "right", "Mister Florian");
@@ -251,9 +250,9 @@ public class CharacterRegressionTests
         AssertNamedGuestAnimationAssets("Madame Coralie Thread", "MadameCoralieThread", "madame_coralie_thread", true);
         AssertNamedGuestAnimationAssets("Miss Isolde Wren", "MissIsoldeWren", "miss_isolde_wren", false);
         AssertNamedGuestAnimationAssets("Professor Lucien Vale", "ProfessorLucienVale", "professor_lucien_vale", false);
-        AssertForwardIdleMatchesWalkScale("Assets/Characters/LadySabineMarrow/walk/aligned/lady_sabine_marrow_walk_01_r01_c01.png", "Assets/Characters/LadySabineMarrow/idle/aligned/lady_sabine_marrow_idle_down", "Lady Sabine Marrow");
-        AssertForwardIdleMatchesWalkScale("Assets/Characters/LordAmbroseVeil/walk/aligned/lord_ambrose_veil_walk_01_r01_c01.png", "Assets/Characters/LordAmbroseVeil/idle/aligned/lord_ambrose_veil_idle_down", "Lord Ambrose Veil");
-        AssertForwardIdleMatchesWalkScale("Assets/Characters/MadameCoralieThread/walk/aligned/madame_coralie_thread_walk_01_r01_c01.png", "Assets/Characters/MadameCoralieThread/idle/aligned/madame_coralie_thread_idle_down", "Madame Coralie Thread");
+        AssertForwardIdleMatchesWalkScale("Assets/Art/Characters/guest6/lady_sabine_marrow_walk_01_r01_c01.png", "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_down", "Lady Sabine Marrow");
+        AssertForwardIdleMatchesWalkScale("Assets/Art/Characters/guest7/lord_ambrose_veil_walk_01_r01_c01.png", "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down", "Lord Ambrose Veil");
+        AssertForwardIdleMatchesWalkScale("Assets/Art/Characters/guest8/madame_coralie_thread_walk_01_r01_c01.png", "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down", "Madame Coralie Thread");
     }
 
     [Test]
@@ -542,7 +541,7 @@ public class CharacterRegressionTests
 
     private static void AssertSceneGuestUsesNamedAnimation(string sceneText, int guestNumber, string displayName, string assetName, string filePrefix)
     {
-        string walkFolder = $"Assets/Characters/{assetName}/walk/aligned";
+        string walkFolder = GetCharacterWalkFolder(assetName);
         string animationFolder = $"Assets/Animation/{assetName}";
         string guestBlock = FindPrefabInstanceBlock(sceneText, $"value: Guest {guestNumber}");
         string firstFrameGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_01_r01_c01.png.meta");
@@ -560,14 +559,14 @@ public class CharacterRegressionTests
 
     private static void AssertNamedGuestAnimationAssets(string displayName, string assetName, string filePrefix, bool usesForwardIdle)
     {
-        string walkFolder = $"Assets/Characters/{assetName}/walk/aligned";
-        string idleFramePrefix = $"Assets/Characters/{assetName}/idle/aligned/{filePrefix}_idle_down";
+        string walkFolder = GetCharacterWalkFolder(assetName);
+        string idleFramePrefix = GetCharacterIdleFramePrefix(assetName, filePrefix);
         string animationFolder = $"Assets/Animation/{assetName}";
         string overrideText = File.ReadAllText($"{animationFolder}/{assetName}.overrideController");
         string firstFrameGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_01_r01_c01.png.meta");
         string idleClipGuid = ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle.anim.meta");
 
-        Assert.That(Directory.GetFiles(walkFolder, $"{filePrefix}_walk_*.png").Length, Is.EqualTo(32), $"{displayName} should keep eight generated walk frames for each of four directions.");
+        Assert.That(Directory.GetFiles(walkFolder, $"{filePrefix}_walk_*.png").Length, Is.EqualTo(GetExpectedWalkFrameCount(assetName)), $"{displayName} should keep the walk frames used by the shipped clips.");
         Assert.That(overrideText, Does.Contain(idleClipGuid), $"{displayName} override controller should wire generic idle states to the main idle clip.");
         Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Down.anim.meta")), $"{displayName} should not wire the separate directional down idle clip.");
         Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Left.anim.meta")), $"{displayName} should not wire the directional left idle clip.");
@@ -602,6 +601,70 @@ public class CharacterRegressionTests
         return assetName == "BaronHectorGlass"
             || assetName == "LordAmbroseVeil"
             || assetName == "ProfessorLucienVale";
+    }
+
+    private static string GetCharacterWalkFolder(string assetName)
+    {
+        return assetName switch
+        {
+            "BaronHectorGlass" => $"{CharacterArtRoot}/guest5",
+            "LadySabineMarrow" => $"{CharacterArtRoot}/guest6",
+            "LordAmbroseVeil" => $"{CharacterArtRoot}/guest7",
+            "MadameCoralieThread" => $"{CharacterArtRoot}/guest8",
+            _ => $"Assets/Characters/{assetName}/walk/aligned"
+        };
+    }
+
+    private static int GetExpectedWalkFrameCount(string assetName)
+    {
+        return assetName == "BaronHectorGlass" || assetName == "LordAmbroseVeil" ? 20 : 32;
+    }
+
+    private static string GetCharacterIdleFramePrefix(string assetName, string filePrefix)
+    {
+        return assetName switch
+        {
+            "BaronHectorGlass" => $"{CharacterArtRoot}/guest5/{filePrefix}_idle_down",
+            "LadySabineMarrow" => $"{CharacterArtRoot}/guest6/{filePrefix}_idle_down",
+            "LordAmbroseVeil" => $"{CharacterArtRoot}/guest7/{filePrefix}_idle_down",
+            "MadameCoralieThread" => $"{CharacterArtRoot}/guest8/{filePrefix}_idle_down",
+            _ => $"Assets/Characters/{assetName}/idle/aligned/{filePrefix}_idle_down"
+        };
+    }
+
+    private static void AssertCharacterArtRootIsGuestAndButlerFoldersOnly()
+    {
+        string[] expectedFolders =
+        {
+            "butler",
+            "guest1",
+            "guest2",
+            "guest3",
+            "guest4",
+            "guest5",
+            "guest6",
+            "guest7",
+            "guest8"
+        };
+        string[] actualFolders = Directory.GetDirectories(CharacterArtRoot)
+            .Select(Path.GetFileName)
+            .OrderBy(folder => folder, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        Assert.That(actualFolders, Is.EqualTo(expectedFolders.OrderBy(folder => folder, StringComparer.OrdinalIgnoreCase).ToArray()), "Assets/Art/Characters should contain only the labeled guest and butler folders.");
+        Assert.That(Directory.GetFiles(CharacterArtRoot, "*.png").Length, Is.EqualTo(0), "Character images should not sit loose in Assets/Art/Characters.");
+
+        for (int i = 0; i < expectedFolders.Length; i++)
+        {
+            string folderPath = $"{CharacterArtRoot}/{expectedFolders[i]}";
+            Assert.That(Directory.GetFiles(folderPath, "*.png").Length, Is.GreaterThan(0), $"{expectedFolders[i]} should contain the images used by its animations.");
+
+            foreach (string filePath in Directory.GetFiles(folderPath))
+            {
+                string extension = Path.GetExtension(filePath);
+                Assert.That(extension == ".png" || extension == ".meta", Is.True, $"{expectedFolders[i]} should contain only sprite images and Unity meta files.");
+            }
+        }
     }
 
     private static void AssertCustomSideWalkSequence(string clipText, string walkFolder, string filePrefix, string direction, string displayName)
