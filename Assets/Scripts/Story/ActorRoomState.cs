@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class ActorRoomState : MonoBehaviour
 {
     private const string DiagnosticPrefix = "[Ch2ClickDiag]";
+    private static readonly int IsCrouchingHash = Animator.StringToHash("IsCrouching");
 
     [Header("Actor")]
     [SerializeField] private string actorId;
@@ -28,6 +29,7 @@ public class ActorRoomState : MonoBehaviour
     private Collider[] colliders3D = new Collider[0];
     private Collider2D[] colliders2D = new Collider2D[0];
     private CanvasGroup[] canvasGroups = new CanvasGroup[0];
+    private Animator[] animators = new Animator[0];
     private CameraManager cameraManager;
     private Vector2 lastRoomStageScreenCenter;
     private float lastRoomStageScreenScale = 1f;
@@ -131,6 +133,8 @@ public class ActorRoomState : MonoBehaviour
     public void SetSeated(bool value)
     {
         isSeated = value;
+        RefreshComponentCache();
+        ApplySeatedAnimatorState();
     }
 
     public void PlaceAt(Transform target)
@@ -209,6 +213,8 @@ public class ActorRoomState : MonoBehaviour
 
         bool shouldBeVisible = ShouldBeVisible();
         bool shouldBeInteractable = shouldBeVisible && isInteractable;
+
+        ApplySeatedAnimatorState();
 
         for (int i = 0; i < renderers.Length; i++)
         {
@@ -321,6 +327,44 @@ public class ActorRoomState : MonoBehaviour
         colliders3D = root.GetComponentsInChildren<Collider>(true);
         colliders2D = root.GetComponentsInChildren<Collider2D>(true);
         canvasGroups = root.GetComponentsInChildren<CanvasGroup>(true);
+        animators = root.GetComponentsInChildren<Animator>(true);
+    }
+
+    private void ApplySeatedAnimatorState()
+    {
+        for (int i = 0; i < animators.Length; i++)
+        {
+            Animator animator = animators[i];
+
+            if (!CanSetAnimatorBool(animator, IsCrouchingHash))
+            {
+                continue;
+            }
+
+            animator.SetBool(IsCrouchingHash, isSeated);
+        }
+    }
+
+    private static bool CanSetAnimatorBool(Animator animator, int parameterHash)
+    {
+        if (animator == null || animator.runtimeAnimatorController == null || !animator.isActiveAndEnabled)
+        {
+            return false;
+        }
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+
+            if (parameter.nameHash == parameterHash && parameter.type == AnimatorControllerParameterType.Bool)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void LogGuestApplyStateChangeIfNeeded(bool shouldBeVisible, bool shouldBeInteractable)

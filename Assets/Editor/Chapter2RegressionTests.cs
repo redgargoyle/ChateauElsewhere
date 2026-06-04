@@ -312,11 +312,11 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Match(@"\bHideGuestForDiningRoomTransfer\s*\("));
         Assert.That(guestSearchText, Does.Match(@"\bRunGuestExitToDiningRoomRoutine\s*\("));
         Assert.That(guestSearchText, Does.Match(@"\bStageGuestForDiningRoomReveal\s*\("));
-        Assert.That(guestSearchText, Does.Match(@"(?s)\bStageGuestForDiningRoomReveal\s*\([^)]*\)\s*\{.*SetCurrentRoom\(targetRoom\).*SetVisibleByChapterState\(false\).*ApplyState\(\)"), "Spoken-to guests should leave the search room and wait hidden for the Dining Room reveal.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bStageGuestForDiningRoomReveal\s*\([^)]*\)\s*\{.*SetCurrentRoom\(targetRoom\).*SetVisibleByChapterState\(false\).*SetSeated\(true\).*ApplyState\(\)"), "Spoken-to guests should leave the search room and wait hidden/seated for the Dining Room reveal.");
         Assert.That(guestSearchText, Does.Match(@"(?s)\bHideGuestForDiningRoomTransfer\s*\([^)]*\)\s*\{.*SetVisibleByChapterState\(false\).*ApplyState\(\)"), "Guests should be hidden from their search rooms before being moved to Dining Room seats.");
-        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*HideGuestForDiningRoomTransfer\(guest\).*PlaceAt\(diningSeat\.transform\).*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*ApplyState\(\)"), "Dining seating should hide, move, assign Dining Room, then restore visibility through ActorRoomState.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*HideGuestForDiningRoomTransfer\(guest\).*PlaceAt\(diningSeat\.transform\).*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*SetSeated\(true\).*ApplyState\(\)"), "Dining seating should hide, move, assign Dining Room, mark seated, then restore visibility through ActorRoomState.");
         Assert.That(guestSearchText, Does.Contain("SetCurrentRoom(diningSeat.RoomId)"));
-        Assert.That(guestSearchText, Does.Contain("SetSeated(false)"));
+        Assert.That(guestSearchText, Does.Contain("SetSeated(false)"), "Guests should still stand while being searched/clicked before the dining reveal.");
         Assert.That(controllerText, Does.Contain("BeginDiningRoomObjective()"));
         Assert.That(controllerText, Does.Match(@"\bRunDiningObjectiveTransitionRoutine\s*\("));
         Assert.That(controllerText, Does.Contain("SetDinnerClockAndStop()"));

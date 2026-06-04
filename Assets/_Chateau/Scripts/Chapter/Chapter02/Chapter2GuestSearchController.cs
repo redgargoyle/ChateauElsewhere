@@ -475,7 +475,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetAvailableInCurrentChapter(true);
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(false);
-            guest.actorState.SetSeated(false);
+            guest.actorState.SetSeated(true);
             guest.actorState.ApplyState();
         }
     }
@@ -894,7 +894,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
         guest.actorState.SetCurrentRoom(targetRoom);
         guest.actorState.SetAvailableInCurrentChapter(true);
         guest.actorState.SetVisibleByChapterState(false);
-        guest.actorState.SetSeated(false);
+        guest.actorState.SetSeated(true);
         guest.actorState.ApplyState();
     }
 

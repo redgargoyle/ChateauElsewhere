@@ -30,8 +30,11 @@ public class CharacterRegressionTests
     private const string GentlemanBlackWalkUpClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Up.anim";
     private const string LadyDirectionalFolder = "Assets/Art/Characters/guest1";
     private const string LadyIdleFramePrefix = "Assets/Art/Characters/guest1/lady_idle_down";
+    private const string LadySittingFramePrefix = "Assets/Art/Characters/guest1/lady_sitting";
+    private const string LadyOverrideControllerPath = "Assets/Animation/Lady/Lady.overrideController";
     private const string LadyOverrideControllerMetaPath = "Assets/Animation/Lady/Lady.overrideController.meta";
     private const string LadyIdleClipPath = "Assets/Animation/Lady/Lady_Idle.anim";
+    private const string LadySittingClipPath = "Assets/Animation/Lady/Lady_Sitting.anim";
     private const string LadyWalkDownClipPath = "Assets/Animation/Lady/Lady_Walk_Down.anim";
     private const string LadyWalkLeftClipPath = "Assets/Animation/Lady/Lady_Walk_Left.anim";
     private const string LadyWalkRightClipPath = "Assets/Animation/Lady/Lady_Walk_Right.anim";
@@ -121,6 +124,8 @@ public class CharacterRegressionTests
         string guestTwoBlock = FindPrefabInstanceBlock(sceneText, "value: Guest 2");
         string firstLadyFrameGuid = ReadGuidFromMeta($"{LadyDirectionalFolder}/lady_walk_01_r01_c01.png.meta");
         string ladyControllerGuid = ReadGuidFromMeta(LadyOverrideControllerMetaPath);
+        string ladySittingClipGuid = ReadGuidFromMeta($"{LadySittingClipPath}.meta");
+        string ladyOverrideControllerText = File.ReadAllText(LadyOverrideControllerPath);
 
         Assert.That(guestOneBlock, Is.Not.Null, "Guest 1 should remain a named scene prefab instance.");
         Assert.That(guestOneBlock, Does.Contain(firstLadyFrameGuid), "Guest 1 should preview with the root Lady frame instead of the player butler sprite.");
@@ -137,8 +142,10 @@ public class CharacterRegressionTests
         Assert.That(arrivalControllerText, Does.Contain("!IsCoatVisualTransform(renderer.transform)"), "Character sprite lookup should ignore coat renderers.");
         Assert.That(arrivalControllerText, Does.Not.Contain("guestRenderers[i].sprite = sourceRenderer.sprite"), "The butler reset must not overwrite every guest SpriteRenderer, or coats collapse to a tiny transparent corner.");
 
+        Assert.That(ladyOverrideControllerText, Does.Match($@"(?s)m_OriginalClip: \{{fileID: 7400000, guid: ae2b75cd2fa12a2a990986dc14eee676, type: 2\}}\s+m_OverrideClip: \{{fileID: 7400000, guid: {ladySittingClipGuid}, type: 2\}}"), "Guest 1 should use her sitting loop when ActorRoomState drives the shared crouch/seated animator state.");
         AssertLadyFramesUseSingleSpriteImports();
         AssertForwardIdleClip(File.ReadAllText(LadyIdleClipPath), LadyIdleFramePrefix, "Lady", 180, 290, "100", "0.5");
+        AssertLadySittingClip(File.ReadAllText(LadySittingClipPath));
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkDownClipPath), 1, "down");
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkLeftClipPath), 2, "left");
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkRightClipPath), 3, "right");
@@ -393,6 +400,33 @@ public class CharacterRegressionTests
             Assert.That(metaText, Does.Contain("spriteMode: 1"), $"Lady frame {frame} should import as a single sprite for Animator clip references.");
             Assert.That(metaText, Does.Contain("alignment: 0"), $"Lady frame {frame} should use the same importer alignment as the butler frames.");
             Assert.That(metaText, Does.Contain("spritePivot: {x: 0.5, y: 0.0}"), $"Lady frame {frame} should serialize the same sprite pivot as the butler frames.");
+        }
+    }
+
+    private static void AssertLadySittingClip(string clipText)
+    {
+        Assert.That(clipText, Does.Contain("classID: 114"), "Lady sitting should bind UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), "Lady sitting should bind SpriteRenderers for prefab-stage reuse.");
+        Assert.That(Regex.Matches(clipText, @"value: \{fileID: 21300000").Count, Is.EqualTo(8), "Lady sitting should have four sprite keys for Image and four for SpriteRenderer.");
+        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: 21300000, guid: [0-9a-f]{32}, type: 3\}$", RegexOptions.Multiline).Count, Is.EqualTo(8), "Lady sitting should keep four pointer mappings per binding.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 4"), "Lady sitting should animate as a slow seated idle.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 1"), "Lady sitting should loop over a full one-second cycle.");
+        Assert.That(clipText, Does.Contain("m_LoopTime: 1"), "Lady sitting should loop.");
+
+        for (int i = 1; i <= 4; i++)
+        {
+            string framePath = $"{LadySittingFramePrefix}_{i:00}.png";
+            string metaPath = $"{framePath}.meta";
+            string frameGuid = ReadGuidFromMeta(metaPath);
+            string metaText = File.ReadAllText(metaPath);
+
+            Assert.That(ReadVisibleSpriteBounds(framePath, 365, 599).height, Is.GreaterThanOrEqualTo(570), $"Lady sitting frame {i} should keep the full seated figure.");
+            Assert.That(metaText, Does.Contain("spriteMode: 1"), $"Lady sitting frame {i} should import as a single sprite.");
+            Assert.That(metaText, Does.Contain("spritePixelsToUnits: 206.55172"), $"Lady sitting frame {i} should render at the same world scale as the standing Lady frames.");
+            Assert.That(metaText, Does.Contain("spritePivot: {x: 0.5, y: 0"), $"Lady sitting frame {i} should keep a bottom-center pivot.");
+            Assert.That(metaText, Does.Contain("alphaIsTransparency: 1"), $"Lady sitting frame {i} should keep transparent sprite import behavior.");
+            Assert.That(metaText, Does.Contain("filterMode: 1"), $"Lady sitting frame {i} should keep point filtering.");
+            Assert.That(clipText, Does.Contain(frameGuid), $"Lady sitting clip should include frame {i}.");
         }
     }
 
