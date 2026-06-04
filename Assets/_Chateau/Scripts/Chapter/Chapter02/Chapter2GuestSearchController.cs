@@ -84,6 +84,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
     {
         AutoDiscoverGuestsIfNeeded();
         AutoAssignHideAnchorsIfNeeded();
+        activeConversationGuest = null;
         foundOrderCounter = 0;
 
         if (foundGuestIdsInOrder == null)

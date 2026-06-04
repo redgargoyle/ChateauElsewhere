@@ -71,6 +71,8 @@ public class Chapter2RegressionTests
         };
 
         Assert.That(controllerText, Does.Match(@"\bBeginChapter2\s*\("), "Chapter2Controller should expose BeginChapter2.");
+        Assert.That(controllerText, Does.Match(@"\bDebugResetForChapter2Skip\s*\("), "Chapter2Controller should expose a reset path for repeated debug skips.");
+        Assert.That(controllerText, Does.Match(@"(?s)\bDebugResetForChapter2Skip\s*\([^)]*\)\s*\{.*StopChapter2Coroutines\s*\(\).*StopStinger\s*\(.*currentPhase\s*=\s*Chapter2Phase\.NotStarted"), "Debug skip reset should stop stale Chapter 2 routines before allowing BeginChapter2 to run again.");
         Assert.That(controllerText, Does.Match(@"\bHandleAddressGuestsPrompt\s*\("), "Chapter2Controller should expose the address prompt callback.");
         Assert.That(controllerText, Does.Contain("Chapter2InteractionHUD"), "Chapter2Controller should use the Chapter 2 interaction HUD.");
         Assert.That(controllerText, Does.Contain("Chapter2MonsterStingerController"), "Chapter2Controller should use the Chapter 2 monster stinger controller.");
@@ -105,6 +107,7 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("AudioSource"));
         Assert.That(stingerText, Does.Match(@"\bBeginStinger\s*\("));
         Assert.That(stingerText, Does.Match(@"\bStopStinger\s*\("));
+        Assert.That(stingerText, Does.Contain("public bool IsRunning => isRunning || stingerRoutine != null"));
         Assert.That(stingerText, Does.Contain("minimumRunSeconds = 1f"));
         Assert.That(stingerText, Does.Contain("maximumRunSeconds = 2f"));
         Assert.That(stingerText, Does.Contain("minimumFreezeSeconds = 1f"));
@@ -145,7 +148,8 @@ public class Chapter2RegressionTests
         string controllerText = File.ReadAllText(Chapter2ControllerPath);
 
         Assert.That(controllerText, Does.Match(@"\bRunMonsterStingerRoutine\s*\("));
-        Assert.That(controllerText, Does.Match(@"(?s)\bRunMonsterStingerRoutine\s*\([^)]*\)\s*\{.*PlayStinger\s*\(.*SetPhase\s*\(\s*Chapter2Phase\.GuestSearch\s*\)"), "Monster stinger should complete before Chapter 2 enters GuestSearch.");
+        Assert.That(controllerText, Does.Contain("monsterStingerTimeoutSeconds = 14f"), "Monster stinger should have a watchdog timeout so Chapter 2 cannot stall before GuestSearch.");
+        Assert.That(controllerText, Does.Match(@"(?s)\bRunMonsterStingerRoutine\s*\([^)]*\)\s*\{.*BeginStinger\s*\(.*monsterStinger\.IsRunning.*Time\.unscaledDeltaTime.*StopStinger\s*\(.*StartGuestSearch\s*\(\);\s*SetPhase\s*\(\s*Chapter2Phase\.GuestSearch\s*\)"), "Monster stinger should run before GuestSearch, but time out and continue if it gets stuck.");
         Assert.That(controllerText, Does.Contain("Find the guests. Tell them dinner will be served at 7:00 PM sharp."));
     }
 
@@ -163,6 +167,7 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Not.Contain("hideRoomId = \"Ballroom\""));
         Assert.That(guestSearchText, Does.Contain("SetCurrentRoom(guest.hideAnchor.RoomId)"));
         Assert.That(guestSearchText, Does.Contain("guests.Sort(CompareGuestIdentity)"));
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bBeginSearch\s*\([^)]*\)\s*\{.*activeConversationGuest\s*=\s*null"), "Beginning a fresh Chapter 2 guest search should clear any previous active conversation.");
         Assert.That(guestSearchText, Does.Contain("Ch2_DiningSeat_"));
         Assert.That(guestSearchText, Does.Contain("GuestCount"));
         Assert.That(guestSearchText, Does.Contain("FoundGuestCount"));

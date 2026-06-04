@@ -277,6 +277,7 @@ public class ChapterManager : MonoBehaviour
 
         if (chapter2Controller != null)
         {
+            chapter2Controller.DebugResetForChapter2Skip(this);
             chapter2Controller.BeginChapter2(this);
             chapter1ArrivalController?.HideGuestCoatsForChapter2Skip();
         }

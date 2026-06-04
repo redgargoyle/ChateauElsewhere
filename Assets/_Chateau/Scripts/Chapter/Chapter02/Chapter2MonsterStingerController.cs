@@ -37,7 +37,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     private bool subscribedToRoomChanges;
     private float visibleElapsedSeconds;
 
-    public bool IsRunning => isRunning;
+    public bool IsRunning => isRunning || stingerRoutine != null;
 
     private struct StingerCycleTiming
     {

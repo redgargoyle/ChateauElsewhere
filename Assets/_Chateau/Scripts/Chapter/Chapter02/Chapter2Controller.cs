@@ -41,6 +41,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField, Range(0, 59)] private int dinnerMinute;
     [SerializeField] private float diningRoomRevealSeconds = 5f;
     [SerializeField] private float clockStrikeCloseUpSeconds = 2.25f;
+    [SerializeField, Min(0.1f)] private float monsterStingerTimeoutSeconds = 14f;
     [SerializeField] private AudioSource clockStrikeAudioSource;
 
     [Header("Speech")]
@@ -177,6 +178,36 @@ public class Chapter2Controller : MonoBehaviour
         UpdateFoundGuestsHud();
         SetPhase(Chapter2Phase.Complete);
         SetPlayerInputEnabled(true);
+    }
+
+    public void DebugResetForChapter2Skip(ChapterManager manager)
+    {
+        chapterManager = manager != null ? manager : chapterManager;
+        ResolveReferences();
+        StopChapter2Coroutines();
+
+        if (monsterStinger != null)
+        {
+            monsterStinger.StopStinger();
+        }
+
+        if (clockStrikeAudioSource != null)
+        {
+            clockStrikeAudioSource.Stop();
+        }
+
+        allGuestsFoundHandled = false;
+        dinnerSeatingHandled = false;
+        currentPhase = Chapter2Phase.NotStarted;
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearDialogue();
+            interactionHUD.ClearClockStrike();
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective(string.Empty);
+        }
     }
 
     public void HandleGuestSearchProgressChanged()
@@ -505,7 +536,22 @@ public class Chapter2Controller : MonoBehaviour
     {
         if (monsterStinger != null)
         {
-            yield return monsterStinger.PlayStinger();
+            monsterStinger.BeginStinger();
+
+            float elapsedSeconds = 0f;
+            float timeoutSeconds = GetMonsterStingerTimeoutSeconds();
+
+            while (monsterStinger.IsRunning && elapsedSeconds < timeoutSeconds)
+            {
+                elapsedSeconds += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (monsterStinger.IsRunning)
+            {
+                Debug.LogWarning($"Chapter 2 monster stinger timed out after {timeoutSeconds:0.##} seconds; continuing to guest search.", this);
+                monsterStinger.StopStinger();
+            }
         }
         else
         {
@@ -734,6 +780,11 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         return Mathf.Max(0f, clockStrikeCloseUpSeconds);
+    }
+
+    private float GetMonsterStingerTimeoutSeconds()
+    {
+        return Mathf.Max(0.1f, monsterStingerTimeoutSeconds);
     }
 
     private void PlayClockStrikeDing()
