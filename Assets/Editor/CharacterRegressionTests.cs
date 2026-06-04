@@ -161,6 +161,7 @@ public class CharacterRegressionTests
         string arrivalControllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string guestTwoBlock = FindPrefabInstanceBlock(sceneText, "value: Guest 2");
         string butlerSheetGuid = ReadGuidFromMeta(ButlerGuestSpriteMetaPath);
+        string butlerSheetMetaText = File.ReadAllText(ButlerGuestSpriteMetaPath);
         string butlerControllerGuid = ReadGuidFromMeta(ButlerGuestOverrideControllerMetaPath);
 
         Assert.That(guestTwoBlock, Is.Not.Null, "Guest 2 should remain a named scene prefab instance.");
@@ -171,7 +172,10 @@ public class CharacterRegressionTests
         Assert.That(arrivalControllerText, Does.Contain("index == 1 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[1])"), "Only the authored Guest 2 object should keep this butler animation.");
 
         AssertForwardIdleClip(File.ReadAllText(ButlerGuestIdleClipPath), ButlerGuestIdleFramePrefix, "Guest 2", 77, 213, "73.44827", "0");
-        Assert.That(File.ReadAllText(ButlerGuestSpriteMetaPath), Does.Contain("spritePixelsToUnits: 73.44827"), "Guest 2 butler sheet should import large enough to match Guest 1 Lady's visible height.");
+        Assert.That(butlerSheetMetaText, Does.Contain("spritePixelsToUnits: 73.44827"), "Guest 2 butler sheet should import large enough to match Guest 1 Lady's visible height.");
+        Assert.That(butlerSheetMetaText, Does.Contain("second: butlersprite_0"), "Guest 2 sheet slices should keep the stable names used by animation clips.");
+        Assert.That(butlerSheetMetaText, Does.Contain("second: butlersprite_44"), "Guest 2 sheet slices should keep the full stable slice table.");
+        Assert.That(butlerSheetMetaText, Does.Not.Contain("butlersprite 1_"), "Replacing the sheet should not leave Unity-regenerated copy suffix sprite names.");
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkDownClipPath), 0, 7, "forward");
         AssertClipUsesButlerSheetSideWalkWithStanding(File.ReadAllText(ButlerGuestWalkLeftClipPath), 8, 15, 12, ButlerGuestStandingSideLeftPath, "left");
         AssertClipUsesButlerSheetSideWalkWithStanding(File.ReadAllText(ButlerGuestWalkRightClipPath), 16, 23, 20, ButlerGuestStandingSidePath, "right");
@@ -480,10 +484,13 @@ public class CharacterRegressionTests
 
     private static void AssertClipUsesButlerSheetSprites(string clipText, int firstSprite, int lastSprite, string direction)
     {
+        string spriteGuid = ReadGuidFromMeta(ButlerGuestSpriteMetaPath);
+
         for (int i = firstSprite; i <= lastSprite; i++)
         {
             string spriteFileId = ReadSpriteFileIdFromMeta(ButlerGuestSpriteMetaPath, $"butlersprite_{i}");
-            Assert.That(clipText, Does.Contain(spriteFileId), $"Guest 2 walk {direction} should include butlersprite_{i}.");
+            string spriteReference = $"{{fileID: {spriteFileId}, guid: {spriteGuid}, type: 3}}";
+            Assert.That(clipText, Does.Contain(spriteReference), $"Guest 2 walk {direction} should include butlersprite_{i} from the current sheet asset.");
         }
 
         Assert.That(clipText, Does.Contain("classID: 114"), "Guest 2 clips should animate UI Images for room-stage reuse.");
@@ -493,16 +500,20 @@ public class CharacterRegressionTests
 
     private static void AssertClipUsesButlerSheetSideWalkWithStanding(string clipText, int firstSprite, int lastSprite, int replacedSprite, string standingFramePath, string direction)
     {
+        string spriteGuid = ReadGuidFromMeta(ButlerGuestSpriteMetaPath);
+
         for (int i = firstSprite; i <= lastSprite; i++)
         {
             string spriteFileId = ReadSpriteFileIdFromMeta(ButlerGuestSpriteMetaPath, $"butlersprite_{i}");
+            string spriteReference = $"{{fileID: {spriteFileId}, guid: {spriteGuid}, type: 3}}";
+
             if (i == replacedSprite)
             {
-                Assert.That(clipText, Does.Not.Contain(spriteFileId), $"Guest 2 walk {direction} should replace butlersprite_{i} with a hands-at-side standing frame.");
+                Assert.That(clipText, Does.Not.Contain(spriteReference), $"Guest 2 walk {direction} should replace butlersprite_{i} with a hands-at-side standing frame.");
                 continue;
             }
 
-            Assert.That(clipText, Does.Contain(spriteFileId), $"Guest 2 walk {direction} should keep butlersprite_{i}.");
+            Assert.That(clipText, Does.Contain(spriteReference), $"Guest 2 walk {direction} should keep butlersprite_{i} from the current sheet asset.");
         }
 
         string standingGuid = ReadGuidFromMeta($"{standingFramePath}.meta");
