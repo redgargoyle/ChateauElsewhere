@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -280,7 +281,8 @@ public class CharacterRegressionTests
         string rightClipText = File.ReadAllText(ButlerClassicIdleRightClipPath);
         string upClipText = File.ReadAllText(ButlerClassicIdleUpClipPath);
 
-        Assert.That(Directory.GetFiles(ButlerClassicIdleFolder, "*.png").Length, Is.EqualTo(16), "ButlerClassic should have a four-frame idle cycle for each direction.");
+        Assert.That(Directory.GetFiles(ButlerClassicIdleFolder, "butler_classic_idle_*.png").Length, Is.EqualTo(8), "ButlerClassic should keep the unique idle breathe frames while reusing duplicate neutral walk frames.");
+        Assert.That(Directory.GetFiles(ButlerClassicIdleFolder, "butler_classic_walk_*.png").Length, Is.EqualTo(16), "ButlerClassic should keep the canonical directional walk frames.");
         Assert.That(controllerText, Does.Contain("m_Name: ButlerClassic_Idle_Down"));
         Assert.That(controllerText, Does.Contain("m_Name: ButlerClassic_Idle_Left"));
         Assert.That(controllerText, Does.Contain("m_Name: ButlerClassic_Idle_Right"));
@@ -351,6 +353,7 @@ public class CharacterRegressionTests
 
     private static string ReadGuidFromMeta(string metaPath)
     {
+        metaPath = ResolveConsolidatedSpriteMetaPath(metaPath);
         Match match = Regex.Match(File.ReadAllText(metaPath), @"^guid: ([a-f0-9]{32})$", RegexOptions.Multiline);
         Assert.That(match.Success, Is.True, $"Could not find a Unity guid in {metaPath}.");
         return match.Groups[1].Value;
@@ -474,6 +477,7 @@ public class CharacterRegressionTests
     private static void AssertForwardIdleClip(string clipText, string framePathPrefix, string characterName, int expectedWidth, int expectedHeight, string expectedPixelsPerUnit, string expectedPivotX)
     {
         RectInt? firstBounds = null;
+        Dictionary<string, int> expectedFrameUses = new Dictionary<string, int>();
         Assert.That(clipText, Does.Contain("classID: 114"), $"{characterName} idle should bind UI Images for room-stage reuse.");
         Assert.That(clipText, Does.Contain("classID: 212"), $"{characterName} idle should bind SpriteRenderers for prefab-stage reuse.");
         Assert.That(Regex.Matches(clipText, @"value: \{fileID: 21300000").Count, Is.EqualTo(8), $"{characterName} idle should have four forward sprite keys for Image and four for SpriteRenderer.");
@@ -489,11 +493,11 @@ public class CharacterRegressionTests
             string framePath = $"{framePathPrefix}_{i:00}.png";
             string metaPath = $"{framePath}.meta";
             string frameGuid = ReadGuidFromMeta(metaPath);
-            string spriteReference = $"{{fileID: 21300000, guid: {frameGuid}, type: 3}}";
-            string metaText = File.ReadAllText(metaPath);
+            string metaText = File.ReadAllText(ResolveConsolidatedSpriteMetaPath(metaPath));
             RectInt bounds = ReadVisibleSpriteBounds(framePath, expectedWidth, expectedHeight);
+            expectedFrameUses.TryGetValue(frameGuid, out int frameUseCount);
+            expectedFrameUses[frameGuid] = frameUseCount + 1;
 
-            Assert.That(Regex.Matches(clipText, Regex.Escape(spriteReference)).Count, Is.EqualTo(4), $"{characterName} idle should use forward frame {i} for both sprite keys and pointer mappings.");
             Assert.That(metaText, Does.Contain("spriteMode: 1"), $"{characterName} idle frame {i} should import as a single sprite.");
             Assert.That(metaText, Does.Contain($"spritePixelsToUnits: {expectedPixelsPerUnit}"), $"{characterName} idle frame {i} should keep the expected pixels-per-unit.");
             Assert.That(metaText, Does.Contain($"spritePivot: {{x: {expectedPivotX}, y: 0"), $"{characterName} idle frame {i} should keep the expected foot pivot.");
@@ -509,6 +513,12 @@ public class CharacterRegressionTests
             {
                 firstBounds = bounds;
             }
+        }
+
+        foreach (KeyValuePair<string, int> expectedFrameUse in expectedFrameUses)
+        {
+            string spriteReference = $"{{fileID: 21300000, guid: {expectedFrameUse.Key}, type: 3}}";
+            Assert.That(Regex.Matches(clipText, Regex.Escape(spriteReference)).Count, Is.EqualTo(expectedFrameUse.Value * 4), $"{characterName} idle should use each canonical forward frame for both sprite keys and pointer mappings.");
         }
 
         foreach (string direction in new[] { "left", "right", "up" })
@@ -751,6 +761,7 @@ public class CharacterRegressionTests
 
     private static RectInt ReadVisibleSpriteBounds(string imagePath, int expectedWidth = 166, int expectedHeight = 297)
     {
+        imagePath = ResolveConsolidatedSpritePath(imagePath);
         Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
         try
         {
@@ -801,5 +812,41 @@ public class CharacterRegressionTests
             string framePath = $"{ButlerClassicIdleFolder}/butler_classic_idle_{direction}_{i:00}.png.meta";
             Assert.That(clipText, Does.Contain(ReadGuidFromMeta(framePath)), $"Idle {direction} should include frame {i}.");
         }
+    }
+
+    private static string ResolveConsolidatedSpriteMetaPath(string metaPath)
+    {
+        if (!metaPath.EndsWith(".png.meta", StringComparison.Ordinal))
+        {
+            return metaPath;
+        }
+
+        string imagePath = metaPath.Substring(0, metaPath.Length - ".meta".Length);
+        return $"{ResolveConsolidatedSpritePath(imagePath)}.meta";
+    }
+
+    private static string ResolveConsolidatedSpritePath(string imagePath)
+    {
+        return imagePath switch
+        {
+            "Assets/Art/Characters/butler/butler_classic_idle_down_01.png" => "Assets/Art/Characters/butler/butler_classic_walk_01_r01_c01.png",
+            "Assets/Art/Characters/butler/butler_classic_idle_down_03.png" => "Assets/Art/Characters/butler/butler_classic_walk_01_r01_c01.png",
+            "Assets/Art/Characters/butler/butler_classic_idle_left_01.png" => "Assets/Art/Characters/butler/butler_classic_walk_05_r02_c01.png",
+            "Assets/Art/Characters/butler/butler_classic_idle_left_03.png" => "Assets/Art/Characters/butler/butler_classic_walk_05_r02_c01.png",
+            "Assets/Art/Characters/butler/butler_classic_idle_right_01.png" => "Assets/Art/Characters/butler/butler_classic_walk_09_r03_c01.png",
+            "Assets/Art/Characters/butler/butler_classic_idle_right_03.png" => "Assets/Art/Characters/butler/butler_classic_walk_09_r03_c01.png",
+            "Assets/Art/Characters/butler/butler_classic_idle_up_01.png" => "Assets/Art/Characters/butler/butler_classic_walk_13_r04_c01.png",
+            "Assets/Art/Characters/butler/butler_classic_idle_up_03.png" => "Assets/Art/Characters/butler/butler_classic_walk_13_r04_c01.png",
+            "Assets/Art/Characters/guest1/lady_idle_down_01.png" => "Assets/Art/Characters/guest1/lady_walk_01_r01_c01.png",
+            "Assets/Art/Characters/guest1/lady_idle_down_04.png" => "Assets/Art/Characters/guest1/lady_idle_down_02.png",
+            "Assets/Art/Characters/guest2/butler_guest_idle_down_03.png" => "Assets/Art/Characters/guest2/butler_guest_idle_down_02.png",
+            "Assets/Art/Characters/guest2/butler_guest_idle_down_04.png" => "Assets/Art/Characters/guest2/butler_guest_idle_down_02.png",
+            "Assets/Art/Characters/guest3/mister_florian_knell_idle_down_04.png" => "Assets/Art/Characters/guest3/mister_florian_knell_idle_down_02.png",
+            "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down_04.png" => "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down_02.png",
+            "Assets/Art/Characters/guest5/baron_hector_glass_idle_down_04.png" => "Assets/Art/Characters/guest5/baron_hector_glass_idle_down_02.png",
+            "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down_04.png" => "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down_02.png",
+            "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_04.png" => "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_02.png",
+            _ => imagePath
+        };
     }
 }
