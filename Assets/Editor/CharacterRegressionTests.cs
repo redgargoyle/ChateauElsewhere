@@ -1,6 +1,8 @@
+using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using UnityEngine;
 
 public class CharacterRegressionTests
 {
@@ -188,9 +190,10 @@ public class CharacterRegressionTests
         Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Up.anim.meta")), "Mister Florian should not wire the animated up idle sequence yet.");
 
         AssertStillIdleClip(File.ReadAllText(MisterFlorianIdleClipPath), firstMisterFlorianFrameGuid, "Mister Florian");
+        Assert.That(Directory.GetFiles(MisterFlorianWalkFolder, "mister_florian_knell_walk_*.png").Length, Is.EqualTo(28), "Mister Florian should keep seven generated walk frames for each of four directions.");
         AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkDownClipPath), 1, "down");
-        AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkLeftClipPath), 2, "left");
-        AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkRightClipPath), 3, "right");
+        AssertCustomSideWalkSequence(File.ReadAllText(MisterFlorianWalkLeftClipPath), MisterFlorianWalkFolder, "mister_florian_knell", "left", "Mister Florian");
+        AssertCustomSideWalkSequence(File.ReadAllText(MisterFlorianWalkRightClipPath), MisterFlorianWalkFolder, "mister_florian_knell", "right", "Mister Florian");
         AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkUpClipPath), 4, "up");
     }
 
@@ -214,6 +217,17 @@ public class CharacterRegressionTests
         AssertClipUsesCountessRow(File.ReadAllText(CountessWalkLeftClipPath), 2, "left");
         AssertClipUsesCountessRow(File.ReadAllText(CountessWalkRightClipPath), 3, "right");
         AssertClipUsesCountessRow(File.ReadAllText(CountessWalkUpClipPath), 4, "up");
+    }
+
+    [Test]
+    public void CustomMaleSideStandingFramesMatchWalkScale()
+    {
+        const string lordAmbroseWalkFolder = "Assets/Characters/LordAmbroseVeil/walk/aligned";
+
+        AssertCustomSideStandingFrameMatchesWalkScale(MisterFlorianWalkFolder, "mister_florian_knell", "left", "Mister Florian");
+        AssertCustomSideStandingFrameMatchesWalkScale(MisterFlorianWalkFolder, "mister_florian_knell", "right", "Mister Florian");
+        AssertCustomSideStandingFrameMatchesWalkScale(lordAmbroseWalkFolder, "lord_ambrose_veil", "left", "Lord Ambrose Veil");
+        AssertCustomSideStandingFrameMatchesWalkScale(lordAmbroseWalkFolder, "lord_ambrose_veil", "right", "Lord Ambrose Veil");
     }
 
     [Test]
@@ -440,10 +454,10 @@ public class CharacterRegressionTests
 
         AssertStillIdleClip(File.ReadAllText($"{animationFolder}/{assetName}_Idle.anim"), firstFrameGuid, displayName);
         AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Down.anim"), walkFolder, filePrefix, 1, "down", displayName);
-        if (assetName == "BaronHectorGlass")
+        if (UsesCustomSideWalk(assetName))
         {
-            AssertBaronSideWalkSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Left.anim"), walkFolder, filePrefix, "left");
-            AssertBaronSideWalkSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Right.anim"), walkFolder, filePrefix, "right");
+            AssertCustomSideWalkSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Left.anim"), walkFolder, filePrefix, "left", displayName);
+            AssertCustomSideWalkSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Right.anim"), walkFolder, filePrefix, "right", displayName);
         }
         else
         {
@@ -453,15 +467,20 @@ public class CharacterRegressionTests
         AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Up.anim"), walkFolder, filePrefix, 4, "up", displayName);
     }
 
-    private static void AssertBaronSideWalkSequence(string clipText, string walkFolder, string filePrefix, string direction)
+    private static bool UsesCustomSideWalk(string assetName)
+    {
+        return assetName == "BaronHectorGlass"
+            || assetName == "LordAmbroseVeil"
+            || assetName == "ProfessorLucienVale";
+    }
+
+    private static void AssertCustomSideWalkSequence(string clipText, string walkFolder, string filePrefix, string direction, string displayName)
     {
         bool isLeft = direction == "left";
         int row = isLeft ? 2 : 3;
         string firstGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_02_r{row:00}_c02.png.meta");
         string secondGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_01_r{row:00}_c01.png.meta");
-        string standingName = isLeft
-            ? "baron_hector_glass_standing_arms_side_same_angle_left"
-            : "baron_hector_glass_standing_arms_side_same_angle";
+        string standingName = $"{filePrefix}_standing_arms_side_same_angle{(isLeft ? "_left" : string.Empty)}";
         string standingMetaPath = $"{walkFolder}/{standingName}.png.meta";
         string standingGuid = ReadGuidFromMeta(standingMetaPath);
         string standingFileId = ReadSpriteFileIdFromMeta(standingMetaPath, $"{standingName}_0");
@@ -474,14 +493,14 @@ public class CharacterRegressionTests
             $"    - time: 0.2\n      {standingValue}\n" +
             $"    - time: 0.3\n      {firstValue}";
 
-        Assert.That(File.Exists($"{walkFolder}/{standingName}.png"), Is.True, $"Baron {direction} custom standing frame should exist.");
-        Assert.That(Regex.Matches(clipText, Regex.Escape(sequence)).Count, Is.EqualTo(2), $"Baron {direction} walk should mirror the custom four-key side sequence for Image and SpriteRenderer.");
-        Assert.That(Regex.Matches(clipText, @"value: \{fileID: ").Count, Is.EqualTo(8), $"Baron {direction} walk should have four sprite keys per binding.");
-        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: ", RegexOptions.Multiline).Count, Is.EqualTo(8), $"Baron {direction} walk should have four pointer mappings per binding.");
-        Assert.That(clipText, Does.Contain("classID: 114"), $"Baron {direction} walk should animate UI Images for room-stage reuse.");
-        Assert.That(clipText, Does.Contain("classID: 212"), $"Baron {direction} walk should animate SpriteRenderers for prefab-stage reuse.");
-        Assert.That(clipText, Does.Contain("m_SampleRate: 10"), $"Baron {direction} walk should keep the custom side-walk timing.");
-        Assert.That(clipText, Does.Contain("m_StopTime: 0.4"), $"Baron {direction} walk should keep the custom four-key side-walk length.");
+        Assert.That(File.Exists($"{walkFolder}/{standingName}.png"), Is.True, $"{displayName} {direction} custom standing frame should exist.");
+        Assert.That(Regex.Matches(clipText, Regex.Escape(sequence)).Count, Is.EqualTo(2), $"{displayName} {direction} walk should mirror the custom four-key side sequence for Image and SpriteRenderer.");
+        Assert.That(Regex.Matches(clipText, @"value: \{fileID: ").Count, Is.EqualTo(8), $"{displayName} {direction} walk should have four sprite keys per binding.");
+        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: ", RegexOptions.Multiline).Count, Is.EqualTo(8), $"{displayName} {direction} walk should have four pointer mappings per binding.");
+        Assert.That(clipText, Does.Contain("classID: 114"), $"{displayName} {direction} walk should animate UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), $"{displayName} {direction} walk should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 10"), $"{displayName} {direction} walk should keep the custom side-walk timing.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 0.4"), $"{displayName} {direction} walk should keep the custom four-key side-walk length.");
     }
 
     private static void AssertNamedGuestWalkRow(string clipText, string walkFolder, string filePrefix, int row, string direction, string displayName)
@@ -512,9 +531,69 @@ public class CharacterRegressionTests
 
     private static string ReadSpriteFileIdFromMeta(string metaPath, string spriteName)
     {
-        Match match = Regex.Match(File.ReadAllText(metaPath), $@"^\s+{Regex.Escape(spriteName)}: (-?\d+)$", RegexOptions.Multiline);
+        string metaText = File.ReadAllText(metaPath);
+        Match match = Regex.Match(metaText, $@"^\s+{Regex.Escape(spriteName)}: (-?\d+)$", RegexOptions.Multiline);
+        if (!match.Success && Regex.IsMatch(metaText, @"^\s+spriteMode: 1$", RegexOptions.Multiline))
+        {
+            return "21300000";
+        }
+
         Assert.That(match.Success, Is.True, $"Could not find sprite fileID for {spriteName} in {metaPath}.");
         return match.Groups[1].Value;
+    }
+
+    private static void AssertCustomSideStandingFrameMatchesWalkScale(string walkFolder, string filePrefix, string direction, string displayName)
+    {
+        bool isLeft = direction == "left";
+        int row = isLeft ? 2 : 3;
+        RectInt firstWalkBounds = ReadVisibleSpriteBounds($"{walkFolder}/{filePrefix}_walk_02_r{row:00}_c02.png");
+        RectInt secondWalkBounds = ReadVisibleSpriteBounds($"{walkFolder}/{filePrefix}_walk_01_r{row:00}_c01.png");
+        RectInt standingBounds = ReadVisibleSpriteBounds($"{walkFolder}/{filePrefix}_standing_arms_side_same_angle{(isLeft ? "_left" : string.Empty)}.png");
+        int expectedHeight = Math.Min(firstWalkBounds.height, secondWalkBounds.height);
+        int expectedBaseline = Math.Max(firstWalkBounds.yMin, secondWalkBounds.yMin);
+
+        Assert.That(standingBounds.height, Is.GreaterThanOrEqualTo(expectedHeight - 4), $"{displayName} {direction} standing frame should match the walk-frame visible height instead of shrinking.");
+        Assert.That(standingBounds.yMin, Is.InRange(expectedBaseline - 2, expectedBaseline + 2), $"{displayName} {direction} standing frame should keep the same foot baseline as the walk frames.");
+    }
+
+    private static RectInt ReadVisibleSpriteBounds(string imagePath)
+    {
+        Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        try
+        {
+            Assert.That(ImageConversion.LoadImage(texture, File.ReadAllBytes(imagePath)), Is.True, $"Could not load PNG sprite at {imagePath}.");
+            Assert.That(texture.width, Is.EqualTo(166), $"{imagePath} should keep the shared side-walk canvas width.");
+            Assert.That(texture.height, Is.EqualTo(297), $"{imagePath} should keep the shared side-walk canvas height.");
+
+            Color32[] pixels = texture.GetPixels32();
+            int minX = texture.width;
+            int minY = texture.height;
+            int maxX = -1;
+            int maxY = -1;
+
+            for (int y = 0; y < texture.height; y++)
+            {
+                for (int x = 0; x < texture.width; x++)
+                {
+                    if (pixels[(y * texture.width) + x].a == 0)
+                    {
+                        continue;
+                    }
+
+                    minX = Math.Min(minX, x);
+                    minY = Math.Min(minY, y);
+                    maxX = Math.Max(maxX, x);
+                    maxY = Math.Max(maxY, y);
+                }
+            }
+
+            Assert.That(maxX, Is.GreaterThanOrEqualTo(0), $"{imagePath} should have visible sprite pixels.");
+            return new RectInt(minX, minY, maxX - minX + 1, maxY - minY + 1);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(texture);
+        }
     }
 
     private static void AssertDirectionalIdleClip(string clipText, string direction)
