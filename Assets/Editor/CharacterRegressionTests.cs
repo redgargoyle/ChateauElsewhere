@@ -29,7 +29,9 @@ public class CharacterRegressionTests
     private const string GentlemanBlackWalkRightClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Right.anim";
     private const string GentlemanBlackWalkUpClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Up.anim";
     private const string LadyDirectionalFolder = "Assets/Art/Characters/guest1";
-    private const string LadyIdleFramePrefix = "Assets/Art/Characters/guest1/lady_idle_down";
+    private const string LadyIdleNeutralFramePath = "Assets/Art/Characters/guest1/lady_walk_01_r01_c01.png";
+    private const string LadyIdleShiftRightPath = "Assets/Art/Characters/guest1/lady_idle_shift_right.png";
+    private const string LadyIdleShiftLeftPath = "Assets/Art/Characters/guest1/lady_idle_shift_left.png";
     private const string LadySittingFramePrefix = "Assets/Art/Characters/guest1/lady_sitting";
     private const string LadyOverrideControllerPath = "Assets/Animation/Lady/Lady.overrideController";
     private const string LadyOverrideControllerMetaPath = "Assets/Animation/Lady/Lady.overrideController.meta";
@@ -144,7 +146,7 @@ public class CharacterRegressionTests
 
         Assert.That(ladyOverrideControllerText, Does.Match($@"(?s)m_OriginalClip: \{{fileID: 7400000, guid: ae2b75cd2fa12a2a990986dc14eee676, type: 2\}}\s+m_OverrideClip: \{{fileID: 7400000, guid: {ladySittingClipGuid}, type: 2\}}"), "Guest 1 should use her sitting loop when ActorRoomState drives the shared crouch/seated animator state.");
         AssertLadyFramesUseSingleSpriteImports();
-        AssertForwardIdleClip(File.ReadAllText(LadyIdleClipPath), LadyIdleFramePrefix, "Lady", 180, 290, "100", "0.5");
+        AssertLadySubtleShiftIdleClip(File.ReadAllText(LadyIdleClipPath));
         AssertLadySittingClip(File.ReadAllText(LadySittingClipPath));
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkDownClipPath), 1, "down");
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkLeftClipPath), 2, "left");
@@ -401,6 +403,52 @@ public class CharacterRegressionTests
             Assert.That(metaText, Does.Contain("alignment: 0"), $"Lady frame {frame} should use the same importer alignment as the butler frames.");
             Assert.That(metaText, Does.Contain("spritePivot: {x: 0.5, y: 0.0}"), $"Lady frame {frame} should serialize the same sprite pivot as the butler frames.");
         }
+    }
+
+    private static void AssertLadySubtleShiftIdleClip(string clipText)
+    {
+        string neutralGuid = ReadGuidFromMeta($"{LadyIdleNeutralFramePath}.meta");
+        string shiftRightGuid = ReadGuidFromMeta($"{LadyIdleShiftRightPath}.meta");
+        string shiftLeftGuid = ReadGuidFromMeta($"{LadyIdleShiftLeftPath}.meta");
+        string neutralReference = $"{{fileID: 21300000, guid: {neutralGuid}, type: 3}}";
+        string shiftRightReference = $"{{fileID: 21300000, guid: {shiftRightGuid}, type: 3}}";
+        string shiftLeftReference = $"{{fileID: 21300000, guid: {shiftLeftGuid}, type: 3}}";
+        RectInt neutralBounds = ReadVisibleSpriteBounds(LadyIdleNeutralFramePath, 180, 290);
+        RectInt shiftRightBounds = ReadVisibleSpriteBounds(LadyIdleShiftRightPath, 180, 290);
+        RectInt shiftLeftBounds = ReadVisibleSpriteBounds(LadyIdleShiftLeftPath, 180, 290);
+
+        Assert.That(clipText, Does.Contain("classID: 114"), "Lady idle should bind UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), "Lady idle should bind SpriteRenderers for prefab-stage reuse.");
+        Assert.That(Regex.Matches(clipText, @"value: \{fileID: 21300000").Count, Is.EqualTo(8), "Lady idle should have four sprite keys for Image and four for SpriteRenderer.");
+        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: 21300000, guid: [0-9a-f]{32}, type: 3\}$", RegexOptions.Multiline).Count, Is.EqualTo(8), "Lady idle should keep four pointer mappings per binding.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 4"), "Lady idle should shift slowly, not step like a walk.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 1"), "Lady idle should loop over a full one-second cycle.");
+        Assert.That(clipText, Does.Contain("m_LoopTime: 1"), "Lady idle should loop.");
+        Assert.That(clipText, Does.Contain("time: 0.25"));
+        Assert.That(clipText, Does.Contain("time: 0.75"));
+        Assert.That(clipText, Does.Not.Contain("2efcc528b4bb42d0b0b0bb79702d77b0"), "Lady idle should not reference the deleted old idle frame 02.");
+        Assert.That(clipText, Does.Not.Contain("48ee9944f96844c888069f7d0eae2ead"), "Lady idle should not reference the deleted old idle frame 03.");
+        Assert.That(Regex.Matches(clipText, Regex.Escape(neutralReference)).Count, Is.EqualTo(8), "Lady idle should return to the loaded neutral frame twice per binding.");
+        Assert.That(Regex.Matches(clipText, Regex.Escape(shiftRightReference)).Count, Is.EqualTo(4), "Lady idle should include the subtle right-shift frame.");
+        Assert.That(Regex.Matches(clipText, Regex.Escape(shiftLeftReference)).Count, Is.EqualTo(4), "Lady idle should include the subtle left-shift frame.");
+
+        AssertLadyShiftFrameImport(LadyIdleShiftRightPath, "right");
+        AssertLadyShiftFrameImport(LadyIdleShiftLeftPath, "left");
+        Assert.That(shiftRightBounds.yMin, Is.EqualTo(neutralBounds.yMin), "Lady right-shift idle should keep the same foot baseline.");
+        Assert.That(shiftLeftBounds.yMin, Is.EqualTo(neutralBounds.yMin), "Lady left-shift idle should keep the same foot baseline.");
+        Assert.That(shiftRightBounds.height, Is.EqualTo(neutralBounds.height), "Lady right-shift idle should keep the same visible height.");
+        Assert.That(shiftLeftBounds.height, Is.EqualTo(neutralBounds.height), "Lady left-shift idle should keep the same visible height.");
+    }
+
+    private static void AssertLadyShiftFrameImport(string framePath, string direction)
+    {
+        string metaText = File.ReadAllText($"{framePath}.meta");
+
+        Assert.That(metaText, Does.Contain("spriteMode: 1"), $"Lady idle shift {direction} should import as a single sprite.");
+        Assert.That(metaText, Does.Contain("spritePixelsToUnits: 100"), $"Lady idle shift {direction} should keep the standing Lady pixels-per-unit.");
+        Assert.That(metaText, Does.Contain("spritePivot: {x: 0.5, y: 0"), $"Lady idle shift {direction} should keep the bottom-center pivot.");
+        Assert.That(metaText, Does.Contain("alphaIsTransparency: 1"), $"Lady idle shift {direction} should keep transparent sprite import behavior.");
+        Assert.That(metaText, Does.Contain("filterMode: 1"), $"Lady idle shift {direction} should keep point filtering.");
     }
 
     private static void AssertLadySittingClip(string clipText)
@@ -871,8 +919,6 @@ public class CharacterRegressionTests
             "Assets/Art/Characters/butler/butler_classic_idle_right_03.png" => "Assets/Art/Characters/butler/butler_classic_walk_09_r03_c01.png",
             "Assets/Art/Characters/butler/butler_classic_idle_up_01.png" => "Assets/Art/Characters/butler/butler_classic_walk_13_r04_c01.png",
             "Assets/Art/Characters/butler/butler_classic_idle_up_03.png" => "Assets/Art/Characters/butler/butler_classic_walk_13_r04_c01.png",
-            "Assets/Art/Characters/guest1/lady_idle_down_01.png" => "Assets/Art/Characters/guest1/lady_walk_01_r01_c01.png",
-            "Assets/Art/Characters/guest1/lady_idle_down_04.png" => "Assets/Art/Characters/guest1/lady_idle_down_02.png",
             "Assets/Art/Characters/guest2/butler_guest_idle_down_03.png" => "Assets/Art/Characters/guest2/butler_guest_idle_down_02.png",
             "Assets/Art/Characters/guest2/butler_guest_idle_down_04.png" => "Assets/Art/Characters/guest2/butler_guest_idle_down_02.png",
             "Assets/Art/Characters/guest3/mister_florian_knell_idle_down_04.png" => "Assets/Art/Characters/guest3/mister_florian_knell_idle_down_02.png",
