@@ -431,7 +431,7 @@ public class CharacterRegressionTests
         string firstFrameGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_01_r01_c01.png.meta");
         string idleClipGuid = ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle.anim.meta");
 
-        Assert.That(Directory.GetFiles(walkFolder, "*.png").Length, Is.EqualTo(32), $"{displayName} should keep eight walk frames for each of four directions.");
+        Assert.That(Directory.GetFiles(walkFolder, $"{filePrefix}_walk_*.png").Length, Is.EqualTo(32), $"{displayName} should keep eight generated walk frames for each of four directions.");
         Assert.That(overrideText, Does.Contain(idleClipGuid), $"{displayName} override controller should wire generic idle states to the still idle clip.");
         Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Down.anim.meta")), $"{displayName} should not wire the animated down idle sequence yet.");
         Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Left.anim.meta")), $"{displayName} should not wire the animated left idle sequence yet.");
@@ -440,9 +440,48 @@ public class CharacterRegressionTests
 
         AssertStillIdleClip(File.ReadAllText($"{animationFolder}/{assetName}_Idle.anim"), firstFrameGuid, displayName);
         AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Down.anim"), walkFolder, filePrefix, 1, "down", displayName);
-        AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Left.anim"), walkFolder, filePrefix, 2, "left", displayName);
-        AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Right.anim"), walkFolder, filePrefix, 3, "right", displayName);
+        if (assetName == "BaronHectorGlass")
+        {
+            AssertBaronSideWalkSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Left.anim"), walkFolder, filePrefix, "left");
+            AssertBaronSideWalkSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Right.anim"), walkFolder, filePrefix, "right");
+        }
+        else
+        {
+            AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Left.anim"), walkFolder, filePrefix, 2, "left", displayName);
+            AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Right.anim"), walkFolder, filePrefix, 3, "right", displayName);
+        }
         AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Up.anim"), walkFolder, filePrefix, 4, "up", displayName);
+    }
+
+    private static void AssertBaronSideWalkSequence(string clipText, string walkFolder, string filePrefix, string direction)
+    {
+        bool isLeft = direction == "left";
+        int row = isLeft ? 2 : 3;
+        string firstGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_02_r{row:00}_c02.png.meta");
+        string secondGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_01_r{row:00}_c01.png.meta");
+        string standingName = isLeft
+            ? "baron_hector_glass_standing_arms_side_same_angle_left"
+            : "baron_hector_glass_standing_arms_side_same_angle";
+        string standingMetaPath = $"{walkFolder}/{standingName}.png.meta";
+        string standingGuid = ReadGuidFromMeta(standingMetaPath);
+        string standingFileId = ReadSpriteFileIdFromMeta(standingMetaPath, $"{standingName}_0");
+        string firstValue = $"value: {{fileID: 21300000, guid: {firstGuid}, type: 3}}";
+        string secondValue = $"value: {{fileID: 21300000, guid: {secondGuid}, type: 3}}";
+        string standingValue = $"value: {{fileID: {standingFileId}, guid: {standingGuid}, type: 3}}";
+        string sequence =
+            $"- time: 0\n      {firstValue}\n" +
+            $"    - time: 0.1\n      {secondValue}\n" +
+            $"    - time: 0.2\n      {standingValue}\n" +
+            $"    - time: 0.3\n      {firstValue}";
+
+        Assert.That(File.Exists($"{walkFolder}/{standingName}.png"), Is.True, $"Baron {direction} custom standing frame should exist.");
+        Assert.That(Regex.Matches(clipText, Regex.Escape(sequence)).Count, Is.EqualTo(2), $"Baron {direction} walk should mirror the custom four-key side sequence for Image and SpriteRenderer.");
+        Assert.That(Regex.Matches(clipText, @"value: \{fileID: ").Count, Is.EqualTo(8), $"Baron {direction} walk should have four sprite keys per binding.");
+        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: ", RegexOptions.Multiline).Count, Is.EqualTo(8), $"Baron {direction} walk should have four pointer mappings per binding.");
+        Assert.That(clipText, Does.Contain("classID: 114"), $"Baron {direction} walk should animate UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), $"Baron {direction} walk should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 10"), $"Baron {direction} walk should keep the custom side-walk timing.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 0.4"), $"Baron {direction} walk should keep the custom four-key side-walk length.");
     }
 
     private static void AssertNamedGuestWalkRow(string clipText, string walkFolder, string filePrefix, int row, string direction, string displayName)
