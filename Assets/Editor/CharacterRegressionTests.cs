@@ -171,15 +171,16 @@ public class CharacterRegressionTests
         Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredButlerGuestAnimation"), "Runtime guest setup should preserve Guest 2's authored butler animation.");
         Assert.That(arrivalControllerText, Does.Contain("index == 1 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[1])"), "Only the authored Guest 2 object should keep this butler animation.");
 
-        AssertForwardIdleClip(File.ReadAllText(ButlerGuestIdleClipPath), ButlerGuestIdleFramePrefix, "Guest 2", 77, 213, "73.44827", "0");
+        AssertButlerGuestIdleClipUsesStandaloneFrames(File.ReadAllText(ButlerGuestIdleClipPath));
         Assert.That(butlerSheetMetaText, Does.Contain("spritePixelsToUnits: 73.44827"), "Guest 2 butler sheet should import large enough to match Guest 1 Lady's visible height.");
         Assert.That(butlerSheetMetaText, Does.Contain("second: butlersprite_0"), "Guest 2 sheet slices should keep the stable names used by animation clips.");
         Assert.That(butlerSheetMetaText, Does.Contain("second: butlersprite_44"), "Guest 2 sheet slices should keep the full stable slice table.");
         Assert.That(butlerSheetMetaText, Does.Not.Contain("butlersprite 1_"), "Replacing the sheet should not leave Unity-regenerated copy suffix sprite names.");
-        AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkDownClipPath), 0, 7, "forward");
-        AssertClipUsesButlerSheetSideWalkWithStanding(File.ReadAllText(ButlerGuestWalkLeftClipPath), 8, 15, 12, ButlerGuestStandingSideLeftPath, "left");
-        AssertClipUsesButlerSheetSideWalkWithStanding(File.ReadAllText(ButlerGuestWalkRightClipPath), 16, 23, 20, ButlerGuestStandingSidePath, "right");
-        AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkUpClipPath), 24, 31, "away");
+        AssertButlerGuestExportedFramesMatchSheetSlices(butlerSheetMetaText);
+        AssertClipUsesButlerExportedFrames(File.ReadAllText(ButlerGuestWalkDownClipPath), Enumerable.Range(0, 8), "forward", 16, 16, "12", "0.666666667", true);
+        AssertClipUsesButlerExportedSideWalkWithStanding(File.ReadAllText(ButlerGuestWalkLeftClipPath), new[] { 8, 9, 10, 11, 13, 14, 15 }, 12, ButlerGuestStandingSideLeftPath, "left", 16, 16, 4, "12", "0.666666667", true);
+        AssertClipUsesButlerExportedSideWalkWithStanding(File.ReadAllText(ButlerGuestWalkRightClipPath), new[] { 16, 17, 18, 19, 21, 22, 23 }, 20, ButlerGuestStandingSidePath, "right", 16, 16, 4, "12", "0.666666667", true);
+        AssertClipUsesButlerExportedFrames(File.ReadAllText(ButlerGuestWalkUpClipPath), Enumerable.Range(24, 8), "away", 16, 16, "12", "0.666666667", true);
         AssertButlerGuestStandingSideFrame(ButlerGuestStandingSideLeftPath, 91, 199, "left");
         AssertButlerGuestStandingSideFrame(ButlerGuestStandingSidePath, 92, 200, "right");
     }
@@ -482,49 +483,85 @@ public class CharacterRegressionTests
         }
     }
 
-    private static void AssertClipUsesButlerSheetSprites(string clipText, int firstSprite, int lastSprite, string direction)
+    private static void AssertButlerGuestIdleClipUsesStandaloneFrames(string clipText)
     {
-        string spriteGuid = ReadGuidFromMeta(ButlerGuestSpriteMetaPath);
-
-        for (int i = firstSprite; i <= lastSprite; i++)
+        for (int i = 1; i <= 2; i++)
         {
-            string spriteFileId = ReadSpriteFileIdFromMeta(ButlerGuestSpriteMetaPath, $"butlersprite_{i}");
-            string spriteReference = $"{{fileID: {spriteFileId}, guid: {spriteGuid}, type: 3}}";
-            Assert.That(clipText, Does.Contain(spriteReference), $"Guest 2 walk {direction} should include butlersprite_{i} from the current sheet asset.");
+            string framePath = $"{ButlerGuestIdleFramePrefix}_{i:00}.png";
+            string frameGuid = ReadGuidFromMeta($"{framePath}.meta");
+            string metaText = File.ReadAllText($"{framePath}.meta");
+
+            Assert.That(File.Exists(framePath), Is.True, $"Guest 2 idle frame {i} should remain an editable standalone PNG.");
+            Assert.That(ReadVisibleSpriteBounds(framePath, 77, 213).height, Is.GreaterThanOrEqualTo(190), $"Guest 2 idle frame {i} should keep the full standing figure.");
+            Assert.That(metaText, Does.Contain("spriteMode: 1"), $"Guest 2 idle frame {i} should import as a single sprite.");
+            Assert.That(metaText, Does.Contain("spritePixelsToUnits: 73.44827"), $"Guest 2 idle frame {i} should keep the butler sheet pixels-per-unit.");
+            Assert.That(metaText, Does.Contain("spritePivot: {x: 0, y: 0}"), $"Guest 2 idle frame {i} should keep the butler sheet pivot.");
+            Assert.That(clipText, Does.Contain($"{{fileID: 21300000, guid: {frameGuid}, type: 3}}"), $"Guest 2 idle should reference standalone frame {i}.");
         }
 
-        Assert.That(clipText, Does.Contain("classID: 114"), "Guest 2 clips should animate UI Images for room-stage reuse.");
-        Assert.That(clipText, Does.Contain("classID: 212"), "Guest 2 clips should animate SpriteRenderers for prefab-stage reuse.");
-        Assert.That(clipText, Does.Contain("m_StopTime: 0.666666667"), $"Guest 2 walk {direction} should play the full eight-frame row.");
+        Assert.That(clipText, Does.Not.Contain(ReadGuidFromMeta(ButlerGuestSpriteMetaPath)), "Guest 2 idle should not depend on the butler sheet sub-sprites.");
+        Assert.That(clipText, Does.Contain("classID: 212"), "Guest 2 idle should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 4"), "Guest 2 idle should keep its four-key idle timing.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 1"), "Guest 2 idle should keep its one-second idle loop.");
     }
 
-    private static void AssertClipUsesButlerSheetSideWalkWithStanding(string clipText, int firstSprite, int lastSprite, int replacedSprite, string standingFramePath, string direction)
+    private static void AssertButlerGuestExportedFramesMatchSheetSlices(string butlerSheetMetaText)
     {
-        string spriteGuid = ReadGuidFromMeta(ButlerGuestSpriteMetaPath);
+        var exportedGuids = new HashSet<string>();
 
-        for (int i = firstSprite; i <= lastSprite; i++)
+        for (int i = 0; i <= 44; i++)
         {
-            string spriteFileId = ReadSpriteFileIdFromMeta(ButlerGuestSpriteMetaPath, $"butlersprite_{i}");
-            string spriteReference = $"{{fileID: {spriteFileId}, guid: {spriteGuid}, type: 3}}";
+            string framePath = GetButlerGuestExportedFramePath(i);
+            string metaPath = $"{framePath}.meta";
+            string frameGuid = ReadGuidFromMeta(metaPath);
+            string metaText = File.ReadAllText(metaPath);
+            RectInt sheetRect = ReadButlerSheetSpriteRect(butlerSheetMetaText, i);
 
-            if (i == replacedSprite)
-            {
-                Assert.That(clipText, Does.Not.Contain(spriteReference), $"Guest 2 walk {direction} should replace butlersprite_{i} with a hands-at-side standing frame.");
-                continue;
-            }
+            Assert.That(File.Exists(framePath), Is.True, $"Exported Guest 2 frame {i:00} should exist as an editable PNG.");
+            Assert.That(exportedGuids.Add(frameGuid), Is.True, $"Exported Guest 2 frame {i:00} should have a unique GUID.");
+            Assert.That(ReadVisibleSpriteBounds(framePath, sheetRect.width, sheetRect.height).height, Is.GreaterThan(0), $"Exported Guest 2 frame {i:00} should not be empty.");
+            Assert.That(metaText, Does.Contain("spriteMode: 1"), $"Exported Guest 2 frame {i:00} should import as a single sprite.");
+            Assert.That(metaText, Does.Contain("spritePixelsToUnits: 73.44827"), $"Exported Guest 2 frame {i:00} should keep the sheet pixels-per-unit.");
+            Assert.That(metaText, Does.Contain("spritePivot: {x: 0, y: 0}"), $"Exported Guest 2 frame {i:00} should keep the sheet pivot.");
+            Assert.That(metaText, Does.Contain("alphaIsTransparency: 1"), $"Exported Guest 2 frame {i:00} should preserve transparent sprite import behavior.");
+            Assert.That(metaText, Does.Contain("filterMode: 1"), $"Exported Guest 2 frame {i:00} should keep point filtering.");
+        }
+    }
 
-            Assert.That(clipText, Does.Contain(spriteReference), $"Guest 2 walk {direction} should keep butlersprite_{i} from the current sheet asset.");
+    private static void AssertClipUsesButlerExportedFrames(string clipText, IEnumerable<int> spriteIndexes, string direction, int expectedSpriteKeyCount, int expectedPointerMappingCount, string expectedSampleRate, string expectedStopTime, bool requiresImageBinding)
+    {
+        foreach (int i in spriteIndexes)
+        {
+            string framePath = GetButlerGuestExportedFramePath(i);
+            string frameGuid = ReadGuidFromMeta($"{framePath}.meta");
+            string spriteReference = $"{{fileID: 21300000, guid: {frameGuid}, type: 3}}";
+            Assert.That(File.Exists(framePath), Is.True, $"Guest 2 exported walk {direction} frame {i:00} should exist.");
+            Assert.That(clipText, Does.Contain(spriteReference), $"Guest 2 walk {direction} should reference exported frame butlersprite_{i:00}.png.");
         }
 
+        Assert.That(clipText, Does.Not.Contain(ReadGuidFromMeta(ButlerGuestSpriteMetaPath)), $"Guest 2 walk {direction} should not reference the sheet sub-sprites.");
+        Assert.That(Regex.Matches(clipText, @"value: \{fileID: ").Count, Is.EqualTo(expectedSpriteKeyCount), $"Guest 2 walk {direction} should keep its authored sprite key count.");
+        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: ", RegexOptions.Multiline).Count, Is.EqualTo(expectedPointerMappingCount), $"Guest 2 walk {direction} should keep its authored pointer mapping count.");
+        if (requiresImageBinding)
+        {
+            Assert.That(clipText, Does.Contain("classID: 114"), $"Guest 2 walk {direction} should animate UI Images for room-stage reuse.");
+        }
+
+        Assert.That(clipText, Does.Contain("classID: 212"), $"Guest 2 walk {direction} should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(clipText, Does.Contain($"m_SampleRate: {expectedSampleRate}"), $"Guest 2 walk {direction} should keep its authored walk timing.");
+        Assert.That(clipText, Does.Contain($"m_StopTime: {expectedStopTime}"), $"Guest 2 walk {direction} should keep its authored row length.");
+    }
+
+    private static void AssertClipUsesButlerExportedSideWalkWithStanding(string clipText, IEnumerable<int> spriteIndexes, int replacedSprite, string standingFramePath, string direction, int expectedSpriteKeyCount, int expectedPointerMappingCount, int expectedStandingReferences, string expectedSampleRate, string expectedStopTime, bool requiresImageBinding)
+    {
+        AssertClipUsesButlerExportedFrames(clipText, spriteIndexes, direction, expectedSpriteKeyCount, expectedPointerMappingCount, expectedSampleRate, expectedStopTime, requiresImageBinding);
+
+        string replacedFrameGuid = ReadGuidFromMeta($"{GetButlerGuestExportedFramePath(replacedSprite)}.meta");
         string standingGuid = ReadGuidFromMeta($"{standingFramePath}.meta");
         string standingValue = $"{{fileID: 21300000, guid: {standingGuid}, type: 3}}";
-        Assert.That(Regex.Matches(clipText, Regex.Escape(standingValue)).Count, Is.EqualTo(4), $"Guest 2 walk {direction} should use the standing side frame for both sprite keys and pointer mappings.");
-        Assert.That(Regex.Matches(clipText, @"value: \{fileID: ").Count, Is.EqualTo(16), $"Guest 2 walk {direction} should keep eight sprite keys per binding.");
-        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: ", RegexOptions.Multiline).Count, Is.EqualTo(16), $"Guest 2 walk {direction} should keep eight pointer mappings per binding.");
-        Assert.That(clipText, Does.Contain("classID: 114"), "Guest 2 clips should animate UI Images for room-stage reuse.");
-        Assert.That(clipText, Does.Contain("classID: 212"), "Guest 2 clips should animate SpriteRenderers for prefab-stage reuse.");
-        Assert.That(clipText, Does.Contain("m_SampleRate: 12"), $"Guest 2 walk {direction} should keep its full-row walk timing.");
-        Assert.That(clipText, Does.Contain("m_StopTime: 0.666666667"), $"Guest 2 walk {direction} should keep the full eight-frame row length.");
+
+        Assert.That(clipText, Does.Not.Contain($"{{fileID: 21300000, guid: {replacedFrameGuid}, type: 3}}"), $"Guest 2 walk {direction} should keep replacing exported frame {replacedSprite:00} with the hands-at-side standing frame.");
+        Assert.That(Regex.Matches(clipText, Regex.Escape(standingValue)).Count, Is.EqualTo(expectedStandingReferences), $"Guest 2 walk {direction} should use the standing side frame for its authored keys and pointer mappings.");
     }
 
     private static void AssertButlerGuestStandingSideFrame(string framePath, int expectedWidth, int expectedHeight, string direction)
@@ -538,6 +575,23 @@ public class CharacterRegressionTests
         Assert.That(metaText, Does.Contain("spritePixelsToUnits: 73.44827"), $"Guest 2 {direction} standing side frame should keep the butler sheet pixels-per-unit.");
         Assert.That(metaText, Does.Contain("alphaIsTransparency: 1"), $"Guest 2 {direction} standing side frame should keep transparent sprite import behavior.");
         Assert.That(metaText, Does.Contain("filterMode: 1"), $"Guest 2 {direction} standing side frame should keep the butler sheet filter mode.");
+    }
+
+    private static string GetButlerGuestExportedFramePath(int spriteIndex)
+    {
+        return $"Assets/Art/Characters/guest2/butlersprite_{spriteIndex:00}.png";
+    }
+
+    private static RectInt ReadButlerSheetSpriteRect(string metaText, int spriteIndex)
+    {
+        string spriteName = $"butlersprite_{spriteIndex}";
+        Match match = Regex.Match(metaText, $@"(?s)name: {Regex.Escape(spriteName)}\s+rect:\s+serializedVersion: 2\s+x: (?<x>\d+)\s+y: (?<y>\d+)\s+width: (?<width>\d+)\s+height: (?<height>\d+)");
+        Assert.That(match.Success, Is.True, $"Could not read sheet rect for {spriteName}.");
+        return new RectInt(
+            int.Parse(match.Groups["x"].Value),
+            int.Parse(match.Groups["y"].Value),
+            int.Parse(match.Groups["width"].Value),
+            int.Parse(match.Groups["height"].Value));
     }
 
     private static void AssertClipUsesMisterFlorianRow(string clipText, int row, string direction)
