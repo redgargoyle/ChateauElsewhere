@@ -26,6 +26,7 @@ public class CharacterRegressionTests
     private const string GentlemanBlackWalkRightClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Right.anim";
     private const string GentlemanBlackWalkUpClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Up.anim";
     private const string LadyDirectionalFolder = "Assets/Characters/Lady/walk/aligned";
+    private const string LadyIdleFramePrefix = "Assets/Characters/Lady/idle/aligned/lady_idle_down";
     private const string LadyOverrideControllerMetaPath = "Assets/Animation/Lady/Lady.overrideController.meta";
     private const string LadyIdleClipPath = "Assets/Animation/Lady/Lady_Idle.anim";
     private const string LadyWalkDownClipPath = "Assets/Animation/Lady/Lady_Walk_Down.anim";
@@ -35,6 +36,7 @@ public class CharacterRegressionTests
     private const string ButlerGuestSpriteMetaPath = "Assets/Art/Characters/butlersprite.png.meta";
     private const string ButlerGuestStandingSidePath = "Assets/Art/Characters/butler_guest_standing_arms_side_same_angle.png";
     private const string ButlerGuestStandingSideLeftPath = "Assets/Art/Characters/butler_guest_standing_arms_side_same_angle_left.png";
+    private const string ButlerGuestIdleFramePrefix = "Assets/Art/Characters/butler_guest_idle_down";
     private const string ButlerGuestOverrideControllerMetaPath = "Assets/Animation/ButlerGuest/ButlerGuest.overrideController.meta";
     private const string ButlerGuestIdleClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Idle.anim";
     private const string ButlerGuestWalkDownClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Down.anim";
@@ -136,7 +138,7 @@ public class CharacterRegressionTests
         Assert.That(arrivalControllerText, Does.Not.Contain("guestRenderers[i].sprite = sourceRenderer.sprite"), "The butler reset must not overwrite every guest SpriteRenderer, or coats collapse to a tiny transparent corner.");
 
         AssertLadyFramesUseSingleSpriteImports();
-        Assert.That(File.ReadAllText(LadyIdleClipPath), Does.Contain(firstLadyFrameGuid), "Lady idle should start on the same down-facing root Lady frame.");
+        AssertForwardIdleClip(File.ReadAllText(LadyIdleClipPath), LadyIdleFramePrefix, "Lady", 180, 290, "100", "0.5");
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkDownClipPath), 1, "down");
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkLeftClipPath), 2, "left");
         AssertClipUsesLadyRow(File.ReadAllText(LadyWalkRightClipPath), 3, "right");
@@ -159,7 +161,7 @@ public class CharacterRegressionTests
         Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredButlerGuestAnimation"), "Runtime guest setup should preserve Guest 2's authored butler animation.");
         Assert.That(arrivalControllerText, Does.Contain("index == 1 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[1])"), "Only the authored Guest 2 object should keep this butler animation.");
 
-        Assert.That(File.ReadAllText(ButlerGuestIdleClipPath), Does.Contain("-8411666499919982919"), "Guest 2 idle should start on the forward-facing butler root frame.");
+        AssertForwardIdleClip(File.ReadAllText(ButlerGuestIdleClipPath), ButlerGuestIdleFramePrefix, "Guest 2", 77, 213, "73.44827", "0");
         Assert.That(File.ReadAllText(ButlerGuestSpriteMetaPath), Does.Contain("spritePixelsToUnits: 73.44827"), "Guest 2 butler sheet should import large enough to match Guest 1 Lady's visible height.");
         AssertClipUsesButlerSheetSprites(File.ReadAllText(ButlerGuestWalkDownClipPath), 0, 7, "forward");
         AssertClipUsesButlerSheetSideWalkWithStanding(File.ReadAllText(ButlerGuestWalkLeftClipPath), 8, 15, 12, ButlerGuestStandingSideLeftPath, "left");
@@ -187,13 +189,14 @@ public class CharacterRegressionTests
 
         Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredMisterFlorianGuestAnimation"), "Runtime guest setup should preserve Guest 3's authored Mister Florian animation.");
         Assert.That(arrivalControllerText, Does.Contain("index == 2 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[2])"), "Only the authored Guest 3 object should keep Mister Florian animation.");
-        Assert.That(misterFlorianOverrideControllerText, Does.Contain(misterFlorianIdleClipGuid), "Mister Florian idle states should use the still idle clip.");
-        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Down.anim.meta")), "Mister Florian should not wire the animated down idle sequence yet.");
-        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Left.anim.meta")), "Mister Florian should not wire the animated left idle sequence yet.");
-        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Right.anim.meta")), "Mister Florian should not wire the animated right idle sequence yet.");
-        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Up.anim.meta")), "Mister Florian should not wire the animated up idle sequence yet.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Contain(misterFlorianIdleClipGuid), "Mister Florian idle states should use the main forward idle clip.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Down.anim.meta")), "Mister Florian should not wire the separate directional down idle clip.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Left.anim.meta")), "Mister Florian should not wire the directional left idle clip.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Right.anim.meta")), "Mister Florian should not wire the directional right idle clip.");
+        Assert.That(misterFlorianOverrideControllerText, Does.Not.Contain(ReadGuidFromMeta("Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Up.anim.meta")), "Mister Florian should not wire the directional up idle clip.");
 
-        AssertStillIdleClip(File.ReadAllText(MisterFlorianIdleClipPath), firstMisterFlorianFrameGuid, "Mister Florian");
+        AssertForwardIdleClip(File.ReadAllText(MisterFlorianIdleClipPath), "Assets/Characters/MisterFlorianKnell/idle/aligned/mister_florian_knell_idle_down", "Mister Florian", 166, 297, "100", "0.5");
+        AssertForwardIdleMatchesWalkScale($"{MisterFlorianWalkFolder}/mister_florian_knell_walk_01_r01_c01.png", "Assets/Characters/MisterFlorianKnell/idle/aligned/mister_florian_knell_idle_down", "Mister Florian");
         Assert.That(Directory.GetFiles(MisterFlorianWalkFolder, "mister_florian_knell_walk_*.png").Length, Is.EqualTo(28), "Mister Florian should keep seven generated walk frames for each of four directions.");
         AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkDownClipPath), 1, "down");
         AssertCustomSideWalkSequence(File.ReadAllText(MisterFlorianWalkLeftClipPath), MisterFlorianWalkFolder, "mister_florian_knell", "left", "Mister Florian");
@@ -217,6 +220,8 @@ public class CharacterRegressionTests
         Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredCountessGuestAnimation"), "Runtime guest setup should preserve Guest 4's authored Countess animation.");
         Assert.That(arrivalControllerText, Does.Contain("index == 3 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[3])"), "Only the authored Guest 4 object should keep Countess animation.");
 
+        AssertForwardIdleClip(File.ReadAllText("Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle.anim"), "Assets/Characters/CountessElowenDusk/idle/aligned/countess_elowen_dusk_idle_down", "Countess", 166, 297, "100", "0.5");
+        AssertForwardIdleMatchesWalkScale($"{CountessWalkFolder}/countess_elowen_dusk_walk_01_r01_c01.png", "Assets/Characters/CountessElowenDusk/idle/aligned/countess_elowen_dusk_idle_down", "Countess");
         AssertClipUsesCountessRow(File.ReadAllText(CountessWalkDownClipPath), 1, "down");
         AssertClipUsesCountessRow(File.ReadAllText(CountessWalkLeftClipPath), 2, "left");
         AssertClipUsesCountessRow(File.ReadAllText(CountessWalkRightClipPath), 3, "right");
@@ -226,23 +231,29 @@ public class CharacterRegressionTests
     [Test]
     public void CustomMaleSideStandingFramesMatchWalkScale()
     {
+        const string baronHectorWalkFolder = "Assets/Characters/BaronHectorGlass/walk/aligned";
         const string lordAmbroseWalkFolder = "Assets/Characters/LordAmbroseVeil/walk/aligned";
 
         AssertCustomSideStandingFrameMatchesWalkScale(MisterFlorianWalkFolder, "mister_florian_knell", "left", "Mister Florian");
         AssertCustomSideStandingFrameMatchesWalkScale(MisterFlorianWalkFolder, "mister_florian_knell", "right", "Mister Florian");
+        AssertCustomSideStandingFrameMatchesWalkScale(baronHectorWalkFolder, "baron_hector_glass", "left", "Baron Hector");
+        AssertCustomSideStandingFrameMatchesWalkScale(baronHectorWalkFolder, "baron_hector_glass", "right", "Baron Hector");
         AssertCustomSideStandingFrameMatchesWalkScale(lordAmbroseWalkFolder, "lord_ambrose_veil", "left", "Lord Ambrose Veil");
         AssertCustomSideStandingFrameMatchesWalkScale(lordAmbroseWalkFolder, "lord_ambrose_veil", "right", "Lord Ambrose Veil");
     }
 
     [Test]
-    public void RemainingNamedGuestAnimationAssetsUseStillIdleAndDirectionalWalks()
+    public void NamedGuestAnimationAssetsUseExpectedIdleAndDirectionalWalks()
     {
-        AssertNamedGuestAnimationAssets("Baron Hector Glass", "BaronHectorGlass", "baron_hector_glass");
-        AssertNamedGuestAnimationAssets("Lady Sabine Marrow", "LadySabineMarrow", "lady_sabine_marrow");
-        AssertNamedGuestAnimationAssets("Lord Ambrose Veil", "LordAmbroseVeil", "lord_ambrose_veil");
-        AssertNamedGuestAnimationAssets("Madame Coralie Thread", "MadameCoralieThread", "madame_coralie_thread");
-        AssertNamedGuestAnimationAssets("Miss Isolde Wren", "MissIsoldeWren", "miss_isolde_wren");
-        AssertNamedGuestAnimationAssets("Professor Lucien Vale", "ProfessorLucienVale", "professor_lucien_vale");
+        AssertNamedGuestAnimationAssets("Baron Hector Glass", "BaronHectorGlass", "baron_hector_glass", true);
+        AssertNamedGuestAnimationAssets("Lady Sabine Marrow", "LadySabineMarrow", "lady_sabine_marrow", true);
+        AssertNamedGuestAnimationAssets("Lord Ambrose Veil", "LordAmbroseVeil", "lord_ambrose_veil", true);
+        AssertNamedGuestAnimationAssets("Madame Coralie Thread", "MadameCoralieThread", "madame_coralie_thread", true);
+        AssertNamedGuestAnimationAssets("Miss Isolde Wren", "MissIsoldeWren", "miss_isolde_wren", false);
+        AssertNamedGuestAnimationAssets("Professor Lucien Vale", "ProfessorLucienVale", "professor_lucien_vale", false);
+        AssertForwardIdleMatchesWalkScale("Assets/Characters/LadySabineMarrow/walk/aligned/lady_sabine_marrow_walk_01_r01_c01.png", "Assets/Characters/LadySabineMarrow/idle/aligned/lady_sabine_marrow_idle_down", "Lady Sabine Marrow");
+        AssertForwardIdleMatchesWalkScale("Assets/Characters/LordAmbroseVeil/walk/aligned/lord_ambrose_veil_walk_01_r01_c01.png", "Assets/Characters/LordAmbroseVeil/idle/aligned/lord_ambrose_veil_idle_down", "Lord Ambrose Veil");
+        AssertForwardIdleMatchesWalkScale("Assets/Characters/MadameCoralieThread/walk/aligned/madame_coralie_thread_walk_01_r01_c01.png", "Assets/Characters/MadameCoralieThread/idle/aligned/madame_coralie_thread_idle_down", "Madame Coralie Thread");
     }
 
     [Test]
@@ -461,6 +472,74 @@ public class CharacterRegressionTests
         Assert.That(clipText, Does.Contain("m_StopTime: 0.083333333"), $"{characterName} idle should be a still one-frame clip, not a multi-frame idle sequence.");
     }
 
+    private static void AssertForwardIdleClip(string clipText, string framePathPrefix, string characterName, int expectedWidth, int expectedHeight, string expectedPixelsPerUnit, string expectedPivotX)
+    {
+        RectInt? firstBounds = null;
+        Assert.That(clipText, Does.Contain("classID: 114"), $"{characterName} idle should bind UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), $"{characterName} idle should bind SpriteRenderers for prefab-stage reuse.");
+        Assert.That(Regex.Matches(clipText, @"value: \{fileID: 21300000").Count, Is.EqualTo(8), $"{characterName} idle should have four forward sprite keys for Image and four for SpriteRenderer.");
+        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: 21300000, guid: [0-9a-f]{32}, type: 3\}$", RegexOptions.Multiline).Count, Is.EqualTo(8), $"{characterName} idle should keep four pointer mappings per binding.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 4"), $"{characterName} idle should breathe slowly, not step like a walk.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 1"), $"{characterName} idle should loop over a full one-second breathing cycle.");
+        Assert.That(clipText, Does.Contain("m_LoopTime: 1"), $"{characterName} idle should loop.");
+        Assert.That(clipText, Does.Contain("m_PositionCurves: []"), $"{characterName} idle should not move transforms.");
+        Assert.That(clipText, Does.Contain("m_ScaleCurves: []"), $"{characterName} idle should not scale transforms.");
+
+        for (int i = 1; i <= 4; i++)
+        {
+            string framePath = $"{framePathPrefix}_{i:00}.png";
+            string metaPath = $"{framePath}.meta";
+            string frameGuid = ReadGuidFromMeta(metaPath);
+            string spriteReference = $"{{fileID: 21300000, guid: {frameGuid}, type: 3}}";
+            string metaText = File.ReadAllText(metaPath);
+            RectInt bounds = ReadVisibleSpriteBounds(framePath, expectedWidth, expectedHeight);
+
+            Assert.That(Regex.Matches(clipText, Regex.Escape(spriteReference)).Count, Is.EqualTo(4), $"{characterName} idle should use forward frame {i} for both sprite keys and pointer mappings.");
+            Assert.That(metaText, Does.Contain("spriteMode: 1"), $"{characterName} idle frame {i} should import as a single sprite.");
+            Assert.That(metaText, Does.Contain($"spritePixelsToUnits: {expectedPixelsPerUnit}"), $"{characterName} idle frame {i} should keep the expected pixels-per-unit.");
+            Assert.That(metaText, Does.Contain($"spritePivot: {{x: {expectedPivotX}, y: 0"), $"{characterName} idle frame {i} should keep the expected foot pivot.");
+            Assert.That(metaText, Does.Contain("alphaIsTransparency: 1"), $"{characterName} idle frame {i} should keep transparent sprite import behavior.");
+            Assert.That(metaText, Does.Contain("filterMode: 1"), $"{characterName} idle frame {i} should keep point filtering.");
+
+            if (firstBounds.HasValue)
+            {
+                Assert.That(bounds.yMin, Is.InRange(firstBounds.Value.yMin - 1, firstBounds.Value.yMin + 1), $"{characterName} idle frame {i} should keep the same foot baseline.");
+                Assert.That(bounds.height, Is.InRange(firstBounds.Value.height - 4, firstBounds.Value.height + 4), $"{characterName} idle frame {i} should keep the same visible scale.");
+            }
+            else
+            {
+                firstBounds = bounds;
+            }
+        }
+
+        foreach (string direction in new[] { "left", "right", "up" })
+        {
+            string directionalPrefix = framePathPrefix.Replace("_idle_down", $"_idle_{direction}");
+            for (int i = 1; i <= 4; i++)
+            {
+                string metaPath = $"{directionalPrefix}_{i:00}.png.meta";
+                if (File.Exists(metaPath))
+                {
+                    Assert.That(clipText, Does.Not.Contain(ReadGuidFromMeta(metaPath)), $"{characterName} idle should stay forward-facing and not use {direction} idle frame {i}.");
+                }
+            }
+        }
+    }
+
+    private static void AssertForwardIdleMatchesWalkScale(string walkFramePath, string idleFramePathPrefix, string characterName)
+    {
+        RectInt walkBounds = ReadVisibleSpriteBounds(walkFramePath);
+
+        for (int i = 1; i <= 4; i++)
+        {
+            RectInt idleBounds = ReadVisibleSpriteBounds($"{idleFramePathPrefix}_{i:00}.png");
+
+            Assert.That(idleBounds.width, Is.EqualTo(walkBounds.width), $"{characterName} idle frame {i} should keep the same visible width as the forward walk frame.");
+            Assert.That(idleBounds.height, Is.InRange(walkBounds.height, walkBounds.height + 3), $"{characterName} idle frame {i} should not shrink below the forward walk frame.");
+            Assert.That(idleBounds.yMin, Is.EqualTo(walkBounds.yMin), $"{characterName} idle frame {i} should keep the same foot baseline as the forward walk frame.");
+        }
+    }
+
     private static void AssertSceneGuestUsesNamedAnimation(string sceneText, int guestNumber, string displayName, string assetName, string filePrefix)
     {
         string walkFolder = $"Assets/Characters/{assetName}/walk/aligned";
@@ -479,22 +558,31 @@ public class CharacterRegressionTests
         Assert.That(guestBlock, Does.Contain("m_AddedGameObjects:"), $"Guest {guestNumber} should keep the carried-coat child visual setup.");
     }
 
-    private static void AssertNamedGuestAnimationAssets(string displayName, string assetName, string filePrefix)
+    private static void AssertNamedGuestAnimationAssets(string displayName, string assetName, string filePrefix, bool usesForwardIdle)
     {
         string walkFolder = $"Assets/Characters/{assetName}/walk/aligned";
+        string idleFramePrefix = $"Assets/Characters/{assetName}/idle/aligned/{filePrefix}_idle_down";
         string animationFolder = $"Assets/Animation/{assetName}";
         string overrideText = File.ReadAllText($"{animationFolder}/{assetName}.overrideController");
         string firstFrameGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_01_r01_c01.png.meta");
         string idleClipGuid = ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle.anim.meta");
 
         Assert.That(Directory.GetFiles(walkFolder, $"{filePrefix}_walk_*.png").Length, Is.EqualTo(32), $"{displayName} should keep eight generated walk frames for each of four directions.");
-        Assert.That(overrideText, Does.Contain(idleClipGuid), $"{displayName} override controller should wire generic idle states to the still idle clip.");
-        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Down.anim.meta")), $"{displayName} should not wire the animated down idle sequence yet.");
-        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Left.anim.meta")), $"{displayName} should not wire the animated left idle sequence yet.");
-        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Right.anim.meta")), $"{displayName} should not wire the animated right idle sequence yet.");
-        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Up.anim.meta")), $"{displayName} should not wire the animated up idle sequence yet.");
+        Assert.That(overrideText, Does.Contain(idleClipGuid), $"{displayName} override controller should wire generic idle states to the main idle clip.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Down.anim.meta")), $"{displayName} should not wire the separate directional down idle clip.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Left.anim.meta")), $"{displayName} should not wire the directional left idle clip.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Right.anim.meta")), $"{displayName} should not wire the directional right idle clip.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Up.anim.meta")), $"{displayName} should not wire the directional up idle clip.");
 
-        AssertStillIdleClip(File.ReadAllText($"{animationFolder}/{assetName}_Idle.anim"), firstFrameGuid, displayName);
+        if (usesForwardIdle)
+        {
+            AssertForwardIdleClip(File.ReadAllText($"{animationFolder}/{assetName}_Idle.anim"), idleFramePrefix, displayName, 166, 297, "100", "0.5");
+        }
+        else
+        {
+            AssertStillIdleClip(File.ReadAllText($"{animationFolder}/{assetName}_Idle.anim"), firstFrameGuid, displayName);
+        }
+
         AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Down.anim"), walkFolder, filePrefix, 1, "down", displayName);
         if (UsesCustomSideWalk(assetName))
         {
@@ -574,12 +662,12 @@ public class CharacterRegressionTests
     private static string ReadSpriteFileIdFromMeta(string metaPath, string spriteName)
     {
         string metaText = File.ReadAllText(metaPath);
-        Match match = Regex.Match(metaText, $@"^\s+{Regex.Escape(spriteName)}: (-?\d+)$", RegexOptions.Multiline);
-        if (!match.Success && Regex.IsMatch(metaText, @"^\s+spriteMode: 1$", RegexOptions.Multiline))
+        if (Regex.IsMatch(metaText, @"^\s+spriteMode: 1$", RegexOptions.Multiline))
         {
             return "21300000";
         }
 
+        Match match = Regex.Match(metaText, $@"^\s+{Regex.Escape(spriteName)}: (-?\d+)$", RegexOptions.Multiline);
         Assert.That(match.Success, Is.True, $"Could not find sprite fileID for {spriteName} in {metaPath}.");
         return match.Groups[1].Value;
     }

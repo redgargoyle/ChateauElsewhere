@@ -1,10 +1,7 @@
 fileFormatVersion: 2
-guid: 4bb92fa2e2484d928200067ceed793d7
+guid: 48ee9944f96844c888069f7d0eae2ead
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: -3802579509772117857
-    second: baron_hector_glass_standing_arms_side_same_angle_left_0
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -98,46 +95,23 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: baron_hector_glass_standing_arms_side_same_angle_left_0
-      rect:
-        serializedVersion: 2
-        x: 56
-        y: 3
-        width: 58
-        height: 234
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a709c2a6f8a641bb0800000000000000
-      internalID: -3802579509772117857
-      vertices: []
-      indices:
-      edges: []
-      weights: []
+    sprites: []
     outline: []
-    customData:
+    customData: 
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
-    indices:
+    indices: 
     edges: []
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      baron_hector_glass_standing_arms_side_same_angle_left_0: -3802579509772117857
-  mipmapLimitGroupName:
+    nameFileIdTable: {}
+  mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData:
-  assetBundleName:
-  assetBundleVariant:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
