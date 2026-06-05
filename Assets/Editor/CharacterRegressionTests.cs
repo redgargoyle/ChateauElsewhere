@@ -217,7 +217,7 @@ public class CharacterRegressionTests
 
         AssertForwardIdleClip(File.ReadAllText(MisterFlorianIdleClipPath), "Assets/Art/Characters/guest3/mister_florian_knell_idle_down", "Mister Florian", 166, 297, "100", "0.5");
         AssertForwardIdleMatchesWalkScale($"{MisterFlorianWalkFolder}/mister_florian_knell_walk_01_r01_c01.png", "Assets/Art/Characters/guest3/mister_florian_knell_idle_down", "Mister Florian");
-        Assert.That(Directory.GetFiles(MisterFlorianWalkFolder, "mister_florian_knell_walk_*.png").Length, Is.EqualTo(18), "Guest 3 should keep only the Mister Florian walk frames used by the shipped clips.");
+        Assert.That(Directory.GetFiles(MisterFlorianWalkFolder, "mister_florian_knell_walk_*.png").Length, Is.EqualTo(28), "Guest 3 should keep the full June 3 Mister Florian source walk frame set in the organized guest folder.");
         AssertClipUsesMisterFlorianRow(File.ReadAllText(MisterFlorianWalkDownClipPath), 1, "down");
         AssertCustomSideWalkSequence(File.ReadAllText(MisterFlorianWalkLeftClipPath), MisterFlorianWalkFolder, "mister_florian_knell", "left", "Mister Florian");
         AssertCustomSideWalkSequence(File.ReadAllText(MisterFlorianWalkRightClipPath), MisterFlorianWalkFolder, "mister_florian_knell", "right", "Mister Florian");
@@ -883,7 +883,7 @@ public class CharacterRegressionTests
 
     private static int GetExpectedWalkFrameCount(string assetName)
     {
-        return assetName == "BaronHectorGlass" || assetName == "LordAmbroseVeil" ? 20 : 32;
+        return 32;
     }
 
     private static string GetCharacterIdleFramePrefix(string assetName, string filePrefix)
@@ -1132,11 +1132,6 @@ public class CharacterRegressionTests
             "Assets/Art/Characters/butler/butler_classic_idle_up_03.png" => "Assets/Art/Characters/butler/butler_classic_walk_13_r04_c01.png",
             "Assets/Art/Characters/guest2/butler_guest_idle_down_03.png" => "Assets/Art/Characters/guest2/butler_guest_idle_down_02.png",
             "Assets/Art/Characters/guest2/butler_guest_idle_down_04.png" => "Assets/Art/Characters/guest2/butler_guest_idle_down_02.png",
-            "Assets/Art/Characters/guest3/mister_florian_knell_idle_down_04.png" => "Assets/Art/Characters/guest3/mister_florian_knell_idle_down_02.png",
-            "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down_04.png" => "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down_02.png",
-            "Assets/Art/Characters/guest5/baron_hector_glass_idle_down_04.png" => "Assets/Art/Characters/guest5/baron_hector_glass_idle_down_02.png",
-            "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down_04.png" => "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down_02.png",
-            "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_04.png" => "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_02.png",
             _ => imagePath
         };
     }

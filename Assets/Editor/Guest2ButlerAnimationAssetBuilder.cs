@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 public static class Guest2ButlerAnimationAssetBuilder
 {
-	private const string SpriteSheetPath = "Assets/Art/Characters/guest2/butlersprite.png";
+	private const string SpriteSheetPath = "Assets/Art/Characters/butlersprite.png";
 	private const string OutputFolder = "Assets/Animation/ButlerGuest";
 	private const string ControllerPath = OutputFolder + "/ButlerGuest.overrideController";
 	private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
