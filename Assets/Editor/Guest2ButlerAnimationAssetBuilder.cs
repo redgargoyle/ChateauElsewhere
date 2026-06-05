@@ -11,11 +11,13 @@ using UnityEngine.UI;
 public static class Guest2ButlerAnimationAssetBuilder
 {
 	private const string SpriteSheetPath = "Assets/Art/Characters/guest2/butlersprite.png";
+	private const string SittingSpriteSheetPath = "Assets/Art/Characters/guest2/butlerspritesit.png";
 	private const string OutputFolder = "Assets/Animation/ButlerGuest";
 	private const string ControllerPath = OutputFolder + "/ButlerGuest.overrideController";
 	private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
 	private const string BaseControllerPath = "Assets/Animation/Player/Player.controller";
 	private const float WalkFrameRate = 12f;
+	private const float SittingFrameRate = 4f;
 
 	private static readonly string[] BaseClipNames =
 	{
@@ -40,18 +42,30 @@ public static class Guest2ButlerAnimationAssetBuilder
 			throw new InvalidOperationException($"Expected at least 32 sliced sprites in {SpriteSheetPath}, but found {frames.Length}.");
 		}
 
+		Sprite[] sittingFrames = LoadSprites(SittingSpriteSheetPath);
+		if (sittingFrames.Length < 4)
+		{
+			throw new InvalidOperationException($"Expected at least 4 sliced sprites in {SittingSpriteSheetPath}, but found {sittingFrames.Length}.");
+		}
+
 		AnimationClip idleClip = CreateSpriteClip("ButlerGuest_Idle", new[] { frames[0] }, false);
 		AnimationClip walkDownClip = CreateSpriteClip("ButlerGuest_Walk_Down", frames.Skip(0).Take(8).ToArray(), true);
 		AnimationClip walkLeftClip = CreateSpriteClip("ButlerGuest_Walk_Left", frames.Skip(8).Take(8).ToArray(), true);
 		AnimationClip walkRightClip = CreateSpriteClip("ButlerGuest_Walk_Right", frames.Skip(16).Take(8).ToArray(), true);
 		AnimationClip walkUpClip = CreateSpriteClip("ButlerGuest_Walk_Up", frames.Skip(24).Take(8).ToArray(), true);
+		AnimationClip sittingClip = CreateSpriteClip(
+			"ButlerGuest_Sitting",
+			sittingFrames.Take(4).ToArray(),
+			true,
+			SittingFrameRate);
 
 		AnimatorOverrideController controller = CreateOverrideController(
 			idleClip,
 			walkDownClip,
 			walkUpClip,
 			walkLeftClip,
-			walkRightClip);
+			walkRightClip,
+			sittingClip);
 
 		ApplyToGuest2(controller, frames[0]);
 
@@ -62,7 +76,12 @@ public static class Guest2ButlerAnimationAssetBuilder
 
 	private static Sprite[] LoadButlerSprites()
 	{
-		return AssetDatabase.LoadAllAssetsAtPath(SpriteSheetPath)
+		return LoadSprites(SpriteSheetPath);
+	}
+
+	private static Sprite[] LoadSprites(string assetPath)
+	{
+		return AssetDatabase.LoadAllAssetsAtPath(assetPath)
 			.OfType<Sprite>()
 			.OrderBy(sprite => ParseTrailingIndex(sprite.name))
 			.ToArray();
@@ -77,7 +96,7 @@ public static class Guest2ButlerAnimationAssetBuilder
 		return int.TryParse(spriteName.Substring(marker + 1), out int index) ? index : int.MaxValue;
 	}
 
-	private static AnimationClip CreateSpriteClip(string clipName, IReadOnlyList<Sprite> sprites, bool loop)
+	private static AnimationClip CreateSpriteClip(string clipName, IReadOnlyList<Sprite> sprites, bool loop, float frameRate = WalkFrameRate)
 	{
 		string assetPath = $"{OutputFolder}/{clipName}.anim";
 		AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
@@ -86,7 +105,7 @@ public static class Guest2ButlerAnimationAssetBuilder
 			clip = new AnimationClip();
 
 		clip.name = clipName;
-		clip.frameRate = WalkFrameRate;
+		clip.frameRate = frameRate;
 		clip.ClearCurves();
 
 		ObjectReferenceKeyframe[] keyframes = new ObjectReferenceKeyframe[sprites.Count];
@@ -94,7 +113,7 @@ public static class Guest2ButlerAnimationAssetBuilder
 		{
 			keyframes[i] = new ObjectReferenceKeyframe
 			{
-				time = i / WalkFrameRate,
+				time = i / frameRate,
 				value = sprites[i]
 			};
 		}
@@ -129,7 +148,8 @@ public static class Guest2ButlerAnimationAssetBuilder
 		AnimationClip walkDownClip,
 		AnimationClip walkUpClip,
 		AnimationClip walkLeftClip,
-		AnimationClip walkRightClip)
+		AnimationClip walkRightClip,
+		AnimationClip sittingClip)
 	{
 		AnimatorController baseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(BaseControllerPath);
 		if (baseController == null)
@@ -156,6 +176,7 @@ public static class Guest2ButlerAnimationAssetBuilder
 				"Player_Walk_Left" => walkLeftClip,
 				"Player_Walk_Right" => walkRightClip,
 				"Player_Climb" => walkUpClip,
+				"Player_Croutch" => sittingClip,
 				_ => idleClip
 			};
 
