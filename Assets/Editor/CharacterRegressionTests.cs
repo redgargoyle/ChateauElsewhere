@@ -45,8 +45,11 @@ public class CharacterRegressionTests
     private const string ButlerGuestStandingSidePath = "Assets/Art/Characters/guest2/butler_guest_standing_arms_side_same_angle.png";
     private const string ButlerGuestStandingSideLeftPath = "Assets/Art/Characters/guest2/butler_guest_standing_arms_side_same_angle_left.png";
     private const string ButlerGuestIdleFramePrefix = "Assets/Art/Characters/guest2/butler_guest_idle_down";
+    private const string ButlerGuestSittingSpriteMetaPath = "Assets/Art/Characters/guest2/butlerspritesit.png.meta";
+    private const string ButlerGuestOverrideControllerPath = "Assets/Animation/ButlerGuest/ButlerGuest.overrideController";
     private const string ButlerGuestOverrideControllerMetaPath = "Assets/Animation/ButlerGuest/ButlerGuest.overrideController.meta";
     private const string ButlerGuestIdleClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Idle.anim";
+    private const string ButlerGuestSittingClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Sitting.anim";
     private const string ButlerGuestWalkDownClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Down.anim";
     private const string ButlerGuestWalkLeftClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Left.anim";
     private const string ButlerGuestWalkRightClipPath = "Assets/Animation/ButlerGuest/ButlerGuest_Walk_Right.anim";
@@ -163,6 +166,8 @@ public class CharacterRegressionTests
         string butlerSheetGuid = ReadGuidFromMeta(ButlerGuestSpriteMetaPath);
         string butlerSheetMetaText = File.ReadAllText(ButlerGuestSpriteMetaPath);
         string butlerControllerGuid = ReadGuidFromMeta(ButlerGuestOverrideControllerMetaPath);
+        string butlerSittingClipGuid = ReadGuidFromMeta($"{ButlerGuestSittingClipPath}.meta");
+        string butlerOverrideControllerText = File.ReadAllText(ButlerGuestOverrideControllerPath);
 
         Assert.That(guestTwoBlock, Is.Not.Null, "Guest 2 should remain a named scene prefab instance.");
         Assert.That(guestTwoBlock, Does.Contain(butlerSheetGuid), "Guest 2 should preview with the new butler sheet instead of the player sprite.");
@@ -170,19 +175,20 @@ public class CharacterRegressionTests
 
         Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredButlerGuestAnimation"), "Runtime guest setup should preserve Guest 2's authored butler animation.");
         Assert.That(arrivalControllerText, Does.Contain("index == 1 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[1])"), "Only the authored Guest 2 object should keep this butler animation.");
+        Assert.That(butlerOverrideControllerText, Does.Match($@"(?s)m_OriginalClip: \{{fileID: 7400000, guid: ae2b75cd2fa12a2a990986dc14eee676, type: 2\}}\s+m_OverrideClip: \{{fileID: 7400000, guid: {butlerSittingClipGuid}, type: 2\}}"), "Guest 2 should use his sitting loop when ActorRoomState drives the shared crouch/seated animator state.");
 
         AssertButlerGuestIdleClipUsesStandaloneFrames(File.ReadAllText(ButlerGuestIdleClipPath));
+        AssertButlerGuestSittingClip(File.ReadAllText(ButlerGuestSittingClipPath));
         Assert.That(butlerSheetMetaText, Does.Contain("spritePixelsToUnits: 73.44827"), "Guest 2 butler sheet should import large enough to match Guest 1 Lady's visible height.");
         Assert.That(butlerSheetMetaText, Does.Contain("second: butlersprite_0"), "Guest 2 sheet slices should keep the stable names used by animation clips.");
         Assert.That(butlerSheetMetaText, Does.Contain("second: butlersprite_44"), "Guest 2 sheet slices should keep the full stable slice table.");
         Assert.That(butlerSheetMetaText, Does.Not.Contain("butlersprite 1_"), "Replacing the sheet should not leave Unity-regenerated copy suffix sprite names.");
         AssertButlerGuestExportedFramesMatchSheetSlices(butlerSheetMetaText);
         AssertClipUsesButlerExportedFrames(File.ReadAllText(ButlerGuestWalkDownClipPath), Enumerable.Range(0, 8), "forward", 16, 16, "12", "0.666666667", true);
-        AssertClipUsesButlerExportedSideWalkWithStanding(File.ReadAllText(ButlerGuestWalkLeftClipPath), new[] { 8, 9, 10, 11, 13, 14, 15 }, 12, ButlerGuestStandingSideLeftPath, "left", 16, 16, 4, "12", "0.666666667", true);
-        AssertClipUsesButlerExportedSideWalkWithStanding(File.ReadAllText(ButlerGuestWalkRightClipPath), new[] { 16, 17, 18, 19, 21, 22, 23 }, 20, ButlerGuestStandingSidePath, "right", 16, 16, 4, "12", "0.666666667", true);
+        AssertButlerGuestMirroredSideWalkClips(File.ReadAllText(ButlerGuestWalkLeftClipPath), File.ReadAllText(ButlerGuestWalkRightClipPath));
         AssertClipUsesButlerExportedFrames(File.ReadAllText(ButlerGuestWalkUpClipPath), Enumerable.Range(24, 8), "away", 16, 16, "12", "0.666666667", true);
         AssertButlerGuestStandingSideFrame(ButlerGuestStandingSideLeftPath, 91, 199, "left");
-        AssertButlerGuestStandingSideFrame(ButlerGuestStandingSidePath, 92, 200, "right");
+        AssertButlerGuestStandingSideFrame(ButlerGuestStandingSidePath, 91, 199, "right");
     }
 
     [Test]
@@ -483,6 +489,42 @@ public class CharacterRegressionTests
         }
     }
 
+    private static void AssertButlerGuestSittingClip(string clipText)
+    {
+        string metaText = File.ReadAllText(ButlerGuestSittingSpriteMetaPath);
+        string sittingSpriteGuid = ReadGuidFromMeta(ButlerGuestSittingSpriteMetaPath);
+
+        Assert.That(File.Exists(ButlerGuestSittingSpriteMetaPath.Replace(".meta", string.Empty)), Is.True, "Guest 2 sitting source sheet should exist.");
+        Assert.That(metaText, Does.Contain("spriteMode: 2"), "Guest 2 sitting source should stay imported as a multi-sprite sheet.");
+        Assert.That(metaText, Does.Contain("spritePixelsToUnits: 197.93102"), "Guest 2 sitting source should render at the same world height as the standing ButlerGuest frames.");
+        Assert.That(metaText, Does.Contain("pivot: {x: 0.5, y: 0}"), "Guest 2 sitting slices should use bottom-center pivots for room seat anchors.");
+        Assert.That(metaText, Does.Contain("alphaIsTransparency: 1"), "Guest 2 sitting source should preserve transparent sprite import behavior.");
+        Assert.That(metaText, Does.Contain("filterMode: 1"), "Guest 2 sitting source should keep point filtering.");
+        Assert.That(metaText, Does.Not.Contain("ChatGPT Image"), "Guest 2 sitting source should not keep stale generated-image slice names after being renamed.");
+
+        Assert.That(clipText, Does.Contain("classID: 114"), "Guest 2 sitting should bind UI Images for room-stage reuse.");
+        Assert.That(clipText, Does.Contain("classID: 212"), "Guest 2 sitting should bind SpriteRenderers for prefab-stage reuse.");
+        Assert.That(Regex.Matches(clipText, @"value: \{fileID: ").Count, Is.EqualTo(8), "Guest 2 sitting should have four sprite keys for Image and four for SpriteRenderer.");
+        Assert.That(Regex.Matches(clipText, @"^\s+- \{fileID: -?\d+, guid: [0-9a-f]{32}, type: 3\}$", RegexOptions.Multiline).Count, Is.EqualTo(8), "Guest 2 sitting should keep four pointer mappings per binding.");
+        Assert.That(clipText, Does.Contain("m_SampleRate: 4"), "Guest 2 sitting should animate as a slow seated idle.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 1"), "Guest 2 sitting should loop over a full one-second cycle.");
+        Assert.That(clipText, Does.Contain("m_LoopTime: 1"), "Guest 2 sitting should loop.");
+        Assert.That(clipText, Does.Contain("m_PositionCurves: []"), "Guest 2 sitting should not move transforms.");
+        Assert.That(clipText, Does.Contain("m_ScaleCurves: []"), "Guest 2 sitting should not scale transforms.");
+
+        for (int i = 0; i <= 3; i++)
+        {
+            string spriteName = $"butlerspritesit_{i}";
+            string spriteFileId = ReadSpriteFileIdFromMeta(ButlerGuestSittingSpriteMetaPath, spriteName);
+            RectInt spriteRect = ReadNamedSpriteRect(metaText, spriteName);
+            string spriteReference = $"{{fileID: {spriteFileId}, guid: {sittingSpriteGuid}, type: 3}}";
+
+            Assert.That(spriteRect.height, Is.GreaterThanOrEqualTo(570), $"Guest 2 sitting frame {i} should keep the full seated figure.");
+            Assert.That(metaText, Does.Contain($"second: {spriteName}"), $"Guest 2 sitting source should keep a clean internal name entry for {spriteName}.");
+            Assert.That(clipText, Does.Contain(spriteReference), $"Guest 2 sitting clip should include {spriteName}.");
+        }
+    }
+
     private static void AssertButlerGuestIdleClipUsesStandaloneFrames(string clipText)
     {
         for (int i = 1; i <= 2; i++)
@@ -515,7 +557,9 @@ public class CharacterRegressionTests
             string metaPath = $"{framePath}.meta";
             string frameGuid = ReadGuidFromMeta(metaPath);
             string metaText = File.ReadAllText(metaPath);
-            RectInt sheetRect = ReadButlerSheetSpriteRect(butlerSheetMetaText, i);
+            RectInt sheetRect = i >= 16 && i <= 23
+                ? ReadButlerSheetSpriteRect(butlerSheetMetaText, i - 8)
+                : ReadButlerSheetSpriteRect(butlerSheetMetaText, i);
 
             Assert.That(File.Exists(framePath), Is.True, $"Exported Guest 2 frame {i:00} should exist as an editable PNG.");
             Assert.That(exportedGuids.Add(frameGuid), Is.True, $"Exported Guest 2 frame {i:00} should have a unique GUID.");
@@ -526,6 +570,67 @@ public class CharacterRegressionTests
             Assert.That(metaText, Does.Contain("alphaIsTransparency: 1"), $"Exported Guest 2 frame {i:00} should preserve transparent sprite import behavior.");
             Assert.That(metaText, Does.Contain("filterMode: 1"), $"Exported Guest 2 frame {i:00} should keep point filtering.");
         }
+    }
+
+    private static void AssertButlerGuestMirroredSideWalkClips(string leftClipText, string rightClipText)
+    {
+        AssertButlerGuestRightWalkFramesMirrorLeftWalkFrames();
+
+        Dictionary<string, string> mirroredGuids = BuildButlerGuestMirroredSideWalkGuidMap();
+        string[] leftSpriteGuids = ReadSpriteGuidSequence(leftClipText);
+        string[] rightSpriteGuids = ReadSpriteGuidSequence(rightClipText);
+        string[] expectedRightSpriteGuids = leftSpriteGuids.Select(guid =>
+        {
+            Assert.That(mirroredGuids.ContainsKey(guid), Is.True, "Guest 2 walk left should only reference left-facing frames that have mirrored right-facing counterparts.");
+            return mirroredGuids[guid];
+        }).ToArray();
+
+        Assert.That(leftSpriteGuids.Length, Is.GreaterThan(0), "Guest 2 walk left should reference standalone sprite frames.");
+        Assert.That(rightSpriteGuids, Is.EqualTo(expectedRightSpriteGuids), "Guest 2 walk right should reuse the walk-left timing with mirrored frame GUIDs.");
+        Assert.That(leftClipText, Does.Not.Contain(ReadGuidFromMeta(ButlerGuestSpriteMetaPath)), "Guest 2 walk left should not reference the sheet sub-sprites.");
+        Assert.That(rightClipText, Does.Not.Contain(ReadGuidFromMeta(ButlerGuestSpriteMetaPath)), "Guest 2 walk right should not reference the sheet sub-sprites.");
+        Assert.That(leftClipText, Does.Contain("classID: 212"), "Guest 2 walk left should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(rightClipText, Does.Contain("classID: 212"), "Guest 2 walk right should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(ReadAnimationScalar(leftClipText, "m_SampleRate"), Is.EqualTo(ReadAnimationScalar(rightClipText, "m_SampleRate")), "Guest 2 mirrored side walks should keep matching sample rates.");
+        Assert.That(ReadAnimationScalar(leftClipText, "m_StopTime"), Is.EqualTo(ReadAnimationScalar(rightClipText, "m_StopTime")), "Guest 2 mirrored side walks should keep matching loop lengths.");
+    }
+
+    private static void AssertButlerGuestRightWalkFramesMirrorLeftWalkFrames()
+    {
+        for (int i = 8; i <= 15; i++)
+        {
+            AssertPngIsHorizontalMirror(GetButlerGuestExportedFramePath(i), GetButlerGuestExportedFramePath(i + 8), $"Guest 2 right walk frame {i + 8:00}");
+        }
+
+        AssertPngIsHorizontalMirror(ButlerGuestStandingSideLeftPath, ButlerGuestStandingSidePath, "Guest 2 right standing side frame");
+    }
+
+    private static Dictionary<string, string> BuildButlerGuestMirroredSideWalkGuidMap()
+    {
+        var mirroredGuids = new Dictionary<string, string>();
+
+        for (int i = 8; i <= 15; i++)
+        {
+            mirroredGuids[ReadGuidFromMeta($"{GetButlerGuestExportedFramePath(i)}.meta")] = ReadGuidFromMeta($"{GetButlerGuestExportedFramePath(i + 8)}.meta");
+        }
+
+        mirroredGuids[ReadGuidFromMeta($"{ButlerGuestStandingSideLeftPath}.meta")] = ReadGuidFromMeta($"{ButlerGuestStandingSidePath}.meta");
+        return mirroredGuids;
+    }
+
+    private static string[] ReadSpriteGuidSequence(string clipText)
+    {
+        return Regex.Matches(clipText, @"\{fileID: 21300000, guid: (?<guid>[0-9a-f]{32}), type: 3\}")
+            .Cast<Match>()
+            .Select(match => match.Groups["guid"].Value)
+            .ToArray();
+    }
+
+    private static string ReadAnimationScalar(string clipText, string key)
+    {
+        Match match = Regex.Match(clipText, $@"^\s+{Regex.Escape(key)}: (?<value>\S+)$", RegexOptions.Multiline);
+        Assert.That(match.Success, Is.True, $"Could not find {key} in animation clip.");
+        return match.Groups["value"].Value;
     }
 
     private static void AssertClipUsesButlerExportedFrames(string clipText, IEnumerable<int> spriteIndexes, string direction, int expectedSpriteKeyCount, int expectedPointerMappingCount, string expectedSampleRate, string expectedStopTime, bool requiresImageBinding)
@@ -584,7 +689,11 @@ public class CharacterRegressionTests
 
     private static RectInt ReadButlerSheetSpriteRect(string metaText, int spriteIndex)
     {
-        string spriteName = $"butlersprite_{spriteIndex}";
+        return ReadNamedSpriteRect(metaText, $"butlersprite_{spriteIndex}");
+    }
+
+    private static RectInt ReadNamedSpriteRect(string metaText, string spriteName)
+    {
         Match match = Regex.Match(metaText, $@"(?s)name: {Regex.Escape(spriteName)}\s+rect:\s+serializedVersion: 2\s+x: (?<x>\d+)\s+y: (?<y>\d+)\s+width: (?<width>\d+)\s+height: (?<height>\d+)");
         Assert.That(match.Success, Is.True, $"Could not read sheet rect for {spriteName}.");
         return new RectInt(
@@ -904,6 +1013,43 @@ public class CharacterRegressionTests
 
         Assert.That(standingBounds.height, Is.GreaterThanOrEqualTo(expectedHeight - 4), $"{displayName} {direction} standing frame should match the walk-frame visible height instead of shrinking.");
         Assert.That(standingBounds.yMin, Is.InRange(expectedBaseline - 2, expectedBaseline + 2), $"{displayName} {direction} standing frame should keep the same foot baseline as the walk frames.");
+    }
+
+    private static void AssertPngIsHorizontalMirror(string leftImagePath, string rightImagePath, string label)
+    {
+        leftImagePath = ResolveConsolidatedSpritePath(leftImagePath);
+        rightImagePath = ResolveConsolidatedSpritePath(rightImagePath);
+        Texture2D leftTexture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        Texture2D rightTexture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        try
+        {
+            Assert.That(ImageConversion.LoadImage(leftTexture, File.ReadAllBytes(leftImagePath)), Is.True, $"Could not load PNG sprite at {leftImagePath}.");
+            Assert.That(ImageConversion.LoadImage(rightTexture, File.ReadAllBytes(rightImagePath)), Is.True, $"Could not load PNG sprite at {rightImagePath}.");
+            Assert.That(rightTexture.width, Is.EqualTo(leftTexture.width), $"{label} should keep the same canvas width as its left-facing source.");
+            Assert.That(rightTexture.height, Is.EqualTo(leftTexture.height), $"{label} should keep the same canvas height as its left-facing source.");
+
+            Color32[] leftPixels = leftTexture.GetPixels32();
+            Color32[] rightPixels = rightTexture.GetPixels32();
+            for (int y = 0; y < leftTexture.height; y++)
+            {
+                for (int x = 0; x < leftTexture.width; x++)
+                {
+                    Color32 expected = leftPixels[(y * leftTexture.width) + (leftTexture.width - 1 - x)];
+                    Color32 actual = rightPixels[(y * rightTexture.width) + x];
+                    if (actual.r == expected.r && actual.g == expected.g && actual.b == expected.b && actual.a == expected.a)
+                    {
+                        continue;
+                    }
+
+                    Assert.Fail($"{label} should be a horizontal flip of {leftImagePath}; first mismatch at ({x}, {y}).");
+                }
+            }
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(leftTexture);
+            UnityEngine.Object.DestroyImmediate(rightTexture);
+        }
     }
 
     private static RectInt ReadVisibleSpriteBounds(string imagePath, int expectedWidth = 166, int expectedHeight = 297)
