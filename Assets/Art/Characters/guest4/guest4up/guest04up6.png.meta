@@ -1,13 +1,16 @@
 fileFormatVersion: 2
-guid: 82372df8d8941e84cbc1691d73a7b3f2
+guid: 63e9ec9cfc3bcac44afc705bc12d8f4f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1945832614517067668
-    second: guest4up1_0
+      213: -2796911794005204035
+    second: guest04up6_0
   - first:
-      213: -8396524087847443312
-    second: guest4up1_1
+      213: -6584606851875930714
+    second: guest04up6_1
+  - first:
+      213: -7839056568053088800
+    second: guest04up6_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -103,13 +106,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: guest4up1_0
+      name: guest04up6_0
       rect:
         serializedVersion: 2
         x: 26
         y: 3
-        width: 113
-        height: 258
+        width: 115
+        height: 259
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -118,20 +121,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c60375beb830ff4e0800000000000000
-      internalID: -1945832614517067668
+      spriteID: db32832ca8f5f29d0800000000000000
+      internalID: -2796911794005204035
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: guest4up1_1
+      name: guest04up6_1
       rect:
         serializedVersion: 2
-        x: 67
-        y: 255
-        width: 10
-        height: 7
+        x: 134
+        y: 141
+        width: 7
+        height: 6
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -140,8 +143,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 094a7db24dd897b80800000000000000
-      internalID: -8396524087847443312
+      spriteID: 6adf45874f6ce94a0800000000000000
+      internalID: -6584606851875930714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guest04up6_2
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 3
+        width: 31
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0edb00f9593163390800000000000000
+      internalID: -7839056568053088800
       vertices: []
       indices: 
       edges: []
@@ -160,8 +185,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      guest4up1_0: -1945832614517067668
-      guest4up1_1: -8396524087847443312
+      guest04up6_0: -2796911794005204035
+      guest04up6_1: -6584606851875930714
+      guest04up6_2: -7839056568053088800
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
