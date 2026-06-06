@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 27fce91874679f24498af0869e23d838
+guid: f7181e803e1b64c489a211a7ea12bb30
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7952725238573258896
-    second: guest7_standing_left_idle_02_0
+      213: 4055013601591011461
+    second: GuestPair02Man_up_04_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -50,8 +50,8 @@ TextureImporter:
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
-  spritePivot: {x: 0.5, y: 0}
-  spritePixelsToUnits: 97.91667
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -100,23 +100,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: guest7_standing_left_idle_02_0
+      name: GuestPair02Man_up_04_0
       rect:
         serializedVersion: 2
-        x: 80
-        y: 4
-        width: 87
-        height: 284
+        x: 74
+        y: 1
+        width: 101
+        height: 259
       alignment: 0
-      pivot: {x: 0.5, y: 0}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 077ae86e78e32a190800000000000000
-      internalID: -7952725238573258896
+      spriteID: 588a532e26d464830800000000000000
+      internalID: 4055013601591011461
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      guest7_standing_left_idle_02_0: -7952725238573258896
+      GuestPair02Man_up_04_0: 4055013601591011461
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
