@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 2fe3bb71f8d20844a90e7eafc6d809cf
+guid: 169f01de3a1c98245b08a3eecec19f52
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7390407375132233172
-    second: 02_mister_florian_knell_idle_down_02_0
+      213: -8380636963051547485
+    second: guest3idle4_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: 02_mister_florian_knell_idle_down_02_0
+      name: guest3idle4_0
       rect:
         serializedVersion: 2
         x: 26
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c22f0dbf5afff6990800000000000000
-      internalID: -7390407375132233172
+      spriteID: 3a4ddc9a51ff1bb80800000000000000
+      internalID: -8380636963051547485
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      02_mister_florian_knell_idle_down_02_0: -7390407375132233172
+      guest3idle4_0: -8380636963051547485
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
