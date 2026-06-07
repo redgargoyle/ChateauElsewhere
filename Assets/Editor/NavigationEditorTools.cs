@@ -424,6 +424,19 @@ public static class NavigationEditorTools
         return null;
     }
 
+    public static bool ShouldForcePreviewSelectedRoom()
+    {
+        GameObject selectedObject = Selection.activeGameObject;
+
+        if (selectedObject == null)
+        {
+            return false;
+        }
+
+        return selectedObject.GetComponent<RoomContentGroup>() != null ||
+            IsSelectedChapter2HideAnchor();
+    }
+
     public static bool IsSelectedChapter2HideAnchor()
     {
         RoomAnchor selectedRoomAnchor = FindSelectedRoomAnchor();
@@ -1042,7 +1055,7 @@ public static class NavigationSelectionAutoPreview
 
     private static void HandleHierarchyChanged()
     {
-        if ((!NavigationEditorTools.AutoPreviewSelectedRoom && !NavigationEditorTools.IsSelectedChapter2HideAnchor()) ||
+        if ((!NavigationEditorTools.AutoPreviewSelectedRoom && !NavigationEditorTools.ShouldForcePreviewSelectedRoom()) ||
             isPreviewingSelection ||
             EditorApplication.isPlayingOrWillChangePlaymode)
         {
@@ -1065,9 +1078,9 @@ public static class NavigationSelectionAutoPreview
 
     private static void QueuePreviewForCurrentSelection()
     {
-        bool forcePreviewSelectedHideAnchor = NavigationEditorTools.IsSelectedChapter2HideAnchor();
+        bool forcePreviewSelection = NavigationEditorTools.ShouldForcePreviewSelectedRoom();
 
-        if ((!NavigationEditorTools.AutoPreviewSelectedRoom && !forcePreviewSelectedHideAnchor) ||
+        if ((!NavigationEditorTools.AutoPreviewSelectedRoom && !forcePreviewSelection) ||
             isPreviewingSelection ||
             EditorApplication.isPlayingOrWillChangePlaymode)
         {
