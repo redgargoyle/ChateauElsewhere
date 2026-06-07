@@ -21,6 +21,7 @@ public class NavigationRegressionTests
     private const string RoomPrefabPath = "Assets/Prefabs/Room.prefab";
     private const string YSortSolidObstaclePath = "Assets/Scripts/Characters/YSortSolidObstacle2D.cs";
     private const string ChapterTimeSettingsUIPath = "Assets/Scripts/Story/ChapterTimeSettingsUI.cs";
+    private const string RuntimeSettingsMenuPath = "Assets/Scripts/UI/RuntimeSettingsMenu.cs";
     private const string GrandfatherClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
@@ -96,6 +97,7 @@ public class NavigationRegressionTests
     public void ChapterClockUsesSingleBottomLeftHudReadout()
     {
         string timeSettingsText = File.ReadAllText(ChapterTimeSettingsUIPath);
+        string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
         string chapter1HudText = File.ReadAllText(Chapter1InteractionHUDPath);
         string chapter2HudText = File.ReadAllText(Chapter2InteractionHUDPath);
 
@@ -105,6 +107,16 @@ public class NavigationRegressionTests
         Assert.That(timeSettingsText, Does.Contain("clockRect.pivot = new Vector2(0f, 0f)"));
         Assert.That(timeSettingsText, Does.Contain("clockRect.anchoredPosition = new Vector2(18f, 18f)"));
         Assert.That(timeSettingsText, Does.Contain("TextAlignmentOptions.BottomLeft"));
+        Assert.That(timeSettingsText, Does.Not.Contain("Slider_SecondsPerGameMinute"), "The editable game-time speed slider should not be created in the always-visible clock HUD.");
+        Assert.That(timeSettingsText, Does.Not.Contain("Input_SecondsPerGameMinute"), "The editable game-time speed input should not be created in the always-visible clock HUD.");
+        Assert.That(runtimeSettingsText, Does.Contain("Control_DebugGameTimeSpeed"), "The game-time speed control should live in the runtime debug menu.");
+        Assert.That(runtimeSettingsText, Does.Contain("Slider_DebugSecondsPerGameMinute"), "The debug game-time control should include the speed slider.");
+        Assert.That(runtimeSettingsText, Does.Contain("Input_DebugSecondsPerGameMinute"), "The debug game-time control should include the numeric speed input.");
+        Assert.That(runtimeSettingsText, Does.Contain("existing.Initialize(navigationManager)"), "Existing generated settings menus should rebuild so stale slider UI cannot survive.");
+        Assert.That(runtimeSettingsText, Does.Not.Contain("typeof(Slider)"), "The debug game-time control should not use Unity's image-backed Slider template.");
+        Assert.That(runtimeSettingsText, Does.Contain("DebugTimeSliderDragTarget"), "The debug game-time control should use a solid custom drag target.");
+        Assert.That(runtimeSettingsText, Does.Contain("ConfigureSolidImage"), "The debug game-time control should force solid UI images instead of inherited sprites.");
+        Assert.That(runtimeSettingsText, Does.Contain("SetSecondsPerGameMinute"), "The moved control should still update the chapter clock.");
 
         Assert.That(chapter1HudText, Does.Not.Contain("BuildShortHudState(chapterClock.CurrentTimeLabel)"), "Chapter 1 status should not render a second clock label.");
         Assert.That(chapter2HudText, Does.Not.Contain("chapterClock.CurrentTimeLabel"), "Chapter 2 status should not render a second clock label.");

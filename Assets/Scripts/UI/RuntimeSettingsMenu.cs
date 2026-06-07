@@ -14,13 +14,19 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private const string SettingsListName = "List_Settings";
     private const string DebugListName = "List_Debug";
     private const string RoomListName = "List_TeleportRooms";
+    private const string DebugTimeControlName = "Control_DebugGameTimeSpeed";
     private const float ButtonWidth = 150f;
     private const float ButtonHeight = 34f;
+    private const float DebugTimeControlWidth = 258f;
+    private const float MinSecondsPerGameMinute = 1f;
+    private const float MaxSecondsPerGameMinute = 120f;
     private const int MenuCanvasSortingOrder = 10050;
 
     private static readonly Color ButtonNormalColor = new Color(0.05f, 0.05f, 0.055f, 0.88f);
     private static readonly Color ButtonHighlightColor = new Color(0.16f, 0.16f, 0.18f, 0.95f);
     private static readonly Color ButtonPressedColor = new Color(0.02f, 0.02f, 0.025f, 1f);
+    private static readonly Color DebugTimeControlColor = new Color(0.08f, 0.08f, 0.085f, 1f);
+    private static readonly Color DebugTimeInputColor = new Color(0.02f, 0.02f, 0.025f, 1f);
     private static readonly Color PanelColor = new Color(0f, 0f, 0f, 0.18f);
 
     private RoomNavigationManager navigationManager;
@@ -29,10 +35,18 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private RectTransform settingsList;
     private RectTransform debugList;
     private RectTransform roomList;
+    private RectTransform debugTimeControl;
+    private RectTransform debugTimeSlider;
+    private RectTransform debugTimeSliderFill;
+    private RectTransform debugTimeSliderHandle;
+    private TMP_InputField debugTimeInput;
+    private TMP_Text debugTimeLabel;
     private ChapterManager chapterManager;
+    private ChapterClock chapterClock;
     private bool settingsOpen;
     private bool debugOpen;
     private bool roomListOpen;
+    private bool isUpdatingDebugTimeControl;
 
     public static RuntimeSettingsMenu FindOrCreate(RoomNavigationManager navigationManager)
     {
@@ -40,6 +54,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         if (existing != null)
         {
+            existing.Initialize(navigationManager);
             return existing;
         }
 
@@ -184,12 +199,21 @@ public class RuntimeSettingsMenu : MonoBehaviour
         FindOrCreateButton(debugList, "Button_SkipToChapter2", "Skip to Chapter 2", SkipToChapter2);
         FindOrCreateButton(debugList, "Button_SkipToChapter3", "Skip to Chapter 3", SkipToChapter3);
         FindOrCreateButton(debugList, "Button_TeleportToRoom", "Teleport to Room", ToggleRoomList);
+        debugTimeControl = FindOrCreateDebugTimeControl(debugList);
 
         roomList = FindOrCreateList(rootRect, RoomListName, true);
         roomList.anchorMin = new Vector2(0f, 1f);
         roomList.anchorMax = new Vector2(0f, 1f);
         roomList.pivot = new Vector2(0f, 1f);
-        roomList.anchoredPosition = new Vector2(ButtonWidth + 10f + ((ButtonWidth + 6f) * 2f), -ButtonHeight * 2f - 14f);
+        roomList.anchoredPosition = new Vector2(ButtonWidth + 10f, -ButtonHeight * 2f - 14f);
+    }
+
+    private void Update()
+    {
+        if (settingsOpen && debugOpen)
+        {
+            RefreshDebugTimeControl();
+        }
     }
 
     private void ToggleSettings()
@@ -261,6 +285,11 @@ public class RuntimeSettingsMenu : MonoBehaviour
         if (debugList != null)
         {
             debugList.gameObject.SetActive(settingsOpen && debugOpen);
+
+            if (settingsOpen && debugOpen)
+            {
+                RefreshDebugTimeControl();
+            }
         }
 
         if (roomList != null)
@@ -336,6 +365,111 @@ public class RuntimeSettingsMenu : MonoBehaviour
         return chapterManager;
     }
 
+    private ChapterClock ResolveChapterClock()
+    {
+        if (chapterClock == null)
+        {
+            ChapterManager manager = ResolveChapterManager();
+            chapterClock = manager != null
+                ? manager.GetComponent<ChapterClock>()
+                : FindAnyObjectByType<ChapterClock>(FindObjectsInactive.Include);
+        }
+
+        if (chapterClock == null)
+        {
+            chapterClock = FindAnyObjectByType<ChapterClock>(FindObjectsInactive.Include);
+        }
+
+        return chapterClock;
+    }
+
+    private void ApplyDebugGameTimeSpeed(float secondsPerGameMinute)
+    {
+        ChapterClock clock = ResolveChapterClock();
+
+        if (clock == null)
+        {
+            RefreshDebugTimeControl();
+            return;
+        }
+
+        clock.SetSecondsPerGameMinute(Mathf.Clamp(secondsPerGameMinute, MinSecondsPerGameMinute, MaxSecondsPerGameMinute));
+        RefreshDebugTimeControl();
+    }
+
+    private void RefreshDebugTimeControl()
+    {
+        ChapterClock clock = ResolveChapterClock();
+        bool hasClock = clock != null;
+        float value = hasClock ? clock.SecondsPerGameMinute : MinSecondsPerGameMinute;
+
+        isUpdatingDebugTimeControl = true;
+
+        RefreshDebugTimeSliderVisual(value, hasClock);
+
+        if (debugTimeInput != null)
+        {
+            debugTimeInput.interactable = hasClock;
+            debugTimeInput.SetTextWithoutNotify(hasClock ? value.ToString("0.##") : "--");
+        }
+
+        if (debugTimeLabel != null)
+        {
+            debugTimeLabel.text = "Game Time";
+        }
+
+        isUpdatingDebugTimeControl = false;
+    }
+
+    private void SetDebugGameTimeFromPointer(RectTransform sliderRect, PointerEventData eventData)
+    {
+        ChapterClock clock = ResolveChapterClock();
+
+        if (clock == null || sliderRect == null || eventData == null)
+        {
+            return;
+        }
+
+        Camera eventCamera = eventData.pressEventCamera != null
+            ? eventData.pressEventCamera
+            : eventData.enterEventCamera;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(sliderRect, eventData.position, eventCamera, out Vector2 localPoint))
+        {
+            return;
+        }
+
+        Rect rect = sliderRect.rect;
+        float normalized = Mathf.Clamp01(Mathf.InverseLerp(rect.xMin, rect.xMax, localPoint.x));
+        float secondsPerGameMinute = Mathf.Lerp(MinSecondsPerGameMinute, MaxSecondsPerGameMinute, normalized);
+        ApplyDebugGameTimeSpeed(secondsPerGameMinute);
+    }
+
+    private void RefreshDebugTimeSliderVisual(float value, bool hasClock)
+    {
+        if (debugTimeSliderFill == null || debugTimeSliderHandle == null)
+        {
+            return;
+        }
+
+        float normalized = Mathf.Clamp01(Mathf.InverseLerp(MinSecondsPerGameMinute, MaxSecondsPerGameMinute, value));
+        debugTimeSliderFill.anchorMin = new Vector2(0f, 0.32f);
+        debugTimeSliderFill.anchorMax = new Vector2(normalized, 0.68f);
+        debugTimeSliderFill.offsetMin = Vector2.zero;
+        debugTimeSliderFill.offsetMax = Vector2.zero;
+
+        debugTimeSliderHandle.anchorMin = new Vector2(normalized, 0.5f);
+        debugTimeSliderHandle.anchorMax = new Vector2(normalized, 0.5f);
+        debugTimeSliderHandle.anchoredPosition = Vector2.zero;
+        debugTimeSliderHandle.sizeDelta = new Vector2(12f, 22f);
+
+        Image fillImage = debugTimeSliderFill.GetComponent<Image>();
+        Image handleImage = debugTimeSliderHandle.GetComponent<Image>();
+
+        ConfigureSolidImage(fillImage, hasClock ? new Color(0.48f, 0.48f, 0.48f, 1f) : new Color(0.24f, 0.24f, 0.24f, 1f));
+        ConfigureSolidImage(handleImage, hasClock ? new Color(0.72f, 0.72f, 0.72f, 1f) : new Color(0.36f, 0.36f, 0.36f, 1f));
+    }
+
     private static RectTransform FindOrCreateList(Transform parent, string objectName, bool vertical)
     {
         Transform existing = parent.Find(objectName);
@@ -397,6 +531,250 @@ public class RuntimeSettingsMenu : MonoBehaviour
         fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         return rect;
+    }
+
+    private RectTransform FindOrCreateDebugTimeControl(Transform parent)
+    {
+        Transform existing = parent.Find(DebugTimeControlName);
+        RectTransform rect = existing != null ? existing as RectTransform : null;
+
+        if (rect == null)
+        {
+            GameObject controlObject = new GameObject(DebugTimeControlName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+            rect = controlObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+        }
+
+        rect.sizeDelta = new Vector2(DebugTimeControlWidth, ButtonHeight);
+
+        LayoutElement layoutElement = rect.GetComponent<LayoutElement>();
+
+        if (layoutElement == null)
+        {
+            layoutElement = rect.gameObject.AddComponent<LayoutElement>();
+        }
+
+        layoutElement.preferredWidth = DebugTimeControlWidth;
+        layoutElement.minWidth = DebugTimeControlWidth;
+        layoutElement.preferredHeight = ButtonHeight;
+        layoutElement.minHeight = ButtonHeight;
+
+        Image image = rect.GetComponent<Image>();
+
+        if (image != null)
+        {
+            ConfigureSolidImage(image, DebugTimeControlColor);
+            image.raycastTarget = false;
+        }
+
+        debugTimeLabel = FindOrCreateControlText(rect, "Text_GameTimeLabel", "Game Time", 13f, TextAlignmentOptions.MidlineLeft);
+        RectTransform labelRect = debugTimeLabel.GetComponent<RectTransform>();
+        labelRect.anchorMin = new Vector2(0f, 0f);
+        labelRect.anchorMax = new Vector2(0f, 1f);
+        labelRect.pivot = new Vector2(0f, 0.5f);
+        labelRect.anchoredPosition = new Vector2(10f, 0f);
+        labelRect.sizeDelta = new Vector2(72f, 0f);
+
+        debugTimeSlider = FindOrCreateDebugTimeSlider(rect);
+
+        debugTimeInput = FindOrCreateDebugTimeInput(rect);
+        debugTimeInput.onEndEdit.RemoveAllListeners();
+        debugTimeInput.onEndEdit.AddListener(value =>
+        {
+            if (!isUpdatingDebugTimeControl && float.TryParse(value, out float parsed))
+            {
+                ApplyDebugGameTimeSpeed(parsed);
+            }
+        });
+
+        RefreshDebugTimeControl();
+        return rect;
+    }
+
+    private RectTransform FindOrCreateDebugTimeSlider(RectTransform parent)
+    {
+        const string sliderName = "Slider_DebugSecondsPerGameMinute";
+        Transform existing = parent.Find(sliderName);
+        RectTransform rect = existing as RectTransform;
+
+        if (rect == null)
+        {
+            GameObject sliderObject = new GameObject(sliderName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            rect = sliderObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+        }
+
+        rect.anchorMin = new Vector2(0f, 0.5f);
+        rect.anchorMax = new Vector2(0f, 0.5f);
+        rect.pivot = new Vector2(0f, 0.5f);
+        rect.anchoredPosition = new Vector2(86f, 0f);
+        rect.sizeDelta = new Vector2(104f, 22f);
+
+        Slider oldSlider = rect.GetComponent<Slider>();
+
+        if (oldSlider != null)
+        {
+            oldSlider.enabled = false;
+            oldSlider.fillRect = null;
+            oldSlider.handleRect = null;
+            oldSlider.targetGraphic = null;
+            DestroyComponent(oldSlider);
+        }
+
+        Image hitTarget = rect.GetComponent<Image>();
+
+        if (hitTarget == null)
+        {
+            hitTarget = rect.gameObject.AddComponent<Image>();
+        }
+
+        ConfigureSolidImage(hitTarget, new Color(0f, 0f, 0f, 0f));
+        hitTarget.raycastTarget = true;
+
+        Image backgroundImage = FindOrCreateSliderImage(rect, "Background", new Color(0.18f, 0.18f, 0.18f, 1f), new Vector2(0f, 0.32f), new Vector2(1f, 0.68f));
+        Image fillImage = FindOrCreateSliderImage(rect, "Fill", new Color(0.48f, 0.48f, 0.48f, 1f), new Vector2(0f, 0.32f), new Vector2(1f, 0.68f));
+        Image handleImage = FindOrCreateSliderImage(rect, "Handle", new Color(0.72f, 0.72f, 0.72f, 1f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f));
+        RectTransform handleRect = handleImage.GetComponent<RectTransform>();
+        handleRect.sizeDelta = new Vector2(12f, 22f);
+        backgroundImage.raycastTarget = false;
+        fillImage.raycastTarget = false;
+        handleImage.raycastTarget = false;
+
+        debugTimeSliderFill = fillImage.GetComponent<RectTransform>();
+        debugTimeSliderHandle = handleRect;
+
+        DebugTimeSliderDragTarget dragTarget = rect.GetComponent<DebugTimeSliderDragTarget>();
+
+        if (dragTarget == null)
+        {
+            dragTarget = rect.gameObject.AddComponent<DebugTimeSliderDragTarget>();
+        }
+
+        dragTarget.Initialize(this, rect);
+        return rect;
+    }
+
+    private static TMP_InputField FindOrCreateDebugTimeInput(RectTransform parent)
+    {
+        const string inputName = "Input_DebugSecondsPerGameMinute";
+        Transform existing = parent.Find(inputName);
+        TMP_InputField input = existing != null ? existing.GetComponent<TMP_InputField>() : null;
+        RectTransform rect;
+
+        if (input == null)
+        {
+            GameObject inputObject = new GameObject(inputName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(TMP_InputField));
+            rect = inputObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            input = inputObject.GetComponent<TMP_InputField>();
+        }
+        else
+        {
+            rect = input.GetComponent<RectTransform>();
+        }
+
+        rect.anchorMin = new Vector2(1f, 0.5f);
+        rect.anchorMax = new Vector2(1f, 0.5f);
+        rect.pivot = new Vector2(1f, 0.5f);
+        rect.anchoredPosition = new Vector2(-8f, 0f);
+        rect.sizeDelta = new Vector2(54f, 26f);
+
+        Image image = rect.GetComponent<Image>();
+
+        if (image != null)
+        {
+            ConfigureSolidImage(image, DebugTimeInputColor);
+        }
+
+        TMP_Text text = FindOrCreateControlText(rect, "Text_Value", string.Empty, 13f, TextAlignmentOptions.Center);
+        RectTransform textRect = text.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(5f, 1f);
+        textRect.offsetMax = new Vector2(-5f, -1f);
+        input.textComponent = text;
+        input.contentType = TMP_InputField.ContentType.DecimalNumber;
+        return input;
+    }
+
+    private static Image FindOrCreateSliderImage(RectTransform parent, string objectName, Color color, Vector2 anchorMin, Vector2 anchorMax)
+    {
+        Transform existing = parent.Find(objectName);
+        Image image = existing != null ? existing.GetComponent<Image>() : null;
+        RectTransform rect;
+
+        if (image == null)
+        {
+            GameObject imageObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            rect = imageObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            image = imageObject.GetComponent<Image>();
+        }
+        else
+        {
+            rect = image.GetComponent<RectTransform>();
+        }
+
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        ConfigureSolidImage(image, color);
+        return image;
+    }
+
+    private static void ConfigureSolidImage(Image image, Color color)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        image.sprite = null;
+        image.overrideSprite = null;
+        image.material = null;
+        image.type = Image.Type.Simple;
+        image.preserveAspect = false;
+        image.color = color;
+    }
+
+    private static void DestroyComponent(Component component)
+    {
+        if (component == null)
+        {
+            return;
+        }
+
+        if (Application.isPlaying)
+        {
+            Destroy(component);
+        }
+        else
+        {
+            DestroyImmediate(component);
+        }
+    }
+
+    private static TMP_Text FindOrCreateControlText(Transform parent, string objectName, string label, float fontSize, TextAlignmentOptions alignment)
+    {
+        Transform existing = parent.Find(objectName);
+        TMP_Text text = existing != null ? existing.GetComponent<TMP_Text>() : null;
+
+        if (text == null)
+        {
+            GameObject textObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            RectTransform rect = textObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            text = textObject.GetComponent<TMP_Text>();
+        }
+
+        text.text = label ?? string.Empty;
+        text.fontSize = fontSize;
+        text.color = Color.white;
+        text.alignment = alignment;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
+        return text;
     }
 
     private static Button FindOrCreateButton(Transform parent, string objectName, string label, Action onClick)
@@ -525,5 +903,27 @@ public class RuntimeSettingsMenu : MonoBehaviour
         }
 
         new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+    }
+
+    private sealed class DebugTimeSliderDragTarget : MonoBehaviour, IPointerDownHandler, IDragHandler
+    {
+        private RuntimeSettingsMenu owner;
+        private RectTransform sliderRect;
+
+        public void Initialize(RuntimeSettingsMenu owner, RectTransform sliderRect)
+        {
+            this.owner = owner;
+            this.sliderRect = sliderRect;
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            owner?.SetDebugGameTimeFromPointer(sliderRect, eventData);
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            owner?.SetDebugGameTimeFromPointer(sliderRect, eventData);
+        }
     }
 }
