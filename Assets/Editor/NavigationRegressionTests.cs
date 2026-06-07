@@ -28,6 +28,9 @@ public class NavigationRegressionTests
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter1InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
+    private const string ButlerIdleFolderPath = "Assets/Art/Characters/butler/butler_idle";
+    private const string PlayerIdleClipPath = "Assets/Animation/Player/Player_Idle.anim";
+    private const string ButlerClassicIdleClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle.anim";
     private const string RoomContentGroupGuid = "d0ea47fd950844bcacb0fd5556a9d880";
 
     [Test]
@@ -523,6 +526,51 @@ public class NavigationRegressionTests
         Assert.That(mainMenuSceneText, Does.Not.Contain("backgroundShaderUvRect"), "MainMenu scene should not carry stale hidden hitbox anchors.");
     }
 
+    [Test]
+    public void ButlerPlayerIdleUsesStableBreathingFrameSequence()
+    {
+        string[] expectedFrameGuids =
+        {
+            "b49b0a0dc361e586fa285412dbdd72b4",
+            "4d26ab12e717ccc6a5b4a91412b5b697",
+            "73060248c52573dbaf7343add2a2db79",
+            "77e98f788d22b7ee6113943ad6be8e25",
+            "39156dcb18a071e8dc8a083ed45c7dc8",
+            "dc13fb2936eab6d3aa4c87bc025ce375",
+            "f7507df042b49451d40940407b12237d",
+            "d07d0b91e1599fad8475de6075308575",
+            "41ebd6fd2e5a42f6c3453349b099ccda",
+            "2bc378ca18b1cc45b1c5722f1b1ce956",
+            "7b1951ac111b05ca8c1b342aa5bf5a03",
+            "9f9c4ccf52828f6f36d73b99e6e80bf6"
+        };
+
+        for (int index = 0; index < expectedFrameGuids.Length; index++)
+        {
+            string framePath = $"{ButlerIdleFolderPath}/butler_idle_{index + 1:00}.png";
+            string frameMetaPath = framePath + ".meta";
+
+            Assert.That(File.Exists(framePath), Is.True, $"{framePath} should exist.");
+            Assert.That(File.Exists(frameMetaPath), Is.True, $"{frameMetaPath} should exist.");
+
+            ReadPngDimensions(framePath, out int width, out int height);
+            Assert.That(width, Is.EqualTo(168), $"{framePath} should keep the normal butler sprite canvas width.");
+            Assert.That(height, Is.EqualTo(299), $"{framePath} should keep the normal butler sprite canvas height.");
+
+            string frameMetaText = File.ReadAllText(frameMetaPath);
+            Assert.That(frameMetaText, Does.Contain($"guid: {expectedFrameGuids[index]}"), $"{framePath} should keep its expected sprite GUID.");
+            Assert.That(frameMetaText, Does.Contain("textureType: 8"), $"{framePath} should import as a Sprite.");
+            Assert.That(frameMetaText, Does.Contain("spriteMode: 1"), $"{framePath} should import as a single sprite.");
+            Assert.That(frameMetaText, Does.Contain("spritePixelsToUnits: 100"), $"{framePath} should match the existing butler PPU.");
+            Assert.That(frameMetaText, Does.Contain("spritePivot: {x: 0.5, y: 0}"), $"{framePath} should stay bottom-centered to keep feet anchored.");
+            Assert.That(frameMetaText, Does.Contain("filterMode: 1"), $"{framePath} should keep the existing point-filtered pixel-art import.");
+            Assert.That(frameMetaText, Does.Contain("alphaIsTransparency: 1"), $"{framePath} should preserve transparent-background import behavior.");
+        }
+
+        AssertButlerIdleClipReferences(PlayerIdleClipPath, expectedFrameGuids, 1);
+        AssertButlerIdleClipReferences(ButlerClassicIdleClipPath, expectedFrameGuids, 2);
+    }
+
     private static void AssertScenePropSorting(string sceneText, string propName, int sortingOrder)
     {
         string escapedName = Regex.Escape(propName);
@@ -538,6 +586,50 @@ public class NavigationRegressionTests
         string pattern = $@"m_Name: {escapedName}[\s\S]*?m_Sprite: \{{fileID: [-\d]+, guid: {escapedGuid}, type: 3\}}";
 
         Assert.That(sceneText, Does.Match(pattern), $"{propName} should keep its intended sprite asset.");
+    }
+
+    private static void AssertButlerIdleClipReferences(string clipPath, string[] expectedFrameGuids, int expectedCurveCount)
+    {
+        string clipText = File.ReadAllText(clipPath);
+
+        Assert.That(clipText, Does.Contain("m_SampleRate: 12"), $"{clipPath} should play the soft idle loop at 12 fps.");
+        Assert.That(clipText, Does.Contain("m_StopTime: 1"), $"{clipPath} should cover the full 12-frame loop.");
+        Assert.That(clipText, Does.Contain("m_LoopTime: 1"), $"{clipPath} should loop cleanly.");
+
+        for (int index = 0; index < expectedFrameGuids.Length; index++)
+        {
+            string expectedReference = $"{{fileID: 21300000, guid: {expectedFrameGuids[index]}, type: 3}}";
+            int referenceCount = Regex.Matches(clipText, Regex.Escape(expectedReference)).Count;
+
+            Assert.That(referenceCount, Is.EqualTo(expectedCurveCount * 2), $"{clipPath} should reference frame {index + 1:00} in each sprite curve and its clip mapping.");
+        }
+    }
+
+    private static void ReadPngDimensions(string path, out int width, out int height)
+    {
+        byte[] header = new byte[24];
+
+        using (FileStream stream = File.OpenRead(path))
+        {
+            int bytesRead = stream.Read(header, 0, header.Length);
+            Assert.That(bytesRead, Is.EqualTo(header.Length), $"{path} should have a complete PNG header.");
+        }
+
+        Assert.That(header[0], Is.EqualTo((byte)0x89), $"{path} should be a PNG file.");
+        Assert.That(header[1], Is.EqualTo((byte)0x50), $"{path} should be a PNG file.");
+        Assert.That(header[2], Is.EqualTo((byte)0x4E), $"{path} should be a PNG file.");
+        Assert.That(header[3], Is.EqualTo((byte)0x47), $"{path} should be a PNG file.");
+
+        width = ReadBigEndianInt32(header, 16);
+        height = ReadBigEndianInt32(header, 20);
+    }
+
+    private static int ReadBigEndianInt32(byte[] bytes, int offset)
+    {
+        return (bytes[offset] << 24)
+            | (bytes[offset + 1] << 16)
+            | (bytes[offset + 2] << 8)
+            | bytes[offset + 3];
     }
 
 }
