@@ -15,9 +15,18 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private const string DebugListName = "List_Debug";
     private const string RoomListName = "List_TeleportRooms";
     private const string DebugTimeControlName = "Control_DebugGameTimeSpeed";
+    private const string DebugButtonRowName = "List_DebugButtons";
+    private const string DebugControlRowName = "List_DebugControls";
+    private const string DebugMusicControlName = "Control_DebugMusicVolume";
+    private const string DebugFxControlName = "Control_DebugFxVolume";
+    private const string ExplorationMusicObjectName = "Audio_ExplorationMusic";
+    private const string ExplorationMusicClipName = "unity_dreadforge_soundscape";
     private const float ButtonWidth = 150f;
     private const float ButtonHeight = 34f;
-    private const float DebugTimeControlWidth = 258f;
+    private const float DebugControlWidth = 220f;
+    private const float DebugControlLabelWidth = 64f;
+    private const float DebugControlInputWidth = 44f;
+    private const float DebugControlSliderLeft = 80f;
     private const float MinSecondsPerGameMinute = 1f;
     private const float MaxSecondsPerGameMinute = 120f;
     private const int MenuCanvasSortingOrder = 10050;
@@ -29,11 +38,20 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private static readonly Color DebugTimeInputColor = new Color(0.02f, 0.02f, 0.025f, 1f);
     private static readonly Color PanelColor = new Color(0f, 0f, 0f, 0.18f);
 
+    private enum DebugSliderKind
+    {
+        Time,
+        Music,
+        Fx
+    }
+
     private RoomNavigationManager navigationManager;
     private RectTransform rootRect;
     private Button settingsButton;
     private RectTransform settingsList;
     private RectTransform debugList;
+    private RectTransform debugButtonRow;
+    private RectTransform debugControlRow;
     private RectTransform roomList;
     private RectTransform debugTimeControl;
     private RectTransform debugTimeSlider;
@@ -41,12 +59,29 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private RectTransform debugTimeSliderHandle;
     private TMP_InputField debugTimeInput;
     private TMP_Text debugTimeLabel;
+    private RectTransform debugMusicControl;
+    private RectTransform debugMusicSlider;
+    private RectTransform debugMusicSliderFill;
+    private RectTransform debugMusicSliderHandle;
+    private TMP_InputField debugMusicInput;
+    private TMP_Text debugMusicLabel;
+    private RectTransform debugFxControl;
+    private RectTransform debugFxSlider;
+    private RectTransform debugFxSliderFill;
+    private RectTransform debugFxSliderHandle;
+    private TMP_InputField debugFxInput;
+    private TMP_Text debugFxLabel;
     private ChapterManager chapterManager;
     private ChapterClock chapterClock;
+    private AudioSource explorationMusicSource;
+    private float explorationMusicBaseVolume = -1f;
+    private float debugMusicVolume = 1f;
+    private float debugFxVolume = 1f;
     private bool settingsOpen;
     private bool debugOpen;
     private bool roomListOpen;
     private bool isUpdatingDebugTimeControl;
+    private bool isUpdatingDebugAudioControl;
 
     public static RuntimeSettingsMenu FindOrCreate(RoomNavigationManager navigationManager)
     {
@@ -190,29 +225,59 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         FindOrCreateButton(settingsList, "Button_Debug", "Debug", ToggleDebug);
 
-        debugList = FindOrCreateList(rootRect, DebugListName, false);
+        debugList = FindOrCreateList(rootRect, DebugListName, true);
         debugList.anchorMin = new Vector2(0f, 1f);
         debugList.anchorMax = new Vector2(0f, 1f);
         debugList.pivot = new Vector2(0f, 1f);
         debugList.anchoredPosition = new Vector2(ButtonWidth + 10f, -ButtonHeight - 6f);
 
-        FindOrCreateButton(debugList, "Button_SkipToChapter2", "Skip to Chapter 2", SkipToChapter2);
-        FindOrCreateButton(debugList, "Button_SkipToChapter3", "Skip to Chapter 3", SkipToChapter3);
-        FindOrCreateButton(debugList, "Button_TeleportToRoom", "Teleport to Room", ToggleRoomList);
-        debugTimeControl = FindOrCreateDebugTimeControl(debugList);
+        debugButtonRow = FindOrCreateList(debugList, DebugButtonRowName, false);
+        FindOrCreateButton(debugButtonRow, "Button_SkipToChapter2", "Skip to Chapter 2", SkipToChapter2);
+        FindOrCreateButton(debugButtonRow, "Button_SkipToChapter3", "Skip to Chapter 3", SkipToChapter3);
+        FindOrCreateButton(debugButtonRow, "Button_TeleportToRoom", "Teleport to Room", ToggleRoomList);
+
+        debugControlRow = FindOrCreateList(debugList, DebugControlRowName, false);
+        debugTimeControl = FindOrCreateDebugTimeControl(debugControlRow);
+        debugMusicControl = FindOrCreateDebugVolumeControl(debugControlRow, DebugMusicControlName, "Music", "Slider_DebugMusicVolume", "Input_DebugMusicVolume", DebugSliderKind.Music);
+        debugFxControl = FindOrCreateDebugVolumeControl(debugControlRow, DebugFxControlName, "FX", "Slider_DebugFxVolume", "Input_DebugFxVolume", DebugSliderKind.Fx);
+        DisableLegacyDebugChildren();
 
         roomList = FindOrCreateList(rootRect, RoomListName, true);
         roomList.anchorMin = new Vector2(0f, 1f);
         roomList.anchorMax = new Vector2(0f, 1f);
         roomList.pivot = new Vector2(0f, 1f);
-        roomList.anchoredPosition = new Vector2(ButtonWidth + 10f, -ButtonHeight * 2f - 14f);
+        roomList.anchoredPosition = new Vector2(ButtonWidth + 10f, -ButtonHeight * 3f - 20f);
+
+        RefreshDebugAudioControls();
+        ApplyDebugAudioVolumes();
+    }
+
+    private void DisableLegacyDebugChildren()
+    {
+        if (debugList == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < debugList.childCount; i++)
+        {
+            Transform child = debugList.GetChild(i);
+
+            if (child != debugButtonRow && child != debugControlRow)
+            {
+                child.gameObject.SetActive(false);
+            }
+        }
     }
 
     private void Update()
     {
+        ApplyDebugAudioVolumes();
+
         if (settingsOpen && debugOpen)
         {
             RefreshDebugTimeControl();
+            RefreshDebugAudioControls();
         }
     }
 
@@ -289,6 +354,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
             if (settingsOpen && debugOpen)
             {
                 RefreshDebugTimeControl();
+                RefreshDebugAudioControls();
             }
         }
 
@@ -397,6 +463,89 @@ public class RuntimeSettingsMenu : MonoBehaviour
         RefreshDebugTimeControl();
     }
 
+    private void ApplyDebugMusicVolume(float normalizedVolume)
+    {
+        debugMusicVolume = Mathf.Clamp01(normalizedVolume);
+        ApplyDebugAudioVolumes();
+        RefreshDebugAudioControls();
+    }
+
+    private void ApplyDebugFxVolume(float normalizedVolume)
+    {
+        debugFxVolume = Mathf.Clamp01(normalizedVolume);
+        ApplyDebugAudioVolumes();
+        RefreshDebugAudioControls();
+    }
+
+    private void ApplyDebugAudioVolumes()
+    {
+        AudioListener.volume = Mathf.Clamp01(debugFxVolume);
+
+        AudioSource musicSource = ResolveExplorationMusicSource();
+
+        if (musicSource == null)
+        {
+            return;
+        }
+
+        musicSource.ignoreListenerVolume = true;
+        musicSource.volume = Mathf.Max(0f, explorationMusicBaseVolume) * Mathf.Clamp01(debugMusicVolume);
+    }
+
+    private AudioSource ResolveExplorationMusicSource()
+    {
+        if (explorationMusicSource != null)
+        {
+            return explorationMusicSource;
+        }
+
+        GameObject musicObject = GameObject.Find(ExplorationMusicObjectName);
+
+        if (musicObject != null)
+        {
+            explorationMusicSource = musicObject.GetComponent<AudioSource>();
+        }
+
+        if (explorationMusicSource == null)
+        {
+            AudioSource[] sources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include);
+
+            for (int i = 0; i < sources.Length; i++)
+            {
+                AudioSource source = sources[i];
+
+                if (IsExplorationMusicSource(source))
+                {
+                    explorationMusicSource = source;
+                    break;
+                }
+            }
+        }
+
+        if (explorationMusicSource != null && explorationMusicBaseVolume < 0f)
+        {
+            explorationMusicBaseVolume = explorationMusicSource.volume;
+        }
+
+        return explorationMusicSource;
+    }
+
+    private static bool IsExplorationMusicSource(AudioSource source)
+    {
+        if (source == null)
+        {
+            return false;
+        }
+
+        if (source.gameObject.name == ExplorationMusicObjectName)
+        {
+            return true;
+        }
+
+        AudioClip clip = source.clip;
+        return clip != null && clip.name == ExplorationMusicClipName;
+    }
+
     private void RefreshDebugTimeControl()
     {
         ChapterClock clock = ResolveChapterClock();
@@ -421,11 +570,70 @@ public class RuntimeSettingsMenu : MonoBehaviour
         isUpdatingDebugTimeControl = false;
     }
 
+    private void RefreshDebugAudioControls()
+    {
+        isUpdatingDebugAudioControl = true;
+
+        RefreshDebugVolumeControl(
+            debugMusicLabel,
+            debugMusicInput,
+            debugMusicSliderFill,
+            debugMusicSliderHandle,
+            "Music",
+            debugMusicVolume,
+            ResolveExplorationMusicSource() != null);
+
+        RefreshDebugVolumeControl(
+            debugFxLabel,
+            debugFxInput,
+            debugFxSliderFill,
+            debugFxSliderHandle,
+            "FX",
+            debugFxVolume,
+            true);
+
+        isUpdatingDebugAudioControl = false;
+    }
+
+    private static void RefreshDebugVolumeControl(
+        TMP_Text label,
+        TMP_InputField input,
+        RectTransform fill,
+        RectTransform handle,
+        string labelText,
+        float normalizedVolume,
+        bool interactable)
+    {
+        normalizedVolume = Mathf.Clamp01(normalizedVolume);
+        RefreshDebugSliderVisual(fill, handle, normalizedVolume, interactable);
+
+        if (input != null)
+        {
+            input.interactable = interactable;
+            input.SetTextWithoutNotify(interactable ? Mathf.RoundToInt(normalizedVolume * 100f).ToString() : "--");
+        }
+
+        if (label != null)
+        {
+            label.text = labelText;
+        }
+    }
+
     private void SetDebugGameTimeFromPointer(RectTransform sliderRect, PointerEventData eventData)
     {
-        ChapterClock clock = ResolveChapterClock();
+        SetDebugSliderFromPointer(DebugSliderKind.Time, sliderRect, eventData);
+    }
 
-        if (clock == null || sliderRect == null || eventData == null)
+    private void SetDebugSliderFromPointer(DebugSliderKind kind, RectTransform sliderRect, PointerEventData eventData)
+    {
+        ChapterClock clock = kind == DebugSliderKind.Time ? ResolveChapterClock() : null;
+
+        if (sliderRect == null || eventData == null)
+        {
+            return;
+        }
+
+        if (kind == DebugSliderKind.Time && clock == null)
         {
             return;
         }
@@ -441,33 +649,51 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         Rect rect = sliderRect.rect;
         float normalized = Mathf.Clamp01(Mathf.InverseLerp(rect.xMin, rect.xMax, localPoint.x));
-        float secondsPerGameMinute = Mathf.Lerp(MinSecondsPerGameMinute, MaxSecondsPerGameMinute, normalized);
-        ApplyDebugGameTimeSpeed(secondsPerGameMinute);
+
+        switch (kind)
+        {
+            case DebugSliderKind.Time:
+                float secondsPerGameMinute = Mathf.Lerp(MinSecondsPerGameMinute, MaxSecondsPerGameMinute, normalized);
+                ApplyDebugGameTimeSpeed(secondsPerGameMinute);
+                break;
+            case DebugSliderKind.Music:
+                ApplyDebugMusicVolume(normalized);
+                break;
+            case DebugSliderKind.Fx:
+                ApplyDebugFxVolume(normalized);
+                break;
+        }
     }
 
     private void RefreshDebugTimeSliderVisual(float value, bool hasClock)
     {
-        if (debugTimeSliderFill == null || debugTimeSliderHandle == null)
+        float normalized = Mathf.Clamp01(Mathf.InverseLerp(MinSecondsPerGameMinute, MaxSecondsPerGameMinute, value));
+        RefreshDebugSliderVisual(debugTimeSliderFill, debugTimeSliderHandle, normalized, hasClock);
+    }
+
+    private static void RefreshDebugSliderVisual(RectTransform fill, RectTransform handle, float normalized, bool interactable)
+    {
+        if (fill == null || handle == null)
         {
             return;
         }
 
-        float normalized = Mathf.Clamp01(Mathf.InverseLerp(MinSecondsPerGameMinute, MaxSecondsPerGameMinute, value));
-        debugTimeSliderFill.anchorMin = new Vector2(0f, 0.32f);
-        debugTimeSliderFill.anchorMax = new Vector2(normalized, 0.68f);
-        debugTimeSliderFill.offsetMin = Vector2.zero;
-        debugTimeSliderFill.offsetMax = Vector2.zero;
+        normalized = Mathf.Clamp01(normalized);
+        fill.anchorMin = new Vector2(0f, 0.32f);
+        fill.anchorMax = new Vector2(normalized, 0.68f);
+        fill.offsetMin = Vector2.zero;
+        fill.offsetMax = Vector2.zero;
 
-        debugTimeSliderHandle.anchorMin = new Vector2(normalized, 0.5f);
-        debugTimeSliderHandle.anchorMax = new Vector2(normalized, 0.5f);
-        debugTimeSliderHandle.anchoredPosition = Vector2.zero;
-        debugTimeSliderHandle.sizeDelta = new Vector2(12f, 22f);
+        handle.anchorMin = new Vector2(normalized, 0.5f);
+        handle.anchorMax = new Vector2(normalized, 0.5f);
+        handle.anchoredPosition = Vector2.zero;
+        handle.sizeDelta = new Vector2(12f, 22f);
 
-        Image fillImage = debugTimeSliderFill.GetComponent<Image>();
-        Image handleImage = debugTimeSliderHandle.GetComponent<Image>();
+        Image fillImage = fill.GetComponent<Image>();
+        Image handleImage = handle.GetComponent<Image>();
 
-        ConfigureSolidImage(fillImage, hasClock ? new Color(0.48f, 0.48f, 0.48f, 1f) : new Color(0.24f, 0.24f, 0.24f, 1f));
-        ConfigureSolidImage(handleImage, hasClock ? new Color(0.72f, 0.72f, 0.72f, 1f) : new Color(0.36f, 0.36f, 0.36f, 1f));
+        ConfigureSolidImage(fillImage, interactable ? new Color(0.48f, 0.48f, 0.48f, 1f) : new Color(0.24f, 0.24f, 0.24f, 1f));
+        ConfigureSolidImage(handleImage, interactable ? new Color(0.72f, 0.72f, 0.72f, 1f) : new Color(0.36f, 0.36f, 0.36f, 1f));
     }
 
     private static RectTransform FindOrCreateList(Transform parent, string objectName, bool vertical)
@@ -494,10 +720,24 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         if (vertical)
         {
+            HorizontalLayoutGroup horizontalLayout = rect.GetComponent<HorizontalLayoutGroup>();
+
+            if (horizontalLayout != null)
+            {
+                DestroyComponent(horizontalLayout, true);
+            }
+
             layout = rect.GetComponent<VerticalLayoutGroup>();
         }
         else
         {
+            VerticalLayoutGroup verticalLayout = rect.GetComponent<VerticalLayoutGroup>();
+
+            if (verticalLayout != null)
+            {
+                DestroyComponent(verticalLayout, true);
+            }
+
             layout = rect.GetComponent<HorizontalLayoutGroup>();
         }
 
@@ -545,7 +785,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
             rect.SetParent(parent, false);
         }
 
-        rect.sizeDelta = new Vector2(DebugTimeControlWidth, ButtonHeight);
+        rect.sizeDelta = new Vector2(DebugControlWidth, ButtonHeight);
 
         LayoutElement layoutElement = rect.GetComponent<LayoutElement>();
 
@@ -554,8 +794,8 @@ public class RuntimeSettingsMenu : MonoBehaviour
             layoutElement = rect.gameObject.AddComponent<LayoutElement>();
         }
 
-        layoutElement.preferredWidth = DebugTimeControlWidth;
-        layoutElement.minWidth = DebugTimeControlWidth;
+        layoutElement.preferredWidth = DebugControlWidth;
+        layoutElement.minWidth = DebugControlWidth;
         layoutElement.preferredHeight = ButtonHeight;
         layoutElement.minHeight = ButtonHeight;
 
@@ -573,11 +813,11 @@ public class RuntimeSettingsMenu : MonoBehaviour
         labelRect.anchorMax = new Vector2(0f, 1f);
         labelRect.pivot = new Vector2(0f, 0.5f);
         labelRect.anchoredPosition = new Vector2(10f, 0f);
-        labelRect.sizeDelta = new Vector2(72f, 0f);
+        labelRect.sizeDelta = new Vector2(DebugControlLabelWidth, 0f);
 
-        debugTimeSlider = FindOrCreateDebugTimeSlider(rect);
+        debugTimeSlider = FindOrCreateDebugSlider(rect, "Slider_DebugSecondsPerGameMinute", DebugSliderKind.Time, out debugTimeSliderFill, out debugTimeSliderHandle);
 
-        debugTimeInput = FindOrCreateDebugTimeInput(rect);
+        debugTimeInput = FindOrCreateDebugInput(rect, "Input_DebugSecondsPerGameMinute");
         debugTimeInput.onEndEdit.RemoveAllListeners();
         debugTimeInput.onEndEdit.AddListener(value =>
         {
@@ -591,9 +831,103 @@ public class RuntimeSettingsMenu : MonoBehaviour
         return rect;
     }
 
-    private RectTransform FindOrCreateDebugTimeSlider(RectTransform parent)
+    private RectTransform FindOrCreateDebugVolumeControl(
+        Transform parent,
+        string controlName,
+        string label,
+        string sliderName,
+        string inputName,
+        DebugSliderKind kind)
     {
-        const string sliderName = "Slider_DebugSecondsPerGameMinute";
+        Transform existing = parent.Find(controlName);
+        RectTransform rect = existing != null ? existing as RectTransform : null;
+
+        if (rect == null)
+        {
+            GameObject controlObject = new GameObject(controlName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+            rect = controlObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+        }
+
+        rect.sizeDelta = new Vector2(DebugControlWidth, ButtonHeight);
+
+        LayoutElement layoutElement = rect.GetComponent<LayoutElement>();
+
+        if (layoutElement == null)
+        {
+            layoutElement = rect.gameObject.AddComponent<LayoutElement>();
+        }
+
+        layoutElement.preferredWidth = DebugControlWidth;
+        layoutElement.minWidth = DebugControlWidth;
+        layoutElement.preferredHeight = ButtonHeight;
+        layoutElement.minHeight = ButtonHeight;
+
+        Image image = rect.GetComponent<Image>();
+
+        if (image != null)
+        {
+            ConfigureSolidImage(image, DebugTimeControlColor);
+            image.raycastTarget = false;
+        }
+
+        TMP_Text labelText = FindOrCreateControlText(rect, $"Text_{label}Label", label, 13f, TextAlignmentOptions.MidlineLeft);
+        RectTransform labelRect = labelText.GetComponent<RectTransform>();
+        labelRect.anchorMin = new Vector2(0f, 0f);
+        labelRect.anchorMax = new Vector2(0f, 1f);
+        labelRect.pivot = new Vector2(0f, 0.5f);
+        labelRect.anchoredPosition = new Vector2(10f, 0f);
+        labelRect.sizeDelta = new Vector2(DebugControlLabelWidth, 0f);
+
+        RectTransform slider = FindOrCreateDebugSlider(rect, sliderName, kind, out RectTransform sliderFill, out RectTransform sliderHandle);
+
+        TMP_InputField input = FindOrCreateDebugInput(rect, inputName);
+        input.contentType = TMP_InputField.ContentType.IntegerNumber;
+        input.onEndEdit.RemoveAllListeners();
+        input.onEndEdit.AddListener(value =>
+        {
+            if (isUpdatingDebugAudioControl)
+            {
+                return;
+            }
+
+            if (float.TryParse(value, out float parsed))
+            {
+                float normalizedVolume = Mathf.Clamp01(parsed / 100f);
+
+                if (kind == DebugSliderKind.Music)
+                {
+                    ApplyDebugMusicVolume(normalizedVolume);
+                }
+                else if (kind == DebugSliderKind.Fx)
+                {
+                    ApplyDebugFxVolume(normalizedVolume);
+                }
+            }
+        });
+
+        if (kind == DebugSliderKind.Music)
+        {
+            debugMusicLabel = labelText;
+            debugMusicSlider = slider;
+            debugMusicSliderFill = sliderFill;
+            debugMusicSliderHandle = sliderHandle;
+            debugMusicInput = input;
+        }
+        else if (kind == DebugSliderKind.Fx)
+        {
+            debugFxLabel = labelText;
+            debugFxSlider = slider;
+            debugFxSliderFill = sliderFill;
+            debugFxSliderHandle = sliderHandle;
+            debugFxInput = input;
+        }
+
+        return rect;
+    }
+
+    private RectTransform FindOrCreateDebugSlider(RectTransform parent, string sliderName, DebugSliderKind kind, out RectTransform sliderFill, out RectTransform sliderHandle)
+    {
         Transform existing = parent.Find(sliderName);
         RectTransform rect = existing as RectTransform;
 
@@ -607,8 +941,8 @@ public class RuntimeSettingsMenu : MonoBehaviour
         rect.anchorMin = new Vector2(0f, 0.5f);
         rect.anchorMax = new Vector2(0f, 0.5f);
         rect.pivot = new Vector2(0f, 0.5f);
-        rect.anchoredPosition = new Vector2(86f, 0f);
-        rect.sizeDelta = new Vector2(104f, 22f);
+        rect.anchoredPosition = new Vector2(DebugControlSliderLeft, 0f);
+        rect.sizeDelta = new Vector2(DebugControlWidth - DebugControlSliderLeft - DebugControlInputWidth - 20f, 22f);
 
         Slider oldSlider = rect.GetComponent<Slider>();
 
@@ -640,23 +974,22 @@ public class RuntimeSettingsMenu : MonoBehaviour
         fillImage.raycastTarget = false;
         handleImage.raycastTarget = false;
 
-        debugTimeSliderFill = fillImage.GetComponent<RectTransform>();
-        debugTimeSliderHandle = handleRect;
+        sliderFill = fillImage.GetComponent<RectTransform>();
+        sliderHandle = handleRect;
 
-        DebugTimeSliderDragTarget dragTarget = rect.GetComponent<DebugTimeSliderDragTarget>();
+        DebugSliderDragTarget dragTarget = rect.GetComponent<DebugSliderDragTarget>();
 
         if (dragTarget == null)
         {
-            dragTarget = rect.gameObject.AddComponent<DebugTimeSliderDragTarget>();
+            dragTarget = rect.gameObject.AddComponent<DebugSliderDragTarget>();
         }
 
-        dragTarget.Initialize(this, rect);
+        dragTarget.Initialize(this, rect, kind);
         return rect;
     }
 
-    private static TMP_InputField FindOrCreateDebugTimeInput(RectTransform parent)
+    private static TMP_InputField FindOrCreateDebugInput(RectTransform parent, string inputName)
     {
-        const string inputName = "Input_DebugSecondsPerGameMinute";
         Transform existing = parent.Find(inputName);
         TMP_InputField input = existing != null ? existing.GetComponent<TMP_InputField>() : null;
         RectTransform rect;
@@ -677,7 +1010,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
         rect.anchorMax = new Vector2(1f, 0.5f);
         rect.pivot = new Vector2(1f, 0.5f);
         rect.anchoredPosition = new Vector2(-8f, 0f);
-        rect.sizeDelta = new Vector2(54f, 26f);
+        rect.sizeDelta = new Vector2(DebugControlInputWidth, 26f);
 
         Image image = rect.GetComponent<Image>();
 
@@ -740,12 +1073,17 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private static void DestroyComponent(Component component)
     {
+        DestroyComponent(component, false);
+    }
+
+    private static void DestroyComponent(Component component, bool immediate)
+    {
         if (component == null)
         {
             return;
         }
 
-        if (Application.isPlaying)
+        if (Application.isPlaying && !immediate)
         {
             Destroy(component);
         }
@@ -905,25 +1243,27 @@ public class RuntimeSettingsMenu : MonoBehaviour
         new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
     }
 
-    private sealed class DebugTimeSliderDragTarget : MonoBehaviour, IPointerDownHandler, IDragHandler
+    private sealed class DebugSliderDragTarget : MonoBehaviour, IPointerDownHandler, IDragHandler
     {
         private RuntimeSettingsMenu owner;
         private RectTransform sliderRect;
+        private DebugSliderKind kind;
 
-        public void Initialize(RuntimeSettingsMenu owner, RectTransform sliderRect)
+        public void Initialize(RuntimeSettingsMenu owner, RectTransform sliderRect, DebugSliderKind kind)
         {
             this.owner = owner;
             this.sliderRect = sliderRect;
+            this.kind = kind;
         }
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            owner?.SetDebugGameTimeFromPointer(sliderRect, eventData);
+            owner?.SetDebugSliderFromPointer(kind, sliderRect, eventData);
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            owner?.SetDebugGameTimeFromPointer(sliderRect, eventData);
+            owner?.SetDebugSliderFromPointer(kind, sliderRect, eventData);
         }
     }
 }

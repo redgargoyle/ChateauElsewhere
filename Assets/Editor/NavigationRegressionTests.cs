@@ -115,11 +115,21 @@ public class NavigationRegressionTests
         Assert.That(runtimeSettingsText, Does.Contain("Control_DebugGameTimeSpeed"), "The game-time speed control should live in the runtime debug menu.");
         Assert.That(runtimeSettingsText, Does.Contain("Slider_DebugSecondsPerGameMinute"), "The debug game-time control should include the speed slider.");
         Assert.That(runtimeSettingsText, Does.Contain("Input_DebugSecondsPerGameMinute"), "The debug game-time control should include the numeric speed input.");
+        Assert.That(runtimeSettingsText, Does.Contain("Control_DebugMusicVolume"), "The music volume control should live next to the debug time slider.");
+        Assert.That(runtimeSettingsText, Does.Contain("Slider_DebugMusicVolume"), "The debug menu should include a custom music volume slider.");
+        Assert.That(runtimeSettingsText, Does.Contain("Input_DebugMusicVolume"), "The debug music control should include a compact numeric value.");
+        Assert.That(runtimeSettingsText, Does.Contain("Control_DebugFxVolume"), "The FX volume control should live next to the debug time slider.");
+        Assert.That(runtimeSettingsText, Does.Contain("Slider_DebugFxVolume"), "The debug menu should include a custom FX volume slider.");
+        Assert.That(runtimeSettingsText, Does.Contain("Input_DebugFxVolume"), "The debug FX control should include a compact numeric value.");
         Assert.That(runtimeSettingsText, Does.Contain("existing.Initialize(navigationManager)"), "Existing generated settings menus should rebuild so stale slider UI cannot survive.");
         Assert.That(runtimeSettingsText, Does.Not.Contain("typeof(Slider)"), "The debug game-time control should not use Unity's image-backed Slider template.");
-        Assert.That(runtimeSettingsText, Does.Contain("DebugTimeSliderDragTarget"), "The debug game-time control should use a solid custom drag target.");
+        Assert.That(runtimeSettingsText, Does.Contain("DebugSliderDragTarget"), "The debug sliders should use solid custom drag targets.");
         Assert.That(runtimeSettingsText, Does.Contain("ConfigureSolidImage"), "The debug game-time control should force solid UI images instead of inherited sprites.");
         Assert.That(runtimeSettingsText, Does.Contain("SetSecondsPerGameMinute"), "The moved control should still update the chapter clock.");
+        Assert.That(runtimeSettingsText, Does.Contain("Audio_ExplorationMusic"), "The music slider should target the gameplay exploration music source.");
+        Assert.That(runtimeSettingsText, Does.Contain("unity_dreadforge_soundscape"), "The music slider should identify the Dreadforge soundscape clip.");
+        Assert.That(runtimeSettingsText, Does.Contain("ignoreListenerVolume = true"), "The soundscape source should ignore the FX/global listener volume.");
+        Assert.That(runtimeSettingsText, Does.Contain("AudioListener.volume"), "The FX slider should control non-music audio through Unity's existing listener volume.");
 
         Assert.That(chapter1HudText, Does.Not.Contain("BuildShortHudState(chapterClock.CurrentTimeLabel)"), "Chapter 1 status should not render a second clock label.");
         Assert.That(chapter2HudText, Does.Not.Contain("chapterClock.CurrentTimeLabel"), "Chapter 2 status should not render a second clock label.");
