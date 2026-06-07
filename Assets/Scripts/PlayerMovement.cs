@@ -142,14 +142,24 @@ public class PlayerMovement : MonoBehaviour
 
 	private void CacheAnimatorParameters()
 	{
-		if (animator == null || animator.runtimeAnimatorController == null)
-			return;
-
 		hasSpeedParameter = false;
 		hasJumpingParameter = false;
 		hasCrouchingParameter = false;
 
-		foreach (AnimatorControllerParameter parameter in animator.parameters)
+		if (animator == null || animator.runtimeAnimatorController == null || !animator.isInitialized)
+			return;
+
+		AnimatorControllerParameter[] parameters;
+		try
+		{
+			parameters = animator.parameters;
+		}
+		catch (InvalidOperationException)
+		{
+			return;
+		}
+
+		foreach (AnimatorControllerParameter parameter in parameters)
 		{
 			if (parameter.nameHash == SpeedHash)
 				hasSpeedParameter = true;
