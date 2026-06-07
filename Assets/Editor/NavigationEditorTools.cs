@@ -395,6 +395,18 @@ public static class NavigationEditorTools
             return directRoomContentGroup;
         }
 
+        RoomAnchor selectedRoomAnchor = selectedObject.GetComponentInParent<RoomAnchor>(true);
+
+        if (selectedRoomAnchor != null)
+        {
+            RoomContentGroup anchorRoomContentGroup = FindRoomContentGroupForRoom(selectedRoomAnchor.RoomId);
+
+            if (anchorRoomContentGroup != null)
+            {
+                return anchorRoomContentGroup;
+            }
+        }
+
         RoomContentGroup[] parentRoomContentGroups = selectedObject.GetComponentsInParent<RoomContentGroup>(true);
 
         if (parentRoomContentGroups.Length > 0)
@@ -410,6 +422,41 @@ public static class NavigationEditorTools
         }
 
         return null;
+    }
+
+    public static bool IsSelectedChapter2HideAnchor()
+    {
+        RoomAnchor selectedRoomAnchor = FindSelectedRoomAnchor();
+        return IsChapter2HideAnchor(selectedRoomAnchor);
+    }
+
+    private static RoomAnchor FindSelectedRoomAnchor()
+    {
+        GameObject selectedObject = Selection.activeGameObject;
+
+        if (selectedObject == null)
+        {
+            return null;
+        }
+
+        return selectedObject.GetComponentInParent<RoomAnchor>(true);
+    }
+
+    private static bool IsChapter2HideAnchor(RoomAnchor roomAnchor)
+    {
+        if (roomAnchor == null)
+        {
+            return false;
+        }
+
+        return StartsWithChapter2HidePrefix(roomAnchor.AnchorId) ||
+            StartsWithChapter2HidePrefix(roomAnchor.name);
+    }
+
+    private static bool StartsWithChapter2HidePrefix(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            value.Trim().StartsWith("Ch2_Hide_", StringComparison.OrdinalIgnoreCase);
     }
 
     private static RoomContentGroup[] FindRoomContentGroupsInSameEditingGroup(RoomContentGroup roomContentGroup)
@@ -985,6 +1032,7 @@ public static class NavigationSelectionAutoPreview
     {
         Selection.selectionChanged += HandleSelectionChanged;
         EditorApplication.hierarchyChanged += HandleHierarchyChanged;
+        EditorApplication.delayCall += QueuePreviewForCurrentSelection;
     }
 
     private static void HandleSelectionChanged()
@@ -994,7 +1042,7 @@ public static class NavigationSelectionAutoPreview
 
     private static void HandleHierarchyChanged()
     {
-        if (!NavigationEditorTools.AutoPreviewSelectedRoom ||
+        if ((!NavigationEditorTools.AutoPreviewSelectedRoom && !NavigationEditorTools.IsSelectedChapter2HideAnchor()) ||
             isPreviewingSelection ||
             EditorApplication.isPlayingOrWillChangePlaymode)
         {
@@ -1017,7 +1065,9 @@ public static class NavigationSelectionAutoPreview
 
     private static void QueuePreviewForCurrentSelection()
     {
-        if (!NavigationEditorTools.AutoPreviewSelectedRoom ||
+        bool forcePreviewSelectedHideAnchor = NavigationEditorTools.IsSelectedChapter2HideAnchor();
+
+        if ((!NavigationEditorTools.AutoPreviewSelectedRoom && !forcePreviewSelectedHideAnchor) ||
             isPreviewingSelection ||
             EditorApplication.isPlayingOrWillChangePlaymode)
         {

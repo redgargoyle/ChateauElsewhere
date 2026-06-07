@@ -494,6 +494,10 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Not.Contain("LateUpdate"), "Door hitboxes should not chase the camera every frame.");
         Assert.That(triggerText, Does.Contain("InferSourceRoomFromHierarchy(transform)"), "Door source rooms should come from the Room_* hierarchy by default.");
         Assert.That(cameraManagerText, Does.Contain("AttachBackgroundToRoomStage"), "CameraManager should put the background under the same room stage as the hitboxes.");
+        Assert.That(editorToolsText, Does.Match(@"RoomAnchor selectedRoomAnchor[\s\S]*FindRoomContentGroupForRoom\(selectedRoomAnchor\.RoomId\)"), "Selecting Ch2_Hide_* RoomAnchor objects should preview their authored room for placement.");
+        Assert.That(editorToolsText, Does.Contain("IsSelectedChapter2HideAnchor"), "Chapter 2 hide-anchor placement should not depend on the generic room auto-preview preference.");
+        Assert.That(editorToolsText, Does.Match(@"!NavigationEditorTools\.AutoPreviewSelectedRoom && !forcePreviewSelectedHideAnchor"), "Selecting Ch2_Hide_* anchors should force room preview even if generic auto-preview is off.");
+        Assert.That(editorToolsText, Does.Match(@"EditorApplication\.delayCall \+= QueuePreviewForCurrentSelection"), "Reopening Unity should preview the currently selected Ch2_Hide_* anchor room after scripts reload.");
         Assert.That(cameraManagerText, Does.Not.Contain("TryCaptureShaderAnchoredRect"), "CameraManager should not expose old capture APIs.");
         Assert.That(cameraManagerText, Does.Not.Contain("TryApplySourceImageRect"), "CameraManager should not expose a projection bridge for door hitboxes.");
         Assert.That(editorToolsText, Does.Not.Contain("CaptureVisibleDoorTriggerAnchorsForCurrentPreview"), "Editor previews should not save hitbox locations as a side effect.");
