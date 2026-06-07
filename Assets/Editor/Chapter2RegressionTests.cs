@@ -317,6 +317,9 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Match(@"(?s)\bStageGuestForDiningRoomReveal\s*\([^)]*\)\s*\{.*SetCurrentRoom\(targetRoom\).*SetVisibleByChapterState\(false\).*SetSeated\(true\).*ApplyState\(\)"), "Spoken-to guests should leave the search room and wait hidden/seated for the Dining Room reveal.");
         Assert.That(guestSearchText, Does.Match(@"(?s)\bHideGuestForDiningRoomTransfer\s*\([^)]*\)\s*\{.*SetVisibleByChapterState\(false\).*ApplyState\(\)"), "Guests should be hidden from their search rooms before being moved to Dining Room seats.");
         Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*HideGuestForDiningRoomTransfer\(guest\).*PlaceAt\(diningSeat\.transform\).*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*SetSeated\(true\).*ApplyState\(\)"), "Dining seating should hide, move, assign Dining Room, mark seated, then restore visibility through ActorRoomState.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*SetSeated\(true\).*ApplyDiningRoomGuestSorting\(guest, i\).*ApplyState\(\)"), "Dining seating should render guests above the dining table overlay.");
+        Assert.That(guestSearchText, Does.Contain("diningGuestSortingOrderBase = 9200"), "Dining guests should sort safely above authored dining table props.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bApplyDiningRoomGuestSorting\s*\([^)]*\)\s*\{.*GetComponentsInChildren<Renderer>\(true\).*renderer\.sortingLayerName = sortingLayerName.*renderer\.sortingOrder = sortingOrder"), "Dining guest renderers should receive an explicit sorting layer/order.");
         Assert.That(guestSearchText, Does.Contain("SetCurrentRoom(diningSeat.RoomId)"));
         Assert.That(guestSearchText, Does.Contain("SetSeated(false)"), "Guests should still stand while being searched/clicked before the dining reveal.");
         Assert.That(controllerText, Does.Contain("BeginDiningRoomObjective()"));
@@ -354,7 +357,7 @@ public class Chapter2RegressionTests
 
         Assert.That(controllerText, Does.Match(@"(?s)\bDebugSkipToChapter3ForTesting\s*\([^)]*\)\s*\{.*MoveToDiningRoomForDebugSkip\s*\(\).*guestSearch\.Initialize\(this\).*guestSearch\.DebugStageAllGuestsFoundForChapter3Skip\(\)"), "Chapter 3 debug skip should move to Dining Room before seating found guests.");
         Assert.That(guestSearchText, Does.Match(@"(?s)\bDebugStageAllGuestsFoundForChapter3Skip\s*\([^)]*\)\s*\{.*AutoDiscoverGuestsIfNeeded\s*\(\).*AutoAssignHideAnchorsIfNeeded\s*\(\).*foundOrderCounter\+\+.*guest\.found\s*=\s*true.*SeatGuestsInDiningRoom\(GetFoundGuestsInOrder\(\)\)"), "Chapter 3 debug skip should discover guests, mark them found, then seat them in found order.");
-        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*SetSeated\(true\).*ApplyState\(\)"), "Chapter 3 debug skip seating should make guests visible in Dining Room.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*SetSeated\(true\).*ApplyDiningRoomGuestSorting\(guest, i\).*ApplyState\(\)"), "Chapter 3 debug skip seating should make guests visible above the Dining Room table.");
     }
 
     [Test]
