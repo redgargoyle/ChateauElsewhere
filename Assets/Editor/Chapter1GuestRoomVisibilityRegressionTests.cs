@@ -37,14 +37,20 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string skipMethodBody = ExtractMethodBody(controllerText, "public void PrepareGuestsForChapter2Skip");
-        string stageMethodBody = ExtractMethodBody(controllerText, "private void StageGuestInDrawingRoomForChapter2Skip");
+        string refreshMethodBody = ExtractMethodBody(controllerText, "public void RefreshChapter2SkipGuestVisibilityAfterRoomChange");
+        string stageAllMethodBody = ExtractMethodBody(controllerText, "private int StageRequiredGuestsInDrawingRoomForChapter2");
+        string stageMethodBody = ExtractMethodBody(controllerText, "private void StageGuestInDrawingRoomForChapter2");
 
         Assert.That(skipMethodBody, Does.Contain("StopAllCoroutines()"), "Debug skip should stop Chapter 1 guest movement before staging Chapter 2.");
         Assert.That(skipMethodBody, Does.Contain("DisableAllChapter1CoatPickupsForChapter2Skip()"), "Debug skip should disable old Chapter 1 coat targets before resetting guest state.");
         Assert.That(skipMethodBody, Does.Contain("ResetGuestStates(true)"), "Debug skip should build guest runtime state even if Chapter 1 was skipped early.");
         Assert.That(skipMethodBody, Does.Contain("coatCloset?.ClearStoredCoats()"), "Debug skip should rebuild the closet contents for a clean Chapter 2 handoff.");
-        Assert.That(skipMethodBody, Does.Contain("StageGuestInDrawingRoomForChapter2Skip"), "Debug skip should place each required guest in the Drawing Room.");
-        Assert.That(skipMethodBody, Does.Match(@"RefreshAllGuestRoomVisibility\(\)[\s\S]*HideGuestCoatsForChapter2Skip\(\)"), "Debug skip should hide coat visuals after the final ActorRoomState visibility refresh.");
+        Assert.That(skipMethodBody, Does.Contain("StageRequiredGuestsInDrawingRoomForChapter2"), "Debug skip should place each required guest in the Drawing Room.");
+        Assert.That(refreshMethodBody, Does.Match(@"ResetGuestStates\(true\)[\s\S]*StageRequiredGuestsInDrawingRoomForChapter2\(\)"), "Debug skip should force-build and stage the full required guest roster after Chapter 2 moves to the Drawing Room.");
+        Assert.That(refreshMethodBody, Does.Not.Contain("IsGuestReadyForChapter2SkipRoomView"), "Debug skip should not preserve a partial Chapter 1 coat-progress state.");
+        Assert.That(stageAllMethodBody, Does.Contain("GetRequiredGuestCountForCurrentRun()"), "Debug skip should stage the configured required guest count, not only already-arrived guests.");
+        Assert.That(stageAllMethodBody, Does.Contain("ResetGuestStates(true)"), "Debug skip should rebuild guest state if the current runtime list is short.");
+        Assert.That(stageAllMethodBody, Does.Match(@"StageGuestInDrawingRoomForChapter2\(guestStates\[i\]\)[\s\S]*HideGuestCoatsForChapter2Skip\(\)"), "Every staged guest should be placed before coat visuals are swept.");
         Assert.That(stageMethodBody, Does.Contain("SetGuestVisibleAfterDrawingRoomExit(guest, true)"), "Skipped guests should have their scene objects active.");
         Assert.That(stageMethodBody, Does.Contain("SetCurrentRoom(drawingRoomId)"), "Skipped guests should logically be in the Drawing Room.");
         Assert.That(stageMethodBody, Does.Contain("SetAvailableInCurrentChapter(true)"), "Skipped guests should be available for Chapter 2 setup.");
@@ -77,10 +83,12 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     public void GuestDrawingRoomMovementDoesNotReparentIntoPresentationHierarchy()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string moveGuestObjectBody = ExtractMethodBody(controllerText, "MoveGuestObjectToRoomContent");
         string suspiciousGuestReparentPattern =
             @"(?s)(?:Move|Place|Reparent|Parent)[A-Za-z0-9_]*(?:Guest|Guests)[A-Za-z0-9_]*(?:Room_Drawing|Room_DrawingRoom|DrawingRoom)[A-Za-z0-9_]*\s*\([^)]*\)\s*\{.*?SetParent";
 
         Assert.That(controllerText, Does.Not.Match(suspiciousGuestReparentPattern), "Guests should not be reparented under the Drawing Room presentation hierarchy.");
+        Assert.That(moveGuestObjectBody, Does.Match(@"guest\.ActorState != null \|\| IsChapterSceneGuest\(guest\.GuestObject\)[\s\S]*return;[\s\S]*SetParent"), "Authored/ActorRoomState guests should stay in the Hierarchy and rely on room state instead of room-content parenting.");
     }
 
     [Test]

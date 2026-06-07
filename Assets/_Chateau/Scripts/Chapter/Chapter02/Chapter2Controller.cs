@@ -60,6 +60,7 @@ public class Chapter2Controller : MonoBehaviour
     private AudioClip runtimeClockStrikeClip;
     private bool allGuestsFoundHandled;
     private bool dinnerSeatingHandled;
+    private bool debugTeleportToDrawingRoomOnStart;
 
     public Chapter2Phase CurrentPhase => currentPhase;
     public string DrawingRoomId => drawingRoomId;
@@ -199,6 +200,7 @@ public class Chapter2Controller : MonoBehaviour
         allGuestsFoundHandled = false;
         dinnerSeatingHandled = false;
         currentPhase = Chapter2Phase.NotStarted;
+        debugTeleportToDrawingRoomOnStart = true;
 
         if (interactionHUD != null)
         {
@@ -679,9 +681,18 @@ public class Chapter2Controller : MonoBehaviour
 
         if (string.Equals(navigationManager.CurrentRoom, drawingRoomId, System.StringComparison.OrdinalIgnoreCase))
         {
+            debugTeleportToDrawingRoomOnStart = false;
             return;
         }
 
+        if (debugTeleportToDrawingRoomOnStart &&
+            navigationManager.DebugTeleportToRoom(drawingRoomId))
+        {
+            debugTeleportToDrawingRoomOnStart = false;
+            return;
+        }
+
+        debugTeleportToDrawingRoomOnStart = false;
         navigationManager.MoveToRoom(drawingRoomId);
     }
 

@@ -279,7 +279,7 @@ public class ChapterManager : MonoBehaviour
         {
             chapter2Controller.DebugResetForChapter2Skip(this);
             chapter2Controller.BeginChapter2(this);
-            chapter1ArrivalController?.HideGuestCoatsForChapter2Skip();
+            chapter1ArrivalController?.RefreshChapter2SkipGuestVisibilityAfterRoomChange();
         }
         else
         {

@@ -73,12 +73,14 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Match(@"\bBeginChapter2\s*\("), "Chapter2Controller should expose BeginChapter2.");
         Assert.That(controllerText, Does.Match(@"\bDebugResetForChapter2Skip\s*\("), "Chapter2Controller should expose a reset path for repeated debug skips.");
         Assert.That(controllerText, Does.Match(@"(?s)\bDebugResetForChapter2Skip\s*\([^)]*\)\s*\{.*StopChapter2Coroutines\s*\(\).*StopStinger\s*\(.*currentPhase\s*=\s*Chapter2Phase\.NotStarted"), "Debug skip reset should stop stale Chapter 2 routines before allowing BeginChapter2 to run again.");
+        Assert.That(controllerText, Does.Match(@"(?s)\bDebugResetForChapter2Skip\s*\([^)]*\)\s*\{.*debugTeleportToDrawingRoomOnStart\s*=\s*true"), "Debug Chapter 2 skips should force the Drawing Room active without relying on normal door routing.");
         Assert.That(controllerText, Does.Match(@"\bHandleAddressGuestsPrompt\s*\("), "Chapter2Controller should expose the address prompt callback.");
         Assert.That(controllerText, Does.Contain("Chapter2InteractionHUD"), "Chapter2Controller should use the Chapter 2 interaction HUD.");
         Assert.That(controllerText, Does.Contain("Chapter2MonsterStingerController"), "Chapter2Controller should use the Chapter 2 monster stinger controller.");
         Assert.That(controllerText, Does.Contain("Chapter2GuestSearchController"), "Chapter2Controller should use the Chapter 2 guest search controller.");
         Assert.That(controllerText, Does.Match(@"\bRunOpeningSpeechRoutine\s*\("), "Chapter2Controller should run the Butler opening speech from a coroutine.");
         Assert.That(controllerText, Does.Match(@"\bHandleAllGuestsFound\s*\("), "Chapter2Controller should handle the all-guests-found transition.");
+        Assert.That(controllerText, Does.Match(@"(?s)\bMoveToDrawingRoom\s*\([^)]*\)\s*\{.*debugTeleportToDrawingRoomOnStart.*DebugTeleportToRoom\(drawingRoomId\).*MoveToRoom\(drawingRoomId\)"), "Chapter 2 debug skip should teleport to the Drawing Room first, then fall back to normal room movement.");
 
         for (int i = 0; i < expectedPhases.Length; i++)
         {
@@ -342,6 +344,17 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Not.Contain("diningRoomFadeDelayGameMinutes"));
         Assert.That(controllerText, Does.Not.Contain("TrySeatDinnerGuestsAtDinnerTime"));
         Assert.That(controllerText, Does.Not.Contain("HasReachedDiningRoomFadeTime"));
+    }
+
+    [Test]
+    public void Chapter3DebugSkipStagesFoundGuestsInDiningRoom()
+    {
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+
+        Assert.That(controllerText, Does.Match(@"(?s)\bDebugSkipToChapter3ForTesting\s*\([^)]*\)\s*\{.*MoveToDiningRoomForDebugSkip\s*\(\).*guestSearch\.Initialize\(this\).*guestSearch\.DebugStageAllGuestsFoundForChapter3Skip\(\)"), "Chapter 3 debug skip should move to Dining Room before seating found guests.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bDebugStageAllGuestsFoundForChapter3Skip\s*\([^)]*\)\s*\{.*AutoDiscoverGuestsIfNeeded\s*\(\).*AutoAssignHideAnchorsIfNeeded\s*\(\).*foundOrderCounter\+\+.*guest\.found\s*=\s*true.*SeatGuestsInDiningRoom\(GetFoundGuestsInOrder\(\)\)"), "Chapter 3 debug skip should discover guests, mark them found, then seat them in found order.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*SetSeated\(true\).*ApplyState\(\)"), "Chapter 3 debug skip seating should make guests visible in Dining Room.");
     }
 
     [Test]

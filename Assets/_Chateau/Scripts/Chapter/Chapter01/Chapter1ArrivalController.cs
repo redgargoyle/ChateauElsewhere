@@ -269,6 +269,16 @@ public class Chapter1ArrivalController : MonoBehaviour
         HideAllGuestCoatVisualsForChapter2Skip();
     }
 
+    public void RefreshChapter2SkipGuestVisibilityAfterRoomChange()
+    {
+        ResolveReferences(true);
+
+        ResetGuestStates(true);
+        int requiredGuestCount = GetRequiredGuestCountForCurrentRun();
+        int stagedGuestCount = StageRequiredGuestsInDrawingRoomForChapter2();
+        LogChapter2SkipGuestVisibility(requiredGuestCount, stagedGuestCount);
+    }
+
     [ContextMenu("Trigger Next Guest Group")]
     public void TriggerNextGuest()
     {
@@ -1769,9 +1779,19 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
-    private void StageRequiredGuestsInDrawingRoomForChapter2()
+    private int StageRequiredGuestsInDrawingRoomForChapter2()
     {
-        int stagedGuestCount = Mathf.Min(GetRequiredGuestCountForCurrentRun(), guestStates.Count);
+        int requiredGuestCount = GetRequiredGuestCountForCurrentRun();
+
+        if (guestStates.Count < requiredGuestCount)
+        {
+            Debug.LogWarning(
+                $"Chapter 2 skip expected {requiredGuestCount} guest state(s), but only {guestStates.Count} existed. Rebuilding guest states before staging.",
+                this);
+            ResetGuestStates(true);
+        }
+
+        int stagedGuestCount = Mathf.Min(requiredGuestCount, guestStates.Count);
 
         for (int i = 0; i < stagedGuestCount; i++)
         {
@@ -1781,7 +1801,16 @@ public class Chapter1ArrivalController : MonoBehaviour
         RefreshInteractionState();
         RefreshAllGuestRoomVisibility();
         HideGuestCoatsForChapter2Skip();
-        Debug.Log($"Chapter 2 staged {stagedGuestCount} guest(s) in the Drawing Room.", this);
+        Debug.Log($"Chapter 2 staged {stagedGuestCount}/{requiredGuestCount} guest(s) in the Drawing Room with coats stored.", this);
+
+        if (stagedGuestCount < requiredGuestCount)
+        {
+            Debug.LogWarning(
+                $"Chapter 2 skip could only stage {stagedGuestCount}/{requiredGuestCount} required guest(s). Check scene guest configuration and fallback guest creation.",
+                this);
+        }
+
+        return stagedGuestCount;
     }
 
     private void StageGuestInDrawingRoomForChapter2(GuestRuntimeState guest)
@@ -1828,6 +1857,45 @@ public class Chapter1ArrivalController : MonoBehaviour
         guest.Handled = true;
         SetGuestState(guest, GuestArrivalState.Seated);
         SetGuestState(guest, GuestArrivalState.Handled);
+    }
+
+    private void LogChapter2SkipGuestVisibility(int expectedGuestCount, int stagedGuestCount)
+    {
+        int visibleGuestCount = 0;
+        int drawingRoomGuestCount = 0;
+
+        for (int i = 0; i < expectedGuestCount && i < guestStates.Count; i++)
+        {
+            GuestRuntimeState guest = guestStates[i];
+            ActorRoomState actorState = guest != null ? guest.ActorState : null;
+
+            if (actorState == null)
+            {
+                continue;
+            }
+
+            if (SameRoom(actorState.CurrentRoomId, drawingRoomId))
+            {
+                drawingRoomGuestCount++;
+            }
+
+            if (actorState.IsVisibleInCurrentRoom)
+            {
+                visibleGuestCount++;
+            }
+        }
+
+        string message = $"Chapter 2 skip guest visibility verified after room change: " +
+            $"{visibleGuestCount}/{expectedGuestCount} visible, {drawingRoomGuestCount}/{expectedGuestCount} assigned to Drawing Room, " +
+            $"{stagedGuestCount} force-staged.";
+
+        if (expectedGuestCount <= 0 || visibleGuestCount == 0)
+        {
+            Debug.LogWarning(message, this);
+            return;
+        }
+
+        Debug.Log(message, this);
     }
 
     private void HideGuestCoatVisualsForChapter2Skip(GuestRuntimeState guest)
@@ -4841,6 +4909,11 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void MoveGuestObjectToRoomContent(GuestRuntimeState guest, string roomId)
     {
         if (guest == null || guest.GuestObject == null)
+        {
+            return;
+        }
+
+        if (guest.ActorState != null || IsChapterSceneGuest(guest.GuestObject))
         {
             return;
         }
