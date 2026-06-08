@@ -6,13 +6,14 @@ using NUnit.Framework;
 public class Chapter1GuestRoomVisibilityRegressionTests
 {
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string Chapter1SceneActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
 
     [Test]
     public void MoveGroupToDrawingRoomDoesNotHideGuestsAtDoor()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
-        string methodBody = ExtractMethodBody(controllerText, "MoveGroupToDrawingRoom");
+        string methodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
 
         Assert.That(methodBody, Does.Not.Contain("SetGuestVisibleAfterDrawingRoomExit(guest, false)"), "Guests who enter the Drawing Room should stay present for later room views.");
         Assert.That(methodBody, Does.Not.Contain("SetVisibleByChapterState(false)"), "Drawing Room guests should not be hidden by chapter state after leaving the entrance.");
@@ -23,7 +24,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     public void MoveGroupToDrawingRoomKeepsGuestsVisibleThroughActorRoomState()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
-        string methodBody = ExtractMethodBody(controllerText, "MoveGroupToDrawingRoom");
+        string methodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
 
         Assert.That(methodBody, Does.Contain("SetCurrentRoom(drawingRoomId)"), "Guests should logically move to the Drawing Room.");
         Assert.That(methodBody, Does.Contain("SetAvailableInCurrentChapter(true)"), "Guests in the Drawing Room should remain available in Chapter 1.");
@@ -96,11 +97,47 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string entryMethodBody = ExtractMethodBody(controllerText, "GetWorldDrawingRoomEntryPosition");
+        string entryBaseMethodBody = ExtractMethodBody(controllerText, "GetWorldDrawingRoomEntryBasePosition");
+        string doorLookupMethodBody = ExtractMethodBody(controllerText, "TryGetGrandEntranceDrawingRoomDoorPosition");
         string spotMethodBody = ExtractMethodBody(controllerText, "ResolveDrawingRoomSpotForGuest");
 
-        Assert.That(entryMethodBody, Does.Contain("GetWorldEntranceCenterPosition()"), "World-space guest exit movement should stay in the world-space coordinate system.");
+        Assert.That(entryMethodBody, Does.Contain("GetWorldDrawingRoomEntryBasePosition(guestState)"), "World-space guest exit movement should use a converted visible entrance-hall doorway target.");
+        Assert.That(entryBaseMethodBody, Does.Contain("TryGetGrandEntranceDrawingRoomDoorPosition"), "World-space guests should walk to the visible Grand Entrance Hall Drawing Room door trigger.");
+        Assert.That(entryBaseMethodBody, Does.Contain("GetWorldVisibleAnchorPosition"), "World-space guest movement should convert room-stage anchors into guest world coordinates.");
+        Assert.That(doorLookupMethodBody, Does.Contain("activeInHierarchy"), "Drawing Room movement should prefer the active Grand Entrance Hall door trigger over inactive duplicate room views.");
         Assert.That(entryMethodBody, Does.Not.Contain("GetEntranceDrawingRoomExitPosition"), "World-space guest movement must not chase a UI/RectTransform Drawing Room door coordinate.");
         Assert.That(spotMethodBody, Does.Contain("GetWorldDrawingRoomSeatPosition"), "World-space guests should receive world-space Drawing Room waiting spots.");
+    }
+
+    [Test]
+    public void LiveDoorAnswerUsesStableEntranceWorldPositions()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string doorArrivalBody = ExtractMethodBody(controllerText, "GetWorldDoorArrivalPosition");
+        string waitBody = ExtractMethodBody(controllerText, "GetWorldEntranceWaitPosition");
+        string interactionTargetBody = ExtractMethodBody(controllerText, "GetFrontDoorInteractionTransform");
+        string conversionBody = ExtractMethodBody(controllerText, "TryGetWorldPositionForGuestTarget");
+
+        Assert.That(doorArrivalBody, Does.Contain("GetWorldEntranceCenterPosition()"), "Door-answer spawning should use the stable world-space entrance cluster instead of projecting authored room-stage anchors.");
+        Assert.That(waitBody, Does.Contain("GetWorldEntranceCenterPosition()"), "Entrance wait spots should stay near the visible guest cluster.");
+        Assert.That(doorArrivalBody, Does.Not.Contain("GetWorldVisibleAnchorPosition"), "Door-answer spawning should not project the high-Z GuestArrival_Door stage anchor off camera.");
+        Assert.That(waitBody, Does.Not.Contain("GetWorldVisibleAnchorPosition"), "Entrance waiting should not project the high-Z ButlerGreetingSpot stage anchor off camera.");
+        Assert.That(interactionTargetBody, Does.Match(@"frontDoorArrivalPoint[\s\S]*return frontDoorArrivalPoint[\s\S]*butlerDoorSpot"), "The butler should walk to the front-door arrival point before answering the door.");
+        Assert.That(conversionBody, Does.Not.Contain("target.GetComponentInParent<Canvas>(true) == null"), "Visible anchor conversion must work for non-Canvas room-stage anchors as well as UI anchors.");
+        Assert.That(conversionBody, Does.Contain("TryGetTargetScreenPosition"), "Visible anchor conversion should preserve what the player sees on screen.");
+        Assert.That(conversionBody, Does.Contain("mainCamera.ScreenToWorldPoint"), "Drawing Room anchor conversion should land on the guest world plane instead of raw room-stage coordinates.");
+    }
+
+    [Test]
+    public void FrontDoorActionUsesArrivalControllerAnswerSpot()
+    {
+        string actionText = File.ReadAllText(Chapter1SceneActionPath);
+        string startBody = ExtractMethodBody(actionText, "StartFrontDoorApproach");
+        string closeBody = ExtractMethodBody(actionText, "IsPlayerCloseToFrontDoor");
+
+        Assert.That(startBody, Does.Contain("arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination)"), "Front-door clicks should use the arrival controller's reachable greeting spot.");
+        Assert.That(startBody, Does.Contain("TryFindClosestReachableDestinationToWorldPoint(transform.position, out approachDestination)"), "The raw trigger transform should only be the fallback for front-door walking.");
+        Assert.That(closeBody, Does.Contain("arrivalController.IsButlerCloseToFrontDoor(playerMovement)"), "Answering should use the same controller-level proximity check as the movement destination.");
     }
 
     [Test]

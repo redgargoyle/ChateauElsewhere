@@ -48,6 +48,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private ChapterManager chapterManager;
     [SerializeField] private ChapterClock chapterClock;
     [SerializeField] private ChapterEventScheduler eventScheduler;
+    [SerializeField] private CameraManager cameraManager;
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private PointClickPlayerMovement playerMovement;
     [SerializeField] private GameObject playerButlerReference;
@@ -123,8 +124,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     private bool subscribedToRoomChanges;
     private bool hasWorldDoorCenterPosition;
     private Vector3 worldDoorCenterPosition;
-    private bool hasEntranceDrawingRoomExitPosition;
-    private Vector3 entranceDrawingRoomExitPosition;
     private bool hasFrontDoorAnswerSpot;
     private Vector2 frontDoorAnswerSpot;
     private bool pendingClosetStorage;
@@ -438,6 +437,11 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (frontDoorArrivalPoint != null)
         {
             return frontDoorArrivalPoint;
+        }
+
+        if (butlerDoorSpot != null)
+        {
+            return butlerDoorSpot;
         }
 
         GameObject triggerObject = FindDoorAnswerTriggerObject();
@@ -1107,8 +1111,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         currentGuestIndex = -1;
         hasWorldDoorCenterPosition = false;
         worldDoorCenterPosition = Vector3.zero;
-        hasEntranceDrawingRoomExitPosition = false;
-        entranceDrawingRoomExitPosition = Vector3.zero;
         hasFrontDoorAnswerSpot = false;
         frontDoorAnswerSpot = Vector2.zero;
         pendingGuestGroups.Clear();
@@ -1708,7 +1710,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         GetDrawingRoomGroupSlot(guest, group, out int slotInGroup, out int groupSize);
         return CreateRuntimeAnchor(
             $"DrawingRoomEntry_{guest.Config.GuestId}",
-            GetWorldDrawingRoomEntryPosition(slotInGroup, groupSize),
+            GetWorldDrawingRoomEntryPosition(guest, slotInGroup, groupSize),
             null);
     }
 
@@ -3956,48 +3958,58 @@ public class Chapter1ArrivalController : MonoBehaviour
         return basePosition + new Vector3(offset.x, offset.y - worldEntranceGuestSpacing * 1.5f, 0f);
     }
 
-    private Vector3 GetWorldDrawingRoomEntryPosition(int indexInBatch, int batchCount)
+    private Vector3 GetWorldDrawingRoomEntryPosition(GuestRuntimeState guestState, int indexInBatch, int batchCount)
     {
-        Vector3 basePosition = GetEntranceDrawingRoomExitPosition();
+        Vector3 basePosition = GetWorldDrawingRoomEntryBasePosition(guestState);
         Vector2 offset = GetWorldGuestGridOffset(indexInBatch, batchCount, worldDrawingRoomSeatSpacing);
         return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
-    private Vector3 GetEntranceDrawingRoomExitPosition()
+    private Vector3 GetWorldDrawingRoomEntryBasePosition(GuestRuntimeState guestState)
     {
-        if (hasEntranceDrawingRoomExitPosition)
+        Transform depthReference = GetWorldPlacementDepthReference(guestState);
+
+        if (TryGetGrandEntranceDrawingRoomDoorPosition(depthReference, out Vector3 doorPosition))
         {
-            return entranceDrawingRoomExitPosition;
+            return doorPosition;
         }
 
-        Vector3 basePosition = drawingRoomEntryPoint != null
-            ? drawingRoomEntryPoint.position
-            : GetWorldEntranceCenterPosition();
-
-        if (TryGetGrandEntranceDrawingRoomDoorX(out float doorX))
-        {
-            basePosition.x = doorX;
-        }
-        else
-        {
-            Vector3 centerPosition = GetWorldEntranceCenterPosition();
-            float distanceFromCenter = Mathf.Abs(basePosition.x - centerPosition.x);
-
-            if (distanceFromCenter > 0.01f && basePosition.x > centerPosition.x)
-            {
-                basePosition.x = centerPosition.x - distanceFromCenter;
-            }
-        }
-
-        entranceDrawingRoomExitPosition = basePosition;
-        hasEntranceDrawingRoomExitPosition = true;
-        return entranceDrawingRoomExitPosition;
+        Transform entryAnchor = guestState != null && guestState.Config != null
+            ? guestState.Config.GetDrawingRoomEntryPoint(drawingRoomEntryPoint)
+            : drawingRoomEntryPoint;
+        return GetWorldVisibleAnchorPosition(guestState, entryAnchor, GetWorldEntranceCenterPosition());
     }
 
-    private bool TryGetGrandEntranceDrawingRoomDoorX(out float doorX)
+    private Vector3 GetWorldVisibleAnchorPosition(GuestRuntimeState guestState, Transform anchor, Vector3 fallbackPosition)
     {
-        doorX = 0f;
+        if (TryGetWorldPositionForGuestTarget(GetWorldPlacementDepthReference(guestState), anchor, out Vector3 worldPosition))
+        {
+            return worldPosition;
+        }
+
+        return fallbackPosition;
+    }
+
+    private Transform GetWorldPlacementDepthReference(GuestRuntimeState guestState)
+    {
+        if (guestState != null && guestState.GuestObject != null)
+        {
+            return guestState.GuestObject.transform;
+        }
+
+        if (playerButlerReference != null)
+        {
+            return playerButlerReference.transform;
+        }
+
+        return transform;
+    }
+
+    private bool TryGetGrandEntranceDrawingRoomDoorPosition(Transform depthReference, out Vector3 worldPosition)
+    {
+        worldPosition = Vector3.zero;
         DoorTriggerNavigation[] doorTriggers = FindObjectsByType<DoorTriggerNavigation>(FindObjectsInactive.Include);
+        DoorTriggerNavigation fallbackTrigger = null;
 
         for (int i = 0; i < doorTriggers.Length; i++)
         {
@@ -4010,12 +4022,20 @@ public class Chapter1ArrivalController : MonoBehaviour
                 continue;
             }
 
-            RectTransform rectTransform = doorTrigger.transform as RectTransform;
-            doorX = rectTransform != null ? rectTransform.anchoredPosition.x : doorTrigger.transform.position.x;
-            return true;
+            if (doorTrigger.gameObject.activeInHierarchy &&
+                TryGetWorldPositionForGuestTarget(depthReference, doorTrigger.transform, out worldPosition))
+            {
+                return true;
+            }
+
+            if (fallbackTrigger == null)
+            {
+                fallbackTrigger = doorTrigger;
+            }
         }
 
-        return false;
+        return fallbackTrigger != null &&
+            TryGetWorldPositionForGuestTarget(depthReference, fallbackTrigger.transform, out worldPosition);
     }
 
     private Vector3 GetWorldDrawingRoomSeatPosition(int guestIndex)
@@ -4206,19 +4226,83 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         worldPosition = Vector3.zero;
 
-        if (guestTransform == null || target == null || target.GetComponentInParent<Canvas>(true) == null)
+        if (target == null)
         {
             return false;
         }
 
         Camera mainCamera = Camera.main;
+        Transform depthReference = guestTransform != null ? guestTransform : GetWorldPlacementDepthReference(null);
 
-        if (mainCamera == null || !TryGetTargetScreenPosition(target, out Vector2 screenPosition))
+        if (mainCamera == null)
         {
             return false;
         }
 
-        float depth = guestTransform.position.z - mainCamera.transform.position.z;
+        float depth = GetWorldPlacementDepth(depthReference, mainCamera);
+
+        if (TryGetActiveRoomStageWorldPositionForGuestTarget(target, depth, out worldPosition))
+        {
+            worldPosition.z = depthReference.position.z;
+            return true;
+        }
+
+        if (!TryGetTargetScreenPosition(target, out Vector2 screenPosition))
+        {
+            return false;
+        }
+
+        worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, depth));
+        worldPosition.z = depthReference.position.z;
+        return true;
+    }
+
+    private bool TryGetActiveRoomStageWorldPositionForGuestTarget(Transform target, float depth, out Vector3 worldPosition)
+    {
+        worldPosition = Vector3.zero;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        if (cameraManager == null)
+        {
+            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
+        }
+
+        if (navigationManager == null)
+        {
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+
+        RoomContentGroup roomContentGroup = target.GetComponentInParent<RoomContentGroup>(true);
+        RectTransform roomStage = roomContentGroup != null ? roomContentGroup.transform as RectTransform : null;
+
+        if (cameraManager == null ||
+            navigationManager == null ||
+            roomStage == null ||
+            !SameRoom(roomContentGroup.RoomName, navigationManager.CurrentRoom))
+        {
+            return false;
+        }
+
+        Vector3 localPoint = roomStage.InverseTransformPoint(target.position);
+        return cameraManager.TryGetActiveRoomStageWorldPoint(
+            new Vector2(localPoint.x, localPoint.y),
+            depth,
+            out worldPosition);
+    }
+
+    private float GetWorldPlacementDepth(Transform depthReference, Camera mainCamera)
+    {
+        if (mainCamera == null)
+        {
+            return 10f;
+        }
+
+        Transform safeDepthReference = depthReference != null ? depthReference : transform;
+        float depth = safeDepthReference.position.z - mainCamera.transform.position.z;
 
         if (depth <= 0.01f)
         {
@@ -4230,14 +4314,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             depth = Mathf.Abs(transform.position.z - mainCamera.transform.position.z);
         }
 
-        if (depth <= 0.01f)
-        {
-            depth = 10f;
-        }
-
-        worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, depth));
-        worldPosition.z = guestTransform.position.z;
-        return true;
+        return depth <= 0.01f ? 10f : depth;
     }
 
     private bool TryGetTargetScreenPosition(Transform target, out Vector2 screenPosition)
@@ -4631,6 +4708,11 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (navigationManager == null)
         {
             navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+
+        if (cameraManager == null)
+        {
+            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
         }
 
         if (playerButlerReference == null && chapterManager != null)

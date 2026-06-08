@@ -178,8 +178,13 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return;
         }
 
-        if (!playerMovement.TryFindClosestReachableDestinationToWorldPoint(transform.position, out Vector2 approachDestination) ||
-            !playerMovement.TrySetDestination(approachDestination, true))
+        if (!arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination) &&
+            !playerMovement.TryFindClosestReachableDestinationToWorldPoint(transform.position, out approachDestination))
+        {
+            return;
+        }
+
+        if (!playerMovement.TrySetDestination(approachDestination, true))
         {
             return;
         }
@@ -213,6 +218,11 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private bool IsPlayerCloseToFrontDoor(PointClickPlayerMovement playerMovement)
     {
+        if (arrivalController != null && arrivalController.IsButlerCloseToFrontDoor(playerMovement))
+        {
+            return true;
+        }
+
         if (playerMovement == null ||
             !playerMovement.TryGetScreenPointFromLogicalPosition(playerMovement.LogicalPosition, out Vector2 playerScreenPosition))
         {
