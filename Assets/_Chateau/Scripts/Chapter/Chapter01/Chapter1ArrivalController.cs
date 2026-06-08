@@ -106,6 +106,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private readonly List<GuestGroupRuntimeState> activeEntranceGroups = new List<GuestGroupRuntimeState>();
     private readonly List<Transform> runtimeSeatAnchors = new List<Transform>();
     private readonly HashSet<GameObject> runtimeGeneratedGuestObjects = new HashSet<GameObject>();
+    private readonly Dictionary<string, Sprite> guestCoatSpriteCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
     private int currentGuestIndex = -1;
     private bool sequenceActive;
     private bool chapterCompletionRequested;
@@ -136,8 +137,10 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float FrontDoorApproachSampleRadius = 160f;
     private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
     private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
+    private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
+    private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
     private static readonly Vector2 WardrobeColliderSize = new Vector2(0.9f, 1.6f);
     private static readonly string[][] ChapterGuestNameAliases =
@@ -571,7 +574,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         GameObject coatObject = guestState.CoatPickup.gameObject;
         coatObject.SetActive(true);
         coatObject.transform.SetParent(butlerTransform, false);
-        coatObject.transform.localPosition = ButlerCarriedCoatOffset;
+        coatObject.transform.localPosition = GetCoatOffsetWithSpritePivot(coatObject, ButlerCarriedCoatOffset);
         coatObject.transform.localRotation = Quaternion.identity;
         BringCoatRenderersAboveButler(coatObject, butlerTransform);
         carriedCoatVisual = coatObject;
@@ -1509,6 +1512,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             coatObject.transform.localScale = Vector3.one;
         }
 
+        ApplyAssignedCoatSprite(guest, coatObject, usingAuthoredCoatObject);
         Debug.Log($"[Chapter1] Coat attached to guest {guest.Config.GuestId}.", this);
 
         BoxCollider2D collider = coatObject.GetComponent<BoxCollider2D>();
@@ -1563,6 +1567,299 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return null;
+    }
+
+    private void ApplyAssignedCoatSprite(GuestRuntimeState guest, GameObject coatObject, bool preserveAuthoredVisualSize)
+    {
+        if (guest == null || coatObject == null)
+        {
+            return;
+        }
+
+        Sprite assignedSprite = ResolveGuestCoatSprite(guest);
+
+        if (assignedSprite == null)
+        {
+            return;
+        }
+
+        SpriteRenderer spriteRenderer = coatObject.GetComponent<SpriteRenderer>();
+
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = coatObject.GetComponentInChildren<SpriteRenderer>(true);
+        }
+
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = coatObject.AddComponent<SpriteRenderer>();
+        }
+
+        Sprite previousSprite = spriteRenderer.sprite;
+        bool spriteChanged = previousSprite != assignedSprite;
+        Vector3 previousScale = spriteRenderer.transform.localScale;
+        Vector2 previousSize = previousSprite != null ? previousSprite.bounds.size : Vector2.zero;
+
+        spriteRenderer.sprite = assignedSprite;
+        spriteRenderer.color = Color.white;
+        spriteRenderer.enabled = true;
+        ConfigureAssignedCoatSorting(guest, spriteRenderer);
+
+        if (spriteChanged && preserveAuthoredVisualSize && previousSize.x > 0f && previousSize.y > 0f)
+        {
+            Vector2 assignedSize = assignedSprite.bounds.size;
+
+            if (assignedSize.x > 0f && assignedSize.y > 0f)
+            {
+                Vector3 assignedScale = new Vector3(
+                    previousScale.x * previousSize.x / assignedSize.x,
+                    previousScale.y * previousSize.y / assignedSize.y,
+                    previousScale.z);
+                Vector2 previousPivot = GetSpritePivotNormalized(previousSprite);
+                Vector2 assignedPivot = GetSpritePivotNormalized(assignedSprite);
+                Vector3 pivotOffsetDelta = new Vector3(
+                    assignedPivot.x * assignedSize.x * assignedScale.x - previousPivot.x * previousSize.x * previousScale.x,
+                    assignedPivot.y * assignedSize.y * assignedScale.y - previousPivot.y * previousSize.y * previousScale.y,
+                    0f);
+
+                spriteRenderer.transform.localScale = assignedScale;
+                spriteRenderer.transform.localPosition += pivotOffsetDelta;
+            }
+        }
+        else if (!preserveAuthoredVisualSize)
+        {
+            spriteRenderer.transform.localScale = AssignedCoatFallbackScale;
+
+            if (spriteChanged)
+            {
+                spriteRenderer.transform.localPosition += GetSpritePivotOffset(spriteRenderer);
+            }
+        }
+    }
+
+    private static Vector2 GetSpritePivotNormalized(Sprite sprite)
+    {
+        if (sprite == null || sprite.rect.width <= 0f || sprite.rect.height <= 0f)
+        {
+            return new Vector2(0.5f, 0.5f);
+        }
+
+        return new Vector2(
+            sprite.pivot.x / sprite.rect.width,
+            sprite.pivot.y / sprite.rect.height);
+    }
+
+    private static Vector3 GetCoatOffsetWithSpritePivot(GameObject coatObject, Vector3 baseOffset)
+    {
+        SpriteRenderer spriteRenderer = coatObject != null ? coatObject.GetComponent<SpriteRenderer>() : null;
+
+        if (spriteRenderer == null && coatObject != null)
+        {
+            spriteRenderer = coatObject.GetComponentInChildren<SpriteRenderer>(true);
+        }
+
+        if (spriteRenderer == null || spriteRenderer.sprite == null || spriteRenderer.transform != coatObject.transform)
+        {
+            return baseOffset;
+        }
+
+        return baseOffset + GetSpritePivotOffset(spriteRenderer);
+    }
+
+    private static Vector3 GetSpritePivotOffset(SpriteRenderer spriteRenderer)
+    {
+        if (spriteRenderer == null || spriteRenderer.sprite == null)
+        {
+            return Vector3.zero;
+        }
+
+        Vector2 pivot = GetSpritePivotNormalized(spriteRenderer.sprite);
+        Vector2 spriteSize = spriteRenderer.sprite.bounds.size;
+        Vector3 spriteScale = spriteRenderer.transform.localScale;
+
+        return new Vector3(
+            pivot.x * spriteSize.x * spriteScale.x,
+            pivot.y * spriteSize.y * spriteScale.y,
+            0f);
+    }
+
+    private void ConfigureAssignedCoatSorting(GuestRuntimeState guest, SpriteRenderer coatRenderer)
+    {
+        if (coatRenderer == null)
+        {
+            return;
+        }
+
+        SpriteRenderer guestRenderer = guest != null ? FindCharacterSpriteRenderer(guest.GuestObject) : null;
+
+        if (guestRenderer != null)
+        {
+            coatRenderer.sortingLayerID = guestRenderer.sortingLayerID;
+            coatRenderer.sortingOrder = guestRenderer.sortingOrder + 1;
+            return;
+        }
+
+        coatRenderer.sortingLayerName = "People";
+        coatRenderer.sortingOrder = 9000 + (guest != null ? guest.GuestIndex : 0) + 1;
+    }
+
+    private Sprite ResolveGuestCoatSprite(GuestRuntimeState guest)
+    {
+        if (guest == null)
+        {
+            return null;
+        }
+
+        int guestNumber;
+        Sprite sprite;
+
+        if (guest.Config != null)
+        {
+            if (TryResolveGuestNumberFromText(guest.Config.GuestId, out guestNumber) &&
+                TryLoadGuestCoatSprite(guestNumber, out sprite))
+            {
+                return sprite;
+            }
+
+            if (TryResolveGuestNumberFromText(guest.Config.CoatId, out guestNumber) &&
+                TryLoadGuestCoatSprite(guestNumber, out sprite))
+            {
+                return sprite;
+            }
+
+            if (TryResolveNamedGuestCoatNumber(guest.Config.GuestDisplayName, out guestNumber) &&
+                TryLoadGuestCoatSprite(guestNumber, out sprite))
+            {
+                return sprite;
+            }
+        }
+
+        string guestObjectName = guest.GuestObject != null ? guest.GuestObject.name : null;
+
+        if (TryResolveGuestNumberFromText(guestObjectName, out guestNumber) &&
+            TryLoadGuestCoatSprite(guestNumber, out sprite))
+        {
+            return sprite;
+        }
+
+        if (TryResolveNamedGuestCoatNumber(guestObjectName, out guestNumber) &&
+            TryLoadGuestCoatSprite(guestNumber, out sprite))
+        {
+            return sprite;
+        }
+
+        if (TryLoadGuestCoatSprite(guest.GuestIndex + 1, out sprite))
+        {
+            return sprite;
+        }
+
+        return null;
+    }
+
+    private bool TryLoadGuestCoatSprite(int guestNumber, out Sprite sprite)
+    {
+        sprite = null;
+
+        if (guestNumber < 1 || guestNumber > ChapterGuestNameAliases.Length)
+        {
+            return false;
+        }
+
+        return TryLoadGuestCoatSprite($"guest{guestNumber}_coat", out sprite);
+    }
+
+    private bool TryLoadGuestCoatSprite(string resourceName, out Sprite sprite)
+    {
+        sprite = null;
+
+        if (string.IsNullOrWhiteSpace(resourceName))
+        {
+            return false;
+        }
+
+        string cleanResourceName = resourceName.Trim();
+
+        if (guestCoatSpriteCache.TryGetValue(cleanResourceName, out sprite))
+        {
+            return sprite != null;
+        }
+
+        string resourcePath = $"{GuestCoatResourceFolder}/{cleanResourceName}";
+        sprite = Resources.Load<Sprite>(resourcePath);
+
+        if (sprite == null)
+        {
+            Sprite[] sprites = Resources.LoadAll<Sprite>(resourcePath);
+            sprite = sprites != null && sprites.Length > 0 ? sprites[0] : null;
+        }
+
+        guestCoatSpriteCache[cleanResourceName] = sprite;
+        return sprite != null;
+    }
+
+    private static bool TryResolveGuestNumberFromText(string value, out int guestNumber)
+    {
+        guestNumber = 0;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        string normalizedValue = NormalizeObjectName(value);
+        int guestIndex = normalizedValue.IndexOf("guest", StringComparison.OrdinalIgnoreCase);
+
+        if (guestIndex < 0)
+        {
+            return false;
+        }
+
+        int digitStart = guestIndex + "guest".Length;
+
+        while (digitStart < normalizedValue.Length && normalizedValue[digitStart] == '_')
+        {
+            digitStart++;
+        }
+
+        if (digitStart >= normalizedValue.Length || !char.IsDigit(normalizedValue[digitStart]))
+        {
+            return false;
+        }
+
+        int digitEnd = digitStart;
+
+        while (digitEnd < normalizedValue.Length && char.IsDigit(normalizedValue[digitEnd]))
+        {
+            digitEnd++;
+        }
+
+        return int.TryParse(normalizedValue.Substring(digitStart, digitEnd - digitStart), out guestNumber);
+    }
+
+    private static bool TryResolveNamedGuestCoatNumber(string value, out int guestNumber)
+    {
+        guestNumber = 0;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        string normalizedValue = NormalizeObjectName(value).Replace("_", string.Empty);
+
+        if (normalizedValue.Contains("missisoldewren"))
+        {
+            guestNumber = 1;
+            return true;
+        }
+
+        if (normalizedValue.Contains("professorlucienvale"))
+        {
+            guestNumber = 7;
+            return true;
+        }
+
+        return false;
     }
 
     private Vector2 GetCoatClickColliderSize(GameObject coatObject, out Vector2 colliderOffset)
