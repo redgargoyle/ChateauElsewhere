@@ -96,17 +96,25 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     public void WorldSpaceGuestsUseWorldSpaceDrawingRoomTargets()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string sceneText = File.ReadAllText(GameplayScenePath);
         string entryMethodBody = ExtractMethodBody(controllerText, "GetWorldDrawingRoomEntryPosition");
         string entryBaseMethodBody = ExtractMethodBody(controllerText, "GetWorldDrawingRoomEntryBasePosition");
+        string editableTargetMethodBody = ExtractMethodBody(controllerText, "TryGetGrandEntranceDrawingRoomGuestTargetPosition");
         string doorLookupMethodBody = ExtractMethodBody(controllerText, "TryGetGrandEntranceDrawingRoomDoorPosition");
         string spotMethodBody = ExtractMethodBody(controllerText, "ResolveDrawingRoomSpotForGuest");
 
         Assert.That(entryMethodBody, Does.Contain("GetWorldDrawingRoomEntryBasePosition(guestState)"), "World-space guest exit movement should use a converted visible entrance-hall doorway target.");
+        Assert.That(entryBaseMethodBody, Does.Match(@"TryGetGrandEntranceDrawingRoomGuestTargetPosition[\s\S]*TryGetGrandEntranceDrawingRoomDoorPosition"), "Guest movement should prefer the hand-authored straight-line target before falling back to the door hitbox.");
+        Assert.That(editableTargetMethodBody, Does.Contain("FindAnchor(DrawingRoomDoorTargetAnchorId, entryRoomId)"), "The Drawing Room door walking target should be editable as a RoomAnchor in the Entrance Hall.");
+        Assert.That(editableTargetMethodBody, Does.Contain("FindSceneObjectByExactName(DrawingRoomDoorTargetAnchorId)"), "The editable target should still be found if RoomAnchor data is stale.");
         Assert.That(entryBaseMethodBody, Does.Contain("TryGetGrandEntranceDrawingRoomDoorPosition"), "World-space guests should walk to the visible Grand Entrance Hall Drawing Room door trigger.");
         Assert.That(entryBaseMethodBody, Does.Contain("GetWorldVisibleAnchorPosition"), "World-space guest movement should convert room-stage anchors into guest world coordinates.");
         Assert.That(doorLookupMethodBody, Does.Contain("activeInHierarchy"), "Drawing Room movement should prefer the active Grand Entrance Hall door trigger over inactive duplicate room views.");
         Assert.That(entryMethodBody, Does.Not.Contain("GetEntranceDrawingRoomExitPosition"), "World-space guest movement must not chase a UI/RectTransform Drawing Room door coordinate.");
         Assert.That(spotMethodBody, Does.Contain("GetWorldDrawingRoomSeatPosition"), "World-space guests should receive world-space Drawing Room waiting spots.");
+        Assert.That(sceneText, Does.Contain("m_Name: GuestDrawingRoomDoorTarget"), "Gameplay should expose an editable Entrance Hall target for the Drawing Room guest walk path.");
+        Assert.That(sceneText, Does.Contain("anchorId: GuestDrawingRoomDoorTarget"), "The editable Drawing Room guest walk target should have a RoomAnchor id.");
+        Assert.That(sceneText, Does.Contain("roomId: Grand Entrance Hall"), "The editable Drawing Room guest walk target should belong to the Entrance Hall.");
     }
 
     [Test]

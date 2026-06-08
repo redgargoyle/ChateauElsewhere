@@ -134,6 +134,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float ClosetStorageReadyScreenDistance = 145f;
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
+    private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
     private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
@@ -3969,6 +3970,11 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         Transform depthReference = GetWorldPlacementDepthReference(guestState);
 
+        if (TryGetGrandEntranceDrawingRoomGuestTargetPosition(depthReference, out Vector3 editableTargetPosition))
+        {
+            return editableTargetPosition;
+        }
+
         if (TryGetGrandEntranceDrawingRoomDoorPosition(depthReference, out Vector3 doorPosition))
         {
             return doorPosition;
@@ -4003,6 +4009,21 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return transform;
+    }
+
+    private bool TryGetGrandEntranceDrawingRoomGuestTargetPosition(Transform depthReference, out Vector3 worldPosition)
+    {
+        worldPosition = Vector3.zero;
+        Transform targetAnchor = FindAnchor(DrawingRoomDoorTargetAnchorId, entryRoomId);
+
+        if (targetAnchor == null)
+        {
+            GameObject targetObject = FindSceneObjectByExactName(DrawingRoomDoorTargetAnchorId);
+            targetAnchor = targetObject != null ? targetObject.transform : null;
+        }
+
+        return targetAnchor != null &&
+            TryGetWorldPositionForGuestTarget(depthReference, targetAnchor, out worldPosition);
     }
 
     private bool TryGetGrandEntranceDrawingRoomDoorPosition(Transform depthReference, out Vector3 worldPosition)
