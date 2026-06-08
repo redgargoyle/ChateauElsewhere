@@ -13,6 +13,7 @@ public class RoomContentGroup : MonoBehaviour
     [Header("Room")]
     [SerializeField] private string roomName;
     [SerializeField] private Texture roomBackgroundTexture;
+    [SerializeField] private RoomPerspectiveProfile perspectiveProfile;
     [Header("Child Renderer Defaults")]
     [SerializeField] private bool applyVisibleDefaultsToChildRenderers = true;
     [SerializeField] private string defaultSortingLayerName = "Background";
@@ -24,6 +25,7 @@ public class RoomContentGroup : MonoBehaviour
 
     public string RoomName => GetEffectiveRoomName();
     public Texture RoomBackgroundTexture => roomBackgroundTexture;
+    public RoomPerspectiveProfile PerspectiveProfile => perspectiveProfile;
 
     private void Reset()
     {
@@ -68,6 +70,17 @@ public class RoomContentGroup : MonoBehaviour
     {
         texture = roomBackgroundTexture;
         return texture != null;
+    }
+
+    public void SetPerspectiveProfile(RoomPerspectiveProfile profile)
+    {
+        perspectiveProfile = profile;
+    }
+
+    public bool TryGetPerspectiveProfile(out RoomPerspectiveProfile profile)
+    {
+        profile = perspectiveProfile;
+        return profile != null;
     }
 
     public void ApplyChildRendererVisibilityDefaults()

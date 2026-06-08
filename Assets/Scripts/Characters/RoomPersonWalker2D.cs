@@ -45,6 +45,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	[SerializeField] private bool disableRaycastTarget = true;
 
 	private RectTransform rectTransform;
+	private RoomProjectedEntity roomProjection;
 	private CharacterAnimatorDriver.ParameterCache animatorParameters;
 	private int targetPathIndex = 1;
 	private int pathDirection = 1;
@@ -133,6 +134,9 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 		if (targetGraphic == null)
 			targetGraphic = GetComponent<Graphic>();
+
+		if (roomProjection == null)
+			roomProjection = GetComponent<RoomProjectedEntity>();
 	}
 
 	private void CacheAnimatorParameters()
@@ -310,16 +314,22 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	private void ApplyVisuals()
 	{
 		ResolveReferences();
+		bool useRoomProjection = roomProjection != null && roomProjection.IsProjectionActive;
 
 		if (targetGraphic != null)
 		{
-			targetGraphic.color = GetDepthTint();
+			if (!useRoomProjection)
+				targetGraphic.color = GetDepthTint();
 
 			if (disableRaycastTarget)
 				targetGraphic.raycastTarget = false;
 		}
 
-		if (rectTransform != null)
+		if (useRoomProjection)
+		{
+			roomProjection.SetRoomLocalFootPoint(GetRenderedPosition(currentPosition));
+		}
+		else if (rectTransform != null)
 		{
 			rectTransform.anchoredPosition = GetRenderedPosition(currentPosition + GetMotionOffset());
 

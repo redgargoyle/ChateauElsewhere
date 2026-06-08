@@ -30,6 +30,7 @@ public class ActorRoomState : MonoBehaviour
     private Collider2D[] colliders2D = new Collider2D[0];
     private CanvasGroup[] canvasGroups = new CanvasGroup[0];
     private Animator[] animators = new Animator[0];
+    private RoomProjectedEntity roomProjection;
     private CameraManager cameraManager;
     private Vector2 lastRoomStageScreenCenter;
     private float lastRoomStageScreenScale = 1f;
@@ -52,6 +53,7 @@ public class ActorRoomState : MonoBehaviour
     public bool IsInteractable => isInteractable;
     public bool IsSeated => isSeated;
     public bool IsVisibleInCurrentRoom => ShouldBeVisible();
+    public RoomProjectedEntity Projection => GetRoomProjection();
 
     private void Reset()
     {
@@ -110,6 +112,7 @@ public class ActorRoomState : MonoBehaviour
 
         currentRoomId = cleanRoomId;
         ApplyState();
+        GetRoomProjection()?.ApplyProjection();
     }
 
     public void SetAvailableInCurrentChapter(bool value)
@@ -143,6 +146,20 @@ public class ActorRoomState : MonoBehaviour
         {
             Debug.LogWarning($"Actor '{ActorId}' missing required waypoint target for PlaceAt.", this);
             return;
+        }
+
+        RoomProjectedEntity projection = GetRoomProjection();
+        if (projection != null)
+        {
+            projection.UseProfileFromRoomTarget(target);
+
+            if (projection.IsProjectionActive &&
+                projection.CanProjectTarget(target) &&
+                projection.TrySetRoomLocalFootPointFromTarget(target))
+            {
+                ClearRoomStagePointBinding();
+                return;
+            }
         }
 
         Transform targetTransform = actorObject != null ? actorObject.transform : transform;
@@ -328,6 +345,7 @@ public class ActorRoomState : MonoBehaviour
         colliders2D = root.GetComponentsInChildren<Collider2D>(true);
         canvasGroups = root.GetComponentsInChildren<CanvasGroup>(true);
         animators = root.GetComponentsInChildren<Animator>(true);
+        roomProjection = root.GetComponentInChildren<RoomProjectedEntity>(true);
     }
 
     private void ApplySeatedAnimatorState()
@@ -579,7 +597,26 @@ public class ActorRoomState : MonoBehaviour
         Transform targetTransform = actorObject != null ? actorObject.transform : transform;
         return targetTransform != null &&
             targetTransform is not RectTransform &&
-            !IsActorUnderRoomStage(targetTransform);
+            !IsActorUnderRoomStage(targetTransform) &&
+            !HasActiveProjection();
+    }
+
+    private RoomProjectedEntity GetRoomProjection()
+    {
+        if (roomProjection != null)
+        {
+            return roomProjection;
+        }
+
+        GameObject root = actorObject != null ? actorObject : gameObject;
+        roomProjection = root != null ? root.GetComponentInChildren<RoomProjectedEntity>(true) : null;
+        return roomProjection;
+    }
+
+    private bool HasActiveProjection()
+    {
+        RoomProjectedEntity projection = GetRoomProjection();
+        return projection != null && projection.IsProjectionActive;
     }
 
     private bool TryApplyRoomStageLocalBindingIfNeeded()
