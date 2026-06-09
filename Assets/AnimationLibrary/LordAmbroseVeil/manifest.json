@@ -1,0 +1,532 @@
+{
+  "character": "LordAmbroseVeil",
+  "display_name": "Lord Ambrose Veil",
+  "role": "guest",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "source_sheet": "SourceSheets/LordAmbroseVeil_source_sheet.png",
+  "style_brief": "Lord Ambrose Veil: tall slim Victorian gentleman, tousled dark hair, pale face, brown frock coat, cream cravat and waistcoat, dark trousers, gloves. Use the current project reference art in reference/source_sheet.png as the strict visual target.",
+  "reference_sequences": {
+    "idle_down": [
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_down/01_lord_ambrose_veil_idle_down_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_down/01_lord_ambrose_veil_idle_down_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            6,
+            131,
+            293
+          ],
+          "visible_pixels": 17994,
+          "semi_alpha_pixels": 1770,
+          "bottom_margin": 4,
+          "sha1": "bf23e38f30aa0b9b8bcfcc5223e98b30552a8dfd"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_down/02_lord_ambrose_veil_idle_down_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_down/02_lord_ambrose_veil_idle_down_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            5,
+            131,
+            293
+          ],
+          "visible_pixels": 18364,
+          "semi_alpha_pixels": 1670,
+          "bottom_margin": 4,
+          "sha1": "774601be30ceb03f6d6272df210ee31921963ed3"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_down/03_lord_ambrose_veil_idle_down_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_down/03_lord_ambrose_veil_idle_down_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            4,
+            131,
+            293
+          ],
+          "visible_pixels": 18472,
+          "semi_alpha_pixels": 1673,
+          "bottom_margin": 4,
+          "sha1": "05ad86a4be228ad1ae6b9d6d18d42aaaa88cd21b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_down/04_lord_ambrose_veil_idle_down_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_down/04_lord_ambrose_veil_idle_down_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            5,
+            131,
+            293
+          ],
+          "visible_pixels": 18364,
+          "semi_alpha_pixels": 1670,
+          "bottom_margin": 4,
+          "sha1": "774601be30ceb03f6d6272df210ee31921963ed3"
+        }
+      }
+    ],
+    "idle_left": [
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_left_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_left/01_lord_ambrose_veil_idle_left_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_left/01_lord_ambrose_veil_idle_left_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            55,
+            72,
+            111,
+            293
+          ],
+          "visible_pixels": 8781,
+          "semi_alpha_pixels": 1044,
+          "bottom_margin": 4,
+          "sha1": "aa9b2b9fa704b3eab578562e69a23a60fbf7344c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_left_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_left/02_lord_ambrose_veil_idle_left_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_left/02_lord_ambrose_veil_idle_left_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            53,
+            72,
+            109,
+            293
+          ],
+          "visible_pixels": 8396,
+          "semi_alpha_pixels": 929,
+          "bottom_margin": 4,
+          "sha1": "d8bb9d00b26c325730a09aa9fd9308ecca6f0a33"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_left_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_left/03_lord_ambrose_veil_idle_left_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_left/03_lord_ambrose_veil_idle_left_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            54,
+            74,
+            112,
+            293
+          ],
+          "visible_pixels": 8748,
+          "semi_alpha_pixels": 824,
+          "bottom_margin": 4,
+          "sha1": "62225186ace7d62f51df0afb6ff6a2a63e1fcf5e"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_left_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_left/04_lord_ambrose_veil_idle_left_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_left/04_lord_ambrose_veil_idle_left_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            51,
+            72,
+            109,
+            293
+          ],
+          "visible_pixels": 8715,
+          "semi_alpha_pixels": 923,
+          "bottom_margin": 4,
+          "sha1": "254e2723445afa6d70f914fa6b6bd630b8038fe0"
+        }
+      }
+    ],
+    "idle_right": [
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_right_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_right/01_lord_ambrose_veil_idle_right_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_right/01_lord_ambrose_veil_idle_right_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            56,
+            72,
+            112,
+            293
+          ],
+          "visible_pixels": 8775,
+          "semi_alpha_pixels": 1043,
+          "bottom_margin": 4,
+          "sha1": "012b8a6d4dc07cb2ffdb4d4bae9a064233998388"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_right_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_right/02_lord_ambrose_veil_idle_right_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_right/02_lord_ambrose_veil_idle_right_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            58,
+            72,
+            114,
+            293
+          ],
+          "visible_pixels": 8396,
+          "semi_alpha_pixels": 929,
+          "bottom_margin": 4,
+          "sha1": "6c51be86690abe9d47b8cd99297a05216ee26e5b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_right_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_right/03_lord_ambrose_veil_idle_right_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_right/03_lord_ambrose_veil_idle_right_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            56,
+            74,
+            114,
+            293
+          ],
+          "visible_pixels": 8734,
+          "semi_alpha_pixels": 825,
+          "bottom_margin": 4,
+          "sha1": "293c7a9597a6429270fa827611198e636115ef58"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_right_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_right/04_lord_ambrose_veil_idle_right_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_right/04_lord_ambrose_veil_idle_right_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            58,
+            72,
+            116,
+            293
+          ],
+          "visible_pixels": 8715,
+          "semi_alpha_pixels": 923,
+          "bottom_margin": 4,
+          "sha1": "c8f62c819da75aaaa1541da9ee17738a9b9d832f"
+        }
+      }
+    ],
+    "idle_up": [
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_up_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_up/01_lord_ambrose_veil_idle_up_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_up/01_lord_ambrose_veil_idle_up_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            43,
+            30,
+            129,
+            293
+          ],
+          "visible_pixels": 15734,
+          "semi_alpha_pixels": 1554,
+          "bottom_margin": 4,
+          "sha1": "a929b09fa14dca12f81e1e2eefa4c2be5c2d4dfd"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_up_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_up/02_lord_ambrose_veil_idle_up_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_up/02_lord_ambrose_veil_idle_up_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            31,
+            132,
+            293
+          ],
+          "visible_pixels": 15302,
+          "semi_alpha_pixels": 1701,
+          "bottom_margin": 4,
+          "sha1": "f1a85583e8cc3b504b37c963d5f3129af238ae5c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_up_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_up/03_lord_ambrose_veil_idle_up_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_up/03_lord_ambrose_veil_idle_up_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            40,
+            30,
+            132,
+            292
+          ],
+          "visible_pixels": 15130,
+          "semi_alpha_pixels": 1641,
+          "bottom_margin": 5,
+          "sha1": "f3baa32db23e1b9992ad3c990bfcb6431cbc427c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_up_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_up/04_lord_ambrose_veil_idle_up_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body/idle_up/04_lord_ambrose_veil_idle_up_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            38,
+            31,
+            133,
+            293
+          ],
+          "visible_pixels": 15455,
+          "semi_alpha_pixels": 1619,
+          "bottom_margin": 4,
+          "sha1": "f73654a352de0f47f55354b0a188caece54f41ee"
+        }
+      }
+    ]
+  },
+  "excluded_sources": [
+    {
+      "sequence": "walk_down",
+      "source": "Assets/Art/Characters/guest7/guest7down/GuestPair02Man_down_01.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_down",
+      "source": "Assets/Art/Characters/guest7/guest7down/GuestPair02Man_down_04.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_down",
+      "source": "Assets/Art/Characters/guest7/guest7down/GuestPair02Man_down_02.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_down",
+      "source": "Assets/Art/Characters/guest7/guest7down/GuestPair02Man_down_03.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_left",
+      "source": "Assets/Art/Characters/guest7/guest7left/GuestPair02Man_left_02.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_left",
+      "source": "Assets/Art/Characters/guest7/guest7left/GuestPair02Man_left_04.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_left",
+      "source": "Assets/Art/Characters/guest7/guest7left/GuestPair02Man_left_03.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_right",
+      "source": "Assets/Art/Characters/guest7/guest7right/GuestPair02Man_right_01.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_right",
+      "source": "Assets/Art/Characters/guest7/guest7right/GuestPair02Man_right_04.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_right",
+      "source": "Assets/Art/Characters/guest7/guest7right/GuestPair02Man_right_02.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_up",
+      "source": "Assets/Art/Characters/guest7/guest07up/GuestPair02Man_up_02.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_up",
+      "source": "Assets/Art/Characters/guest7/guest07up/GuestPair02Man_up_01.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "walk_up",
+      "source": "Assets/Art/Characters/guest7/guest07up/GuestPair02Man_up_04.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "sitting",
+      "source": "Assets/Art/Characters/guest7/guest7sitidle/guest7sit1.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "sitting",
+      "source": "Assets/Art/Characters/guest7/guest7sitidle/guest7sit2.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "sitting",
+      "source": "Assets/Art/Characters/guest7/guest7sitidle/guest7sit3.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    },
+    {
+      "sequence": "sitting",
+      "source": "Assets/Art/Characters/guest7/guest7sitidle/guest7_sitting_left_idle_04.png",
+      "reason": "excluded legacy/mismatched source pattern"
+    }
+  ],
+  "contact_sheet": "Assets/AnimationLibrary/LordAmbroseVeil/qa/reference_contact_sheet.png",
+  "generation_requests": "Assets/AnimationLibrary/LordAmbroseVeil/requests/generation_prompts.jsonl",
+  "warnings": []
+}

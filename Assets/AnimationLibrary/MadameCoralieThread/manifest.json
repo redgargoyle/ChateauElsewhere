@@ -1,0 +1,1392 @@
+{
+  "character": "MadameCoralieThread",
+  "display_name": "Madame Coralie Thread",
+  "role": "guest",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "source_sheet": "SourceSheets/MadameCoralieThread_source_sheet.png",
+  "style_brief": "Madame Coralie Thread: older Victorian woman, dark jacket, bronze and gold skirt, dark updo, formal brooch, reserved upright posture. Use the current project reference art in reference/source_sheet.png as the strict visual target.",
+  "reference_sequences": {
+    "idle_down": [
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_down/01_madame_coralie_thread_idle_down_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_down/01_madame_coralie_thread_idle_down_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            12,
+            151,
+            293
+          ],
+          "visible_pixels": 21974,
+          "semi_alpha_pixels": 1509,
+          "bottom_margin": 4,
+          "sha1": "94bf8f63e5de441ea1ce8f5688ee488686b8198c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_down/02_madame_coralie_thread_idle_down_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_down/02_madame_coralie_thread_idle_down_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            11,
+            151,
+            293
+          ],
+          "visible_pixels": 22306,
+          "semi_alpha_pixels": 1344,
+          "bottom_margin": 4,
+          "sha1": "6a2c18697e444f3c498931055df66f48a363f50a"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_down/03_madame_coralie_thread_idle_down_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_down/03_madame_coralie_thread_idle_down_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            10,
+            151,
+            293
+          ],
+          "visible_pixels": 22468,
+          "semi_alpha_pixels": 1359,
+          "bottom_margin": 4,
+          "sha1": "4b742392184364f4d1fd82e08d5b6ffa7cc3b777"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_down/04_madame_coralie_thread_idle_down_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_down/04_madame_coralie_thread_idle_down_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            11,
+            151,
+            293
+          ],
+          "visible_pixels": 22306,
+          "semi_alpha_pixels": 1344,
+          "bottom_margin": 4,
+          "sha1": "6a2c18697e444f3c498931055df66f48a363f50a"
+        }
+      }
+    ],
+    "idle_left": [
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_left_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_left/01_madame_coralie_thread_idle_left_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_left/01_madame_coralie_thread_idle_left_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            45,
+            65,
+            122,
+            293
+          ],
+          "visible_pixels": 11757,
+          "semi_alpha_pixels": 1119,
+          "bottom_margin": 4,
+          "sha1": "87e74373f654e040397109d7b16defbec5a3cd27"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_left_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_left/02_madame_coralie_thread_idle_left_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_left/02_madame_coralie_thread_idle_left_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            46,
+            65,
+            123,
+            293
+          ],
+          "visible_pixels": 11795,
+          "semi_alpha_pixels": 1137,
+          "bottom_margin": 4,
+          "sha1": "5c93aea8f6033bc522efbfe108a256bd5a04fd8b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_left_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_left/03_madame_coralie_thread_idle_left_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_left/03_madame_coralie_thread_idle_left_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            45,
+            65,
+            123,
+            293
+          ],
+          "visible_pixels": 11718,
+          "semi_alpha_pixels": 1019,
+          "bottom_margin": 4,
+          "sha1": "5b4a09d5ca85e48e8e68b5ecc316e23e0242a92b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_left_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_left/04_madame_coralie_thread_idle_left_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_left/04_madame_coralie_thread_idle_left_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            45,
+            65,
+            123,
+            293
+          ],
+          "visible_pixels": 11623,
+          "semi_alpha_pixels": 988,
+          "bottom_margin": 4,
+          "sha1": "78f7ab9449329166ac8517554e065a08f6f9e7e6"
+        }
+      }
+    ],
+    "idle_right": [
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_right_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_right/01_madame_coralie_thread_idle_right_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_right/01_madame_coralie_thread_idle_right_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            46,
+            65,
+            123,
+            293
+          ],
+          "visible_pixels": 11757,
+          "semi_alpha_pixels": 1119,
+          "bottom_margin": 4,
+          "sha1": "9ebf68a7ff1ead722c8d9cffba79eb68220c7ecb"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_right_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_right/02_madame_coralie_thread_idle_right_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_right/02_madame_coralie_thread_idle_right_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            45,
+            65,
+            122,
+            293
+          ],
+          "visible_pixels": 11795,
+          "semi_alpha_pixels": 1137,
+          "bottom_margin": 4,
+          "sha1": "9f85f0abc3c8072d264f28c0cb74cf2e61550883"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_right_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_right/03_madame_coralie_thread_idle_right_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_right/03_madame_coralie_thread_idle_right_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            44,
+            65,
+            122,
+            293
+          ],
+          "visible_pixels": 11718,
+          "semi_alpha_pixels": 1019,
+          "bottom_margin": 4,
+          "sha1": "5601786cd36d9875f48eab0e0fdd60cd362ed121"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_right_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_right/04_madame_coralie_thread_idle_right_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_right/04_madame_coralie_thread_idle_right_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            45,
+            65,
+            123,
+            293
+          ],
+          "visible_pixels": 11623,
+          "semi_alpha_pixels": 988,
+          "bottom_margin": 4,
+          "sha1": "f7f9842e288d9be4fc14a252a2f4374e85c8a897"
+        }
+      }
+    ],
+    "idle_up": [
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_up_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_up/01_madame_coralie_thread_idle_up_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_up/01_madame_coralie_thread_idle_up_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            35,
+            135,
+            293
+          ],
+          "visible_pixels": 17877,
+          "semi_alpha_pixels": 1289,
+          "bottom_margin": 4,
+          "sha1": "3fac68582a0f75c2ed19a32e5861c20ce858362d"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_up_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_up/02_madame_coralie_thread_idle_up_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_up/02_madame_coralie_thread_idle_up_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            36,
+            135,
+            293
+          ],
+          "visible_pixels": 17758,
+          "semi_alpha_pixels": 1200,
+          "bottom_margin": 4,
+          "sha1": "f03529f6baf08ebdb91c53d4a9c985be3f19ae3a"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_up_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_up/03_madame_coralie_thread_idle_up_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_up/03_madame_coralie_thread_idle_up_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            35,
+            135,
+            293
+          ],
+          "visible_pixels": 17717,
+          "semi_alpha_pixels": 1251,
+          "bottom_margin": 4,
+          "sha1": "cd6be10e7af3bdc0becfe78db0694712c243cb2f"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_up_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_up/04_madame_coralie_thread_idle_up_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/idle_up/04_madame_coralie_thread_idle_up_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            36,
+            135,
+            293
+          ],
+          "visible_pixels": 17766,
+          "semi_alpha_pixels": 1191,
+          "bottom_margin": 4,
+          "sha1": "59e1d79785e224aa642f6b5fcebae0749ba2a369"
+        }
+      }
+    ],
+    "sitting": [
+      {
+        "source": "Assets/Art/Characters/guest8/guest8sitidle/guest8_sitting_left_idle_01.png",
+        "source_size": [
+          430,
+          599
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/sitting/01_guest8_sitting_left_idle_01.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/sitting/01_guest8_sitting_left_idle_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            52,
+            166,
+            297
+          ],
+          "visible_pixels": 22285,
+          "semi_alpha_pixels": 1137,
+          "bottom_margin": 0,
+          "sha1": "6d6e71022c9c73fa527aabe841c19421516f3f1f"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8sitidle/guest8_sitting_left_idle_02.png",
+        "source_size": [
+          430,
+          599
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/sitting/02_guest8_sitting_left_idle_02.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/sitting/02_guest8_sitting_left_idle_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            53,
+            166,
+            297
+          ],
+          "visible_pixels": 22260,
+          "semi_alpha_pixels": 1148,
+          "bottom_margin": 0,
+          "sha1": "1d8e057823753ecaa2419d825d633b5d4390b5db"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8sitidle/guest8_sitting_left_idle_03.png",
+        "source_size": [
+          430,
+          599
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/sitting/03_guest8_sitting_left_idle_03.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/sitting/03_guest8_sitting_left_idle_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            52,
+            166,
+            297
+          ],
+          "visible_pixels": 22289,
+          "semi_alpha_pixels": 1175,
+          "bottom_margin": 0,
+          "sha1": "5ac3f1bded8bc764812dfff11d33f99c45748801"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8sitidle/guest8_sitting_left_idle_04.png",
+        "source_size": [
+          430,
+          599
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/sitting/04_guest8_sitting_left_idle_04.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/sitting/04_guest8_sitting_left_idle_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            53,
+            166,
+            297
+          ],
+          "visible_pixels": 22159,
+          "semi_alpha_pixels": 1146,
+          "bottom_margin": 0,
+          "sha1": "a215ed2f3d97c1b147d6bb815a929ff492a2ad3a"
+        }
+      }
+    ],
+    "walk_down": [
+      {
+        "source": "Assets/Art/Characters/guest8/guest8down/guest08down1.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/01_guest08down1.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/01_guest08down1.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            12,
+            150,
+            293
+          ],
+          "visible_pixels": 21183,
+          "semi_alpha_pixels": 1022,
+          "bottom_margin": 4,
+          "sha1": "6b935add4a988bfd5757e27b0bef4f75986dfba1"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8down/guest08down2.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/02_guest08down2.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/02_guest08down2.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            9,
+            147,
+            292
+          ],
+          "visible_pixels": 21194,
+          "semi_alpha_pixels": 866,
+          "bottom_margin": 5,
+          "sha1": "7e747c0ddfaaea9633c57047e54e2bd3669a376e"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8down/guest08down3.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/03_guest08down3.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/03_guest08down3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            9,
+            155,
+            292
+          ],
+          "visible_pixels": 21362,
+          "semi_alpha_pixels": 846,
+          "bottom_margin": 5,
+          "sha1": "f1b9d7e48cf47caeea5eccf85b1b73e4763e6ebb"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8down/guest08down4.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/04_guest08down4.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/04_guest08down4.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            12,
+            150,
+            292
+          ],
+          "visible_pixels": 20962,
+          "semi_alpha_pixels": 947,
+          "bottom_margin": 5,
+          "sha1": "ea8326838440e4729f112ec7b3ad413b4c22bee0"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8down/guest08down8.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/05_guest08down8.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/05_guest08down8.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            9,
+            144,
+            292
+          ],
+          "visible_pixels": 19843,
+          "semi_alpha_pixels": 783,
+          "bottom_margin": 5,
+          "sha1": "292ab53b91a6885cef839480f0ec2725afe3d8e7"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8down/guest08down5.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/06_guest08down5.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/06_guest08down5.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            8,
+            145,
+            292
+          ],
+          "visible_pixels": 19959,
+          "semi_alpha_pixels": 803,
+          "bottom_margin": 5,
+          "sha1": "63ead981c81974bb3cbc25954f0ea48c2ac7a58d"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8down/guest08down6.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/07_guest08down6.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/07_guest08down6.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            8,
+            144,
+            292
+          ],
+          "visible_pixels": 20171,
+          "semi_alpha_pixels": 870,
+          "bottom_margin": 5,
+          "sha1": "fded9afe8a5db33ac3bb9b33d3bd10fa15a303e5"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8down/guest08down7.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/08_guest08down7.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_down/08_guest08down7.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            6,
+            140,
+            292
+          ],
+          "visible_pixels": 20321,
+          "semi_alpha_pixels": 963,
+          "bottom_margin": 5,
+          "sha1": "63d837cf5ec842a8a36afadbdf660e79bc51a860"
+        }
+      }
+    ],
+    "walk_left": [
+      {
+        "source": "Assets/Art/Characters/guest8/guest8left/guest08walkleft01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/01_guest08walkleft01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/01_guest08walkleft01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            19,
+            155,
+            293
+          ],
+          "visible_pixels": 20565,
+          "semi_alpha_pixels": 988,
+          "bottom_margin": 4,
+          "sha1": "d28ae5cd7f018279093b1959584f08d73b77a4c8"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8left/guest08walkleft02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/02_guest08walkleft02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/02_guest08walkleft02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            21,
+            159,
+            293
+          ],
+          "visible_pixels": 19949,
+          "semi_alpha_pixels": 930,
+          "bottom_margin": 4,
+          "sha1": "a185d3c42db171f8906e0f21a12c207656973640"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8left/guest08walkleft03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/03_guest08walkleft03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/03_guest08walkleft03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            21,
+            157,
+            293
+          ],
+          "visible_pixels": 20669,
+          "semi_alpha_pixels": 896,
+          "bottom_margin": 4,
+          "sha1": "0cacb66a05fb4842541b6c541cc4bbd1b6bc2f9b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8left/guest08walkleft04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/04_guest08walkleft04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/04_guest08walkleft04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            19,
+            153,
+            293
+          ],
+          "visible_pixels": 19853,
+          "semi_alpha_pixels": 916,
+          "bottom_margin": 4,
+          "sha1": "90cf2df5fa1b21c38fa24473fa51ab2148c7e200"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8left/guest08walkleft05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/05_guest08walkleft05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/05_guest08walkleft05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            19,
+            151,
+            293
+          ],
+          "visible_pixels": 19023,
+          "semi_alpha_pixels": 945,
+          "bottom_margin": 4,
+          "sha1": "9421865bd1c645eb6cd38e833d59baecdc1d0490"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8left/guest08walkleft06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/06_guest08walkleft06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/06_guest08walkleft06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            11,
+            21,
+            162,
+            293
+          ],
+          "visible_pixels": 20333,
+          "semi_alpha_pixels": 1010,
+          "bottom_margin": 4,
+          "sha1": "06f3bd026adb08b87c9b158a678f9b18ea890082"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8left/guest08walkleft07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/07_guest08walkleft07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/07_guest08walkleft07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            19,
+            153,
+            293
+          ],
+          "visible_pixels": 19110,
+          "semi_alpha_pixels": 926,
+          "bottom_margin": 4,
+          "sha1": "82834775de5a0f82824a9a4a1a7438e898d7ce9e"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8left/guest08walkleft08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/08_guest08walkleft08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_left/08_guest08walkleft08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            11,
+            25,
+            159,
+            293
+          ],
+          "visible_pixels": 20558,
+          "semi_alpha_pixels": 932,
+          "bottom_margin": 4,
+          "sha1": "775a7254bd60739d8c5b0441da8936b65aa8610e"
+        }
+      }
+    ],
+    "walk_right": [
+      {
+        "source": "Assets/Art/Characters/guest8/guest8right/guest08walkright1.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/01_guest08walkright1.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/01_guest08walkright1.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            18,
+            153,
+            293
+          ],
+          "visible_pixels": 19484,
+          "semi_alpha_pixels": 958,
+          "bottom_margin": 4,
+          "sha1": "a3fbd761a1be646d4617bde55ae2b9cfd1d7d74c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8right/guest08walkright2.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/02_guest08walkright2.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/02_guest08walkright2.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            11,
+            19,
+            159,
+            293
+          ],
+          "visible_pixels": 20073,
+          "semi_alpha_pixels": 953,
+          "bottom_margin": 4,
+          "sha1": "b85a7c96aabc81e2078a52932eba89196bdab656"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8right/guest08walkright3.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/03_guest08walkright3.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/03_guest08walkright3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            7,
+            18,
+            159,
+            293
+          ],
+          "visible_pixels": 20591,
+          "semi_alpha_pixels": 981,
+          "bottom_margin": 4,
+          "sha1": "18ebdb2614a7fab73419f9e5b0413153d9c26cf8"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8right/guest08walkright4.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/04_guest08walkright4.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/04_guest08walkright4.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            11,
+            18,
+            156,
+            293
+          ],
+          "visible_pixels": 20569,
+          "semi_alpha_pixels": 977,
+          "bottom_margin": 4,
+          "sha1": "87c753a5ea260d42b58eeb9160f00c27dec79476"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8right/guest08walkright5.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/05_guest08walkright5.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/05_guest08walkright5.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            7,
+            18,
+            159,
+            293
+          ],
+          "visible_pixels": 20175,
+          "semi_alpha_pixels": 892,
+          "bottom_margin": 4,
+          "sha1": "45e5926250e452db5e1618a1ad0cad39ca23bd19"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8right/guest08walkright6.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/06_guest08walkright6.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/06_guest08walkright6.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            19,
+            156,
+            293
+          ],
+          "visible_pixels": 19907,
+          "semi_alpha_pixels": 967,
+          "bottom_margin": 4,
+          "sha1": "8dc1df7d6f10a430b0219912aa691fc03e3d7626"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8right/guest08walkright7.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/07_guest08walkright7.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/07_guest08walkright7.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            18,
+            157,
+            293
+          ],
+          "visible_pixels": 20055,
+          "semi_alpha_pixels": 939,
+          "bottom_margin": 4,
+          "sha1": "dc54d8e6e8f3ea1985af32ce85509a80a1687ff9"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8right/guest08walkright8.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/08_guest08walkright8.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_right/08_guest08walkright8.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            18,
+            157,
+            293
+          ],
+          "visible_pixels": 19767,
+          "semi_alpha_pixels": 921,
+          "bottom_margin": 4,
+          "sha1": "8eccc71ee4b6fdf82ba71bf582c920a116d29b52"
+        }
+      }
+    ],
+    "walk_up": [
+      {
+        "source": "Assets/Art/Characters/guest8/guest8up/guest08up01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/01_guest08up01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/01_guest08up01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            16,
+            145,
+            292
+          ],
+          "visible_pixels": 20067,
+          "semi_alpha_pixels": 923,
+          "bottom_margin": 5,
+          "sha1": "c3cc6cfeee3c65a802f40319d65d020649ad509f"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8up/guest08up02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/02_guest08up02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/02_guest08up02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            18,
+            145,
+            293
+          ],
+          "visible_pixels": 19968,
+          "semi_alpha_pixels": 779,
+          "bottom_margin": 4,
+          "sha1": "b30102a3f6f9985d346c1f8b827ed6f7572f1c0b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8up/guest08up03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/03_guest08up03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/03_guest08up03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            16,
+            144,
+            292
+          ],
+          "visible_pixels": 20104,
+          "semi_alpha_pixels": 863,
+          "bottom_margin": 5,
+          "sha1": "5643a59f3f32795002ffd78263e43a326d31f7f4"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8up/guest08up04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/04_guest08up04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/04_guest08up04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            18,
+            144,
+            293
+          ],
+          "visible_pixels": 20186,
+          "semi_alpha_pixels": 890,
+          "bottom_margin": 4,
+          "sha1": "31cc4febc5ff5024460e2f8e104ea844dc16f9e3"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8up/guest08up05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/05_guest08up05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/05_guest08up05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            16,
+            143,
+            293
+          ],
+          "visible_pixels": 19935,
+          "semi_alpha_pixels": 819,
+          "bottom_margin": 4,
+          "sha1": "3a055045cb87c3f72c49d0f789c7709154a712f9"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8up/guest08up06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/06_guest08up06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/06_guest08up06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            16,
+            144,
+            293
+          ],
+          "visible_pixels": 20533,
+          "semi_alpha_pixels": 914,
+          "bottom_margin": 4,
+          "sha1": "58c30717190b5a4ca27ee5183e01f2cd547620b2"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8up/guest08up07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/07_guest08up07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/07_guest08up07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            16,
+            143,
+            293
+          ],
+          "visible_pixels": 19921,
+          "semi_alpha_pixels": 835,
+          "bottom_margin": 4,
+          "sha1": "1fb3cff2f691ae043940eaf3936cdc9fb25bf14c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest8/guest8up/guest08up08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/08_guest08up08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/reference/full_body/walk_up/08_guest08up08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            18,
+            142,
+            293
+          ],
+          "visible_pixels": 19885,
+          "semi_alpha_pixels": 917,
+          "bottom_margin": 4,
+          "sha1": "471361aa1965056a89db58d68b1ddd1c8e89ec1e"
+        }
+      }
+    ]
+  },
+  "excluded_sources": [],
+  "contact_sheet": "Assets/AnimationLibrary/MadameCoralieThread/qa/reference_contact_sheet.png",
+  "generation_requests": "Assets/AnimationLibrary/MadameCoralieThread/requests/generation_prompts.jsonl",
+  "warnings": []
+}

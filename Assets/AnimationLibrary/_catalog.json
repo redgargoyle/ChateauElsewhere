@@ -1,0 +1,92 @@
+{
+  "generated_by": "Tools/chateau_animation_pipeline.py",
+  "purpose": "Reference, AI intake, and approved animation asset database for Chateau Elsewhere.",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "policy": {
+    "reference": "Trusted existing game/source art.",
+    "intake": "AI or manual candidate art awaiting crop, alpha, style, and motion review.",
+    "approved": "Reviewed PNGs allowed to feed Unity clips and rigs."
+  },
+  "characters": [
+    {
+      "character": "LordAmbroseVeil",
+      "display_name": "Lord Ambrose Veil",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/LordAmbroseVeil/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/LordAmbroseVeil/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
+      "character": "LadySabineMarrow",
+      "display_name": "Lady Sabine Marrow",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/LadySabineMarrow/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/LadySabineMarrow/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
+      "character": "CountessElowenDusk",
+      "display_name": "Countess Elowen Dusk",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/CountessElowenDusk/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/CountessElowenDusk/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
+      "character": "MisterFlorianKnell",
+      "display_name": "Mister Florian Knell",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/MisterFlorianKnell/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/MisterFlorianKnell/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
+      "character": "ProfessorLucienVale",
+      "display_name": "Professor Lucien Vale",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/ProfessorLucienVale/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/ProfessorLucienVale/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
+      "character": "MadameCoralieThread",
+      "display_name": "Madame Coralie Thread",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/MadameCoralieThread/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/MadameCoralieThread/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
+      "character": "BaronHectorGlass",
+      "display_name": "Baron Hector Glass",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/BaronHectorGlass/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/BaronHectorGlass/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
+      "character": "MissIsoldeWren",
+      "display_name": "Miss Isolde Wren",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/MissIsoldeWren/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/MissIsoldeWren/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
+      "character": "ButlerClassic",
+      "display_name": "Butler",
+      "role": "staff",
+      "manifest": "Assets/AnimationLibrary/ButlerClassic/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/ButlerClassic/qa/reference_contact_sheet.png",
+      "warnings": []
+    }
+  ]
+}

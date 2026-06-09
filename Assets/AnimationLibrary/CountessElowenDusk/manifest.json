@@ -1,0 +1,1340 @@
+{
+  "character": "CountessElowenDusk",
+  "display_name": "Countess Elowen Dusk",
+  "role": "guest",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "source_sheet": "SourceSheets/CountessElowenDusk_source_sheet.png",
+  "style_brief": "Countess Elowen Dusk: older aristocratic countess, ornate gold dress, deep teal embroidered shawl, brown fur collar, feathered headdress, fan. Use the current project reference art in reference/source_sheet.png as the strict visual target.",
+  "reference_sequences": {
+    "idle_down": [
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/01_countess_elowen_dusk_idle_down_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/01_countess_elowen_dusk_idle_down_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            14,
+            146,
+            293
+          ],
+          "visible_pixels": 21353,
+          "semi_alpha_pixels": 1283,
+          "bottom_margin": 4,
+          "sha1": "1111b407853b8712f692ff9d839158585586c168"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/02_countess_elowen_dusk_idle_down_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/02_countess_elowen_dusk_idle_down_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            13,
+            146,
+            293
+          ],
+          "visible_pixels": 21706,
+          "semi_alpha_pixels": 1203,
+          "bottom_margin": 4,
+          "sha1": "abc6c31aca14fb0b51649b41bfdc5c29a34e8c3d"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/03_countess_elowen_dusk_idle_down_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/03_countess_elowen_dusk_idle_down_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            12,
+            146,
+            293
+          ],
+          "visible_pixels": 21828,
+          "semi_alpha_pixels": 1197,
+          "bottom_margin": 4,
+          "sha1": "977bd7d157ad917dfb44726c3647e2fddd04ae8f"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_down_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/04_countess_elowen_dusk_idle_down_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/04_countess_elowen_dusk_idle_down_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            13,
+            146,
+            293
+          ],
+          "visible_pixels": 21706,
+          "semi_alpha_pixels": 1203,
+          "bottom_margin": 4,
+          "sha1": "abc6c31aca14fb0b51649b41bfdc5c29a34e8c3d"
+        }
+      }
+    ],
+    "idle_left": [
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_left_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_left/01_countess_elowen_dusk_idle_left_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_left/01_countess_elowen_dusk_idle_left_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            50,
+            71,
+            128,
+            293
+          ],
+          "visible_pixels": 11515,
+          "semi_alpha_pixels": 1097,
+          "bottom_margin": 4,
+          "sha1": "20ed91f35f27b3113dedaf0b32dfd490c69a0a2b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_left_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_left/02_countess_elowen_dusk_idle_left_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_left/02_countess_elowen_dusk_idle_left_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            50,
+            70,
+            128,
+            293
+          ],
+          "visible_pixels": 11618,
+          "semi_alpha_pixels": 1112,
+          "bottom_margin": 4,
+          "sha1": "4176e7fb18b139efb7f540105e1079d09411e71f"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_left_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_left/03_countess_elowen_dusk_idle_left_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_left/03_countess_elowen_dusk_idle_left_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            50,
+            69,
+            126,
+            293
+          ],
+          "visible_pixels": 11302,
+          "semi_alpha_pixels": 939,
+          "bottom_margin": 4,
+          "sha1": "c353f5f19d11c58a5d1b1d30047eca5ca468c384"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_left_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_left/04_countess_elowen_dusk_idle_left_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_left/04_countess_elowen_dusk_idle_left_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            49,
+            69,
+            129,
+            293
+          ],
+          "visible_pixels": 11549,
+          "semi_alpha_pixels": 1055,
+          "bottom_margin": 4,
+          "sha1": "0278a4b3b705dad2f771f3814c1dcf951b76df07"
+        }
+      }
+    ],
+    "idle_right": [
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_right_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_right/01_countess_elowen_dusk_idle_right_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_right/01_countess_elowen_dusk_idle_right_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            40,
+            71,
+            118,
+            293
+          ],
+          "visible_pixels": 11515,
+          "semi_alpha_pixels": 1097,
+          "bottom_margin": 4,
+          "sha1": "59b2156f6095eab699fcb9d3db352edb441547ae"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_right_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_right/02_countess_elowen_dusk_idle_right_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_right/02_countess_elowen_dusk_idle_right_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            70,
+            117,
+            293
+          ],
+          "visible_pixels": 11618,
+          "semi_alpha_pixels": 1112,
+          "bottom_margin": 4,
+          "sha1": "8fd439fa18550100d10c1465e25ef5d19293251f"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_right_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_right/03_countess_elowen_dusk_idle_right_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_right/03_countess_elowen_dusk_idle_right_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            41,
+            69,
+            117,
+            293
+          ],
+          "visible_pixels": 11302,
+          "semi_alpha_pixels": 939,
+          "bottom_margin": 4,
+          "sha1": "803ab4d7ff088a30828b706258c50c3496e98450"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_right_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_right/04_countess_elowen_dusk_idle_right_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_right/04_countess_elowen_dusk_idle_right_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            38,
+            69,
+            118,
+            293
+          ],
+          "visible_pixels": 11549,
+          "semi_alpha_pixels": 1055,
+          "bottom_margin": 4,
+          "sha1": "c03b947f2493951e3cf6f15f515fc556af5b5785"
+        }
+      }
+    ],
+    "idle_up": [
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_up_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_up/01_countess_elowen_dusk_idle_up_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_up/01_countess_elowen_dusk_idle_up_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            42,
+            115,
+            129,
+            293
+          ],
+          "visible_pixels": 10892,
+          "semi_alpha_pixels": 772,
+          "bottom_margin": 4,
+          "sha1": "6fbb00efcc2bf488117aa858d7f65ef694337a23"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_up_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_up/02_countess_elowen_dusk_idle_up_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_up/02_countess_elowen_dusk_idle_up_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            40,
+            115,
+            128,
+            293
+          ],
+          "visible_pixels": 10905,
+          "semi_alpha_pixels": 803,
+          "bottom_margin": 4,
+          "sha1": "127d0be9d2aaa285307926eec09fe233e7ab48b0"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_up_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_up/03_countess_elowen_dusk_idle_up_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_up/03_countess_elowen_dusk_idle_up_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            41,
+            115,
+            128,
+            293
+          ],
+          "visible_pixels": 10867,
+          "semi_alpha_pixels": 764,
+          "bottom_margin": 4,
+          "sha1": "3395b54d8b1dddd9f81def50e7ff240a1ca8f162"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/countess_elowen_dusk_idle_up_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_up/04_countess_elowen_dusk_idle_up_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_up/04_countess_elowen_dusk_idle_up_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            41,
+            115,
+            128,
+            293
+          ],
+          "visible_pixels": 10924,
+          "semi_alpha_pixels": 780,
+          "bottom_margin": 4,
+          "sha1": "336bd48cc2b020ca6d246fd0efac14e44922f735"
+        }
+      }
+    ],
+    "sitting": [
+      {
+        "source": "Assets/Art/Characters/guest4/guest4sitidle/guest4sit2.png",
+        "source_size": [
+          180,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/sitting/01_guest4sit2.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/sitting/01_guest4sit2.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            31,
+            166,
+            297
+          ],
+          "visible_pixels": 25130,
+          "semi_alpha_pixels": 1805,
+          "bottom_margin": 0,
+          "sha1": "ac9d122950f6bac1be3c73bdb670a9e445274e06"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4sitidle/guest4sit3.png",
+        "source_size": [
+          180,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/sitting/02_guest4sit3.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/sitting/02_guest4sit3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            31,
+            166,
+            297
+          ],
+          "visible_pixels": 25098,
+          "semi_alpha_pixels": 1707,
+          "bottom_margin": 0,
+          "sha1": "ab6eac3f839044449c84161cf7715d5a987f0934"
+        }
+      }
+    ],
+    "walk_down": [
+      {
+        "source": "Assets/Art/Characters/guest4/guest4down/guest04walkdown1.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/01_guest04walkdown1.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/01_guest04walkdown1.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            15,
+            145,
+            293
+          ],
+          "visible_pixels": 20472,
+          "semi_alpha_pixels": 803,
+          "bottom_margin": 4,
+          "sha1": "35a6c27a8cdada8014212eb6f69e3f4c35fba695"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4down/guest04walkdown2.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/02_guest04walkdown2.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/02_guest04walkdown2.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            10,
+            144,
+            292
+          ],
+          "visible_pixels": 20498,
+          "semi_alpha_pixels": 794,
+          "bottom_margin": 5,
+          "sha1": "76235d657ac1b4d64751125e7275626b85673762"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4down/guest04walkdown3.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/03_guest04walkdown3.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/03_guest04walkdown3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            7,
+            143,
+            292
+          ],
+          "visible_pixels": 20263,
+          "semi_alpha_pixels": 681,
+          "bottom_margin": 5,
+          "sha1": "602765f2e2ca4240c2772a692f9471a8871284fa"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4down/guest04walkdown4.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/04_guest04walkdown4.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/04_guest04walkdown4.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            7,
+            147,
+            293
+          ],
+          "visible_pixels": 20527,
+          "semi_alpha_pixels": 856,
+          "bottom_margin": 4,
+          "sha1": "53abd38cc6d3f99ab11c5d7de1aed25ec5136c52"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4down/guest04walkdown5.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/05_guest04walkdown5.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/05_guest04walkdown5.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            9,
+            145,
+            293
+          ],
+          "visible_pixels": 20441,
+          "semi_alpha_pixels": 834,
+          "bottom_margin": 4,
+          "sha1": "30745fd4400acc7570ed9cf5a6c022637b8551be"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4down/guest04walkdown6.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/06_guest04walkdown6.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/06_guest04walkdown6.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            6,
+            143,
+            293
+          ],
+          "visible_pixels": 20309,
+          "semi_alpha_pixels": 814,
+          "bottom_margin": 4,
+          "sha1": "39aebdcf63157e30c7afcdda8deec3766e261545"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4down/guest04walkdown7.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/07_guest04walkdown7.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/07_guest04walkdown7.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            6,
+            140,
+            292
+          ],
+          "visible_pixels": 20038,
+          "semi_alpha_pixels": 844,
+          "bottom_margin": 5,
+          "sha1": "abaf9ecec920d7f43595c9a29973ce3cc34c6213"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4down/guest04walkdown8.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/08_guest04walkdown8.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_down/08_guest04walkdown8.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            6,
+            145,
+            293
+          ],
+          "visible_pixels": 20693,
+          "semi_alpha_pixels": 802,
+          "bottom_margin": 4,
+          "sha1": "09839009f89c4404df8227b4a8f09c79c44493ce"
+        }
+      }
+    ],
+    "walk_left": [
+      {
+        "source": "Assets/Art/Characters/guest4/guest4left/01_countess_elowen_dusk_walk_01_r02_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/01_01_countess_elowen_dusk_walk_01_r02_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/01_01_countess_elowen_dusk_walk_01_r02_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            38,
+            147,
+            293
+          ],
+          "visible_pixels": 17178,
+          "semi_alpha_pixels": 828,
+          "bottom_margin": 4,
+          "sha1": "ecfac6e9f955b0938ae03ecc3c3a6369665e97b5"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4left/02_countess_elowen_dusk_walk_02_r02_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/02_02_countess_elowen_dusk_walk_02_r02_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/02_02_countess_elowen_dusk_walk_02_r02_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            34,
+            147,
+            293
+          ],
+          "visible_pixels": 17176,
+          "semi_alpha_pixels": 744,
+          "bottom_margin": 4,
+          "sha1": "49aeb2181559f4714c95bc68fc555051011dd614"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4left/03_countess_elowen_dusk_walk_03_r02_c03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/03_03_countess_elowen_dusk_walk_03_r02_c03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/03_03_countess_elowen_dusk_walk_03_r02_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            37,
+            154,
+            292
+          ],
+          "visible_pixels": 17575,
+          "semi_alpha_pixels": 731,
+          "bottom_margin": 5,
+          "sha1": "6671ab67a5f2e59dd68ce2f1bf4c738565cba1ab"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4left/04_countess_elowen_dusk_walk_04_r02_c04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/04_04_countess_elowen_dusk_walk_04_r02_c04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/04_04_countess_elowen_dusk_walk_04_r02_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            35,
+            147,
+            292
+          ],
+          "visible_pixels": 16936,
+          "semi_alpha_pixels": 812,
+          "bottom_margin": 5,
+          "sha1": "fd8258af77f90fd2f56ba1fd5978f3c75c7f5d52"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4left/05_countess_elowen_dusk_walk_05_r02_c05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/05_05_countess_elowen_dusk_walk_05_r02_c05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/05_05_countess_elowen_dusk_walk_05_r02_c05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            37,
+            149,
+            293
+          ],
+          "visible_pixels": 17304,
+          "semi_alpha_pixels": 743,
+          "bottom_margin": 4,
+          "sha1": "74bf40c353ba07871e00903021d1a6b79450f605"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4left/06_countess_elowen_dusk_walk_06_r02_c06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/06_06_countess_elowen_dusk_walk_06_r02_c06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/06_06_countess_elowen_dusk_walk_06_r02_c06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            38,
+            147,
+            293
+          ],
+          "visible_pixels": 16773,
+          "semi_alpha_pixels": 692,
+          "bottom_margin": 4,
+          "sha1": "11223568d605d778005186eefc36abe14434ca11"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4left/07_countess_elowen_dusk_walk_07_r02_c07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/07_07_countess_elowen_dusk_walk_07_r02_c07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/07_07_countess_elowen_dusk_walk_07_r02_c07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            38,
+            147,
+            293
+          ],
+          "visible_pixels": 16463,
+          "semi_alpha_pixels": 766,
+          "bottom_margin": 4,
+          "sha1": "502202757b991e627e68a93c94df05c012cb6cf6"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4left/08_countess_elowen_dusk_walk_08_r02_c08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/08_08_countess_elowen_dusk_walk_08_r02_c08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_left/08_08_countess_elowen_dusk_walk_08_r02_c08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            37,
+            152,
+            293
+          ],
+          "visible_pixels": 16113,
+          "semi_alpha_pixels": 722,
+          "bottom_margin": 4,
+          "sha1": "a90dc862a97e35acc3b107c9efa68b4fd733af73"
+        }
+      }
+    ],
+    "walk_right": [
+      {
+        "source": "Assets/Art/Characters/guest4/guest4right/01_countess_elowen_dusk_walk_01_r03_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/01_01_countess_elowen_dusk_walk_01_r03_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/01_01_countess_elowen_dusk_walk_01_r03_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            40,
+            140,
+            292
+          ],
+          "visible_pixels": 16076,
+          "semi_alpha_pixels": 772,
+          "bottom_margin": 5,
+          "sha1": "07360f8a6e7b15f15a54bc500c259f65cc22d77a"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4right/02_countess_elowen_dusk_walk_02_r03_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/02_02_countess_elowen_dusk_walk_02_r03_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/02_02_countess_elowen_dusk_walk_02_r03_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            40,
+            142,
+            292
+          ],
+          "visible_pixels": 16074,
+          "semi_alpha_pixels": 781,
+          "bottom_margin": 5,
+          "sha1": "f7a73b8b4be6b2e86ce3530ec99e85f07053f552"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4right/03_countess_elowen_dusk_walk_03_r03_c03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/03_03_countess_elowen_dusk_walk_03_r03_c03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/03_03_countess_elowen_dusk_walk_03_r03_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            40,
+            142,
+            293
+          ],
+          "visible_pixels": 15929,
+          "semi_alpha_pixels": 733,
+          "bottom_margin": 4,
+          "sha1": "0edb65419f3e2775d012b5d7ed4d65f763884f3a"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4right/04_countess_elowen_dusk_walk_04_r03_c04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/04_04_countess_elowen_dusk_walk_04_r03_c04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/04_04_countess_elowen_dusk_walk_04_r03_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            40,
+            142,
+            293
+          ],
+          "visible_pixels": 16302,
+          "semi_alpha_pixels": 772,
+          "bottom_margin": 4,
+          "sha1": "3d3b1cdc8a8473b278015e8a33516317b6e8a4b6"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4right/05_countess_elowen_dusk_walk_05_r03_c05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/05_05_countess_elowen_dusk_walk_05_r03_c05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/05_05_countess_elowen_dusk_walk_05_r03_c05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            40,
+            145,
+            293
+          ],
+          "visible_pixels": 16542,
+          "semi_alpha_pixels": 778,
+          "bottom_margin": 4,
+          "sha1": "ab9d496cf4d28966354ffc95d12cb37abfb31f9a"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4right/06_countess_elowen_dusk_walk_06_r03_c06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/06_06_countess_elowen_dusk_walk_06_r03_c06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/06_06_countess_elowen_dusk_walk_06_r03_c06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            40,
+            146,
+            293
+          ],
+          "visible_pixels": 16533,
+          "semi_alpha_pixels": 780,
+          "bottom_margin": 4,
+          "sha1": "68b967dcd4dc8ffab5a035eb656b12f3a99cffd7"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4right/07_countess_elowen_dusk_walk_07_r03_c07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/07_07_countess_elowen_dusk_walk_07_r03_c07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/07_07_countess_elowen_dusk_walk_07_r03_c07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            40,
+            144,
+            292
+          ],
+          "visible_pixels": 16204,
+          "semi_alpha_pixels": 784,
+          "bottom_margin": 5,
+          "sha1": "4a04280d8c4e5030de58c2480b1f4cef2488d00f"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4right/08_countess_elowen_dusk_walk_08_r03_c08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/08_08_countess_elowen_dusk_walk_08_r03_c08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/08_08_countess_elowen_dusk_walk_08_r03_c08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            39,
+            145,
+            293
+          ],
+          "visible_pixels": 16523,
+          "semi_alpha_pixels": 819,
+          "bottom_margin": 4,
+          "sha1": "e8a512e681811a57eb897442246da66e5e517613"
+        }
+      }
+    ],
+    "walk_up": [
+      {
+        "source": "Assets/Art/Characters/guest4/guest4up/guest04up1.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/01_guest04up1.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/01_guest04up1.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            37,
+            138,
+            292
+          ],
+          "visible_pixels": 17247,
+          "semi_alpha_pixels": 684,
+          "bottom_margin": 5,
+          "sha1": "31a355de404db49d656cfdd47ad78396590eaaf9"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4up/guest04up2.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/02_guest04up2.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/02_guest04up2.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            38,
+            138,
+            293
+          ],
+          "visible_pixels": 17301,
+          "semi_alpha_pixels": 645,
+          "bottom_margin": 4,
+          "sha1": "777d40cc09223a277c2398601751c0f5d01d2152"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4up/guest04up3.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/03_guest04up3.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/03_guest04up3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            36,
+            137,
+            292
+          ],
+          "visible_pixels": 17171,
+          "semi_alpha_pixels": 620,
+          "bottom_margin": 5,
+          "sha1": "0eba1ee30bf143e460b190a650de4f35627f256b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4up/guest04up4.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/04_guest04up4.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/04_guest04up4.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            37,
+            137,
+            293
+          ],
+          "visible_pixels": 17481,
+          "semi_alpha_pixels": 661,
+          "bottom_margin": 4,
+          "sha1": "b21d5e1626c43a42ecafc31457ed4ced3b121ebb"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4up/guest04up5.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/05_guest04up5.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/05_guest04up5.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            38,
+            137,
+            293
+          ],
+          "visible_pixels": 17123,
+          "semi_alpha_pixels": 616,
+          "bottom_margin": 4,
+          "sha1": "4a099eb433837c3bfb8ca4c2f86b67ef13905ba8"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4up/guest04up6.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/06_guest04up6.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/06_guest04up6.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            37,
+            140,
+            293
+          ],
+          "visible_pixels": 16950,
+          "semi_alpha_pixels": 633,
+          "bottom_margin": 4,
+          "sha1": "f9287822382d596d8bee21599a7f5199d5cf2b25"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4up/guest04up7.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/07_guest04up7.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/07_guest04up7.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            38,
+            138,
+            293
+          ],
+          "visible_pixels": 17037,
+          "semi_alpha_pixels": 743,
+          "bottom_margin": 4,
+          "sha1": "15b02be013c259161d3ca58e5845188cc7ebd3de"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest4/guest4up/guest04up8.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/08_guest04up8.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_up/08_guest04up8.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            39,
+            140,
+            293
+          ],
+          "visible_pixels": 17155,
+          "semi_alpha_pixels": 695,
+          "bottom_margin": 4,
+          "sha1": "f14eeb0107d6c7589936d10604c209386552d2e2"
+        }
+      }
+    ]
+  },
+  "excluded_sources": [],
+  "contact_sheet": "Assets/AnimationLibrary/CountessElowenDusk/qa/reference_contact_sheet.png",
+  "generation_requests": "Assets/AnimationLibrary/CountessElowenDusk/requests/generation_prompts.jsonl",
+  "warnings": []
+}
