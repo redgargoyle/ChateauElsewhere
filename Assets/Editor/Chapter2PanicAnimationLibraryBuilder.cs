@@ -15,8 +15,10 @@ public static class Chapter2PanicAnimationLibraryBuilder
     private const float ClipFrameRate = 12f;
     private const string PanicHandsUpActionId = "panic_hands_up";
     private const string Guest7CharacterId = "LordAmbroseVeil";
+    private const string Guest7RunDownFolder = "Assets/Art/Characters/guest7/guest7down";
     private const string Guest7RunLeftFolder = "Assets/Art/Characters/guest7/guest7left";
     private const string Guest7RunRightFolder = "Assets/Art/Characters/guest7/guest7right";
+    private const string Guest7RunUpFolder = "Assets/Art/Characters/guest7/guest07up";
 
     private static readonly GuestFolderSpec[] GuestFolders =
     {
@@ -56,12 +58,16 @@ public static class Chapter2PanicAnimationLibraryBuilder
 
             string handsUpFramesFolder = GetGuestActionFramesFolder(guestFolder, PanicHandsUpActionId);
             Sprite[] handsUpSprites = LoadSprites(handsUpFramesFolder);
+            Sprite[] runDownSprites = LoadRunSprites(characterId, "walk_down", 4);
             Sprite[] runLeftSprites = LoadRunSprites(characterId, "walk_left", 4);
             Sprite[] runRightSprites = LoadRunSprites(characterId, "walk_right", 4);
+            Sprite[] runUpSprites = LoadRunSprites(characterId, "walk_up", 4);
 
             AppendCountError(errors, characterId, PanicHandsUpActionId, handsUpSprites, 4, handsUpFramesFolder);
+            AppendCountError(errors, characterId, "panic_run_down", runDownSprites, 4, "normal walk_down references");
             AppendCountError(errors, characterId, "panic_run_left", runLeftSprites, 4, "normal walk_left references");
             AppendCountError(errors, characterId, "panic_run_right", runRightSprites, 4, "normal walk_right references");
+            AppendCountError(errors, characterId, "panic_run_up", runUpSprites, 4, "normal walk_up references");
 
             string clipFolder = $"{PanicClipRoot}/{guestFolder.clipFolderName}";
             EnsureFolder(clipFolder);
@@ -71,14 +77,40 @@ public static class Chapter2PanicAnimationLibraryBuilder
                 handsUpSprites,
                 false,
                 ClipFrameRate);
+            CreateSpriteClip(
+                $"{guestFolder.clipFolderName}_PanicRunDown",
+                clipFolder,
+                runDownSprites,
+                true,
+                ClipFrameRate);
+            CreateSpriteClip(
+                $"{guestFolder.clipFolderName}_PanicRunLeft",
+                clipFolder,
+                runLeftSprites,
+                true,
+                ClipFrameRate);
+            CreateSpriteClip(
+                $"{guestFolder.clipFolderName}_PanicRunRight",
+                clipFolder,
+                runRightSprites,
+                true,
+                ClipFrameRate);
+            CreateSpriteClip(
+                $"{guestFolder.clipFolderName}_PanicRunUp",
+                clipFolder,
+                runUpSprites,
+                true,
+                ClipFrameRate);
 
             Chapter2PanicCharacterAnimation animation = new Chapter2PanicCharacterAnimation();
             animation.Configure(
                 characterId,
                 displayName,
                 handsUpSprites,
+                runDownSprites,
                 runLeftSprites,
-                runRightSprites);
+                runRightSprites,
+                runUpSprites);
             characterAnimations.Add(animation);
         }
 
@@ -133,9 +165,21 @@ public static class Chapter2PanicAnimationLibraryBuilder
 
         if (string.Equals(characterId, Guest7CharacterId, StringComparison.Ordinal))
         {
-            framesFolder = string.Equals(direction, "walk_left", StringComparison.Ordinal)
-                ? Guest7RunLeftFolder
-                : Guest7RunRightFolder;
+            switch (direction)
+            {
+                case "walk_down":
+                    framesFolder = Guest7RunDownFolder;
+                    break;
+                case "walk_left":
+                    framesFolder = Guest7RunLeftFolder;
+                    break;
+                case "walk_right":
+                    framesFolder = Guest7RunRightFolder;
+                    break;
+                case "walk_up":
+                    framesFolder = Guest7RunUpFolder;
+                    break;
+            }
         }
 
         return LoadSpritesCycled(framesFolder, expectedFrameCount);

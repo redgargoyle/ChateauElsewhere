@@ -20,6 +20,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: a9436c9fae1404fa81f2c03fe06134fa, type: 3}
     - {fileID: 21300000, guid: c43e6fedac49ca75bae69d73d35d1843, type: 3}
     - {fileID: 21300000, guid: 849d2c76daaf21a7b768c6df914a2468, type: 3}
+    panicRunDown:
+    - {fileID: -9218857416313089186, guid: 558437fb08e91693faa34e292061d3f4, type: 3}
+    - {fileID: -4265662371580972891, guid: 05ec92a6b08c98f5796bd0ce250272b4, type: 3}
+    - {fileID: -4617158781203656880, guid: 82c385f6858608e7192dabff4485ded8, type: 3}
+    - {fileID: -1566261345201869352, guid: dac8af32222e54e51ab94477532cc809, type: 3}
     panicRunLeft:
     - {fileID: 4084019855493377386, guid: 7de9f91fca24a4fedba5112e6f8d7764, type: 3}
     - {fileID: -7394040306562849740, guid: 9cf931b452be1f6f4b18f5e91ea47166, type: 3}
@@ -30,6 +35,11 @@ MonoBehaviour:
     - {fileID: 3081592531595978388, guid: 10ab213db1f2c0165b6cb43013539e12, type: 3}
     - {fileID: -5657380926766475670, guid: fb14d676ebec9176680d83a3d0a20125, type: 3}
     - {fileID: 6056271442666198358, guid: 949fd7f5620a8b6f790eafa07c3e969d, type: 3}
+    panicRunUp:
+    - {fileID: -3715659233880709328, guid: 6eb34af090898e37b8c5b2fd9e71578e, type: 3}
+    - {fileID: -48817028803357180, guid: a0a7026c71a9f31ffbf45747784dff43, type: 3}
+    - {fileID: -466404526560858938, guid: 8380ac1f43bd82cf9bb7ef22d88cf68e, type: 3}
+    - {fileID: 7379951522246585526, guid: 076954947151e03fcbb9cf22e041144b, type: 3}
   - characterId: ButlerGuest
     displayName: Butler Guest
     panicHandsUp:
@@ -37,6 +47,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: ffcfbf0b681c2a1598a1ec55e06dd2ac, type: 3}
     - {fileID: 21300000, guid: 2a8df33e86b8fe10fec004724e5f0da7, type: 3}
     - {fileID: 21300000, guid: d0796a62cbc89280ad896bf3d6ab65a0, type: 3}
+    panicRunDown:
+    - {fileID: 1025528158127574581, guid: e30589688bb23e233a36b7ea98ed7b5f, type: 3}
+    - {fileID: -1837137445908433469, guid: 1a97ae1bfca3f7a9890386fea28f064a, type: 3}
+    - {fileID: 1025528158127574581, guid: e30589688bb23e233a36b7ea98ed7b5f, type: 3}
+    - {fileID: -1837137445908433469, guid: 1a97ae1bfca3f7a9890386fea28f064a, type: 3}
     panicRunLeft:
     - {fileID: -4387222816691918669, guid: 43220334c5da9cc1cbf8a0de3a65fbfa, type: 3}
     - {fileID: -4387222816691918669, guid: 43220334c5da9cc1cbf8a0de3a65fbfa, type: 3}
@@ -47,6 +62,11 @@ MonoBehaviour:
     - {fileID: 3282760307376017059, guid: cf89b44aad563d631b0a61b3e9efb539, type: 3}
     - {fileID: 3468883530629670129, guid: 1781f2b6b7d5f76cdae72e841a6d1040, type: 3}
     - {fileID: -7511592951438912024, guid: 0caaef711c9b65b2099be107cedd0aa7, type: 3}
+    panicRunUp:
+    - {fileID: -4387222816691918669, guid: e80da21360d72f05a8b9c1b0f868333b, type: 3}
+    - {fileID: -4387222816691918669, guid: e80da21360d72f05a8b9c1b0f868333b, type: 3}
+    - {fileID: -4387222816691918669, guid: e80da21360d72f05a8b9c1b0f868333b, type: 3}
+    - {fileID: -4387222816691918669, guid: e80da21360d72f05a8b9c1b0f868333b, type: 3}
   - characterId: MisterFlorianKnell
     displayName: Mister Florian Knell
     panicHandsUp:
@@ -54,6 +74,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 9943d810ff93d1fe22f0465c5c77fa1d, type: 3}
     - {fileID: 21300000, guid: 34064c9074ad0f22eca30e3d240c37a5, type: 3}
     - {fileID: 21300000, guid: 3eebce8e99fb13c3fc976b99245fc275, type: 3}
+    panicRunDown:
+    - {fileID: -7821548458104148983, guid: 7ec7efa83db1de18986a17239242de4e, type: 3}
+    - {fileID: 383989971076051979, guid: 7156d8d96f6c7547b9769abcbaed8e64, type: 3}
+    - {fileID: 6823642825031628722, guid: cbeabb0bb2ea11a7d8b840af02f091af, type: 3}
+    - {fileID: -7221032756305625488, guid: 1909ab79bb41d206095adaebaeddffc8, type: 3}
     panicRunLeft:
     - {fileID: -1936868247199252967, guid: 3734b3eb0a2805c6bb9ddc8d92efbaa0, type: 3}
     - {fileID: 6439082100123244584, guid: 4d40fee6b2ec246899dd6f0389739f56, type: 3}
@@ -64,6 +89,11 @@ MonoBehaviour:
     - {fileID: -1121739747180984415, guid: ab0ede77e001f275c96dfbbe81bd05ea, type: 3}
     - {fileID: 1990938986751233210, guid: 85610a6b2efc0299ca3ec3c88a16c94a, type: 3}
     - {fileID: 7109285632261367992, guid: 5b1b8321fc338fd8f9486b6e0882061a, type: 3}
+    panicRunUp:
+    - {fileID: 2440120929754467297, guid: a825e8aac066345de8b165fe2514a455, type: 3}
+    - {fileID: 5861931245896425113, guid: 373588d88c735334b88d6ec149a41ab1, type: 3}
+    - {fileID: 6492762723714705466, guid: 8519d74d8677c1e30a2d4141c5fc0f50, type: 3}
+    - {fileID: -5697915240517769387, guid: be96f3d331ef540e9a1b672545e1f71d, type: 3}
   - characterId: CountessElowenDusk
     displayName: Countess Elowen Dusk
     panicHandsUp:
@@ -71,6 +101,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 439a3311092173a828a541017250a787, type: 3}
     - {fileID: 21300000, guid: ec13afb10b3d134163ddae79dc69074b, type: 3}
     - {fileID: 21300000, guid: 8a13c86a8c758ad14a1ffa66cbdd2917, type: 3}
+    panicRunDown:
+    - {fileID: -8860559348369804320, guid: b10596cfc0fac82959eafada92a99e05, type: 3}
+    - {fileID: -4044925302970992967, guid: 7a1f6b6e2b6d5b1179f08b1cb1dfc9dd, type: 3}
+    - {fileID: -4066988273343058598, guid: 6c416fc8ca3494335a43e823ac360c80, type: 3}
+    - {fileID: 4794883587573310053, guid: 0361ca43a27618d43a959ee0705bc350, type: 3}
     panicRunLeft:
     - {fileID: 769628462846129712, guid: c51f1253cb457730fbc7dbe1eeb2ffcf, type: 3}
     - {fileID: -2128671913236123064, guid: c3e8e66c9f0f50f72a328aa82c9cd0f8, type: 3}
@@ -81,6 +116,11 @@ MonoBehaviour:
     - {fileID: -1601009309792120646, guid: 2cdf7b917f66f58c8a031aa288e40b2d, type: 3}
     - {fileID: 9006166411051458994, guid: 1f0ef44715854174ba007146fe6c3843, type: 3}
     - {fileID: -1668137606416179511, guid: 6e0e0cf3f91e3fad2b2bf3604e8b1ac2, type: 3}
+    panicRunUp:
+    - {fileID: 3297387461057092908, guid: 442b15670b88c7d1c8e56b623fb59b0c, type: 3}
+    - {fileID: 7427269972303037165, guid: 232118b3af42142c082459652ade9fc5, type: 3}
+    - {fileID: 2010892811816473033, guid: d847adf687be774a4ba3c085aa85b0bc, type: 3}
+    - {fileID: -8047952132919671190, guid: a5329c770fa2efc61866c15500aa344c, type: 3}
   - characterId: BaronHectorGlass
     displayName: Baron Hector Glass
     panicHandsUp:
@@ -88,6 +128,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 5e5fa3930de5f88f21b9f61f60607b60, type: 3}
     - {fileID: 21300000, guid: 00f87a0e18b27ef6396cfbc1c8af7b65, type: 3}
     - {fileID: 21300000, guid: 6188adbcc9a787865571a658cae8a37e, type: 3}
+    panicRunDown:
+    - {fileID: -7821548458104148983, guid: aabb1577b2f19ea4aad43cbfc30c450e, type: 3}
+    - {fileID: 383989971076051979, guid: 77bb22a1f5fe0381ead5d79fd973e6fb, type: 3}
+    - {fileID: 6823642825031628722, guid: 40ad890bf519d4f25b92ecc3ee322d2f, type: 3}
+    - {fileID: -7221032756305625488, guid: a4f8ce481e13867c8bf22aa8150ac09e, type: 3}
     panicRunLeft:
     - {fileID: 5866354158921764988, guid: 324936d8fa7bc58bea6e49de4c1913f8, type: 3}
     - {fileID: -1986315045106021720, guid: d8ec26e1123eed342aad33901f5df8a0, type: 3}
@@ -98,6 +143,11 @@ MonoBehaviour:
     - {fileID: 6082321994838234306, guid: 6a74223284f5d2258bcd12d30f8cc23f, type: 3}
     - {fileID: -1694893459400297834, guid: 44eb202c35e6deafaaba819c17196ec5, type: 3}
     - {fileID: 1586065769651415237, guid: 2d0780fa8e229683f9213f7fc70304fc, type: 3}
+    panicRunUp:
+    - {fileID: 8781093022270031483, guid: 1b6656afbcd0bac9f94258ba02d085fd, type: 3}
+    - {fileID: -1204087368217850744, guid: 498a9de01d938dac98f59f84bba67d75, type: 3}
+    - {fileID: -1732034643355378650, guid: dd5f9849c20449f9081431d1be27d71f, type: 3}
+    - {fileID: -4007974410419329254, guid: 406518a2856e9271cbcb7b09b6e674a8, type: 3}
   - characterId: LadySabineMarrow
     displayName: Lady Sabine Marrow
     panicHandsUp:
@@ -105,6 +155,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: c4c28ba35cf9408fa6d1d5d92e2bc31c, type: 3}
     - {fileID: 21300000, guid: c14681f83dff5280463babf4499ac287, type: 3}
     - {fileID: 21300000, guid: 282fb5585838ddfce1d09c424b7d5eae, type: 3}
+    panicRunDown:
+    - {fileID: -7603498671260042070, guid: 709023ed2a4a076ddada1ad0f884a108, type: 3}
+    - {fileID: 8872780064577259615, guid: ab31e2ec96be82d94a5f0ed97288cefc, type: 3}
+    - {fileID: 5404622583615109052, guid: 3a1e1e1755f384bad86bb91396dad9a9, type: 3}
+    - {fileID: -175760611587694204, guid: 06baf04e322975e0ab06692e42f67159, type: 3}
     panicRunLeft:
     - {fileID: 6459812066805706637, guid: 5d605342b56d9e8108029a0df0207698, type: 3}
     - {fileID: 7394535296205011958, guid: 85eb8e500bbe5e35cac61dac348771b7, type: 3}
@@ -115,6 +170,11 @@ MonoBehaviour:
     - {fileID: 4418480812337943343, guid: f71d0ff3531514099938406cf0d83e78, type: 3}
     - {fileID: -6652719223143397740, guid: 5afc12e3da9f374a1beb9864ad8c99dd, type: 3}
     - {fileID: -7400283094898633619, guid: b2865fde9aa5076d0a8050dd2c4d9cec, type: 3}
+    panicRunUp:
+    - {fileID: 1297092276326588290, guid: 4c81dfc8d4c0f014bbb2e6755b1f341a, type: 3}
+    - {fileID: 1584401025595913970, guid: 166ec15cbe7f84cfaac295add00a9246, type: 3}
+    - {fileID: -4938435603980231028, guid: 70d6426478d386dfcb2674ee1fe9747c, type: 3}
+    - {fileID: 6956587600681568412, guid: b4f9e62a48a065e10bbd3dbcda468903, type: 3}
   - characterId: LordAmbroseVeil
     displayName: Lord Ambrose Veil
     panicHandsUp:
@@ -122,6 +182,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 70638190d468770ba1ee06b5af209fee, type: 3}
     - {fileID: 21300000, guid: b3b21d5fa3bd5b4eaeb123c9c8d521dd, type: 3}
     - {fileID: 21300000, guid: 85afb47dfe6eaa12fee7a648a41df950, type: 3}
+    panicRunDown:
+    - {fileID: 7894965820864212643, guid: d9b78b56a52b38f49ba7aeac54a81fd6, type: 3}
+    - {fileID: -7135724470996621284, guid: 9a2df9b2fc9f93249b4d4af234588e46, type: 3}
+    - {fileID: 8720792042427589755, guid: 8290e4b69c29a3a41bf6081c08e160de, type: 3}
+    - {fileID: -4767764510232766464, guid: 60eb5a16b65f4d549833f7d5847b30e8, type: 3}
     panicRunLeft:
     - {fileID: -2257875831443177292, guid: ab399775fb3ef2a438da143ddc52b373, type: 3}
     - {fileID: -199271497957006042, guid: 50c985fac9fd8d444a2cf4d5fc75b35f, type: 3}
@@ -132,6 +197,11 @@ MonoBehaviour:
     - {fileID: -2291888970802524497, guid: fc70559d976fd574e89a6b9e49be0f5a, type: 3}
     - {fileID: 5537724406429582439, guid: 50a2c0b970c82db45b0d2afc35f82a82, type: 3}
     - {fileID: 213737340287471525, guid: 681f1864e9bf16a4c9be9401b9814cd9, type: 3}
+    panicRunUp:
+    - {fileID: -585907631074405546, guid: bde66898ca3a59b4fb2a4725672702af, type: 3}
+    - {fileID: 8447594157162399529, guid: 6fe87015c7c35824cb3b703e8ee42fde, type: 3}
+    - {fileID: 4055013601591011461, guid: f7181e803e1b64c489a211a7ea12bb30, type: 3}
+    - {fileID: -585907631074405546, guid: bde66898ca3a59b4fb2a4725672702af, type: 3}
   - characterId: MadameCoralieThread
     displayName: Madame Coralie Thread
     panicHandsUp:
@@ -139,6 +209,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 920a19c7882798d3ec2f531935badced, type: 3}
     - {fileID: 21300000, guid: a8ff46ed58df33e2bc488a22c391fb64, type: 3}
     - {fileID: 21300000, guid: c165615b508c41aba5546a1f9b46f82f, type: 3}
+    panicRunDown:
+    - {fileID: -6268437372559595839, guid: 2975d75ddee06d7c0a62634a10dfe4c8, type: 3}
+    - {fileID: 1928111071478973922, guid: ddae0b3b02b3664caa00671d0394b2a2, type: 3}
+    - {fileID: -8064139287481111265, guid: aa8a9fe1e6f23bbe2a313aa8f09a1baf, type: 3}
+    - {fileID: -5486513820030658763, guid: b02fed92100646b5c8658c9cb27664eb, type: 3}
     panicRunLeft:
     - {fileID: 7649441787748285565, guid: c7b782f45a1e5eb0d8f81874846c7e67, type: 3}
     - {fileID: -1689933692553984647, guid: 370a81a7c5e84de5cad90651ecccdfd5, type: 3}
@@ -149,3 +224,8 @@ MonoBehaviour:
     - {fileID: 899908368856974742, guid: d02c62a677c6f66d79cf86513059cd0e, type: 3}
     - {fileID: -8442878647197234797, guid: fb516bcba8ad7111bb41dc34c05edb74, type: 3}
     - {fileID: 4436862543771419089, guid: 9ab1aab4cdb56c4e3b1e78fca08eab76, type: 3}
+    panicRunUp:
+    - {fileID: -7330317696173511592, guid: 87dba4276988e388fbaa660b23a08cf4, type: 3}
+    - {fileID: -59461113876946559, guid: ecfde48696098441d87faf19a16ec6e9, type: 3}
+    - {fileID: 2207517150263274023, guid: 6bae2c08f19e950d68a295691e25cff6, type: 3}
+    - {fileID: -5783272731526753676, guid: 2f29cf8f3ed82f7e18284a8bea4a2453, type: 3}

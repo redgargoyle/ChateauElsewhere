@@ -62,8 +62,10 @@ public class Chapter2RegressionTests
     private static readonly PanicActionSpec[] RequiredPanicActions =
     {
         new PanicActionSpec("panic_hands_up", "panicHandsUp", 4),
+        new PanicActionSpec("panic_run_down", "panicRunDown", 4),
         new PanicActionSpec("panic_run_left", "panicRunLeft", 4),
-        new PanicActionSpec("panic_run_right", "panicRunRight", 4)
+        new PanicActionSpec("panic_run_right", "panicRunRight", 4),
+        new PanicActionSpec("panic_run_up", "panicRunUp", 4)
     };
     private static readonly string[] RemovedPanicActions =
     {
@@ -298,10 +300,18 @@ public class Chapter2RegressionTests
         Assert.That(firstClipIndex, Is.GreaterThan(whileIndex), "Guests should start running immediately instead of spending stinger time on a non-running pre-roll.");
 
         string routineText = panicText.Substring(routineIndex, nextMethodIndex - routineIndex);
-        Assert.That(routineText, Does.Contain("PanicAction.PanicRunLeft"));
-        Assert.That(routineText, Does.Contain("PanicAction.PanicRunRight"));
+        Assert.That(routineText, Does.Contain("ChooseRandomRunTargets"));
+        Assert.That(routineText, Does.Contain("MoveParticipantsTowardAssignedTargets"));
         Assert.That(routineText, Does.Contain("PlayRandomStopActions"));
         Assert.That(panicText, Does.Contain("PanicAction.PanicHandsUp"));
+        Assert.That(panicText, Does.Contain("PanicAction.PanicRunDown"));
+        Assert.That(panicText, Does.Contain("PanicAction.PanicRunLeft"));
+        Assert.That(panicText, Does.Contain("PanicAction.PanicRunRight"));
+        Assert.That(panicText, Does.Contain("PanicAction.PanicRunUp"));
+        Assert.That(panicText, Does.Contain("panicRoamRadiusPixels = 190f"));
+        Assert.That(panicText, Does.Contain("verticalRunDistanceScale = 0.55f"));
+        Assert.That(panicText, Does.Contain("GetRandomCardinalDirection"));
+        Assert.That(panicText, Does.Contain("CurrentRunAction"));
         Assert.That(panicText, Does.Contain("SetStopFramePhase"));
         Assert.That(panicText, Does.Contain("randomStopActionChance = 1f"));
         Assert.That(panicText, Does.Not.Contain("RandomStopActions"));
@@ -316,9 +326,9 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("DefaultExecutionOrder(10000)"));
         Assert.That(panicText, Does.Not.Contain("turnaroundDistanceScale"));
         Assert.That(panicText, Does.Not.Contain("GetTurnaroundOffset"));
-        Assert.That(panicText, Does.Contain("MoveParticipantsToward"));
-        Assert.That(panicText, Does.Contain("StepParticipantsToward"));
-        Assert.That(panicText, Does.Contain("MovePanicOffsetToward"));
+        Assert.That(panicText, Does.Contain("MoveParticipantsTowardAssignedTargets"));
+        Assert.That(panicText, Does.Contain("StepParticipantsTowardAssignedTargets"));
+        Assert.That(panicText, Does.Contain("MovePanicOffsetTowardCurrentTarget"));
         Assert.That(panicText, Does.Contain("Vector2.MoveTowards"));
         Assert.That(panicText, Does.Contain("private void LateUpdate()"));
         Assert.That(panicText, Does.Contain("ReapplyParticipantVisualOffsets"));
@@ -330,10 +340,9 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("ApplySpriteScale(currentPanicSprite)"));
         Assert.That(panicText, Does.Contain("float frameProgress"));
         Assert.That(panicText, Does.Contain("float motionFrame = frameIndex + frameProgress"));
-        Assert.That(panicText, Does.Contain("ApplyActionFrame(action, frameIndex, motionFrame, jitter)"));
+        Assert.That(panicText, Does.Contain("ApplyAssignedRunFrame(frameIndex, motionFrame, jitter)"));
         Assert.That(panicText, Does.Not.Contain("Vector2.LerpUnclamped"));
         Assert.That(panicText, Does.Contain("ConfigureRunMotion"));
-        Assert.That(panicText, Does.Contain("GetVisualAction"));
         Assert.That(panicText, Does.Contain("GetPanicOffset"));
         Assert.That(panicText, Does.Contain("FindMotionDrivers"));
         Assert.That(panicText, Does.Contain("RoomPersonWalker2D"));
@@ -377,6 +386,26 @@ public class Chapter2RegressionTests
             Assert.That(clipText, Does.Contain("classID: 212"), $"{clipPath} should animate SpriteRenderer sprites like normal character clips.");
             Assert.That(clipText, Does.Not.Contain("classID: 114"), $"{clipPath} should not animate an extra UI Image curve over the SpriteRenderer frames.");
             Assert.That(clipText, Does.Contain(ReadGuid(firstGuestFrameMeta)), $"{clipPath} should reference generated guest-local frame sprites.");
+
+            string[] runClipSuffixes =
+            {
+                "PanicRunDown",
+                "PanicRunLeft",
+                "PanicRunRight",
+                "PanicRunUp"
+            };
+
+            for (int clipIndex = 0; clipIndex < runClipSuffixes.Length; clipIndex++)
+            {
+                string runClipPath = Path.Combine(Chapter2PanicClipRoot, PanicRosterClipFolders[characterIndex], $"{PanicRosterClipFolders[characterIndex]}_{runClipSuffixes[clipIndex]}.anim");
+                Assert.That(File.Exists(runClipPath), Is.True, $"{PanicRosterClipFolders[characterIndex]} should have a saved {runClipSuffixes[clipIndex]} clip.");
+
+                string runClipText = File.ReadAllText(runClipPath);
+                Assert.That(runClipText, Does.Contain("m_SampleRate: 12"), $"{runClipPath} should play at the panic frame rate.");
+                Assert.That(runClipText, Does.Contain("classID: 212"), $"{runClipPath} should animate SpriteRenderer sprites like normal character clips.");
+                Assert.That(runClipText, Does.Not.Contain("classID: 114"), $"{runClipPath} should not animate an extra UI Image curve over the SpriteRenderer frames.");
+                Assert.That(runClipText, Does.Contain("m_LoopTime: 1"), $"{runClipPath} should loop while a guest runs in that direction.");
+            }
 
             for (int actionIndex = 0; actionIndex < RemovedPanicActions.Length; actionIndex++)
             {

@@ -85,35 +85,45 @@ public sealed class Chapter2PanicCharacterAnimation
     [SerializeField] private string characterId;
     [SerializeField] private string displayName;
     [SerializeField] private Sprite[] panicHandsUp = Array.Empty<Sprite>();
+    [SerializeField] private Sprite[] panicRunDown = Array.Empty<Sprite>();
     [SerializeField] private Sprite[] panicRunLeft = Array.Empty<Sprite>();
     [SerializeField] private Sprite[] panicRunRight = Array.Empty<Sprite>();
+    [SerializeField] private Sprite[] panicRunUp = Array.Empty<Sprite>();
 
     public string CharacterId => characterId;
     public string DisplayName => displayName;
     public Sprite[] PanicHandsUp => panicHandsUp;
+    public Sprite[] PanicRunDown => panicRunDown;
     public Sprite[] PanicRunLeft => panicRunLeft;
     public Sprite[] PanicRunRight => panicRunRight;
+    public Sprite[] PanicRunUp => panicRunUp;
 
     public void Configure(
         string nextCharacterId,
         string nextDisplayName,
         Sprite[] nextPanicHandsUp,
+        Sprite[] nextPanicRunDown,
         Sprite[] nextPanicRunLeft,
-        Sprite[] nextPanicRunRight)
+        Sprite[] nextPanicRunRight,
+        Sprite[] nextPanicRunUp)
     {
         characterId = nextCharacterId;
         displayName = nextDisplayName;
         panicHandsUp = nextPanicHandsUp ?? Array.Empty<Sprite>();
+        panicRunDown = nextPanicRunDown ?? Array.Empty<Sprite>();
         panicRunLeft = nextPanicRunLeft ?? Array.Empty<Sprite>();
         panicRunRight = nextPanicRunRight ?? Array.Empty<Sprite>();
+        panicRunUp = nextPanicRunUp ?? Array.Empty<Sprite>();
     }
 
     public bool HasRequiredFrames(out string report)
     {
         StringBuilder missing = new StringBuilder();
         AppendCountMismatch(missing, "panic_hands_up", panicHandsUp, 4);
+        AppendCountMismatch(missing, "panic_run_down", panicRunDown, 4);
         AppendCountMismatch(missing, "panic_run_left", panicRunLeft, 4);
         AppendCountMismatch(missing, "panic_run_right", panicRunRight, 4);
+        AppendCountMismatch(missing, "panic_run_up", panicRunUp, 4);
         report = missing.ToString();
         return report.Length == 0;
     }
