@@ -260,7 +260,10 @@ public class Chapter2RegressionTests
         Assert.That(routineText, Does.Not.Contain("PanicAction.PanicReactionDown"));
         Assert.That(routineText, Does.Not.Contain("PanicAction.PanicShriekDown"));
         Assert.That(routineText, Does.Not.Contain("PanicAction.CoverFaceCower"));
-        Assert.That(panicText, Does.Contain("ApplyActionFrame(PanicAction.PanicRunLeft, 0, new Vector2(runDistancePixels * 0.35f, 0f), true)"));
+        Assert.That(panicText, Does.Contain("runDistancePixels = 150f"));
+        Assert.That(panicText, Does.Contain("turnaroundDistanceScale = 0.68f"));
+        Assert.That(panicText, Does.Contain("GetTurnaroundOffset"));
+        Assert.That(panicText, Does.Contain("Mathf.SmoothStep"));
         Assert.That(panicText, Does.Contain("ConfigureRunMotion"));
         Assert.That(panicText, Does.Contain("GetVisualAction"));
         Assert.That(panicText, Does.Contain("GetPanicOffset"));

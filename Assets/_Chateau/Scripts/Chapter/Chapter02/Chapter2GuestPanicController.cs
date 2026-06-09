@@ -12,7 +12,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField] private Chapter2GuestSearchController guestSearch;
     [SerializeField] private Chapter2PanicAnimationLibrary animationLibrary;
     [SerializeField, Min(1f)] private float frameRate = 12f;
-    [SerializeField, Min(0f)] private float runDistancePixels = 70f;
+    [SerializeField, Min(0f)] private float runDistancePixels = 150f;
+    [SerializeField, Range(0.1f, 0.95f)] private float turnaroundDistanceScale = 0.68f;
     [SerializeField, Min(0f)] private float jitterPixels = 3f;
     [SerializeField, Min(0.0001f)] private float worldUnitsPerRoomPixel = 0.012f;
     [SerializeField] private bool logMissingFrames = true;
@@ -40,7 +41,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         isRunning = true;
-        ApplyActionFrame(PanicAction.PanicRunLeft, 0, new Vector2(runDistancePixels * 0.35f, 0f), true);
+        ApplyActionFrame(PanicAction.PanicRunLeft, 0, GetTurnaroundOffset(new Vector2(runDistancePixels, 0f)), true);
         panicRoutine = StartCoroutine(RunPanicRoutine());
         return panicRoutine;
     }
@@ -147,8 +148,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     {
         Vector2 leftOffset = new Vector2(-runDistancePixels, 0f);
         Vector2 rightOffset = new Vector2(runDistancePixels, 0f);
-        Vector2 leftTurnOffset = leftOffset * 0.35f;
-        Vector2 rightTurnOffset = rightOffset * 0.35f;
+        Vector2 leftTurnOffset = GetTurnaroundOffset(leftOffset);
+        Vector2 rightTurnOffset = GetTurnaroundOffset(rightOffset);
 
         while (isRunning)
         {
@@ -157,6 +158,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             yield return PlayClipForAll(PanicAction.PanicRunRight, leftTurnOffset, rightOffset, true);
             yield return PlayClipForAll(PanicAction.PanicTurnaround, rightOffset, rightTurnOffset, true);
         }
+    }
+
+    private Vector2 GetTurnaroundOffset(Vector2 endpointOffset)
+    {
+        return endpointOffset * Mathf.Clamp(turnaroundDistanceScale, 0.1f, 0.95f);
     }
 
     private IEnumerator PlayClipForAll(PanicAction action, Vector2 startOffset, Vector2 endOffset, bool jitter)
@@ -173,7 +179,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         for (int frameIndex = 0; frameIndex < frameCount && isRunning; frameIndex++)
         {
             float t = frameCount <= 1 ? 1f : frameIndex / (float)(frameCount - 1);
-            Vector2 offset = Vector2.Lerp(startOffset, endOffset, t);
+            float easedT = Mathf.SmoothStep(0f, 1f, t);
+            Vector2 offset = Vector2.LerpUnclamped(startOffset, endOffset, easedT);
 
             ApplyActionFrame(action, frameIndex, offset, jitter);
 
