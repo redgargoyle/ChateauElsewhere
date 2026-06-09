@@ -33,6 +33,14 @@ GUID_RE = re.compile(r"guid:\s*([0-9a-f]{32})")
 
 
 CHARACTER_DESCRIPTIONS: Dict[str, str] = {
+    "Lady": (
+        "Victorian lady guest in a blue dress, dark hair, pale sleeves, full skirt, "
+        "delicate formal posture"
+    ),
+    "ButlerGuest": (
+        "formal butler-like male guest, black suit, white shirt, waistcoat, dark trousers, "
+        "reserved posture and compact silhouette"
+    ),
     "LordAmbroseVeil": (
         "tall slim Victorian gentleman, tousled dark hair, pale face, brown frock coat, "
         "cream cravat and waistcoat, dark trousers, gloves"
@@ -191,6 +199,12 @@ class CharacterSpec:
     role: str
 
 
+CHAPTER2_AUTHORED_GUEST_SPECS: Sequence[Tuple[str, str, str]] = (
+    ("Lady", "Lady", "Assets/Animation/Lady"),
+    ("ButlerGuest", "Butler Guest", "Assets/Animation/ButlerGuest"),
+)
+
+
 def snake_case(value: str) -> str:
     text = re.sub(r"(?<!^)([A-Z])", r"_\1", value)
     text = re.sub(r"[^a-zA-Z0-9]+", "_", text)
@@ -207,6 +221,17 @@ def load_character_specs(include_butler: bool) -> List[CharacterSpec]:
 
     registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
     specs: List[CharacterSpec] = []
+    for character, display_name, animation_folder in CHAPTER2_AUTHORED_GUEST_SPECS:
+        specs.append(
+            CharacterSpec(
+                character=character,
+                display_name=display_name,
+                animation_folder=REPO_ROOT / animation_folder,
+                source_sheet=None,
+                role="guest",
+            )
+        )
+
     for guest in registry.get("guests", []):
         character = guest["character"]
         source_sheet = SOURCE_SHEET_ROOT / f"{character}_source_sheet.png"

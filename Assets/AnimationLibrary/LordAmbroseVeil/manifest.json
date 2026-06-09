@@ -528,5 +528,921 @@
   ],
   "contact_sheet": "Assets/AnimationLibrary/LordAmbroseVeil/qa/reference_contact_sheet.png",
   "generation_requests": "Assets/AnimationLibrary/LordAmbroseVeil/requests/generation_prompts.jsonl",
-  "warnings": []
+  "warnings": [],
+  "chapter2_guest_number": 7,
+  "approved_panic_actions": {
+    "panic_reaction_down": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_reaction_down/frames/01_lord_ambrose_veil_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            16,
+            132,
+            296
+          ],
+          "visible_pixels": 17665,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "28ae9680a6c2c1370c6c0b5d27d07315f14b7ad8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_reaction_down/frames/02_lord_ambrose_veil_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            24,
+            134,
+            295
+          ],
+          "visible_pixels": 18269,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0c4a98ed33c9c8f233e49308fd687ec60b3f341d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_reaction_down/frames/03_lord_ambrose_veil_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            27,
+            137,
+            293
+          ],
+          "visible_pixels": 18329,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f351b87ca8753083e8ad1b4e09fc73d3346ef6ed"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_reaction_down/frames/04_lord_ambrose_veil_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            20,
+            135,
+            294
+          ],
+          "visible_pixels": 18277,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "769c346b156a782f4d097c745a95cc97a249fcd6"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_reaction_down/frames/05_lord_ambrose_veil_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            26,
+            138,
+            293
+          ],
+          "visible_pixels": 17939,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c731408c33234ddb4eab23da7085239503eb2a6a"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_reaction_down/frames/06_lord_ambrose_veil_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            19,
+            134,
+            295
+          ],
+          "visible_pixels": 18390,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "2bd63a2731c5899c3ad04e2e9b8b5670aa281f92"
+        }
+      ]
+    },
+    "panic_shriek_down": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_shriek_down/frames/01_lord_ambrose_veil_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            2,
+            135,
+            295
+          ],
+          "visible_pixels": 20250,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c3c8af1dd0f72b88d2bf8aa75f9d9bc39f19ed73"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_shriek_down/frames/02_lord_ambrose_veil_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            1,
+            137,
+            294
+          ],
+          "visible_pixels": 20667,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "df9868a83a15a0873596e8b9aa09567ef5d9ec62"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_shriek_down/frames/03_lord_ambrose_veil_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            1,
+            137,
+            293
+          ],
+          "visible_pixels": 20681,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5c8b8dcf3324f69d974d5463d124d560f9eccb32"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_shriek_down/frames/04_lord_ambrose_veil_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            1,
+            137,
+            294
+          ],
+          "visible_pixels": 20667,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "df9868a83a15a0873596e8b9aa09567ef5d9ec62"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_shriek_down/frames/05_lord_ambrose_veil_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            2,
+            135,
+            295
+          ],
+          "visible_pixels": 20250,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c3c8af1dd0f72b88d2bf8aa75f9d9bc39f19ed73"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_shriek_down/frames/06_lord_ambrose_veil_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            1,
+            136,
+            296
+          ],
+          "visible_pixels": 20304,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4a4158551c37f4c9bb31e111cfa90cc21391bd66"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_shriek_down/frames/07_lord_ambrose_veil_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            1,
+            136,
+            296
+          ],
+          "visible_pixels": 20492,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8de7a43f8bb3015bb397639d20a3995485d0e23b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_shriek_down/frames/08_lord_ambrose_veil_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            1,
+            136,
+            296
+          ],
+          "visible_pixels": 20304,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4a4158551c37f4c9bb31e111cfa90cc21391bd66"
+        }
+      ]
+    },
+    "panic_run_left": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_left/frames/01_lord_ambrose_veil_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            55,
+            72,
+            111,
+            293
+          ],
+          "visible_pixels": 8617,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "aa9b2b9fa704b3eab578562e69a23a60fbf7344c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_left/frames/02_lord_ambrose_veil_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            55,
+            72,
+            111,
+            293
+          ],
+          "visible_pixels": 8617,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "aa9b2b9fa704b3eab578562e69a23a60fbf7344c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_left/frames/03_lord_ambrose_veil_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            53,
+            72,
+            109,
+            293
+          ],
+          "visible_pixels": 8257,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d8bb9d00b26c325730a09aa9fd9308ecca6f0a33"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_left/frames/04_lord_ambrose_veil_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            53,
+            72,
+            109,
+            293
+          ],
+          "visible_pixels": 8257,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d8bb9d00b26c325730a09aa9fd9308ecca6f0a33"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_left/frames/05_lord_ambrose_veil_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            54,
+            74,
+            112,
+            293
+          ],
+          "visible_pixels": 8626,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "62225186ace7d62f51df0afb6ff6a2a63e1fcf5e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_left/frames/06_lord_ambrose_veil_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            54,
+            74,
+            112,
+            293
+          ],
+          "visible_pixels": 8626,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "62225186ace7d62f51df0afb6ff6a2a63e1fcf5e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_left/frames/07_lord_ambrose_veil_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            51,
+            72,
+            109,
+            293
+          ],
+          "visible_pixels": 8606,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "254e2723445afa6d70f914fa6b6bd630b8038fe0"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_left/frames/08_lord_ambrose_veil_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            51,
+            72,
+            109,
+            293
+          ],
+          "visible_pixels": 8606,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "254e2723445afa6d70f914fa6b6bd630b8038fe0"
+        }
+      ]
+    },
+    "panic_run_right": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_right/frames/01_lord_ambrose_veil_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            56,
+            72,
+            112,
+            293
+          ],
+          "visible_pixels": 8611,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "012b8a6d4dc07cb2ffdb4d4bae9a064233998388"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_right/frames/02_lord_ambrose_veil_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            56,
+            72,
+            112,
+            293
+          ],
+          "visible_pixels": 8611,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "012b8a6d4dc07cb2ffdb4d4bae9a064233998388"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_right/frames/03_lord_ambrose_veil_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            58,
+            72,
+            114,
+            293
+          ],
+          "visible_pixels": 8257,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "6c51be86690abe9d47b8cd99297a05216ee26e5b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_right/frames/04_lord_ambrose_veil_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            58,
+            72,
+            114,
+            293
+          ],
+          "visible_pixels": 8257,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "6c51be86690abe9d47b8cd99297a05216ee26e5b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_right/frames/05_lord_ambrose_veil_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            56,
+            74,
+            114,
+            293
+          ],
+          "visible_pixels": 8612,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "293c7a9597a6429270fa827611198e636115ef58"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_right/frames/06_lord_ambrose_veil_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            56,
+            74,
+            114,
+            293
+          ],
+          "visible_pixels": 8612,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "293c7a9597a6429270fa827611198e636115ef58"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_right/frames/07_lord_ambrose_veil_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            58,
+            72,
+            116,
+            293
+          ],
+          "visible_pixels": 8606,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c8f62c819da75aaaa1541da9ee17738a9b9d832f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_run_right/frames/08_lord_ambrose_veil_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            58,
+            72,
+            116,
+            293
+          ],
+          "visible_pixels": 8606,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c8f62c819da75aaaa1541da9ee17738a9b9d832f"
+        }
+      ]
+    },
+    "panic_turnaround": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_turnaround/frames/01_lord_ambrose_veil_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            51,
+            84,
+            111,
+            296
+          ],
+          "visible_pixels": 8937,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "161db442f4d927abc3ad2b0b6a82923547a63928"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_turnaround/frames/02_lord_ambrose_veil_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            50,
+            86,
+            111,
+            296
+          ],
+          "visible_pixels": 8315,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d7bd749cded45f5ca8397feae4ba56ec42706b98"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_turnaround/frames/03_lord_ambrose_veil_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            25,
+            134,
+            296
+          ],
+          "visible_pixels": 18001,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "29fe25d2505645125ef4667f95c028e59bbc416b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_turnaround/frames/04_lord_ambrose_veil_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            24,
+            136,
+            296
+          ],
+          "visible_pixels": 18312,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "cf810c862f479b1f288d0ce8a7240e05ad85e79f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_turnaround/frames/05_lord_ambrose_veil_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            55,
+            86,
+            116,
+            296
+          ],
+          "visible_pixels": 8399,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3aa05cc260399cbc5279073f1d8655b980dd3927"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/panic_turnaround/frames/06_lord_ambrose_veil_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            55,
+            84,
+            115,
+            296
+          ],
+          "visible_pixels": 9084,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ccc92322bfb8487b0d81d26295102764beafb930"
+        }
+      ]
+    },
+    "cover_face_cower": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/cover_face_cower/frames/01_lord_ambrose_veil_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            58,
+            136,
+            296
+          ],
+          "visible_pixels": 16360,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "da37aaa9b44b8d56bd4436e75c345e03ebd620b5"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/cover_face_cower/frames/02_lord_ambrose_veil_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            57,
+            138,
+            296
+          ],
+          "visible_pixels": 17002,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e1c7ea444adaf40ea92f6fa225ef14dad1deefec"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/cover_face_cower/frames/03_lord_ambrose_veil_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            56,
+            138,
+            296
+          ],
+          "visible_pixels": 17108,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "43e83b291ea7fce68374deff9af8e6ef80b81700"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/cover_face_cower/frames/04_lord_ambrose_veil_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            57,
+            137,
+            296
+          ],
+          "visible_pixels": 16680,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "1682f05d1778f23491f21a9d7d0a9b3484a556a7"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/cover_face_cower/frames/05_lord_ambrose_veil_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            58,
+            135,
+            296
+          ],
+          "visible_pixels": 16037,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ba7882fc038169925c084eeb31747275fd79fed0"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LordAmbroseVeil/approved/full_body/cover_face_cower/frames/06_lord_ambrose_veil_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            57,
+            136,
+            296
+          ],
+          "visible_pixels": 16369,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3fd358bc419df553f4395c2a87151bd8af008ef3"
+        }
+      ]
+    }
+  },
+  "panic_contact_sheet": "Assets/AnimationLibrary/LordAmbroseVeil/qa/panic_approved_contact_sheet.png"
 }

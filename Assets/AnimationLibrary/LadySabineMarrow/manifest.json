@@ -1284,5 +1284,921 @@
   "excluded_sources": [],
   "contact_sheet": "Assets/AnimationLibrary/LadySabineMarrow/qa/reference_contact_sheet.png",
   "generation_requests": "Assets/AnimationLibrary/LadySabineMarrow/requests/generation_prompts.jsonl",
-  "warnings": []
+  "warnings": [],
+  "chapter2_guest_number": 6,
+  "approved_panic_actions": {
+    "panic_reaction_down": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/01_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            18,
+            129,
+            296
+          ],
+          "visible_pixels": 18309,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0f5f9e544c2500fcaba41e42abf1f96afe3e2b4d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/02_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            26,
+            129,
+            295
+          ],
+          "visible_pixels": 18787,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ccaf6000d58d5096757489934f14c39b7b9c53a9"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/03_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            29,
+            131,
+            293
+          ],
+          "visible_pixels": 18714,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c067590ef1fb4999d3874db05f5bd197847057f8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/04_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            22,
+            129,
+            294
+          ],
+          "visible_pixels": 18895,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d2c37319a27064894c2e1adf0a32d2fd9dc4a5d4"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/05_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            28,
+            133,
+            293
+          ],
+          "visible_pixels": 18411,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a0aab6cd90f70de6f4c354291e98d3d473e6273c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/06_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            20,
+            129,
+            295
+          ],
+          "visible_pixels": 19083,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "129414075f303a1683d78545ad5a94f8d1f3b233"
+        }
+      ]
+    },
+    "panic_shriek_down": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/01_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            5,
+            131,
+            295
+          ],
+          "visible_pixels": 20675,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "07f1b9d5709f7e9fd380566505f957cc5b513363"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/02_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            3,
+            131,
+            294
+          ],
+          "visible_pixels": 20960,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b72d6a2e82a69a6be9d0cd2754b014d668531c07"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/03_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            1,
+            132,
+            293
+          ],
+          "visible_pixels": 21154,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f3d85a42167fe5fcd0f5a49100546d944a5ccc83"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/04_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            3,
+            131,
+            294
+          ],
+          "visible_pixels": 20960,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b72d6a2e82a69a6be9d0cd2754b014d668531c07"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/05_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            5,
+            131,
+            295
+          ],
+          "visible_pixels": 20675,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "07f1b9d5709f7e9fd380566505f957cc5b513363"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/06_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            1,
+            130,
+            296
+          ],
+          "visible_pixels": 20838,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4bc3ba986cf3260de812fbda4a5e41445809f091"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/07_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            1,
+            130,
+            296
+          ],
+          "visible_pixels": 21010,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d911757785d2962469f142f34b4e9c6bb8fd2e40"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/08_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            1,
+            130,
+            296
+          ],
+          "visible_pixels": 20838,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4bc3ba986cf3260de812fbda4a5e41445809f091"
+        }
+      ]
+    },
+    "panic_run_left": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/01_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            40,
+            148,
+            292
+          ],
+          "visible_pixels": 14698,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b3421950179f96d06b9024f000e59989a508ec46"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/02_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            40,
+            151,
+            293
+          ],
+          "visible_pixels": 14747,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "2ec33ff5650ee304f3caa6103ae2a23fc7fedd05"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/03_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            41,
+            155,
+            292
+          ],
+          "visible_pixels": 15687,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "fac54d61bcc10cefb293fc0c0ab1f3778e7a4442"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/04_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            41,
+            153,
+            292
+          ],
+          "visible_pixels": 14980,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d800fa0bd1b330bcd626a79b5bd0d70e5af14eb4"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/05_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            41,
+            153,
+            292
+          ],
+          "visible_pixels": 14980,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d800fa0bd1b330bcd626a79b5bd0d70e5af14eb4"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/06_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            42,
+            155,
+            293
+          ],
+          "visible_pixels": 15297,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f333611613802e5dcfc0143db6d54c97d7c0f2b9"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/07_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            40,
+            156,
+            292
+          ],
+          "visible_pixels": 15523,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "2087743e9bcb4d8ffba245104ea0c86f014822f5"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/08_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            42,
+            161,
+            293
+          ],
+          "visible_pixels": 15914,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c328b0e032c9212e15a82d0cbb131759c6a66432"
+        }
+      ]
+    },
+    "panic_run_right": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/01_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            37,
+            145,
+            292
+          ],
+          "visible_pixels": 15737,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8f0336fb15a4b5bfdee8b6b1890f39befb83d0bb"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/02_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            38,
+            146,
+            293
+          ],
+          "visible_pixels": 15341,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "77597a057f2b5bd058f135a02e7b5f96d8c414ce"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/03_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            37,
+            148,
+            292
+          ],
+          "visible_pixels": 15462,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5034c79dcdcc17ff6d1d3fd49454de0c61bd864b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/04_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            38,
+            142,
+            296
+          ],
+          "visible_pixels": 14771,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "07bb5355d05935b0985816e16c26cd6555fcd40f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/05_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            38,
+            142,
+            296
+          ],
+          "visible_pixels": 14771,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "07bb5355d05935b0985816e16c26cd6555fcd40f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/06_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            38,
+            146,
+            293
+          ],
+          "visible_pixels": 15792,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3874543d2d639f1a7bafa3854ae820dba79da8d1"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/07_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            41,
+            147,
+            293
+          ],
+          "visible_pixels": 15447,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "21696dd23e199d3e282b5b98a0112224dcf4db62"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/08_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            36,
+            146,
+            292
+          ],
+          "visible_pixels": 15502,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "99036594511d9272ad47804d0f94a40b18d0213a"
+        }
+      ]
+    },
+    "panic_turnaround": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/01_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            54,
+            144,
+            296
+          ],
+          "visible_pixels": 16607,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d7a8f5626a802b0c5335ede2783fe482ee7a7ff1"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/02_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            55,
+            147,
+            296
+          ],
+          "visible_pixels": 16719,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "88961cd39200e9f79574b8ac518c4aac6dcdde67"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/03_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            27,
+            130,
+            296
+          ],
+          "visible_pixels": 18547,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "10ed06693e9ee1cfc4a1d3c10e1e8a151dc4a233"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/04_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            26,
+            131,
+            296
+          ],
+          "visible_pixels": 18932,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7153e4e0b34216f165f7a9eacceeccb804a01867"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/05_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            53,
+            155,
+            296
+          ],
+          "visible_pixels": 17833,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b5f5a4cec19e8fee61238ad26018b3df1a408c40"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/06_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            51,
+            154,
+            296
+          ],
+          "visible_pixels": 18466,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "37be087c3ad3a7580e72deb545c96a395fee537c"
+        }
+      ]
+    },
+    "cover_face_cower": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/01_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            93,
+            136,
+            296
+          ],
+          "visible_pixels": 14930,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c2109b43589d62ca40e66682b8ec1d129cc3019c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/02_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            93,
+            137,
+            296
+          ],
+          "visible_pixels": 15322,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "26c262cec27ac01e7a8757b6bb21881939196757"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/03_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            93,
+            137,
+            296
+          ],
+          "visible_pixels": 15411,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5a024a259dc9402c873a2a7be443a823fdfe6452"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/04_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            93,
+            136,
+            296
+          ],
+          "visible_pixels": 14940,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "69db92931c3578a0843b9eb1ec2a0e6b5782680b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/05_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            93,
+            135,
+            296
+          ],
+          "visible_pixels": 14566,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f197d00e25d9778c0f8c94857da6a8619e346c7d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/06_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            93,
+            135,
+            296
+          ],
+          "visible_pixels": 14690,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "19e13c417c4568e76e8f74688aeacd6dcbeea188"
+        }
+      ]
+    }
+  },
+  "panic_contact_sheet": "Assets/AnimationLibrary/LadySabineMarrow/qa/panic_approved_contact_sheet.png"
 }

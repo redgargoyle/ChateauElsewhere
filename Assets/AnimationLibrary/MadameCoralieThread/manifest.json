@@ -16,7 +16,7 @@
   "reference_sequences": {
     "idle_down": [
       {
-        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_01.png",
+        "source": "Assets/Art/Characters/guest8/guest8standidle/madame_coralie_thread_idle_down_01.png",
         "source_size": [
           166,
           297
@@ -42,7 +42,7 @@
         }
       },
       {
-        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_02.png",
+        "source": "Assets/Art/Characters/guest8/guest8standidle/madame_coralie_thread_idle_down_02.png",
         "source_size": [
           166,
           297
@@ -68,7 +68,7 @@
         }
       },
       {
-        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_03.png",
+        "source": "Assets/Art/Characters/guest8/guest8standidle/madame_coralie_thread_idle_down_03.png",
         "source_size": [
           166,
           297
@@ -94,7 +94,7 @@
         }
       },
       {
-        "source": "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down_04.png",
+        "source": "Assets/Art/Characters/guest8/guest8standidle/madame_coralie_thread_idle_down_04.png",
         "source_size": [
           166,
           297
@@ -1388,5 +1388,921 @@
   "excluded_sources": [],
   "contact_sheet": "Assets/AnimationLibrary/MadameCoralieThread/qa/reference_contact_sheet.png",
   "generation_requests": "Assets/AnimationLibrary/MadameCoralieThread/requests/generation_prompts.jsonl",
-  "warnings": []
+  "warnings": [],
+  "chapter2_guest_number": 8,
+  "approved_panic_actions": {
+    "panic_reaction_down": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_reaction_down/frames/01_madame_coralie_thread_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            22,
+            146,
+            296
+          ],
+          "visible_pixels": 22206,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "fc538a9b62e431effe2074d3c4e26452fa5a431f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_reaction_down/frames/02_madame_coralie_thread_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            30,
+            148,
+            295
+          ],
+          "visible_pixels": 22698,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "1a116e2cb5c5e428fb2e54a39ee1b386e5f8f254"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_reaction_down/frames/03_madame_coralie_thread_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            33,
+            151,
+            293
+          ],
+          "visible_pixels": 22976,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c72d967a854170b39287c1552306998047a160ba"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_reaction_down/frames/04_madame_coralie_thread_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            26,
+            148,
+            294
+          ],
+          "visible_pixels": 23006,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "866c2a74583aa1bb5b06aef452faf0e632ef5e81"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_reaction_down/frames/05_madame_coralie_thread_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            32,
+            152,
+            293
+          ],
+          "visible_pixels": 22712,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b5b093a4b8e44bf36184d15997245ace0855283d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_reaction_down/frames/06_madame_coralie_thread_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            24,
+            148,
+            295
+          ],
+          "visible_pixels": 23364,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "03b2abc338de639bff5269d4b1d17cc8687ba2ab"
+        }
+      ]
+    },
+    "panic_shriek_down": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_shriek_down/frames/01_madame_coralie_thread_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            7,
+            150,
+            295
+          ],
+          "visible_pixels": 25206,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e55e11dcde521243f2c8e7be9d15ea52081b602f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_shriek_down/frames/02_madame_coralie_thread_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            5,
+            151,
+            294
+          ],
+          "visible_pixels": 25694,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b00952b20d070a2dd6faa13f573ca3adb3bda123"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_shriek_down/frames/03_madame_coralie_thread_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            4,
+            151,
+            293
+          ],
+          "visible_pixels": 25823,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "586902365de3990bef4f2b112fa7c25f146238e8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_shriek_down/frames/04_madame_coralie_thread_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            5,
+            151,
+            294
+          ],
+          "visible_pixels": 25694,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b00952b20d070a2dd6faa13f573ca3adb3bda123"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_shriek_down/frames/05_madame_coralie_thread_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            7,
+            150,
+            295
+          ],
+          "visible_pixels": 25206,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e55e11dcde521243f2c8e7be9d15ea52081b602f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_shriek_down/frames/06_madame_coralie_thread_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            1,
+            148,
+            296
+          ],
+          "visible_pixels": 25313,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e0fa7f3126b88ae8908c69820166bd90a075a076"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_shriek_down/frames/07_madame_coralie_thread_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            1,
+            148,
+            296
+          ],
+          "visible_pixels": 25454,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4251b3d88b76c3908ca3d6ce5debaa7c8be977a8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_shriek_down/frames/08_madame_coralie_thread_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            1,
+            148,
+            296
+          ],
+          "visible_pixels": 25313,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e0fa7f3126b88ae8908c69820166bd90a075a076"
+        }
+      ]
+    },
+    "panic_run_left": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_left/frames/01_madame_coralie_thread_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            20,
+            155,
+            292
+          ],
+          "visible_pixels": 20337,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d28ae5cd7f018279093b1959584f08d73b77a4c8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_left/frames/02_madame_coralie_thread_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            21,
+            159,
+            292
+          ],
+          "visible_pixels": 19748,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a185d3c42db171f8906e0f21a12c207656973640"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_left/frames/03_madame_coralie_thread_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            21,
+            157,
+            292
+          ],
+          "visible_pixels": 20469,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0cacb66a05fb4842541b6c541cc4bbd1b6bc2f9b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_left/frames/04_madame_coralie_thread_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            19,
+            153,
+            292
+          ],
+          "visible_pixels": 19668,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "90cf2df5fa1b21c38fa24473fa51ab2148c7e200"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_left/frames/05_madame_coralie_thread_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            20,
+            150,
+            292
+          ],
+          "visible_pixels": 18790,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "9421865bd1c645eb6cd38e833d59baecdc1d0490"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_left/frames/06_madame_coralie_thread_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            11,
+            21,
+            161,
+            292
+          ],
+          "visible_pixels": 20098,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "06f3bd026adb08b87c9b158a678f9b18ea890082"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_left/frames/07_madame_coralie_thread_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            20,
+            152,
+            293
+          ],
+          "visible_pixels": 18906,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "82834775de5a0f82824a9a4a1a7438e898d7ce9e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_left/frames/08_madame_coralie_thread_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            25,
+            159,
+            292
+          ],
+          "visible_pixels": 20355,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "775a7254bd60739d8c5b0441da8936b65aa8610e"
+        }
+      ]
+    },
+    "panic_run_right": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_right/frames/01_madame_coralie_thread_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            19,
+            153,
+            293
+          ],
+          "visible_pixels": 19272,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a3fbd761a1be646d4617bde55ae2b9cfd1d7d74c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_right/frames/02_madame_coralie_thread_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            11,
+            19,
+            159,
+            293
+          ],
+          "visible_pixels": 19862,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b85a7c96aabc81e2078a52932eba89196bdab656"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_right/frames/03_madame_coralie_thread_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            8,
+            18,
+            159,
+            292
+          ],
+          "visible_pixels": 20389,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "18ebdb2614a7fab73419f9e5b0413153d9c26cf8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_right/frames/04_madame_coralie_thread_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            19,
+            156,
+            292
+          ],
+          "visible_pixels": 20363,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "87c753a5ea260d42b58eeb9160f00c27dec79476"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_right/frames/05_madame_coralie_thread_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            7,
+            19,
+            159,
+            292
+          ],
+          "visible_pixels": 19974,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "45e5926250e452db5e1618a1ad0cad39ca23bd19"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_right/frames/06_madame_coralie_thread_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            19,
+            156,
+            292
+          ],
+          "visible_pixels": 19679,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8dc1df7d6f10a430b0219912aa691fc03e3d7626"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_right/frames/07_madame_coralie_thread_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            19,
+            157,
+            293
+          ],
+          "visible_pixels": 19828,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "dc54d8e6e8f3ea1985af32ce85509a80a1687ff9"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_run_right/frames/08_madame_coralie_thread_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            19,
+            157,
+            292
+          ],
+          "visible_pixels": 19558,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8eccc71ee4b6fdf82ba71bf582c920a116d29b52"
+        }
+      ]
+    },
+    "panic_turnaround": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_turnaround/frames/01_madame_coralie_thread_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            6,
+            35,
+            155,
+            296
+          ],
+          "visible_pixels": 22592,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a57be88eb8e4428235799e9c64e032c1802c79ad"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_turnaround/frames/02_madame_coralie_thread_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            6,
+            38,
+            156,
+            296
+          ],
+          "visible_pixels": 21914,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7f9fba3c5c5278041bcc3524c09ad0c1ea0577a6"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_turnaround/frames/03_madame_coralie_thread_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            31,
+            149,
+            296
+          ],
+          "visible_pixels": 22568,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d4e97a1dc3e3739de41be46399245edea2754452"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_turnaround/frames/04_madame_coralie_thread_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            30,
+            150,
+            296
+          ],
+          "visible_pixels": 23040,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a1c8ea7997a0198bbe0fbd9dec7aed5a81c1e4bc"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_turnaround/frames/05_madame_coralie_thread_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            7,
+            35,
+            163,
+            296
+          ],
+          "visible_pixels": 22941,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d52e06c3c11e4f97c756a0f1958ffaeff04859c1"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/panic_turnaround/frames/06_madame_coralie_thread_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            33,
+            154,
+            296
+          ],
+          "visible_pixels": 22052,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c6c90ed369e743b0dc0a08cdcd98e691235c7ca1"
+        }
+      ]
+    },
+    "cover_face_cower": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/cover_face_cower/frames/01_madame_coralie_thread_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            63,
+            151,
+            296
+          ],
+          "visible_pixels": 20239,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "caf035c2d37b3cd017958362a121aafecbcde19a"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/cover_face_cower/frames/02_madame_coralie_thread_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            62,
+            152,
+            296
+          ],
+          "visible_pixels": 20858,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "723100c87a2c234e45c4f787fe42a7369e2b27a1"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/cover_face_cower/frames/03_madame_coralie_thread_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            61,
+            152,
+            296
+          ],
+          "visible_pixels": 20991,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "50c09580c30ddf2b783f07d073ef57ad878a6f35"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/cover_face_cower/frames/04_madame_coralie_thread_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            62,
+            151,
+            296
+          ],
+          "visible_pixels": 20564,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "20c5f130bd00a1b48cc72effd817a778ed71be6e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/cover_face_cower/frames/05_madame_coralie_thread_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            63,
+            150,
+            296
+          ],
+          "visible_pixels": 19961,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "68bce75772d0e76d34025a130b8a59216aaec5ba"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MadameCoralieThread/approved/full_body/cover_face_cower/frames/06_madame_coralie_thread_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            62,
+            150,
+            296
+          ],
+          "visible_pixels": 20277,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0485f52c7be84a3d07d613741054e47d1f7163be"
+        }
+      ]
+    }
+  },
+  "panic_contact_sheet": "Assets/AnimationLibrary/MadameCoralieThread/qa/panic_approved_contact_sheet.png"
 }

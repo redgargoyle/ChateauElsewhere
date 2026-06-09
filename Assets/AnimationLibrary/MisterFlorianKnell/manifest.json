@@ -972,5 +972,921 @@
   "excluded_sources": [],
   "contact_sheet": "Assets/AnimationLibrary/MisterFlorianKnell/qa/reference_contact_sheet.png",
   "generation_requests": "Assets/AnimationLibrary/MisterFlorianKnell/requests/generation_prompts.jsonl",
-  "warnings": []
+  "warnings": [],
+  "chapter2_guest_number": 3,
+  "approved_panic_actions": {
+    "panic_reaction_down": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_reaction_down/frames/01_mister_florian_knell_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            15,
+            138,
+            296
+          ],
+          "visible_pixels": 19933,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "aa3c23d2f8419b07b48ee1bdcecbfba0f5232d04"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_reaction_down/frames/02_mister_florian_knell_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            23,
+            139,
+            295
+          ],
+          "visible_pixels": 20348,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a7ee68151211b158780b1eb2dfe89a8829991338"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_reaction_down/frames/03_mister_florian_knell_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            26,
+            142,
+            293
+          ],
+          "visible_pixels": 20489,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "cb85f7fdaf9d3ff51aa61dfccd3123c810ae4d03"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_reaction_down/frames/04_mister_florian_knell_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            19,
+            139,
+            294
+          ],
+          "visible_pixels": 20324,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "52c62552f1c7692a30150ec4b0a6579749aecd69"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_reaction_down/frames/05_mister_florian_knell_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            25,
+            144,
+            293
+          ],
+          "visible_pixels": 20148,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5ed011de8effd41053ed003130aa9a047c39a52a"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_reaction_down/frames/06_mister_florian_knell_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            18,
+            139,
+            295
+          ],
+          "visible_pixels": 20395,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b1a15c37bc1325560fe2672696088c97564d8fea"
+        }
+      ]
+    },
+    "panic_shriek_down": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_shriek_down/frames/01_mister_florian_knell_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            1,
+            141,
+            295
+          ],
+          "visible_pixels": 22645,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d8c3afa2ead166c0cc267d04e8ff06d7b5b5cc24"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_shriek_down/frames/02_mister_florian_knell_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            1,
+            142,
+            294
+          ],
+          "visible_pixels": 22973,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e7402f6546aa3aa9b3a0fd509dc2127010d23533"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_shriek_down/frames/03_mister_florian_knell_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            1,
+            142,
+            293
+          ],
+          "visible_pixels": 23133,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8fe0c677c8529a53467141077ece14e321000b43"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_shriek_down/frames/04_mister_florian_knell_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            1,
+            142,
+            294
+          ],
+          "visible_pixels": 22973,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e7402f6546aa3aa9b3a0fd509dc2127010d23533"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_shriek_down/frames/05_mister_florian_knell_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            1,
+            141,
+            295
+          ],
+          "visible_pixels": 22645,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d8c3afa2ead166c0cc267d04e8ff06d7b5b5cc24"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_shriek_down/frames/06_mister_florian_knell_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            1,
+            140,
+            296
+          ],
+          "visible_pixels": 22568,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "12cc52f459d6d659b9bcad0b7c411236d63354d2"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_shriek_down/frames/07_mister_florian_knell_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            1,
+            139,
+            296
+          ],
+          "visible_pixels": 22711,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "9ec2366603f61c5defc4838904f98ad3c6d62e9b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_shriek_down/frames/08_mister_florian_knell_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            1,
+            140,
+            296
+          ],
+          "visible_pixels": 22568,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "12cc52f459d6d659b9bcad0b7c411236d63354d2"
+        }
+      ]
+    },
+    "panic_run_left": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_left/frames/01_mister_florian_knell_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            27,
+            142,
+            293
+          ],
+          "visible_pixels": 14665,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "75dc75c04a2bbfdc96a11145bc4d2a8c88ecb225"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_left/frames/02_mister_florian_knell_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            27,
+            142,
+            293
+          ],
+          "visible_pixels": 14665,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "75dc75c04a2bbfdc96a11145bc4d2a8c88ecb225"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_left/frames/03_mister_florian_knell_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            11,
+            27,
+            146,
+            293
+          ],
+          "visible_pixels": 15204,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "42a89943a6ca2f43ae43068175535d0536a7fe8c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_left/frames/04_mister_florian_knell_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            11,
+            27,
+            146,
+            293
+          ],
+          "visible_pixels": 15204,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "42a89943a6ca2f43ae43068175535d0536a7fe8c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_left/frames/05_mister_florian_knell_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            51,
+            29,
+            114,
+            293
+          ],
+          "visible_pixels": 12140,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7090aeec8f654c9797b074975e71e99b94b8ef47"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_left/frames/06_mister_florian_knell_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            51,
+            29,
+            114,
+            293
+          ],
+          "visible_pixels": 12140,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7090aeec8f654c9797b074975e71e99b94b8ef47"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_left/frames/07_mister_florian_knell_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            27,
+            142,
+            293
+          ],
+          "visible_pixels": 14665,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "75dc75c04a2bbfdc96a11145bc4d2a8c88ecb225"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_left/frames/08_mister_florian_knell_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            27,
+            142,
+            293
+          ],
+          "visible_pixels": 14665,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "75dc75c04a2bbfdc96a11145bc4d2a8c88ecb225"
+        }
+      ]
+    },
+    "panic_run_right": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_right/frames/01_mister_florian_knell_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            29,
+            147,
+            292
+          ],
+          "visible_pixels": 15162,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b07d799832a85bbadf35b9b9a5eb851e19200587"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_right/frames/02_mister_florian_knell_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            29,
+            147,
+            292
+          ],
+          "visible_pixels": 15162,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b07d799832a85bbadf35b9b9a5eb851e19200587"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_right/frames/03_mister_florian_knell_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            52,
+            28,
+            115,
+            293
+          ],
+          "visible_pixels": 11945,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3499826977f1a12b06a244b47bd1a91ba233cec0"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_right/frames/04_mister_florian_knell_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            52,
+            28,
+            115,
+            293
+          ],
+          "visible_pixels": 11945,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3499826977f1a12b06a244b47bd1a91ba233cec0"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_right/frames/05_mister_florian_knell_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            31,
+            145,
+            293
+          ],
+          "visible_pixels": 14840,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4c57e08edf7c0ae5c9af9d0c891cfa42922fd501"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_right/frames/06_mister_florian_knell_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            31,
+            145,
+            293
+          ],
+          "visible_pixels": 14840,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4c57e08edf7c0ae5c9af9d0c891cfa42922fd501"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_right/frames/07_mister_florian_knell_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            52,
+            28,
+            115,
+            293
+          ],
+          "visible_pixels": 11945,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3499826977f1a12b06a244b47bd1a91ba233cec0"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_run_right/frames/08_mister_florian_knell_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            52,
+            28,
+            115,
+            293
+          ],
+          "visible_pixels": 11945,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3499826977f1a12b06a244b47bd1a91ba233cec0"
+        }
+      ]
+    },
+    "panic_turnaround": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_turnaround/frames/01_mister_florian_knell_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            41,
+            146,
+            296
+          ],
+          "visible_pixels": 16467,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "83b616a07a9e2f6d5bec4f9335b53e503862e5cf"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_turnaround/frames/02_mister_florian_knell_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            10,
+            43,
+            152,
+            296
+          ],
+          "visible_pixels": 17187,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3bd2126983d01bf5cda5c7802f94e80eae611c6f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_turnaround/frames/03_mister_florian_knell_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            24,
+            140,
+            296
+          ],
+          "visible_pixels": 20074,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3b3aabb1459c23e4345f80e75ea6909d96a41195"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_turnaround/frames/04_mister_florian_knell_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            23,
+            141,
+            296
+          ],
+          "visible_pixels": 20389,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3218023d42aa5cf8f2b99d761fd7d0be01cc99f1"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_turnaround/frames/05_mister_florian_knell_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            51,
+            44,
+            119,
+            296
+          ],
+          "visible_pixels": 12294,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ae7512756b4062b2a8cbe41122835dbe0bff4cdd"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/panic_turnaround/frames/06_mister_florian_knell_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            44,
+            150,
+            296
+          ],
+          "visible_pixels": 17643,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "cf0deb158117cef09870fad1eb8e37bad0a302bb"
+        }
+      ]
+    },
+    "cover_face_cower": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/cover_face_cower/frames/01_mister_florian_knell_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            58,
+            165,
+            296
+          ],
+          "visible_pixels": 21090,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "99d74502d5099839e958ac594bcababffa3a3e87"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/cover_face_cower/frames/02_mister_florian_knell_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            61,
+            165,
+            296
+          ],
+          "visible_pixels": 21095,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7534d5d48baee89fcbdc0a3fd0a264949bd444ea"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/cover_face_cower/frames/03_mister_florian_knell_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            57,
+            165,
+            296
+          ],
+          "visible_pixels": 21606,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4884ef8978c3a92620dffd204e05ff7ca1ef2e3e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/cover_face_cower/frames/04_mister_florian_knell_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            58,
+            165,
+            296
+          ],
+          "visible_pixels": 20978,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b3b08e23ae36edb3861519e9aab041fd17564df3"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/cover_face_cower/frames/05_mister_florian_knell_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            58,
+            165,
+            296
+          ],
+          "visible_pixels": 20944,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d00c8e8e0a2dd7f34ebe8f3382645aecccd6238e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/MisterFlorianKnell/approved/full_body/cover_face_cower/frames/06_mister_florian_knell_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            61,
+            165,
+            296
+          ],
+          "visible_pixels": 20932,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "49cb0bc7f64adcdd6b41de5f5c813feccc17a63b"
+        }
+      ]
+    }
+  },
+  "panic_contact_sheet": "Assets/AnimationLibrary/MisterFlorianKnell/qa/panic_approved_contact_sheet.png"
 }

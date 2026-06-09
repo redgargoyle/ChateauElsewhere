@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using UnityEngine;
 
 public class Chapter2RegressionTests
 {
@@ -14,10 +15,35 @@ public class Chapter2RegressionTests
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
     private const string Chapter2MonsterStingerControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs";
     private const string Chapter2GuestSearchControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs";
+    private const string Chapter2GuestPanicControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs";
+    private const string Chapter2PanicAnimationLibraryPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2PanicAnimationLibrary.cs";
     private const string Chapter2GuestFindActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs";
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
+    private const string Chapter2PanicLibraryAssetPath = "Assets/Resources/Chapter2/PanicAnimationLibrary.asset";
+    private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
+    private const string AnimationLibraryPath = "Assets/AnimationLibrary";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
+    private static readonly string[] PanicRosterCharacters =
+    {
+        "Lady",
+        "ButlerGuest",
+        "MisterFlorianKnell",
+        "CountessElowenDusk",
+        "BaronHectorGlass",
+        "LadySabineMarrow",
+        "LordAmbroseVeil",
+        "MadameCoralieThread"
+    };
+    private static readonly PanicActionSpec[] RequiredPanicActions =
+    {
+        new PanicActionSpec("panic_reaction_down", "panicReactionDown", 6),
+        new PanicActionSpec("panic_shriek_down", "panicShriekDown", 8),
+        new PanicActionSpec("panic_run_left", "panicRunLeft", 8),
+        new PanicActionSpec("panic_run_right", "panicRunRight", 8),
+        new PanicActionSpec("panic_turnaround", "panicTurnaround", 6),
+        new PanicActionSpec("cover_face_cower", "coverFaceCower", 6)
+    };
 
     [Test]
     public void Chapter2ScriptSpecExists()
@@ -78,6 +104,7 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Contain("Chapter2InteractionHUD"), "Chapter2Controller should use the Chapter 2 interaction HUD.");
         Assert.That(controllerText, Does.Contain("Chapter2MonsterStingerController"), "Chapter2Controller should use the Chapter 2 monster stinger controller.");
         Assert.That(controllerText, Does.Contain("Chapter2GuestSearchController"), "Chapter2Controller should use the Chapter 2 guest search controller.");
+        Assert.That(controllerText, Does.Contain("Chapter2GuestPanicController"), "Chapter2Controller should use the Chapter 2 guest panic controller during the monster stinger.");
         Assert.That(controllerText, Does.Match(@"\bRunOpeningSpeechRoutine\s*\("), "Chapter2Controller should run the Butler opening speech from a coroutine.");
         Assert.That(controllerText, Does.Match(@"\bHandleAllGuestsFound\s*\("), "Chapter2Controller should handle the all-guests-found transition.");
         Assert.That(controllerText, Does.Match(@"(?s)\bMoveToDrawingRoom\s*\([^)]*\)\s*\{.*debugTeleportToDrawingRoomOnStart.*DebugTeleportToRoom\(drawingRoomId\).*MoveToRoom\(drawingRoomId\)"), "Chapter 2 debug skip should teleport to the Drawing Room first, then fall back to normal room movement.");
@@ -153,6 +180,160 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Contain("monsterStingerTimeoutSeconds = 14f"), "Monster stinger should have a watchdog timeout so Chapter 2 cannot stall before GuestSearch.");
         Assert.That(controllerText, Does.Match(@"(?s)\bRunMonsterStingerRoutine\s*\([^)]*\)\s*\{.*BeginStinger\s*\(.*monsterStinger\.IsRunning.*Time\.unscaledDeltaTime.*StopStinger\s*\(.*StartGuestSearch\s*\(\);\s*SetPhase\s*\(\s*Chapter2Phase\.GuestSearch\s*\)"), "Monster stinger should run before GuestSearch, but time out and continue if it gets stuck.");
         Assert.That(controllerText, Does.Contain("Find the guests. Tell them dinner will be served at 7:00 PM sharp."));
+    }
+
+    [Test]
+    public void Chapter2RunsGuestPanicOnlyDuringMonsterStinger()
+    {
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        int routineIndex = controllerText.IndexOf("RunMonsterStingerRoutine", System.StringComparison.Ordinal);
+        int beginPanicIndex = controllerText.IndexOf("guestPanic.BeginPanic()", routineIndex, System.StringComparison.Ordinal);
+        int beginStingerIndex = controllerText.IndexOf("monsterStinger.BeginStinger()", routineIndex, System.StringComparison.Ordinal);
+        int stopPanicIndex = controllerText.IndexOf("guestPanic.StopPanic()", routineIndex, System.StringComparison.Ordinal);
+        int startSearchIndex = controllerText.IndexOf("StartGuestSearch()", routineIndex, System.StringComparison.Ordinal);
+
+        Assert.That(File.Exists(Chapter2GuestPanicControllerPath), Is.True, "Chapter 2 should have a dedicated panic playback controller.");
+        Assert.That(routineIndex, Is.GreaterThanOrEqualTo(0), "Chapter 2 should have a monster stinger routine.");
+        Assert.That(beginPanicIndex, Is.GreaterThan(routineIndex), "Guest panic should start inside the monster stinger routine.");
+        Assert.That(beginStingerIndex, Is.GreaterThan(routineIndex), "Monster stinger should start inside the monster stinger routine.");
+        Assert.That(beginPanicIndex, Is.LessThan(beginStingerIndex), "Guest panic should begin in the same handoff frame as the monster stinger.");
+        Assert.That(stopPanicIndex, Is.GreaterThan(beginStingerIndex), "Guest panic should keep running while the stinger wait/timeout runs.");
+        Assert.That(stopPanicIndex, Is.LessThan(startSearchIndex), "Guest panic should stop before guest search placement begins.");
+        Assert.That(controllerText, Does.Match(@"(?s)\bStopChapter2Coroutines\s*\([^)]*\)\s*\{.*guestPanic\.StopPanic\(\)"), "Coroutine cleanup should not leave panic running.");
+        Assert.That(controllerText, Does.Match(@"(?s)\bDebugResetForChapter2Skip\s*\([^)]*\)\s*\{.*guestPanic\.StopPanic\(\)"), "Debug reset should not leave panic running.");
+    }
+
+    [Test]
+    public void Chapter2GuestPanicUsesApprovedResourcesOnly()
+    {
+        Assert.That(File.Exists(Chapter2GuestPanicControllerPath), Is.True);
+        Assert.That(File.Exists(Chapter2PanicAnimationLibraryPath), Is.True);
+        Assert.That(File.Exists(Chapter2PanicLibraryBuilderPath), Is.True);
+
+        string panicText = File.ReadAllText(Chapter2GuestPanicControllerPath);
+        string libraryText = File.ReadAllText(Chapter2PanicAnimationLibraryPath);
+        string builderText = File.ReadAllText(Chapter2PanicLibraryBuilderPath);
+
+        Assert.That(panicText, Does.Contain("Resources.Load<Chapter2PanicAnimationLibrary>(Chapter2PanicAnimationLibrary.ResourcesPath)"));
+        Assert.That(panicText, Does.Contain("GetGuestActorsInIdentityOrder()"));
+        Assert.That(panicText, Does.Contain("HasRequiredFrames"));
+        Assert.That(panicText, Does.Contain("Debug.LogError"));
+        Assert.That(panicText, Does.Not.Contain("AssetDatabase"), "Runtime panic playback must not read editor-only project paths.");
+        Assert.That(panicText, Does.Not.Contain("Sprite.Create"), "Runtime panic playback must not synthesize fallback sprites.");
+        Assert.That(panicText, Does.Not.Contain("new Texture2D"), "Runtime panic playback must not synthesize fallback textures.");
+        Assert.That(panicText, Does.Not.Contain("LineRenderer"), "Runtime panic playback must not draw placeholder limbs.");
+        Assert.That(panicText, Does.Not.Contain("CreatePrimitive"));
+
+        Assert.That(libraryText, Does.Contain("ResourcesPath = \"Chapter2/PanicAnimationLibrary\""));
+        Assert.That(libraryText, Does.Contain("TryGetCharacterIdForGuestNumber"));
+
+        for (int i = 0; i < PanicRosterCharacters.Length; i++)
+        {
+            Assert.That(libraryText, Does.Contain("\"" + PanicRosterCharacters[i] + "\""), $"Panic roster should include {PanicRosterCharacters[i]}.");
+        }
+
+        Assert.That(builderText, Does.Contain("Assets/AnimationLibrary"));
+        Assert.That(builderText, Does.Contain("Assets/Resources/Chapter2"));
+        Assert.That(builderText, Does.Contain("throw new InvalidOperationException"), "The editor builder should fail when approved frames are incomplete.");
+    }
+
+    [Test]
+    public void Chapter2PanicApprovedFrameLibraryIsComplete()
+    {
+        Assert.That(File.Exists(Chapter2PanicLibraryAssetPath), Is.True, "The runtime Resources panic library asset should be built.");
+
+        string assetText = File.ReadAllText(Chapter2PanicLibraryAssetPath);
+        Assert.That(Regex.Matches(assetText, @"\bcharacterId:").Count, Is.EqualTo(PanicRosterCharacters.Length));
+
+        for (int characterIndex = 0; characterIndex < PanicRosterCharacters.Length; characterIndex++)
+        {
+            string character = PanicRosterCharacters[characterIndex];
+            Assert.That(assetText, Does.Contain("characterId: " + character), $"Runtime asset should contain {character}.");
+            Assert.That(File.Exists(Path.Combine(AnimationLibraryPath, character, "qa", "panic_approved_contact_sheet.png")), Is.True, $"{character} should have a panic contact sheet.");
+            Assert.That(File.Exists(Path.Combine(AnimationLibraryPath, character, "manifest.json")), Is.True, $"{character} should have a manifest.");
+
+            string manifestText = File.ReadAllText(Path.Combine(AnimationLibraryPath, character, "manifest.json"));
+            Assert.That(manifestText, Does.Contain("approved_panic_actions"), $"{character} manifest should list approved panic actions.");
+
+            for (int actionIndex = 0; actionIndex < RequiredPanicActions.Length; actionIndex++)
+            {
+                PanicActionSpec action = RequiredPanicActions[actionIndex];
+                string framesFolder = Path.Combine(AnimationLibraryPath, character, "approved", "full_body", action.ActionId, "frames");
+                Assert.That(Directory.Exists(framesFolder), Is.True, $"{character}/{action.ActionId} should have an approved frames folder.");
+                Assert.That(Directory.GetFiles(framesFolder, "*.png").Length, Is.EqualTo(action.ExpectedFrameCount), $"{character}/{action.ActionId} should have the exact approved frame count.");
+                Assert.That(assetText, Does.Contain(action.AssetField + ":"), $"Runtime asset should contain {action.AssetField} arrays.");
+            }
+        }
+    }
+
+    [Test]
+    public void Chapter2GuestPanicBeginStopRestoresActorState()
+    {
+        GameObject root = new GameObject("Chapter2PanicTestRoot");
+        GameObject actor = new GameObject("Guest1");
+        Texture2D texture = null;
+        Sprite originalSprite = null;
+
+        try
+        {
+            actor.transform.SetParent(root.transform);
+            actor.transform.position = new Vector3(1.25f, 2.5f, -0.75f);
+            actor.transform.localScale = new Vector3(1.2f, 0.9f, 1f);
+
+            texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            texture.SetPixels(new[]
+            {
+                Color.white,
+                Color.white,
+                Color.white,
+                Color.white
+            });
+            texture.Apply();
+            originalSprite = Sprite.Create(texture, new Rect(0f, 0f, 2f, 2f), new Vector2(0.5f, 0f));
+
+            SpriteRenderer renderer = actor.AddComponent<SpriteRenderer>();
+            renderer.sprite = originalSprite;
+            Animator animator = actor.AddComponent<Animator>();
+            animator.enabled = true;
+
+            ActorRoomState actorState = actor.AddComponent<ActorRoomState>();
+            actorState.SetCurrentRoom("Drawing Room");
+            actorState.SetAvailableInCurrentChapter(true);
+            actorState.SetVisibleByChapterState(true);
+            actorState.SetInteractable(true);
+            actorState.SetSeated(true);
+
+            root.AddComponent<Chapter2GuestSearchController>();
+            Chapter2GuestPanicController panic = root.AddComponent<Chapter2GuestPanicController>();
+
+            Vector3 originalPosition = actor.transform.position;
+            Vector3 originalLocalScale = actor.transform.localScale;
+
+            panic.BeginPanic();
+
+            Assert.That(panic.IsRunning, Is.True, "BeginPanic should start playback when approved Resources frames exist.");
+            Assert.That(actorState.IsInteractable, Is.False, "Panic should make guests non-interactable.");
+            Assert.That(actorState.IsSeated, Is.False, "Panic should stand guests up temporarily.");
+            Assert.That(animator.enabled, Is.False, "Panic should disable authored animators while sprite clips play.");
+
+            panic.StopPanic();
+
+            Assert.That(panic.IsRunning, Is.False);
+            Assert.That(renderer.sprite, Is.EqualTo(originalSprite));
+            Assert.That(animator.enabled, Is.True);
+            Assert.That(actorState.CurrentRoomId, Is.EqualTo("Drawing Room"));
+            Assert.That(actorState.IsVisibleByChapterState, Is.True);
+            Assert.That(actorState.IsInteractable, Is.True);
+            Assert.That(actorState.IsSeated, Is.True);
+            Assert.That(actor.transform.position, Is.EqualTo(originalPosition));
+            Assert.That(actor.transform.localScale, Is.EqualTo(originalLocalScale));
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(originalSprite);
+            Object.DestroyImmediate(texture);
+        }
     }
 
     [Test]
@@ -488,5 +669,19 @@ public class Chapter2RegressionTests
 
         Assert.That(sceneText, Does.Match(anchorPattern), $"{anchorName} should be parented under {roomObjectName} and marked as {roomId}.");
         Assert.That(sceneText, Does.Not.Match($@"anchorId: {Regex.Escape(anchorName)}\s+roomId: (Ballroom|Drawing Room|Dining Room)"));
+    }
+
+    private readonly struct PanicActionSpec
+    {
+        public readonly string ActionId;
+        public readonly string AssetField;
+        public readonly int ExpectedFrameCount;
+
+        public PanicActionSpec(string actionId, string assetField, int expectedFrameCount)
+        {
+            ActionId = actionId;
+            AssetField = assetField;
+            ExpectedFrameCount = expectedFrameCount;
+        }
     }
 }

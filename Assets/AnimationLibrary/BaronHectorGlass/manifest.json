@@ -1050,5 +1050,921 @@
   "excluded_sources": [],
   "contact_sheet": "Assets/AnimationLibrary/BaronHectorGlass/qa/reference_contact_sheet.png",
   "generation_requests": "Assets/AnimationLibrary/BaronHectorGlass/requests/generation_prompts.jsonl",
-  "warnings": []
+  "warnings": [],
+  "chapter2_guest_number": 5,
+  "approved_panic_actions": {
+    "panic_reaction_down": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_reaction_down/frames/01_baron_hector_glass_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            43,
+            127,
+            296
+          ],
+          "visible_pixels": 14466,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "82a4f4663f73a8e25e3534d6cfe6fc955a7ed2f4"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_reaction_down/frames/02_baron_hector_glass_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            51,
+            128,
+            295
+          ],
+          "visible_pixels": 14933,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "fa3b105283f9f112f7d327e9202c6bee19324070"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_reaction_down/frames/03_baron_hector_glass_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            53,
+            130,
+            293
+          ],
+          "visible_pixels": 14914,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "aa43af19419cedad93b54124ba6d1f237562dff9"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_reaction_down/frames/04_baron_hector_glass_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            47,
+            129,
+            294
+          ],
+          "visible_pixels": 14998,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b3f0a60e6bdf7b325edf6ca5a215aca3e6c5f2c3"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_reaction_down/frames/05_baron_hector_glass_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            38,
+            52,
+            132,
+            293
+          ],
+          "visible_pixels": 14526,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "96f3d7024d33a516ba30fe35516511328e8f6c0e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_reaction_down/frames/06_baron_hector_glass_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            45,
+            129,
+            295
+          ],
+          "visible_pixels": 15011,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5b17234f9a484c16f0ebef1512d0919bb7df69e2"
+        }
+      ]
+    },
+    "panic_shriek_down": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_shriek_down/frames/01_baron_hector_glass_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            31,
+            130,
+            295
+          ],
+          "visible_pixels": 16674,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "cd87c723dfe76fc660dd3a9c468b8c85fc41c918"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_shriek_down/frames/02_baron_hector_glass_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            28,
+            130,
+            294
+          ],
+          "visible_pixels": 16992,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7ad8955d42776661b920031736646722dd1e8c9e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_shriek_down/frames/03_baron_hector_glass_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            27,
+            131,
+            293
+          ],
+          "visible_pixels": 17076,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "9c2aa456681b768c9f3f9a47e8d5fa5e0c673ac8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_shriek_down/frames/04_baron_hector_glass_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            28,
+            130,
+            294
+          ],
+          "visible_pixels": 16992,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7ad8955d42776661b920031736646722dd1e8c9e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_shriek_down/frames/05_baron_hector_glass_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            31,
+            130,
+            295
+          ],
+          "visible_pixels": 16674,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "cd87c723dfe76fc660dd3a9c468b8c85fc41c918"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_shriek_down/frames/06_baron_hector_glass_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            23,
+            129,
+            296
+          ],
+          "visible_pixels": 16667,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5f53e9d9d101f1848cdb78e71f8d39b5a81d0faa"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_shriek_down/frames/07_baron_hector_glass_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            21,
+            129,
+            296
+          ],
+          "visible_pixels": 16818,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7fff7f639a3f5eecc5906013d20a259cb8c2d5f0"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_shriek_down/frames/08_baron_hector_glass_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            23,
+            129,
+            296
+          ],
+          "visible_pixels": 16667,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5f53e9d9d101f1848cdb78e71f8d39b5a81d0faa"
+        }
+      ]
+    },
+    "panic_run_left": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_left/frames/01_baron_hector_glass_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            31,
+            137,
+            293
+          ],
+          "visible_pixels": 14036,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "1d144256a87d54a00f2a5bbf4bf56d152d5bb494"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_left/frames/02_baron_hector_glass_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            31,
+            137,
+            293
+          ],
+          "visible_pixels": 14036,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "1d144256a87d54a00f2a5bbf4bf56d152d5bb494"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_left/frames/03_baron_hector_glass_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            29,
+            144,
+            293
+          ],
+          "visible_pixels": 14353,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8f11b7b3761bf2f6381e604d0aac5e858e20e506"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_left/frames/04_baron_hector_glass_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            29,
+            144,
+            293
+          ],
+          "visible_pixels": 14353,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8f11b7b3761bf2f6381e604d0aac5e858e20e506"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_left/frames/05_baron_hector_glass_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            29,
+            144,
+            293
+          ],
+          "visible_pixels": 14353,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8f11b7b3761bf2f6381e604d0aac5e858e20e506"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_left/frames/06_baron_hector_glass_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            29,
+            144,
+            293
+          ],
+          "visible_pixels": 14353,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8f11b7b3761bf2f6381e604d0aac5e858e20e506"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_left/frames/07_baron_hector_glass_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            50,
+            31,
+            112,
+            293
+          ],
+          "visible_pixels": 10851,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "406b9648567d60466ef3857f3c263af535d73a7b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_left/frames/08_baron_hector_glass_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            50,
+            31,
+            112,
+            293
+          ],
+          "visible_pixels": 10851,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "406b9648567d60466ef3857f3c263af535d73a7b"
+        }
+      ]
+    },
+    "panic_run_right": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_right/frames/01_baron_hector_glass_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            29,
+            149,
+            293
+          ],
+          "visible_pixels": 13816,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "50d029f3c994bc219d1e8913c8b79b167017e6e7"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_right/frames/02_baron_hector_glass_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            29,
+            149,
+            293
+          ],
+          "visible_pixels": 13816,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "50d029f3c994bc219d1e8913c8b79b167017e6e7"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_right/frames/03_baron_hector_glass_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            29,
+            152,
+            293
+          ],
+          "visible_pixels": 13594,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4d1e8551eecf73a91fc197703a73e5b62476fae8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_right/frames/04_baron_hector_glass_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            29,
+            152,
+            293
+          ],
+          "visible_pixels": 13594,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4d1e8551eecf73a91fc197703a73e5b62476fae8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_right/frames/05_baron_hector_glass_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            29,
+            152,
+            293
+          ],
+          "visible_pixels": 13594,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4d1e8551eecf73a91fc197703a73e5b62476fae8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_right/frames/06_baron_hector_glass_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            29,
+            152,
+            293
+          ],
+          "visible_pixels": 13594,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4d1e8551eecf73a91fc197703a73e5b62476fae8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_right/frames/07_baron_hector_glass_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            54,
+            29,
+            117,
+            293
+          ],
+          "visible_pixels": 11106,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b10cb82582ed0bc7ea149b99c5bd969c81ece929"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_run_right/frames/08_baron_hector_glass_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            54,
+            29,
+            117,
+            293
+          ],
+          "visible_pixels": 11106,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b10cb82582ed0bc7ea149b99c5bd969c81ece929"
+        }
+      ]
+    },
+    "panic_turnaround": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_turnaround/frames/01_baron_hector_glass_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            44,
+            144,
+            296
+          ],
+          "visible_pixels": 15562,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7794b99054a5ffab81fb7ffb6ddf89df27c2512b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_turnaround/frames/02_baron_hector_glass_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            45,
+            145,
+            296
+          ],
+          "visible_pixels": 15958,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f451ebc08332e02f0f36533d4785fad87e5a07b6"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_turnaround/frames/03_baron_hector_glass_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            52,
+            129,
+            296
+          ],
+          "visible_pixels": 14681,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "1636aebd69368768de60f36073cc35365008e35f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_turnaround/frames/04_baron_hector_glass_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            51,
+            130,
+            296
+          ],
+          "visible_pixels": 15000,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f1621cc39bbce2add4514b00b464dac41919b572"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_turnaround/frames/05_baron_hector_glass_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            45,
+            151,
+            296
+          ],
+          "visible_pixels": 15687,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "97eed220dc4eff0f2b4948ae8de828b1115bba64"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/panic_turnaround/frames/06_baron_hector_glass_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            43,
+            146,
+            296
+          ],
+          "visible_pixels": 15983,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "10995fb81f90ef9be395d73b41d0d1dae00c0c2c"
+        }
+      ]
+    },
+    "cover_face_cower": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/cover_face_cower/frames/01_baron_hector_glass_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            72,
+            165,
+            296
+          ],
+          "visible_pixels": 20463,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "bc65112931d9003fbfcb3a073b7f03dd2984d831"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/cover_face_cower/frames/02_baron_hector_glass_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            71,
+            165,
+            296
+          ],
+          "visible_pixels": 20498,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "85ac59032b07376f32b80ea8dcf214fb763a2fdb"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/cover_face_cower/frames/03_baron_hector_glass_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            68,
+            165,
+            296
+          ],
+          "visible_pixels": 20807,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5ee26edb0c7df101606d0bc376a5a8e3081856a8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/cover_face_cower/frames/04_baron_hector_glass_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            71,
+            165,
+            296
+          ],
+          "visible_pixels": 20634,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "1333a57fd1ba0492e666dcf1ae5cbd6b3b712c72"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/cover_face_cower/frames/05_baron_hector_glass_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            72,
+            165,
+            296
+          ],
+          "visible_pixels": 20526,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "eda3cc22e3683a0924bce7a39cf352c85139276c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/BaronHectorGlass/approved/full_body/cover_face_cower/frames/06_baron_hector_glass_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            71,
+            165,
+            296
+          ],
+          "visible_pixels": 20639,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "edbd702babba922ff01ecd7848affd20fd578bc2"
+        }
+      ]
+    }
+  },
+  "panic_contact_sheet": "Assets/AnimationLibrary/BaronHectorGlass/qa/panic_approved_contact_sheet.png"
 }

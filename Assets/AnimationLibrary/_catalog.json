@@ -17,6 +17,22 @@
   },
   "characters": [
     {
+      "character": "Lady",
+      "display_name": "Lady",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/Lady/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/Lady/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
+      "character": "ButlerGuest",
+      "display_name": "Butler Guest",
+      "role": "guest",
+      "manifest": "Assets/AnimationLibrary/ButlerGuest/manifest.json",
+      "contact_sheet": "Assets/AnimationLibrary/ButlerGuest/qa/reference_contact_sheet.png",
+      "warnings": []
+    },
+    {
       "character": "LordAmbroseVeil",
       "display_name": "Lord Ambrose Veil",
       "role": "guest",

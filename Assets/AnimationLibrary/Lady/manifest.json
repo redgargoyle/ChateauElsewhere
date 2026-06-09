@@ -1,0 +1,1468 @@
+{
+  "character": "Lady",
+  "display_name": "Lady",
+  "role": "guest",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "source_sheet": "",
+  "style_brief": "Lady: Victorian lady guest in a blue dress, dark hair, pale sleeves, full skirt, delicate formal posture. Use the current project reference art in reference/full_body as the strict visual target.",
+  "reference_sequences": {
+    "sitting": [
+      {
+        "source": "Assets/Art/Characters/guest1/lady_sitting_01.png",
+        "source_size": [
+          365,
+          599
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/sitting/01_lady_sitting_01.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/sitting/01_lady_sitting_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            11,
+            166,
+            297
+          ],
+          "visible_pixels": 27669,
+          "semi_alpha_pixels": 1170,
+          "bottom_margin": 0,
+          "sha1": "400d701406b9201215932a4f06132b83bd811457"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_sitting_02.png",
+        "source_size": [
+          365,
+          599
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/sitting/02_lady_sitting_02.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/sitting/02_lady_sitting_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            8,
+            166,
+            297
+          ],
+          "visible_pixels": 28213,
+          "semi_alpha_pixels": 1154,
+          "bottom_margin": 0,
+          "sha1": "9b1f183fa8859b79978032e23f8e80435055fe43"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_sitting_03.png",
+        "source_size": [
+          365,
+          599
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/sitting/03_lady_sitting_03.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/sitting/03_lady_sitting_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            24,
+            166,
+            297
+          ],
+          "visible_pixels": 25445,
+          "semi_alpha_pixels": 1118,
+          "bottom_margin": 0,
+          "sha1": "d7998eebb8047d2e2e1d0fc0926eb0c8112f1a3a"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_sitting_04.png",
+        "source_size": [
+          365,
+          599
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/sitting/04_lady_sitting_04.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/sitting/04_lady_sitting_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            12,
+            166,
+            297
+          ],
+          "visible_pixels": 26685,
+          "semi_alpha_pixels": 1207,
+          "bottom_margin": 0,
+          "sha1": "06f5c391b44e03aa5f57e51bab296e194cc28288"
+        }
+      }
+    ],
+    "walk_down": [
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_01_r01_c01.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_down/01_lady_walk_01_r01_c01.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_down/01_lady_walk_01_r01_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            22,
+            134,
+            297
+          ],
+          "visible_pixels": 18829,
+          "semi_alpha_pixels": 1506,
+          "bottom_margin": 0,
+          "sha1": "9e46914f308667e8c2f3a001e4d5d481a76c442b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_02_r01_c02.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_down/02_lady_walk_02_r01_c02.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_down/02_lady_walk_02_r01_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            15,
+            140,
+            297
+          ],
+          "visible_pixels": 18752,
+          "semi_alpha_pixels": 1738,
+          "bottom_margin": 0,
+          "sha1": "88c39177bf132d69f49b4bdf03c061c5cdd41ebb"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_03_r01_c03.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_down/03_lady_walk_03_r01_c03.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_down/03_lady_walk_03_r01_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            17,
+            145,
+            297
+          ],
+          "visible_pixels": 18517,
+          "semi_alpha_pixels": 1967,
+          "bottom_margin": 0,
+          "sha1": "92632c175eaa5a753e6887f3daab762d20c49faf"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_04_r01_c04.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_down/04_lady_walk_04_r01_c04.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_down/04_lady_walk_04_r01_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            17,
+            143,
+            297
+          ],
+          "visible_pixels": 18440,
+          "semi_alpha_pixels": 1937,
+          "bottom_margin": 0,
+          "sha1": "2b3021631fa7fab1b79d3363cff0e0e4c4b7445c"
+        }
+      }
+    ],
+    "walk_left": [
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_05_r02_c01.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_left/01_lady_walk_05_r02_c01.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_left/01_lady_walk_05_r02_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            23,
+            131,
+            297
+          ],
+          "visible_pixels": 16405,
+          "semi_alpha_pixels": 1323,
+          "bottom_margin": 0,
+          "sha1": "c9848bad5fe5b3cf9291fd58c87cf7598acfe172"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_06_r02_c02.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_left/02_lady_walk_06_r02_c02.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_left/02_lady_walk_06_r02_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            3,
+            21,
+            163,
+            297
+          ],
+          "visible_pixels": 20481,
+          "semi_alpha_pixels": 1523,
+          "bottom_margin": 0,
+          "sha1": "1c3fdde0536d15a4cc8659cc8232a12e7d9d83fe"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_07_r02_c03.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_left/03_lady_walk_07_r02_c03.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_left/03_lady_walk_07_r02_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            33,
+            166,
+            297
+          ],
+          "visible_pixels": 19663,
+          "semi_alpha_pixels": 1125,
+          "bottom_margin": 0,
+          "sha1": "d8b0edc52f36a9c67aae31fe3ec2cf7059fea589"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_08_r02_c04.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_left/04_lady_walk_08_r02_c04.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_left/04_lady_walk_08_r02_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            30,
+            166,
+            297
+          ],
+          "visible_pixels": 19809,
+          "semi_alpha_pixels": 1169,
+          "bottom_margin": 0,
+          "sha1": "906636776cfe1812a5236276d691d9da13661706"
+        }
+      }
+    ],
+    "walk_right": [
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_09_r03_c01.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_right/01_lady_walk_09_r03_c01.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_right/01_lady_walk_09_r03_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            23,
+            129,
+            297
+          ],
+          "visible_pixels": 16044,
+          "semi_alpha_pixels": 1318,
+          "bottom_margin": 0,
+          "sha1": "e18ba9af039480999efc1fbbb3f8917bc51cbb46"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_10_r03_c02.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_right/02_lady_walk_10_r03_c02.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_right/02_lady_walk_10_r03_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            6,
+            23,
+            160,
+            297
+          ],
+          "visible_pixels": 20147,
+          "semi_alpha_pixels": 1609,
+          "bottom_margin": 0,
+          "sha1": "8909c7f23db49e3fdc7617b6cda81f7b7af8362a"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_11_r03_c03.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_right/03_lady_walk_11_r03_c03.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_right/03_lady_walk_11_r03_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            25,
+            165,
+            297
+          ],
+          "visible_pixels": 20563,
+          "semi_alpha_pixels": 1621,
+          "bottom_margin": 0,
+          "sha1": "1e86163dc692d93187e5407975869695f2b8b474"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_12_r03_c04.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_right/04_lady_walk_12_r03_c04.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_right/04_lady_walk_12_r03_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            25,
+            164,
+            297
+          ],
+          "visible_pixels": 20435,
+          "semi_alpha_pixels": 1678,
+          "bottom_margin": 0,
+          "sha1": "9a010dd3f8d7820dbbc2196227a900e61baa85be"
+        }
+      }
+    ],
+    "walk_up": [
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_13_r04_c01.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_up/01_lady_walk_13_r04_c01.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_up/01_lady_walk_13_r04_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            16,
+            134,
+            297
+          ],
+          "visible_pixels": 19507,
+          "semi_alpha_pixels": 1517,
+          "bottom_margin": 0,
+          "sha1": "830cfd4eba30dbb488d6489d7f19d2d1306fcc0a"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_14_r04_c02.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_up/02_lady_walk_14_r04_c02.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_up/02_lady_walk_14_r04_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            11,
+            139,
+            297
+          ],
+          "visible_pixels": 19967,
+          "semi_alpha_pixels": 1803,
+          "bottom_margin": 0,
+          "sha1": "d36a6a44be5999bbfedeb2fc0bedcdd2b982feba"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_15_r04_c03.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_up/03_lady_walk_15_r04_c03.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_up/03_lady_walk_15_r04_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            12,
+            145,
+            297
+          ],
+          "visible_pixels": 20882,
+          "semi_alpha_pixels": 1916,
+          "bottom_margin": 0,
+          "sha1": "9901330d4093d438cc59ba17d2c40dc5b4fbaf82"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest1/lady_walk_16_r04_c04.png",
+        "source_size": [
+          180,
+          290
+        ],
+        "library_file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_up/04_lady_walk_16_r04_c04.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/Lady/reference/full_body/walk_up/04_lady_walk_16_r04_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            11,
+            143,
+            297
+          ],
+          "visible_pixels": 20465,
+          "semi_alpha_pixels": 1900,
+          "bottom_margin": 0,
+          "sha1": "14f0ec71e3ac995e61fe302f9d1601d5e9559cf7"
+        }
+      }
+    ]
+  },
+  "excluded_sources": [],
+  "contact_sheet": "Assets/AnimationLibrary/Lady/qa/reference_contact_sheet.png",
+  "generation_requests": "Assets/AnimationLibrary/Lady/requests/generation_prompts.jsonl",
+  "warnings": [],
+  "chapter2_guest_number": 1,
+  "approved_panic_actions": {
+    "panic_reaction_down": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_reaction_down/frames/01_lady_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            27,
+            134,
+            296
+          ],
+          "visible_pixels": 18921,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d058a0f6a0049dc4bf1252f7974b07d8e033b3e5"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_reaction_down/frames/02_lady_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            30,
+            142,
+            295
+          ],
+          "visible_pixels": 18911,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c9143404cb313f20cade1bd074c66706e611b3c6"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_reaction_down/frames/03_lady_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            35,
+            149,
+            293
+          ],
+          "visible_pixels": 18941,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "40f79986057e2b39326b9e18c5196b14201cb64a"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_reaction_down/frames/04_lady_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            28,
+            145,
+            294
+          ],
+          "visible_pixels": 18966,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ff565c270d44d32255e7ad4892f58a1cae317913"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_reaction_down/frames/05_lady_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            37,
+            140,
+            293
+          ],
+          "visible_pixels": 18995,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c7115f73a7cc93f66f881df97ef6d69df91b8eff"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_reaction_down/frames/06_lady_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            24,
+            141,
+            295
+          ],
+          "visible_pixels": 19387,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "6cc2e85ac762a166f7e5bc2bbca7f7f1ec45983b"
+        }
+      ]
+    },
+    "panic_shriek_down": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_shriek_down/frames/01_lady_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            13,
+            137,
+            295
+          ],
+          "visible_pixels": 21028,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "074c87742d20ebdcf145238485229d68662d9c73"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_shriek_down/frames/02_lady_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            5,
+            144,
+            294
+          ],
+          "visible_pixels": 21441,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0044e666699380f501ac82a984ed388dac6840f4"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_shriek_down/frames/03_lady_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            7,
+            150,
+            293
+          ],
+          "visible_pixels": 21517,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "53d4a76bff67885851d960cb5b8e68cf90648755"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_shriek_down/frames/04_lady_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            7,
+            147,
+            294
+          ],
+          "visible_pixels": 21409,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3a1c258f7bfadbf4e3159759cd8625eae3bcad02"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_shriek_down/frames/05_lady_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            13,
+            137,
+            295
+          ],
+          "visible_pixels": 21028,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "074c87742d20ebdcf145238485229d68662d9c73"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_shriek_down/frames/06_lady_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            1,
+            142,
+            296
+          ],
+          "visible_pixels": 21512,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "be68bfb3cff09f1f590d7204206eeff91db80102"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_shriek_down/frames/07_lady_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            1,
+            146,
+            296
+          ],
+          "visible_pixels": 21360,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "cc277dd665950b38ef7ea211fe73f5087d62f92a"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_shriek_down/frames/08_lady_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            1,
+            145,
+            296
+          ],
+          "visible_pixels": 21227,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "43fbe5be5bb011e7dba52cad143df284402853ac"
+        }
+      ]
+    },
+    "panic_run_left": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_left/frames/01_lady_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            23,
+            131,
+            296
+          ],
+          "visible_pixels": 16385,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "2eefe6c7a5c77b403e4e058817e02045acee3ed9"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_left/frames/02_lady_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            23,
+            131,
+            296
+          ],
+          "visible_pixels": 16385,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "2eefe6c7a5c77b403e4e058817e02045acee3ed9"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_left/frames/03_lady_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            3,
+            21,
+            163,
+            296
+          ],
+          "visible_pixels": 20454,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4668a0153bf59e2c1de141461ebb93c8a0fc9a5c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_left/frames/04_lady_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            3,
+            21,
+            163,
+            296
+          ],
+          "visible_pixels": 20454,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4668a0153bf59e2c1de141461ebb93c8a0fc9a5c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_left/frames/05_lady_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            33,
+            165,
+            296
+          ],
+          "visible_pixels": 19596,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "28f594f58d890aa3eed87c581381201f3361fb83"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_left/frames/06_lady_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            33,
+            165,
+            296
+          ],
+          "visible_pixels": 19596,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "28f594f58d890aa3eed87c581381201f3361fb83"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_left/frames/07_lady_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            30,
+            165,
+            296
+          ],
+          "visible_pixels": 19771,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "167d39187c712daa03d8d57ca342e873558b82ee"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_left/frames/08_lady_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            30,
+            165,
+            296
+          ],
+          "visible_pixels": 19771,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "167d39187c712daa03d8d57ca342e873558b82ee"
+        }
+      ]
+    },
+    "panic_run_right": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_right/frames/01_lady_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            23,
+            129,
+            296
+          ],
+          "visible_pixels": 16031,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c4b23868333f33b3406468d0d60567df75f0f569"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_right/frames/02_lady_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            23,
+            129,
+            296
+          ],
+          "visible_pixels": 16031,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c4b23868333f33b3406468d0d60567df75f0f569"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_right/frames/03_lady_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            6,
+            23,
+            160,
+            296
+          ],
+          "visible_pixels": 20140,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f55f3f51e398f3558cddc1deb451fbeddbd356f2"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_right/frames/04_lady_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            6,
+            23,
+            160,
+            296
+          ],
+          "visible_pixels": 20140,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f55f3f51e398f3558cddc1deb451fbeddbd356f2"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_right/frames/05_lady_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            25,
+            165,
+            296
+          ],
+          "visible_pixels": 20515,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a99becafec83fa77ee84111d9d4b25ea78dd320b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_right/frames/06_lady_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            25,
+            165,
+            296
+          ],
+          "visible_pixels": 20515,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a99becafec83fa77ee84111d9d4b25ea78dd320b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_right/frames/07_lady_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            25,
+            164,
+            296
+          ],
+          "visible_pixels": 20409,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "236062125adcd9e81ec228b73700a75473a2efe9"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_run_right/frames/08_lady_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            25,
+            164,
+            296
+          ],
+          "visible_pixels": 20409,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "236062125adcd9e81ec228b73700a75473a2efe9"
+        }
+      ]
+    },
+    "panic_turnaround": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_turnaround/frames/01_lady_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            33,
+            132,
+            296
+          ],
+          "visible_pixels": 17152,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "847dcd59bd0dfbc63ae7f0e3eb97fe9e1083fe46"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_turnaround/frames/02_lady_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            33,
+            165,
+            296
+          ],
+          "visible_pixels": 22638,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ab2053a579c3e410b431865cbde7dc37180c862d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_turnaround/frames/03_lady_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            36,
+            136,
+            296
+          ],
+          "visible_pixels": 18890,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "6e51fd8e4188c026ffaf99e16a687b8a4b80cde2"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_turnaround/frames/04_lady_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            30,
+            144,
+            296
+          ],
+          "visible_pixels": 19230,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0ff8b5f20b84c1ed4be94fed921124c7343de360"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_turnaround/frames/05_lady_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            4,
+            35,
+            165,
+            296
+          ],
+          "visible_pixels": 22641,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f2d53e4f51e840ffdd9dacb63d6c37b4c1028f4b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/panic_turnaround/frames/06_lady_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            33,
+            133,
+            296
+          ],
+          "visible_pixels": 17209,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "73f9fef59964a414ef24775c1446403244b65d45"
+        }
+      ]
+    },
+    "cover_face_cower": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/cover_face_cower/frames/01_lady_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            59,
+            165,
+            296
+          ],
+          "visible_pixels": 25132,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "73df9f6ab527c1aee3e7811df8eac84550c8064f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/cover_face_cower/frames/02_lady_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            56,
+            165,
+            296
+          ],
+          "visible_pixels": 25580,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "1a1f796e7c4d74f37b4242c5e9ca3204430394eb"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/cover_face_cower/frames/03_lady_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            70,
+            165,
+            296
+          ],
+          "visible_pixels": 23227,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ae0187b0f456fb065deae21168678ac3e6a56eb3"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/cover_face_cower/frames/04_lady_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            60,
+            165,
+            296
+          ],
+          "visible_pixels": 24304,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "66849577686543fa10e074ed45339aa278ce6add"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/cover_face_cower/frames/05_lady_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            59,
+            165,
+            296
+          ],
+          "visible_pixels": 25245,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "49f21761359100147075aa47289cbecc8469b6e3"
+        },
+        {
+          "file": "Assets/AnimationLibrary/Lady/approved/full_body/cover_face_cower/frames/06_lady_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            56,
+            165,
+            296
+          ],
+          "visible_pixels": 25793,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "dbb2ff2d0ab492b9bab698a84c56f703dd0e5374"
+        }
+      ]
+    }
+  },
+  "panic_contact_sheet": "Assets/AnimationLibrary/Lady/qa/panic_approved_contact_sheet.png"
+}

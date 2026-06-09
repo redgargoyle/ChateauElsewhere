@@ -1336,5 +1336,921 @@
   "excluded_sources": [],
   "contact_sheet": "Assets/AnimationLibrary/CountessElowenDusk/qa/reference_contact_sheet.png",
   "generation_requests": "Assets/AnimationLibrary/CountessElowenDusk/requests/generation_prompts.jsonl",
-  "warnings": []
+  "warnings": [],
+  "chapter2_guest_number": 4,
+  "approved_panic_actions": {
+    "panic_reaction_down": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_reaction_down/frames/01_countess_elowen_dusk_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            24,
+            145,
+            296
+          ],
+          "visible_pixels": 21650,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a10f8b9ac171ebb477b275dc8d7a17643380a90d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_reaction_down/frames/02_countess_elowen_dusk_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            32,
+            146,
+            295
+          ],
+          "visible_pixels": 22141,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "dd39ab2e17b87ed6df32f97f49ed18498a140583"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_reaction_down/frames/03_countess_elowen_dusk_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            34,
+            149,
+            293
+          ],
+          "visible_pixels": 22382,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b09333bb84da736bc63566e6ae735e2602998b0c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_reaction_down/frames/04_countess_elowen_dusk_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            28,
+            147,
+            294
+          ],
+          "visible_pixels": 22478,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "08a7d4216d3cc71fd2b03475eef27c2a2e43e5e8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_reaction_down/frames/05_countess_elowen_dusk_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            34,
+            151,
+            293
+          ],
+          "visible_pixels": 22259,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "aac96f6a48251bc34cb9340c7f41d13dab4b9c2b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_reaction_down/frames/06_countess_elowen_dusk_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            26,
+            146,
+            295
+          ],
+          "visible_pixels": 22743,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0f603631a024481ab9cf1011af10c6c2b7400c65"
+        }
+      ]
+    },
+    "panic_shriek_down": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_shriek_down/frames/01_countess_elowen_dusk_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            9,
+            148,
+            295
+          ],
+          "visible_pixels": 24601,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "693b6a5b9150094ce618961536005fc763a0a952"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_shriek_down/frames/02_countess_elowen_dusk_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            7,
+            149,
+            294
+          ],
+          "visible_pixels": 25026,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ce364b65d7310800041964151b1fc898a3249a8e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_shriek_down/frames/03_countess_elowen_dusk_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            6,
+            150,
+            293
+          ],
+          "visible_pixels": 25162,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e28ac2e21dfe7fd401699ec6e573d2c7191bca74"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_shriek_down/frames/04_countess_elowen_dusk_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            7,
+            149,
+            294
+          ],
+          "visible_pixels": 25026,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ce364b65d7310800041964151b1fc898a3249a8e"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_shriek_down/frames/05_countess_elowen_dusk_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            9,
+            148,
+            295
+          ],
+          "visible_pixels": 24601,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "693b6a5b9150094ce618961536005fc763a0a952"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_shriek_down/frames/06_countess_elowen_dusk_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            1,
+            147,
+            296
+          ],
+          "visible_pixels": 24785,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "fabf2704b380d77a33f3572ba61b20bda8bb223b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_shriek_down/frames/07_countess_elowen_dusk_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            1,
+            146,
+            296
+          ],
+          "visible_pixels": 24965,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7b2643eb86dda1c4b09b97a18022245717f4b5ae"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_shriek_down/frames/08_countess_elowen_dusk_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            1,
+            147,
+            296
+          ],
+          "visible_pixels": 24785,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "fabf2704b380d77a33f3572ba61b20bda8bb223b"
+        }
+      ]
+    },
+    "panic_run_left": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_left/frames/01_countess_elowen_dusk_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            38,
+            147,
+            293
+          ],
+          "visible_pixels": 17005,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ecfac6e9f955b0938ae03ecc3c3a6369665e97b5"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_left/frames/02_countess_elowen_dusk_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            34,
+            147,
+            292
+          ],
+          "visible_pixels": 17013,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "49aeb2181559f4714c95bc68fc555051011dd614"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_left/frames/03_countess_elowen_dusk_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            37,
+            154,
+            292
+          ],
+          "visible_pixels": 17410,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "6671ab67a5f2e59dd68ce2f1bf4c738565cba1ab"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_left/frames/04_countess_elowen_dusk_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            36,
+            147,
+            292
+          ],
+          "visible_pixels": 16732,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "fd8258af77f90fd2f56ba1fd5978f3c75c7f5d52"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_left/frames/05_countess_elowen_dusk_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            37,
+            149,
+            292
+          ],
+          "visible_pixels": 17100,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "74bf40c353ba07871e00903021d1a6b79450f605"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_left/frames/06_countess_elowen_dusk_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            39,
+            147,
+            292
+          ],
+          "visible_pixels": 16604,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "11223568d605d778005186eefc36abe14434ca11"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_left/frames/07_countess_elowen_dusk_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            38,
+            147,
+            292
+          ],
+          "visible_pixels": 16285,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "502202757b991e627e68a93c94df05c012cb6cf6"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_left/frames/08_countess_elowen_dusk_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            23,
+            38,
+            152,
+            293
+          ],
+          "visible_pixels": 15927,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a90dc862a97e35acc3b107c9efa68b4fd733af73"
+        }
+      ]
+    },
+    "panic_run_right": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_right/frames/01_countess_elowen_dusk_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            40,
+            140,
+            292
+          ],
+          "visible_pixels": 15902,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "07360f8a6e7b15f15a54bc500c259f65cc22d77a"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_right/frames/02_countess_elowen_dusk_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            40,
+            142,
+            292
+          ],
+          "visible_pixels": 15887,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f7a73b8b4be6b2e86ce3530ec99e85f07053f552"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_right/frames/03_countess_elowen_dusk_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            40,
+            141,
+            293
+          ],
+          "visible_pixels": 15735,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0edb65419f3e2775d012b5d7ed4d65f763884f3a"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_right/frames/04_countess_elowen_dusk_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            40,
+            142,
+            293
+          ],
+          "visible_pixels": 16124,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3d3b1cdc8a8473b278015e8a33516317b6e8a4b6"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_right/frames/05_countess_elowen_dusk_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            40,
+            145,
+            292
+          ],
+          "visible_pixels": 16381,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ab9d496cf4d28966354ffc95d12cb37abfb31f9a"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_right/frames/06_countess_elowen_dusk_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            40,
+            146,
+            292
+          ],
+          "visible_pixels": 16368,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "68b967dcd4dc8ffab5a035eb656b12f3a99cffd7"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_right/frames/07_countess_elowen_dusk_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            40,
+            143,
+            292
+          ],
+          "visible_pixels": 16050,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4a04280d8c4e5030de58c2480b1f4cef2488d00f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_run_right/frames/08_countess_elowen_dusk_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            40,
+            145,
+            292
+          ],
+          "visible_pixels": 16328,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e8a512e681811a57eb897442246da66e5e517613"
+        }
+      ]
+    },
+    "panic_turnaround": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_turnaround/frames/01_countess_elowen_dusk_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            51,
+            146,
+            296
+          ],
+          "visible_pixels": 18659,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "acf4e58ff091be82c0b871da3a3997e46111466d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_turnaround/frames/02_countess_elowen_dusk_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            50,
+            144,
+            296
+          ],
+          "visible_pixels": 18497,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "493017a94ef4e2b8739728ea839cdb63abbf5aed"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_turnaround/frames/03_countess_elowen_dusk_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            33,
+            147,
+            296
+          ],
+          "visible_pixels": 22122,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a493527ac7668036521f60cfe129b9243efc86b5"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_turnaround/frames/04_countess_elowen_dusk_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            32,
+            148,
+            296
+          ],
+          "visible_pixels": 22509,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "1e9d19800523bd01a533ac76b120496aa974e1f6"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_turnaround/frames/05_countess_elowen_dusk_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            56,
+            148,
+            296
+          ],
+          "visible_pixels": 18134,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ed2039d303f223ba89806bbebf24018697f57c41"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/panic_turnaround/frames/06_countess_elowen_dusk_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            54,
+            147,
+            296
+          ],
+          "visible_pixels": 18203,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4616baf177371e72a3ac5aacde9ba9bd7a70c751"
+        }
+      ]
+    },
+    "cover_face_cower": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/cover_face_cower/frames/01_countess_elowen_dusk_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            76,
+            165,
+            296
+          ],
+          "visible_pixels": 22697,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d2c82678ad41d6af6af071ef0c667bb0e5ea537d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/cover_face_cower/frames/02_countess_elowen_dusk_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            76,
+            165,
+            296
+          ],
+          "visible_pixels": 22630,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "88fc001543652827ff2f997b6da6a575b0acfe46"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/cover_face_cower/frames/03_countess_elowen_dusk_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            76,
+            165,
+            296
+          ],
+          "visible_pixels": 22615,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "daff0c8329769bd18bd417ebd43e31b668dd781f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/cover_face_cower/frames/04_countess_elowen_dusk_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            76,
+            165,
+            296
+          ],
+          "visible_pixels": 22701,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "22da8d4560e39bf93e70b21a6d2a210e55119d10"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/cover_face_cower/frames/05_countess_elowen_dusk_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            76,
+            165,
+            296
+          ],
+          "visible_pixels": 22773,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "042b1dabc1c1a517df0cc9024bfb4abf925bc3e6"
+        },
+        {
+          "file": "Assets/AnimationLibrary/CountessElowenDusk/approved/full_body/cover_face_cower/frames/06_countess_elowen_dusk_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            1,
+            76,
+            165,
+            296
+          ],
+          "visible_pixels": 22764,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c80fce47185198e96bd3d68c121faa5655701b4a"
+        }
+      ]
+    }
+  },
+  "panic_contact_sheet": "Assets/AnimationLibrary/CountessElowenDusk/qa/panic_approved_contact_sheet.png"
 }

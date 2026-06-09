@@ -25,6 +25,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private PointClickPlayerMovement playerMovement;
     [SerializeField] private Chapter2InteractionHUD interactionHUD;
     [SerializeField] private Chapter2MonsterStingerController monsterStinger;
+    [SerializeField] private Chapter2GuestPanicController guestPanic;
     [SerializeField] private Chapter2GuestSearchController guestSearch;
 
     [Header("Rooms")]
@@ -190,6 +191,11 @@ public class Chapter2Controller : MonoBehaviour
         if (monsterStinger != null)
         {
             monsterStinger.StopStinger();
+        }
+
+        if (guestPanic != null)
+        {
+            guestPanic.StopPanic();
         }
 
         if (clockStrikeAudioSource != null)
@@ -458,6 +464,16 @@ public class Chapter2Controller : MonoBehaviour
             monsterStinger = gameObject.AddComponent<Chapter2MonsterStingerController>();
         }
 
+        if (guestPanic == null)
+        {
+            guestPanic = GetComponent<Chapter2GuestPanicController>();
+        }
+
+        if (guestPanic == null)
+        {
+            guestPanic = gameObject.AddComponent<Chapter2GuestPanicController>();
+        }
+
         if (guestSearch == null)
         {
             guestSearch = GetComponent<Chapter2GuestSearchController>();
@@ -497,6 +513,11 @@ public class Chapter2Controller : MonoBehaviour
             monsterStingerRoutine = null;
         }
 
+        if (guestPanic != null)
+        {
+            guestPanic.StopPanic();
+        }
+
         if (diningObjectiveTransitionRoutine != null)
         {
             StopCoroutine(diningObjectiveTransitionRoutine);
@@ -522,6 +543,11 @@ public class Chapter2Controller : MonoBehaviour
             ResolveReferences();
         }
 
+        if (guestPanic == null)
+        {
+            ResolveReferences();
+        }
+
         SetPlayerInputEnabled(false);
 
         if (interactionHUD != null)
@@ -536,6 +562,11 @@ public class Chapter2Controller : MonoBehaviour
 
     private IEnumerator RunMonsterStingerRoutine()
     {
+        if (guestPanic != null)
+        {
+            guestPanic.BeginPanic();
+        }
+
         if (monsterStinger != null)
         {
             monsterStinger.BeginStinger();
@@ -558,6 +589,11 @@ public class Chapter2Controller : MonoBehaviour
         else
         {
             Debug.LogWarning("Chapter 2 monster stinger requested, but Chapter2MonsterStingerController is missing.", this);
+        }
+
+        if (guestPanic != null)
+        {
+            guestPanic.StopPanic();
         }
 
         monsterStingerRoutine = null;

@@ -1,0 +1,126 @@
+{
+  "generated_by": "Tools/generate_chapter2_panic_frames.py",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "roster": {
+    "Lady": {
+      "guest_number": 1,
+      "display_name": "Lady",
+      "contact_sheet": "Assets/AnimationLibrary/Lady/qa/panic_approved_contact_sheet.png",
+      "actions": {
+        "panic_reaction_down": 6,
+        "panic_shriek_down": 8,
+        "panic_run_left": 8,
+        "panic_run_right": 8,
+        "panic_turnaround": 6,
+        "cover_face_cower": 6
+      },
+      "errors": []
+    },
+    "ButlerGuest": {
+      "guest_number": 2,
+      "display_name": "Butler Guest",
+      "contact_sheet": "Assets/AnimationLibrary/ButlerGuest/qa/panic_approved_contact_sheet.png",
+      "actions": {
+        "panic_reaction_down": 6,
+        "panic_shriek_down": 8,
+        "panic_run_left": 8,
+        "panic_run_right": 8,
+        "panic_turnaround": 6,
+        "cover_face_cower": 6
+      },
+      "errors": []
+    },
+    "MisterFlorianKnell": {
+      "guest_number": 3,
+      "display_name": "Mister Florian Knell",
+      "contact_sheet": "Assets/AnimationLibrary/MisterFlorianKnell/qa/panic_approved_contact_sheet.png",
+      "actions": {
+        "panic_reaction_down": 6,
+        "panic_shriek_down": 8,
+        "panic_run_left": 8,
+        "panic_run_right": 8,
+        "panic_turnaround": 6,
+        "cover_face_cower": 6
+      },
+      "errors": []
+    },
+    "CountessElowenDusk": {
+      "guest_number": 4,
+      "display_name": "Countess Elowen Dusk",
+      "contact_sheet": "Assets/AnimationLibrary/CountessElowenDusk/qa/panic_approved_contact_sheet.png",
+      "actions": {
+        "panic_reaction_down": 6,
+        "panic_shriek_down": 8,
+        "panic_run_left": 8,
+        "panic_run_right": 8,
+        "panic_turnaround": 6,
+        "cover_face_cower": 6
+      },
+      "errors": []
+    },
+    "BaronHectorGlass": {
+      "guest_number": 5,
+      "display_name": "Baron Hector Glass",
+      "contact_sheet": "Assets/AnimationLibrary/BaronHectorGlass/qa/panic_approved_contact_sheet.png",
+      "actions": {
+        "panic_reaction_down": 6,
+        "panic_shriek_down": 8,
+        "panic_run_left": 8,
+        "panic_run_right": 8,
+        "panic_turnaround": 6,
+        "cover_face_cower": 6
+      },
+      "errors": []
+    },
+    "LadySabineMarrow": {
+      "guest_number": 6,
+      "display_name": "Lady Sabine Marrow",
+      "contact_sheet": "Assets/AnimationLibrary/LadySabineMarrow/qa/panic_approved_contact_sheet.png",
+      "actions": {
+        "panic_reaction_down": 6,
+        "panic_shriek_down": 8,
+        "panic_run_left": 8,
+        "panic_run_right": 8,
+        "panic_turnaround": 6,
+        "cover_face_cower": 6
+      },
+      "errors": []
+    },
+    "LordAmbroseVeil": {
+      "guest_number": 7,
+      "display_name": "Lord Ambrose Veil",
+      "contact_sheet": "Assets/AnimationLibrary/LordAmbroseVeil/qa/panic_approved_contact_sheet.png",
+      "actions": {
+        "panic_reaction_down": 6,
+        "panic_shriek_down": 8,
+        "panic_run_left": 8,
+        "panic_run_right": 8,
+        "panic_turnaround": 6,
+        "cover_face_cower": 6
+      },
+      "errors": []
+    },
+    "MadameCoralieThread": {
+      "guest_number": 8,
+      "display_name": "Madame Coralie Thread",
+      "contact_sheet": "Assets/AnimationLibrary/MadameCoralieThread/qa/panic_approved_contact_sheet.png",
+      "actions": {
+        "panic_reaction_down": 6,
+        "panic_shriek_down": 8,
+        "panic_run_left": 8,
+        "panic_run_right": 8,
+        "panic_turnaround": 6,
+        "cover_face_cower": 6
+      },
+      "errors": []
+    }
+  }
+}
