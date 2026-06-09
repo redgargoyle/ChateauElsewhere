@@ -1,0 +1,10 @@
+guest=MadameCoralieThread
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a289bb24d38819883dfeca004cdff74.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\MadameCoralieThread\_ContactSheets\MadameCoralieThread_expanded_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\MadameCoralieThread\_ContactSheets\MadameCoralieThread_expanded_sheet_01_alpha.png
+Idle/MadameCoralieThread_idle_tense_three_quarter_01.png: 324x540, transparent_corners=True, visible_pixels=69279
+Surprised/MadameCoralieThread_surprised_hand_to_chest_01.png: 482x552, transparent_corners=True, visible_pixels=74175
+Panic/MadameCoralieThread_panic_scream_hands_up_01.png: 339x546, transparent_corners=True, visible_pixels=80369
+Sitting/MadameCoralieThread_sitting_tense_hands_clasped_01.png: 503x488, transparent_corners=True, visible_pixels=89473
+DiningRoomChair/MadameCoralieThread_dining_room_chair_startled_01.png: 502x508, transparent_corners=True, visible_pixels=109535
+DrawingRoomCouch/MadameCoralieThread_drawing_room_couch_cover_face_01.png: 518x481, transparent_corners=True, visible_pixels=137071
