@@ -257,14 +257,15 @@ public class Chapter2RegressionTests
         string routineText = panicText.Substring(routineIndex, nextMethodIndex - routineIndex);
         Assert.That(routineText, Does.Contain("PanicAction.PanicRunLeft"));
         Assert.That(routineText, Does.Contain("PanicAction.PanicRunRight"));
+        Assert.That(routineText, Does.Not.Contain("PanicAction.PanicTurnaround"));
         Assert.That(routineText, Does.Not.Contain("PanicAction.PanicReactionDown"));
         Assert.That(routineText, Does.Not.Contain("PanicAction.PanicShriekDown"));
         Assert.That(routineText, Does.Not.Contain("PanicAction.CoverFaceCower"));
         Assert.That(panicText, Does.Contain("runDistancePixels = 150f"));
         Assert.That(panicText, Does.Contain("panicMoveSpeedPixels = 300f"));
         Assert.That(panicText, Does.Contain("DefaultExecutionOrder(10000)"));
-        Assert.That(panicText, Does.Contain("turnaroundDistanceScale = 0.68f"));
-        Assert.That(panicText, Does.Contain("GetTurnaroundOffset"));
+        Assert.That(panicText, Does.Not.Contain("turnaroundDistanceScale"));
+        Assert.That(panicText, Does.Not.Contain("GetTurnaroundOffset"));
         Assert.That(panicText, Does.Contain("MoveParticipantsToward"));
         Assert.That(panicText, Does.Contain("StepParticipantsToward"));
         Assert.That(panicText, Does.Contain("MovePanicOffsetToward"));

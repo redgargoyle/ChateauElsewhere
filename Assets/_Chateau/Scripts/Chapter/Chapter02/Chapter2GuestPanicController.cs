@@ -15,7 +15,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField, Min(1f)] private float frameRate = 12f;
     [SerializeField, Min(0f)] private float runDistancePixels = 150f;
     [SerializeField, Min(1f)] private float panicMoveSpeedPixels = 300f;
-    [SerializeField, Range(0.1f, 0.95f)] private float turnaroundDistanceScale = 0.68f;
     [SerializeField, Min(0f)] private float jitterPixels = 3f;
     [SerializeField, Min(0.0001f)] private float worldUnitsPerRoomPixel = 0.012f;
     [SerializeField] private bool logMissingFrames = true;
@@ -167,21 +166,12 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     {
         Vector2 leftOffset = new Vector2(-runDistancePixels, 0f);
         Vector2 rightOffset = new Vector2(runDistancePixels, 0f);
-        Vector2 leftTurnOffset = GetTurnaroundOffset(leftOffset);
-        Vector2 rightTurnOffset = GetTurnaroundOffset(rightOffset);
 
         while (isRunning)
         {
             yield return MoveParticipantsToward(PanicAction.PanicRunLeft, leftOffset, true);
-            yield return MoveParticipantsToward(PanicAction.PanicTurnaround, leftTurnOffset, true);
             yield return MoveParticipantsToward(PanicAction.PanicRunRight, rightOffset, true);
-            yield return MoveParticipantsToward(PanicAction.PanicTurnaround, rightTurnOffset, true);
         }
-    }
-
-    private Vector2 GetTurnaroundOffset(Vector2 endpointOffset)
-    {
-        return endpointOffset * Mathf.Clamp(turnaroundDistanceScale, 0.1f, 0.95f);
     }
 
     private IEnumerator MoveParticipantsToward(PanicAction action, Vector2 targetOffset, bool jitter)
