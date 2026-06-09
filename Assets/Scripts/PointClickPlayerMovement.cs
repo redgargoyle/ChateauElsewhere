@@ -35,6 +35,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private float nearScale = 1f;
 	[SerializeField] private float farScale = 0.58f;
 	[SerializeField] private bool applyPerspectiveScale = true;
+	[SerializeField] private bool applyPlayerSorting = true;
 	[SerializeField] private float runningAnimationSpeed = 40f;
 	[SerializeField] private bool disablePlatformMovement = true;
 	[SerializeField] private bool sortPlayerByVisibleFeet = true;
@@ -64,7 +65,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private bool isWalking;
 	private bool inputEnabled = true;
 	private bool hasAuthoredLocalScale;
+	private bool hasAuthoredRendererSorting;
 	private Vector3 authoredLocalScale = Vector3.one;
+	private AuthoredRendererSorting[] authoredRendererSorting = Array.Empty<AuthoredRendererSorting>();
 	private int currentSortingOrder;
 	private int movementPathIndex;
 	private readonly List<Vector2> movementPath = new List<Vector2>();
@@ -78,6 +81,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public int CurrentSortingOrder => currentSortingOrder;
 	public bool InputEnabled => inputEnabled;
 	public bool AppliesPerspectiveScale => applyPerspectiveScale;
+	public bool AppliesPlayerSorting => applyPlayerSorting;
 
 	public void SetInputEnabled(bool enabled)
 	{
@@ -104,6 +108,18 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!applyPerspectiveScale && restoreAuthoredScale)
 		{
 			RestoreAuthoredLocalScale();
+		}
+	}
+
+	public void SetPlayerSortingEnabled(bool value, bool restoreAuthoredSorting = true)
+	{
+		CacheReferences();
+		CaptureAuthoredRendererSortingIfNeeded();
+		applyPlayerSorting = value;
+
+		if (!applyPlayerSorting && restoreAuthoredSorting)
+		{
+			RestoreAuthoredRendererSorting();
 		}
 	}
 
@@ -137,6 +153,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		CaptureAuthoredLocalScaleIfNeeded();
 		CacheReferences();
+		CaptureAuthoredRendererSortingIfNeeded();
 		CacheAnimatorParameters();
 		InitializeVisualStateFromTransform();
 	}
@@ -251,6 +268,71 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		transform.localScale = authoredLocalScale;
+	}
+
+	private void CaptureAuthoredRendererSortingIfNeeded()
+	{
+		if (hasAuthoredRendererSorting)
+		{
+			return;
+		}
+
+		if (spriteRenderers == null || spriteRenderers.Length == 0)
+		{
+			CacheReferences();
+		}
+
+		if (spriteRenderers == null || spriteRenderers.Length == 0)
+		{
+			authoredRendererSorting = Array.Empty<AuthoredRendererSorting>();
+			hasAuthoredRendererSorting = true;
+			return;
+		}
+
+		List<AuthoredRendererSorting> capturedSorting = new List<AuthoredRendererSorting>(spriteRenderers.Length);
+
+		for (int i = 0; i < spriteRenderers.Length; i++)
+		{
+			SpriteRenderer targetRenderer = spriteRenderers[i];
+
+			if (targetRenderer == null)
+			{
+				continue;
+			}
+
+			capturedSorting.Add(new AuthoredRendererSorting(targetRenderer));
+		}
+
+		authoredRendererSorting = capturedSorting.Count > 0 ? capturedSorting.ToArray() : Array.Empty<AuthoredRendererSorting>();
+		hasAuthoredRendererSorting = true;
+	}
+
+	private void RestoreAuthoredRendererSorting()
+	{
+		if (!hasAuthoredRendererSorting)
+		{
+			return;
+		}
+
+		for (int i = 0; i < authoredRendererSorting.Length; i++)
+		{
+			AuthoredRendererSorting sorting = authoredRendererSorting[i];
+			SpriteRenderer targetRenderer = sorting.Renderer;
+
+			if (targetRenderer == null)
+			{
+				continue;
+			}
+
+			targetRenderer.sortingLayerID = sorting.SortingLayerId;
+			targetRenderer.sortingOrder = sorting.SortingOrder;
+			targetRenderer.spriteSortPoint = sorting.SpriteSortPoint;
+
+			if (targetRenderer == spriteRenderer)
+			{
+				currentSortingOrder = sorting.SortingOrder;
+			}
+		}
 	}
 
 	private void InitializeVisualStateFromTransform()
@@ -1307,6 +1389,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void ApplyPlayerSorting()
 	{
+		if (!applyPlayerSorting)
+		{
+			return;
+		}
+
 		if (spriteRenderers == null || spriteRenderers.Length == 0)
 			return;
 
@@ -1367,6 +1454,22 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return requestedLayerName;
 
 		return "Default";
+	}
+
+	private readonly struct AuthoredRendererSorting
+	{
+		public AuthoredRendererSorting(SpriteRenderer renderer)
+		{
+			Renderer = renderer;
+			SortingLayerId = renderer.sortingLayerID;
+			SortingOrder = renderer.sortingOrder;
+			SpriteSortPoint = renderer.spriteSortPoint;
+		}
+
+		public SpriteRenderer Renderer { get; }
+		public int SortingLayerId { get; }
+		public int SortingOrder { get; }
+		public SpriteSortPoint SpriteSortPoint { get; }
 	}
 
 }

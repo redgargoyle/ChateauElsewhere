@@ -3827,6 +3827,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         actorState.SetScaleWithRoomStageMotion(false);
         guestObject.transform.localScale = authoredGuestScale;
 
+        bool preserveAuthoredSorting = ShouldPreserveAuthoredGuestSorting(guestObject);
         SpriteRenderer[] renderers = guestObject.GetComponentsInChildren<SpriteRenderer>(true);
 
         for (int i = 0; i < renderers.Length; i++)
@@ -3836,9 +3837,22 @@ public class Chapter1ArrivalController : MonoBehaviour
                 continue;
             }
 
+            if (preserveAuthoredSorting)
+            {
+                continue;
+            }
+
             renderers[i].sortingLayerName = "People";
             renderers[i].sortingOrder = 9000 + index;
         }
+    }
+
+    private bool ShouldPreserveAuthoredGuestSorting(GameObject guestObject)
+    {
+        return guestObject != null &&
+            guestObject.scene.IsValid() &&
+            guestObject.scene.isLoaded &&
+            !runtimeGeneratedGuestObjects.Contains(guestObject);
     }
 
     private void DisableAmbientWalkers(GameObject guestObject)
@@ -3868,6 +3882,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             if (pointClickMovements[i] != null)
             {
                 pointClickMovements[i].SetPerspectiveScaleEnabled(false);
+                pointClickMovements[i].SetPlayerSortingEnabled(false);
                 pointClickMovements[i].enabled = false;
             }
         }
