@@ -262,12 +262,18 @@ public class Chapter2RegressionTests
         Assert.That(routineText, Does.Not.Contain("PanicAction.CoverFaceCower"));
         Assert.That(panicText, Does.Contain("runDistancePixels = 150f"));
         Assert.That(panicText, Does.Contain("panicMoveSpeedPixels = 300f"));
+        Assert.That(panicText, Does.Contain("DefaultExecutionOrder(10000)"));
         Assert.That(panicText, Does.Contain("turnaroundDistanceScale = 0.68f"));
         Assert.That(panicText, Does.Contain("GetTurnaroundOffset"));
         Assert.That(panicText, Does.Contain("MoveParticipantsToward"));
         Assert.That(panicText, Does.Contain("StepParticipantsToward"));
         Assert.That(panicText, Does.Contain("MovePanicOffsetToward"));
         Assert.That(panicText, Does.Contain("Vector2.MoveTowards"));
+        Assert.That(panicText, Does.Contain("private void LateUpdate()"));
+        Assert.That(panicText, Does.Contain("ReapplyParticipantVisualOffsets"));
+        Assert.That(panicText, Does.Contain("Rigidbody2D"));
+        Assert.That(panicText, Does.Contain("MoveRigidbodyTo"));
+        Assert.That(panicText, Does.Contain("Physics2D.SyncTransforms"));
         Assert.That(panicText, Does.Contain("float frameProgress"));
         Assert.That(panicText, Does.Contain("float motionFrame = frameIndex + frameProgress"));
         Assert.That(panicText, Does.Contain("ApplyActionFrame(action, frameIndex, motionFrame, jitter)"));
@@ -341,6 +347,10 @@ public class Chapter2RegressionTests
             animator.enabled = true;
             NPCWaypointMover waypointMover = actor.AddComponent<NPCWaypointMover>();
             waypointMover.enabled = true;
+            Rigidbody2D body = actor.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Dynamic;
+            body.gravityScale = 1f;
+            body.linearVelocity = new Vector2(0.5f, -0.25f);
 
             ActorRoomState actorState = actor.AddComponent<ActorRoomState>();
             actorState.SetCurrentRoom("Drawing Room");
@@ -354,6 +364,10 @@ public class Chapter2RegressionTests
 
             Vector3 originalPosition = actor.transform.position;
             Vector3 originalLocalScale = actor.transform.localScale;
+            RigidbodyType2D originalBodyType = body.bodyType;
+            float originalGravityScale = body.gravityScale;
+            Vector2 originalBodyVelocity = body.linearVelocity;
+            Vector2 originalBodyPosition = body.position;
 
             panic.BeginPanic();
 
@@ -363,6 +377,9 @@ public class Chapter2RegressionTests
             Assert.That(animator.enabled, Is.False, "Panic should disable authored animators while sprite clips play.");
             Assert.That(waypointMover.enabled, Is.False, "Panic should disable guest movement drivers that can overwrite panic offsets.");
             Assert.That(actor.transform.position, Is.Not.EqualTo(originalPosition), "Panic should translate the guest left/right while the run animation sequence is active.");
+            Assert.That(body.bodyType, Is.EqualTo(RigidbodyType2D.Kinematic), "Panic should take Rigidbody2D authority away from normal physics.");
+            Assert.That(body.gravityScale, Is.Zero, "Panic should prevent Rigidbody2D gravity from fighting panic movement.");
+            Assert.That(body.position, Is.Not.EqualTo(originalBodyPosition), "Panic should move Rigidbody2D-backed guest actors, not just their sprite.");
 
             panic.StopPanic();
 
@@ -376,6 +393,10 @@ public class Chapter2RegressionTests
             Assert.That(actorState.IsSeated, Is.True);
             Assert.That(actor.transform.position, Is.EqualTo(originalPosition));
             Assert.That(actor.transform.localScale, Is.EqualTo(originalLocalScale));
+            Assert.That(body.bodyType, Is.EqualTo(originalBodyType));
+            Assert.That(body.gravityScale, Is.EqualTo(originalGravityScale));
+            Assert.That(body.linearVelocity, Is.EqualTo(originalBodyVelocity));
+            Assert.That(body.position, Is.EqualTo(originalBodyPosition));
         }
         finally
         {

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+[DefaultExecutionOrder(10000)]
 [DisallowMultipleComponent]
 public sealed class Chapter2GuestPanicController : MonoBehaviour
 {
@@ -57,6 +58,12 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         RestoreParticipants();
+
+        if (Application.isPlaying)
+        {
+            Physics2D.SyncTransforms();
+        }
+
         participants.Clear();
         isRunning = false;
     }
@@ -64,6 +71,16 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     private void OnDisable()
     {
         StopPanic();
+    }
+
+    private void LateUpdate()
+    {
+        if (!isRunning)
+        {
+            return;
+        }
+
+        ReapplyParticipantVisualOffsets();
     }
 
     private void ResolveReferences()
@@ -253,7 +270,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             PanicAction visualAction = participant.GetVisualAction(action);
             participant.SetSprite(GetFrame(participant.Animation, visualAction, participant.GetClipFrameIndex(visualAction, frameIndex)));
-            participant.ApplyVisualOffset(participant.GetPanicOffset(motionFrame, jitter, jitterPixels), worldUnitsPerRoomPixel);
+            participant.ApplyPanicVisualOffset(participant.GetPanicOffset(motionFrame, jitter, jitterPixels), worldUnitsPerRoomPixel);
         }
     }
 
@@ -276,6 +293,14 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         for (int i = 0; i < participants.Count; i++)
         {
             participants[i]?.Restore();
+        }
+    }
+
+    private void ReapplyParticipantVisualOffsets()
+    {
+        for (int i = 0; i < participants.Count; i++)
+        {
+            participants[i]?.ReapplyPanicVisualOffset(worldUnitsPerRoomPixel);
         }
     }
 
@@ -382,6 +407,13 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private bool[] animatorEnabledStates;
         private Behaviour[] motionDrivers;
         private bool[] motionDriverEnabledStates;
+        private Rigidbody2D rigidbody2D;
+        private RigidbodyType2D originalRigidbodyBodyType;
+        private Vector2 originalRigidbodyPosition;
+        private Vector2 originalRigidbodyLinearVelocity;
+        private float originalRigidbodyAngularVelocity;
+        private float originalRigidbodyGravityScale;
+        private bool originalRigidbodySimulated;
         private Sprite originalRendererSprite;
         private Sprite originalImageSprite;
         private Transform targetTransform;
@@ -405,6 +437,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private float jitterPhase;
         private float bobPixels = 2f;
         private Vector2 currentPanicOffset;
+        private Vector2 currentVisualOffset;
 
         public Chapter2PanicCharacterAnimation Animation => animation;
         public bool HasSpriteTarget => spriteRenderer != null || image != null;
@@ -422,6 +455,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 image = FindPrimaryImage(root),
                 animators = root != null ? root.GetComponentsInChildren<Animator>(true) : Array.Empty<Animator>(),
                 motionDrivers = FindMotionDrivers(root),
+                rigidbody2D = root != null ? root.GetComponent<Rigidbody2D>() : null,
                 targetTransform = rootTransform,
                 rectTransform = rootTransform as RectTransform,
                 projection = nextProjection,
@@ -454,6 +488,17 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             participant.originalRendererSprite = participant.spriteRenderer != null ? participant.spriteRenderer.sprite : null;
             participant.originalImageSprite = participant.image != null ? participant.image.sprite : null;
+
+            if (participant.rigidbody2D != null)
+            {
+                participant.originalRigidbodyBodyType = participant.rigidbody2D.bodyType;
+                participant.originalRigidbodyPosition = participant.rigidbody2D.position;
+                participant.originalRigidbodyLinearVelocity = participant.rigidbody2D.linearVelocity;
+                participant.originalRigidbodyAngularVelocity = participant.rigidbody2D.angularVelocity;
+                participant.originalRigidbodyGravityScale = participant.rigidbody2D.gravityScale;
+                participant.originalRigidbodySimulated = participant.rigidbody2D.simulated;
+            }
+
             return participant;
         }
 
@@ -487,6 +532,14 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 {
                     animators[i].enabled = false;
                 }
+            }
+
+            if (rigidbody2D != null)
+            {
+                rigidbody2D.bodyType = RigidbodyType2D.Kinematic;
+                rigidbody2D.gravityScale = 0f;
+                rigidbody2D.linearVelocity = Vector2.zero;
+                rigidbody2D.angularVelocity = 0f;
             }
 
             if (actorState != null)
@@ -548,6 +601,17 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             return new Vector2(x, y);
         }
 
+        public void ApplyPanicVisualOffset(Vector2 roomPixelOffset, float worldUnitsPerPixel)
+        {
+            currentVisualOffset = roomPixelOffset;
+            ApplyVisualOffset(roomPixelOffset, worldUnitsPerPixel);
+        }
+
+        public void ReapplyPanicVisualOffset(float worldUnitsPerPixel)
+        {
+            ApplyVisualOffset(currentVisualOffset, worldUnitsPerPixel);
+        }
+
         private Vector2 GetDirectionalTargetOffset(Vector2 sharedTargetOffset)
         {
             return new Vector2(
@@ -578,19 +642,23 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             if (usesProjection && projection != null)
             {
                 projection.SetRoomLocalFootPoint(originalProjectionFootPoint + roomPixelOffset);
+                SyncRigidbodyToTransform();
                 return;
             }
 
             if (rectTransform != null)
             {
                 rectTransform.anchoredPosition = originalAnchoredPosition + roomPixelOffset;
+                SyncRigidbodyToTransform();
                 return;
             }
 
             if (targetTransform != null)
             {
                 Vector3 worldOffset = new Vector3(roomPixelOffset.x * worldUnitsPerPixel, roomPixelOffset.y * worldUnitsPerPixel, 0f);
-                targetTransform.position = originalPosition + worldOffset;
+                Vector3 nextPosition = originalPosition + worldOffset;
+                targetTransform.position = nextPosition;
+                MoveRigidbodyTo(nextPosition);
             }
         }
 
@@ -624,6 +692,17 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             currentPanicOffset = Vector2.zero;
+            currentVisualOffset = Vector2.zero;
+
+            if (rigidbody2D != null)
+            {
+                rigidbody2D.position = originalRigidbodyPosition;
+                rigidbody2D.linearVelocity = originalRigidbodyLinearVelocity;
+                rigidbody2D.angularVelocity = originalRigidbodyAngularVelocity;
+                rigidbody2D.gravityScale = originalRigidbodyGravityScale;
+                rigidbody2D.bodyType = originalRigidbodyBodyType;
+                rigidbody2D.simulated = originalRigidbodySimulated;
+            }
 
             for (int i = 0; i < animators.Length; i++)
             {
@@ -650,6 +729,28 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 actorState.SetSeated(originalSeated);
                 actorState.ApplyState();
             }
+        }
+
+        private void MoveRigidbodyTo(Vector3 worldPosition)
+        {
+            if (rigidbody2D == null)
+            {
+                return;
+            }
+
+            rigidbody2D.linearVelocity = Vector2.zero;
+            rigidbody2D.angularVelocity = 0f;
+            rigidbody2D.position = new Vector2(worldPosition.x, worldPosition.y);
+        }
+
+        private void SyncRigidbodyToTransform()
+        {
+            if (targetTransform == null)
+            {
+                return;
+            }
+
+            MoveRigidbodyTo(targetTransform.position);
         }
 
         private static SpriteRenderer FindPrimarySpriteRenderer(GameObject root)
