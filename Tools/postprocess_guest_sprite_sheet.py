@@ -252,7 +252,8 @@ def validate_alpha(path: Path) -> dict[str, int | bool]:
         alpha.getpixel((0, image.height - 1)),
         alpha.getpixel((image.width - 1, image.height - 1)),
     ]
-    visible_pixels = sum(1 for value in alpha.getdata() if value > 8)
+    alpha_data = alpha.get_flattened_data() if hasattr(alpha, "get_flattened_data") else alpha.getdata()
+    visible_pixels = sum(1 for value in alpha_data if value > 8)
     return {
         "width": image.width,
         "height": image.height,
