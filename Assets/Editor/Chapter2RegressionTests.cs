@@ -274,6 +274,9 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("Rigidbody2D"));
         Assert.That(panicText, Does.Contain("MoveRigidbodyTo"));
         Assert.That(panicText, Does.Contain("Physics2D.SyncTransforms"));
+        Assert.That(panicText, Does.Contain("CaptureOriginalSpriteLocalSize"));
+        Assert.That(panicText, Does.Contain("GetSpriteScaleMultiplier"));
+        Assert.That(panicText, Does.Contain("ApplySpriteScale(currentPanicSprite)"));
         Assert.That(panicText, Does.Contain("float frameProgress"));
         Assert.That(panicText, Does.Contain("float motionFrame = frameIndex + frameProgress"));
         Assert.That(panicText, Does.Contain("ApplyActionFrame(action, frameIndex, motionFrame, jitter)"));
@@ -377,6 +380,7 @@ public class Chapter2RegressionTests
             Assert.That(animator.enabled, Is.False, "Panic should disable authored animators while sprite clips play.");
             Assert.That(waypointMover.enabled, Is.False, "Panic should disable guest movement drivers that can overwrite panic offsets.");
             Assert.That(actor.transform.position, Is.Not.EqualTo(originalPosition), "Panic should translate the guest left/right while the run animation sequence is active.");
+            Assert.That(actor.transform.localScale, Is.Not.EqualTo(originalLocalScale), "Panic should normalize replacement sprite scale against the original guest sprite.");
             Assert.That(body.bodyType, Is.EqualTo(RigidbodyType2D.Kinematic), "Panic should take Rigidbody2D authority away from normal physics.");
             Assert.That(body.gravityScale, Is.Zero, "Panic should prevent Rigidbody2D gravity from fighting panic movement.");
             Assert.That(body.position, Is.Not.EqualTo(originalBodyPosition), "Panic should move Rigidbody2D-backed guest actors, not just their sprite.");

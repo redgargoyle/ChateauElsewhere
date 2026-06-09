@@ -425,6 +425,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private Vector3 originalPosition;
         private Vector3 originalLocalPosition;
         private Vector3 originalLocalScale;
+        private Vector2 originalSpriteLocalSize;
+        private bool hasOriginalSpriteLocalSize;
         private string originalRoomId;
         private bool originalAvailable;
         private bool originalVisible;
@@ -438,6 +440,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private float bobPixels = 2f;
         private Vector2 currentPanicOffset;
         private Vector2 currentVisualOffset;
+        private Sprite currentPanicSprite;
 
         public Chapter2PanicCharacterAnimation Animation => animation;
         public bool HasSpriteTarget => spriteRenderer != null || image != null;
@@ -488,6 +491,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             participant.originalRendererSprite = participant.spriteRenderer != null ? participant.spriteRenderer.sprite : null;
             participant.originalImageSprite = participant.image != null ? participant.image.sprite : null;
+            participant.CaptureOriginalSpriteLocalSize();
 
             if (participant.rigidbody2D != null)
             {
@@ -609,6 +613,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         public void ReapplyPanicVisualOffset(float worldUnitsPerPixel)
         {
+            ApplySpriteScale(currentPanicSprite);
             ApplyVisualOffset(currentVisualOffset, worldUnitsPerPixel);
         }
 
@@ -626,6 +631,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 return;
             }
 
+            currentPanicSprite = sprite;
+
             if (spriteRenderer != null)
             {
                 spriteRenderer.sprite = sprite;
@@ -635,6 +642,62 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             {
                 image.sprite = sprite;
             }
+
+            ApplySpriteScale(sprite);
+        }
+
+        private void CaptureOriginalSpriteLocalSize()
+        {
+            Sprite sprite = originalRendererSprite != null ? originalRendererSprite : originalImageSprite;
+
+            if (TryGetSpriteLocalSize(sprite, out originalSpriteLocalSize))
+            {
+                hasOriginalSpriteLocalSize = true;
+            }
+        }
+
+        private void ApplySpriteScale(Sprite sprite)
+        {
+            if (targetTransform == null ||
+                !hasOriginalSpriteLocalSize ||
+                !TryGetSpriteLocalSize(sprite, out Vector2 spriteLocalSize))
+            {
+                return;
+            }
+
+            float scale = GetSpriteScaleMultiplier(originalSpriteLocalSize, spriteLocalSize);
+            targetTransform.localScale = new Vector3(
+                originalLocalScale.x * scale,
+                originalLocalScale.y * scale,
+                originalLocalScale.z);
+        }
+
+        private static bool TryGetSpriteLocalSize(Sprite sprite, out Vector2 size)
+        {
+            size = Vector2.zero;
+
+            if (sprite == null)
+            {
+                return false;
+            }
+
+            size = sprite.bounds.size;
+            return size.x > 0.0001f || size.y > 0.0001f;
+        }
+
+        private static float GetSpriteScaleMultiplier(Vector2 originalSize, Vector2 nextSize)
+        {
+            if (originalSize.y > 0.0001f && nextSize.y > 0.0001f)
+            {
+                return originalSize.y / nextSize.y;
+            }
+
+            if (originalSize.x > 0.0001f && nextSize.x > 0.0001f)
+            {
+                return originalSize.x / nextSize.x;
+            }
+
+            return 1f;
         }
 
         public void ApplyVisualOffset(Vector2 roomPixelOffset, float worldUnitsPerPixel)
@@ -693,6 +756,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             currentPanicOffset = Vector2.zero;
             currentVisualOffset = Vector2.zero;
+            currentPanicSprite = null;
 
             if (rigidbody2D != null)
             {
