@@ -246,9 +246,9 @@ public class Chapter2RegressionTests
         int routineIndex = panicText.IndexOf("private IEnumerator RunPanicRoutine()", System.StringComparison.Ordinal);
         Assert.That(routineIndex, Is.GreaterThanOrEqualTo(0), "Panic playback should have a dedicated stinger routine.");
 
-        int nextMethodIndex = panicText.IndexOf("private IEnumerator PlayClipForAll", routineIndex, System.StringComparison.Ordinal);
+        int nextMethodIndex = panicText.IndexOf("private IEnumerator MoveParticipantsToward", routineIndex, System.StringComparison.Ordinal);
         int whileIndex = panicText.IndexOf("while (isRunning)", routineIndex, System.StringComparison.Ordinal);
-        int firstClipIndex = panicText.IndexOf("yield return PlayClipForAll", routineIndex, System.StringComparison.Ordinal);
+        int firstClipIndex = panicText.IndexOf("yield return MoveParticipantsToward", routineIndex, System.StringComparison.Ordinal);
 
         Assert.That(nextMethodIndex, Is.GreaterThan(routineIndex));
         Assert.That(whileIndex, Is.GreaterThan(routineIndex), "Panic playback should loop while the stinger is running.");
@@ -261,13 +261,17 @@ public class Chapter2RegressionTests
         Assert.That(routineText, Does.Not.Contain("PanicAction.PanicShriekDown"));
         Assert.That(routineText, Does.Not.Contain("PanicAction.CoverFaceCower"));
         Assert.That(panicText, Does.Contain("runDistancePixels = 150f"));
+        Assert.That(panicText, Does.Contain("panicMoveSpeedPixels = 300f"));
         Assert.That(panicText, Does.Contain("turnaroundDistanceScale = 0.68f"));
         Assert.That(panicText, Does.Contain("GetTurnaroundOffset"));
-        Assert.That(panicText, Does.Contain("Mathf.SmoothStep"));
+        Assert.That(panicText, Does.Contain("MoveParticipantsToward"));
+        Assert.That(panicText, Does.Contain("StepParticipantsToward"));
+        Assert.That(panicText, Does.Contain("MovePanicOffsetToward"));
+        Assert.That(panicText, Does.Contain("Vector2.MoveTowards"));
         Assert.That(panicText, Does.Contain("float frameProgress"));
         Assert.That(panicText, Does.Contain("float motionFrame = frameIndex + frameProgress"));
-        Assert.That(panicText, Does.Contain("GetClipOffset(startOffset, endOffset, clipProgress)"));
-        Assert.That(panicText, Does.Contain("ApplyActionFrame(action, frameIndex, motionFrame, offset, jitter)"));
+        Assert.That(panicText, Does.Contain("ApplyActionFrame(action, frameIndex, motionFrame, jitter)"));
+        Assert.That(panicText, Does.Not.Contain("Vector2.LerpUnclamped"));
         Assert.That(panicText, Does.Contain("ConfigureRunMotion"));
         Assert.That(panicText, Does.Contain("GetVisualAction"));
         Assert.That(panicText, Does.Contain("GetPanicOffset"));
