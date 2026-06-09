@@ -256,6 +256,7 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("currentRoomStageScaleRatio"), "Player position and visible scale should apply the room-stage zoom ratio.");
         Assert.That(playerText, Does.Contain("roomStageReferenceWorldCenter"), "Player logical movement should be mapped from a stable room-stage reference center.");
         Assert.That(playerText, Does.Contain("ResetRoomStageVisualReference"), "Changing rooms should reset the player's room-stage pan/zoom baseline.");
+        Assert.That(playerText, Does.Contain("TryBuildReachableWorldPath"), "NPC panic routes should reuse the same floor-boundary route query as point-click movement.");
         Assert.That(playerText, Does.Match(@"LogicalToWalkableWorldPoint\s*\([^)]*\)[\s\S]*referenceOffset \* currentRoomStageScaleRatio"), "Player logical-to-world mapping must include room-stage scale, not translation only.");
         Assert.That(playerText, Does.Match(@"ApplyPerspectiveScale\s*\([^)]*\)[\s\S]*currentRoomStageScaleRatio"), "Player sprite scale should grow and shrink with the room stage just like room objects.");
         Assert.That(playerText, Does.Not.Contain("IsPickupObjectAtPoint"), "Pickup or prop colliders should not decide whether the floor is walkable.");

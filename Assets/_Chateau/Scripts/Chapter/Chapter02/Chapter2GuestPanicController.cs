@@ -11,6 +11,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     private const string ClickTargetName = "Ch2_ClickTarget";
 
     [SerializeField] private Chapter2GuestSearchController guestSearch;
+    [SerializeField] private PointClickPlayerMovement playerMovement;
     [SerializeField] private Chapter2PanicAnimationLibrary animationLibrary;
     [SerializeField, Min(1f)] private float frameRate = 12f;
     [SerializeField, Min(0f)] private float runDistancePixels = 150f;
@@ -23,6 +24,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField] private bool logMissingFrames = true;
 
     private readonly List<PanicParticipant> participants = new List<PanicParticipant>();
+    private readonly List<Vector2> routeQueryScratch = new List<Vector2>();
     private Coroutine panicRoutine;
     private bool isRunning;
 
@@ -95,6 +97,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         if (guestSearch == null)
         {
             guestSearch = FindAnyObjectByType<Chapter2GuestSearchController>(FindObjectsInactive.Include);
+        }
+
+        if (playerMovement == null)
+        {
+            playerMovement = FindPlayerMovement();
         }
 
         if (animationLibrary == null)
@@ -255,7 +262,13 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     {
         for (int i = 0; i < participants.Count; i++)
         {
-            participants[i]?.ChooseNextRunTarget(runDistancePixels, panicRoamRadiusPixels, verticalRunDistanceScale);
+            participants[i]?.ChooseNextRunTarget(
+                playerMovement,
+                runDistancePixels,
+                panicRoamRadiusPixels,
+                verticalRunDistanceScale,
+                worldUnitsPerRoomPixel,
+                routeQueryScratch);
         }
     }
 
@@ -466,6 +479,77 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         return foundDigit && number > 0;
     }
 
+    private static PointClickPlayerMovement FindPlayerMovement()
+    {
+        GameObject playerObject = GameObject.Find("Player");
+
+        if (TryGetUsablePlayerMovement(playerObject, out PointClickPlayerMovement namedPlayerMovement))
+        {
+            return namedPlayerMovement;
+        }
+
+        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Exclude);
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (IsUsablePlayerMovement(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (candidate != null && candidate.gameObject.activeInHierarchy)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryGetUsablePlayerMovement(GameObject candidateObject, out PointClickPlayerMovement movement)
+    {
+        movement = candidateObject != null ? candidateObject.GetComponent<PointClickPlayerMovement>() : null;
+        return IsUsablePlayerMovement(movement);
+    }
+
+    private static bool IsUsablePlayerMovement(PointClickPlayerMovement candidate)
+    {
+        return candidate != null &&
+            candidate.gameObject.activeInHierarchy &&
+            !IsLikelyChapterGuest(candidate.gameObject);
+    }
+
+    private static bool IsLikelyChapterGuest(GameObject candidate)
+    {
+        if (candidate == null)
+        {
+            return false;
+        }
+
+        ActorRoomState actorState = candidate.GetComponentInParent<ActorRoomState>();
+
+        if (actorState != null &&
+            (LooksLikeGuestId(actorState.ActorId) || LooksLikeGuestId(actorState.gameObject.name)))
+        {
+            return true;
+        }
+
+        return LooksLikeGuestId(candidate.name);
+    }
+
+    private static bool LooksLikeGuestId(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            value.TrimStart().StartsWith("Guest", StringComparison.OrdinalIgnoreCase);
+    }
+
     private enum PanicAction
     {
         PanicHandsUp,
@@ -519,6 +603,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private Vector2 currentPanicOffset;
         private Vector2 currentRunTargetOffset;
         private Vector2 currentVisualOffset;
+        private readonly List<Vector2> currentRouteOffsets = new List<Vector2>();
+        private int currentRouteOffsetIndex;
         private Sprite currentPanicSprite;
         private PanicAction currentRunAction = PanicAction.PanicRunDown;
 
@@ -635,7 +721,78 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
         }
 
-        public void ChooseNextRunTarget(float runDistancePixels, float roamRadiusPixels, float verticalDistanceScale)
+        public void ChooseNextRunTarget(
+            PointClickPlayerMovement routeSource,
+            float runDistancePixels,
+            float roamRadiusPixels,
+            float verticalDistanceScale,
+            float worldUnitsPerPixel,
+            List<Vector2> routeScratch)
+        {
+            currentRouteOffsets.Clear();
+            currentRouteOffsetIndex = 0;
+
+            if (TryChooseReachableRouteTarget(
+                routeSource,
+                runDistancePixels,
+                roamRadiusPixels,
+                verticalDistanceScale,
+                worldUnitsPerPixel,
+                routeScratch))
+            {
+                return;
+            }
+
+            ChooseFallbackRunTarget(runDistancePixels, roamRadiusPixels, verticalDistanceScale);
+        }
+
+        private bool TryChooseReachableRouteTarget(
+            PointClickPlayerMovement routeSource,
+            float runDistancePixels,
+            float roamRadiusPixels,
+            float verticalDistanceScale,
+            float worldUnitsPerPixel,
+            List<Vector2> routeScratch)
+        {
+            if (routeSource == null || routeScratch == null)
+            {
+                return false;
+            }
+
+            float horizontalRadius = Mathf.Max(1f, roamRadiusPixels * runDistanceScale);
+            float verticalRadius = Mathf.Max(1f, roamRadiusPixels * Mathf.Clamp(verticalDistanceScale, 0.1f, 1f) * runDistanceScale);
+            float stepPixels = Mathf.Max(1f, runDistancePixels * runDistanceScale * UnityEngine.Random.Range(0.72f, 1.15f));
+
+            if (!TryGetWorldPointForOffset(currentPanicOffset, worldUnitsPerPixel, out Vector2 startWorldPoint))
+            {
+                return false;
+            }
+
+            for (int attempt = 0; attempt < 12; attempt++)
+            {
+                Vector2 direction = GetRandomScatterDirection();
+                Vector2 targetOffset = currentPanicOffset + new Vector2(
+                    direction.x * stepPixels,
+                    direction.y * stepPixels * Mathf.Clamp(verticalDistanceScale, 0.1f, 1f));
+                targetOffset = ClampPanicOffset(targetOffset, horizontalRadius, verticalRadius);
+
+                if (Vector2.Distance(currentPanicOffset, targetOffset) <= 1f ||
+                    !TryGetWorldPointForOffset(targetOffset, worldUnitsPerPixel, out Vector2 targetWorldPoint) ||
+                    !routeSource.TryBuildReachableWorldPath(startWorldPoint, targetWorldPoint, true, routeScratch))
+                {
+                    continue;
+                }
+
+                if (TrySetRouteFromWorldPath(routeScratch, worldUnitsPerPixel))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void ChooseFallbackRunTarget(float runDistancePixels, float roamRadiusPixels, float verticalDistanceScale)
         {
             float horizontalRadius = Mathf.Max(1f, roamRadiusPixels * runDistanceScale);
             float verticalRadius = Mathf.Max(1f, roamRadiusPixels * Mathf.Clamp(verticalDistanceScale, 0.1f, 1f) * runDistanceScale);
@@ -643,22 +800,70 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             for (int attempt = 0; attempt < 6; attempt++)
             {
-                Vector2 direction = GetRandomCardinalDirection();
+                Vector2 direction = GetRandomScatterDirection();
                 Vector2 targetOffset = currentPanicOffset + new Vector2(
                     direction.x * stepPixels,
                     direction.y * stepPixels * Mathf.Clamp(verticalDistanceScale, 0.1f, 1f));
                 targetOffset = ClampPanicOffset(targetOffset, horizontalRadius, verticalRadius);
 
-                if (Vector2.Distance(currentPanicOffset, targetOffset) > 1f)
+                if (TrySetDirectRouteTarget(targetOffset))
                 {
-                    currentRunTargetOffset = targetOffset;
-                    currentRunAction = GetRunActionForDirection(targetOffset - currentPanicOffset);
                     return;
                 }
             }
 
             currentRunTargetOffset = Vector2.zero;
             currentRunAction = GetRunActionForDirection(Vector2.zero - currentPanicOffset);
+            currentRouteOffsets.Add(currentRunTargetOffset);
+        }
+
+        private bool TrySetRouteFromWorldPath(List<Vector2> worldPath, float worldUnitsPerPixel)
+        {
+            currentRouteOffsets.Clear();
+            currentRouteOffsetIndex = 0;
+
+            for (int i = 0; i < worldPath.Count; i++)
+            {
+                if (!TryGetOffsetForWorldPoint(worldPath[i], worldUnitsPerPixel, out Vector2 routeOffset))
+                {
+                    continue;
+                }
+
+                Vector2 previousOffset = currentRouteOffsets.Count > 0
+                    ? currentRouteOffsets[currentRouteOffsets.Count - 1]
+                    : currentPanicOffset;
+
+                if (Vector2.Distance(previousOffset, routeOffset) <= 0.5f)
+                {
+                    continue;
+                }
+
+                currentRouteOffsets.Add(routeOffset);
+            }
+
+            if (currentRouteOffsets.Count == 0)
+            {
+                return false;
+            }
+
+            currentRunTargetOffset = currentRouteOffsets[currentRouteOffsets.Count - 1];
+            currentRunAction = GetRunActionForDirection(currentRouteOffsets[0] - currentPanicOffset);
+            return true;
+        }
+
+        private bool TrySetDirectRouteTarget(Vector2 targetOffset)
+        {
+            if (Vector2.Distance(currentPanicOffset, targetOffset) <= 1f)
+            {
+                return false;
+            }
+
+            currentRunTargetOffset = targetOffset;
+            currentRunAction = GetRunActionForDirection(targetOffset - currentPanicOffset);
+            currentRouteOffsets.Clear();
+            currentRouteOffsetIndex = 0;
+            currentRouteOffsets.Add(targetOffset);
+            return true;
         }
 
         public int GetRunClipFrameIndex(int frameIndex)
@@ -678,9 +883,40 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         public bool MovePanicOffsetTowardCurrentTarget(float pixelsPerSecond, float deltaTime)
         {
-            float maxDistanceDelta = Mathf.Max(1f, pixelsPerSecond) * moveSpeedScale * Mathf.Max(0f, deltaTime);
-            currentPanicOffset = Vector2.MoveTowards(currentPanicOffset, currentRunTargetOffset, maxDistanceDelta);
-            return Vector2.Distance(currentPanicOffset, currentRunTargetOffset) <= 0.5f;
+            float remainingDistance = Mathf.Max(1f, pixelsPerSecond) * moveSpeedScale * Mathf.Max(0f, deltaTime);
+
+            while (remainingDistance > 0f && currentRouteOffsetIndex < currentRouteOffsets.Count)
+            {
+                Vector2 targetOffset = currentRouteOffsets[currentRouteOffsetIndex];
+                Vector2 previousOffset = currentPanicOffset;
+                Vector2 nextOffset = Vector2.MoveTowards(previousOffset, targetOffset, remainingDistance);
+                Vector2 movement = nextOffset - previousOffset;
+                currentPanicOffset = nextOffset;
+
+                if (movement.sqrMagnitude > 0.0001f)
+                {
+                    currentRunAction = GetRunActionForDirection(movement);
+                }
+
+                float movedDistance = movement.magnitude;
+                remainingDistance = Mathf.Max(0f, remainingDistance - movedDistance);
+
+                if (Vector2.Distance(currentPanicOffset, targetOffset) > 0.5f)
+                {
+                    break;
+                }
+
+                currentPanicOffset = targetOffset;
+                currentRouteOffsetIndex++;
+
+                if (movedDistance <= 0.0001f)
+                {
+                    break;
+                }
+            }
+
+            return currentRouteOffsetIndex >= currentRouteOffsets.Count &&
+                Vector2.Distance(currentPanicOffset, currentRunTargetOffset) <= 0.5f;
         }
 
         public Vector2 GetPanicOffset(float motionFrame, bool jitter, float maxJitterPixels)
@@ -810,6 +1046,101 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
         }
 
+        private bool TryGetWorldPointForOffset(Vector2 roomPixelOffset, float worldUnitsPerPixel, out Vector2 worldPoint)
+        {
+            worldPoint = Vector2.zero;
+
+            if (usesProjection && projection != null)
+            {
+                if (TryGetProjectionRoomStage(out Transform roomStage))
+                {
+                    Vector3 projectedWorldPoint = roomStage.TransformPoint(originalProjectionFootPoint + roomPixelOffset);
+                    worldPoint = projectedWorldPoint;
+                    return true;
+                }
+
+                worldPoint = targetTransform != null ? targetTransform.position : projection.transform.position;
+                return true;
+            }
+
+            if (rectTransform != null && rectTransform.parent != null)
+            {
+                Vector3 projectedWorldPoint = rectTransform.parent.TransformPoint(originalAnchoredPosition + roomPixelOffset);
+                worldPoint = projectedWorldPoint;
+                return true;
+            }
+
+            if (targetTransform != null)
+            {
+                Vector3 worldOffset = new Vector3(
+                    roomPixelOffset.x * worldUnitsPerPixel,
+                    roomPixelOffset.y * worldUnitsPerPixel,
+                    0f);
+                worldPoint = originalPosition + worldOffset;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryGetOffsetForWorldPoint(Vector2 worldPoint, float worldUnitsPerPixel, out Vector2 roomPixelOffset)
+        {
+            roomPixelOffset = Vector2.zero;
+
+            if (usesProjection && projection != null)
+            {
+                if (!TryGetProjectionRoomStage(out Transform roomStage))
+                {
+                    return false;
+                }
+
+                Vector3 roomLocalPoint = roomStage.InverseTransformPoint(worldPoint);
+                roomPixelOffset = new Vector2(roomLocalPoint.x, roomLocalPoint.y) - originalProjectionFootPoint;
+                return true;
+            }
+
+            if (rectTransform != null && rectTransform.parent != null)
+            {
+                Vector3 localPoint = rectTransform.parent.InverseTransformPoint(worldPoint);
+                roomPixelOffset = new Vector2(localPoint.x, localPoint.y) - originalAnchoredPosition;
+                return true;
+            }
+
+            if (targetTransform != null && worldUnitsPerPixel > 0.0001f)
+            {
+                Vector2 worldOffset = worldPoint - (Vector2)originalPosition;
+                roomPixelOffset = worldOffset / worldUnitsPerPixel;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryGetProjectionRoomStage(out Transform roomStage)
+        {
+            roomStage = null;
+
+            if (projection == null)
+            {
+                return false;
+            }
+
+            RoomContentGroup roomContent = projection.GetComponentInParent<RoomContentGroup>(true);
+            if (roomContent != null)
+            {
+                roomStage = roomContent.transform;
+                return roomStage != null;
+            }
+
+            if (projection.transform.parent != null)
+            {
+                roomStage = projection.transform.parent;
+                return true;
+            }
+
+            return false;
+        }
+
         public void Restore()
         {
             if (spriteRenderer != null)
@@ -842,6 +1173,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             currentPanicOffset = Vector2.zero;
             currentRunTargetOffset = Vector2.zero;
             currentVisualOffset = Vector2.zero;
+            currentRouteOffsets.Clear();
+            currentRouteOffsetIndex = 0;
             currentPanicSprite = null;
 
             if (rigidbody2D != null)
@@ -903,19 +1236,10 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             MoveRigidbodyTo(targetTransform.position);
         }
 
-        private static Vector2 GetRandomCardinalDirection()
+        private static Vector2 GetRandomScatterDirection()
         {
-            switch (UnityEngine.Random.Range(0, 4))
-            {
-                case 0:
-                    return Vector2.down;
-                case 1:
-                    return Vector2.left;
-                case 2:
-                    return Vector2.right;
-                default:
-                    return Vector2.up;
-            }
+            float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+            return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
         }
 
         private static Vector2 ClampPanicOffset(Vector2 offset, float horizontalRadius, float verticalRadius)

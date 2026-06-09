@@ -83,6 +83,41 @@ public class StoryActorRoomStageLockingTests
         }
     }
 
+    [Test]
+    public void WorldActorUsesAuthoredScaleAsRoomZoomBaseline()
+    {
+        TestRig rig = CreateRig();
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            Vector3 authoredScale = rig.ActorState.transform.localScale;
+
+            rig.ActorState.PlaceAt(rig.Anchor);
+            AssertActorLockedToAnchor(rig, "initial placement");
+
+            float boundStageScale = rig.Stage.lossyScale.x;
+            rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
+            rig.CameraManager.SetRoomLookForPreview(1f, 0f, 0.8f);
+            Assert.That(ApplyBinding(rig.ActorState), Is.True);
+
+            float zoomRatio = rig.Stage.lossyScale.x / Mathf.Max(0.0001f, boundStageScale);
+            Vector3 expectedScale = new Vector3(
+                authoredScale.x * zoomRatio,
+                authoredScale.y * zoomRatio,
+                authoredScale.z);
+
+            AssertActorLockedToAnchor(rig, "room zoom");
+            Assert.That(rig.ActorState.transform.localScale.x, Is.EqualTo(expectedScale.x).Within(0.0001f));
+            Assert.That(rig.ActorState.transform.localScale.y, Is.EqualTo(expectedScale.y).Within(0.0001f));
+            Assert.That(rig.ActorState.transform.localScale.z, Is.EqualTo(expectedScale.z).Within(0.0001f));
+        }
+        finally
+        {
+            rig.Destroy();
+        }
+    }
+
     private static TestRig CreateRig()
     {
         GameObject root = new GameObject("StoryActorRoomStageLockingTestRoot");

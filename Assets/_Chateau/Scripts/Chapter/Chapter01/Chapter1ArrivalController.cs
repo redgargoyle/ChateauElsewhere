@@ -2777,7 +2777,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (actorState != null)
         {
-            actorState.SetScaleWithRoomStageMotion(false);
+            actorState.SetScaleWithRoomStageMotion(true);
         }
     }
 
@@ -3844,7 +3844,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         actorState.SetActorId(MakeGuestId(guestObject.name, index));
-        actorState.SetScaleWithRoomStageMotion(false);
+        actorState.SetScaleWithRoomStageMotion(true);
         guestObject.transform.localScale = authoredGuestScale;
         RoomProjectedEntity projection = ResolveGuestProjection(guestObject, actorState);
 
