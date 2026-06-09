@@ -15,401 +15,137 @@ MonoBehaviour:
   characters:
   - characterId: Lady
     displayName: Lady
-    panicReactionDown:
-    - {fileID: 21300000, guid: 598f63fb1a45e2a416995851c4417030, type: 3}
-    - {fileID: 21300000, guid: 623a45a6606f4d86fa4a65baa19396c1, type: 3}
-    - {fileID: 21300000, guid: 8ef38d8905f53efefc799009e9d600d3, type: 3}
-    - {fileID: 21300000, guid: c8aaaf3b8eb960a8a6ffd484dcd1c3d9, type: 3}
-    - {fileID: 21300000, guid: 44c280ecede50fd00640fb09a4c6e832, type: 3}
-    - {fileID: 21300000, guid: bd7b0cb95a1a5e6afca10a6cc0ec5bf8, type: 3}
-    panicShriekDown:
-    - {fileID: 21300000, guid: 9a19a87ec674186ad41dd24fa9ac62ba, type: 3}
-    - {fileID: 21300000, guid: 8143e678cd49ef700a635cb3815cb960, type: 3}
-    - {fileID: 21300000, guid: f7fb2092dee19f2b9635cb6d5bbf9358, type: 3}
-    - {fileID: 21300000, guid: 061991a1ec14f4219a07ad134c9541e1, type: 3}
-    - {fileID: 21300000, guid: 04c9a65cacf0f3996b2bef20609c9bbc, type: 3}
-    - {fileID: 21300000, guid: 5735bd66be6c88ca2cf4b14f175a2979, type: 3}
-    - {fileID: 21300000, guid: 4749728ca45b4e1489683eebc37d5c09, type: 3}
-    - {fileID: 21300000, guid: 654c7ac41368b2016b87a064bff807a5, type: 3}
+    panicHandsUp:
+    - {fileID: 21300000, guid: f33784d47b84aacb4776a4e1ebe2021b, type: 3}
+    - {fileID: 21300000, guid: a9436c9fae1404fa81f2c03fe06134fa, type: 3}
+    - {fileID: 21300000, guid: c43e6fedac49ca75bae69d73d35d1843, type: 3}
+    - {fileID: 21300000, guid: 849d2c76daaf21a7b768c6df914a2468, type: 3}
     panicRunLeft:
-    - {fileID: 21300000, guid: c19f66086975d76f29f21f2c76b02c3f, type: 3}
-    - {fileID: 21300000, guid: 5d41b54c0d3ee0d684493dad3db12b80, type: 3}
-    - {fileID: 21300000, guid: 9199dea91081850db3cc6978de932482, type: 3}
-    - {fileID: 21300000, guid: d34b8bada0bd96810b65a28b260b5b0d, type: 3}
-    - {fileID: 21300000, guid: 19e7f3e09c40b4bf5557f255ec263a0c, type: 3}
-    - {fileID: 21300000, guid: c0ba54ee93c8b93cc512808558880a85, type: 3}
-    - {fileID: 21300000, guid: 6157a0bf320b8a9ae526e773a0b85753, type: 3}
-    - {fileID: 21300000, guid: 7d3ab6c3ccb8e0c2fa067782777c8921, type: 3}
+    - {fileID: 4084019855493377386, guid: 7de9f91fca24a4fedba5112e6f8d7764, type: 3}
+    - {fileID: -7394040306562849740, guid: 9cf931b452be1f6f4b18f5e91ea47166, type: 3}
+    - {fileID: -4452330781881763824, guid: d3c7d21bef10cf8c4bb6ccaae8c70567, type: 3}
+    - {fileID: 4866493404242277061, guid: dea264caa6d3d94868173cd4c70c288b, type: 3}
     panicRunRight:
-    - {fileID: 21300000, guid: 46dfe2b5ef4ded3e56d102f275468dba, type: 3}
-    - {fileID: 21300000, guid: f0809d5b07f387ff34c56706724c5b89, type: 3}
-    - {fileID: 21300000, guid: 3aba4874333136881c9ff31bfa2f6083, type: 3}
-    - {fileID: 21300000, guid: 75d3990149e600f36420b7ced0445917, type: 3}
-    - {fileID: 21300000, guid: f645abf128822f316c064f46cab4b9e3, type: 3}
-    - {fileID: 21300000, guid: d41aea4b9d0b792645afb11c3ad2a698, type: 3}
-    - {fileID: 21300000, guid: 407754542dbeeca2bdbac1a260ee149b, type: 3}
-    - {fileID: 21300000, guid: 95a2140a62afab10bd5e550ba5df55bd, type: 3}
-    panicTurnaround:
-    - {fileID: 21300000, guid: 6cd2c54992861f62625df222907c9bab, type: 3}
-    - {fileID: 21300000, guid: f12e5753b06f3b44e052d0d67c7db2ec, type: 3}
-    - {fileID: 21300000, guid: 4b42432b967e150b12780498b7d10515, type: 3}
-    - {fileID: 21300000, guid: 55115141aa2f18f85001a5e00e0c324b, type: 3}
-    - {fileID: 21300000, guid: 4a81d955d1b60ae5e63559f1602a4e27, type: 3}
-    - {fileID: 21300000, guid: c21f388392c97a4f4465087c9e4ed2a3, type: 3}
-    coverFaceCower:
-    - {fileID: 21300000, guid: 786abae08b55fca3a1cd2db55a7bbc1a, type: 3}
-    - {fileID: 21300000, guid: 111166b41d6ad7bc19f06f83a3f1694b, type: 3}
-    - {fileID: 21300000, guid: 6b4f189bf84ae14c586d548be46c9406, type: 3}
-    - {fileID: 21300000, guid: b61f8703435fb86bffefd49d236717f9, type: 3}
-    - {fileID: 21300000, guid: ea0a9f26fc253e33b2faa97fe9104f5b, type: 3}
-    - {fileID: 21300000, guid: ac05156df8c19fc4c6d8b8cd744d3c01, type: 3}
+    - {fileID: 946704054228289057, guid: 6aa9c51eb5bf6750f88b5ef4ed38e96d, type: 3}
+    - {fileID: 3081592531595978388, guid: 10ab213db1f2c0165b6cb43013539e12, type: 3}
+    - {fileID: -5657380926766475670, guid: fb14d676ebec9176680d83a3d0a20125, type: 3}
+    - {fileID: 6056271442666198358, guid: 949fd7f5620a8b6f790eafa07c3e969d, type: 3}
   - characterId: ButlerGuest
     displayName: Butler Guest
-    panicReactionDown:
-    - {fileID: 21300000, guid: 8d7dea487f41ed7bc644b154b495bf97, type: 3}
-    - {fileID: 21300000, guid: f26b783e9b7651390844bd434aa54d89, type: 3}
-    - {fileID: 21300000, guid: ad9b026e3359029d96e9543dfd7a4b98, type: 3}
-    - {fileID: 21300000, guid: edd4c2dc095f740e52fa8f7ae384deb5, type: 3}
-    - {fileID: 21300000, guid: f44ba1877242f4ab5c1fba5bbd84a1fe, type: 3}
-    - {fileID: 21300000, guid: 4bdb3b77a03790092777d9767c15f010, type: 3}
-    panicShriekDown:
-    - {fileID: 21300000, guid: 653b6032d2dcb2268a00a0b467f955b3, type: 3}
-    - {fileID: 21300000, guid: 96c7812621214df852ae9110d175ecbf, type: 3}
-    - {fileID: 21300000, guid: 8fd98421b59fbceabde92095d2fa709b, type: 3}
-    - {fileID: 21300000, guid: 94cd4b22b80910d88d358052297e6aa0, type: 3}
-    - {fileID: 21300000, guid: 5f2ba9850f640e86ea1f206620ace5a4, type: 3}
-    - {fileID: 21300000, guid: a65054f163ae95dc06f5d122dba737cd, type: 3}
-    - {fileID: 21300000, guid: 87cc88ca33d49ddcf2b7cdf2eae296fa, type: 3}
-    - {fileID: 21300000, guid: 87b4e710be7b841b97cc131cdd3dcd08, type: 3}
+    panicHandsUp:
+    - {fileID: 21300000, guid: a18954746ce048bbe6fd79da894a6277, type: 3}
+    - {fileID: 21300000, guid: ffcfbf0b681c2a1598a1ec55e06dd2ac, type: 3}
+    - {fileID: 21300000, guid: 2a8df33e86b8fe10fec004724e5f0da7, type: 3}
+    - {fileID: 21300000, guid: d0796a62cbc89280ad896bf3d6ab65a0, type: 3}
     panicRunLeft:
-    - {fileID: 21300000, guid: c30eccb9166d32068ee80b51f8ad991b, type: 3}
-    - {fileID: 21300000, guid: 29753d839f4b6e4c146c59569498d54a, type: 3}
-    - {fileID: 21300000, guid: ae7accc6cee1b5fa38b6f09addd11fdb, type: 3}
-    - {fileID: 21300000, guid: 5d63eb3ecff9fc7b2b4f34cb898af028, type: 3}
-    - {fileID: 21300000, guid: 96d09c58cc6851a7800e7403c53acea5, type: 3}
-    - {fileID: 21300000, guid: a76830934a37405dccd48df7c4bc6ef2, type: 3}
-    - {fileID: 21300000, guid: 488bb374cc82447e75223e5ad310b493, type: 3}
-    - {fileID: 21300000, guid: 26b1f126abea84338421ae7ac11fb19c, type: 3}
+    - {fileID: -4387222816691918669, guid: 43220334c5da9cc1cbf8a0de3a65fbfa, type: 3}
+    - {fileID: -4387222816691918669, guid: 43220334c5da9cc1cbf8a0de3a65fbfa, type: 3}
+    - {fileID: -4387222816691918669, guid: 43220334c5da9cc1cbf8a0de3a65fbfa, type: 3}
+    - {fileID: -4387222816691918669, guid: 43220334c5da9cc1cbf8a0de3a65fbfa, type: 3}
     panicRunRight:
-    - {fileID: 21300000, guid: 9d250c498940283e0fe4f69e9b50e3e8, type: 3}
-    - {fileID: 21300000, guid: 5ed7907fa8128ef86d9d9df82d83da6f, type: 3}
-    - {fileID: 21300000, guid: 98df9b15df80ed98c90e32b6b5d0cf82, type: 3}
-    - {fileID: 21300000, guid: 8e0b0d61a6d203d5e38e3648c7c77dff, type: 3}
-    - {fileID: 21300000, guid: 3dc706927d5335fe3588496fbb5583b4, type: 3}
-    - {fileID: 21300000, guid: 5fabbde2909732f56c404d4e18841a6e, type: 3}
-    - {fileID: 21300000, guid: 9302229657c93f834fbd83c8234b5899, type: 3}
-    - {fileID: 21300000, guid: 629eaeb6e751b94d9635fb5f0e3b635e, type: 3}
-    panicTurnaround:
-    - {fileID: 21300000, guid: 646b26e7dfda199457304f321f622604, type: 3}
-    - {fileID: 21300000, guid: efc348dbd1a48de01e8b37fa6ddd6ff1, type: 3}
-    - {fileID: 21300000, guid: e357e9eb0504c27c5872a741ba2d5595, type: 3}
-    - {fileID: 21300000, guid: 008537ce1db1ed58c66a9347fa60ebb3, type: 3}
-    - {fileID: 21300000, guid: 400868f625fbe74863fad08d0e9e0790, type: 3}
-    - {fileID: 21300000, guid: d1597976eb42487dd7bab81016e19beb, type: 3}
-    coverFaceCower:
-    - {fileID: 21300000, guid: 484d8f3732fccc782e0b0933f3c939b7, type: 3}
-    - {fileID: 21300000, guid: 04aeb2b41875275f6d6ce0827d93d524, type: 3}
-    - {fileID: 21300000, guid: da8ec1e8ff9b2082b0c5f0b957866bfb, type: 3}
-    - {fileID: 21300000, guid: d477e3c79cedde671ad6d179d4234995, type: 3}
-    - {fileID: 21300000, guid: 72ee7a5c058593a51b32ce57b3a46183, type: 3}
-    - {fileID: 21300000, guid: e9b4f0a44aea3e57c52e3320a375af77, type: 3}
+    - {fileID: 8458359987313073745, guid: a8ff8ea5c4380161abbd513a1f43249b, type: 3}
+    - {fileID: 3282760307376017059, guid: cf89b44aad563d631b0a61b3e9efb539, type: 3}
+    - {fileID: 3468883530629670129, guid: 1781f2b6b7d5f76cdae72e841a6d1040, type: 3}
+    - {fileID: -7511592951438912024, guid: 0caaef711c9b65b2099be107cedd0aa7, type: 3}
   - characterId: MisterFlorianKnell
     displayName: Mister Florian Knell
-    panicReactionDown:
-    - {fileID: 21300000, guid: 286c02be30c3f5559c858095121239d8, type: 3}
-    - {fileID: 21300000, guid: 63d61abafddde5b764380d314a8fbfd2, type: 3}
-    - {fileID: 21300000, guid: 60320a509ec5102905815d960d624da1, type: 3}
-    - {fileID: 21300000, guid: d5d07adf604c1c56918032ba37593e16, type: 3}
-    - {fileID: 21300000, guid: 8736d9baf83d189e5f37cc35296199ef, type: 3}
-    - {fileID: 21300000, guid: cd14f7428f3162e2f817e4899969c526, type: 3}
-    panicShriekDown:
-    - {fileID: 21300000, guid: d45050df3078e1e5868cf0c815f9966c, type: 3}
-    - {fileID: 21300000, guid: 1505ab5ce6fc65dd7b24c9e36e5a8de4, type: 3}
-    - {fileID: 21300000, guid: eb80f03fc17923f34ed48a5072cfaea1, type: 3}
-    - {fileID: 21300000, guid: ad9f282b0c930380fa7a596a5ddf9556, type: 3}
-    - {fileID: 21300000, guid: 187173f735ddbbc69a228bd5dc1c9374, type: 3}
-    - {fileID: 21300000, guid: 41ddbbfc131d11a89666f536a8e813eb, type: 3}
-    - {fileID: 21300000, guid: 961105f9704f92fbf7c786ad8e14a72c, type: 3}
-    - {fileID: 21300000, guid: 1ae7dcfc834b8e9fd9f4c31fb11019f8, type: 3}
+    panicHandsUp:
+    - {fileID: 21300000, guid: c5aee110ed412e169d81c80cef58cf73, type: 3}
+    - {fileID: 21300000, guid: 9943d810ff93d1fe22f0465c5c77fa1d, type: 3}
+    - {fileID: 21300000, guid: 34064c9074ad0f22eca30e3d240c37a5, type: 3}
+    - {fileID: 21300000, guid: 3eebce8e99fb13c3fc976b99245fc275, type: 3}
     panicRunLeft:
-    - {fileID: 21300000, guid: f16fa7b214ded286019955f9f54cfc2a, type: 3}
-    - {fileID: 21300000, guid: edf74c6b1b973626fd795e61643281d9, type: 3}
-    - {fileID: 21300000, guid: dee38da2fb562dc5138a30115453dff8, type: 3}
-    - {fileID: 21300000, guid: 1a856a4bdce560b1ee09f95de3637eac, type: 3}
-    - {fileID: 21300000, guid: 74bc54a6b90493dcdad76f9f8373e8e4, type: 3}
-    - {fileID: 21300000, guid: 407298704cc7482ed7eb0e1671a3289f, type: 3}
-    - {fileID: 21300000, guid: 636f786dfd32b1821331ac9d10ec3457, type: 3}
-    - {fileID: 21300000, guid: 78d8961b88d2be0a1b3de57e9e5ea21f, type: 3}
+    - {fileID: -1936868247199252967, guid: 3734b3eb0a2805c6bb9ddc8d92efbaa0, type: 3}
+    - {fileID: 6439082100123244584, guid: 4d40fee6b2ec246899dd6f0389739f56, type: 3}
+    - {fileID: 6949385011475491293, guid: 75656237e8df583e2baed156e3454f9c, type: 3}
+    - {fileID: 8851788257716542116, guid: 9b731288eb2c48446aaf44ec4f21a75a, type: 3}
     panicRunRight:
-    - {fileID: 21300000, guid: c89d355a1d4567f8503d9ec937ab288c, type: 3}
-    - {fileID: 21300000, guid: 76735034daf1563d3ac16a30167e9a06, type: 3}
-    - {fileID: 21300000, guid: eb515e169eedaf5945038a8146f0620c, type: 3}
-    - {fileID: 21300000, guid: 94374a31a1934543b068374557c6a020, type: 3}
-    - {fileID: 21300000, guid: b08c0879181fc3ee9c5342137e9989b8, type: 3}
-    - {fileID: 21300000, guid: b41b39b5321823898e758352196f11e9, type: 3}
-    - {fileID: 21300000, guid: 00ca9645d7389344a5e63950ef2dd239, type: 3}
-    - {fileID: 21300000, guid: 85d55a1cd1022eb7422aab5f7a887cb3, type: 3}
-    panicTurnaround:
-    - {fileID: 21300000, guid: 2f79fd41e0a69cc99ca385e08152b316, type: 3}
-    - {fileID: 21300000, guid: 4ffd841f7a6d4517de169d7a0e8c698e, type: 3}
-    - {fileID: 21300000, guid: 5f5b452d3eea556f1788a9668656453a, type: 3}
-    - {fileID: 21300000, guid: 93917959f2895e6dda3511acd5ff2e64, type: 3}
-    - {fileID: 21300000, guid: 0b296079b091bc90368d45f368024f03, type: 3}
-    - {fileID: 21300000, guid: 0b27209a2a15a8213b346e56988198bc, type: 3}
-    coverFaceCower:
-    - {fileID: 21300000, guid: 927e969ca94c20ab7acd4f67d9ff526a, type: 3}
-    - {fileID: 21300000, guid: ec3f9d8c45f35f7d2b1c05c539d914fb, type: 3}
-    - {fileID: 21300000, guid: f3a04155cbfd7f62d36a43ba11ae2189, type: 3}
-    - {fileID: 21300000, guid: d0c94d13a3e00ab9010549ca1a5d3ff8, type: 3}
-    - {fileID: 21300000, guid: 1301de842733a4f2553fa6b7138b1d3b, type: 3}
-    - {fileID: 21300000, guid: cf351694e1a8abc8f383d788ce8f5027, type: 3}
+    - {fileID: -2549205206284814527, guid: 6c20425c554b04527985aeee902fa329, type: 3}
+    - {fileID: -1121739747180984415, guid: ab0ede77e001f275c96dfbbe81bd05ea, type: 3}
+    - {fileID: 1990938986751233210, guid: 85610a6b2efc0299ca3ec3c88a16c94a, type: 3}
+    - {fileID: 7109285632261367992, guid: 5b1b8321fc338fd8f9486b6e0882061a, type: 3}
   - characterId: CountessElowenDusk
     displayName: Countess Elowen Dusk
-    panicReactionDown:
-    - {fileID: 21300000, guid: 16dfcb8ea70d145b408078d2d6e39872, type: 3}
-    - {fileID: 21300000, guid: 391fc7685474f14a2b3aeb027c098c8e, type: 3}
-    - {fileID: 21300000, guid: 3858f3fac88fb56916ff10ad2ec428cf, type: 3}
-    - {fileID: 21300000, guid: 3a3013cd248c17bed02270d73b5f64aa, type: 3}
-    - {fileID: 21300000, guid: 916195833ba57d96e494ee7b45a5c724, type: 3}
-    - {fileID: 21300000, guid: b908e16a20b3ba42c4cf4bbdb624ac57, type: 3}
-    panicShriekDown:
-    - {fileID: 21300000, guid: bd09ad976bd51897ea2013df104c6221, type: 3}
-    - {fileID: 21300000, guid: b0bf00a1de36281e92188cc2edb90fc5, type: 3}
-    - {fileID: 21300000, guid: 95698eac7572b456c6b8f307def8d216, type: 3}
-    - {fileID: 21300000, guid: 4733aea3539073da18aae5fa443231c7, type: 3}
-    - {fileID: 21300000, guid: ea24e8b2d80210a4d82adcbb30471b0e, type: 3}
-    - {fileID: 21300000, guid: 77082e3a68ecf7c7af5ab61735c1bed8, type: 3}
-    - {fileID: 21300000, guid: 66b20303070729feb26840debf74834d, type: 3}
-    - {fileID: 21300000, guid: a0be3ed6a29aa117392e3a44b166a740, type: 3}
+    panicHandsUp:
+    - {fileID: 21300000, guid: a88cecd7f08473748e1058d6d4ee52b8, type: 3}
+    - {fileID: 21300000, guid: 439a3311092173a828a541017250a787, type: 3}
+    - {fileID: 21300000, guid: ec13afb10b3d134163ddae79dc69074b, type: 3}
+    - {fileID: 21300000, guid: 8a13c86a8c758ad14a1ffa66cbdd2917, type: 3}
     panicRunLeft:
-    - {fileID: 21300000, guid: 1713cbd3c096103a3fbd5ecc5fa2c97d, type: 3}
-    - {fileID: 21300000, guid: 53726f1731307e2bab45e8ca8b19d0dd, type: 3}
-    - {fileID: 21300000, guid: 9175ce026ac4d0cd29cb25dff50e4ba3, type: 3}
-    - {fileID: 21300000, guid: 2b7962da6cce9b592a0a92af925828a9, type: 3}
-    - {fileID: 21300000, guid: 9fcd911a245239197979b2660c64f335, type: 3}
-    - {fileID: 21300000, guid: c611cd50605a1dfc55f91942d9756a1e, type: 3}
-    - {fileID: 21300000, guid: 99f8f0b28988d393b269ac349ed8f6c3, type: 3}
-    - {fileID: 21300000, guid: b9fe1081dbeb34fc8d1be8c83a01238b, type: 3}
+    - {fileID: 769628462846129712, guid: c51f1253cb457730fbc7dbe1eeb2ffcf, type: 3}
+    - {fileID: -2128671913236123064, guid: c3e8e66c9f0f50f72a328aa82c9cd0f8, type: 3}
+    - {fileID: -5982351762337293014, guid: 179a0ad3404127d6bbb9806a1651aa74, type: 3}
+    - {fileID: 444703860227500768, guid: 4c7d97f7b1e365289a8b16069d8a7777, type: 3}
     panicRunRight:
-    - {fileID: 21300000, guid: d7f655502d892394ac70816571ea3e38, type: 3}
-    - {fileID: 21300000, guid: 0579d65de0ec59b48cb4f56ddfad57dc, type: 3}
-    - {fileID: 21300000, guid: f8617f902de753ff78dc2d6a080399e1, type: 3}
-    - {fileID: 21300000, guid: d64edeb162f33302c0455a5c1a6c14bf, type: 3}
-    - {fileID: 21300000, guid: 906f9634af1c4ee6ad7eae9c620269cf, type: 3}
-    - {fileID: 21300000, guid: db8b985c867bda64ebc2f90db9adace5, type: 3}
-    - {fileID: 21300000, guid: 3dfd052ae51d973fe81102fb4f91518f, type: 3}
-    - {fileID: 21300000, guid: 4d022bc3cb3da3b43155646759d6360f, type: 3}
-    panicTurnaround:
-    - {fileID: 21300000, guid: 68c7f8d467c3faf1e1180cfd04b0d4cc, type: 3}
-    - {fileID: 21300000, guid: e080bb84bd9e662dc215a29a4c74bc9a, type: 3}
-    - {fileID: 21300000, guid: a98b4ccd4b4352d8807ec104394d6172, type: 3}
-    - {fileID: 21300000, guid: f9c84bb1ee20731644b40ba16a672d1e, type: 3}
-    - {fileID: 21300000, guid: f4a817ed34354ac6a8167ab8ffb88284, type: 3}
-    - {fileID: 21300000, guid: 5efad60373b7d68ca3a7c67b6a0dd214, type: 3}
-    coverFaceCower:
-    - {fileID: 21300000, guid: 4cb87fa539a56521dcbb36620d452158, type: 3}
-    - {fileID: 21300000, guid: 06b2138268cf60de3fcb17c7de2f3dfb, type: 3}
-    - {fileID: 21300000, guid: 1f18b72dab3659e3d9b9776a9b203304, type: 3}
-    - {fileID: 21300000, guid: 8088ff657b903ac683da243ddceb1240, type: 3}
-    - {fileID: 21300000, guid: 3f89a702b86a2ec61a2bb1f156c1f83b, type: 3}
-    - {fileID: 21300000, guid: b8dffe0fcb1118e7a2aed201e6264083, type: 3}
+    - {fileID: 7486233615080850707, guid: 833e06332a1b4b4778b6041e662aafd2, type: 3}
+    - {fileID: -1601009309792120646, guid: 2cdf7b917f66f58c8a031aa288e40b2d, type: 3}
+    - {fileID: 9006166411051458994, guid: 1f0ef44715854174ba007146fe6c3843, type: 3}
+    - {fileID: -1668137606416179511, guid: 6e0e0cf3f91e3fad2b2bf3604e8b1ac2, type: 3}
   - characterId: BaronHectorGlass
     displayName: Baron Hector Glass
-    panicReactionDown:
-    - {fileID: 21300000, guid: 2a067de5d320d309295fc840d63fd478, type: 3}
-    - {fileID: 21300000, guid: 8114a8bba64a3ec458fa14da1c382ee5, type: 3}
-    - {fileID: 21300000, guid: 135663fb1f9b76355883c43d45dd0c9f, type: 3}
-    - {fileID: 21300000, guid: 2f8a36201e7faab2ba0d7459f749c33a, type: 3}
-    - {fileID: 21300000, guid: 2ad30aeb1d235b8db287700ce1e289bb, type: 3}
-    - {fileID: 21300000, guid: b67a0b85a9baa159a207329acc273588, type: 3}
-    panicShriekDown:
-    - {fileID: 21300000, guid: fe6c3030528afc70b5bb652e0b22dcb9, type: 3}
-    - {fileID: 21300000, guid: 134821a5ba91c0964d708ef7acd25737, type: 3}
-    - {fileID: 21300000, guid: df16151260435fd0b925d6617050b439, type: 3}
-    - {fileID: 21300000, guid: c036a5dd6970bb56694cbd83a8c0d7c4, type: 3}
-    - {fileID: 21300000, guid: 5633e1c7b538309075af86d2e49e9c2e, type: 3}
-    - {fileID: 21300000, guid: 5a46f6ce8784c19c7b5401bbcc409077, type: 3}
-    - {fileID: 21300000, guid: 8fe223941576b5aafc1a011af6117431, type: 3}
-    - {fileID: 21300000, guid: f2178866b351314b1ae5647635604bc5, type: 3}
+    panicHandsUp:
+    - {fileID: 21300000, guid: 3dc48e9d6741cad5b944f38eb415e12c, type: 3}
+    - {fileID: 21300000, guid: 5e5fa3930de5f88f21b9f61f60607b60, type: 3}
+    - {fileID: 21300000, guid: 00f87a0e18b27ef6396cfbc1c8af7b65, type: 3}
+    - {fileID: 21300000, guid: 6188adbcc9a787865571a658cae8a37e, type: 3}
     panicRunLeft:
-    - {fileID: 21300000, guid: 651dd7495c219f3fe64258e34204d21e, type: 3}
-    - {fileID: 21300000, guid: f7aa524075b3ffffd3b02607061da352, type: 3}
-    - {fileID: 21300000, guid: 1708bc740f16513f6c99d21f590ec4dd, type: 3}
-    - {fileID: 21300000, guid: 889171a29be566b5b4a2f83ab82f904a, type: 3}
-    - {fileID: 21300000, guid: 898538b4986936e7f75d00c17a6e00bb, type: 3}
-    - {fileID: 21300000, guid: c48588aee57c7e02aed581de4e8b2a4b, type: 3}
-    - {fileID: 21300000, guid: fd0942a536923bf94e9aa63aeee2d72e, type: 3}
-    - {fileID: 21300000, guid: f6702576763a90344fe4a915b7866f48, type: 3}
+    - {fileID: 5866354158921764988, guid: 324936d8fa7bc58bea6e49de4c1913f8, type: 3}
+    - {fileID: -1986315045106021720, guid: d8ec26e1123eed342aad33901f5df8a0, type: 3}
+    - {fileID: 1331190076403772625, guid: b846192031842e6b7a27391293b07c55, type: 3}
+    - {fileID: 5866354158921764988, guid: 324936d8fa7bc58bea6e49de4c1913f8, type: 3}
     panicRunRight:
-    - {fileID: 21300000, guid: d62c41ef43d5f3f7404758036504422c, type: 3}
-    - {fileID: 21300000, guid: d6b8beb2014130e33e7a120db713c2b6, type: 3}
-    - {fileID: 21300000, guid: 0eb99e9d573fdce49c2d80c73988a741, type: 3}
-    - {fileID: 21300000, guid: 546777a7a81bb90749fe18eafd9e0a53, type: 3}
-    - {fileID: 21300000, guid: f22e091b517cc99011c0e6a363626ae6, type: 3}
-    - {fileID: 21300000, guid: dece1075bbc656402ea12a5114ed63ef, type: 3}
-    - {fileID: 21300000, guid: 44728a9912ae58536e7aa9ad1a61806e, type: 3}
-    - {fileID: 21300000, guid: acb1251164e0004c47fdb1d8b8d6df20, type: 3}
-    panicTurnaround:
-    - {fileID: 21300000, guid: bcc7cfe70267f4b4de24e39a17ad3cc7, type: 3}
-    - {fileID: 21300000, guid: 022b3d66a6beee1d8ba64dc4b7e03415, type: 3}
-    - {fileID: 21300000, guid: 303ea10da7bd1ae6bb983e3c45d0b7c1, type: 3}
-    - {fileID: 21300000, guid: 3a48ed1d485d82461da9a6f639db862e, type: 3}
-    - {fileID: 21300000, guid: 53400c8518a902992e13fd252ded1d22, type: 3}
-    - {fileID: 21300000, guid: d29420b5fe81e0e4d99307f70a7062a4, type: 3}
-    coverFaceCower:
-    - {fileID: 21300000, guid: 3059f5cbfa1f6e3fc2ce039ba0186187, type: 3}
-    - {fileID: 21300000, guid: b07f3b48dbea2036f41d1bd62f86fac7, type: 3}
-    - {fileID: 21300000, guid: 994ea782109aecfac44e547781a5dd63, type: 3}
-    - {fileID: 21300000, guid: 8adda4562d876a18fc2dbcb363af5438, type: 3}
-    - {fileID: 21300000, guid: cae8f9adaa8213cdcf427eeaa0504b49, type: 3}
-    - {fileID: 21300000, guid: 8f36c4d052e38114036ec170c3400c04, type: 3}
+    - {fileID: 1586065769651415237, guid: 2d0780fa8e229683f9213f7fc70304fc, type: 3}
+    - {fileID: 6082321994838234306, guid: 6a74223284f5d2258bcd12d30f8cc23f, type: 3}
+    - {fileID: -1694893459400297834, guid: 44eb202c35e6deafaaba819c17196ec5, type: 3}
+    - {fileID: 1586065769651415237, guid: 2d0780fa8e229683f9213f7fc70304fc, type: 3}
   - characterId: LadySabineMarrow
     displayName: Lady Sabine Marrow
-    panicReactionDown:
-    - {fileID: 21300000, guid: 56ed50e32a340049769bcdd9f747b103, type: 3}
-    - {fileID: 21300000, guid: 504f035e5c2798953974bcf42229bdaf, type: 3}
-    - {fileID: 21300000, guid: 875ea6f31bf98ce93e96563a6b8e6d09, type: 3}
-    - {fileID: 21300000, guid: 51ccc1f2f45f56a49d3b55877235f81c, type: 3}
-    - {fileID: 21300000, guid: cc9565ca4b1883eee8c54c87678a77ae, type: 3}
-    - {fileID: 21300000, guid: 92893cf9b669aac615304905fdad02fd, type: 3}
-    panicShriekDown:
-    - {fileID: 21300000, guid: 42e8ef42f905423bc65f265091ab37be, type: 3}
-    - {fileID: 21300000, guid: 23c8bd383a0e32d34d304465215a3f62, type: 3}
-    - {fileID: 21300000, guid: fc6831562acf65a99e0fae6ddc0599f9, type: 3}
-    - {fileID: 21300000, guid: 0121be09dbd8334a7dd4d8db0926a38b, type: 3}
-    - {fileID: 21300000, guid: ebd9921eafb3199c5771d8958c2a150a, type: 3}
-    - {fileID: 21300000, guid: b194e7e60675503bf3513feb3eda01bc, type: 3}
-    - {fileID: 21300000, guid: 2a924de179cf7e6757ce09bb0f462137, type: 3}
-    - {fileID: 21300000, guid: f06480ab47cb908d75951a7c6c039c36, type: 3}
+    panicHandsUp:
+    - {fileID: 21300000, guid: 108da0612345234d834bbf4a6612deb5, type: 3}
+    - {fileID: 21300000, guid: c4c28ba35cf9408fa6d1d5d92e2bc31c, type: 3}
+    - {fileID: 21300000, guid: c14681f83dff5280463babf4499ac287, type: 3}
+    - {fileID: 21300000, guid: 282fb5585838ddfce1d09c424b7d5eae, type: 3}
     panicRunLeft:
-    - {fileID: 21300000, guid: 228567eb2e5ec18330046df0e8c3f2be, type: 3}
-    - {fileID: 21300000, guid: fcea687b56fe4652d97b9beb10acd10c, type: 3}
-    - {fileID: 21300000, guid: 8ae1a54ad6d32582b4c2a9e5050f4cb0, type: 3}
-    - {fileID: 21300000, guid: 8a266ebfda0352631f6ed40bf8c0466f, type: 3}
-    - {fileID: 21300000, guid: 4ea7077ab76d9035fc4b0b83a689b002, type: 3}
-    - {fileID: 21300000, guid: 28d5658e2d143dca49e0a6dd02af329c, type: 3}
-    - {fileID: 21300000, guid: 35d5c846ec3dba9c652be2952fcf8358, type: 3}
-    - {fileID: 21300000, guid: 04cdd593d4a2827ec7520074cc111a29, type: 3}
+    - {fileID: 6459812066805706637, guid: 5d605342b56d9e8108029a0df0207698, type: 3}
+    - {fileID: 7394535296205011958, guid: 85eb8e500bbe5e35cac61dac348771b7, type: 3}
+    - {fileID: 3182341613727222802, guid: 7031d4b35b7c98744a17a7608c4cf66c, type: 3}
+    - {fileID: 7653195778475059391, guid: 92229e59e4be45c91ba527943de9381f, type: 3}
     panicRunRight:
-    - {fileID: 21300000, guid: cbea311cff01779739df26e4154471a4, type: 3}
-    - {fileID: 21300000, guid: 17a170467f807c316210d11ce51ca90c, type: 3}
-    - {fileID: 21300000, guid: e6b9022b3e4faa3c3b6ecf874decbb13, type: 3}
-    - {fileID: 21300000, guid: 02b30273c8148eb939baf85e08f40712, type: 3}
-    - {fileID: 21300000, guid: 598dcd5525b25a02cb9444a68177c238, type: 3}
-    - {fileID: 21300000, guid: 4736f6cf095aa4d2b2f514f7687bfcc5, type: 3}
-    - {fileID: 21300000, guid: c055a9af1dfc2706a8af40730a5bd094, type: 3}
-    - {fileID: 21300000, guid: 67d387aedc736e8d9161317281559697, type: 3}
-    panicTurnaround:
-    - {fileID: 21300000, guid: aa62fc48414fbc9d37a68e66c26b8c9f, type: 3}
-    - {fileID: 21300000, guid: c2a8fa0737b919f678b31d66e2cbf126, type: 3}
-    - {fileID: 21300000, guid: 841358c9b76cc511b4c84cac877edbbb, type: 3}
-    - {fileID: 21300000, guid: ead0a633aae0c4cd6cfc1e0651a80a04, type: 3}
-    - {fileID: 21300000, guid: d8f996fdcf42b667f915348abe836e92, type: 3}
-    - {fileID: 21300000, guid: c79dbdd72b909412c3468a9790fdecbb, type: 3}
-    coverFaceCower:
-    - {fileID: 21300000, guid: e30d85284b82343d2fd4852a44efa94e, type: 3}
-    - {fileID: 21300000, guid: bc4b6bb478e43fac0d9f8f6086153088, type: 3}
-    - {fileID: 21300000, guid: f6ebca025b5f4ea2b6e86329de4143af, type: 3}
-    - {fileID: 21300000, guid: 080d03e14519b5832a35e450b561d44e, type: 3}
-    - {fileID: 21300000, guid: 3ec3c4a498741db3122c47aea556c5fe, type: 3}
-    - {fileID: 21300000, guid: 58337d119cad8728bdd5415dcbb4bb75, type: 3}
+    - {fileID: -117979817168769350, guid: 65bc97cbd21f79017bb684516e081ad4, type: 3}
+    - {fileID: 4418480812337943343, guid: f71d0ff3531514099938406cf0d83e78, type: 3}
+    - {fileID: -6652719223143397740, guid: 5afc12e3da9f374a1beb9864ad8c99dd, type: 3}
+    - {fileID: -7400283094898633619, guid: b2865fde9aa5076d0a8050dd2c4d9cec, type: 3}
   - characterId: LordAmbroseVeil
     displayName: Lord Ambrose Veil
-    panicReactionDown:
-    - {fileID: 21300000, guid: 1ee78b3f411c967cc61514a50707b989, type: 3}
-    - {fileID: 21300000, guid: 602be98ac53bd1d7ea40c8311151dd0a, type: 3}
-    - {fileID: 21300000, guid: 8cf892c2849d8e1a5cfbf6d0b50750de, type: 3}
-    - {fileID: 21300000, guid: ba31e54a2ca3ffc25154d0b560f0a849, type: 3}
-    - {fileID: 21300000, guid: 3b885eaef71326b345688e0023538985, type: 3}
-    - {fileID: 21300000, guid: 0258842d571f57dc5714103b9d31b45c, type: 3}
-    panicShriekDown:
-    - {fileID: 21300000, guid: 3f625941a2e85300112466ba9a14aeae, type: 3}
-    - {fileID: 21300000, guid: 474e2492442965b6933f8ded9044a2d3, type: 3}
-    - {fileID: 21300000, guid: 5d21115be4b62e940036d8e1ded57c5b, type: 3}
-    - {fileID: 21300000, guid: fc85efdafc0b71bea63ef75b4ec6f52f, type: 3}
-    - {fileID: 21300000, guid: d88cfaef6eb8bf2143d8b110c15a9a93, type: 3}
-    - {fileID: 21300000, guid: dfe86e8fc47fdca108b6884862bbb86d, type: 3}
-    - {fileID: 21300000, guid: 5739e7b525c8aa43ab3273cdf74bba90, type: 3}
-    - {fileID: 21300000, guid: f90ae41ec8a4b9ff7b2d2eb0d6235b7a, type: 3}
+    panicHandsUp:
+    - {fileID: 21300000, guid: b0f1ccf530eceda69e7125502a49b3f8, type: 3}
+    - {fileID: 21300000, guid: 70638190d468770ba1ee06b5af209fee, type: 3}
+    - {fileID: 21300000, guid: b3b21d5fa3bd5b4eaeb123c9c8d521dd, type: 3}
+    - {fileID: 21300000, guid: 85afb47dfe6eaa12fee7a648a41df950, type: 3}
     panicRunLeft:
     - {fileID: -2257875831443177292, guid: ab399775fb3ef2a438da143ddc52b373, type: 3}
     - {fileID: -199271497957006042, guid: 50c985fac9fd8d444a2cf4d5fc75b35f, type: 3}
     - {fileID: 5696943945425279077, guid: 0d5dcbb521c2e8249b1f44d1bd8e7e7c, type: 3}
     - {fileID: -2257875831443177292, guid: ab399775fb3ef2a438da143ddc52b373, type: 3}
-    - {fileID: -199271497957006042, guid: 50c985fac9fd8d444a2cf4d5fc75b35f, type: 3}
-    - {fileID: 5696943945425279077, guid: 0d5dcbb521c2e8249b1f44d1bd8e7e7c, type: 3}
-    - {fileID: -2257875831443177292, guid: ab399775fb3ef2a438da143ddc52b373, type: 3}
-    - {fileID: -199271497957006042, guid: 50c985fac9fd8d444a2cf4d5fc75b35f, type: 3}
     panicRunRight:
     - {fileID: 213737340287471525, guid: 681f1864e9bf16a4c9be9401b9814cd9, type: 3}
     - {fileID: -2291888970802524497, guid: fc70559d976fd574e89a6b9e49be0f5a, type: 3}
     - {fileID: 5537724406429582439, guid: 50a2c0b970c82db45b0d2afc35f82a82, type: 3}
     - {fileID: 213737340287471525, guid: 681f1864e9bf16a4c9be9401b9814cd9, type: 3}
-    - {fileID: -2291888970802524497, guid: fc70559d976fd574e89a6b9e49be0f5a, type: 3}
-    - {fileID: 5537724406429582439, guid: 50a2c0b970c82db45b0d2afc35f82a82, type: 3}
-    - {fileID: 213737340287471525, guid: 681f1864e9bf16a4c9be9401b9814cd9, type: 3}
-    - {fileID: -2291888970802524497, guid: fc70559d976fd574e89a6b9e49be0f5a, type: 3}
-    panicTurnaround:
-    - {fileID: 21300000, guid: 3dacdc18deca990efbd31a8e49d6ba72, type: 3}
-    - {fileID: 21300000, guid: 9ddeb943cfbbfc573f5672b65398648a, type: 3}
-    - {fileID: 21300000, guid: 435d67fd75abe05f97d8a86c9266dcf2, type: 3}
-    - {fileID: 21300000, guid: 2744496b2bb4aac6e9899e3e2f42ad19, type: 3}
-    - {fileID: 21300000, guid: 8ea914f8c35adf2d5b3e5506d9ee65bb, type: 3}
-    - {fileID: 21300000, guid: 8c1f5f0e53026b74685ef46ac1c8398d, type: 3}
-    coverFaceCower:
-    - {fileID: 21300000, guid: 5176b20f2c910f5209ff9823f5189756, type: 3}
-    - {fileID: 21300000, guid: 38d36427aa9e019c952fab5a243334f5, type: 3}
-    - {fileID: 21300000, guid: 6e7e1119e3c5ca2145763d4d3cd0b8ee, type: 3}
-    - {fileID: 21300000, guid: 24404019e9014a0c51a968d5954d0c2b, type: 3}
-    - {fileID: 21300000, guid: 73879033c0232af6fb686658e290bdeb, type: 3}
-    - {fileID: 21300000, guid: 91d03ef021e07eff14d4e8ffebcddc51, type: 3}
   - characterId: MadameCoralieThread
     displayName: Madame Coralie Thread
-    panicReactionDown:
-    - {fileID: 21300000, guid: 06b71ae55e0a5b0744a080ccc8889504, type: 3}
-    - {fileID: 21300000, guid: 903a71f507b06a6bf0c2502a1542d77a, type: 3}
-    - {fileID: 21300000, guid: a32bf03fc7792646cc00d3e5fa7bae89, type: 3}
-    - {fileID: 21300000, guid: 9cdf80c889eca04cb0f0dc05be44ef57, type: 3}
-    - {fileID: 21300000, guid: ddd5d407e8d21892356d59a1468eb075, type: 3}
-    - {fileID: 21300000, guid: 027944963c961c8096de2686a3557456, type: 3}
-    panicShriekDown:
-    - {fileID: 21300000, guid: be795d89a7e8dd554714680fa7ad2079, type: 3}
-    - {fileID: 21300000, guid: 37dc51f89cd7addef6cdfbef7a92164d, type: 3}
-    - {fileID: 21300000, guid: 7646c2a8ec732ae58a449f4d273acddf, type: 3}
-    - {fileID: 21300000, guid: 557c62cf26ec3cc16707d181d4d2320b, type: 3}
-    - {fileID: 21300000, guid: e7d7841026037d44d7079e91f12e4a85, type: 3}
-    - {fileID: 21300000, guid: ec1b4cbe8f0e2844b17a93b21577e0f5, type: 3}
-    - {fileID: 21300000, guid: a0265451c24f942318c353023a1363a0, type: 3}
-    - {fileID: 21300000, guid: d35bbc7e9d74535108f953e55778ab12, type: 3}
+    panicHandsUp:
+    - {fileID: 21300000, guid: f084bc67cbe39b84cf3b72ba91211154, type: 3}
+    - {fileID: 21300000, guid: 920a19c7882798d3ec2f531935badced, type: 3}
+    - {fileID: 21300000, guid: a8ff46ed58df33e2bc488a22c391fb64, type: 3}
+    - {fileID: 21300000, guid: c165615b508c41aba5546a1f9b46f82f, type: 3}
     panicRunLeft:
-    - {fileID: 21300000, guid: b7d6513d5d5983db65f28e21c3cd9901, type: 3}
-    - {fileID: 21300000, guid: 47bee4436839305de32c8a2e6e649148, type: 3}
-    - {fileID: 21300000, guid: 32bb4ce50048072c42eb0097f21c9f2b, type: 3}
-    - {fileID: 21300000, guid: 8ac1e7f0331d3783481e9c3d7336fa45, type: 3}
-    - {fileID: 21300000, guid: a4ab4dc7686f9a4c50106418ec5032d4, type: 3}
-    - {fileID: 21300000, guid: 77a5998bbea3d9501d8b6288be6cb29d, type: 3}
-    - {fileID: 21300000, guid: 56fdd5aef2f79fc31955d9f58a7b72a5, type: 3}
-    - {fileID: 21300000, guid: 18697740897f1d5165cb3d67da10b000, type: 3}
+    - {fileID: 7649441787748285565, guid: c7b782f45a1e5eb0d8f81874846c7e67, type: 3}
+    - {fileID: -1689933692553984647, guid: 370a81a7c5e84de5cad90651ecccdfd5, type: 3}
+    - {fileID: 8853894534061696307, guid: a34e952e340350812934999035561bab, type: 3}
+    - {fileID: 612658329840384659, guid: b0e34e79c938256a795c0156b9faab45, type: 3}
     panicRunRight:
-    - {fileID: 21300000, guid: b5c1c2563c5be1c18e7e22f185d33ba9, type: 3}
-    - {fileID: 21300000, guid: 00f23e75ebd80fcd7255690ff1319128, type: 3}
-    - {fileID: 21300000, guid: 293985bb553c2dc42c14c4560d0dc8c5, type: 3}
-    - {fileID: 21300000, guid: 71892ad761ab804576b4f8cd960bd630, type: 3}
-    - {fileID: 21300000, guid: 638309365a763f16018dfa0a1740bd32, type: 3}
-    - {fileID: 21300000, guid: 9e35c137aee0f898ba1af18206d8e076, type: 3}
-    - {fileID: 21300000, guid: cd22454a1113149414a9d5ed915dd9f4, type: 3}
-    - {fileID: 21300000, guid: c35bef62e17fc51a32f4905f5044ab45, type: 3}
-    panicTurnaround:
-    - {fileID: 21300000, guid: 6fb6ca4f1d892b865367c9d5ae059420, type: 3}
-    - {fileID: 21300000, guid: 85411ff04ca4bcbd777e49fc31f2b70d, type: 3}
-    - {fileID: 21300000, guid: 564d1136d7b50ef989fceae23c63fa48, type: 3}
-    - {fileID: 21300000, guid: 5ee78ad2096e11f1af5d69fc024e0373, type: 3}
-    - {fileID: 21300000, guid: e654e3089d35942f2713a709dd16a4fb, type: 3}
-    - {fileID: 21300000, guid: bbfee0ac7516f5728c2b68b22a16f067, type: 3}
-    coverFaceCower:
-    - {fileID: 21300000, guid: 81ef4fb37c2938928ff9731e24db0968, type: 3}
-    - {fileID: 21300000, guid: 6c16a626702586d7cc3437f0c0c75659, type: 3}
-    - {fileID: 21300000, guid: 7186e35adfd59748bcfbcd65077d617e, type: 3}
-    - {fileID: 21300000, guid: 27f071129f325025a1b3063d7042a39b, type: 3}
-    - {fileID: 21300000, guid: 976d676c81c42f59af1ee7a7632de5ce, type: 3}
-    - {fileID: 21300000, guid: 51494857d9d9f5ebae297b0a9474d380, type: 3}
+    - {fileID: -3796842709939616434, guid: e3a4090b866164c83a653795392b5d85, type: 3}
+    - {fileID: 899908368856974742, guid: d02c62a677c6f66d79cf86513059cd0e, type: 3}
+    - {fileID: -8442878647197234797, guid: fb516bcba8ad7111bb41dc34c05edb74, type: 3}
+    - {fileID: 4436862543771419089, guid: 9ab1aab4cdb56c4e3b1e78fca08eab76, type: 3}

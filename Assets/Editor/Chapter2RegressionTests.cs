@@ -22,6 +22,8 @@ public class Chapter2RegressionTests
     private const string Chapter2PanicLibraryAssetPath = "Assets/Resources/Chapter2/PanicAnimationLibrary.asset";
     private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
     private const string AnimationLibraryPath = "Assets/AnimationLibrary";
+    private const string GuestArtRoot = "Assets/Art/Characters";
+    private const string Chapter2PanicClipRoot = "Assets/Animation/Chapter2Panic";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
     private static readonly string[] PanicRosterCharacters =
@@ -35,14 +37,40 @@ public class Chapter2RegressionTests
         "LordAmbroseVeil",
         "MadameCoralieThread"
     };
+    private static readonly string[] PanicRosterGuestFolders =
+    {
+        "guest1",
+        "guest2",
+        "guest3",
+        "guest4",
+        "guest5",
+        "guest6",
+        "guest7",
+        "guest8"
+    };
+    private static readonly string[] PanicRosterClipFolders =
+    {
+        "Guest01_Lady",
+        "Guest02_ButlerGuest",
+        "Guest03_MisterFlorianKnell",
+        "Guest04_CountessElowenDusk",
+        "Guest05_BaronHectorGlass",
+        "Guest06_LadySabineMarrow",
+        "Guest07_LordAmbroseVeil",
+        "Guest08_MadameCoralieThread"
+    };
     private static readonly PanicActionSpec[] RequiredPanicActions =
     {
-        new PanicActionSpec("panic_reaction_down", "panicReactionDown", 6),
-        new PanicActionSpec("panic_shriek_down", "panicShriekDown", 8),
-        new PanicActionSpec("panic_run_left", "panicRunLeft", 8),
-        new PanicActionSpec("panic_run_right", "panicRunRight", 8),
-        new PanicActionSpec("panic_turnaround", "panicTurnaround", 6),
-        new PanicActionSpec("cover_face_cower", "coverFaceCower", 6)
+        new PanicActionSpec("panic_hands_up", "panicHandsUp", 4),
+        new PanicActionSpec("panic_run_left", "panicRunLeft", 4),
+        new PanicActionSpec("panic_run_right", "panicRunRight", 4)
+    };
+    private static readonly string[] RemovedPanicActions =
+    {
+        "panic_reaction_down",
+        "panic_shriek_down",
+        "panic_turnaround",
+        "cover_face_cower"
     };
 
     [Test]
@@ -235,17 +263,21 @@ public class Chapter2RegressionTests
 
         Assert.That(builderText, Does.Contain("Assets/AnimationLibrary"));
         Assert.That(builderText, Does.Contain("Assets/Resources/Chapter2"));
+        Assert.That(builderText, Does.Contain("Assets/Art/Characters"));
+        Assert.That(builderText, Does.Contain("Assets/Animation/Chapter2Panic"));
         Assert.That(builderText, Does.Contain("Assets/Art/Characters/guest7/guest7left"));
         Assert.That(builderText, Does.Contain("Assets/Art/Characters/guest7/guest7right"));
         Assert.That(builderText, Does.Contain("LoadSpritesCycled"));
+        Assert.That(builderText, Does.Contain("PanicHandsUpActionId"));
+        Assert.That(builderText, Does.Contain("CreateSpriteClip"));
+        Assert.That(builderText, Does.Not.Contain("SyncSpritesToGuestPanicFolder"));
         Assert.That(builderText, Does.Contain("throw new InvalidOperationException"), "The editor builder should fail when approved frames are incomplete.");
 
-        Assert.That(libraryAssetText, Does.Contain("fileID: -2257875831443177292, guid: ab399775fb3ef2a438da143ddc52b373"), "Guest 7 panic left should use the correct authored walk-left sprites.");
-        Assert.That(libraryAssetText, Does.Contain("fileID: -199271497957006042, guid: 50c985fac9fd8d444a2cf4d5fc75b35f"), "Guest 7 panic left should use the correct authored walk-left sprites.");
-        Assert.That(libraryAssetText, Does.Contain("fileID: 5696943945425279077, guid: 0d5dcbb521c2e8249b1f44d1bd8e7e7c"), "Guest 7 panic left should use the correct authored walk-left sprites.");
-        Assert.That(libraryAssetText, Does.Contain("fileID: 213737340287471525, guid: 681f1864e9bf16a4c9be9401b9814cd9"), "Guest 7 panic right should use the correct authored walk-right sprites.");
-        Assert.That(libraryAssetText, Does.Contain("fileID: -2291888970802524497, guid: fc70559d976fd574e89a6b9e49be0f5a"), "Guest 7 panic right should use the correct authored walk-right sprites.");
-        Assert.That(libraryAssetText, Does.Contain("fileID: 5537724406429582439, guid: 50a2c0b970c82db45b0d2afc35f82a82"), "Guest 7 panic right should use the correct authored walk-right sprites.");
+        Assert.That(libraryAssetText, Does.Contain(ReadGuid(Path.Combine(GuestArtRoot, "guest7", "panic", "panic_hands_up", "frames", "01_guest7_panic_hands_up.png.meta"))), "Guest 7 panic stop should use the generated guest-local hands-up sprites.");
+        Assert.That(libraryAssetText, Does.Not.Contain("panicReactionDown:"), "The rejected multi-action panic stop set should not be serialized.");
+        Assert.That(libraryAssetText, Does.Not.Contain("panicShriekDown:"), "The rejected multi-action panic stop set should not be serialized.");
+        Assert.That(libraryAssetText, Does.Not.Contain("panicTurnaround:"), "The rejected multi-action panic stop set should not be serialized.");
+        Assert.That(libraryAssetText, Does.Not.Contain("coverFaceCower:"), "The rejected multi-action panic stop set should not be serialized.");
     }
 
     [Test]
@@ -268,10 +300,17 @@ public class Chapter2RegressionTests
         string routineText = panicText.Substring(routineIndex, nextMethodIndex - routineIndex);
         Assert.That(routineText, Does.Contain("PanicAction.PanicRunLeft"));
         Assert.That(routineText, Does.Contain("PanicAction.PanicRunRight"));
-        Assert.That(routineText, Does.Not.Contain("PanicAction.PanicTurnaround"));
-        Assert.That(routineText, Does.Not.Contain("PanicAction.PanicReactionDown"));
-        Assert.That(routineText, Does.Not.Contain("PanicAction.PanicShriekDown"));
-        Assert.That(routineText, Does.Not.Contain("PanicAction.CoverFaceCower"));
+        Assert.That(routineText, Does.Contain("PlayRandomStopActions"));
+        Assert.That(panicText, Does.Contain("PanicAction.PanicHandsUp"));
+        Assert.That(panicText, Does.Contain("SetStopFramePhase"));
+        Assert.That(panicText, Does.Contain("randomStopActionChance = 1f"));
+        Assert.That(panicText, Does.Not.Contain("RandomStopActions"));
+        Assert.That(panicText, Does.Not.Contain("PanicAction.PanicShriekDown"));
+        Assert.That(panicText, Does.Not.Contain("PanicAction.PanicReactionDown"));
+        Assert.That(panicText, Does.Not.Contain("PanicAction.CoverFaceCower"));
+        Assert.That(panicText, Does.Not.Contain("PanicAction.PanicTurnaround"));
+        Assert.That(panicText, Does.Contain("ChooseRandomStopActions"));
+        Assert.That(panicText, Does.Contain("ApplyRandomStopActionFrame"));
         Assert.That(panicText, Does.Contain("runDistancePixels = 150f"));
         Assert.That(panicText, Does.Contain("panicMoveSpeedPixels = 300f"));
         Assert.That(panicText, Does.Contain("DefaultExecutionOrder(10000)"));
@@ -314,19 +353,35 @@ public class Chapter2RegressionTests
         {
             string character = PanicRosterCharacters[characterIndex];
             Assert.That(assetText, Does.Contain("characterId: " + character), $"Runtime asset should contain {character}.");
-            Assert.That(File.Exists(Path.Combine(AnimationLibraryPath, character, "qa", "panic_approved_contact_sheet.png")), Is.True, $"{character} should have a panic contact sheet.");
             Assert.That(File.Exists(Path.Combine(AnimationLibraryPath, character, "manifest.json")), Is.True, $"{character} should have a manifest.");
-
-            string manifestText = File.ReadAllText(Path.Combine(AnimationLibraryPath, character, "manifest.json"));
-            Assert.That(manifestText, Does.Contain("approved_panic_actions"), $"{character} manifest should list approved panic actions.");
 
             for (int actionIndex = 0; actionIndex < RequiredPanicActions.Length; actionIndex++)
             {
                 PanicActionSpec action = RequiredPanicActions[actionIndex];
-                string framesFolder = Path.Combine(AnimationLibraryPath, character, "approved", "full_body", action.ActionId, "frames");
-                Assert.That(Directory.Exists(framesFolder), Is.True, $"{character}/{action.ActionId} should have an approved frames folder.");
-                Assert.That(Directory.GetFiles(framesFolder, "*.png").Length, Is.EqualTo(action.ExpectedFrameCount), $"{character}/{action.ActionId} should have the exact approved frame count.");
                 Assert.That(assetText, Does.Contain(action.AssetField + ":"), $"Runtime asset should contain {action.AssetField} arrays.");
+            }
+
+            string handsUpFramesFolder = Path.Combine(GuestArtRoot, PanicRosterGuestFolders[characterIndex], "panic", "panic_hands_up", "frames");
+            Assert.That(Directory.Exists(handsUpFramesFolder), Is.True, $"{PanicRosterGuestFolders[characterIndex]} should have generated panic_hands_up frames.");
+            Assert.That(Directory.GetFiles(handsUpFramesFolder, "*.png").Length, Is.EqualTo(4), $"{PanicRosterGuestFolders[characterIndex]} should have exactly four generated hands-up frames.");
+
+            string firstGuestFrameMeta = Path.Combine(handsUpFramesFolder, $"01_{PanicRosterGuestFolders[characterIndex]}_panic_hands_up.png.meta");
+            Assert.That(File.Exists(firstGuestFrameMeta), Is.True, $"{PanicRosterGuestFolders[characterIndex]} should have imported generated hands-up sprite metadata.");
+            Assert.That(assetText, Does.Contain(ReadGuid(firstGuestFrameMeta)), $"Runtime asset should reference the generated {PanicRosterGuestFolders[characterIndex]} panic_hands_up sprites.");
+
+            string clipPath = Path.Combine(Chapter2PanicClipRoot, PanicRosterClipFolders[characterIndex], $"{PanicRosterClipFolders[characterIndex]}_PanicHandsUp.anim");
+            Assert.That(File.Exists(clipPath), Is.True, $"{PanicRosterClipFolders[characterIndex]} should have one saved PanicHandsUp AnimationClip.");
+
+            string clipText = File.ReadAllText(clipPath);
+            Assert.That(clipText, Does.Contain("m_SampleRate: 12"), $"{clipPath} should play at the panic frame rate.");
+            Assert.That(clipText, Does.Contain("classID: 212"), $"{clipPath} should animate SpriteRenderer sprites like normal character clips.");
+            Assert.That(clipText, Does.Not.Contain("classID: 114"), $"{clipPath} should not animate an extra UI Image curve over the SpriteRenderer frames.");
+            Assert.That(clipText, Does.Contain(ReadGuid(firstGuestFrameMeta)), $"{clipPath} should reference generated guest-local frame sprites.");
+
+            for (int actionIndex = 0; actionIndex < RemovedPanicActions.Length; actionIndex++)
+            {
+                string removedFolder = Path.Combine(GuestArtRoot, PanicRosterGuestFolders[characterIndex], "panic", RemovedPanicActions[actionIndex]);
+                Assert.That(Directory.Exists(removedFolder), Is.False, $"{removedFolder} should not be kept after replacing the bad generated panic actions.");
             }
         }
     }
@@ -755,6 +810,15 @@ public class Chapter2RegressionTests
 
         Assert.That(sceneText, Does.Match(anchorPattern), $"{anchorName} should be parented under {roomObjectName} and marked as {roomId}.");
         Assert.That(sceneText, Does.Not.Match($@"anchorId: {Regex.Escape(anchorName)}\s+roomId: (Ballroom|Drawing Room|Dining Room)"));
+    }
+
+    private static string ReadGuid(string metaPath)
+    {
+        string metaText = File.ReadAllText(metaPath);
+        Match match = Regex.Match(metaText, @"(?m)^guid: ([0-9a-f]{32})$");
+
+        Assert.That(match.Success, Is.True, $"{metaPath} should contain a Unity GUID.");
+        return match.Groups[1].Value;
     }
 
     private readonly struct PanicActionSpec

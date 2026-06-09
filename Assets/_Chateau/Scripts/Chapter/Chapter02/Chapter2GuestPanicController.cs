@@ -16,6 +16,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField, Min(0f)] private float runDistancePixels = 150f;
     [SerializeField, Min(1f)] private float panicMoveSpeedPixels = 300f;
     [SerializeField, Min(0f)] private float jitterPixels = 3f;
+    [SerializeField, Range(0f, 1f)] private float randomStopActionChance = 1f;
     [SerializeField, Min(0.0001f)] private float worldUnitsPerRoomPixel = 0.012f;
     [SerializeField] private bool logMissingFrames = true;
 
@@ -170,7 +171,85 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         while (isRunning)
         {
             yield return MoveParticipantsToward(PanicAction.PanicRunLeft, leftOffset, true);
+            yield return PlayRandomStopActions();
             yield return MoveParticipantsToward(PanicAction.PanicRunRight, rightOffset, true);
+            yield return PlayRandomStopActions();
+        }
+    }
+
+    private IEnumerator PlayRandomStopActions()
+    {
+        if (participants.Count == 0 ||
+            randomStopActionChance <= 0f ||
+            UnityEngine.Random.value > randomStopActionChance)
+        {
+            yield break;
+        }
+
+        int maxFrameCount = ChooseRandomStopActions();
+
+        if (maxFrameCount <= 0)
+        {
+            yield break;
+        }
+
+        float secondsPerFrame = GetSecondsPerFrame();
+
+        for (int frameIndex = 0; frameIndex < maxFrameCount && isRunning; frameIndex++)
+        {
+            float frameElapsed = 0f;
+
+            while (isRunning && frameElapsed < secondsPerFrame)
+            {
+                float frameProgress = secondsPerFrame <= 0f ? 1f : Mathf.Clamp01(frameElapsed / secondsPerFrame);
+                float motionFrame = frameIndex + frameProgress;
+                ApplyRandomStopActionFrame(frameIndex, motionFrame);
+                frameElapsed += GetPlaybackDeltaTime(secondsPerFrame);
+                yield return null;
+            }
+        }
+    }
+
+    private int ChooseRandomStopActions()
+    {
+        int maxFrameCount = 0;
+
+        for (int i = 0; i < participants.Count; i++)
+        {
+            PanicParticipant participant = participants[i];
+
+            if (participant == null)
+            {
+                continue;
+            }
+
+            Sprite[] frames = GetFrames(participant.Animation, PanicAction.PanicHandsUp);
+
+            if (frames == null || frames.Length == 0)
+            {
+                continue;
+            }
+
+            participant.SetStopFramePhase(UnityEngine.Random.Range(0, frames.Length));
+            maxFrameCount = Mathf.Max(maxFrameCount, frames.Length);
+        }
+
+        return maxFrameCount;
+    }
+
+    private void ApplyRandomStopActionFrame(int frameIndex, float motionFrame)
+    {
+        for (int i = 0; i < participants.Count; i++)
+        {
+            PanicParticipant participant = participants[i];
+
+            if (participant == null)
+            {
+                continue;
+            }
+
+            participant.SetSprite(GetFrame(participant.Animation, PanicAction.PanicHandsUp, participant.GetStopClipFrameIndex(frameIndex)));
+            participant.ApplyPanicVisualOffset(participant.GetPanicOffset(motionFrame, false, 0f), worldUnitsPerRoomPixel);
         }
     }
 
@@ -227,6 +306,23 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     private float GetSecondsPerFrame()
     {
         return 1f / Mathf.Max(1f, frameRate);
+    }
+
+    private static float GetPlaybackDeltaTime(float fallbackSeconds)
+    {
+        float deltaTime = Time.deltaTime;
+
+        if (deltaTime <= 0f)
+        {
+            deltaTime = Time.unscaledDeltaTime;
+        }
+
+        if (deltaTime <= 0f)
+        {
+            deltaTime = fallbackSeconds;
+        }
+
+        return deltaTime;
     }
 
     private bool StepParticipantsToward(Vector2 targetOffset, float deltaTime)
@@ -315,18 +411,12 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         switch (action)
         {
-            case PanicAction.PanicReactionDown:
-                return animation.PanicReactionDown;
-            case PanicAction.PanicShriekDown:
-                return animation.PanicShriekDown;
+            case PanicAction.PanicHandsUp:
+                return animation.PanicHandsUp;
             case PanicAction.PanicRunLeft:
                 return animation.PanicRunLeft;
             case PanicAction.PanicRunRight:
                 return animation.PanicRunRight;
-            case PanicAction.PanicTurnaround:
-                return animation.PanicTurnaround;
-            case PanicAction.CoverFaceCower:
-                return animation.CoverFaceCower;
             default:
                 return Array.Empty<Sprite>();
         }
@@ -379,12 +469,9 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
     private enum PanicAction
     {
-        PanicReactionDown,
-        PanicShriekDown,
+        PanicHandsUp,
         PanicRunLeft,
         PanicRunRight,
-        PanicTurnaround,
-        CoverFaceCower,
     }
 
     private sealed class PanicParticipant
@@ -426,6 +513,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private float runDistanceScale = 1f;
         private float moveSpeedScale = 1f;
         private int framePhaseOffset;
+        private int stopFramePhaseOffset;
         private float jitterPhase;
         private float bobPixels = 2f;
         private Vector2 currentPanicOffset;
@@ -571,6 +659,16 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             return frameIndex;
+        }
+
+        public void SetStopFramePhase(int framePhase)
+        {
+            stopFramePhaseOffset = Mathf.Max(0, framePhase);
+        }
+
+        public int GetStopClipFrameIndex(int frameIndex)
+        {
+            return frameIndex + stopFramePhaseOffset;
         }
 
         public bool MovePanicOffsetToward(Vector2 sharedTargetOffset, float pixelsPerSecond, float deltaTime)

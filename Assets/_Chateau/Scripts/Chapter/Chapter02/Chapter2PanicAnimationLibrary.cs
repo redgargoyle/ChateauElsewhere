@@ -84,51 +84,36 @@ public sealed class Chapter2PanicCharacterAnimation
 {
     [SerializeField] private string characterId;
     [SerializeField] private string displayName;
-    [SerializeField] private Sprite[] panicReactionDown = Array.Empty<Sprite>();
-    [SerializeField] private Sprite[] panicShriekDown = Array.Empty<Sprite>();
+    [SerializeField] private Sprite[] panicHandsUp = Array.Empty<Sprite>();
     [SerializeField] private Sprite[] panicRunLeft = Array.Empty<Sprite>();
     [SerializeField] private Sprite[] panicRunRight = Array.Empty<Sprite>();
-    [SerializeField] private Sprite[] panicTurnaround = Array.Empty<Sprite>();
-    [SerializeField] private Sprite[] coverFaceCower = Array.Empty<Sprite>();
 
     public string CharacterId => characterId;
     public string DisplayName => displayName;
-    public Sprite[] PanicReactionDown => panicReactionDown;
-    public Sprite[] PanicShriekDown => panicShriekDown;
+    public Sprite[] PanicHandsUp => panicHandsUp;
     public Sprite[] PanicRunLeft => panicRunLeft;
     public Sprite[] PanicRunRight => panicRunRight;
-    public Sprite[] PanicTurnaround => panicTurnaround;
-    public Sprite[] CoverFaceCower => coverFaceCower;
 
     public void Configure(
         string nextCharacterId,
         string nextDisplayName,
-        Sprite[] nextPanicReactionDown,
-        Sprite[] nextPanicShriekDown,
+        Sprite[] nextPanicHandsUp,
         Sprite[] nextPanicRunLeft,
-        Sprite[] nextPanicRunRight,
-        Sprite[] nextPanicTurnaround,
-        Sprite[] nextCoverFaceCower)
+        Sprite[] nextPanicRunRight)
     {
         characterId = nextCharacterId;
         displayName = nextDisplayName;
-        panicReactionDown = nextPanicReactionDown ?? Array.Empty<Sprite>();
-        panicShriekDown = nextPanicShriekDown ?? Array.Empty<Sprite>();
+        panicHandsUp = nextPanicHandsUp ?? Array.Empty<Sprite>();
         panicRunLeft = nextPanicRunLeft ?? Array.Empty<Sprite>();
         panicRunRight = nextPanicRunRight ?? Array.Empty<Sprite>();
-        panicTurnaround = nextPanicTurnaround ?? Array.Empty<Sprite>();
-        coverFaceCower = nextCoverFaceCower ?? Array.Empty<Sprite>();
     }
 
     public bool HasRequiredFrames(out string report)
     {
         StringBuilder missing = new StringBuilder();
-        AppendCountMismatch(missing, "panic_reaction_down", panicReactionDown, 6);
-        AppendCountMismatch(missing, "panic_shriek_down", panicShriekDown, 8);
-        AppendCountMismatch(missing, "panic_run_left", panicRunLeft, 8);
-        AppendCountMismatch(missing, "panic_run_right", panicRunRight, 8);
-        AppendCountMismatch(missing, "panic_turnaround", panicTurnaround, 6);
-        AppendCountMismatch(missing, "cover_face_cower", coverFaceCower, 6);
+        AppendCountMismatch(missing, "panic_hands_up", panicHandsUp, 4);
+        AppendCountMismatch(missing, "panic_run_left", panicRunLeft, 4);
+        AppendCountMismatch(missing, "panic_run_right", panicRunRight, 4);
         report = missing.ToString();
         return report.Length == 0;
     }

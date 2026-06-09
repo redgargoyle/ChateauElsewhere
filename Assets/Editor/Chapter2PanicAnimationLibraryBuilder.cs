@@ -8,26 +8,33 @@ using UnityEngine;
 public static class Chapter2PanicAnimationLibraryBuilder
 {
     private const string AnimationLibraryRoot = "Assets/AnimationLibrary";
+    private const string GuestArtRoot = "Assets/Art/Characters";
+    private const string PanicClipRoot = "Assets/Animation/Chapter2Panic";
     private const string OutputFolder = "Assets/Resources/Chapter2";
     private const string OutputPath = OutputFolder + "/PanicAnimationLibrary.asset";
+    private const float ClipFrameRate = 12f;
+    private const string PanicHandsUpActionId = "panic_hands_up";
     private const string Guest7CharacterId = "LordAmbroseVeil";
     private const string Guest7RunLeftFolder = "Assets/Art/Characters/guest7/guest7left";
     private const string Guest7RunRightFolder = "Assets/Art/Characters/guest7/guest7right";
 
-    private static readonly ActionSpec[] RequiredActions =
+    private static readonly GuestFolderSpec[] GuestFolders =
     {
-        new ActionSpec("panic_reaction_down", 6),
-        new ActionSpec("panic_shriek_down", 8),
-        new ActionSpec("panic_run_left", 8),
-        new ActionSpec("panic_run_right", 8),
-        new ActionSpec("panic_turnaround", 6),
-        new ActionSpec("cover_face_cower", 6),
+        new GuestFolderSpec("Lady", "guest1", "Guest01_Lady"),
+        new GuestFolderSpec("ButlerGuest", "guest2", "Guest02_ButlerGuest"),
+        new GuestFolderSpec("MisterFlorianKnell", "guest3", "Guest03_MisterFlorianKnell"),
+        new GuestFolderSpec("CountessElowenDusk", "guest4", "Guest04_CountessElowenDusk"),
+        new GuestFolderSpec("BaronHectorGlass", "guest5", "Guest05_BaronHectorGlass"),
+        new GuestFolderSpec("LadySabineMarrow", "guest6", "Guest06_LadySabineMarrow"),
+        new GuestFolderSpec("LordAmbroseVeil", "guest7", "Guest07_LordAmbroseVeil"),
+        new GuestFolderSpec("MadameCoralieThread", "guest8", "Guest08_MadameCoralieThread")
     };
 
     [MenuItem("Dreadforge/Chapter 2/Rebuild Panic Animation Library")]
     public static void RebuildPanicAnimationLibrary()
     {
         EnsureFolder(OutputFolder);
+        EnsureFolder(PanicClipRoot);
         AssetDatabase.Refresh();
 
         List<Chapter2PanicCharacterAnimation> characterAnimations = new List<Chapter2PanicCharacterAnimation>();
@@ -39,34 +46,39 @@ public static class Chapter2PanicAnimationLibraryBuilder
             string displayName = i < Chapter2PanicRoster.DisplayNames.Length
                 ? Chapter2PanicRoster.DisplayNames[i]
                 : characterId;
+            bool hasGuestFolder = TryGetGuestFolder(characterId, out GuestFolderSpec guestFolder);
 
-            Sprite[][] actionSprites = new Sprite[RequiredActions.Length][];
-
-            for (int actionIndex = 0; actionIndex < RequiredActions.Length; actionIndex++)
+            if (!hasGuestFolder)
             {
-                ActionSpec action = RequiredActions[actionIndex];
-                string framesFolder = $"{AnimationLibraryRoot}/{characterId}/approved/full_body/{action.id}/frames";
-                Sprite[] sprites = TryLoadCharacterActionOverride(characterId, action.id, action.expectedFrameCount, out Sprite[] overrideSprites)
-                    ? overrideSprites
-                    : LoadSprites(framesFolder);
-                actionSprites[actionIndex] = sprites;
-
-                if (sprites.Length != action.expectedFrameCount)
-                {
-                    errors.Add($"{characterId}/{action.id}: expected {action.expectedFrameCount} frame(s), found {sprites.Length} in {framesFolder}");
-                }
+                errors.Add($"{characterId}: missing guest folder mapping");
+                continue;
             }
+
+            string handsUpFramesFolder = GetGuestActionFramesFolder(guestFolder, PanicHandsUpActionId);
+            Sprite[] handsUpSprites = LoadSprites(handsUpFramesFolder);
+            Sprite[] runLeftSprites = LoadRunSprites(characterId, "walk_left", 4);
+            Sprite[] runRightSprites = LoadRunSprites(characterId, "walk_right", 4);
+
+            AppendCountError(errors, characterId, PanicHandsUpActionId, handsUpSprites, 4, handsUpFramesFolder);
+            AppendCountError(errors, characterId, "panic_run_left", runLeftSprites, 4, "normal walk_left references");
+            AppendCountError(errors, characterId, "panic_run_right", runRightSprites, 4, "normal walk_right references");
+
+            string clipFolder = $"{PanicClipRoot}/{guestFolder.clipFolderName}";
+            EnsureFolder(clipFolder);
+            CreateSpriteClip(
+                $"{guestFolder.clipFolderName}_PanicHandsUp",
+                clipFolder,
+                handsUpSprites,
+                false,
+                ClipFrameRate);
 
             Chapter2PanicCharacterAnimation animation = new Chapter2PanicCharacterAnimation();
             animation.Configure(
                 characterId,
                 displayName,
-                actionSprites[0],
-                actionSprites[1],
-                actionSprites[2],
-                actionSprites[3],
-                actionSprites[4],
-                actionSprites[5]);
+                handsUpSprites,
+                runLeftSprites,
+                runRightSprites);
             characterAnimations.Add(animation);
         }
 
@@ -93,28 +105,40 @@ public static class Chapter2PanicAnimationLibraryBuilder
         Debug.Log($"Built Chapter 2 panic animation library at {OutputPath}.");
     }
 
-    private static bool TryLoadCharacterActionOverride(string characterId, string actionId, int expectedFrameCount, out Sprite[] sprites)
+    private static bool TryGetGuestFolder(string characterId, out GuestFolderSpec guestFolder)
     {
-        sprites = Array.Empty<Sprite>();
-
-        if (!string.Equals(characterId, Guest7CharacterId, StringComparison.Ordinal))
+        for (int i = 0; i < GuestFolders.Length; i++)
         {
-            return false;
+            GuestFolderSpec candidate = GuestFolders[i];
+
+            if (string.Equals(candidate.characterId, characterId, StringComparison.Ordinal))
+            {
+                guestFolder = candidate;
+                return true;
+            }
         }
 
-        if (string.Equals(actionId, "panic_run_left", StringComparison.Ordinal))
-        {
-            sprites = LoadSpritesCycled(Guest7RunLeftFolder, expectedFrameCount);
-            return true;
-        }
-
-        if (string.Equals(actionId, "panic_run_right", StringComparison.Ordinal))
-        {
-            sprites = LoadSpritesCycled(Guest7RunRightFolder, expectedFrameCount);
-            return true;
-        }
-
+        guestFolder = default;
         return false;
+    }
+
+    private static string GetGuestActionFramesFolder(GuestFolderSpec guestFolder, string actionId)
+    {
+        return $"{GuestArtRoot}/{guestFolder.guestFolder}/panic/{actionId}/frames";
+    }
+
+    private static Sprite[] LoadRunSprites(string characterId, string direction, int expectedFrameCount)
+    {
+        string framesFolder = $"{AnimationLibraryRoot}/{characterId}/reference/full_body/{direction}";
+
+        if (string.Equals(characterId, Guest7CharacterId, StringComparison.Ordinal))
+        {
+            framesFolder = string.Equals(direction, "walk_left", StringComparison.Ordinal)
+                ? Guest7RunLeftFolder
+                : Guest7RunRightFolder;
+        }
+
+        return LoadSpritesCycled(framesFolder, expectedFrameCount);
     }
 
     private static Sprite[] LoadSpritesCycled(string framesFolder, int expectedFrameCount)
@@ -175,6 +199,81 @@ public static class Chapter2PanicAnimationLibraryBuilder
         return sprites.ToArray();
     }
 
+    private static AnimationClip CreateSpriteClip(
+        string clipName,
+        string outputFolder,
+        IReadOnlyList<Sprite> sprites,
+        bool loop,
+        float frameRate)
+    {
+        string assetPath = $"{outputFolder}/{clipName}.anim";
+        AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
+        bool isNewAsset = clip == null;
+
+        if (isNewAsset)
+        {
+            clip = new AnimationClip();
+        }
+
+        clip.name = clipName;
+        clip.frameRate = frameRate;
+        clip.ClearCurves();
+
+        ObjectReferenceKeyframe[] keyframes = new ObjectReferenceKeyframe[sprites.Count];
+
+        for (int i = 0; i < sprites.Count; i++)
+        {
+            keyframes[i] = new ObjectReferenceKeyframe
+            {
+                time = i / frameRate,
+                value = sprites[i]
+            };
+        }
+
+        AnimationUtility.SetObjectReferenceCurve(clip, CreateSpriteBinding(), keyframes);
+
+        AnimationClipSettings settings = AnimationUtility.GetAnimationClipSettings(clip);
+        settings.loopTime = loop;
+        AnimationUtility.SetAnimationClipSettings(clip, settings);
+
+        if (isNewAsset)
+        {
+            AssetDatabase.CreateAsset(clip, assetPath);
+        }
+        else
+        {
+            EditorUtility.SetDirty(clip);
+        }
+
+        return clip;
+    }
+
+    private static EditorCurveBinding CreateSpriteBinding()
+    {
+        return new EditorCurveBinding
+        {
+            path = string.Empty,
+            type = typeof(SpriteRenderer),
+            propertyName = "m_Sprite"
+        };
+    }
+
+    private static void AppendCountError(
+        List<string> errors,
+        string characterId,
+        string actionId,
+        Sprite[] sprites,
+        int expectedFrameCount,
+        string sourceDescription)
+    {
+        if (sprites.Length == expectedFrameCount)
+        {
+            return;
+        }
+
+        errors.Add($"{characterId}/{actionId}: expected {expectedFrameCount} frame(s), found {sprites.Length} in {sourceDescription}");
+    }
+
     private static void EnsureFolder(string folderPath)
     {
         folderPath = folderPath.Replace('\\', '/');
@@ -195,15 +294,17 @@ public static class Chapter2PanicAnimationLibraryBuilder
         AssetDatabase.CreateFolder(string.IsNullOrWhiteSpace(parent) ? "Assets" : parent, folderName);
     }
 
-    private readonly struct ActionSpec
+    private readonly struct GuestFolderSpec
     {
-        public readonly string id;
-        public readonly int expectedFrameCount;
+        public readonly string characterId;
+        public readonly string guestFolder;
+        public readonly string clipFolderName;
 
-        public ActionSpec(string id, int expectedFrameCount)
+        public GuestFolderSpec(string characterId, string guestFolder, string clipFolderName)
         {
-            this.id = id;
-            this.expectedFrameCount = expectedFrameCount;
+            this.characterId = characterId;
+            this.guestFolder = guestFolder;
+            this.clipFolderName = clipFolderName;
         }
     }
 }
