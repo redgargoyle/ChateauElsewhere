@@ -1,0 +1,10 @@
+guest=LordAmbroseVeil
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a288c6f06648198be3dc606f77d9702.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\LordAmbroseVeil\_ContactSheets\LordAmbroseVeil_sprite_library_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\LordAmbroseVeil\_ContactSheets\LordAmbroseVeil_sprite_library_sheet_01_alpha.png
+Idle/LordAmbroseVeil_idle_front_neutral_01.png: 426x547, transparent_corners=True, visible_pixels=47575
+Surprised/LordAmbroseVeil_surprised_front_startled_01.png: 301x530, transparent_corners=True, visible_pixels=51529
+Panic/LordAmbroseVeil_panic_cover_face_recoil_01.png: 331x514, transparent_corners=True, visible_pixels=53322
+Sitting/LordAmbroseVeil_sitting_idle_plain_01.png: 385x443, transparent_corners=True, visible_pixels=60705
+DiningRoomChair/LordAmbroseVeil_dining_room_chair_eating_01.png: 514x510, transparent_corners=True, visible_pixels=83565
+DrawingRoomCouch/LordAmbroseVeil_drawing_room_couch_shocked_01.png: 530x497, transparent_corners=True, visible_pixels=118067

@@ -1,0 +1,8 @@
+guest=MissIsoldeWren
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a2891ddef4c81989972ad56cf8641a7.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\MissIsoldeWren\_ContactSheets\MissIsoldeWren_walking_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\MissIsoldeWren\_ContactSheets\MissIsoldeWren_walking_sheet_01_alpha.png
+Walking/MissIsoldeWren_walk_front_step_left_01.png: 285x660, transparent_corners=True, visible_pixels=75790
+Walking/MissIsoldeWren_walk_front_step_right_01.png: 274x660, transparent_corners=True, visible_pixels=74919
+Walking/MissIsoldeWren_walk_side_step_left_01.png: 363x561, transparent_corners=True, visible_pixels=73222
+Walking/MissIsoldeWren_walk_side_step_right_01.png: 375x561, transparent_corners=True, visible_pixels=74463

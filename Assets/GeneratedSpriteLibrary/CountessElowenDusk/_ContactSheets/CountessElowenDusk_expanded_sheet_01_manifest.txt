@@ -1,0 +1,10 @@
+guest=CountessElowenDusk
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a289897f0d48198a060ce11e4485368.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\CountessElowenDusk\_ContactSheets\CountessElowenDusk_expanded_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\CountessElowenDusk\_ContactSheets\CountessElowenDusk_expanded_sheet_01_alpha.png
+Idle/CountessElowenDusk_idle_tense_three_quarter_01.png: 334x528, transparent_corners=True, visible_pixels=70665
+Surprised/CountessElowenDusk_surprised_hand_to_chest_01.png: 483x553, transparent_corners=True, visible_pixels=74040
+Panic/CountessElowenDusk_panic_scream_hands_up_01.png: 349x524, transparent_corners=True, visible_pixels=83430
+Sitting/CountessElowenDusk_sitting_tense_hands_clasped_01.png: 485x493, transparent_corners=True, visible_pixels=89393
+DiningRoomChair/CountessElowenDusk_dining_room_chair_startled_01.png: 480x481, transparent_corners=True, visible_pixels=102246
+DrawingRoomCouch/CountessElowenDusk_drawing_room_couch_cover_face_01.png: 475x478, transparent_corners=True, visible_pixels=117647

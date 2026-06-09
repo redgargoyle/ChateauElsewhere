@@ -1,0 +1,10 @@
+guest=BaronHectorGlass
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a289970895c8198a5f6e143c32e7e24.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\BaronHectorGlass\_ContactSheets\BaronHectorGlass_expanded_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\BaronHectorGlass\_ContactSheets\BaronHectorGlass_expanded_sheet_01_alpha.png
+Idle/BaronHectorGlass_idle_tense_three_quarter_01.png: 218x518, transparent_corners=True, visible_pixels=47617
+Surprised/BaronHectorGlass_surprised_hand_to_chest_01.png: 265x547, transparent_corners=True, visible_pixels=49796
+Panic/BaronHectorGlass_panic_scream_hands_up_01.png: 311x523, transparent_corners=True, visible_pixels=56062
+Sitting/BaronHectorGlass_sitting_tense_hands_clasped_01.png: 378x433, transparent_corners=True, visible_pixels=56062
+DiningRoomChair/BaronHectorGlass_dining_room_chair_startled_01.png: 499x517, transparent_corners=True, visible_pixels=89857
+DrawingRoomCouch/BaronHectorGlass_drawing_room_couch_cover_face_01.png: 527x470, transparent_corners=True, visible_pixels=118760

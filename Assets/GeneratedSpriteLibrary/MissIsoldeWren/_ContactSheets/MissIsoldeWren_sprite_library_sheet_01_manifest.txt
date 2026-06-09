@@ -1,0 +1,10 @@
+guest=MissIsoldeWren
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a288d43c7208198901a1ee3b6ad322b.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\MissIsoldeWren\_ContactSheets\MissIsoldeWren_sprite_library_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\MissIsoldeWren\_ContactSheets\MissIsoldeWren_sprite_library_sheet_01_alpha.png
+Idle/MissIsoldeWren_idle_front_neutral_01.png: 221x530, transparent_corners=True, visible_pixels=52270
+Surprised/MissIsoldeWren_surprised_front_startled_01.png: 277x549, transparent_corners=True, visible_pixels=63809
+Panic/MissIsoldeWren_panic_cover_face_recoil_01.png: 336x547, transparent_corners=True, visible_pixels=69568
+Sitting/MissIsoldeWren_sitting_idle_plain_01.png: 496x497, transparent_corners=True, visible_pixels=82799
+DiningRoomChair/MissIsoldeWren_dining_room_chair_eating_01.png: 506x514, transparent_corners=True, visible_pixels=100676
+DrawingRoomCouch/MissIsoldeWren_drawing_room_couch_shocked_01.png: 537x509, transparent_corners=True, visible_pixels=143413

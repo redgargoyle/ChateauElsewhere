@@ -1,0 +1,10 @@
+guest=MisterFlorianKnell
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a288addc35881988691bc242d6e2da2.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\MisterFlorianKnell\_ContactSheets\MisterFlorianKnell_sprite_library_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\MisterFlorianKnell\_ContactSheets\MisterFlorianKnell_sprite_library_sheet_01_alpha.png
+Idle/MisterFlorianKnell_idle_front_neutral_01.png: 205x522, transparent_corners=True, visible_pixels=45150
+Surprised/MisterFlorianKnell_surprised_front_startled_01.png: 293x545, transparent_corners=True, visible_pixels=50077
+Panic/MisterFlorianKnell_panic_cover_face_recoil_01.png: 249x508, transparent_corners=True, visible_pixels=49522
+Sitting/MisterFlorianKnell_sitting_idle_plain_01.png: 386x428, transparent_corners=True, visible_pixels=58142
+DiningRoomChair/MisterFlorianKnell_dining_room_chair_eating_01.png: 486x496, transparent_corners=True, visible_pixels=77035
+DrawingRoomCouch/MisterFlorianKnell_drawing_room_couch_shocked_01.png: 531x482, transparent_corners=True, visible_pixels=116316

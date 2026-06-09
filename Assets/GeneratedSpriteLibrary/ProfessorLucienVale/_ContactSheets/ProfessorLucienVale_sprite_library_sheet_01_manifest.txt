@@ -1,0 +1,10 @@
+guest=ProfessorLucienVale
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a288db0a5e08198adeea2fc78dc3d00.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\ProfessorLucienVale\_ContactSheets\ProfessorLucienVale_sprite_library_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\ProfessorLucienVale\_ContactSheets\ProfessorLucienVale_sprite_library_sheet_01_alpha.png
+Idle/ProfessorLucienVale_idle_front_neutral_01.png: 247x536, transparent_corners=True, visible_pixels=55099
+Surprised/ProfessorLucienVale_surprised_front_startled_01.png: 309x535, transparent_corners=True, visible_pixels=60418
+Panic/ProfessorLucienVale_panic_cover_face_recoil_01.png: 330x520, transparent_corners=True, visible_pixels=67403
+Sitting/ProfessorLucienVale_sitting_idle_plain_01.png: 399x444, transparent_corners=True, visible_pixels=64783
+DiningRoomChair/ProfessorLucienVale_dining_room_chair_eating_01.png: 493x513, transparent_corners=True, visible_pixels=88343
+DrawingRoomCouch/ProfessorLucienVale_drawing_room_couch_shocked_01.png: 565x509, transparent_corners=True, visible_pixels=136244

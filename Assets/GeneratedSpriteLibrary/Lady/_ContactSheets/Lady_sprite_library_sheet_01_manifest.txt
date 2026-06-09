@@ -1,0 +1,10 @@
+guest=Lady
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a288935a3848198a5cbea27195f9632.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\Lady\_ContactSheets\Lady_sprite_library_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\Lady\_ContactSheets\Lady_sprite_library_sheet_01_alpha.png
+Idle/Lady_idle_front_neutral_01.png: 330x529, transparent_corners=True, visible_pixels=66632
+Surprised/Lady_surprised_front_startled_01.png: 491x530, transparent_corners=True, visible_pixels=71962
+Panic/Lady_panic_cover_face_recoil_01.png: 329x506, transparent_corners=True, visible_pixels=69099
+Sitting/Lady_sitting_idle_plain_01.png: 534x525, transparent_corners=True, visible_pixels=83096
+DiningRoomChair/Lady_dining_room_chair_eating_01.png: 480x495, transparent_corners=True, visible_pixels=89117
+DrawingRoomCouch/Lady_drawing_room_couch_shocked_01.png: 568x559, transparent_corners=True, visible_pixels=132808

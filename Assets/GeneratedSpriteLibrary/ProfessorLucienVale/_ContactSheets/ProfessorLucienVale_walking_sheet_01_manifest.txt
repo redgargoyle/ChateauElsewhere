@@ -1,0 +1,8 @@
+guest=ProfessorLucienVale
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a289254f5588198b22b7e0d2ef53405.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\ProfessorLucienVale\_ContactSheets\ProfessorLucienVale_walking_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\ProfessorLucienVale\_ContactSheets\ProfessorLucienVale_walking_sheet_01_alpha.png
+Walking/ProfessorLucienVale_walk_front_step_left_01.png: 278x652, transparent_corners=True, visible_pixels=65401
+Walking/ProfessorLucienVale_walk_front_step_right_01.png: 277x650, transparent_corners=True, visible_pixels=63822
+Walking/ProfessorLucienVale_walk_side_step_left_01.png: 344x559, transparent_corners=True, visible_pixels=55652
+Walking/ProfessorLucienVale_walk_side_step_right_01.png: 361x566, transparent_corners=True, visible_pixels=55927

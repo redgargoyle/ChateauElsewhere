@@ -1,0 +1,8 @@
+guest=LordAmbroseVeil
+source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a2890fc16a08198ac78499358dba7d0.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\LordAmbroseVeil\_ContactSheets\LordAmbroseVeil_walking_sheet_01_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\LordAmbroseVeil\_ContactSheets\LordAmbroseVeil_walking_sheet_01_alpha.png
+Walking/LordAmbroseVeil_walk_front_step_left_01.png: 271x657, transparent_corners=True, visible_pixels=63631
+Walking/LordAmbroseVeil_walk_front_step_right_01.png: 277x658, transparent_corners=True, visible_pixels=62281
+Walking/LordAmbroseVeil_walk_side_step_left_01.png: 334x572, transparent_corners=True, visible_pixels=54179
+Walking/LordAmbroseVeil_walk_side_step_right_01.png: 348x574, transparent_corners=True, visible_pixels=55829
