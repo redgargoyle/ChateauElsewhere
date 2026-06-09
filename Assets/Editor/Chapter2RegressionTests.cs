@@ -196,8 +196,8 @@ public class Chapter2RegressionTests
         Assert.That(routineIndex, Is.GreaterThanOrEqualTo(0), "Chapter 2 should have a monster stinger routine.");
         Assert.That(beginPanicIndex, Is.GreaterThan(routineIndex), "Guest panic should start inside the monster stinger routine.");
         Assert.That(beginStingerIndex, Is.GreaterThan(routineIndex), "Monster stinger should start inside the monster stinger routine.");
-        Assert.That(beginPanicIndex, Is.LessThan(beginStingerIndex), "Guest panic should begin in the same handoff frame as the monster stinger.");
-        Assert.That(stopPanicIndex, Is.GreaterThan(beginStingerIndex), "Guest panic should keep running while the stinger wait/timeout runs.");
+        Assert.That(beginPanicIndex, Is.GreaterThan(beginStingerIndex), "Guest panic should begin immediately after the monster stinger cut-in starts.");
+        Assert.That(stopPanicIndex, Is.GreaterThan(beginPanicIndex), "Guest panic should keep running while the stinger wait/timeout runs.");
         Assert.That(stopPanicIndex, Is.LessThan(startSearchIndex), "Guest panic should stop before guest search placement begins.");
         Assert.That(controllerText, Does.Match(@"(?s)\bStopChapter2Coroutines\s*\([^)]*\)\s*\{.*guestPanic\.StopPanic\(\)"), "Coroutine cleanup should not leave panic running.");
         Assert.That(controllerText, Does.Match(@"(?s)\bDebugResetForChapter2Skip\s*\([^)]*\)\s*\{.*guestPanic\.StopPanic\(\)"), "Debug reset should not leave panic running.");
@@ -213,6 +213,7 @@ public class Chapter2RegressionTests
         string panicText = File.ReadAllText(Chapter2GuestPanicControllerPath);
         string libraryText = File.ReadAllText(Chapter2PanicAnimationLibraryPath);
         string builderText = File.ReadAllText(Chapter2PanicLibraryBuilderPath);
+        string libraryAssetText = File.ReadAllText(Chapter2PanicLibraryAssetPath);
 
         Assert.That(panicText, Does.Contain("Resources.Load<Chapter2PanicAnimationLibrary>(Chapter2PanicAnimationLibrary.ResourcesPath)"));
         Assert.That(panicText, Does.Contain("GetGuestActorsInIdentityOrder()"));
@@ -234,7 +235,17 @@ public class Chapter2RegressionTests
 
         Assert.That(builderText, Does.Contain("Assets/AnimationLibrary"));
         Assert.That(builderText, Does.Contain("Assets/Resources/Chapter2"));
+        Assert.That(builderText, Does.Contain("Assets/Art/Characters/guest7/guest7left"));
+        Assert.That(builderText, Does.Contain("Assets/Art/Characters/guest7/guest7right"));
+        Assert.That(builderText, Does.Contain("LoadSpritesCycled"));
         Assert.That(builderText, Does.Contain("throw new InvalidOperationException"), "The editor builder should fail when approved frames are incomplete.");
+
+        Assert.That(libraryAssetText, Does.Contain("fileID: -2257875831443177292, guid: ab399775fb3ef2a438da143ddc52b373"), "Guest 7 panic left should use the correct authored walk-left sprites.");
+        Assert.That(libraryAssetText, Does.Contain("fileID: -199271497957006042, guid: 50c985fac9fd8d444a2cf4d5fc75b35f"), "Guest 7 panic left should use the correct authored walk-left sprites.");
+        Assert.That(libraryAssetText, Does.Contain("fileID: 5696943945425279077, guid: 0d5dcbb521c2e8249b1f44d1bd8e7e7c"), "Guest 7 panic left should use the correct authored walk-left sprites.");
+        Assert.That(libraryAssetText, Does.Contain("fileID: 213737340287471525, guid: 681f1864e9bf16a4c9be9401b9814cd9"), "Guest 7 panic right should use the correct authored walk-right sprites.");
+        Assert.That(libraryAssetText, Does.Contain("fileID: -2291888970802524497, guid: fc70559d976fd574e89a6b9e49be0f5a"), "Guest 7 panic right should use the correct authored walk-right sprites.");
+        Assert.That(libraryAssetText, Does.Contain("fileID: 5537724406429582439, guid: 50a2c0b970c82db45b0d2afc35f82a82"), "Guest 7 panic right should use the correct authored walk-right sprites.");
     }
 
     [Test]

@@ -562,14 +562,14 @@ public class Chapter2Controller : MonoBehaviour
 
     private IEnumerator RunMonsterStingerRoutine()
     {
-        if (guestPanic != null)
-        {
-            guestPanic.BeginPanic();
-        }
-
         if (monsterStinger != null)
         {
             monsterStinger.BeginStinger();
+
+            if (guestPanic != null)
+            {
+                guestPanic.BeginPanic();
+            }
 
             float elapsedSeconds = 0f;
             float timeoutSeconds = GetMonsterStingerTimeoutSeconds();

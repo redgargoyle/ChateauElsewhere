@@ -10,6 +10,9 @@ public static class Chapter2PanicAnimationLibraryBuilder
     private const string AnimationLibraryRoot = "Assets/AnimationLibrary";
     private const string OutputFolder = "Assets/Resources/Chapter2";
     private const string OutputPath = OutputFolder + "/PanicAnimationLibrary.asset";
+    private const string Guest7CharacterId = "LordAmbroseVeil";
+    private const string Guest7RunLeftFolder = "Assets/Art/Characters/guest7/guest7left";
+    private const string Guest7RunRightFolder = "Assets/Art/Characters/guest7/guest7right";
 
     private static readonly ActionSpec[] RequiredActions =
     {
@@ -43,7 +46,9 @@ public static class Chapter2PanicAnimationLibraryBuilder
             {
                 ActionSpec action = RequiredActions[actionIndex];
                 string framesFolder = $"{AnimationLibraryRoot}/{characterId}/approved/full_body/{action.id}/frames";
-                Sprite[] sprites = LoadSprites(framesFolder);
+                Sprite[] sprites = TryLoadCharacterActionOverride(characterId, action.id, action.expectedFrameCount, out Sprite[] overrideSprites)
+                    ? overrideSprites
+                    : LoadSprites(framesFolder);
                 actionSprites[actionIndex] = sprites;
 
                 if (sprites.Length != action.expectedFrameCount)
@@ -88,6 +93,49 @@ public static class Chapter2PanicAnimationLibraryBuilder
         Debug.Log($"Built Chapter 2 panic animation library at {OutputPath}.");
     }
 
+    private static bool TryLoadCharacterActionOverride(string characterId, string actionId, int expectedFrameCount, out Sprite[] sprites)
+    {
+        sprites = Array.Empty<Sprite>();
+
+        if (!string.Equals(characterId, Guest7CharacterId, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (string.Equals(actionId, "panic_run_left", StringComparison.Ordinal))
+        {
+            sprites = LoadSpritesCycled(Guest7RunLeftFolder, expectedFrameCount);
+            return true;
+        }
+
+        if (string.Equals(actionId, "panic_run_right", StringComparison.Ordinal))
+        {
+            sprites = LoadSpritesCycled(Guest7RunRightFolder, expectedFrameCount);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static Sprite[] LoadSpritesCycled(string framesFolder, int expectedFrameCount)
+    {
+        Sprite[] sourceSprites = LoadSprites(framesFolder);
+
+        if (sourceSprites.Length == 0 || expectedFrameCount <= 0)
+        {
+            return sourceSprites;
+        }
+
+        Sprite[] cycledSprites = new Sprite[expectedFrameCount];
+
+        for (int i = 0; i < cycledSprites.Length; i++)
+        {
+            cycledSprites[i] = sourceSprites[i % sourceSprites.Length];
+        }
+
+        return cycledSprites;
+    }
+
     private static Sprite[] LoadSprites(string framesFolder)
     {
         if (!Directory.Exists(framesFolder))
@@ -110,6 +158,17 @@ public static class Chapter2PanicAnimationLibraryBuilder
             if (sprite != null)
             {
                 sprites.Add(sprite);
+                continue;
+            }
+
+            UnityEngine.Object[] subAssets = AssetDatabase.LoadAllAssetRepresentationsAtPath(paths[i]);
+
+            for (int subAssetIndex = 0; subAssetIndex < subAssets.Length; subAssetIndex++)
+            {
+                if (subAssets[subAssetIndex] is Sprite subSprite)
+                {
+                    sprites.Add(subSprite);
+                }
             }
         }
 

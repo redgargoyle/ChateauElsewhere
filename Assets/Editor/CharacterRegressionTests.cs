@@ -258,8 +258,7 @@ public class CharacterRegressionTests
         AssertCustomSideStandingFrameMatchesWalkScale(MisterFlorianWalkFolder, "mister_florian_knell", "right", "Mister Florian");
         AssertCustomSideStandingFrameMatchesWalkScale(baronHectorWalkFolder, "baron_hector_glass", "left", "Baron Hector");
         AssertCustomSideStandingFrameMatchesWalkScale(baronHectorWalkFolder, "baron_hector_glass", "right", "Baron Hector");
-        AssertCustomSideStandingFrameMatchesWalkScale(lordAmbroseWalkFolder, "lord_ambrose_veil", "left", "Lord Ambrose Veil");
-        AssertCustomSideStandingFrameMatchesWalkScale(lordAmbroseWalkFolder, "lord_ambrose_veil", "right", "Lord Ambrose Veil");
+        AssertGuestPair02ManWalkSpritesExist(lordAmbroseWalkFolder);
     }
 
     [Test]
@@ -272,7 +271,7 @@ public class CharacterRegressionTests
         AssertNamedGuestAnimationAssets("Miss Isolde Wren", "MissIsoldeWren", "miss_isolde_wren", false);
         AssertNamedGuestAnimationAssets("Professor Lucien Vale", "ProfessorLucienVale", "professor_lucien_vale", false);
         AssertForwardIdleMatchesWalkScale("Assets/Art/Characters/guest6/lady_sabine_marrow_walk_01_r01_c01.png", "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_down", "Lady Sabine Marrow");
-        AssertForwardIdleMatchesWalkScale("Assets/Art/Characters/guest7/lord_ambrose_veil_walk_01_r01_c01.png", "Assets/Art/Characters/guest7/lord_ambrose_veil_idle_down", "Lord Ambrose Veil");
+        AssertGuestPair02ManStandingIdleFramesAreValid();
         AssertForwardIdleMatchesWalkScale("Assets/Art/Characters/guest8/madame_coralie_thread_walk_01_r01_c01.png", "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down", "Madame Coralie Thread");
     }
 
@@ -810,7 +809,7 @@ public class CharacterRegressionTests
         string walkFolder = GetCharacterWalkFolder(assetName);
         string animationFolder = $"Assets/Animation/{assetName}";
         string guestBlock = FindPrefabInstanceBlock(sceneText, $"value: Guest {guestNumber}");
-        string firstFrameGuid = ReadGuidFromMeta($"{walkFolder}/{filePrefix}_walk_01_r01_c01.png.meta");
+        string firstFrameGuid = ReadGuidFromMeta(GetScenePreviewFrameMetaPath(assetName, walkFolder, filePrefix));
         string controllerGuid = ReadGuidFromMeta($"{animationFolder}/{assetName}.overrideController.meta");
 
         Assert.That(guestBlock, Is.Not.Null, $"Guest {guestNumber} should exist as a named scene prefab instance for {displayName}.");
@@ -825,6 +824,12 @@ public class CharacterRegressionTests
 
     private static void AssertNamedGuestAnimationAssets(string displayName, string assetName, string filePrefix, bool usesForwardIdle)
     {
+        if (assetName == "LordAmbroseVeil")
+        {
+            AssertLordAmbroseUsesGuestPair02ManAnimations(displayName, assetName);
+            return;
+        }
+
         string walkFolder = GetCharacterWalkFolder(assetName);
         string idleFramePrefix = GetCharacterIdleFramePrefix(assetName, filePrefix);
         string animationFolder = $"Assets/Animation/{assetName}";
@@ -860,6 +865,70 @@ public class CharacterRegressionTests
             AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Right.anim"), walkFolder, filePrefix, 3, "right", displayName);
         }
         AssertNamedGuestWalkRow(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Up.anim"), walkFolder, filePrefix, 4, "up", displayName);
+    }
+
+    private static void AssertLordAmbroseUsesGuestPair02ManAnimations(string displayName, string assetName)
+    {
+        string animationFolder = $"Assets/Animation/{assetName}";
+        string overrideText = File.ReadAllText($"{animationFolder}/{assetName}.overrideController");
+        string idleClipGuid = ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle.anim.meta");
+
+        Assert.That(Directory.GetFiles($"{CharacterArtRoot}/guest7", "lord_ambrose_veil_*.png").Length, Is.EqualTo(0), $"{displayName} should not keep the deleted generated Lord Ambrose sprites in the guest7 root.");
+        Assert.That(overrideText, Does.Contain(idleClipGuid), $"{displayName} override controller should wire generic idle states to the main idle clip.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Down.anim.meta")), $"{displayName} should not wire the separate directional down idle clip.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Left.anim.meta")), $"{displayName} should not wire the directional left idle clip.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Right.anim.meta")), $"{displayName} should not wire the directional right idle clip.");
+        Assert.That(overrideText, Does.Not.Contain(ReadGuidFromMeta($"{animationFolder}/{assetName}_Idle_Up.anim.meta")), $"{displayName} should not wire the directional up idle clip.");
+
+        AssertGuestPair02ManClipSequence(File.ReadAllText($"{animationFolder}/{assetName}_Idle.anim"), "guest7standidle", "GuestPair02Man_standing_idle", new[] { 1, 2, 3, 4 }, displayName, "idle");
+        AssertGuestPair02ManClipSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Down.anim"), "guest7down", "GuestPair02Man_down", new[] { 1, 4, 2, 3 }, displayName, "walk down");
+        AssertGuestPair02ManClipSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Left.anim"), "guest7left", "GuestPair02Man_left", new[] { 2, 4, 3, 4 }, displayName, "walk left");
+        AssertGuestPair02ManClipSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Right.anim"), "guest7right", "GuestPair02Man_right", new[] { 1, 4, 2, 4 }, displayName, "walk right");
+        AssertGuestPair02ManClipSequence(File.ReadAllText($"{animationFolder}/{assetName}_Walk_Up.anim"), "guest07up", "GuestPair02Man_up", new[] { 2, 2, 1, 4 }, displayName, "walk up");
+    }
+
+    private static void AssertGuestPair02ManClipSequence(string clipText, string subfolder, string filePrefix, int[] frameNumbers, string displayName, string clipLabel)
+    {
+        Assert.That(clipText, Does.Contain("classID: 212"), $"{displayName} {clipLabel} should animate SpriteRenderers.");
+        Assert.That(clipText, Does.Contain("m_LoopTime: 1"), $"{displayName} {clipLabel} should loop.");
+
+        for (int i = 0; i < frameNumbers.Length; i++)
+        {
+            string framePath = $"{CharacterArtRoot}/guest7/{subfolder}/{filePrefix}_{frameNumbers[i]:00}.png";
+            string metaPath = $"{framePath}.meta";
+            string spriteName = $"{Path.GetFileNameWithoutExtension(framePath)}_0";
+            string guid = ReadGuidFromMeta(metaPath);
+            string fileId = ReadSpriteFileIdFromMeta(metaPath, spriteName);
+            string spriteValue = $"value: {{fileID: {fileId}, guid: {guid}, type: 3}}";
+            string mappingValue = $"- {{fileID: {fileId}, guid: {guid}, type: 3}}";
+
+            Assert.That(File.Exists(framePath), Is.True, $"{displayName} {clipLabel} should use {framePath}.");
+            Assert.That(clipText, Does.Contain(spriteValue), $"{displayName} {clipLabel} should include {Path.GetFileName(framePath)} as an animation key.");
+            Assert.That(clipText, Does.Contain(mappingValue), $"{displayName} {clipLabel} should include {Path.GetFileName(framePath)} in pointer mappings.");
+        }
+    }
+
+    private static void AssertGuestPair02ManWalkSpritesExist(string walkFolder)
+    {
+        Assert.That(Directory.GetFiles($"{walkFolder}/guest7left", "GuestPair02Man_left_*.png").Length, Is.GreaterThanOrEqualTo(3), "Lord Ambrose Veil should keep the correct guest7 left walk sprites.");
+        Assert.That(Directory.GetFiles($"{walkFolder}/guest7right", "GuestPair02Man_right_*.png").Length, Is.GreaterThanOrEqualTo(3), "Lord Ambrose Veil should keep the correct guest7 right walk sprites.");
+    }
+
+    private static void AssertGuestPair02ManStandingIdleFramesAreValid()
+    {
+        for (int i = 1; i <= 4; i++)
+        {
+            RectInt standingBounds = ReadVisibleSpriteBounds($"{CharacterArtRoot}/guest7/guest7standidle/GuestPair02Man_standing_idle_{i:00}.png", 248, 304);
+            Assert.That(standingBounds.height, Is.GreaterThanOrEqualTo(240), $"Lord Ambrose Veil standing idle frame {i} should keep the full-height GuestPair02Man art.");
+            Assert.That(standingBounds.width, Is.GreaterThanOrEqualTo(80), $"Lord Ambrose Veil standing idle frame {i} should keep visible character pixels.");
+        }
+    }
+
+    private static string GetScenePreviewFrameMetaPath(string assetName, string walkFolder, string filePrefix)
+    {
+        return assetName == "LordAmbroseVeil"
+            ? $"{CharacterArtRoot}/guest7/guest7standidle/GuestPair02Man_standing_idle_01.png.meta"
+            : $"{walkFolder}/{filePrefix}_walk_01_r01_c01.png.meta";
     }
 
     private static bool UsesCustomSideWalk(string assetName)
