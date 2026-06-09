@@ -264,6 +264,10 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("turnaroundDistanceScale = 0.68f"));
         Assert.That(panicText, Does.Contain("GetTurnaroundOffset"));
         Assert.That(panicText, Does.Contain("Mathf.SmoothStep"));
+        Assert.That(panicText, Does.Contain("float frameProgress"));
+        Assert.That(panicText, Does.Contain("float motionFrame = frameIndex + frameProgress"));
+        Assert.That(panicText, Does.Contain("GetClipOffset(startOffset, endOffset, clipProgress)"));
+        Assert.That(panicText, Does.Contain("ApplyActionFrame(action, frameIndex, motionFrame, offset, jitter)"));
         Assert.That(panicText, Does.Contain("ConfigureRunMotion"));
         Assert.That(panicText, Does.Contain("GetVisualAction"));
         Assert.That(panicText, Does.Contain("GetPanicOffset"));
@@ -347,6 +351,7 @@ public class Chapter2RegressionTests
             Assert.That(actorState.IsInteractable, Is.False, "Panic should make guests non-interactable.");
             Assert.That(actorState.IsSeated, Is.False, "Panic should stand guests up temporarily.");
             Assert.That(animator.enabled, Is.False, "Panic should disable authored animators while sprite clips play.");
+            Assert.That(actor.transform.position, Is.Not.EqualTo(originalPosition), "Panic should translate the guest left/right while the run animation sequence is active.");
 
             panic.StopPanic();
 

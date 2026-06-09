@@ -41,7 +41,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         isRunning = true;
-        ApplyActionFrame(PanicAction.PanicRunLeft, 0, GetTurnaroundOffset(new Vector2(runDistancePixels, 0f)), true);
+        ApplyActionFrame(PanicAction.PanicRunLeft, 0, 0f, GetTurnaroundOffset(new Vector2(runDistancePixels, 0f)), true);
         panicRoutine = StartCoroutine(RunPanicRoutine());
         return panicRoutine;
     }
@@ -178,23 +178,35 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         for (int frameIndex = 0; frameIndex < frameCount && isRunning; frameIndex++)
         {
-            float t = frameCount <= 1 ? 1f : frameIndex / (float)(frameCount - 1);
-            float easedT = Mathf.SmoothStep(0f, 1f, t);
-            Vector2 offset = Vector2.LerpUnclamped(startOffset, endOffset, easedT);
-
-            ApplyActionFrame(action, frameIndex, offset, jitter);
-
             float elapsed = 0f;
 
             while (elapsed < secondsPerFrame && isRunning)
             {
+                float frameProgress = secondsPerFrame <= 0f ? 1f : Mathf.Clamp01(elapsed / secondsPerFrame);
+                float motionFrame = frameIndex + frameProgress;
+                float clipProgress = frameCount <= 1 ? 1f : Mathf.Clamp01(motionFrame / frameCount);
+                Vector2 offset = GetClipOffset(startOffset, endOffset, clipProgress);
+
+                ApplyActionFrame(action, frameIndex, motionFrame, offset, jitter);
+
                 elapsed += Time.deltaTime;
                 yield return null;
             }
         }
+
+        if (isRunning)
+        {
+            ApplyActionFrame(action, frameCount - 1, frameCount, endOffset, jitter);
+        }
     }
 
-    private void ApplyActionFrame(PanicAction action, int frameIndex, Vector2 offset, bool jitter)
+    private static Vector2 GetClipOffset(Vector2 startOffset, Vector2 endOffset, float clipProgress)
+    {
+        float easedT = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(clipProgress));
+        return Vector2.LerpUnclamped(startOffset, endOffset, easedT);
+    }
+
+    private void ApplyActionFrame(PanicAction action, int frameIndex, float motionFrame, Vector2 offset, bool jitter)
     {
         for (int i = 0; i < participants.Count; i++)
         {
@@ -207,7 +219,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             PanicAction visualAction = participant.GetVisualAction(action);
             participant.SetSprite(GetFrame(participant.Animation, visualAction, participant.GetClipFrameIndex(visualAction, frameIndex)));
-            participant.ApplyVisualOffset(participant.GetPanicOffset(offset, frameIndex, jitter, jitterPixels), worldUnitsPerRoomPixel);
+            participant.ApplyVisualOffset(participant.GetPanicOffset(offset, motionFrame, jitter, jitterPixels), worldUnitsPerRoomPixel);
         }
     }
 
@@ -457,15 +469,15 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             return frameIndex;
         }
 
-        public Vector2 GetPanicOffset(Vector2 sharedOffset, int frameIndex, bool jitter, float maxJitterPixels)
+        public Vector2 GetPanicOffset(Vector2 sharedOffset, float motionFrame, bool jitter, float maxJitterPixels)
         {
             float x = sharedOffset.x * runDirectionSign * runDistanceScale;
-            float y = Mathf.Abs(Mathf.Sin((frameIndex + framePhaseOffset) * 0.92f * Mathf.PI)) * bobPixels;
+            float y = Mathf.Abs(Mathf.Sin((motionFrame + framePhaseOffset) * 0.92f * Mathf.PI)) * bobPixels;
 
             if (jitter && maxJitterPixels > 0f)
             {
-                x += Mathf.Sin(frameIndex * 1.73f + jitterPhase) * maxJitterPixels;
-                y += Mathf.Abs(Mathf.Cos(frameIndex * 1.11f + jitterPhase)) * maxJitterPixels * 0.25f;
+                x += Mathf.Sin(motionFrame * 1.73f + jitterPhase) * maxJitterPixels;
+                y += Mathf.Abs(Mathf.Cos(motionFrame * 1.11f + jitterPhase)) * maxJitterPixels * 0.25f;
             }
 
             return new Vector2(x, y);
