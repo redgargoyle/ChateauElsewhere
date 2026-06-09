@@ -271,6 +271,10 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("ConfigureRunMotion"));
         Assert.That(panicText, Does.Contain("GetVisualAction"));
         Assert.That(panicText, Does.Contain("GetPanicOffset"));
+        Assert.That(panicText, Does.Contain("FindMotionDrivers"));
+        Assert.That(panicText, Does.Contain("RoomPersonWalker2D"));
+        Assert.That(panicText, Does.Contain("NPCWaypointMover"));
+        Assert.That(panicText, Does.Contain("motionDrivers[i].enabled = false"));
     }
 
     [Test]
@@ -331,6 +335,8 @@ public class Chapter2RegressionTests
             renderer.sprite = originalSprite;
             Animator animator = actor.AddComponent<Animator>();
             animator.enabled = true;
+            NPCWaypointMover waypointMover = actor.AddComponent<NPCWaypointMover>();
+            waypointMover.enabled = true;
 
             ActorRoomState actorState = actor.AddComponent<ActorRoomState>();
             actorState.SetCurrentRoom("Drawing Room");
@@ -351,6 +357,7 @@ public class Chapter2RegressionTests
             Assert.That(actorState.IsInteractable, Is.False, "Panic should make guests non-interactable.");
             Assert.That(actorState.IsSeated, Is.False, "Panic should stand guests up temporarily.");
             Assert.That(animator.enabled, Is.False, "Panic should disable authored animators while sprite clips play.");
+            Assert.That(waypointMover.enabled, Is.False, "Panic should disable guest movement drivers that can overwrite panic offsets.");
             Assert.That(actor.transform.position, Is.Not.EqualTo(originalPosition), "Panic should translate the guest left/right while the run animation sequence is active.");
 
             panic.StopPanic();
@@ -358,6 +365,7 @@ public class Chapter2RegressionTests
             Assert.That(panic.IsRunning, Is.False);
             Assert.That(renderer.sprite, Is.EqualTo(originalSprite));
             Assert.That(animator.enabled, Is.True);
+            Assert.That(waypointMover.enabled, Is.True);
             Assert.That(actorState.CurrentRoomId, Is.EqualTo("Drawing Room"));
             Assert.That(actorState.IsVisibleByChapterState, Is.True);
             Assert.That(actorState.IsInteractable, Is.True);

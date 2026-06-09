@@ -346,6 +346,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private Image image;
         private Animator[] animators;
         private bool[] animatorEnabledStates;
+        private Behaviour[] motionDrivers;
+        private bool[] motionDriverEnabledStates;
         private Sprite originalRendererSprite;
         private Sprite originalImageSprite;
         private Transform targetTransform;
@@ -383,6 +385,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 spriteRenderer = FindPrimarySpriteRenderer(root),
                 image = FindPrimaryImage(root),
                 animators = root != null ? root.GetComponentsInChildren<Animator>(true) : Array.Empty<Animator>(),
+                motionDrivers = FindMotionDrivers(root),
                 targetTransform = rootTransform,
                 rectTransform = rootTransform as RectTransform,
                 projection = nextProjection,
@@ -406,6 +409,13 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 participant.animatorEnabledStates[i] = participant.animators[i] != null && participant.animators[i].enabled;
             }
 
+            participant.motionDriverEnabledStates = new bool[participant.motionDrivers.Length];
+
+            for (int i = 0; i < participant.motionDrivers.Length; i++)
+            {
+                participant.motionDriverEnabledStates[i] = participant.motionDrivers[i] != null && participant.motionDrivers[i].enabled;
+            }
+
             participant.originalRendererSprite = participant.spriteRenderer != null ? participant.spriteRenderer.sprite : null;
             participant.originalImageSprite = participant.image != null ? participant.image.sprite : null;
             return participant;
@@ -424,6 +434,16 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         public void ApplyPanicState()
         {
+            StopMotionDrivers();
+
+            for (int i = 0; i < motionDrivers.Length; i++)
+            {
+                if (motionDrivers[i] != null)
+                {
+                    motionDrivers[i].enabled = false;
+                }
+            }
+
             for (int i = 0; i < animators.Length; i++)
             {
                 if (animators[i] != null)
@@ -559,6 +579,14 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 }
             }
 
+            for (int i = 0; i < motionDrivers.Length; i++)
+            {
+                if (motionDrivers[i] != null && i < motionDriverEnabledStates.Length)
+                {
+                    motionDrivers[i].enabled = motionDriverEnabledStates[i];
+                }
+            }
+
             if (actorState != null)
             {
                 actorState.SetCurrentRoom(originalRoomId);
@@ -601,6 +629,51 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             return best;
+        }
+
+        private void StopMotionDrivers()
+        {
+            for (int i = 0; i < motionDrivers.Length; i++)
+            {
+                if (motionDrivers[i] is NPCWaypointMover waypointMover)
+                {
+                    waypointMover.StopMoving();
+                }
+
+                if (motionDrivers[i] is PointClickPlayerMovement pointClickMovement)
+                {
+                    pointClickMovement.SetInputEnabled(false);
+                }
+            }
+        }
+
+        private static Behaviour[] FindMotionDrivers(GameObject root)
+        {
+            if (root == null)
+            {
+                return Array.Empty<Behaviour>();
+            }
+
+            List<Behaviour> drivers = new List<Behaviour>();
+            AppendMotionDrivers<RoomPersonWalker2D>(root, drivers);
+            AppendMotionDrivers<NPCWaypointMover>(root, drivers);
+            AppendMotionDrivers<PointClickPlayerMovement>(root, drivers);
+            AppendMotionDrivers<PlayerMovement>(root, drivers);
+            AppendMotionDrivers<CharacterController2D>(root, drivers);
+            return drivers.ToArray();
+        }
+
+        private static void AppendMotionDrivers<T>(GameObject root, List<Behaviour> drivers) where T : Behaviour
+        {
+            T[] components = root.GetComponentsInChildren<T>(true);
+
+            for (int i = 0; i < components.Length; i++)
+            {
+                if (components[i] != null && !drivers.Contains(components[i]))
+                {
+                    drivers.Add(components[i]);
+                }
+            }
         }
 
         private static Image FindPrimaryImage(GameObject root)
