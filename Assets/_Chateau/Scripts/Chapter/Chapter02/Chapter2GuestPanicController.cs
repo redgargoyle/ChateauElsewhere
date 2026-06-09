@@ -40,7 +40,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         isRunning = true;
-        ApplyActionFrame(PanicAction.PanicReactionDown, 0, Vector2.zero);
+        ApplyActionFrame(PanicAction.PanicRunLeft, 0, new Vector2(runDistancePixels * 0.35f, 0f), true);
         panicRoutine = StartCoroutine(RunPanicRoutine());
         return panicRoutine;
     }
@@ -129,6 +129,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             PanicParticipant participant = PanicParticipant.Create(actorState, animation);
+            participant.ConfigureRunMotion(targetParticipants.Count, guestNumber);
 
             if (!participant.HasSpriteTarget)
             {
@@ -144,20 +145,17 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
     private IEnumerator RunPanicRoutine()
     {
-        yield return PlayClipForAll(PanicAction.PanicReactionDown, Vector2.zero, Vector2.zero, false);
-        yield return PlayClipForAll(PanicAction.PanicShriekDown, Vector2.zero, Vector2.zero, true);
+        Vector2 leftOffset = new Vector2(-runDistancePixels, 0f);
+        Vector2 rightOffset = new Vector2(runDistancePixels, 0f);
+        Vector2 leftTurnOffset = leftOffset * 0.35f;
+        Vector2 rightTurnOffset = rightOffset * 0.35f;
 
         while (isRunning)
         {
-            Vector2 leftOffset = new Vector2(-runDistancePixels, 0f);
-            Vector2 rightOffset = new Vector2(runDistancePixels, 0f);
-
-            yield return PlayClipForAll(PanicAction.PanicRunLeft, Vector2.zero, leftOffset, true);
-            yield return PlayClipForAll(PanicAction.PanicTurnaround, leftOffset, leftOffset * 0.45f, true);
-            yield return PlayClipForAll(PanicAction.PanicRunRight, leftOffset * 0.45f, rightOffset, true);
-            yield return PlayClipForAll(PanicAction.PanicTurnaround, rightOffset, Vector2.zero, true);
-            yield return PlayClipForAll(PanicAction.CoverFaceCower, Vector2.zero, Vector2.zero, true);
-            yield return PlayClipForAll(PanicAction.PanicShriekDown, Vector2.zero, Vector2.zero, true);
+            yield return PlayClipForAll(PanicAction.PanicRunLeft, rightTurnOffset, leftOffset, true);
+            yield return PlayClipForAll(PanicAction.PanicTurnaround, leftOffset, leftTurnOffset, true);
+            yield return PlayClipForAll(PanicAction.PanicRunRight, leftTurnOffset, rightOffset, true);
+            yield return PlayClipForAll(PanicAction.PanicTurnaround, rightOffset, rightTurnOffset, true);
         }
     }
 
@@ -177,13 +175,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             float t = frameCount <= 1 ? 1f : frameIndex / (float)(frameCount - 1);
             Vector2 offset = Vector2.Lerp(startOffset, endOffset, t);
 
-            if (jitter && jitterPixels > 0f)
-            {
-                float wobble = Mathf.Sin((Time.time + frameIndex * 0.37f) * 37f) * jitterPixels;
-                offset += new Vector2(wobble, Mathf.Abs(wobble) * 0.35f);
-            }
-
-            ApplyActionFrame(action, frameIndex, offset);
+            ApplyActionFrame(action, frameIndex, offset, jitter);
 
             float elapsed = 0f;
 
@@ -195,7 +187,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
     }
 
-    private void ApplyActionFrame(PanicAction action, int frameIndex, Vector2 offset)
+    private void ApplyActionFrame(PanicAction action, int frameIndex, Vector2 offset, bool jitter)
     {
         for (int i = 0; i < participants.Count; i++)
         {
@@ -206,8 +198,9 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 continue;
             }
 
-            participant.SetSprite(GetFrame(participant.Animation, action, frameIndex));
-            participant.ApplyVisualOffset(offset, worldUnitsPerRoomPixel);
+            PanicAction visualAction = participant.GetVisualAction(action);
+            participant.SetSprite(GetFrame(participant.Animation, visualAction, participant.GetClipFrameIndex(visualAction, frameIndex)));
+            participant.ApplyVisualOffset(participant.GetPanicOffset(offset, frameIndex, jitter, jitterPixels), worldUnitsPerRoomPixel);
         }
     }
 
@@ -350,6 +343,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private bool originalVisible;
         private bool originalInteractable;
         private bool originalSeated;
+        private float runDirectionSign = 1f;
+        private float runDistanceScale = 1f;
+        private int framePhaseOffset;
+        private float jitterPhase;
+        private float bobPixels = 2f;
 
         public Chapter2PanicCharacterAnimation Animation => animation;
         public bool HasSpriteTarget => spriteRenderer != null || image != null;
@@ -394,6 +392,17 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             return participant;
         }
 
+        public void ConfigureRunMotion(int participantIndex, int guestNumber)
+        {
+            int seed = Mathf.Abs((guestNumber + 1) * 37 + (participantIndex + 1) * 19);
+
+            runDirectionSign = seed % 2 == 0 ? 1f : -1f;
+            runDistanceScale = 0.82f + seed % 5 * 0.07f;
+            framePhaseOffset = seed % 4;
+            jitterPhase = seed * 0.618f;
+            bobPixels = 2f + seed % 3 * 0.75f;
+        }
+
         public void ApplyPanicState()
         {
             for (int i = 0; i < animators.Length; i++)
@@ -411,6 +420,48 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 actorState.SetVisibleByChapterState(true);
                 actorState.ApplyState();
             }
+        }
+
+        public PanicAction GetVisualAction(PanicAction action)
+        {
+            if (runDirectionSign >= 0f)
+            {
+                return action;
+            }
+
+            switch (action)
+            {
+                case PanicAction.PanicRunLeft:
+                    return PanicAction.PanicRunRight;
+                case PanicAction.PanicRunRight:
+                    return PanicAction.PanicRunLeft;
+                default:
+                    return action;
+            }
+        }
+
+        public int GetClipFrameIndex(PanicAction action, int frameIndex)
+        {
+            if (action == PanicAction.PanicRunLeft || action == PanicAction.PanicRunRight)
+            {
+                return frameIndex + framePhaseOffset;
+            }
+
+            return frameIndex;
+        }
+
+        public Vector2 GetPanicOffset(Vector2 sharedOffset, int frameIndex, bool jitter, float maxJitterPixels)
+        {
+            float x = sharedOffset.x * runDirectionSign * runDistanceScale;
+            float y = Mathf.Abs(Mathf.Sin((frameIndex + framePhaseOffset) * 0.92f * Mathf.PI)) * bobPixels;
+
+            if (jitter && maxJitterPixels > 0f)
+            {
+                x += Mathf.Sin(frameIndex * 1.73f + jitterPhase) * maxJitterPixels;
+                y += Mathf.Abs(Mathf.Cos(frameIndex * 1.11f + jitterPhase)) * maxJitterPixels * 0.25f;
+            }
+
+            return new Vector2(x, y);
         }
 
         public void SetSprite(Sprite sprite)

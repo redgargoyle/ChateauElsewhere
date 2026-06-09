@@ -238,6 +238,35 @@ public class Chapter2RegressionTests
     }
 
     [Test]
+    public void Chapter2GuestPanicRunsBackAndForthImmediately()
+    {
+        Assert.That(File.Exists(Chapter2GuestPanicControllerPath), Is.True);
+
+        string panicText = File.ReadAllText(Chapter2GuestPanicControllerPath);
+        int routineIndex = panicText.IndexOf("private IEnumerator RunPanicRoutine()", System.StringComparison.Ordinal);
+        Assert.That(routineIndex, Is.GreaterThanOrEqualTo(0), "Panic playback should have a dedicated stinger routine.");
+
+        int nextMethodIndex = panicText.IndexOf("private IEnumerator PlayClipForAll", routineIndex, System.StringComparison.Ordinal);
+        int whileIndex = panicText.IndexOf("while (isRunning)", routineIndex, System.StringComparison.Ordinal);
+        int firstClipIndex = panicText.IndexOf("yield return PlayClipForAll", routineIndex, System.StringComparison.Ordinal);
+
+        Assert.That(nextMethodIndex, Is.GreaterThan(routineIndex));
+        Assert.That(whileIndex, Is.GreaterThan(routineIndex), "Panic playback should loop while the stinger is running.");
+        Assert.That(firstClipIndex, Is.GreaterThan(whileIndex), "Guests should start running immediately instead of spending stinger time on a non-running pre-roll.");
+
+        string routineText = panicText.Substring(routineIndex, nextMethodIndex - routineIndex);
+        Assert.That(routineText, Does.Contain("PanicAction.PanicRunLeft"));
+        Assert.That(routineText, Does.Contain("PanicAction.PanicRunRight"));
+        Assert.That(routineText, Does.Not.Contain("PanicAction.PanicReactionDown"));
+        Assert.That(routineText, Does.Not.Contain("PanicAction.PanicShriekDown"));
+        Assert.That(routineText, Does.Not.Contain("PanicAction.CoverFaceCower"));
+        Assert.That(panicText, Does.Contain("ApplyActionFrame(PanicAction.PanicRunLeft, 0, new Vector2(runDistancePixels * 0.35f, 0f), true)"));
+        Assert.That(panicText, Does.Contain("ConfigureRunMotion"));
+        Assert.That(panicText, Does.Contain("GetVisualAction"));
+        Assert.That(panicText, Does.Contain("GetPanicOffset"));
+    }
+
+    [Test]
     public void Chapter2PanicApprovedFrameLibraryIsComplete()
     {
         Assert.That(File.Exists(Chapter2PanicLibraryAssetPath), Is.True, "The runtime Resources panic library asset should be built.");
