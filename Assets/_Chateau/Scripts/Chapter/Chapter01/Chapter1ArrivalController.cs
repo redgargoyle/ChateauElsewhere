@@ -29,6 +29,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public Chapter1CoatPickup CoatPickup;
         public NPCWaypointMover Mover;
         public ActorRoomState ActorState;
+        public RoomProjectedEntity Projection;
     }
 
     private sealed class GuestGroupRuntimeState
@@ -1148,6 +1149,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             ActorRoomState actorState = config.ResolveActorState();
             GameObject guestObject = config.ResolveGuestObject();
             NPCWaypointMover mover = guestObject != null ? guestObject.GetComponent<NPCWaypointMover>() : null;
+            RoomProjectedEntity projection = ResolveGuestProjection(guestObject, actorState);
 
             if (mover == null && guestObject != null)
             {
@@ -1173,6 +1175,7 @@ public class Chapter1ArrivalController : MonoBehaviour
                 Seated = false,
                 Mover = mover,
                 ActorState = actorState,
+                Projection = projection,
                 Seat = ResolveSeatForGuest(i)
             };
 
@@ -1687,6 +1690,17 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         if (coatRenderer == null)
         {
+            return;
+        }
+
+        RoomProjectedEntity projection = ResolveGuestProjection(guest);
+
+        if (projection != null && projection.IsProjectionActive)
+        {
+            int coatSortingOffset = projection.VisualProfile != null ? projection.VisualProfile.CoatSortingOffset : 1;
+            coatRenderer.sortingLayerName = projection.GetSortingLayerName();
+            coatRenderer.sortingOrder = projection.GetSortingOrder(coatSortingOffset);
+            coatRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
             return;
         }
 
@@ -2661,6 +2675,11 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         PreserveGuestAuthoredScale(guestState);
 
+        if (TryPlaceProjectedGuestAtTarget(guestState, target))
+        {
+            return;
+        }
+
         if (guestState.GuestObject != null &&
             guestState.GuestObject.transform is RectTransform rectTransform &&
             TryGetAnchoredPositionForGuestTarget(guestState, target, out Vector2 anchoredPosition))
@@ -2721,7 +2740,8 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         if (guestState == null ||
             guestState.ActorState == null ||
-            !IsWorldSpaceGuestObject(guestState.GuestObject))
+            !IsWorldSpaceGuestObject(guestState.GuestObject) ||
+            HasActiveProjection(guestState))
         {
             return;
         }
@@ -3826,9 +3846,17 @@ public class Chapter1ArrivalController : MonoBehaviour
         actorState.SetActorId(MakeGuestId(guestObject.name, index));
         actorState.SetScaleWithRoomStageMotion(false);
         guestObject.transform.localScale = authoredGuestScale;
+        RoomProjectedEntity projection = ResolveGuestProjection(guestObject, actorState);
 
         bool preserveAuthoredSorting = ShouldPreserveAuthoredGuestSorting(guestObject);
         SpriteRenderer[] renderers = guestObject.GetComponentsInChildren<SpriteRenderer>(true);
+
+        if (projection != null && projection.IsProjectionActive)
+        {
+            projection.RefreshVisualTargets();
+            projection.ApplyProjection();
+            return;
+        }
 
         for (int i = 0; i < renderers.Length; i++)
         {
@@ -4253,9 +4281,67 @@ public class Chapter1ArrivalController : MonoBehaviour
         return guestObject != null && !(guestObject.transform is RectTransform);
     }
 
+    private bool TryPlaceProjectedGuestAtTarget(GuestRuntimeState guestState, Transform target)
+    {
+        RoomProjectedEntity projection = ResolveGuestProjection(guestState);
+
+        if (projection == null)
+        {
+            return false;
+        }
+
+        projection.UseProfileFromRoomTarget(target);
+
+        if (!projection.HasUsableProfile)
+        {
+            return false;
+        }
+
+        return projection.TrySetRoomLocalFootPointFromTarget(target);
+    }
+
+    private bool HasActiveProjection(GuestRuntimeState guestState)
+    {
+        RoomProjectedEntity projection = ResolveGuestProjection(guestState);
+        return projection != null && projection.IsProjectionActive;
+    }
+
+    private bool HasActiveProjection(GameObject guestObject)
+    {
+        RoomProjectedEntity projection = ResolveGuestProjection(guestObject, guestObject != null ? guestObject.GetComponent<ActorRoomState>() : null);
+        return projection != null && projection.IsProjectionActive;
+    }
+
+    private RoomProjectedEntity ResolveGuestProjection(GuestRuntimeState guestState)
+    {
+        if (guestState == null)
+        {
+            return null;
+        }
+
+        if (guestState.Projection == null)
+        {
+            guestState.Projection = ResolveGuestProjection(guestState.GuestObject, guestState.ActorState);
+        }
+
+        return guestState.Projection;
+    }
+
+    private static RoomProjectedEntity ResolveGuestProjection(GameObject guestObject, ActorRoomState actorState)
+    {
+        if (actorState != null && actorState.Projection != null)
+        {
+            return actorState.Projection;
+        }
+
+        return guestObject != null ? guestObject.GetComponentInChildren<RoomProjectedEntity>(true) : null;
+    }
+
     private float GetMoveSpeedForGuestObject(GameObject guestObject)
     {
-        return IsWorldSpaceGuestObject(guestObject)
+        return HasActiveProjection(guestObject)
+            ? Mathf.Max(0.01f, guestMoveSpeed)
+            : IsWorldSpaceGuestObject(guestObject)
             ? Mathf.Max(0.01f, worldGuestMoveSpeed)
             : Mathf.Max(0.01f, guestMoveSpeed);
     }

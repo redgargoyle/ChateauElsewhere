@@ -9,6 +9,7 @@ public class NPCWaypointMover : MonoBehaviour
     [SerializeField] private bool preserveStartingZ = true;
     [SerializeField, Range(0.1f, 1f)] private float horizontalDirectionThreshold = 0.55f;
     [SerializeField] private RoomPersonWalker2D ambientWalker;
+    [SerializeField] private RoomProjectedEntity roomProjection;
     [SerializeField] private Animator animator;
 
     private Coroutine moveRoutine;
@@ -44,7 +45,11 @@ public class NPCWaypointMover : MonoBehaviour
 
         if (!isActiveAndEnabled)
         {
-            transform.position = GetTargetPosition(target);
+            if (!TryPlaceProjectedAtTarget(target))
+            {
+                transform.position = GetTargetPosition(target);
+            }
+
             return null;
         }
 
@@ -73,6 +78,12 @@ public class NPCWaypointMover : MonoBehaviour
             ambientWalker.enabled = false;
         }
 
+        if (TryGetProjectedTarget(target, out Vector2 projectedTarget))
+        {
+            yield return MoveProjectedToRoutine(projectedTarget);
+            yield break;
+        }
+
         isMoving = true;
         Vector3 targetPosition = GetTargetPosition(target);
 
@@ -89,6 +100,33 @@ public class NPCWaypointMover : MonoBehaviour
         }
 
         transform.position = targetPosition;
+        UpdateAnimator(Vector2.zero, false);
+        isMoving = false;
+        moveRoutine = null;
+    }
+
+    private IEnumerator MoveProjectedToRoutine(Vector2 targetFootPoint)
+    {
+        isMoving = true;
+
+        while (roomProjection != null &&
+            Vector2.Distance(roomProjection.RoomLocalFootPoint, targetFootPoint) > stopDistance)
+        {
+            Vector2 previousPosition = roomProjection.RoomLocalFootPoint;
+            Vector2 nextPosition = Vector2.MoveTowards(
+                previousPosition,
+                targetFootPoint,
+                moveSpeed * Time.deltaTime);
+            roomProjection.SetRoomLocalFootPoint(nextPosition);
+            UpdateAnimator(nextPosition - previousPosition, true);
+            yield return null;
+        }
+
+        if (roomProjection != null)
+        {
+            roomProjection.SetRoomLocalFootPoint(targetFootPoint);
+        }
+
         UpdateAnimator(Vector2.zero, false);
         isMoving = false;
         moveRoutine = null;
@@ -135,12 +173,48 @@ public class NPCWaypointMover : MonoBehaviour
             ambientWalker = GetComponent<RoomPersonWalker2D>();
         }
 
+        if (roomProjection == null)
+        {
+            roomProjection = GetComponentInChildren<RoomProjectedEntity>(true);
+        }
+
         if (animator == null)
         {
             animator = GetComponentInChildren<Animator>(true);
         }
 
         animatorParameters = CharacterAnimatorDriver.ParameterCache.FromAnimator(animator);
+    }
+
+    private bool TryPlaceProjectedAtTarget(Transform target)
+    {
+        ResolveReferences();
+
+        if (roomProjection == null)
+        {
+            return false;
+        }
+
+        roomProjection.UseProfileFromRoomTarget(target);
+        return roomProjection.IsProjectionActive &&
+            roomProjection.CanProjectTarget(target) &&
+            roomProjection.TrySetRoomLocalFootPointFromTarget(target);
+    }
+
+    private bool TryGetProjectedTarget(Transform target, out Vector2 targetFootPoint)
+    {
+        targetFootPoint = Vector2.zero;
+        ResolveReferences();
+
+        if (roomProjection == null)
+        {
+            return false;
+        }
+
+        roomProjection.UseProfileFromRoomTarget(target);
+        return roomProjection.IsProjectionActive &&
+            roomProjection.CanProjectTarget(target) &&
+            roomProjection.TryGetRoomLocalFootPointForTarget(target, out targetFootPoint);
     }
 
     private void UpdateAnimator(Vector2 movement, bool isWalking)

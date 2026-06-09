@@ -2,7 +2,7 @@
 
 People are authored as real scene objects under each room's `People` child. They move with the room stage, so panning and zooming keep them locked to the painted background.
 
-`RoomPersonWalker2D` now only owns room-local movement, depth scale/tint, tiny step/idle offsets, and Animator parameter updates. It does not choose animation frames. Character frames live in regular Unity Animator clips under `Assets/Animation/<CharacterName>`, using the same `Speed`, `IsWalkingUp`, `IsWalkingDown`, `IsWalkingLeft`, and `IsWalkingRight` parameter protocol as the controllable player.
+`RoomPersonWalker2D` now only owns legacy room-local path movement, per-object depth scale/tint when no projection is present, tiny step/idle offsets, and Animator parameter updates. If the same object has an active `RoomProjectedEntity`, the walker feeds the projected foot point and lets projection own position, scale, and tint. It does not choose animation frames. Character frames live in regular Unity Animator clips under `Assets/Animation/<CharacterName>`, using the same `Speed`, `IsWalkingUp`, `IsWalkingDown`, `IsWalkingLeft`, and `IsWalkingRight` parameter protocol as the controllable player.
 
 Room people use a UI `Image` plus an `Animator` override controller so they still live inside the painted room stage. The generated clips animate both the Image `m_Sprite` field and SpriteRenderer `m_Sprite` field. This keeps the animation editable in Unity's Animation window while preserving the room-stage panning/zooming workflow.
 
@@ -14,9 +14,23 @@ If a character's original sheet is side-only, add an explicit `directional/align
 
 `ButlerClassic` currently has the most complete player-facing setup: `Assets/Animation/ButlerClassic/ButlerClassic.controller` uses persistent `IsFacingUp`, `IsFacingDown`, `IsFacingLeft`, and `IsFacingRight` Animator parameters to pick one of four looping directional idle clips. Its source idle and walk frames live in `Assets/Art/Characters/butler`.
 
-World-space SpriteRenderer props use `WorldYSortSpriteRenderer` when they need to depth-sort against the controllable butler. It mirrors `PointClickPlayerMovement`'s player sorting rule: Sorting Layer `People`, order `1000 - y * 100`, and Sprite Sort Point `Pivot`. The player sorts from the bottom of the visible SpriteRenderer bounds, and props can sort from the bottom of an editable physical footprint. A copied tutorial prop will not y-sort just because its pivot is bottom-center; it also needs this dynamic sorting order.
+World-space SpriteRenderer props use `WorldYSortSpriteRenderer` when they need to depth-sort against the controllable butler and are not using room projection. It mirrors `PointClickPlayerMovement`'s player sorting rule: Sorting Layer `People`, order `1000 - y * 100`, and Sprite Sort Point `Pivot`. If an active `RoomProjectedEntity` is present, projection owns sorting and `WorldYSortSpriteRenderer` does not write orders. The player sorts from the bottom of the visible SpriteRenderer bounds, and props can sort from the bottom of an editable physical footprint. A copied tutorial prop will not y-sort just because its pivot is bottom-center; it also needs this dynamic sorting order.
 
 Props that need a custom base footprint can also use `YSortSolidObstacle2D` plus a 2D trigger collider around the base area. That footprint drives sorting and optional occlusion safety only; player movement is intentionally controlled by the active `PlayerBoundary` floor collider. Keep the collider tight around the physical base, not the full painted sprite. Keep `Force Behind Player Inside Physical Bounds` off for grouped props like mushrooms so nearby props do not reorder while the player moves between them.
+
+## Room Projection
+
+`RoomPerspectiveProfile` is the source of truth for a painted room's shared perspective. It stores the room id, reference texture size, near/far foot Y values, scale curve, depth tint, sorting curve, optional contact-shadow curves, and future floor bounds. If two people stand at the same room-local foot Y in the same room profile, they should receive the same room scale and sorting depth.
+
+`CharacterVisualProfile` owns source-art normalization. Put deliberate differences like a taller guest, sitting height, foot pivot, and local body/coat/shadow sorting offsets there. Do not tune guest height by randomly scaling each guest root in the scene.
+
+`RoomProjectedEntity` owns the projection. Chapter controllers and waypoint movers should move its room-local foot point; the component applies position, visual-root scale, depth tint, SpriteRenderer sorting, and optional contact shadow. Keep animation clips focused on sprite changes and pose. Keep coat replacement focused on sprites. Neither should fight the logical root scale.
+
+`ActorRoomState` still owns story identity, current room, visibility, interactability, chapter availability, and seated state. When a projected entity is active for the actor's current room, `ActorRoomState` leaves room-stage projection scale/motion to `RoomProjectedEntity`.
+
+Chapter controllers should place guests by authored room anchors such as `DrawingRoomGuestPoint_01`, then let `RoomProjectedEntity` convert that anchor into a room-local foot point. Existing transform and `ActorRoomState.PlaceAt` paths remain as compatibility fallbacks for guests that have not migrated yet.
+
+To calibrate the Drawing Room, open `Tools > Room Projection > Calibration Window`, create the Drawing Room perspective profile, then assign it to the Drawing Room `RoomContentGroup` and to any `RoomProjectedEntity` that is not under the room stage. Adjust near/far Y until a standard adult preview matches the painting at the front and back of the floor, then tune the scale/tint/sorting curves. Add `RoomProjectedEntity` to guests, set their `Visual Root` to the animated sprite child, assign a suitable `CharacterVisualProfile`, and move only the room-local foot point or the existing `DrawingRoomGuestPoint_##` anchors.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 

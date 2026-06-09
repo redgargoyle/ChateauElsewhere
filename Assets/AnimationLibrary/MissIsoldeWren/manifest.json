@@ -1,0 +1,1286 @@
+{
+  "character": "MissIsoldeWren",
+  "display_name": "Miss Isolde Wren",
+  "role": "guest",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "source_sheet": "SourceSheets/MissIsoldeWren_source_sheet.png",
+  "style_brief": "Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.",
+  "reference_sequences": {
+    "idle_down": [
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_down_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_down/01_miss_isolde_wren_idle_down_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_down/01_miss_isolde_wren_idle_down_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            44,
+            95,
+            122,
+            293
+          ],
+          "visible_pixels": 11441,
+          "semi_alpha_pixels": 1021,
+          "bottom_margin": 4,
+          "sha1": "1422305171b99b5637fdf8210c5e999d3db3970a"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_down_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_down/02_miss_isolde_wren_idle_down_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_down/02_miss_isolde_wren_idle_down_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            42,
+            93,
+            123,
+            293
+          ],
+          "visible_pixels": 11470,
+          "semi_alpha_pixels": 1085,
+          "bottom_margin": 4,
+          "sha1": "11d41258a0a04d525255159716e08b6157d8e1b4"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_down_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_down/03_miss_isolde_wren_idle_down_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_down/03_miss_isolde_wren_idle_down_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            43,
+            95,
+            124,
+            293
+          ],
+          "visible_pixels": 11619,
+          "semi_alpha_pixels": 1065,
+          "bottom_margin": 4,
+          "sha1": "9749d46f271e303f94de8280516dc67dd2946529"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_down_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_down/04_miss_isolde_wren_idle_down_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_down/04_miss_isolde_wren_idle_down_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            43,
+            93,
+            124,
+            293
+          ],
+          "visible_pixels": 11572,
+          "semi_alpha_pixels": 1086,
+          "bottom_margin": 4,
+          "sha1": "2502a1e0da94db2c099dcc9e204ed4fea3c4b3bf"
+        }
+      }
+    ],
+    "idle_left": [
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_left_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_left/01_miss_isolde_wren_idle_left_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_left/01_miss_isolde_wren_idle_left_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            45,
+            102,
+            126,
+            293
+          ],
+          "visible_pixels": 9220,
+          "semi_alpha_pixels": 1074,
+          "bottom_margin": 4,
+          "sha1": "138739a140d2d419af63d8d21c02596573f12272"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_left_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_left/02_miss_isolde_wren_idle_left_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_left/02_miss_isolde_wren_idle_left_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            45,
+            104,
+            123,
+            293
+          ],
+          "visible_pixels": 8997,
+          "semi_alpha_pixels": 1015,
+          "bottom_margin": 4,
+          "sha1": "b63a7860449c3e2412f325f87800cb694ef59907"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_left_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_left/03_miss_isolde_wren_idle_left_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_left/03_miss_isolde_wren_idle_left_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            46,
+            104,
+            127,
+            293
+          ],
+          "visible_pixels": 9180,
+          "semi_alpha_pixels": 1092,
+          "bottom_margin": 4,
+          "sha1": "82b6843119897a66e74c8dcb5740ce03210af496"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_left_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_left/04_miss_isolde_wren_idle_left_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_left/04_miss_isolde_wren_idle_left_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            46,
+            102,
+            126,
+            293
+          ],
+          "visible_pixels": 9199,
+          "semi_alpha_pixels": 1152,
+          "bottom_margin": 4,
+          "sha1": "5758c83e0e18e68bed106b6ae9b629aae8505d85"
+        }
+      }
+    ],
+    "idle_right": [
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_right_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_right/01_miss_isolde_wren_idle_right_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_right/01_miss_isolde_wren_idle_right_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            41,
+            102,
+            122,
+            293
+          ],
+          "visible_pixels": 9220,
+          "semi_alpha_pixels": 1074,
+          "bottom_margin": 4,
+          "sha1": "215916176e8f2074c4a44d3442c0c90392389cca"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_right_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_right/02_miss_isolde_wren_idle_right_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_right/02_miss_isolde_wren_idle_right_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            44,
+            104,
+            122,
+            293
+          ],
+          "visible_pixels": 8997,
+          "semi_alpha_pixels": 1015,
+          "bottom_margin": 4,
+          "sha1": "65aeb41ec81f1f2fe45bbd29b9513acd2d0db049"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_right_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_right/03_miss_isolde_wren_idle_right_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_right/03_miss_isolde_wren_idle_right_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            40,
+            104,
+            121,
+            293
+          ],
+          "visible_pixels": 9180,
+          "semi_alpha_pixels": 1092,
+          "bottom_margin": 4,
+          "sha1": "d0cca0af983161ca0e4f4c757d7c8d7ef9ea11c3"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_right_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_right/04_miss_isolde_wren_idle_right_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_right/04_miss_isolde_wren_idle_right_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            41,
+            102,
+            121,
+            293
+          ],
+          "visible_pixels": 9199,
+          "semi_alpha_pixels": 1152,
+          "bottom_margin": 4,
+          "sha1": "ccceb6d0bc66d80b45e04fc3ef80bff2d910f0dd"
+        }
+      }
+    ],
+    "idle_up": [
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_up_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_up/01_miss_isolde_wren_idle_up_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_up/01_miss_isolde_wren_idle_up_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            35,
+            132,
+            293
+          ],
+          "visible_pixels": 17662,
+          "semi_alpha_pixels": 1308,
+          "bottom_margin": 4,
+          "sha1": "2d56e84416bc220b3ef1c1dff8c4a002881d88e3"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_up_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_up/02_miss_isolde_wren_idle_up_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_up/02_miss_isolde_wren_idle_up_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            35,
+            133,
+            293
+          ],
+          "visible_pixels": 17607,
+          "semi_alpha_pixels": 1337,
+          "bottom_margin": 4,
+          "sha1": "1628a365c2527e848e240fcd399095a6f59e1af5"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_up_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_up/03_miss_isolde_wren_idle_up_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_up/03_miss_isolde_wren_idle_up_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            35,
+            132,
+            293
+          ],
+          "visible_pixels": 17466,
+          "semi_alpha_pixels": 1348,
+          "bottom_margin": 4,
+          "sha1": "a020646b3ea312dae4de70bd0379b4ab78430715"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/idle/aligned/miss_isolde_wren_idle_up_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_up/04_miss_isolde_wren_idle_up_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/idle_up/04_miss_isolde_wren_idle_up_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            37,
+            133,
+            293
+          ],
+          "visible_pixels": 17491,
+          "semi_alpha_pixels": 1325,
+          "bottom_margin": 4,
+          "sha1": "808b886c9286df2bc78cb07aa29e5a5758ffb01f"
+        }
+      }
+    ],
+    "walk_down": [
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_01_r01_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/01_miss_isolde_wren_walk_01_r01_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/01_miss_isolde_wren_walk_01_r01_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            5,
+            136,
+            293
+          ],
+          "visible_pixels": 20856,
+          "semi_alpha_pixels": 1505,
+          "bottom_margin": 4,
+          "sha1": "88fff55d5372d8c251b19ab49d83aa9e25f166ac"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_02_r01_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/02_miss_isolde_wren_walk_02_r01_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/02_miss_isolde_wren_walk_02_r01_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            5,
+            135,
+            293
+          ],
+          "visible_pixels": 20302,
+          "semi_alpha_pixels": 1431,
+          "bottom_margin": 4,
+          "sha1": "b061041774a840b921e05067d0bba73e4e2f2ce0"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_03_r01_c03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/03_miss_isolde_wren_walk_03_r01_c03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/03_miss_isolde_wren_walk_03_r01_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            5,
+            138,
+            293
+          ],
+          "visible_pixels": 20462,
+          "semi_alpha_pixels": 1448,
+          "bottom_margin": 4,
+          "sha1": "4ef371b9806f43e6f857eb64b238ebce668d1352"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_04_r01_c04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/04_miss_isolde_wren_walk_04_r01_c04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/04_miss_isolde_wren_walk_04_r01_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            8,
+            135,
+            293
+          ],
+          "visible_pixels": 19985,
+          "semi_alpha_pixels": 1449,
+          "bottom_margin": 4,
+          "sha1": "ce23feb3ab2808c17ac1ac250b667b3ccde42970"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_05_r01_c05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/05_miss_isolde_wren_walk_05_r01_c05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/05_miss_isolde_wren_walk_05_r01_c05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            8,
+            138,
+            293
+          ],
+          "visible_pixels": 19975,
+          "semi_alpha_pixels": 1446,
+          "bottom_margin": 4,
+          "sha1": "e27b656f01e398bc75dfbc4abacf8feab403fe14"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_06_r01_c06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/06_miss_isolde_wren_walk_06_r01_c06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/06_miss_isolde_wren_walk_06_r01_c06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            8,
+            136,
+            293
+          ],
+          "visible_pixels": 19688,
+          "semi_alpha_pixels": 1397,
+          "bottom_margin": 4,
+          "sha1": "ed66af9f173f7aff051943714854a71b1d0a18cd"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_07_r01_c07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/07_miss_isolde_wren_walk_07_r01_c07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/07_miss_isolde_wren_walk_07_r01_c07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            8,
+            134,
+            293
+          ],
+          "visible_pixels": 19379,
+          "semi_alpha_pixels": 1419,
+          "bottom_margin": 4,
+          "sha1": "1d579a64a8ad48ebb19b6e55d28793514ba015b6"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_08_r01_c08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/08_miss_isolde_wren_walk_08_r01_c08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_down/08_miss_isolde_wren_walk_08_r01_c08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            8,
+            136,
+            293
+          ],
+          "visible_pixels": 19855,
+          "semi_alpha_pixels": 1387,
+          "bottom_margin": 4,
+          "sha1": "18b40bab802d0bb102c662201d5e15d9349a72ba"
+        }
+      }
+    ],
+    "walk_left": [
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_01_r02_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/01_miss_isolde_wren_walk_01_r02_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/01_miss_isolde_wren_walk_01_r02_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            52,
+            154,
+            293
+          ],
+          "visible_pixels": 15954,
+          "semi_alpha_pixels": 1396,
+          "bottom_margin": 4,
+          "sha1": "7a78d5f5d7a6670458a8138a9c6cc21d2f053f39"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_02_r02_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/02_miss_isolde_wren_walk_02_r02_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/02_miss_isolde_wren_walk_02_r02_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            53,
+            152,
+            293
+          ],
+          "visible_pixels": 15547,
+          "semi_alpha_pixels": 1421,
+          "bottom_margin": 4,
+          "sha1": "9dbec21ccc8e114af2c0956f73a9dfaf4435e825"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_03_r02_c03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/03_miss_isolde_wren_walk_03_r02_c03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/03_miss_isolde_wren_walk_03_r02_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            50,
+            144,
+            293
+          ],
+          "visible_pixels": 15117,
+          "semi_alpha_pixels": 1454,
+          "bottom_margin": 4,
+          "sha1": "83ef0fa649e940bdbc0ba634cf026be1d0fa2626"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_04_r02_c04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/04_miss_isolde_wren_walk_04_r02_c04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/04_miss_isolde_wren_walk_04_r02_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            49,
+            142,
+            293
+          ],
+          "visible_pixels": 14301,
+          "semi_alpha_pixels": 1459,
+          "bottom_margin": 4,
+          "sha1": "663e7b4fed23e5d09a2db5aadf39cb9d9753a30a"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_05_r02_c05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/05_miss_isolde_wren_walk_05_r02_c05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/05_miss_isolde_wren_walk_05_r02_c05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            54,
+            142,
+            293
+          ],
+          "visible_pixels": 14147,
+          "semi_alpha_pixels": 1360,
+          "bottom_margin": 4,
+          "sha1": "1a9d4941beb94ccde2f13dc538628caade966399"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_06_r02_c06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/06_miss_isolde_wren_walk_06_r02_c06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/06_miss_isolde_wren_walk_06_r02_c06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            54,
+            145,
+            293
+          ],
+          "visible_pixels": 14623,
+          "semi_alpha_pixels": 1465,
+          "bottom_margin": 4,
+          "sha1": "50f063f0abe2bca1635252d75ad4b2b1968e6baa"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_07_r02_c07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/07_miss_isolde_wren_walk_07_r02_c07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/07_miss_isolde_wren_walk_07_r02_c07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            52,
+            146,
+            293
+          ],
+          "visible_pixels": 14600,
+          "semi_alpha_pixels": 1354,
+          "bottom_margin": 4,
+          "sha1": "15f6edbba50aa6cb54ef5b3a26caa2c1889be8e2"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_08_r02_c08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/08_miss_isolde_wren_walk_08_r02_c08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_left/08_miss_isolde_wren_walk_08_r02_c08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            52,
+            154,
+            293
+          ],
+          "visible_pixels": 15459,
+          "semi_alpha_pixels": 1378,
+          "bottom_margin": 4,
+          "sha1": "d5d45fb23dd81eddfedd84cba0c38a55e76d97b6"
+        }
+      }
+    ],
+    "walk_right": [
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_01_r03_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/01_miss_isolde_wren_walk_01_r03_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/01_miss_isolde_wren_walk_01_r03_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            43,
+            147,
+            293
+          ],
+          "visible_pixels": 17386,
+          "semi_alpha_pixels": 1606,
+          "bottom_margin": 4,
+          "sha1": "3fb86cb735a96483396af8369bea7db09294fa57"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_02_r03_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/02_miss_isolde_wren_walk_02_r03_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/02_miss_isolde_wren_walk_02_r03_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            44,
+            151,
+            293
+          ],
+          "visible_pixels": 16961,
+          "semi_alpha_pixels": 1658,
+          "bottom_margin": 4,
+          "sha1": "bad40c3e3ff24e7c8727cae8e14089dff95bfd62"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_03_r03_c03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/03_miss_isolde_wren_walk_03_r03_c03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/03_miss_isolde_wren_walk_03_r03_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            44,
+            152,
+            293
+          ],
+          "visible_pixels": 17296,
+          "semi_alpha_pixels": 1605,
+          "bottom_margin": 4,
+          "sha1": "b3007631bbde724177b30340a1f3ae878aa1ad3f"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_04_r03_c04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/04_miss_isolde_wren_walk_04_r03_c04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/04_miss_isolde_wren_walk_04_r03_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            44,
+            150,
+            293
+          ],
+          "visible_pixels": 16740,
+          "semi_alpha_pixels": 1611,
+          "bottom_margin": 4,
+          "sha1": "6c15a396327ee8e40f61ea7987eb3827fd89a088"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_05_r03_c05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/05_miss_isolde_wren_walk_05_r03_c05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/05_miss_isolde_wren_walk_05_r03_c05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            43,
+            149,
+            293
+          ],
+          "visible_pixels": 17369,
+          "semi_alpha_pixels": 1646,
+          "bottom_margin": 4,
+          "sha1": "c5615b7e3344d1e82700e7b0d4e3629547f2f361"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_06_r03_c06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/06_miss_isolde_wren_walk_06_r03_c06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/06_miss_isolde_wren_walk_06_r03_c06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            45,
+            143,
+            293
+          ],
+          "visible_pixels": 16936,
+          "semi_alpha_pixels": 1573,
+          "bottom_margin": 4,
+          "sha1": "7a42a80c42b3fbac26e128742c77306a1127d15f"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_07_r03_c07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/07_miss_isolde_wren_walk_07_r03_c07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/07_miss_isolde_wren_walk_07_r03_c07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            44,
+            144,
+            293
+          ],
+          "visible_pixels": 16767,
+          "semi_alpha_pixels": 1530,
+          "bottom_margin": 4,
+          "sha1": "5f51036386a6286356afb55d94e6c978d705d34c"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_08_r03_c08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/08_miss_isolde_wren_walk_08_r03_c08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_right/08_miss_isolde_wren_walk_08_r03_c08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            44,
+            148,
+            293
+          ],
+          "visible_pixels": 16953,
+          "semi_alpha_pixels": 1658,
+          "bottom_margin": 4,
+          "sha1": "022ab922f2d2833ca8da8610c58c7d6d2bacc171"
+        }
+      }
+    ],
+    "walk_up": [
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_01_r04_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/01_miss_isolde_wren_walk_01_r04_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/01_miss_isolde_wren_walk_01_r04_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            42,
+            135,
+            293
+          ],
+          "visible_pixels": 17916,
+          "semi_alpha_pixels": 1337,
+          "bottom_margin": 4,
+          "sha1": "b83872fdb9cef5c9e37f4c46ccb9aa5bcdf362c8"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_02_r04_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/02_miss_isolde_wren_walk_02_r04_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/02_miss_isolde_wren_walk_02_r04_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            40,
+            133,
+            293
+          ],
+          "visible_pixels": 17649,
+          "semi_alpha_pixels": 1313,
+          "bottom_margin": 4,
+          "sha1": "58b5fdae37b3d634862e85bb50d5b306ac132a68"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_03_r04_c03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/03_miss_isolde_wren_walk_03_r04_c03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/03_miss_isolde_wren_walk_03_r04_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            42,
+            134,
+            293
+          ],
+          "visible_pixels": 17617,
+          "semi_alpha_pixels": 1339,
+          "bottom_margin": 4,
+          "sha1": "db10ad6e4f6632ab1abe1ba2abe8101a6a2a47af"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_04_r04_c04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/04_miss_isolde_wren_walk_04_r04_c04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/04_miss_isolde_wren_walk_04_r04_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            40,
+            132,
+            293
+          ],
+          "visible_pixels": 17460,
+          "semi_alpha_pixels": 1341,
+          "bottom_margin": 4,
+          "sha1": "98bb1b344c1e41472c9c1ab40218c913a0e0f8e3"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_05_r04_c05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/05_miss_isolde_wren_walk_05_r04_c05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/05_miss_isolde_wren_walk_05_r04_c05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            39,
+            134,
+            293
+          ],
+          "visible_pixels": 17834,
+          "semi_alpha_pixels": 1368,
+          "bottom_margin": 4,
+          "sha1": "73594e937f9c84b1f0d31c75dbf1c7999a765b27"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_06_r04_c06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/06_miss_isolde_wren_walk_06_r04_c06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/06_miss_isolde_wren_walk_06_r04_c06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            40,
+            134,
+            293
+          ],
+          "visible_pixels": 17662,
+          "semi_alpha_pixels": 1389,
+          "bottom_margin": 4,
+          "sha1": "3f16fd6743b575a23ed874d04aeab4f2a6dfc67c"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_07_r04_c07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/07_miss_isolde_wren_walk_07_r04_c07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/07_miss_isolde_wren_walk_07_r04_c07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            42,
+            132,
+            293
+          ],
+          "visible_pixels": 17832,
+          "semi_alpha_pixels": 1278,
+          "bottom_margin": 4,
+          "sha1": "743220409a2126d9169967f600d16c390c8d4216"
+        }
+      },
+      {
+        "source": "Assets/Characters/MissIsoldeWren/walk/aligned/miss_isolde_wren_walk_08_r04_c08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/08_miss_isolde_wren_walk_08_r04_c08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/MissIsoldeWren/reference/full_body/walk_up/08_miss_isolde_wren_walk_08_r04_c08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            42,
+            135,
+            293
+          ],
+          "visible_pixels": 17487,
+          "semi_alpha_pixels": 1298,
+          "bottom_margin": 4,
+          "sha1": "f9a387e0bc2dbbc7947a7926c05b2079ed70984c"
+        }
+      }
+    ]
+  },
+  "excluded_sources": [],
+  "contact_sheet": "Assets/AnimationLibrary/MissIsoldeWren/qa/reference_contact_sheet.png",
+  "generation_requests": "Assets/AnimationLibrary/MissIsoldeWren/requests/generation_prompts.jsonl",
+  "warnings": []
+}

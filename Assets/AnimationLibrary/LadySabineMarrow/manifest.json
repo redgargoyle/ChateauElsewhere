@@ -1,0 +1,2204 @@
+{
+  "character": "LadySabineMarrow",
+  "display_name": "Lady Sabine Marrow",
+  "role": "guest",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "source_sheet": "SourceSheets/LadySabineMarrow_source_sheet.png",
+  "style_brief": "Lady Sabine Marrow: petite Victorian lady, dark curled hair with teal accents, pale blue gown, teal bodice, cream sleeves, delicate skirt volume. Use the current project reference art in reference/source_sheet.png as the strict visual target.",
+  "reference_sequences": {
+    "idle_down": [
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_down_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_down/01_lady_sabine_marrow_idle_down_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_down/01_lady_sabine_marrow_idle_down_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            8,
+            129,
+            293
+          ],
+          "visible_pixels": 18479,
+          "semi_alpha_pixels": 1422,
+          "bottom_margin": 4,
+          "sha1": "1953ba83845fbddffa002d9d3da77661280490a3"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_down_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_down/02_lady_sabine_marrow_idle_down_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_down/02_lady_sabine_marrow_idle_down_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            7,
+            129,
+            293
+          ],
+          "visible_pixels": 18798,
+          "semi_alpha_pixels": 1240,
+          "bottom_margin": 4,
+          "sha1": "f0ba6c416d92bdee05d641ecd9a15385b5cb83aa"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_down_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_down/03_lady_sabine_marrow_idle_down_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_down/03_lady_sabine_marrow_idle_down_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            6,
+            129,
+            293
+          ],
+          "visible_pixels": 18936,
+          "semi_alpha_pixels": 1251,
+          "bottom_margin": 4,
+          "sha1": "e887bc4f497a4a0e42439499d817b275abd601b2"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_down_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_down/04_lady_sabine_marrow_idle_down_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_down/04_lady_sabine_marrow_idle_down_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            7,
+            129,
+            293
+          ],
+          "visible_pixels": 18798,
+          "semi_alpha_pixels": 1240,
+          "bottom_margin": 4,
+          "sha1": "f0ba6c416d92bdee05d641ecd9a15385b5cb83aa"
+        }
+      }
+    ],
+    "idle_left": [
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_left_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_left/01_lady_sabine_marrow_idle_left_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_left/01_lady_sabine_marrow_idle_left_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            50,
+            107,
+            123,
+            293
+          ],
+          "visible_pixels": 7927,
+          "semi_alpha_pixels": 886,
+          "bottom_margin": 4,
+          "sha1": "4fbac29fff4c98613fd807a1ec6aeca68a7e4aa8"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_left_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_left/02_lady_sabine_marrow_idle_left_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_left/02_lady_sabine_marrow_idle_left_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            51,
+            109,
+            118,
+            293
+          ],
+          "visible_pixels": 7531,
+          "semi_alpha_pixels": 868,
+          "bottom_margin": 4,
+          "sha1": "9e9cecaadc246e958baffa0018c47a410cfc0ae8"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_left_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_left/03_lady_sabine_marrow_idle_left_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_left/03_lady_sabine_marrow_idle_left_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            51,
+            109,
+            120,
+            293
+          ],
+          "visible_pixels": 7592,
+          "semi_alpha_pixels": 880,
+          "bottom_margin": 4,
+          "sha1": "62b7a3b262ebd1449dbbf429d6e2b0ea4ccdfe24"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_left_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_left/04_lady_sabine_marrow_idle_left_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_left/04_lady_sabine_marrow_idle_left_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            49,
+            109,
+            122,
+            293
+          ],
+          "visible_pixels": 7766,
+          "semi_alpha_pixels": 871,
+          "bottom_margin": 4,
+          "sha1": "4e35b8295246db8cac53d5bf1f822a9a8e5fe700"
+        }
+      }
+    ],
+    "idle_right": [
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_right_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_right/01_lady_sabine_marrow_idle_right_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_right/01_lady_sabine_marrow_idle_right_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            44,
+            107,
+            117,
+            293
+          ],
+          "visible_pixels": 7927,
+          "semi_alpha_pixels": 886,
+          "bottom_margin": 4,
+          "sha1": "8a0b300a884f1ee8488b92da2c8851bfe975e042"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_right_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_right/02_lady_sabine_marrow_idle_right_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_right/02_lady_sabine_marrow_idle_right_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            49,
+            109,
+            116,
+            293
+          ],
+          "visible_pixels": 7531,
+          "semi_alpha_pixels": 868,
+          "bottom_margin": 4,
+          "sha1": "0db7324674e3d5ffc153efda33749da0a0ad297b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_right_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_right/03_lady_sabine_marrow_idle_right_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_right/03_lady_sabine_marrow_idle_right_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            47,
+            109,
+            116,
+            293
+          ],
+          "visible_pixels": 7592,
+          "semi_alpha_pixels": 880,
+          "bottom_margin": 4,
+          "sha1": "29da530e0738486d4bf47bba351fdc8a67b937ba"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_right_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_right/04_lady_sabine_marrow_idle_right_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_right/04_lady_sabine_marrow_idle_right_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            45,
+            109,
+            118,
+            293
+          ],
+          "visible_pixels": 7766,
+          "semi_alpha_pixels": 871,
+          "bottom_margin": 4,
+          "sha1": "7c5e38df25085e7194066324aa2ce945d15dde1b"
+        }
+      }
+    ],
+    "idle_up": [
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_up_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_up/01_lady_sabine_marrow_idle_up_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_up/01_lady_sabine_marrow_idle_up_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            23,
+            132,
+            293
+          ],
+          "visible_pixels": 17181,
+          "semi_alpha_pixels": 1247,
+          "bottom_margin": 4,
+          "sha1": "9906d3482e3b6ef11f5df8abbfea29d7b39510ea"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_up_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_up/02_lady_sabine_marrow_idle_up_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_up/02_lady_sabine_marrow_idle_up_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            22,
+            131,
+            292
+          ],
+          "visible_pixels": 16904,
+          "semi_alpha_pixels": 1281,
+          "bottom_margin": 5,
+          "sha1": "09c2317ab436849fe0926938d0206b36474752ef"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_up_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_up/03_lady_sabine_marrow_idle_up_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_up/03_lady_sabine_marrow_idle_up_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            22,
+            132,
+            293
+          ],
+          "visible_pixels": 16954,
+          "semi_alpha_pixels": 1269,
+          "bottom_margin": 4,
+          "sha1": "f36b4843649d2bcf4b4d3fc7c4e7da3d888781e2"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_up_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_up/04_lady_sabine_marrow_idle_up_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/idle_up/04_lady_sabine_marrow_idle_up_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            23,
+            131,
+            293
+          ],
+          "visible_pixels": 16868,
+          "semi_alpha_pixels": 1221,
+          "bottom_margin": 4,
+          "sha1": "799dd4f83c97ab7b6d1dd16f25df0c46cacc4e7a"
+        }
+      }
+    ],
+    "sitting": [
+      {
+        "source": "Assets/Art/Characters/guest6/guest6sitidle/guest06sitidle1.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/sitting/01_guest06sitidle1.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/sitting/01_guest06sitidle1.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            47,
+            131,
+            292
+          ],
+          "visible_pixels": 15103,
+          "semi_alpha_pixels": 903,
+          "bottom_margin": 5,
+          "sha1": "f9dd55359b1d99c92a9f2869d5e5fc9fce194f67"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6sitidle/guest06sitidle2.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/sitting/02_guest06sitidle2.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/sitting/02_guest06sitidle2.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            47,
+            132,
+            292
+          ],
+          "visible_pixels": 15230,
+          "semi_alpha_pixels": 861,
+          "bottom_margin": 5,
+          "sha1": "e32e851e86e9e7fa0788def082574a58b81eb059"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6sitidle/guest06sitidle3.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/sitting/03_guest06sitidle3.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/sitting/03_guest06sitidle3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            47,
+            132,
+            292
+          ],
+          "visible_pixels": 15377,
+          "semi_alpha_pixels": 901,
+          "bottom_margin": 5,
+          "sha1": "480f24573208d06e81e232c21e21a1d469c3b9b7"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6sitidle/guest06sitidle4.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/sitting/04_guest06sitidle4.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/sitting/04_guest06sitidle4.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            47,
+            131,
+            292
+          ],
+          "visible_pixels": 15120,
+          "semi_alpha_pixels": 907,
+          "bottom_margin": 5,
+          "sha1": "0db3e1d401a94a183aa5c4422a2ef3c0c919760c"
+        }
+      }
+    ],
+    "walk_down": [
+      {
+        "source": "Assets/Art/Characters/guest6/guest6down/guest05down6.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/01_guest05down6.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/01_guest05down6.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            11,
+            144,
+            292
+          ],
+          "visible_pixels": 16992,
+          "semi_alpha_pixels": 1036,
+          "bottom_margin": 5,
+          "sha1": "1ec174fd2254615f7d066cb5a786dca11ae8c5cf"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6down/guest06down1.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/02_guest06down1.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/02_guest06down1.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            8,
+            129,
+            293
+          ],
+          "visible_pixels": 17322,
+          "semi_alpha_pixels": 934,
+          "bottom_margin": 4,
+          "sha1": "eab0d12effe26ea572c6496c2fe96501ba16ad07"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6down/guest06down2.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/03_guest06down2.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/03_guest06down2.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            6,
+            132,
+            293
+          ],
+          "visible_pixels": 16450,
+          "semi_alpha_pixels": 983,
+          "bottom_margin": 4,
+          "sha1": "07d6ef155bc18fb174f8ac542d26989a3a98cfad"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6down/guest06down3.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/04_guest06down3.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/04_guest06down3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            10,
+            135,
+            292
+          ],
+          "visible_pixels": 16997,
+          "semi_alpha_pixels": 915,
+          "bottom_margin": 5,
+          "sha1": "db6ddec0e9f81451440db3e1ec91a6db69d17e70"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6down/guest06down4.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/05_guest06down4.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/05_guest06down4.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            8,
+            136,
+            293
+          ],
+          "visible_pixels": 17637,
+          "semi_alpha_pixels": 857,
+          "bottom_margin": 4,
+          "sha1": "06ebb4ed48dfdcef07bf44c7d7ecb56d7fc35c35"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6down/guest06down5.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/06_guest06down5.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/06_guest06down5.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            38,
+            11,
+            146,
+            293
+          ],
+          "visible_pixels": 17145,
+          "semi_alpha_pixels": 861,
+          "bottom_margin": 4,
+          "sha1": "95557072291e34443f0dcccf8334550cd23ddb61"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6down/guest06down7.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/07_guest06down7.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/07_guest06down7.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            12,
+            144,
+            293
+          ],
+          "visible_pixels": 16609,
+          "semi_alpha_pixels": 913,
+          "bottom_margin": 4,
+          "sha1": "908c82ee2d1d237666184f91ed3598e9af4c6da9"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6down/guest06down8.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/08_guest06down8.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_down/08_guest06down8.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            41,
+            10,
+            132,
+            292
+          ],
+          "visible_pixels": 16519,
+          "semi_alpha_pixels": 802,
+          "bottom_margin": 5,
+          "sha1": "223d2c82f9c372275ae2d37e8b7d3cdf37bfd067"
+        }
+      }
+    ],
+    "walk_left": [
+      {
+        "source": "Assets/Art/Characters/guest6/guest6left/01_lady_sabine_marrow_walk_01_r02_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/01_01_lady_sabine_marrow_walk_01_r02_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/01_01_lady_sabine_marrow_walk_01_r02_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            26,
+            39,
+            149,
+            292
+          ],
+          "visible_pixels": 14855,
+          "semi_alpha_pixels": 753,
+          "bottom_margin": 5,
+          "sha1": "b3421950179f96d06b9024f000e59989a508ec46"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6left/02_lady_sabine_marrow_walk_02_r02_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/02_02_lady_sabine_marrow_walk_02_r02_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/02_02_lady_sabine_marrow_walk_02_r02_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            40,
+            152,
+            293
+          ],
+          "visible_pixels": 14898,
+          "semi_alpha_pixels": 745,
+          "bottom_margin": 4,
+          "sha1": "2ec33ff5650ee304f3caa6103ae2a23fc7fedd05"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6left/03_lady_sabine_marrow_walk_03_r02_c03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/03_03_lady_sabine_marrow_walk_03_r02_c03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/03_03_lady_sabine_marrow_walk_03_r02_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            39,
+            155,
+            292
+          ],
+          "visible_pixels": 15844,
+          "semi_alpha_pixels": 804,
+          "bottom_margin": 5,
+          "sha1": "fac54d61bcc10cefb293fc0c0ab1f3778e7a4442"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6left/05_lady_sabine_marrow_walk_05_r02_c05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/04_05_lady_sabine_marrow_walk_05_r02_c05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/04_05_lady_sabine_marrow_walk_05_r02_c05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            41,
+            153,
+            292
+          ],
+          "visible_pixels": 15125,
+          "semi_alpha_pixels": 743,
+          "bottom_margin": 5,
+          "sha1": "d800fa0bd1b330bcd626a79b5bd0d70e5af14eb4"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6left/06_lady_sabine_marrow_walk_06_r02_c06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/05_06_lady_sabine_marrow_walk_06_r02_c06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/05_06_lady_sabine_marrow_walk_06_r02_c06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            41,
+            155,
+            293
+          ],
+          "visible_pixels": 15444,
+          "semi_alpha_pixels": 793,
+          "bottom_margin": 4,
+          "sha1": "f333611613802e5dcfc0143db6d54c97d7c0f2b9"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6left/07_lady_sabine_marrow_walk_07_r02_c07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/06_07_lady_sabine_marrow_walk_07_r02_c07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/06_07_lady_sabine_marrow_walk_07_r02_c07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            40,
+            156,
+            292
+          ],
+          "visible_pixels": 15695,
+          "semi_alpha_pixels": 733,
+          "bottom_margin": 5,
+          "sha1": "2087743e9bcb4d8ffba245104ea0c86f014822f5"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6left/08_lady_sabine_marrow_walk_08_r02_c08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/07_08_lady_sabine_marrow_walk_08_r02_c08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_left/07_08_lady_sabine_marrow_walk_08_r02_c08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            41,
+            162,
+            293
+          ],
+          "visible_pixels": 16103,
+          "semi_alpha_pixels": 941,
+          "bottom_margin": 4,
+          "sha1": "c328b0e032c9212e15a82d0cbb131759c6a66432"
+        }
+      }
+    ],
+    "walk_right": [
+      {
+        "source": "Assets/Art/Characters/guest6/guest6right/guest06walkright1.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/01_guest06walkright1.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/01_guest06walkright1.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            36,
+            146,
+            292
+          ],
+          "visible_pixels": 15956,
+          "semi_alpha_pixels": 893,
+          "bottom_margin": 5,
+          "sha1": "8f0336fb15a4b5bfdee8b6b1890f39befb83d0bb"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6right/guest06walkright2.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/02_guest06walkright2.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/02_guest06walkright2.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            37,
+            146,
+            293
+          ],
+          "visible_pixels": 15496,
+          "semi_alpha_pixels": 805,
+          "bottom_margin": 4,
+          "sha1": "77597a057f2b5bd058f135a02e7b5f96d8c414ce"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6right/guest06walkright3.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/03_guest06walkright3.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/03_guest06walkright3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            37,
+            148,
+            292
+          ],
+          "visible_pixels": 15634,
+          "semi_alpha_pixels": 824,
+          "bottom_margin": 5,
+          "sha1": "5034c79dcdcc17ff6d1d3fd49454de0c61bd864b"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6right/guest06walkright5.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/04_guest06walkright5.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/04_guest06walkright5.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            38,
+            142,
+            297
+          ],
+          "visible_pixels": 14944,
+          "semi_alpha_pixels": 787,
+          "bottom_margin": 0,
+          "sha1": "0e6b4155fad5003d80bc662e6f92a3088b6f366c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6right/guest06walkright7.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/05_guest06walkright7.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/05_guest06walkright7.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            38,
+            146,
+            293
+          ],
+          "visible_pixels": 15938,
+          "semi_alpha_pixels": 753,
+          "bottom_margin": 4,
+          "sha1": "3874543d2d639f1a7bafa3854ae820dba79da8d1"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6right/guest06walkright6.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/06_guest06walkright6.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/06_guest06walkright6.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            39,
+            148,
+            293
+          ],
+          "visible_pixels": 15616,
+          "semi_alpha_pixels": 813,
+          "bottom_margin": 4,
+          "sha1": "21696dd23e199d3e282b5b98a0112224dcf4db62"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6right/guest06walkright8.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/07_guest06walkright8.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_right/07_guest06walkright8.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            35,
+            147,
+            292
+          ],
+          "visible_pixels": 15713,
+          "semi_alpha_pixels": 895,
+          "bottom_margin": 5,
+          "sha1": "99036594511d9272ad47804d0f94a40b18d0213a"
+        }
+      }
+    ],
+    "walk_up": [
+      {
+        "source": "Assets/Art/Characters/guest6/guest6up/guest6up3.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/01_guest6up3.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/01_guest6up3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            41,
+            127,
+            292
+          ],
+          "visible_pixels": 14403,
+          "semi_alpha_pixels": 801,
+          "bottom_margin": 5,
+          "sha1": "393d925cd95ee34fd28409e07b9ce973d40b2fdf"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6up/guest6up4.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/02_guest6up4.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/02_guest6up4.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            42,
+            128,
+            292
+          ],
+          "visible_pixels": 14561,
+          "semi_alpha_pixels": 705,
+          "bottom_margin": 5,
+          "sha1": "4cfa185e6be754327ff11234e94f1835f87be70c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6up/guest6up5.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/03_guest6up5.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/03_guest6up5.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            42,
+            126,
+            292
+          ],
+          "visible_pixels": 13968,
+          "semi_alpha_pixels": 730,
+          "bottom_margin": 5,
+          "sha1": "ff4c755da47cc4b4e5bd2052b3cd3aba13e5028c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6up/guest6up6.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/04_guest6up6.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/04_guest6up6.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            44,
+            130,
+            292
+          ],
+          "visible_pixels": 14419,
+          "semi_alpha_pixels": 846,
+          "bottom_margin": 5,
+          "sha1": "e72d796739529b80cf422819831d04c3305094d4"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6up/guest6up7.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/05_guest6up7.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/05_guest6up7.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            42,
+            126,
+            292
+          ],
+          "visible_pixels": 14468,
+          "semi_alpha_pixels": 768,
+          "bottom_margin": 5,
+          "sha1": "bdfb9c51a09bf52bcffeb167f795c256e00eab82"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest6/guest6up/guest6up8.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/06_guest6up8.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/reference/full_body/walk_up/06_guest6up8.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            42,
+            127,
+            292
+          ],
+          "visible_pixels": 14250,
+          "semi_alpha_pixels": 834,
+          "bottom_margin": 5,
+          "sha1": "a98545ada7ca532018f1b60915c05502df41b502"
+        }
+      }
+    ]
+  },
+  "excluded_sources": [],
+  "contact_sheet": "Assets/AnimationLibrary/LadySabineMarrow/qa/reference_contact_sheet.png",
+  "generation_requests": "Assets/AnimationLibrary/LadySabineMarrow/requests/generation_prompts.jsonl",
+  "warnings": [],
+  "chapter2_guest_number": 6,
+  "approved_panic_actions": {
+    "panic_reaction_down": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/01_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            18,
+            129,
+            296
+          ],
+          "visible_pixels": 18309,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0f5f9e544c2500fcaba41e42abf1f96afe3e2b4d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/02_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            26,
+            129,
+            295
+          ],
+          "visible_pixels": 18787,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ccaf6000d58d5096757489934f14c39b7b9c53a9"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/03_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            29,
+            131,
+            293
+          ],
+          "visible_pixels": 18714,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c067590ef1fb4999d3874db05f5bd197847057f8"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/04_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            22,
+            129,
+            294
+          ],
+          "visible_pixels": 18895,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d2c37319a27064894c2e1adf0a32d2fd9dc4a5d4"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/05_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            28,
+            133,
+            293
+          ],
+          "visible_pixels": 18411,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "a0aab6cd90f70de6f4c354291e98d3d473e6273c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_reaction_down/frames/06_lady_sabine_marrow_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            20,
+            129,
+            295
+          ],
+          "visible_pixels": 19083,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "129414075f303a1683d78545ad5a94f8d1f3b233"
+        }
+      ]
+    },
+    "panic_shriek_down": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/01_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            5,
+            131,
+            295
+          ],
+          "visible_pixels": 20675,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "07f1b9d5709f7e9fd380566505f957cc5b513363"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/02_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            3,
+            131,
+            294
+          ],
+          "visible_pixels": 20960,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b72d6a2e82a69a6be9d0cd2754b014d668531c07"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/03_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            1,
+            132,
+            293
+          ],
+          "visible_pixels": 21154,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f3d85a42167fe5fcd0f5a49100546d944a5ccc83"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/04_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            3,
+            131,
+            294
+          ],
+          "visible_pixels": 20960,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b72d6a2e82a69a6be9d0cd2754b014d668531c07"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/05_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            5,
+            131,
+            295
+          ],
+          "visible_pixels": 20675,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "07f1b9d5709f7e9fd380566505f957cc5b513363"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/06_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            1,
+            130,
+            296
+          ],
+          "visible_pixels": 20838,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4bc3ba986cf3260de812fbda4a5e41445809f091"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/07_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            1,
+            130,
+            296
+          ],
+          "visible_pixels": 21010,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d911757785d2962469f142f34b4e9c6bb8fd2e40"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_shriek_down/frames/08_lady_sabine_marrow_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            1,
+            130,
+            296
+          ],
+          "visible_pixels": 20838,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "4bc3ba986cf3260de812fbda4a5e41445809f091"
+        }
+      ]
+    },
+    "panic_run_left": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/01_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            40,
+            148,
+            292
+          ],
+          "visible_pixels": 14698,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b3421950179f96d06b9024f000e59989a508ec46"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/02_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            25,
+            40,
+            151,
+            293
+          ],
+          "visible_pixels": 14747,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "2ec33ff5650ee304f3caa6103ae2a23fc7fedd05"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/03_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            41,
+            155,
+            292
+          ],
+          "visible_pixels": 15687,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "fac54d61bcc10cefb293fc0c0ab1f3778e7a4442"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/04_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            41,
+            153,
+            292
+          ],
+          "visible_pixels": 14980,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d800fa0bd1b330bcd626a79b5bd0d70e5af14eb4"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/05_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            41,
+            153,
+            292
+          ],
+          "visible_pixels": 14980,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d800fa0bd1b330bcd626a79b5bd0d70e5af14eb4"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/06_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            22,
+            42,
+            155,
+            293
+          ],
+          "visible_pixels": 15297,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f333611613802e5dcfc0143db6d54c97d7c0f2b9"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/07_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            40,
+            156,
+            292
+          ],
+          "visible_pixels": 15523,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "2087743e9bcb4d8ffba245104ea0c86f014822f5"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_left/frames/08_lady_sabine_marrow_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            19,
+            42,
+            161,
+            293
+          ],
+          "visible_pixels": 15914,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c328b0e032c9212e15a82d0cbb131759c6a66432"
+        }
+      ]
+    },
+    "panic_run_right": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/01_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            12,
+            37,
+            145,
+            292
+          ],
+          "visible_pixels": 15737,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "8f0336fb15a4b5bfdee8b6b1890f39befb83d0bb"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/02_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            38,
+            146,
+            293
+          ],
+          "visible_pixels": 15341,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "77597a057f2b5bd058f135a02e7b5f96d8c414ce"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/03_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            37,
+            148,
+            292
+          ],
+          "visible_pixels": 15462,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5034c79dcdcc17ff6d1d3fd49454de0c61bd864b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/04_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            38,
+            142,
+            296
+          ],
+          "visible_pixels": 14771,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "07bb5355d05935b0985816e16c26cd6555fcd40f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/05_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            38,
+            142,
+            296
+          ],
+          "visible_pixels": 14771,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "07bb5355d05935b0985816e16c26cd6555fcd40f"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/06_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            38,
+            146,
+            293
+          ],
+          "visible_pixels": 15792,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "3874543d2d639f1a7bafa3854ae820dba79da8d1"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/07_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            41,
+            147,
+            293
+          ],
+          "visible_pixels": 15447,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "21696dd23e199d3e282b5b98a0112224dcf4db62"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_run_right/frames/08_lady_sabine_marrow_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            13,
+            36,
+            146,
+            292
+          ],
+          "visible_pixels": 15502,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "99036594511d9272ad47804d0f94a40b18d0213a"
+        }
+      ]
+    },
+    "panic_turnaround": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/01_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            54,
+            144,
+            296
+          ],
+          "visible_pixels": 16607,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "d7a8f5626a802b0c5335ede2783fe482ee7a7ff1"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/02_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            55,
+            147,
+            296
+          ],
+          "visible_pixels": 16719,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "88961cd39200e9f79574b8ac518c4aac6dcdde67"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/03_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            27,
+            130,
+            296
+          ],
+          "visible_pixels": 18547,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "10ed06693e9ee1cfc4a1d3c10e1e8a151dc4a233"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/04_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            26,
+            131,
+            296
+          ],
+          "visible_pixels": 18932,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7153e4e0b34216f165f7a9eacceeccb804a01867"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/05_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            15,
+            53,
+            155,
+            296
+          ],
+          "visible_pixels": 17833,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b5f5a4cec19e8fee61238ad26018b3df1a408c40"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/panic_turnaround/frames/06_lady_sabine_marrow_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            16,
+            51,
+            154,
+            296
+          ],
+          "visible_pixels": 18466,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "37be087c3ad3a7580e72deb545c96a395fee537c"
+        }
+      ]
+    },
+    "cover_face_cower": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/01_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            93,
+            136,
+            296
+          ],
+          "visible_pixels": 14930,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c2109b43589d62ca40e66682b8ec1d129cc3019c"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/02_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            93,
+            137,
+            296
+          ],
+          "visible_pixels": 15322,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "26c262cec27ac01e7a8757b6bb21881939196757"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/03_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            93,
+            137,
+            296
+          ],
+          "visible_pixels": 15411,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5a024a259dc9402c873a2a7be443a823fdfe6452"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/04_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            93,
+            136,
+            296
+          ],
+          "visible_pixels": 14940,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "69db92931c3578a0843b9eb1ec2a0e6b5782680b"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/05_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            93,
+            135,
+            296
+          ],
+          "visible_pixels": 14566,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f197d00e25d9778c0f8c94857da6a8619e346c7d"
+        },
+        {
+          "file": "Assets/AnimationLibrary/LadySabineMarrow/approved/full_body/cover_face_cower/frames/06_lady_sabine_marrow_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            93,
+            135,
+            296
+          ],
+          "visible_pixels": 14690,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "19e13c417c4568e76e8f74688aeacd6dcbeea188"
+        }
+      ]
+    }
+  },
+  "panic_contact_sheet": "Assets/AnimationLibrary/LadySabineMarrow/qa/panic_approved_contact_sheet.png"
+}

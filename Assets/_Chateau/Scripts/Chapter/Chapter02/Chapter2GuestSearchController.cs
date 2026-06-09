@@ -416,6 +416,32 @@ public class Chapter2GuestSearchController : MonoBehaviour
         return foundActors;
     }
 
+    public List<ActorRoomState> GetGuestActorsInIdentityOrder()
+    {
+        AutoDiscoverGuestsIfNeeded();
+
+        List<ActorRoomState> orderedActors = new List<ActorRoomState>();
+
+        if (guests == null)
+        {
+            return orderedActors;
+        }
+
+        guests.Sort(CompareGuestIdentity);
+
+        for (int i = 0; i < guests.Count; i++)
+        {
+            GuestSearchEntry guest = guests[i];
+
+            if (guest != null && guest.actorState != null)
+            {
+                orderedActors.Add(guest.actorState);
+            }
+        }
+
+        return orderedActors;
+    }
+
     public void SeatFoundGuestsInDiningRoom()
     {
         SeatGuestsInDiningRoom(GetFoundGuestsInOrder());
@@ -1265,8 +1291,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
         string actorId = actorState.ActorId;
         string objectName = actorState.gameObject != null ? actorState.gameObject.name : string.Empty;
 
-        if (ContainsAny(actorId, "Player", "Butler", "Monster") ||
-            ContainsAny(objectName, "Player", "Butler", "Monster"))
+        if (ContainsAny(actorId, "Player", "Monster") ||
+            ContainsAny(objectName, "Player", "Monster"))
         {
             return false;
         }
