@@ -1976,7 +1976,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.SetCurrentRoom(drawingRoomId);
             guest.ActorState.SetAvailableInCurrentChapter(true);
             guest.ActorState.SetInteractable(false);
-            guest.ActorState.SetSeated(true);
+            ApplyDrawingRoomWaitingPose(guest);
             guest.ActorState.SetVisibleByChapterState(true);
             guest.ActorState.ApplyState();
         }
@@ -2138,7 +2138,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.SetCurrentRoom(drawingRoomId);
             guest.ActorState.SetAvailableInCurrentChapter(true);
             guest.ActorState.SetInteractable(false);
-            guest.ActorState.SetSeated(true);
+            ApplyDrawingRoomWaitingPose(guest);
             guest.ActorState.SetVisibleByChapterState(true);
             guest.ActorState.ApplyState();
         }
@@ -2157,6 +2157,24 @@ public class Chapter1ArrivalController : MonoBehaviour
         guest.Handled = true;
         SetGuestState(guest, GuestArrivalState.Seated);
         SetGuestState(guest, GuestArrivalState.Handled);
+    }
+
+    private void ApplyDrawingRoomWaitingPose(GuestRuntimeState guest)
+    {
+        if (guest == null || guest.ActorState == null)
+        {
+            return;
+        }
+
+        guest.ActorState.SetSeated(!ShouldUseStandingDrawingRoomPose(guest));
+    }
+
+    private bool ShouldUseStandingDrawingRoomPose(GuestRuntimeState guest)
+    {
+        return guest != null &&
+            (guest.GuestIndex == 2 ||
+            guest.GuestIndex == 4 ||
+            guest.GuestIndex == 6);
     }
 
     private void LogChapter2SkipGuestVisibility(int expectedGuestCount, int stagedGuestCount)
