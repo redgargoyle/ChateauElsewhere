@@ -8,6 +8,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter1SceneActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
+    private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
+    private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
 
     [Test]
     public void MoveGroupToDrawingRoomDoesNotHideGuestsAtDoor()
@@ -172,6 +174,26 @@ public class Chapter1GuestRoomVisibilityRegressionTests
             Assert.That(sceneText, Does.Contain($"m_Name: {anchorName}"), $"Gameplay should contain editable scene object {anchorName}.");
             Assert.That(sceneText, Does.Contain($"anchorId: {anchorName}"), $"{anchorName} should have a RoomAnchor id.");
         }
+    }
+
+    [Test]
+    public void Chapter1GuestsPreserveAuthoredScaleInsteadOfRuntimeDepthScale()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string playerMovementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
+        string prepareMethodBody = ExtractMethodBody(controllerText, "PrepareSceneGuestObject");
+        string disablePlayerMethodBody = ExtractMethodBody(controllerText, "DisablePlayerOnlyComponents");
+        string placeMethodBody = ExtractMethodBody(controllerText, "PlaceGuestAt");
+
+        Assert.That(playerMovementText, Does.Contain("applyPerspectiveScale"), "Player movement should have an explicit switch for runtime perspective scale.");
+        Assert.That(playerMovementText, Does.Contain("SetPerspectiveScaleEnabled"), "Guests cloned from the player prefab need a public way to opt out of player depth scaling.");
+        Assert.That(playerMovementText, Does.Match(@"if \(!applyPerspectiveScale\)[\s\S]*return;"), "Disabled perspective scale should stop PointClickPlayerMovement from writing transform.localScale.");
+        Assert.That(actorRoomStateText, Does.Contain("scaleWithRoomStageMotion"), "ActorRoomState should be able to keep a bound actor's authored scale.");
+        Assert.That(prepareMethodBody, Does.Contain("authoredGuestScale"), "Scene guest preparation should capture the scale restored from player movement before other setup.");
+        Assert.That(prepareMethodBody, Does.Contain("SetScaleWithRoomStageMotion(false)"), "Chapter 1 guests should follow room placement without being rescaled by room-stage zoom.");
+        Assert.That(disablePlayerMethodBody, Does.Contain("SetPerspectiveScaleEnabled(false)"), "Scene guests should turn off inherited player perspective scaling before disabling player-only movement.");
+        Assert.That(placeMethodBody, Does.Contain("PreserveGuestAuthoredScale(guestState)"), "Drawing room placement and skip staging should preserve the scale artists set in Edit Mode.");
     }
 
     private static string ExtractMethodBody(string sourceText, string methodName)

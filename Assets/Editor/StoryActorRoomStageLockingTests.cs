@@ -56,6 +56,33 @@ public class StoryActorRoomStageLockingTests
         }
     }
 
+    [Test]
+    public void WorldActorCanKeepAuthoredScaleWhileLockedToRoomStage()
+    {
+        TestRig rig = CreateRig();
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            rig.ActorState.SetScaleWithRoomStageMotion(false);
+            Vector3 authoredScale = rig.ActorState.transform.localScale;
+
+            rig.ActorState.PlaceAt(rig.Anchor);
+            AssertActorLockedToAnchor(rig, "initial placement");
+
+            rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
+            rig.CameraManager.SetRoomLookForPreview(1f, 0f, 0.8f);
+            Assert.That(ApplyBinding(rig.ActorState), Is.True);
+
+            AssertActorLockedToAnchor(rig, "room zoom");
+            Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredScale));
+        }
+        finally
+        {
+            rig.Destroy();
+        }
+    }
+
     private static TestRig CreateRig()
     {
         GameObject root = new GameObject("StoryActorRoomStageLockingTestRoot");

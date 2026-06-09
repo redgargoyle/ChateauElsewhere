@@ -34,6 +34,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private float farY = -2.25f;
 	[SerializeField] private float nearScale = 1f;
 	[SerializeField] private float farScale = 0.58f;
+	[SerializeField] private bool applyPerspectiveScale = true;
 	[SerializeField] private float runningAnimationSpeed = 40f;
 	[SerializeField] private bool disablePlatformMovement = true;
 	[SerializeField] private bool sortPlayerByVisibleFeet = true;
@@ -62,6 +63,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private bool isReady;
 	private bool isWalking;
 	private bool inputEnabled = true;
+	private bool hasAuthoredLocalScale;
+	private Vector3 authoredLocalScale = Vector3.one;
 	private int currentSortingOrder;
 	private int movementPathIndex;
 	private readonly List<Vector2> movementPath = new List<Vector2>();
@@ -74,6 +77,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public bool HasDestination => hasDestination;
 	public int CurrentSortingOrder => currentSortingOrder;
 	public bool InputEnabled => inputEnabled;
+	public bool AppliesPerspectiveScale => applyPerspectiveScale;
 
 	public void SetInputEnabled(bool enabled)
 	{
@@ -90,6 +94,17 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		CacheReferences();
 		CacheAnimatorParameters();
+	}
+
+	public void SetPerspectiveScaleEnabled(bool value, bool restoreAuthoredScale = true)
+	{
+		CaptureAuthoredLocalScaleIfNeeded();
+		applyPerspectiveScale = value;
+
+		if (!applyPerspectiveScale && restoreAuthoredScale)
+		{
+			RestoreAuthoredLocalScale();
+		}
 	}
 
 	public readonly struct MovementTargetQuery
@@ -120,6 +135,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void Awake()
 	{
+		CaptureAuthoredLocalScaleIfNeeded();
 		CacheReferences();
 		CacheAnimatorParameters();
 		InitializeVisualStateFromTransform();
@@ -214,6 +230,27 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private void CacheAnimatorParameters()
 	{
 		animatorParameters = CharacterAnimatorDriver.ParameterCache.FromAnimator(animator);
+	}
+
+	private void CaptureAuthoredLocalScaleIfNeeded()
+	{
+		if (hasAuthoredLocalScale)
+		{
+			return;
+		}
+
+		authoredLocalScale = transform.localScale;
+		hasAuthoredLocalScale = true;
+	}
+
+	private void RestoreAuthoredLocalScale()
+	{
+		if (!hasAuthoredLocalScale)
+		{
+			return;
+		}
+
+		transform.localScale = authoredLocalScale;
 	}
 
 	private void InitializeVisualStateFromTransform()
@@ -811,6 +848,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void ApplyPerspectiveScale()
 	{
+		if (!applyPerspectiveScale)
+		{
+			return;
+		}
+
 		UpdateVisualOffset(Camera.main);
 		float depth = Mathf.InverseLerp(nearY, farY, logicalPosition.y);
 		float scale = Mathf.Lerp(nearScale, farScale, depth) * currentRoomStageScaleRatio;

@@ -23,6 +23,7 @@ public class ActorRoomState : MonoBehaviour
     [SerializeField] private bool restrictVisibilityToCurrentRoom = true;
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private bool followRoomStageMotion = true;
+    [SerializeField] private bool scaleWithRoomStageMotion = true;
 
     private Renderer[] renderers = new Renderer[0];
     private Graphic[] graphics = new Graphic[0];
@@ -135,6 +136,11 @@ public class ActorRoomState : MonoBehaviour
         isSeated = value;
         RefreshComponentCache();
         ApplySeatedAnimatorState();
+    }
+
+    public void SetScaleWithRoomStageMotion(bool value)
+    {
+        scaleWithRoomStageMotion = value;
     }
 
     public void PlaceAt(Transform target)
@@ -528,7 +534,7 @@ public class ActorRoomState : MonoBehaviour
                 targetTransform.position = correctedWorldPosition;
             }
 
-            if (!Mathf.Approximately(scaleRatio, 1f))
+            if (scaleWithRoomStageMotion && !Mathf.Approximately(scaleRatio, 1f))
             {
                 targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio);
             }
@@ -635,7 +641,9 @@ public class ActorRoomState : MonoBehaviour
 
         worldPoint.z = boundWorldZ;
         targetTransform.position = worldPoint;
-        targetTransform.localScale = ScaleXY(boundLocalScale, currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale));
+        targetTransform.localScale = scaleWithRoomStageMotion
+            ? ScaleXY(boundLocalScale, currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale))
+            : boundLocalScale;
         return true;
     }
 

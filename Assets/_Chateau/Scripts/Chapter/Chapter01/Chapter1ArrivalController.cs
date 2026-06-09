@@ -2641,6 +2641,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        PreserveGuestAuthoredScale(guestState);
+
         if (guestState.GuestObject != null &&
             guestState.GuestObject.transform is RectTransform rectTransform &&
             TryGetAnchoredPositionForGuestTarget(guestState, target, out Vector2 anchoredPosition))
@@ -2679,6 +2681,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        PreserveGuestAuthoredScale(guestState);
+
         if (guestState.GuestObject != null)
         {
             Vector3 targetPosition = position;
@@ -2704,7 +2708,39 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        PreserveGuestAuthoredScale(guestState);
         guestState.ActorState.BindToRoomStagePoint(target);
+    }
+
+    private void PreserveGuestAuthoredScale(GuestRuntimeState guestState)
+    {
+        if (guestState == null)
+        {
+            return;
+        }
+
+        PreserveGuestAuthoredScale(guestState.GuestObject, guestState.ActorState);
+    }
+
+    private void PreserveGuestAuthoredScale(GameObject guestObject, ActorRoomState actorState)
+    {
+        if (guestObject != null && guestObject != playerButlerReference)
+        {
+            PointClickPlayerMovement[] pointClickMovements = guestObject.GetComponentsInChildren<PointClickPlayerMovement>(true);
+
+            for (int i = 0; i < pointClickMovements.Length; i++)
+            {
+                if (pointClickMovements[i] != null)
+                {
+                    pointClickMovements[i].SetPerspectiveScaleEnabled(false);
+                }
+            }
+        }
+
+        if (actorState != null)
+        {
+            actorState.SetScaleWithRoomStageMotion(false);
+        }
     }
 
     private void ClearGuestRoomStagePointBinding(GuestRuntimeState guestState)
@@ -3757,6 +3793,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         DisablePlayerOnlyComponents(guestObject);
+        Vector3 authoredGuestScale = guestObject.transform.localScale;
         DisableAmbientWalkers(guestObject);
         ConfigureGuestPhysicsForScriptedMovement(guestObject);
         ConfigureGuestAnimatorForIndex(guestObject, index);
@@ -3769,6 +3806,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         actorState.SetActorId(MakeGuestId(guestObject.name, index));
+        actorState.SetScaleWithRoomStageMotion(false);
+        guestObject.transform.localScale = authoredGuestScale;
 
         SpriteRenderer[] renderers = guestObject.GetComponentsInChildren<SpriteRenderer>(true);
 
@@ -3810,6 +3849,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             if (pointClickMovements[i] != null)
             {
+                pointClickMovements[i].SetPerspectiveScaleEnabled(false);
                 pointClickMovements[i].enabled = false;
             }
         }
