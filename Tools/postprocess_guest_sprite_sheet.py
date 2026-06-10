@@ -171,24 +171,24 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-    customData: 
+    customData:
     physicsShape: []
     bones: []
     spriteID: {sprite_id}
     internalID: 0
     vertices: []
-    indices: 
+    indices:
     edges: []
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
     nameFileIdTable: {{}}
-  mipmapLimitGroupName: 
+  mipmapLimitGroupName:
   pSDRemoveMatte: 0
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:
+  assetBundleName:
+  assetBundleVariant:
 """
 
 
@@ -200,9 +200,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--index", default="01")
     parser.add_argument("--preset", choices=sorted(POSE_PRESETS), default="starter")
     parser.add_argument("--padding", type=int, default=28)
+    parser.add_argument("--key-color", default=None)
     parser.add_argument("--transparent-threshold", type=int, default=10)
     parser.add_argument("--opaque-threshold", type=int, default=90)
-    parser.add_argument("--edge-contract", type=float, default=0.0)
+    parser.add_argument("--edge-contract", type=int, default=0)
     return parser.parse_args()
 
 
@@ -218,6 +219,25 @@ def write_meta(path: Path) -> None:
     )
 
 
+def write_default_meta(path: Path) -> None:
+    meta_path = Path(str(path) + ".meta")
+    meta_path.write_text(
+        "\n".join(
+            [
+                "fileFormatVersion: 2",
+                f"guid: {unity_guid()}",
+                "DefaultImporter:",
+                "  externalObjects: {}",
+                "  userData:",
+                "  assetBundleName:",
+                "  assetBundleVariant:",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
 def remove_chroma(source: Path, out: Path, args: argparse.Namespace) -> None:
     helper = Path.home() / ".codex" / "skills" / ".system" / "imagegen" / "scripts" / "remove_chroma_key.py"
     cmd = [
@@ -227,8 +247,6 @@ def remove_chroma(source: Path, out: Path, args: argparse.Namespace) -> None:
         str(source),
         "--out",
         str(out),
-        "--auto-key",
-        "border",
         "--soft-matte",
         "--transparent-threshold",
         str(args.transparent_threshold),
@@ -237,6 +255,10 @@ def remove_chroma(source: Path, out: Path, args: argparse.Namespace) -> None:
         "--despill",
         "--force",
     ]
+    if args.key_color:
+        cmd.extend(["--key-color", args.key_color])
+    else:
+        cmd.extend(["--auto-key", "border"])
     if args.edge_contract:
         cmd.extend(["--edge-contract", str(args.edge_contract)])
     subprocess.run(cmd, check=True)
@@ -285,6 +307,7 @@ def main() -> None:
     chroma_sheet = contact_root / f"{args.guest}_{sheet_slug}_{args.index}_chroma.png"
     transparent_sheet = contact_root / f"{args.guest}_{sheet_slug}_{args.index}_alpha.png"
     shutil.copy2(source, chroma_sheet)
+    write_meta(chroma_sheet)
     remove_chroma(chroma_sheet, transparent_sheet, args)
     write_meta(transparent_sheet)
 
@@ -321,10 +344,12 @@ def main() -> None:
             f"transparent_corners={stats['transparent_corners']}, visible_pixels={stats['visible_pixels']}"
         )
 
-    (contact_root / f"{args.guest}_{sheet_slug}_{args.index}_manifest.txt").write_text(
+    manifest_path = contact_root / f"{args.guest}_{sheet_slug}_{args.index}_manifest.txt"
+    manifest_path.write_text(
         "\n".join(manifest_lines) + "\n",
         encoding="utf-8",
     )
+    write_default_meta(manifest_path)
 
 
 if __name__ == "__main__":
