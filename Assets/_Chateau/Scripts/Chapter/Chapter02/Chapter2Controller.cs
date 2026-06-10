@@ -593,7 +593,7 @@ public class Chapter2Controller : MonoBehaviour
 
         if (guestPanic != null)
         {
-            guestPanic.StopPanic();
+            yield return guestPanic.RunExitToDoorsThenRestoreRoutine();
         }
 
         monsterStingerRoutine = null;
