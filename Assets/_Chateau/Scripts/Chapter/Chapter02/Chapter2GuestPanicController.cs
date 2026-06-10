@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public sealed class Chapter2GuestPanicController : MonoBehaviour
 {
     private const string ClickTargetName = "Ch2_ClickTarget";
+    private const int ScriptedGuestNumber = 1;
 
     [SerializeField] private Chapter2GuestSearchController guestSearch;
     [SerializeField] private Chapter2PanicAnimationLibrary animationLibrary;
@@ -20,6 +21,13 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField, Min(0f)] private float jitterPixels = 3f;
     [SerializeField, Range(0f, 1f)] private float randomStopActionChance = 1f;
     [SerializeField, Range(0f, 1f)] private float randomPopActionChance = 0.45f;
+    [SerializeField] private bool useScriptedGuest1Panic = true;
+    [SerializeField, Min(0.1f)] private float scriptedGuestRunSeconds = 1f;
+    [SerializeField, Min(0.1f)] private float scriptedGuestHoldSeconds = 1f;
+    [SerializeField, Min(1f)] private float scriptedGuestRunDistancePixels = 360f;
+    [SerializeField, Min(1f)] private float scriptedGuestMoveSpeedPixels = 380f;
+    [SerializeField, Min(0f)] private float scriptedGuestShakePixels = 5f;
+    [SerializeField, Min(0.1f)] private float scriptedGuestShakeCyclesPerSecond = 8f;
     [SerializeField] private PointClickPlayerMovement routePlanner;
     [SerializeField] private string routePlannerObjectName = "Player";
     [SerializeField] private Transform leftExitTarget;
@@ -34,9 +42,10 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
     private readonly List<PanicParticipant> participants = new List<PanicParticipant>();
     private Coroutine panicRoutine;
+    private Coroutine scriptedGuestRoutine;
     private bool isRunning;
 
-    public bool IsRunning => isRunning || panicRoutine != null;
+    public bool IsRunning => isRunning || panicRoutine != null || scriptedGuestRoutine != null;
 
     public Coroutine BeginPanic()
     {
@@ -55,6 +64,15 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         isRunning = true;
+
+        PanicParticipant scriptedGuest = FindScriptedGuestParticipant();
+
+        if (scriptedGuest != null)
+        {
+            scriptedGuest.SetControlledByScript(true);
+            scriptedGuestRoutine = StartCoroutine(RunScriptedGuest1PanicRoutine(scriptedGuest));
+        }
+
         ChooseRandomRunTargets();
         ApplyAssignedRunFrame(0, 0f, true);
         panicRoutine = StartCoroutine(RunPanicRoutine());
@@ -68,7 +86,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         if (exitRoutine != null)
         {
             float elapsedSeconds = 0f;
-            float timeoutSeconds = Mathf.Max(0.1f, exitTimeoutSeconds);
+            float timeoutSeconds = GetExitWaitTimeoutSeconds();
 
             while (IsRunning && elapsedSeconds < timeoutSeconds)
             {
@@ -110,7 +128,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
     public void StopPanic()
     {
-        StopPanicRoutineOnly();
+        StopPanicRoutineOnly(true);
 
         RestoreParticipants();
 
@@ -236,23 +254,295 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
     }
 
-    private void StopPanicRoutineOnly()
+    private PanicParticipant FindScriptedGuestParticipant()
+    {
+        if (!useScriptedGuest1Panic)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < participants.Count; i++)
+        {
+            PanicParticipant participant = participants[i];
+
+            if (participant != null && participant.GuestNumber == ScriptedGuestNumber)
+            {
+                Sprite[] frames = GetFrames(participant.Animation, PanicAction.PanicPop);
+
+                if (frames != null && frames.Length >= 8)
+                {
+                    return participant;
+                }
+
+                if (logMissingFrames)
+                {
+                    Debug.LogError("Chapter 2 scripted Guest 1 panic needs eight panic_pop frames.", this);
+                }
+
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    private float GetExitWaitTimeoutSeconds()
+    {
+        float timeoutSeconds = Mathf.Max(0.1f, exitTimeoutSeconds);
+
+        if (useScriptedGuest1Panic)
+        {
+            timeoutSeconds += GetScriptedGuest1PanicSeconds();
+        }
+
+        return timeoutSeconds;
+    }
+
+    private float GetScriptedGuest1PanicSeconds()
+    {
+        return 8f * (Mathf.Max(0.1f, scriptedGuestRunSeconds) + Mathf.Max(0.1f, scriptedGuestHoldSeconds)) +
+            Mathf.Max(0.1f, exitTimeoutSeconds);
+    }
+
+    private void StopPanicRoutineOnly(bool stopScriptedGuest = false)
     {
         if (panicRoutine != null)
         {
             StopCoroutine(panicRoutine);
             panicRoutine = null;
         }
+
+        if (stopScriptedGuest && scriptedGuestRoutine != null)
+        {
+            StopCoroutine(scriptedGuestRoutine);
+            scriptedGuestRoutine = null;
+        }
+    }
+
+    private IEnumerator RunScriptedGuest1PanicRoutine(PanicParticipant participant)
+    {
+        Sprite[] panicFrames = GetFrames(participant.Animation, PanicAction.PanicPop);
+
+        if (panicFrames == null || panicFrames.Length < 8)
+        {
+            participant.SetControlledByScript(false);
+            scriptedGuestRoutine = null;
+
+            if (panicRoutine == null)
+            {
+                isRunning = false;
+            }
+
+            yield break;
+        }
+
+        for (int frameIndex = 0; frameIndex < 8 && isRunning; frameIndex++)
+        {
+            bool runRight = frameIndex % 2 == 0;
+            yield return RunScriptedGuestDirectionalRun(
+                participant,
+                runRight ? Vector2.right : Vector2.left,
+                runRight ? PanicAction.PanicRunRight : PanicAction.PanicRunLeft);
+            yield return HoldScriptedGuestPanicFrame(participant, panicFrames[frameIndex], frameIndex);
+        }
+
+        if (isRunning)
+        {
+            yield return RunScriptedGuestToExit(participant);
+        }
+
+        scriptedGuestRoutine = null;
+
+        if (panicRoutine == null)
+        {
+            isRunning = false;
+        }
+    }
+
+    private IEnumerator RunScriptedGuestDirectionalRun(
+        PanicParticipant participant,
+        Vector2 direction,
+        PanicAction runAction)
+    {
+        if (participant == null)
+        {
+            yield break;
+        }
+
+        float durationSeconds = Mathf.Max(0.1f, scriptedGuestRunSeconds);
+        float moveSpeedPixels = Mathf.Max(1f, scriptedGuestMoveSpeedPixels);
+        float distancePixels = Mathf.Max(1f, scriptedGuestRunDistancePixels);
+
+        if (routePlanner == null ||
+            !participant.TryChooseRoutedDirectionalRunTarget(routePlanner, direction, distancePixels, worldUnitsPerRoomPixel))
+        {
+            participant.ChooseDirectionalRunTarget(direction, distancePixels);
+        }
+
+        participant.SetCurrentRunAction(runAction);
+        yield return RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true);
+    }
+
+    private IEnumerator RunScriptedGuestMoveForSeconds(
+        PanicParticipant participant,
+        float durationSeconds,
+        float moveSpeedPixels,
+        bool jitter)
+    {
+        float secondsPerFrame = GetSecondsPerFrame();
+        float elapsedSeconds = 0f;
+        int frameIndex = 0;
+
+        while (isRunning && elapsedSeconds < durationSeconds)
+        {
+            float deltaTime = GetPlaybackDeltaTime(secondsPerFrame);
+            participant.MovePanicOffsetTowardCurrentTarget(moveSpeedPixels, deltaTime);
+
+            float frameProgress = secondsPerFrame <= 0f
+                ? 1f
+                : Mathf.Clamp01((elapsedSeconds % secondsPerFrame) / secondsPerFrame);
+            float motionFrame = frameIndex + frameProgress;
+            PanicAction visualAction = participant.CurrentRunAction;
+            participant.SetSprite(GetFrame(participant.Animation, visualAction, participant.GetRunClipFrameIndex(frameIndex)));
+            participant.ApplyPanicVisualOffset(participant.GetPanicOffset(motionFrame, jitter, jitter ? jitterPixels : 0f), worldUnitsPerRoomPixel);
+
+            elapsedSeconds += deltaTime;
+
+            while (elapsedSeconds >= (frameIndex + 1) * secondsPerFrame)
+            {
+                frameIndex++;
+            }
+
+            yield return null;
+        }
+    }
+
+    private IEnumerator HoldScriptedGuestPanicFrame(PanicParticipant participant, Sprite panicSprite, int frameIndex)
+    {
+        if (participant == null || panicSprite == null)
+        {
+            yield break;
+        }
+
+        float durationSeconds = Mathf.Max(0.1f, scriptedGuestHoldSeconds);
+        float elapsedSeconds = 0f;
+        Vector2 baseOffset = participant.CurrentPanicOffset;
+
+        while (isRunning && elapsedSeconds < durationSeconds)
+        {
+            float deltaTime = GetPlaybackDeltaTime(durationSeconds);
+            float shake = Mathf.Sin(elapsedSeconds * scriptedGuestShakeCyclesPerSecond * Mathf.PI * 2f) *
+                Mathf.Max(0f, scriptedGuestShakePixels);
+
+            participant.SetSprite(panicSprite);
+            participant.ApplyPanicVisualOffset(baseOffset + new Vector2(shake, 0f), worldUnitsPerRoomPixel);
+            elapsedSeconds += deltaTime;
+            yield return null;
+        }
+
+        participant.ApplyPanicVisualOffset(baseOffset, worldUnitsPerRoomPixel);
+    }
+
+    private IEnumerator RunScriptedGuestToExit(PanicParticipant participant)
+    {
+        ResolveExitTargets();
+
+        Transform exitTarget = ChooseNearestScriptedGuestExitTarget(participant);
+
+        if (exitTarget == null ||
+            !participant.TryChooseExitTarget(exitTarget, routePlanner, worldUnitsPerRoomPixel, exitOvershootPixels))
+        {
+            yield break;
+        }
+
+        int frameCount = Mathf.Max(1, GetFrames(participant.Animation, participant.CurrentRunAction).Length);
+        float secondsPerFrame = GetSecondsPerFrame();
+        float elapsedSeconds = 0f;
+        float timeoutSeconds = Mathf.Max(0.1f, exitTimeoutSeconds);
+        int frameIndex = 0;
+        bool arrived = false;
+
+        while (isRunning && elapsedSeconds < timeoutSeconds && !arrived)
+        {
+            float deltaTime = GetPlaybackDeltaTime(secondsPerFrame);
+            arrived = participant.MovePanicOffsetTowardCurrentTarget(exitMoveSpeedPixels, deltaTime);
+            float frameProgress = secondsPerFrame <= 0f
+                ? 1f
+                : Mathf.Clamp01((elapsedSeconds % secondsPerFrame) / secondsPerFrame);
+            float motionFrame = frameIndex + frameProgress;
+            PanicAction visualAction = participant.CurrentRunAction;
+
+            participant.SetSprite(GetFrame(participant.Animation, visualAction, participant.GetRunClipFrameIndex(frameIndex % frameCount)));
+            participant.ApplyPanicVisualOffset(participant.GetPanicOffset(motionFrame, false, 0f), worldUnitsPerRoomPixel);
+            elapsedSeconds += deltaTime;
+
+            while (elapsedSeconds >= (frameIndex + 1) * secondsPerFrame)
+            {
+                frameIndex++;
+            }
+
+            yield return null;
+        }
+    }
+
+    private Transform ChooseNearestScriptedGuestExitTarget(PanicParticipant participant)
+    {
+        if (leftExitTarget == null)
+        {
+            return rightExitTarget;
+        }
+
+        if (rightExitTarget == null)
+        {
+            return leftExitTarget;
+        }
+
+        Vector3 currentPosition = participant != null ? participant.CurrentWorldFootPosition : Vector3.zero;
+        float leftDistance = Mathf.Abs(GetExitWorldX(leftExitTarget) - currentPosition.x);
+        float rightDistance = Mathf.Abs(GetExitWorldX(rightExitTarget) - currentPosition.x);
+        return leftDistance <= rightDistance ? leftExitTarget : rightExitTarget;
+    }
+
+    private static float GetExitWorldX(Transform exitTarget)
+    {
+        if (exitTarget is RectTransform exitRectTransform)
+        {
+            Rect rect = exitRectTransform.rect;
+            return exitRectTransform.TransformPoint(new Vector3(rect.center.x, rect.yMin, 0f)).x;
+        }
+
+        return exitTarget != null ? exitTarget.position.x : 0f;
     }
 
     private IEnumerator RunPanicRoutine()
     {
         while (isRunning)
         {
+            if (!HasSharedPanicParticipants())
+            {
+                yield return null;
+                continue;
+            }
+
             ChooseRandomRunTargets();
             yield return MoveParticipantsTowardAssignedTargets(true);
             yield return PlayRandomStopActions();
         }
+    }
+
+    private bool HasSharedPanicParticipants()
+    {
+        for (int i = 0; i < participants.Count; i++)
+        {
+            PanicParticipant participant = participants[i];
+
+            if (participant != null && !participant.IsControlledByScript)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private IEnumerator RunExitToDoorsRoutine()
@@ -260,7 +550,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         yield return MoveParticipantsTowardAssignedTargets(false, exitMoveSpeedPixels);
 
         panicRoutine = null;
-        isRunning = false;
+
+        if (scriptedGuestRoutine == null)
+        {
+            isRunning = false;
+        }
     }
 
     private int ChooseRandomStopActions()
@@ -271,7 +565,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             PanicParticipant participant = participants[i];
 
-            if (participant == null)
+            if (participant == null || participant.IsControlledByScript)
             {
                 continue;
             }
@@ -312,7 +606,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             PanicParticipant participant = participants[i];
 
-            if (participant == null)
+            if (participant == null || participant.IsControlledByScript)
             {
                 continue;
             }
@@ -361,7 +655,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             PanicParticipant participant = participants[i];
 
-            if (participant == null)
+            if (participant == null || participant.IsControlledByScript)
             {
                 continue;
             }
@@ -456,6 +750,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             PanicParticipant participant = participants[i];
 
             if (participant != null &&
+                !participant.IsControlledByScript &&
                 !participant.MovePanicOffsetTowardCurrentTarget(moveSpeedPixels, deltaTime))
             {
                 allArrived = false;
@@ -484,7 +779,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             PanicParticipant participant = sortedParticipants[i];
 
-            if (participant == null)
+            if (participant == null || participant.IsControlledByScript)
             {
                 continue;
             }
@@ -506,7 +801,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             PanicParticipant participant = participants[i];
 
-            if (participant == null)
+            if (participant == null || participant.IsControlledByScript)
             {
                 continue;
             }
@@ -524,6 +819,12 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         for (int i = 0; i < participants.Count; i++)
         {
             PanicParticipant participant = participants[i];
+
+            if (participant != null && participant.IsControlledByScript)
+            {
+                continue;
+            }
+
             Sprite[] frames = participant != null ? GetFrames(participant.Animation, participant.CurrentRunAction) : null;
             maxFrameCount = Mathf.Max(maxFrameCount, frames != null ? frames.Length : 0);
         }
@@ -783,11 +1084,17 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private Sprite currentPanicSprite;
         private PanicAction currentRunAction = PanicAction.PanicRunDown;
         private PanicAction currentStopAction = PanicAction.PanicHandsUp;
+        private int guestNumber;
+        private bool controlledByScript;
 
         public Chapter2PanicCharacterAnimation Animation => animation;
         public bool HasSpriteTarget => spriteRenderer != null || image != null;
         public PanicAction CurrentRunAction => currentRunAction;
         public PanicAction CurrentStopAction => currentStopAction;
+        public int GuestNumber => guestNumber;
+        public bool IsControlledByScript => controlledByScript;
+        public Vector2 CurrentPanicOffset => currentPanicOffset;
+        public Vector3 CurrentWorldFootPosition => GetCurrentWorldFootPosition(routeWorldUnitsPerPixel);
 
         public static PanicParticipant Create(ActorRoomState nextActorState, Chapter2PanicCharacterAnimation nextAnimation)
         {
@@ -852,6 +1159,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         public void ConfigureRunMotion(int participantIndex, int guestNumber)
         {
+            this.guestNumber = guestNumber;
             int seed = Mathf.Abs((guestNumber + 1) * 37 + (participantIndex + 1) * 19);
 
             runDistanceScale = 0.82f + seed % 5 * 0.07f;
@@ -859,6 +1167,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             framePhaseOffset = seed % 4;
             jitterPhase = seed * 0.618f;
             bobPixels = 2f + seed % 3 * 0.75f;
+        }
+
+        public void SetControlledByScript(bool controlled)
+        {
+            controlledByScript = controlled;
         }
 
         public void ApplyPanicState()
@@ -934,6 +1247,42 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             currentStopAction = stopAction;
             stopFramePhaseOffset = Mathf.Max(0, framePhase);
+        }
+
+        public void SetCurrentRunAction(PanicAction runAction)
+        {
+            currentRunAction = runAction;
+        }
+
+        public void ChooseDirectionalRunTarget(Vector2 direction, float distancePixels)
+        {
+            useRouteLogicalMotion = false;
+
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                direction = Vector2.right;
+            }
+
+            Vector2 normalizedDirection = direction.normalized;
+            currentRunTargetOffset = currentPanicOffset + normalizedDirection * Mathf.Max(1f, distancePixels);
+            currentRunAction = GetRunActionForDirection(normalizedDirection);
+        }
+
+        public bool TryChooseRoutedDirectionalRunTarget(
+            PointClickPlayerMovement planner,
+            Vector2 direction,
+            float distancePixels,
+            float worldUnitsPerPixel)
+        {
+            if (direction.sqrMagnitude <= 0.0001f ||
+                !TryGetRouteCurrentLogicalPosition(planner, worldUnitsPerPixel, out Vector2 startLogical))
+            {
+                return false;
+            }
+
+            float unitsPerPixel = Mathf.Max(0.0001f, worldUnitsPerPixel);
+            Vector2 targetLogical = startLogical + direction.normalized * Mathf.Max(1f, distancePixels) * unitsPerPixel;
+            return TryBeginRouteMotion(planner, startLogical, targetLogical, worldUnitsPerPixel);
         }
 
         public bool TryChooseRoutedRunTarget(
@@ -1458,6 +1807,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             routeWorldUnitsPerPixel = 0.012f;
             useRouteLogicalMotion = false;
             currentPanicSprite = null;
+            controlledByScript = false;
 
             if (rigidbody2D != null)
             {

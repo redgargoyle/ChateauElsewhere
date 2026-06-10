@@ -319,6 +319,16 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("SetStopAction"));
         Assert.That(panicText, Does.Contain("randomStopActionChance = 1f"));
         Assert.That(panicText, Does.Contain("randomPopActionChance = 0.45f"));
+        Assert.That(panicText, Does.Contain("ScriptedGuestNumber = 1"));
+        Assert.That(panicText, Does.Contain("useScriptedGuest1Panic = true"));
+        Assert.That(panicText, Does.Contain("scriptedGuestRunSeconds = 1f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestHoldSeconds = 1f"));
+        Assert.That(panicText, Does.Contain("RunScriptedGuest1PanicRoutine"));
+        Assert.That(panicText, Does.Contain("RunScriptedGuestDirectionalRun"));
+        Assert.That(panicText, Does.Contain("HoldScriptedGuestPanicFrame"));
+        Assert.That(panicText, Does.Contain("ChooseNearestScriptedGuestExitTarget"));
+        Assert.That(panicText, Does.Contain("IsControlledByScript"));
+        Assert.That(panicText, Does.Contain("HasSharedPanicParticipants"));
         Assert.That(panicText, Does.Not.Contain("RandomStopActions"));
         Assert.That(panicText, Does.Not.Contain("PanicAction.PanicShriekDown"));
         Assert.That(panicText, Does.Not.Contain("PanicAction.PanicReactionDown"));
@@ -366,6 +376,7 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("PointClickPlayerMovement routePlanner"), "Guest panic should reuse the butler movement route planner instead of inventing a separate floor system.");
         Assert.That(panicText, Does.Contain("FindRoutePlanner"), "Guest panic should resolve the named Player movement component for walkable-floor route queries.");
         Assert.That(panicText, Does.Contain("TryChooseRoutedRunTarget"), "Random panic movement should prefer butler route-space targets before falling back to raw room offsets.");
+        Assert.That(panicText, Does.Contain("TryChooseRoutedDirectionalRunTarget"), "Guest 1's scripted panic runs should also prefer butler route-space targets.");
         Assert.That(panicText, Does.Contain("leftExitTargetName = \"DoorTrigger_DrawingRoom_MusicRoom\""));
         Assert.That(panicText, Does.Contain("rightExitTargetName = \"DoorTrigger_DrawingRoom_GEH\""));
         Assert.That(panicText, Does.Contain("ChooseDoorExitTargets"));
@@ -377,6 +388,7 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("TryGetRoomPixelOffsetFromWorldPoint"), "Guest route positions should be converted back into RoomProjectedEntity room-local points.");
         Assert.That(panicText, Does.Contain("TryGetActiveRoomStageLocalPoint"), "Persistent projected guests should convert routed world points back through the active room stage.");
         Assert.That(panicText, Does.Contain("GetExitFootWorldPosition"), "Guests should run toward the door floor, not the center of the door trigger.");
+        Assert.That(panicText, Does.Contain("GetExitWaitTimeoutSeconds"), "Guest search handoff should wait long enough for Guest 1's scripted panic sequence to finish.");
         Assert.That(panicText, Does.Contain("StopPanic()"), "The exit beat should restore normal sprites/animators before guest search stages actors at hide anchors.");
 
         string movementText = File.ReadAllText(PointClickPlayerMovementPath);
