@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 [DefaultExecutionOrder(10000)]
@@ -9,10 +10,8 @@ using UnityEngine.UI;
 public sealed class Chapter2GuestPanicController : MonoBehaviour
 {
     private const string ClickTargetName = "Ch2_ClickTarget";
-    private const int ScriptedGuestNumber = 1;
 
     [SerializeField] private Chapter2GuestSearchController guestSearch;
-    [SerializeField] private PointClickPlayerMovement playerMovement;
     [SerializeField] private Chapter2PanicAnimationLibrary animationLibrary;
     [SerializeField, Min(1f)] private float frameRate = 12f;
     [SerializeField, Min(0f)] private float runDistancePixels = 150f;
@@ -22,7 +21,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField, Min(0f)] private float jitterPixels = 3f;
     [SerializeField, Range(0f, 1f)] private float randomStopActionChance = 1f;
     [SerializeField, Range(0f, 1f)] private float randomPopActionChance = 0.45f;
-    [SerializeField] private bool useScriptedGuest1Panic = true;
+    [SerializeField, FormerlySerializedAs("useScriptedGuest1Panic")] private bool useScriptedGuestPanic = true;
     [SerializeField, Min(0.1f)] private float scriptedGuestRunSeconds = 1f;
     [SerializeField, Min(0.1f)] private float scriptedGuestHoldSeconds = 1f;
     [SerializeField, Min(1f)] private float scriptedGuestRunDistancePixels = 500f;
@@ -45,11 +44,12 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
     private readonly List<PanicParticipant> participants = new List<PanicParticipant>();
     private readonly List<Vector2> routeQueryScratch = new List<Vector2>();
+    private readonly List<Coroutine> scriptedGuestRoutines = new List<Coroutine>();
     private Coroutine panicRoutine;
-    private Coroutine scriptedGuestRoutine;
+    private int runningScriptedGuestCount;
     private bool isRunning;
 
-    public bool IsRunning => isRunning || panicRoutine != null || scriptedGuestRoutine != null;
+    public bool IsRunning => isRunning || panicRoutine != null || runningScriptedGuestCount > 0;
 
     public Coroutine BeginPanic()
     {
@@ -68,19 +68,17 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         isRunning = true;
+        StartScriptedGuestPanicRoutines();
 
-        PanicParticipant scriptedGuest = FindScriptedGuestParticipant();
-
-        if (scriptedGuest != null)
+        if (HasSharedPanicParticipants())
         {
-            scriptedGuest.SetControlledByScript(true);
-            scriptedGuestRoutine = StartCoroutine(RunScriptedGuest1PanicRoutine(scriptedGuest));
+            ChooseRandomRunTargets();
+            ApplyAssignedRunFrame(0, 0f, true);
+            panicRoutine = StartCoroutine(RunPanicRoutine());
+            return panicRoutine;
         }
 
-        ChooseRandomRunTargets();
-        ApplyAssignedRunFrame(0, 0f, true);
-        panicRoutine = StartCoroutine(RunPanicRoutine());
-        return panicRoutine;
+        return scriptedGuestRoutines.Count > 0 ? scriptedGuestRoutines[0] : null;
     }
 
     public IEnumerator RunExitToDoorsThenRestoreRoutine()
@@ -172,11 +170,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             guestSearch = FindAnyObjectByType<Chapter2GuestSearchController>(FindObjectsInactive.Include);
         }
 
-        if (playerMovement == null)
-        {
-            playerMovement = FindPlayerMovement();
-        }
-
         if (animationLibrary == null)
         {
             animationLibrary = Resources.Load<Chapter2PanicAnimationLibrary>(Chapter2PanicAnimationLibrary.ResourcesPath);
@@ -263,51 +256,62 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
     }
 
-    private PanicParticipant FindScriptedGuestParticipant()
+    private void StartScriptedGuestPanicRoutines()
     {
-        if (!useScriptedGuest1Panic)
+        scriptedGuestRoutines.Clear();
+        runningScriptedGuestCount = 0;
+
+        if (!useScriptedGuestPanic)
         {
-            return null;
+            return;
         }
 
         for (int i = 0; i < participants.Count; i++)
         {
             PanicParticipant participant = participants[i];
 
-            if (participant != null && participant.GuestNumber == ScriptedGuestNumber)
+            if (participant == null)
             {
-                Sprite[] frames = GetFrames(participant.Animation, PanicAction.PanicPop);
+                continue;
+            }
 
-                if (frames != null && frames.Length >= 8)
-                {
-                    return participant;
-                }
+            Sprite[] frames = GetFrames(participant.Animation, PanicAction.PanicPop);
+            int frameCount = frames != null ? frames.Length : 0;
 
+            if (frameCount == 0)
+            {
+                continue;
+            }
+
+            if (frameCount < 8)
+            {
                 if (logMissingFrames)
                 {
-                    Debug.LogError("Chapter 2 scripted Guest 1 panic needs eight panic_pop frames.", this);
+                    Debug.LogError($"Chapter 2 scripted guest {participant.GuestNumber} panic needs eight panic_pop frames; found {frameCount}.", this);
                 }
 
-                return null;
+                continue;
             }
-        }
 
-        return null;
+            participant.SetControlledByScript(true);
+            runningScriptedGuestCount++;
+            scriptedGuestRoutines.Add(StartCoroutine(RunScriptedGuestPanicRoutine(participant)));
+        }
     }
 
     private float GetExitWaitTimeoutSeconds()
     {
         float timeoutSeconds = Mathf.Max(0.1f, exitTimeoutSeconds);
 
-        if (useScriptedGuest1Panic)
+        if (runningScriptedGuestCount > 0)
         {
-            timeoutSeconds += GetScriptedGuest1PanicSeconds();
+            timeoutSeconds += GetScriptedGuestPanicSeconds();
         }
 
         return timeoutSeconds;
     }
 
-    private float GetScriptedGuest1PanicSeconds()
+    private float GetScriptedGuestPanicSeconds()
     {
         return 8f * (Mathf.Max(0.1f, scriptedGuestRunSeconds) + Mathf.Max(0.1f, scriptedGuestHoldSeconds)) +
             Mathf.Max(0.1f, exitTimeoutSeconds);
@@ -321,23 +325,31 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             panicRoutine = null;
         }
 
-        if (stopScriptedGuest && scriptedGuestRoutine != null)
+        if (stopScriptedGuest)
         {
-            StopCoroutine(scriptedGuestRoutine);
-            scriptedGuestRoutine = null;
+            for (int i = 0; i < scriptedGuestRoutines.Count; i++)
+            {
+                if (scriptedGuestRoutines[i] != null)
+                {
+                    StopCoroutine(scriptedGuestRoutines[i]);
+                }
+            }
+
+            scriptedGuestRoutines.Clear();
+            runningScriptedGuestCount = 0;
         }
     }
 
-    private IEnumerator RunScriptedGuest1PanicRoutine(PanicParticipant participant)
+    private IEnumerator RunScriptedGuestPanicRoutine(PanicParticipant participant)
     {
         Sprite[] panicFrames = GetFrames(participant.Animation, PanicAction.PanicPop);
 
         if (panicFrames == null || panicFrames.Length < 8)
         {
             participant.SetControlledByScript(false);
-            scriptedGuestRoutine = null;
+            MarkScriptedGuestRoutineFinished();
 
-            if (panicRoutine == null)
+            if (panicRoutine == null && runningScriptedGuestCount == 0)
             {
                 isRunning = false;
             }
@@ -360,11 +372,21 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             yield return RunScriptedGuestToExit(participant);
         }
 
-        scriptedGuestRoutine = null;
+        MarkScriptedGuestRoutineFinished();
 
-        if (panicRoutine == null)
+        if (panicRoutine == null && runningScriptedGuestCount == 0)
         {
             isRunning = false;
+        }
+    }
+
+    private void MarkScriptedGuestRoutineFinished()
+    {
+        runningScriptedGuestCount = Mathf.Max(0, runningScriptedGuestCount - 1);
+
+        if (runningScriptedGuestCount == 0)
+        {
+            scriptedGuestRoutines.Clear();
         }
     }
 
@@ -562,6 +584,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             yield return MoveParticipantsTowardAssignedTargets(true);
             yield return PlayRandomStopActions();
         }
+
+        panicRoutine = null;
     }
 
     private bool HasSharedPanicParticipants()
@@ -585,7 +609,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         panicRoutine = null;
 
-        if (scriptedGuestRoutine == null)
+        if (runningScriptedGuestCount == 0)
         {
             isRunning = false;
         }
@@ -824,7 +848,13 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             if (!participant.TryChooseExitTarget(exitTarget, routePlanner, worldUnitsPerRoomPixel, exitOvershootPixels))
             {
-                participant.ChooseNextRunTarget(runDistancePixels, panicRoamRadiusPixels, verticalRunDistanceScale);
+                participant.ChooseNextRunTarget(
+                    routePlanner,
+                    runDistancePixels,
+                    panicRoamRadiusPixels,
+                    verticalRunDistanceScale,
+                    worldUnitsPerRoomPixel,
+                    routeQueryScratch);
             }
         }
     }
