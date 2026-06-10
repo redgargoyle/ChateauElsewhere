@@ -380,14 +380,15 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         participant.SetCurrentRunAction(runAction);
-        yield return RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true);
+        yield return RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction);
     }
 
     private IEnumerator RunScriptedGuestMoveForSeconds(
         PanicParticipant participant,
         float durationSeconds,
         float moveSpeedPixels,
-        bool jitter)
+        bool jitter,
+        PanicAction lockedRunAction)
     {
         float secondsPerFrame = GetSecondsPerFrame();
         float elapsedSeconds = 0f;
@@ -402,8 +403,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 ? 1f
                 : Mathf.Clamp01((elapsedSeconds % secondsPerFrame) / secondsPerFrame);
             float motionFrame = frameIndex + frameProgress;
-            PanicAction visualAction = participant.CurrentRunAction;
-            participant.SetSprite(GetFrame(participant.Animation, visualAction, participant.GetRunClipFrameIndex(frameIndex)));
+            participant.SetCurrentRunAction(lockedRunAction);
+            participant.SetSprite(GetFrame(participant.Animation, lockedRunAction, participant.GetRunClipFrameIndex(frameIndex)));
             participant.ApplyPanicVisualOffset(participant.GetPanicOffset(motionFrame, jitter, jitter ? jitterPixels : 0f), worldUnitsPerRoomPixel);
 
             elapsedSeconds += deltaTime;

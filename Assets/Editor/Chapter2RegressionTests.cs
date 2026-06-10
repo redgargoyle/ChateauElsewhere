@@ -325,6 +325,8 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("scriptedGuestHoldSeconds = 1f"));
         Assert.That(panicText, Does.Contain("RunScriptedGuest1PanicRoutine"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestDirectionalRun"));
+        Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Guest 1 scripted runs should lock the displayed walk direction to the requested left/right beat.");
+        Assert.That(panicText, Does.Contain("participant.SetCurrentRunAction(lockedRunAction)"), "Routed movement should not visually override Guest 1's scripted left/right walk animation.");
         Assert.That(panicText, Does.Contain("HoldScriptedGuestPanicFrame"));
         Assert.That(panicText, Does.Contain("ChooseNearestScriptedGuestExitTarget"));
         Assert.That(panicText, Does.Contain("IsControlledByScript"));
