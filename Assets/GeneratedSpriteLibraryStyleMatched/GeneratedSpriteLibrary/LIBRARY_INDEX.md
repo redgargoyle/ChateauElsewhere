@@ -14,6 +14,8 @@ Current main cutout sprites:
   Lord Ambrose +10, Madame Coralie +10
 - Transition additions: 4 stand-to-sit frames for each guest
 - Shake/sweat additions: 12 shaking frames and 12 sweating frames for each guest
+- Nested review additions: ButlerGuest +8 original-style panic candidates in
+  `Panic/OriginalStyleGuest2_20260610`
 - Alpha verification: transparent corners passed for all main sprites
 
 Style-matched mirror:
@@ -42,6 +44,8 @@ Category coverage per guest:
 - `Idle`: 2 sprites
 - `Surprised`: 2 sprites
 - `Panic`: 2 sprites
+- `Panic/OriginalStyleGuest2_20260610`: 8 guest2 panic review sprites, scaled and
+  post-processed toward the original guest2 pixel-watercolor style
 - `Sitting`: 2 sprites
 - `DiningRoomChair`: 2 sprites, plus room-perspective overlay variants for focused guests
 - `DrawingRoomCouch`: 2 sprites, plus room-perspective overlay variants for focused guests
@@ -87,6 +91,16 @@ Shake/sweat pass rules:
   perspiration glints while preserving the original character cutout.
 - These frames do not use drawn-on replacement arms, hands, faces, or body
   construction overlays.
+
+Guest2 original-style panic review rules:
+- `ButlerGuest/Panic/OriginalStyleGuest2_20260610/*_originalstyle_*.png`
+  are smaller review sprites built to match the original `Assets/Art/Characters/guest2`
+  scale and darker hand-painted/pixel-watercolor look.
+- The raw green-background generation was not placed in the library. The library files
+  are alpha-cleaned, palette-reduced, dark-rimmed, and checked for transparent corners
+  and white edge halos.
+- This set is deliberately nested for critique before promoting any frame into the
+  flat `Panic` category.
 
 Transition pass rules:
 - `Transitions/*_transition_stand_to_sit_01..04.png` are non-destructive
