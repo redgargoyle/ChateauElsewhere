@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b37929ba088b0907f9ffd024b3991265
+guid: 0b73f13887eb253d4a589c81818a92b2
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6168083732550661486
-    second: cow_0
+      213: 2795513133132895430
+    second: greenchair_bottom_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,23 +100,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: cow_0
+      name: greenchair_bottom_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 108
-        width: 1200
-        height: 913
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
+        y: 0
+        width: 106
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e653c8f897f699550800000000000000
-      internalID: 6168083732550661486
+      spriteID: 6c453512268abc620800000000000000
+      internalID: 2795513133132895430
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: c16b14f0e7825cdbc8f86e413c3be966
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      cow_0: 6168083732550661486
+      greenchair_bottom_0: 2795513133132895430
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

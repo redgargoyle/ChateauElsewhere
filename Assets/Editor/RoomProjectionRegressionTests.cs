@@ -187,12 +187,16 @@ public class RoomProjectionRegressionTests
     public void ActorRoomStateSkipsRoomStageScaleBindingWhenProjectionIsActive()
     {
         string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
+        string projectionText = File.ReadAllText("Assets/Scripts/Characters/RoomProjectedEntity.cs");
         string shouldFollowBody = ExtractMethodBody(actorRoomStateText, "ShouldFollowRoomStageMotion");
+        string projectedScaleBody = ExtractMethodBody(projectionText, "ApplyProjectedScale");
 
         Assert.That(actorRoomStateText, Does.Contain("RoomProjectedEntity"), "ActorRoomState should know how to detect projection without owning perspective math.");
         Assert.That(shouldFollowBody, Does.Contain("!HasActiveProjection()"), "Projection should own visual scale and room-stage positioning when present.");
         Assert.That(actorRoomStateText, Does.Contain("projection.IsProjectionActive"), "ActorRoomState should only defer to projection in the matching projected room.");
         Assert.That(actorRoomStateText, Does.Contain("ApplyState()"), "ActorRoomState should continue to own visibility and interaction state.");
+        Assert.That(projectionText, Does.Contain("GetRoomStageScaleMultiplier"), "Projected world-space guests should still scale with room-stage zoom.");
+        Assert.That(projectedScaleBody, Does.Contain("currentScale * currentRoomStageScaleMultiplier"), "Projection should multiply room-depth scale by room-stage zoom without replacing the authored base scale.");
     }
 
     [Test]

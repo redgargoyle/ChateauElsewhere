@@ -179,7 +179,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void Chapter1GuestsPreserveAuthoredScaleInsteadOfRuntimeDepthScale()
+    public void Chapter1GuestsPreserveAuthoredScaleAsRoomZoomBaseline()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string playerMovementText = File.ReadAllText(PointClickPlayerMovementPath);
@@ -191,11 +191,11 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(playerMovementText, Does.Contain("applyPerspectiveScale"), "Player movement should have an explicit switch for runtime perspective scale.");
         Assert.That(playerMovementText, Does.Contain("SetPerspectiveScaleEnabled"), "Guests cloned from the player prefab need a public way to opt out of player depth scaling.");
         Assert.That(playerMovementText, Does.Match(@"if \(!applyPerspectiveScale\)[\s\S]*return;"), "Disabled perspective scale should stop PointClickPlayerMovement from writing transform.localScale.");
-        Assert.That(actorRoomStateText, Does.Contain("scaleWithRoomStageMotion"), "ActorRoomState should be able to keep a bound actor's authored scale.");
+        Assert.That(actorRoomStateText, Does.Contain("scaleWithRoomStageMotion"), "ActorRoomState should be able to use a bound actor's authored scale as the room-zoom baseline.");
         Assert.That(prepareMethodBody, Does.Contain("authoredGuestScale"), "Scene guest preparation should capture the scale restored from player movement before other setup.");
-        Assert.That(prepareMethodBody, Does.Contain("SetScaleWithRoomStageMotion(false)"), "Chapter 1 guests should follow room placement without being rescaled by room-stage zoom.");
+        Assert.That(prepareMethodBody, Does.Contain("SetScaleWithRoomStageMotion(true)"), "Chapter 1 guests should keep their authored base size while scaling with room-stage zoom like the butler.");
         Assert.That(disablePlayerMethodBody, Does.Contain("SetPerspectiveScaleEnabled(false)"), "Scene guests should turn off inherited player perspective scaling before disabling player-only movement.");
-        Assert.That(placeMethodBody, Does.Contain("PreserveGuestAuthoredScale(guestState)"), "Drawing room placement and skip staging should preserve the scale artists set in Edit Mode.");
+        Assert.That(placeMethodBody, Does.Contain("PreserveGuestAuthoredScale(guestState)"), "Drawing room placement and skip staging should preserve the scale artists set in Edit Mode as the zoom baseline.");
     }
 
     [Test]

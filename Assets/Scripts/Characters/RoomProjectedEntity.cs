@@ -45,7 +45,11 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private Vector3 authoredVisualRootScale = Vector3.one;
     private bool hasAuthoredVisualRootScale;
     private float currentScale = 1f;
+    private float currentRoomStageScaleMultiplier = 1f;
     private int currentSortingOrder;
+    private bool hasRoomStageScaleReference;
+    private float roomStageScaleReference = 1f;
+    private string roomStageScaleReferenceRoom = string.Empty;
 
     public RoomPerspectiveProfile RoomProfile => roomProfile;
     public CharacterVisualProfile VisualProfile => visualProfile;
@@ -55,6 +59,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public bool HasUsableProfile => roomProfile != null;
     public bool IsProjectionActive => ShouldApplyProjection();
     public float CurrentScale => currentScale;
+    public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;
 
     private void Reset()
@@ -111,9 +116,15 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        ClearRoomStageScaleReference();
+    }
+
     public void SetRoomProfile(RoomPerspectiveProfile profile)
     {
         roomProfile = profile;
+        ClearRoomStageScaleReference();
         ApplyProjection();
     }
 
@@ -244,10 +255,12 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
         if (!ShouldApplyProjection())
         {
+            ClearRoomStageScaleReference();
             return;
         }
 
         currentScale = GetProjectedScale();
+        currentRoomStageScaleMultiplier = GetRoomStageScaleMultiplier();
         currentSortingOrder = roomProfile.GetSortingOrder(roomLocalFootPoint, sortingOffset);
 
         if (normalizeLogicalRootScale && VisualRoot != transform)
@@ -410,17 +423,18 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             return;
         }
 
+        float appliedScale = currentScale * currentRoomStageScaleMultiplier;
         Vector3 baseScale = hasAuthoredVisualRootScale ? authoredVisualRootScale : Vector3.one;
         Vector3 projectedScale = new Vector3(
-            baseScale.x * currentScale,
-            baseScale.y * currentScale,
+            baseScale.x * appliedScale,
+            baseScale.y * appliedScale,
             baseScale.z);
 
         if (targetRoot == transform && normalizeLogicalRootScale)
         {
             projectedScale = new Vector3(
-                logicalRootScale.x * currentScale,
-                logicalRootScale.y * currentScale,
+                logicalRootScale.x * appliedScale,
+                logicalRootScale.y * appliedScale,
                 logicalRootScale.z);
         }
 
@@ -483,7 +497,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             return;
         }
 
-        float shadowScale = roomProfile.GetShadowScale(roomLocalFootPoint);
+        float shadowScale = roomProfile.GetShadowScale(roomLocalFootPoint) * currentRoomStageScaleMultiplier;
         contactShadowRoot.localScale = new Vector3(shadowScale, shadowScale, contactShadowRoot.localScale.z);
         float opacity = roomProfile.GetShadowOpacity(roomLocalFootPoint);
 
@@ -544,6 +558,85 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         return SameRoom(actorRoomState.CurrentRoomId, roomProfile.RoomId);
+    }
+
+    private float GetRoomStageScaleMultiplier()
+    {
+        if (IsAlreadyOwnedByRoomStage())
+        {
+            ClearRoomStageScaleReference();
+            return 1f;
+        }
+
+        if (cameraManager == null)
+        {
+            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
+        }
+
+        Camera mainCamera = Camera.main;
+        if (cameraManager == null || mainCamera == null)
+        {
+            ClearRoomStageScaleReference();
+            return 1f;
+        }
+
+        float depth = transform.position.z - mainCamera.transform.position.z;
+        if (depth <= 0.01f)
+        {
+            depth = Mathf.Abs(depth);
+        }
+
+        if (depth <= 0.01f)
+        {
+            depth = 10f;
+        }
+
+        if (!cameraManager.TryGetActiveRoomStageWorldPoint(
+            roomLocalFootPoint,
+            depth,
+            out _,
+            out float roomStageScale))
+        {
+            ClearRoomStageScaleReference();
+            return 1f;
+        }
+
+        string roomKey = GetCurrentProjectionRoomKey();
+        if (!hasRoomStageScaleReference ||
+            !SameRoom(roomStageScaleReferenceRoom, roomKey))
+        {
+            roomStageScaleReference = Mathf.Max(0.0001f, roomStageScale);
+            roomStageScaleReferenceRoom = roomKey;
+            hasRoomStageScaleReference = true;
+        }
+
+        return roomStageScale / Mathf.Max(0.0001f, roomStageScaleReference);
+    }
+
+    private bool IsAlreadyOwnedByRoomStage()
+    {
+        Transform targetRoot = VisualRoot;
+        return targetRoot != null &&
+            targetRoot.GetComponentInParent<RoomContentGroup>(true) != null;
+    }
+
+    private string GetCurrentProjectionRoomKey()
+    {
+        if (actorRoomState != null &&
+            !string.IsNullOrWhiteSpace(actorRoomState.CurrentRoomId))
+        {
+            return actorRoomState.CurrentRoomId;
+        }
+
+        return roomProfile != null ? roomProfile.RoomId : string.Empty;
+    }
+
+    private void ClearRoomStageScaleReference()
+    {
+        currentRoomStageScaleMultiplier = 1f;
+        hasRoomStageScaleReference = false;
+        roomStageScaleReference = 1f;
+        roomStageScaleReferenceRoom = string.Empty;
     }
 
     private static Color MultiplyColor(Color baseColor, Color tint)
