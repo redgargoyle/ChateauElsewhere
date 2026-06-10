@@ -85,6 +85,7 @@ public sealed class Chapter2PanicCharacterAnimation
     [SerializeField] private string characterId;
     [SerializeField] private string displayName;
     [SerializeField] private Sprite[] panicHandsUp = Array.Empty<Sprite>();
+    [SerializeField] private Sprite[] panicPop = Array.Empty<Sprite>();
     [SerializeField] private Sprite[] panicRunDown = Array.Empty<Sprite>();
     [SerializeField] private Sprite[] panicRunLeft = Array.Empty<Sprite>();
     [SerializeField] private Sprite[] panicRunRight = Array.Empty<Sprite>();
@@ -93,6 +94,7 @@ public sealed class Chapter2PanicCharacterAnimation
     public string CharacterId => characterId;
     public string DisplayName => displayName;
     public Sprite[] PanicHandsUp => panicHandsUp;
+    public Sprite[] PanicPop => panicPop;
     public Sprite[] PanicRunDown => panicRunDown;
     public Sprite[] PanicRunLeft => panicRunLeft;
     public Sprite[] PanicRunRight => panicRunRight;
@@ -102,6 +104,7 @@ public sealed class Chapter2PanicCharacterAnimation
         string nextCharacterId,
         string nextDisplayName,
         Sprite[] nextPanicHandsUp,
+        Sprite[] nextPanicPop,
         Sprite[] nextPanicRunDown,
         Sprite[] nextPanicRunLeft,
         Sprite[] nextPanicRunRight,
@@ -110,6 +113,7 @@ public sealed class Chapter2PanicCharacterAnimation
         characterId = nextCharacterId;
         displayName = nextDisplayName;
         panicHandsUp = nextPanicHandsUp ?? Array.Empty<Sprite>();
+        panicPop = nextPanicPop ?? Array.Empty<Sprite>();
         panicRunDown = nextPanicRunDown ?? Array.Empty<Sprite>();
         panicRunLeft = nextPanicRunLeft ?? Array.Empty<Sprite>();
         panicRunRight = nextPanicRunRight ?? Array.Empty<Sprite>();

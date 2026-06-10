@@ -19,6 +19,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField, Min(1f)] private float panicMoveSpeedPixels = 300f;
     [SerializeField, Min(0f)] private float jitterPixels = 3f;
     [SerializeField, Range(0f, 1f)] private float randomStopActionChance = 1f;
+    [SerializeField, Range(0f, 1f)] private float randomPopActionChance = 0.45f;
     [SerializeField] private PointClickPlayerMovement routePlanner;
     [SerializeField] private string routePlannerObjectName = "Player";
     [SerializeField] private Transform leftExitTarget;
@@ -275,18 +276,34 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 continue;
             }
 
-            Sprite[] frames = GetFrames(participant.Animation, PanicAction.PanicHandsUp);
+            PanicAction stopAction = GetRandomStopAction(participant.Animation);
+            Sprite[] frames = GetFrames(participant.Animation, stopAction);
 
             if (frames == null || frames.Length == 0)
             {
                 continue;
             }
 
-            participant.SetStopFramePhase(UnityEngine.Random.Range(0, frames.Length));
+            participant.SetStopAction(stopAction, UnityEngine.Random.Range(0, frames.Length));
             maxFrameCount = Mathf.Max(maxFrameCount, frames.Length);
         }
 
         return maxFrameCount;
+    }
+
+    private PanicAction GetRandomStopAction(Chapter2PanicCharacterAnimation animation)
+    {
+        Sprite[] popFrames = GetFrames(animation, PanicAction.PanicPop);
+
+        if (popFrames != null &&
+            popFrames.Length > 0 &&
+            randomPopActionChance > 0f &&
+            UnityEngine.Random.value < randomPopActionChance)
+        {
+            return PanicAction.PanicPop;
+        }
+
+        return PanicAction.PanicHandsUp;
     }
 
     private void ApplyRandomStopActionFrame(int frameIndex, float motionFrame)
@@ -300,7 +317,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 continue;
             }
 
-            participant.SetSprite(GetFrame(participant.Animation, PanicAction.PanicHandsUp, participant.GetStopClipFrameIndex(frameIndex)));
+            participant.SetSprite(GetFrame(participant.Animation, participant.CurrentStopAction, participant.GetStopClipFrameIndex(frameIndex)));
             participant.ApplyPanicVisualOffset(participant.GetPanicOffset(motionFrame, false, 0f), worldUnitsPerRoomPixel);
         }
     }
@@ -553,6 +570,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             case PanicAction.PanicHandsUp:
                 return animation.PanicHandsUp;
+            case PanicAction.PanicPop:
+                return animation.PanicPop;
             case PanicAction.PanicRunDown:
                 return animation.PanicRunDown;
             case PanicAction.PanicRunLeft:
@@ -705,6 +724,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     private enum PanicAction
     {
         PanicHandsUp,
+        PanicPop,
         PanicRunDown,
         PanicRunLeft,
         PanicRunRight,
@@ -762,10 +782,12 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private bool useRouteLogicalMotion;
         private Sprite currentPanicSprite;
         private PanicAction currentRunAction = PanicAction.PanicRunDown;
+        private PanicAction currentStopAction = PanicAction.PanicHandsUp;
 
         public Chapter2PanicCharacterAnimation Animation => animation;
         public bool HasSpriteTarget => spriteRenderer != null || image != null;
         public PanicAction CurrentRunAction => currentRunAction;
+        public PanicAction CurrentStopAction => currentStopAction;
 
         public static PanicParticipant Create(ActorRoomState nextActorState, Chapter2PanicCharacterAnimation nextAnimation)
         {
@@ -908,8 +930,9 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             return frameIndex + framePhaseOffset;
         }
 
-        public void SetStopFramePhase(int framePhase)
+        public void SetStopAction(PanicAction stopAction, int framePhase)
         {
+            currentStopAction = stopAction;
             stopFramePhaseOffset = Mathf.Max(0, framePhase);
         }
 
