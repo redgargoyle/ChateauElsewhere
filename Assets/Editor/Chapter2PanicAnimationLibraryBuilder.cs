@@ -14,6 +14,7 @@ public static class Chapter2PanicAnimationLibraryBuilder
     private const string OutputPath = OutputFolder + "/PanicAnimationLibrary.asset";
     private const float ClipFrameRate = 12f;
     private const string PanicHandsUpActionId = "panic_hands_up";
+    private const string PanicPopActionId = "panic_pop";
     private const string Guest7CharacterId = "LordAmbroseVeil";
     private const string Guest7RunDownFolder = "Assets/Art/Characters/guest7/guest7down";
     private const string Guest7RunLeftFolder = "Assets/Art/Characters/guest7/guest7left";
@@ -57,7 +58,9 @@ public static class Chapter2PanicAnimationLibraryBuilder
             }
 
             string handsUpFramesFolder = GetGuestActionFramesFolder(guestFolder, PanicHandsUpActionId);
+            string panicPopFramesFolder = GetGuestActionFramesFolder(guestFolder, PanicPopActionId);
             Sprite[] handsUpSprites = LoadSprites(handsUpFramesFolder);
+            Sprite[] panicPopSprites = LoadSprites(panicPopFramesFolder);
             Sprite[] runDownSprites = LoadRunSprites(characterId, "walk_down", 4);
             Sprite[] runLeftSprites = LoadRunSprites(characterId, "walk_left", 4);
             Sprite[] runRightSprites = LoadRunSprites(characterId, "walk_right", 4);
@@ -77,6 +80,17 @@ public static class Chapter2PanicAnimationLibraryBuilder
                 handsUpSprites,
                 false,
                 ClipFrameRate);
+
+            if (panicPopSprites.Length > 0)
+            {
+                CreateSpriteClip(
+                    $"{guestFolder.clipFolderName}_PanicPop",
+                    clipFolder,
+                    panicPopSprites,
+                    false,
+                    ClipFrameRate);
+            }
+
             CreateSpriteClip(
                 $"{guestFolder.clipFolderName}_PanicRunDown",
                 clipFolder,
@@ -107,6 +121,7 @@ public static class Chapter2PanicAnimationLibraryBuilder
                 characterId,
                 displayName,
                 handsUpSprites,
+                panicPopSprites,
                 runDownSprites,
                 runLeftSprites,
                 runRightSprites,

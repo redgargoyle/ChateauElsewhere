@@ -67,6 +67,7 @@ public class Chapter2RegressionTests
         new PanicActionSpec("panic_run_right", "panicRunRight", 4),
         new PanicActionSpec("panic_run_up", "panicRunUp", 4)
     };
+    private const string Guest1OptionalPanicPopAction = "panic_pop";
     private static readonly string[] RemovedPanicActions =
     {
         "panic_reaction_down",
@@ -271,11 +272,13 @@ public class Chapter2RegressionTests
         Assert.That(builderText, Does.Contain("Assets/Art/Characters/guest7/guest7right"));
         Assert.That(builderText, Does.Contain("LoadSpritesCycled"));
         Assert.That(builderText, Does.Contain("PanicHandsUpActionId"));
+        Assert.That(builderText, Does.Contain("PanicPopActionId"));
         Assert.That(builderText, Does.Contain("CreateSpriteClip"));
         Assert.That(builderText, Does.Not.Contain("SyncSpritesToGuestPanicFolder"));
         Assert.That(builderText, Does.Contain("throw new InvalidOperationException"), "The editor builder should fail when approved frames are incomplete.");
 
         Assert.That(libraryAssetText, Does.Contain(ReadGuid(Path.Combine(GuestArtRoot, "guest7", "panic", "panic_hands_up", "frames", "01_guest7_panic_hands_up.png.meta"))), "Guest 7 panic stop should use the generated guest-local hands-up sprites.");
+        Assert.That(libraryAssetText, Does.Contain(ReadGuid(Path.Combine(GuestArtRoot, "guest1", "panic", Guest1OptionalPanicPopAction, "frames", "01_guest1_panic_pop_cover_face.png.meta"))), "Guest 1 panic pop should use the generated Guest 1-style sprites.");
         Assert.That(libraryAssetText, Does.Not.Contain("panicReactionDown:"), "The rejected multi-action panic stop set should not be serialized.");
         Assert.That(libraryAssetText, Does.Not.Contain("panicShriekDown:"), "The rejected multi-action panic stop set should not be serialized.");
         Assert.That(libraryAssetText, Does.Not.Contain("panicTurnaround:"), "The rejected multi-action panic stop set should not be serialized.");
@@ -304,6 +307,7 @@ public class Chapter2RegressionTests
         Assert.That(routineText, Does.Contain("MoveParticipantsTowardAssignedTargets"));
         Assert.That(routineText, Does.Contain("PlayRandomStopActions"));
         Assert.That(panicText, Does.Contain("PanicAction.PanicHandsUp"));
+        Assert.That(panicText, Does.Contain("PanicAction.PanicPop"));
         Assert.That(panicText, Does.Contain("PanicAction.PanicRunDown"));
         Assert.That(panicText, Does.Contain("PanicAction.PanicRunLeft"));
         Assert.That(panicText, Does.Contain("PanicAction.PanicRunRight"));
@@ -312,8 +316,29 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("verticalRunDistanceScale = 0.55f"));
         Assert.That(panicText, Does.Contain("GetRandomCardinalDirection"));
         Assert.That(panicText, Does.Contain("CurrentRunAction"));
-        Assert.That(panicText, Does.Contain("SetStopFramePhase"));
+        Assert.That(panicText, Does.Contain("SetStopAction"));
         Assert.That(panicText, Does.Contain("randomStopActionChance = 1f"));
+        Assert.That(panicText, Does.Contain("randomPopActionChance = 0.45f"));
+        Assert.That(panicText, Does.Contain("ScriptedGuestNumber = 1"));
+        Assert.That(panicText, Does.Contain("useScriptedGuest1Panic = true"));
+        Assert.That(panicText, Does.Contain("scriptedGuestRunSeconds = 1f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestHoldSeconds = 1f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestRunDistancePixels = 500f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestMoveSpeedPixels = 560f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestWalkAnimationSpeed = 2f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestPanicSpriteScaleMultiplier = 1f"));
+        Assert.That(panicText, Does.Contain("RunScriptedGuest1PanicRoutine"));
+        Assert.That(panicText, Does.Contain("RunScriptedGuestDirectionalRun"));
+        Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Guest 1 scripted runs should lock to the requested left/right beat.");
+        Assert.That(panicText, Does.Contain("BeginScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Guest 1 run beats should use the existing Animator walk clips, not panic still sprites.");
+        Assert.That(panicText, Does.Contain("UpdateScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Guest 1 run beats should keep the Animator walking in the scripted direction.");
+        Assert.That(panicText, Does.Contain("StopScriptedAnimatorWalk(participant.CurrentRunAction)"), "Guest 1 panic holds should stop the Animator before showing one panic still.");
+        Assert.That(panicText, Does.Contain("SetSprite(panicSprite, scriptedGuestPanicSpriteScaleMultiplier)"), "Guest 1 panic stills should stay sized against her authored body scale.");
+        Assert.That(panicText, Does.Contain("HoldScriptedGuestPanicFrame"));
+        Assert.That(panicText, Does.Not.Contain("SetInputEnabled(false)"), "Guest panic must not lock the global point-click input/cursor state.");
+        Assert.That(panicText, Does.Contain("ChooseNearestScriptedGuestExitTarget"));
+        Assert.That(panicText, Does.Contain("IsControlledByScript"));
+        Assert.That(panicText, Does.Contain("HasSharedPanicParticipants"));
         Assert.That(panicText, Does.Not.Contain("RandomStopActions"));
         Assert.That(panicText, Does.Not.Contain("PanicAction.PanicShriekDown"));
         Assert.That(panicText, Does.Not.Contain("PanicAction.PanicReactionDown"));
@@ -361,6 +386,7 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("PointClickPlayerMovement routePlanner"), "Guest panic should reuse the butler movement route planner instead of inventing a separate floor system.");
         Assert.That(panicText, Does.Contain("FindRoutePlanner"), "Guest panic should resolve the named Player movement component for walkable-floor route queries.");
         Assert.That(panicText, Does.Contain("TryChooseRoutedRunTarget"), "Random panic movement should prefer butler route-space targets before falling back to raw room offsets.");
+        Assert.That(panicText, Does.Contain("TryChooseRoutedDirectionalRunTarget"), "Guest 1's scripted panic runs should also prefer butler route-space targets.");
         Assert.That(panicText, Does.Contain("leftExitTargetName = \"DoorTrigger_DrawingRoom_MusicRoom\""));
         Assert.That(panicText, Does.Contain("rightExitTargetName = \"DoorTrigger_DrawingRoom_GEH\""));
         Assert.That(panicText, Does.Contain("ChooseDoorExitTargets"));
@@ -372,6 +398,7 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("TryGetRoomPixelOffsetFromWorldPoint"), "Guest route positions should be converted back into RoomProjectedEntity room-local points.");
         Assert.That(panicText, Does.Contain("TryGetActiveRoomStageLocalPoint"), "Persistent projected guests should convert routed world points back through the active room stage.");
         Assert.That(panicText, Does.Contain("GetExitFootWorldPosition"), "Guests should run toward the door floor, not the center of the door trigger.");
+        Assert.That(panicText, Does.Contain("GetExitWaitTimeoutSeconds"), "Guest search handoff should wait long enough for Guest 1's scripted panic sequence to finish.");
         Assert.That(panicText, Does.Contain("StopPanic()"), "The exit beat should restore normal sprites/animators before guest search stages actors at hide anchors.");
 
         string movementText = File.ReadAllText(PointClickPlayerMovementPath);
@@ -419,6 +446,27 @@ public class Chapter2RegressionTests
             Assert.That(clipText, Does.Contain("classID: 212"), $"{clipPath} should animate SpriteRenderer sprites like normal character clips.");
             Assert.That(clipText, Does.Not.Contain("classID: 114"), $"{clipPath} should not animate an extra UI Image curve over the SpriteRenderer frames.");
             Assert.That(clipText, Does.Contain(ReadGuid(firstGuestFrameMeta)), $"{clipPath} should reference generated guest-local frame sprites.");
+
+            if (characterIndex == 0)
+            {
+                string popFramesFolder = Path.Combine(GuestArtRoot, "guest1", "panic", Guest1OptionalPanicPopAction, "frames");
+                Assert.That(Directory.Exists(popFramesFolder), Is.True, "Guest 1 should have optional panic_pop frames.");
+                Assert.That(Directory.GetFiles(popFramesFolder, "*.png").Length, Is.EqualTo(8), "Guest 1 should have exactly eight panic_pop frames.");
+
+                string firstPopFrameMeta = Path.Combine(popFramesFolder, "01_guest1_panic_pop_cover_face.png.meta");
+                Assert.That(File.Exists(firstPopFrameMeta), Is.True, "Guest 1 panic_pop should have imported sprite metadata.");
+                Assert.That(assetText, Does.Contain("panicPop:"), "Runtime asset should serialize optional panicPop arrays.");
+                Assert.That(assetText, Does.Contain(ReadGuid(firstPopFrameMeta)), "Runtime asset should reference Guest 1 panic_pop sprites.");
+
+                string popClipPath = Path.Combine(Chapter2PanicClipRoot, "Guest01_Lady", "Guest01_Lady_PanicPop.anim");
+                Assert.That(File.Exists(popClipPath), Is.True, "Guest 1 should have one saved PanicPop AnimationClip.");
+
+                string popClipText = File.ReadAllText(popClipPath);
+                Assert.That(popClipText, Does.Contain("m_SampleRate: 12"), $"{popClipPath} should play at the panic frame rate.");
+                Assert.That(popClipText, Does.Contain("classID: 212"), $"{popClipPath} should animate SpriteRenderer sprites like normal character clips.");
+                Assert.That(popClipText, Does.Not.Contain("classID: 114"), $"{popClipPath} should not animate an extra UI Image curve over the SpriteRenderer frames.");
+                Assert.That(popClipText, Does.Contain(ReadGuid(firstPopFrameMeta)), $"{popClipPath} should reference generated Guest 1 panic_pop sprites.");
+            }
 
             string[] runClipSuffixes =
             {
