@@ -4,8 +4,9 @@ Branch: `asset-library/generated-sprite-database`
 
 Current main cutout sprites:
 - Guests: 10
-- Main sprite PNGs: 160
-- Main sprites per guest: 16
+- Main sprite PNGs: 184
+- Base main sprites per guest: 16
+- Focused room-perspective additions: 6 extra sprites each for guests 1-4
 - Alpha verification: transparent corners passed for all main sprites
 
 Guest folders:
@@ -25,9 +26,22 @@ Category coverage per guest:
 - `Surprised`: 2 sprites
 - `Panic`: 2 sprites
 - `Sitting`: 2 sprites
-- `DiningRoomChair`: 2 sprites
-- `DrawingRoomCouch`: 2 sprites
+- `DiningRoomChair`: 2 sprites, plus room-perspective overlay variants for focused guests
+- `DrawingRoomCouch`: 2 sprites, plus room-perspective overlay variants for focused guests
 - `Walking`: 4 sprites
+
+Focused guest 1-4 room-perspective pass:
+- `LordAmbroseVeil`: couch idle/startled/panic and dining idle/startled/panic
+- `LadySabineMarrow`: couch idle/startled/panic and dining idle/startled/panic
+- `CountessElowenDusk`: couch idle/startled/panic and dining idle/startled/panic
+- `MisterFlorianKnell`: couch idle/startled/panic and dining idle/startled/panic
+
+Room-perspective pass rules:
+- Keep furniture aligned to existing object perspective: the purple drawing-room couch
+  should remain low, wide, tufted, and slightly top-down; the dining-table/chair variants
+  should match the burgundy/gold chair and lavender tablecloth perspective.
+- Keep each row's lower-body/furniture placement stable, with expression and upper-body
+  changes doing most of the animation work.
 
 Raw generated sheets:
 - Each guest has `_ContactSheets` for original chroma sheets, alpha sheets, and per-sheet manifests.

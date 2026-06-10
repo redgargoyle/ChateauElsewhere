@@ -57,6 +57,18 @@ POSE_PRESETS = {
             ("Walking", "walk_side_hurried_right"),
         ],
     ),
+    "furniture_overlay": (
+        3,
+        2,
+        [
+            ("DrawingRoomCouch", "drawing_room_couch_roomstyle_idle"),
+            ("DrawingRoomCouch", "drawing_room_couch_roomstyle_startled"),
+            ("DrawingRoomCouch", "drawing_room_couch_roomstyle_panic_cover_face"),
+            ("DiningRoomChair", "dining_room_chair_roomstyle_idle"),
+            ("DiningRoomChair", "dining_room_chair_roomstyle_startled"),
+            ("DiningRoomChair", "dining_room_chair_roomstyle_panic_cover_face"),
+        ],
+    ),
 }
 
 
