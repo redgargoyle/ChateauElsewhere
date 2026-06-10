@@ -56,15 +56,7 @@ MonoBehaviour:
     - {fileID: 21300000, guid: ffcfbf0b681c2a1598a1ec55e06dd2ac, type: 3}
     - {fileID: 21300000, guid: 2a8df33e86b8fe10fec004724e5f0da7, type: 3}
     - {fileID: 21300000, guid: d0796a62cbc89280ad896bf3d6ab65a0, type: 3}
-    panicPop:
-    - {fileID: 21300000, guid: 063f215141764d3f9171f2f62cbc1500, type: 3}
-    - {fileID: 21300000, guid: fe9dd536ce394fdcb32bb931b87d942d, type: 3}
-    - {fileID: 21300000, guid: c11e551aec6a4a2ca4084d6278329e5b, type: 3}
-    - {fileID: 21300000, guid: 02fa5464c10745a0b5103266ac2de4cf, type: 3}
-    - {fileID: 21300000, guid: b687dc168f9a4858bdc8d243d20164a4, type: 3}
-    - {fileID: 21300000, guid: 66a54ee7c8ab47b3adad9021baf64e03, type: 3}
-    - {fileID: 21300000, guid: 6a59e8c623524026a7ded8fcafa2ccd1, type: 3}
-    - {fileID: 21300000, guid: f2ed64ff394b4bc0a4248d2fe2124d3b, type: 3}
+    panicPop: []
     panicRunDown:
     - {fileID: 1025528158127574581, guid: e30589688bb23e233a36b7ea98ed7b5f, type: 3}
     - {fileID: -1837137445908433469, guid: 1a97ae1bfca3f7a9890386fea28f064a, type: 3}

@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public sealed class Chapter2GuestPanicController : MonoBehaviour
 {
     private const string ClickTargetName = "Ch2_ClickTarget";
-    private static readonly int[] ScriptedGuestNumbers = { 1, 2 };
+    private const int ScriptedGuestNumber = 1;
 
     [SerializeField] private Chapter2GuestSearchController guestSearch;
     [SerializeField] private Chapter2PanicAnimationLibrary animationLibrary;
@@ -43,12 +43,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField] private bool logMissingFrames = true;
 
     private readonly List<PanicParticipant> participants = new List<PanicParticipant>();
-    private readonly List<Coroutine> scriptedGuestRoutines = new List<Coroutine>();
     private Coroutine panicRoutine;
-    private int runningScriptedGuestRoutineCount;
+    private Coroutine scriptedGuestRoutine;
     private bool isRunning;
 
-    public bool IsRunning => isRunning || panicRoutine != null || runningScriptedGuestRoutineCount > 0;
+    public bool IsRunning => isRunning || panicRoutine != null || scriptedGuestRoutine != null;
 
     public Coroutine BeginPanic()
     {
@@ -59,8 +58,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         ResolveReferences();
         participants.Clear();
-        scriptedGuestRoutines.Clear();
-        runningScriptedGuestRoutineCount = 0;
         BuildParticipants(participants);
 
         if (participants.Count == 0)
@@ -70,7 +67,13 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         isRunning = true;
 
-        StartScriptedGuestPanicRoutines();
+        PanicParticipant scriptedGuest = FindScriptedGuestParticipant();
+
+        if (scriptedGuest != null)
+        {
+            scriptedGuest.SetControlledByScript(true);
+            scriptedGuestRoutine = StartCoroutine(RunScriptedGuest1PanicRoutine(scriptedGuest));
+        }
 
         ChooseRandomRunTargets();
         ApplyAssignedRunFrame(0, 0f, true);
@@ -253,50 +256,36 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
     }
 
-    private void StartScriptedGuestPanicRoutines()
+    private PanicParticipant FindScriptedGuestParticipant()
     {
         if (!useScriptedGuest1Panic)
         {
-            return;
+            return null;
         }
 
         for (int i = 0; i < participants.Count; i++)
         {
             PanicParticipant participant = participants[i];
 
-            if (participant == null || !IsScriptedGuestNumber(participant.GuestNumber))
+            if (participant != null && participant.GuestNumber == ScriptedGuestNumber)
             {
-                continue;
-            }
+                Sprite[] frames = GetFrames(participant.Animation, PanicAction.PanicPop);
 
-            Sprite[] frames = GetFrames(participant.Animation, PanicAction.PanicPop);
+                if (frames != null && frames.Length >= 8)
+                {
+                    return participant;
+                }
 
-            if (frames != null && frames.Length >= 8)
-            {
-                participant.SetControlledByScript(true);
-                runningScriptedGuestRoutineCount++;
-                scriptedGuestRoutines.Add(StartCoroutine(RunScriptedGuestPanicRoutine(participant)));
-                continue;
-            }
+                if (logMissingFrames)
+                {
+                    Debug.LogError("Chapter 2 scripted Guest 1 panic needs eight panic_pop frames.", this);
+                }
 
-            if (logMissingFrames)
-            {
-                Debug.LogError($"Chapter 2 scripted Guest {participant.GuestNumber} panic needs eight panic_pop frames.", this);
-            }
-        }
-    }
-
-    private static bool IsScriptedGuestNumber(int guestNumber)
-    {
-        for (int i = 0; i < ScriptedGuestNumbers.Length; i++)
-        {
-            if (ScriptedGuestNumbers[i] == guestNumber)
-            {
-                return true;
+                return null;
             }
         }
 
-        return false;
+        return null;
     }
 
     private float GetExitWaitTimeoutSeconds()
@@ -325,29 +314,21 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             panicRoutine = null;
         }
 
-        if (stopScriptedGuest)
+        if (stopScriptedGuest && scriptedGuestRoutine != null)
         {
-            for (int i = 0; i < scriptedGuestRoutines.Count; i++)
-            {
-                if (scriptedGuestRoutines[i] != null)
-                {
-                    StopCoroutine(scriptedGuestRoutines[i]);
-                }
-            }
-
-            scriptedGuestRoutines.Clear();
-            runningScriptedGuestRoutineCount = 0;
+            StopCoroutine(scriptedGuestRoutine);
+            scriptedGuestRoutine = null;
         }
     }
 
-    private IEnumerator RunScriptedGuestPanicRoutine(PanicParticipant participant)
+    private IEnumerator RunScriptedGuest1PanicRoutine(PanicParticipant participant)
     {
         Sprite[] panicFrames = GetFrames(participant.Animation, PanicAction.PanicPop);
 
         if (panicFrames == null || panicFrames.Length < 8)
         {
             participant.SetControlledByScript(false);
-            FinishScriptedGuestPanicRoutine();
+            scriptedGuestRoutine = null;
 
             if (panicRoutine == null)
             {
@@ -372,17 +353,12 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             yield return RunScriptedGuestToExit(participant);
         }
 
-        FinishScriptedGuestPanicRoutine();
+        scriptedGuestRoutine = null;
 
         if (panicRoutine == null)
         {
             isRunning = false;
         }
-    }
-
-    private void FinishScriptedGuestPanicRoutine()
-    {
-        runningScriptedGuestRoutineCount = Mathf.Max(0, runningScriptedGuestRoutineCount - 1);
     }
 
     private IEnumerator RunScriptedGuestDirectionalRun(
@@ -602,7 +578,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         panicRoutine = null;
 
-        if (runningScriptedGuestRoutineCount <= 0)
+        if (scriptedGuestRoutine == null)
         {
             isRunning = false;
         }
