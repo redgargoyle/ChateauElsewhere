@@ -15,6 +15,8 @@ public static class Chapter2PanicAnimationLibraryBuilder
     private const float ClipFrameRate = 12f;
     private const string PanicHandsUpActionId = "panic_hands_up";
     private const string PanicPopActionId = "panic_pop";
+    private const string Guest2CharacterId = "ButlerGuest";
+    private const string Guest2PanicPopFolder = "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610";
     private const string Guest7CharacterId = "LordAmbroseVeil";
     private const string Guest7RunDownFolder = "Assets/Art/Characters/guest7/guest7down";
     private const string Guest7RunLeftFolder = "Assets/Art/Characters/guest7/guest7left";
@@ -58,7 +60,7 @@ public static class Chapter2PanicAnimationLibraryBuilder
             }
 
             string handsUpFramesFolder = GetGuestActionFramesFolder(guestFolder, PanicHandsUpActionId);
-            string panicPopFramesFolder = GetGuestActionFramesFolder(guestFolder, PanicPopActionId);
+            string panicPopFramesFolder = GetGuestPanicPopFramesFolder(characterId, guestFolder);
             Sprite[] handsUpSprites = LoadSprites(handsUpFramesFolder);
             Sprite[] panicPopSprites = LoadSprites(panicPopFramesFolder);
             Sprite[] runDownSprites = LoadRunSprites(characterId, "walk_down", 4);
@@ -174,6 +176,13 @@ public static class Chapter2PanicAnimationLibraryBuilder
         return $"{GuestArtRoot}/{guestFolder.guestFolder}/panic/{actionId}/frames";
     }
 
+    private static string GetGuestPanicPopFramesFolder(string characterId, GuestFolderSpec guestFolder)
+    {
+        return string.Equals(characterId, Guest2CharacterId, StringComparison.Ordinal)
+            ? Guest2PanicPopFolder
+            : GetGuestActionFramesFolder(guestFolder, PanicPopActionId);
+    }
+
     private static Sprite[] LoadRunSprites(string characterId, string direction, int expectedFrameCount)
     {
         string framesFolder = $"{AnimationLibraryRoot}/{characterId}/reference/full_body/{direction}";
@@ -227,7 +236,8 @@ public static class Chapter2PanicAnimationLibraryBuilder
         }
 
         string[] paths = Directory.GetFiles(framesFolder, "*.png")
-            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(GetSpriteFrameSortNumber)
+            .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
             .Select(path => path.Replace('\\', '/'))
             .ToArray();
 
@@ -256,6 +266,33 @@ public static class Chapter2PanicAnimationLibraryBuilder
         }
 
         return sprites.ToArray();
+    }
+
+    private static int GetSpriteFrameSortNumber(string path)
+    {
+        string name = Path.GetFileNameWithoutExtension(path);
+
+        for (int i = 0; i < name.Length; i++)
+        {
+            if (!char.IsDigit(name[i]))
+            {
+                continue;
+            }
+
+            int start = i;
+
+            while (i + 1 < name.Length && char.IsDigit(name[i + 1]))
+            {
+                i++;
+            }
+
+            if (int.TryParse(name.Substring(start, i - start + 1), out int number))
+            {
+                return number;
+            }
+        }
+
+        return int.MaxValue;
     }
 
     private static AnimationClip CreateSpriteClip(
