@@ -27,6 +27,7 @@ SPRITE_CATEGORIES = {
     "Panic",
     "Sitting",
     "Surprised",
+    "Transitions",
     "Walking",
 }
 
