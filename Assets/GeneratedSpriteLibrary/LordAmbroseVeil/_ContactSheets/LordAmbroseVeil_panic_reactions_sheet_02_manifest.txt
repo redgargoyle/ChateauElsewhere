@@ -1,0 +1,10 @@
+guest=LordAmbroseVeil
+source=C:\Users\wimpy\Desktop\ChateauElsewhere\tmp\imagegen\LordAmbroseVeil_panic_reactions_02_source.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\LordAmbroseVeil\_ContactSheets\LordAmbroseVeil_panic_reactions_sheet_02_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\LordAmbroseVeil\_ContactSheets\LordAmbroseVeil_panic_reactions_sheet_02_alpha.png
+Idle/LordAmbroseVeil_idle_anxious_clutching_02.png: 224x488, transparent_corners=True, visible_pixels=40117
+Surprised/LordAmbroseVeil_surprised_hand_to_mouth_gasp_02.png: 411x489, transparent_corners=True, visible_pixels=39436
+Panic/LordAmbroseVeil_panic_recoil_scream_02.png: 344x468, transparent_corners=True, visible_pixels=48134
+Sitting/LordAmbroseVeil_sitting_hunched_shaken_02.png: 248x417, transparent_corners=True, visible_pixels=36552
+DiningRoomChair/LordAmbroseVeil_dining_room_chair_roomstyle_braced_panic_02.png: 520x474, transparent_corners=True, visible_pixels=91659
+DrawingRoomCouch/LordAmbroseVeil_drawing_room_couch_roomstyle_face_covered_02.png: 475x442, transparent_corners=True, visible_pixels=112624

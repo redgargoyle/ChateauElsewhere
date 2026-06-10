@@ -1,0 +1,10 @@
+guest=LadySabineMarrow
+source=C:\Users\wimpy\Desktop\ChateauElsewhere\tmp\imagegen\LadySabineMarrow_panic_reactions_02_source.png
+chroma_sheet=Assets\GeneratedSpriteLibrary\LadySabineMarrow\_ContactSheets\LadySabineMarrow_panic_reactions_sheet_02_chroma.png
+transparent_sheet=Assets\GeneratedSpriteLibrary\LadySabineMarrow\_ContactSheets\LadySabineMarrow_panic_reactions_sheet_02_alpha.png
+Idle/LadySabineMarrow_idle_anxious_clutching_02.png: 236x484, transparent_corners=True, visible_pixels=45185
+Surprised/LadySabineMarrow_surprised_hand_to_mouth_gasp_02.png: 242x533, transparent_corners=True, visible_pixels=45314
+Panic/LadySabineMarrow_panic_recoil_scream_02.png: 327x463, transparent_corners=True, visible_pixels=53485
+Sitting/LadySabineMarrow_sitting_hunched_shaken_02.png: 325x420, transparent_corners=True, visible_pixels=49853
+DiningRoomChair/LadySabineMarrow_dining_room_chair_roomstyle_braced_panic_02.png: 510x462, transparent_corners=True, visible_pixels=91555
+DrawingRoomCouch/LadySabineMarrow_drawing_room_couch_roomstyle_face_covered_02.png: 464x432, transparent_corners=True, visible_pixels=110041

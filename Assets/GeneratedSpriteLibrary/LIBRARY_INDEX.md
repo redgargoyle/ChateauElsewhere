@@ -4,9 +4,11 @@ Branch: `asset-library/generated-sprite-database`
 
 Current main cutout sprites:
 - Guests: 10
-- Main sprite PNGs: 184
+- Main sprite PNGs: 214
 - Base main sprites per guest: 16
 - Focused room-perspective additions: 6 extra sprites each for guests 1-4
+- Focused panic-reaction additions: 6 extra sprites each for guests 1-4
+- Baron Hector expanded additions: 6 extra sprite candidates
 - Alpha verification: transparent corners passed for all main sprites
 
 Guest folders:
@@ -35,6 +37,28 @@ Focused guest 1-4 room-perspective pass:
 - `LadySabineMarrow`: couch idle/startled/panic and dining idle/startled/panic
 - `CountessElowenDusk`: couch idle/startled/panic and dining idle/startled/panic
 - `MisterFlorianKnell`: couch idle/startled/panic and dining idle/startled/panic
+
+Focused guest 1-4 panic-reaction pass:
+- `LordAmbroseVeil`: anxious idle, hand-to-mouth shock, scream recoil, shaken sitting,
+  dining-chair braced panic, and couch face-covered panic
+- `LadySabineMarrow`: anxious idle, hand-to-mouth shock, scream recoil, shaken sitting,
+  dining-chair braced panic, and couch face-covered panic
+- `CountessElowenDusk`: anxious idle, hand-to-mouth shock, scream recoil, shaken sitting,
+  dining-chair braced panic, and couch face-covered panic
+- `MisterFlorianKnell`: anxious idle, hand-to-mouth shock, scream recoil, shaken sitting,
+  dining-chair braced panic, and couch face-covered panic
+
+Current main sprite counts:
+- `BaronHectorGlass`: 22
+- `ButlerGuest`: 16
+- `CountessElowenDusk`: 28
+- `Lady`: 16
+- `LadySabineMarrow`: 28
+- `LordAmbroseVeil`: 28
+- `MadameCoralieThread`: 16
+- `MissIsoldeWren`: 16
+- `MisterFlorianKnell`: 28
+- `ProfessorLucienVale`: 16
 
 Room-perspective pass rules:
 - Keep furniture aligned to existing object perspective: the purple drawing-room couch

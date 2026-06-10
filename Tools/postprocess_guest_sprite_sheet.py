@@ -69,6 +69,18 @@ POSE_PRESETS = {
             ("DiningRoomChair", "dining_room_chair_roomstyle_panic_cover_face"),
         ],
     ),
+    "panic_reactions": (
+        3,
+        2,
+        [
+            ("Idle", "idle_anxious_clutching"),
+            ("Surprised", "surprised_hand_to_mouth_gasp"),
+            ("Panic", "panic_recoil_scream"),
+            ("Sitting", "sitting_hunched_shaken"),
+            ("DiningRoomChair", "dining_room_chair_roomstyle_braced_panic"),
+            ("DrawingRoomCouch", "drawing_room_couch_roomstyle_face_covered"),
+        ],
+    ),
 }
 
 
