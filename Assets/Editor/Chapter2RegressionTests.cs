@@ -314,7 +314,10 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("PanicAction.PanicRunUp"));
         Assert.That(panicText, Does.Contain("panicRoamRadiusPixels = 190f"));
         Assert.That(panicText, Does.Contain("verticalRunDistanceScale = 0.55f"));
-        Assert.That(panicText, Does.Contain("GetRandomCardinalDirection"));
+        Assert.That(panicText, Does.Contain("TryBuildReachableWorldPath"));
+        Assert.That(panicText, Does.Contain("currentRouteOffsets"));
+        Assert.That(panicText, Does.Contain("GetRandomScatterDirection"));
+        Assert.That(panicText, Does.Not.Contain("GetRandomCardinalDirection"));
         Assert.That(panicText, Does.Contain("CurrentRunAction"));
         Assert.That(panicText, Does.Contain("SetStopAction"));
         Assert.That(panicText, Does.Contain("randomStopActionChance = 1f"));

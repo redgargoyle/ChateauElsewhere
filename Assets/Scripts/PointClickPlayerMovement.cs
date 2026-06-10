@@ -664,6 +664,52 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return MoveLogicalPositionToward(currentPosition, targetPosition, maxDistance);
 	}
 
+	public bool TryBuildReachableWorldPath(
+		Vector2 startWorldPoint,
+		Vector2 targetWorldPoint,
+		bool clampToWalkableArea,
+		List<Vector2> worldPath)
+	{
+		if (worldPath == null)
+			return false;
+
+		worldPath.Clear();
+
+		if (!isReady)
+			return false;
+
+		RefreshWalkableFloorForCurrentRoom();
+		UpdateVisualOffset(Camera.main);
+
+		Vector2 startLogicalPoint = WalkableWorldToLogicalPoint(startWorldPoint);
+		Vector2 targetLogicalPoint = WalkableWorldToLogicalPoint(targetWorldPoint);
+		Vector2 destinationLogicalPoint = targetLogicalPoint;
+		bool exactPointWalkable = IsPointWalkable(targetLogicalPoint);
+
+		if (!exactPointWalkable && clampToWalkableArea)
+		{
+			destinationLogicalPoint = ClampToWalkableArea(targetLogicalPoint, startLogicalPoint);
+		}
+
+		if (clampToWalkableArea && !IsPointWalkable(destinationLogicalPoint))
+		{
+			destinationLogicalPoint = ClampToWalkableArea(destinationLogicalPoint, startLogicalPoint);
+		}
+
+		if (!TryBuildMovementPath(startLogicalPoint, destinationLogicalPoint, movementQueryPath) ||
+			movementQueryPath.Count == 0)
+		{
+			return false;
+		}
+
+		for (int i = 0; i < movementQueryPath.Count; i++)
+		{
+			worldPath.Add(LogicalToWalkableWorldPoint(movementQueryPath[i]));
+		}
+
+		return worldPath.Count > 0;
+	}
+
 	private bool TryEvaluateMovementTarget(Vector2 targetPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)
 	{
 		return TryEvaluateMovementTarget(targetPosition, clampToWalkableArea, Vector2.zero, out movementQuery);
