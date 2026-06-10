@@ -4,7 +4,7 @@ Branch: `asset-library/generated-sprite-database`
 
 Current main cutout sprites:
 - Guests: 10
-- Main sprite PNGs: 328
+- Main sprite PNGs: 568
 - Base main sprites per guest: 16
 - Focused room-perspective additions: 6 extra sprites each for guests 1-4
 - Focused panic-reaction additions: 6 extra sprites each for guests 1-4
@@ -13,11 +13,12 @@ Current main cutout sprites:
 - Original-style additions from parallel generation: Baron Hector +10, Lady Sabine +10,
   Lord Ambrose +10, Madame Coralie +10
 - Transition additions: 4 stand-to-sit frames for each guest
+- Shake/sweat additions: 12 shaking frames and 12 sweating frames for each guest
 - Alpha verification: transparent corners passed for all main sprites
 
 Style-matched mirror:
 - `Assets/GeneratedSpriteLibraryStyleMatched` contains non-destructive filtered copies
-  of all 328 main sprite PNGs.
+  of all 568 main sprite PNGs.
 - The filter uses `Assets/Art/Final Images (DO NOT EDIT)/drawing room 2.png` as the
   primary read-only style target, with original `Assets/AnimationLibrary/*/reference/full_body`
   sprites kept as additional read-only context.
@@ -46,6 +47,8 @@ Category coverage per guest:
 - `DrawingRoomCouch`: 2 sprites, plus room-perspective overlay variants for focused guests
 - `Walking`: 4 sprites
 - `Transitions`: 4 stand-to-sit sprites
+- `Shaking`: 6 standing panic-shake sprites and 6 seated panic-shake sprites
+- `Sweating`: 6 standing sweaty-panic sprites and 6 seated sweaty-panic sprites
 
 Focused guest 1-4 room-perspective pass:
 - `LordAmbroseVeil`: couch idle/startled/panic and dining idle/startled/panic
@@ -64,16 +67,26 @@ Focused guest 1-4 panic-reaction pass:
   dining-chair braced panic, and couch face-covered panic
 
 Current main sprite counts:
-- `BaronHectorGlass`: 40
-- `ButlerGuest`: 20
-- `CountessElowenDusk`: 32
-- `Lady`: 20
-- `LadySabineMarrow`: 52
-- `LordAmbroseVeil`: 52
-- `MadameCoralieThread`: 40
-- `MissIsoldeWren`: 20
-- `MisterFlorianKnell`: 32
-- `ProfessorLucienVale`: 20
+- `BaronHectorGlass`: 64
+- `ButlerGuest`: 44
+- `CountessElowenDusk`: 56
+- `Lady`: 44
+- `LadySabineMarrow`: 76
+- `LordAmbroseVeil`: 76
+- `MadameCoralieThread`: 64
+- `MissIsoldeWren`: 44
+- `MisterFlorianKnell`: 56
+- `ProfessorLucienVale`: 44
+
+Shake/sweat pass rules:
+- `Shaking/*_shaking_standing_panic_01..06.png` and
+  `Shaking/*_shaking_seated_panic_01..06.png` are whole-sprite tremble
+  variants generated from existing panic and sitting cutouts.
+- `Sweating/*_sweating_standing_panic_01..06.png` and
+  `Sweating/*_sweating_seated_panic_01..06.png` add small watercolor-style
+  perspiration glints while preserving the original character cutout.
+- These frames do not use drawn-on replacement arms, hands, faces, or body
+  construction overlays.
 
 Transition pass rules:
 - `Transitions/*_transition_stand_to_sit_01..04.png` are non-destructive
