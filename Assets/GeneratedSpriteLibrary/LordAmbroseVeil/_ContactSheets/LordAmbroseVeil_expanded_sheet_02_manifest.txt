@@ -1,0 +1,10 @@
+guest=LordAmbroseVeil
+source=/home/hamzak/.codex/generated_images/019ea93f-7ddf-7831-8128-fe51770d5918/ig_0a13604d0c6e99a0016a28bf696aa0819a82b9db2cc583960f.png
+chroma_sheet=Assets/GeneratedSpriteLibrary/LordAmbroseVeil/_ContactSheets/LordAmbroseVeil_expanded_sheet_02_chroma.png
+transparent_sheet=Assets/GeneratedSpriteLibrary/LordAmbroseVeil/_ContactSheets/LordAmbroseVeil_expanded_sheet_02_alpha.png
+Idle/LordAmbroseVeil_idle_tense_three_quarter_02.png: 207x519, transparent_corners=True, visible_pixels=49342
+Surprised/LordAmbroseVeil_surprised_hand_to_chest_02.png: 295x539, transparent_corners=True, visible_pixels=53058
+Panic/LordAmbroseVeil_panic_scream_hands_up_02.png: 486x538, transparent_corners=True, visible_pixels=60026
+Sitting/LordAmbroseVeil_sitting_tense_hands_clasped_02.png: 381x394, transparent_corners=True, visible_pixels=54891
+DiningRoomChair/LordAmbroseVeil_dining_room_chair_startled_02.png: 515x478, transparent_corners=True, visible_pixels=90533
+DrawingRoomCouch/LordAmbroseVeil_drawing_room_couch_cover_face_02.png: 506x492, transparent_corners=True, visible_pixels=123970

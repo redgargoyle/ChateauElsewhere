@@ -1,0 +1,8 @@
+guest=LadySabineMarrow
+source=/home/hamzak/.codex/generated_images/019ea93f-7ddf-7831-8128-fe51770d5918/ig_0a13604d0c6e99a0016a28c144dd40819ab291cdbcc61560e9.png
+chroma_sheet=Assets/GeneratedSpriteLibrary/LadySabineMarrow/_ContactSheets/LadySabineMarrow_hurried_sheet_01_chroma.png
+transparent_sheet=Assets/GeneratedSpriteLibrary/LadySabineMarrow/_ContactSheets/LadySabineMarrow_hurried_sheet_01_alpha.png
+Walking/LadySabineMarrow_walk_front_hurried_left_01.png: 360x590, transparent_corners=True, visible_pixels=101652
+Walking/LadySabineMarrow_walk_front_hurried_right_01.png: 359x603, transparent_corners=True, visible_pixels=99393
+Walking/LadySabineMarrow_walk_side_hurried_left_01.png: 473x582, transparent_corners=True, visible_pixels=111919
+Walking/LadySabineMarrow_walk_side_hurried_right_01.png: 448x568, transparent_corners=True, visible_pixels=106098

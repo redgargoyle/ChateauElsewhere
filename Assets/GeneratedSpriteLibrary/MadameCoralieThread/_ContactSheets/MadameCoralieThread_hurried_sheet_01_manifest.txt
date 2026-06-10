@@ -1,0 +1,8 @@
+guest=MadameCoralieThread
+source=/home/hamzak/.codex/generated_images/019ea93f-7ddf-7831-8128-fe51770d5918/ig_0a13604d0c6e99a0016a28c2d17790819a95a4b6f07827fbff.png
+chroma_sheet=Assets/GeneratedSpriteLibrary/MadameCoralieThread/_ContactSheets/MadameCoralieThread_hurried_sheet_01_chroma.png
+transparent_sheet=Assets/GeneratedSpriteLibrary/MadameCoralieThread/_ContactSheets/MadameCoralieThread_hurried_sheet_01_alpha.png
+Walking/MadameCoralieThread_walk_front_hurried_left_01.png: 378x605, transparent_corners=True, visible_pixels=94910
+Walking/MadameCoralieThread_walk_front_hurried_right_01.png: 431x595, transparent_corners=True, visible_pixels=98738
+Walking/MadameCoralieThread_walk_side_hurried_left_01.png: 484x556, transparent_corners=True, visible_pixels=107577
+Walking/MadameCoralieThread_walk_side_hurried_right_01.png: 485x535, transparent_corners=True, visible_pixels=105802
