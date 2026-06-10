@@ -4,11 +4,12 @@ Branch: `asset-library/generated-sprite-database`
 
 Current main cutout sprites:
 - Guests: 10
-- Main sprite PNGs: 214
+- Main sprite PNGs: 248
 - Base main sprites per guest: 16
 - Focused room-perspective additions: 6 extra sprites each for guests 1-4
 - Focused panic-reaction additions: 6 extra sprites each for guests 1-4
-- Baron Hector expanded additions: 6 extra sprite candidates
+- Merged expanded/hurried additions: Baron Hector +4 hurried walking, Lord Ambrose +10,
+  Lady Sabine +10, Madame Coralie +10
 - Alpha verification: transparent corners passed for all main sprites
 
 Guest folders:
@@ -49,13 +50,13 @@ Focused guest 1-4 panic-reaction pass:
   dining-chair braced panic, and couch face-covered panic
 
 Current main sprite counts:
-- `BaronHectorGlass`: 22
+- `BaronHectorGlass`: 26
 - `ButlerGuest`: 16
 - `CountessElowenDusk`: 28
 - `Lady`: 16
-- `LadySabineMarrow`: 28
-- `LordAmbroseVeil`: 28
-- `MadameCoralieThread`: 16
+- `LadySabineMarrow`: 38
+- `LordAmbroseVeil`: 38
+- `MadameCoralieThread`: 26
 - `MissIsoldeWren`: 16
 - `MisterFlorianKnell`: 28
 - `ProfessorLucienVale`: 16
