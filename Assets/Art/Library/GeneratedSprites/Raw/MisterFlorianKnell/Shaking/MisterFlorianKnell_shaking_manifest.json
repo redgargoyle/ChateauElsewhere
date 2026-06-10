@@ -1,0 +1,25 @@
+{
+  "category": "Shaking",
+  "method": "whole-sprite tremble variants from existing generated cutouts",
+  "no_drawn_limb_or_face_overlays": true,
+  "standing_source": "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Panic/MisterFlorianKnell_panic_recoil_scream_02.png",
+  "sitting_source": "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Sitting/MisterFlorianKnell_sitting_hunched_shaken_02.png",
+  "frames": {
+    "shaking_standing_panic": [
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_standing_panic_01.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_standing_panic_02.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_standing_panic_03.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_standing_panic_04.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_standing_panic_05.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_standing_panic_06.png"
+    ],
+    "shaking_seated_panic": [
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_seated_panic_01.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_seated_panic_02.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_seated_panic_03.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_seated_panic_04.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_seated_panic_05.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MisterFlorianKnell/Shaking/MisterFlorianKnell_shaking_seated_panic_06.png"
+    ]
+  }
+}

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public static class AnimationLibraryClipBuilder
 {
-    private const string LibraryRoot = "Assets/AnimationLibrary";
+    private const string LibraryRoot = "Assets/Art/Library/AnimationLibrary";
     private const float DefaultFrameRate = 12f;
 
     [MenuItem("Dreadforge/Animation Library/Rebuild Approved Full-Body Clips")]

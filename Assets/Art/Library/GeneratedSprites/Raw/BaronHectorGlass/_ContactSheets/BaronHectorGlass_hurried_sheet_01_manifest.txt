@@ -1,0 +1,8 @@
+guest=BaronHectorGlass
+source=/home/hamzak/.codex/generated_images/019ea93f-7ddf-7831-8128-fe51770d5918/ig_0a13604d0c6e99a0016a28c0f1ffa4819abea7d0926140fa9f.png
+chroma_sheet=Assets/Art/Library/GeneratedSprites/Raw/BaronHectorGlass/_ContactSheets/BaronHectorGlass_hurried_sheet_01_chroma.png
+transparent_sheet=Assets/Art/Library/GeneratedSprites/Raw/BaronHectorGlass/_ContactSheets/BaronHectorGlass_hurried_sheet_01_alpha.png
+Walking/BaronHectorGlass_walk_front_hurried_left_01.png: 301x605, transparent_corners=True, visible_pixels=75278
+Walking/BaronHectorGlass_walk_front_hurried_right_01.png: 316x611, transparent_corners=True, visible_pixels=74870
+Walking/BaronHectorGlass_walk_side_hurried_left_01.png: 479x559, transparent_corners=True, visible_pixels=80229
+Walking/BaronHectorGlass_walk_side_hurried_right_01.png: 468x557, transparent_corners=True, visible_pixels=81201

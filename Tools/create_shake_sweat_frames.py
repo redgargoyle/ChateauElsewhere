@@ -23,7 +23,7 @@ sys.dont_write_bytecode = True
 from postprocess_guest_sprite_sheet import write_meta
 
 
-DEFAULT_LIBRARY_ROOT = Path("Assets/GeneratedSpriteLibrary")
+DEFAULT_LIBRARY_ROOT = Path("Assets/Art/Library/GeneratedSprites/Raw")
 FRAME_COUNT = 6
 
 FOLDER_META_TEMPLATE = """fileFormatVersion: 2

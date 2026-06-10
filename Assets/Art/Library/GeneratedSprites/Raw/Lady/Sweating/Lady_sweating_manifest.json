@@ -1,0 +1,25 @@
+{
+  "category": "Sweating",
+  "method": "whole-sprite tremble variants from existing generated cutouts",
+  "no_drawn_limb_or_face_overlays": true,
+  "standing_source": "Assets/Art/Library/GeneratedSprites/Raw/Lady/Panic/Lady_panic_scream_hands_up_01.png",
+  "sitting_source": "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sitting/Lady_sitting_tense_hands_clasped_01.png",
+  "frames": {
+    "sweating_standing_panic": [
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_standing_panic_01.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_standing_panic_02.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_standing_panic_03.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_standing_panic_04.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_standing_panic_05.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_standing_panic_06.png"
+    ],
+    "sweating_seated_panic": [
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_seated_panic_01.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_seated_panic_02.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_seated_panic_03.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_seated_panic_04.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_seated_panic_05.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/Lady/Sweating/Lady_sweating_seated_panic_06.png"
+    ]
+  }
+}

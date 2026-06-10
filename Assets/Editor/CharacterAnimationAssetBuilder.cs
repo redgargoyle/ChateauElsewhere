@@ -10,7 +10,7 @@ using UnityEngine.UI;
 public static class CharacterAnimationAssetBuilder
 {
 	private const string BaseControllerPath = "Assets/Animation/Player/Player.controller";
-	private const string CharacterRoot = "Assets/Characters";
+	private const string CharacterRoot = "Assets/Art/Library/LegacyCharacters";
 	private const string AnimationRoot = "Assets/Animation";
 	private const float FrameRate = 12f;
 

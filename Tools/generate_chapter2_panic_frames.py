@@ -23,7 +23,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ASSETS_ROOT = REPO_ROOT / "Assets"
-LIBRARY_ROOT = ASSETS_ROOT / "AnimationLibrary"
+LIBRARY_ROOT = ASSETS_ROOT / "Art/Library/AnimationLibrary"
 CANVAS_SIZE = (166, 297)
 FRAME_RATE = 12
 

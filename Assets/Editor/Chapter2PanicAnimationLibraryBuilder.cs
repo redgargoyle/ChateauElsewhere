@@ -7,7 +7,7 @@ using UnityEngine;
 
 public static class Chapter2PanicAnimationLibraryBuilder
 {
-    private const string AnimationLibraryRoot = "Assets/AnimationLibrary";
+    private const string AnimationLibraryRoot = "Assets/Art/Library/AnimationLibrary";
     private const string GuestArtRoot = "Assets/Art/Characters";
     private const string PanicClipRoot = "Assets/Animation/Chapter2Panic";
     private const string OutputFolder = "Assets/Resources/Chapter2";

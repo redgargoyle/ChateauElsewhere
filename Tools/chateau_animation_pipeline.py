@@ -25,8 +25,8 @@ from PIL import Image, ImageDraw, ImageFont
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ASSETS_ROOT = REPO_ROOT / "Assets"
 REGISTRY_PATH = ASSETS_ROOT / "Resources/Chapter1/GuestCharacterRegistry.json"
-SOURCE_SHEET_ROOT = REPO_ROOT / "SourceSheets"
-DEFAULT_OUTPUT_ROOT = ASSETS_ROOT / "AnimationLibrary"
+SOURCE_SHEET_ROOT = ASSETS_ROOT / "Art/Library/SourceSheets"
+DEFAULT_OUTPUT_ROOT = ASSETS_ROOT / "Art/Library/AnimationLibrary"
 CANVAS_SIZE = (166, 297)
 FRAME_RATE = 12
 GUID_RE = re.compile(r"guid:\s*([0-9a-f]{32})")
@@ -715,7 +715,7 @@ def write_root_catalog(output_root: Path, manifests: Sequence[Dict[str, object]]
                 "character": item["character"],
                 "display_name": item["display_name"],
                 "role": item["role"],
-                "manifest": f"Assets/AnimationLibrary/{item['character']}/manifest.json",
+                "manifest": f"Assets/Art/Library/AnimationLibrary/{item['character']}/manifest.json",
                 "contact_sheet": item.get("contact_sheet", ""),
                 "warnings": item.get("warnings", []),
             }
@@ -750,7 +750,7 @@ def main() -> None:
         "--output-root",
         type=Path,
         default=DEFAULT_OUTPUT_ROOT,
-        help="Animation library root. Defaults to Assets/AnimationLibrary.",
+        help="Animation library root. Defaults to Assets/Art/Library/AnimationLibrary.",
     )
     parser.add_argument(
         "--no-butler",

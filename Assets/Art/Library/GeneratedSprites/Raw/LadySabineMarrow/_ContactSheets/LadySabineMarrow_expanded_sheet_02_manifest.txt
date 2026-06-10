@@ -1,0 +1,10 @@
+guest=LadySabineMarrow
+source=/home/hamzak/.codex/generated_images/019ea93f-7ddf-7831-8128-fe51770d5918/ig_0a13604d0c6e99a0016a28bec9e264819aa9ec81a84a5664b5.png
+chroma_sheet=Assets/Art/Library/GeneratedSprites/Raw/LadySabineMarrow/_ContactSheets/LadySabineMarrow_expanded_sheet_02_chroma.png
+transparent_sheet=Assets/Art/Library/GeneratedSprites/Raw/LadySabineMarrow/_ContactSheets/LadySabineMarrow_expanded_sheet_02_alpha.png
+Idle/LadySabineMarrow_idle_tense_three_quarter_02.png: 302x514, transparent_corners=True, visible_pixels=66917
+Surprised/LadySabineMarrow_surprised_hand_to_chest_02.png: 300x520, transparent_corners=True, visible_pixels=68836
+Panic/LadySabineMarrow_panic_scream_hands_up_02.png: 318x518, transparent_corners=True, visible_pixels=74986
+Sitting/LadySabineMarrow_sitting_tense_hands_clasped_02.png: 474x450, transparent_corners=True, visible_pixels=83054
+DiningRoomChair/LadySabineMarrow_dining_room_chair_startled_02.png: 496x485, transparent_corners=True, visible_pixels=100844
+DrawingRoomCouch/LadySabineMarrow_drawing_room_couch_cover_face_02.png: 514x467, transparent_corners=True, visible_pixels=137104

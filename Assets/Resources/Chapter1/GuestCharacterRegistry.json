@@ -65,7 +65,7 @@
     {
       "character": "LordAmbroseVeil",
       "display_name": "Lord Ambrose Veil",
-      "character_folder": "Assets/Characters/LordAmbroseVeil",
+      "character_folder": "Assets/Art/Library/LegacyCharacters/LordAmbroseVeil",
       "animation_folder": "Assets/Animation/LordAmbroseVeil",
       "override_controller": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil.overrideController",
       "generic_idle_clip": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Idle.anim",
@@ -81,12 +81,12 @@
         "right": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Idle_Right.anim",
         "up": "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Idle_Up.anim"
       },
-      "coat_prop": "Assets/Characters/LordAmbroseVeil/props/lord_ambrose_veil_coat_prop.png"
+      "coat_prop": "Assets/Art/Library/LegacyCharacters/LordAmbroseVeil/props/lord_ambrose_veil_coat_prop.png"
     },
     {
       "character": "LadySabineMarrow",
       "display_name": "Lady Sabine Marrow",
-      "character_folder": "Assets/Characters/LadySabineMarrow",
+      "character_folder": "Assets/Art/Library/LegacyCharacters/LadySabineMarrow",
       "animation_folder": "Assets/Animation/LadySabineMarrow",
       "override_controller": "Assets/Animation/LadySabineMarrow/LadySabineMarrow.overrideController",
       "generic_idle_clip": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Idle.anim",
@@ -102,12 +102,12 @@
         "right": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Idle_Right.anim",
         "up": "Assets/Animation/LadySabineMarrow/LadySabineMarrow_Idle_Up.anim"
       },
-      "coat_prop": "Assets/Characters/LadySabineMarrow/props/lady_sabine_marrow_coat_prop.png"
+      "coat_prop": "Assets/Art/Library/LegacyCharacters/LadySabineMarrow/props/lady_sabine_marrow_coat_prop.png"
     },
     {
       "character": "CountessElowenDusk",
       "display_name": "Countess Elowen Dusk",
-      "character_folder": "Assets/Characters/CountessElowenDusk",
+      "character_folder": "Assets/Art/Library/LegacyCharacters/CountessElowenDusk",
       "animation_folder": "Assets/Animation/CountessElowenDusk",
       "override_controller": "Assets/Animation/CountessElowenDusk/CountessElowenDusk.overrideController",
       "generic_idle_clip": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle.anim",
@@ -123,12 +123,12 @@
         "right": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Right.anim",
         "up": "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Up.anim"
       },
-      "coat_prop": "Assets/Characters/CountessElowenDusk/props/countess_elowen_dusk_coat_prop.png"
+      "coat_prop": "Assets/Art/Library/LegacyCharacters/CountessElowenDusk/props/countess_elowen_dusk_coat_prop.png"
     },
     {
       "character": "MisterFlorianKnell",
       "display_name": "Mister Florian Knell",
-      "character_folder": "Assets/Characters/MisterFlorianKnell",
+      "character_folder": "Assets/Art/Library/LegacyCharacters/MisterFlorianKnell",
       "animation_folder": "Assets/Animation/MisterFlorianKnell",
       "override_controller": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell.overrideController",
       "generic_idle_clip": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle.anim",
@@ -144,12 +144,12 @@
         "right": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Right.anim",
         "up": "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell_Idle_Up.anim"
       },
-      "coat_prop": "Assets/Characters/MisterFlorianKnell/props/mister_florian_knell_coat_prop.png"
+      "coat_prop": "Assets/Art/Library/LegacyCharacters/MisterFlorianKnell/props/mister_florian_knell_coat_prop.png"
     },
     {
       "character": "ProfessorLucienVale",
       "display_name": "Professor Lucien Vale",
-      "character_folder": "Assets/Characters/ProfessorLucienVale",
+      "character_folder": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale",
       "animation_folder": "Assets/Animation/ProfessorLucienVale",
       "override_controller": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale.overrideController",
       "generic_idle_clip": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Idle.anim",
@@ -165,12 +165,12 @@
         "right": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Idle_Right.anim",
         "up": "Assets/Animation/ProfessorLucienVale/ProfessorLucienVale_Idle_Up.anim"
       },
-      "coat_prop": "Assets/Characters/ProfessorLucienVale/props/professor_lucien_vale_coat_prop.png"
+      "coat_prop": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/props/professor_lucien_vale_coat_prop.png"
     },
     {
       "character": "MadameCoralieThread",
       "display_name": "Madame Coralie Thread",
-      "character_folder": "Assets/Characters/MadameCoralieThread",
+      "character_folder": "Assets/Art/Library/LegacyCharacters/MadameCoralieThread",
       "animation_folder": "Assets/Animation/MadameCoralieThread",
       "override_controller": "Assets/Animation/MadameCoralieThread/MadameCoralieThread.overrideController",
       "generic_idle_clip": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Idle.anim",
@@ -186,12 +186,12 @@
         "right": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Idle_Right.anim",
         "up": "Assets/Animation/MadameCoralieThread/MadameCoralieThread_Idle_Up.anim"
       },
-      "coat_prop": "Assets/Characters/MadameCoralieThread/props/madame_coralie_thread_coat_prop.png"
+      "coat_prop": "Assets/Art/Library/LegacyCharacters/MadameCoralieThread/props/madame_coralie_thread_coat_prop.png"
     },
     {
       "character": "BaronHectorGlass",
       "display_name": "Baron Hector Glass",
-      "character_folder": "Assets/Characters/BaronHectorGlass",
+      "character_folder": "Assets/Art/Library/LegacyCharacters/BaronHectorGlass",
       "animation_folder": "Assets/Animation/BaronHectorGlass",
       "override_controller": "Assets/Animation/BaronHectorGlass/BaronHectorGlass.overrideController",
       "generic_idle_clip": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Idle.anim",
@@ -207,12 +207,12 @@
         "right": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Idle_Right.anim",
         "up": "Assets/Animation/BaronHectorGlass/BaronHectorGlass_Idle_Up.anim"
       },
-      "coat_prop": "Assets/Characters/BaronHectorGlass/props/baron_hector_glass_coat_prop.png"
+      "coat_prop": "Assets/Art/Library/LegacyCharacters/BaronHectorGlass/props/baron_hector_glass_coat_prop.png"
     },
     {
       "character": "MissIsoldeWren",
       "display_name": "Miss Isolde Wren",
-      "character_folder": "Assets/Characters/MissIsoldeWren",
+      "character_folder": "Assets/Art/Library/LegacyCharacters/MissIsoldeWren",
       "animation_folder": "Assets/Animation/MissIsoldeWren",
       "override_controller": "Assets/Animation/MissIsoldeWren/MissIsoldeWren.overrideController",
       "generic_idle_clip": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Idle.anim",
@@ -228,7 +228,7 @@
         "right": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Idle_Right.anim",
         "up": "Assets/Animation/MissIsoldeWren/MissIsoldeWren_Idle_Up.anim"
       },
-      "coat_prop": "Assets/Characters/MissIsoldeWren/props/miss_isolde_wren_coat_prop.png"
+      "coat_prop": "Assets/Art/Library/LegacyCharacters/MissIsoldeWren/props/miss_isolde_wren_coat_prop.png"
     }
   ]
 }

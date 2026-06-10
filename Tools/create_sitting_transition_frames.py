@@ -21,7 +21,7 @@ from PIL import Image
 from postprocess_guest_sprite_sheet import write_meta
 
 
-DEFAULT_LIBRARY_ROOT = Path("Assets/GeneratedSpriteLibrary")
+DEFAULT_LIBRARY_ROOT = Path("Assets/Art/Library/GeneratedSprites/Raw")
 FRAME_T_VALUES = (0.18, 0.38, 0.62, 0.82)
 
 FOLDER_META_TEMPLATE = """fileFormatVersion: 2

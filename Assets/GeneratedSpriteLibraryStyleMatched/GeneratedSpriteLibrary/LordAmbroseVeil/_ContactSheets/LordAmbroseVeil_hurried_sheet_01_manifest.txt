@@ -1,8 +1,0 @@
-guest=LordAmbroseVeil
-source=/home/hamzak/.codex/generated_images/019ea93f-7ddf-7831-8128-fe51770d5918/ig_0a13604d0c6e99a0016a28c20cac14819a9f76752fc46c3d8d.png
-chroma_sheet=Assets/GeneratedSpriteLibrary/LordAmbroseVeil/_ContactSheets/LordAmbroseVeil_hurried_sheet_01_chroma.png
-transparent_sheet=Assets/GeneratedSpriteLibrary/LordAmbroseVeil/_ContactSheets/LordAmbroseVeil_hurried_sheet_01_alpha.png
-Walking/LordAmbroseVeil_walk_front_hurried_left_01.png: 310x510, transparent_corners=True, visible_pixels=56737
-Walking/LordAmbroseVeil_walk_front_hurried_right_01.png: 312x510, transparent_corners=True, visible_pixels=53641
-Walking/LordAmbroseVeil_walk_side_hurried_left_01.png: 403x519, transparent_corners=True, visible_pixels=60741
-Walking/LordAmbroseVeil_walk_side_hurried_right_01.png: 390x515, transparent_corners=True, visible_pixels=59132

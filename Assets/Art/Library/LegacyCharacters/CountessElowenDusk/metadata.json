@@ -1,0 +1,32 @@
+{
+  "character_name": "CountessElowenDusk",
+  "display_name": "Countess Elowen Dusk",
+  "source_sheet": "ChatGPT Image May 31, 2026, 01_54_49 PM (3).png",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "scale_from_source": 1.2743362831858407,
+  "walk_frame_counts": {
+    "down": 8,
+    "left": 8,
+    "right": 8,
+    "up": 8
+  },
+  "idle_frame_counts": {
+    "down": 4,
+    "left": 4,
+    "right": 4,
+    "up": 4
+  },
+  "notes": [
+    "These frames were extracted from the user's attached finished high-quality sprite sheet, not procedurally assembled from primitive shapes.",
+    "Walk rows follow the project's butler row protocol: down, left, right, up.",
+    "Idle right is mirrored from the supplied idle-left row because the source sheets provide three idle rows: front, side, back."
+  ],
+  "prop": "Assets/Art/Library/LegacyCharacters/CountessElowenDusk/props/countess_elowen_dusk_coat_prop.png"
+}

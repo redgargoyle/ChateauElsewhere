@@ -1,0 +1,38 @@
+{
+  "guest": "ButlerGuest",
+  "category": "Panic",
+  "set": "OriginalStyleGuest2_20260610",
+  "source_sheet_copy": "Temp/guest2_originalstyle_panic/ig_01642dcc6fecb5ac016a2999eefc4c819ab135b0dc06d356b6.png",
+  "source_sheet_original": "C:/Users/wimpy/.codex/generated_images/019eadd0-977d-7c80-a34f-fd1318385542/ig_01642dcc6fecb5ac016a2999eefc4c819ab135b0dc06d356b6.png",
+  "notes": "Eight guest2 panic candidates extracted from a pose sheet, then reduced to original guest2 sprite scale with green matte removal, connected-component cleanup, muted pixel palette, watercolor noise, hatch lines, and dark rim cleanup. Raw smooth/cartoon sheet is not used directly.",
+  "frames": [
+    "Assets/Art/Library/GeneratedSprites/Raw/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_tense_cane_grip_01.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_recoil_half_lift_02.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_controlled_palms_up_03.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_cane_braced_back_04.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_hand_to_mouth_05.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_clutch_chest_06.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_shield_face_07.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_trembling_cane_grip_08.png"
+  ],
+  "style_matched_frames": [
+    "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_tense_cane_grip_01.png",
+    "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_recoil_half_lift_02.png",
+    "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_controlled_palms_up_03.png",
+    "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_cane_braced_back_04.png",
+    "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_hand_to_mouth_05.png",
+    "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_clutch_chest_06.png",
+    "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_shield_face_07.png",
+    "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610/ButlerGuest_panic_originalstyle_trembling_cane_grip_08.png"
+  ],
+  "edge_white_ratio": {
+    "ButlerGuest_panic_originalstyle_tense_cane_grip_01.png": 0.0,
+    "ButlerGuest_panic_originalstyle_recoil_half_lift_02.png": 0.0,
+    "ButlerGuest_panic_originalstyle_controlled_palms_up_03.png": 0.0,
+    "ButlerGuest_panic_originalstyle_cane_braced_back_04.png": 0.0,
+    "ButlerGuest_panic_originalstyle_hand_to_mouth_05.png": 0.0,
+    "ButlerGuest_panic_originalstyle_clutch_chest_06.png": 0.0,
+    "ButlerGuest_panic_originalstyle_shield_face_07.png": 0.0,
+    "ButlerGuest_panic_originalstyle_trembling_cane_grip_08.png": 0.0
+  }
+}

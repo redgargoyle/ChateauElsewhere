@@ -47,9 +47,9 @@ DefaultImporter:
 
 DEFAULT_REFERENCES = (
     Path("Assets/Art/Final Images (DO NOT EDIT)/drawing room 2.png"),
-    Path("Assets/AnimationLibrary/CountessElowenDusk/reference/full_body"),
-    Path("Assets/AnimationLibrary/LadySabineMarrow/reference/full_body"),
-    Path("Assets/AnimationLibrary/LordAmbroseVeil/reference/full_body"),
+    Path("Assets/Art/Library/AnimationLibrary/CountessElowenDusk/reference/full_body"),
+    Path("Assets/Art/Library/AnimationLibrary/LadySabineMarrow/reference/full_body"),
+    Path("Assets/Art/Library/AnimationLibrary/LordAmbroseVeil/reference/full_body"),
 )
 
 DEFAULT_ROOM_REFERENCE = Path("Assets/Art/Final Images (DO NOT EDIT)/drawing room 2.png")
@@ -65,8 +65,8 @@ class StyleProfile:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source-root", default=Path("Assets/GeneratedSpriteLibrary"), type=Path)
-    parser.add_argument("--out-root", default=Path("Assets/GeneratedSpriteLibraryStyleMatched"), type=Path)
+    parser.add_argument("--source-root", default=Path("Assets/Art/Library/GeneratedSprites/Raw"), type=Path)
+    parser.add_argument("--out-root", default=Path("Assets/Art/Library/GeneratedSprites/StyleMatched"), type=Path)
     parser.add_argument("--reference", action="append", type=Path, default=[])
     parser.add_argument("--room-reference", default=DEFAULT_ROOM_REFERENCE, type=Path)
     parser.add_argument("--strength", type=float, default=0.9)

@@ -1,0 +1,13 @@
+{
+  "action": "stand_to_sit",
+  "method": "whole-sprite alpha transition from existing generated cutouts",
+  "no_drawn_limb_overlays": true,
+  "standing_source": "Assets/Art/Library/GeneratedSprites/Raw/LadySabineMarrow/Idle/LadySabineMarrow_idle_tense_three_quarter_02_originalstyle_01.png",
+  "sitting_source": "Assets/Art/Library/GeneratedSprites/Raw/LadySabineMarrow/Sitting/LadySabineMarrow_sitting_tense_hands_clasped_02_originalstyle_01.png",
+  "frames": [
+    "Assets/Art/Library/GeneratedSprites/Raw/LadySabineMarrow/Transitions/LadySabineMarrow_transition_stand_to_sit_01.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/LadySabineMarrow/Transitions/LadySabineMarrow_transition_stand_to_sit_02.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/LadySabineMarrow/Transitions/LadySabineMarrow_transition_stand_to_sit_03.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/LadySabineMarrow/Transitions/LadySabineMarrow_transition_stand_to_sit_04.png"
+  ]
+}

@@ -1,0 +1,1182 @@
+{
+  "character": "ButlerGuest",
+  "display_name": "Butler Guest",
+  "role": "guest",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "source_sheet": "",
+  "style_brief": "Butler Guest: formal butler-like male guest, black suit, white shirt, waistcoat, dark trousers, reserved posture and compact silhouette. Use the current project reference art in reference/full_body as the strict visual target.",
+  "reference_sequences": {
+    "sitting": [
+      {
+        "source": "Assets/Art/Characters/guest2/butlerspritesit.png",
+        "source_size": [
+          1857,
+          593
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/sitting/01_butlerspritesit.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/sitting/01_butlerspritesit.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            245,
+            166,
+            297
+          ],
+          "visible_pixels": 3157,
+          "semi_alpha_pixels": 934,
+          "bottom_margin": 0,
+          "sha1": "57cf3169daa6d7ef168562e3bbd674b1769a615a"
+        }
+      }
+    ],
+    "walk_down": [
+      {
+        "source": "Assets/Art/Characters/guest2/butler40_alpha.png",
+        "source_size": [
+          445,
+          1271
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_down/01_butler40_alpha.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_down/01_butler40_alpha.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            0,
+            134,
+            297
+          ],
+          "visible_pixels": 19336,
+          "semi_alpha_pixels": 1488,
+          "bottom_margin": 0,
+          "sha1": "3584a98e06671fbabc963ac125a5f551d7a9e46c"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest2/butlersprite.png",
+        "source_size": [
+          977,
+          1421
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_down/02_butlersprite.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_down/02_butlersprite.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            53,
+            166,
+            297
+          ],
+          "visible_pixels": 14486,
+          "semi_alpha_pixels": 6535,
+          "bottom_margin": 0,
+          "sha1": "f3ef79f8f797edd7a2bcee5ce084d78cdf69e70f"
+        }
+      }
+    ],
+    "walk_left": [
+      {
+        "source": "Assets/Art/Characters/guest2/butlersprite.png",
+        "source_size": [
+          977,
+          1421
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_left/01_butlersprite.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_left/01_butlersprite.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            53,
+            166,
+            297
+          ],
+          "visible_pixels": 14486,
+          "semi_alpha_pixels": 6535,
+          "bottom_margin": 0,
+          "sha1": "f3ef79f8f797edd7a2bcee5ce084d78cdf69e70f"
+        }
+      }
+    ],
+    "walk_right": [
+      {
+        "source": "Assets/Art/Characters/guest2/Guest2Walkright/guest2right1.png",
+        "source_size": [
+          99,
+          198
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_right/01_guest2right1.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_right/01_guest2right1.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            101,
+            131,
+            297
+          ],
+          "visible_pixels": 8593,
+          "semi_alpha_pixels": 1614,
+          "bottom_margin": 0,
+          "sha1": "73f13e207d70039fc0a8e7ab9cc932bc270cc109"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest2/Guest2Walkright/guest2right2.png",
+        "source_size": [
+          91,
+          199
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_right/02_guest2right2.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_right/02_guest2right2.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            100,
+            126,
+            297
+          ],
+          "visible_pixels": 7972,
+          "semi_alpha_pixels": 1457,
+          "bottom_margin": 0,
+          "sha1": "a69dc29dca7cb783b29d2efaad51de299aa94554"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest2/Guest2Walkright/guest2right3.png",
+        "source_size": [
+          97,
+          198
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_right/03_guest2right3.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_right/03_guest2right3.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            101,
+            130,
+            297
+          ],
+          "visible_pixels": 8529,
+          "semi_alpha_pixels": 1556,
+          "bottom_margin": 0,
+          "sha1": "4ab4b3ef3a2c965a7c7164eaa67eaa9a394e4fdc"
+        }
+      },
+      {
+        "source": "Assets/Art/Characters/guest2/Guest2Walkright/guest2right4.png",
+        "source_size": [
+          91,
+          199
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_right/04_guest2right4.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_right/04_guest2right4.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            100,
+            126,
+            297
+          ],
+          "visible_pixels": 7972,
+          "semi_alpha_pixels": 1457,
+          "bottom_margin": 0,
+          "sha1": "a69dc29dca7cb783b29d2efaad51de299aa94554"
+        }
+      }
+    ],
+    "walk_up": [
+      {
+        "source": "Assets/Art/Characters/guest2/butlersprite.png",
+        "source_size": [
+          977,
+          1421
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_up/01_butlersprite.png",
+        "normalized_to_canvas": true,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/reference/full_body/walk_up/01_butlersprite.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            0,
+            53,
+            166,
+            297
+          ],
+          "visible_pixels": 14486,
+          "semi_alpha_pixels": 6535,
+          "bottom_margin": 0,
+          "sha1": "f3ef79f8f797edd7a2bcee5ce084d78cdf69e70f"
+        }
+      }
+    ]
+  },
+  "excluded_sources": [],
+  "contact_sheet": "Assets/Art/Library/AnimationLibrary/ButlerGuest/qa/reference_contact_sheet.png",
+  "generation_requests": "Assets/Art/Library/AnimationLibrary/ButlerGuest/requests/generation_prompts.jsonl",
+  "warnings": [],
+  "chapter2_guest_number": 2,
+  "approved_panic_actions": {
+    "panic_reaction_down": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_reaction_down/frames/01_butler_guest_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            6,
+            134,
+            296
+          ],
+          "visible_pixels": 19109,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "67db8c8d32bc5fdbf50303bf9589dc779df3c0d5"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_reaction_down/frames/02_butler_guest_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            16,
+            135,
+            295
+          ],
+          "visible_pixels": 19220,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f8e13b2bfc3167a712b7c170af2918018d252749"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_reaction_down/frames/03_butler_guest_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            20,
+            138,
+            293
+          ],
+          "visible_pixels": 19150,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "16abdc98e86ab86de4381a6847f1a3aa23971180"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_reaction_down/frames/04_butler_guest_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            12,
+            135,
+            294
+          ],
+          "visible_pixels": 19275,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e6e8156aa07f2a1de8fee514a0b05270ff01e6f7"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_reaction_down/frames/05_butler_guest_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            17,
+            139,
+            293
+          ],
+          "visible_pixels": 19238,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "cb59ae95adb20915f9e4d9038ecbeb87d3484062"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_reaction_down/frames/06_butler_guest_panic_reaction_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            10,
+            135,
+            295
+          ],
+          "visible_pixels": 19389,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "b0d2710a102a110f5b3a04aad58126918ecc3df5"
+        }
+      ]
+    },
+    "panic_shriek_down": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_shriek_down/frames/01_butler_guest_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            1,
+            137,
+            295
+          ],
+          "visible_pixels": 21597,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c23186adb7e9790d116a3e72605bb5b204814ad8"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_shriek_down/frames/02_butler_guest_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            1,
+            138,
+            294
+          ],
+          "visible_pixels": 21704,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e044c9049a9206032cb3b10109df0a60a42b6a3f"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_shriek_down/frames/03_butler_guest_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            1,
+            138,
+            293
+          ],
+          "visible_pixels": 21732,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "9dd8b78371f73da10cad2788fee5cd8ee19be90a"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_shriek_down/frames/04_butler_guest_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            1,
+            138,
+            294
+          ],
+          "visible_pixels": 21704,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "e044c9049a9206032cb3b10109df0a60a42b6a3f"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_shriek_down/frames/05_butler_guest_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            1,
+            137,
+            295
+          ],
+          "visible_pixels": 21597,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c23186adb7e9790d116a3e72605bb5b204814ad8"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_shriek_down/frames/06_butler_guest_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            1,
+            136,
+            296
+          ],
+          "visible_pixels": 21259,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ed8f5a5ec937e7f025380ccfc5b03ca39cc1d402"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_shriek_down/frames/07_butler_guest_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            1,
+            135,
+            296
+          ],
+          "visible_pixels": 21373,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "28604a3cb08f27d03829479b8f0e6a8d575778a5"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_shriek_down/frames/08_butler_guest_panic_shriek_down.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            1,
+            136,
+            296
+          ],
+          "visible_pixels": 21259,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ed8f5a5ec937e7f025380ccfc5b03ca39cc1d402"
+        }
+      ]
+    },
+    "panic_run_left": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_left/frames/01_butler_guest_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            101,
+            132,
+            296
+          ],
+          "visible_pixels": 8578,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0a926fb752381b4f6dffc49f5bba9d0405be5016"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_left/frames/02_butler_guest_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            101,
+            132,
+            296
+          ],
+          "visible_pixels": 8578,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0a926fb752381b4f6dffc49f5bba9d0405be5016"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_left/frames/03_butler_guest_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            40,
+            100,
+            127,
+            296
+          ],
+          "visible_pixels": 7948,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "079d04a33209964bfab09be938d7d3e20ad35e43"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_left/frames/04_butler_guest_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            40,
+            100,
+            127,
+            296
+          ],
+          "visible_pixels": 7948,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "079d04a33209964bfab09be938d7d3e20ad35e43"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_left/frames/05_butler_guest_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            101,
+            131,
+            296
+          ],
+          "visible_pixels": 8504,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ee82fce05bed64b334cb5a92c41d95d1b34a9761"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_left/frames/06_butler_guest_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            101,
+            131,
+            296
+          ],
+          "visible_pixels": 8504,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "ee82fce05bed64b334cb5a92c41d95d1b34a9761"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_left/frames/07_butler_guest_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            40,
+            100,
+            127,
+            296
+          ],
+          "visible_pixels": 7948,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "079d04a33209964bfab09be938d7d3e20ad35e43"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_left/frames/08_butler_guest_panic_run_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            40,
+            100,
+            127,
+            296
+          ],
+          "visible_pixels": 7948,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "079d04a33209964bfab09be938d7d3e20ad35e43"
+        }
+      ]
+    },
+    "panic_run_right": {
+      "frame_count": 8,
+      "frames": [
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_right/frames/01_butler_guest_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            101,
+            131,
+            296
+          ],
+          "visible_pixels": 8578,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "32b227c3d0ff3a0ccaec0808e786e904b736ab6d"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_right/frames/02_butler_guest_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            34,
+            101,
+            131,
+            296
+          ],
+          "visible_pixels": 8578,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "32b227c3d0ff3a0ccaec0808e786e904b736ab6d"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_right/frames/03_butler_guest_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            100,
+            126,
+            296
+          ],
+          "visible_pixels": 7948,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "6e78ed224295715d6f4e9aa3804873a653d5c528"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_right/frames/04_butler_guest_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            100,
+            126,
+            296
+          ],
+          "visible_pixels": 7948,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "6e78ed224295715d6f4e9aa3804873a653d5c528"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_right/frames/05_butler_guest_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            101,
+            130,
+            296
+          ],
+          "visible_pixels": 8504,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "206af72cb58d12eaeec3300c2bc75bd1b11a6b55"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_right/frames/06_butler_guest_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            101,
+            130,
+            296
+          ],
+          "visible_pixels": 8504,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "206af72cb58d12eaeec3300c2bc75bd1b11a6b55"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_right/frames/07_butler_guest_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            100,
+            126,
+            296
+          ],
+          "visible_pixels": 7948,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "6e78ed224295715d6f4e9aa3804873a653d5c528"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_run_right/frames/08_butler_guest_panic_run_right.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            100,
+            126,
+            296
+          ],
+          "visible_pixels": 7948,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "6e78ed224295715d6f4e9aa3804873a653d5c528"
+        }
+      ]
+    },
+    "panic_turnaround": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_turnaround/frames/01_butler_guest_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            11,
+            134,
+            296
+          ],
+          "visible_pixels": 19603,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "f21851bc8dc453ebeb8c1dd4ff50b6d398f1117d"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_turnaround/frames/02_butler_guest_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            13,
+            135,
+            296
+          ],
+          "visible_pixels": 19499,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "0d79d14e004e5180ba58c7b36a8e9b7ca72b1164"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_turnaround/frames/03_butler_guest_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            16,
+            136,
+            296
+          ],
+          "visible_pixels": 19291,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "84e34fc58b56558cd8e839b1449601968867e9d0"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_turnaround/frames/04_butler_guest_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            16,
+            137,
+            296
+          ],
+          "visible_pixels": 19300,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "bce8bf553a6226fc2e0f1491cd7d3848f71ba10e"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_turnaround/frames/05_butler_guest_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            108,
+            131,
+            296
+          ],
+          "visible_pixels": 8478,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "2e10ee3029edfb1532cf81a4a470e7025551153b"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/panic_turnaround/frames/06_butler_guest_panic_turnaround.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            108,
+            136,
+            296
+          ],
+          "visible_pixels": 9611,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "c63cd13bdd562688cff344bb42d6bf3e741a721b"
+        }
+      ]
+    },
+    "cover_face_cower": {
+      "frame_count": 6,
+      "frames": [
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/cover_face_cower/frames/01_butler_guest_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            50,
+            138,
+            296
+          ],
+          "visible_pixels": 17582,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5808732b69c0cb9c655c209fba6f0a244e5716a7"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/cover_face_cower/frames/02_butler_guest_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            50,
+            139,
+            296
+          ],
+          "visible_pixels": 17953,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "832b424b56cd3107669303dbce1b2ec561c0f222"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/cover_face_cower/frames/03_butler_guest_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            27,
+            50,
+            139,
+            296
+          ],
+          "visible_pixels": 17953,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "832b424b56cd3107669303dbce1b2ec561c0f222"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/cover_face_cower/frames/04_butler_guest_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            28,
+            50,
+            138,
+            296
+          ],
+          "visible_pixels": 17582,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "5808732b69c0cb9c655c209fba6f0a244e5716a7"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/cover_face_cower/frames/05_butler_guest_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            50,
+            137,
+            296
+          ],
+          "visible_pixels": 17260,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7df003c4e52306d22519e1c439854ddafa96f752"
+        },
+        {
+          "file": "Assets/Art/Library/AnimationLibrary/ButlerGuest/approved/full_body/cover_face_cower/frames/06_butler_guest_cover_face_cower.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            50,
+            137,
+            296
+          ],
+          "visible_pixels": 17260,
+          "transparent_corners": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "sha1": "7df003c4e52306d22519e1c439854ddafa96f752"
+        }
+      ]
+    }
+  },
+  "panic_contact_sheet": "Assets/Art/Library/AnimationLibrary/ButlerGuest/qa/panic_approved_contact_sheet.png"
+}

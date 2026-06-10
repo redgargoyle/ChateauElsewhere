@@ -21,7 +21,7 @@ public class Chapter2RegressionTests
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
     private const string Chapter2PanicLibraryAssetPath = "Assets/Resources/Chapter2/PanicAnimationLibrary.asset";
     private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
-    private const string AnimationLibraryPath = "Assets/AnimationLibrary";
+    private const string AnimationLibraryPath = "Assets/Art/Library/AnimationLibrary";
     private const string GuestArtRoot = "Assets/Art/Characters";
     private const string Chapter2PanicClipRoot = "Assets/Animation/Chapter2Panic";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
@@ -264,7 +264,7 @@ public class Chapter2RegressionTests
             Assert.That(libraryText, Does.Contain("\"" + PanicRosterCharacters[i] + "\""), $"Panic roster should include {PanicRosterCharacters[i]}.");
         }
 
-        Assert.That(builderText, Does.Contain("Assets/AnimationLibrary"));
+        Assert.That(builderText, Does.Contain("Assets/Art/Library/AnimationLibrary"));
         Assert.That(builderText, Does.Contain("Assets/Resources/Chapter2"));
         Assert.That(builderText, Does.Contain("Assets/Art/Characters"));
         Assert.That(builderText, Does.Contain("Assets/Animation/Chapter2Panic"));

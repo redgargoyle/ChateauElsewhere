@@ -9,7 +9,7 @@ This project needs character acting, not procedural wobble. The production rule 
 The active library root is:
 
 ```text
-Assets/AnimationLibrary/
+Assets/Art/Library/AnimationLibrary/
 ```
 
 ## Why This Pipeline Exists
@@ -28,7 +28,7 @@ Use full-body frames for moments like shrieking, cowering, skidding, and sprinti
 Each character gets this structure:
 
 ```text
-Assets/AnimationLibrary/<Character>/
+Assets/Art/Library/AnimationLibrary/<Character>/
   reference/
     source_sheet.png
     full_body/<existing_clip_frames>/
@@ -63,7 +63,7 @@ Generate controlled source material:
 Prompts are written per character in:
 
 ```text
-Assets/AnimationLibrary/<Character>/requests/generation_prompts.jsonl
+Assets/Art/Library/AnimationLibrary/<Character>/requests/generation_prompts.jsonl
 ```
 
 Every prompt tells the image model to match the current character art and explicitly forbids stick limbs, tilted idle bodies, pasted stickers, modern clothing, shadows, labels, and text.

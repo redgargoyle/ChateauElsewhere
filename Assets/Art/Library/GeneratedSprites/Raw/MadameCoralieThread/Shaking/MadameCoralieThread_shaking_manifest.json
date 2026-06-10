@@ -1,0 +1,25 @@
+{
+  "category": "Shaking",
+  "method": "whole-sprite tremble variants from existing generated cutouts",
+  "no_drawn_limb_or_face_overlays": true,
+  "standing_source": "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Panic/MadameCoralieThread_panic_scream_hands_up_02_originalstyle_01.png",
+  "sitting_source": "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Sitting/MadameCoralieThread_sitting_tense_hands_clasped_02_originalstyle_01.png",
+  "frames": {
+    "shaking_standing_panic": [
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_standing_panic_01.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_standing_panic_02.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_standing_panic_03.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_standing_panic_04.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_standing_panic_05.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_standing_panic_06.png"
+    ],
+    "shaking_seated_panic": [
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_seated_panic_01.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_seated_panic_02.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_seated_panic_03.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_seated_panic_04.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_seated_panic_05.png",
+      "Assets/Art/Library/GeneratedSprites/Raw/MadameCoralieThread/Shaking/MadameCoralieThread_shaking_seated_panic_06.png"
+    ]
+  }
+}

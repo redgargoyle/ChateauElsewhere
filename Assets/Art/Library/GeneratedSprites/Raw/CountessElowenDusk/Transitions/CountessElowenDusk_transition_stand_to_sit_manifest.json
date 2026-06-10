@@ -1,0 +1,13 @@
+{
+  "action": "stand_to_sit",
+  "method": "whole-sprite alpha transition from existing generated cutouts",
+  "no_drawn_limb_overlays": true,
+  "standing_source": "Assets/Art/Library/GeneratedSprites/Raw/CountessElowenDusk/Idle/CountessElowenDusk_idle_tense_three_quarter_01.png",
+  "sitting_source": "Assets/Art/Library/GeneratedSprites/Raw/CountessElowenDusk/Sitting/CountessElowenDusk_sitting_hunched_shaken_02.png",
+  "frames": [
+    "Assets/Art/Library/GeneratedSprites/Raw/CountessElowenDusk/Transitions/CountessElowenDusk_transition_stand_to_sit_01.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/CountessElowenDusk/Transitions/CountessElowenDusk_transition_stand_to_sit_02.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/CountessElowenDusk/Transitions/CountessElowenDusk_transition_stand_to_sit_03.png",
+    "Assets/Art/Library/GeneratedSprites/Raw/CountessElowenDusk/Transitions/CountessElowenDusk_transition_stand_to_sit_04.png"
+  ]
+}

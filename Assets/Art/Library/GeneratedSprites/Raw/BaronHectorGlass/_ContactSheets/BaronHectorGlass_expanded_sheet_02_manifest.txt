@@ -1,0 +1,10 @@
+guest=BaronHectorGlass
+source=/home/hamzak/.codex/generated_images/019ea93f-7ddf-7831-8128-fe51770d5918/ig_068c919127417e47016a28a792b58c819ba3fbc0a861ae644f.png
+chroma_sheet=Assets/Art/Library/GeneratedSprites/Raw/BaronHectorGlass/_ContactSheets/BaronHectorGlass_expanded_sheet_02_chroma.png
+transparent_sheet=Assets/Art/Library/GeneratedSprites/Raw/BaronHectorGlass/_ContactSheets/BaronHectorGlass_expanded_sheet_02_alpha.png
+Idle/BaronHectorGlass_idle_tense_three_quarter_02.png: 562x549, transparent_corners=True, visible_pixels=61000
+Surprised/BaronHectorGlass_surprised_hand_to_chest_02.png: 562x549, transparent_corners=True, visible_pixels=59356
+Panic/BaronHectorGlass_panic_scream_hands_up_02.png: 563x549, transparent_corners=True, visible_pixels=64593
+Sitting/BaronHectorGlass_sitting_tense_hands_clasped_02.png: 562x550, transparent_corners=True, visible_pixels=63441
+DiningRoomChair/BaronHectorGlass_dining_room_chair_startled_02.png: 562x550, transparent_corners=True, visible_pixels=104484
+DrawingRoomCouch/BaronHectorGlass_drawing_room_couch_cover_face_02.png: 563x550, transparent_corners=True, visible_pixels=126333

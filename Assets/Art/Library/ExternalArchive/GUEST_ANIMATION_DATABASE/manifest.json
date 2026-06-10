@@ -1,0 +1,3877 @@
+{
+  "export_root": "C:\\Users\\wimpy\\Desktop\\GuestRestAndButlerAnimationFrames",
+  "note": "Standalone PNG frames are byte-for-byte copies. Sprite-sheet frames are exact crops from the Unity sprite rect referenced by the animation clip.",
+  "characters": {
+    "guest1": {
+      "name": "Guest 1 Lady",
+      "animations": {
+        "guest1right": {
+          "clip": "Assets\\Animation\\Lady\\Lady_Walk_Right.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest1right\\01_lady_walk_09_r03_c01.png",
+              "sha256": "72b6f592748404c858c492d7d9648cb8960fbce4e01a9d4b92c719ce0bb6e891",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_09_r03_c01.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333336",
+              "exported": "guest1right\\02_lady_walk_10_r03_c02.png",
+              "sha256": "18772b2cb55c1218cbf50b4aeefe6fbf9b49ffadb3801e68bce0be3dc0c7e124",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_10_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.16666667",
+              "exported": "guest1right\\03_lady_walk_11_r03_c03.png",
+              "sha256": "d2f7da83a13a14a86b17f96601eccba234dc9176535497c420f1374651526d35",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_11_r03_c03.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest1right\\04_lady_walk_12_r03_c04.png",
+              "sha256": "10508bbe371f6d8f2a4d716491d1d7053744ca3d5ca0cc7d7418c253a5459060",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_12_r03_c04.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            }
+          ]
+        },
+        "guest1left": {
+          "clip": "Assets\\Animation\\Lady\\Lady_Walk_Left.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest1left\\01_lady_walk_05_r02_c01.png",
+              "sha256": "53af103bbd64e45ab4b83f701975fe952fc259b4c70f4f89cd91022548a4dcfa",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_05_r02_c01.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333336",
+              "exported": "guest1left\\02_lady_walk_06_r02_c02.png",
+              "sha256": "58cb75de33f666f144d2e0010b76c3681a1c2a487fd49a0bbc93735192db560f",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_06_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.16666667",
+              "exported": "guest1left\\03_lady_walk_07_r02_c03.png",
+              "sha256": "6ec6ddb65b7fb7f0e19c0c3a1dc21c5319c9ab3409a860f84d5a38c7149a9eba",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_07_r02_c03.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest1left\\04_lady_walk_08_r02_c04.png",
+              "sha256": "a4e5b221eee94b7b47023f20b96f31c3f124025e9a46aaf16c108619a2b0761b",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_08_r02_c04.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            }
+          ]
+        },
+        "guest1down": {
+          "clip": "Assets\\Animation\\Lady\\Lady_Walk_Down.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest1down\\01_lady_walk_01_r01_c01.png",
+              "sha256": "8869823b68da5d557345244a2baa5ebd341fe402872684c53aac6bafb4a11e59",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333336",
+              "exported": "guest1down\\02_lady_walk_02_r01_c02.png",
+              "sha256": "116e60f30c8fea235c6e9485dae5392ae9f23738ba3ac0784263d8a9b9f37da4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_02_r01_c02.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.16666667",
+              "exported": "guest1down\\03_lady_walk_03_r01_c03.png",
+              "sha256": "4ca2f6f8f7ba0c32611041bb81e16484e27e41135162cc77f747b2c4edc20416",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_03_r01_c03.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest1down\\04_lady_walk_04_r01_c04.png",
+              "sha256": "3e1326e2526b4d13362f399ebdded3565db45c1c5dbca44f87e2007752c93462",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_04_r01_c04.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            }
+          ]
+        },
+        "guest1up": {
+          "clip": "Assets\\Animation\\Lady\\Lady_Walk_Up.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest1up\\01_lady_walk_13_r04_c01.png",
+              "sha256": "a3e0ed561fbc4302689daf623a0a40abcc97c546bbce8f086e204bb4f0100740",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_13_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333336",
+              "exported": "guest1up\\02_lady_walk_14_r04_c02.png",
+              "sha256": "45a421c0ef1720f402ef5c527879240f55d8ba2882ba0f6d1f98a62347204ac3",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_14_r04_c02.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.16666667",
+              "exported": "guest1up\\03_lady_walk_15_r04_c03.png",
+              "sha256": "8c115c17d0909098cd391476f9ae260d36ca20375027eb09b5fc57b5b22d8c35",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_15_r04_c03.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest1up\\04_lady_walk_16_r04_c04.png",
+              "sha256": "a4ec334c3ca2b5f1c08d976250dbdf7f8c9906e39b7c802eefd3079127d515ff",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_16_r04_c04.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            }
+          ]
+        },
+        "guest1standidle": {
+          "clip": "Assets\\Animation\\Lady\\Lady_Idle.anim",
+          "frame_count": 4,
+          "unique_source_count": 3,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest1standidle\\01_lady_walk_01_r01_c01.png",
+              "sha256": "8869823b68da5d557345244a2baa5ebd341fe402872684c53aac6bafb4a11e59",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest1standidle\\02_lady_idle_shift_right.png",
+              "sha256": "3f502e2c32d1c56990524d07ac28404f2bfe1681a56939585ac4d0e7b979fe1c",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_idle_shift_right.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest1standidle\\03_lady_walk_01_r01_c01.png",
+              "sha256": "8869823b68da5d557345244a2baa5ebd341fe402872684c53aac6bafb4a11e59",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest1standidle\\04_lady_idle_shift_left.png",
+              "sha256": "7ecbdf8521e4903fd639490474e1a8b6cea780d40daf8760c70e8c1433fb0d32",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_idle_shift_left.png",
+              "file_id": 21300000,
+              "size": [
+                180,
+                290
+              ]
+            }
+          ]
+        },
+        "guest1sitidle": {
+          "clip": "Assets\\Animation\\Lady\\Lady_Sitting.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest1sitidle\\01_lady_sitting_01.png",
+              "sha256": "8565cb1c60f46a1f99a0b0f0402b92de00add826e3292e3b0e9d844afe496730",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_sitting_01.png",
+              "file_id": 21300000,
+              "size": [
+                365,
+                599
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest1sitidle\\02_lady_sitting_02.png",
+              "sha256": "d8e80be366484799c39023e77cce6bb4d829abfc187851f16aeaa0b6d824152b",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_sitting_02.png",
+              "file_id": 21300000,
+              "size": [
+                365,
+                599
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest1sitidle\\03_lady_sitting_03.png",
+              "sha256": "dbdb964560e04c26515e4dadeaa51ee34138bf6ebca8e9b4f4b56071171e3723",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_sitting_03.png",
+              "file_id": 21300000,
+              "size": [
+                365,
+                599
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest1sitidle\\04_lady_sitting_04.png",
+              "sha256": "e52d4963227d3ddb961675ae7179f58e0a2e3b814fc2189b0f41b7df8cdf7397",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest1\\lady_sitting_04.png",
+              "file_id": 21300000,
+              "size": [
+                365,
+                599
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "guest2": {
+      "name": "Guest 2 ButlerGuest",
+      "animations": {
+        "guest2right": {
+          "clip": "Assets\\Animation\\ButlerGuest\\ButlerGuest_Walk_Right.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest2right\\01_guest2right1_0.png",
+              "sha256": "0875197eec6ccfdea89c31a765c1cee1cbd258fe90d4bd5d0d25d4ab53cdc0bf",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\Guest2Walkright\\guest2right1.png",
+              "sprite_name": "guest2right1_0",
+              "file_id": 1130487056729445183,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 99,
+                "height": 198
+              },
+              "size": [
+                99,
+                198
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.33333334",
+              "exported": "guest2right\\02_guest2right2_0.png",
+              "sha256": "924b2481a3f89e4e0bd8e774782330c9e09556875dd65474a6b7c320bb9dbe3e",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\Guest2Walkright\\guest2right2.png",
+              "sprite_name": "guest2right2_0",
+              "file_id": 4492779285514123926,
+              "rect": {
+                "x": 2,
+                "y": 0,
+                "width": 89,
+                "height": 199
+              },
+              "size": [
+                89,
+                199
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.6666667",
+              "exported": "guest2right\\03_guest2right3_0.png",
+              "sha256": "23745af635a19524b8a445a48c975bce79b2d6b14acb575d389ac5980620473d",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\Guest2Walkright\\guest2right3.png",
+              "sprite_name": "guest2right3_0",
+              "file_id": 6591929602149735536,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 97,
+                "height": 198
+              },
+              "size": [
+                97,
+                198
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "1",
+              "exported": "guest2right\\04_guest2right4_0.png",
+              "sha256": "924b2481a3f89e4e0bd8e774782330c9e09556875dd65474a6b7c320bb9dbe3e",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\Guest2Walkright\\guest2right4.png",
+              "sprite_name": "guest2right4_0",
+              "file_id": -7706576614424568479,
+              "rect": {
+                "x": 2,
+                "y": 0,
+                "width": 89,
+                "height": 199
+              },
+              "size": [
+                89,
+                199
+              ]
+            }
+          ]
+        },
+        "guest2left": {
+          "clip": "Assets\\Animation\\ButlerGuest\\ButlerGuest_Walk_Left.anim",
+          "frame_count": 4,
+          "unique_source_count": 2,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest2left\\01_butlersprite_15.png",
+              "sha256": "31a88fbfc800ab41e3b73cbdd1d45e35591f4ea725a0976bfafb324773740fea",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_15",
+              "file_id": -8887158564443408505,
+              "rect": {
+                "x": 844,
+                "y": 993,
+                "width": 102,
+                "height": 198
+              },
+              "size": [
+                102,
+                198
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest2left\\02_butlersprite_38.png",
+              "sha256": "5324b20e25a43a54011f412ae506feb8f2699e8ec3a2696e5a32c4f7cf9f69a2",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_38",
+              "file_id": 5983788774961956206,
+              "rect": {
+                "x": 886,
+                "y": 0,
+                "width": 91,
+                "height": 199
+              },
+              "size": [
+                91,
+                199
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest2left\\03_butlersprite_15.png",
+              "sha256": "31a88fbfc800ab41e3b73cbdd1d45e35591f4ea725a0976bfafb324773740fea",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_15",
+              "file_id": -8887158564443408505,
+              "rect": {
+                "x": 844,
+                "y": 993,
+                "width": 102,
+                "height": 198
+              },
+              "size": [
+                102,
+                198
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest2left\\04_butlersprite_38.png",
+              "sha256": "5324b20e25a43a54011f412ae506feb8f2699e8ec3a2696e5a32c4f7cf9f69a2",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_38",
+              "file_id": 5983788774961956206,
+              "rect": {
+                "x": 886,
+                "y": 0,
+                "width": 91,
+                "height": 199
+              },
+              "size": [
+                91,
+                199
+              ]
+            }
+          ]
+        },
+        "guest2down": {
+          "clip": "Assets\\Animation\\ButlerGuest\\ButlerGuest_Walk_Down.anim",
+          "frame_count": 4,
+          "unique_source_count": 3,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest2down\\01_butler40_alpha.png",
+              "sha256": "65630a36c2a2c434d79afb3581f2973d3e6cb0c3ab4dc5c4569e91125fe5944e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest2\\butler40_alpha.png",
+              "file_id": 21300000,
+              "size": [
+                445,
+                1271
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333336",
+              "exported": "guest2down\\02_butler40_alpha.png",
+              "sha256": "65630a36c2a2c434d79afb3581f2973d3e6cb0c3ab4dc5c4569e91125fe5944e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest2\\butler40_alpha.png",
+              "file_id": 21300000,
+              "size": [
+                445,
+                1271
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.16666667",
+              "exported": "guest2down\\03_butlersprite_6.png",
+              "sha256": "797680f00f60e7c61f507c03b07762e24ad57c780abb2770248c43b8dd27f14e",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_6",
+              "file_id": -58330777484112019,
+              "rect": {
+                "x": 753,
+                "y": 1200,
+                "width": 72,
+                "height": 214
+              },
+              "size": [
+                72,
+                214
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest2down\\04_butlersprite_7.png",
+              "sha256": "adb85f2e9958170879d722e50165c62f7a01bcfe72c830a8e283d362b177bdb8",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_7",
+              "file_id": 8640617017120873130,
+              "rect": {
+                "x": 872,
+                "y": 1200,
+                "width": 74,
+                "height": 214
+              },
+              "size": [
+                74,
+                214
+              ]
+            }
+          ]
+        },
+        "guest2up": {
+          "clip": "Assets\\Animation\\ButlerGuest\\ButlerGuest_Walk_Up.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest2up\\01_butlersprite_28.png",
+              "sha256": "5de1962f038249d7b5ff4824c1f003b00f22bead422188d459184f662c92cd8f",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_28",
+              "file_id": -1932678991046642513,
+              "rect": {
+                "x": 517,
+                "y": 579,
+                "width": 77,
+                "height": 199
+              },
+              "size": [
+                77,
+                199
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.16666667",
+              "exported": "guest2up\\02_butlersprite_29.png",
+              "sha256": "34026c5cd739d3186a07ebcb6d02956b0a260992462d1250f29ac3bb2b98fa25",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_29",
+              "file_id": -4995146701888261048,
+              "rect": {
+                "x": 637,
+                "y": 579,
+                "width": 77,
+                "height": 199
+              },
+              "size": [
+                77,
+                199
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.33333334",
+              "exported": "guest2up\\03_butlersprite_30.png",
+              "sha256": "84761b9afb411bc01b04f1592d774725c63d2f75586b743642e4545e44d6305e",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_30",
+              "file_id": 683938592853119149,
+              "rect": {
+                "x": 760,
+                "y": 579,
+                "width": 77,
+                "height": 199
+              },
+              "size": [
+                77,
+                199
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.5",
+              "exported": "guest2up\\04_butlersprite_31.png",
+              "sha256": "e9ae6ba8efb7b811bcc5958a598b26f8c1ec72b13088114cc6d387db492f1478",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlersprite.png",
+              "sprite_name": "butlersprite_31",
+              "file_id": 1372619842602941957,
+              "rect": {
+                "x": 882,
+                "y": 577,
+                "width": 72,
+                "height": 201
+              },
+              "size": [
+                72,
+                201
+              ]
+            }
+          ]
+        },
+        "guest2standidle": {
+          "clip": "Assets\\Animation\\ButlerGuest\\ButlerGuest_Idle.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest2standidle\\01_butler_guest_idle_down_01.png",
+              "sha256": "7357499154db4718bf86ece9fb38176ad3adfb34eb366db0df62d83a8b58f5a0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest2\\butler_guest_idle_down_01.png",
+              "file_id": 21300000,
+              "size": [
+                77,
+                213
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest2standidle\\02_butler_guest_idle_down_02.png",
+              "sha256": "c773d9d8f77856163f901bc748b208fabe7dd3f1923d747097aab2ea8ddc3c88",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest2\\butler_guest_idle_down_02.png",
+              "file_id": 21300000,
+              "size": [
+                77,
+                213
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest2standidle\\03_butler_guest_idle_down_03.png",
+              "sha256": "a6c75cb8807ae8856e66a2046af4ad92435769f7e51a558a769ff3073fdcddac",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest2\\butler_guest_idle_down_03.png",
+              "file_id": 21300000,
+              "size": [
+                77,
+                213
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest2standidle\\04_butler_guest_idle_down_04.png",
+              "sha256": "5a9ff19bc78b4166ae992efb57eee5ac6069f78807939d6ee2484e79c8ec49f4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest2\\butler_guest_idle_down_04.png",
+              "file_id": 21300000,
+              "size": [
+                77,
+                213
+              ]
+            }
+          ]
+        },
+        "guest2sitidle": {
+          "clip": "Assets\\Animation\\ButlerGuest\\ButlerGuest_Sitting.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest2sitidle\\01_butlerspritesit_0.png",
+              "sha256": "ab53e3979de78b223e261336c759bdfe01a38163fcac7402528efa965941e333",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlerspritesit.png",
+              "sprite_name": "butlerspritesit_0",
+              "file_id": 7423532398524213824,
+              "rect": {
+                "x": 7,
+                "y": 10,
+                "width": 284,
+                "height": 576
+              },
+              "size": [
+                284,
+                576
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest2sitidle\\02_butlerspritesit_1.png",
+              "sha256": "e24113b8ffdd53be23d8946d6980526c054883c6d7bc9d37c7a6a136fab60409",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlerspritesit.png",
+              "sprite_name": "butlerspritesit_1",
+              "file_id": 7540426546054294487,
+              "rect": {
+                "x": 519,
+                "y": 10,
+                "width": 282,
+                "height": 574
+              },
+              "size": [
+                282,
+                574
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest2sitidle\\03_butlerspritesit_2.png",
+              "sha256": "97d35caa1d63a3038a1ddc105c5a49f94b73291928881b11ddc1fded6ec3d969",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlerspritesit.png",
+              "sprite_name": "butlerspritesit_2",
+              "file_id": -1632025291508846223,
+              "rect": {
+                "x": 1044,
+                "y": 7,
+                "width": 280,
+                "height": 575
+              },
+              "size": [
+                280,
+                575
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest2sitidle\\04_butlerspritesit_3.png",
+              "sha256": "4b325e177a441ab367a322d464641c7951d96cc91b10f8bd03a9e83e2935e06b",
+              "mode": "sheet_slice_crop",
+              "sheet": "Assets\\Art\\Characters\\guest2\\butlerspritesit.png",
+              "sprite_name": "butlerspritesit_3",
+              "file_id": -5526496082931766456,
+              "rect": {
+                "x": 1573,
+                "y": 10,
+                "width": 277,
+                "height": 574
+              },
+              "size": [
+                277,
+                574
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "guest4": {
+      "name": "Guest 4 Countess Elowen Dusk",
+      "animations": {
+        "guest4right": {
+          "clip": "Assets\\Animation\\CountessElowenDusk\\CountessElowenDusk_Walk_Right.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest4right\\01_countess_elowen_dusk_walk_01_r03_c01.png",
+              "sha256": "b1d77245075a2cd69138cd1a66bd4bbef4f34a6157e1ebf3c87df524fb7f128f",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_01_r03_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest4right\\02_countess_elowen_dusk_walk_02_r03_c02.png",
+              "sha256": "6f1a9de0dade0228f977c78ff2174cc2147a2636b6734408c0a72416d37624ac",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_02_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest4right\\03_countess_elowen_dusk_walk_03_r03_c03.png",
+              "sha256": "9a1164659326a9e5cfe14194c8329da3be0b7ce0b10a0ae73f3f737108b89631",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_03_r03_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest4right\\04_countess_elowen_dusk_walk_04_r03_c04.png",
+              "sha256": "de0a8bed221a68e6de280ccec9fc816dfd5bd3a0f78638430e7d4cd5f5a21545",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_04_r03_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest4right\\05_countess_elowen_dusk_walk_05_r03_c05.png",
+              "sha256": "02b3ee7365dc1cb1ac5f359a9fba06f19e449ca23549a05c108704c29d81309a",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_05_r03_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest4right\\06_countess_elowen_dusk_walk_06_r03_c06.png",
+              "sha256": "f92ff4a46765d8636e92e688e5a3220f869cdf8881638c13554f17031a5786b0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_06_r03_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest4right\\07_countess_elowen_dusk_walk_07_r03_c07.png",
+              "sha256": "fad0a2ba77edab5a1c8eaccc633fdd679208cf898126c5f591a5c2fe927f0d96",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_07_r03_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest4right\\08_countess_elowen_dusk_walk_08_r03_c08.png",
+              "sha256": "a12237418f5894fb233ea81ccc9c89dd48b8fb1b7ee235feae2601059b3c7c1a",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_08_r03_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest4left": {
+          "clip": "Assets\\Animation\\CountessElowenDusk\\CountessElowenDusk_Walk_Left.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest4left\\01_countess_elowen_dusk_walk_01_r02_c01.png",
+              "sha256": "0f0f5d31e36df6e22de61eb83d2028486087c211d2b75b0cf50c534d83666119",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_01_r02_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest4left\\02_countess_elowen_dusk_walk_02_r02_c02.png",
+              "sha256": "752eb62fbfd3f212dbf275d891cb8d90365b5ff14df68ceff68aa0caf1f496ee",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_02_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest4left\\03_countess_elowen_dusk_walk_03_r02_c03.png",
+              "sha256": "3c6a57aa47072cd5d62a70f880f601b521e4022184a22cc748d2a15ae7758735",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_03_r02_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest4left\\04_countess_elowen_dusk_walk_04_r02_c04.png",
+              "sha256": "ac5e06873a79a9ab28f6e4703ddb3d1a465ce397925d060b7dbd3bd90d7e768c",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_04_r02_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest4left\\05_countess_elowen_dusk_walk_05_r02_c05.png",
+              "sha256": "23b7be1f1d597a91d22b7c93e49353e047132029036e1513b8f81a54dd15381d",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_05_r02_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest4left\\06_countess_elowen_dusk_walk_06_r02_c06.png",
+              "sha256": "a0676837ec0fc858b29f4a376baf73b1eafb0186dfc0b1060d61e23443e6b204",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_06_r02_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest4left\\07_countess_elowen_dusk_walk_07_r02_c07.png",
+              "sha256": "6b60b4820b5940a99356e2b2f4243ce4a90d21c5b9d78feb6a297483fdf0f153",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_07_r02_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest4left\\08_countess_elowen_dusk_walk_08_r02_c08.png",
+              "sha256": "f3f9aec6a24b4ae22a2debf63e602b79dce24e7e1b2a9dc61f1ae466f1ac5aa0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_08_r02_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest4down": {
+          "clip": "Assets\\Animation\\CountessElowenDusk\\CountessElowenDusk_Walk_Down.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest4down\\01_countess_elowen_dusk_walk_01_r01_c01.png",
+              "sha256": "9a71af8de3cdc8a2c03dbb339e504c6d08ad4a07156908ca13c9adde7692b5cf",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest4down\\02_countess_elowen_dusk_walk_02_r01_c02.png",
+              "sha256": "3915cfbf53cc9a1b9a2ab51be0192435b9ab028b3cf9af84d33b7e522ea7baa6",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_02_r01_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest4down\\03_countess_elowen_dusk_walk_03_r01_c03.png",
+              "sha256": "ed26d4b854f10d76488a6789b892523e416a3e29260152ebb36aeb1fbf9ef513",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_03_r01_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest4down\\04_countess_elowen_dusk_walk_04_r01_c04.png",
+              "sha256": "5de6481aebec9fdb497e9aa84e410cceb8389856531d4d82ae42016fbf6f2c91",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_04_r01_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest4down\\05_countess_elowen_dusk_walk_05_r01_c05.png",
+              "sha256": "fa23c28c0ac7fded1fff6e70c74fda0c014b7a1dd0cad1273e17f83c5101e6bb",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_05_r01_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest4down\\06_countess_elowen_dusk_walk_06_r01_c06.png",
+              "sha256": "8741b786ec847faa2476952c5374bfabdc5d29217850e660f6d809f6e82f28c7",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_06_r01_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest4down\\07_countess_elowen_dusk_walk_07_r01_c07.png",
+              "sha256": "0a9c5a222e15a3507627e72b8b2357b4fd8fc55a0eb36db45eb052a6e8e53755",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_07_r01_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest4down\\08_countess_elowen_dusk_walk_08_r01_c08.png",
+              "sha256": "f72b744edf63e96b77f7420d86198d0e104386277ce3f6a0100d16beb914deb2",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_08_r01_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest4up": {
+          "clip": "Assets\\Animation\\CountessElowenDusk\\CountessElowenDusk_Walk_Up.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest4up\\01_countess_elowen_dusk_walk_01_r04_c01.png",
+              "sha256": "7320a41a67cb69cf08e700aa9e400d8efe17cee0283c50038898fb11504e198b",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_01_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest4up\\02_countess_elowen_dusk_walk_02_r04_c02.png",
+              "sha256": "072afb781756f4cfe9d3236a437dd536161a180d58d32565312738545803a89e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_02_r04_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest4up\\03_countess_elowen_dusk_walk_03_r04_c03.png",
+              "sha256": "81c108dbed1a2a0faf094b8f93fd629527a3b47eaa4fab0b0050b0f44b76e557",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_03_r04_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest4up\\04_countess_elowen_dusk_walk_04_r04_c04.png",
+              "sha256": "4a330efd0eb48c4139b64d104b9a3b31822e33fe8103190f71f9cfce361a16d0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_04_r04_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest4up\\05_countess_elowen_dusk_walk_05_r04_c05.png",
+              "sha256": "b1cd12d496ff65f007b99e9756bf0f514e3ff9e2dc289ead5769a9e61c7e02d4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_05_r04_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest4up\\06_countess_elowen_dusk_walk_06_r04_c06.png",
+              "sha256": "9d62d261f33fb89499e2b73833404442346bdd85e66589858a24dc7b84a051ac",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_06_r04_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest4up\\07_countess_elowen_dusk_walk_07_r04_c07.png",
+              "sha256": "8a75e1353d55460d3181d29df926ec49a80b2aafce35f8c84c927ba69d0a7274",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_07_r04_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest4up\\08_countess_elowen_dusk_walk_08_r04_c08.png",
+              "sha256": "55d3cb64751dbafaf8172d976e1f104ff736574d63a88f78c7ac3b002d394532",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_walk_08_r04_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest4standidle": {
+          "clip": "Assets\\Animation\\CountessElowenDusk\\CountessElowenDusk_Idle.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest4standidle\\01_countess_elowen_dusk_idle_down_01.png",
+              "sha256": "9a71af8de3cdc8a2c03dbb339e504c6d08ad4a07156908ca13c9adde7692b5cf",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_idle_down_01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest4standidle\\02_countess_elowen_dusk_idle_down_02.png",
+              "sha256": "2023f954babeda4db30fc601b8f6286693235c0e3e79bcff860ae203374329fc",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_idle_down_02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest4standidle\\03_countess_elowen_dusk_idle_down_03.png",
+              "sha256": "0729d091c6c55e30423b7ba9cbbf186a7fb7f9b3c977b4d730a101caa303423c",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_idle_down_03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest4standidle\\04_countess_elowen_dusk_idle_down_04.png",
+              "sha256": "2023f954babeda4db30fc601b8f6286693235c0e3e79bcff860ae203374329fc",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest4\\countess_elowen_dusk_idle_down_04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest4sitidle": {
+          "clip": null,
+          "frames": [],
+          "note": "No authored clip found; folder intentionally left empty."
+        }
+      }
+    },
+    "guest5": {
+      "name": "Guest 5 Baron Hector Glass",
+      "animations": {
+        "guest5right": {
+          "clip": "Assets\\Animation\\BaronHectorGlass\\BaronHectorGlass_Walk_Right.anim",
+          "frame_count": 4,
+          "unique_source_count": 3,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest5right\\01_baron_hector_glass_walk_02_r03_c02.png",
+              "sha256": "17e4f14bb45a9a04edfded9b46aa950a9a90e1663bfbb4ca2e44e6aa957c69d5",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_02_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.1",
+              "exported": "guest5right\\02_baron_hector_glass_walk_01_r03_c01.png",
+              "sha256": "583a6bb7c444d5e79570b0fa44963b92d4b43637dd0df64d5dffe7f8a27e3d5f",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_01_r03_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.2",
+              "exported": "guest5right\\03_baron_hector_glass_standing_arms_side_same_angle.png",
+              "sha256": "68e8bc0bc0ffe0b53a2890accb1c83597b55d9927ee64cb8d42035512e02c30b",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_standing_arms_side_same_angle.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.3",
+              "exported": "guest5right\\04_baron_hector_glass_walk_02_r03_c02.png",
+              "sha256": "17e4f14bb45a9a04edfded9b46aa950a9a90e1663bfbb4ca2e44e6aa957c69d5",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_02_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest5left": {
+          "clip": "Assets\\Animation\\BaronHectorGlass\\BaronHectorGlass_Walk_Left.anim",
+          "frame_count": 4,
+          "unique_source_count": 3,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest5left\\01_baron_hector_glass_walk_02_r02_c02.png",
+              "sha256": "9043f4914d0dc3574d043f9d209572c82f291bb8d7522f3512bd78ac9253b1a6",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_02_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.1",
+              "exported": "guest5left\\02_baron_hector_glass_walk_01_r02_c01.png",
+              "sha256": "ab14f302e7bebebeea214c4d5c2591a82da8c53cb49c2772024d7af506334006",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_01_r02_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.2",
+              "exported": "guest5left\\03_baron_hector_glass_standing_arms_side_same_angle_left.png",
+              "sha256": "7a75837652316b339083f1a263ec8cba80fe05593fb3ff6e3c1130a4724589df",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_standing_arms_side_same_angle_left.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.3",
+              "exported": "guest5left\\04_baron_hector_glass_walk_02_r02_c02.png",
+              "sha256": "9043f4914d0dc3574d043f9d209572c82f291bb8d7522f3512bd78ac9253b1a6",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_02_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest5down": {
+          "clip": "Assets\\Animation\\BaronHectorGlass\\BaronHectorGlass_Walk_Down.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest5down\\01_baron_hector_glass_walk_01_r01_c01.png",
+              "sha256": "2dfd14b79321cf3f59a014c2f1e1019fd778167cfe1974f2f747f4c302207100",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest5down\\02_baron_hector_glass_walk_02_r01_c02.png",
+              "sha256": "3599fc158e71ca2f3126a1054bf206c0228894293c825372b21f8723240f2da3",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_02_r01_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest5down\\03_baron_hector_glass_walk_03_r01_c03.png",
+              "sha256": "be3df5228665d580355601939d08bca7b3e1d80c9680706753800adf7f49507d",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_03_r01_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest5down\\04_baron_hector_glass_walk_04_r01_c04.png",
+              "sha256": "b3bdc4839b67afee2630769a663d490eb37fda31e4978bc2353ab0e8984fc906",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_04_r01_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest5down\\05_baron_hector_glass_walk_05_r01_c05.png",
+              "sha256": "885118c69400ad7e55db38a2a9248525c883a7605ddc17fda948a6cb830b8d9f",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_05_r01_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest5down\\06_baron_hector_glass_walk_06_r01_c06.png",
+              "sha256": "1b6960c7f418c77ef79f44d6efd8ff3582a2447b9a647d9f6f3ba97189b392e1",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_06_r01_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest5down\\07_baron_hector_glass_walk_07_r01_c07.png",
+              "sha256": "824d0526fe616efa1f6e165739e24b4b3d0221ac60cdf10d3587705c8db1ffb1",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_07_r01_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest5down\\08_baron_hector_glass_walk_08_r01_c08.png",
+              "sha256": "3dc3e773f9417813067eaaee57e0a4ffadb052574afe1db914dbae4b7ca7493c",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_08_r01_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest5up": {
+          "clip": "Assets\\Animation\\BaronHectorGlass\\BaronHectorGlass_Walk_Up.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest5up\\01_baron_hector_glass_walk_01_r04_c01.png",
+              "sha256": "0384a99b434aeb05d546a98b570b86a22a6119f50981295c14541dd442f44a69",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_01_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest5up\\02_baron_hector_glass_walk_02_r04_c02.png",
+              "sha256": "8b1638a5b6bb924f9d315e0236d4d9e2da031d463375042a0e221547bc033b1f",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_02_r04_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest5up\\03_baron_hector_glass_walk_03_r04_c03.png",
+              "sha256": "a9f5adfc2aac6b2268fb6a832f384f27baa7ee6e077b16230df06fc155f3df65",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_03_r04_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest5up\\04_baron_hector_glass_walk_04_r04_c04.png",
+              "sha256": "16e596beb9a2dc2302ab9adca1262f35ef6121cffe9f484e9dd0e8a75b349210",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_04_r04_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest5up\\05_baron_hector_glass_walk_05_r04_c05.png",
+              "sha256": "7b1c8e483e006bbf68d019a0e93886fc21d4b4f92aeae36afb319392fd9d068c",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_05_r04_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest5up\\06_baron_hector_glass_walk_06_r04_c06.png",
+              "sha256": "60e56a7387620789a6c6a14dd244385467abfad0394cdda6322f02711ccb0a6a",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_06_r04_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest5up\\07_baron_hector_glass_walk_07_r04_c07.png",
+              "sha256": "7dec8e852484b88c87d8b576c0b7c0262729fb59cb9529e560a7ca573a9f1bf1",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_07_r04_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest5up\\08_baron_hector_glass_walk_08_r04_c08.png",
+              "sha256": "5b82049e925350008557e8b12b82cd7d5219d32b7e12b54f147b3557f44a0c2a",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_walk_08_r04_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest5standidle": {
+          "clip": "Assets\\Animation\\BaronHectorGlass\\BaronHectorGlass_Idle.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest5standidle\\01_baron_hector_glass_idle_down_01.png",
+              "sha256": "bf2ba70d437db90d4203fac86fa01f8d73a090f1d10d75772523ec3b1fbb09fa",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_idle_down_01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest5standidle\\02_baron_hector_glass_idle_down_02.png",
+              "sha256": "ea3f2aed3c1cc83bdf3d69bd98e3ca95c9a01086ee1dc7d04973da1eb488f9d6",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_idle_down_02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest5standidle\\03_baron_hector_glass_idle_down_03.png",
+              "sha256": "b853e0548c0c92704319b6c929c32b99f8a9fcb3cc4e11e74de59389161a1b46",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_idle_down_03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest5standidle\\04_baron_hector_glass_idle_down_04.png",
+              "sha256": "ea3f2aed3c1cc83bdf3d69bd98e3ca95c9a01086ee1dc7d04973da1eb488f9d6",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest5\\baron_hector_glass_idle_down_04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest5sitidle": {
+          "clip": null,
+          "frames": [],
+          "note": "No authored clip found; folder intentionally left empty."
+        }
+      }
+    },
+    "guest6": {
+      "name": "Guest 6 Lady Sabine Marrow",
+      "animations": {
+        "guest6right": {
+          "clip": "Assets\\Animation\\LadySabineMarrow\\LadySabineMarrow_Walk_Right.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest6right\\01_lady_sabine_marrow_walk_01_r03_c01.png",
+              "sha256": "c108b68dbe1f951deeae839611b2645adc507e495e918398e2c411eaa9d17cfc",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_01_r03_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest6right\\02_lady_sabine_marrow_walk_02_r03_c02.png",
+              "sha256": "f85024975a8727d5cec11ca3b237a11de7b0d8b2aa8b06ba6dc37e3b72049a7f",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_02_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest6right\\03_lady_sabine_marrow_walk_03_r03_c03.png",
+              "sha256": "374e3f0805b73511cbc4a31a85cca9a53d359573c5b87289095456c970338945",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_03_r03_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest6right\\04_lady_sabine_marrow_walk_04_r03_c04.png",
+              "sha256": "913efad86689a3f42066bfce596e1ad2984c627ba922715765c1d951cb5188c4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_04_r03_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest6right\\05_lady_sabine_marrow_walk_05_r03_c05.png",
+              "sha256": "13a3baffc05d7532ba8149654a7eae6eb6f4a7c908ee7c8a39d10b8fbea42c0b",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_05_r03_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest6right\\06_lady_sabine_marrow_walk_06_r03_c06.png",
+              "sha256": "a358228ced1af25c3d4856883fbc58c4b040f644779db51a6061fcdfaae953f4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_06_r03_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest6right\\07_lady_sabine_marrow_walk_07_r03_c07.png",
+              "sha256": "d80df5c7cdfa2e2c223185f76405e310d9a9d2b269fcc0214f130ce6709cde0a",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_07_r03_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest6right\\08_lady_sabine_marrow_walk_08_r03_c08.png",
+              "sha256": "ad5934a173b63da66014b808eddbad5d5f8207cc1e1868143939eb9daf9af179",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_08_r03_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest6left": {
+          "clip": "Assets\\Animation\\LadySabineMarrow\\LadySabineMarrow_Walk_Left.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest6left\\01_lady_sabine_marrow_walk_01_r02_c01.png",
+              "sha256": "271d50420f9ed9e2e8b73f5a25473ac2c590237557c1a36449c159e1ee15a6a6",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_01_r02_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest6left\\02_lady_sabine_marrow_walk_02_r02_c02.png",
+              "sha256": "d149824c052625991537b8b654b986dd6f0b06eb955fbfe1776d5a21b1e1a2af",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_02_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest6left\\03_lady_sabine_marrow_walk_03_r02_c03.png",
+              "sha256": "f35ba1c20887fa27aaa83512231e3a0a60cf35dc87da403b3bbd7c256c25ed50",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_03_r02_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest6left\\04_lady_sabine_marrow_walk_04_r02_c04.png",
+              "sha256": "8f01e22c4847169744469d6e2e4675034e0f7e7d7e2772cb3e7a63e209e21c8d",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_04_r02_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest6left\\05_lady_sabine_marrow_walk_05_r02_c05.png",
+              "sha256": "8e955bba55a864712060a276eacbd27bd196806ab58680ca118ffe37d115fa42",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_05_r02_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest6left\\06_lady_sabine_marrow_walk_06_r02_c06.png",
+              "sha256": "d2143631d944e67fc5f1dbf5f314737e7148f0dcb78951318ce1be97ad56bb42",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_06_r02_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest6left\\07_lady_sabine_marrow_walk_07_r02_c07.png",
+              "sha256": "faf3dcda70f111cabad15bb7d73419246d4a28382e88d6c8287a0c3215b0ec9b",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_07_r02_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest6left\\08_lady_sabine_marrow_walk_08_r02_c08.png",
+              "sha256": "ae390e07ca883f947ed77bfcbfe73b61fdf01374e9f001eeaed4ca20e4288ed4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_08_r02_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest6down": {
+          "clip": "Assets\\Animation\\LadySabineMarrow\\LadySabineMarrow_Walk_Down.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest6down\\01_lady_sabine_marrow_walk_01_r01_c01.png",
+              "sha256": "416302e9bcd811ea7e399c545b14ba17b2d8f3e228ff22d204f3574c947a06c0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest6down\\02_lady_sabine_marrow_walk_02_r01_c02.png",
+              "sha256": "7ef51587eaa77b9a22df502b76061fd8025c6feb9861bfd6181e05a376252899",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_02_r01_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest6down\\03_lady_sabine_marrow_walk_03_r01_c03.png",
+              "sha256": "b0bb2167f7bd8b310ba3eb99266a670599e7fbc59aefb8d40eaebf0d5c62b010",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_03_r01_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest6down\\04_lady_sabine_marrow_walk_04_r01_c04.png",
+              "sha256": "c75e0b3485cd73dffe8973db89345a1fd2aeb2f126d09b721d5362128e2634d6",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_04_r01_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest6down\\05_lady_sabine_marrow_walk_05_r01_c05.png",
+              "sha256": "581ea462ff877965c906173402c0509f01786e25cb34d44a58ba160e99b79afa",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_05_r01_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest6down\\06_lady_sabine_marrow_walk_06_r01_c06.png",
+              "sha256": "48e04dcb28706acc4f56dfaaa3b5c61bedf0789cdfdd91d639f8f27fafeb8bb5",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_06_r01_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest6down\\07_lady_sabine_marrow_walk_07_r01_c07.png",
+              "sha256": "2eb45a92e33c9b3a330c5df01c6ef61708e0f1ecae98fab1ff48befeeab7de8f",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_07_r01_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest6down\\08_lady_sabine_marrow_walk_08_r01_c08.png",
+              "sha256": "eababe82231e8aed51aa28c95c721145f0b87b967aefd04f07db9d23950e97f4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_08_r01_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest6up": {
+          "clip": "Assets\\Animation\\LadySabineMarrow\\LadySabineMarrow_Walk_Up.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest6up\\01_lady_sabine_marrow_walk_01_r04_c01.png",
+              "sha256": "313496851f38bc2968674202699c1227be6c1133230b974a4f5f5f64442fe866",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_01_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest6up\\02_lady_sabine_marrow_walk_02_r04_c02.png",
+              "sha256": "73549710c03a6cf91aafd0b1f647a9c18c8de91a7e6db2da2018ebc511e53910",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_02_r04_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest6up\\03_lady_sabine_marrow_walk_03_r04_c03.png",
+              "sha256": "ac00c481e6814837412101a5b60543a1549b627188ec7d22ff3fecc8429bf184",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_03_r04_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest6up\\04_lady_sabine_marrow_walk_04_r04_c04.png",
+              "sha256": "c6ca9801ca728bbab10e122680af2e0e6d42f6ae97cb2f9e07b8e60fea4591f1",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_04_r04_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest6up\\05_lady_sabine_marrow_walk_05_r04_c05.png",
+              "sha256": "69736adb70d66d303bf47234e41144e864dd044f8c5cc728260f69ae42062db2",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_05_r04_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest6up\\06_lady_sabine_marrow_walk_06_r04_c06.png",
+              "sha256": "49b828818ce5407cb19e93ef08c617dccc151a2ef9e3da210d90001e7a5677cd",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_06_r04_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest6up\\07_lady_sabine_marrow_walk_07_r04_c07.png",
+              "sha256": "b0df342fcd51dbfc350535ffcf5e13267bedcc0724b44827c119c7aa37ab9555",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_07_r04_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest6up\\08_lady_sabine_marrow_walk_08_r04_c08.png",
+              "sha256": "20d6b361621f6aa8f3499ab05432cde738a0b041a578de1f488baa6c0b07c6ab",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_walk_08_r04_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest6standidle": {
+          "clip": "Assets\\Animation\\LadySabineMarrow\\LadySabineMarrow_Idle.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest6standidle\\01_lady_sabine_marrow_idle_down_01.png",
+              "sha256": "416302e9bcd811ea7e399c545b14ba17b2d8f3e228ff22d204f3574c947a06c0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_idle_down_01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest6standidle\\02_lady_sabine_marrow_idle_down_02.png",
+              "sha256": "effa302536288ceda267255c4232e62c66c556939bfb79615828f4361bde6bfc",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_idle_down_02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest6standidle\\03_lady_sabine_marrow_idle_down_03.png",
+              "sha256": "9b8a1d67ea7e05056c8bcbdcaeb5b63993a533c6f95c57e9f6fecec1116dd4b9",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_idle_down_03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest6standidle\\04_lady_sabine_marrow_idle_down_04.png",
+              "sha256": "effa302536288ceda267255c4232e62c66c556939bfb79615828f4361bde6bfc",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest6\\lady_sabine_marrow_idle_down_04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest6sitidle": {
+          "clip": null,
+          "frames": [],
+          "note": "No authored clip found; folder intentionally left empty."
+        }
+      }
+    },
+    "guest7": {
+      "name": "Guest 7 Lord Ambrose Veil",
+      "animations": {
+        "guest7right": {
+          "clip": "Assets\\Animation\\LordAmbroseVeil\\LordAmbroseVeil_Walk_Right.anim",
+          "frame_count": 4,
+          "unique_source_count": 3,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest7right\\01_lord_ambrose_veil_walk_02_r03_c02.png",
+              "sha256": "616ae1cf74fef7a6d178dae54a2d903dbc4a8fb09c03545ed9c13e9b9bc4d192",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_02_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.1",
+              "exported": "guest7right\\02_lord_ambrose_veil_walk_01_r03_c01.png",
+              "sha256": "2f48cb5c87b0b8507f7305677e742a497c00c561a750eb99dae8001f2f0790c4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_01_r03_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.2",
+              "exported": "guest7right\\03_lord_ambrose_veil_standing_arms_side_same_angle.png",
+              "sha256": "24d00edcc71f518cfccbdcd39fd235cec3f69e8e0364bb495a507cf1e5163990",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_standing_arms_side_same_angle.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.3",
+              "exported": "guest7right\\04_lord_ambrose_veil_walk_02_r03_c02.png",
+              "sha256": "616ae1cf74fef7a6d178dae54a2d903dbc4a8fb09c03545ed9c13e9b9bc4d192",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_02_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest7left": {
+          "clip": "Assets\\Animation\\LordAmbroseVeil\\LordAmbroseVeil_Walk_Left.anim",
+          "frame_count": 4,
+          "unique_source_count": 3,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest7left\\01_lord_ambrose_veil_walk_02_r02_c02.png",
+              "sha256": "c7a019b3e74828890d68e4e72a310212ceb6bc22e269ed66238fce63a3c714cd",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_02_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.1",
+              "exported": "guest7left\\02_lord_ambrose_veil_walk_01_r02_c01.png",
+              "sha256": "8f4dc2aca4a9a86e7aa785a9044bc163fd8ae6df91d9220dda19f80451239ec3",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_01_r02_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.2",
+              "exported": "guest7left\\03_lord_ambrose_veil_standing_arms_side_same_angle_left.png",
+              "sha256": "98a352e38e802191dd9e8ed2cbbd6fc08ca267e61acb31c51c002dd328b6cc27",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_standing_arms_side_same_angle_left.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.3",
+              "exported": "guest7left\\04_lord_ambrose_veil_walk_02_r02_c02.png",
+              "sha256": "c7a019b3e74828890d68e4e72a310212ceb6bc22e269ed66238fce63a3c714cd",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_02_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest7down": {
+          "clip": "Assets\\Animation\\LordAmbroseVeil\\LordAmbroseVeil_Walk_Down.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest7down\\01_lord_ambrose_veil_walk_01_r01_c01.png",
+              "sha256": "014b6e870ff0d15373ec1fe55eaa58a41c63ec4b4178c6dc5275a49f3798c91e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest7down\\02_lord_ambrose_veil_walk_02_r01_c02.png",
+              "sha256": "1b79534a9386e1ef7c6c8e9307ba4b6960ff78a5fec3b4b379cb75f98c29fd89",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_02_r01_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest7down\\03_lord_ambrose_veil_walk_03_r01_c03.png",
+              "sha256": "107982d60020ebcac2e28c6ee9954f7f50980dd064f148b4295c5e6867d5ba16",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_03_r01_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest7down\\04_lord_ambrose_veil_walk_04_r01_c04.png",
+              "sha256": "5efb379013ef9b186b807eef86cbab4c3f660704c23c829d55f72db99a9268ab",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_04_r01_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest7down\\05_lord_ambrose_veil_walk_05_r01_c05.png",
+              "sha256": "77e376e5ae68737b331424edef04e8572a5b79aed2ce434f67c957931c3b0284",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_05_r01_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest7down\\06_lord_ambrose_veil_walk_06_r01_c06.png",
+              "sha256": "855433cfb69dc15f52d6341be4be1e32ff0f70f7b797e079eed86a630e646a97",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_06_r01_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest7down\\07_lord_ambrose_veil_walk_07_r01_c07.png",
+              "sha256": "fc5740333a0dbd16344d88e2299165f5d7e1bd1488aef60e63516347fba3d263",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_07_r01_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest7down\\08_lord_ambrose_veil_walk_08_r01_c08.png",
+              "sha256": "a706db1c872fe029083139419aca584f212f4aa00092cbeb381cba7f7adc9894",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_08_r01_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest7up": {
+          "clip": "Assets\\Animation\\LordAmbroseVeil\\LordAmbroseVeil_Walk_Up.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest7up\\01_lord_ambrose_veil_walk_01_r04_c01.png",
+              "sha256": "9d5f57a358fcc40b9e695f293c29edb0b1d82a8f6283b728f3bf9a65ed61ccd5",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_01_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest7up\\02_lord_ambrose_veil_walk_02_r04_c02.png",
+              "sha256": "22490d196a113f62c50047510cce3ffa05c70f52f39a1462506f51f64708a0bf",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_02_r04_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest7up\\03_lord_ambrose_veil_walk_03_r04_c03.png",
+              "sha256": "78fc270c87e28e825891ebf14eacd1beb634f0001ddf2ae396eb0337d14c7021",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_03_r04_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest7up\\04_lord_ambrose_veil_walk_04_r04_c04.png",
+              "sha256": "dc9204ebe625ddff2bb4f2935fb10777a56015010aeb96361a96404b40b75051",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_04_r04_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest7up\\05_lord_ambrose_veil_walk_05_r04_c05.png",
+              "sha256": "861c6b1415f387f089d35f25f3593ab0ea6d36c3bad12d7f78a0648d379adea5",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_05_r04_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest7up\\06_lord_ambrose_veil_walk_06_r04_c06.png",
+              "sha256": "e27c3711e05273f738ac8af24e1b50dda142aeb53a3e91393a9c99df0d0420d7",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_06_r04_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest7up\\07_lord_ambrose_veil_walk_07_r04_c07.png",
+              "sha256": "3804efa143dda522646eee8cf704348e51423f4c37d176aae0577fd9cd724f96",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_07_r04_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest7up\\08_lord_ambrose_veil_walk_08_r04_c08.png",
+              "sha256": "4ad2a32ee25e3626fe62745c55ed0f3ddea1426f4c28b54c12a2537f66bdc2cd",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_walk_08_r04_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest7standidle": {
+          "clip": "Assets\\Animation\\LordAmbroseVeil\\LordAmbroseVeil_Idle.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest7standidle\\01_lord_ambrose_veil_idle_down_01.png",
+              "sha256": "014b6e870ff0d15373ec1fe55eaa58a41c63ec4b4178c6dc5275a49f3798c91e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_idle_down_01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest7standidle\\02_lord_ambrose_veil_idle_down_02.png",
+              "sha256": "79b58ec6133199fff7f8fea856ea9304f44dedff6ea3f0b8c1be9d5dbd618fc7",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_idle_down_02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest7standidle\\03_lord_ambrose_veil_idle_down_03.png",
+              "sha256": "19cbf347d6a8465ba2f4a2693e95acefd18ed5b972b93c4909665fbfc694dad0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_idle_down_03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest7standidle\\04_lord_ambrose_veil_idle_down_04.png",
+              "sha256": "79b58ec6133199fff7f8fea856ea9304f44dedff6ea3f0b8c1be9d5dbd618fc7",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest7\\lord_ambrose_veil_idle_down_04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest7sitidle": {
+          "clip": null,
+          "frames": [],
+          "note": "No authored clip found; folder intentionally left empty."
+        }
+      }
+    },
+    "guest8": {
+      "name": "Guest 8 Madame Coralie Thread",
+      "animations": {
+        "guest8right": {
+          "clip": "Assets\\Animation\\MadameCoralieThread\\MadameCoralieThread_Walk_Right.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest8right\\01_madame_coralie_thread_walk_01_r03_c01.png",
+              "sha256": "dfe74eb9203d9ccd0f3a3029eb01716f508fd01b3d1a1d9943f3f6f1609eb575",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_01_r03_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest8right\\02_madame_coralie_thread_walk_02_r03_c02.png",
+              "sha256": "bb2632f4012a3e92cf2a613d8eeeddea359f940d984a22fd5d8d6c8c801b3286",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_02_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest8right\\03_madame_coralie_thread_walk_03_r03_c03.png",
+              "sha256": "5ec392aa59526d5ff849b98c09ce7771ad9d69911d7e06723726c12dc9d74eb1",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_03_r03_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest8right\\04_madame_coralie_thread_walk_04_r03_c04.png",
+              "sha256": "a54982431b9a4040364196dea67037dbf1c876ec8dd7d3a0683f85ff364a127b",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_04_r03_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest8right\\05_madame_coralie_thread_walk_05_r03_c05.png",
+              "sha256": "eca2ecb469bd59e35d23c440fec56285e74c62c2907b7418c87cf49d48529c46",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_05_r03_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest8right\\06_madame_coralie_thread_walk_06_r03_c06.png",
+              "sha256": "5e16e1da65d9ec3f4ad62959115925982387c8ccc08785ec8a01f0867263abae",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_06_r03_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest8right\\07_madame_coralie_thread_walk_07_r03_c07.png",
+              "sha256": "b9550f1d82c755e15f08d374b22225e9a3458c52c6a0d69baf079f396f1ed636",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_07_r03_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest8right\\08_madame_coralie_thread_walk_08_r03_c08.png",
+              "sha256": "8fc2750518b4835efa4069db26030adacfe6697f8ab181e17114e1eece24d855",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_08_r03_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest8left": {
+          "clip": "Assets\\Animation\\MadameCoralieThread\\MadameCoralieThread_Walk_Left.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest8left\\01_madame_coralie_thread_walk_01_r02_c01.png",
+              "sha256": "695374613bb6abc04d7b75018d527324887042cf85bee1ba2d6e8e197bdf4990",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_01_r02_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest8left\\02_madame_coralie_thread_walk_02_r02_c02.png",
+              "sha256": "bdb877102e49009a25546f7919ecccce69241a39f69d3481843b7245077f16ef",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_02_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest8left\\03_madame_coralie_thread_walk_03_r02_c03.png",
+              "sha256": "8d0f6eaee640fef198004b1b19acd263ff222130cad7ad587b1a5ab50913e136",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_03_r02_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest8left\\04_madame_coralie_thread_walk_04_r02_c04.png",
+              "sha256": "4f2d768d38fd6eff00e894802c8aa1a1c2be56c4e6f52fd7ee37d469a4dd516a",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_04_r02_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest8left\\05_madame_coralie_thread_walk_05_r02_c05.png",
+              "sha256": "304bc4d4bdefaa535f9e0e711f504527fb6612d253ec21c7945e418b518b5447",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_05_r02_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest8left\\06_madame_coralie_thread_walk_06_r02_c06.png",
+              "sha256": "333d28d3d9fd1ffd63d83895041d539c2186c89e7749123ef2b08cebafdb2662",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_06_r02_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest8left\\07_madame_coralie_thread_walk_07_r02_c07.png",
+              "sha256": "36d78375b0ec6aaf577925d592af0a7fcca4d694b0055fe791000ac9886c967d",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_07_r02_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest8left\\08_madame_coralie_thread_walk_08_r02_c08.png",
+              "sha256": "77dad505f5cafb3b603a8a736cc51e687a3ec8d48362066fea62dde6c2beb413",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_08_r02_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest8down": {
+          "clip": "Assets\\Animation\\MadameCoralieThread\\MadameCoralieThread_Walk_Down.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest8down\\01_madame_coralie_thread_walk_01_r01_c01.png",
+              "sha256": "59c139f8046280643416c69420efaed1d78b9e3cb3d22dd89f166a9a1da9f5ca",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest8down\\02_madame_coralie_thread_walk_02_r01_c02.png",
+              "sha256": "ef5d6c4457eadd19404354c848b8e31c0e131e2ee3a0e4c629a96f6d94f8b986",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_02_r01_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest8down\\03_madame_coralie_thread_walk_03_r01_c03.png",
+              "sha256": "b4abed36904a1bd4d372b8be81f0e5e239e0b581361fde81f632bc932ba1b73f",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_03_r01_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest8down\\04_madame_coralie_thread_walk_04_r01_c04.png",
+              "sha256": "85d38f4177fb2fbbcbf209e4f7bd201cc8764e956efce95dbcabdd0765875991",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_04_r01_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest8down\\05_madame_coralie_thread_walk_05_r01_c05.png",
+              "sha256": "a291e512747274bb9483edafb234dd05234962b73885fd06f6d908039dfbc6d3",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_05_r01_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest8down\\06_madame_coralie_thread_walk_06_r01_c06.png",
+              "sha256": "5fb6410725897b16fd84bb34289e1d0f9a5b856c053a54d0d5106a8cf5bcdc23",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_06_r01_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest8down\\07_madame_coralie_thread_walk_07_r01_c07.png",
+              "sha256": "87123552e765d21e2b6ca23f8cc48b45c1d981a5c3f1c7cebef91dadb9255cf0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_07_r01_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest8down\\08_madame_coralie_thread_walk_08_r01_c08.png",
+              "sha256": "86efe9887258aa5d735ece51c0a557904fa2198a242ecf0862ca1dcc9f6ba97e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_08_r01_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest8up": {
+          "clip": "Assets\\Animation\\MadameCoralieThread\\MadameCoralieThread_Walk_Up.anim",
+          "frame_count": 8,
+          "unique_source_count": 8,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest8up\\01_madame_coralie_thread_walk_01_r04_c01.png",
+              "sha256": "00a48520e1934b5b1313a5b9d09c25990ac125225a417908aa9b6b0e26ef04d1",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_01_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "guest8up\\02_madame_coralie_thread_walk_02_r04_c02.png",
+              "sha256": "83acdb43f1b8c25b2ef927fca23960b211e9abd16359649385248df5e3b6e67f",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_02_r04_c02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "guest8up\\03_madame_coralie_thread_walk_03_r04_c03.png",
+              "sha256": "b49d422ae571523087de7f6d9687cca1c135f969ef19e15dd58a755851606c60",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_03_r04_c03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "guest8up\\04_madame_coralie_thread_walk_04_r04_c04.png",
+              "sha256": "a32e27a8f8a6199f58389fb34db584f4285526e067d231875dfb6d84f97bc358",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_04_r04_c04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.333333333",
+              "exported": "guest8up\\05_madame_coralie_thread_walk_05_r04_c05.png",
+              "sha256": "281505a9dc94af7033886619e713ba0c0ebd9c3d9879dc6a4df9e749aa994384",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_05_r04_c05.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 6,
+              "time": "0.416666667",
+              "exported": "guest8up\\06_madame_coralie_thread_walk_06_r04_c06.png",
+              "sha256": "c0e2fb2634747490830fff0d443cc709e9ae75cf008b403a8844dd502eb20e44",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_06_r04_c06.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 7,
+              "time": "0.5",
+              "exported": "guest8up\\07_madame_coralie_thread_walk_07_r04_c07.png",
+              "sha256": "63ba89db3ab0b79b1ff34c9ce055baaaf0b5690c2b1d5d5aa236f6d2989da921",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_07_r04_c07.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 8,
+              "time": "0.583333333",
+              "exported": "guest8up\\08_madame_coralie_thread_walk_08_r04_c08.png",
+              "sha256": "dd91e8f21f00533f3fd9aecc8470f68c7be1d14fe326f491e252d490fdc54a47",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_walk_08_r04_c08.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest8standidle": {
+          "clip": "Assets\\Animation\\MadameCoralieThread\\MadameCoralieThread_Idle.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "guest8standidle\\01_madame_coralie_thread_idle_down_01.png",
+              "sha256": "59c139f8046280643416c69420efaed1d78b9e3cb3d22dd89f166a9a1da9f5ca",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_idle_down_01.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "guest8standidle\\02_madame_coralie_thread_idle_down_02.png",
+              "sha256": "cdf3030a610170291071c185ef34ae50963719c0718903879eea20ed6598a58d",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_idle_down_02.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.5",
+              "exported": "guest8standidle\\03_madame_coralie_thread_idle_down_03.png",
+              "sha256": "18befc60611ec994d4b226312880d94c2ea60f12f66b8d5334fe0898ea987dc2",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_idle_down_03.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.75",
+              "exported": "guest8standidle\\04_madame_coralie_thread_idle_down_04.png",
+              "sha256": "cdf3030a610170291071c185ef34ae50963719c0718903879eea20ed6598a58d",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\guest8\\madame_coralie_thread_idle_down_04.png",
+              "file_id": 21300000,
+              "size": [
+                166,
+                297
+              ]
+            }
+          ]
+        },
+        "guest8sitidle": {
+          "clip": null,
+          "frames": [],
+          "note": "No authored clip found; folder intentionally left empty."
+        }
+      }
+    },
+    "butler": {
+      "name": "ButlerClassic",
+      "animations": {
+        "butlerright": {
+          "clip": "Assets\\Animation\\ButlerClassic\\ButlerClassic_Walk_Right.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "butlerright\\01_butler_classic_walk_09_r03_c01.png",
+              "sha256": "274d0e8adb9a7759b2dee148fe658280871a8032ecb20de1bef1604f654e22c2",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_09_r03_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "butlerright\\02_butler_classic_walk_10_r03_c02.png",
+              "sha256": "f63ff1146906173dcd4f825b2cdd5e74b431381311920653c752d64134383752",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_10_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "butlerright\\03_butler_classic_walk_11_r03_c03.png",
+              "sha256": "6f7f947a519b500e60bfe798c0fbf6004a578b6a94d233680432826f50552c21",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_11_r03_c03.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "butlerright\\04_butler_classic_walk_12_r03_c04.png",
+              "sha256": "57c2b6c746d1f58d1a17463898b83bcec78eb2b044dd9b2dc55d8c65c0a063e8",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_12_r03_c04.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "butlerleft": {
+          "clip": "Assets\\Animation\\ButlerClassic\\ButlerClassic_Walk_Left.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "butlerleft\\01_butler_classic_walk_05_r02_c01.png",
+              "sha256": "5ee56d007a9cd2845f0ff573b256d928ac0d5174b0d920a3ca2b993d4fbd19f7",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_05_r02_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "butlerleft\\02_butler_classic_walk_06_r02_c02.png",
+              "sha256": "460f83a91b70e1f0273d325b49a5783bc6d70392a783bef81b61ec6135e7b413",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_06_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "butlerleft\\03_butler_classic_walk_07_r02_c03.png",
+              "sha256": "f2aeaccedf6de1a94448ff89e9241ef65acd11b7ff3d959819d50c959b184f9e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_07_r02_c03.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "butlerleft\\04_butler_classic_walk_08_r02_c04.png",
+              "sha256": "21d2cdc7e359221ec0914f559456f0caeda986e7da41fd86ab8a828685bae3d1",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_08_r02_c04.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "butlerdown": {
+          "clip": "Assets\\Animation\\ButlerClassic\\ButlerClassic_Walk_Down.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "butlerdown\\01_butler_classic_walk_01_r01_c01.png",
+              "sha256": "565c5425138d0db183d79eedaa0a4089a9a700e4fe0453e18038f90a7ae91d8e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "butlerdown\\02_butler_classic_walk_02_r01_c02.png",
+              "sha256": "f25ef89d0a03fdcff4ed709dbcd5cbca575e2c82e1a4eeb608cbb195ab0d1fd2",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_02_r01_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "butlerdown\\03_butler_classic_walk_03_r01_c03.png",
+              "sha256": "8727b4ca68bc3c09d9e1cb274cffb3eeb525890892e0e94f1eb2dc3928d673a0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_03_r01_c03.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "butlerdown\\04_butler_classic_walk_04_r01_c04.png",
+              "sha256": "eeb4dc6c7dcb4a2919a052af337a1ecd63a863f93c0c6ddea1c7f9df6d913044",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_04_r01_c04.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "butlerup": {
+          "clip": "Assets\\Animation\\ButlerClassic\\ButlerClassic_Walk_Up.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "butlerup\\01_butler_classic_walk_13_r04_c01.png",
+              "sha256": "f82cc07a9a1ea02a80a0612a5503d2636075ba50de426b41f9a86cae6d938ca4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_13_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333333",
+              "exported": "butlerup\\02_butler_classic_walk_14_r04_c02.png",
+              "sha256": "5b0830c507ae7f7624a1a548c04d9f03eae438c66df569ff71136831422f1a14",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_14_r04_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.166666667",
+              "exported": "butlerup\\03_butler_classic_walk_15_r04_c03.png",
+              "sha256": "c2153b21c8b60c900a8410d2c0e773061053f06621f0bd6dcc18eb449db4ff20",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_15_r04_c03.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.25",
+              "exported": "butlerup\\04_butler_classic_walk_16_r04_c04.png",
+              "sha256": "bb6a992013269fc3e196fdf10ecbb98eec0c6f454ae18dce550e1ebf19d3edc0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_16_r04_c04.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "butlerstandidle": {
+          "clip": "Assets\\Animation\\ButlerClassic\\ButlerClassic_Idle.anim",
+          "frame_count": 1,
+          "unique_source_count": 1,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "butlerstandidle\\01_butler_classic_walk_01_r01_c01.png",
+              "sha256": "565c5425138d0db183d79eedaa0a4089a9a700e4fe0453e18038f90a7ae91d8e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "butlersitidle": {
+          "clip": null,
+          "frames": [],
+          "note": "No authored clip found; folder intentionally left empty."
+        }
+      }
+    },
+    "playerbutler": {
+      "name": "Player Base Butler Controller",
+      "animations": {
+        "playerbutlerright": {
+          "clip": "Assets\\Animation\\Player\\Player_Walk_Right.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "playerbutlerright\\01_butler_classic_walk_09_r03_c01.png",
+              "sha256": "274d0e8adb9a7759b2dee148fe658280871a8032ecb20de1bef1604f654e22c2",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_09_r03_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.16666667",
+              "exported": "playerbutlerright\\02_butler_classic_walk_10_r03_c02.png",
+              "sha256": "f63ff1146906173dcd4f825b2cdd5e74b431381311920653c752d64134383752",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_10_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.33333334",
+              "exported": "playerbutlerright\\03_butler_classic_walk_11_r03_c03.png",
+              "sha256": "6f7f947a519b500e60bfe798c0fbf6004a578b6a94d233680432826f50552c21",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_11_r03_c03.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.5",
+              "exported": "playerbutlerright\\04_butler_classic_walk_12_r03_c04.png",
+              "sha256": "57c2b6c746d1f58d1a17463898b83bcec78eb2b044dd9b2dc55d8c65c0a063e8",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_12_r03_c04.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "playerbutlerleft": {
+          "clip": "Assets\\Animation\\Player\\Player_Walk_Left.anim",
+          "frame_count": 4,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "playerbutlerleft\\01_butler_classic_walk_05_r02_c01.png",
+              "sha256": "5ee56d007a9cd2845f0ff573b256d928ac0d5174b0d920a3ca2b993d4fbd19f7",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_05_r02_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.16666667",
+              "exported": "playerbutlerleft\\02_butler_classic_walk_06_r02_c02.png",
+              "sha256": "460f83a91b70e1f0273d325b49a5783bc6d70392a783bef81b61ec6135e7b413",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_06_r02_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.33333334",
+              "exported": "playerbutlerleft\\03_butler_classic_walk_07_r02_c03.png",
+              "sha256": "f2aeaccedf6de1a94448ff89e9241ef65acd11b7ff3d959819d50c959b184f9e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_07_r02_c03.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.5",
+              "exported": "playerbutlerleft\\04_butler_classic_walk_08_r02_c04.png",
+              "sha256": "21d2cdc7e359221ec0914f559456f0caeda986e7da41fd86ab8a828685bae3d1",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_08_r02_c04.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "playerbutlerdown": {
+          "clip": "Assets\\Animation\\Player\\Player_Walk_Down.anim",
+          "frame_count": 5,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "playerbutlerdown\\01_butler_classic_walk_01_r01_c01.png",
+              "sha256": "565c5425138d0db183d79eedaa0a4089a9a700e4fe0453e18038f90a7ae91d8e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.16666667",
+              "exported": "playerbutlerdown\\02_butler_classic_walk_02_r01_c02.png",
+              "sha256": "f25ef89d0a03fdcff4ed709dbcd5cbca575e2c82e1a4eeb608cbb195ab0d1fd2",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_02_r01_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.33333334",
+              "exported": "playerbutlerdown\\03_butler_classic_walk_03_r01_c03.png",
+              "sha256": "8727b4ca68bc3c09d9e1cb274cffb3eeb525890892e0e94f1eb2dc3928d673a0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_03_r01_c03.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.5",
+              "exported": "playerbutlerdown\\04_butler_classic_walk_01_r01_c01.png",
+              "sha256": "565c5425138d0db183d79eedaa0a4089a9a700e4fe0453e18038f90a7ae91d8e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.6666667",
+              "exported": "playerbutlerdown\\05_butler_classic_walk_04_r01_c04.png",
+              "sha256": "eeb4dc6c7dcb4a2919a052af337a1ecd63a863f93c0c6ddea1c7f9df6d913044",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_04_r01_c04.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "playerbutlerup": {
+          "clip": "Assets\\Animation\\Player\\Player_Walk_Up.anim",
+          "frame_count": 5,
+          "unique_source_count": 4,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "playerbutlerup\\01_butler_classic_walk_13_r04_c01.png",
+              "sha256": "f82cc07a9a1ea02a80a0612a5503d2636075ba50de426b41f9a86cae6d938ca4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_13_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.16666667",
+              "exported": "playerbutlerup\\02_butler_classic_walk_14_r04_c02.png",
+              "sha256": "5b0830c507ae7f7624a1a548c04d9f03eae438c66df569ff71136831422f1a14",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_14_r04_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.33333334",
+              "exported": "playerbutlerup\\03_butler_classic_walk_15_r04_c03.png",
+              "sha256": "c2153b21c8b60c900a8410d2c0e773061053f06621f0bd6dcc18eb449db4ff20",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_15_r04_c03.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 4,
+              "time": "0.5",
+              "exported": "playerbutlerup\\04_butler_classic_walk_13_r04_c01.png",
+              "sha256": "f82cc07a9a1ea02a80a0612a5503d2636075ba50de426b41f9a86cae6d938ca4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_13_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 5,
+              "time": "0.6666667",
+              "exported": "playerbutlerup\\05_butler_classic_walk_16_r04_c04.png",
+              "sha256": "bb6a992013269fc3e196fdf10ecbb98eec0c6f454ae18dce550e1ebf19d3edc0",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_16_r04_c04.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "playerbutlerstandidle": {
+          "clip": "Assets\\Animation\\Player\\Player_Idle.anim",
+          "frame_count": 1,
+          "unique_source_count": 1,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "playerbutlerstandidle\\01_butler_classic_walk_01_r01_c01.png",
+              "sha256": "565c5425138d0db183d79eedaa0a4089a9a700e4fe0453e18038f90a7ae91d8e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "playerbutlersitidle": {
+          "clip": null,
+          "frames": [],
+          "note": "No authored clip found; folder intentionally left empty."
+        },
+        "playerbutlerclimb": {
+          "clip": "Assets\\Animation\\Player\\Player_Climb.anim",
+          "frame_count": 3,
+          "unique_source_count": 3,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "playerbutlerclimb\\01_butler_classic_walk_13_r04_c01.png",
+              "sha256": "f82cc07a9a1ea02a80a0612a5503d2636075ba50de426b41f9a86cae6d938ca4",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_13_r04_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.06666667",
+              "exported": "playerbutlerclimb\\02_butler_classic_walk_14_r04_c02.png",
+              "sha256": "5b0830c507ae7f7624a1a548c04d9f03eae438c66df569ff71136831422f1a14",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_14_r04_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 3,
+              "time": "0.13333334",
+              "exported": "playerbutlerclimb\\03_butler_classic_walk_15_r04_c03.png",
+              "sha256": "c2153b21c8b60c900a8410d2c0e773061053f06621f0bd6dcc18eb449db4ff20",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_15_r04_c03.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "playerbutlercrouch": {
+          "clip": "Assets\\Animation\\Player\\Player_Croutch.anim",
+          "frame_count": 2,
+          "unique_source_count": 2,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "playerbutlercrouch\\01_butler_classic_walk_01_r01_c01.png",
+              "sha256": "565c5425138d0db183d79eedaa0a4089a9a700e4fe0453e18038f90a7ae91d8e",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_01_r01_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.083333336",
+              "exported": "playerbutlercrouch\\02_butler_classic_walk_02_r01_c02.png",
+              "sha256": "f25ef89d0a03fdcff4ed709dbcd5cbca575e2c82e1a4eeb608cbb195ab0d1fd2",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_02_r01_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        },
+        "playerbutlerjump": {
+          "clip": "Assets\\Animation\\Player\\Player_Jump.anim",
+          "frame_count": 2,
+          "unique_source_count": 2,
+          "frames": [
+            {
+              "frame": 1,
+              "time": "0",
+              "exported": "playerbutlerjump\\01_butler_classic_walk_09_r03_c01.png",
+              "sha256": "274d0e8adb9a7759b2dee148fe658280871a8032ecb20de1bef1604f654e22c2",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_09_r03_c01.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            },
+            {
+              "frame": 2,
+              "time": "0.25",
+              "exported": "playerbutlerjump\\02_butler_classic_walk_10_r03_c02.png",
+              "sha256": "f63ff1146906173dcd4f825b2cdd5e74b431381311920653c752d64134383752",
+              "mode": "standalone_png_copy",
+              "source": "Assets\\Art\\Characters\\butler\\butler_classic_walk_10_r03_c02.png",
+              "file_id": 21300000,
+              "size": [
+                168,
+                299
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

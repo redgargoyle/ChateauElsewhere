@@ -19,9 +19,9 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter, ImageOps
 
 
-DEFAULT_OUT_ROOT = Path("Assets/GeneratedSpriteLibrary/ButlerGuest/Panic/OriginalStyleGuest2_20260610")
+DEFAULT_OUT_ROOT = Path("Assets/Art/Library/GeneratedSprites/Raw/ButlerGuest/Panic/OriginalStyleGuest2_20260610")
 DEFAULT_STYLE_ROOT = Path(
-    "Assets/GeneratedSpriteLibraryStyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610"
+    "Assets/Art/Library/GeneratedSprites/StyleMatched/ButlerGuest/Panic/OriginalStyleGuest2_20260610"
 )
 DEFAULT_TEMP_ROOT = Path("Temp/guest2_originalstyle_panic")
 
@@ -444,8 +444,8 @@ def main() -> None:
         raise SystemExit(f"Input sheet does not exist: {args.input}")
 
     for folder, boundary in (
-        (args.out_root, Path("Assets/GeneratedSpriteLibrary")),
-        (args.style_root, Path("Assets/GeneratedSpriteLibraryStyleMatched")),
+        (args.out_root, Path("Assets/Art/Library/GeneratedSprites/Raw")),
+        (args.style_root, Path("Assets/Art/Library/GeneratedSprites/StyleMatched")),
     ):
         ensure_folder(folder, boundary)
 

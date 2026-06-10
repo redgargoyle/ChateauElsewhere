@@ -22,7 +22,7 @@ public class CharacterRegressionTests
     private const string ButlerClassicIdleLeftClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Left.anim";
     private const string ButlerClassicIdleRightClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Right.anim";
     private const string ButlerClassicIdleUpClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle_Up.anim";
-    private const string GentlemanBlackDirectionalFolder = "Assets/Characters/GentlemanBlack/directional/aligned";
+    private const string GentlemanBlackDirectionalFolder = "Assets/Art/Library/LegacyCharacters/GentlemanBlack/directional/aligned";
     private const string GentlemanBlackIdleClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Idle.anim";
     private const string GentlemanBlackWalkDownClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Down.anim";
     private const string GentlemanBlackWalkLeftClipPath = "Assets/Animation/GentlemanBlack/GentlemanBlack_Walk_Left.anim";
@@ -946,7 +946,7 @@ public class CharacterRegressionTests
             "LadySabineMarrow" => $"{CharacterArtRoot}/guest6",
             "LordAmbroseVeil" => $"{CharacterArtRoot}/guest7",
             "MadameCoralieThread" => $"{CharacterArtRoot}/guest8",
-            _ => $"Assets/Characters/{assetName}/walk/aligned"
+            _ => $"Assets/Art/Library/LegacyCharacters/{assetName}/walk/aligned"
         };
     }
 
@@ -963,7 +963,7 @@ public class CharacterRegressionTests
             "LadySabineMarrow" => $"{CharacterArtRoot}/guest6/{filePrefix}_idle_down",
             "LordAmbroseVeil" => $"{CharacterArtRoot}/guest7/{filePrefix}_idle_down",
             "MadameCoralieThread" => $"{CharacterArtRoot}/guest8/{filePrefix}_idle_down",
-            _ => $"Assets/Characters/{assetName}/idle/aligned/{filePrefix}_idle_down"
+            _ => $"Assets/Art/Library/LegacyCharacters/{assetName}/idle/aligned/{filePrefix}_idle_down"
         };
     }
 

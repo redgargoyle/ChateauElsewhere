@@ -3,7 +3,7 @@ using UnityEngine;
 
 public sealed class AnimationLibrarySpriteImportPostprocessor : AssetPostprocessor
 {
-    private const string LibraryRoot = "Assets/AnimationLibrary/";
+    private const string LibraryRoot = "Assets/Art/Library/AnimationLibrary/";
     private const float PixelsPerUnit = 100f;
 
     private void OnPreprocessTexture()

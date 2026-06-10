@@ -208,7 +208,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--guest", required=True)
     parser.add_argument("--input", required=True, type=Path)
-    parser.add_argument("--library-root", default=Path("Assets/GeneratedSpriteLibrary"), type=Path)
+    parser.add_argument("--library-root", default=Path("Assets/Art/Library/GeneratedSprites/Raw"), type=Path)
     parser.add_argument("--index", default="01")
     parser.add_argument("--preset", choices=sorted(POSE_PRESETS), default="starter")
     parser.add_argument("--padding", type=int, default=28)

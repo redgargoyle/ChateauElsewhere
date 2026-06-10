@@ -1,0 +1,1026 @@
+{
+  "character": "ProfessorLucienVale",
+  "display_name": "Professor Lucien Vale",
+  "role": "guest",
+  "canvas_size": [
+    166,
+    297
+  ],
+  "pivot": [
+    0.5,
+    0.0
+  ],
+  "frame_rate": 12,
+  "source_sheet": "SourceSheets/ProfessorLucienVale_source_sheet.png",
+  "style_brief": "Professor Lucien Vale: slim nervous professor, round blue-tinted glasses, dark wavy hair, brown long coat, teal waistcoat, cream shirt, satchel. Use the current project reference art in reference/source_sheet.png as the strict visual target.",
+  "reference_sequences": {
+    "idle_down": [
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_down_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_down/01_professor_lucien_vale_idle_down_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_down/01_professor_lucien_vale_idle_down_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            18,
+            131,
+            293
+          ],
+          "visible_pixels": 18108,
+          "semi_alpha_pixels": 1449,
+          "bottom_margin": 4,
+          "sha1": "76db94508c5e37b20dd807b48ee776cf3a5de1e4"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_down_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_down/02_professor_lucien_vale_idle_down_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_down/02_professor_lucien_vale_idle_down_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            37,
+            18,
+            135,
+            293
+          ],
+          "visible_pixels": 18233,
+          "semi_alpha_pixels": 1523,
+          "bottom_margin": 4,
+          "sha1": "5e4e171b0f8b4cc1d22547e103d6de25837edf4f"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_down_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_down/03_professor_lucien_vale_idle_down_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_down/03_professor_lucien_vale_idle_down_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            36,
+            19,
+            134,
+            293
+          ],
+          "visible_pixels": 18123,
+          "semi_alpha_pixels": 1453,
+          "bottom_margin": 4,
+          "sha1": "96f9cdd54a970493327c24e3de9a8a9af84cd24d"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_down_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_down/04_professor_lucien_vale_idle_down_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_down/04_professor_lucien_vale_idle_down_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            35,
+            19,
+            137,
+            293
+          ],
+          "visible_pixels": 19115,
+          "semi_alpha_pixels": 1394,
+          "bottom_margin": 4,
+          "sha1": "b5c335f99354362812c9a857316813e74b683722"
+        }
+      }
+    ],
+    "idle_left": [
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_left_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_left/01_professor_lucien_vale_idle_left_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_left/01_professor_lucien_vale_idle_left_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            53,
+            50,
+            113,
+            293
+          ],
+          "visible_pixels": 11463,
+          "semi_alpha_pixels": 1268,
+          "bottom_margin": 4,
+          "sha1": "0ff1765db6334c4d345032bc0f8297babaa4e0b6"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_left_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_left/02_professor_lucien_vale_idle_left_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_left/02_professor_lucien_vale_idle_left_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            55,
+            50,
+            114,
+            293
+          ],
+          "visible_pixels": 11252,
+          "semi_alpha_pixels": 1126,
+          "bottom_margin": 4,
+          "sha1": "44dece57f2b744d13f96e1792c24a8ba71adc370"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_left_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_left/03_professor_lucien_vale_idle_left_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_left/03_professor_lucien_vale_idle_left_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            55,
+            51,
+            115,
+            293
+          ],
+          "visible_pixels": 11375,
+          "semi_alpha_pixels": 1215,
+          "bottom_margin": 4,
+          "sha1": "9de9253470106bbaa4dd807b137a9ec4285ed837"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_left_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_left/04_professor_lucien_vale_idle_left_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_left/04_professor_lucien_vale_idle_left_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            55,
+            50,
+            114,
+            293
+          ],
+          "visible_pixels": 11254,
+          "semi_alpha_pixels": 1110,
+          "bottom_margin": 4,
+          "sha1": "7d6c4f893222752501f8193c3712149612fe6e9c"
+        }
+      }
+    ],
+    "idle_right": [
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_right_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_right/01_professor_lucien_vale_idle_right_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_right/01_professor_lucien_vale_idle_right_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            54,
+            50,
+            114,
+            293
+          ],
+          "visible_pixels": 11463,
+          "semi_alpha_pixels": 1268,
+          "bottom_margin": 4,
+          "sha1": "a095e20b33ab92d8c90b72107891e55c6da5ca4d"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_right_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_right/02_professor_lucien_vale_idle_right_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_right/02_professor_lucien_vale_idle_right_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            54,
+            50,
+            113,
+            293
+          ],
+          "visible_pixels": 11252,
+          "semi_alpha_pixels": 1126,
+          "bottom_margin": 4,
+          "sha1": "6e1efcf72dc41fbf86a46ceef53aedc5a61c04d0"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_right_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_right/03_professor_lucien_vale_idle_right_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_right/03_professor_lucien_vale_idle_right_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            53,
+            51,
+            113,
+            293
+          ],
+          "visible_pixels": 11375,
+          "semi_alpha_pixels": 1215,
+          "bottom_margin": 4,
+          "sha1": "6a550f473efef63833a3d3f0fefb61ee100c8538"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_right_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_right/04_professor_lucien_vale_idle_right_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_right/04_professor_lucien_vale_idle_right_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            53,
+            50,
+            112,
+            293
+          ],
+          "visible_pixels": 11254,
+          "semi_alpha_pixels": 1110,
+          "bottom_margin": 4,
+          "sha1": "f478c0955b4bad1ad169e4005679b452ab2dcd69"
+        }
+      }
+    ],
+    "idle_up": [
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_up_01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_up/01_professor_lucien_vale_idle_up_01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_up/01_professor_lucien_vale_idle_up_01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            26,
+            130,
+            293
+          ],
+          "visible_pixels": 17554,
+          "semi_alpha_pixels": 1250,
+          "bottom_margin": 4,
+          "sha1": "d89872870ede60b8c4626c862768ea8932084ebc"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_up_02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_up/02_professor_lucien_vale_idle_up_02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_up/02_professor_lucien_vale_idle_up_02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            26,
+            130,
+            293
+          ],
+          "visible_pixels": 17348,
+          "semi_alpha_pixels": 1319,
+          "bottom_margin": 4,
+          "sha1": "84ae3fb425ebd5d806f81ef2fad2575dbda843d5"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_up_03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_up/03_professor_lucien_vale_idle_up_03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_up/03_professor_lucien_vale_idle_up_03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            39,
+            26,
+            130,
+            293
+          ],
+          "visible_pixels": 17434,
+          "semi_alpha_pixels": 1264,
+          "bottom_margin": 4,
+          "sha1": "40e952b5126f921d6dea7ae9490020bb4b44dc3f"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/idle/aligned/professor_lucien_vale_idle_up_04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_up/04_professor_lucien_vale_idle_up_04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/idle_up/04_professor_lucien_vale_idle_up_04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            40,
+            26,
+            129,
+            293
+          ],
+          "visible_pixels": 17202,
+          "semi_alpha_pixels": 1295,
+          "bottom_margin": 4,
+          "sha1": "c53a1f7a9a1c0d3db610c1a831752e85e8a9e6bf"
+        }
+      }
+    ],
+    "walk_down": [
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_01_r01_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/01_professor_lucien_vale_walk_01_r01_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/01_professor_lucien_vale_walk_01_r01_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            24,
+            6,
+            147,
+            293
+          ],
+          "visible_pixels": 21320,
+          "semi_alpha_pixels": 1801,
+          "bottom_margin": 4,
+          "sha1": "a82b168b42101e31e2143dcce50ca298c4ee3502"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_02_r01_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/02_professor_lucien_vale_walk_02_r01_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/02_professor_lucien_vale_walk_02_r01_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            5,
+            143,
+            293
+          ],
+          "visible_pixels": 21808,
+          "semi_alpha_pixels": 1728,
+          "bottom_margin": 4,
+          "sha1": "328f3dfc078788817e149cc6e6607c5fcc23b668"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_03_r01_c03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/03_professor_lucien_vale_walk_03_r01_c03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/03_professor_lucien_vale_walk_03_r01_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            5,
+            138,
+            293
+          ],
+          "visible_pixels": 21508,
+          "semi_alpha_pixels": 1522,
+          "bottom_margin": 4,
+          "sha1": "18a51dddebbdece43e2e8998a8cd7a1c91dcb2c7"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_04_r01_c04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/04_professor_lucien_vale_walk_04_r01_c04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/04_professor_lucien_vale_walk_04_r01_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            20,
+            5,
+            139,
+            293
+          ],
+          "visible_pixels": 21931,
+          "semi_alpha_pixels": 1610,
+          "bottom_margin": 4,
+          "sha1": "0d05d015797335ba7df30666164e0c4b1697e4e3"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_05_r01_c05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/05_professor_lucien_vale_walk_05_r01_c05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/05_professor_lucien_vale_walk_05_r01_c05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            5,
+            137,
+            293
+          ],
+          "visible_pixels": 21051,
+          "semi_alpha_pixels": 1664,
+          "bottom_margin": 4,
+          "sha1": "8dcef5ed365b2326b5c7dd91e7ab12a8ce298beb"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_06_r01_c06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/06_professor_lucien_vale_walk_06_r01_c06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/06_professor_lucien_vale_walk_06_r01_c06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            5,
+            145,
+            293
+          ],
+          "visible_pixels": 21902,
+          "semi_alpha_pixels": 1679,
+          "bottom_margin": 4,
+          "sha1": "d472193cfb5816da8b457563cb6c856f354258b4"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_07_r01_c07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/07_professor_lucien_vale_walk_07_r01_c07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/07_professor_lucien_vale_walk_07_r01_c07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            5,
+            138,
+            293
+          ],
+          "visible_pixels": 20978,
+          "semi_alpha_pixels": 1707,
+          "bottom_margin": 4,
+          "sha1": "32601972a65fa4af5ba872916e5cf00a7bc9fad1"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_08_r01_c08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/08_professor_lucien_vale_walk_08_r01_c08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_down/08_professor_lucien_vale_walk_08_r01_c08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            29,
+            5,
+            142,
+            293
+          ],
+          "visible_pixels": 20982,
+          "semi_alpha_pixels": 1668,
+          "bottom_margin": 4,
+          "sha1": "69d9ae4ff2760c5a9961372fc04568ef109abe7d"
+        }
+      }
+    ],
+    "walk_left": [
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_02_r02_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_left/01_professor_lucien_vale_walk_02_r02_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_left/01_professor_lucien_vale_walk_02_r02_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            21,
+            33,
+            151,
+            293
+          ],
+          "visible_pixels": 16466,
+          "semi_alpha_pixels": 1901,
+          "bottom_margin": 4,
+          "sha1": "fc5cb88401750ec61644c04991962ca1bf5fb836"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_01_r02_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_left/02_professor_lucien_vale_walk_01_r02_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_left/02_professor_lucien_vale_walk_01_r02_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            14,
+            33,
+            144,
+            293
+          ],
+          "visible_pixels": 16341,
+          "semi_alpha_pixels": 1860,
+          "bottom_margin": 4,
+          "sha1": "36798cc26b2282b5377765f591bdf82417467f33"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_standing_arms_side_same_angle_left.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_left/03_professor_lucien_vale_standing_arms_side_same_angle_left.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_left/03_professor_lucien_vale_standing_arms_side_same_angle_left.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            52,
+            50,
+            112,
+            293
+          ],
+          "visible_pixels": 11463,
+          "semi_alpha_pixels": 1268,
+          "bottom_margin": 4,
+          "sha1": "7d9412f3912d9d61476d5698537bb7375d939569"
+        }
+      }
+    ],
+    "walk_right": [
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_02_r03_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_right/01_professor_lucien_vale_walk_02_r03_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_right/01_professor_lucien_vale_walk_02_r03_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            17,
+            30,
+            155,
+            293
+          ],
+          "visible_pixels": 16547,
+          "semi_alpha_pixels": 1879,
+          "bottom_margin": 4,
+          "sha1": "5acecd097990792820faecf6870eaedd862d8437"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_01_r03_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_right/02_professor_lucien_vale_walk_01_r03_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_right/02_professor_lucien_vale_walk_01_r03_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            18,
+            29,
+            158,
+            293
+          ],
+          "visible_pixels": 17111,
+          "semi_alpha_pixels": 2036,
+          "bottom_margin": 4,
+          "sha1": "5cd4147e2b265fcf00d0ec2219f08576fd9c2cdd"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_standing_arms_side_same_angle.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_right/03_professor_lucien_vale_standing_arms_side_same_angle.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_right/03_professor_lucien_vale_standing_arms_side_same_angle.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            54,
+            50,
+            114,
+            293
+          ],
+          "visible_pixels": 11463,
+          "semi_alpha_pixels": 1268,
+          "bottom_margin": 4,
+          "sha1": "a095e20b33ab92d8c90b72107891e55c6da5ca4d"
+        }
+      }
+    ],
+    "walk_up": [
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_01_r04_c01.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/01_professor_lucien_vale_walk_01_r04_c01.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/01_professor_lucien_vale_walk_01_r04_c01.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            16,
+            141,
+            293
+          ],
+          "visible_pixels": 19636,
+          "semi_alpha_pixels": 1542,
+          "bottom_margin": 4,
+          "sha1": "512c6665fe557e66e4316b4be2ac8da01051279b"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_02_r04_c02.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/02_professor_lucien_vale_walk_02_r04_c02.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/02_professor_lucien_vale_walk_02_r04_c02.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            15,
+            142,
+            293
+          ],
+          "visible_pixels": 19653,
+          "semi_alpha_pixels": 1558,
+          "bottom_margin": 4,
+          "sha1": "c753073ca496846e77ef399901b60d06e5653dd3"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_03_r04_c03.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/03_professor_lucien_vale_walk_03_r04_c03.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/03_professor_lucien_vale_walk_03_r04_c03.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            31,
+            15,
+            143,
+            293
+          ],
+          "visible_pixels": 19866,
+          "semi_alpha_pixels": 1535,
+          "bottom_margin": 4,
+          "sha1": "e875a306d4a3a04c48679b5d0e90f5482e4c82cc"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_04_r04_c04.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/04_professor_lucien_vale_walk_04_r04_c04.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/04_professor_lucien_vale_walk_04_r04_c04.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            15,
+            142,
+            293
+          ],
+          "visible_pixels": 19652,
+          "semi_alpha_pixels": 1573,
+          "bottom_margin": 4,
+          "sha1": "65f3f393819ecdc51a246a28faa415e71f9fa93f"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_05_r04_c05.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/05_professor_lucien_vale_walk_05_r04_c05.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/05_professor_lucien_vale_walk_05_r04_c05.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            16,
+            141,
+            293
+          ],
+          "visible_pixels": 19566,
+          "semi_alpha_pixels": 1501,
+          "bottom_margin": 4,
+          "sha1": "ad09f47f2d4781b92e9bdc8b6100ff505b5b9fc8"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_06_r04_c06.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/06_professor_lucien_vale_walk_06_r04_c06.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/06_professor_lucien_vale_walk_06_r04_c06.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            30,
+            16,
+            142,
+            293
+          ],
+          "visible_pixels": 19639,
+          "semi_alpha_pixels": 1489,
+          "bottom_margin": 4,
+          "sha1": "ec233e83e761a987c3d85998c99271fa496e6cb9"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_07_r04_c07.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/07_professor_lucien_vale_walk_07_r04_c07.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/07_professor_lucien_vale_walk_07_r04_c07.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            33,
+            15,
+            142,
+            293
+          ],
+          "visible_pixels": 19501,
+          "semi_alpha_pixels": 1536,
+          "bottom_margin": 4,
+          "sha1": "bac1c803a5079c8b09184a8f4863c09b0be84692"
+        }
+      },
+      {
+        "source": "Assets/Art/Library/LegacyCharacters/ProfessorLucienVale/walk/aligned/professor_lucien_vale_walk_08_r04_c08.png",
+        "source_size": [
+          166,
+          297
+        ],
+        "library_file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/08_professor_lucien_vale_walk_08_r04_c08.png",
+        "normalized_to_canvas": false,
+        "metrics": {
+          "file": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/reference/full_body/walk_up/08_professor_lucien_vale_walk_08_r04_c08.png",
+          "size": [
+            166,
+            297
+          ],
+          "bbox": [
+            32,
+            16,
+            141,
+            293
+          ],
+          "visible_pixels": 19366,
+          "semi_alpha_pixels": 1543,
+          "bottom_margin": 4,
+          "sha1": "bd30d84b862ce3420d0284c3f2117c98aad11a91"
+        }
+      }
+    ]
+  },
+  "excluded_sources": [],
+  "contact_sheet": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/qa/reference_contact_sheet.png",
+  "generation_requests": "Assets/Art/Library/AnimationLibrary/ProfessorLucienVale/requests/generation_prompts.jsonl",
+  "warnings": []
+}

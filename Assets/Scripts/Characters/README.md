@@ -6,7 +6,7 @@ People are authored as real scene objects under each room's `People` child. They
 
 Room people use a UI `Image` plus an `Animator` override controller so they still live inside the painted room stage. The generated clips animate both the Image `m_Sprite` field and SpriteRenderer `m_Sprite` field. This keeps the animation editable in Unity's Animation window while preserving the room-stage panning/zooming workflow.
 
-The current Chapter 1 guest and butler animation sprites live in `Assets/Art/Characters/guest1` through `Assets/Art/Characters/guest8` and `Assets/Art/Characters/butler`. Keep frames normalized to a shared foot baseline, and move each `.png.meta` with its `.png` so Unity Animator clips keep the same sprite GUID references. Older prototype character sources may still live in `Assets/Characters/<CharacterName>`.
+The current Chapter 1 guest and butler animation sprites live in `Assets/Art/Characters/guest1` through `Assets/Art/Characters/guest8` and `Assets/Art/Characters/butler`. Keep frames normalized to a shared foot baseline, and move each `.png.meta` with its `.png` so Unity Animator clips keep the same sprite GUID references. Older prototype character sources may still live in `Assets/Art/Library/LegacyCharacters/<CharacterName>`.
 
 Exact duplicate idle holds are consolidated: animation clips may reuse an earlier idle frame or a matching neutral walk frame instead of keeping multiple identical PNG files. This keeps the folders smaller without changing the visible timing.
 
@@ -39,7 +39,7 @@ Useful tweaks:
 - Move path points on `RoomPersonWalker2D` to change where a person walks.
 - Resize the `Image` RectTransform to change character height.
 - Fix frame timing, bad frames, or direction bugs in `Assets/Animation/<CharacterName>/*.anim`, not in `RoomPersonWalker2D`.
-- Use `Dreadforge > Characters > Rebuild Character Animation Assets` after changing legacy source frame folders under `Assets/Characters`; use character-specific rebuild menu items when they exist.
+- Use `Dreadforge > Characters > Rebuild Character Animation Assets` after changing legacy source frame folders under `Assets/Art/Library/LegacyCharacters`; use character-specific rebuild menu items when they exist.
 - Adjust `Near Y`, `Far Y`, `Near Scale`, and `Far Scale` for perspective.
 - Keep `Preview Path In Edit Mode` off while placing people. The animation frames still preview, but the scene object will not quietly walk away while you edit.
 - Keep `Snap To Whole Pixels` off for scaled room walkers unless a specific character needs crunchy pixel locking. Subpixel motion reads smoother while the room stage pans and zooms.
