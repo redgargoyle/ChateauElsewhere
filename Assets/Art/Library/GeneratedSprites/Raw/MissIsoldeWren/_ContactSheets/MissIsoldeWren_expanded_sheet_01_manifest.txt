@@ -1,7 +1,7 @@
 guest=MissIsoldeWren
 source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a289c564fd88198bf85966c09221e0c.png
-chroma_sheet=Assets\GeneratedSpriteLibrary\MissIsoldeWren\_ContactSheets\MissIsoldeWren_expanded_sheet_01_chroma.png
-transparent_sheet=Assets\GeneratedSpriteLibrary\MissIsoldeWren\_ContactSheets\MissIsoldeWren_expanded_sheet_01_alpha.png
+chroma_sheet=Assets\Art\Library\GeneratedSprites\Raw\MissIsoldeWren\_ContactSheets\MissIsoldeWren_expanded_sheet_01_chroma.png
+transparent_sheet=Assets\Art\Library\GeneratedSprites\Raw\MissIsoldeWren\_ContactSheets\MissIsoldeWren_expanded_sheet_01_alpha.png
 Idle/MissIsoldeWren_idle_tense_three_quarter_01.png: 325x546, transparent_corners=True, visible_pixels=73427
 Surprised/MissIsoldeWren_surprised_hand_to_chest_01.png: 447x551, transparent_corners=True, visible_pixels=76143
 Panic/MissIsoldeWren_panic_scream_hands_up_01.png: 364x551, transparent_corners=True, visible_pixels=85112

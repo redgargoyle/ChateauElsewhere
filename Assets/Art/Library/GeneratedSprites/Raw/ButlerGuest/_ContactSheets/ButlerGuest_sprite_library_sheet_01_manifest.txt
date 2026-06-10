@@ -1,7 +1,7 @@
 guest=ButlerGuest
 source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a288a39c9008198aa76d891531f1524.png
-chroma_sheet=Assets\GeneratedSpriteLibrary\ButlerGuest\_ContactSheets\ButlerGuest_sprite_library_sheet_01_chroma.png
-transparent_sheet=Assets\GeneratedSpriteLibrary\ButlerGuest\_ContactSheets\ButlerGuest_sprite_library_sheet_01_alpha.png
+chroma_sheet=Assets\Art\Library\GeneratedSprites\Raw\ButlerGuest\_ContactSheets\ButlerGuest_sprite_library_sheet_01_chroma.png
+transparent_sheet=Assets\Art\Library\GeneratedSprites\Raw\ButlerGuest\_ContactSheets\ButlerGuest_sprite_library_sheet_01_alpha.png
 Idle/ButlerGuest_idle_front_neutral_01.png: 196x503, transparent_corners=True, visible_pixels=38904
 Surprised/ButlerGuest_surprised_front_startled_01.png: 250x498, transparent_corners=True, visible_pixels=40471
 Panic/ButlerGuest_panic_cover_face_recoil_01.png: 211x476, transparent_corners=True, visible_pixels=39121

@@ -1,7 +1,7 @@
 guest=LadySabineMarrow
 source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a289aae213c81989837ee5da410ac0c.png
-chroma_sheet=Assets\GeneratedSpriteLibrary\LadySabineMarrow\_ContactSheets\LadySabineMarrow_expanded_sheet_01_chroma.png
-transparent_sheet=Assets\GeneratedSpriteLibrary\LadySabineMarrow\_ContactSheets\LadySabineMarrow_expanded_sheet_01_alpha.png
+chroma_sheet=Assets\Art\Library\GeneratedSprites\Raw\LadySabineMarrow\_ContactSheets\LadySabineMarrow_expanded_sheet_01_chroma.png
+transparent_sheet=Assets\Art\Library\GeneratedSprites\Raw\LadySabineMarrow\_ContactSheets\LadySabineMarrow_expanded_sheet_01_alpha.png
 Idle/LadySabineMarrow_idle_tense_three_quarter_01.png: 317x543, transparent_corners=True, visible_pixels=71125
 Surprised/LadySabineMarrow_surprised_hand_to_chest_01.png: 313x549, transparent_corners=True, visible_pixels=71624
 Panic/LadySabineMarrow_panic_scream_hands_up_01.png: 333x547, transparent_corners=True, visible_pixels=80686

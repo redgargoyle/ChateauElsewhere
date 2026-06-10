@@ -1,7 +1,7 @@
 guest=Lady
 source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a288e5d2f148198acdd072ebbf88189.png
-chroma_sheet=Assets\GeneratedSpriteLibrary\Lady\_ContactSheets\Lady_walking_sheet_01_chroma.png
-transparent_sheet=Assets\GeneratedSpriteLibrary\Lady\_ContactSheets\Lady_walking_sheet_01_alpha.png
+chroma_sheet=Assets\Art\Library\GeneratedSprites\Raw\Lady\_ContactSheets\Lady_walking_sheet_01_chroma.png
+transparent_sheet=Assets\Art\Library\GeneratedSprites\Raw\Lady\_ContactSheets\Lady_walking_sheet_01_alpha.png
 Walking/Lady_walk_front_step_left_01.png: 325x645, transparent_corners=True, visible_pixels=80528
 Walking/Lady_walk_front_step_right_01.png: 316x645, transparent_corners=True, visible_pixels=76690
 Walking/Lady_walk_side_step_left_01.png: 350x571, transparent_corners=True, visible_pixels=76049

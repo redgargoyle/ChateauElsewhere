@@ -1,7 +1,7 @@
 guest=LadySabineMarrow
 source=C:\Users\wimpy\.codex\generated_images\019eadd0-977d-7c80-a34f-fd1318385542\ig_0448ed9628e3b1ba016a289083f668819891cfcfa30d738c7e.png
-chroma_sheet=Assets\GeneratedSpriteLibrary\LadySabineMarrow\_ContactSheets\LadySabineMarrow_walking_sheet_01_chroma.png
-transparent_sheet=Assets\GeneratedSpriteLibrary\LadySabineMarrow\_ContactSheets\LadySabineMarrow_walking_sheet_01_alpha.png
+chroma_sheet=Assets\Art\Library\GeneratedSprites\Raw\LadySabineMarrow\_ContactSheets\LadySabineMarrow_walking_sheet_01_chroma.png
+transparent_sheet=Assets\Art\Library\GeneratedSprites\Raw\LadySabineMarrow\_ContactSheets\LadySabineMarrow_walking_sheet_01_alpha.png
 Walking/LadySabineMarrow_walk_front_step_left_01.png: 301x640, transparent_corners=True, visible_pixels=72923
 Walking/LadySabineMarrow_walk_front_step_right_01.png: 311x636, transparent_corners=True, visible_pixels=74852
 Walking/LadySabineMarrow_walk_side_step_left_01.png: 357x569, transparent_corners=True, visible_pixels=74544
