@@ -323,11 +323,15 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("useScriptedGuest1Panic = true"));
         Assert.That(panicText, Does.Contain("scriptedGuestRunSeconds = 1f"));
         Assert.That(panicText, Does.Contain("scriptedGuestHoldSeconds = 1f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestWalkAnimationSpeed = 1.35f"));
         Assert.That(panicText, Does.Contain("RunScriptedGuest1PanicRoutine"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestDirectionalRun"));
-        Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Guest 1 scripted runs should lock the displayed walk direction to the requested left/right beat.");
-        Assert.That(panicText, Does.Contain("participant.SetCurrentRunAction(lockedRunAction)"), "Routed movement should not visually override Guest 1's scripted left/right walk animation.");
+        Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Guest 1 scripted runs should lock to the requested left/right beat.");
+        Assert.That(panicText, Does.Contain("BeginScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Guest 1 run beats should use the existing Animator walk clips, not panic still sprites.");
+        Assert.That(panicText, Does.Contain("UpdateScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Guest 1 run beats should keep the Animator walking in the scripted direction.");
+        Assert.That(panicText, Does.Contain("StopScriptedAnimatorWalk(participant.CurrentRunAction)"), "Guest 1 panic holds should stop the Animator before showing one panic still.");
         Assert.That(panicText, Does.Contain("HoldScriptedGuestPanicFrame"));
+        Assert.That(panicText, Does.Not.Contain("SetInputEnabled(false)"), "Guest panic must not lock the global point-click input/cursor state.");
         Assert.That(panicText, Does.Contain("ChooseNearestScriptedGuestExitTarget"));
         Assert.That(panicText, Does.Contain("IsControlledByScript"));
         Assert.That(panicText, Does.Contain("HasSharedPanicParticipants"));
