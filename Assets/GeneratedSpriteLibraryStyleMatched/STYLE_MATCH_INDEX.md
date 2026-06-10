@@ -5,7 +5,7 @@ Source root: `Assets/GeneratedSpriteLibrary`
 This folder mirrors the generated sprite library with non-destructive filtered copies.
 The original generated sprites and original animation/reference sprites are not edited.
 
-Style-matched main sprite PNGs: 288
+Style-matched main sprite PNGs: 328
 Reference saturation: 0.548
 Reference brightness: 0.416
 Reference luminance contrast: 42.14
@@ -14,8 +14,8 @@ Reference edge mean: 36.15
 Room reference: `Assets/Art/Final Images (DO NOT EDIT)/drawing room 2.png`
 
 Comparison metrics:
-- Source average saturation/brightness/contrast/edge: 0.392 / 0.344 / 47.64 / 46.68
-- Styled average saturation/brightness/contrast/edge: 0.432 / 0.337 / 38.60 / 41.84
+- Source average saturation/brightness/contrast/edge: 0.383 / 0.343 / 47.29 / 46.18
+- Styled average saturation/brightness/contrast/edge: 0.429 / 0.336 / 38.40 / 41.38
 
 Reference inputs:
 - `Assets/Art/Final Images (DO NOT EDIT)/drawing room 2.png`
