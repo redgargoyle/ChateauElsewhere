@@ -12,6 +12,13 @@ Current main cutout sprites:
   Lady Sabine +10, Madame Coralie +10
 - Alpha verification: transparent corners passed for all main sprites
 
+Style-matched mirror:
+- `Assets/GeneratedSpriteLibraryStyleMatched` contains non-destructive filtered copies
+  of all 248 main sprite PNGs.
+- The filter uses original `Assets/AnimationLibrary/*/reference/full_body` sprites as
+  read-only references for muted color, slight pixelation, and watercolor/paper texture.
+- The original generated sprites and original animation/reference sprites are not edited.
+
 Guest folders:
 - `BaronHectorGlass`
 - `ButlerGuest`
