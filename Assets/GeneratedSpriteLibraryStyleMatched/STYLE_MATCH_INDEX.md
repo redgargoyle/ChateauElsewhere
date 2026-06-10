@@ -5,12 +5,20 @@ Source root: `Assets/GeneratedSpriteLibrary`
 This folder mirrors the generated sprite library with non-destructive filtered copies.
 The original generated sprites and original animation/reference sprites are not edited.
 
-Style-matched main sprite PNGs: 248
-Reference saturation: 0.430
-Reference brightness: 0.437
-Reference luminance contrast: 57.22
+Style-matched main sprite PNGs: 288
+Reference saturation: 0.548
+Reference brightness: 0.416
+Reference luminance contrast: 42.14
+Reference edge mean: 36.15
+
+Room reference: `Assets/Art/Final Images (DO NOT EDIT)/drawing room 2.png`
+
+Comparison metrics:
+- Source average saturation/brightness/contrast/edge: 0.392 / 0.344 / 47.64 / 46.68
+- Styled average saturation/brightness/contrast/edge: 0.432 / 0.337 / 38.60 / 41.84
 
 Reference inputs:
+- `Assets/Art/Final Images (DO NOT EDIT)/drawing room 2.png`
 - `Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/01_countess_elowen_dusk_idle_down_01.png`
 - `Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/02_countess_elowen_dusk_idle_down_02.png`
 - `Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/idle_down/03_countess_elowen_dusk_idle_down_03.png`
@@ -50,11 +58,10 @@ Reference inputs:
 - `Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/03_03_countess_elowen_dusk_walk_03_r03_c03.png`
 - `Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/04_04_countess_elowen_dusk_walk_04_r03_c04.png`
 - `Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/05_05_countess_elowen_dusk_walk_05_r03_c05.png`
-- `Assets/AnimationLibrary/CountessElowenDusk/reference/full_body/walk_right/06_06_countess_elowen_dusk_walk_06_r03_c06.png`
-- ...and 74 more reference PNGs
+- ...and 75 more reference PNGs
 
 Filter intent:
-- Slightly mute overly clean generated colors toward the existing sprite references.
-- Add subtle watercolor paper/grain variation.
-- Add light sprite-scale pixel roughness while preserving silhouettes and alpha.
+- Match the drawing room's stronger ochre/olive watercolor glaze.
+- Add room-derived paper, crackle, and sketch-line texture.
+- Add stronger ink density while preserving silhouettes and alpha.
 - Keep ink edges readable without drawing new limbs, shapes, or animation overlays.
