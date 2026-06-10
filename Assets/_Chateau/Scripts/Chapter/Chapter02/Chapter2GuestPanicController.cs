@@ -27,7 +27,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField, Min(1f)] private float scriptedGuestRunDistancePixels = 500f;
     [SerializeField, Min(1f)] private float scriptedGuestMoveSpeedPixels = 560f;
     [SerializeField, Min(0.1f)] private float scriptedGuestWalkAnimationSpeed = 2f;
-    [SerializeField, Min(0.1f)] private float scriptedGuestPanicSpriteScaleMultiplier = 1.18f;
+    [SerializeField, Min(0.1f)] private float scriptedGuestPanicSpriteScaleMultiplier = 1f;
     [SerializeField, Min(0f)] private float scriptedGuestShakePixels = 5f;
     [SerializeField, Min(0.1f)] private float scriptedGuestShakeCyclesPerSecond = 8f;
     [SerializeField] private PointClickPlayerMovement routePlanner;

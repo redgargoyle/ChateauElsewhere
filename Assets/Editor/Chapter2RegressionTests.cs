@@ -326,7 +326,7 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("scriptedGuestRunDistancePixels = 500f"));
         Assert.That(panicText, Does.Contain("scriptedGuestMoveSpeedPixels = 560f"));
         Assert.That(panicText, Does.Contain("scriptedGuestWalkAnimationSpeed = 2f"));
-        Assert.That(panicText, Does.Contain("scriptedGuestPanicSpriteScaleMultiplier = 1.18f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestPanicSpriteScaleMultiplier = 1f"));
         Assert.That(panicText, Does.Contain("RunScriptedGuest1PanicRoutine"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestDirectionalRun"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Guest 1 scripted runs should lock to the requested left/right beat.");
