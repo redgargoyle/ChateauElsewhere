@@ -1573,7 +1573,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             for (int attempt = 0; attempt < 8; attempt++)
             {
-                Vector2 direction = GetRandomCardinalDirection();
+                Vector2 direction = GetRandomScatterDirection();
                 Vector2 candidateLogical = startLogical + new Vector2(
                     direction.x * stepUnits,
                     direction.y * stepUnits * Mathf.Clamp(verticalDistanceScale, 0.1f, 1f));
