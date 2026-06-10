@@ -608,6 +608,62 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return true;
 	}
 
+	public bool TryGetWorldPointFromLogicalPosition(Vector2 logicalPoint, out Vector2 worldPoint)
+	{
+		worldPoint = Vector2.zero;
+
+		if (!isReady)
+			return false;
+
+		RefreshWalkableFloorForCurrentRoom();
+		UpdateVisualOffset(Camera.main);
+		worldPoint = LogicalToWalkableWorldPoint(logicalPoint);
+		return true;
+	}
+
+	public bool TryGetLogicalPositionFromWorldPoint(
+		Vector2 worldPoint,
+		bool clampToWalkableArea,
+		Vector2 preferredWorldPoint,
+		out Vector2 logicalPoint)
+	{
+		logicalPoint = Vector2.zero;
+
+		if (!isReady)
+			return false;
+
+		RefreshWalkableFloorForCurrentRoom();
+		UpdateVisualOffset(Camera.main);
+
+		Vector2 candidateLogicalPoint = WalkableWorldToLogicalPoint(worldPoint);
+
+		if (!IsPointWalkable(candidateLogicalPoint))
+		{
+			if (!clampToWalkableArea)
+				return false;
+
+			Vector2 preferredLogicalPoint = WalkableWorldToLogicalPoint(preferredWorldPoint);
+			candidateLogicalPoint = ClampToWalkableArea(candidateLogicalPoint, preferredLogicalPoint);
+		}
+
+		if (clampToWalkableArea && !IsPointWalkable(candidateLogicalPoint))
+		{
+			Vector2 preferredLogicalPoint = WalkableWorldToLogicalPoint(preferredWorldPoint);
+			candidateLogicalPoint = ClampToWalkableArea(candidateLogicalPoint, preferredLogicalPoint);
+		}
+
+		if (!IsPointWalkable(candidateLogicalPoint))
+			return false;
+
+		logicalPoint = candidateLogicalPoint;
+		return true;
+	}
+
+	public Vector2 MoveLogicalPointToward(Vector2 currentPosition, Vector2 targetPosition, float maxDistance)
+	{
+		return MoveLogicalPositionToward(currentPosition, targetPosition, maxDistance);
+	}
+
 	private bool TryEvaluateMovementTarget(Vector2 targetPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)
 	{
 		return TryEvaluateMovementTarget(targetPosition, clampToWalkableArea, Vector2.zero, out movementQuery);

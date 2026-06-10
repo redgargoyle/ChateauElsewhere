@@ -25,8 +25,10 @@ SPRITE_CATEGORIES = {
     "DrawingRoomCouch",
     "Idle",
     "Panic",
+    "Shaking",
     "Sitting",
     "Surprised",
+    "Sweating",
     "Transitions",
     "Walking",
 }

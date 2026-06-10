@@ -208,18 +208,18 @@ public class Chapter2RegressionTests
 
         Assert.That(controllerText, Does.Match(@"\bRunMonsterStingerRoutine\s*\("));
         Assert.That(controllerText, Does.Contain("monsterStingerTimeoutSeconds = 14f"), "Monster stinger should have a watchdog timeout so Chapter 2 cannot stall before GuestSearch.");
-        Assert.That(controllerText, Does.Match(@"(?s)\bRunMonsterStingerRoutine\s*\([^)]*\)\s*\{.*BeginStinger\s*\(.*monsterStinger\.IsRunning.*Time\.unscaledDeltaTime.*StopStinger\s*\(.*StartGuestSearch\s*\(\);\s*SetPhase\s*\(\s*Chapter2Phase\.GuestSearch\s*\)"), "Monster stinger should run before GuestSearch, but time out and continue if it gets stuck.");
+        Assert.That(controllerText, Does.Match(@"(?s)\bRunMonsterStingerRoutine\s*\([^)]*\)\s*\{.*BeginStinger\s*\(.*monsterStinger\.IsRunning.*Time\.unscaledDeltaTime.*StopStinger\s*\(.*RunExitToDoorsThenRestoreRoutine\s*\(\).*StartGuestSearch\s*\(\);\s*SetPhase\s*\(\s*Chapter2Phase\.GuestSearch\s*\)"), "Monster stinger should run before GuestSearch, time out if it gets stuck, then let guests flee to the doors before search placement begins.");
         Assert.That(controllerText, Does.Contain("Find the guests. Tell them dinner will be served at 7:00 PM sharp."));
     }
 
     [Test]
-    public void Chapter2RunsGuestPanicOnlyDuringMonsterStinger()
+    public void Chapter2RunsGuestPanicThroughDoorExitBeforeGuestSearch()
     {
         string controllerText = File.ReadAllText(Chapter2ControllerPath);
         int routineIndex = controllerText.IndexOf("RunMonsterStingerRoutine", System.StringComparison.Ordinal);
         int beginPanicIndex = controllerText.IndexOf("guestPanic.BeginPanic()", routineIndex, System.StringComparison.Ordinal);
         int beginStingerIndex = controllerText.IndexOf("monsterStinger.BeginStinger()", routineIndex, System.StringComparison.Ordinal);
-        int stopPanicIndex = controllerText.IndexOf("guestPanic.StopPanic()", routineIndex, System.StringComparison.Ordinal);
+        int doorExitIndex = controllerText.IndexOf("guestPanic.RunExitToDoorsThenRestoreRoutine()", routineIndex, System.StringComparison.Ordinal);
         int startSearchIndex = controllerText.IndexOf("StartGuestSearch()", routineIndex, System.StringComparison.Ordinal);
 
         Assert.That(File.Exists(Chapter2GuestPanicControllerPath), Is.True, "Chapter 2 should have a dedicated panic playback controller.");
@@ -227,8 +227,8 @@ public class Chapter2RegressionTests
         Assert.That(beginPanicIndex, Is.GreaterThan(routineIndex), "Guest panic should start inside the monster stinger routine.");
         Assert.That(beginStingerIndex, Is.GreaterThan(routineIndex), "Monster stinger should start inside the monster stinger routine.");
         Assert.That(beginPanicIndex, Is.GreaterThan(beginStingerIndex), "Guest panic should begin immediately after the monster stinger cut-in starts.");
-        Assert.That(stopPanicIndex, Is.GreaterThan(beginPanicIndex), "Guest panic should keep running while the stinger wait/timeout runs.");
-        Assert.That(stopPanicIndex, Is.LessThan(startSearchIndex), "Guest panic should stop before guest search placement begins.");
+        Assert.That(doorExitIndex, Is.GreaterThan(beginPanicIndex), "Guest panic should keep running while the stinger wait/timeout runs.");
+        Assert.That(doorExitIndex, Is.LessThan(startSearchIndex), "Guests should flee to the Drawing Room doors before guest search placement begins.");
         Assert.That(controllerText, Does.Match(@"(?s)\bStopChapter2Coroutines\s*\([^)]*\)\s*\{.*guestPanic\.StopPanic\(\)"), "Coroutine cleanup should not leave panic running.");
         Assert.That(controllerText, Does.Match(@"(?s)\bDebugResetForChapter2Skip\s*\([^)]*\)\s*\{.*guestPanic\.StopPanic\(\)"), "Debug reset should not leave panic running.");
     }
@@ -348,6 +348,39 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("RoomPersonWalker2D"));
         Assert.That(panicText, Does.Contain("NPCWaypointMover"));
         Assert.That(panicText, Does.Contain("motionDrivers[i].enabled = false"));
+    }
+
+    [Test]
+    public void Chapter2GuestPanicExitsHalfTheGuestsThroughEachDrawingRoomDoor()
+    {
+        Assert.That(File.Exists(Chapter2GuestPanicControllerPath), Is.True);
+
+        string panicText = File.ReadAllText(Chapter2GuestPanicControllerPath);
+        Assert.That(panicText, Does.Contain("RunExitToDoorsThenRestoreRoutine"), "Panic should expose an exit beat that Chapter2Controller can await.");
+        Assert.That(panicText, Does.Contain("BeginExitToDoors"), "Panic should switch from roaming to a directed door exit.");
+        Assert.That(panicText, Does.Contain("PointClickPlayerMovement routePlanner"), "Guest panic should reuse the butler movement route planner instead of inventing a separate floor system.");
+        Assert.That(panicText, Does.Contain("FindRoutePlanner"), "Guest panic should resolve the named Player movement component for walkable-floor route queries.");
+        Assert.That(panicText, Does.Contain("TryChooseRoutedRunTarget"), "Random panic movement should prefer butler route-space targets before falling back to raw room offsets.");
+        Assert.That(panicText, Does.Contain("leftExitTargetName = \"DoorTrigger_DrawingRoom_MusicRoom\""));
+        Assert.That(panicText, Does.Contain("rightExitTargetName = \"DoorTrigger_DrawingRoom_GEH\""));
+        Assert.That(panicText, Does.Contain("ChooseDoorExitTargets"));
+        Assert.That(panicText, Does.Contain("sortedParticipants.Count / 2"), "Door exit should split the visible guests evenly between the two exits.");
+        Assert.That(panicText, Does.Contain("TryChooseExitTarget"));
+        Assert.That(panicText, Does.Contain("TryChooseRoutedExitTarget"), "Door exits should clamp through the same walkable-floor route logic as point-click movement.");
+        Assert.That(panicText, Does.Contain("MoveLogicalPointToward"), "Door exits should step in butler logical coordinates, including vertical movement scaling.");
+        Assert.That(panicText, Does.Contain("TryGetLogicalPositionFromWorldPoint"), "Door exits should ask the player movement boundary to clamp targets onto the floor collider.");
+        Assert.That(panicText, Does.Contain("TryGetRoomPixelOffsetFromWorldPoint"), "Guest route positions should be converted back into RoomProjectedEntity room-local points.");
+        Assert.That(panicText, Does.Contain("TryGetActiveRoomStageLocalPoint"), "Persistent projected guests should convert routed world points back through the active room stage.");
+        Assert.That(panicText, Does.Contain("GetExitFootWorldPosition"), "Guests should run toward the door floor, not the center of the door trigger.");
+        Assert.That(panicText, Does.Contain("StopPanic()"), "The exit beat should restore normal sprites/animators before guest search stages actors at hide anchors.");
+
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        Assert.That(movementText, Does.Contain("TryGetLogicalPositionFromWorldPoint"), "Guest panic needs public access to the same world-to-logical walkable-floor conversion used by the butler.");
+        Assert.That(movementText, Does.Contain("TryGetWorldPointFromLogicalPosition"), "Guest panic needs public access to the same logical-to-world conversion used by the butler.");
+        Assert.That(movementText, Does.Contain("MoveLogicalPointToward"), "Guest panic should step using the butler's vertical movement scaling.");
+
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
+        Assert.That(cameraManagerText, Does.Contain("TryGetActiveRoomStageLocalPoint"), "Projected guest panic needs the inverse of CameraManager's active room-stage world conversion.");
     }
 
     [Test]

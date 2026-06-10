@@ -1,0 +1,25 @@
+{
+  "category": "Sweating",
+  "method": "whole-sprite tremble variants from existing generated cutouts",
+  "no_drawn_limb_or_face_overlays": true,
+  "standing_source": "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Panic/LordAmbroseVeil_panic_recoil_scream_02.png",
+  "sitting_source": "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sitting/LordAmbroseVeil_sitting_hunched_shaken_02.png",
+  "frames": {
+    "sweating_standing_panic": [
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_standing_panic_01.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_standing_panic_02.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_standing_panic_03.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_standing_panic_04.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_standing_panic_05.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_standing_panic_06.png"
+    ],
+    "sweating_seated_panic": [
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_seated_panic_01.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_seated_panic_02.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_seated_panic_03.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_seated_panic_04.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_seated_panic_05.png",
+      "Assets/GeneratedSpriteLibrary/LordAmbroseVeil/Sweating/LordAmbroseVeil_sweating_seated_panic_06.png"
+    ]
+  }
+}

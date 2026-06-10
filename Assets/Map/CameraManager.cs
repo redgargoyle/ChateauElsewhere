@@ -210,6 +210,28 @@ public class CameraManager : MonoBehaviour
         return true;
     }
 
+    public bool TryGetActiveRoomStageLocalPoint(Vector3 worldPoint, out Vector2 roomStageLocalPoint)
+    {
+        roomStageLocalPoint = Vector2.zero;
+
+        Camera mainCamera = Camera.main;
+        if (!UsesRoomStageLayout() || activeRoomStage == null || mainCamera == null)
+        {
+            return false;
+        }
+
+        Canvas canvas = activeRoomStage.GetComponentInParent<Canvas>();
+        Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+        Vector2 screenPoint = mainCamera.WorldToScreenPoint(worldPoint);
+        return RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            activeRoomStage,
+            screenPoint,
+            canvasCamera,
+            out roomStageLocalPoint);
+    }
+
     private void Reset()
     {
         cameraBackground = FindAnyObjectByType<RawImage>();
