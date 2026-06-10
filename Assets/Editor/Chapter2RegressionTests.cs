@@ -323,13 +323,17 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("useScriptedGuest1Panic = true"));
         Assert.That(panicText, Does.Contain("scriptedGuestRunSeconds = 1f"));
         Assert.That(panicText, Does.Contain("scriptedGuestHoldSeconds = 1f"));
-        Assert.That(panicText, Does.Contain("scriptedGuestWalkAnimationSpeed = 1.35f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestRunDistancePixels = 500f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestMoveSpeedPixels = 560f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestWalkAnimationSpeed = 2f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestPanicSpriteScaleMultiplier = 1.18f"));
         Assert.That(panicText, Does.Contain("RunScriptedGuest1PanicRoutine"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestDirectionalRun"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Guest 1 scripted runs should lock to the requested left/right beat.");
         Assert.That(panicText, Does.Contain("BeginScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Guest 1 run beats should use the existing Animator walk clips, not panic still sprites.");
         Assert.That(panicText, Does.Contain("UpdateScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Guest 1 run beats should keep the Animator walking in the scripted direction.");
         Assert.That(panicText, Does.Contain("StopScriptedAnimatorWalk(participant.CurrentRunAction)"), "Guest 1 panic holds should stop the Animator before showing one panic still.");
+        Assert.That(panicText, Does.Contain("SetSprite(panicSprite, scriptedGuestPanicSpriteScaleMultiplier)"), "Guest 1 panic stills should stay sized against her authored body scale.");
         Assert.That(panicText, Does.Contain("HoldScriptedGuestPanicFrame"));
         Assert.That(panicText, Does.Not.Contain("SetInputEnabled(false)"), "Guest panic must not lock the global point-click input/cursor state.");
         Assert.That(panicText, Does.Contain("ChooseNearestScriptedGuestExitTarget"));

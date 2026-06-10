@@ -24,9 +24,10 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField] private bool useScriptedGuest1Panic = true;
     [SerializeField, Min(0.1f)] private float scriptedGuestRunSeconds = 1f;
     [SerializeField, Min(0.1f)] private float scriptedGuestHoldSeconds = 1f;
-    [SerializeField, Min(1f)] private float scriptedGuestRunDistancePixels = 360f;
-    [SerializeField, Min(1f)] private float scriptedGuestMoveSpeedPixels = 380f;
-    [SerializeField, Min(0.1f)] private float scriptedGuestWalkAnimationSpeed = 1.35f;
+    [SerializeField, Min(1f)] private float scriptedGuestRunDistancePixels = 500f;
+    [SerializeField, Min(1f)] private float scriptedGuestMoveSpeedPixels = 560f;
+    [SerializeField, Min(0.1f)] private float scriptedGuestWalkAnimationSpeed = 2f;
+    [SerializeField, Min(0.1f)] private float scriptedGuestPanicSpriteScaleMultiplier = 1.18f;
     [SerializeField, Min(0f)] private float scriptedGuestShakePixels = 5f;
     [SerializeField, Min(0.1f)] private float scriptedGuestShakeCyclesPerSecond = 8f;
     [SerializeField] private PointClickPlayerMovement routePlanner;
@@ -449,7 +450,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             float shake = Mathf.Sin(elapsedSeconds * scriptedGuestShakeCyclesPerSecond * Mathf.PI * 2f) *
                 Mathf.Max(0f, scriptedGuestShakePixels);
 
-            participant.SetSprite(panicSprite);
+            participant.SetSprite(panicSprite, scriptedGuestPanicSpriteScaleMultiplier);
             participant.ApplyPanicVisualOffset(baseOffset + new Vector2(shake, 0f), worldUnitsPerRoomPixel);
             elapsedSeconds += deltaTime;
             yield return null;
@@ -1110,6 +1111,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private float routeWorldUnitsPerPixel = 0.012f;
         private bool useRouteLogicalMotion;
         private Sprite currentPanicSprite;
+        private float currentPanicSpriteScaleMultiplier = 1f;
         private PanicAction currentRunAction = PanicAction.PanicRunDown;
         private PanicAction currentStopAction = PanicAction.PanicHandsUp;
         private int guestNumber;
@@ -1289,6 +1291,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         public bool BeginScriptedAnimatorWalk(PanicAction runAction, float animationSpeed)
         {
             currentPanicSprite = null;
+            currentPanicSpriteScaleMultiplier = 1f;
             SetCurrentRunAction(runAction);
 
             if (targetTransform != null)
@@ -1615,11 +1618,16 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         public void ReapplyPanicVisualOffset(float worldUnitsPerPixel)
         {
-            ApplySpriteScale(currentPanicSprite);
+            ApplySpriteScale(currentPanicSprite, currentPanicSpriteScaleMultiplier);
             ApplyVisualOffset(currentVisualOffset, worldUnitsPerPixel);
         }
 
         public void SetSprite(Sprite sprite)
+        {
+            SetSprite(sprite, 1f);
+        }
+
+        public void SetSprite(Sprite sprite, float scaleMultiplier)
         {
             if (sprite == null)
             {
@@ -1627,6 +1635,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             currentPanicSprite = sprite;
+            currentPanicSpriteScaleMultiplier = Mathf.Max(0.1f, scaleMultiplier);
 
             if (spriteRenderer != null)
             {
@@ -1638,7 +1647,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 image.sprite = sprite;
             }
 
-            ApplySpriteScale(sprite);
+            ApplySpriteScale(sprite, currentPanicSpriteScaleMultiplier);
         }
 
         private void CaptureOriginalSpriteLocalSize()
@@ -1651,7 +1660,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
         }
 
-        private void ApplySpriteScale(Sprite sprite)
+        private void ApplySpriteScale(Sprite sprite, float scaleMultiplier = 1f)
         {
             if (targetTransform == null ||
                 !hasOriginalSpriteLocalSize ||
@@ -1660,7 +1669,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 return;
             }
 
-            float scale = GetSpriteScaleMultiplier(originalSpriteLocalSize, spriteLocalSize);
+            float scale = GetSpriteScaleMultiplier(originalSpriteLocalSize, spriteLocalSize) * Mathf.Max(0.1f, scaleMultiplier);
             targetTransform.localScale = new Vector3(
                 originalLocalScale.x * scale,
                 originalLocalScale.y * scale,
@@ -1902,6 +1911,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             routeWorldUnitsPerPixel = 0.012f;
             useRouteLogicalMotion = false;
             currentPanicSprite = null;
+            currentPanicSpriteScaleMultiplier = 1f;
             controlledByScript = false;
 
             if (rigidbody2D != null)
