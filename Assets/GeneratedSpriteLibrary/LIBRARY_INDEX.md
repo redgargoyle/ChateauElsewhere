@@ -4,7 +4,7 @@ Branch: `asset-library/generated-sprite-database`
 
 Current main cutout sprites:
 - Guests: 10
-- Main sprite PNGs: 568
+- Main sprite PNGs: 736
 - Base main sprites per guest: 16
 - Focused room-perspective additions: 6 extra sprites each for guests 1-4
 - Focused panic-reaction additions: 6 extra sprites each for guests 1-4
@@ -14,11 +14,18 @@ Current main cutout sprites:
   Lord Ambrose +10, Madame Coralie +10
 - Transition additions: 4 stand-to-sit frames for each guest
 - Shake/sweat additions: 12 shaking frames and 12 sweating frames for each guest
+- Guest 1 reference panic additions: 8 `180x290` Lady panic/scream/run frames
+  generated from `Assets/Art/Characters/guest1` reference sprites
+- Reference-locked panic additions: 8 `166x297` panic/reaction/run frames each
+  for ButlerGuest, MisterFlorianKnell, CountessElowenDusk, BaronHectorGlass,
+  LadySabineMarrow, LordAmbroseVeil, MadameCoralieThread, MissIsoldeWren, and
+  ProfessorLucienVale
 - Alpha verification: transparent corners passed for all main sprites
 
 Style-matched mirror:
 - `Assets/GeneratedSpriteLibraryStyleMatched` contains non-destructive filtered copies
-  of all 568 main sprite PNGs.
+  of 648 style-matched sprite PNGs, including the new Guest 1 reference panic set
+  and the new reference-locked panic sets for the other guests.
 - The filter uses `Assets/Art/Final Images (DO NOT EDIT)/drawing room 2.png` as the
   primary read-only style target, with original `Assets/AnimationLibrary/*/reference/full_body`
   sprites kept as additional read-only context.
@@ -67,16 +74,38 @@ Focused guest 1-4 panic-reaction pass:
   dining-chair braced panic, and couch face-covered panic
 
 Current main sprite counts:
-- `BaronHectorGlass`: 64
-- `ButlerGuest`: 44
-- `CountessElowenDusk`: 56
-- `Lady`: 44
-- `LadySabineMarrow`: 76
-- `LordAmbroseVeil`: 76
-- `MadameCoralieThread`: 64
-- `MissIsoldeWren`: 44
-- `MisterFlorianKnell`: 56
-- `ProfessorLucienVale`: 44
+- `BaronHectorGlass`: 94
+- `ButlerGuest`: 52
+- `CountessElowenDusk`: 64
+- `Lady`: 52
+- `LadySabineMarrow`: 106
+- `LordAmbroseVeil`: 106
+- `MadameCoralieThread`: 94
+- `MissIsoldeWren`: 52
+- `MisterFlorianKnell`: 64
+- `ProfessorLucienVale`: 52
+
+Guest 1 reference panic pass:
+- `Lady/Panic/guest1_reference_panic_180x290/` contains 8 panic, scream,
+  cower, and run frames based on the original guest1 Lady walking, idle, and
+  sitting sprites.
+- These frames are cut out with alpha, resized to the original `180x290`
+  standing/walking canvas, and palette-matched to the black and mauve-purple
+  dress from `Assets/Art/Characters/guest1`.
+- The mirrored style-library copy lives at
+  `Assets/GeneratedSpriteLibraryStyleMatched/Lady/Panic/guest1_reference_panic_180x290/`.
+
+Reference-locked panic pass:
+- Each non-Lady guest listed above now has
+  `Panic/reference_locked_panic_166x297/` with 8 adult-scale panic frames:
+  startled recoil, hands near face, cover-face cower, braced defensive, run left,
+  run right, turnaround, and run start.
+- These are candidate library cutouts generated from normalized adult-scale project
+  references, then alpha-cleaned, palette-matched to each guest's existing sprites,
+  given a drawing-room watercolor/pencil texture pass, and validated as `166x297`
+  transparent PNG sprites.
+- The combined review sheet is
+  `_reference_locked_panic_166x297_all_guests_preview.png`.
 
 Shake/sweat pass rules:
 - `Shaking/*_shaking_standing_panic_01..06.png` and

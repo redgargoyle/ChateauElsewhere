@@ -5,13 +5,23 @@ Source root: `Assets/GeneratedSpriteLibrary`
 This folder mirrors the generated sprite library with non-destructive filtered copies.
 The original generated sprites and original animation/reference sprites are not edited.
 
-Style-matched main sprite PNGs: 568
+Style-matched main sprite PNGs: 648
 Reference saturation: 0.548
 Reference brightness: 0.416
 Reference luminance contrast: 42.14
 Reference edge mean: 36.15
 
 Room reference: `Assets/Art/Final Images (DO NOT EDIT)/drawing room 2.png`
+
+Latest focused addition:
+- `Lady/Panic/guest1_reference_panic_180x290/` mirrors 8 new Guest 1 Lady
+  panic/scream/run frames generated from the original
+  `Assets/Art/Characters/guest1` sprites and fit to the `180x290` animation
+  canvas.
+- `Panic/reference_locked_panic_166x297/` mirrors 8 new adult-scale
+  panic/reaction/run frames each for ButlerGuest, MisterFlorianKnell,
+  CountessElowenDusk, BaronHectorGlass, LadySabineMarrow, LordAmbroseVeil,
+  MadameCoralieThread, MissIsoldeWren, and ProfessorLucienVale.
 
 Comparison metrics:
 - Source average saturation/brightness/contrast/edge: 0.377 / 0.347 / 47.44 / 45.45
@@ -65,3 +75,10 @@ Filter intent:
 - Add room-derived paper, crackle, and sketch-line texture.
 - Add stronger ink density while preserving silhouettes and alpha.
 - Keep ink edges readable without drawing new limbs, shapes, or animation overlays.
+
+Latest validation:
+- The reference-locked panic pass was validated as `166x297` RGBA sprites with
+  transparent corners, non-empty visible pixels, no green chroma residue, and
+  Unity PNG `.meta` files.
+- Combined review sheet:
+  `_reference_locked_panic_166x297_all_guests_preview.png`.

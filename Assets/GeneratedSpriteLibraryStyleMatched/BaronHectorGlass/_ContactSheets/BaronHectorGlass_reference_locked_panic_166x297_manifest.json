@@ -1,0 +1,52 @@
+{
+  "guest": "BaronHectorGlass",
+  "set": "reference_locked_panic_166x297",
+  "frame_size": [
+    166,
+    297
+  ],
+  "source": "strict image-generation sheets post-processed with guest palette, alpha cleanup, drawing-room watercolor pencil texture, and pixel crunch",
+  "generated_on": "2026-06-10",
+  "frames": [
+    {
+      "index": 1,
+      "action": "startled_recoil",
+      "file": "BaronHectorGlass_reference_locked_panic_01_startled_recoil_166x297.png"
+    },
+    {
+      "index": 2,
+      "action": "hands_near_face",
+      "file": "BaronHectorGlass_reference_locked_panic_02_hands_near_face_166x297.png"
+    },
+    {
+      "index": 3,
+      "action": "cover_face_cower",
+      "file": "BaronHectorGlass_reference_locked_panic_03_cover_face_cower_166x297.png"
+    },
+    {
+      "index": 4,
+      "action": "braced_defensive",
+      "file": "BaronHectorGlass_reference_locked_panic_04_braced_defensive_166x297.png"
+    },
+    {
+      "index": 5,
+      "action": "run_left",
+      "file": "BaronHectorGlass_reference_locked_panic_05_run_left_166x297.png"
+    },
+    {
+      "index": 6,
+      "action": "run_right",
+      "file": "BaronHectorGlass_reference_locked_panic_06_run_right_166x297.png"
+    },
+    {
+      "index": 7,
+      "action": "turnaround",
+      "file": "BaronHectorGlass_reference_locked_panic_07_turnaround_166x297.png"
+    },
+    {
+      "index": 8,
+      "action": "run_start",
+      "file": "BaronHectorGlass_reference_locked_panic_08_run_start_166x297.png"
+    }
+  ]
+}

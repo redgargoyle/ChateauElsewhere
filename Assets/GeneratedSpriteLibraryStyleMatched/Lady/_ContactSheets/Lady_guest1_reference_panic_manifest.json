@@ -1,0 +1,30 @@
+{
+  "character": "Lady",
+  "source_reference_folder": "Assets/Art/Characters/guest1",
+  "source_reference_files": [
+    "Assets/Art/Characters/guest1/lady_sitting_02.png",
+    "Assets/Art/Characters/guest1/lady_idle_shift_left.png",
+    "Assets/Art/Characters/guest1/lady_walk_10_r03_c02.png",
+    "Assets/Art/Characters/guest1/lady_walk_12_r03_c04.png",
+    "Assets/Art/Characters/guest1/lady_walk_04_r01_c04.png",
+    "Assets/Art/Characters/guest1/lady_walk_03_r01_c03.png",
+    "Assets/Art/Characters/guest1/lady_walk_09_r03_c01.png"
+  ],
+  "description": "Eight panic/screaming/running frames generated from the actual guest1 Lady references, chroma-key cut out, palette matched, and fit to 180x290 animation canvas.",
+  "output_folder": "Assets/GeneratedSpriteLibrary/Lady/Panic/guest1_reference_panic_180x290",
+  "style_matched_mirror": "Assets/GeneratedSpriteLibraryStyleMatched/Lady/Panic/guest1_reference_panic_180x290",
+  "contact_sheets": [
+    "Assets/GeneratedSpriteLibrary/Lady/_ContactSheets/Lady_guest1_reference_panic_sheet_01_reaction_alpha.png",
+    "Assets/GeneratedSpriteLibrary/Lady/_ContactSheets/Lady_guest1_reference_panic_sheet_02_running_alpha.png"
+  ],
+  "frames": [
+    "Assets/GeneratedSpriteLibrary/Lady/Panic/guest1_reference_panic_180x290/Lady_guest1_reference_panic_01_startled_recoil_180x290.png",
+    "Assets/GeneratedSpriteLibrary/Lady/Panic/guest1_reference_panic_180x290/Lady_guest1_reference_panic_02_scream_hands_up_180x290.png",
+    "Assets/GeneratedSpriteLibrary/Lady/Panic/guest1_reference_panic_180x290/Lady_guest1_reference_panic_03_cover_face_180x290.png",
+    "Assets/GeneratedSpriteLibrary/Lady/Panic/guest1_reference_panic_180x290/Lady_guest1_reference_panic_04_cower_clutch_180x290.png",
+    "Assets/GeneratedSpriteLibrary/Lady/Panic/guest1_reference_panic_180x290/Lady_guest1_reference_panic_05_run_left_180x290.png",
+    "Assets/GeneratedSpriteLibrary/Lady/Panic/guest1_reference_panic_180x290/Lady_guest1_reference_panic_06_run_right_180x290.png",
+    "Assets/GeneratedSpriteLibrary/Lady/Panic/guest1_reference_panic_180x290/Lady_guest1_reference_panic_07_turn_back_scream_180x290.png",
+    "Assets/GeneratedSpriteLibrary/Lady/Panic/guest1_reference_panic_180x290/Lady_guest1_reference_panic_08_braced_avoid_180x290.png"
+  ]
+}
