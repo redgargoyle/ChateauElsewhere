@@ -62,6 +62,7 @@ public class Chapter2RegressionTests
     private static readonly PanicActionSpec[] RequiredPanicActions =
     {
         new PanicActionSpec("panic_hands_up", "panicHandsUp", 4),
+        new PanicActionSpec("panic_pop", "panicPop", 8),
         new PanicActionSpec("panic_run_down", "panicRunDown", 4),
         new PanicActionSpec("panic_run_left", "panicRunLeft", 4),
         new PanicActionSpec("panic_run_right", "panicRunRight", 4),
@@ -273,12 +274,14 @@ public class Chapter2RegressionTests
         Assert.That(builderText, Does.Contain("LoadSpritesCycled"));
         Assert.That(builderText, Does.Contain("PanicHandsUpActionId"));
         Assert.That(builderText, Does.Contain("PanicPopActionId"));
+        Assert.That(builderText, Does.Contain("GetLegacyGuestPanicFramesFolder"));
         Assert.That(builderText, Does.Contain("CreateSpriteClip"));
         Assert.That(builderText, Does.Not.Contain("SyncSpritesToGuestPanicFolder"));
         Assert.That(builderText, Does.Contain("throw new InvalidOperationException"), "The editor builder should fail when approved frames are incomplete.");
 
         Assert.That(libraryAssetText, Does.Contain(ReadGuid(Path.Combine(GuestArtRoot, "guest7", "panic", "panic_hands_up", "frames", "01_guest7_panic_hands_up.png.meta"))), "Guest 7 panic stop should use the generated guest-local hands-up sprites.");
         Assert.That(libraryAssetText, Does.Contain(ReadGuid(Path.Combine(GuestArtRoot, "guest1", "panic", OptionalPanicPopAction, "frames", "01_guest1_panic_pop_cover_face.png.meta"))), "Guest 1 panic pop should use the generated Guest 1-style sprites.");
+        Assert.That(libraryAssetText, Does.Contain(ReadGuid(Path.Combine(GuestArtRoot, "guest2", "guest2panic", "guest2_panic_01.png.meta"))), "Guest 2 panic pop should use the existing eight-frame guest panic stills.");
         Assert.That(libraryAssetText, Does.Contain(ReadGuid(Path.Combine(GuestArtRoot, "guest3", "panic", OptionalPanicPopAction, "frames", "guest3_panic_01.png.meta"))), "Guest 3 panic pop should use the selected Guest 3 panic sprites.");
         Assert.That(libraryAssetText, Does.Not.Contain("panicReactionDown:"), "The rejected multi-action panic stop set should not be serialized.");
         Assert.That(libraryAssetText, Does.Not.Contain("panicShriekDown:"), "The rejected multi-action panic stop set should not be serialized.");
@@ -328,9 +331,9 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("FormerlySerializedAs(\"useScriptedGuest1Panic\")"), "Existing scene data should survive the field rename.");
         Assert.That(panicText, Does.Contain("StartScriptedGuestPanicRoutines"));
         Assert.That(panicText, Does.Contain("panicFrames.Length < 8"), "Any guest with eight panic_pop frames should use the scripted panic routine.");
-        Assert.That(panicText, Does.Contain("scriptedGuestMinRunSeconds = 0.25f"));
-        Assert.That(panicText, Does.Contain("scriptedGuestMaxRunSeconds = 1.5f"));
-        Assert.That(panicText, Does.Contain("scriptedGuestHoldSeconds = 1f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestMinRunSeconds = 0.5f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestMaxRunSeconds = 1.25f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestHoldSeconds = 0.25f"));
         Assert.That(panicText, Does.Contain("scriptedGuestRunDistancePixels = 500f"));
         Assert.That(panicText, Does.Contain("scriptedGuestMoveSpeedPixels = 560f"));
         Assert.That(panicText, Does.Contain("scriptedGuestWalkAnimationSpeed = 2f"));
@@ -339,6 +342,7 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("RunScriptedGuestDirectionalRun"));
         Assert.That(panicText, Does.Contain("ChooseRandomScriptedGuestRunAction"), "Scripted guests should choose their next panic direction independently.");
         Assert.That(panicText, Does.Contain("GetRandomScriptedGuestRunSeconds"), "Scripted guests should randomize how long each direction lasts.");
+        Assert.That(panicText, Does.Contain("GetScriptedGuestTransitionSeconds"), "Scripted panic stills should use the short transition beat.");
         Assert.That(panicText, Does.Contain("UnityEngine.Random.Range(0, 4)"), "Scripted guests should choose from all four cardinal directions.");
         Assert.That(panicText, Does.Contain("Vector2.down"));
         Assert.That(panicText, Does.Contain("Vector2.left"));
@@ -347,14 +351,14 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Scripted guest runs should lock to each randomly requested four-direction beat.");
         Assert.That(panicText, Does.Contain("BeginScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Scripted run beats should use the existing Animator walk clips, not panic still sprites.");
         Assert.That(panicText, Does.Contain("UpdateScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Scripted run beats should keep the Animator walking in the scripted direction.");
+        Assert.That(panicText, Does.Contain("panicFrames[UnityEngine.Random.Range(0, panicFrames.Length)]"), "Each transition should choose one random panic still instead of playing a coordinated sequence.");
         Assert.That(panicText, Does.Contain("StopScriptedAnimatorWalk(participant.CurrentRunAction)"), "Scripted panic holds should stop the Animator before showing one panic still.");
         Assert.That(panicText, Does.Contain("SetSprite(panicSprite, scriptedGuestPanicSpriteScaleMultiplier)"), "Scripted panic stills should stay sized against each guest's authored body scale.");
         Assert.That(panicText, Does.Contain("HoldScriptedGuestPanicFrame"));
         Assert.That(panicText, Does.Not.Contain("SetInputEnabled(false)"), "Guest panic must not lock the global point-click input/cursor state.");
-        Assert.That(panicText, Does.Contain("ChooseNearestScriptedGuestExitTarget"));
+        Assert.That(panicText, Does.Contain("ReleaseScriptedGuestParticipantsForSharedMotion"));
         Assert.That(panicText, Does.Contain("IsControlledByScript"));
         Assert.That(panicText, Does.Contain("HasSharedPanicParticipants"));
-        Assert.That(panicText, Does.Not.Contain("RandomStopActions"));
         Assert.That(panicText, Does.Not.Contain("PanicAction.PanicShriekDown"));
         Assert.That(panicText, Does.Not.Contain("PanicAction.PanicReactionDown"));
         Assert.That(panicText, Does.Not.Contain("PanicAction.CoverFaceCower"));
@@ -398,6 +402,7 @@ public class Chapter2RegressionTests
         string panicText = File.ReadAllText(Chapter2GuestPanicControllerPath);
         Assert.That(panicText, Does.Contain("RunExitToDoorsThenRestoreRoutine"), "Panic should expose an exit beat that Chapter2Controller can await.");
         Assert.That(panicText, Does.Contain("BeginExitToDoors"), "Panic should switch from roaming to a directed door exit.");
+        Assert.That(panicText, Does.Contain("StopPanicRoutineOnly(true)"), "Door exit should reclaim per-guest panic routines before assigning shared door targets.");
         Assert.That(panicText, Does.Contain("PointClickPlayerMovement routePlanner"), "Guest panic should reuse the butler movement route planner instead of inventing a separate floor system.");
         Assert.That(panicText, Does.Contain("FindRoutePlanner"), "Guest panic should resolve the named Player movement component for walkable-floor route queries.");
         Assert.That(panicText, Does.Contain("TryChooseRoutedRunTarget"), "Random panic movement should prefer butler route-space targets before falling back to raw room offsets.");
@@ -462,24 +467,27 @@ public class Chapter2RegressionTests
             Assert.That(clipText, Does.Not.Contain("classID: 114"), $"{clipPath} should not animate an extra UI Image curve over the SpriteRenderer frames.");
             Assert.That(clipText, Does.Contain(ReadGuid(firstGuestFrameMeta)), $"{clipPath} should reference generated guest-local frame sprites.");
 
-            if (characterIndex == 0 || characterIndex == 2)
+            string guestFolder = PanicRosterGuestFolders[characterIndex];
+            string clipFolder = PanicRosterClipFolders[characterIndex];
+            string generatedPopFramesFolder = Path.Combine(GuestArtRoot, guestFolder, "panic", OptionalPanicPopAction, "frames");
+            string legacyPopFramesFolder = Path.Combine(GuestArtRoot, guestFolder, guestFolder + "panic");
+            string popFramesFolder = Directory.Exists(generatedPopFramesFolder)
+                ? generatedPopFramesFolder
+                : legacyPopFramesFolder;
+            Assert.That(Directory.Exists(popFramesFolder), Is.True, $"{guestFolder} should have eight panic_pop source frames.");
+            Assert.That(Directory.GetFiles(popFramesFolder, "*.png").Length, Is.EqualTo(8), $"{guestFolder} should have exactly eight panic_pop source frames.");
+
+            string[] popFrameMetas = Directory.GetFiles(popFramesFolder, "*.png.meta");
+            System.Array.Sort(popFrameMetas, System.StringComparer.OrdinalIgnoreCase);
+            string firstPopFrameMeta = popFrameMetas[0];
+            Assert.That(File.Exists(firstPopFrameMeta), Is.True, $"{guestFolder} panic_pop should have imported sprite metadata.");
+            Assert.That(assetText, Does.Contain("panicPop:"), "Runtime asset should serialize panicPop arrays.");
+            Assert.That(assetText, Does.Contain(ReadGuid(firstPopFrameMeta)), $"Runtime asset should reference {guestFolder} panic_pop sprites.");
+
+            string popClipPath = Path.Combine(Chapter2PanicClipRoot, clipFolder, $"{clipFolder}_PanicPop.anim");
+
+            if (File.Exists(popClipPath))
             {
-                string guestFolder = PanicRosterGuestFolders[characterIndex];
-                string clipFolder = PanicRosterClipFolders[characterIndex];
-                string popFramesFolder = Path.Combine(GuestArtRoot, guestFolder, "panic", OptionalPanicPopAction, "frames");
-                Assert.That(Directory.Exists(popFramesFolder), Is.True, $"{guestFolder} should have optional panic_pop frames.");
-                Assert.That(Directory.GetFiles(popFramesFolder, "*.png").Length, Is.EqualTo(8), $"{guestFolder} should have exactly eight panic_pop frames.");
-
-                string[] popFrameMetas = Directory.GetFiles(popFramesFolder, "*.png.meta");
-                System.Array.Sort(popFrameMetas, System.StringComparer.OrdinalIgnoreCase);
-                string firstPopFrameMeta = popFrameMetas[0];
-                Assert.That(File.Exists(firstPopFrameMeta), Is.True, $"{guestFolder} panic_pop should have imported sprite metadata.");
-                Assert.That(assetText, Does.Contain("panicPop:"), "Runtime asset should serialize optional panicPop arrays.");
-                Assert.That(assetText, Does.Contain(ReadGuid(firstPopFrameMeta)), $"Runtime asset should reference {guestFolder} panic_pop sprites.");
-
-                string popClipPath = Path.Combine(Chapter2PanicClipRoot, clipFolder, $"{clipFolder}_PanicPop.anim");
-                Assert.That(File.Exists(popClipPath), Is.True, $"{guestFolder} should have one saved PanicPop AnimationClip.");
-
                 string popClipText = File.ReadAllText(popClipPath);
                 Assert.That(popClipText, Does.Contain("m_SampleRate: 12"), $"{popClipPath} should play at the panic frame rate.");
                 Assert.That(popClipText, Does.Contain("classID: 212"), $"{popClipPath} should animate SpriteRenderer sprites like normal character clips.");

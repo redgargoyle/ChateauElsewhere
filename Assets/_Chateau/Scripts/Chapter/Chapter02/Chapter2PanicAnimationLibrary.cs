@@ -124,6 +124,7 @@ public sealed class Chapter2PanicCharacterAnimation
     {
         StringBuilder missing = new StringBuilder();
         AppendCountMismatch(missing, "panic_hands_up", panicHandsUp, 4);
+        AppendCountMismatch(missing, "panic_pop", panicPop, 8);
         AppendCountMismatch(missing, "panic_run_down", panicRunDown, 4);
         AppendCountMismatch(missing, "panic_run_left", panicRunLeft, 4);
         AppendCountMismatch(missing, "panic_run_right", panicRunRight, 4);

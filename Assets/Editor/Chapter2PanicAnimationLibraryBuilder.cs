@@ -61,12 +61,20 @@ public static class Chapter2PanicAnimationLibraryBuilder
             string panicPopFramesFolder = GetGuestActionFramesFolder(guestFolder, PanicPopActionId);
             Sprite[] handsUpSprites = LoadSprites(handsUpFramesFolder);
             Sprite[] panicPopSprites = LoadSprites(panicPopFramesFolder);
+
+            if (panicPopSprites.Length == 0)
+            {
+                panicPopFramesFolder = GetLegacyGuestPanicFramesFolder(guestFolder);
+                panicPopSprites = LoadSprites(panicPopFramesFolder);
+            }
+
             Sprite[] runDownSprites = LoadRunSprites(characterId, "walk_down", 4);
             Sprite[] runLeftSprites = LoadRunSprites(characterId, "walk_left", 4);
             Sprite[] runRightSprites = LoadRunSprites(characterId, "walk_right", 4);
             Sprite[] runUpSprites = LoadRunSprites(characterId, "walk_up", 4);
 
             AppendCountError(errors, characterId, PanicHandsUpActionId, handsUpSprites, 4, handsUpFramesFolder);
+            AppendCountError(errors, characterId, PanicPopActionId, panicPopSprites, 8, panicPopFramesFolder);
             AppendCountError(errors, characterId, "panic_run_down", runDownSprites, 4, "normal walk_down references");
             AppendCountError(errors, characterId, "panic_run_left", runLeftSprites, 4, "normal walk_left references");
             AppendCountError(errors, characterId, "panic_run_right", runRightSprites, 4, "normal walk_right references");
@@ -172,6 +180,11 @@ public static class Chapter2PanicAnimationLibraryBuilder
     private static string GetGuestActionFramesFolder(GuestFolderSpec guestFolder, string actionId)
     {
         return $"{GuestArtRoot}/{guestFolder.guestFolder}/panic/{actionId}/frames";
+    }
+
+    private static string GetLegacyGuestPanicFramesFolder(GuestFolderSpec guestFolder)
+    {
+        return $"{GuestArtRoot}/{guestFolder.guestFolder}/{guestFolder.guestFolder}panic";
     }
 
     private static Sprite[] LoadRunSprites(string characterId, string direction, int expectedFrameCount)
