@@ -88,11 +88,39 @@ public class RoomProjectionRegressionTests
     }
 
     [Test]
-    public void ProjectedEntityDoesNotDependOnRandomRootPrefabScale()
+    public void ProjectedEntityPreservesAuthoredVisualScaleWhileNormalizingRoot()
     {
         RoomPerspectiveProfile profile = CreatePerspectiveProfile();
         GameObject root = new GameObject("ScaledPrefabRoot");
         root.transform.localScale = new Vector3(3f, 0.25f, 7f);
+        GameObject visual = new GameObject("Visual");
+        visual.transform.SetParent(root.transform, false);
+        visual.transform.localScale = new Vector3(1.4f, 0.75f, 2f);
+        visual.AddComponent<SpriteRenderer>();
+        RoomProjectedEntity entity = root.AddComponent<RoomProjectedEntity>();
+        entity.SetVisualRoot(visual.transform);
+        entity.SetRoomProfile(profile);
+        entity.SetRoomLocalFootPoint(new Vector2(0f, -40f));
+
+        try
+        {
+            Assert.That(root.transform.localScale, Is.EqualTo(Vector3.one));
+            Assert.That(visual.transform.localScale.x, Is.EqualTo(1.4f * entity.CurrentScale).Within(0.0001f));
+            Assert.That(visual.transform.localScale.y, Is.EqualTo(0.75f * entity.CurrentScale).Within(0.0001f));
+            Assert.That(visual.transform.localScale.z, Is.EqualTo(2f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void ProjectedEntityUsesEditedVisualScaleAsProjectionBase()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject root = new GameObject("EditedVisualRoot");
         GameObject visual = new GameObject("Visual");
         visual.transform.SetParent(root.transform, false);
         visual.AddComponent<SpriteRenderer>();
@@ -103,9 +131,53 @@ public class RoomProjectionRegressionTests
 
         try
         {
-            Assert.That(root.transform.localScale, Is.EqualTo(Vector3.one));
-            Assert.That(visual.transform.localScale.x, Is.EqualTo(entity.CurrentScale).Within(0.0001f));
-            Assert.That(visual.transform.localScale.y, Is.EqualTo(entity.CurrentScale).Within(0.0001f));
+            Vector3 editedScale = new Vector3(2f, 0.5f, 1.25f);
+            visual.transform.localScale = editedScale;
+
+            entity.ApplyProjection();
+
+            Assert.That(visual.transform.localScale.x, Is.EqualTo(editedScale.x * entity.CurrentScale).Within(0.0001f));
+            Assert.That(visual.transform.localScale.y, Is.EqualTo(editedScale.y * entity.CurrentScale).Within(0.0001f));
+            Assert.That(visual.transform.localScale.z, Is.EqualTo(editedScale.z).Within(0.0001f));
+
+            entity.SetRoomLocalFootPoint(new Vector2(0f, -120f));
+
+            Assert.That(visual.transform.localScale.x, Is.EqualTo(editedScale.x * entity.CurrentScale).Within(0.0001f));
+            Assert.That(visual.transform.localScale.y, Is.EqualTo(editedScale.y * entity.CurrentScale).Within(0.0001f));
+            Assert.That(visual.transform.localScale.z, Is.EqualTo(editedScale.z).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void ProjectedEntityUsesEditedRootScaleWhenVisualRootIsActorRoot()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject root = new GameObject("SameRootProjectedActor");
+        root.transform.localScale = new Vector3(1.5f, 0.8f, 1.1f);
+        root.AddComponent<SpriteRenderer>();
+        RoomProjectedEntity entity = root.AddComponent<RoomProjectedEntity>();
+        entity.SetRoomProfile(profile);
+        entity.SetRoomLocalFootPoint(new Vector2(0f, -40f));
+
+        try
+        {
+            Assert.That(root.transform.localScale.x, Is.EqualTo(1.5f * entity.CurrentScale).Within(0.0001f));
+            Assert.That(root.transform.localScale.y, Is.EqualTo(0.8f * entity.CurrentScale).Within(0.0001f));
+            Assert.That(root.transform.localScale.z, Is.EqualTo(1.1f).Within(0.0001f));
+
+            Vector3 editedScale = new Vector3(1.75f, 1.2f, 0.9f);
+            root.transform.localScale = editedScale;
+
+            entity.ApplyProjection();
+
+            Assert.That(root.transform.localScale.x, Is.EqualTo(editedScale.x * entity.CurrentScale).Within(0.0001f));
+            Assert.That(root.transform.localScale.y, Is.EqualTo(editedScale.y * entity.CurrentScale).Within(0.0001f));
+            Assert.That(root.transform.localScale.z, Is.EqualTo(editedScale.z).Within(0.0001f));
         }
         finally
         {

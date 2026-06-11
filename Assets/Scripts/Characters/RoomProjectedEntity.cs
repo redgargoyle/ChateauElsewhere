@@ -42,8 +42,10 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private Color[] graphicBaseColors = Array.Empty<Color>();
     private Transform cachedVisualRoot;
     private ActorRoomState actorRoomState;
-    private Vector3 authoredVisualRootScale = Vector3.one;
-    private bool hasAuthoredVisualRootScale;
+    [SerializeField, HideInInspector] private Vector3 authoredVisualRootScale = Vector3.one;
+    [SerializeField, HideInInspector] private bool hasAuthoredVisualRootScale;
+    [SerializeField, HideInInspector] private Vector3 lastAppliedVisualRootScale = Vector3.one;
+    [SerializeField, HideInInspector] private bool hasLastAppliedVisualRootScale;
     private float currentScale = 1f;
     private float currentRoomStageScaleMultiplier = 1f;
     private int currentSortingOrder;
@@ -252,6 +254,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public void ApplyProjection()
     {
         ResolveReferences();
+        CaptureAuthoredVisualScale(false);
 
         if (!ShouldApplyProjection())
         {
@@ -336,16 +339,23 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private void CaptureAuthoredVisualScale(bool force)
     {
         Transform targetRoot = VisualRoot;
+        Vector3 currentVisualRootScale = targetRoot != null
+            ? SanitizeScale(targetRoot.localScale)
+            : Vector3.one;
+        bool currentScaleIsProjectionOutput =
+            hasLastAppliedVisualRootScale &&
+            Approximately(currentVisualRootScale, lastAppliedVisualRootScale);
 
         if (!force &&
             hasAuthoredVisualRootScale &&
-            cachedVisualRoot == targetRoot)
+            currentScaleIsProjectionOutput)
         {
+            cachedVisualRoot = targetRoot;
             return;
         }
 
         cachedVisualRoot = targetRoot;
-        authoredVisualRootScale = targetRoot != null ? targetRoot.localScale : Vector3.one;
+        authoredVisualRootScale = currentVisualRootScale;
         hasAuthoredVisualRootScale = true;
     }
 
@@ -430,15 +440,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             baseScale.y * appliedScale,
             baseScale.z);
 
-        if (targetRoot == transform && normalizeLogicalRootScale)
-        {
-            projectedScale = new Vector3(
-                logicalRootScale.x * appliedScale,
-                logicalRootScale.y * appliedScale,
-                logicalRootScale.z);
-        }
-
         targetRoot.localScale = projectedScale;
+        lastAppliedVisualRootScale = projectedScale;
+        hasLastAppliedVisualRootScale = true;
     }
 
     private void ApplyProjectedTint()
@@ -651,6 +655,21 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private static bool SameRoom(string left, string right)
     {
         return string.Equals(NormalizeRoomName(left), NormalizeRoomName(right), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static Vector3 SanitizeScale(Vector3 scale)
+    {
+        return new Vector3(
+            Mathf.Approximately(scale.x, 0f) ? 1f : scale.x,
+            Mathf.Approximately(scale.y, 0f) ? 1f : scale.y,
+            Mathf.Approximately(scale.z, 0f) ? 1f : scale.z);
+    }
+
+    private static bool Approximately(Vector3 left, Vector3 right)
+    {
+        return Mathf.Approximately(left.x, right.x) &&
+            Mathf.Approximately(left.y, right.y) &&
+            Mathf.Approximately(left.z, right.z);
     }
 
     private static string NormalizeRoomName(string value)

@@ -55,6 +55,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private Vector3 roomStageReferenceWorldCenter;
 	private float roomStageReferenceScale = 1f;
 	private float currentRoomStageScaleRatio = 1f;
+	private float authoredPerspectiveScaleReference = 1f;
 	private CharacterWalkDirection walkDirection = CharacterWalkDirection.Right;
 	private CharacterAnimatorDriver.ParameterCache animatorParameters;
 	private string currentWalkableBoundaryRoom;
@@ -257,6 +258,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		authoredLocalScale = transform.localScale;
+		authoredPerspectiveScaleReference = GetPerspectiveScaleForY(transform.position.y);
 		hasAuthoredLocalScale = true;
 	}
 
@@ -1038,9 +1040,18 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		UpdateVisualOffset(Camera.main);
-		float depth = Mathf.InverseLerp(nearY, farY, logicalPosition.y);
-		float scale = Mathf.Lerp(nearScale, farScale, depth) * currentRoomStageScaleRatio;
-		transform.localScale = new Vector3(scale, scale, transform.localScale.z);
+		float depthScale = GetPerspectiveScaleForY(logicalPosition.y);
+		float scale = depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference) * currentRoomStageScaleRatio;
+		transform.localScale = new Vector3(
+			authoredLocalScale.x * scale,
+			authoredLocalScale.y * scale,
+			authoredLocalScale.z);
+	}
+
+	private float GetPerspectiveScaleForY(float y)
+	{
+		float depth = Mathf.InverseLerp(nearY, farY, y);
+		return Mathf.Max(0.0001f, Mathf.Lerp(nearScale, farScale, depth));
 	}
 
 	private void UpdateAnimator()
