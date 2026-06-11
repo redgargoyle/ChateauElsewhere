@@ -16,6 +16,7 @@ using UnityEditor.SceneManagement;
 public sealed class RoomLightingController : MonoBehaviour
 {
     private const string DefaultPresetResourcePath = "Lighting/RoomLightingPreset";
+    private const string LightingRootName = "Lighting";
     private const int HudSortingOrder = 7000;
 
     [SerializeField] private string presetResourcePath = DefaultPresetResourcePath;
@@ -30,6 +31,8 @@ public sealed class RoomLightingController : MonoBehaviour
     [SerializeField] private float lightsOffBloomIntensity = 0f;
 
     private readonly List<RoomLightOverlay> overlays = new List<RoomLightOverlay>();
+    private readonly List<GameObject> lightingStructureObjects = new List<GameObject>();
+    private readonly Dictionary<GameObject, bool> lightingStructureActiveStates = new Dictionary<GameObject, bool>();
 
     private bool lightsOn = true;
     private float lightBlend = 1f;
@@ -73,6 +76,7 @@ public sealed class RoomLightingController : MonoBehaviour
 
         CreateMissingSceneLights();
         RefreshOverlayCache();
+        ApplyLightingStructureActiveState();
     }
 
     private void Update()
@@ -101,7 +105,13 @@ public sealed class RoomLightingController : MonoBehaviour
 
     public void ToggleLights()
     {
+        if (lightsOn)
+        {
+            CaptureLightingStructureActiveStates();
+        }
+
         lightsOn = !lightsOn;
+        ApplyLightingStructureActiveState();
         ApplyGlobalBloomIntensity(true);
         RefreshHud();
     }
@@ -131,6 +141,7 @@ public sealed class RoomLightingController : MonoBehaviour
 
         RefreshOverlayCache();
         ApplyLightBlendToOverlays();
+        ApplyLightingStructureActiveState();
         ApplyGlobalBloomIntensity(true);
 
         if (Application.isPlaying && showHud)
@@ -168,6 +179,7 @@ public sealed class RoomLightingController : MonoBehaviour
     private void RefreshOverlayCache()
     {
         overlays.Clear();
+        lightingStructureObjects.Clear();
         RoomContentGroup[] roomGroups = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
 
         for (int i = 0; i < roomGroups.Length; i++)
@@ -180,7 +192,10 @@ public sealed class RoomLightingController : MonoBehaviour
             }
 
             overlays.AddRange(roomGroup.GetComponentsInChildren<RoomLightOverlay>(true));
+            CacheLightingStructureObjects(roomGroup.transform);
         }
+
+        PruneLightingStructureActiveStates();
 
         if (Application.isPlaying && overlays.Count == 0)
         {
@@ -255,14 +270,14 @@ public sealed class RoomLightingController : MonoBehaviour
 
     private static Transform FindOrCreateLightingRoot(Transform roomTransform)
     {
-        Transform existing = roomTransform.Find("Lighting");
+        Transform existing = roomTransform.Find(LightingRootName);
 
         if (existing != null)
         {
             return existing;
         }
 
-        GameObject rootObject = CreateSceneGameObject("Lighting", typeof(RectTransform));
+        GameObject rootObject = CreateSceneGameObject(LightingRootName, typeof(RectTransform));
         RectTransform root = rootObject.GetComponent<RectTransform>();
         root.SetParent(roomTransform, false);
         root.anchorMin = Vector2.zero;
@@ -280,6 +295,113 @@ public sealed class RoomLightingController : MonoBehaviour
 
         MarkSceneDirtyIfEditing(rootObject);
         return root;
+    }
+
+    private void CacheLightingStructureObjects(Transform roomTransform)
+    {
+        Transform[] roomTransforms = roomTransform.GetComponentsInChildren<Transform>(true);
+
+        for (int i = 0; i < roomTransforms.Length; i++)
+        {
+            Transform candidate = roomTransforms[i];
+
+            if (candidate == null || candidate.name != LightingRootName)
+            {
+                continue;
+            }
+
+            CacheLightingRootChildren(candidate);
+        }
+    }
+
+    private void CacheLightingRootChildren(Transform lightingRoot)
+    {
+        for (int i = 0; i < lightingRoot.childCount; i++)
+        {
+            GameObject childObject = lightingRoot.GetChild(i).gameObject;
+
+            if (!lightingStructureObjects.Contains(childObject))
+            {
+                lightingStructureObjects.Add(childObject);
+            }
+
+            if (!lightingStructureActiveStates.ContainsKey(childObject))
+            {
+                lightingStructureActiveStates[childObject] = childObject.activeSelf;
+            }
+        }
+    }
+
+    private void CaptureLightingStructureActiveStates()
+    {
+        for (int i = 0; i < lightingStructureObjects.Count; i++)
+        {
+            GameObject lightingObject = lightingStructureObjects[i];
+
+            if (lightingObject != null)
+            {
+                lightingStructureActiveStates[lightingObject] = lightingObject.activeSelf;
+            }
+        }
+    }
+
+    private void ApplyLightingStructureActiveState()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        for (int i = 0; i < lightingStructureObjects.Count; i++)
+        {
+            GameObject lightingObject = lightingStructureObjects[i];
+
+            if (lightingObject == null)
+            {
+                continue;
+            }
+
+            if (!lightingStructureActiveStates.TryGetValue(lightingObject, out bool authoredActive))
+            {
+                authoredActive = lightingObject.activeSelf;
+                lightingStructureActiveStates[lightingObject] = authoredActive;
+            }
+
+            bool targetActive = lightsOn && authoredActive;
+
+            if (lightingObject.activeSelf != targetActive)
+            {
+                lightingObject.SetActive(targetActive);
+            }
+        }
+    }
+
+    private void PruneLightingStructureActiveStates()
+    {
+        List<GameObject> staleObjects = null;
+
+        foreach (KeyValuePair<GameObject, bool> entry in lightingStructureActiveStates)
+        {
+            if (entry.Key == null || !lightingStructureObjects.Contains(entry.Key))
+            {
+                if (staleObjects == null)
+                {
+                    staleObjects = new List<GameObject>();
+                }
+
+                staleObjects.Add(entry.Key);
+            }
+        }
+
+        if (staleObjects == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < staleObjects.Count; i++)
+        {
+            lightingStructureActiveStates.Remove(staleObjects[i]);
+        }
     }
 
     private void BuildHud()

@@ -12,6 +12,7 @@ public class RoomLightingRegressionTests
     private const string NoPostLayerPath = "Assets/Scripts/Lighting/NoPostProcessRenderLayer.cs";
     private const string BypassCameraPath = "Assets/Scripts/Lighting/PostProcessBypassCamera.cs";
     private const string FlameToolPath = "Assets/Editor/FlameBloomSeparationTools.cs";
+    private const string FireplacePrefabPath = "Assets/Prefabs/Fireplace.prefab";
     private const string PresetPath = "Assets/Resources/Lighting/RoomLightingPreset.asset";
     private const string ReadmePath = "Assets/Scripts/Lighting/README.md";
 
@@ -27,6 +28,12 @@ public class RoomLightingRegressionTests
         Assert.That(controllerText, Does.Contain("Resources.Load<RoomLightingPreset>"), "Lighting should be driven by a simple editable preset asset.");
         Assert.That(controllerText, Does.Contain("Create Missing Scene Lights From Preset"), "Artists should have a simple explicit way to create missing scene light objects.");
         Assert.That(controllerText, Does.Contain("CreateMissingSceneLight"), "The preset should create real scene children instead of runtime-only overlays.");
+        Assert.That(controllerText, Does.Contain("lightingStructureObjects"), "Lighting roots should own non-light payloads like flames, not only overlay components.");
+        Assert.That(controllerText, Does.Contain("lightingStructureActiveStates"), "Turning lights back on should restore authored active states instead of enabling inactive patch candidates.");
+        Assert.That(controllerText, Does.Contain("GetComponentsInChildren<Transform>(true)"), "Nested lighting roots inside room props should also be discovered.");
+        Assert.That(controllerText, Does.Contain("CaptureLightingStructureActiveStates"), "Runtime object state should be captured before the controller disables lighting payloads.");
+        Assert.That(controllerText, Does.Contain("ApplyLightingStructureActiveState"), "Lighting payloads should be toggled with the room lights.");
+        Assert.That(controllerText, Does.Contain("SetActive(targetActive)"), "Objects under Lighting should become inactive when the lights are off.");
         Assert.That(controllerText, Does.Contain("Button_Lights"), "The player should have a small HUD control for lights.");
         Assert.That(controllerText, Does.Contain("HudSortingOrder = 7000"), "The light toggle should appear above gameplay UI.");
         Assert.That(controllerText, Does.Contain("KeyCode.L"), "The player should be able to toggle lights quickly while testing.");
@@ -50,6 +57,7 @@ public class RoomLightingRegressionTests
         string layerText = File.ReadAllText(NoPostLayerPath);
         string cameraText = File.ReadAllText(BypassCameraPath);
         string toolText = File.ReadAllText(FlameToolPath);
+        string fireplacePrefabText = File.ReadAllText(FireplacePrefabPath);
         string readmeText = File.ReadAllText(ReadmePath);
 
         Assert.That(layerText, Does.Contain("NoPostProcessFlame"), "The flame particle should have a named layer that can be excluded from the post-processed camera.");
@@ -62,6 +70,8 @@ public class RoomLightingRegressionTests
         Assert.That(toolText, Does.Contain("Setup Selected Flame Bloom Separation"), "Artists should have a single menu action for separating flame particles from bloom drivers.");
         Assert.That(toolText, Does.Contain("BloomDriver"), "The menu action should create a compact bloom driver overlay.");
         Assert.That(toolText, Does.Contain("PaintedReflection"), "The menu action should create a broader painted reflection overlay.");
+        Assert.That(fireplacePrefabText, Does.Contain("m_Name: Lighting"), "The reusable fireplace prefab should keep flame children in a Lighting child.");
+        Assert.That(fireplacePrefabText, Does.Contain("m_Name: fireplace_no_fire_game_ready_transparent"), "The static no-fire fireplace art should stay outside the flame lighting payload.");
         Assert.That(readmeText, Does.Contain("Flame Bloom Separation"), "The separation workflow should be documented for room-light tuning.");
     }
 
@@ -78,6 +88,7 @@ public class RoomLightingRegressionTests
         Assert.That(sceneText, Does.Contain("createMissingLightsFromPreset: 1"), "Gameplay should create any missing editable scene lights from the preset.");
         Assert.That(sceneText, Does.Contain("m_Name: Lighting"), "Rooms should contain visible Lighting children for edit-mode authoring.");
         Assert.That(sceneText, Does.Contain("m_Name: RoomLight_"), "Gameplay should contain editable RoomLight scene objects.");
+        Assert.That(sceneText, Does.Contain("m_Name: FlameGroup"), "Grouped scene flames should remain visible as authored hierarchy objects.");
     }
 
     [Test]
