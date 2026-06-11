@@ -152,8 +152,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void Awake()
 	{
-		CaptureAuthoredLocalScaleIfNeeded();
 		CacheReferences();
+		CaptureAuthoredLocalScaleIfNeeded();
 		CaptureAuthoredRendererSortingIfNeeded();
 		CacheAnimatorParameters();
 		InitializeVisualStateFromTransform();
@@ -216,8 +216,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!isReady)
 			return;
 
-		ApplyVisualPosition();
 		ApplyPerspectiveScale();
+		ApplyVisualPosition();
 		ApplyPlayerSorting();
 	}
 
@@ -258,7 +258,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		authoredLocalScale = transform.localScale;
-		authoredPerspectiveScaleReference = GetPerspectiveScaleForY(transform.position.y);
+		authoredPerspectiveScaleReference = GetPerspectiveScaleForY(GetCurrentVisibleMovementWorldPoint().y);
 		hasAuthoredLocalScale = true;
 	}
 
@@ -339,7 +339,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void InitializeVisualStateFromTransform()
 	{
-		logicalPosition = transform.position;
+		UpdateVisualOffset(Camera.main);
+		logicalPosition = WalkableWorldToLogicalPoint(GetCurrentVisibleMovementWorldPoint());
 		destination = logicalPosition;
 		finalDestination = logicalPosition;
 		ApplyPerspectiveScale();
@@ -416,7 +417,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 		body.linearVelocity = Vector2.zero;
 		body.angularVelocity = 0f;
 
-		Vector2 startPosition = ClampToWalkableArea(transform.position);
+		UpdateVisualOffset(Camera.main);
+		Vector2 startPosition = ClampToWalkableArea(WalkableWorldToLogicalPoint(GetCurrentVisibleMovementWorldPoint()));
 		logicalPosition = startPosition;
 		destination = startPosition;
 		finalDestination = startPosition;
@@ -428,8 +430,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		UpdateAnimator();
 		ApplySpriteMirror();
-		ApplyVisualPosition();
 		ApplyPerspectiveScale();
+		ApplyVisualPosition();
 		ApplyPlayerSorting();
 	}
 
@@ -937,8 +939,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		UpdateAnimator();
 		ApplySpriteMirror();
-		ApplyVisualPosition();
 		ApplyPerspectiveScale();
+		ApplyVisualPosition();
 		ApplyPlayerSorting();
 	}
 
@@ -1099,7 +1101,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		UpdateVisualOffset(Camera.main);
 		Vector2 visualPoint = LogicalToWalkableWorldPoint(logicalPosition);
-		Vector3 visualPosition = new Vector3(visualPoint.x, visualPoint.y, transform.position.z);
+		float feetOffsetY = GetVisibleFeetOffsetY();
+		Vector3 visualPosition = new Vector3(visualPoint.x, visualPoint.y - feetOffsetY, transform.position.z);
 
 		transform.position = visualPosition;
 
@@ -1178,6 +1181,62 @@ public class PointClickPlayerMovement : MonoBehaviour
 			depth = Mathf.Abs(depth);
 
 		return depth > 0.01f ? depth : 10f;
+	}
+
+	private Vector2 GetCurrentVisibleMovementWorldPoint()
+	{
+		Vector2 movementPoint = transform.position;
+
+		if (TryGetVisibleFeetY(out float feetY))
+		{
+			movementPoint.y = feetY;
+		}
+
+		return movementPoint;
+	}
+
+	private float GetVisibleFeetOffsetY()
+	{
+		return TryGetVisibleFeetY(out float feetY) ? feetY - transform.position.y : 0f;
+	}
+
+	private bool TryGetVisibleFeetY(out float feetY)
+	{
+		feetY = transform.position.y;
+
+		if (spriteRenderers == null || spriteRenderers.Length == 0)
+		{
+			CacheReferences();
+		}
+
+		if (spriteRenderers == null || spriteRenderers.Length == 0)
+		{
+			return false;
+		}
+
+		bool foundRendererBounds = false;
+		float lowestVisibleY = float.PositiveInfinity;
+
+		for (int i = 0; i < spriteRenderers.Length; i++)
+		{
+			SpriteRenderer targetRenderer = spriteRenderers[i];
+
+			if (targetRenderer == null || !targetRenderer.enabled || targetRenderer.sprite == null)
+			{
+				continue;
+			}
+
+			lowestVisibleY = Mathf.Min(lowestVisibleY, targetRenderer.bounds.min.y);
+			foundRendererBounds = true;
+		}
+
+		if (!foundRendererBounds)
+		{
+			return false;
+		}
+
+		feetY = lowestVisibleY;
+		return true;
 	}
 
 	private bool IsPointWalkable(Vector2 point)

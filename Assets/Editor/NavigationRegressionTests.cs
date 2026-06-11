@@ -259,6 +259,9 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("TryBuildReachableWorldPath"), "NPC panic routes should reuse the same floor-boundary route query as point-click movement.");
         Assert.That(playerText, Does.Match(@"LogicalToWalkableWorldPoint\s*\([^)]*\)[\s\S]*referenceOffset \* currentRoomStageScaleRatio"), "Player logical-to-world mapping must include room-stage scale, not translation only.");
         Assert.That(playerText, Does.Match(@"ApplyPerspectiveScale\s*\([^)]*\)[\s\S]*currentRoomStageScaleRatio"), "Player sprite scale should grow and shrink with the room stage just like room objects.");
+        Assert.That(playerText, Does.Contain("GetCurrentVisibleMovementWorldPoint"), "Player logical movement should anchor to the visible feet rather than the transform origin.");
+        Assert.That(playerText, Does.Contain("GetVisibleFeetOffsetY"), "Applying the player visual position should offset the transform so the feet land on the clicked point.");
+        Assert.That(playerText, Does.Contain("visualPoint.y - feetOffsetY"), "The butler's visible feet, not his chest pivot, should end at the movement destination.");
         Assert.That(playerText, Does.Not.Contain("IsPickupObjectAtPoint"), "Pickup or prop colliders should not decide whether the floor is walkable.");
         Assert.That(playerText, Does.Not.Contain("IsMovementPointBlocked"), "Object footprints should not block point-click movement.");
         Assert.That(playerText, Does.Not.Contain("TryRestartPathFrom"), "Movement should not rebuild obstacle routes based on the butler's current position.");
