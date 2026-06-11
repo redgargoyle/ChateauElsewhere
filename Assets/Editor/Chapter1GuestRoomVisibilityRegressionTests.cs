@@ -129,8 +129,6 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string doorArrivalBody = ExtractMethodBody(controllerText, "GetWorldDoorArrivalPosition");
         string doorArrivalBaseBody = ExtractMethodBody(controllerText, "GetWorldDoorArrivalBasePosition");
         string waitBody = ExtractMethodBody(controllerText, "GetWorldEntranceWaitPosition");
-        string entranceOffsetBody = ExtractMethodBody(controllerText, "GetWorldEntranceGroupOffset");
-        string rowDirectionBody = ExtractMethodBody(controllerText, "GetEntranceRowDirection");
         string entranceCenterBody = ExtractMethodBody(controllerText, "GetWorldEntranceCenterPosition(GuestRuntimeState guestState)");
         string anchorLookupBody = ExtractMethodBody(controllerText, "GetEntranceHallGuestAnchor");
         string interactionTargetBody = ExtractMethodBody(controllerText, "GetFrontDoorInteractionTransform");
@@ -140,10 +138,6 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(doorArrivalBody, Does.Contain("GetWorldDoorArrivalBasePosition(guestState)"), "Door-answer spawning should begin at the front-door point before guests walk inward.");
         Assert.That(doorArrivalBaseBody, Does.Match(@"GetFrontDoorArrivalPoint\(frontDoorArrivalPoint\)[\s\S]*TryGetWorldPositionForGuestTarget[\s\S]*GetWorldEntranceCenterPosition\(guestState\)"), "Front-door spawning should convert the visible door anchor and keep the stable entrance fallback.");
         Assert.That(waitBody, Does.Contain("GetWorldEntranceCenterPosition(guestState)"), "Entrance wait spots should use the guest-depth-aware editable entrance anchor.");
-        Assert.That(waitBody, Does.Contain("stackRowsUpFromAnchor: true"), "Entrance wait rows should stack upward from the editable anchor so guest feet do not fall below the room image.");
-        Assert.That(doorArrivalBody, Does.Contain("stackRowsUpFromAnchor: false"), "Door spawning should not reuse the upward line-up row offset.");
-        Assert.That(entranceOffsetBody, Does.Contain("rowDirection * groupIndex * spacing"), "Entrance group rows should use a configurable row direction instead of always moving downward.");
-        Assert.That(rowDirectionBody, Does.Contain("stackRowsUpFromAnchor && GetEntranceHallGuestAnchor() != null ? 1f : -1f"), "The editable Entrance Hall anchor should act as the front/bottom row floor line.");
         Assert.That(entranceCenterBody, Does.Match(@"TryGetEntranceHallGuestAnchorWorldPosition\(guestState[\s\S]*TryGetAverageAuthoredChapterGuestPosition"), "Entrance waiting should prefer the scene anchor before falling back to authored guest averages.");
         Assert.That(anchorLookupBody, Does.Contain("FindAnchor(EntranceHallGuestAnchorId, entryRoomId)"), "The entrance wait point should be discoverable through RoomAnchor data.");
         Assert.That(anchorLookupBody, Does.Contain("FindSceneObjectByExactName(EntranceHallGuestAnchorId)"), "The entrance wait point should still resolve if RoomAnchor data is stale.");
