@@ -149,6 +149,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float ClosetStorageReadyScreenDistance = 145f;
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
+    private const int EntranceBanisterSafeWalkingSortingOrder = 1599;
     private const string EntranceHallGuestAnchorId = "EntranceHallGuestAnchor";
     private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
     private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
@@ -1953,6 +1954,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         Transform drawingRoomEntry = ResolveDrawingRoomEntryPointForGuest(guest, group);
 
         SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
+        RestoreGuestAuthoredSorting(guest);
+        ApplyEntranceBanisterSafeWalkingSorting(guest);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to drawing room door.", this);
         BeginGuestMoveTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
 
@@ -3933,6 +3936,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         if (guestState == null ||
             guestState.GuestObject == null ||
+            guestState.MovingToDrawingRoom ||
             guestState.Seated ||
             HasActiveProjection(guestState))
         {
@@ -3997,6 +4001,44 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         RemoveDestroyedGuestSortingCacheEntries();
+    }
+
+    private void ApplyEntranceBanisterSafeWalkingSorting(GuestRuntimeState guestState)
+    {
+        if (guestState == null ||
+            guestState.GuestObject == null ||
+            HasActiveProjection(guestState))
+        {
+            return;
+        }
+
+        CacheGuestAuthoredSorting(guestState.GuestObject);
+        Renderer[] renderers = GetGuestRenderers(guestState);
+
+        if (renderers.Length == 0)
+        {
+            return;
+        }
+
+        int referenceOrder = GetGuestRendererReferenceSortingOrder(guestState, renderers);
+
+        if (referenceOrder <= EntranceBanisterSafeWalkingSortingOrder)
+        {
+            return;
+        }
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            int localOffset = GetCachedSortingOrder(renderer) - referenceOrder;
+            renderer.sortingOrder = EntranceBanisterSafeWalkingSortingOrder + localOffset;
+        }
     }
 
     private int GetGuestRendererReferenceSortingOrder(GuestRuntimeState guestState, Renderer[] renderers)
