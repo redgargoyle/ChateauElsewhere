@@ -202,6 +202,37 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
+    public void EntranceCoatHangerUsesAuthoredSceneObjectForClosetInteraction()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string ensureBody = ExtractMethodBody(controllerText, "EnsureEntranceCoatHanger");
+        string configureBody = ExtractMethodBody(controllerText, "ConfigureAuthoredCoatHangerObject");
+        string colliderBody = ExtractMethodBody(controllerText, "EnsureCoatHangerCollider");
+        string interactionTargetBody = ExtractMethodBody(controllerText, "GetClosetInteractionTransform");
+        string resolveReferencesBody = ExtractMethodBody(controllerText, "ResolveReferences(bool createFallbacks)");
+        string resolveAnchorsBody = ExtractMethodBody(controllerText, "ResolveAnchors");
+
+        Assert.That(sceneText, Does.Contain("m_Name: entrance_coat_hanger_0"), "Gameplay should contain the authored entrance coat hanger object.");
+        Assert.That(controllerText, Does.Contain("EntranceCoatHangerName = \"entrance_coat_hanger_0\""), "Chapter 1 should look up the authored entrance coat hanger by its scene name.");
+        Assert.That(ensureBody, Does.Contain("FindSceneObjectByExactName(EntranceCoatHangerName)"), "Closet setup should start from the authored scene object.");
+        Assert.That(ensureBody, Does.Not.Contain("new GameObject"), "Closet setup should not create a hard-coded runtime wardrobe object.");
+        Assert.That(configureBody, Does.Contain("Chapter1SceneActionType.CoatCloset"), "The authored hanger should reuse the existing coat-closet action so cursor hover and click handling stay intact.");
+        Assert.That(configureBody, Does.Contain("AddComponent<Chapter1SceneAction>"), "The authored hanger should gain the standard scene action if it is not already serialized.");
+        Assert.That(configureBody, Does.Contain("AddComponent<CoatCloset>"), "The authored hanger should become the active coat storage container.");
+        Assert.That(colliderBody, Does.Contain("BoxCollider2D"), "The authored hanger needs a trigger collider for pointer hit testing.");
+        Assert.That(interactionTargetBody, Does.Contain("SameRoom(GetRoomForTransform(coatCloset.transform), entryRoomId)"), "Closet walking should prefer an entrance-room closet over the old pantry closet.");
+        Assert.That(interactionTargetBody, Does.Contain("SameRoom(GetRoomForTransform(closetPoint), entryRoomId)"), "Closet walking should fall back to the authored entrance hanger transform.");
+        Assert.That(resolveReferencesBody, Does.Contain("EnsureEntranceCoatHanger()"), "Runtime reference resolution should configure the authored hanger.");
+        Assert.That(resolveAnchorsBody, Does.Contain("FindSceneObjectByExactName(EntranceCoatHangerName)"), "Anchor resolution should prefer the authored entrance hanger when the serialized closet still points elsewhere.");
+        Assert.That(controllerText, Does.Not.Contain("Ensure" + "RuntimeCloset"), "The old hard-coded runtime closet setup must stay removed.");
+        Assert.That(controllerText, Does.Not.Contain("Configure" + "Runtime" + "WardrobeObject"), "The old hard-coded runtime wardrobe configuration must stay removed.");
+        Assert.That(controllerText, Does.Not.Contain("Wardrobe_" + "EntranceHall_" + "Runtime"), "The old runtime wardrobe object name must stay removed.");
+        Assert.That(controllerText, Does.Not.Contain("CoatCloset_" + "EntranceHall_" + "Runtime"), "The old runtime closet object name must stay removed.");
+        Assert.That(controllerText, Does.Not.Contain("Create" + "WardrobeSprite"), "The old generated wardrobe sprite path must stay removed.");
+    }
+
+    [Test]
     public void Chapter1GuestsUseAuthoredScaleAsRoomZoomBaseline()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);

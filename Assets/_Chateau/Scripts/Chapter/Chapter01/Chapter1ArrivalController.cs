@@ -135,7 +135,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Chapter1CoatPickup pendingCoatPickup;
     private GameObject carriedCoatVisual;
     private Sprite runtimeCoatSprite;
-    private Sprite runtimeWardrobeSprite;
     private Sprite runtimeGuestSprite;
     private bool subscribedToRoomChanges;
     private bool hasWorldDoorCenterPosition;
@@ -153,12 +152,13 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const string EntranceHallGuestAnchorId = "EntranceHallGuestAnchor";
     private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
     private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
+    private const string EntranceCoatHangerName = "entrance_coat_hanger_0";
     private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
-    private static readonly Vector2 WardrobeColliderSize = new Vector2(0.9f, 1.6f);
+    private static readonly Vector2 CoatHangerFallbackColliderSize = new Vector2(0.9f, 1.6f);
     private static readonly string[][] ChapterGuestNameAliases =
     {
         new[] { "Guest1", "Guest 1" },
@@ -935,7 +935,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Transform GetClosetInteractionTransform()
     {
-        if (coatCloset != null && IsRuntimeEntranceCloset(coatCloset.gameObject))
+        if (coatCloset != null && SameRoom(GetRoomForTransform(coatCloset.transform), entryRoomId))
         {
             return coatCloset.transform;
         }
@@ -1050,7 +1050,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (coatCloset == null)
         {
-            Debug.LogWarning("Chapter1ArrivalController missing required field: closet reference. A runtime placeholder will be created for testing.", this);
+            Debug.LogWarning($"Chapter1ArrivalController missing required field: closet reference. Add authored object '{EntranceCoatHangerName}' to the entrance room or assign an entrance CoatCloset.", this);
         }
 
         if (frontDoorArrivalPoint == null)
@@ -4313,102 +4313,108 @@ public class Chapter1ArrivalController : MonoBehaviour
             .Replace(")", string.Empty);
     }
 
-    private void EnsureRuntimeCloset()
+    private void EnsureEntranceCoatHanger()
     {
-        if (coatCloset != null && IsRuntimeEntranceCloset(coatCloset.gameObject))
+        GameObject coatHangerObject = FindSceneObjectByExactName(EntranceCoatHangerName);
+
+        if (coatHangerObject == null)
         {
-            ConfigureRuntimeWardrobeObject(coatCloset.gameObject);
-            closetPoint = coatCloset.transform;
+            if (coatCloset != null && SameRoom(GetRoomForTransform(coatCloset.transform), entryRoomId))
+            {
+                ConfigureAuthoredCoatHangerObject(coatCloset.gameObject);
+                closetPoint = coatCloset.transform;
+                return;
+            }
+
+            Debug.LogWarning($"Chapter1ArrivalController could not find authored coat hanger '{EntranceCoatHangerName}' in the entrance room. Coat storage will require an assigned entrance CoatCloset.", this);
             return;
         }
 
-        if (coatCloset != null && SameRoom(GetRoomForTransform(coatCloset.transform), entryRoomId))
-        {
-            return;
-        }
-
-        GameObject closetObject = GameObject.Find("Wardrobe_EntranceHall_Runtime");
-
-        if (closetObject == null)
-        {
-            closetObject = GameObject.Find("CoatCloset_EntranceHall_Runtime");
-        }
-
-        if (closetObject == null)
-        {
-            closetObject = new GameObject("Wardrobe_EntranceHall_Runtime");
-            Transform parent = frontDoorArrivalPoint != null && frontDoorArrivalPoint.parent != null ? frontDoorArrivalPoint.parent : transform;
-            closetObject.transform.SetParent(parent, true);
-        }
-
-        closetObject.name = "Wardrobe_EntranceHall_Runtime";
-        closetObject.transform.position = GetRuntimeWardrobePosition();
-        ConfigureRuntimeWardrobeObject(closetObject);
-
-        coatCloset = closetObject.GetComponent<CoatCloset>();
+        ConfigureAuthoredCoatHangerObject(coatHangerObject);
+        coatCloset = coatHangerObject.GetComponent<CoatCloset>();
 
         if (coatCloset == null)
         {
-            coatCloset = closetObject.AddComponent<CoatCloset>();
+            coatCloset = coatHangerObject.AddComponent<CoatCloset>();
         }
 
-        if (closetPoint == null || !SameRoom(GetRoomForTransform(closetPoint), entryRoomId))
-        {
-            closetPoint = closetObject.transform;
-        }
+        closetPoint = coatHangerObject.transform;
     }
 
-    private Vector3 GetRuntimeWardrobePosition()
+    private void ConfigureAuthoredCoatHangerObject(GameObject coatHangerObject)
     {
-        if (closetPoint != null && SameRoom(GetRoomForTransform(closetPoint), entryRoomId))
-        {
-            return closetPoint.position;
-        }
-
-        return GetWorldEntranceCenterPosition() + new Vector3(-1.75f, -0.55f, 0f);
-    }
-
-    private void ConfigureRuntimeWardrobeObject(GameObject wardrobeObject)
-    {
-        if (wardrobeObject == null)
+        if (coatHangerObject == null)
         {
             return;
         }
 
-        SpriteRenderer renderer = wardrobeObject.GetComponent<SpriteRenderer>();
+        EnsureCoatHangerCollider(coatHangerObject);
 
-        if (renderer == null)
-        {
-            renderer = wardrobeObject.AddComponent<SpriteRenderer>();
-        }
-
-        renderer.sprite = GetRuntimeWardrobeSprite();
-        renderer.color = Color.white;
-        renderer.sortingLayerName = "People";
-        renderer.sortingOrder = 120;
-        renderer.enabled = true;
-
-        BoxCollider2D collider = wardrobeObject.GetComponent<BoxCollider2D>();
-
-        if (collider == null)
-        {
-            collider = wardrobeObject.AddComponent<BoxCollider2D>();
-        }
-
-        collider.size = WardrobeColliderSize;
-        collider.offset = new Vector2(0f, WardrobeColliderSize.y * 0.5f);
-        collider.isTrigger = true;
-        collider.enabled = true;
-
-        Chapter1SceneAction action = wardrobeObject.GetComponent<Chapter1SceneAction>();
+        Chapter1SceneAction action = coatHangerObject.GetComponent<Chapter1SceneAction>();
 
         if (action == null)
         {
-            action = wardrobeObject.AddComponent<Chapter1SceneAction>();
+            action = coatHangerObject.AddComponent<Chapter1SceneAction>();
         }
 
         action.Initialize(Chapter1SceneActionType.CoatCloset, this, grandfatherClock);
         action.SetAvailable(true);
+
+        if (coatHangerObject.GetComponent<CoatCloset>() == null)
+        {
+            coatHangerObject.AddComponent<CoatCloset>();
+        }
+    }
+
+    private void EnsureCoatHangerCollider(GameObject coatHangerObject)
+    {
+        BoxCollider2D collider = coatHangerObject.GetComponent<BoxCollider2D>();
+        bool addedCollider = collider == null;
+
+        if (addedCollider)
+        {
+            collider = coatHangerObject.AddComponent<BoxCollider2D>();
+        }
+
+        if (addedCollider)
+        {
+            collider.size = GetCoatHangerColliderSize(coatHangerObject, out Vector2 colliderOffset);
+            collider.offset = colliderOffset;
+        }
+
+        collider.isTrigger = true;
+        collider.enabled = true;
+    }
+
+    private Vector2 GetCoatHangerColliderSize(GameObject coatHangerObject, out Vector2 colliderOffset)
+    {
+        colliderOffset = Vector2.zero;
+        SpriteRenderer spriteRenderer = coatHangerObject != null
+            ? coatHangerObject.GetComponent<SpriteRenderer>()
+            : null;
+
+        if (spriteRenderer == null && coatHangerObject != null)
+        {
+            spriteRenderer = coatHangerObject.GetComponentInChildren<SpriteRenderer>(true);
+        }
+
+        if (spriteRenderer != null && spriteRenderer.sprite != null)
+        {
+            Bounds spriteBounds = spriteRenderer.sprite.bounds;
+            colliderOffset = spriteRenderer.transform == coatHangerObject.transform
+                ? (Vector2)spriteBounds.center
+                : coatHangerObject.transform.InverseTransformPoint(spriteRenderer.bounds.center);
+            Vector2 colliderSize = spriteRenderer.transform == coatHangerObject.transform
+                ? (Vector2)spriteBounds.size
+                : (Vector2)coatHangerObject.transform.InverseTransformVector(spriteRenderer.bounds.size);
+
+            colliderSize = new Vector2(Mathf.Abs(colliderSize.x), Mathf.Abs(colliderSize.y));
+            return colliderSize.x > 0.0001f && colliderSize.y > 0.0001f
+                ? colliderSize
+                : CoatHangerFallbackColliderSize;
+        }
+
+        return CoatHangerFallbackColliderSize;
     }
 
     private Transform ResolveSeatForGuest(int index)
@@ -5345,16 +5351,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         return runtimeCoatSprite;
     }
 
-    private Sprite GetRuntimeWardrobeSprite()
-    {
-        if (runtimeWardrobeSprite == null)
-        {
-            runtimeWardrobeSprite = CreateWardrobeSprite();
-        }
-
-        return runtimeWardrobeSprite;
-    }
-
     private Sprite GetRuntimeGuestSprite()
     {
         if (runtimeGuestSprite == null)
@@ -5363,50 +5359,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return runtimeGuestSprite;
-    }
-
-    private static Sprite CreateWardrobeSprite()
-    {
-        const int width = 72;
-        const int height = 112;
-        Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
-        Color clear = new Color(0f, 0f, 0f, 0f);
-        Color wood = new Color(0.28f, 0.16f, 0.09f, 1f);
-        Color trim = new Color(0.13f, 0.08f, 0.045f, 1f);
-        Color panel = new Color(0.40f, 0.24f, 0.13f, 1f);
-        Color knob = new Color(0.88f, 0.68f, 0.28f, 1f);
-
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                texture.SetPixel(x, y, clear);
-            }
-        }
-
-        for (int y = 6; y < height - 4; y++)
-        {
-            for (int x = 10; x < width - 10; x++)
-            {
-                bool border = x < 14 || x >= width - 14 || y < 10 || y >= height - 8;
-                bool centerLine = Mathf.Abs(x - width / 2) <= 1;
-                bool insetPanel = x > 17 && x < width - 17 && y > 18 && y < height - 18 && !centerLine;
-                texture.SetPixel(x, y, border || centerLine ? trim : insetPanel ? panel : wood);
-            }
-        }
-
-        for (int y = 53; y <= 58; y++)
-        {
-            for (int x = 31; x <= 40; x++)
-            {
-                texture.SetPixel(x, y, knob);
-            }
-        }
-
-        texture.Apply();
-        texture.name = "RuntimeWardrobeSprite";
-        texture.filterMode = FilterMode.Point;
-        return Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.05f), 64f);
     }
 
     private SpriteRenderer CreateRuntimeVisual(Transform parent, string objectName, Sprite sprite, float visualScale)
@@ -5468,13 +5420,6 @@ public class Chapter1ArrivalController : MonoBehaviour
                 graphics[i].enabled = false;
             }
         }
-    }
-
-    private static bool IsRuntimeEntranceCloset(GameObject target)
-    {
-        return target != null &&
-            (string.Equals(target.name, "Wardrobe_EntranceHall_Runtime", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(target.name, "CoatCloset_EntranceHall_Runtime", StringComparison.OrdinalIgnoreCase));
     }
 
     private void ResolveReferences()
@@ -5559,7 +5504,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (createFallbacks)
         {
-            EnsureRuntimeCloset();
+            EnsureEntranceCoatHanger();
         }
     }
 
@@ -5649,6 +5594,19 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void ResolveAnchors()
     {
+        GameObject entranceCoatHanger = FindSceneObjectByExactName(EntranceCoatHangerName);
+
+        if (entranceCoatHanger != null)
+        {
+            closetPoint = entranceCoatHanger.transform;
+            CoatCloset entranceCloset = entranceCoatHanger.GetComponent<CoatCloset>();
+
+            if (entranceCloset != null)
+            {
+                coatCloset = entranceCloset;
+            }
+        }
+
         if (frontDoorArrivalPoint == null)
         {
             frontDoorArrivalPoint = FindAnchor("GuestArrival_Door", entryRoomId);
