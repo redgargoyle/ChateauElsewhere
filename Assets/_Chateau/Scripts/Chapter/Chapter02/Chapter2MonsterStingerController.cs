@@ -9,6 +9,7 @@ using UnityEditor;
 public class Chapter2MonsterStingerController : MonoBehaviour
 {
     private const int RunFreezeCycleCount = 3;
+    private static readonly int[] MonsterRunStutterFrameOrder = { 0, 3, 1, 5, 2, 6, 4, 7 };
 
     [SerializeField] private GameObject monsterObject;
     [SerializeField] private string monsterObjectName = "Ch2_Monster";
@@ -28,13 +29,18 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     [SerializeField] private SpriteRenderer monsterSpriteRenderer;
     [SerializeField] private Sprite[] monsterRunSprites = new Sprite[0];
     [SerializeField] private string monsterRunSpritesResourcePath = "Chapter2/Monster/ArmSwing";
-    [SerializeField, Min(1f)] private float monsterRunAnimationFramesPerSecond = 12f;
+    [SerializeField, Min(1f)] private float monsterRunAnimationFramesPerSecond = 6f;
     [SerializeField] private bool animateMonsterRunSprites = true;
+    [SerializeField] private bool useMonsterRunStutterFrameOrder = true;
     [SerializeField] private bool shakeMonsterWhileRunning = true;
-    [SerializeField, Min(0f)] private float monsterRunShakePixels = 6f;
-    [SerializeField, Min(0f)] private float monsterRunWorldShakeUnits = 0.045f;
-    [SerializeField, Min(0.1f)] private float monsterRunShakeFrequency = 36f;
-    [SerializeField, Range(0f, 1f)] private float monsterRunVerticalShakeScale = 0.55f;
+    [SerializeField, Min(0f)] private float monsterRunShakePixels = 1.75f;
+    [SerializeField, Min(0f)] private float monsterRunWorldShakeUnits = 0.015f;
+    [SerializeField, Min(0.1f)] private float monsterRunShakeFrequency = 20f;
+    [SerializeField, Range(0f, 1f)] private float monsterRunVerticalShakeScale = 0.2f;
+    [SerializeField] private bool holdDifferentMonsterPoseOnFreeze = true;
+    [SerializeField, Min(1)] private int monsterFreezePoseStep = 3;
+    [SerializeField] private bool twitchMonsterPoseWhileFrozen = true;
+    [SerializeField, Min(0.1f)] private float monsterFreezeTwitchFramesPerSecond = 2f;
     [SerializeField, Min(0f)] private float minimumRunSeconds = 1f;
     [SerializeField, Min(0f)] private float maximumRunSeconds = 2f;
     [SerializeField, Min(0f)] private float minimumFreezeSeconds = 1f;
@@ -50,6 +56,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     private float visibleElapsedSeconds;
     private float monsterRunAnimationElapsedSeconds;
     private int currentMonsterRunFrameIndex = -1;
+    private int nextMonsterFreezeFrameIndex;
     private Sprite originalMonsterSprite;
     private bool hasOriginalMonsterSprite;
 
@@ -135,7 +142,6 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
             yield return MoveMonsterToNextFreezeTarget(cycleTimings[i].RunSeconds);
 
-            StopViolinAudio();
             ApplyMonsterRoomVisibility();
 
             if (cycleTimings[i].FreezeSeconds > 0f && HasVisibleTimeRemaining())
@@ -167,6 +173,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         if (duration <= 0f)
         {
             monsterObject.transform.position = targetPosition;
+            ApplyNextMonsterFreezePose();
             yield break;
         }
 
@@ -188,11 +195,24 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         }
 
         monsterObject.transform.position = targetPosition;
+        ApplyNextMonsterFreezePose();
     }
 
     private IEnumerator WaitForFreezeSeconds(float duration)
     {
-        yield return WaitForStingerSeconds(duration);
+        float elapsed = 0f;
+
+        while (elapsed < duration && HasVisibleTimeRemaining())
+        {
+            float deltaTime = Time.deltaTime;
+            elapsed += deltaTime;
+            monsterRunAnimationElapsedSeconds += deltaTime;
+            UpdateMonsterFreezeAnimation(monsterRunAnimationElapsedSeconds);
+            TickVisibleElapsed();
+            ApplyMonsterRoomVisibility();
+            PlayViolinAudioIfVisible();
+            yield return null;
+        }
     }
 
     private StingerCycleTiming[] BuildCycleTimings()
@@ -246,6 +266,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             elapsed += Time.deltaTime;
             TickVisibleElapsed();
             ApplyMonsterRoomVisibility();
+            PlayViolinAudioIfVisible();
             yield return null;
         }
     }
@@ -507,6 +528,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     private void ResetMonsterRunAnimation()
     {
         currentMonsterRunFrameIndex = -1;
+        nextMonsterFreezeFrameIndex = 0;
         ApplyMonsterRunSpriteFrame(0);
     }
 
@@ -518,8 +540,44 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         }
 
         float frameRate = Mathf.Max(1f, monsterRunAnimationFramesPerSecond);
-        int frameIndex = Mathf.FloorToInt(elapsedSeconds * frameRate) % monsterRunSprites.Length;
+        int cycleFrameIndex = Mathf.FloorToInt(elapsedSeconds * frameRate) % monsterRunSprites.Length;
+        int frameIndex = GetMonsterRunFrameIndex(cycleFrameIndex);
         ApplyMonsterRunSpriteFrame(frameIndex);
+    }
+
+    private void UpdateMonsterFreezeAnimation(float elapsedSeconds)
+    {
+        if (!twitchMonsterPoseWhileFrozen || !CanAnimateMonsterRunSprites())
+        {
+            return;
+        }
+
+        float frameRate = Mathf.Max(0.1f, monsterFreezeTwitchFramesPerSecond);
+        int cycleFrameIndex = Mathf.FloorToInt(elapsedSeconds * frameRate) % monsterRunSprites.Length;
+        int frameIndex = GetMonsterRunFrameIndex(cycleFrameIndex);
+        ApplyMonsterRunSpriteFrame(frameIndex);
+    }
+
+    private int GetMonsterRunFrameIndex(int cycleFrameIndex)
+    {
+        if (!useMonsterRunStutterFrameOrder || monsterRunSprites == null || monsterRunSprites.Length != MonsterRunStutterFrameOrder.Length)
+        {
+            return cycleFrameIndex;
+        }
+
+        return MonsterRunStutterFrameOrder[cycleFrameIndex];
+    }
+
+    private void ApplyNextMonsterFreezePose()
+    {
+        if (!holdDifferentMonsterPoseOnFreeze || !CanAnimateMonsterRunSprites())
+        {
+            return;
+        }
+
+        int frameStep = Mathf.Max(1, monsterFreezePoseStep);
+        nextMonsterFreezeFrameIndex = (nextMonsterFreezeFrameIndex + frameStep) % monsterRunSprites.Length;
+        ApplyMonsterRunSpriteFrame(nextMonsterFreezeFrameIndex);
     }
 
     private bool CanAnimateMonsterRunSprites()
