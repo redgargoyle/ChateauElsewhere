@@ -45,6 +45,12 @@ public class Chapter1ArrivalController : MonoBehaviour
         public readonly List<GuestRuntimeState> Guests = new List<GuestRuntimeState>();
     }
 
+    private sealed class RendererSortingState
+    {
+        public string LayerName;
+        public int Order;
+    }
+
     [Header("References")]
     [SerializeField] private ChapterManager chapterManager;
     [SerializeField] private ChapterClock chapterClock;
@@ -90,6 +96,12 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private float worldDrawingRoomSeatSpacing = 0.75f;
     [SerializeField] private float worldGuestMoveSpeed = 2.2f;
 
+    [Header("Entrance Sorting")]
+    [SerializeField] private string entranceGuestSortingLayerName = "People";
+    [SerializeField] private int entranceGuestSortingOrderBase = 9000;
+    [SerializeField] private int entranceGuestSortingOrderGroupStep = 100;
+    [SerializeField] private int entranceGuestSortingOrderSlotStep = 10;
+
     [Header("Interactions")]
     [SerializeField] private bool createRuntimeHud = true;
     [SerializeField] private bool createRuntimeClickTargets = true;
@@ -107,6 +119,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private readonly List<GuestGroupRuntimeState> activeEntranceGroups = new List<GuestGroupRuntimeState>();
     private readonly List<Transform> runtimeSeatAnchors = new List<Transform>();
     private readonly HashSet<GameObject> runtimeGeneratedGuestObjects = new HashSet<GameObject>();
+    private readonly Dictionary<Renderer, RendererSortingState> authoredGuestRendererSorting = new Dictionary<Renderer, RendererSortingState>();
     private readonly Dictionary<string, Sprite> guestCoatSpriteCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
     private int currentGuestIndex = -1;
     private bool sequenceActive;
@@ -1121,6 +1134,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         pendingGuestGroups.Clear();
         activeEntranceGroups.Clear();
         guestGroups.Clear();
+        authoredGuestRendererSorting.Clear();
 
         if (coatCloset != null)
         {
@@ -1979,6 +1993,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
 
+        RestoreGuestAuthoredSorting(guest);
         DisableGuestMovement(guest);
         MoveGuestObjectToRoomContent(guest, drawingRoomId);
         SetGuestVisibleAfterDrawingRoomExit(guest, true);
@@ -2136,6 +2151,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
 
+        RestoreGuestAuthoredSorting(guest);
         MoveGuestObjectToRoomContent(guest, drawingRoomId);
         SetGuestVisibleAfterDrawingRoomExit(guest, true);
         PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
@@ -2637,6 +2653,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             ForceRenderersAndCollidersOn(guestObject);
         }
 
+        ApplyEntranceHallGuestSorting(guestState);
         Debug.Log($"Scene guest activated: {guestObject.name}", this);
     }
 
@@ -2828,6 +2845,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             ForceRenderersAndCollidersOn(guestState.GuestObject);
         }
 
+        ApplyEntranceHallGuestSorting(guestState);
         RefreshCoatPickupVisibilityForCurrentRoom(guestState);
     }
 
@@ -3853,6 +3871,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (projection != null && projection.IsProjectionActive)
         {
+            CacheGuestAuthoredSorting(guestObject);
             projection.RefreshVisualTargets();
             projection.ApplyProjection();
             return;
@@ -3873,6 +3892,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             renderers[i].sortingLayerName = "People";
             renderers[i].sortingOrder = 9000 + index;
         }
+
+        CacheGuestAuthoredSorting(guestObject);
     }
 
     private bool ShouldPreserveAuthoredGuestSorting(GameObject guestObject)
@@ -3881,6 +3902,189 @@ public class Chapter1ArrivalController : MonoBehaviour
             guestObject.scene.IsValid() &&
             guestObject.scene.isLoaded &&
             !runtimeGeneratedGuestObjects.Contains(guestObject);
+    }
+
+    private void CacheGuestAuthoredSorting(GameObject guestObject)
+    {
+        Renderer[] renderers = GetGuestRenderers(guestObject);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer == null || authoredGuestRendererSorting.ContainsKey(renderer))
+            {
+                continue;
+            }
+
+            authoredGuestRendererSorting.Add(renderer, new RendererSortingState
+            {
+                LayerName = renderer.sortingLayerName,
+                Order = renderer.sortingOrder
+            });
+        }
+
+        RemoveDestroyedGuestSortingCacheEntries();
+    }
+
+    private void ApplyEntranceHallGuestSorting(GuestRuntimeState guestState)
+    {
+        if (guestState == null ||
+            guestState.GuestObject == null ||
+            guestState.Seated ||
+            HasActiveProjection(guestState))
+        {
+            return;
+        }
+
+        if (guestState.ActorState != null &&
+            !SameRoom(guestState.ActorState.CurrentRoomId, entryRoomId))
+        {
+            return;
+        }
+
+        CacheGuestAuthoredSorting(guestState.GuestObject);
+
+        Renderer[] renderers = GetGuestRenderers(guestState);
+
+        if (renderers.Length == 0)
+        {
+            return;
+        }
+
+        int groupIndex = Mathf.Max(0, guestState.GroupIndex);
+        int groupSize = Mathf.Max(1, guestsPerArrivalGroup);
+        int slotIndex = Mathf.Max(0, guestState.GuestIndex) % groupSize;
+        int sortingOrder = entranceGuestSortingOrderBase +
+            groupIndex * Mathf.Max(1, entranceGuestSortingOrderGroupStep) +
+            slotIndex * Mathf.Max(1, entranceGuestSortingOrderSlotStep);
+        int authoredReferenceOrder = GetGuestRendererReferenceSortingOrder(guestState, renderers);
+        string sortingLayerName = ResolveSortingLayerName(entranceGuestSortingLayerName);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            int localOffset = GetCachedSortingOrder(renderer) - authoredReferenceOrder;
+            renderer.sortingLayerName = sortingLayerName;
+            renderer.sortingOrder = sortingOrder + localOffset;
+        }
+    }
+
+    private void RestoreGuestAuthoredSorting(GuestRuntimeState guestState)
+    {
+        Renderer[] renderers = GetGuestRenderers(guestState);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer == null ||
+                !authoredGuestRendererSorting.TryGetValue(renderer, out RendererSortingState originalSorting))
+            {
+                continue;
+            }
+
+            renderer.sortingLayerName = originalSorting.LayerName;
+            renderer.sortingOrder = originalSorting.Order;
+        }
+
+        RemoveDestroyedGuestSortingCacheEntries();
+    }
+
+    private int GetGuestRendererReferenceSortingOrder(GuestRuntimeState guestState, Renderer[] renderers)
+    {
+        SpriteRenderer characterRenderer = guestState != null ? FindCharacterSpriteRenderer(guestState.GuestObject) : null;
+
+        if (characterRenderer != null)
+        {
+            return GetCachedSortingOrder(characterRenderer);
+        }
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null)
+            {
+                return GetCachedSortingOrder(renderers[i]);
+            }
+        }
+
+        return 0;
+    }
+
+    private int GetCachedSortingOrder(Renderer renderer)
+    {
+        return renderer != null &&
+            authoredGuestRendererSorting.TryGetValue(renderer, out RendererSortingState originalSorting)
+                ? originalSorting.Order
+                : renderer != null
+                    ? renderer.sortingOrder
+                    : 0;
+    }
+
+    private static Renderer[] GetGuestRenderers(GuestRuntimeState guestState)
+    {
+        return GetGuestRenderers(guestState != null ? guestState.GuestObject : null);
+    }
+
+    private static Renderer[] GetGuestRenderers(GameObject guestObject)
+    {
+        return guestObject != null
+            ? guestObject.GetComponentsInChildren<Renderer>(true)
+            : Array.Empty<Renderer>();
+    }
+
+    private void RemoveDestroyedGuestSortingCacheEntries()
+    {
+        if (authoredGuestRendererSorting.Count == 0)
+        {
+            return;
+        }
+
+        List<Renderer> destroyedRenderers = null;
+
+        foreach (Renderer renderer in authoredGuestRendererSorting.Keys)
+        {
+            if (renderer != null)
+            {
+                continue;
+            }
+
+            if (destroyedRenderers == null)
+            {
+                destroyedRenderers = new List<Renderer>();
+            }
+
+            destroyedRenderers.Add(renderer);
+        }
+
+        if (destroyedRenderers == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < destroyedRenderers.Count; i++)
+        {
+            authoredGuestRendererSorting.Remove(destroyedRenderers[i]);
+        }
+    }
+
+    private static string ResolveSortingLayerName(string sortingLayerName)
+    {
+        if (string.IsNullOrWhiteSpace(sortingLayerName))
+        {
+            return "Default";
+        }
+
+        return string.Equals(sortingLayerName, "Default", StringComparison.OrdinalIgnoreCase) ||
+            SortingLayer.NameToID(sortingLayerName) != 0
+                ? sortingLayerName
+                : "Default";
     }
 
     private void DisableAmbientWalkers(GameObject guestObject)

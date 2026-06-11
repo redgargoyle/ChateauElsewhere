@@ -145,10 +145,19 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string actionText = File.ReadAllText(Chapter1SceneActionPath);
         string startBody = ExtractMethodBody(actionText, "StartFrontDoorApproach");
+        string stoppedBody = ExtractMethodBody(actionText, "HandleFrontDoorApproachStopped");
         string closeBody = ExtractMethodBody(actionText, "IsPlayerCloseToFrontDoor");
+        int destinationLookupIndex = startBody.IndexOf(
+            "arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination)",
+            StringComparison.Ordinal);
+        int firstAnswerIndex = startBody.IndexOf("arrivalController.AnswerFrontDoor()", StringComparison.Ordinal);
 
         Assert.That(startBody, Does.Contain("arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination)"), "Front-door clicks should use the arrival controller's reachable greeting spot.");
         Assert.That(startBody, Does.Contain("TryFindClosestReachableDestinationToWorldPoint(transform.position, out approachDestination)"), "The raw trigger transform should only be the fallback for front-door walking.");
+        Assert.That(destinationLookupIndex, Is.GreaterThanOrEqualTo(0), "Front-door clicks should attempt a door approach destination before any answer logic.");
+        Assert.That(firstAnswerIndex, Is.GreaterThan(destinationLookupIndex), "The butler must not answer from the click handler just because he is close to the cached front-door spot.");
+        Assert.That(startBody, Does.Not.Match(@"CancelPendingFrontDoorApproach\(\);\s*if \(IsPlayerCloseToFrontDoor\(playerMovement\)\)"), "Every available front-door click should route through a movement attempt before guests are admitted.");
+        Assert.That(stoppedBody, Does.Contain("arrivalController.AnswerFrontDoor()"), "Guests should be admitted after the butler's front-door approach stops near the answer spot.");
         Assert.That(closeBody, Does.Contain("arrivalController.IsButlerCloseToFrontDoor(playerMovement)"), "Answering should use the same controller-level proximity check as the movement destination.");
     }
 
@@ -227,6 +236,32 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(preserveMethodBody, Does.Contain("guestObject.scene.IsValid()"), "Sorting preservation should only apply to real scene objects.");
         Assert.That(preserveMethodBody, Does.Contain("guestObject.scene.isLoaded"), "Sorting preservation should only apply to loaded scene objects.");
         Assert.That(preserveMethodBody, Does.Contain("!runtimeGeneratedGuestObjects.Contains(guestObject)"), "Runtime-generated fallback guests still need generated sorting.");
+    }
+
+    [Test]
+    public void EntranceHallTemporarilySortsGuestsByArrivalPair()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string resetMethodBody = ExtractMethodBody(controllerText, "ResetChapterRuntime");
+        string prepareMethodBody = ExtractMethodBody(controllerText, "PrepareSceneGuestObject");
+        string activateMethodBody = ExtractMethodBody(controllerText, "ActivateAuthoredChapterGuestObject");
+        string forceVisibleMethodBody = ExtractMethodBody(controllerText, "ForceGuestVisibleForDoorFlow");
+        string applyMethodBody = ExtractMethodBody(controllerText, "ApplyEntranceHallGuestSorting");
+        string completeMethodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
+        string skipStageMethodBody = ExtractMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
+
+        Assert.That(controllerText, Does.Contain("[Header(\"Entrance Sorting\")]"), "Entrance hall should have its own temporary sorting controls.");
+        Assert.That(controllerText, Does.Contain("entranceGuestSortingOrderGroupStep"), "Entrance sorting should step each arrival pair above the previous pair.");
+        Assert.That(controllerText, Does.Contain("authoredGuestRendererSorting"), "The temporary entrance override should preserve drawing-room authored sorting.");
+        Assert.That(resetMethodBody, Does.Contain("authoredGuestRendererSorting.Clear()"), "A fresh Chapter 1 run should not reuse stale renderer sorting cache entries.");
+        Assert.That(prepareMethodBody, Does.Contain("CacheGuestAuthoredSorting(guestObject)"), "Guest preparation should cache the drawing-room-authored sort order before hallway overrides.");
+        Assert.That(activateMethodBody, Does.Contain("ApplyEntranceHallGuestSorting(guestState)"), "Authored scene guests should receive the entrance hallway pair order when admitted.");
+        Assert.That(forceVisibleMethodBody, Does.Contain("ApplyEntranceHallGuestSorting(guestState)"), "Door-flow visibility refreshes should reapply the entrance pair order after movement/state changes.");
+        Assert.That(applyMethodBody, Does.Contain("groupIndex * Mathf.Max(1, entranceGuestSortingOrderGroupStep)"), "Later arrival pairs should render above earlier pairs.");
+        Assert.That(applyMethodBody, Does.Contain("slotIndex * Mathf.Max(1, entranceGuestSortingOrderSlotStep)"), "Guests inside a pair should still have a stable left/right order.");
+        Assert.That(applyMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - authoredReferenceOrder"), "Coat/body renderer offsets should survive the temporary hallway override.");
+        Assert.That(completeMethodBody, Does.Match(@"RestoreGuestAuthoredSorting\(guest\)[\s\S]*PlaceGuestAt\(guest, drawingRoomSpot"), "Normal Drawing Room entry should restore authored sort order before placement.");
+        Assert.That(skipStageMethodBody, Does.Match(@"RestoreGuestAuthoredSorting\(guest\)[\s\S]*PlaceGuestAt\(guest, drawingRoomSpot"), "Chapter 2 skip staging should also restore authored sort order before Drawing Room placement.");
     }
 
     [Test]
