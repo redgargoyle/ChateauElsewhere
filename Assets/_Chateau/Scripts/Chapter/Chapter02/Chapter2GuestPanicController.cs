@@ -22,7 +22,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float randomStopActionChance = 1f;
     [SerializeField, Range(0f, 1f)] private float randomPopActionChance = 0.45f;
     [SerializeField, FormerlySerializedAs("useScriptedGuest1Panic")] private bool useScriptedGuestPanic = true;
-    [SerializeField, Min(0.1f)] private float scriptedGuestRunSeconds = 1f;
+    [SerializeField, Min(0.01f)] private float scriptedGuestMinRunSeconds = 0.25f;
+    [SerializeField, Min(0.01f)] private float scriptedGuestMaxRunSeconds = 1.5f;
     [SerializeField, Min(0.1f)] private float scriptedGuestHoldSeconds = 1f;
     [SerializeField, Min(1f)] private float scriptedGuestRunDistancePixels = 500f;
     [SerializeField, Min(1f)] private float scriptedGuestMoveSpeedPixels = 560f;
@@ -313,7 +314,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
     private float GetScriptedGuestPanicSeconds()
     {
-        return 8f * (Mathf.Max(0.1f, scriptedGuestRunSeconds) + Mathf.Max(0.1f, scriptedGuestHoldSeconds)) +
+        return 8f * (GetMaxScriptedGuestRunSeconds() + Mathf.Max(0.1f, scriptedGuestHoldSeconds)) +
             Mathf.Max(0.1f, exitTimeoutSeconds);
     }
 
@@ -357,13 +358,18 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             yield break;
         }
 
+        PanicAction previousRunAction = PanicAction.PanicHandsUp;
+
         for (int frameIndex = 0; frameIndex < 8 && isRunning; frameIndex++)
         {
-            bool runRight = frameIndex % 2 == 0;
+            PanicAction runAction = ChooseRandomScriptedGuestRunAction(previousRunAction);
+            previousRunAction = runAction;
+
             yield return RunScriptedGuestDirectionalRun(
                 participant,
-                runRight ? Vector2.right : Vector2.left,
-                runRight ? PanicAction.PanicRunRight : PanicAction.PanicRunLeft);
+                GetDirectionForRunAction(runAction),
+                runAction,
+                GetRandomScriptedGuestRunSeconds());
             yield return HoldScriptedGuestPanicFrame(participant, panicFrames[frameIndex], frameIndex);
         }
 
@@ -390,17 +396,80 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
     }
 
+    private float GetRandomScriptedGuestRunSeconds()
+    {
+        float minSeconds = GetMinScriptedGuestRunSeconds();
+        float maxSeconds = GetMaxScriptedGuestRunSeconds();
+        return UnityEngine.Random.Range(minSeconds, maxSeconds);
+    }
+
+    private float GetMinScriptedGuestRunSeconds()
+    {
+        return Mathf.Max(0.01f, Mathf.Min(scriptedGuestMinRunSeconds, scriptedGuestMaxRunSeconds));
+    }
+
+    private float GetMaxScriptedGuestRunSeconds()
+    {
+        return Mathf.Max(GetMinScriptedGuestRunSeconds(), Mathf.Max(scriptedGuestMinRunSeconds, scriptedGuestMaxRunSeconds));
+    }
+
+    private static PanicAction ChooseRandomScriptedGuestRunAction(PanicAction previousRunAction)
+    {
+        int directionIndex = UnityEngine.Random.Range(0, 4);
+        PanicAction runAction = GetScriptedGuestRunAction(directionIndex);
+
+        if (runAction != previousRunAction)
+        {
+            return runAction;
+        }
+
+        return GetScriptedGuestRunAction((directionIndex + 1 + UnityEngine.Random.Range(0, 3)) % 4);
+    }
+
+    private static PanicAction GetScriptedGuestRunAction(int directionIndex)
+    {
+        switch (Mathf.Abs(directionIndex) % 4)
+        {
+            case 0:
+                return PanicAction.PanicRunDown;
+            case 1:
+                return PanicAction.PanicRunLeft;
+            case 2:
+                return PanicAction.PanicRunRight;
+            case 3:
+            default:
+                return PanicAction.PanicRunUp;
+        }
+    }
+
+    private static Vector2 GetDirectionForRunAction(PanicAction runAction)
+    {
+        switch (runAction)
+        {
+            case PanicAction.PanicRunLeft:
+                return Vector2.left;
+            case PanicAction.PanicRunRight:
+                return Vector2.right;
+            case PanicAction.PanicRunUp:
+                return Vector2.up;
+            case PanicAction.PanicRunDown:
+            default:
+                return Vector2.down;
+        }
+    }
+
     private IEnumerator RunScriptedGuestDirectionalRun(
         PanicParticipant participant,
         Vector2 direction,
-        PanicAction runAction)
+        PanicAction runAction,
+        float runDurationSeconds)
     {
         if (participant == null)
         {
             yield break;
         }
 
-        float durationSeconds = Mathf.Max(0.1f, scriptedGuestRunSeconds);
+        float durationSeconds = Mathf.Max(GetMinScriptedGuestRunSeconds(), runDurationSeconds);
         float moveSpeedPixels = Mathf.Max(1f, scriptedGuestMoveSpeedPixels);
         float distancePixels = Mathf.Max(1f, scriptedGuestRunDistancePixels);
 

@@ -328,7 +328,8 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("FormerlySerializedAs(\"useScriptedGuest1Panic\")"), "Existing scene data should survive the field rename.");
         Assert.That(panicText, Does.Contain("StartScriptedGuestPanicRoutines"));
         Assert.That(panicText, Does.Contain("panicFrames.Length < 8"), "Any guest with eight panic_pop frames should use the scripted panic routine.");
-        Assert.That(panicText, Does.Contain("scriptedGuestRunSeconds = 1f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestMinRunSeconds = 0.25f"));
+        Assert.That(panicText, Does.Contain("scriptedGuestMaxRunSeconds = 1.5f"));
         Assert.That(panicText, Does.Contain("scriptedGuestHoldSeconds = 1f"));
         Assert.That(panicText, Does.Contain("scriptedGuestRunDistancePixels = 500f"));
         Assert.That(panicText, Does.Contain("scriptedGuestMoveSpeedPixels = 560f"));
@@ -336,7 +337,14 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("scriptedGuestPanicSpriteScaleMultiplier = 1f"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestPanicRoutine"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestDirectionalRun"));
-        Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Scripted guest runs should lock to the requested left/right beat.");
+        Assert.That(panicText, Does.Contain("ChooseRandomScriptedGuestRunAction"), "Scripted guests should choose their next panic direction independently.");
+        Assert.That(panicText, Does.Contain("GetRandomScriptedGuestRunSeconds"), "Scripted guests should randomize how long each direction lasts.");
+        Assert.That(panicText, Does.Contain("UnityEngine.Random.Range(0, 4)"), "Scripted guests should choose from all four cardinal directions.");
+        Assert.That(panicText, Does.Contain("Vector2.down"));
+        Assert.That(panicText, Does.Contain("Vector2.left"));
+        Assert.That(panicText, Does.Contain("Vector2.right"));
+        Assert.That(panicText, Does.Contain("Vector2.up"));
+        Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Scripted guest runs should lock to each randomly requested four-direction beat.");
         Assert.That(panicText, Does.Contain("BeginScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Scripted run beats should use the existing Animator walk clips, not panic still sprites.");
         Assert.That(panicText, Does.Contain("UpdateScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Scripted run beats should keep the Animator walking in the scripted direction.");
         Assert.That(panicText, Does.Contain("StopScriptedAnimatorWalk(participant.CurrentRunAction)"), "Scripted panic holds should stop the Animator before showing one panic still.");
