@@ -403,6 +403,12 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("RunExitToDoorsThenRestoreRoutine"), "Panic should expose an exit beat that Chapter2Controller can await.");
         Assert.That(panicText, Does.Contain("BeginExitToDoors"), "Panic should switch from roaming to a directed door exit.");
         Assert.That(panicText, Does.Contain("StopPanicRoutineOnly(true)"), "Door exit should reclaim per-guest panic routines before assigning shared door targets.");
+        Assert.That(panicText, Does.Contain("MoveParticipantsTowardAssignedTargets(false, exitMoveSpeedPixels, true)"), "Door exit should hide each guest as soon as that guest reaches its assigned door point.");
+        Assert.That(panicText, Does.Contain("TryChooseExitTarget(exitTarget, routePlanner, worldUnitsPerRoomPixel, 0f)"), "Guests should disappear at the door point itself instead of running past it before hiding.");
+        Assert.That(panicText, Does.Contain("HideAfterExitArrival"), "Door exit should make each arrived guest disappear independently.");
+        Assert.That(panicText, Does.Contain("IsHiddenAfterExitArrival"), "Arrived guests should stop receiving shared run frames while other guests keep fleeing.");
+        Assert.That(panicText, Does.Contain("ShouldHideAfterCurrentTargetArrival"), "Only guests with assigned door targets should disappear on arrival.");
+        Assert.That(panicText, Does.Contain("SetVisibleByChapterState(false)"), "Arrived guests should disappear through ActorRoomState visibility.");
         Assert.That(panicText, Does.Contain("PointClickPlayerMovement routePlanner"), "Guest panic should reuse the butler movement route planner instead of inventing a separate floor system.");
         Assert.That(panicText, Does.Contain("FindRoutePlanner"), "Guest panic should resolve the named Player movement component for walkable-floor route queries.");
         Assert.That(panicText, Does.Contain("TryChooseRoutedRunTarget"), "Random panic movement should prefer butler route-space targets before falling back to raw room offsets.");

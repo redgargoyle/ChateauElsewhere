@@ -38,7 +38,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField] private string leftExitTargetName = "DoorTrigger_DrawingRoom_MusicRoom";
     [SerializeField] private string rightExitTargetName = "DoorTrigger_DrawingRoom_GEH";
     [SerializeField, Min(1f)] private float exitMoveSpeedPixels = 520f;
-    [SerializeField, Min(0f)] private float exitOvershootPixels = 90f;
     [SerializeField, Min(0.1f)] private float exitTimeoutSeconds = 4f;
     [SerializeField, Min(0.0001f)] private float worldUnitsPerRoomPixel = 0.012f;
     [SerializeField] private bool logMissingFrames = true;
@@ -626,7 +625,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
     private IEnumerator RunExitToDoorsRoutine()
     {
-        yield return MoveParticipantsTowardAssignedTargets(false, exitMoveSpeedPixels);
+        yield return MoveParticipantsTowardAssignedTargets(false, exitMoveSpeedPixels, true);
 
         panicRoutine = null;
 
@@ -756,6 +755,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
     private IEnumerator MoveParticipantsTowardAssignedTargets(bool jitter, float moveSpeedPixels)
     {
+        yield return MoveParticipantsTowardAssignedTargets(jitter, moveSpeedPixels, false);
+    }
+
+    private IEnumerator MoveParticipantsTowardAssignedTargets(bool jitter, float moveSpeedPixels, bool hideParticipantsOnArrival)
+    {
         int frameCount = GetMaxAssignedRunFrameCount();
 
         if (frameCount <= 0)
@@ -770,7 +774,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         while (isRunning)
         {
             float deltaTime = GetPlaybackDeltaTime(secondsPerFrame);
-            bool allArrived = StepParticipantsTowardAssignedTargets(deltaTime, moveSpeedPixels);
+            bool allArrived = StepParticipantsTowardAssignedTargets(deltaTime, moveSpeedPixels, hideParticipantsOnArrival);
             float frameProgress = secondsPerFrame <= 0f ? 1f : Mathf.Clamp01(frameElapsed / secondsPerFrame);
             float motionFrame = frameIndex + frameProgress;
 
@@ -822,15 +826,35 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
     private bool StepParticipantsTowardAssignedTargets(float deltaTime, float moveSpeedPixels)
     {
+        return StepParticipantsTowardAssignedTargets(deltaTime, moveSpeedPixels, false);
+    }
+
+    private bool StepParticipantsTowardAssignedTargets(float deltaTime, float moveSpeedPixels, bool hideParticipantsOnArrival)
+    {
         bool allArrived = true;
 
         for (int i = 0; i < participants.Count; i++)
         {
             PanicParticipant participant = participants[i];
 
-            if (participant != null &&
-                !participant.IsControlledByScript &&
-                !participant.MovePanicOffsetTowardCurrentTarget(moveSpeedPixels, deltaTime))
+            if (participant == null || participant.IsControlledByScript || participant.IsHiddenAfterExitArrival)
+            {
+                continue;
+            }
+
+            bool arrived = participant.MovePanicOffsetTowardCurrentTarget(moveSpeedPixels, deltaTime);
+
+            if (arrived)
+            {
+                if (hideParticipantsOnArrival && participant.ShouldHideAfterCurrentTargetArrival)
+                {
+                    participant.HideAfterExitArrival();
+                }
+
+                continue;
+            }
+
+            if (!arrived)
             {
                 allArrived = false;
             }
@@ -858,7 +882,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             PanicParticipant participant = sortedParticipants[i];
 
-            if (participant == null || participant.IsControlledByScript)
+            if (participant == null || participant.IsControlledByScript || participant.IsHiddenAfterExitArrival)
             {
                 continue;
             }
@@ -867,7 +891,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 ? leftExitTarget != null ? leftExitTarget : rightExitTarget
                 : rightExitTarget != null ? rightExitTarget : leftExitTarget;
 
-            if (!participant.TryChooseExitTarget(exitTarget, routePlanner, worldUnitsPerRoomPixel, exitOvershootPixels))
+            if (!participant.TryChooseExitTarget(exitTarget, routePlanner, worldUnitsPerRoomPixel, 0f))
             {
                 participant.ChooseNextRunTarget(
                     routePlanner,
@@ -905,7 +929,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             PanicParticipant participant = participants[i];
 
-            if (participant != null && participant.IsControlledByScript)
+            if (participant != null && (participant.IsControlledByScript || participant.IsHiddenAfterExitArrival))
             {
                 continue;
             }
@@ -929,7 +953,10 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     {
         for (int i = 0; i < participants.Count; i++)
         {
-            participants[i]?.ReapplyPanicVisualOffset(worldUnitsPerRoomPixel);
+            if (participants[i] != null && !participants[i].IsHiddenAfterExitArrival)
+            {
+                participants[i].ReapplyPanicVisualOffset(worldUnitsPerRoomPixel);
+            }
         }
     }
 
@@ -1189,6 +1216,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private PanicAction currentStopAction = PanicAction.PanicHandsUp;
         private int guestNumber;
         private bool controlledByScript;
+        private bool hiddenAfterExitArrival;
+        private bool hideAfterCurrentTargetArrival;
 
         public Chapter2PanicCharacterAnimation Animation => animation;
         public bool HasSpriteTarget => spriteRenderer != null || image != null;
@@ -1196,6 +1225,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         public PanicAction CurrentStopAction => currentStopAction;
         public int GuestNumber => guestNumber;
         public bool IsControlledByScript => controlledByScript;
+        public bool IsHiddenAfterExitArrival => hiddenAfterExitArrival;
+        public bool ShouldHideAfterCurrentTargetArrival => hideAfterCurrentTargetArrival;
         public Vector2 CurrentPanicOffset => currentPanicOffset;
 
         public static PanicParticipant Create(ActorRoomState nextActorState, Chapter2PanicCharacterAnimation nextAnimation)
@@ -1325,6 +1356,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             float worldUnitsPerPixel,
             List<Vector2> routeScratch)
         {
+            hideAfterCurrentTargetArrival = false;
             currentRouteOffsets.Clear();
             currentRouteOffsetIndex = 0;
 
@@ -1479,6 +1511,24 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             currentRunAction = runAction;
         }
 
+        public void HideAfterExitArrival()
+        {
+            if (hiddenAfterExitArrival)
+            {
+                return;
+            }
+
+            hiddenAfterExitArrival = true;
+            StopScriptedAnimatorWalk(currentRunAction);
+
+            if (actorState != null)
+            {
+                actorState.SetVisibleByChapterState(false);
+                actorState.SetInteractable(false);
+                actorState.ApplyState();
+            }
+        }
+
         public bool BeginScriptedAnimatorWalk(PanicAction runAction, float animationSpeed)
         {
             currentPanicSprite = null;
@@ -1545,6 +1595,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         public void ChooseDirectionalRunTarget(Vector2 direction, float distancePixels)
         {
+            hideAfterCurrentTargetArrival = false;
             useRouteLogicalMotion = false;
 
             if (direction.sqrMagnitude <= 0.0001f)
@@ -1563,6 +1614,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             float distancePixels,
             float worldUnitsPerPixel)
         {
+            hideAfterCurrentTargetArrival = false;
+
             if (direction.sqrMagnitude <= 0.0001f ||
                 !TryGetRouteCurrentLogicalPosition(planner, worldUnitsPerPixel, out Vector2 startLogical))
             {
@@ -1581,6 +1634,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             float verticalDistanceScale,
             float worldUnitsPerPixel)
         {
+            hideAfterCurrentTargetArrival = false;
+
             if (!TryGetRouteCurrentLogicalPosition(planner, worldUnitsPerPixel, out Vector2 startLogical))
             {
                 return false;
@@ -1618,8 +1673,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             float worldUnitsPerPixel,
             float overshootPixels)
         {
+            hideAfterCurrentTargetArrival = false;
+
             if (planner != null && TryChooseRoutedExitTarget(exitTarget, planner, worldUnitsPerPixel, overshootPixels))
             {
+                hideAfterCurrentTargetArrival = true;
                 return true;
             }
 
@@ -1639,6 +1697,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             currentRunTargetOffset = targetOffset;
             currentRunAction = GetRunActionForDirection(currentRunTargetOffset - currentPanicOffset);
+            hideAfterCurrentTargetArrival = true;
             return true;
         }
 
@@ -2238,6 +2297,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             currentPanicSprite = null;
             currentPanicSpriteScaleMultiplier = 1f;
             controlledByScript = false;
+            hiddenAfterExitArrival = false;
+            hideAfterCurrentTargetArrival = false;
 
             if (rigidbody2D != null)
             {
