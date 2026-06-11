@@ -292,6 +292,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string activateMethodBody = ExtractMethodBody(controllerText, "ActivateAuthoredChapterGuestObject");
         string forceVisibleMethodBody = ExtractMethodBody(controllerText, "ForceGuestVisibleForDoorFlow");
         string applyMethodBody = ExtractMethodBody(controllerText, "ApplyEntranceHallGuestSorting");
+        string moveMethodBody = ExtractMethodBody(controllerText, "MoveGuestToDrawingRoom");
+        string banisterSafeWalkMethodBody = ExtractMethodBody(controllerText, "ApplyEntranceBanisterSafeWalkingSorting");
         string completeMethodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
         string skipStageMethodBody = ExtractMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
 
@@ -305,6 +307,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(applyMethodBody, Does.Contain("groupIndex * Mathf.Max(1, entranceGuestSortingOrderGroupStep)"), "Later arrival pairs should render above earlier pairs.");
         Assert.That(applyMethodBody, Does.Contain("slotIndex * Mathf.Max(1, entranceGuestSortingOrderSlotStep)"), "Guests inside a pair should still have a stable left/right order.");
         Assert.That(applyMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - authoredReferenceOrder"), "Coat/body renderer offsets should survive the temporary hallway override.");
+        Assert.That(applyMethodBody, Does.Contain("guestState.MovingToDrawingRoom"), "Guests walking to the Drawing Room should not regain the high entrance-hall sorting override.");
+        Assert.That(moveMethodBody, Does.Match(@"RestoreGuestAuthoredSorting\(guest\)[\s\S]*ApplyEntranceBanisterSafeWalkingSorting\(guest\)[\s\S]*BeginGuestMoveTo\(guest, drawingRoomEntry"), "Guests should switch from the high entrance override to banister-safe sorting before walking to the Drawing Room door.");
+        Assert.That(banisterSafeWalkMethodBody, Does.Contain("EntranceBanisterSafeWalkingSortingOrder"), "The drawing-room walk should use a transition-only order below the front banister.");
+        Assert.That(banisterSafeWalkMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - referenceOrder"), "The banister-safe walk should preserve local body/coat renderer offsets.");
         Assert.That(completeMethodBody, Does.Match(@"RestoreGuestAuthoredSorting\(guest\)[\s\S]*PlaceGuestAt\(guest, drawingRoomSpot"), "Normal Drawing Room entry should restore authored sort order before placement.");
         Assert.That(skipStageMethodBody, Does.Match(@"RestoreGuestAuthoredSorting\(guest\)[\s\S]*PlaceGuestAt\(guest, drawingRoomSpot"), "Chapter 2 skip staging should also restore authored sort order before Drawing Room placement.");
     }
