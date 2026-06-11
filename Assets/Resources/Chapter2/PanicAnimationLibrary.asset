@@ -84,7 +84,15 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 9943d810ff93d1fe22f0465c5c77fa1d, type: 3}
     - {fileID: 21300000, guid: 34064c9074ad0f22eca30e3d240c37a5, type: 3}
     - {fileID: 21300000, guid: 3eebce8e99fb13c3fc976b99245fc275, type: 3}
-    panicPop: []
+    panicPop:
+    - {fileID: 21300000, guid: ef7824c5694d58c5f12a2dac030d55c2, type: 3}
+    - {fileID: 21300000, guid: 7d38c334497bfb6dff2513395bbb3d3d, type: 3}
+    - {fileID: 21300000, guid: 7df773dabe2baf9128c89300c5a49c75, type: 3}
+    - {fileID: 21300000, guid: bdc772aaa63cf39ad0f12629a99df399, type: 3}
+    - {fileID: 21300000, guid: 1a99345ea5bd2f62c4b7912e22e7d6fd, type: 3}
+    - {fileID: 21300000, guid: 303bb5341c0c18a662a76bebe9d733a0, type: 3}
+    - {fileID: 21300000, guid: 44504c4a1b92b09b5d5c38c49bb10271, type: 3}
+    - {fileID: 21300000, guid: 153ae1cfa042c7b3bf10a2ea1ba4fbd1, type: 3}
     panicRunDown:
     - {fileID: -7821548458104148983, guid: 7ec7efa83db1de18986a17239242de4e, type: 3}
     - {fileID: 383989971076051979, guid: 7156d8d96f6c7547b9769abcbaed8e64, type: 3}
