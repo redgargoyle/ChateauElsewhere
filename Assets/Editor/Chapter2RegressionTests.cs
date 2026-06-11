@@ -21,6 +21,8 @@ public class Chapter2RegressionTests
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
     private const string Chapter2PanicLibraryAssetPath = "Assets/Resources/Chapter2/PanicAnimationLibrary.asset";
     private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
+    private const string Chapter2MonsterArmSwingResourcePath = "Assets/Resources/Chapter2/Monster/ArmSwing";
+    private const string Chapter2MonsterArmSwingClipPath = "Assets/Animation/Monster/Ch2_Monster_ArmSwing.anim";
     private const string AnimationLibraryPath = "Assets/Art/Library/AnimationLibrary";
     private const string GuestArtRoot = "Assets/Art/Characters";
     private const string Chapter2PanicClipRoot = "Assets/Animation/Chapter2Panic";
@@ -201,6 +203,20 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("monsterSortingOrder = 9999"));
         Assert.That(stingerText, Does.Contain("monsterOverlaySortingOrder = 10000"));
         Assert.That(stingerText, Does.Contain("overrideSorting = true"));
+        Assert.That(stingerText, Does.Contain("using UnityEngine.UI;"));
+        Assert.That(stingerText, Does.Contain("monsterRunSpritesResourcePath = \"Chapter2/Monster/ArmSwing\""));
+        Assert.That(stingerText, Does.Contain("monsterRunAnimationFramesPerSecond = 12f"));
+        Assert.That(stingerText, Does.Contain("monsterRunShakePixels = 6f"));
+        Assert.That(stingerText, Does.Contain("Resources.LoadAll<Sprite>(monsterRunSpritesResourcePath)"));
+        Assert.That(stingerText, Does.Contain("System.Array.Sort(loadedSprites, CompareSpritesByName)"));
+        Assert.That(stingerText, Does.Contain("monsterImage.sprite = sprite"));
+        Assert.That(stingerText, Does.Contain("UpdateMonsterRunAnimation(monsterRunAnimationElapsedSeconds)"));
+        Assert.That(stingerText, Does.Contain("GetMonsterRunShakeOffset(monsterRunAnimationElapsedSeconds)"));
+        Assert.That(stingerText, Does.Contain("monsterObject.transform.position = basePosition + GetMonsterRunShakeOffset(monsterRunAnimationElapsedSeconds)"));
+        Assert.That(stingerText, Does.Contain("monsterObject.transform.position = targetPosition"));
+        Assert.That(Directory.Exists(Chapter2MonsterArmSwingResourcePath), Is.True, "Monster run sprites should be available from Resources for the runtime-created stinger component.");
+        Assert.That(Directory.GetFiles(Chapter2MonsterArmSwingResourcePath, "*.png").Length, Is.GreaterThanOrEqualTo(8), "Monster arm swing animation should have at least the approved 8-frame sprite cycle.");
+        Assert.That(File.Exists(Chapter2MonsterArmSwingClipPath), Is.True, "Monster arm swing animation clip should be kept with the generated frame library.");
     }
 
     [Test]
