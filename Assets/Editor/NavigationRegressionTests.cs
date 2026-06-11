@@ -28,6 +28,7 @@ public class NavigationRegressionTests
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter1InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
+    private const string GameplayPlayModeGuardPath = "Assets/Editor/GameplayPlayModeGuard.cs";
     private const string ButlerIdleFolderPath = "Assets/Art/Characters/butler/butler_idle";
     private const string PlayerIdleClipPath = "Assets/Animation/Player/Player_Idle.anim";
     private const string ButlerClassicIdleClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle.anim";
@@ -439,6 +440,17 @@ public class NavigationRegressionTests
 
         Assert.That(bootstrapText, Does.Contain("SceneManager.sceneLoaded"), "Navigation bootstrap must run again when MainMenu loads Gameplay.");
         Assert.That(bootstrapText, Does.Contain("HandleSceneLoaded"), "Navigation bootstrap needs a scene-loaded callback for non-initial gameplay loads.");
+    }
+
+    [Test]
+    public void GameplaySceneCannotBeStartedDirectlyFromEditorPlayMode()
+    {
+        string guardText = File.ReadAllText(GameplayPlayModeGuardPath);
+
+        Assert.That(guardText, Does.Contain("PlayModeStateChange.ExitingEditMode"), "The guard should run before Unity finishes entering Play Mode.");
+        Assert.That(guardText, Does.Contain("EditorApplication.isPlaying = false"), "The guard should cancel Play Mode instead of allowing partial gameplay startup.");
+        Assert.That(guardText, Does.Contain(GameplayScenePath), "The guard should explicitly block Gameplay.unity.");
+        Assert.That(guardText, Does.Contain(MainMenuScenePath), "The guard should point developers back to MainMenu.unity.");
     }
 
     [Test]
