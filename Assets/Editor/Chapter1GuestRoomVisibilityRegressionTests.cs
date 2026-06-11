@@ -125,19 +125,33 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     public void LiveDoorAnswerUsesStableEntranceWorldPositions()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string sceneText = File.ReadAllText(GameplayScenePath);
         string doorArrivalBody = ExtractMethodBody(controllerText, "GetWorldDoorArrivalPosition");
+        string doorArrivalBaseBody = ExtractMethodBody(controllerText, "GetWorldDoorArrivalBasePosition");
         string waitBody = ExtractMethodBody(controllerText, "GetWorldEntranceWaitPosition");
+        string entranceCenterBody = ExtractMethodBody(controllerText, "GetWorldEntranceCenterPosition(GuestRuntimeState guestState)");
+        string anchorLookupBody = ExtractMethodBody(controllerText, "GetEntranceHallGuestAnchor");
         string interactionTargetBody = ExtractMethodBody(controllerText, "GetFrontDoorInteractionTransform");
         string conversionBody = ExtractMethodBody(controllerText, "TryGetWorldPositionForGuestTarget");
 
-        Assert.That(doorArrivalBody, Does.Contain("GetWorldEntranceCenterPosition()"), "Door-answer spawning should use the stable world-space entrance cluster instead of projecting authored room-stage anchors.");
-        Assert.That(waitBody, Does.Contain("GetWorldEntranceCenterPosition()"), "Entrance wait spots should stay near the visible guest cluster.");
+        Assert.That(controllerText, Does.Contain("EntranceHallGuestAnchorId"), "Chapter 1 should name the editable Entrance Hall guest anchor consistently.");
+        Assert.That(doorArrivalBody, Does.Contain("GetWorldDoorArrivalBasePosition(guestState)"), "Door-answer spawning should begin at the front-door point before guests walk inward.");
+        Assert.That(doorArrivalBaseBody, Does.Match(@"GetFrontDoorArrivalPoint\(frontDoorArrivalPoint\)[\s\S]*TryGetWorldPositionForGuestTarget[\s\S]*GetWorldEntranceCenterPosition\(guestState\)"), "Front-door spawning should convert the visible door anchor and keep the stable entrance fallback.");
+        Assert.That(waitBody, Does.Contain("GetWorldEntranceCenterPosition(guestState)"), "Entrance wait spots should use the guest-depth-aware editable entrance anchor.");
+        Assert.That(entranceCenterBody, Does.Match(@"TryGetEntranceHallGuestAnchorWorldPosition\(guestState[\s\S]*TryGetAverageAuthoredChapterGuestPosition"), "Entrance waiting should prefer the scene anchor before falling back to authored guest averages.");
+        Assert.That(anchorLookupBody, Does.Contain("FindAnchor(EntranceHallGuestAnchorId, entryRoomId)"), "The entrance wait point should be discoverable through RoomAnchor data.");
+        Assert.That(anchorLookupBody, Does.Contain("FindSceneObjectByExactName(EntranceHallGuestAnchorId)"), "The entrance wait point should still resolve if RoomAnchor data is stale.");
         Assert.That(doorArrivalBody, Does.Not.Contain("GetWorldVisibleAnchorPosition"), "Door-answer spawning should not project the high-Z GuestArrival_Door stage anchor off camera.");
         Assert.That(waitBody, Does.Not.Contain("GetWorldVisibleAnchorPosition"), "Entrance waiting should not project the high-Z ButlerGreetingSpot stage anchor off camera.");
         Assert.That(interactionTargetBody, Does.Match(@"frontDoorArrivalPoint[\s\S]*return frontDoorArrivalPoint[\s\S]*butlerDoorSpot"), "The butler should walk to the front-door arrival point before answering the door.");
         Assert.That(conversionBody, Does.Not.Contain("target.GetComponentInParent<Canvas>(true) == null"), "Visible anchor conversion must work for non-Canvas room-stage anchors as well as UI anchors.");
         Assert.That(conversionBody, Does.Contain("TryGetTargetScreenPosition"), "Visible anchor conversion should preserve what the player sees on screen.");
         Assert.That(conversionBody, Does.Contain("mainCamera.ScreenToWorldPoint"), "Drawing Room anchor conversion should land on the guest world plane instead of raw room-stage coordinates.");
+        Assert.That(sceneText, Does.Contain("m_Name: EntranceHallGuestAnchor"), "Gameplay should expose a movable Entrance Hall guest anchor.");
+        Assert.That(sceneText, Does.Contain("anchorId: EntranceHallGuestAnchor"), "The Entrance Hall guest anchor should have a RoomAnchor id.");
+        Assert.That(sceneText, Does.Contain("roomId: Grand Entrance Hall"), "The Entrance Hall guest anchor should belong to the entry room hierarchy.");
+        Assert.That(sceneText, Does.Contain("entranceHallGuestAnchor: {fileID: 3501000024}"), "The Chapter 1 controller should serialize the editable Entrance Hall guest anchor.");
+        Assert.That(sceneText, Does.Contain("showSceneGizmo: 1"), "The Entrance Hall guest anchor should be color-coded in Edit Mode.");
     }
 
     [Test]

@@ -71,6 +71,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     [Header("Required Anchors")]
     [SerializeField] private Transform frontDoorArrivalPoint;
+    [SerializeField] private Transform entranceHallGuestAnchor;
     [SerializeField] private Transform butlerDoorSpot;
     [SerializeField] private Transform closetPoint;
     [SerializeField] private Transform drawingRoomEntryPoint;
@@ -149,6 +150,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float ClosetStorageReadyScreenDistance = 145f;
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
+    private const string EntranceHallGuestAnchorId = "EntranceHallGuestAnchor";
     private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
     private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
     private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
@@ -4553,7 +4555,12 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Vector3 GetEntranceWaitPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
     {
         Vector3 basePosition = GetEntranceWaitBasePosition();
-        Vector2 offset = GetEntranceGroupOffset(guestState, fallbackIndex, fallbackCount, entranceGuestSpacing);
+        Vector2 offset = GetEntranceGroupOffset(
+            guestState,
+            fallbackIndex,
+            fallbackCount,
+            entranceGuestSpacing,
+            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
         return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
@@ -4561,14 +4568,27 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         Vector3 basePosition = GetEntranceWaitBasePosition();
         float centeredIndex = indexInBatch - (batchCount - 1) * 0.5f;
-        Vector3 offset = snapGuestsIntoEntranceForFirstVisualPass
-            ? new Vector3(centeredIndex * entranceGuestSpacing, entranceGuestSpacing * 0.65f, 0f)
-            : new Vector3(centeredIndex * entranceGuestSpacing, -entranceGuestSpacing * 0.55f, 0f);
+        Vector3 offset = new Vector3(
+            centeredIndex * entranceGuestSpacing,
+            GetEntranceWaitBaseYOffset(entranceGuestSpacing),
+            0f);
         return basePosition + offset;
     }
 
     private Vector3 GetEntranceWaitBasePosition()
     {
+        Transform anchor = GetEntranceHallGuestAnchor();
+
+        if (anchor != null)
+        {
+            if (TryGetEntranceHallGuestAnchorWorldPosition(null, out Vector3 anchorPosition))
+            {
+                return anchorPosition;
+            }
+
+            return anchor.position;
+        }
+
         Vector3 basePosition = frontDoorArrivalPoint != null
             ? frontDoorArrivalPoint.position
             : butlerDoorSpot != null ? butlerDoorSpot.position : transform.position;
@@ -4588,27 +4608,27 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Vector3 GetWorldDoorArrivalPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
     {
-        Vector3 basePosition = GetWorldEntranceCenterPosition();
+        Vector3 basePosition = GetWorldDoorArrivalBasePosition(guestState);
         Vector2 offset = GetWorldEntranceGroupOffset(guestState, fallbackIndex, fallbackCount, worldEntranceGuestSpacing, 0f);
         return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
     private Vector3 GetWorldDoorArrivalPosition(int indexInBatch, int batchCount)
     {
-        Vector3 basePosition = GetWorldEntranceCenterPosition();
+        Vector3 basePosition = GetWorldDoorArrivalBasePosition(null);
         Vector2 offset = GetWorldGuestGridOffset(indexInBatch, batchCount, worldEntranceGuestSpacing);
         return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
     private Vector3 GetWorldEntranceWaitPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
     {
-        Vector3 basePosition = GetWorldEntranceCenterPosition();
+        Vector3 basePosition = GetWorldEntranceCenterPosition(guestState);
         Vector2 offset = GetWorldEntranceGroupOffset(
             guestState,
             fallbackIndex,
             fallbackCount,
             worldEntranceGuestSpacing,
-            -worldEntranceGuestSpacing * 1.5f);
+            GetWorldEntranceWaitBaseYOffset());
         return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
@@ -4616,7 +4636,21 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         Vector3 basePosition = GetWorldEntranceCenterPosition();
         Vector2 offset = GetWorldGuestGridOffset(indexInBatch, batchCount, worldEntranceGuestSpacing);
-        return basePosition + new Vector3(offset.x, offset.y - worldEntranceGuestSpacing * 1.5f, 0f);
+        return basePosition + new Vector3(offset.x, offset.y + GetWorldEntranceWaitBaseYOffset(), 0f);
+    }
+
+    private Vector3 GetWorldDoorArrivalBasePosition(GuestRuntimeState guestState)
+    {
+        Transform doorAnchor = guestState != null && guestState.Config != null
+            ? guestState.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint)
+            : frontDoorArrivalPoint;
+
+        if (TryGetWorldPositionForGuestTarget(GetWorldPlacementDepthReference(guestState), doorAnchor, out Vector3 doorPosition))
+        {
+            return doorPosition;
+        }
+
+        return GetWorldEntranceCenterPosition(guestState);
     }
 
     private Vector3 GetWorldDrawingRoomEntryPosition(GuestRuntimeState guestState, int indexInBatch, int batchCount)
@@ -4643,7 +4677,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         Transform entryAnchor = guestState != null && guestState.Config != null
             ? guestState.Config.GetDrawingRoomEntryPoint(drawingRoomEntryPoint)
             : drawingRoomEntryPoint;
-        return GetWorldVisibleAnchorPosition(guestState, entryAnchor, GetWorldEntranceCenterPosition());
+        return GetWorldVisibleAnchorPosition(guestState, entryAnchor, GetWorldEntranceCenterPosition(guestState));
     }
 
     private Vector3 GetWorldVisibleAnchorPosition(GuestRuntimeState guestState, Transform anchor, Vector3 fallbackPosition)
@@ -4755,6 +4789,16 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Vector3 GetWorldEntranceCenterPosition()
     {
+        return GetWorldEntranceCenterPosition(null);
+    }
+
+    private Vector3 GetWorldEntranceCenterPosition(GuestRuntimeState guestState)
+    {
+        if (TryGetEntranceHallGuestAnchorWorldPosition(guestState, out Vector3 anchorPosition))
+        {
+            return anchorPosition;
+        }
+
         if (hasWorldDoorCenterPosition)
         {
             return worldDoorCenterPosition;
@@ -4777,6 +4821,49 @@ public class Chapter1ArrivalController : MonoBehaviour
         worldDoorCenterPosition = transform.position;
         hasWorldDoorCenterPosition = true;
         return worldDoorCenterPosition;
+    }
+
+    private bool TryGetEntranceHallGuestAnchorWorldPosition(GuestRuntimeState guestState, out Vector3 worldPosition)
+    {
+        worldPosition = Vector3.zero;
+        Transform anchor = GetEntranceHallGuestAnchor();
+
+        if (anchor == null)
+        {
+            return false;
+        }
+
+        if (TryGetWorldPositionForGuestTarget(GetWorldPlacementDepthReference(guestState), anchor, out worldPosition))
+        {
+            return true;
+        }
+
+        if (anchor.GetComponentInParent<RoomContentGroup>(true) == null && !(anchor is RectTransform))
+        {
+            worldPosition = anchor.position;
+            return true;
+        }
+
+        return false;
+    }
+
+    private Transform GetEntranceHallGuestAnchor()
+    {
+        if (entranceHallGuestAnchor != null)
+        {
+            return entranceHallGuestAnchor;
+        }
+
+        entranceHallGuestAnchor = FindAnchor(EntranceHallGuestAnchorId, entryRoomId);
+
+        if (entranceHallGuestAnchor != null)
+        {
+            return entranceHallGuestAnchor;
+        }
+
+        GameObject anchorObject = FindSceneObjectByExactName(EntranceHallGuestAnchorId);
+        entranceHallGuestAnchor = anchorObject != null ? anchorObject.transform : null;
+        return entranceHallGuestAnchor;
     }
 
     private Vector3 GetWorldDrawingRoomCenterPosition()
@@ -4815,26 +4902,53 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Vector2 GetEntranceWaitAnchoredPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
     {
         Vector2 basePosition = GetEntranceWaitBaseAnchoredPosition();
-        return basePosition + GetEntranceGroupOffset(guestState, fallbackIndex, fallbackCount, entranceGuestSpacing);
+        return basePosition + GetEntranceGroupOffset(
+            guestState,
+            fallbackIndex,
+            fallbackCount,
+            entranceGuestSpacing,
+            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
     }
 
     private Vector2 GetEntranceWaitAnchoredPosition(int indexInBatch, int batchCount)
     {
         Vector2 basePosition = GetEntranceWaitBaseAnchoredPosition();
         float centeredIndex = indexInBatch - (batchCount - 1) * 0.5f;
-        Vector2 offset = snapGuestsIntoEntranceForFirstVisualPass
-            ? new Vector2(centeredIndex * entranceGuestSpacing, entranceGuestSpacing * 0.65f)
-            : new Vector2(centeredIndex * entranceGuestSpacing, -entranceGuestSpacing * 0.55f);
+        Vector2 offset = new Vector2(
+            centeredIndex * entranceGuestSpacing,
+            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
         return basePosition + offset;
     }
 
     private Vector2 GetEntranceWaitBaseAnchoredPosition()
     {
+        Transform anchor = GetEntranceHallGuestAnchor();
+
+        if (anchor != null)
+        {
+            return new Vector2(anchor.localPosition.x, anchor.localPosition.y);
+        }
+
         return frontDoorArrivalPoint != null
             ? new Vector2(frontDoorArrivalPoint.localPosition.x, frontDoorArrivalPoint.localPosition.y)
             : butlerDoorSpot != null
                 ? new Vector2(butlerDoorSpot.localPosition.x, butlerDoorSpot.localPosition.y)
                 : Vector2.zero;
+    }
+
+    private float GetEntranceWaitBaseYOffset(float spacing)
+    {
+        if (GetEntranceHallGuestAnchor() != null)
+        {
+            return 0f;
+        }
+
+        return snapGuestsIntoEntranceForFirstVisualPass ? spacing * 0.65f : -spacing * 0.55f;
+    }
+
+    private float GetWorldEntranceWaitBaseYOffset()
+    {
+        return GetEntranceHallGuestAnchor() != null ? 0f : -worldEntranceGuestSpacing * 1.5f;
     }
 
     private Vector2 GetEntranceGroupOffset(
@@ -4843,9 +4957,23 @@ public class Chapter1ArrivalController : MonoBehaviour
         int fallbackCount,
         float spacing)
     {
+        return GetEntranceGroupOffset(
+            guestState,
+            fallbackIndex,
+            fallbackCount,
+            spacing,
+            GetEntranceWaitBaseYOffset(spacing));
+    }
+
+    private Vector2 GetEntranceGroupOffset(
+        GuestRuntimeState guestState,
+        int fallbackIndex,
+        int fallbackCount,
+        float spacing,
+        float baseY)
+    {
         GetEntranceGroupSlot(guestState, fallbackIndex, fallbackCount, out int slotInGroup, out int groupIndex, out int groupSize);
         float centeredSlot = slotInGroup - (groupSize - 1) * 0.5f;
-        float baseY = snapGuestsIntoEntranceForFirstVisualPass ? spacing * 0.65f : -spacing * 0.55f;
         return new Vector2(centeredSlot * spacing, baseY - groupIndex * spacing * 0.75f);
     }
 
@@ -5524,6 +5652,11 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (frontDoorArrivalPoint == null)
         {
             frontDoorArrivalPoint = FindAnchor("GuestArrival_Door", entryRoomId);
+        }
+
+        if (entranceHallGuestAnchor == null)
+        {
+            entranceHallGuestAnchor = FindAnchor(EntranceHallGuestAnchorId, entryRoomId);
         }
 
         if (butlerDoorSpot == null)
