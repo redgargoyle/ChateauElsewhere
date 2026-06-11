@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -273,6 +274,23 @@ public class CharacterRegressionTests
         AssertForwardIdleMatchesWalkScale("Assets/Art/Characters/guest6/lady_sabine_marrow_walk_01_r01_c01.png", "Assets/Art/Characters/guest6/lady_sabine_marrow_idle_down", "Lady Sabine Marrow");
         AssertGuestPair02ManStandingIdleFramesAreValid();
         AssertForwardIdleMatchesWalkScale("Assets/Art/Characters/guest8/madame_coralie_thread_walk_01_r01_c01.png", "Assets/Art/Characters/guest8/madame_coralie_thread_idle_down", "Madame Coralie Thread");
+    }
+
+    [Test]
+    public void LaterGuestEntranceStandingIdlesUseComparableWorldHeight()
+    {
+        AssertStandingIdleSequenceWorldHeight(
+            "Baron Hector Glass",
+            $"{CharacterArtRoot}/guest5/guest5standidle",
+            "baron_hector_glass_idle_down",
+            166,
+            297);
+        AssertStandingIdleSequenceWorldHeight(
+            "Lord Ambrose Veil",
+            $"{CharacterArtRoot}/guest7/guest7standidle",
+            "GuestPair02Man_standing_idle",
+            248,
+            304);
     }
 
     [Test]
@@ -924,6 +942,32 @@ public class CharacterRegressionTests
         }
     }
 
+    private static void AssertStandingIdleSequenceWorldHeight(
+        string displayName,
+        string frameFolder,
+        string frameName,
+        int expectedWidth,
+        int expectedHeight)
+    {
+        const float MinimumEntranceIdleWorldHeight = 2.8f;
+
+        for (int i = 1; i <= 4; i++)
+        {
+            string framePath = $"{frameFolder}/{i:00}_{frameName}_{i:00}.png";
+
+            if (!File.Exists(framePath))
+            {
+                framePath = $"{frameFolder}/{frameName}_{i:00}.png";
+            }
+
+            RectInt visibleBounds = ReadVisibleSpriteBounds(framePath, expectedWidth, expectedHeight);
+            float pixelsPerUnit = ReadSpritePixelsPerUnit($"{framePath}.meta");
+            float visibleWorldHeight = visibleBounds.height / pixelsPerUnit;
+
+            Assert.That(visibleWorldHeight, Is.GreaterThanOrEqualTo(MinimumEntranceIdleWorldHeight), $"{displayName} entrance idle frame {i} should not render smaller than the other line-up guests.");
+        }
+    }
+
     private static string GetScenePreviewFrameMetaPath(string assetName, string walkFolder, string filePrefix)
     {
         return assetName == "LordAmbroseVeil"
@@ -1068,6 +1112,15 @@ public class CharacterRegressionTests
         Match match = Regex.Match(metaText, $@"^\s+{Regex.Escape(spriteName)}: (-?\d+)$", RegexOptions.Multiline);
         Assert.That(match.Success, Is.True, $"Could not find sprite fileID for {spriteName} in {metaPath}.");
         return match.Groups[1].Value;
+    }
+
+    private static float ReadSpritePixelsPerUnit(string metaPath)
+    {
+        string metaText = File.ReadAllText(metaPath);
+        Match match = Regex.Match(metaText, @"^\s+spritePixelsToUnits: (?<value>[0-9.]+)$", RegexOptions.Multiline);
+
+        Assert.That(match.Success, Is.True, $"Could not find spritePixelsToUnits in {metaPath}.");
+        return float.Parse(match.Groups["value"].Value, CultureInfo.InvariantCulture);
     }
 
     private static void AssertCustomSideStandingFrameMatchesWalkScale(string walkFolder, string filePrefix, string direction, string displayName)
