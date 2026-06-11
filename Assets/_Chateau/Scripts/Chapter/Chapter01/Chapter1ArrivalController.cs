@@ -4566,7 +4566,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             fallbackIndex,
             fallbackCount,
             entranceGuestSpacing,
-            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
+            GetEntranceWaitBaseYOffset(entranceGuestSpacing),
+            stackRowsUpFromAnchor: true);
         return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
@@ -4615,7 +4616,13 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Vector3 GetWorldDoorArrivalPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
     {
         Vector3 basePosition = GetWorldDoorArrivalBasePosition(guestState);
-        Vector2 offset = GetWorldEntranceGroupOffset(guestState, fallbackIndex, fallbackCount, worldEntranceGuestSpacing, 0f);
+        Vector2 offset = GetWorldEntranceGroupOffset(
+            guestState,
+            fallbackIndex,
+            fallbackCount,
+            worldEntranceGuestSpacing,
+            0f,
+            stackRowsUpFromAnchor: false);
         return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
@@ -4634,7 +4641,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             fallbackIndex,
             fallbackCount,
             worldEntranceGuestSpacing,
-            GetWorldEntranceWaitBaseYOffset());
+            GetWorldEntranceWaitBaseYOffset(),
+            stackRowsUpFromAnchor: true);
         return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
@@ -4786,11 +4794,13 @@ public class Chapter1ArrivalController : MonoBehaviour
         int fallbackIndex,
         int fallbackCount,
         float spacing,
-        float baseY)
+        float baseY,
+        bool stackRowsUpFromAnchor = false)
     {
         GetEntranceGroupSlot(guestState, fallbackIndex, fallbackCount, out int slotInGroup, out int groupIndex, out int groupSize);
         float centeredSlot = slotInGroup - (groupSize - 1) * 0.5f;
-        return new Vector2(centeredSlot * spacing, baseY - groupIndex * spacing * 0.85f);
+        float rowDirection = GetEntranceRowDirection(stackRowsUpFromAnchor);
+        return new Vector2(centeredSlot * spacing, baseY + rowDirection * groupIndex * spacing * 0.85f);
     }
 
     private Vector3 GetWorldEntranceCenterPosition()
@@ -4913,7 +4923,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             fallbackIndex,
             fallbackCount,
             entranceGuestSpacing,
-            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
+            GetEntranceWaitBaseYOffset(entranceGuestSpacing),
+            stackRowsUpFromAnchor: true);
     }
 
     private Vector2 GetEntranceWaitAnchoredPosition(int indexInBatch, int batchCount)
@@ -4976,11 +4987,18 @@ public class Chapter1ArrivalController : MonoBehaviour
         int fallbackIndex,
         int fallbackCount,
         float spacing,
-        float baseY)
+        float baseY,
+        bool stackRowsUpFromAnchor = false)
     {
         GetEntranceGroupSlot(guestState, fallbackIndex, fallbackCount, out int slotInGroup, out int groupIndex, out int groupSize);
         float centeredSlot = slotInGroup - (groupSize - 1) * 0.5f;
-        return new Vector2(centeredSlot * spacing, baseY - groupIndex * spacing * 0.75f);
+        float rowDirection = GetEntranceRowDirection(stackRowsUpFromAnchor);
+        return new Vector2(centeredSlot * spacing, baseY + rowDirection * groupIndex * spacing * 0.75f);
+    }
+
+    private float GetEntranceRowDirection(bool stackRowsUpFromAnchor)
+    {
+        return stackRowsUpFromAnchor && GetEntranceHallGuestAnchor() != null ? 1f : -1f;
     }
 
     private void GetEntranceGroupSlot(

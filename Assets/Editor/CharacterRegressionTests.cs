@@ -186,7 +186,7 @@ public class CharacterRegressionTests
         Assert.That(butlerSheetMetaText, Does.Not.Contain("butlersprite 1_"), "Replacing the sheet should not leave Unity-regenerated copy suffix sprite names.");
         AssertButlerGuestExportedFramesMatchSheetSlices(butlerSheetMetaText);
         AssertClipUsesButlerExportedFrames(File.ReadAllText(ButlerGuestWalkDownClipPath), Enumerable.Range(0, 8), "forward", 16, 16, "12", "0.666666667", true);
-        AssertButlerGuestMirroredSideWalkClips(File.ReadAllText(ButlerGuestWalkLeftClipPath), File.ReadAllText(ButlerGuestWalkRightClipPath));
+        AssertButlerGuestSideWalkClipsUseFullScaleFrames(File.ReadAllText(ButlerGuestWalkLeftClipPath), File.ReadAllText(ButlerGuestWalkRightClipPath));
         AssertClipUsesButlerExportedFrames(File.ReadAllText(ButlerGuestWalkUpClipPath), Enumerable.Range(24, 8), "away", 16, 16, "12", "0.666666667", true);
         AssertButlerGuestStandingSideFrame(ButlerGuestStandingSideLeftPath, 91, 199, "left");
         AssertButlerGuestStandingSideFrame(ButlerGuestStandingSidePath, 91, 199, "right");
@@ -620,6 +620,34 @@ public class CharacterRegressionTests
         }
 
         AssertPngIsHorizontalMirror(ButlerGuestStandingSideLeftPath, ButlerGuestStandingSidePath, "Guest 2 right standing side frame");
+    }
+
+    private static void AssertButlerGuestSideWalkClipsUseFullScaleFrames(string leftClipText, string rightClipText)
+    {
+        Assert.That(leftClipText, Does.Contain("classID: 212"), "Guest 2 walk left should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(rightClipText, Does.Contain("classID: 212"), "Guest 2 walk right should animate SpriteRenderers for prefab-stage reuse.");
+        Assert.That(leftClipText, Does.Contain("m_ScaleCurves: []"), "Guest 2 walk left should not fix size by scaling transforms.");
+        Assert.That(rightClipText, Does.Contain("m_ScaleCurves: []"), "Guest 2 walk right should not fix size by scaling transforms.");
+        AssertButlerGuestRightWalkUsesFullScaleStandaloneFrames();
+    }
+
+    private static void AssertButlerGuestRightWalkUsesFullScaleStandaloneFrames()
+    {
+        int[] expectedWidths = { 99, 91, 97, 91 };
+        int[] expectedHeights = { 198, 199, 198, 199 };
+
+        for (int i = 1; i <= 4; i++)
+        {
+            string framePath = $"{CharacterArtRoot}/guest2/Guest2Walkright/guest2right{i}.png";
+            string metaPath = $"{framePath}.meta";
+            string metaText = File.ReadAllText(metaPath);
+            RectInt visibleBounds = ReadVisibleSpriteBounds(framePath, expectedWidths[i - 1], expectedHeights[i - 1]);
+            float pixelsPerUnit = ReadSpritePixelsPerUnit(metaPath);
+            float visibleWorldHeight = visibleBounds.height / pixelsPerUnit;
+
+            Assert.That(metaText, Does.Contain("spritePixelsToUnits: 73.44827"), $"Guest 2 right walk frame {i} should use the same import scale as the rest of his butler art.");
+            Assert.That(visibleWorldHeight, Is.GreaterThanOrEqualTo(2.6f), $"Guest 2 right walk frame {i} should not shrink compared with his other standing animations.");
+        }
     }
 
     private static Dictionary<string, string> BuildButlerGuestMirroredSideWalkGuidMap()
