@@ -60,7 +60,7 @@ public sealed class DiningRoomAmbienceDirector : MonoBehaviour
         if (crossFading)
         {
             float fade01 = Mathf.Clamp01(timer / crossFadeSeconds);
-            SetAlpha(currentImage, 1f - fade01);
+            SetAlpha(currentImage, 1f);
             SetAlpha(nextImage, fade01);
 
             if (fade01 >= 1f)
@@ -81,6 +81,27 @@ public sealed class DiningRoomAmbienceDirector : MonoBehaviour
     {
         frames = value;
         ApplyInitialFrame();
+    }
+
+    public bool HasUsableFrames()
+    {
+        return HasFrames();
+    }
+
+    public void RestartLoop()
+    {
+        ResolveTargets();
+        frameIndex = FindValidFrameIndex(0, 1);
+        direction = 1;
+        timer = 0f;
+        crossFading = false;
+        ApplyInitialFrame();
+    }
+
+    public void SetImagesVisible(bool visible)
+    {
+        ResolveTargets();
+        SetTargetsVisible(visible);
     }
 
     private void ResolveTargets()

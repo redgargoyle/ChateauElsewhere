@@ -1057,8 +1057,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f7a27b0ab2e4f728f38a7f82be9eb11, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   animationStyle: 1
   color: {r: 1, g: 0.1155018, b: 0, a: 1}
   onAlpha: 0.711
@@ -1077,8 +1077,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0.121162586, b: 0.0064, a: 0.6580085}
   m_RaycastTarget: 0
@@ -5865,7 +5865,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &468177685
 RectTransform:
   m_ObjectHideFlags: 0
@@ -17400,7 +17400,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1493246501
 RectTransform:
   m_ObjectHideFlags: 0
@@ -25669,6 +25669,8 @@ GameObject:
   - component: {fileID: 3301000003}
   - component: {fileID: 3301000004}
   - component: {fileID: 3301000005}
+  - component: {fileID: 3301000006}
+  - component: {fileID: 3301000007}
   m_Layer: 0
   m_Name: ChapterManager
   m_TagString: Untagged
@@ -27964,7 +27966,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   roomName: Dining Room
-  roomBackgroundTexture: {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
+  roomBackgroundTexture: {fileID: 2800000, guid: 004ab4cca930d0387892725fe69b4f72, type: 3}
   perspectiveProfile: {fileID: 0}
   applyVisibleDefaultsToChildRenderers: 1
   defaultSortingLayerName: Background
@@ -34018,6 +34020,8 @@ MonoBehaviour:
   introUI: {fileID: 3301000003}
   chapter1ArrivalController: {fileID: 3302000001}
   chapter2Controller: {fileID: 0}
+  chapter3AbominationDinnerController: {fileID: 3301000007}
+  chapter3DinnerController: {fileID: 3301000006}
 --- !u!114 &3301000005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34031,6 +34035,76 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clockStrikeClockFaceSprite: {fileID: 3571343685731824843, guid: 941ff15a69f3e194b9048e9b67b21e20, type: 3}
+--- !u!114 &3301000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099709257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cf1253a115545868594fb067725f8e2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  chapterManager: {fileID: 3301000004}
+  navigationManager: {fileID: 0}
+  introUI: {fileID: 3301000003}
+  chapter2Controller: {fileID: 0}
+  guestSearch: {fileID: 0}
+  interactionHUD: {fileID: 3301000005}
+  diningRoomAmbienceDirector: {fileID: 3701000002}
+  diningRoomId: Dining Room
+  pendingFlag: chapter_03_dinner_pending
+  currentPhase: 0
+  coveredDinnerHoldSeconds: 2.5
+  eatingDurationSeconds: 60
+  foodHalfwayNormalizedTime: 0.5
+  autoStartSequence: 1
+  movePlayerToDiningRoomOnStart: 1
+  useAnimatedDiningRoomPresentation: 1
+  hideGuestActorVisualsWhenPresentationActive: 1
+  keepAnimatedPresentationAfterMeal: 0
+  coveredDinnerGroup: {fileID: 0}
+  fullFoodGroup: {fileID: 0}
+  halfFoodGroup: {fileID: 0}
+  emptyFoodGroup: {fileID: 0}
+  guestPerformances: []
+--- !u!114 &3301000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099709257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7b40f246bc14dbdb52a2010e1c4f894, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  chapterManager: {fileID: 3301000004}
+  navigationManager: {fileID: 0}
+  introUI: {fileID: 3301000003}
+  chapter2Controller: {fileID: 0}
+  guestSearch: {fileID: 0}
+  interactionHUD: {fileID: 3301000005}
+  fullFrameAnimator: {fileID: 3701000004}
+  legacyAmbienceDirector: {fileID: 3701000002}
+  pendingFlag: chapter_03_dinner_pending
+  diningRoomId: Dining Room
+  autoStartWhenPendingFlagDetected: 1
+  currentPhase: 0
+  seatedIdleHoldSeconds: 2
+  coveredDinnerHoldSeconds: 2.5
+  eatingDurationSeconds: 60
+  finishedIdleHoldSeconds: 2
+  movePlayerToDiningRoomOnStart: 1
+  hideNormalDiningRoomActorsDuringAbomination: 1
+  hideNormalDiningRoomTableDuringAbomination: 1
+  keepCompositeVisibleOnComplete: 1
+  normalDiningRoomPeopleGroup: {fileID: 0}
+  normalDiningRoomTableGroup: {fileID: 0}
+  abominationCompositeRoot: {fileID: 3701000000}
 --- !u!114 &3302000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36459,13 +36533,14 @@ GameObject:
   - component: {fileID: 3701000001}
   - component: {fileID: 3701000002}
   - component: {fileID: 3701000003}
+  - component: {fileID: 3701000004}
   m_Layer: 5
   m_Name: DiningRoom_Demo_Ambience
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3701000001
 RectTransform:
   m_ObjectHideFlags: 0
@@ -36494,7 +36569,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3701000000}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8bf826aaedbb42f6949d720c2752959a, type: 3}
   m_Name: 
@@ -36504,8 +36579,8 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
   - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
   - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
-  holdSeconds: 3.35
-  crossFadeSeconds: 1.15
+  holdSeconds: 2.25
+  crossFadeSeconds: 0.7
   pingPong: 1
   useUnscaledTime: 1
   currentImage: {fileID: 3701000013}
@@ -36525,9 +36600,63 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoomEnvironmentMarker
   roomName: Dining Room
   kind: 3
-  itemName: CEO Demo Dining Room Idle Loop
+  itemName: Chapter 3 Animated Dining Presentation
   needsPolish: 0
-  authoringNotes: Crossfades through the no-duplicate-butler full-room dining frames for slow candlelight, eating, arm, and head movement.
+  authoringNotes: Chapter 3 Abomination enables this no-butler full-room dinner frame loop and hides duplicate live guest sprites while it plays.
+--- !u!114 &3701000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3701000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3c8f83abdbd4b709d9b21a2962bf353, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  animator: {fileID: 0}
+  seatedIdleClip: {fileID: 0}
+  coveredDinnerClip: {fileID: 0}
+  eatingLoopClip: {fileID: 0}
+  finishedIdleClip: {fileID: 0}
+  spriteRenderer: {fileID: 0}
+  image: {fileID: 0}
+  rawImage: {fileID: 3701000013}
+  crossFadeImage: {fileID: 3701000023}
+  seatedIdleFrames: []
+  coveredDinnerFrames: []
+  eatingFrames: []
+  finishedIdleFrames: []
+  seatedIdleTextures:
+  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
+  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
+  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
+  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
+  coveredDinnerTextures:
+  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
+  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
+  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
+  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
+  eatingTextures:
+  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
+  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
+  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
+  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
+  finishedIdleTextures:
+  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
+  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
+  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
+  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
+  seatedIdleFps: 0.6
+  coveredDinnerFps: 0.6
+  eatingFps: 0.85
+  finishedIdleFps: 0.6
+  loopSeatedIdle: 1
+  loopCoveredDinner: 1
+  loopEating: 1
+  loopFinishedIdle: 1
+  useUnscaledTime: 1
 --- !u!1 &3701000010
 GameObject:
   m_ObjectHideFlags: 0
@@ -36692,7 +36821,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3701000101
 RectTransform:
   m_ObjectHideFlags: 0

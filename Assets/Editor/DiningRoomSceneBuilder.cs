@@ -10,6 +10,7 @@ public static class DiningRoomSceneBuilder
     private const string DiningRoomObjectName = "Room_Dining_Room";
     private const string AmbienceRootName = "DiningRoom_Demo_Ambience";
     private const string ButlerObjectName = "DiningRoom_ButlerObserver";
+    private const string BaseRoomTexturePath = "Assets/Art/Final Images (DO NOT EDIT)/dining room.png";
 
     private static readonly string[] DiningFramePaths =
     {
@@ -17,6 +18,18 @@ public static class DiningRoomSceneBuilder
         "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (2).png",
         "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (3).png",
         "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (4).png",
+    };
+
+    private static readonly string[] LegacyIdleGuestNames =
+    {
+        "Guest 1",
+        "Guest 2",
+        "Guest 3",
+        "Guest 4",
+        "Guest 5",
+        "Guest 6",
+        "Guest 7",
+        "Guest 8",
     };
 
     [MenuItem("Tools/Dreadforge/Build Dining Room Demo Scene")]
@@ -39,11 +52,14 @@ public static class DiningRoomSceneBuilder
             return;
         }
 
-        ConfigureRoomContent(diningRoom, diningFrames[0]);
+        Texture2D baseRoomTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(BaseRoomTexturePath);
+
+        ConfigureRoomContent(diningRoom, baseRoomTexture != null ? baseRoomTexture : diningFrames[0]);
         ConfigureAmbienceLoop(diningRoom.transform, diningFrames);
-        ConfigureButlerObserver(diningRoom.transform);
+        DisableAutomaticButlerObserver(diningRoom.transform);
         DisableLegacyStandaloneDiningTable(diningRoom.transform);
-        DisablePrerenderedSceneOverlays(diningRoom.transform);
+        RestoreSceneLightingAndEffects(diningRoom.transform);
+        DisableLegacyIdleGuests(scene);
 
         EditorUtility.SetDirty(diningRoom);
         EditorSceneManager.MarkSceneDirty(scene);
@@ -83,14 +99,17 @@ public static class DiningRoomSceneBuilder
 
         SerializedObject serializedDirector = new SerializedObject(director);
         AssignTextureArray(serializedDirector.FindProperty("frames"), frames);
-        serializedDirector.FindProperty("holdSeconds").floatValue = 3.35f;
-        serializedDirector.FindProperty("crossFadeSeconds").floatValue = 1.15f;
+        serializedDirector.FindProperty("holdSeconds").floatValue = 2.25f;
+        serializedDirector.FindProperty("crossFadeSeconds").floatValue = 0.7f;
         serializedDirector.FindProperty("pingPong").boolValue = true;
         serializedDirector.FindProperty("useUnscaledTime").boolValue = true;
         serializedDirector.FindProperty("currentImage").objectReferenceValue = current;
         serializedDirector.FindProperty("nextImage").objectReferenceValue = next;
         serializedDirector.FindProperty("hideWhenNoFrames").boolValue = true;
         serializedDirector.ApplyModifiedPropertiesWithoutUndo();
+        director.enabled = false;
+
+        ConfigureAbominationAnimator(ambienceRoot, current, next, frames);
 
         RoomEnvironmentMarker marker = ambienceRoot.GetComponent<RoomEnvironmentMarker>();
         if (marker == null)
@@ -101,111 +120,52 @@ public static class DiningRoomSceneBuilder
         marker.Configure(
             "Dining Room",
             RoomEnvironmentItemKind.PrerenderedPatch,
-            "CEO Demo Dining Room Idle Loop",
-            "Crossfades through the no-duplicate-butler full-room dining frames for slow candlelight, eating, arm, and head movement.",
+            "Chapter 3 Animated Dining Presentation",
+            "Chapter 3 enables this no-butler full-room dinner frame loop and hides duplicate live guest sprites while it plays.",
             false);
 
+        ambienceRoot.gameObject.SetActive(false);
         EditorUtility.SetDirty(ambienceRoot.gameObject);
     }
 
-    private static void ConfigureButlerObserver(Transform roomTransform)
+    private static void ConfigureAbominationAnimator(RectTransform ambienceRoot, RawImage current, RawImage next, Texture2D[] frames)
     {
-        RectTransform butler = EnsureRectChild(roomTransform, ButlerObjectName);
-        butler.SetAsLastSibling();
-        butler.anchorMin = new Vector2(0.5f, 0.5f);
-        butler.anchorMax = new Vector2(0.5f, 0.5f);
-        butler.pivot = new Vector2(0.5f, 0.035f);
-        butler.sizeDelta = new Vector2(168f, 299f);
-        butler.anchoredPosition = new Vector2(-720f, -220f);
-
-        if (butler.GetComponent<CanvasRenderer>() == null)
-        {
-            butler.gameObject.AddComponent<CanvasRenderer>();
-        }
-
-        Image image = butler.GetComponent<Image>();
-        if (image == null)
-        {
-            image = butler.gameObject.AddComponent<Image>();
-        }
-
-        image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Characters/butler/butler_classic_walk_01_r01_c01.png");
-        image.preserveAspect = true;
-        image.raycastTarget = false;
-        image.color = new Color(0.92f, 0.88f, 0.78f, 0.93f);
-
-        Animator animator = butler.GetComponent<Animator>();
+        AbominationFullFrameAnimator animator = ambienceRoot.GetComponent<AbominationFullFrameAnimator>();
         if (animator == null)
         {
-            animator = butler.gameObject.AddComponent<Animator>();
+            animator = ambienceRoot.gameObject.AddComponent<AbominationFullFrameAnimator>();
         }
 
-        animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/Animation/ButlerClassic/ButlerClassic.controller");
-        animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        SerializedObject serializedAnimator = new SerializedObject(animator);
+        serializedAnimator.FindProperty("rawImage").objectReferenceValue = current;
+        serializedAnimator.FindProperty("crossFadeImage").objectReferenceValue = next;
+        AssignTextureArray(serializedAnimator.FindProperty("seatedIdleTextures"), frames);
+        AssignTextureArray(serializedAnimator.FindProperty("coveredDinnerTextures"), frames);
+        AssignTextureArray(serializedAnimator.FindProperty("eatingTextures"), frames);
+        AssignTextureArray(serializedAnimator.FindProperty("finishedIdleTextures"), frames);
+        serializedAnimator.FindProperty("seatedIdleFps").floatValue = 0.6f;
+        serializedAnimator.FindProperty("coveredDinnerFps").floatValue = 0.6f;
+        serializedAnimator.FindProperty("eatingFps").floatValue = 0.85f;
+        serializedAnimator.FindProperty("finishedIdleFps").floatValue = 0.6f;
+        serializedAnimator.FindProperty("loopSeatedIdle").boolValue = true;
+        serializedAnimator.FindProperty("loopCoveredDinner").boolValue = true;
+        serializedAnimator.FindProperty("loopEating").boolValue = true;
+        serializedAnimator.FindProperty("loopFinishedIdle").boolValue = true;
+        serializedAnimator.ApplyModifiedPropertiesWithoutUndo();
 
-        RoomPersonWalker2D walker = butler.GetComponent<RoomPersonWalker2D>();
-        if (walker == null)
+        EditorUtility.SetDirty(animator);
+    }
+
+    private static void DisableAutomaticButlerObserver(Transform roomTransform)
+    {
+        Transform butler = FindChildRecursive(roomTransform, ButlerObjectName);
+
+        if (butler == null)
         {
-            walker = butler.gameObject.AddComponent<RoomPersonWalker2D>();
+            return;
         }
 
-        SerializedObject serializedWalker = new SerializedObject(walker);
-        serializedWalker.FindProperty("animator").objectReferenceValue = animator;
-        serializedWalker.FindProperty("targetGraphic").objectReferenceValue = image;
-        serializedWalker.FindProperty("previewInEditMode").boolValue = true;
-        serializedWalker.FindProperty("previewPathInEditMode").boolValue = false;
-        serializedWalker.FindProperty("snapToWholePixels").boolValue = false;
-        serializedWalker.FindProperty("animationSpeed").floatValue = 40f;
-        serializedWalker.FindProperty("horizontalDirectionThreshold").floatValue = 0.58f;
-        serializedWalker.FindProperty("addStepMotion").boolValue = true;
-        serializedWalker.FindProperty("pixelsPerWalkCycle").floatValue = 70f;
-        serializedWalker.FindProperty("walkBobPixels").floatValue = 2.7f;
-        serializedWalker.FindProperty("walkSwayPixels").floatValue = 0.8f;
-        serializedWalker.FindProperty("animateIdlePose").boolValue = true;
-        serializedWalker.FindProperty("idleBobPixels").floatValue = 0.7f;
-        serializedWalker.FindProperty("idleSwayPixels").floatValue = 0.28f;
-        serializedWalker.FindProperty("idleCycleSeconds").floatValue = 2.8f;
-        serializedWalker.FindProperty("pointPauseSeconds").floatValue = 0.35f;
-        serializedWalker.FindProperty("endpointPauseSeconds").floatValue = 2.2f;
-        serializedWalker.FindProperty("mirrorWhenWalkingLeft").boolValue = true;
-        AssignVector2Array(
-            serializedWalker.FindProperty("pathPoints"),
-            new[]
-            {
-                new Vector2(-720f, -220f),
-                new Vector2(-600f, -292f),
-                new Vector2(-365f, -352f),
-                new Vector2(-40f, -378f),
-                new Vector2(310f, -350f),
-                new Vector2(560f, -278f),
-                new Vector2(650f, -170f),
-                new Vector2(612f, -84f),
-            });
-        serializedWalker.FindProperty("pixelsPerSecond").floatValue = 54f;
-        serializedWalker.FindProperty("loopPath").boolValue = false;
-        serializedWalker.FindProperty("pingPongPath").boolValue = true;
-        serializedWalker.FindProperty("nearY").floatValue = -380f;
-        serializedWalker.FindProperty("farY").floatValue = -70f;
-        serializedWalker.FindProperty("nearScale").floatValue = 0.9f;
-        serializedWalker.FindProperty("farScale").floatValue = 0.52f;
-        serializedWalker.FindProperty("nearTint").colorValue = new Color(0.94f, 0.88f, 0.74f, 0.94f);
-        serializedWalker.FindProperty("farTint").colorValue = new Color(0.72f, 0.70f, 0.62f, 0.76f);
-        serializedWalker.FindProperty("disableRaycastTarget").boolValue = true;
-        serializedWalker.ApplyModifiedPropertiesWithoutUndo();
-
-        RoomEnvironmentMarker marker = butler.GetComponent<RoomEnvironmentMarker>();
-        if (marker == null)
-        {
-            marker = butler.gameObject.AddComponent<RoomEnvironmentMarker>();
-        }
-
-        marker.Configure(
-            "Dining Room",
-            RoomEnvironmentItemKind.AuthoringNote,
-            "Butler Observer Route",
-            "Slow ping-pong patrol across the foreground and right side of the dining room, using the ButlerClassic animation controller.",
-            false);
-
+        butler.gameObject.SetActive(false);
         EditorUtility.SetDirty(butler.gameObject);
     }
 
@@ -226,14 +186,13 @@ public static class DiningRoomSceneBuilder
         }
     }
 
-    private static void DisablePrerenderedSceneOverlays(Transform roomTransform)
+    private static void RestoreSceneLightingAndEffects(Transform roomTransform)
     {
-        DisableDirectChild(roomTransform, "AnimatedPatches");
-        DisableDirectChild(roomTransform, "Lighting");
-        DisableGuestVisuals(roomTransform);
+        SetDirectChildActive(roomTransform, "AnimatedPatches", true);
+        SetDirectChildActive(roomTransform, "Lighting", true);
     }
 
-    private static void DisableDirectChild(Transform parent, string childName)
+    private static void SetDirectChildActive(Transform parent, string childName, bool active)
     {
         Transform child = parent != null ? parent.Find(childName) : null;
 
@@ -242,39 +201,36 @@ public static class DiningRoomSceneBuilder
             return;
         }
 
-        child.gameObject.SetActive(false);
+        child.gameObject.SetActive(active);
         EditorUtility.SetDirty(child.gameObject);
     }
 
-    private static void DisableGuestVisuals(Transform roomTransform)
+    private static void DisableLegacyIdleGuests(Scene scene)
     {
-        if (roomTransform == null)
+        GameObject[] roots = scene.GetRootGameObjects();
+
+        for (int i = 0; i < roots.Length; i++)
         {
-            return;
-        }
+            Transform rootTransform = roots[i] != null ? roots[i].transform : null;
 
-        Transform[] children = roomTransform.GetComponentsInChildren<Transform>(true);
-
-        for (int i = 0; i < children.Length; i++)
-        {
-            Transform child = children[i];
-
-            if (child == null || child == roomTransform || !LooksLikeGuestVisual(child.name))
+            if (rootTransform == null)
             {
                 continue;
             }
 
-            child.gameObject.SetActive(false);
-            EditorUtility.SetDirty(child.gameObject);
-        }
-    }
+            for (int guestIndex = 0; guestIndex < LegacyIdleGuestNames.Length; guestIndex++)
+            {
+                Transform guest = FindChildRecursive(rootTransform, LegacyIdleGuestNames[guestIndex]);
 
-    private static bool LooksLikeGuestVisual(string objectName)
-    {
-        return !string.IsNullOrWhiteSpace(objectName) &&
-            (objectName.StartsWith("Guest") ||
-            objectName.StartsWith("Walker_Guest") ||
-            objectName.Contains("_Guest"));
+                if (guest == null)
+                {
+                    continue;
+                }
+
+                guest.gameObject.SetActive(false);
+                EditorUtility.SetDirty(guest.gameObject);
+            }
+        }
     }
 
     private static RawImage EnsureRawImage(RectTransform parent, string name, float alpha)
@@ -361,15 +317,6 @@ public static class DiningRoomSceneBuilder
         for (int i = 0; i < textures.Length; i++)
         {
             property.GetArrayElementAtIndex(i).objectReferenceValue = textures[i];
-        }
-    }
-
-    private static void AssignVector2Array(SerializedProperty property, Vector2[] points)
-    {
-        property.arraySize = points.Length;
-        for (int i = 0; i < points.Length; i++)
-        {
-            property.GetArrayElementAtIndex(i).vector2Value = points[i];
         }
     }
 

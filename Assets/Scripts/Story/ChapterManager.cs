@@ -51,6 +51,8 @@ public class ChapterManager : MonoBehaviour
     [SerializeField] private ChapterIntroUI introUI;
     [SerializeField] private Chapter1ArrivalController chapter1ArrivalController;
     [SerializeField] private Chapter2Controller chapter2Controller;
+    [SerializeField] private Chapter3AbominationDinnerController chapter3AbominationDinnerController;
+    [SerializeField] private Chapter3DinnerController chapter3DinnerController;
 
     private Coroutine chapterRoutine;
     private Coroutine chapterCompleteRoutine;
@@ -87,6 +89,7 @@ public class ChapterManager : MonoBehaviour
         managerObject.AddComponent<ChapterIntroUI>();
         managerObject.AddComponent<Chapter1ArrivalController>();
         managerObject.AddComponent<Chapter2Controller>();
+        managerObject.AddComponent<Chapter3AbominationDinnerController>();
         managerObject.AddComponent<ChapterManager>();
     }
 
@@ -232,6 +235,12 @@ public class ChapterManager : MonoBehaviour
             return;
         }
 
+        if (IsDuplicateChapter3Request(cleanNextChapterId))
+        {
+            Debug.Log("Chapter 3 request ignored because Chapter 3 dinner is already active.", this);
+            return;
+        }
+
         if (chapterCompleteRoutine != null)
         {
             return;
@@ -326,6 +335,26 @@ public class ChapterManager : MonoBehaviour
         if (chapter2Controller != null)
         {
             chapter2Controller.DebugSkipToChapter3ForTesting(this);
+            chapter3AbominationDinnerController = ResolveChapter3AbominationDinnerController(true);
+
+            if (chapter3AbominationDinnerController != null)
+            {
+                chapter3AbominationDinnerController.BeginAbominationDinner(this);
+            }
+            else
+            {
+                chapter3DinnerController = ResolveChapter3DinnerController(true);
+
+                if (chapter3DinnerController != null)
+                {
+                    chapter3DinnerController.BeginChapter3Dinner(this);
+                }
+                else
+                {
+                    Debug.LogWarning("Skip to Chapter 3 requested, but no Chapter 3 dinner controller could be resolved.", this);
+                    SetPlayerInputEnabled(true);
+                }
+            }
         }
         else
         {
@@ -486,6 +515,35 @@ public class ChapterManager : MonoBehaviour
             yield break;
         }
 
+        if (IsChapter3Request(cleanNextChapterId))
+        {
+            currentChapterId = Chapter3PendingId;
+            displayedTitle = "Chapter 3";
+            chapterCompleteRoutine = null;
+            chapter3AbominationDinnerController = ResolveChapter3AbominationDinnerController(true);
+
+            if (chapter3AbominationDinnerController != null)
+            {
+                chapter3AbominationDinnerController.BeginAbominationDinner(this);
+            }
+            else
+            {
+                chapter3DinnerController = ResolveChapter3DinnerController(true);
+
+                if (chapter3DinnerController != null)
+                {
+                    chapter3DinnerController.BeginChapter3Dinner(this);
+                }
+                else
+                {
+                    Debug.LogWarning("Chapter 3 dinner requested, but no Chapter 3 dinner controller could be resolved.", this);
+                    SetPlayerInputEnabled(true);
+                }
+            }
+
+            yield break;
+        }
+
         Debug.Log($"Next chapter requested: {cleanNextChapterId}", this);
         chapterCompleteRoutine = null;
     }
@@ -500,6 +558,13 @@ public class ChapterManager : MonoBehaviour
         return string.Equals(nextChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
             string.Equals(nextChapterId, "chapter_02_pending", System.StringComparison.OrdinalIgnoreCase) ||
             nextChapterId.StartsWith("chapter_02", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsChapter3Request(string nextChapterId)
+    {
+        return string.Equals(nextChapterId, Chapter3PendingId, System.StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(nextChapterId, "chapter_03_pending", System.StringComparison.OrdinalIgnoreCase) ||
+            nextChapterId.StartsWith("chapter_03", System.StringComparison.OrdinalIgnoreCase);
     }
 
     private bool IsCurrentChapter(string chapterId)
@@ -521,6 +586,23 @@ public class ChapterManager : MonoBehaviour
             (chapter2Controller != null && chapter2Controller.CurrentPhase != Chapter2Phase.NotStarted);
     }
 
+    private bool IsDuplicateChapter3Request(string nextChapterId)
+    {
+        if (!IsChapter3Request(nextChapterId))
+        {
+            return false;
+        }
+
+        ResolveChapter3AbominationDinnerController(false);
+        ResolveChapter3DinnerController(false);
+
+        return string.Equals(currentChapterId, Chapter3PendingId, System.StringComparison.OrdinalIgnoreCase) &&
+            ((chapter3AbominationDinnerController != null &&
+                chapter3AbominationDinnerController.CurrentPhase != Chapter3AbominationDinnerPhase.NotStarted) ||
+                (chapter3DinnerController != null &&
+                    chapter3DinnerController.CurrentPhase != Chapter3DinnerPhase.NotStarted));
+    }
+
     private Chapter2Controller ResolveChapter2Controller(bool createIfMissing)
     {
         if (chapter2Controller == null)
@@ -539,6 +621,46 @@ public class ChapterManager : MonoBehaviour
         }
 
         return chapter2Controller;
+    }
+
+    private Chapter3DinnerController ResolveChapter3DinnerController(bool createIfMissing)
+    {
+        if (chapter3DinnerController == null)
+        {
+            chapter3DinnerController = GetComponent<Chapter3DinnerController>();
+        }
+
+        if (chapter3DinnerController == null)
+        {
+            chapter3DinnerController = FindAnyObjectByType<Chapter3DinnerController>(FindObjectsInactive.Include);
+        }
+
+        if (chapter3DinnerController == null && createIfMissing)
+        {
+            chapter3DinnerController = gameObject.AddComponent<Chapter3DinnerController>();
+        }
+
+        return chapter3DinnerController;
+    }
+
+    private Chapter3AbominationDinnerController ResolveChapter3AbominationDinnerController(bool createIfMissing)
+    {
+        if (chapter3AbominationDinnerController == null)
+        {
+            chapter3AbominationDinnerController = GetComponent<Chapter3AbominationDinnerController>();
+        }
+
+        if (chapter3AbominationDinnerController == null)
+        {
+            chapter3AbominationDinnerController = FindAnyObjectByType<Chapter3AbominationDinnerController>(FindObjectsInactive.Include);
+        }
+
+        if (chapter3AbominationDinnerController == null && createIfMissing)
+        {
+            chapter3AbominationDinnerController = gameObject.AddComponent<Chapter3AbominationDinnerController>();
+        }
+
+        return chapter3AbominationDinnerController;
     }
 
     private void SetPlayerInputEnabled(bool enabled)
@@ -649,6 +771,8 @@ public class ChapterManager : MonoBehaviour
         }
 
         ResolveChapter2Controller(false);
+        ResolveChapter3AbominationDinnerController(false);
+        ResolveChapter3DinnerController(false);
 
         ResolvePlayerReference();
 
