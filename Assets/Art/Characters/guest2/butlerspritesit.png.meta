@@ -112,12 +112,12 @@ TextureImporter:
       name: butlerspritesit_0
       rect:
         serializedVersion: 2
-        x: 8
-        y: 8
-        width: 438
-        height: 574
+        x: 7
+        y: 10
+        width: 284
+        height: 576
       alignment: 0
-      pivot: {x: 0.678082, y: 0}
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData:
       outline: []
@@ -134,12 +134,12 @@ TextureImporter:
       name: butlerspritesit_1
       rect:
         serializedVersion: 2
-        x: 470
-        y: 8
-        width: 438
+        x: 519
+        y: 10
+        width: 282
         height: 574
       alignment: 0
-      pivot: {x: 0.675799, y: 0.003484}
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData:
       outline: []
@@ -156,12 +156,12 @@ TextureImporter:
       name: butlerspritesit_2
       rect:
         serializedVersion: 2
-        x: 932
-        y: 8
-        width: 438
-        height: 574
+        x: 1044
+        y: 7
+        width: 280
+        height: 575
       alignment: 0
-      pivot: {x: 0.673516, y: 0.001742}
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData:
       outline: []
@@ -178,12 +178,12 @@ TextureImporter:
       name: butlerspritesit_3
       rect:
         serializedVersion: 2
-        x: 1394
-        y: 8
-        width: 438
+        x: 1573
+        y: 10
+        width: 277
         height: 574
       alignment: 0
-      pivot: {x: 0.670091, y: 0.003484}
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData:
       outline: []

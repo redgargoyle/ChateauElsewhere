@@ -54,27 +54,6 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
         ApplySorting();
     }
 
-    public void Configure(
-        string layerName,
-        int orderBase,
-        float orderPerYUnit,
-        int orderOffset,
-        Transform reference,
-        bool sortChildren = true)
-    {
-        sortingLayerName = string.IsNullOrWhiteSpace(layerName) ? "People" : layerName.Trim();
-        sortingOrderBase = orderBase;
-        sortingOrderPerYUnit = Mathf.Max(0f, orderPerYUnit);
-        sortingOrderOffset = orderOffset;
-        includeChildren = sortChildren;
-        forcePivotSortPoint = true;
-        sortSolidObstacleFromPhysicalBottom = false;
-        yReference = reference != null ? reference : transform;
-        RefreshRenderers();
-        ResolveOptionalReferences();
-        ApplySorting();
-    }
-
     public void ApplySorting()
     {
         ResolveOptionalReferences();

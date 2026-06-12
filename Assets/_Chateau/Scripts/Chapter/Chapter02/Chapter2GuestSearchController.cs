@@ -34,9 +34,10 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private List<GuestSearchEntry> guests = new List<GuestSearchEntry>();
     [SerializeField] private string hideAnchorPrefix = "Ch2_Hide_";
     [SerializeField] private string diningSeatPrefix = "Ch2_DiningSeat_";
+    [SerializeField] private string diningTableObjectName = "correct_dining_table_0";
     [SerializeField] private string diningGuestSortingLayerName = "People";
-    [SerializeField] private int diningGuestSortingOrderBase = 1000;
-    [SerializeField] private float diningGuestSortingOrderPerYUnit = 100f;
+    [SerializeField] private int diningGuestSortingOrderBase = 1600;
+    [SerializeField] private float diningGuestSortingOrderPerYUnit = 1f;
     [SerializeField] private int diningGuestSortingOrderOffset;
     [SerializeField] private int foundOrderCounter;
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
@@ -509,7 +510,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(false);
             guest.actorState.SetSeated(true);
-            ApplyDiningRoomGuestYSorting(guest);
+            ApplyDiningRoomGuestYSorting(guest, diningSeat);
             guest.actorState.ApplyState();
         }
     }
@@ -559,7 +560,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
         return null;
     }
 
-    private void ApplyDiningRoomGuestYSorting(GuestSearchEntry guest)
+    private void ApplyDiningRoomGuestYSorting(GuestSearchEntry guest, RoomAnchor diningSeat)
     {
         if (guest == null || guest.actorState == null || guest.actorState.gameObject == null)
         {
@@ -576,18 +577,37 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         WorldYSortSpriteRenderer sorter = actorObject.GetComponent<WorldYSortSpriteRenderer>();
 
-        if (sorter == null)
+        if (sorter != null)
         {
-            sorter = actorObject.AddComponent<WorldYSortSpriteRenderer>();
+            sorter.enabled = false;
         }
 
-        sorter.enabled = true;
-        sorter.Configure(
-            diningGuestSortingLayerName,
-            diningGuestSortingOrderBase,
-            diningGuestSortingOrderPerYUnit,
-            diningGuestSortingOrderOffset,
-            actorObject.transform);
+        SpriteRenderer[] renderers = actorObject.GetComponentsInChildren<SpriteRenderer>(true);
+
+        if (renderers == null || renderers.Length == 0)
+        {
+            return;
+        }
+
+        SpriteRenderer tableRenderer = FindDiningTableRenderer(diningSeat);
+        string sortingLayerName = tableRenderer != null
+            ? tableRenderer.sortingLayerName
+            : GetSortingLayerName(diningGuestSortingLayerName);
+        int sortingOrder = ResolveDiningGuestSortingOrder(diningSeat, tableRenderer);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            renderer.sortingLayerName = sortingLayerName;
+            renderer.sortingOrder = sortingOrder;
+            renderer.spriteSortPoint = SpriteSortPoint.Pivot;
+        }
     }
 
     private static void RestoreGuestMovementSorting(GuestSearchEntry guest)
@@ -609,8 +629,114 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         if (movement != null)
         {
-            movement.SetPlayerSortingEnabled(true, false);
+            movement.SetPlayerSortingEnabled(true);
         }
+    }
+
+    private SpriteRenderer FindDiningTableRenderer(RoomAnchor diningSeat)
+    {
+        RoomContentGroup roomContentGroup = diningSeat != null
+            ? diningSeat.GetComponentInParent<RoomContentGroup>(true)
+            : null;
+
+        if (roomContentGroup != null &&
+            TryFindDiningTableRenderer(roomContentGroup.transform, out SpriteRenderer roomTableRenderer))
+        {
+            return roomTableRenderer;
+        }
+
+        SpriteRenderer[] renderers = FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+
+            if (IsDiningTableRenderer(renderer))
+            {
+                return renderer;
+            }
+        }
+
+        return null;
+    }
+
+    private bool TryFindDiningTableRenderer(Transform root, out SpriteRenderer tableRenderer)
+    {
+        tableRenderer = null;
+
+        if (root == null)
+        {
+            return false;
+        }
+
+        SpriteRenderer[] renderers = root.GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+
+            if (IsDiningTableRenderer(renderer))
+            {
+                tableRenderer = renderer;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsDiningTableRenderer(SpriteRenderer renderer)
+    {
+        if (renderer == null)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(diningTableObjectName) &&
+            SameId(renderer.gameObject.name, diningTableObjectName.Trim()))
+        {
+            return true;
+        }
+
+        Sprite sprite = renderer.sprite;
+        return sprite != null &&
+            !string.IsNullOrWhiteSpace(sprite.name) &&
+            sprite.name.IndexOf("correct_dining_table", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private int ResolveDiningGuestSortingOrder(RoomAnchor diningSeat, SpriteRenderer tableRenderer)
+    {
+        float orderPerYUnit = Mathf.Max(0f, diningGuestSortingOrderPerYUnit);
+
+        if (diningSeat != null && tableRenderer != null)
+        {
+            RoomContentGroup roomContentGroup = diningSeat.GetComponentInParent<RoomContentGroup>(true);
+            Transform roomRoot = roomContentGroup != null ? roomContentGroup.transform : null;
+            float seatY = GetRoomRelativeY(diningSeat.transform, roomRoot);
+            float tableY = GetRoomRelativeY(tableRenderer.transform, roomRoot);
+            int yOffset = Mathf.RoundToInt((seatY - tableY) * orderPerYUnit);
+            return tableRenderer.sortingOrder - yOffset + diningGuestSortingOrderOffset;
+        }
+
+        Transform fallbackReference = diningSeat != null ? diningSeat.transform : transform;
+        return diningGuestSortingOrderBase -
+            Mathf.RoundToInt(fallbackReference.position.y * orderPerYUnit) +
+            diningGuestSortingOrderOffset;
+    }
+
+    private static float GetRoomRelativeY(Transform target, Transform roomRoot)
+    {
+        if (target == null)
+        {
+            return 0f;
+        }
+
+        if (roomRoot != null)
+        {
+            return roomRoot.InverseTransformPoint(target.position).y;
+        }
+
+        return target.localPosition.y;
     }
 
     private void HideGuestForDiningRoomTransfer(GuestSearchEntry guest)
@@ -1492,6 +1618,22 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private static bool SameId(string left, string right)
     {
         return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string GetSortingLayerName(string requestedLayerName)
+    {
+        if (string.IsNullOrWhiteSpace(requestedLayerName))
+        {
+            return "Default";
+        }
+
+        if (string.Equals(requestedLayerName, "Default", StringComparison.OrdinalIgnoreCase) ||
+            SortingLayer.NameToID(requestedLayerName) != 0)
+        {
+            return requestedLayerName;
+        }
+
+        return "Default";
     }
 
     private static string FormatDiagnosticValue(string value)
