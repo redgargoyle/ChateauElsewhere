@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6555f42e4c7c4e5db0e7ee2009039c37, type: 3}
+  m_Name: LayeredDinnerManifest
+  m_EditorClassIdentifier: Assembly-CSharp::Chapter3LayeredDinnerAssetManifest
+  canvasSize: {x: 1448, y: 1086}
+  tableBack: {fileID: 0}
+  tableTopProps: {fileID: 0}
+  tableFrontOverlay: {fileID: 0}
+  coveredDish: {fileID: 0}
+  foodFull: {fileID: 0}
+  foodHalf: {fileID: 0}
+  foodEmpty: {fileID: 0}
+  seats:
+  - seatId: Seat01
+    idleFrames: []
+    eatFrames: []
+    talkFrames: []
+    headFrames: []
+    utensilFrames: []
+    handOverlayFrames: []
+  - seatId: Seat02
+    idleFrames: []
+    eatFrames: []
+    talkFrames: []
+    headFrames: []
+    utensilFrames: []
+    handOverlayFrames: []
+  - seatId: Seat03
+    idleFrames: []
+    eatFrames: []
+    talkFrames: []
+    headFrames: []
+    utensilFrames: []
+    handOverlayFrames: []
+  - seatId: Seat04
+    idleFrames: []
+    eatFrames: []
+    talkFrames: []
+    headFrames: []
+    utensilFrames: []
+    handOverlayFrames: []
+  - seatId: Seat05
+    idleFrames: []
+    eatFrames: []
+    talkFrames: []
+    headFrames: []
+    utensilFrames: []
+    handOverlayFrames: []
+  - seatId: Seat06
+    idleFrames: []
+    eatFrames: []
+    talkFrames: []
+    headFrames: []
+    utensilFrames: []
+    handOverlayFrames: []
+  - seatId: Seat07
+    idleFrames: []
+    eatFrames: []
+    talkFrames: []
+    headFrames: []
+    utensilFrames: []
+    handOverlayFrames: []
+  - seatId: Seat08
+    idleFrames: []
+    eatFrames: []
+    talkFrames: []
+    headFrames: []
+    utensilFrames: []
+    handOverlayFrames: []

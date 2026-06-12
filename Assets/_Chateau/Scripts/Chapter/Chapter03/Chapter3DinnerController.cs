@@ -1,11 +1,12 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum Chapter3DinnerPhase
 {
     NotStarted,
+    BuildLayeredDinner,
     SeatedIdle,
     DinnerServedCovered,
     EatingActive,
@@ -16,73 +17,73 @@ public enum Chapter3DinnerPhase
 [DisallowMultipleComponent]
 public sealed class Chapter3DinnerController : MonoBehaviour
 {
-    private const string LogPrefix = "[Chapter3Dinner]";
+    private const string LogPrefix = "[Ch3Dining]";
+    private const string DebugHudCanvasName = "Ch3_Dining_DebugHUD";
 
     [Header("References")]
     [SerializeField] private ChapterManager chapterManager;
     [SerializeField] private RoomNavigationManager navigationManager;
-    [SerializeField] private ChapterIntroUI introUI;
-    [SerializeField] private Chapter2Controller chapter2Controller;
     [SerializeField] private Chapter2GuestSearchController guestSearch;
     [SerializeField] private Chapter2InteractionHUD interactionHUD;
-    [SerializeField] private DiningFoodVisualState foodVisualState;
-    [SerializeField] private DiningTableIdleSceneController diningTableSequence;
+    [SerializeField] private Chapter3LayeredDinnerBuilder dinnerBuilder;
+    [SerializeField] private Chapter3DiningTableForegroundOccluder tableForegroundOccluder;
 
-    [Header("Chapter")]
+    [Header("Room")]
     [SerializeField] private string diningRoomId = "Dining Room";
-    [SerializeField] private string pendingFlag = ChapterManager.Chapter3PendingId;
-    [SerializeField] private Chapter3DinnerPhase currentPhase = Chapter3DinnerPhase.NotStarted;
-
-    [Header("Dining Animation")]
-    [SerializeField] private bool useDiningTableImageSequence = true;
 
     [Header("Timing")]
-    [SerializeField, Min(0f)] private float seatedIdleHoldSeconds = 0.5f;
-    [SerializeField, Min(0f)] private float coveredDinnerHoldSeconds = 2.5f;
-    [SerializeField, Min(0f)] private float eatingDurationSeconds = 60f;
-    [SerializeField, Range(0f, 1f)] private float foodHalfwayNormalizedTime = 0.5f;
-    [SerializeField] private bool autoStartSequence = true;
-    [SerializeField] private bool fadeFromBlackOnStart = true;
+    [SerializeField] private float seatedIdleSeconds = 1f;
+    [SerializeField] private float coveredDinnerHoldSeconds = 1.5f;
+    [SerializeField] private float eatingDurationSeconds = 60f;
+    [SerializeField, Range(0.05f, 0.95f)] private float foodHalfwayNormalizedTime = 0.5f;
 
-    [Header("Food Groups")]
-    [SerializeField] private GameObject coveredDinnerGroup;
-    [SerializeField] private GameObject fullFoodGroup;
-    [SerializeField] private GameObject halfFoodGroup;
-    [SerializeField] private GameObject emptyFoodGroup;
-    [SerializeField] private bool autoFindFoodGroupsByName = true;
-    [SerializeField] private string coveredDinnerObjectName = "Ch3_CoveredDinnerGroup";
-    [SerializeField] private string fullFoodObjectName = "Ch3_FullFoodGroup";
-    [SerializeField] private string halfFoodObjectName = "Ch3_HalfFoodGroup";
-    [SerializeField] private string emptyFoodObjectName = "Ch3_EmptyFoodGroup";
+    [Header("Debug")]
+    [SerializeField] private Chapter3DinnerPhase currentPhase;
+    [SerializeField] private bool debugFastMode;
+    [SerializeField] private bool showDebugHud = true;
 
-    [Header("Guest Performances")]
-    [SerializeField] private List<GuestDiningPerformance> guestPerformances = new List<GuestDiningPerformance>();
-    [SerializeField, Min(0.05f)] private float minGuestActionDelay = 1.5f;
-    [SerializeField, Min(0.05f)] private float maxGuestActionDelay = 4.5f;
-
-    private Coroutine dinnerRoutine;
-    private bool warnedMissingFoodSetup;
-    private bool warnedMissingGuestSearch;
-    private bool warnedMissingGuests;
-    private bool warnedMissingDiningTableSequence;
+    private readonly List<Chapter3GuestVisualSuppressor> suppressors = new List<Chapter3GuestVisualSuppressor>();
+    private readonly List<Chapter3LayeredSeatAnimator> seatAnimators = new List<Chapter3LayeredSeatAnimator>();
+    private Coroutine routine;
+    private Coroutine eatingWatchdogRoutine;
+    private Canvas debugCanvas;
+    private Text debugText;
 
     public Chapter3DinnerPhase CurrentPhase => currentPhase;
-    public string PendingFlag => pendingFlag;
-    public float EatingDurationSeconds => eatingDurationSeconds;
+    public int SeatAnimatorCount => seatAnimators.Count;
+    public int TotalSeatActions => GetTotalSeatActions();
+    public int TotalSpriteFramesApplied => GetTotalSpriteFramesApplied();
 
     private void OnValidate()
     {
-        maxGuestActionDelay = Mathf.Max(minGuestActionDelay, maxGuestActionDelay);
-        eatingDurationSeconds = Mathf.Max(0f, eatingDurationSeconds);
+        seatedIdleSeconds = Mathf.Max(0f, seatedIdleSeconds);
         coveredDinnerHoldSeconds = Mathf.Max(0f, coveredDinnerHoldSeconds);
-        seatedIdleHoldSeconds = Mathf.Max(0f, seatedIdleHoldSeconds);
+        eatingDurationSeconds = Mathf.Max(0f, eatingDurationSeconds);
+    }
+
+    private void LateUpdate()
+    {
+        if (currentPhase == Chapter3DinnerPhase.NotStarted)
+        {
+            return;
+        }
+
+        for (int i = 0; i < suppressors.Count; i++)
+        {
+            if (suppressors[i] != null)
+            {
+                suppressors[i].Suppress();
+            }
+        }
+
+        tableForegroundOccluder?.EnsureOccluder();
     }
 
     private void OnDisable()
     {
-        StopDinnerRoutine();
-        StopGuestEating();
-        diningTableSequence?.Hide();
+        StopRoutine();
+        StopSeatEating();
+        tableForegroundOccluder?.HideOccluder();
     }
 
     public void BeginChapter3Dinner(ChapterManager manager = null)
@@ -93,200 +94,192 @@ public sealed class Chapter3DinnerController : MonoBehaviour
         }
 
         ResolveReferences();
-        StopDinnerRoutine();
-        StopGuestEating();
+        StopRoutine();
+        routine = StartCoroutine(RunDinnerRoutine());
+    }
 
-        if (!autoStartSequence)
-        {
-            PrepareSeatedIdlePhase();
-            SetPlayerInputEnabled(true);
-            Debug.Log($"{LogPrefix} Chapter 3 staged in seated idle. autoStartSequence is disabled.", this);
-            return;
-        }
-
-        dinnerRoutine = StartCoroutine(RunDinnerSequence());
+    public void FinishDinnerImmediately()
+    {
+        ResolveReferences();
+        StopRoutine();
+        FinishDinner(false);
     }
 
     [ContextMenu("Debug Start Chapter 3 Dinner")]
-    public void DebugStartChapter3Dinner()
+    private void DebugStartChapter3Dinner()
     {
         BeginChapter3Dinner(chapterManager);
     }
 
-    [ContextMenu("Debug Finish Dinner Immediately")]
-    public void DebugFinishDinnerImmediately()
+    [ContextMenu("Debug Jump To Eating Active")]
+    public void DebugJumpToEatingActive()
     {
         ResolveReferences();
-        StopDinnerRoutine();
-        FinishMeal(false);
-    }
+        StopRoutine();
 
-    private IEnumerator RunDinnerSequence()
-    {
-        SetPlayerInputEnabled(false);
-        PrepareSeatedIdlePhase();
-
-        if (fadeFromBlackOnStart && introUI != null)
+        if (!PrepareLayeredDinner())
         {
-            yield return introUI.FadeFromBlack(GetFadeSeconds());
-        }
-        else if (introUI != null)
-        {
-            introUI.HideOverlay();
-        }
-
-        SetPlayerInputEnabled(true);
-
-        if (seatedIdleHoldSeconds > 0f)
-        {
-            yield return new WaitForSeconds(seatedIdleHoldSeconds);
-        }
-
-        SetPhase(Chapter3DinnerPhase.DinnerServedCovered);
-        UpdateObjective("Dinner is served.");
-        ShowFoodCovered();
-
-        if (coveredDinnerHoldSeconds > 0f)
-        {
-            yield return new WaitForSeconds(coveredDinnerHoldSeconds);
+            SetPlayerInputEnabled(true);
+            return;
         }
 
         SetPhase(Chapter3DinnerPhase.EatingActive);
-        UpdateObjective("Dinner is served.");
-        ShowFoodFull();
-        BeginGuestEating();
-
-        yield return RunEatingTimer();
-        FinishMeal(false);
-        dinnerRoutine = null;
+        dinnerBuilder.ShowDinner(true);
+        dinnerBuilder.FoodState?.ShowFull();
+        UpdateObjective("The guests begin to eat.");
+        BeginSeatEating(true);
+        StartEatingWatchdog();
+        SetPlayerInputEnabled(true);
     }
 
-    private void PrepareSeatedIdlePhase()
+    [ContextMenu("Debug Finish Dinner Immediately")]
+    private void DebugFinishDinnerImmediately()
+    {
+        FinishDinnerImmediately();
+    }
+
+    private IEnumerator RunDinnerRoutine()
     {
         ResolveReferences();
-        HideChapter2DiningStillIfNeeded();
-        EnsureDiningRoomIsActive();
-        SeatGuestsUsingExistingController();
-        ResolveGuestPerformances();
-        PrepareGuestsForSeatedIdle();
-        HideAllFood();
-        ShowDiningTableSequenceIfNeeded();
+        SetPlayerInputEnabled(false);
+
+        if (!PrepareLayeredDinner())
+        {
+            SetPlayerInputEnabled(true);
+            routine = null;
+            yield break;
+        }
+
         SetPhase(Chapter3DinnerPhase.SeatedIdle);
+        dinnerBuilder.ShowDinner(true);
+        dinnerBuilder.FoodState?.HideAll();
+        PlayAllSeatsIdle();
+        UpdateObjective("The guests take their seats.");
+
+        if (GetMaybeFastDuration(seatedIdleSeconds) > 0f)
+        {
+            yield return new WaitForSeconds(GetMaybeFastDuration(seatedIdleSeconds));
+        }
+
+        SetPhase(Chapter3DinnerPhase.DinnerServedCovered);
+        dinnerBuilder.FoodState?.ShowCovered();
         UpdateObjective("Dinner is served.");
-        Debug.Log($"{LogPrefix} Chapter 3 dinner seated idle is ready.", this);
-    }
 
-    private IEnumerator RunEatingTimer()
-    {
-        float duration = Mathf.Max(0f, eatingDurationSeconds);
-        float halfwayTime = duration * Mathf.Clamp01(foodHalfwayNormalizedTime);
-        bool showedHalf = false;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
+        if (GetMaybeFastDuration(coveredDinnerHoldSeconds) > 0f)
         {
-            elapsed += Time.deltaTime;
-
-            if (!showedHalf && CanShowHalfFood() && elapsed >= halfwayTime)
-            {
-                showedHalf = true;
-                ShowFoodHalf();
-            }
-
-            yield return null;
-        }
-    }
-
-    private void FinishMeal(bool markComplete)
-    {
-        StopGuestEating();
-        PrepareGuestsForSeatedIdle();
-        ShowFoodEmpty();
-        ShowDiningTableSequenceIfNeeded();
-        UpdateObjective("The meal is finished.");
-        SetPhase(Chapter3DinnerPhase.MealFinishedIdle);
-        SetPlayerInputEnabled(true);
-
-        if (markComplete)
-        {
-            SetPhase(Chapter3DinnerPhase.Complete);
+            yield return new WaitForSeconds(GetMaybeFastDuration(coveredDinnerHoldSeconds));
         }
 
-        Debug.Log($"{LogPrefix} Chapter 3 dinner meal finished.", this);
+        SetPhase(Chapter3DinnerPhase.EatingActive);
+        dinnerBuilder.FoodState?.ShowFull();
+        UpdateObjective("The guests begin to eat.");
+        BeginSeatEating(false);
+        StartEatingWatchdog();
+
+        float eatingDuration = GetEatingDuration();
+        float firstLeg = eatingDuration * foodHalfwayNormalizedTime;
+        float secondLeg = Mathf.Max(0f, eatingDuration - firstLeg);
+
+        if (firstLeg > 0f)
+        {
+            yield return new WaitForSeconds(firstLeg);
+        }
+
+        dinnerBuilder.FoodState?.ShowHalf();
+
+        if (secondLeg > 0f)
+        {
+            yield return new WaitForSeconds(secondLeg);
+        }
+
+        dinnerBuilder.FoodState?.ShowEmpty();
+        FinishDinner(false);
+        routine = null;
     }
 
-    private void SeatGuestsUsingExistingController()
+    private bool PrepareLayeredDinner()
+    {
+        SetPhase(Chapter3DinnerPhase.BuildLayeredDinner);
+        MoveToDiningRoom();
+
+        if (dinnerBuilder == null)
+        {
+            dinnerBuilder = gameObject.AddComponent<Chapter3LayeredDinnerBuilder>();
+        }
+
+        if (!dinnerBuilder.BuildOrRefresh())
+        {
+            Debug.LogError($"{LogPrefix} Could not build layered Chapter 3 dinner. Missing registered full-canvas art is the likely cause.", this);
+            UpdateDebugHud();
+            return false;
+        }
+
+        SeatStoryGuests();
+        SuppressStoryGuestVisuals();
+        EnsureTableForegroundOccluder();
+        RefreshSeatAnimators();
+        EnsureDebugHud();
+        UpdateDebugHud();
+        return true;
+    }
+
+    private void EnsureTableForegroundOccluder()
+    {
+        if (tableForegroundOccluder == null)
+        {
+            tableForegroundOccluder = GetComponent<Chapter3DiningTableForegroundOccluder>();
+        }
+
+        if (tableForegroundOccluder == null)
+        {
+            tableForegroundOccluder = gameObject.AddComponent<Chapter3DiningTableForegroundOccluder>();
+        }
+
+        tableForegroundOccluder.EnsureOccluder();
+    }
+
+    private void SeatStoryGuests()
     {
         if (guestSearch == null)
         {
-            WarnMissingGuestSearchOnce();
+            Debug.LogWarning($"{LogPrefix} No Chapter2GuestSearchController found; layered dinner will still render but old guest actors cannot be staged.", this);
             return;
         }
 
         guestSearch.AutoDiscoverGuestsIfNeeded();
-
-        if (guestSearch.GuestCount == 0)
-        {
-            WarnMissingGuestsOnce();
-            return;
-        }
-
-        if (!guestSearch.AllGuestsFound)
-        {
-            Debug.LogWarning(
-                $"{LogPrefix} Chapter 3 started before all guests were marked found. " +
-                "Staging all discovered guests so the dinner sequence can run.",
-                this);
-            guestSearch.DebugStageAllGuestsFoundForChapter3Skip();
-            return;
-        }
-
         guestSearch.SeatGuestsInDiningRoom();
     }
 
-    private void ResolveGuestPerformances()
+    private void SuppressStoryGuestVisuals()
     {
-        if (guestPerformances == null)
-        {
-            guestPerformances = new List<GuestDiningPerformance>();
-        }
+        suppressors.Clear();
+        List<ActorRoomState> actors = GetGuestActors();
 
-        guestPerformances.RemoveAll(performance => performance == null);
-        List<ActorRoomState> guestActors = GetGuestActors();
-
-        for (int i = 0; i < guestActors.Count; i++)
+        for (int i = 0; i < actors.Count; i++)
         {
-            ActorRoomState actor = guestActors[i];
+            ActorRoomState actor = actors[i];
 
             if (actor == null)
             {
                 continue;
             }
 
-            GuestDiningPerformance performance = actor.GetComponent<GuestDiningPerformance>();
+            actor.SetSeated(true);
+            actor.SetInteractable(false);
+            actor.SetVisibleByChapterState(true);
+            actor.SetAvailableInCurrentChapter(true);
+            actor.ApplyState();
 
-            if (performance == null)
+            Chapter3GuestVisualSuppressor suppressor = actor.GetComponent<Chapter3GuestVisualSuppressor>();
+
+            if (suppressor == null)
             {
-                performance = actor.GetComponentInChildren<GuestDiningPerformance>(true);
+                suppressor = actor.gameObject.AddComponent<Chapter3GuestVisualSuppressor>();
             }
 
-            if (performance == null)
-            {
-                performance = actor.gameObject.AddComponent<GuestDiningPerformance>();
-            }
-
-            performance.AssignActorStateIfMissing(actor);
-            performance.ConfigureActionDelays(minGuestActionDelay, maxGuestActionDelay);
-
-            if (!guestPerformances.Contains(performance))
-            {
-                guestPerformances.Add(performance);
-            }
-        }
-
-        if (guestPerformances.Count == 0)
-        {
-            WarnMissingGuestsOnce();
+            suppressor.Initialize(actor);
+            suppressor.Suppress();
+            suppressors.Add(suppressor);
         }
     }
 
@@ -297,251 +290,153 @@ public sealed class Chapter3DinnerController : MonoBehaviour
             return guestSearch.GetGuestActorsInIdentityOrder();
         }
 
-        ActorRoomState[] actorStates = FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
+        ActorRoomState[] allActors = FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
         List<ActorRoomState> actors = new List<ActorRoomState>();
 
-        for (int i = 0; i < actorStates.Length; i++)
+        for (int i = 0; i < allActors.Length; i++)
         {
-            ActorRoomState actor = actorStates[i];
+            ActorRoomState actor = allActors[i];
 
-            if (actor != null && IsLikelyGuestActor(actor))
+            if (actor != null &&
+                (ContainsGuest(actor.ActorId) || ContainsGuest(actor.gameObject.name)))
             {
                 actors.Add(actor);
             }
         }
 
-        actors.Sort(CompareActorsById);
         return actors;
     }
 
-    private void PrepareGuestsForSeatedIdle()
+    private void RefreshSeatAnimators()
     {
-        for (int i = 0; i < guestPerformances.Count; i++)
+        seatAnimators.Clear();
+
+        if (dinnerBuilder == null)
         {
-            if (guestPerformances[i] != null)
+            return;
+        }
+
+        IReadOnlyList<Chapter3LayeredSeatAnimator> builderAnimators = dinnerBuilder.SeatAnimators;
+
+        for (int i = 0; i < builderAnimators.Count; i++)
+        {
+            if (builderAnimators[i] != null)
             {
-                guestPerformances[i].PrepareSeatedIdle();
+                seatAnimators.Add(builderAnimators[i]);
             }
         }
     }
 
-    private void BeginGuestEating()
+    private void PlayAllSeatsIdle()
     {
-        if (useDiningTableImageSequence)
+        for (int i = 0; i < seatAnimators.Count; i++)
         {
-            ShowDiningTableSequenceIfNeeded();
-            return;
-        }
-
-        for (int i = 0; i < guestPerformances.Count; i++)
-        {
-            if (guestPerformances[i] != null)
+            if (seatAnimators[i] != null)
             {
-                guestPerformances[i].BeginEating();
+                seatAnimators[i].PlayIdle();
             }
         }
     }
 
-    private void StopGuestEating()
+    private void BeginSeatEating(bool immediate)
     {
-        if (guestPerformances == null)
+        for (int i = 0; i < seatAnimators.Count; i++)
         {
-            return;
-        }
-
-        for (int i = 0; i < guestPerformances.Count; i++)
-        {
-            if (guestPerformances[i] != null)
+            if (seatAnimators[i] == null)
             {
-                guestPerformances[i].StopEatingAndIdle();
+                continue;
+            }
+
+            float initialDelay = immediate
+                ? 0f
+                : i * 0.17f + Random.Range(0f, 0.15f);
+            seatAnimators[i].BeginEating(initialDelay);
+        }
+    }
+
+    private void StopSeatEating()
+    {
+        for (int i = 0; i < seatAnimators.Count; i++)
+        {
+            if (seatAnimators[i] != null)
+            {
+                seatAnimators[i].StopEatingAndIdle();
             }
         }
     }
 
-    private void HideChapter2DiningStillIfNeeded()
+    private void FinishDinner(bool markComplete)
     {
-        if (useDiningTableImageSequence || chapter2Controller == null)
+        StopEatingWatchdog();
+        StopSeatEating();
+
+        if (dinnerBuilder != null)
+        {
+            dinnerBuilder.ShowDinner(true);
+            dinnerBuilder.FoodState?.ShowEmpty();
+        }
+
+        UpdateObjective("The meal is finished.");
+        SetPhase(markComplete ? Chapter3DinnerPhase.Complete : Chapter3DinnerPhase.MealFinishedIdle);
+        SetPlayerInputEnabled(true);
+        UpdateDebugHud();
+    }
+
+    private void StartEatingWatchdog()
+    {
+        StopEatingWatchdog();
+        eatingWatchdogRoutine = StartCoroutine(EatingWatchdog());
+    }
+
+    private IEnumerator EatingWatchdog()
+    {
+        int startActions = GetTotalSeatActions();
+        yield return new WaitForSeconds(2f);
+
+        if (currentPhase == Chapter3DinnerPhase.EatingActive && GetTotalSeatActions() <= startActions)
+        {
+            Debug.LogError("[Ch3Dining][ERROR] EatingActive started but no seat animator has played a visible action.", this);
+        }
+    }
+
+    private void StopRoutine()
+    {
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        StopEatingWatchdog();
+    }
+
+    private void StopEatingWatchdog()
+    {
+        if (eatingWatchdogRoutine != null)
+        {
+            StopCoroutine(eatingWatchdogRoutine);
+            eatingWatchdogRoutine = null;
+        }
+    }
+
+    private void MoveToDiningRoom()
+    {
+        if (navigationManager == null)
         {
             return;
         }
 
-        chapter2Controller.HideDiningTableIdleScene();
-    }
+        bool moved = navigationManager.DebugTeleportToRoom(diningRoomId);
 
-    private void ShowDiningTableSequenceIfNeeded()
-    {
-        if (!useDiningTableImageSequence)
+        if (!moved)
         {
-            return;
+            moved = navigationManager.MoveToRoom(diningRoomId);
         }
 
-        if (diningTableSequence == null)
+        if (!moved)
         {
-            ResolveReferences();
+            Debug.LogWarning($"{LogPrefix} Could not move to '{diningRoomId}'.", this);
         }
-
-        if (diningTableSequence == null)
-        {
-            WarnMissingDiningTableSequenceOnce();
-            return;
-        }
-
-        diningTableSequence.Show(GetGuestActors());
-    }
-
-    private void EnsureDiningRoomIsActive()
-    {
-        if (navigationManager == null || string.IsNullOrWhiteSpace(diningRoomId))
-        {
-            Debug.LogWarning($"{LogPrefix} Cannot ensure Dining Room because navigation or diningRoomId is missing.", this);
-            return;
-        }
-
-        if (string.Equals(navigationManager.CurrentRoom, diningRoomId, StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        if (!navigationManager.MoveToRoom(diningRoomId))
-        {
-            Debug.LogWarning($"{LogPrefix} Could not move to room '{diningRoomId}'.", this);
-        }
-    }
-
-    private void ShowFoodCovered()
-    {
-        ResolveFoodReferences();
-
-        if (foodVisualState != null)
-        {
-            foodVisualState.ShowCovered();
-        }
-        else
-        {
-            SetFoodGroups(coveredDinnerGroup, fullFoodGroup, halfFoodGroup, emptyFoodGroup);
-        }
-
-        WarnMissingFoodSetupIfNeeded();
-    }
-
-    private void ShowFoodFull()
-    {
-        ResolveFoodReferences();
-
-        if (foodVisualState != null)
-        {
-            foodVisualState.ShowFull();
-        }
-        else
-        {
-            SetFoodGroups(fullFoodGroup, coveredDinnerGroup, halfFoodGroup, emptyFoodGroup);
-        }
-
-        WarnMissingFoodSetupIfNeeded();
-    }
-
-    private void ShowFoodHalf()
-    {
-        ResolveFoodReferences();
-
-        if (foodVisualState != null)
-        {
-            foodVisualState.ShowHalf();
-        }
-        else
-        {
-            SetFoodGroups(halfFoodGroup, coveredDinnerGroup, fullFoodGroup, emptyFoodGroup);
-        }
-    }
-
-    private void ShowFoodEmpty()
-    {
-        ResolveFoodReferences();
-
-        if (foodVisualState != null)
-        {
-            foodVisualState.ShowEmpty();
-        }
-        else
-        {
-            SetFoodGroups(emptyFoodGroup, coveredDinnerGroup, fullFoodGroup, halfFoodGroup);
-        }
-
-        WarnMissingFoodSetupIfNeeded();
-    }
-
-    private void HideAllFood()
-    {
-        ResolveFoodReferences();
-
-        if (foodVisualState != null)
-        {
-            foodVisualState.HideAll();
-            return;
-        }
-
-        SetActiveSafe(coveredDinnerGroup, false);
-        SetActiveSafe(fullFoodGroup, false);
-        SetActiveSafe(halfFoodGroup, false);
-        SetActiveSafe(emptyFoodGroup, false);
-    }
-
-    private void SetFoodGroups(GameObject activeGroup, params GameObject[] inactiveGroups)
-    {
-        SetActiveSafe(activeGroup, true);
-
-        if (inactiveGroups == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < inactiveGroups.Length; i++)
-        {
-            SetActiveSafe(inactiveGroups[i], false);
-        }
-    }
-
-    private void ResolveFoodReferences()
-    {
-        if (autoFindFoodGroupsByName)
-        {
-            coveredDinnerGroup = coveredDinnerGroup != null
-                ? coveredDinnerGroup
-                : FindSceneObjectByName(coveredDinnerObjectName);
-            fullFoodGroup = fullFoodGroup != null
-                ? fullFoodGroup
-                : FindSceneObjectByName(fullFoodObjectName);
-            halfFoodGroup = halfFoodGroup != null
-                ? halfFoodGroup
-                : FindSceneObjectByName(halfFoodObjectName);
-            emptyFoodGroup = emptyFoodGroup != null
-                ? emptyFoodGroup
-                : FindSceneObjectByName(emptyFoodObjectName);
-        }
-
-        if (foodVisualState != null)
-        {
-            foodVisualState.ConfigureIfMissing(
-                coveredDinnerGroup,
-                fullFoodGroup,
-                halfFoodGroup,
-                emptyFoodGroup);
-        }
-    }
-
-    private bool HasAnyFoodReference()
-    {
-        return coveredDinnerGroup != null ||
-            fullFoodGroup != null ||
-            halfFoodGroup != null ||
-            emptyFoodGroup != null ||
-            (foodVisualState != null && foodVisualState.HasAnyFoodReference);
-    }
-
-    private bool CanShowHalfFood()
-    {
-        return halfFoodGroup != null ||
-            (foodVisualState != null && foodVisualState.HasHalfFoodReference);
     }
 
     private void UpdateObjective(string objective)
@@ -556,6 +451,139 @@ public sealed class Chapter3DinnerController : MonoBehaviour
         interactionHUD.ClearPrimaryAction();
         interactionHUD.ClearStatus();
         interactionHUD.SetObjective(objective);
+    }
+
+    private void SetPhase(Chapter3DinnerPhase nextPhase)
+    {
+        if (currentPhase == nextPhase)
+        {
+            return;
+        }
+
+        currentPhase = nextPhase;
+        Debug.Log($"{LogPrefix} Phase changed: {currentPhase}", this);
+        UpdateDebugHud();
+    }
+
+    private int GetTotalSeatActions()
+    {
+        int total = 0;
+
+        for (int i = 0; i < seatAnimators.Count; i++)
+        {
+            if (seatAnimators[i] != null)
+            {
+                total += seatAnimators[i].DebugActions;
+            }
+        }
+
+        return total;
+    }
+
+    private int GetTotalSpriteFramesApplied()
+    {
+        int total = 0;
+
+        for (int i = 0; i < seatAnimators.Count; i++)
+        {
+            if (seatAnimators[i] != null)
+            {
+                total += seatAnimators[i].DebugFramesApplied;
+            }
+        }
+
+        return total;
+    }
+
+    private void EnsureDebugHud()
+    {
+        if (!showDebugHud)
+        {
+            return;
+        }
+
+        if (debugCanvas == null)
+        {
+            GameObject canvasObject = GameObject.Find(DebugHudCanvasName);
+
+            if (canvasObject == null)
+            {
+                canvasObject = new GameObject(DebugHudCanvasName, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            }
+
+            debugCanvas = canvasObject.GetComponent<Canvas>();
+            debugCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            debugCanvas.sortingOrder = 20000;
+        }
+
+        if (debugText == null)
+        {
+            Transform existing = debugCanvas.transform.Find("Text");
+
+            if (existing == null)
+            {
+                GameObject textObject = new GameObject("Text", typeof(RectTransform), typeof(Text));
+                existing = textObject.transform;
+                existing.SetParent(debugCanvas.transform, false);
+            }
+
+            debugText = existing.GetComponent<Text>();
+            RectTransform rect = debugText.transform as RectTransform;
+
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(0f, 1f);
+                rect.anchorMax = new Vector2(0f, 1f);
+                rect.pivot = new Vector2(0f, 1f);
+                rect.anchoredPosition = new Vector2(12f, -64f);
+                rect.sizeDelta = new Vector2(470f, 130f);
+            }
+
+            debugText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            debugText.fontSize = 14;
+            debugText.alignment = TextAnchor.UpperLeft;
+            debugText.color = Color.white;
+            debugText.raycastTarget = false;
+        }
+
+        debugCanvas.gameObject.SetActive(showDebugHud);
+        UpdateDebugHud();
+    }
+
+    private void UpdateDebugHud()
+    {
+        if (!showDebugHud || debugText == null)
+        {
+            return;
+        }
+
+        bool manifestLoaded = dinnerBuilder != null && dinnerBuilder.HasValidManifest;
+        string foodState = dinnerBuilder != null && dinnerBuilder.FoodState != null
+            ? dinnerBuilder.FoodState.CurrentState
+            : "Missing";
+        debugText.text =
+            $"Ch3 phase: {currentPhase}\n" +
+            $"manifest: {manifestLoaded} seats: {seatAnimators.Count}\n" +
+            $"actions: {GetTotalSeatActions()} frames: {GetTotalSpriteFramesApplied()}\n" +
+            $"food: {foodState}";
+    }
+
+    private float GetMaybeFastDuration(float duration)
+    {
+        return debugFastMode ? Mathf.Min(duration, 0.2f) : duration;
+    }
+
+    private float GetEatingDuration()
+    {
+        return debugFastMode ? Mathf.Min(15f, Mathf.Max(0f, eatingDurationSeconds)) : Mathf.Max(0f, eatingDurationSeconds);
+    }
+
+    private void SetPlayerInputEnabled(bool enabled)
+    {
+        if (chapterManager != null)
+        {
+            chapterManager.SetChapterPlayerInputEnabled(enabled);
+        }
     }
 
     private void ResolveReferences()
@@ -573,26 +601,6 @@ public sealed class Chapter3DinnerController : MonoBehaviour
         if (navigationManager == null)
         {
             navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
-        }
-
-        if (introUI == null)
-        {
-            introUI = GetComponent<ChapterIntroUI>();
-        }
-
-        if (introUI == null)
-        {
-            introUI = FindAnyObjectByType<ChapterIntroUI>(FindObjectsInactive.Include);
-        }
-
-        if (chapter2Controller == null)
-        {
-            chapter2Controller = GetComponent<Chapter2Controller>();
-        }
-
-        if (chapter2Controller == null)
-        {
-            chapter2Controller = FindAnyObjectByType<Chapter2Controller>(FindObjectsInactive.Include);
         }
 
         if (guestSearch == null)
@@ -615,171 +623,30 @@ public sealed class Chapter3DinnerController : MonoBehaviour
             interactionHUD = FindAnyObjectByType<Chapter2InteractionHUD>(FindObjectsInactive.Include);
         }
 
-        if (foodVisualState == null)
+        if (dinnerBuilder == null)
         {
-            foodVisualState = GetComponent<DiningFoodVisualState>();
+            dinnerBuilder = GetComponent<Chapter3LayeredDinnerBuilder>();
         }
 
-        if (diningTableSequence == null)
+        if (dinnerBuilder == null)
         {
-            diningTableSequence = GetComponent<DiningTableIdleSceneController>();
+            dinnerBuilder = FindAnyObjectByType<Chapter3LayeredDinnerBuilder>(FindObjectsInactive.Include);
         }
 
-        if (diningTableSequence == null)
+        if (dinnerBuilder == null)
         {
-            diningTableSequence = FindAnyObjectByType<DiningTableIdleSceneController>(FindObjectsInactive.Include);
+            dinnerBuilder = gameObject.AddComponent<Chapter3LayeredDinnerBuilder>();
         }
 
-        if (diningTableSequence == null && useDiningTableImageSequence)
+        if (tableForegroundOccluder == null)
         {
-            diningTableSequence = gameObject.AddComponent<DiningTableIdleSceneController>();
+            tableForegroundOccluder = GetComponent<Chapter3DiningTableForegroundOccluder>();
         }
-
-        ResolveFoodReferences();
-    }
-
-    private void StopDinnerRoutine()
-    {
-        if (dinnerRoutine == null)
-        {
-            return;
-        }
-
-        StopCoroutine(dinnerRoutine);
-        dinnerRoutine = null;
-    }
-
-    private void SetPhase(Chapter3DinnerPhase nextPhase)
-    {
-        if (currentPhase == nextPhase)
-        {
-            return;
-        }
-
-        currentPhase = nextPhase;
-        Debug.Log($"{LogPrefix} phase changed: {currentPhase}", this);
-    }
-
-    private void SetPlayerInputEnabled(bool enabled)
-    {
-        if (chapterManager != null)
-        {
-            chapterManager.SetChapterPlayerInputEnabled(enabled);
-        }
-    }
-
-    private float GetFadeSeconds()
-    {
-        if (chapterManager != null && chapterManager.DebugFastMode)
-        {
-            return 0.15f;
-        }
-
-        return introUI != null ? introUI.FadeFromBlackSeconds : 1.5f;
-    }
-
-    private void WarnMissingFoodSetupIfNeeded()
-    {
-        if (warnedMissingFoodSetup || HasAnyFoodReference())
-        {
-            return;
-        }
-
-        warnedMissingFoodSetup = true;
-        Debug.LogWarning(
-            $"{LogPrefix} No Chapter 3 food props are assigned. Assign coveredDinnerGroup, " +
-            "fullFoodGroup, halfFoodGroup, and emptyFoodGroup in the Inspector, or name scene " +
-            "objects Ch3_CoveredDinnerGroup/Ch3_FullFoodGroup/Ch3_HalfFoodGroup/Ch3_EmptyFoodGroup.",
-            this);
-    }
-
-    private void WarnMissingGuestSearchOnce()
-    {
-        if (warnedMissingGuestSearch)
-        {
-            return;
-        }
-
-        warnedMissingGuestSearch = true;
-        Debug.LogWarning($"{LogPrefix} Chapter2GuestSearchController is missing; Chapter 3 cannot reuse dining seating.", this);
-    }
-
-    private void WarnMissingGuestsOnce()
-    {
-        if (warnedMissingGuests)
-        {
-            return;
-        }
-
-        warnedMissingGuests = true;
-        Debug.LogWarning($"{LogPrefix} No guest ActorRoomState objects were found for Chapter 3 dinner.", this);
-    }
-
-    private void WarnMissingDiningTableSequenceOnce()
-    {
-        if (warnedMissingDiningTableSequence)
-        {
-            return;
-        }
-
-        warnedMissingDiningTableSequence = true;
-        Debug.LogWarning($"{LogPrefix} DiningTableIdleSceneController is missing; Chapter 3 cannot show the dining animation sequence.", this);
-    }
-
-    private static GameObject FindSceneObjectByName(string objectName)
-    {
-        if (string.IsNullOrWhiteSpace(objectName))
-        {
-            return null;
-        }
-
-        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < transforms.Length; i++)
-        {
-            Transform candidate = transforms[i];
-
-            if (candidate == null ||
-                !candidate.gameObject.scene.IsValid() ||
-                !string.Equals(candidate.name, objectName.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            return candidate.gameObject;
-        }
-
-        return null;
-    }
-
-    private static void SetActiveSafe(GameObject target, bool active)
-    {
-        if (target != null && target.activeSelf != active)
-        {
-            target.SetActive(active);
-        }
-    }
-
-    private static bool IsLikelyGuestActor(ActorRoomState actor)
-    {
-        if (actor == null || actor.gameObject == null)
-        {
-            return false;
-        }
-
-        return ContainsGuest(actor.ActorId) || ContainsGuest(actor.gameObject.name);
     }
 
     private static bool ContainsGuest(string value)
     {
         return !string.IsNullOrWhiteSpace(value) &&
-            value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
-    }
-
-    private static int CompareActorsById(ActorRoomState left, ActorRoomState right)
-    {
-        string leftId = left != null ? left.ActorId : string.Empty;
-        string rightId = right != null ? right.ActorId : string.Empty;
-        return string.Compare(leftId, rightId, StringComparison.OrdinalIgnoreCase);
+            value.IndexOf("Guest", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 }

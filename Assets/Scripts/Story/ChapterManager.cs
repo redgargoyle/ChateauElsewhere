@@ -586,7 +586,9 @@ public class ChapterManager : MonoBehaviour
     private static bool IsChapter3Request(string nextChapterId)
     {
         return string.Equals(nextChapterId, Chapter3PendingId, System.StringComparison.OrdinalIgnoreCase) ||
-            nextChapterId.StartsWith("chapter_03", System.StringComparison.OrdinalIgnoreCase);
+            string.Equals(nextChapterId, "chapter_03_dinner", System.StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrWhiteSpace(nextChapterId) &&
+                nextChapterId.StartsWith("chapter_03", System.StringComparison.OrdinalIgnoreCase));
     }
 
     private bool IsCurrentChapter(string chapterId)

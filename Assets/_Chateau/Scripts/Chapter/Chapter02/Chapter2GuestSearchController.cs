@@ -517,6 +517,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
+        RoomProjectedEntity projection = guest.actorState.Projection;
+        if (projection != null && projection.IsProjectionActive)
+        {
+            projection.ApplyProjection();
+            return;
+        }
+
         string sortingLayerName = ResolveSortingLayerName(diningGuestSortingLayerName);
         int sortingOrder = diningGuestSortingOrderBase + Mathf.Max(0, seatIndex) * diningGuestSortingOrderStep;
         Renderer[] renderers = guest.actorState.GetComponentsInChildren<Renderer>(true);
