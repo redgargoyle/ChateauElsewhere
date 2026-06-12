@@ -34,9 +34,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private List<GuestSearchEntry> guests = new List<GuestSearchEntry>();
     [SerializeField] private string hideAnchorPrefix = "Ch2_Hide_";
     [SerializeField] private string diningSeatPrefix = "Ch2_DiningSeat_";
-    [SerializeField] private string diningGuestSortingLayerName = "People";
-    [SerializeField] private int diningGuestSortingOrderBase = 9200;
-    [SerializeField] private int diningGuestSortingOrderStep = 5;
     [SerializeField] private int foundOrderCounter;
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
 
@@ -505,46 +502,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(false);
             guest.actorState.SetSeated(true);
-            ApplyDiningRoomGuestSorting(guest, i);
             guest.actorState.ApplyState();
         }
-    }
-
-    private void ApplyDiningRoomGuestSorting(GuestSearchEntry guest, int seatIndex)
-    {
-        if (guest == null || guest.actorState == null)
-        {
-            return;
-        }
-
-        string sortingLayerName = ResolveSortingLayerName(diningGuestSortingLayerName);
-        int sortingOrder = diningGuestSortingOrderBase + Mathf.Max(0, seatIndex) * diningGuestSortingOrderStep;
-        Renderer[] renderers = guest.actorState.GetComponentsInChildren<Renderer>(true);
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-
-            if (renderer == null)
-            {
-                continue;
-            }
-
-            renderer.sortingLayerName = sortingLayerName;
-            renderer.sortingOrder = sortingOrder;
-        }
-    }
-
-    private static string ResolveSortingLayerName(string requestedLayerName)
-    {
-        if (!string.IsNullOrWhiteSpace(requestedLayerName) &&
-            (string.Equals(requestedLayerName, "Default", StringComparison.OrdinalIgnoreCase) ||
-                SortingLayer.NameToID(requestedLayerName) != 0))
-        {
-            return requestedLayerName.Trim();
-        }
-
-        return "Default";
     }
 
     private void HideGuestForDiningRoomTransfer(GuestSearchEntry guest)
