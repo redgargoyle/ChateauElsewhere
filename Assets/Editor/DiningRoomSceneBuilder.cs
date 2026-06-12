@@ -14,10 +14,14 @@ public static class DiningRoomSceneBuilder
 
     private static readonly string[] DiningFramePaths =
     {
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (1).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (2).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (3).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (4).png",
+        "Assets/_Chateau/Art/Chapter03/Abomination/Generated/Ch3_Abomination_Eating_01.png",
+        "Assets/_Chateau/Art/Chapter03/Abomination/Generated/Ch3_Abomination_Eating_02.png",
+        "Assets/_Chateau/Art/Chapter03/Abomination/Generated/Ch3_Abomination_Eating_03.png",
+        "Assets/_Chateau/Art/Chapter03/Abomination/Generated/Ch3_Abomination_Eating_04.png",
+        "Assets/_Chateau/Art/Chapter03/Abomination/Generated/Ch3_Abomination_Eating_05.png",
+        "Assets/_Chateau/Art/Chapter03/Abomination/Generated/Ch3_Abomination_Eating_06.png",
+        "Assets/_Chateau/Art/Chapter03/Abomination/Generated/Ch3_Abomination_Eating_07.png",
+        "Assets/_Chateau/Art/Chapter03/Abomination/Generated/Ch3_Abomination_Eating_08.png",
     };
 
     private static readonly string[] LegacyIdleGuestNames =
@@ -139,14 +143,15 @@ public static class DiningRoomSceneBuilder
         SerializedObject serializedAnimator = new SerializedObject(animator);
         serializedAnimator.FindProperty("rawImage").objectReferenceValue = current;
         serializedAnimator.FindProperty("crossFadeImage").objectReferenceValue = next;
-        AssignTextureArray(serializedAnimator.FindProperty("seatedIdleTextures"), frames);
-        AssignTextureArray(serializedAnimator.FindProperty("coveredDinnerTextures"), frames);
+        Texture2D[] stillFrame = GetFirstFrameOnly(frames);
+        AssignTextureArray(serializedAnimator.FindProperty("seatedIdleTextures"), stillFrame);
+        AssignTextureArray(serializedAnimator.FindProperty("coveredDinnerTextures"), stillFrame);
         AssignTextureArray(serializedAnimator.FindProperty("eatingTextures"), frames);
-        AssignTextureArray(serializedAnimator.FindProperty("finishedIdleTextures"), frames);
-        serializedAnimator.FindProperty("seatedIdleFps").floatValue = 0.6f;
-        serializedAnimator.FindProperty("coveredDinnerFps").floatValue = 0.6f;
-        serializedAnimator.FindProperty("eatingFps").floatValue = 0.85f;
-        serializedAnimator.FindProperty("finishedIdleFps").floatValue = 0.6f;
+        AssignTextureArray(serializedAnimator.FindProperty("finishedIdleTextures"), stillFrame);
+        serializedAnimator.FindProperty("seatedIdleFps").floatValue = 1f;
+        serializedAnimator.FindProperty("coveredDinnerFps").floatValue = 1f;
+        serializedAnimator.FindProperty("eatingFps").floatValue = 4f;
+        serializedAnimator.FindProperty("finishedIdleFps").floatValue = 1f;
         serializedAnimator.FindProperty("loopSeatedIdle").boolValue = true;
         serializedAnimator.FindProperty("loopCoveredDinner").boolValue = true;
         serializedAnimator.FindProperty("loopEating").boolValue = true;
@@ -154,6 +159,16 @@ public static class DiningRoomSceneBuilder
         serializedAnimator.ApplyModifiedPropertiesWithoutUndo();
 
         EditorUtility.SetDirty(animator);
+    }
+
+    private static Texture2D[] GetFirstFrameOnly(Texture2D[] frames)
+    {
+        if (frames == null || frames.Length == 0 || frames[0] == null)
+        {
+            return new Texture2D[0];
+        }
+
+        return new[] { frames[0] };
     }
 
     private static void DisableAutomaticButlerObserver(Transform roomTransform)

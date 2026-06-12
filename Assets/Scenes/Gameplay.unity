@@ -34094,8 +34094,8 @@ MonoBehaviour:
   diningRoomId: Dining Room
   autoStartWhenPendingFlagDetected: 1
   currentPhase: 0
-  seatedIdleHoldSeconds: 2
-  coveredDinnerHoldSeconds: 2.5
+  seatedIdleHoldSeconds: 0.35
+  coveredDinnerHoldSeconds: 0.35
   eatingDurationSeconds: 60
   finishedIdleHoldSeconds: 2
   movePlayerToDiningRoomOnStart: 1
@@ -36575,10 +36575,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   frames:
-  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
-  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
-  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
-  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
+  - {fileID: 2800000, guid: 4b708d9aa79e456fba4925a92d6183b3, type: 3}
+  - {fileID: 2800000, guid: 3bb470c0930c4f9ebfb4b914c3a97fb4, type: 3}
+  - {fileID: 2800000, guid: 4b2a2ed32e1b40aba7c2ae00dbc7e2a4, type: 3}
+  - {fileID: 2800000, guid: 98af2e64e1d241f7acd4c33e96978e6f, type: 3}
+  - {fileID: 2800000, guid: 3e0fa7aaab2140d08592f27dfa03ae31, type: 3}
+  - {fileID: 2800000, guid: 9e31f1c2e54142979c54ce688335cd6a, type: 3}
+  - {fileID: 2800000, guid: 5857aa7316a840b49dd0878ff3d49ce3, type: 3}
+  - {fileID: 2800000, guid: 8ce660235f0c402f9d37f54f62e35282, type: 3}
   holdSeconds: 2.25
   crossFadeSeconds: 0.7
   pingPong: 1
@@ -36629,29 +36633,24 @@ MonoBehaviour:
   eatingFrames: []
   finishedIdleFrames: []
   seatedIdleTextures:
-  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
-  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
-  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
-  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
+  - {fileID: 2800000, guid: 4b708d9aa79e456fba4925a92d6183b3, type: 3}
   coveredDinnerTextures:
-  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
-  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
-  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
-  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
+  - {fileID: 2800000, guid: 4b708d9aa79e456fba4925a92d6183b3, type: 3}
   eatingTextures:
-  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
-  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
-  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
-  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
+  - {fileID: 2800000, guid: 4b708d9aa79e456fba4925a92d6183b3, type: 3}
+  - {fileID: 2800000, guid: 3bb470c0930c4f9ebfb4b914c3a97fb4, type: 3}
+  - {fileID: 2800000, guid: 4b2a2ed32e1b40aba7c2ae00dbc7e2a4, type: 3}
+  - {fileID: 2800000, guid: 98af2e64e1d241f7acd4c33e96978e6f, type: 3}
+  - {fileID: 2800000, guid: 3e0fa7aaab2140d08592f27dfa03ae31, type: 3}
+  - {fileID: 2800000, guid: 9e31f1c2e54142979c54ce688335cd6a, type: 3}
+  - {fileID: 2800000, guid: 5857aa7316a840b49dd0878ff3d49ce3, type: 3}
+  - {fileID: 2800000, guid: 8ce660235f0c402f9d37f54f62e35282, type: 3}
   finishedIdleTextures:
-  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
-  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
-  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
-  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
-  seatedIdleFps: 0.6
-  coveredDinnerFps: 0.6
-  eatingFps: 0.85
-  finishedIdleFps: 0.6
+  - {fileID: 2800000, guid: 4b708d9aa79e456fba4925a92d6183b3, type: 3}
+  seatedIdleFps: 1
+  coveredDinnerFps: 1
+  eatingFps: 4
+  finishedIdleFps: 1
   loopSeatedIdle: 1
   loopCoveredDinner: 1
   loopEating: 1
@@ -36722,7 +36721,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
+  m_Texture: {fileID: 2800000, guid: 4b708d9aa79e456fba4925a92d6183b3, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
