@@ -26,11 +26,15 @@ public sealed class Chapter3DinnerController : MonoBehaviour
     [SerializeField] private Chapter2GuestSearchController guestSearch;
     [SerializeField] private Chapter2InteractionHUD interactionHUD;
     [SerializeField] private DiningFoodVisualState foodVisualState;
+    [SerializeField] private DiningTableIdleSceneController diningTableSequence;
 
     [Header("Chapter")]
     [SerializeField] private string diningRoomId = "Dining Room";
     [SerializeField] private string pendingFlag = ChapterManager.Chapter3PendingId;
     [SerializeField] private Chapter3DinnerPhase currentPhase = Chapter3DinnerPhase.NotStarted;
+
+    [Header("Dining Animation")]
+    [SerializeField] private bool useDiningTableImageSequence = true;
 
     [Header("Timing")]
     [SerializeField, Min(0f)] private float seatedIdleHoldSeconds = 0.5f;
@@ -60,6 +64,7 @@ public sealed class Chapter3DinnerController : MonoBehaviour
     private bool warnedMissingFoodSetup;
     private bool warnedMissingGuestSearch;
     private bool warnedMissingGuests;
+    private bool warnedMissingDiningTableSequence;
 
     public Chapter3DinnerPhase CurrentPhase => currentPhase;
     public string PendingFlag => pendingFlag;
@@ -77,6 +82,7 @@ public sealed class Chapter3DinnerController : MonoBehaviour
     {
         StopDinnerRoutine();
         StopGuestEating();
+        diningTableSequence?.Hide();
     }
 
     public void BeginChapter3Dinner(ChapterManager manager = null)
@@ -158,12 +164,13 @@ public sealed class Chapter3DinnerController : MonoBehaviour
     private void PrepareSeatedIdlePhase()
     {
         ResolveReferences();
-        HideChapter2DiningStill();
+        HideChapter2DiningStillIfNeeded();
         EnsureDiningRoomIsActive();
         SeatGuestsUsingExistingController();
         ResolveGuestPerformances();
         PrepareGuestsForSeatedIdle();
         HideAllFood();
+        ShowDiningTableSequenceIfNeeded();
         SetPhase(Chapter3DinnerPhase.SeatedIdle);
         UpdateObjective("Dinner is served.");
         Debug.Log($"{LogPrefix} Chapter 3 dinner seated idle is ready.", this);
@@ -195,6 +202,7 @@ public sealed class Chapter3DinnerController : MonoBehaviour
         StopGuestEating();
         PrepareGuestsForSeatedIdle();
         ShowFoodEmpty();
+        ShowDiningTableSequenceIfNeeded();
         UpdateObjective("The meal is finished.");
         SetPhase(Chapter3DinnerPhase.MealFinishedIdle);
         SetPlayerInputEnabled(true);
@@ -319,6 +327,12 @@ public sealed class Chapter3DinnerController : MonoBehaviour
 
     private void BeginGuestEating()
     {
+        if (useDiningTableImageSequence)
+        {
+            ShowDiningTableSequenceIfNeeded();
+            return;
+        }
+
         for (int i = 0; i < guestPerformances.Count; i++)
         {
             if (guestPerformances[i] != null)
@@ -344,14 +358,35 @@ public sealed class Chapter3DinnerController : MonoBehaviour
         }
     }
 
-    private void HideChapter2DiningStill()
+    private void HideChapter2DiningStillIfNeeded()
     {
-        if (chapter2Controller == null)
+        if (useDiningTableImageSequence || chapter2Controller == null)
         {
             return;
         }
 
         chapter2Controller.HideDiningTableIdleScene();
+    }
+
+    private void ShowDiningTableSequenceIfNeeded()
+    {
+        if (!useDiningTableImageSequence)
+        {
+            return;
+        }
+
+        if (diningTableSequence == null)
+        {
+            ResolveReferences();
+        }
+
+        if (diningTableSequence == null)
+        {
+            WarnMissingDiningTableSequenceOnce();
+            return;
+        }
+
+        diningTableSequence.Show(GetGuestActors());
     }
 
     private void EnsureDiningRoomIsActive()
@@ -585,6 +620,21 @@ public sealed class Chapter3DinnerController : MonoBehaviour
             foodVisualState = GetComponent<DiningFoodVisualState>();
         }
 
+        if (diningTableSequence == null)
+        {
+            diningTableSequence = GetComponent<DiningTableIdleSceneController>();
+        }
+
+        if (diningTableSequence == null)
+        {
+            diningTableSequence = FindAnyObjectByType<DiningTableIdleSceneController>(FindObjectsInactive.Include);
+        }
+
+        if (diningTableSequence == null && useDiningTableImageSequence)
+        {
+            diningTableSequence = gameObject.AddComponent<DiningTableIdleSceneController>();
+        }
+
         ResolveFoodReferences();
     }
 
@@ -663,6 +713,17 @@ public sealed class Chapter3DinnerController : MonoBehaviour
 
         warnedMissingGuests = true;
         Debug.LogWarning($"{LogPrefix} No guest ActorRoomState objects were found for Chapter 3 dinner.", this);
+    }
+
+    private void WarnMissingDiningTableSequenceOnce()
+    {
+        if (warnedMissingDiningTableSequence)
+        {
+            return;
+        }
+
+        warnedMissingDiningTableSequence = true;
+        Debug.LogWarning($"{LogPrefix} DiningTableIdleSceneController is missing; Chapter 3 cannot show the dining animation sequence.", this);
     }
 
     private static GameObject FindSceneObjectByName(string objectName)

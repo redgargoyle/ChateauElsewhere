@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [DisallowMultipleComponent]
 public sealed class DiningTableIdleSceneController : MonoBehaviour
@@ -15,8 +18,14 @@ public sealed class DiningTableIdleSceneController : MonoBehaviour
 
     [SerializeField] private string diningRoomId = "Dining Room";
     [SerializeField] private string resourcePath = "Chapter2/DiningRoomDinnerStill";
-    [SerializeField, Min(0.05f)] private float frameSeconds = 1.15f;
+    [SerializeField, Min(0.05f)] private float frameSeconds = 1.35f;
     [SerializeField] private bool pingPong = true;
+
+    [Header("Editor Preview Frames")]
+    [SerializeField] private bool preferEditorPreviewSequence = true;
+    [SerializeField] private string editorPreviewAssetFolder = "Assets/Art/DiningTables";
+    [SerializeField] private string editorPreviewNameContains = "02_44_46";
+    [SerializeField] private string editorPreviewNameExcludes = "";
 
     private readonly Dictionary<ActorRoomState, GuestVisualState> hiddenGuests = new Dictionary<ActorRoomState, GuestVisualState>();
     private readonly Dictionary<Renderer, bool> hiddenRenderers = new Dictionary<Renderer, bool>();
@@ -55,6 +64,18 @@ public sealed class DiningTableIdleSceneController : MonoBehaviour
         {
             loopRoutine = StartCoroutine(PlayLoop());
         }
+    }
+
+    [ContextMenu("Debug Show Dining Table Sequence")]
+    public void DebugShowDiningTableSequence()
+    {
+        Show(null);
+    }
+
+    [ContextMenu("Debug Hide Dining Table Sequence")]
+    public void DebugHideDiningTableSequence()
+    {
+        Hide();
     }
 
     public void Hide()
@@ -124,6 +145,15 @@ public sealed class DiningTableIdleSceneController : MonoBehaviour
             return true;
         }
 
+#if UNITY_EDITOR
+        if (preferEditorPreviewSequence && TryLoadEditorPreviewFrames(out Texture2D[] editorFrames))
+        {
+            frames = editorFrames;
+            Debug.Log($"Dining table idle scene loaded {frames.Length} editor preview frames from '{editorPreviewAssetFolder}' using filter '{editorPreviewNameContains}'.", this);
+            return true;
+        }
+#endif
+
         Texture2D[] loadedTextures = Resources.LoadAll<Texture2D>(resourcePath);
 
         if (loadedTextures != null && loadedTextures.Length > 0)
@@ -161,6 +191,105 @@ public sealed class DiningTableIdleSceneController : MonoBehaviour
 
         return true;
     }
+
+#if UNITY_EDITOR
+    private bool TryLoadEditorPreviewFrames(out Texture2D[] editorFrames)
+    {
+        editorFrames = Array.Empty<Texture2D>();
+
+        if (string.IsNullOrWhiteSpace(editorPreviewAssetFolder) ||
+            !AssetDatabase.IsValidFolder(editorPreviewAssetFolder))
+        {
+            return false;
+        }
+
+        string[] assetGuids = AssetDatabase.FindAssets("t:Texture2D", new[] { editorPreviewAssetFolder });
+        List<Texture2D> previewFrames = new List<Texture2D>();
+
+        for (int i = 0; i < assetGuids.Length; i++)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(assetGuids[i]);
+
+            if (!MatchesEditorPreviewFilter(assetPath))
+            {
+                continue;
+            }
+
+            Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
+
+            if (texture != null)
+            {
+                previewFrames.Add(texture);
+            }
+        }
+
+        if (previewFrames.Count == 0)
+        {
+            return false;
+        }
+
+        previewFrames.Sort(CompareAssetsByName);
+        editorFrames = previewFrames.ToArray();
+        return true;
+    }
+
+    private bool MatchesEditorPreviewFilter(string assetPath)
+    {
+        if (string.IsNullOrWhiteSpace(assetPath))
+        {
+            return false;
+        }
+
+        bool hasIncludeFilter = HasFilterTokens(editorPreviewNameContains);
+        bool matchesInclude = !hasIncludeFilter || PathContainsAnyFilterToken(assetPath, editorPreviewNameContains);
+        bool matchesExclude = PathContainsAnyFilterToken(assetPath, editorPreviewNameExcludes);
+
+        return matchesInclude && !matchesExclude;
+    }
+
+    private static bool HasFilterTokens(string filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            return false;
+        }
+
+        string[] tokens = filter.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(tokens[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool PathContainsAnyFilterToken(string assetPath, string filter)
+    {
+        if (string.IsNullOrWhiteSpace(assetPath) || string.IsNullOrWhiteSpace(filter))
+        {
+            return false;
+        }
+
+        string[] tokens = filter.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            string token = tokens[i].Trim();
+
+            if (!string.IsNullOrEmpty(token) &&
+                assetPath.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+#endif
 
     private void CaptureOriginalBackground()
     {
@@ -302,12 +431,16 @@ public sealed class DiningTableIdleSceneController : MonoBehaviour
         {
             ActorRoomState actor = guestActors[i];
 
-            if (actor == null || hiddenGuests.ContainsKey(actor))
+            if (actor == null)
             {
                 continue;
             }
 
-            hiddenGuests.Add(actor, new GuestVisualState(actor));
+            if (!hiddenGuests.ContainsKey(actor))
+            {
+                hiddenGuests.Add(actor, new GuestVisualState(actor));
+            }
+
             actor.SetInteractable(false);
             actor.SetVisibleByChapterState(false);
             actor.ApplyState();

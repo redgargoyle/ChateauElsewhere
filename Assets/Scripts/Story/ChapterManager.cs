@@ -348,6 +348,51 @@ public class ChapterManager : MonoBehaviour
         }
     }
 
+    [ContextMenu("Preview Dining Room Dinner Sequence")]
+    public void PreviewDiningRoomDinnerSequenceForTesting()
+    {
+        ResolveReferences();
+        StopChapterCoroutines();
+
+        if (eventScheduler != null)
+        {
+            eventScheduler.Clear();
+        }
+
+        if (chapterClock != null)
+        {
+            chapterClock.StopClock();
+        }
+
+        if (introUI != null)
+        {
+            introUI.HideOverlay();
+        }
+
+        currentChapterId = Chapter2Id;
+        displayedTitle = "Chapter 2";
+        chapterStarted = true;
+        SetPhase(ChapterPhase.Complete);
+
+        if (chapter1ArrivalController != null)
+        {
+            chapter1ArrivalController.PrepareGuestsForChapter2Skip();
+            chapter1ArrivalController.HideGuestCoatsForChapter2Skip();
+        }
+
+        chapter2Controller = ResolveChapter2Controller(true);
+
+        if (chapter2Controller != null)
+        {
+            chapter2Controller.DebugPreviewDiningRoomDinnerSequence(this);
+        }
+        else
+        {
+            Debug.LogWarning("Dining room dinner preview requested, but Chapter2Controller could not be resolved.", this);
+            SetPlayerInputEnabled(true);
+        }
+    }
+
     private void StopChapterCoroutines()
     {
         if (chapterRoutine != null)

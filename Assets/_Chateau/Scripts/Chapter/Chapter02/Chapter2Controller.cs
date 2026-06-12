@@ -185,6 +185,52 @@ public class Chapter2Controller : MonoBehaviour
         SetPlayerInputEnabled(true);
     }
 
+    [ContextMenu("Debug Preview Dining Room Dinner Sequence")]
+    public void DebugPreviewDiningRoomDinnerSequence()
+    {
+        DebugPreviewDiningRoomDinnerSequence(chapterManager);
+    }
+
+    public void DebugPreviewDiningRoomDinnerSequence(ChapterManager manager)
+    {
+        chapterManager = manager != null ? manager : chapterManager;
+        ResolveReferences();
+        StopChapter2Coroutines();
+        SetPlayerInputEnabled(false);
+        SetDinnerClockAndStop();
+        InitializeInteractionHUD();
+
+        if (introUI != null)
+        {
+            introUI.HideOverlay();
+        }
+
+        MoveToDiningRoomForDebugSkip();
+
+        if (guestSearch != null)
+        {
+            guestSearch.Initialize(this);
+            guestSearch.DebugStageAllGuestsFoundForChapter3Skip();
+        }
+
+        allGuestsFoundHandled = true;
+        dinnerSeatingHandled = true;
+        ShowDiningTableIdleScene();
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearDialogue();
+            interactionHUD.ClearClockStrike();
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective("Dinner is served.");
+            UpdateFoundGuestsHud();
+        }
+
+        SetPhase(Chapter2Phase.DiningRoomReveal);
+        SetPlayerInputEnabled(true);
+    }
+
     public void DebugResetForChapter2Skip(ChapterManager manager)
     {
         chapterManager = manager != null ? manager : chapterManager;

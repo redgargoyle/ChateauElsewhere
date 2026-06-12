@@ -156,7 +156,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const string EntranceCoatHangerName = "entrance_coat_hanger_0";
     private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
-    private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
+    private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.08f, 0.38f, 0f);
     private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
     private static readonly Vector2 CoatHangerFallbackColliderSize = new Vector2(0.9f, 1.6f);
