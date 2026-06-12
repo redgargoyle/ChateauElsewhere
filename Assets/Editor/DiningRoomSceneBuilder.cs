@@ -13,14 +13,10 @@ public static class DiningRoomSceneBuilder
 
     private static readonly string[] DiningFramePaths =
     {
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_22 PM (1).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_22 PM (2).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_22 PM (3).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_22 PM (4).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_22 PM (5).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_23 PM (6).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_23 PM (7).png",
-        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_23 PM (8).png",
+        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (1).png",
+        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (2).png",
+        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (3).png",
+        "Assets/Art/DiningTables/ChatGPT Image Jun 11, 2026, 02_44_46 PM (4).png",
     };
 
     [MenuItem("Tools/Dreadforge/Build Dining Room Demo Scene")]
@@ -47,6 +43,7 @@ public static class DiningRoomSceneBuilder
         ConfigureAmbienceLoop(diningRoom.transform, diningFrames);
         ConfigureButlerObserver(diningRoom.transform);
         DisableLegacyStandaloneDiningTable(diningRoom.transform);
+        DisablePrerenderedSceneOverlays(diningRoom.transform);
 
         EditorUtility.SetDirty(diningRoom);
         EditorSceneManager.MarkSceneDirty(scene);
@@ -86,8 +83,8 @@ public static class DiningRoomSceneBuilder
 
         SerializedObject serializedDirector = new SerializedObject(director);
         AssignTextureArray(serializedDirector.FindProperty("frames"), frames);
-        serializedDirector.FindProperty("holdSeconds").floatValue = 2.8f;
-        serializedDirector.FindProperty("crossFadeSeconds").floatValue = 0.85f;
+        serializedDirector.FindProperty("holdSeconds").floatValue = 3.35f;
+        serializedDirector.FindProperty("crossFadeSeconds").floatValue = 1.15f;
         serializedDirector.FindProperty("pingPong").boolValue = true;
         serializedDirector.FindProperty("useUnscaledTime").boolValue = true;
         serializedDirector.FindProperty("currentImage").objectReferenceValue = current;
@@ -105,7 +102,7 @@ public static class DiningRoomSceneBuilder
             "Dining Room",
             RoomEnvironmentItemKind.PrerenderedPatch,
             "CEO Demo Dining Room Idle Loop",
-            "Crossfades through the selected full-room dining frames for slow candlelight, eating, arm, and head movement.",
+            "Crossfades through the no-duplicate-butler full-room dining frames for slow candlelight, eating, arm, and head movement.",
             false);
 
         EditorUtility.SetDirty(ambienceRoot.gameObject);
@@ -227,6 +224,57 @@ public static class DiningRoomSceneBuilder
             oldPatch.gameObject.SetActive(false);
             EditorUtility.SetDirty(oldPatch.gameObject);
         }
+    }
+
+    private static void DisablePrerenderedSceneOverlays(Transform roomTransform)
+    {
+        DisableDirectChild(roomTransform, "AnimatedPatches");
+        DisableDirectChild(roomTransform, "Lighting");
+        DisableGuestVisuals(roomTransform);
+    }
+
+    private static void DisableDirectChild(Transform parent, string childName)
+    {
+        Transform child = parent != null ? parent.Find(childName) : null;
+
+        if (child == null)
+        {
+            return;
+        }
+
+        child.gameObject.SetActive(false);
+        EditorUtility.SetDirty(child.gameObject);
+    }
+
+    private static void DisableGuestVisuals(Transform roomTransform)
+    {
+        if (roomTransform == null)
+        {
+            return;
+        }
+
+        Transform[] children = roomTransform.GetComponentsInChildren<Transform>(true);
+
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+
+            if (child == null || child == roomTransform || !LooksLikeGuestVisual(child.name))
+            {
+                continue;
+            }
+
+            child.gameObject.SetActive(false);
+            EditorUtility.SetDirty(child.gameObject);
+        }
+    }
+
+    private static bool LooksLikeGuestVisual(string objectName)
+    {
+        return !string.IsNullOrWhiteSpace(objectName) &&
+            (objectName.StartsWith("Guest") ||
+            objectName.StartsWith("Walker_Guest") ||
+            objectName.Contains("_Guest"));
     }
 
     private static RawImage EnsureRawImage(RectTransform parent, string name, float alpha)
