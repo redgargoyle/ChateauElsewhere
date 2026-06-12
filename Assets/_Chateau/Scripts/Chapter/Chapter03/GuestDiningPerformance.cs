@@ -13,6 +13,14 @@ public sealed class GuestDiningPerformance : MonoBehaviour
     [SerializeField, Min(0.05f)] private float maxActionDelay = 4.5f;
     [SerializeField, Min(0.05f)] private float talkingPulseSeconds = 0.85f;
 
+    [Header("Procedural Fallback")]
+    [SerializeField] private bool proceduralFallbackEnabled = true;
+    [SerializeField, Min(0f)] private float seatedIdleBob = 0.01f;
+    [SerializeField, Min(0f)] private float eatingBob = 0.025f;
+    [SerializeField, Min(0f)] private float eatingLean = 0.018f;
+    [SerializeField, Min(0f)] private float idleRotationDegrees = 0.25f;
+    [SerializeField, Min(0f)] private float eatingRotationDegrees = 0.9f;
+
     [Header("Animator Parameters")]
     [SerializeField] private string eatingBool = "IsEating";
     [SerializeField] private string talkingBool = "IsTalking";
@@ -26,6 +34,13 @@ public sealed class GuestDiningPerformance : MonoBehaviour
     };
 
     private Coroutine randomActionRoutine;
+    private Coroutine proceduralMotionRoutine;
+    private Transform proceduralVisualRoot;
+    private Vector3 proceduralBaseLocalPosition;
+    private Quaternion proceduralBaseLocalRotation;
+    private bool hasProceduralBase;
+    private bool dinnerInteractable;
+    private float proceduralSeed;
     private bool warnedMissingAnimatorActions;
 
     public ActorRoomState ActorState => actorState;
@@ -38,6 +53,7 @@ public sealed class GuestDiningPerformance : MonoBehaviour
     private void OnDisable()
     {
         StopEatingAndIdle();
+        StopProceduralMotion(true);
     }
 
     public void AssignActorStateIfMissing(ActorRoomState actor)
@@ -56,6 +72,17 @@ public sealed class GuestDiningPerformance : MonoBehaviour
         maxActionDelay = Mathf.Max(minActionDelay, maxDelay);
     }
 
+    public void SetDinnerInteractable(bool value)
+    {
+        dinnerInteractable = value;
+
+        if (actorState != null)
+        {
+            actorState.SetInteractable(value);
+            actorState.ApplyState();
+        }
+    }
+
     public void PrepareSeatedIdle()
     {
         ResolveReferences();
@@ -64,13 +91,14 @@ public sealed class GuestDiningPerformance : MonoBehaviour
         {
             actorState.SetAvailableInCurrentChapter(true);
             actorState.SetVisibleByChapterState(true);
-            actorState.SetInteractable(false);
+            actorState.SetInteractable(dinnerInteractable);
             actorState.SetSeated(true);
             actorState.ApplyState();
         }
 
         SetBoolIfPresent(eatingBool, false);
         SetBoolIfPresent(talkingBool, false);
+        StartProceduralMotion(false);
     }
 
     public void BeginEating()
@@ -84,9 +112,17 @@ public sealed class GuestDiningPerformance : MonoBehaviour
 
         if (!hasAnyAction)
         {
-            WarnMissingAnimatorActionsOnce();
+            if (!proceduralFallbackEnabled)
+            {
+                WarnMissingAnimatorActionsOnce();
+                return;
+            }
+
+            StartProceduralMotion(true);
             return;
         }
+
+        StartProceduralMotion(true);
 
         if (randomActionRoutine != null)
         {
@@ -111,9 +147,103 @@ public sealed class GuestDiningPerformance : MonoBehaviour
         if (actorState != null)
         {
             actorState.SetSeated(true);
-            actorState.SetInteractable(false);
+            actorState.SetInteractable(dinnerInteractable);
             actorState.ApplyState();
         }
+
+        StartProceduralMotion(false);
+    }
+
+    private IEnumerator ProceduralMotionLoop(bool eating)
+    {
+        Transform target = ResolveProceduralVisualRoot();
+
+        if (target == null)
+        {
+            yield break;
+        }
+
+        proceduralVisualRoot = target;
+        proceduralBaseLocalPosition = target.localPosition;
+        proceduralBaseLocalRotation = target.localRotation;
+        hasProceduralBase = true;
+
+        float bobAmplitude = eating ? eatingBob : seatedIdleBob;
+        float rotationAmplitude = eating ? eatingRotationDegrees : idleRotationDegrees;
+        float leanAmplitude = eating ? eatingLean : 0f;
+
+        while (true)
+        {
+            float t = Time.time + proceduralSeed;
+            float slow = Mathf.Sin(t * 1.1f);
+            float medium = Mathf.Sin(t * 1.75f + proceduralSeed * 0.37f);
+            float bitePulse = eating ? Mathf.Max(0f, Mathf.Sin(t * 2.8f + proceduralSeed)) : 0f;
+
+            Vector3 offset = new Vector3(
+                medium * leanAmplitude,
+                slow * bobAmplitude - bitePulse * eatingBob * 0.35f,
+                0f);
+
+            float rotation = medium * rotationAmplitude + bitePulse * rotationAmplitude * 0.35f;
+            target.localPosition = proceduralBaseLocalPosition + offset;
+            target.localRotation = proceduralBaseLocalRotation * Quaternion.Euler(0f, 0f, rotation);
+            yield return null;
+        }
+    }
+
+    private void StartProceduralMotion(bool eating)
+    {
+        if (!proceduralFallbackEnabled || !isActiveAndEnabled)
+        {
+            StopProceduralMotion(true);
+            return;
+        }
+
+        StopProceduralMotion(true);
+        proceduralMotionRoutine = StartCoroutine(ProceduralMotionLoop(eating));
+    }
+
+    private void StopProceduralMotion(bool resetToBase)
+    {
+        if (proceduralMotionRoutine != null)
+        {
+            StopCoroutine(proceduralMotionRoutine);
+            proceduralMotionRoutine = null;
+        }
+
+        if (!resetToBase || !hasProceduralBase || proceduralVisualRoot == null)
+        {
+            return;
+        }
+
+        proceduralVisualRoot.localPosition = proceduralBaseLocalPosition;
+        proceduralVisualRoot.localRotation = proceduralBaseLocalRotation;
+        hasProceduralBase = false;
+    }
+
+    private Transform ResolveProceduralVisualRoot()
+    {
+        ResolveReferences();
+
+        if (animator != null)
+        {
+            return animator.transform;
+        }
+
+        GameObject root = actorState != null ? actorState.gameObject : gameObject;
+        Renderer[] renderers = root != null ? root.GetComponentsInChildren<Renderer>(true) : GetComponentsInChildren<Renderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer != null && renderer.transform != null && !IsClickTarget(renderer.transform))
+            {
+                return renderer.transform;
+            }
+        }
+
+        return root != null ? root.transform : transform;
     }
 
     private IEnumerator RandomActionLoop()
@@ -272,11 +402,23 @@ public sealed class GuestDiningPerformance : MonoBehaviour
         {
             animator = GetComponentInChildren<Animator>(true);
         }
+
+        if (Mathf.Approximately(proceduralSeed, 0f))
+        {
+            string seedSource = actorState != null ? actorState.ActorId : name;
+            proceduralSeed = Mathf.Abs(seedSource.GetHashCode() % 1000) * 0.01f + 0.01f;
+        }
     }
 
     private static bool IsTalkAction(string actionName)
     {
         return !string.IsNullOrWhiteSpace(actionName) &&
             actionName.IndexOf("Talk", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool IsClickTarget(Transform candidate)
+    {
+        return candidate != null &&
+            candidate.name.IndexOf("ClickTarget", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 }

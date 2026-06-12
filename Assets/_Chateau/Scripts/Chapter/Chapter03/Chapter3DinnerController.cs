@@ -34,7 +34,11 @@ public sealed class Chapter3DinnerController : MonoBehaviour
     [SerializeField] private Chapter3DinnerPhase currentPhase = Chapter3DinnerPhase.NotStarted;
 
     [Header("Dining Animation")]
-    [SerializeField] private bool useDiningTableImageSequence = true;
+    [SerializeField] private bool useDiningTableImageSequence = false;
+    [SerializeField] private bool guestsInteractableDuringDinner = true;
+    [SerializeField] private string diningGuestClickTargetName = "Ch3_DiningGuestClickTarget";
+    [SerializeField] private Vector2 diningGuestClickFallbackOffset = new Vector2(0f, 1f);
+    [SerializeField] private Vector2 diningGuestClickFallbackSize = new Vector2(1.1f, 2f);
 
     [Header("Timing")]
     [SerializeField, Min(0f)] private float seatedIdleHoldSeconds = 0.5f;
@@ -65,6 +69,7 @@ public sealed class Chapter3DinnerController : MonoBehaviour
     private bool warnedMissingGuestSearch;
     private bool warnedMissingGuests;
     private bool warnedMissingDiningTableSequence;
+    private bool warnedMissingDiningClickTarget;
 
     public Chapter3DinnerPhase CurrentPhase => currentPhase;
     public string PendingFlag => pendingFlag;
@@ -82,6 +87,7 @@ public sealed class Chapter3DinnerController : MonoBehaviour
     {
         StopDinnerRoutine();
         StopGuestEating();
+        SetDiningGuestClickTargetsAvailable(false);
         diningTableSequence?.Hide();
     }
 
@@ -165,10 +171,12 @@ public sealed class Chapter3DinnerController : MonoBehaviour
     {
         ResolveReferences();
         HideChapter2DiningStillIfNeeded();
+        diningTableSequence?.Hide();
         EnsureDiningRoomIsActive();
         SeatGuestsUsingExistingController();
         ResolveGuestPerformances();
         PrepareGuestsForSeatedIdle();
+        EnsureDiningGuestClickTargets();
         HideAllFood();
         ShowDiningTableSequenceIfNeeded();
         SetPhase(Chapter3DinnerPhase.SeatedIdle);
@@ -320,9 +328,12 @@ public sealed class Chapter3DinnerController : MonoBehaviour
         {
             if (guestPerformances[i] != null)
             {
+                guestPerformances[i].SetDinnerInteractable(guestsInteractableDuringDinner);
                 guestPerformances[i].PrepareSeatedIdle();
             }
         }
+
+        EnsureDiningGuestClickTargets();
     }
 
     private void BeginGuestEating()
@@ -333,10 +344,13 @@ public sealed class Chapter3DinnerController : MonoBehaviour
             return;
         }
 
+        EnsureDiningGuestClickTargets();
+
         for (int i = 0; i < guestPerformances.Count; i++)
         {
             if (guestPerformances[i] != null)
             {
+                guestPerformances[i].SetDinnerInteractable(guestsInteractableDuringDinner);
                 guestPerformances[i].BeginEating();
             }
         }
@@ -353,9 +367,31 @@ public sealed class Chapter3DinnerController : MonoBehaviour
         {
             if (guestPerformances[i] != null)
             {
+                guestPerformances[i].SetDinnerInteractable(guestsInteractableDuringDinner);
                 guestPerformances[i].StopEatingAndIdle();
             }
         }
+    }
+
+    public void HandleDiningGuestClicked(ActorRoomState actor)
+    {
+        if (actor == null || !actor.IsInteractable || !actor.IsVisibleInCurrentRoom)
+        {
+            return;
+        }
+
+        ResolveReferences();
+
+        if (interactionHUD == null)
+        {
+            return;
+        }
+
+        interactionHUD.ClearPrimaryAction();
+        interactionHUD.ClearStatus();
+        interactionHUD.SetObjective("Dinner is served.");
+        interactionHUD.SetDialogue(GetGuestDisplayName(actor), GetDiningGuestObservation(actor));
+        interactionHUD.SetDialogueChoices("Continue", () => interactionHUD.ClearDialogue());
     }
 
     private void HideChapter2DiningStillIfNeeded()
@@ -387,6 +423,207 @@ public sealed class Chapter3DinnerController : MonoBehaviour
         }
 
         diningTableSequence.Show(GetGuestActors());
+    }
+
+    private void EnsureDiningGuestClickTargets()
+    {
+        List<ActorRoomState> guestActors = GetGuestActors();
+
+        if (guestActors.Count == 0)
+        {
+            WarnMissingGuestsOnce();
+            return;
+        }
+
+        for (int i = 0; i < guestActors.Count; i++)
+        {
+            ActorRoomState actor = guestActors[i];
+
+            if (actor == null || actor.gameObject == null)
+            {
+                continue;
+            }
+
+            Transform clickTarget = FindOrCreateDiningGuestClickTarget(actor);
+
+            if (clickTarget == null)
+            {
+                WarnMissingDiningClickTargetOnce(actor);
+                continue;
+            }
+
+            BoxCollider2D collider = clickTarget.GetComponent<BoxCollider2D>();
+
+            if (collider == null)
+            {
+                collider = clickTarget.gameObject.AddComponent<BoxCollider2D>();
+            }
+
+            collider.isTrigger = true;
+            ResizeDiningGuestClickTarget(actor, clickTarget, collider);
+
+            Chapter3DiningGuestAction action = clickTarget.GetComponent<Chapter3DiningGuestAction>();
+
+            if (action == null)
+            {
+                action = clickTarget.gameObject.AddComponent<Chapter3DiningGuestAction>();
+            }
+
+            action.Initialize(this, actor);
+            action.SetAvailable(guestsInteractableDuringDinner);
+            clickTarget.gameObject.SetActive(true);
+
+            actor.SetInteractable(guestsInteractableDuringDinner);
+            actor.ApplyState();
+        }
+
+        if (Application.isPlaying)
+        {
+            Physics2D.SyncTransforms();
+        }
+    }
+
+    private void SetDiningGuestClickTargetsAvailable(bool available)
+    {
+        Chapter3DiningGuestAction[] actions = FindObjectsByType<Chapter3DiningGuestAction>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < actions.Length; i++)
+        {
+            if (actions[i] != null)
+            {
+                actions[i].SetAvailable(available);
+            }
+        }
+    }
+
+    private Transform FindOrCreateDiningGuestClickTarget(ActorRoomState actor)
+    {
+        if (actor == null || actor.gameObject == null)
+        {
+            return null;
+        }
+
+        Transform actorTransform = actor.gameObject.transform;
+        Transform[] childTransforms = actorTransform.GetComponentsInChildren<Transform>(true);
+
+        for (int i = 0; i < childTransforms.Length; i++)
+        {
+            Transform child = childTransforms[i];
+
+            if (child != null &&
+                child != actorTransform &&
+                string.Equals(child.name, diningGuestClickTargetName, StringComparison.OrdinalIgnoreCase))
+            {
+                child.SetParent(actorTransform, false);
+                return child;
+            }
+        }
+
+        GameObject targetObject = new GameObject(diningGuestClickTargetName);
+        Transform target = targetObject.transform;
+        target.SetParent(actorTransform, false);
+        target.localPosition = Vector3.zero;
+        target.localRotation = Quaternion.identity;
+        target.localScale = Vector3.one;
+        return target;
+    }
+
+    private void ResizeDiningGuestClickTarget(ActorRoomState actor, Transform clickTarget, BoxCollider2D collider)
+    {
+        if (actor == null || clickTarget == null || collider == null)
+        {
+            return;
+        }
+
+        Vector2 nextOffset = diningGuestClickFallbackOffset;
+        Vector2 nextSize = diningGuestClickFallbackSize;
+
+        if (TryGetDiningGuestRendererBounds(actor.gameObject, clickTarget, out Bounds bounds))
+        {
+            nextOffset = clickTarget.InverseTransformPoint(bounds.center);
+            nextSize = GetLocalBoundsSize(clickTarget, bounds);
+            nextSize = new Vector2(
+                Mathf.Max(diningGuestClickFallbackSize.x, nextSize.x * 1.1f),
+                Mathf.Max(diningGuestClickFallbackSize.y, nextSize.y * 1.1f));
+        }
+
+        collider.offset = nextOffset;
+        collider.size = nextSize;
+    }
+
+    private static bool TryGetDiningGuestRendererBounds(GameObject actorObject, Transform clickTarget, out Bounds bounds)
+    {
+        bounds = default;
+
+        if (actorObject == null)
+        {
+            return false;
+        }
+
+        Renderer[] renderers = actorObject.GetComponentsInChildren<Renderer>(true);
+        bool hasBounds = false;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer == null ||
+                renderer.transform == null ||
+                IsUnderTransform(renderer.transform, clickTarget) ||
+                !IsUsableBounds(renderer.bounds))
+            {
+                continue;
+            }
+
+            if (!hasBounds)
+            {
+                bounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        return hasBounds && IsUsableBounds(bounds);
+    }
+
+    private static Vector2 GetLocalBoundsSize(Transform targetTransform, Bounds worldBounds)
+    {
+        Vector3 min = worldBounds.min;
+        Vector3 max = worldBounds.max;
+        Vector3[] corners =
+        {
+            new Vector3(min.x, min.y, worldBounds.center.z),
+            new Vector3(min.x, max.y, worldBounds.center.z),
+            new Vector3(max.x, min.y, worldBounds.center.z),
+            new Vector3(max.x, max.y, worldBounds.center.z)
+        };
+
+        Vector2 localMin = targetTransform.InverseTransformPoint(corners[0]);
+        Vector2 localMax = localMin;
+
+        for (int i = 1; i < corners.Length; i++)
+        {
+            Vector2 localPoint = targetTransform.InverseTransformPoint(corners[i]);
+            localMin = Vector2.Min(localMin, localPoint);
+            localMax = Vector2.Max(localMax, localPoint);
+        }
+
+        return localMax - localMin;
+    }
+
+    private static bool IsUnderTransform(Transform candidate, Transform root)
+    {
+        return candidate != null && root != null &&
+            (candidate == root || candidate.IsChildOf(root));
+    }
+
+    private static bool IsUsableBounds(Bounds bounds)
+    {
+        Vector3 size = bounds.size;
+        return size.x > 0.001f && size.y > 0.001f;
     }
 
     private void EnsureDiningRoomIsActive()
@@ -724,6 +961,63 @@ public sealed class Chapter3DinnerController : MonoBehaviour
 
         warnedMissingDiningTableSequence = true;
         Debug.LogWarning($"{LogPrefix} DiningTableIdleSceneController is missing; Chapter 3 cannot show the dining animation sequence.", this);
+    }
+
+    private void WarnMissingDiningClickTargetOnce(ActorRoomState actor)
+    {
+        if (warnedMissingDiningClickTarget)
+        {
+            return;
+        }
+
+        warnedMissingDiningClickTarget = true;
+        string actorName = actor != null ? actor.ActorId : "<unknown>";
+        Debug.LogWarning($"{LogPrefix} Could not create a dining click target for guest '{actorName}'.", this);
+    }
+
+    private static string GetGuestDisplayName(ActorRoomState actor)
+    {
+        if (actor == null)
+        {
+            return "Guest";
+        }
+
+        string actorId = actor.ActorId;
+
+        if (string.IsNullOrWhiteSpace(actorId))
+        {
+            return actor.name;
+        }
+
+        return actorId
+            .Replace('_', ' ')
+            .Replace("Guest01", "Guest 1")
+            .Replace("Guest02", "Guest 2")
+            .Replace("Guest03", "Guest 3")
+            .Replace("Guest04", "Guest 4")
+            .Replace("Guest05", "Guest 5")
+            .Replace("Guest06", "Guest 6")
+            .Replace("Guest07", "Guest 7")
+            .Replace("Guest08", "Guest 8")
+            .Trim();
+    }
+
+    private static string GetDiningGuestObservation(ActorRoomState actor)
+    {
+        string actorId = actor != null ? actor.ActorId : string.Empty;
+        int lineIndex = Mathf.Abs(actorId.GetHashCode()) % 4;
+
+        switch (lineIndex)
+        {
+            case 0:
+                return "They pause over their plate, listening to the conversation around the table.";
+            case 1:
+                return "They take a careful bite and glance toward the other guests.";
+            case 2:
+                return "They murmur something polite, then return to the meal.";
+            default:
+                return "They sit poised at dinner, alert but trying not to show it.";
+        }
     }
 
     private static GameObject FindSceneObjectByName(string objectName)
