@@ -34,6 +34,10 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private List<GuestSearchEntry> guests = new List<GuestSearchEntry>();
     [SerializeField] private string hideAnchorPrefix = "Ch2_Hide_";
     [SerializeField] private string diningSeatPrefix = "Ch2_DiningSeat_";
+    [SerializeField] private string diningGuestSortingLayerName = "People";
+    [SerializeField] private int diningGuestSortingOrderBase = 1000;
+    [SerializeField] private float diningGuestSortingOrderPerYUnit = 100f;
+    [SerializeField] private int diningGuestSortingOrderOffset;
     [SerializeField] private int foundOrderCounter;
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
 
@@ -126,6 +130,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(true);
             guest.actorState.SetSeated(false);
+            RestoreGuestMovementSorting(guest);
             EnsureGuestFindAction(guest);
             guest.actorState.ApplyState();
 
@@ -474,6 +479,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private void SeatGuestsInDiningRoom(List<GuestSearchEntry> guestsToSeat)
     {
         RoomAnchor[] diningSeats = FindDiningSeatAnchors();
+        HashSet<RoomAnchor> claimedSeats = new HashSet<RoomAnchor>();
 
         for (int i = 0; i < guestsToSeat.Count; i++)
         {
@@ -484,13 +490,14 @@ public class Chapter2GuestSearchController : MonoBehaviour
                 continue;
             }
 
-            if (i >= diningSeats.Length || diningSeats[i] == null)
+            RoomAnchor diningSeat = ResolveDiningSeatForGuest(guest, diningSeats, claimedSeats, i);
+
+            if (diningSeat == null)
             {
                 Debug.LogWarning($"Chapter 2 guest search has no dining seat for guest '{GetGuestIdForOrderList(guest)}'.", this);
                 continue;
             }
 
-            RoomAnchor diningSeat = diningSeats[i];
             EnsureGuestUsesPersistentActorRoot(guest);
             DisableGuestFindAction(guest);
 
@@ -502,7 +509,107 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(false);
             guest.actorState.SetSeated(true);
+            ApplyDiningRoomGuestYSorting(guest);
             guest.actorState.ApplyState();
+        }
+    }
+
+    private RoomAnchor ResolveDiningSeatForGuest(
+        GuestSearchEntry guest,
+        RoomAnchor[] diningSeats,
+        HashSet<RoomAnchor> claimedSeats,
+        int fallbackIndex)
+    {
+        if (diningSeats == null || diningSeats.Length == 0)
+        {
+            return null;
+        }
+
+        if (TryGetDiningSeatNumber(guest, out int seatNumber))
+        {
+            int seatIndex = seatNumber - 1;
+
+            if (seatIndex >= 0 &&
+                seatIndex < diningSeats.Length &&
+                diningSeats[seatIndex] != null &&
+                claimedSeats.Add(diningSeats[seatIndex]))
+            {
+                return diningSeats[seatIndex];
+            }
+        }
+
+        if (fallbackIndex >= 0 &&
+            fallbackIndex < diningSeats.Length &&
+            diningSeats[fallbackIndex] != null &&
+            claimedSeats.Add(diningSeats[fallbackIndex]))
+        {
+            return diningSeats[fallbackIndex];
+        }
+
+        for (int i = 0; i < diningSeats.Length; i++)
+        {
+            RoomAnchor diningSeat = diningSeats[i];
+
+            if (diningSeat != null && claimedSeats.Add(diningSeat))
+            {
+                return diningSeat;
+            }
+        }
+
+        return null;
+    }
+
+    private void ApplyDiningRoomGuestYSorting(GuestSearchEntry guest)
+    {
+        if (guest == null || guest.actorState == null || guest.actorState.gameObject == null)
+        {
+            return;
+        }
+
+        GameObject actorObject = guest.actorState.gameObject;
+        PointClickPlayerMovement movement = actorObject.GetComponent<PointClickPlayerMovement>();
+
+        if (movement != null)
+        {
+            movement.SetPlayerSortingEnabled(false, false);
+        }
+
+        WorldYSortSpriteRenderer sorter = actorObject.GetComponent<WorldYSortSpriteRenderer>();
+
+        if (sorter == null)
+        {
+            sorter = actorObject.AddComponent<WorldYSortSpriteRenderer>();
+        }
+
+        sorter.enabled = true;
+        sorter.Configure(
+            diningGuestSortingLayerName,
+            diningGuestSortingOrderBase,
+            diningGuestSortingOrderPerYUnit,
+            diningGuestSortingOrderOffset,
+            actorObject.transform);
+    }
+
+    private static void RestoreGuestMovementSorting(GuestSearchEntry guest)
+    {
+        if (guest == null || guest.actorState == null || guest.actorState.gameObject == null)
+        {
+            return;
+        }
+
+        GameObject actorObject = guest.actorState.gameObject;
+        WorldYSortSpriteRenderer sorter = actorObject.GetComponent<WorldYSortSpriteRenderer>();
+
+        if (sorter != null)
+        {
+            sorter.enabled = false;
+        }
+
+        PointClickPlayerMovement movement = actorObject.GetComponent<PointClickPlayerMovement>();
+
+        if (movement != null)
+        {
+            movement.SetPlayerSortingEnabled(true, false);
         }
     }
 
@@ -1218,6 +1325,63 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         return GetGuestDisplayName(guest);
+    }
+
+    private static bool TryGetDiningSeatNumber(GuestSearchEntry guest, out int seatNumber)
+    {
+        seatNumber = 0;
+
+        if (guest == null)
+        {
+            return false;
+        }
+
+        if (TryGetTrailingNumber(guest.guestId, out seatNumber) ||
+            TryGetTrailingNumber(guest.displayName, out seatNumber))
+        {
+            return true;
+        }
+
+        ActorRoomState actorState = guest.actorState;
+
+        return actorState != null &&
+            (TryGetTrailingNumber(actorState.ActorId, out seatNumber) ||
+                TryGetTrailingNumber(actorState.gameObject != null ? actorState.gameObject.name : null, out seatNumber));
+    }
+
+    private static bool TryGetTrailingNumber(string value, out int number)
+    {
+        number = 0;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        int end = -1;
+
+        for (int i = value.Length - 1; i >= 0; i--)
+        {
+            if (char.IsDigit(value[i]))
+            {
+                end = i + 1;
+                break;
+            }
+        }
+
+        if (end < 0)
+        {
+            return false;
+        }
+
+        int start = end - 1;
+
+        while (start > 0 && char.IsDigit(value[start - 1]))
+        {
+            start--;
+        }
+
+        return int.TryParse(value.Substring(start, end - start), out number) && number > 0;
     }
 
     private static string GetGuestDisplayName(GuestSearchEntry guest)
