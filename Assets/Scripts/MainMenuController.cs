@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -16,6 +17,7 @@ public class MainMenuController : MonoBehaviour
     private const string ContinueButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Continue.png";
     private const string SettingsButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Settings.png";
     private const string ExitButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Exit.png";
+    private const string TitleFontPath = "Assets/Art/UI/Fonts/LiberationSerif-Bold.ttf";
 
     [SerializeField] private string newGameSceneName = DefaultGameplaySceneName;
 
@@ -35,7 +37,14 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Sprite settingsButtonSprite;
     [SerializeField] private Sprite exitButtonSprite;
     [SerializeField] private Color buttonOverlayHoverColor = new Color(0.88f, 0.53f, 0.16f, 0.24f);
-    [SerializeField] private Color buttonOverlayPressedColor = new Color(0.28f, 0.05f, 0.02f, 0.42f);
+    [SerializeField] private Color buttonOverlayPressedColor = new Color(0.06f, 0.035f, 0.02f, 0.50f);
+
+    [Header("Title Visuals")]
+    [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private Font titleSourceFont;
+    [SerializeField] private TMP_FontAsset titleFontAsset;
+    [SerializeField] private Color titleColor = new Color(0.94f, 0.86f, 0.72f, 1f);
+    [SerializeField] private float titleFontSize = 48f;
 
     [Header("Responsive Layout")]
     public bool configureCanvasScaling = true;
@@ -43,16 +52,18 @@ public class MainMenuController : MonoBehaviour
     [Range(0f, 1f)]
     public float matchWidthOrHeight = 0.5f;
     public bool pinMenuToTopLeft = true;
+    public bool applyLayoutEveryFrame = false;
     public RectTransform menuPanel;
     public RectTransform title;
     public RectTransform newGameButton;
     public RectTransform continueButton;
     public RectTransform settingsButton;
     public RectTransform exitButton;
-    public Vector2 titlePosition = new Vector2(170f, -68f);
-    public Vector2 buttonStartPosition = new Vector2(26f, -178f);
-    public Vector2 buttonSize = new Vector2(700f, 175f);
-    public float buttonSpacing = 132f;
+    public Vector2 titlePosition = new Vector2(104f, -38f);
+    public Vector2 titleSize = new Vector2(430f, 112f);
+    public Vector2 buttonStartPosition = new Vector2(16f, -116f);
+    public Vector2 buttonSize = new Vector2(960f, 240f);
+    public float buttonSpacing = 128f;
 
     private void Reset()
     {
@@ -65,6 +76,7 @@ public class MainMenuController : MonoBehaviour
         ConfigureCanvasScalers();
         CacheMenuReferences();
         CacheVisualReferences();
+        ConfigureTitleVisual();
         CacheSoundscapeReference();
         ConfigureMenuSoundscape();
         ApplyPinnedMenuLayout();
@@ -75,6 +87,7 @@ public class MainMenuController : MonoBehaviour
     {
         ApplyPinnedMenuLayout();
         ApplyMenuVisuals();
+        ConfigureTitleVisual();
 
         if (playSoundscapeOnStart)
         {
@@ -84,7 +97,10 @@ public class MainMenuController : MonoBehaviour
 
     private void Update()
     {
-        ApplyPinnedMenuLayout();
+        if (applyLayoutEveryFrame)
+        {
+            ApplyPinnedMenuLayout();
+        }
     }
 
     public void NewGame()
@@ -118,6 +134,11 @@ public class MainMenuController : MonoBehaviour
         if (title == null)
         {
             title = FindRectTransform("Text_Title");
+        }
+
+        if (titleText == null && title != null)
+        {
+            titleText = title.GetComponent<TextMeshProUGUI>();
         }
 
         if (newGameButton == null)
@@ -172,6 +193,39 @@ public class MainMenuController : MonoBehaviour
                 backgroundImage = backgroundObject.GetComponent<Image>();
             }
         }
+    }
+
+    private void ConfigureTitleVisual()
+    {
+        if (titleText == null && title != null)
+        {
+            titleText = title.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (titleText == null)
+        {
+            return;
+        }
+
+        titleSourceFont = ResolveFont(titleSourceFont, TitleFontPath);
+
+        if (titleFontAsset == null && titleSourceFont != null)
+        {
+            titleFontAsset = TMP_FontAsset.CreateFontAsset(titleSourceFont);
+        }
+
+        if (titleFontAsset != null)
+        {
+            titleText.font = titleFontAsset;
+        }
+
+        titleText.fontSize = titleFontSize;
+        titleText.enableAutoSizing = true;
+        titleText.fontSizeMin = 30f;
+        titleText.fontSizeMax = titleFontSize;
+        titleText.color = titleColor;
+        titleText.alignment = TextAlignmentOptions.TopLeft;
+        titleText.raycastTarget = false;
     }
 
     private void ConfigureMenuSoundscape()
@@ -265,7 +319,25 @@ public class MainMenuController : MonoBehaviour
             button.colors = CreateOverlayColorBlock();
         }
 
+        ConfigureButtonCursor(buttonRect, button);
         HideLegacyButtonText(buttonRect);
+    }
+
+    private void ConfigureButtonCursor(RectTransform buttonRect, Button button)
+    {
+        if (buttonRect == null)
+        {
+            return;
+        }
+
+        NavigationCursorHoverTarget cursorTarget = buttonRect.GetComponent<NavigationCursorHoverTarget>();
+
+        if (cursorTarget == null)
+        {
+            cursorTarget = buttonRect.gameObject.AddComponent<NavigationCursorHoverTarget>();
+        }
+
+        cursorTarget.Configure(NavigationCursorController.HoverIcon.Door, button, true);
     }
 
     private Image FindOrCreateButtonOverlay(RectTransform buttonRect, Sprite buttonSprite)
@@ -341,6 +413,17 @@ public class MainMenuController : MonoBehaviour
         }
 #endif
         return sprite;
+    }
+
+    private Font ResolveFont(Font font, string editorAssetPath)
+    {
+#if UNITY_EDITOR
+        if (font == null && !string.IsNullOrEmpty(editorAssetPath))
+        {
+            font = AssetDatabase.LoadAssetAtPath<Font>(editorAssetPath);
+        }
+#endif
+        return font;
     }
 
     private void PlayMenuSoundscape()
@@ -445,7 +528,7 @@ public class MainMenuController : MonoBehaviour
             menuPanel.localScale = Vector3.one;
         }
 
-        PinTopLeft(title, titlePosition, null);
+        PinTopLeft(title, titlePosition, titleSize);
         PinTopLeft(newGameButton, buttonStartPosition, buttonSize);
         PinTopLeft(continueButton, buttonStartPosition + new Vector2(0f, -buttonSpacing), buttonSize);
         PinTopLeft(settingsButton, buttonStartPosition + new Vector2(0f, -buttonSpacing * 2f), buttonSize);

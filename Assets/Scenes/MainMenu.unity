@@ -418,21 +418,28 @@ MonoBehaviour:
   settingsButtonSprite: {fileID: 21300000, guid: 3d604c7648c44d158552d1bfc4a39cb8, type: 3}
   exitButtonSprite: {fileID: 21300000, guid: 1129d42ffdaf4d11a278989d847b38fe, type: 3}
   buttonOverlayHoverColor: {r: 0.88, g: 0.53, b: 0.16, a: 0.24}
-  buttonOverlayPressedColor: {r: 0.28, g: 0.05, b: 0.02, a: 0.42}
+  buttonOverlayPressedColor: {r: 0.06, g: 0.035, b: 0.02, a: 0.5}
+  titleText: {fileID: 1108384987}
+  titleSourceFont: {fileID: 12800000, guid: d5b39386d34f4e568e0fb76059d6fef9, type: 3}
+  titleFontAsset: {fileID: 0}
+  titleColor: {r: 0.94, g: 0.86, b: 0.72, a: 1}
+  titleFontSize: 48
   configureCanvasScaling: 1
   referenceResolution: {x: 1366, y: 768}
   matchWidthOrHeight: 0.5
   pinMenuToTopLeft: 1
+  applyLayoutEveryFrame: 0
   menuPanel: {fileID: 1134925409}
   title: {fileID: 1108384986}
   newGameButton: {fileID: 569614588}
   continueButton: {fileID: 1319767816}
   settingsButton: {fileID: 1575482020}
   exitButton: {fileID: 1026890705}
-  titlePosition: {x: 170, y: -68}
-  buttonStartPosition: {x: 26, y: -178}
-  buttonSize: {x: 700, y: 175}
-  buttonSpacing: 132
+  titlePosition: {x: 104, y: -38}
+  titleSize: {x: 430, y: 112}
+  buttonStartPosition: {x: 16, y: -116}
+  buttonSize: {x: 960, y: 240}
+  buttonSpacing: 128
 --- !u!1 &263270545
 GameObject:
   m_ObjectHideFlags: 0
@@ -1072,8 +1079,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 26, y: -178}
-  m_SizeDelta: {x: 700, y: 175}
+  m_AnchoredPosition: {x: 16, y: -116}
+  m_SizeDelta: {x: 960, y: 240}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &569614589
 MonoBehaviour:
@@ -1761,8 +1768,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 26, y: -574}
-  m_SizeDelta: {x: 700, y: 175}
+  m_AnchoredPosition: {x: 16, y: -500}
+  m_SizeDelta: {x: 960, y: 240}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1026890706
 MonoBehaviour:
@@ -1892,8 +1899,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 170, y: -68}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 443, y: -38}
+  m_SizeDelta: {x: 430, y: 112}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1108384987
 MonoBehaviour:
@@ -1908,7 +1915,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.94, g: 0.86, b: 0.72, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1926,8 +1933,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4290305008
+  m_fontColor: {r: 0.94, g: 0.86, b: 0.72, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1944,12 +1951,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 48
+  m_fontSizeBase: 48
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 30
+  m_fontSizeMax: 48
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
@@ -2493,8 +2500,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 26, y: -310}
-  m_SizeDelta: {x: 700, y: 175}
+  m_AnchoredPosition: {x: 16, y: -244}
+  m_SizeDelta: {x: 960, y: 240}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1319767817
 MonoBehaviour:
@@ -3129,8 +3136,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 26, y: -442}
-  m_SizeDelta: {x: 700, y: 175}
+  m_AnchoredPosition: {x: 16, y: -372}
+  m_SizeDelta: {x: 960, y: 240}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1575482021
 MonoBehaviour:
