@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum Chapter2Phase
@@ -27,6 +28,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private Chapter2MonsterStingerController monsterStinger;
     [SerializeField] private Chapter2GuestPanicController guestPanic;
     [SerializeField] private Chapter2GuestSearchController guestSearch;
+    [SerializeField] private DiningTableIdleSceneController diningTableIdle;
 
     [Header("Rooms")]
     [SerializeField] private string drawingRoomId = "Drawing Room";
@@ -40,7 +42,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private bool debugFastMode;
     [SerializeField, Range(0, 23)] private int dinnerHour = 19;
     [SerializeField, Range(0, 59)] private int dinnerMinute;
-    [SerializeField] private float diningRoomRevealSeconds = 5f;
+    [SerializeField] private float diningRoomRevealSeconds = 90f;
     [SerializeField] private float clockStrikeCloseUpSeconds = 2.25f;
     [SerializeField, Min(0.1f)] private float monsterStingerTimeoutSeconds = 14f;
     [SerializeField] private AudioSource clockStrikeAudioSource;
@@ -167,6 +169,7 @@ public class Chapter2Controller : MonoBehaviour
 
         allGuestsFoundHandled = true;
         dinnerSeatingHandled = true;
+        ShowDiningTableIdleScene();
 
         if (interactionHUD != null)
         {
@@ -187,6 +190,7 @@ public class Chapter2Controller : MonoBehaviour
         chapterManager = manager != null ? manager : chapterManager;
         ResolveReferences();
         StopChapter2Coroutines();
+        diningTableIdle?.Hide();
 
         if (monsterStinger != null)
         {
@@ -483,6 +487,21 @@ public class Chapter2Controller : MonoBehaviour
         {
             guestSearch = gameObject.AddComponent<Chapter2GuestSearchController>();
         }
+
+        if (diningTableIdle == null)
+        {
+            diningTableIdle = GetComponent<DiningTableIdleSceneController>();
+        }
+
+        if (diningTableIdle == null)
+        {
+            diningTableIdle = FindAnyObjectByType<DiningTableIdleSceneController>(FindObjectsInactive.Include);
+        }
+
+        if (diningTableIdle == null)
+        {
+            diningTableIdle = gameObject.AddComponent<DiningTableIdleSceneController>();
+        }
     }
 
     private void InitializeInteractionHUD()
@@ -529,6 +548,8 @@ public class Chapter2Controller : MonoBehaviour
             StopCoroutine(diningRoomCompletionRoutine);
             diningRoomCompletionRoutine = null;
         }
+
+        diningTableIdle?.Hide();
     }
 
     private void StartMonsterStingerRoutine()
@@ -647,6 +668,26 @@ public class Chapter2Controller : MonoBehaviour
         dinnerSeatingHandled = true;
     }
 
+    private void ShowDiningTableIdleScene()
+    {
+        if (diningTableIdle == null || guestSearch == null)
+        {
+            ResolveReferences();
+        }
+
+        if (diningTableIdle == null)
+        {
+            Debug.LogWarning("Chapter 2 dining table idle scene requested, but the controller is missing.", this);
+            return;
+        }
+
+        List<ActorRoomState> guestActors = guestSearch != null
+            ? guestSearch.GetGuestActorsInIdentityOrder()
+            : null;
+
+        diningTableIdle.Show(guestActors);
+    }
+
     private void PrepareGuestsForDiningTransfer()
     {
         if (guestSearch == null)
@@ -674,6 +715,7 @@ public class Chapter2Controller : MonoBehaviour
     {
         SetPhase(Chapter2Phase.DiningRoomReveal);
         SeatGuestsInDiningRoom();
+        ShowDiningTableIdleScene();
 
         if (interactionHUD != null)
         {
@@ -816,7 +858,7 @@ public class Chapter2Controller : MonoBehaviour
             return 0.15f;
         }
 
-        return Mathf.Max(0f, diningRoomRevealSeconds);
+        return Mathf.Max(60f, diningRoomRevealSeconds);
     }
 
     private float GetClockStrikeCloseUpSeconds()
