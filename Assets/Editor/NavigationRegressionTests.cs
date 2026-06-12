@@ -11,7 +11,6 @@ public class NavigationRegressionTests
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string RoomContentGroupPath = "Assets/Scripts/Navigation/RoomContentGroup.cs";
-    private const string DiningRoomIdleSceneControllerPath = "Assets/Scripts/Navigation/DiningRoomIdleSceneController.cs";
     private const string DoorOpenSoundCatalogPath = "Assets/Resources/Audio/DoorOpenSoundCatalog.asset";
     private const string StairwaySoundCatalogPath = "Assets/Resources/Audio/StairwaySoundCatalog.asset";
     private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
@@ -34,7 +33,6 @@ public class NavigationRegressionTests
     private const string PlayerIdleClipPath = "Assets/Animation/Player/Player_Idle.anim";
     private const string ButlerClassicIdleClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle.anim";
     private const string RoomContentGroupGuid = "d0ea47fd950844bcacb0fd5556a9d880";
-    private const string DiningRoomIdleSceneControllerGuid = "802bdcfed8b803ecd177fa885cef1abb";
 
     [Test]
     public void DoorTriggersUseInspectorDestinationsOnly()
@@ -507,42 +505,6 @@ public class NavigationRegressionTests
         Assert.That(sceneText, Does.Contain("m_Name: Audio_DoorOpen"), "Door triggers need a shared AudioSource for the door opening sound.");
         Assert.That(sceneText, Does.Contain("guid: 5cd6bd3d35aa8e1ebae11661918fd66a"), "Exploration music should use the existing dreadforge soundscape clip.");
         Assert.That(sceneText, Does.Contain("guid: 700538fbae21acc4dae7d01a518aad25"), "Door opening should use an existing short click-style clip until final door audio exists.");
-    }
-
-    [Test]
-    public void DiningRoomUsesAmbientIdleSceneLoop()
-    {
-        string[] expectedDiningFrameGuids =
-        {
-            "91d6ad9fa2507eba8bacf657238d6f28",
-            "0dfde68a2a1533b36b064003cc917040",
-            "3c6d94ad962365b75ace44868d151b45",
-            "34a6ad0cb4dc5da00bf2db54e498c5b9"
-        };
-
-        Assert.That(File.Exists(DiningRoomIdleSceneControllerPath), Is.True, "Dining Room should have a dedicated ambient scene loop controller.");
-
-        string controllerText = File.ReadAllText(DiningRoomIdleSceneControllerPath);
-        string sceneText = File.ReadAllText(GameplayScenePath);
-
-        Assert.That(controllerText, Does.Contain("RawImage"), "The dining loop should animate room art as UI layers under the room stage.");
-        Assert.That(controllerText, Does.Contain("CrossFadeToFrame"), "Dining frames should crossfade instead of snapping like a flipbook.");
-        Assert.That(controllerText, Does.Contain("raycastTarget = false"), "Generated dining art must not intercept movement or door clicks.");
-        Assert.That(controllerText, Does.Contain("GetFirstAnimatedSiblingIndex"), "Dining frames should reserve the camera background sibling slot.");
-        Assert.That(controllerText, Does.Contain("SetSiblingIndex(firstAnimatedSiblingIndex)"), "The current dining frame should sit behind authored room content.");
-        Assert.That(controllerText, Does.Contain("SetSiblingIndex(firstAnimatedSiblingIndex + 1)"), "The crossfade layer should also stay behind authored room content.");
-        Assert.That(sceneText, Does.Match(@"m_Name: Room_Dining_Room[\s\S]*guid: " + DiningRoomIdleSceneControllerGuid), "Dining Room should own the idle scene controller.");
-        Assert.That(sceneText, Does.Contain("roomName: Dining Room\n  roomBackgroundTexture: {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}"), "Dining Room should fall back to the first dinner scene frame.");
-        Assert.That(sceneText, Does.Contain("secondsPerFrame: 2.25"), "Dinner ambience should hold long enough to read as gentle idle motion.");
-        Assert.That(sceneText, Does.Contain("crossFadeSeconds: 0.75"), "Dinner ambience should use visible soft transitions.");
-        Assert.That(sceneText, Does.Contain("pingPong: 1"), "The dining loop should play back and forth to avoid a hard reset jump.");
-        Assert.That(sceneText, Does.Contain("createImagesIfMissing: 1"));
-        Assert.That(sceneText, Does.Contain("sendImagesBehindRoomContent: 1"));
-
-        for (int i = 0; i < expectedDiningFrameGuids.Length; i++)
-        {
-            Assert.That(sceneText, Does.Contain($"guid: {expectedDiningFrameGuids[i]}"), "The curated no-duplicate-butler dining frames should be wired into the room loop.");
-        }
     }
 
     [Test]

@@ -27910,7 +27910,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2300000016}
   - component: {fileID: 2300000017}
-  - component: {fileID: 3807000001}
   m_Layer: 0
   m_Name: Room_Dining_Room
   m_TagString: Untagged
@@ -27963,7 +27962,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   roomName: Dining Room
-  roomBackgroundTexture: {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
+  roomBackgroundTexture: {fileID: 2800000, guid: 004ab4cca930d0387892725fe69b4f72, type: 3}
   perspectiveProfile: {fileID: 0}
   applyVisibleDefaultsToChildRenderers: 1
   defaultSortingLayerName: Background
@@ -27972,32 +27971,6 @@ MonoBehaviour:
   onlyAdjustDefaultSorting: 1
   flattenChildRendererDepthAtRuntime: 1
   runtimeChildRendererLocalZ: 0
---- !u!114 &3807000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2300000015}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 802bdcfed8b803ecd177fa885cef1abb, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  currentImage: {fileID: 0}
-  nextImage: {fileID: 0}
-  idleFrames:
-  - {fileID: 2800000, guid: 91d6ad9fa2507eba8bacf657238d6f28, type: 3}
-  - {fileID: 2800000, guid: 0dfde68a2a1533b36b064003cc917040, type: 3}
-  - {fileID: 2800000, guid: 3c6d94ad962365b75ace44868d151b45, type: 3}
-  - {fileID: 2800000, guid: 34a6ad0cb4dc5da00bf2db54e498c5b9, type: 3}
-  secondsPerFrame: 2.25
-  crossFadeSeconds: 0.75
-  pingPong: 1
-  startAtRandomFrame: 0
-  createImagesIfMissing: 1
-  imageObjectName: DiningRoomIdleScene
-  sendImagesBehindRoomContent: 1
 --- !u!1 &2300000018
 GameObject:
   m_ObjectHideFlags: 0
