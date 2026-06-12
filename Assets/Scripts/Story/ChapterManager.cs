@@ -51,6 +51,7 @@ public class ChapterManager : MonoBehaviour
     [SerializeField] private ChapterIntroUI introUI;
     [SerializeField] private Chapter1ArrivalController chapter1ArrivalController;
     [SerializeField] private Chapter2Controller chapter2Controller;
+    [SerializeField] private Chapter3DinnerController chapter3DinnerController;
 
     private Coroutine chapterRoutine;
     private Coroutine chapterCompleteRoutine;
@@ -87,6 +88,7 @@ public class ChapterManager : MonoBehaviour
         managerObject.AddComponent<ChapterIntroUI>();
         managerObject.AddComponent<Chapter1ArrivalController>();
         managerObject.AddComponent<Chapter2Controller>();
+        managerObject.AddComponent<Chapter3DinnerController>();
         managerObject.AddComponent<ChapterManager>();
     }
 
@@ -330,6 +332,18 @@ public class ChapterManager : MonoBehaviour
         else
         {
             Debug.LogWarning("Skip to Chapter 3 requested, but Chapter2Controller could not be resolved.", this);
+        }
+
+        chapter2Controller?.HideDiningTableIdleScene();
+        chapter3DinnerController = ResolveChapter3DinnerController(true);
+
+        if (chapter3DinnerController != null)
+        {
+            chapter3DinnerController.BeginChapter3Dinner(this);
+        }
+        else
+        {
+            Debug.LogWarning("Skip to Chapter 3 requested, but Chapter3DinnerController could not be resolved.", this);
             SetPlayerInputEnabled(true);
         }
     }
@@ -486,6 +500,28 @@ public class ChapterManager : MonoBehaviour
             yield break;
         }
 
+        if (IsChapter3Request(cleanNextChapterId))
+        {
+            currentChapterId = Chapter3PendingId;
+            displayedTitle = "Chapter 3";
+            chapterCompleteRoutine = null;
+            chapter2Controller = ResolveChapter2Controller(false);
+            chapter2Controller?.HideDiningTableIdleScene();
+            chapter3DinnerController = ResolveChapter3DinnerController(true);
+
+            if (chapter3DinnerController != null)
+            {
+                chapter3DinnerController.BeginChapter3Dinner(this);
+            }
+            else
+            {
+                Debug.LogWarning("Chapter 3 requested, but Chapter3DinnerController could not be resolved.", this);
+                SetPlayerInputEnabled(true);
+            }
+
+            yield break;
+        }
+
         Debug.Log($"Next chapter requested: {cleanNextChapterId}", this);
         chapterCompleteRoutine = null;
     }
@@ -500,6 +536,12 @@ public class ChapterManager : MonoBehaviour
         return string.Equals(nextChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
             string.Equals(nextChapterId, "chapter_02_pending", System.StringComparison.OrdinalIgnoreCase) ||
             nextChapterId.StartsWith("chapter_02", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsChapter3Request(string nextChapterId)
+    {
+        return string.Equals(nextChapterId, Chapter3PendingId, System.StringComparison.OrdinalIgnoreCase) ||
+            nextChapterId.StartsWith("chapter_03", System.StringComparison.OrdinalIgnoreCase);
     }
 
     private bool IsCurrentChapter(string chapterId)
@@ -539,6 +581,26 @@ public class ChapterManager : MonoBehaviour
         }
 
         return chapter2Controller;
+    }
+
+    private Chapter3DinnerController ResolveChapter3DinnerController(bool createIfMissing)
+    {
+        if (chapter3DinnerController == null)
+        {
+            chapter3DinnerController = GetComponent<Chapter3DinnerController>();
+        }
+
+        if (chapter3DinnerController == null)
+        {
+            chapter3DinnerController = FindAnyObjectByType<Chapter3DinnerController>(FindObjectsInactive.Include);
+        }
+
+        if (chapter3DinnerController == null && createIfMissing)
+        {
+            chapter3DinnerController = gameObject.AddComponent<Chapter3DinnerController>();
+        }
+
+        return chapter3DinnerController;
     }
 
     private void SetPlayerInputEnabled(bool enabled)
@@ -649,6 +711,7 @@ public class ChapterManager : MonoBehaviour
         }
 
         ResolveChapter2Controller(false);
+        ResolveChapter3DinnerController(false);
 
         ResolvePlayerReference();
 

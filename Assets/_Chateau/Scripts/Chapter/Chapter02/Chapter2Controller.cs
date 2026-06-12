@@ -222,6 +222,16 @@ public class Chapter2Controller : MonoBehaviour
         }
     }
 
+    public void HideDiningTableIdleScene()
+    {
+        if (diningTableIdle == null)
+        {
+            ResolveReferences();
+        }
+
+        diningTableIdle?.Hide();
+    }
+
     public void HandleGuestSearchProgressChanged()
     {
         UpdateFoundGuestsHud();
