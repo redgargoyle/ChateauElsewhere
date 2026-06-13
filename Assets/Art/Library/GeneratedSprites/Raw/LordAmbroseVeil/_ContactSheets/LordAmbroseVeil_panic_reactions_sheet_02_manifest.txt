@@ -1,5 +1,5 @@
 guest=LordAmbroseVeil
-source=C:\Users\wimpy\Desktop\ChateauElsewhere\tmp\imagegen\LordAmbroseVeil_panic_reactions_02_source.png
+source=C:\Users\wimpy\Desktop\ChataeuChatilly\tmp\imagegen\LordAmbroseVeil_panic_reactions_02_source.png
 chroma_sheet=Assets\Art\Library\GeneratedSprites\Raw\LordAmbroseVeil\_ContactSheets\LordAmbroseVeil_panic_reactions_sheet_02_chroma.png
 transparent_sheet=Assets\Art\Library\GeneratedSprites\Raw\LordAmbroseVeil\_ContactSheets\LordAmbroseVeil_panic_reactions_sheet_02_alpha.png
 Idle/LordAmbroseVeil_idle_anxious_clutching_02.png: 224x488, transparent_corners=True, visible_pixels=40117

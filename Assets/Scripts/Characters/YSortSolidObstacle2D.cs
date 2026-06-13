@@ -3,7 +3,7 @@ using UnityEngine;
 [ExecuteAlways]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Collider2D))]
-[AddComponentMenu("Dreadforge/Characters/Y Sort Solid Obstacle 2D")]
+[AddComponentMenu("ChataeuChatilly/Characters/Y Sort Solid Obstacle 2D")]
 public sealed class YSortSolidObstacle2D : MonoBehaviour
 {
     [SerializeField] private Collider2D physicalBounds;

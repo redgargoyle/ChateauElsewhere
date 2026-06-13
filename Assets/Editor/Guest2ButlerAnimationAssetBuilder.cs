@@ -31,7 +31,7 @@ public static class Guest2ButlerAnimationAssetBuilder
 		"Player_Jump"
 	};
 
-	[MenuItem("Dreadforge/Characters/Rebuild Guest 2 Butler Animation")]
+	[MenuItem("ChataeuChatilly/Characters/Rebuild Guest 2 Butler Animation")]
 	public static void RebuildGuest2ButlerAnimation()
 	{
 		EnsureFolder(OutputFolder);

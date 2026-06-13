@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "RoomLightingPreset", menuName = "Dreadforge/Lighting/Room Lighting Preset")]
+[CreateAssetMenu(fileName = "RoomLightingPreset", menuName = "ChataeuChatilly/Lighting/Room Lighting Preset")]
 public sealed class RoomLightingPreset : ScriptableObject
 {
     [SerializeField] private bool startLightsOn = true;

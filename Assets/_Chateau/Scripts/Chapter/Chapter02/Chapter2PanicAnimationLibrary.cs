@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Dreadforge/Chapter 2/Panic Animation Library", fileName = "PanicAnimationLibrary")]
+[CreateAssetMenu(menuName = "ChataeuChatilly/Chapter 2/Panic Animation Library", fileName = "PanicAnimationLibrary")]
 public sealed class Chapter2PanicAnimationLibrary : ScriptableObject
 {
     public const string ResourcesPath = "Chapter2/PanicAnimationLibrary";

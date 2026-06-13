@@ -12,7 +12,7 @@ public static class FireplaceFlamePlacement
     private const string SortingLayerName = "Background";
     private const int FlameSortingOrder = 10;
 
-    [MenuItem("Dreadforge/Particles/Place Flame Above Fireplace")]
+    [MenuItem("ChataeuChatilly/Particles/Place Flame Above Fireplace")]
     public static void PlaceFlamesInOpenFireplaces()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -45,7 +45,7 @@ public static class FireplaceFlamePlacement
         }
     }
 
-    [MenuItem("Dreadforge/Particles/Place Flame Above Fireplace", true)]
+    [MenuItem("ChataeuChatilly/Particles/Place Flame Above Fireplace", true)]
     private static bool CanPlaceFlamesInOpenFireplaces()
     {
         return FindFirstSceneTransform(FireplaceName) != null;

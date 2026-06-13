@@ -128,7 +128,7 @@ public class NavigationRegressionTests
         Assert.That(runtimeSettingsText, Does.Contain("ConfigureSolidImage"), "The debug game-time control should force solid UI images instead of inherited sprites.");
         Assert.That(runtimeSettingsText, Does.Contain("SetSecondsPerGameMinute"), "The moved control should still update the chapter clock.");
         Assert.That(runtimeSettingsText, Does.Contain("Audio_ExplorationMusic"), "The music slider should target the gameplay exploration music source.");
-        Assert.That(runtimeSettingsText, Does.Contain("unity_dreadforge_soundscape"), "The music slider should identify the Dreadforge soundscape clip.");
+        Assert.That(runtimeSettingsText, Does.Contain("ChataeuChatilly_soundscape"), "The music slider should identify the ChataeuChatilly soundscape clip.");
         Assert.That(runtimeSettingsText, Does.Contain("ignoreListenerVolume = true"), "The soundscape source should ignore the FX/global listener volume.");
         Assert.That(runtimeSettingsText, Does.Contain("AudioListener.volume"), "The FX slider should control non-music audio through Unity's existing listener volume.");
 
@@ -503,7 +503,7 @@ public class NavigationRegressionTests
 
         Assert.That(sceneText, Does.Contain("m_Name: Audio_ExplorationMusic"), "Gameplay should start house exploration ambience without depending on MainMenu.");
         Assert.That(sceneText, Does.Contain("m_Name: Audio_DoorOpen"), "Door triggers need a shared AudioSource for the door opening sound.");
-        Assert.That(sceneText, Does.Contain("guid: 5cd6bd3d35aa8e1ebae11661918fd66a"), "Exploration music should use the existing dreadforge soundscape clip.");
+        Assert.That(sceneText, Does.Contain("guid: 5cd6bd3d35aa8e1ebae11661918fd66a"), "Exploration music should use the existing chataeuchatilly soundscape clip.");
         Assert.That(sceneText, Does.Contain("guid: 700538fbae21acc4dae7d01a518aad25"), "Door opening should use an existing short click-style clip until final door audio exists.");
     }
 

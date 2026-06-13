@@ -19,7 +19,7 @@ The first comparison set is in `Kitchen`, `Drawing Room`, `Dining Room`, `Master
 
 For real particle flames, keep the particle readable by rendering it after post-processing, then use editable room-light overlays to drive the bloom and painted reflection.
 
-Select the flame root or any child particle object and run `Dreadforge > Lighting > Setup Selected Flame Bloom Separation`. The command adds `NoPostProcessRenderLayer`, keeps the flame and its children on `NoPostProcessFlame`, and ensures `Camera_NoPostProcessFlame` renders that layer after the main camera with post-processing disabled.
+Select the flame root or any child particle object and run `ChataeuChatilly > Lighting > Setup Selected Flame Bloom Separation`. The command adds `NoPostProcessRenderLayer`, keeps the flame and its children on `NoPostProcessFlame`, and ensures `Camera_NoPostProcessFlame` renders that layer after the main camera with post-processing disabled.
 
 The same command creates two room-local overlays under the room's `Lighting` child when they do not already exist:
 

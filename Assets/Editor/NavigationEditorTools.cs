@@ -11,15 +11,15 @@ public static class NavigationEditorTools
 {
     private const string DoorDataAssetPath = "Assets/Resources/Navigation/doors.txt";
     private const string RoomVisualCatalogAssetPath = "Assets/Resources/Navigation/RoomVisualCatalog.asset";
-    private const string AutoPreviewEditorPrefKey = "Dreadforge.Navigation.AutoPreviewSelectedRoom";
+    private const string AutoPreviewEditorPrefKey = "ChataeuChatilly.Navigation.AutoPreviewSelectedRoom";
 
-    [MenuItem("Dreadforge/Navigation/Sync Door Triggers From Door Data")]
+    [MenuItem("ChataeuChatilly/Navigation/Sync Door Triggers From Door Data")]
     public static void SyncDoorTriggersFromDoorData()
     {
         SyncDoorTriggersFromDoorData(true);
     }
 
-    [MenuItem("Dreadforge/Navigation/Preview Selected Room For Door Editing")]
+    [MenuItem("ChataeuChatilly/Navigation/Preview Selected Room For Door Editing")]
     public static void PreviewSelectedRoomForDoorEditing()
     {
         RoomContentGroup roomContentGroup = FindSelectedRoomContentGroup();
@@ -33,13 +33,13 @@ public static class NavigationEditorTools
         PreviewRoomForDoorEditing(roomContentGroup);
     }
 
-    [MenuItem("Dreadforge/Navigation/Preview Selected Room For Door Editing", true)]
+    [MenuItem("ChataeuChatilly/Navigation/Preview Selected Room For Door Editing", true)]
     private static bool CanPreviewSelectedRoomForDoorEditing()
     {
         return FindSelectedRoomContentGroup() != null;
     }
 
-    [MenuItem("Dreadforge/Navigation/Auto Preview Selected Room")]
+    [MenuItem("ChataeuChatilly/Navigation/Auto Preview Selected Room")]
     public static void ToggleAutoPreviewSelectedRoom()
     {
         bool enabled = !AutoPreviewSelectedRoom;
@@ -47,14 +47,14 @@ public static class NavigationEditorTools
         Debug.Log($"Navigation room auto preview is now {(enabled ? "ON" : "OFF")}.");
     }
 
-    [MenuItem("Dreadforge/Navigation/Auto Preview Selected Room", true)]
+    [MenuItem("ChataeuChatilly/Navigation/Auto Preview Selected Room", true)]
     private static bool ValidateToggleAutoPreviewSelectedRoom()
     {
-        Menu.SetChecked("Dreadforge/Navigation/Auto Preview Selected Room", AutoPreviewSelectedRoom);
+        Menu.SetChecked("ChataeuChatilly/Navigation/Auto Preview Selected Room", AutoPreviewSelectedRoom);
         return true;
     }
 
-    [MenuItem("Dreadforge/Navigation/Validate Door Data")]
+    [MenuItem("ChataeuChatilly/Navigation/Validate Door Data")]
     public static void ValidateDoorData()
     {
         TextAsset doorData = AssetDatabase.LoadAssetAtPath<TextAsset>(DoorDataAssetPath);
@@ -90,7 +90,7 @@ public static class NavigationEditorTools
         }
     }
 
-    [MenuItem("Dreadforge/Navigation/Generate Placeholder Door Data From Door Buttons")]
+    [MenuItem("ChataeuChatilly/Navigation/Generate Placeholder Door Data From Door Buttons")]
     public static void GeneratePlaceholderDoorDataFromDoorButtons()
     {
         DoorButton[] doorButtons = FindSceneObjects<DoorButton>();
@@ -114,7 +114,7 @@ public static class NavigationEditorTools
         Debug.Log($"Wrote placeholder door data to {DoorDataAssetPath}.");
     }
 
-    [MenuItem("Dreadforge/Navigation/Create Room Visual Catalog From Rooms")]
+    [MenuItem("ChataeuChatilly/Navigation/Create Room Visual Catalog From Rooms")]
     public static void CreateRoomVisualCatalogFromRooms()
     {
         bool shouldWrite = !File.Exists(RoomVisualCatalogAssetPath) ||
@@ -175,7 +175,7 @@ public static class NavigationEditorTools
         Debug.Log($"Created {RoomVisualCatalogAssetPath} with {entries.Count} room visual(s).");
     }
 
-    [MenuItem("Dreadforge/Navigation/Create Door Button Placeholders From Door Data")]
+    [MenuItem("ChataeuChatilly/Navigation/Create Door Button Placeholders From Door Data")]
     public static void CreateDoorButtonPlaceholdersFromDoorData()
     {
         TextAsset doorData = AssetDatabase.LoadAssetAtPath<TextAsset>(DoorDataAssetPath);
@@ -190,7 +190,7 @@ public static class NavigationEditorTools
 
         if (!parseResult.IsValid)
         {
-            Debug.LogError("Cannot create door button placeholders because doors.txt has parser errors. Run Dreadforge > Navigation > Validate Door Data.");
+            Debug.LogError("Cannot create door button placeholders because doors.txt has parser errors. Run ChataeuChatilly > Navigation > Validate Door Data.");
             return;
         }
 

@@ -1,4 +1,4 @@
-Shader "Hidden/Dreadforge/AnchoredOverlayComposite"
+Shader "Hidden/ChataeuChatilly/AnchoredOverlayComposite"
 {
     Properties
     {

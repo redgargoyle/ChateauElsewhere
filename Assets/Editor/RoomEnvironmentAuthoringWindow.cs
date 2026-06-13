@@ -16,13 +16,13 @@ public sealed class RoomEnvironmentAuthoringWindow : EditorWindow
     private bool createParticleFire = true;
     private bool createPrerenderedPatchPlaceholders = true;
 
-    [MenuItem("Dreadforge/Rooms/Environment Authoring")]
+    [MenuItem("ChataeuChatilly/Rooms/Environment Authoring")]
     public static void Open()
     {
         GetWindow<RoomEnvironmentAuthoringWindow>("Room Environment");
     }
 
-    [MenuItem("Dreadforge/Rooms/Create Suggested Environment Placeholders")]
+    [MenuItem("ChataeuChatilly/Rooms/Create Suggested Environment Placeholders")]
     public static void CreateSuggestedEnvironmentPlaceholders()
     {
         ApplyPlans(true, true, true);

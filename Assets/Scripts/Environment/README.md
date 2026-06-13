@@ -1,13 +1,13 @@
 # Room Environment Authoring
 
-Use `Dreadforge > Rooms > Environment Authoring` in `Gameplay.unity`.
+Use `ChataeuChatilly > Rooms > Environment Authoring` in `Gameplay.unity`.
 
 The tool creates missing editable scene objects only. It does not reset existing objects, so it is safe to run again after Hamza has moved or resized things.
 
 ## Workflow
 
 1. Open `Gameplay.unity`.
-2. Run `Dreadforge > Rooms > Environment Authoring`.
+2. Run `ChataeuChatilly > Rooms > Environment Authoring`.
 3. Click `Create Missing Suggested Items In Open Scene`.
 4. Expand a room under `Canvas_Background/Rooms`.
 5. Polish these children directly in Edit mode:

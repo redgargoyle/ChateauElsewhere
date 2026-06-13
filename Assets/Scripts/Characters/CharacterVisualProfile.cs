@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "CharacterVisualProfile", menuName = "Dreadforge/Characters/Character Visual Profile")]
+[CreateAssetMenu(fileName = "CharacterVisualProfile", menuName = "ChataeuChatilly/Characters/Character Visual Profile")]
 public sealed class CharacterVisualProfile : ScriptableObject
 {
     [SerializeField] private string characterId = "Character";

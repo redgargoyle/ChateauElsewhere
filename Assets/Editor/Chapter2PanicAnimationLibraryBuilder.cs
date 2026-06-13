@@ -33,7 +33,7 @@ public static class Chapter2PanicAnimationLibraryBuilder
         new GuestFolderSpec("MadameCoralieThread", "guest8", "Guest08_MadameCoralieThread")
     };
 
-    [MenuItem("Dreadforge/Chapter 2/Rebuild Panic Animation Library")]
+    [MenuItem("ChataeuChatilly/Chapter 2/Rebuild Panic Animation Library")]
     public static void RebuildPanicAnimationLibrary()
     {
         EnsureFolder(OutputFolder);

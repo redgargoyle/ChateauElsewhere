@@ -8,7 +8,7 @@ public static class FlameParticleMaterialRepair
 {
     private const string MaterialPath = "Assets/Art/Flame/M_FlameParticleVertexColor.mat";
 
-    [MenuItem("Dreadforge/Particles/Repair Flame Particle Materials")]
+    [MenuItem("ChataeuChatilly/Particles/Repair Flame Particle Materials")]
     public static void RepairOpenFlameParticles()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -42,7 +42,7 @@ public static class FlameParticleMaterialRepair
         }
     }
 
-    [MenuItem("Dreadforge/Particles/Repair Selected Particle Materials")]
+    [MenuItem("ChataeuChatilly/Particles/Repair Selected Particle Materials")]
     public static void RepairSelectedParticleMaterials()
     {
         Material material = LoadMaterial();
@@ -66,7 +66,7 @@ public static class FlameParticleMaterialRepair
         Debug.Log($"Repaired {repairedCount} selected particle renderer material(s).");
     }
 
-    [MenuItem("Dreadforge/Particles/Repair Selected Particle Materials", true)]
+    [MenuItem("ChataeuChatilly/Particles/Repair Selected Particle Materials", true)]
     private static bool CanRepairSelectedParticleMaterials()
     {
         foreach (GameObject selectedObject in Selection.gameObjects)

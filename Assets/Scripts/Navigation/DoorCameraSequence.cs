@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "DoorCameraSequence", menuName = "Dreadforge/Navigation/Door Camera Sequence")]
+[CreateAssetMenu(fileName = "DoorCameraSequence", menuName = "ChataeuChatilly/Navigation/Door Camera Sequence")]
 public class DoorCameraSequence : ScriptableObject
 {
     public string promptText = "Open Door";

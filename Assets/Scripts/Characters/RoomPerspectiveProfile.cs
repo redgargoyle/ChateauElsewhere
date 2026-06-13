@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "RoomPerspectiveProfile", menuName = "Dreadforge/Rooms/Room Perspective Profile")]
+[CreateAssetMenu(fileName = "RoomPerspectiveProfile", menuName = "ChataeuChatilly/Rooms/Room Perspective Profile")]
 public sealed class RoomPerspectiveProfile : ScriptableObject
 {
     [SerializeField] private string roomId = "Drawing Room";

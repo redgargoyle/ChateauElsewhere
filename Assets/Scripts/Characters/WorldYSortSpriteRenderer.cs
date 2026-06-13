@@ -2,7 +2,7 @@ using UnityEngine;
 
 [ExecuteAlways]
 [DisallowMultipleComponent]
-[AddComponentMenu("Dreadforge/Characters/World Y Sort Sprite Renderer")]
+[AddComponentMenu("ChataeuChatilly/Characters/World Y Sort Sprite Renderer")]
 public sealed class WorldYSortSpriteRenderer : MonoBehaviour
 {
     [SerializeField] private string sortingLayerName = "People";

@@ -20,7 +20,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private const string DebugMusicControlName = "Control_DebugMusicVolume";
     private const string DebugFxControlName = "Control_DebugFxVolume";
     private const string ExplorationMusicObjectName = "Audio_ExplorationMusic";
-    private const string ExplorationMusicClipName = "unity_dreadforge_soundscape";
+    private const string ExplorationMusicClipName = "ChataeuChatilly_soundscape";
     private const float ButtonWidth = 150f;
     private const float ButtonHeight = 34f;
     private const float DebugControlWidth = 220f;

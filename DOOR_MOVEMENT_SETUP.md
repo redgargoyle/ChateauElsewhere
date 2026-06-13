@@ -16,8 +16,8 @@ The code now does everything else:
 ## Fast Setup
 
 1. Open the gameplay scene in Unity.
-2. Run `Dreadforge > Navigation > Create Room Visual Catalog From Map Buttons`.
-3. Run `Dreadforge > Navigation > Create Door Button Placeholders From Door Data`.
+2. Run `ChataeuChatilly > Navigation > Create Room Visual Catalog From Map Buttons`.
+3. Run `ChataeuChatilly > Navigation > Create Door Button Placeholders From Door Data`.
 4. In the Hierarchy, open:
 
 ```txt
@@ -30,7 +30,7 @@ Canvas_Background
 
 5. For each yellow `Door_*` rectangle, drag/resize it over the actual visible door in that room image.
 6. Press Play and click a door.
-7. Run `Dreadforge > Navigation > Validate Door Data` whenever something feels wrong.
+7. Run `ChataeuChatilly > Navigation > Validate Door Data` whenever something feels wrong.
 
 ## Replacing Door Data
 

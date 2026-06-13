@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a production animation library scaffold for Chateau Elsewhere.
+"""Build a production animation library scaffold for ChataeuChatilly.
 
 This tool does not invent final animation by deforming existing sprites. It
 collects trusted reference frames, writes AI generation briefs, creates intake
@@ -575,7 +575,7 @@ def build_prompt(spec: CharacterSpec, request: Dict[str, object], request_type: 
     return "\n".join(
         [
             f"Use case: stylized-concept",
-            f"Asset type: Chateau Elsewhere {request_type} animation asset",
+            f"Asset type: ChataeuChatilly {request_type} animation asset",
             f"Character: {style_brief}",
             f"Primary request: {request['label']}",
             f"Action/part detail: {description}",
@@ -701,7 +701,7 @@ def write_character_manifest(
 def write_root_catalog(output_root: Path, manifests: Sequence[Dict[str, object]]) -> None:
     catalog = {
         "generated_by": "Tools/chateau_animation_pipeline.py",
-        "purpose": "Reference, AI intake, and approved animation asset database for Chateau Elsewhere.",
+        "purpose": "Reference, AI intake, and approved animation asset database for ChataeuChatilly.",
         "canvas_size": list(CANVAS_SIZE),
         "pivot": [0.5, 0.0],
         "frame_rate": FRAME_RATE,

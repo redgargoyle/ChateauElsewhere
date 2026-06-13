@@ -748,7 +748,7 @@ public class CameraManager : MonoBehaviour
 
         if (shader == null)
         {
-            shader = Shader.Find("Hidden/Dreadforge/AnchoredOverlayComposite");
+            shader = Shader.Find("Hidden/ChataeuChatilly/AnchoredOverlayComposite");
         }
 
         if (shader == null)

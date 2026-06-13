@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "DoorOpenSoundCatalog", menuName = "Dreadforge/Audio/Door Open Sound Catalog")]
+[CreateAssetMenu(fileName = "DoorOpenSoundCatalog", menuName = "ChataeuChatilly/Audio/Door Open Sound Catalog")]
 public class DoorOpenSoundCatalog : ScriptableObject
 {
     [SerializeField] private AudioClip[] clips = new AudioClip[0];

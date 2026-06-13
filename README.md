@@ -1,4 +1,4 @@
-# Chateau Elsewhere Attached Guest Sprite Animations
+# ChataeuChatilly Attached Guest Sprite Animations
 
 This package was generated directly from the eight high-quality guest sprite sheets attached by the user.
 

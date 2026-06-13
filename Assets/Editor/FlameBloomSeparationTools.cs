@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public static class FlameBloomSeparationTools
 {
-    private const string MenuPath = "Dreadforge/Lighting/Setup Selected Flame Bloom Separation";
+    private const string MenuPath = "ChataeuChatilly/Lighting/Setup Selected Flame Bloom Separation";
 
     [MenuItem(MenuPath)]
     public static void SetupSelectedFlame()

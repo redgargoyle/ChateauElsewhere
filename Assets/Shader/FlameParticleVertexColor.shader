@@ -1,4 +1,4 @@
-Shader "Chateau/Particles/VertexColorUnlit"
+Shader "ChataeuChatilly/Particles/VertexColorUnlit"
 {
     Properties
     {

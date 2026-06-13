@@ -10,7 +10,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/full_body
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere full_body animation asset
+Asset type: ChataeuChatilly full_body animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Panic reaction facing camera
 Action/part detail: A readable startle beat: recoil, shoulders lift, eyes wide, mouth open, hands rising. The whole body must be newly painted in pose, not a tilted copy of an idle frame.
@@ -30,7 +30,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/full_body
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere full_body animation asset
+Asset type: ChataeuChatilly full_body animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Shriek with hands raised
 Action/part detail: High-emotion shriek loop with both arms fully raised or thrown outward, fingers visible, costume sleeves and coat or skirt mass preserved.
@@ -50,7 +50,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/full_body
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere full_body animation asset
+Asset type: ChataeuChatilly full_body animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Panicked run left
 Action/part detail: A frantic left-facing run cycle with longer stride and arms pumping or flailing. Feet must change contact positions and the torso must have real pose changes.
@@ -70,7 +70,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/full_body
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere full_body animation asset
+Asset type: ChataeuChatilly full_body animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Panicked run right
 Action/part detail: A frantic right-facing run cycle with longer stride and arms pumping or flailing. Do not mirror textural details incorrectly; preserve costume asymmetry where visible.
@@ -90,7 +90,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/full_body
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere full_body animation asset
+Asset type: ChataeuChatilly full_body animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Back and forth turn
 Action/part detail: Short transition frames for reversing direction: skid, twist, half-turn, and recover. Useful for running back and forth without teleporty flips.
@@ -110,7 +110,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/full_body
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere full_body animation asset
+Asset type: ChataeuChatilly full_body animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Cower and cover face
 Action/part detail: Fear pose with bent knees, shoulders hunched, hands covering face or clutching chest. This should read as acting, not a small face decal.
@@ -130,7 +130,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/parts/fro
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere parts animation asset
+Asset type: ChataeuChatilly parts animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Front rig parts
 Action/part detail: Separate transparent parts for front view: head neutral/scared/shrieking, torso, left and right upper arms, forearms, open hands, clenched hands, raised hands, coat or shawl overlays, skirt or trouser mass, legs, shoes, and character prop.
@@ -150,7 +150,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/parts/sid
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere parts animation asset
+Asset type: ChataeuChatilly parts animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Left-facing rig parts
 Action/part detail: Separate transparent parts for left view with full sleeve shapes, profile head emotions, near and far arms, hands, legs, shoes, coat tails, skirt or dress side volume, and prop.
@@ -170,7 +170,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/parts/sid
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere parts animation asset
+Asset type: ChataeuChatilly parts animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Right-facing rig parts
 Action/part detail: Separate transparent parts for right view with full sleeve shapes, profile head emotions, near and far arms, hands, legs, shoes, coat tails, skirt or dress side volume, and prop.
@@ -190,7 +190,7 @@ Approved: `Assets/Art/Library/AnimationLibrary/MissIsoldeWren/approved/parts/han
 
 ```text
 Use case: stylized-concept
-Asset type: Chateau Elsewhere parts animation asset
+Asset type: ChataeuChatilly parts animation asset
 Character: Miss Isolde Wren: young petite woman, dark updo, pale blue and cream gown, teal corset details, delicate skirt, soft anxious expression. Use the current project reference art in reference/source_sheet.png as the strict visual target.
 Primary request: Hands and expressions
 Action/part detail: A small library of hands and heads: open palms, tense fingers, clenched fists, hands on cheeks, clutching chest, pointing, neutral face, gasp, scream, grimace, sob.

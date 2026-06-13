@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "RoomVisualCatalog", menuName = "Dreadforge/Navigation/Room Visual Catalog")]
+[CreateAssetMenu(fileName = "RoomVisualCatalog", menuName = "ChataeuChatilly/Navigation/Room Visual Catalog")]
 public class RoomVisualCatalog : ScriptableObject
 {
     public RoomVisualEntry[] rooms;

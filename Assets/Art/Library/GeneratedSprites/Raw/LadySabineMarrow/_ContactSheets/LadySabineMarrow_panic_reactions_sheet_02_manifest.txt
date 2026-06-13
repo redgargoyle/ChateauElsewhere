@@ -1,5 +1,5 @@
 guest=LadySabineMarrow
-source=C:\Users\wimpy\Desktop\ChateauElsewhere\tmp\imagegen\LadySabineMarrow_panic_reactions_02_source.png
+source=C:\Users\wimpy\Desktop\ChataeuChatilly\tmp\imagegen\LadySabineMarrow_panic_reactions_02_source.png
 chroma_sheet=Assets\Art\Library\GeneratedSprites\Raw\LadySabineMarrow\_ContactSheets\LadySabineMarrow_panic_reactions_sheet_02_chroma.png
 transparent_sheet=Assets\Art\Library\GeneratedSprites\Raw\LadySabineMarrow\_ContactSheets\LadySabineMarrow_panic_reactions_sheet_02_alpha.png
 Idle/LadySabineMarrow_idle_anxious_clutching_02.png: 236x484, transparent_corners=True, visible_pixels=45185

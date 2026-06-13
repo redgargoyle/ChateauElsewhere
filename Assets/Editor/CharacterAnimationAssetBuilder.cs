@@ -26,7 +26,7 @@ public static class CharacterAnimationAssetBuilder
 		"Player_Jump"
 	};
 
-	[MenuItem("Dreadforge/Characters/Rebuild Character Animation Assets")]
+	[MenuItem("ChataeuChatilly/Characters/Rebuild Character Animation Assets")]
 	public static void RebuildAllCharacterAnimationAssets()
 	{
 		AnimatorController baseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(BaseControllerPath);

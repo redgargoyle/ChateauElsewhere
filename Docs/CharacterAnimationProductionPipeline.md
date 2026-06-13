@@ -1,4 +1,4 @@
-# Chateau Elsewhere Character Animation Pipeline
+# ChataeuChatilly Character Animation Pipeline
 
 This project needs character acting, not procedural wobble. The production rule is:
 

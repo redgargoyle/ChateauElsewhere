@@ -1,5 +1,5 @@
 guest=CountessElowenDusk
-source=C:\Users\wimpy\Desktop\ChateauElsewhere\tmp\imagegen\CountessElowenDusk_panic_reactions_02_source.png
+source=C:\Users\wimpy\Desktop\ChataeuChatilly\tmp\imagegen\CountessElowenDusk_panic_reactions_02_source.png
 chroma_sheet=Assets\Art\Library\GeneratedSprites\Raw\CountessElowenDusk\_ContactSheets\CountessElowenDusk_panic_reactions_sheet_02_chroma.png
 transparent_sheet=Assets\Art\Library\GeneratedSprites\Raw\CountessElowenDusk\_ContactSheets\CountessElowenDusk_panic_reactions_sheet_02_alpha.png
 Idle/CountessElowenDusk_idle_anxious_clutching_02.png: 260x515, transparent_corners=True, visible_pixels=60717

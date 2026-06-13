@@ -39,7 +39,7 @@ Useful tweaks:
 - Move path points on `RoomPersonWalker2D` to change where a person walks.
 - Resize the `Image` RectTransform to change character height.
 - Fix frame timing, bad frames, or direction bugs in `Assets/Animation/<CharacterName>/*.anim`, not in `RoomPersonWalker2D`.
-- Use `Dreadforge > Characters > Rebuild Character Animation Assets` after changing legacy source frame folders under `Assets/Art/Library/LegacyCharacters`; use character-specific rebuild menu items when they exist.
+- Use `ChataeuChatilly > Characters > Rebuild Character Animation Assets` after changing legacy source frame folders under `Assets/Art/Library/LegacyCharacters`; use character-specific rebuild menu items when they exist.
 - Adjust `Near Y`, `Far Y`, `Near Scale`, and `Far Scale` for perspective.
 - Keep `Preview Path In Edit Mode` off while placing people. The animation frames still preview, but the scene object will not quietly walk away while you edit.
 - Keep `Snap To Whole Pixels` off for scaled room walkers unless a specific character needs crunchy pixel locking. Subpixel motion reads smoother while the room stage pans and zooms.

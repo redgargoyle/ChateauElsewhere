@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 [ExecuteAlways]
 [DisallowMultipleComponent]
-[AddComponentMenu("Dreadforge/Characters/Room Projected Entity")]
+[AddComponentMenu("ChataeuChatilly/Characters/Room Projected Entity")]
 public sealed class RoomProjectedEntity : MonoBehaviour
 {
     public enum ProjectionMode

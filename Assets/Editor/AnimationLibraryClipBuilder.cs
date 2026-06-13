@@ -11,7 +11,7 @@ public static class AnimationLibraryClipBuilder
     private const string LibraryRoot = "Assets/Art/Library/AnimationLibrary";
     private const float DefaultFrameRate = 12f;
 
-    [MenuItem("Dreadforge/Animation Library/Rebuild Approved Full-Body Clips")]
+    [MenuItem("ChataeuChatilly/Animation Library/Rebuild Approved Full-Body Clips")]
     public static void RebuildApprovedFullBodyClips()
     {
         if (!AssetDatabase.IsValidFolder(LibraryRoot))

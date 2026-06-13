@@ -14,7 +14,7 @@ public class NavigationRoomImageShaderControlsWindow : EditorWindow
     private float verticalPan;
     private float fov = 1f;
 
-    [MenuItem("Dreadforge/Navigation/Open Room Image Shader Controls")]
+    [MenuItem("ChataeuChatilly/Navigation/Open Room Image Shader Controls")]
     public static void OpenWindow()
     {
         NavigationRoomImageShaderControlsWindow window = GetWindow<NavigationRoomImageShaderControlsWindow>();

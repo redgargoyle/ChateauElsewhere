@@ -1,4 +1,4 @@
-# Chateau Elsewhere Art Library
+# ChataeuChatilly Art Library
 
 This folder collects production, reference, generated, and archived art that is not part of the active `Assets/Art/Characters` runtime sprite tree.
 
