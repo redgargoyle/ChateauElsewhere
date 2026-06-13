@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,6 +35,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     [SerializeField] private Transform contactShadowRoot;
     [SerializeField] private SpriteRenderer contactShadowRenderer;
     [SerializeField] private Graphic contactShadowGraphic;
+    [SerializeField] private bool useRoomVisualScaleOverrides = true;
+    [SerializeField, HideInInspector] private string editorSelectedVisualScaleRoomId = string.Empty;
+    [SerializeField, HideInInspector] private List<RoomVisualScaleOverride> roomVisualScaleOverrides = new List<RoomVisualScaleOverride>();
 
     private RectTransform rectTransform;
     private SpriteRenderer[] spriteRenderers = Array.Empty<SpriteRenderer>();
@@ -63,6 +67,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public float CurrentScale => currentScale;
     public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;
+    public bool UsesRoomVisualScaleOverrides => useRoomVisualScaleOverrides;
+    public string EditorSelectedVisualScaleRoomId => editorSelectedVisualScaleRoomId;
+    public string CurrentVisualScaleRoomId => GetCurrentVisualScaleRoomKey();
 
     private void Reset()
     {
@@ -142,6 +149,146 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         CaptureAuthoredVisualScale(true);
         RefreshVisualTargets();
         ApplyProjection();
+    }
+
+    public void SetEditorSelectedVisualScaleRoomId(string roomId)
+    {
+        editorSelectedVisualScaleRoomId = CleanRoomId(roomId);
+    }
+
+    public Vector3 GetVisualRootScaleForRoom(string roomId)
+    {
+        return TryGetVisualRootScaleForRoom(roomId, out Vector3 scale)
+            ? scale
+            : GetDefaultAuthoredVisualRootScale();
+    }
+
+    public bool TryGetVisualRootScaleForRoom(string roomId, out Vector3 scale)
+    {
+        scale = Vector3.one;
+
+        if (!useRoomVisualScaleOverrides ||
+            string.IsNullOrWhiteSpace(roomId) ||
+            roomVisualScaleOverrides == null)
+        {
+            return false;
+        }
+
+        string cleanRoomId = CleanRoomId(roomId);
+
+        for (int i = 0; i < roomVisualScaleOverrides.Count; i++)
+        {
+            RoomVisualScaleOverride roomScale = roomVisualScaleOverrides[i];
+
+            if (roomScale.Matches(cleanRoomId))
+            {
+                scale = roomScale.VisualRootScale;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool HasVisualRootScaleForRoom(string roomId)
+    {
+        return TryGetVisualRootScaleForRoom(roomId, out _);
+    }
+
+    public void SetVisualRootScaleForRoom(string roomId, Vector3 scale, bool applyImmediately = true)
+    {
+        string cleanRoomId = CleanRoomId(roomId);
+
+        if (string.IsNullOrWhiteSpace(cleanRoomId))
+        {
+            return;
+        }
+
+        if (roomVisualScaleOverrides == null)
+        {
+            roomVisualScaleOverrides = new List<RoomVisualScaleOverride>();
+        }
+
+        scale = SanitizeScale(scale);
+        int existingIndex = GetVisualScaleOverrideIndex(cleanRoomId);
+
+        if (existingIndex >= 0)
+        {
+            roomVisualScaleOverrides[existingIndex] = new RoomVisualScaleOverride(cleanRoomId, scale);
+        }
+        else
+        {
+            roomVisualScaleOverrides.Add(new RoomVisualScaleOverride(cleanRoomId, scale));
+        }
+
+        useRoomVisualScaleOverrides = true;
+        SetEditorSelectedVisualScaleRoomId(cleanRoomId);
+
+        if (applyImmediately)
+        {
+            ApplyProjection();
+        }
+    }
+
+    public bool RemoveVisualRootScaleForRoom(string roomId, bool applyImmediately = true)
+    {
+        string cleanRoomId = CleanRoomId(roomId);
+        int existingIndex = GetVisualScaleOverrideIndex(cleanRoomId);
+
+        if (existingIndex < 0)
+        {
+            return false;
+        }
+
+        roomVisualScaleOverrides.RemoveAt(existingIndex);
+
+        if (applyImmediately)
+        {
+            ApplyProjection();
+        }
+
+        return true;
+    }
+
+    public Vector3 CaptureCurrentVisualRootScaleForRoom(string roomId, bool removeProjectionMultiplier = true)
+    {
+        Transform targetRoot = VisualRoot;
+        Vector3 currentVisualRootScale = targetRoot != null
+            ? SanitizeScale(targetRoot.localScale)
+            : GetDefaultAuthoredVisualRootScale();
+
+        if (removeProjectionMultiplier && applyScale && ShouldApplyProjection())
+        {
+            float projectionMultiplier = Mathf.Max(
+                0.001f,
+                Mathf.Max(0.001f, currentScale > 0f ? currentScale : GetProjectedScale()) *
+                Mathf.Max(0.001f, currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : 1f));
+            currentVisualRootScale = new Vector3(
+                currentVisualRootScale.x / projectionMultiplier,
+                currentVisualRootScale.y / projectionMultiplier,
+                currentVisualRootScale.z);
+        }
+
+        SetVisualRootScaleForRoom(roomId, currentVisualRootScale);
+        return currentVisualRootScale;
+    }
+
+    public void GetVisualScaleOverrideRoomIds(List<string> roomIds)
+    {
+        if (roomIds == null || roomVisualScaleOverrides == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < roomVisualScaleOverrides.Count; i++)
+        {
+            string roomId = roomVisualScaleOverrides[i].RoomId;
+
+            if (!string.IsNullOrWhiteSpace(roomId) && !ContainsRoomId(roomIds, roomId))
+            {
+                roomIds.Add(roomId);
+            }
+        }
     }
 
     public void SetRoomLocalFootPoint(Vector2 footPoint, bool applyImmediately = true)
@@ -434,7 +581,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         float appliedScale = currentScale * currentRoomStageScaleMultiplier;
-        Vector3 baseScale = hasAuthoredVisualRootScale ? authoredVisualRootScale : Vector3.one;
+        Vector3 baseScale = GetAuthoredVisualRootScaleForCurrentRoom();
         Vector3 projectedScale = new Vector3(
             baseScale.x * appliedScale,
             baseScale.y * appliedScale,
@@ -564,6 +711,29 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return SameRoom(actorRoomState.CurrentRoomId, roomProfile.RoomId);
     }
 
+    private Vector3 GetAuthoredVisualRootScaleForCurrentRoom()
+    {
+        string roomKey = GetCurrentVisualScaleRoomKey();
+        return TryGetVisualRootScaleForRoom(roomKey, out Vector3 roomScale)
+            ? roomScale
+            : GetDefaultAuthoredVisualRootScale();
+    }
+
+    private Vector3 GetDefaultAuthoredVisualRootScale()
+    {
+        return hasAuthoredVisualRootScale ? authoredVisualRootScale : Vector3.one;
+    }
+
+    private string GetCurrentVisualScaleRoomKey()
+    {
+        if (!Application.isPlaying && !string.IsNullOrWhiteSpace(editorSelectedVisualScaleRoomId))
+        {
+            return editorSelectedVisualScaleRoomId;
+        }
+
+        return GetCurrentProjectionRoomKey();
+    }
+
     private float GetRoomStageScaleMultiplier()
     {
         if (IsAlreadyOwnedByRoomStage())
@@ -635,6 +805,26 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return roomProfile != null ? roomProfile.RoomId : string.Empty;
     }
 
+    private int GetVisualScaleOverrideIndex(string roomId)
+    {
+        if (roomVisualScaleOverrides == null || string.IsNullOrWhiteSpace(roomId))
+        {
+            return -1;
+        }
+
+        string cleanRoomId = CleanRoomId(roomId);
+
+        for (int i = 0; i < roomVisualScaleOverrides.Count; i++)
+        {
+            if (roomVisualScaleOverrides[i].Matches(cleanRoomId))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     private void ClearRoomStageScaleReference()
     {
         currentRoomStageScaleMultiplier = 1f;
@@ -683,5 +873,49 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             .Replace("_", string.Empty)
             .Replace(" ", string.Empty)
             .Replace("-", string.Empty);
+    }
+
+    private static string CleanRoomId(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private static bool ContainsRoomId(List<string> roomIds, string roomId)
+    {
+        if (roomIds == null || string.IsNullOrWhiteSpace(roomId))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < roomIds.Count; i++)
+        {
+            if (SameRoom(roomIds[i], roomId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    [Serializable]
+    private struct RoomVisualScaleOverride
+    {
+        [SerializeField] private string roomId;
+        [SerializeField] private Vector3 visualRootScale;
+
+        public RoomVisualScaleOverride(string roomId, Vector3 visualRootScale)
+        {
+            this.roomId = CleanRoomId(roomId);
+            this.visualRootScale = SanitizeScale(visualRootScale);
+        }
+
+        public string RoomId => roomId;
+        public Vector3 VisualRootScale => SanitizeScale(visualRootScale);
+
+        public bool Matches(string otherRoomId)
+        {
+            return SameRoom(roomId, otherRoomId);
+        }
     }
 }
