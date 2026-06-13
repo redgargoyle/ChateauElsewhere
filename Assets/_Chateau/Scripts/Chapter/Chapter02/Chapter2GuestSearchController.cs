@@ -34,9 +34,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private List<GuestSearchEntry> guests = new List<GuestSearchEntry>();
     [SerializeField] private string hideAnchorPrefix = "Ch2_Hide_";
     [SerializeField] private string diningSeatPrefix = "Ch2_DiningSeat_";
-    [SerializeField] private string diningGuestSortingLayerName = "People";
-    [SerializeField] private int diningGuestSortingOrderBase = 1620;
-    [SerializeField] private int diningGuestSortingOrderStep = 1;
     [SerializeField] private int foundOrderCounter;
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
 
@@ -122,7 +119,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
             }
 
             EnsureGuestUsesPersistentActorRoot(guest);
-            SetGuestProjectionSortingEnabled(guest, true);
             guest.actorState.enabled = true;
             guest.actorState.PlaceAt(guest.hideAnchor.transform);
             guest.actorState.SetCurrentRoom(guest.hideAnchor.RoomId);
@@ -497,7 +493,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
             RoomAnchor diningSeat = diningSeats[i];
             EnsureGuestUsesPersistentActorRoot(guest);
             DisableGuestFindAction(guest);
-            SetGuestProjectionSortingEnabled(guest, false);
 
             guest.actorState.enabled = true;
             HideGuestForDiningRoomTransfer(guest);
@@ -507,64 +502,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(false);
             guest.actorState.SetSeated(true);
-            ApplyDiningRoomGuestSorting(guest, i);
             guest.actorState.ApplyState();
         }
-    }
-
-    private void ApplyDiningRoomGuestSorting(GuestSearchEntry guest, int seatIndex)
-    {
-        if (guest == null || guest.actorState == null)
-        {
-            return;
-        }
-
-        string sortingLayerName = ResolveSortingLayerName(diningGuestSortingLayerName);
-        int sortingOrder = diningGuestSortingOrderBase + Mathf.Max(0, seatIndex) * diningGuestSortingOrderStep;
-        Renderer[] renderers = guest.actorState.GetComponentsInChildren<Renderer>(true);
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-
-            if (renderer == null)
-            {
-                continue;
-            }
-
-            renderer.sortingLayerName = sortingLayerName;
-            renderer.sortingOrder = sortingOrder;
-        }
-    }
-
-    private void SetGuestProjectionSortingEnabled(GuestSearchEntry guest, bool enabled)
-    {
-        if (guest == null || guest.actorState == null)
-        {
-            return;
-        }
-
-        RoomProjectedEntity[] projections = guest.actorState.GetComponentsInChildren<RoomProjectedEntity>(true);
-
-        for (int i = 0; i < projections.Length; i++)
-        {
-            if (projections[i] != null)
-            {
-                projections[i].SetApplySorting(enabled, enabled);
-            }
-        }
-    }
-
-    private static string ResolveSortingLayerName(string requestedLayerName)
-    {
-        if (!string.IsNullOrWhiteSpace(requestedLayerName) &&
-            (string.Equals(requestedLayerName, "Default", StringComparison.OrdinalIgnoreCase) ||
-                SortingLayer.NameToID(requestedLayerName) != 0))
-        {
-            return requestedLayerName.Trim();
-        }
-
-        return "Default";
     }
 
     private void HideGuestForDiningRoomTransfer(GuestSearchEntry guest)
