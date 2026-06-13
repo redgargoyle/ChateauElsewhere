@@ -496,8 +496,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
             guest.actorState.enabled = true;
             HideGuestForDiningRoomTransfer(guest);
-            guest.actorState.PlaceAt(diningSeat.transform);
             guest.actorState.SetCurrentRoom(diningSeat.RoomId);
+            guest.actorState.PlaceAt(diningSeat.transform);
             guest.actorState.SetAvailableInCurrentChapter(true);
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(false);

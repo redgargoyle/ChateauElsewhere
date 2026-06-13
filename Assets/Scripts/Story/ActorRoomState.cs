@@ -160,12 +160,14 @@ public class ActorRoomState : MonoBehaviour
         {
             projection.UseProfileFromRoomTarget(target);
 
-            if (projection.IsProjectionActive &&
-                projection.CanProjectTarget(target) &&
+            if (projection.CanProjectTarget(target) &&
                 projection.TrySetRoomLocalFootPointFromTarget(target))
             {
-                ClearRoomStagePointBinding();
-                return;
+                if (projection.IsProjectionActive)
+                {
+                    ClearRoomStagePointBinding();
+                    return;
+                }
             }
         }
 

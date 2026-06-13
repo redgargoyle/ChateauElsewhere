@@ -348,10 +348,12 @@ public class RoomProjectionRegressionTests
     {
         string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
         string projectionText = File.ReadAllText("Assets/Scripts/Characters/RoomProjectedEntity.cs");
+        string placeBody = ExtractMethodBody(actorRoomStateText, "PlaceAt");
         string shouldFollowBody = ExtractMethodBody(actorRoomStateText, "ShouldFollowRoomStageMotion");
         string projectedScaleBody = ExtractMethodBody(projectionText, "ApplyProjectedScale");
 
         Assert.That(actorRoomStateText, Does.Contain("RoomProjectedEntity"), "ActorRoomState should know how to detect projection without owning perspective math.");
+        Assert.That(placeBody, Does.Match(@"projection\.CanProjectTarget\(target\)[\s\S]*projection\.TrySetRoomLocalFootPointFromTarget\(target\)[\s\S]*projection\.IsProjectionActive"), "ActorRoomState should seed projected foot points before checking whether projection is already active.");
         Assert.That(shouldFollowBody, Does.Contain("!HasActiveProjection()"), "Projection should own visual scale and room-stage positioning when present.");
         Assert.That(actorRoomStateText, Does.Contain("projection.IsProjectionActive"), "ActorRoomState should only defer to projection in the matching projected room.");
         Assert.That(actorRoomStateText, Does.Contain("ApplyState()"), "ActorRoomState should continue to own visibility and interaction state.");
