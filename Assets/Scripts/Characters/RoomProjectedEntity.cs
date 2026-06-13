@@ -67,6 +67,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public float CurrentScale => currentScale;
     public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;
+    public bool AppliesSorting => applySorting;
     public bool UsesRoomVisualScaleOverrides => useRoomVisualScaleOverrides;
     public string EditorSelectedVisualScaleRoomId => editorSelectedVisualScaleRoomId;
     public string CurrentVisualScaleRoomId => GetCurrentVisualScaleRoomKey();
@@ -296,6 +297,16 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         roomLocalFootPoint = footPoint;
 
         if (applyImmediately)
+        {
+            ApplyProjection();
+        }
+    }
+
+    public void SetApplySorting(bool value, bool applyImmediately = true)
+    {
+        applySorting = value;
+
+        if (applyImmediately && applySorting)
         {
             ApplyProjection();
         }
@@ -657,8 +668,12 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             Color color = contactShadowRenderer.color;
             color.a = opacity;
             contactShadowRenderer.color = color;
-            contactShadowRenderer.sortingLayerName = GetSortingLayerName();
-            contactShadowRenderer.sortingOrder = GetSortingOrder(visualProfile != null ? visualProfile.ShadowSortingOffset : -2);
+
+            if (applySorting)
+            {
+                contactShadowRenderer.sortingLayerName = GetSortingLayerName();
+                contactShadowRenderer.sortingOrder = GetSortingOrder(visualProfile != null ? visualProfile.ShadowSortingOffset : -2);
+            }
         }
 
         if (contactShadowGraphic != null)
