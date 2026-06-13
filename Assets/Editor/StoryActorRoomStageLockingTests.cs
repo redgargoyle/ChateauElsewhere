@@ -118,6 +118,44 @@ public class StoryActorRoomStageLockingTests
         }
     }
 
+    [Test]
+    public void WorldActorBindingUsesRoomPerspectiveProfileScale()
+    {
+        TestRig rig = CreateRig();
+        RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
+        profile.Configure(
+            rig.RoomContent.RoomName,
+            new Vector2(400f, 200f),
+            -100f,
+            100f,
+            AnimationCurve.Linear(0f, 1.25f, 1f, 0.75f),
+            null,
+            1000,
+            8000,
+            AnimationCurve.Linear(0f, 1f, 1f, 0f));
+        rig.RoomContent.SetPerspectiveProfile(profile);
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            Vector3 authoredScale = rig.ActorState.transform.localScale;
+
+            rig.ActorState.PlaceAt(rig.Anchor);
+            Assert.That(ApplyBinding(rig.ActorState), Is.True);
+
+            float expectedPerspectiveScale = profile.GetScale(rig.Anchor.anchoredPosition);
+            AssertActorLockedToAnchor(rig, "profile-scaled placement");
+            Assert.That(rig.ActorState.transform.localScale.x, Is.EqualTo(authoredScale.x * expectedPerspectiveScale).Within(0.0001f));
+            Assert.That(rig.ActorState.transform.localScale.y, Is.EqualTo(authoredScale.y * expectedPerspectiveScale).Within(0.0001f));
+            Assert.That(rig.ActorState.transform.localScale.z, Is.EqualTo(authoredScale.z).Within(0.0001f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(profile);
+            rig.Destroy();
+        }
+    }
+
     private static TestRig CreateRig()
     {
         GameObject root = new GameObject("StoryActorRoomStageLockingTestRoot");

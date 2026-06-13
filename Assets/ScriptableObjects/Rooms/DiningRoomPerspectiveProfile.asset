@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoomPerspectiveProfile
   roomId: Dining Room
   nativeRoomReferenceSize: {x: 1672, y: 941}
-  nearFootY: -470.5
-  farFootY: 470.5
+  nearFootY: -200
+  farFootY: -10
   scaleByDepth:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1.1
+      value: 1.16
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -30,7 +30,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.6
+      value: 0.78
       inSlope: 0
       outSlope: 0
       tangentMode: 0
