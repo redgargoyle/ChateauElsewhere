@@ -27965,7 +27965,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomName: Dining Room
   roomBackgroundTexture: {fileID: 2800000, guid: 004ab4cca930d0387892725fe69b4f72, type: 3}
-  perspectiveProfile: {fileID: 0}
+  perspectiveProfile: {fileID: 11400000, guid: a63248cfbd6b4a72af45c62cff7e94d0, type: 2}
   applyVisibleDefaultsToChildRenderers: 1
   defaultSortingLayerName: Background
   defaultSpriteSortingOrder: 20
