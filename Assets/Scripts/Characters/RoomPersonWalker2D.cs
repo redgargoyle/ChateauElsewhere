@@ -36,6 +36,8 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	[SerializeField] private bool loopPath = true;
 	[SerializeField] private bool pingPongPath;
 	[Header("Painted-Room Depth")]
+	[SerializeField] private RoomPerspectiveProfile roomProfile;
+	[SerializeField] private bool useRoomPerspectiveProfileScale = true;
 	[SerializeField] private float nearY = -360f;
 	[SerializeField] private float farY = 150f;
 	[SerializeField] [Min(0.01f)] private float nearScale = 1f;
@@ -96,6 +98,19 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 #endif
 	}
 
+	public void RefreshDepthVisualsNow()
+	{
+		ResolveReferences();
+		ApplyVisuals();
+	}
+
+	public bool UsesPerspectiveProfile(RoomPerspectiveProfile profile)
+	{
+		return profile != null &&
+			TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile currentProfile) &&
+			currentProfile == profile;
+	}
+
 	private void OnValidate()
 	{
 		animationSpeed = Mathf.Max(0f, animationSpeed);
@@ -137,6 +152,16 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 		if (roomProjection == null)
 			roomProjection = GetComponent<RoomProjectedEntity>();
+
+		if (roomProfile == null)
+		{
+			RoomContentGroup roomContent = GetComponentInParent<RoomContentGroup>(true);
+
+			if (roomContent != null)
+			{
+				roomProfile = roomContent.PerspectiveProfile;
+			}
+		}
 	}
 
 	private void CacheAnimatorParameters()
@@ -364,17 +389,46 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 	private float GetDepth01()
 	{
+		if (TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
+			return profile.GetDepth01(currentPosition);
+
 		return Mathf.Clamp01(Mathf.InverseLerp(nearY, farY, currentPosition.y));
 	}
 
 	private float GetDepthScale()
 	{
+		if (TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
+			return profile.GetScale(currentPosition);
+
 		return Mathf.Lerp(nearScale, farScale, GetDepth01());
 	}
 
 	private Color GetDepthTint()
 	{
+		if (TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
+			return profile.GetTint(currentPosition);
+
 		return Color.Lerp(nearTint, farTint, GetDepth01());
+	}
+
+	private bool TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile profile)
+	{
+		profile = null;
+
+		if (!useRoomPerspectiveProfileScale)
+			return false;
+
+		if (roomProfile != null)
+		{
+			profile = roomProfile;
+			return true;
+		}
+
+		RoomContentGroup roomContent = GetComponentInParent<RoomContentGroup>(true);
+		if (roomContent != null && roomContent.TryGetPerspectiveProfile(out profile))
+			return true;
+
+		return false;
 	}
 
 	private Vector2 GetRenderedPosition(Vector2 position)

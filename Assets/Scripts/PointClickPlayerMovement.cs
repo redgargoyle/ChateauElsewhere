@@ -34,6 +34,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private float farY = -2.25f;
 	[SerializeField] private float nearScale = 1f;
 	[SerializeField] private float farScale = 0.58f;
+	[SerializeField] private bool useRoomPerspectiveProfileScale = true;
 	[SerializeField] private bool applyPerspectiveScale = true;
 	[SerializeField] private bool applyPlayerSorting = true;
 	[SerializeField] private float runningAnimationSpeed = 40f;
@@ -56,6 +57,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private float roomStageReferenceScale = 1f;
 	private float currentRoomStageScaleRatio = 1f;
 	private float authoredPerspectiveScaleReference = 1f;
+	private RoomPerspectiveProfile currentRoomPerspectiveProfile;
+	private string currentRoomPerspectiveProfileRoom;
 	private CharacterWalkDirection walkDirection = CharacterWalkDirection.Right;
 	private CharacterAnimatorDriver.ParameterCache animatorParameters;
 	private string currentWalkableBoundaryRoom;
@@ -99,6 +102,27 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		CacheReferences();
 		CacheAnimatorParameters();
+	}
+
+	public void RefreshPerspectiveScaleNow(bool refreshLogicalPositionFromTransform = false)
+	{
+		CacheReferences();
+		CaptureAuthoredLocalScaleIfNeeded();
+
+		if (refreshLogicalPositionFromTransform || !Application.isPlaying)
+		{
+			UpdateVisualOffset(Camera.main);
+			logicalPosition = WalkableWorldToLogicalPoint(GetCurrentVisibleMovementWorldPoint());
+		}
+
+		ApplyPerspectiveScale();
+	}
+
+	public bool UsesPerspectiveProfile(RoomPerspectiveProfile profile)
+	{
+		return profile != null &&
+			TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile currentProfile) &&
+			currentProfile == profile;
 	}
 
 	public void SetPerspectiveScaleEnabled(bool value, bool restoreAuthoredScale = true)
@@ -1042,8 +1066,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		UpdateVisualOffset(Camera.main);
-		float depthScale = GetPerspectiveScaleForY(logicalPosition.y);
-		float scale = depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference) * currentRoomStageScaleRatio;
+		TryGetPerspectiveScaleForY(logicalPosition.y, out float depthScale, out bool usesRoomProfileScale);
+		float fallbackRelativeScale = depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference);
+		float scale = (usesRoomProfileScale ? depthScale : fallbackRelativeScale) * currentRoomStageScaleRatio;
 		transform.localScale = new Vector3(
 			authoredLocalScale.x * scale,
 			authoredLocalScale.y * scale,
@@ -1052,8 +1077,111 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private float GetPerspectiveScaleForY(float y)
 	{
+		TryGetPerspectiveScaleForY(y, out float scale, out _);
+		return scale;
+	}
+
+	private bool TryGetPerspectiveScaleForY(float y, out float scale, out bool usesRoomProfileScale)
+	{
+		if (TryGetRoomPerspectiveScaleForY(y, out scale))
+		{
+			usesRoomProfileScale = true;
+			return true;
+		}
+
+		usesRoomProfileScale = false;
+		scale = GetFallbackPerspectiveScaleForY(y);
+		return true;
+	}
+
+	private float GetFallbackPerspectiveScaleForY(float y)
+	{
 		float depth = Mathf.InverseLerp(nearY, farY, y);
 		return Mathf.Max(0.0001f, Mathf.Lerp(nearScale, farScale, depth));
+	}
+
+	private bool TryGetRoomPerspectiveScaleForY(float y, out float scale)
+	{
+		scale = 1f;
+
+		if (!TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
+		{
+			return false;
+		}
+
+		Vector2 logicalPoint = new Vector2(logicalPosition.x, y);
+
+		if (TryGetRoomStageLocalPoint(logicalPoint, out Vector2 roomLocalPoint))
+		{
+			scale = profile.GetScale(roomLocalPoint);
+			return true;
+		}
+
+		scale = profile.GetScale(new Vector2(0f, y));
+		return true;
+	}
+
+	private bool TryGetRoomStageLocalPoint(Vector2 logicalPoint, out Vector2 roomLocalPoint)
+	{
+		roomLocalPoint = Vector2.zero;
+
+		if (cameraManager == null)
+		{
+			cameraManager = FindAnyObjectByType<CameraManager>();
+		}
+
+		if (cameraManager == null)
+		{
+			return false;
+		}
+
+		Vector2 worldPoint = LogicalToWalkableWorldPoint(logicalPoint);
+		return cameraManager.TryGetActiveRoomStageLocalPoint(worldPoint, out roomLocalPoint);
+	}
+
+	private bool TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile profile)
+	{
+		profile = null;
+
+		if (!useRoomPerspectiveProfileScale)
+		{
+			return false;
+		}
+
+		if (navigationManager == null)
+		{
+			navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+		}
+
+		string currentRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
+
+		if (currentRoomPerspectiveProfile != null &&
+			SameRoomName(currentRoomPerspectiveProfileRoom, currentRoom))
+		{
+			profile = currentRoomPerspectiveProfile;
+			return true;
+		}
+
+		if (!string.IsNullOrWhiteSpace(currentRoom) &&
+			TryFindRoomContentForRoom(currentRoom, out RoomContentGroup roomContent) &&
+			roomContent.TryGetPerspectiveProfile(out profile))
+		{
+			currentRoomPerspectiveProfile = profile;
+			currentRoomPerspectiveProfileRoom = roomContent.RoomName;
+			return true;
+		}
+
+		RoomContentGroup parentRoom = GetComponentInParent<RoomContentGroup>(true);
+		if (parentRoom != null && parentRoom.TryGetPerspectiveProfile(out profile))
+		{
+			currentRoomPerspectiveProfile = profile;
+			currentRoomPerspectiveProfileRoom = parentRoom.RoomName;
+			return true;
+		}
+
+		currentRoomPerspectiveProfile = null;
+		currentRoomPerspectiveProfileRoom = string.Empty;
+		return false;
 	}
 
 	private void UpdateAnimator()
@@ -1454,6 +1582,32 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		return null;
+	}
+
+	private bool TryFindRoomContentForRoom(string roomName, out RoomContentGroup roomContent)
+	{
+		roomContent = null;
+
+		if (string.IsNullOrWhiteSpace(roomName))
+			return false;
+
+#if UNITY_2023_1_OR_NEWER
+		RoomContentGroup[] rooms = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
+#else
+		RoomContentGroup[] rooms = FindObjectsOfType<RoomContentGroup>(true);
+#endif
+
+		for (int i = 0; i < rooms.Length; i++)
+		{
+			RoomContentGroup room = rooms[i];
+			if (room == null || !SameRoomName(room.RoomName, roomName))
+				continue;
+
+			roomContent = room;
+			return true;
+		}
+
+		return false;
 	}
 
 	private bool TryFindPlayerBoundaryForRoom(string roomName, out Collider2D boundary)

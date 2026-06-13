@@ -1,8 +1,10 @@
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 public sealed class RoomProjectionCalibrationWindow : EditorWindow
 {
+    private const string RoomProfilesFolderPath = "Assets/ScriptableObjects/Rooms";
     private const string DrawingRoomProfilePath = "Assets/ScriptableObjects/Rooms/DrawingRoomPerspectiveProfile.asset";
     private const string StandardAdultProfilePath = "Assets/ScriptableObjects/Characters/StandardAdultVisualProfile.asset";
 
@@ -35,6 +37,55 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
         AssetDatabase.SaveAssets();
         Selection.activeObject = profile;
         return profile;
+    }
+
+    [MenuItem("Tools/Room Projection/Create Perspective Profiles For Scene Rooms")]
+    public static void CreatePerspectiveProfilesForSceneRooms()
+    {
+        EnsureAssetFolder("Assets/ScriptableObjects");
+        EnsureAssetFolder(RoomProfilesFolderPath);
+
+        int assignedCount = 0;
+        RoomContentGroup[] rooms = Resources.FindObjectsOfTypeAll<RoomContentGroup>();
+
+        for (int i = 0; i < rooms.Length; i++)
+        {
+            RoomContentGroup room = rooms[i];
+
+            if (room == null || EditorUtility.IsPersistent(room) || string.IsNullOrWhiteSpace(room.RoomName))
+            {
+                continue;
+            }
+
+            RoomPerspectiveProfile profile = room.PerspectiveProfile;
+
+            if (profile == null)
+            {
+                string profilePath = $"{RoomProfilesFolderPath}/{GetSafeAssetName(room.RoomName)}PerspectiveProfile.asset";
+                profile = AssetDatabase.LoadAssetAtPath<RoomPerspectiveProfile>(profilePath);
+
+                if (profile == null)
+                {
+                    profile = CreateInstance<RoomPerspectiveProfile>();
+                    ConfigureRoomProfileDefaults(profile, room);
+                    AssetDatabase.CreateAsset(profile, profilePath);
+                }
+            }
+
+            Undo.RecordObject(room, "Assign Room Perspective Profile");
+            room.SetPerspectiveProfile(profile);
+            EditorUtility.SetDirty(room);
+
+            if (room.gameObject.scene.IsValid())
+            {
+                EditorSceneManager.MarkSceneDirty(room.gameObject.scene);
+            }
+
+            assignedCount++;
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Assigned room perspective profiles to {assignedCount} room(s).");
     }
 
     [MenuItem("Tools/Room Projection/Create Standard Adult Visual Profile")]
@@ -94,6 +145,11 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
             {
                 CreateStandardAdultVisualProfile();
             }
+        }
+
+        if (GUILayout.Button("Create/Assign Profiles For Scene Rooms"))
+        {
+            CreatePerspectiveProfilesForSceneRooms();
         }
 
         EditorGUILayout.Space();
@@ -172,5 +228,54 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
             EnsureAssetFolder(parent);
             AssetDatabase.CreateFolder(parent, folderName);
         }
+    }
+
+    private static void ConfigureRoomProfileDefaults(RoomPerspectiveProfile profile, RoomContentGroup room)
+    {
+        RectTransform roomStage = room != null ? room.transform as RectTransform : null;
+        Vector2 referenceSize = new Vector2(1366f, 768f);
+        float nearY = -360f;
+        float farY = 140f;
+
+        if (roomStage != null)
+        {
+            Rect rect = roomStage.rect;
+            referenceSize = new Vector2(Mathf.Max(1f, rect.width), Mathf.Max(1f, rect.height));
+            nearY = rect.yMin;
+            farY = rect.yMax;
+        }
+
+        profile.Configure(
+            room != null ? room.RoomName : "Room",
+            referenceSize,
+            nearY,
+            farY,
+            AnimationCurve.EaseInOut(0f, 1f, 1f, 0.54f),
+            null,
+            1000,
+            8000,
+            AnimationCurve.Linear(0f, 1f, 1f, 0f));
+    }
+
+    private static string GetSafeAssetName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "Room";
+        }
+
+        System.Text.StringBuilder builder = new System.Text.StringBuilder(value.Length);
+
+        for (int i = 0; i < value.Length; i++)
+        {
+            char character = value[i];
+
+            if (char.IsLetterOrDigit(character))
+            {
+                builder.Append(character);
+            }
+        }
+
+        return builder.Length > 0 ? builder.ToString() : "Room";
     }
 }
