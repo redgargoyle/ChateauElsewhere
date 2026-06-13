@@ -17519,58 +17519,13 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}
       insertIndex: -1
       addedObject: {fileID: 118731755}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5236250058300121345, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1485188971}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}
 --- !u!4 &1485188969 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}
   m_PrefabInstance: {fileID: 1485188968}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1485188970 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5236250058300121345, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}
-  m_PrefabInstance: {fileID: 1485188968}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1485188971
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1485188970}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 361e3658088b41ab98d330ae6457640b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RoomProjectedEntity
-  roomProfile: {fileID: 0}
-  visualProfile: {fileID: 0}
-  projectionMode: 0
-  roomLocalFootPoint: {x: -2.41, y: -1.19}
-  visualRoot: {fileID: 1485188969}
-  applyPosition: 1
-  applyScale: 1
-  applyTint: 1
-  applySorting: 1
-  includeInactiveRenderers: 1
-  requireActorRoomMatch: 1
-  normalizeLogicalRootScale: 1
-  logicalRootScale: {x: 1, y: 1, z: 1}
-  sortingOffset: 0
-  cameraManager: {fileID: 2050006783}
-  contactShadowRoot: {fileID: 0}
-  contactShadowRenderer: {fileID: 0}
-  contactShadowGraphic: {fileID: 0}
-  useRoomVisualScaleOverrides: 1
-  editorSelectedVisualScaleRoomId: Dining Room
-  roomVisualScaleOverrides: []
-  authoredVisualRootScale: {x: 1.12, y: 1.12, z: 1.12}
-  hasAuthoredVisualRootScale: 1
-  lastAppliedVisualRootScale: {x: 1, y: 1, z: 1}
-  hasLastAppliedVisualRootScale: 0
 --- !u!1001 &1491486592
 PrefabInstance:
   m_ObjectHideFlags: 0
