@@ -345,7 +345,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void DrawingRoomGuestsAndTeaTableUsePerspectiveDepthSorting()
+    public void DrawingRoomGuestsAndFurnitureUsePerspectiveDepthSorting()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string completeMethodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
@@ -363,9 +363,18 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(depthSortMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - referenceOrder"), "Depth sorting should preserve local renderer offsets such as coats or layered bodies.");
         Assert.That(depthSortMethodBody, Does.Not.Contain("9000"), "Drawing Room depth sorting should not reuse the entrance fallback sorting band.");
 
-        AssertTeaTableUsesProjectedDepth(gameplaySceneText, "roomLocalFootPoint: {x: -80.26, y: -211.67}", "m_SortingOrder: 6627");
-        AssertTeaTableUsesProjectedDepth(drawingRoomPrefabText, "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
-        AssertTeaTableUsesProjectedDepth(drawingRoomPerspectivePrefabText, "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
+        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "tea_service_table", "roomLocalFootPoint: {x: -80.26, y: -211.67}", "m_SortingOrder: 6627");
+        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
+        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -479.54, y: -281.56}", "m_SortingOrder: 7745");
+        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair[_0", "roomLocalFootPoint: {x: -408.72, y: -261.91}", "m_SortingOrder: 7431");
+
+        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "tea_service_table", "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
+        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
+        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -490.46, y: -282.58}", "m_SortingOrder: 7761");
+
+        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "tea_service_table", "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
+        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
+        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -490.46, y: -282.58}", "m_SortingOrder: 7761");
     }
 
     [Test]
@@ -387,18 +396,18 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(skipStageMethodBody, Does.Contain("guest.Seated = true"), "Visual standing should not break Chapter 2 skip progression.");
     }
 
-    private static void AssertTeaTableUsesProjectedDepth(string assetText, string expectedFootPoint, string expectedSortingOrder)
+    private static void AssertDrawingRoomProjectedOccluderDepth(string assetText, string objectName, string expectedFootPoint, string expectedSortingOrder)
     {
-        string teaTableBlock = ExtractObjectBlock(assetText, "tea_service_table");
+        string objectBlock = ExtractObjectBlock(assetText, objectName);
 
-        Assert.That(teaTableBlock, Does.Contain("guid: 361e3658088b41ab98d330ae6457640b"), "The Drawing Room tea table should use RoomProjectedEntity for depth sorting.");
-        Assert.That(teaTableBlock, Does.Contain("roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267"), "The tea table should sort against the Drawing Room perspective profile.");
-        Assert.That(teaTableBlock, Does.Contain(expectedFootPoint), "The table sort point should match the authored floor/occlusion point.");
-        Assert.That(teaTableBlock, Does.Contain("applyPosition: 0"), "The table projection must not move authored art.");
-        Assert.That(teaTableBlock, Does.Contain("applyScale: 0"), "The table projection must not resize authored art.");
-        Assert.That(teaTableBlock, Does.Contain("applyTint: 0"), "The table projection must not recolor authored art.");
-        Assert.That(teaTableBlock, Does.Contain("applySorting: 1"), "The table projection should only own sorting.");
-        Assert.That(teaTableBlock, Does.Contain(expectedSortingOrder), "The serialized table order should match its profile-derived y depth.");
+        Assert.That(objectBlock, Does.Contain("guid: 361e3658088b41ab98d330ae6457640b"), $"The Drawing Room object '{objectName}' should use RoomProjectedEntity for depth sorting.");
+        Assert.That(objectBlock, Does.Contain("roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267"), $"The Drawing Room object '{objectName}' should sort against the Drawing Room perspective profile.");
+        Assert.That(objectBlock, Does.Contain(expectedFootPoint), $"The Drawing Room object '{objectName}' sort point should match the authored floor/occlusion point.");
+        Assert.That(objectBlock, Does.Contain("applyPosition: 0"), $"The Drawing Room object '{objectName}' projection must not move authored art.");
+        Assert.That(objectBlock, Does.Contain("applyScale: 0"), $"The Drawing Room object '{objectName}' projection must not resize authored art.");
+        Assert.That(objectBlock, Does.Contain("applyTint: 0"), $"The Drawing Room object '{objectName}' projection must not recolor authored art.");
+        Assert.That(objectBlock, Does.Contain("applySorting: 1"), $"The Drawing Room object '{objectName}' projection should only own sorting.");
+        Assert.That(objectBlock, Does.Contain(expectedSortingOrder), $"The Drawing Room object '{objectName}' serialized order should match its profile-derived y depth.");
     }
 
     private static string ExtractObjectBlock(string assetText, string objectName)

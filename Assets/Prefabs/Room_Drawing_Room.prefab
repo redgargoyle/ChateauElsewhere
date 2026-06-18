@@ -1693,6 +1693,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6868143003304670455}
   - component: {fileID: 2572990784866014180}
+  - component: {fileID: 6868143003304670456}
   m_Layer: 0
   m_Name: drawingroomgreenchair_0
   m_TagString: Untagged
@@ -1762,7 +1763,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1614
+  m_SortingOrder: 7761
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7176405640066159467, guid: 5d2f4c79f6c75e4c69dbbafeaff8b2c2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1774,6 +1775,43 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
+--- !u!114 &6868143003304670456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4983676372279172322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 361e3658088b41ab98d330ae6457640b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
+  visualProfile: {fileID: 0}
+  projectionMode: 4
+  roomLocalFootPoint: {x: -490.46, y: -282.58}
+  visualRoot: {fileID: 0}
+  applyPosition: 0
+  applyScale: 0
+  applyTint: 0
+  applySorting: 1
+  includeInactiveRenderers: 1
+  requireActorRoomMatch: 0
+  normalizeLogicalRootScale: 0
+  logicalRootScale: {x: 1, y: 1, z: 1}
+  sortingOffset: 0
+  cameraManager: {fileID: 0}
+  contactShadowRoot: {fileID: 0}
+  contactShadowRenderer: {fileID: 0}
+  contactShadowGraphic: {fileID: 0}
+  useRoomVisualScaleOverrides: 0
+  editorSelectedVisualScaleRoomId:
+  roomVisualScaleOverrides: []
+  authoredVisualRootScale: {x: 1, y: 1, z: 1}
+  hasAuthoredVisualRootScale: 0
+  lastAppliedVisualRootScale: {x: 1, y: 1, z: 1}
+  hasLastAppliedVisualRootScale: 0
 --- !u!1 &5079070975608087535
 GameObject:
   m_ObjectHideFlags: 0
@@ -2043,6 +2081,7 @@ GameObject:
   m_Component:
   - component: {fileID: 941830645189917262}
   - component: {fileID: 6995352408496590697}
+  - component: {fileID: 941830645189917263}
   m_Layer: 0
   m_Name: purple_armchair_back
   m_TagString: Untagged
@@ -2112,7 +2151,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1613
+  m_SortingOrder: 8289
   m_MaskInteraction: 0
   m_Sprite: {fileID: 8151572500087809967, guid: 84e185b06bd4d9a19842586e593673e5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -2124,6 +2163,43 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
+--- !u!114 &941830645189917263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6132816832511842994}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 361e3658088b41ab98d330ae6457640b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
+  visualProfile: {fileID: 0}
+  projectionMode: 4
+  roomLocalFootPoint: {x: 243.62, y: -315.58}
+  visualRoot: {fileID: 0}
+  applyPosition: 0
+  applyScale: 0
+  applyTint: 0
+  applySorting: 1
+  includeInactiveRenderers: 1
+  requireActorRoomMatch: 0
+  normalizeLogicalRootScale: 0
+  logicalRootScale: {x: 1, y: 1, z: 1}
+  sortingOffset: 0
+  cameraManager: {fileID: 0}
+  contactShadowRoot: {fileID: 0}
+  contactShadowRenderer: {fileID: 0}
+  contactShadowGraphic: {fileID: 0}
+  useRoomVisualScaleOverrides: 0
+  editorSelectedVisualScaleRoomId:
+  roomVisualScaleOverrides: []
+  authoredVisualRootScale: {x: 1, y: 1, z: 1}
+  hasAuthoredVisualRootScale: 0
+  lastAppliedVisualRootScale: {x: 1, y: 1, z: 1}
+  hasLastAppliedVisualRootScale: 0
 --- !u!1 &6617981745460704418
 GameObject:
   m_ObjectHideFlags: 0
