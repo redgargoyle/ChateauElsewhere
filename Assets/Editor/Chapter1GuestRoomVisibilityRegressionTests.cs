@@ -167,7 +167,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         int firstAnswerIndex = startBody.IndexOf("arrivalController.AnswerFrontDoor()", StringComparison.Ordinal);
 
         Assert.That(startBody, Does.Contain("arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination)"), "Front-door clicks should use the arrival controller's reachable greeting spot.");
-        Assert.That(startBody, Does.Contain("TryFindClosestReachableDestinationToWorldPoint(transform.position, out approachDestination)"), "The raw trigger transform should only be the fallback for front-door walking.");
+        Assert.That(startBody, Does.Not.Contain("TryFindClosestReachableDestinationToWorldPoint(transform.position"), "Front-door clicks should not fall back to the scene-action object's visual center.");
         Assert.That(destinationLookupIndex, Is.GreaterThanOrEqualTo(0), "Front-door clicks should attempt a door approach destination before any answer logic.");
         Assert.That(firstAnswerIndex, Is.GreaterThan(destinationLookupIndex), "The butler must not answer from the click handler just because he is close to the cached front-door spot.");
         Assert.That(startBody, Does.Not.Match(@"CancelPendingFrontDoorApproach\(\);\s*if \(IsPlayerCloseToFrontDoor\(playerMovement\)\)"), "Every available front-door click should route through a movement attempt before guests are admitted.");
@@ -211,6 +211,12 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string configureBody = ExtractMethodBody(controllerText, "ConfigureAuthoredCoatHangerObject");
         string colliderBody = ExtractMethodBody(controllerText, "EnsureCoatHangerCollider");
         string handleClosetBody = ExtractMethodBody(controllerText, "HandleClosetClicked");
+        string walkClosetBody = ExtractMethodBody(controllerText, "WalkButlerToCloset");
+        string completeClosetBody = ExtractMethodBody(controllerText, "CompletePendingClosetStorage");
+        string closetDestinationBody = ExtractMethodBody(controllerText, "TryGetClosetApproachDestination");
+        string closetScreenBody = ExtractMethodBody(controllerText, "TryGetClosetApproachScreenPosition");
+        string walkCoatBody = ExtractMethodBody(controllerText, "WalkButlerToCoat");
+        string closeCoatBody = ExtractMethodBody(controllerText, "IsButlerCloseToCoat");
         string actionBoundsBody = ExtractMethodBody(actionText, "IsPointerInsideActionBounds");
         string screenBoundsBody = ExtractMethodBody(actionText, "IsPointerInsideScreenBounds");
         string actionUpdateBody = ExtractMethodBody(actionText, "private void Update");
@@ -226,9 +232,16 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(configureBody, Does.Contain("AddComponent<Chapter1SceneAction>"), "The authored hanger should gain the standard scene action if it is not already serialized.");
         Assert.That(configureBody, Does.Contain("AddComponent<CoatCloset>"), "The authored hanger should become the active coat storage container.");
         Assert.That(colliderBody, Does.Contain("BoxCollider2D"), "The authored hanger needs a trigger collider for pointer hit testing.");
-        Assert.That(handleClosetBody, Does.Match(@"if \(!butlerCarryingCoat\)[\s\S]*return;[\s\S]*StoreCarriedCoatInCloset\(\)"), "A valid coat-hanger click while carrying a coat should store it immediately instead of depending on walk/proximity state.");
-        Assert.That(controllerText, Does.Not.Contain("WalkButlerToCloset"), "Coat storage should not be gated behind a closet-walk helper that can fail due to room-stage scaling.");
-        Assert.That(controllerText, Does.Not.Contain("IsButlerCloseToCloset"), "Coat storage should not be gated behind screen-distance proximity to the hanger transform.");
+        Assert.That(handleClosetBody, Does.Match(@"if \(!IsButlerCloseToCloset\(\)\)[\s\S]*WalkButlerToCloset\(\)[\s\S]*return;[\s\S]*StoreCarriedCoatInCloset\(\)"), "A valid coat-hanger click should walk the butler's feet to the hanger approach point before storing.");
+        Assert.That(walkClosetBody, Does.Contain("TryGetClosetApproachDestination"), "Coat storage should use a computed reachable hanger approach destination.");
+        Assert.That(walkClosetBody, Does.Contain("MovementStopped"), "Coat storage should finish after the butler reaches the hanger.");
+        Assert.That(completeClosetBody, Does.Contain("IsButlerCloseToCloset()"), "Movement completion should re-check that the butler reached the hanger approach point.");
+        Assert.That(closetDestinationBody, Does.Contain("TryGetClosetApproachScreenPosition"), "The hanger walk target should start from the visible lower hanger point, not the object center.");
+        Assert.That(closetDestinationBody, Does.Contain("TryEvaluateMovementAtScreenPoint"), "The hanger target should be converted through the same screen-space movement mapping as player clicks.");
+        Assert.That(closetScreenBody, Does.Contain("TryGetVisibleFeetWorldPoint"), "The hanger approach point should use the lower visible bounds.");
+        Assert.That(walkCoatBody, Does.Contain("TryGetGuestFeetScreenPosition"), "Guest coat pickup should walk to the guest's feet, not the coat sprite transform.");
+        Assert.That(closeCoatBody, Does.Contain("TryGetGuestFeetScreenPosition"), "Guest coat proximity should compare the butler's feet with the same guest-feet target used for movement.");
+        Assert.That(controllerText, Does.Contain("IsCoatVisualTransform(renderer.transform)"), "Guest feet detection should ignore coat renderers before falling back to all visible renderers.");
         Assert.That(actionBoundsBody, Does.Contain("IsPointerInsideScreenBounds(screenPosition)"), "World-space scene actions should test the visible screen bounds, not raw world collider points.");
         Assert.That(screenBoundsBody, Does.Contain("TryGetActionScreenBounds"), "Coat-hanger hit testing should build screen-space bounds from the visible object.");
         Assert.That(screenBoundsBody, Does.Contain("GetMinimumScreenClickRadius"), "Coat-hanger hit testing should keep a minimum screen click radius for scaled layouts.");

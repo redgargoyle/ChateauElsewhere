@@ -133,6 +133,8 @@ public class Chapter1ArrivalController : MonoBehaviour
     private GuestRuntimeState carriedCoatGuest;
     private GuestRuntimeState pendingCoatPickupGuest;
     private Chapter1CoatPickup pendingCoatPickup;
+    private bool hasPendingClosetApproachDestination;
+    private Vector2 pendingClosetApproachDestination;
     private GameObject carriedCoatVisual;
     private Sprite runtimeCoatSprite;
     private Sprite runtimeGuestSprite;
@@ -145,6 +147,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
     private const float CoatPickupReadyScreenDistance = 90f;
+    private const float ClosetStorageReadyScreenDistance = 90f;
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
     private const int EntranceBanisterSafeWalkingSortingOrder = 1599;
@@ -206,6 +209,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void OnDisable()
     {
         CancelPendingCoatPickup();
+        CancelPendingClosetStorage();
 
         if (guestRoomVisibilityRefreshRoutine != null)
         {
@@ -264,6 +268,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         CancelPendingCoatPickup();
+        CancelPendingClosetStorage();
         doorbellSystem?.StopRinging();
         pendingGuestGroups.Clear();
         activeEntranceGroups.Clear();
@@ -659,7 +664,9 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        Vector2 coatScreenPosition = mainCamera.WorldToScreenPoint(coatPickup.transform.position);
+        Vector2 coatScreenPosition = TryGetGuestFeetScreenPosition(guestState, out Vector2 guestFeetScreenPosition)
+            ? guestFeetScreenPosition
+            : mainCamera.WorldToScreenPoint(coatPickup.transform.position);
 
         if (!playerMovement.TryEvaluateMovementAtScreenPoint(coatScreenPosition, true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
             !movementQuery.HasReachableDestination)
@@ -746,7 +753,10 @@ public class Chapter1ArrivalController : MonoBehaviour
             return false;
         }
 
-        Vector2 coatScreenPosition = mainCamera.WorldToScreenPoint(coatPickup.transform.position);
+        GuestRuntimeState guestState = FindGuestByCoat(coatPickup.CoatId);
+        Vector2 coatScreenPosition = TryGetGuestFeetScreenPosition(guestState, out Vector2 guestFeetScreenPosition)
+            ? guestFeetScreenPosition
+            : mainCamera.WorldToScreenPoint(coatPickup.transform.position);
 
         if (!playerMovement.TryGetScreenPointFromLogicalPosition(playerMovement.LogicalPosition, out Vector2 butlerScreenPosition))
         {
@@ -761,6 +771,143 @@ public class Chapter1ArrivalController : MonoBehaviour
         return Vector2.Distance(butlerScreenPosition, coatScreenPosition) <= CoatPickupReadyScreenDistance;
     }
 
+    private bool TryGetGuestFeetScreenPosition(GuestRuntimeState guestState, out Vector2 screenPosition)
+    {
+        screenPosition = Vector2.zero;
+
+        if (guestState == null)
+        {
+            return false;
+        }
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
+        {
+            return false;
+        }
+
+        RoomProjectedEntity projection = ResolveGuestProjection(guestState);
+
+        if (projection != null && projection.IsProjectionActive)
+        {
+            screenPosition = mainCamera.WorldToScreenPoint(projection.transform.position);
+            return true;
+        }
+
+        if (TryGetVisibleFeetWorldPoint(guestState.GuestObject, true, out Vector3 feetWorldPoint))
+        {
+            screenPosition = mainCamera.WorldToScreenPoint(feetWorldPoint);
+            return true;
+        }
+
+        if (guestState.GuestObject != null)
+        {
+            screenPosition = mainCamera.WorldToScreenPoint(guestState.GuestObject.transform.position);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryGetVisibleFeetWorldPoint(GameObject root, bool ignoreCoatRenderers, out Vector3 feetWorldPoint)
+    {
+        feetWorldPoint = Vector3.zero;
+
+        if (root == null)
+        {
+            return false;
+        }
+
+        Bounds combinedBounds = default;
+        bool hasBounds = false;
+
+        AccumulateVisibleRendererBounds(root, ignoreCoatRenderers, ref combinedBounds, ref hasBounds);
+
+        if (!hasBounds && ignoreCoatRenderers)
+        {
+            AccumulateVisibleRendererBounds(root, false, ref combinedBounds, ref hasBounds);
+        }
+
+        AccumulateVisibleGraphicBounds(root, ref combinedBounds, ref hasBounds);
+
+        if (!hasBounds)
+        {
+            return false;
+        }
+
+        feetWorldPoint = new Vector3(combinedBounds.center.x, combinedBounds.min.y, combinedBounds.center.z);
+        return true;
+    }
+
+    private static void AccumulateVisibleRendererBounds(
+        GameObject root,
+        bool ignoreCoatRenderers,
+        ref Bounds combinedBounds,
+        ref bool hasBounds)
+    {
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer == null ||
+                !renderer.enabled ||
+                !renderer.gameObject.activeInHierarchy ||
+                (ignoreCoatRenderers && IsCoatVisualTransform(renderer.transform)))
+            {
+                continue;
+            }
+
+            IncludeBounds(renderer.bounds, ref combinedBounds, ref hasBounds);
+        }
+    }
+
+    private static void AccumulateVisibleGraphicBounds(
+        GameObject root,
+        ref Bounds combinedBounds,
+        ref bool hasBounds)
+    {
+        Graphic[] graphics = root.GetComponentsInChildren<Graphic>(true);
+        Vector3[] corners = new Vector3[4];
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            Graphic graphic = graphics[i];
+
+            if (graphic == null ||
+                !graphic.enabled ||
+                !graphic.gameObject.activeInHierarchy ||
+                graphic.rectTransform == null)
+            {
+                continue;
+            }
+
+            graphic.rectTransform.GetWorldCorners(corners);
+            Bounds graphicBounds = new Bounds(corners[0], Vector3.zero);
+
+            for (int cornerIndex = 1; cornerIndex < corners.Length; cornerIndex++)
+            {
+                graphicBounds.Encapsulate(corners[cornerIndex]);
+            }
+
+            IncludeBounds(graphicBounds, ref combinedBounds, ref hasBounds);
+        }
+    }
+
+    private static void IncludeBounds(Bounds bounds, ref Bounds combinedBounds, ref bool hasBounds)
+    {
+        if (!hasBounds)
+        {
+            combinedBounds = bounds;
+            hasBounds = true;
+            return;
+        }
+
+        combinedBounds.Encapsulate(bounds);
+    }
+
     public void HandleClosetClicked()
     {
         ResolveReferences();
@@ -771,7 +918,163 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        if (!IsButlerCloseToCloset())
+        {
+            WalkButlerToCloset();
+            return;
+        }
+
         StoreCarriedCoatInCloset();
+    }
+
+    private void WalkButlerToCloset()
+    {
+        ResolveReferences();
+        CancelPendingClosetStorage();
+
+        if (playerMovement == null)
+        {
+            Debug.LogWarning("Closet clicked, but the butler cannot walk to it because the player movement reference is missing.", this);
+            return;
+        }
+
+        if (!TryGetClosetApproachDestination(out Vector2 destination))
+        {
+            Debug.LogWarning("Closet clicked, but no reachable coat-hanger approach point could be found.", this);
+            return;
+        }
+
+        if (!playerMovement.TrySetDestination(destination, true))
+        {
+            Debug.LogWarning("Closet clicked, but the butler could not walk to the selected coat-hanger approach point.", this);
+            return;
+        }
+
+        pendingClosetApproachDestination = destination;
+        hasPendingClosetApproachDestination = true;
+
+        if (!playerMovement.HasDestination)
+        {
+            CompletePendingClosetStorage();
+            return;
+        }
+
+        playerMovement.MovementStopped += HandleClosetStorageMovementStopped;
+    }
+
+    private void HandleClosetStorageMovementStopped()
+    {
+        CompletePendingClosetStorage();
+    }
+
+    private void CompletePendingClosetStorage()
+    {
+        bool hasDestination = hasPendingClosetApproachDestination;
+        Vector2 destination = pendingClosetApproachDestination;
+        CancelPendingClosetStorage();
+
+        if (!butlerCarryingCoat ||
+            !(hasDestination
+                ? IsButlerCloseToCloset(destination)
+                : IsButlerCloseToCloset()))
+        {
+            return;
+        }
+
+        StoreCarriedCoatInCloset();
+    }
+
+    private void CancelPendingClosetStorage()
+    {
+        if (playerMovement != null)
+        {
+            playerMovement.MovementStopped -= HandleClosetStorageMovementStopped;
+        }
+
+        hasPendingClosetApproachDestination = false;
+        pendingClosetApproachDestination = Vector2.zero;
+    }
+
+    private bool IsButlerCloseToCloset()
+    {
+        ResolveReferences();
+
+        if (playerMovement == null || !TryGetClosetApproachDestination(out Vector2 destination))
+        {
+            return false;
+        }
+
+        return IsButlerCloseToCloset(destination);
+    }
+
+    private bool IsButlerCloseToCloset(Vector2 destination)
+    {
+        if (playerMovement == null ||
+            !playerMovement.TryGetScreenPointFromLogicalPosition(playerMovement.LogicalPosition, out Vector2 butlerScreenPosition) ||
+            !playerMovement.TryGetScreenPointFromLogicalPosition(destination, out Vector2 closetScreenPosition))
+        {
+            return false;
+        }
+
+        return Vector2.Distance(butlerScreenPosition, closetScreenPosition) <= ClosetStorageReadyScreenDistance;
+    }
+
+    private bool TryGetClosetApproachDestination(out Vector2 destination)
+    {
+        destination = Vector2.zero;
+
+        if (playerMovement == null)
+        {
+            return false;
+        }
+
+        if (TryGetClosetApproachScreenPosition(out Vector2 screenPosition) &&
+            playerMovement.TryEvaluateMovementAtScreenPoint(screenPosition, true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) &&
+            movementQuery.HasReachableDestination)
+        {
+            destination = movementQuery.Destination;
+            return true;
+        }
+
+        Transform target = closetPoint != null
+            ? closetPoint
+            : coatCloset != null ? coatCloset.transform : null;
+
+        return target != null &&
+            playerMovement.TryFindClosestReachableDestinationToWorldPoint(target.position, out destination);
+    }
+
+    private bool TryGetClosetApproachScreenPosition(out Vector2 screenPosition)
+    {
+        screenPosition = Vector2.zero;
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
+        {
+            return false;
+        }
+
+        GameObject closetObject = coatCloset != null
+            ? coatCloset.gameObject
+            : closetPoint != null ? closetPoint.gameObject : null;
+
+        if (TryGetVisibleFeetWorldPoint(closetObject, false, out Vector3 feetWorldPoint))
+        {
+            screenPosition = mainCamera.WorldToScreenPoint(feetWorldPoint);
+            return true;
+        }
+
+        Transform target = closetPoint != null
+            ? closetPoint
+            : coatCloset != null ? coatCloset.transform : null;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        screenPosition = mainCamera.WorldToScreenPoint(target.position);
+        return true;
     }
 
     private void StoreCarriedCoatInCloset()
@@ -997,6 +1300,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         carriedCoatVisual = null;
         CancelPendingCoatPickup();
+        CancelPendingClosetStorage();
         currentGuestIndex = -1;
         hasWorldDoorCenterPosition = false;
         worldDoorCenterPosition = Vector3.zero;

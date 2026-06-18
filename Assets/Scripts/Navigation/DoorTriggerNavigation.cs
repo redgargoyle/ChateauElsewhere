@@ -356,9 +356,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         float bestScore = float.MaxValue;
         Vector2 bestDestination = Vector2.zero;
 
-        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[0] + triggerWorldCorners[2]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
         TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[0] + triggerWorldCorners[3]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, Vector3.Lerp(triggerWorldCorners[0], triggerWorldCorners[3], 0.25f), canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, Vector3.Lerp(triggerWorldCorners[0], triggerWorldCorners[3], 0.75f), canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
         TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[1] + triggerWorldCorners[2]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
+        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[0] + triggerWorldCorners[2]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
         TryScoreArrivalWorldPoint(playerMovement, triggerWorldCorners[0], canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
         TryScoreArrivalWorldPoint(playerMovement, triggerWorldCorners[3], canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
 
@@ -429,7 +431,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
                 continue;
             }
 
-            Vector2 closestTriggerPoint = GetClosestPointInTriggerBounds(destinationScreenPoint, min, max);
+            Vector2 closestTriggerPoint = GetClosestApproachPointInTriggerBounds(destinationScreenPoint, min, max);
             float triggerDistance = Vector2.Distance(destinationScreenPoint, closestTriggerPoint);
             float playerDistance = Vector2.Distance(playerScreenPosition, destinationScreenPoint);
             float score = triggerDistance * ApproachTriggerDistanceWeight +
@@ -512,9 +514,20 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     private Vector2 GetPlayerScreenPosition()
     {
         Camera mainCamera = Camera.main;
-        return mainCamera != null && player != null
-            ? RectTransformUtility.WorldToScreenPoint(mainCamera, player.position)
-            : Vector2.zero;
+        if (mainCamera == null || player == null)
+        {
+            return Vector2.zero;
+        }
+
+        PointClickPlayerMovement playerMovement = player.GetComponent<PointClickPlayerMovement>();
+
+        if (playerMovement != null &&
+            playerMovement.TryGetScreenPointFromLogicalPosition(playerMovement.LogicalPosition, out Vector2 feetScreenPosition))
+        {
+            return feetScreenPosition;
+        }
+
+        return RectTransformUtility.WorldToScreenPoint(mainCamera, player.position);
     }
 
     private Vector2 GetClosestTriggerScreenPoint(Vector2 screenPosition)
@@ -524,7 +537,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return screenPosition;
         }
 
-        return GetClosestPointInTriggerBounds(screenPosition, min, max);
+        return GetClosestApproachPointInTriggerBounds(screenPosition, min, max);
     }
 
     private bool TryGetTriggerScreenBounds(out Vector2 min, out Vector2 max)
@@ -566,7 +579,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         float leftX = min.x;
         float rightX = max.x;
 
-        AddUniqueApproachSample(GetClosestPointInTriggerBounds(playerScreenPosition, min, max));
+        AddUniqueApproachSample(GetClosestApproachPointInTriggerBounds(playerScreenPosition, min, max));
         AddUniqueApproachSample(new Vector2(centerX, lowerY));
         AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.25f), lowerY));
         AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.75f), lowerY));
@@ -614,11 +627,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         triggerScreenSamples.Add(sample);
     }
 
-    private static Vector2 GetClosestPointInTriggerBounds(Vector2 screenPosition, Vector2 min, Vector2 max)
+    private static Vector2 GetClosestApproachPointInTriggerBounds(Vector2 screenPosition, Vector2 min, Vector2 max)
     {
         return new Vector2(
             Mathf.Clamp(screenPosition.x, min.x, max.x),
-            Mathf.Clamp(screenPosition.y, min.y, max.y));
+            min.y);
     }
 
     private void ResolvePlayerReference()

@@ -188,9 +188,11 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("requirePlayerProximity"), "Door and stairway triggers should check player distance before navigating.");
         Assert.That(triggerText, Does.Contain("walkPlayerToTriggerWhenFar"), "Far trigger clicks should walk the player toward the trigger instead of instantly navigating.");
         Assert.That(triggerText, Does.Contain("TryStartPlayerApproach"), "Door triggers should share one approach flow for doors and stairways.");
-        Assert.That(triggerText, Does.Contain("GetClosestTriggerScreenPoint"), "Wide hitboxes should measure to the closest trigger edge, not only the center.");
+        Assert.That(triggerText, Does.Contain("GetClosestTriggerScreenPoint"), "Wide hitboxes should measure to the door threshold, not only the center.");
+        Assert.That(triggerText, Does.Contain("GetClosestApproachPointInTriggerBounds"), "Door approaches should prefer the lower threshold line so the butler's feet reach the door.");
         Assert.That(triggerText, Does.Contain("TryFindBestApproachDestination"), "Door approaches should sample the trigger and choose the closest reachable floor point.");
         Assert.That(triggerText, Does.Contain("CollectTriggerApproachSamples"), "Door approaches should consider trigger edges and bottom points, not a single screen point.");
+        Assert.That(triggerText, Does.Match(@"GetPlayerScreenPosition\s*\([^)]*\)[\s\S]*TryGetScreenPointFromLogicalPosition\(playerMovement\.LogicalPosition"), "Door proximity should measure the butler's visible feet, not the visual transform origin.");
         Assert.That(triggerText, Does.Contain("MovementStopped"), "Pending door approaches should clean up whether the player arrives or gets blocked.");
         Assert.That(triggerText, Does.Contain("ResetStaticState"), "Door trigger static state should reset between Play Mode sessions, including when domain reload is disabled.");
         Assert.That(triggerText, Does.Contain("LogApproachFailure"), "Failed door approaches should leave a useful console reason.");
@@ -223,6 +225,7 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("TryFindArrivalDestination"), "Door hitboxes should expose the same reachable floor sampling for arrivals.");
         Assert.That(triggerText, Does.Match(@"(?s)TryFindArrivalDestination\s*\([^)]*\)\s*\{.*TryFindBestApproachDestination\(playerMovement,\s*false,\s*out destination\).*return TryFindClosestReachableArrivalDestination\(playerMovement,\s*out destination\)"), "Door arrivals should prefer the doorway approach sampler before falling back to raw trigger proximity.");
         Assert.That(triggerText, Does.Contain("TryFindClosestReachableArrivalDestination"), "Door arrivals should fall back to the nearest reachable floor point around the destination trigger.");
+        Assert.That(triggerText, Does.Contain("Vector3.Lerp(triggerWorldCorners[0], triggerWorldCorners[3]"), "Door arrival fallback should sample the threshold edge before the trigger center.");
         Assert.That(triggerText, Does.Contain("TryFindClosestReachableDestinationToWorldPointTowardRoomCenter"), "Door arrivals should bias placement toward the destination room interior, not the player's stale pre-transition position.");
         Assert.That(triggerText, Does.Contain("TryFindClosestReachableDestinationToWorldPoint"), "Door arrivals should reuse the player movement boundary search when trigger screen samples miss the floor.");
         Assert.That(playerText, Does.Contain("TryWarpTo"), "Navigation needs an explicit non-walking placement path after a room change.");

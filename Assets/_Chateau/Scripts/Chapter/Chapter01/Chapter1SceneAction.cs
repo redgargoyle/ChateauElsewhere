@@ -190,8 +190,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
         CancelPendingFrontDoorApproach();
 
-        if (!arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination) &&
-            !playerMovement.TryFindClosestReachableDestinationToWorldPoint(transform.position, out approachDestination))
+        if (!arrivalController.TryGetFrontDoorApproachDestination(playerMovement, out Vector2 approachDestination))
         {
             return;
         }
