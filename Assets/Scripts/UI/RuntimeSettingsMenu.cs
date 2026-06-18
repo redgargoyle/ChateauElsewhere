@@ -10,7 +10,9 @@ public class RuntimeSettingsMenu : MonoBehaviour
 {
     private const string MenuObjectName = "RuntimeSettingsMenu";
     private const string MenuCanvasName = "Canvas_RuntimeSettingsMenu";
-    private const string SettingsInputBlockerName = "Panel_SettingsInputBlocker";
+    private const string SettingsOverlayName = "Panel_SettingsOverlay";
+    private const string SettingsPanelName = "Panel_SettingsModal";
+    private const string SettingsTitleName = "Text_SettingsTitle";
     private const string SettingsButtonName = "Button_Settings";
     private const string SettingsListName = "List_Settings";
     private const string SettingsAudioListName = "List_AudioControls";
@@ -27,10 +29,12 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private const string ExplorationMusicClipName = "unity_dreadforge_soundscape";
     private const float ButtonWidth = 150f;
     private const float ButtonHeight = 34f;
-    private const float DebugControlWidth = 220f;
-    private const float DebugControlLabelWidth = 64f;
-    private const float DebugControlInputWidth = 44f;
-    private const float DebugControlSliderLeft = 80f;
+    private const float SettingsPanelWidth = 640f;
+    private const float SettingsPanelHeight = 560f;
+    private const float DebugControlWidth = 360f;
+    private const float DebugControlLabelWidth = 116f;
+    private const float DebugControlInputWidth = 54f;
+    private const float DebugControlSliderLeft = 132f;
     private const float MinSecondsPerGameMinute = 1f;
     private const float MaxSecondsPerGameMinute = 120f;
     private const int MenuCanvasSortingOrder = 10050;
@@ -53,7 +57,9 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private RoomNavigationManager navigationManager;
     private RectTransform rootRect;
-    private RectTransform settingsInputBlocker;
+    private RectTransform settingsOverlay;
+    private RectTransform settingsPanel;
+    private TMP_Text settingsTitle;
     private Button settingsButton;
     private RectTransform settingsList;
     private RectTransform settingsAudioList;
@@ -91,11 +97,15 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private ChapterClock chapterClock;
     private AudioSource explorationMusicSource;
     private float explorationMusicBaseVolume = -1f;
+    private float timeScaleBeforeSettings = 1f;
     private bool settingsOpen;
     private bool debugOpen;
     private bool roomListOpen;
     private bool isUpdatingDebugTimeControl;
     private bool isUpdatingAudioControl;
+    private bool timeScalePausedForSettings;
+
+    public static bool BlocksGameInput { get; private set; }
 
     public static RuntimeSettingsMenu FindOrCreate(RoomNavigationManager navigationManager)
     {
@@ -127,6 +137,16 @@ public class RuntimeSettingsMenu : MonoBehaviour
         EnsureEventSystem();
         EnsureUI();
         RefreshOpenState();
+    }
+
+    private void OnDisable()
+    {
+        ClearModalGameState();
+    }
+
+    private void OnDestroy()
+    {
+        ClearModalGameState();
     }
 
     private static Canvas GetOrCreateMenuCanvas()
@@ -215,29 +235,28 @@ public class RuntimeSettingsMenu : MonoBehaviour
             canvas.sortingOrder = MenuCanvasSortingOrder;
         }
 
-        rootRect.anchorMin = new Vector2(0f, 1f);
-        rootRect.anchorMax = new Vector2(0f, 1f);
-        rootRect.pivot = new Vector2(0f, 1f);
-        rootRect.anchoredPosition = new Vector2(12f, -12f);
-        rootRect.sizeDelta = new Vector2(760f, 520f);
+        rootRect.anchorMin = Vector2.zero;
+        rootRect.anchorMax = Vector2.one;
+        rootRect.pivot = new Vector2(0.5f, 0.5f);
+        rootRect.anchoredPosition = Vector2.zero;
+        rootRect.offsetMin = Vector2.zero;
+        rootRect.offsetMax = Vector2.zero;
+        rootRect.sizeDelta = Vector2.zero;
         rootRect.localScale = Vector3.one;
         transform.SetAsLastSibling();
 
-        settingsInputBlocker = FindOrCreateSettingsInputBlocker(rootRect);
+        settingsOverlay = FindOrCreateSettingsOverlay(rootRect);
+        settingsPanel = FindOrCreateSettingsPanel(rootRect);
+        settingsTitle = FindOrCreateSettingsTitle(settingsPanel);
 
         settingsButton = FindOrCreateButton(rootRect, SettingsButtonName, "Settings", ToggleSettings);
-        RectTransform settingsButtonRect = settingsButton.GetComponent<RectTransform>();
-        settingsButtonRect.anchorMin = new Vector2(0f, 1f);
-        settingsButtonRect.anchorMax = new Vector2(0f, 1f);
-        settingsButtonRect.pivot = new Vector2(0f, 1f);
-        settingsButtonRect.anchoredPosition = Vector2.zero;
-        settingsButtonRect.sizeDelta = new Vector2(112f, ButtonHeight);
+        UpdateSettingsButtonLayout();
 
-        settingsList = FindOrCreateList(rootRect, SettingsListName, true);
+        settingsList = FindOrCreateList(settingsPanel, SettingsListName, true);
         settingsList.anchorMin = new Vector2(0f, 1f);
         settingsList.anchorMax = new Vector2(0f, 1f);
         settingsList.pivot = new Vector2(0f, 1f);
-        settingsList.anchoredPosition = new Vector2(0f, -ButtonHeight - 6f);
+        settingsList.anchoredPosition = new Vector2(28f, -80f);
 
         FindOrCreateButton(settingsList, "Button_Debug", "Debug", ToggleDebug);
         settingsAudioList = FindOrCreateList(settingsList, SettingsAudioListName, true);
@@ -246,11 +265,11 @@ public class RuntimeSettingsMenu : MonoBehaviour
         atmosphereAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, AtmosphereAudioControlName, GameAudioChannel.Atmosphere, DebugSliderKind.Atmosphere);
         musicAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, MusicAudioControlName, GameAudioChannel.Music, DebugSliderKind.Music);
 
-        debugList = FindOrCreateList(rootRect, DebugListName, true);
+        debugList = FindOrCreateList(settingsPanel, DebugListName, true);
         debugList.anchorMin = new Vector2(0f, 1f);
         debugList.anchorMax = new Vector2(0f, 1f);
         debugList.pivot = new Vector2(0f, 1f);
-        debugList.anchoredPosition = new Vector2(ButtonWidth + 10f, -ButtonHeight - 6f);
+        debugList.anchoredPosition = new Vector2(28f, -390f);
 
         debugButtonRow = FindOrCreateList(debugList, DebugButtonRowName, false);
         FindOrCreateButton(debugButtonRow, "Button_SkipToChapter2", "Skip to Chapter 2", SkipToChapter2);
@@ -261,11 +280,11 @@ public class RuntimeSettingsMenu : MonoBehaviour
         debugTimeControl = FindOrCreateDebugTimeControl(debugControlRow);
         DisableLegacyDebugChildren();
 
-        roomList = FindOrCreateList(rootRect, RoomListName, true);
+        roomList = FindOrCreateList(settingsPanel, RoomListName, true);
         roomList.anchorMin = new Vector2(0f, 1f);
         roomList.anchorMax = new Vector2(0f, 1f);
         roomList.pivot = new Vector2(0f, 1f);
-        roomList.anchoredPosition = new Vector2(ButtonWidth + 10f, -ButtonHeight * 3f - 20f);
+        roomList.anchoredPosition = new Vector2(SettingsPanelWidth - ButtonWidth - 28f, -80f);
 
         RefreshAudioControls();
         EnsureRuntimeAudioBindings();
@@ -365,10 +384,26 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void RefreshOpenState()
     {
-        if (settingsInputBlocker != null)
+        BlocksGameInput = settingsOpen;
+        NavigationCursorController.SetGameplayHoverBlocked(settingsOpen);
+        ApplySettingsPauseState();
+        UpdateSettingsButtonLayout();
+
+        if (settingsOverlay != null)
         {
-            settingsInputBlocker.gameObject.SetActive(settingsOpen);
-            settingsInputBlocker.SetAsFirstSibling();
+            settingsOverlay.gameObject.SetActive(settingsOpen);
+            settingsOverlay.SetAsFirstSibling();
+        }
+
+        if (settingsPanel != null)
+        {
+            settingsPanel.gameObject.SetActive(settingsOpen);
+            settingsPanel.SetAsLastSibling();
+        }
+
+        if (settingsButton != null)
+        {
+            settingsButton.transform.SetAsLastSibling();
         }
 
         if (settingsList != null)
@@ -401,6 +436,77 @@ public class RuntimeSettingsMenu : MonoBehaviour
                 RebuildRoomButtons();
             }
         }
+    }
+
+    private void UpdateSettingsButtonLayout()
+    {
+        if (settingsButton == null)
+        {
+            return;
+        }
+
+        RectTransform buttonRect = settingsButton.GetComponent<RectTransform>();
+
+        if (settingsOpen)
+        {
+            buttonRect.anchorMin = new Vector2(0.5f, 0.5f);
+            buttonRect.anchorMax = new Vector2(0.5f, 0.5f);
+            buttonRect.pivot = new Vector2(1f, 1f);
+            buttonRect.anchoredPosition = new Vector2(SettingsPanelWidth * 0.5f - 24f, SettingsPanelHeight * 0.5f - 22f);
+            buttonRect.sizeDelta = new Vector2(92f, ButtonHeight);
+            SetButtonLabel(settingsButton, "Close");
+        }
+        else
+        {
+            buttonRect.anchorMin = new Vector2(0f, 1f);
+            buttonRect.anchorMax = new Vector2(0f, 1f);
+            buttonRect.pivot = new Vector2(0f, 1f);
+            buttonRect.anchoredPosition = new Vector2(12f, -12f);
+            buttonRect.sizeDelta = new Vector2(112f, ButtonHeight);
+            SetButtonLabel(settingsButton, "Settings");
+        }
+    }
+
+    private void ApplySettingsPauseState()
+    {
+        if (settingsOpen)
+        {
+            if (!timeScalePausedForSettings)
+            {
+                timeScaleBeforeSettings = Time.timeScale;
+                Time.timeScale = 0f;
+                timeScalePausedForSettings = true;
+            }
+
+            return;
+        }
+
+        RestoreSettingsPauseState();
+    }
+
+    private void RestoreSettingsPauseState()
+    {
+        if (!timeScalePausedForSettings)
+        {
+            return;
+        }
+
+        Time.timeScale = timeScaleBeforeSettings;
+        timeScalePausedForSettings = false;
+    }
+
+    private void ClearModalGameState()
+    {
+        if (settingsOpen)
+        {
+            settingsOpen = false;
+            debugOpen = false;
+            roomListOpen = false;
+        }
+
+        BlocksGameInput = false;
+        NavigationCursorController.SetGameplayHoverBlocked(false);
+        RestoreSettingsPauseState();
     }
 
     private void RebuildRoomButtons()
@@ -739,15 +845,15 @@ public class RuntimeSettingsMenu : MonoBehaviour
         ConfigureSolidImage(handleImage, interactable ? new Color(0.72f, 0.72f, 0.72f, 1f) : new Color(0.36f, 0.36f, 0.36f, 1f));
     }
 
-    private static RectTransform FindOrCreateSettingsInputBlocker(Transform parent)
+    private static RectTransform FindOrCreateSettingsOverlay(Transform parent)
     {
-        Transform existing = parent.Find(SettingsInputBlockerName);
+        Transform existing = parent.Find(SettingsOverlayName);
         RectTransform rect = existing != null ? existing as RectTransform : null;
 
         if (rect == null)
         {
-            GameObject blockerObject = new GameObject(SettingsInputBlockerName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            rect = blockerObject.GetComponent<RectTransform>();
+            GameObject overlayObject = new GameObject(SettingsOverlayName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            rect = overlayObject.GetComponent<RectTransform>();
             rect.SetParent(parent, false);
         }
 
@@ -761,11 +867,78 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         if (image != null)
         {
-            ConfigureSolidImage(image, new Color(0f, 0f, 0f, 0f));
+            ConfigureSolidImage(image, new Color(0f, 0f, 0f, 0.82f));
             image.raycastTarget = true;
         }
 
         return rect;
+    }
+
+    private static RectTransform FindOrCreateSettingsPanel(Transform parent)
+    {
+        Transform existing = parent.Find(SettingsPanelName);
+        RectTransform rect = existing != null ? existing as RectTransform : null;
+
+        if (rect == null)
+        {
+            GameObject panelObject = new GameObject(SettingsPanelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Outline));
+            rect = panelObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+        }
+
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(SettingsPanelWidth, SettingsPanelHeight);
+
+        Image image = rect.GetComponent<Image>();
+
+        if (image != null)
+        {
+            ConfigureSolidImage(image, new Color(0.02f, 0.02f, 0.024f, 0.96f));
+            image.raycastTarget = true;
+        }
+
+        Outline outline = rect.GetComponent<Outline>();
+
+        if (outline != null)
+        {
+            outline.effectColor = new Color(1f, 1f, 1f, 0.16f);
+            outline.effectDistance = new Vector2(1f, -1f);
+            outline.useGraphicAlpha = false;
+        }
+
+        return rect;
+    }
+
+    private static TMP_Text FindOrCreateSettingsTitle(Transform parent)
+    {
+        Transform existing = parent.Find(SettingsTitleName);
+        TMP_Text text = existing != null ? existing.GetComponent<TMP_Text>() : null;
+
+        if (text == null)
+        {
+            GameObject titleObject = new GameObject(SettingsTitleName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            RectTransform rect = titleObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            text = titleObject.GetComponent<TMP_Text>();
+        }
+
+        RectTransform titleRect = text.GetComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0f, 1f);
+        titleRect.anchorMax = new Vector2(0f, 1f);
+        titleRect.pivot = new Vector2(0f, 1f);
+        titleRect.anchoredPosition = new Vector2(28f, -24f);
+        titleRect.sizeDelta = new Vector2(360f, 38f);
+
+        text.text = "Settings";
+        text.fontSize = 28f;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
+        return text;
     }
 
     private static RectTransform FindOrCreateList(Transform parent, string objectName, bool vertical)
@@ -1230,6 +1403,16 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         button.interactable = onClick != null;
         return button;
+    }
+
+    private static void SetButtonLabel(Button button, string label)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        FindOrCreateButtonLabel(button.transform).text = label ?? string.Empty;
     }
 
     private static TMP_Text FindOrCreateButtonLabel(Transform buttonRoot)

@@ -155,7 +155,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (IsPointerOverAvailableGuestAction(eventData) || IsPlayerInputLocked())
+        if (RuntimeSettingsMenu.BlocksGameInput || IsPointerOverAvailableGuestAction(eventData) || IsPlayerInputLocked())
         {
             ClearActiveDoorHover(this);
             return;
@@ -174,6 +174,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (RuntimeSettingsMenu.BlocksGameInput)
+        {
+            ClearActiveDoorHover(this);
+            return;
+        }
+
         if (IsPointerOverAvailableGuestAction(eventData))
         {
             ClearActiveDoorHover(this);
@@ -191,6 +197,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public static bool IsPointerOverActiveTrigger(Vector2 screenPosition)
     {
+        if (RuntimeSettingsMenu.BlocksGameInput)
+        {
+            return false;
+        }
+
         return FindTopmostTriggerAtScreenPoint(screenPosition) != null;
     }
 
@@ -744,6 +755,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         lastFallbackUpdateFrame = Time.frameCount;
+
+        if (RuntimeSettingsMenu.BlocksGameInput)
+        {
+            ClearActiveDoorHover(fallbackHoveredTrigger);
+            return;
+        }
 
         if (!TryGetPointerPosition(out Vector2 screenPosition))
         {

@@ -465,6 +465,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 		screenPosition = Vector2.zero;
 		pointerOverUi = false;
 
+		if (RuntimeSettingsMenu.BlocksGameInput)
+			return false;
+
 		if (!TryGetPrimaryPointerDown(out screenPosition))
 			return false;
 
@@ -892,6 +895,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void UpdateWalkCursor()
 	{
+		if (RuntimeSettingsMenu.BlocksGameInput)
+		{
+			NavigationCursorController.ClearWalkHover(this);
+			return;
+		}
+
 		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition))
 		{
 			NavigationCursorController.ClearWalkHover(this);
