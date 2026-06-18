@@ -397,6 +397,22 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void SettingsDebugChapterSkipsClosePausedModalBeforeRunning()
+    {
+        string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
+        string skipChapter2Body = ExtractMethodBody(runtimeSettingsText, "private void SkipToChapter2");
+        string skipChapter3Body = ExtractMethodBody(runtimeSettingsText, "private void SkipToChapter3");
+        string closeBody = ExtractMethodBody(runtimeSettingsText, "CloseSettingsForGameplayCommand");
+
+        Assert.That(skipChapter2Body, Does.Match(@"CloseSettingsForGameplayCommand\(\)[\s\S]*manager\.SkipToChapter2ForTesting\(\)"), "Chapter 2 debug skip should unpause/close settings before starting scaled-time title fades.");
+        Assert.That(skipChapter3Body, Does.Match(@"CloseSettingsForGameplayCommand\(\)[\s\S]*manager\.SkipToChapter3ForTesting\(\)"), "Chapter 3 debug skip should also leave settings modal state before running gameplay commands.");
+        Assert.That(closeBody, Does.Contain("settingsOpen = false"), "Closing for a gameplay command should clear the modal-open state.");
+        Assert.That(closeBody, Does.Contain("debugOpen = false"), "Closing for a gameplay command should clear nested debug UI state.");
+        Assert.That(closeBody, Does.Contain("roomListOpen = false"), "Closing for a gameplay command should clear nested room-list UI state.");
+        Assert.That(closeBody, Does.Contain("RefreshOpenState()"), "Closing for a gameplay command should restore Time.timeScale through the normal modal-state path.");
+    }
+
+    [Test]
     public void GameplayHasManualRoomStageRoot()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
@@ -603,6 +619,37 @@ public class NavigationRegressionTests
         string pattern = $@"m_Name: {escapedName}[\s\S]*?m_SortingLayer: 2[\s\S]*?m_SortingOrder: {sortingOrder}\b";
 
         Assert.That(sceneText, Does.Match(pattern), $"{propName} should keep its authored People-layer sorting order.");
+    }
+
+    private static string ExtractMethodBody(string sourceText, string methodName)
+    {
+        int methodIndex = sourceText.IndexOf(methodName, System.StringComparison.Ordinal);
+        Assert.That(methodIndex, Is.GreaterThanOrEqualTo(0), $"Expected to find method '{methodName}'.");
+
+        int bodyStart = sourceText.IndexOf('{', methodIndex);
+        Assert.That(bodyStart, Is.GreaterThanOrEqualTo(0), $"Expected method '{methodName}' to have a body.");
+
+        int depth = 0;
+
+        for (int i = bodyStart; i < sourceText.Length; i++)
+        {
+            if (sourceText[i] == '{')
+            {
+                depth++;
+            }
+            else if (sourceText[i] == '}')
+            {
+                depth--;
+
+                if (depth == 0)
+                {
+                    return sourceText.Substring(bodyStart, i - bodyStart + 1);
+                }
+            }
+        }
+
+        Assert.Fail($"Could not extract method body for '{methodName}'.");
+        return string.Empty;
     }
 
     private static void AssertScenePropSprite(string sceneText, string propName, string spriteGuid)

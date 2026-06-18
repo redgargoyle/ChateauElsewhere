@@ -205,11 +205,16 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     public void EntranceCoatHangerUsesAuthoredSceneObjectForClosetInteraction()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string actionText = File.ReadAllText(Chapter1SceneActionPath);
         string sceneText = File.ReadAllText(GameplayScenePath);
         string ensureBody = ExtractMethodBody(controllerText, "EnsureEntranceCoatHanger");
         string configureBody = ExtractMethodBody(controllerText, "ConfigureAuthoredCoatHangerObject");
         string colliderBody = ExtractMethodBody(controllerText, "EnsureCoatHangerCollider");
-        string interactionTargetBody = ExtractMethodBody(controllerText, "GetClosetInteractionTransform");
+        string handleClosetBody = ExtractMethodBody(controllerText, "HandleClosetClicked");
+        string actionBoundsBody = ExtractMethodBody(actionText, "IsPointerInsideActionBounds");
+        string screenBoundsBody = ExtractMethodBody(actionText, "IsPointerInsideScreenBounds");
+        string actionUpdateBody = ExtractMethodBody(actionText, "private void Update");
+        string performActionBody = ExtractMethodBody(actionText, "private void PerformAction");
         string resolveReferencesBody = ExtractMethodBody(controllerText, "ResolveReferences(bool createFallbacks)");
         string resolveAnchorsBody = ExtractMethodBody(controllerText, "ResolveAnchors");
 
@@ -221,8 +226,17 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(configureBody, Does.Contain("AddComponent<Chapter1SceneAction>"), "The authored hanger should gain the standard scene action if it is not already serialized.");
         Assert.That(configureBody, Does.Contain("AddComponent<CoatCloset>"), "The authored hanger should become the active coat storage container.");
         Assert.That(colliderBody, Does.Contain("BoxCollider2D"), "The authored hanger needs a trigger collider for pointer hit testing.");
-        Assert.That(interactionTargetBody, Does.Contain("SameRoom(GetRoomForTransform(coatCloset.transform), entryRoomId)"), "Closet walking should prefer an entrance-room closet over the old pantry closet.");
-        Assert.That(interactionTargetBody, Does.Contain("SameRoom(GetRoomForTransform(closetPoint), entryRoomId)"), "Closet walking should fall back to the authored entrance hanger transform.");
+        Assert.That(handleClosetBody, Does.Match(@"if \(!butlerCarryingCoat\)[\s\S]*return;[\s\S]*StoreCarriedCoatInCloset\(\)"), "A valid coat-hanger click while carrying a coat should store it immediately instead of depending on walk/proximity state.");
+        Assert.That(controllerText, Does.Not.Contain("WalkButlerToCloset"), "Coat storage should not be gated behind a closet-walk helper that can fail due to room-stage scaling.");
+        Assert.That(controllerText, Does.Not.Contain("IsButlerCloseToCloset"), "Coat storage should not be gated behind screen-distance proximity to the hanger transform.");
+        Assert.That(actionBoundsBody, Does.Contain("IsPointerInsideScreenBounds(screenPosition)"), "World-space scene actions should test the visible screen bounds, not raw world collider points.");
+        Assert.That(screenBoundsBody, Does.Contain("TryGetActionScreenBounds"), "Coat-hanger hit testing should build screen-space bounds from the visible object.");
+        Assert.That(screenBoundsBody, Does.Contain("GetMinimumScreenClickRadius"), "Coat-hanger hit testing should keep a minimum screen click radius for scaled layouts.");
+        Assert.That(actionText, Does.Contain("CoatClosetClickScreenRadius"), "The coat hanger should have an explicit screen-space click radius.");
+        Assert.That(actionText, Does.Not.Contain("ScreenToWorldPointAtActionDepth"), "The coat hanger should not convert mouse points through a raw world plane for hit testing.");
+        Assert.That(actionText, Does.Not.Contain("OverlapPoint(worldPosition)"), "The coat hanger should not rely on world collider overlap for scaled room-stage hit testing.");
+        Assert.That(actionUpdateBody, Does.Contain("RuntimeSettingsMenu.BlocksGameInput"), "Manual scene-action polling must stop while the settings modal blocks game input.");
+        Assert.That(performActionBody, Does.Contain("RuntimeSettingsMenu.BlocksGameInput"), "Scene actions must not execute while the settings modal blocks game input.");
         Assert.That(resolveReferencesBody, Does.Contain("EnsureEntranceCoatHanger()"), "Runtime reference resolution should configure the authored hanger.");
         Assert.That(resolveAnchorsBody, Does.Contain("FindSceneObjectByExactName(EntranceCoatHangerName)"), "Anchor resolution should prefer the authored entrance hanger when the serialized closet still points elsewhere.");
         Assert.That(controllerText, Does.Not.Contain("Ensure" + "RuntimeCloset"), "The old hard-coded runtime closet setup must stay removed.");

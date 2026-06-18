@@ -364,8 +364,8 @@ public class RuntimeSettingsMenu : MonoBehaviour
         }
 
         roomListOpen = false;
+        CloseSettingsForGameplayCommand();
         manager.SkipToChapter2ForTesting();
-        RefreshOpenState();
     }
 
     private void SkipToChapter3()
@@ -378,7 +378,21 @@ public class RuntimeSettingsMenu : MonoBehaviour
         }
 
         roomListOpen = false;
+        CloseSettingsForGameplayCommand();
         manager.SkipToChapter3ForTesting();
+    }
+
+    private void CloseSettingsForGameplayCommand()
+    {
+        if (!settingsOpen)
+        {
+            RefreshOpenState();
+            return;
+        }
+
+        settingsOpen = false;
+        debugOpen = false;
+        roomListOpen = false;
         RefreshOpenState();
     }
 

@@ -18,6 +18,8 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 {
     private const float FrontDoorClickScreenRadius = 90f;
     private const float FrontDoorReadyScreenDistance = 110f;
+    private const float DefaultSceneActionClickScreenRadius = 54f;
+    private const float CoatClosetClickScreenRadius = 90f;
 
     [SerializeField] private Chapter1SceneActionType actionType;
     [SerializeField] private Chapter1ArrivalController arrivalController;
@@ -51,6 +53,11 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (RuntimeSettingsMenu.BlocksGameInput)
+        {
+            return;
+        }
+
         if (UsesManualPointerPolling() &&
             TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
             IsPointerInsideActionBounds(screenPosition) &&
@@ -78,6 +85,12 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void Update()
     {
+        if (RuntimeSettingsMenu.BlocksGameInput)
+        {
+            SetDoorCursorHover(false);
+            return;
+        }
+
         if (!UsesManualPointerPolling())
         {
             return;
@@ -111,6 +124,11 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void PerformAction()
     {
+        if (RuntimeSettingsMenu.BlocksGameInput)
+        {
+            return;
+        }
+
         if (actionType == Chapter1SceneActionType.FrontDoor && !IsCurrentPointerOnFrontDoor())
         {
             return;
@@ -322,46 +340,7 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return RectTransformUtility.RectangleContainsScreenPoint(rectTransform, screenPosition, eventCamera);
         }
 
-        Camera worldCamera = Camera.main;
-
-        if (worldCamera == null)
-        {
-            return false;
-        }
-
-        Vector3 worldPosition = ScreenToWorldPointAtActionDepth(worldCamera, screenPosition);
-        Collider2D[] colliders2D = GetComponentsInChildren<Collider2D>(true);
-
-        for (int i = 0; i < colliders2D.Length; i++)
-        {
-            if (colliders2D[i] != null &&
-                colliders2D[i].enabled &&
-                colliders2D[i].gameObject.activeInHierarchy &&
-                colliders2D[i].OverlapPoint(worldPosition))
-            {
-                return true;
-            }
-        }
-
-        SpriteRenderer[] spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-
-        for (int i = 0; i < spriteRenderers.Length; i++)
-        {
-            Bounds bounds = spriteRenderers[i] != null ? spriteRenderers[i].bounds : default;
-
-            if (spriteRenderers[i] != null &&
-                spriteRenderers[i].enabled &&
-                spriteRenderers[i].gameObject.activeInHierarchy &&
-                worldPosition.x >= bounds.min.x &&
-                worldPosition.x <= bounds.max.x &&
-                worldPosition.y >= bounds.min.y &&
-                worldPosition.y <= bounds.max.y)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return IsPointerInsideScreenBounds(screenPosition);
     }
 
     private bool IsCurrentPointerOnFrontDoor()
@@ -382,19 +361,95 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         return Vector2.Distance(screenPosition, doorScreenPosition) <= FrontDoorClickScreenRadius;
     }
 
-    private Vector3 ScreenToWorldPointAtActionDepth(Camera worldCamera, Vector2 screenPosition)
+    private bool IsPointerInsideScreenBounds(Vector2 screenPosition)
     {
-        Ray pointerRay = worldCamera.ScreenPointToRay(screenPosition);
-        Plane actionPlane = new Plane(Vector3.forward, new Vector3(0f, 0f, transform.position.z));
+        Camera worldCamera = Camera.main;
 
-        if (actionPlane.Raycast(pointerRay, out float distance))
+        if (worldCamera == null)
         {
-            return pointerRay.GetPoint(distance);
+            return false;
         }
 
-        float depth = Mathf.Abs(Vector3.Dot(transform.position - worldCamera.transform.position, worldCamera.transform.forward));
-        depth = Mathf.Max(depth, worldCamera.nearClipPlane);
-        return worldCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, depth));
+        if (TryGetActionScreenBounds(worldCamera, out Vector2 min, out Vector2 max))
+        {
+            if (screenPosition.x >= min.x &&
+                screenPosition.x <= max.x &&
+                screenPosition.y >= min.y &&
+                screenPosition.y <= max.y)
+            {
+                return true;
+            }
+
+            Vector2 center = (min + max) * 0.5f;
+            return Vector2.Distance(screenPosition, center) <= GetMinimumScreenClickRadius();
+        }
+
+        Vector2 fallbackCenter = worldCamera.WorldToScreenPoint(transform.position);
+        return Vector2.Distance(screenPosition, fallbackCenter) <= GetMinimumScreenClickRadius();
+    }
+
+    private bool TryGetActionScreenBounds(Camera worldCamera, out Vector2 min, out Vector2 max)
+    {
+        min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+        bool hasBounds = false;
+
+        Collider2D[] colliders2D = GetComponentsInChildren<Collider2D>(true);
+
+        for (int i = 0; i < colliders2D.Length; i++)
+        {
+            Collider2D collider2D = colliders2D[i];
+
+            if (collider2D == null ||
+                !collider2D.enabled ||
+                !collider2D.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            AddWorldBoundsToScreenBounds(collider2D.bounds, worldCamera, ref min, ref max);
+            hasBounds = true;
+        }
+
+        SpriteRenderer[] spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = spriteRenderers[i];
+
+            if (spriteRenderer == null ||
+                !spriteRenderer.enabled ||
+                !spriteRenderer.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            AddWorldBoundsToScreenBounds(spriteRenderer.bounds, worldCamera, ref min, ref max);
+            hasBounds = true;
+        }
+
+        return hasBounds;
+    }
+
+    private static void AddWorldBoundsToScreenBounds(Bounds bounds, Camera worldCamera, ref Vector2 min, ref Vector2 max)
+    {
+        AddScreenPointToBounds(worldCamera.WorldToScreenPoint(new Vector3(bounds.min.x, bounds.min.y, bounds.center.z)), ref min, ref max);
+        AddScreenPointToBounds(worldCamera.WorldToScreenPoint(new Vector3(bounds.min.x, bounds.max.y, bounds.center.z)), ref min, ref max);
+        AddScreenPointToBounds(worldCamera.WorldToScreenPoint(new Vector3(bounds.max.x, bounds.min.y, bounds.center.z)), ref min, ref max);
+        AddScreenPointToBounds(worldCamera.WorldToScreenPoint(new Vector3(bounds.max.x, bounds.max.y, bounds.center.z)), ref min, ref max);
+    }
+
+    private static void AddScreenPointToBounds(Vector2 point, ref Vector2 min, ref Vector2 max)
+    {
+        min = Vector2.Min(min, point);
+        max = Vector2.Max(max, point);
+    }
+
+    private float GetMinimumScreenClickRadius()
+    {
+        return actionType == Chapter1SceneActionType.CoatCloset
+            ? CoatClosetClickScreenRadius
+            : DefaultSceneActionClickScreenRadius;
     }
 
     private void SetDoorCursorHover(bool active)

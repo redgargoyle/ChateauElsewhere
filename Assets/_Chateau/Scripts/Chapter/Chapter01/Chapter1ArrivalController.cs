@@ -141,12 +141,10 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Vector3 worldDoorCenterPosition;
     private bool hasFrontDoorAnswerSpot;
     private Vector2 frontDoorAnswerSpot;
-    private bool pendingClosetStorage;
     private Coroutine guestRoomVisibilityRefreshRoutine;
 
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
     private const float CoatPickupReadyScreenDistance = 90f;
-    private const float ClosetStorageReadyScreenDistance = 145f;
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
     private const int EntranceBanisterSafeWalkingSortingOrder = 1599;
@@ -208,7 +206,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void OnDisable()
     {
         CancelPendingCoatPickup();
-        CancelPendingClosetStorage();
 
         if (guestRoomVisibilityRefreshRoutine != null)
         {
@@ -267,7 +264,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         CancelPendingCoatPickup();
-        CancelPendingClosetStorage();
         doorbellSystem?.StopRinging();
         pendingGuestGroups.Clear();
         activeEntranceGroups.Clear();
@@ -775,12 +771,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        if (!IsButlerCloseToCloset())
-        {
-            WalkButlerToCloset();
-            return;
-        }
-
         StoreCarriedCoatInCloset();
     }
 
@@ -826,127 +816,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         RefreshInteractionState();
         CheckActiveGroupsReadyForDrawingRoom();
         CheckChapterCompletionGate();
-    }
-
-    private void WalkButlerToCloset()
-    {
-        ResolveReferences();
-        CancelPendingClosetStorage();
-
-        Camera mainCamera = Camera.main;
-        Transform target = GetClosetInteractionTransform();
-
-        if (playerMovement == null || mainCamera == null || target == null)
-        {
-            Debug.LogWarning("Wardrobe clicked, but the butler cannot walk to it because a required reference is missing.", this);
-            return;
-        }
-
-        Vector2 closetScreenPosition = mainCamera.WorldToScreenPoint(target.position);
-
-        if (!playerMovement.TryEvaluateMovementAtScreenPoint(closetScreenPosition, true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
-            !movementQuery.HasReachableDestination)
-        {
-            Debug.LogWarning("Wardrobe clicked, but the butler could not find a reachable wardrobe spot.", this);
-            return;
-        }
-
-        if (!playerMovement.TrySetDestination(movementQuery.Destination))
-        {
-            Debug.LogWarning("Wardrobe clicked, but the butler could not walk to the selected wardrobe spot.", this);
-            return;
-        }
-
-        pendingClosetStorage = true;
-        Debug.Log("[Chapter1] Butler walking to wardrobe.", this);
-
-        if (!playerMovement.HasDestination)
-        {
-            CompletePendingClosetStorage();
-            return;
-        }
-
-        playerMovement.MovementStopped += HandleClosetStorageMovementStopped;
-    }
-
-    private void HandleClosetStorageMovementStopped()
-    {
-        CompletePendingClosetStorage();
-    }
-
-    private void CompletePendingClosetStorage()
-    {
-        if (!pendingClosetStorage)
-        {
-            return;
-        }
-
-        CancelPendingClosetStorage();
-
-        if (!butlerCarryingCoat || !IsButlerCloseToCloset())
-        {
-            return;
-        }
-
-        Debug.Log("[Chapter1] Butler reached wardrobe.", this);
-        StoreCarriedCoatInCloset();
-    }
-
-    private void CancelPendingClosetStorage()
-    {
-        if (playerMovement != null)
-        {
-            playerMovement.MovementStopped -= HandleClosetStorageMovementStopped;
-        }
-
-        pendingClosetStorage = false;
-    }
-
-    private bool IsButlerCloseToCloset()
-    {
-        ResolveReferences();
-
-        if (playerMovement == null)
-        {
-            return false;
-        }
-
-        Camera mainCamera = Camera.main;
-        Transform target = GetClosetInteractionTransform();
-
-        if (mainCamera == null || target == null)
-        {
-            return false;
-        }
-
-        Vector2 closetScreenPosition = mainCamera.WorldToScreenPoint(target.position);
-
-        if (!playerMovement.TryGetScreenPointFromLogicalPosition(playerMovement.LogicalPosition, out Vector2 butlerScreenPosition))
-        {
-            if (playerButlerReference == null)
-            {
-                return false;
-            }
-
-            butlerScreenPosition = mainCamera.WorldToScreenPoint(playerButlerReference.transform.position);
-        }
-
-        return Vector2.Distance(butlerScreenPosition, closetScreenPosition) <= ClosetStorageReadyScreenDistance;
-    }
-
-    private Transform GetClosetInteractionTransform()
-    {
-        if (coatCloset != null && SameRoom(GetRoomForTransform(coatCloset.transform), entryRoomId))
-        {
-            return coatCloset.transform;
-        }
-
-        if (closetPoint != null && SameRoom(GetRoomForTransform(closetPoint), entryRoomId))
-        {
-            return closetPoint;
-        }
-
-        return coatCloset != null ? coatCloset.transform : null;
     }
 
     public void TryCompleteChapterFromDrawingRoomExit()
@@ -1128,7 +997,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         carriedCoatVisual = null;
         CancelPendingCoatPickup();
-        CancelPendingClosetStorage();
         currentGuestIndex = -1;
         hasWorldDoorCenterPosition = false;
         worldDoorCenterPosition = Vector3.zero;
