@@ -15,6 +15,7 @@ public class RoomProjectionRegressionTests
     private const string NPCWaypointMoverPath = "Assets/Scripts/Story/NPCWaypointMover.cs";
     private const string RoomPerspectiveProfileEditorPath = "Assets/Editor/RoomPerspectiveProfileEditor.cs";
     private const string RoomProjectionCalibrationWindowPath = "Assets/Editor/RoomProjectionCalibrationWindow.cs";
+    private const string PlayModeLayoutCaptureWindowPath = "Assets/Editor/PlayModeLayoutCaptureWindow.cs";
     private const string RoomProjectedEntityEditorPath = "Assets/Editor/RoomProjectedEntityEditor.cs";
 
     [Test]
@@ -102,6 +103,21 @@ public class RoomProjectionRegressionTests
         Assert.That(calibrationWindowText, Does.Contain("Create Perspective Profiles For Scene Rooms"), "Room profile setup should be available from the Tools menu.");
         Assert.That(calibrationWindowText, Does.Contain("Create/Assign Profiles For Scene Rooms"), "The calibration window should make one-click per-room profile assignment available.");
         Assert.That(calibrationWindowText, Does.Contain("room.SetPerspectiveProfile(profile)"), "Creating room profiles should wire them into RoomContentGroup.");
+    }
+
+    [Test]
+    public void PlayModeLayoutCaptureCanPersistRuntimeAnchorTuning()
+    {
+        string captureWindowText = File.ReadAllText(PlayModeLayoutCaptureWindowPath);
+
+        Assert.That(captureWindowText, Does.Contain("PlayModeStateChange.EnteredEditMode"), "Captured play-mode edits should be reapplied after Unity returns to edit mode.");
+        Assert.That(captureWindowText, Does.Contain("SessionState.SetString"), "Captured transform data should survive the play/edit transition within the editor session.");
+        Assert.That(captureWindowText, Does.Contain("Capture Dining Seat Anchors"), "Dining room seats should have a focused capture action.");
+        Assert.That(captureWindowText, Does.Contain("Ch2_DiningSeat_"), "The dining seat capture should target the Chapter 2 dining anchors.");
+        Assert.That(captureWindowText, Does.Contain("RectTransform"), "UI anchors should persist anchored position and rect transform data, not only world transform data.");
+        Assert.That(captureWindowText, Does.Contain("Apply + Save Scenes"), "Artists should have a one-click path to apply captured data and save the edited scene.");
+        Assert.That(captureWindowText, Does.Contain("Application.isPlaying"), "The apply action should not try to write edit-time scene data while Unity is still in Play Mode.");
+        Assert.That(captureWindowText, Does.Contain("Stop Play Mode And Apply"), "The tool should make the play-to-edit apply handoff explicit.");
     }
 
     [Test]
