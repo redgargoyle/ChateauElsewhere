@@ -130,7 +130,7 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
             return;
         }
 
-        if (!catalog.TryGetRandomClip(ref lastClipIndex, out AudioClip clip))
+        if (!catalog.TryGetClipForRoom(roomName, ref lastClipIndex, out AudioClip clip))
         {
             FadeOutAndStop();
             return;

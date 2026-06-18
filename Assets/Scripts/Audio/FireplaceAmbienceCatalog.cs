@@ -4,8 +4,18 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "FireplaceAmbienceCatalog", menuName = "Dreadforge/Audio/Fireplace Ambience Catalog")]
 public sealed class FireplaceAmbienceCatalog : ScriptableObject
 {
+#pragma warning disable 0649
+    [Serializable]
+    private struct RoomClipAssignment
+    {
+        public string roomName;
+        public AudioClip clip;
+    }
+#pragma warning restore 0649
+
     [SerializeField] private AudioClip[] clips = new AudioClip[0];
     [SerializeField] private string[] roomNames = new string[0];
+    [SerializeField] private RoomClipAssignment[] roomClipAssignments = new RoomClipAssignment[0];
     [SerializeField, Range(0f, 1f)] private float baseVolume = 0.42f;
     [SerializeField, Min(0f)] private float fadeSeconds = 0.65f;
     [SerializeField, Range(0.25f, 2f)] private float minPitch = 0.96f;
@@ -32,6 +42,16 @@ public sealed class FireplaceAmbienceCatalog : ScriptableObject
         }
 
         return false;
+    }
+
+    public bool TryGetClipForRoom(string roomName, ref int lastClipIndex, out AudioClip clip)
+    {
+        if (TryGetAssignedRoomClip(roomName, out clip))
+        {
+            return true;
+        }
+
+        return TryGetRandomClip(ref lastClipIndex, out clip);
     }
 
     public bool TryGetRandomClip(ref int lastClipIndex, out AudioClip clip)
@@ -79,6 +99,30 @@ public sealed class FireplaceAmbienceCatalog : ScriptableObject
         float low = Mathf.Min(minPitch, maxPitch);
         float high = Mathf.Max(minPitch, maxPitch);
         return UnityEngine.Random.Range(low, high);
+    }
+
+    private bool TryGetAssignedRoomClip(string roomName, out AudioClip clip)
+    {
+        clip = null;
+        string normalizedRoom = NormalizeRoomName(roomName);
+
+        if (string.IsNullOrEmpty(normalizedRoom) || roomClipAssignments == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < roomClipAssignments.Length; i++)
+        {
+            RoomClipAssignment assignment = roomClipAssignments[i];
+
+            if (assignment.clip != null && NormalizeRoomName(assignment.roomName) == normalizedRoom)
+            {
+                clip = assignment.clip;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static string NormalizeRoomName(string value)

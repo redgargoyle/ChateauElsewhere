@@ -15,6 +15,9 @@ MonoBehaviour:
   clips:
   - {fileID: 8300000, guid: 871dcee6ddd561a008bdd7f3a57c8fc5, type: 3}
   - {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+  - {fileID: 8300000, guid: 7f79360b8e04c81cf9bcfb3503f9101e, type: 3}
+  - {fileID: 8300000, guid: c92033866904fd943b6ddc3be17b2fb0, type: 3}
+  - {fileID: 8300000, guid: 8c0717d4e82f95ee9af371344a0d20ea, type: 3}
   roomNames:
   - Grand Entrance Hall
   - Grand Entrance Hall Rear view
@@ -27,6 +30,29 @@ MonoBehaviour:
   - Upper Gallery
   - Master Bedroom
   - Master Bedroom Suite
+  roomClipAssignments:
+  - roomName: Grand Entrance Hall
+    clip: {fileID: 8300000, guid: 871dcee6ddd561a008bdd7f3a57c8fc5, type: 3}
+  - roomName: Grand Entrance Hall Rear view
+    clip: {fileID: 8300000, guid: 871dcee6ddd561a008bdd7f3a57c8fc5, type: 3}
+  - roomName: Drawing Room
+    clip: {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+  - roomName: Music Room
+    clip: {fileID: 8300000, guid: 7f79360b8e04c81cf9bcfb3503f9101e, type: 3}
+  - roomName: Library
+    clip: {fileID: 8300000, guid: c92033866904fd943b6ddc3be17b2fb0, type: 3}
+  - roomName: Ballroom
+    clip: {fileID: 8300000, guid: 8c0717d4e82f95ee9af371344a0d20ea, type: 3}
+  - roomName: Dining Room
+    clip: {fileID: 8300000, guid: 7f79360b8e04c81cf9bcfb3503f9101e, type: 3}
+  - roomName: Billiard Room
+    clip: {fileID: 8300000, guid: 8c0717d4e82f95ee9af371344a0d20ea, type: 3}
+  - roomName: Upper Gallery
+    clip: {fileID: 8300000, guid: c92033866904fd943b6ddc3be17b2fb0, type: 3}
+  - roomName: Master Bedroom
+    clip: {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+  - roomName: Master Bedroom Suite
+    clip: {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
   baseVolume: 0.42
   fadeSeconds: 0.65
   minPitch: 0.96
