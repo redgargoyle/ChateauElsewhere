@@ -591,6 +591,7 @@ public class MainMenuController : MonoBehaviour
         slider.fillRect = fill.GetComponent<RectTransform>();
         slider.handleRect = handleRect;
         slider.targetGraphic = handle;
+        ConfigureControlCursor(sliderRect, slider);
         return slider;
     }
 
@@ -635,6 +636,11 @@ public class MainMenuController : MonoBehaviour
 
     private void ConfigureButtonCursor(RectTransform buttonRect, Button button)
     {
+        ConfigureControlCursor(buttonRect, button);
+    }
+
+    private void ConfigureControlCursor(RectTransform buttonRect, Selectable selectable)
+    {
         if (buttonRect == null)
         {
             return;
@@ -647,7 +653,7 @@ public class MainMenuController : MonoBehaviour
             cursorTarget = buttonRect.gameObject.AddComponent<NavigationCursorHoverTarget>();
         }
 
-        cursorTarget.Configure(NavigationCursorController.HoverIcon.Door, button, true);
+        cursorTarget.Configure(NavigationCursorController.HoverIcon.Ui, selectable, selectable != null);
     }
 
     private Image FindOrCreateButtonOverlay(RectTransform buttonRect, Sprite buttonSprite)

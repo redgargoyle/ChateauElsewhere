@@ -22,6 +22,8 @@ public class NavigationRegressionTests
     private const string YSortSolidObstaclePath = "Assets/Scripts/Characters/YSortSolidObstacle2D.cs";
     private const string ChapterTimeSettingsUIPath = "Assets/Scripts/Story/ChapterTimeSettingsUI.cs";
     private const string RuntimeSettingsMenuPath = "Assets/Scripts/UI/RuntimeSettingsMenu.cs";
+    private const string NavigationCursorHoverTargetPath = "Assets/Scripts/UI/NavigationCursorHoverTarget.cs";
+    private const string MainMenuControllerPath = "Assets/Scripts/MainMenuController.cs";
     private const string GrandfatherClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
@@ -244,8 +246,30 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("movementQuery.ExactPointWalkable && movementQuery.HasReachableDestination"), "The walk cursor should describe exact floor validity, not the player's current distance from that point.");
         Assert.That(cameraManagerText, Does.Contain("CreateWalkCursor"), "The cursor controller should generate a walk cursor without needing imported art.");
         Assert.That(cameraManagerText, Does.Contain("Cursor_WalkBlocked"), "Invalid movement should show a distinct blocked-walk cursor.");
-        Assert.That(cameraManagerText, Does.Contain("private const int CursorSize = 48"), "Movement cursors should be large enough to read quickly.");
+        Assert.That(cameraManagerText, Does.Contain("private const int CursorSize = 72"), "Movement cursors should be large enough to read quickly.");
         Assert.That(cameraManagerText, Does.Contain("ScaleCursorHotspot"), "Generated cursor art and hotspots should scale together.");
+        Assert.That(cameraManagerText, Does.Contain("AddWatercolorTexture"), "Generated cursors should keep the game's painted texture language instead of flat monochrome glyphs.");
+        Assert.That(cameraManagerText, Does.Contain("DrawBlockedSlash"), "Blocked cursor states should stay visually distinct from valid click actions.");
+    }
+
+    [Test]
+    public void UiControlsUseDedicatedCursorDuringModalPause()
+    {
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
+        string hoverTargetText = File.ReadAllText(NavigationCursorHoverTargetPath);
+        string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
+        string mainMenuText = File.ReadAllText(MainMenuControllerPath);
+
+        Assert.That(cameraManagerText, Does.Contain("HoverIcon.Ui"), "The shared cursor controller should have a dedicated UI/action icon.");
+        Assert.That(cameraManagerText, Does.Contain("CreateUiCursor"), "UI clicks should have their own generated cursor instead of borrowing the door cursor.");
+        Assert.That(cameraManagerText, Does.Contain("gameplayHoverBlocked && icon != HoverIcon.Ui"), "Settings should block gameplay hover cursors without suppressing settings controls.");
+        Assert.That(cameraManagerText, Does.Contain("doorHoverIcon != HoverIcon.Ui"), "Opening settings should clear stale gameplay cursors while preserving hovered UI controls.");
+        Assert.That(hoverTargetText, Does.Contain("HoverIcon.Ui"), "Generic UI hover targets should default to the UI cursor.");
+        Assert.That(runtimeSettingsText, Does.Contain("ConfigureUiCursor(buttonRect, button)"), "Runtime settings buttons should advertise UI clicks.");
+        Assert.That(runtimeSettingsText, Does.Contain("ConfigureUiCursor(rect, input)"), "Runtime settings inputs should advertise UI focus clicks.");
+        Assert.That(runtimeSettingsText, Does.Contain("ConfigureUiCursor(rect, null)"), "Runtime settings sliders should advertise UI drag/click regions.");
+        Assert.That(mainMenuText, Does.Contain("ConfigureControlCursor(sliderRect, slider)"), "Main menu audio sliders should share the UI cursor contract.");
+        Assert.That(mainMenuText, Does.Contain("NavigationCursorController.HoverIcon.Ui"), "Main menu buttons should use the UI cursor, not the door cursor.");
     }
 
     [Test]

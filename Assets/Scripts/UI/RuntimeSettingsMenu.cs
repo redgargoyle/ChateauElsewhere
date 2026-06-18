@@ -1227,6 +1227,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         ConfigureSolidImage(hitTarget, new Color(0f, 0f, 0f, 0f));
         hitTarget.raycastTarget = true;
+        ConfigureUiCursor(rect, null);
 
         Image backgroundImage = FindOrCreateSliderImage(rect, "Background", new Color(0.18f, 0.18f, 0.18f, 1f), new Vector2(0f, 0.32f), new Vector2(1f, 0.68f));
         Image fillImage = FindOrCreateSliderImage(rect, "Fill", new Color(0.48f, 0.48f, 0.48f, 1f), new Vector2(0f, 0.32f), new Vector2(1f, 0.68f));
@@ -1290,6 +1291,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
         textRect.offsetMax = new Vector2(-5f, -1f);
         input.textComponent = text;
         input.contentType = TMP_InputField.ContentType.DecimalNumber;
+        ConfigureUiCursor(rect, input);
         return input;
     }
 
@@ -1416,7 +1418,25 @@ public class RuntimeSettingsMenu : MonoBehaviour
         }
 
         button.interactable = onClick != null;
+        ConfigureUiCursor(buttonRect, button);
         return button;
+    }
+
+    private static void ConfigureUiCursor(RectTransform rect, Selectable selectable)
+    {
+        if (rect == null)
+        {
+            return;
+        }
+
+        NavigationCursorHoverTarget cursorTarget = rect.GetComponent<NavigationCursorHoverTarget>();
+
+        if (cursorTarget == null)
+        {
+            cursorTarget = rect.gameObject.AddComponent<NavigationCursorHoverTarget>();
+        }
+
+        cursorTarget.Configure(NavigationCursorController.HoverIcon.Ui, selectable, selectable != null);
     }
 
     private static void SetButtonLabel(Button button, string label)

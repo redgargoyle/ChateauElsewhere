@@ -1908,21 +1908,39 @@ public static class NavigationCursorController
         Stairway,
         Coat,
         BlockedCoat,
-        Talk
+        Talk,
+        Ui
     }
 
-    private const int CursorDesignSize = 32;
-    private const int CursorSize = 48;
+    private const int CursorDesignSize = 48;
+    private const int CursorSize = 72;
     private static readonly Color Clear = new Color(0f, 0f, 0f, 0f);
-    private static readonly Color Ink = new Color(0.02f, 0.02f, 0.02f, 1f);
-    private static readonly Color Paper = new Color(1f, 1f, 1f, 1f);
-    private static readonly Color Warning = new Color(0.95f, 0.04f, 0.03f, 1f);
-    private static readonly Vector2 ArrowHotspot = ScaleCursorHotspot(16f, 16f);
-    private static readonly Vector2 DoorHotspot = ScaleCursorHotspot(9f, 6f);
-    private static readonly Vector2 StairwayHotspot = ScaleCursorHotspot(10f, 7f);
-    private static readonly Vector2 CoatHotspot = ScaleCursorHotspot(10f, 9f);
-    private static readonly Vector2 TalkHotspot = ScaleCursorHotspot(10f, 8f);
-    private static readonly Vector2 WalkHotspot = ScaleCursorHotspot(13f, 24f);
+    private static readonly Color Ink = new Color(0.05f, 0.025f, 0.015f, 1f);
+    private static readonly Color InkSoft = new Color(0.16f, 0.08f, 0.045f, 1f);
+    private static readonly Color Shadow = new Color(0.02f, 0.01f, 0.006f, 0.55f);
+    private static readonly Color ParchmentLight = new Color(1f, 0.91f, 0.68f, 1f);
+    private static readonly Color Brass = new Color(0.88f, 0.58f, 0.19f, 1f);
+    private static readonly Color Gold = new Color(1f, 0.76f, 0.25f, 1f);
+    private static readonly Color DoorBlue = new Color(0.16f, 0.25f, 0.48f, 1f);
+    private static readonly Color DoorPanel = new Color(0.25f, 0.38f, 0.63f, 1f);
+    private static readonly Color StairTeal = new Color(0.12f, 0.48f, 0.48f, 1f);
+    private static readonly Color StairHighlight = new Color(0.42f, 0.82f, 0.75f, 1f);
+    private static readonly Color CoatWine = new Color(0.52f, 0.12f, 0.19f, 1f);
+    private static readonly Color CoatHighlight = new Color(0.92f, 0.39f, 0.35f, 1f);
+    private static readonly Color TalkPlum = new Color(0.42f, 0.19f, 0.52f, 1f);
+    private static readonly Color TalkLavender = new Color(0.77f, 0.55f, 0.86f, 1f);
+    private static readonly Color WalkGreen = new Color(0.2f, 0.52f, 0.27f, 1f);
+    private static readonly Color WalkHighlight = new Color(0.62f, 0.86f, 0.46f, 1f);
+    private static readonly Color UiIvory = new Color(0.99f, 0.86f, 0.62f, 1f);
+    private static readonly Color UiBlue = new Color(0.18f, 0.31f, 0.56f, 1f);
+    private static readonly Color Warning = new Color(0.92f, 0.05f, 0.04f, 1f);
+    private static readonly Vector2 ArrowHotspot = ScaleCursorHotspot(24f, 24f);
+    private static readonly Vector2 DoorHotspot = ScaleCursorHotspot(12f, 12f);
+    private static readonly Vector2 StairwayHotspot = ScaleCursorHotspot(12f, 34f);
+    private static readonly Vector2 CoatHotspot = ScaleCursorHotspot(12f, 15f);
+    private static readonly Vector2 TalkHotspot = ScaleCursorHotspot(13f, 13f);
+    private static readonly Vector2 WalkHotspot = ScaleCursorHotspot(22f, 37f);
+    private static readonly Vector2 UiHotspot = ScaleCursorHotspot(13f, 10f);
 
     private static int edgePanDirection;
     private static bool gameplayHoverBlocked;
@@ -1937,6 +1955,7 @@ public static class NavigationCursorController
     private static Texture2D coatCursor;
     private static Texture2D blockedCoatCursor;
     private static Texture2D talkCursor;
+    private static Texture2D uiCursor;
     private static Texture2D walkCursor;
     private static Texture2D blockedWalkCursor;
 
@@ -1982,7 +2001,10 @@ public static class NavigationCursorController
         if (gameplayHoverBlocked)
         {
             edgePanDirection = 0;
-            doorHoverOwner = null;
+            if (doorHoverIcon != HoverIcon.Ui)
+            {
+                doorHoverOwner = null;
+            }
             walkHoverOwner = null;
             walkHoverCanMove = false;
         }
@@ -1997,7 +2019,7 @@ public static class NavigationCursorController
 
     public static void SetDoorHover(object owner, HoverIcon icon, bool active)
     {
-        if (gameplayHoverBlocked)
+        if (gameplayHoverBlocked && icon != HoverIcon.Ui)
         {
             return;
         }
@@ -2066,7 +2088,7 @@ public static class NavigationCursorController
 
     private static void ApplyCursor()
     {
-        if (gameplayHoverBlocked)
+        if (gameplayHoverBlocked && (doorHoverOwner == null || doorHoverIcon != HoverIcon.Ui))
         {
             Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
             return;
@@ -2097,6 +2119,12 @@ public static class NavigationCursorController
             if (doorHoverIcon == HoverIcon.Talk)
             {
                 Cursor.SetCursor(GetTalkCursor(), TalkHotspot, CursorMode.Auto);
+                return;
+            }
+
+            if (doorHoverIcon == HoverIcon.Ui)
+            {
+                Cursor.SetCursor(GetUiCursor(), UiHotspot, CursorMode.Auto);
                 return;
             }
 
@@ -2198,6 +2226,16 @@ public static class NavigationCursorController
         return talkCursor;
     }
 
+    private static Texture2D GetUiCursor()
+    {
+        if (uiCursor == null)
+        {
+            uiCursor = CreateUiCursor();
+        }
+
+        return uiCursor;
+    }
+
     private static Texture2D GetWalkCursor()
     {
         if (walkCursor == null)
@@ -2221,15 +2259,22 @@ public static class NavigationCursorController
     private static Texture2D CreateArrowCursor(string cursorName, int direction)
     {
         Texture2D texture = CreateBlankCursor(cursorName);
-        int tipX = direction < 0 ? 5 : 26;
-        int backX = direction < 0 ? 20 : 11;
+        int tipX = direction < 0 ? 7 : 40;
+        int backX = direction < 0 ? 31 : 16;
+        int tailX = direction < 0 ? 41 : 6;
 
-        DrawLine(texture, tipX, 16, backX, 5, Ink, 5);
-        DrawLine(texture, tipX, 16, backX, 27, Ink, 5);
-        DrawLine(texture, tipX, 16, direction < 0 ? 27 : 4, 16, Ink, 5);
-        DrawLine(texture, tipX, 16, backX, 5, Paper, 2);
-        DrawLine(texture, tipX, 16, backX, 27, Paper, 2);
-        DrawLine(texture, tipX, 16, direction < 0 ? 27 : 4, 16, Paper, 2);
+        DrawLine(texture, tipX + direction, 24 + 2, backX + direction, 9 + 2, Shadow, 8);
+        DrawLine(texture, tipX + direction, 24 + 2, backX + direction, 39 + 2, Shadow, 8);
+        DrawLine(texture, tipX + direction, 24 + 2, tailX + direction, 24 + 2, Shadow, 8);
+        DrawLine(texture, tipX, 24, backX, 9, Ink, 8);
+        DrawLine(texture, tipX, 24, backX, 39, Ink, 8);
+        DrawLine(texture, tipX, 24, tailX, 24, Ink, 8);
+        DrawLine(texture, tipX, 24, backX, 9, Brass, 5);
+        DrawLine(texture, tipX, 24, backX, 39, Brass, 5);
+        DrawLine(texture, tipX, 24, tailX, 24, Brass, 5);
+        DrawLine(texture, tipX + direction * 2, 23, backX, 13, Gold, 2);
+        DrawLine(texture, tipX + direction * 2, 25, tailX - direction * 4, 25, ParchmentLight, 2);
+        AddWatercolorTexture(texture, 17);
         texture.Apply();
         return texture;
     }
@@ -2238,18 +2283,24 @@ public static class NavigationCursorController
     {
         Texture2D texture = CreateBlankCursor("Cursor_OpenDoor");
 
-        // A tiny open-door icon: frame, swinging panel, and knob. It is generated
-        // in code so the cursor works even before custom art assets are imported.
-        FillRect(texture, 8, 5, 21, 28, Ink);
-        FillRect(texture, 10, 7, 19, 26, Paper);
-        DrawLine(texture, 10, 7, 24, 11, Ink, 3);
-        DrawLine(texture, 24, 11, 24, 25, Ink, 3);
-        DrawLine(texture, 24, 25, 10, 26, Ink, 3);
-        DrawLine(texture, 10, 7, 10, 26, Ink, 3);
-        DrawLine(texture, 12, 9, 22, 12, Paper, 1);
-        DrawLine(texture, 22, 12, 22, 24, Paper, 1);
-        DrawLine(texture, 22, 24, 12, 25, Paper, 1);
-        FillRect(texture, 18, 16, 21, 19, Ink);
+        FillEllipse(texture, 24, 14, 17, 10, Shadow);
+        FillRect(texture, 7, 14, 37, 42, Shadow);
+        FillEllipse(texture, 22, 12, 17, 10, Ink);
+        FillRect(texture, 5, 13, 35, 42, Ink);
+        FillEllipse(texture, 22, 13, 13, 7, Brass);
+        FillRect(texture, 9, 13, 31, 39, Brass);
+        FillRect(texture, 13, 16, 28, 39, DoorBlue);
+        FillRect(texture, 16, 19, 25, 37, DoorPanel);
+        DrawLine(texture, 13, 16, 28, 20, Ink, 3);
+        DrawLine(texture, 28, 20, 28, 38, Ink, 3);
+        DrawLine(texture, 28, 38, 13, 39, Ink, 3);
+        DrawLine(texture, 13, 16, 13, 39, Ink, 3);
+        DrawLine(texture, 16, 18, 25, 21, ParchmentLight, 1);
+        FillEllipse(texture, 23, 28, 2, 2, Gold);
+        DrawLine(texture, 33, 13, 42, 8, Gold, 4);
+        DrawLine(texture, 42, 8, 39, 15, Gold, 4);
+        DrawLine(texture, 42, 8, 35, 8, Gold, 4);
+        AddWatercolorTexture(texture, 29);
         texture.Apply();
         return texture;
     }
@@ -2258,25 +2309,33 @@ public static class NavigationCursorController
     {
         Texture2D texture = CreateBlankCursor("Cursor_Stairway");
 
-        // A compact stair-step icon, generated like the door cursor so it does
-        // not need a separate imported texture to work in early builds.
-        DrawLine(texture, 8, 24, 24, 24, Ink, 5);
-        DrawLine(texture, 8, 24, 8, 19, Ink, 5);
-        DrawLine(texture, 8, 19, 12, 19, Ink, 5);
-        DrawLine(texture, 12, 19, 12, 15, Ink, 5);
-        DrawLine(texture, 12, 15, 16, 15, Ink, 5);
-        DrawLine(texture, 16, 15, 16, 11, Ink, 5);
-        DrawLine(texture, 16, 11, 21, 11, Ink, 5);
-        DrawLine(texture, 21, 11, 21, 7, Ink, 5);
-
-        DrawLine(texture, 8, 24, 24, 24, Paper, 2);
-        DrawLine(texture, 8, 24, 8, 19, Paper, 2);
-        DrawLine(texture, 8, 19, 12, 19, Paper, 2);
-        DrawLine(texture, 12, 19, 12, 15, Paper, 2);
-        DrawLine(texture, 12, 15, 16, 15, Paper, 2);
-        DrawLine(texture, 16, 15, 16, 11, Paper, 2);
-        DrawLine(texture, 16, 11, 21, 11, Paper, 2);
-        DrawLine(texture, 21, 11, 21, 7, Paper, 2);
+        DrawLine(texture, 9, 39, 39, 39, Shadow, 8);
+        DrawLine(texture, 9, 39, 9, 31, Shadow, 8);
+        DrawLine(texture, 9, 31, 17, 31, Shadow, 8);
+        DrawLine(texture, 17, 31, 17, 23, Shadow, 8);
+        DrawLine(texture, 17, 23, 25, 23, Shadow, 8);
+        DrawLine(texture, 25, 23, 25, 15, Shadow, 8);
+        DrawLine(texture, 25, 15, 35, 15, Shadow, 8);
+        DrawLine(texture, 35, 15, 35, 8, Shadow, 8);
+        DrawLine(texture, 7, 37, 39, 37, Ink, 7);
+        DrawLine(texture, 7, 37, 7, 29, Ink, 7);
+        DrawLine(texture, 7, 29, 15, 29, Ink, 7);
+        DrawLine(texture, 15, 29, 15, 21, Ink, 7);
+        DrawLine(texture, 15, 21, 23, 21, Ink, 7);
+        DrawLine(texture, 23, 21, 23, 13, Ink, 7);
+        DrawLine(texture, 23, 13, 34, 13, Ink, 7);
+        DrawLine(texture, 34, 13, 34, 6, Ink, 7);
+        DrawLine(texture, 7, 37, 39, 37, StairTeal, 4);
+        DrawLine(texture, 7, 29, 15, 29, StairTeal, 4);
+        DrawLine(texture, 15, 21, 23, 21, StairTeal, 4);
+        DrawLine(texture, 23, 13, 34, 13, StairTeal, 4);
+        DrawLine(texture, 7, 37, 7, 29, StairHighlight, 2);
+        DrawLine(texture, 15, 29, 15, 21, StairHighlight, 2);
+        DrawLine(texture, 23, 21, 23, 13, StairHighlight, 2);
+        DrawLine(texture, 34, 13, 34, 6, StairHighlight, 2);
+        DrawLine(texture, 36, 9, 42, 15, Gold, 3);
+        DrawLine(texture, 42, 15, 42, 9, Gold, 3);
+        AddWatercolorTexture(texture, 43);
         texture.Apply();
         return texture;
     }
@@ -2285,15 +2344,48 @@ public static class NavigationCursorController
     {
         Texture2D texture = CreateBlankCursor("Cursor_Talk");
 
-        FillRect(texture, 7, 7, 25, 21, Ink);
-        FillRect(texture, 9, 9, 23, 19, Paper);
-        DrawLine(texture, 11, 22, 8, 27, Ink, 4);
-        DrawLine(texture, 11, 22, 15, 20, Ink, 4);
-        DrawLine(texture, 11, 22, 10, 25, Paper, 1);
-        DrawLine(texture, 11, 22, 14, 21, Paper, 1);
-        FillRect(texture, 12, 13, 14, 15, Ink);
-        FillRect(texture, 16, 13, 18, 15, Ink);
-        FillRect(texture, 20, 13, 22, 15, Ink);
+        FillEllipse(texture, 24, 20, 18, 12, Shadow);
+        DrawLine(texture, 15, 31, 9, 39, Shadow, 6);
+        FillEllipse(texture, 22, 18, 18, 12, Ink);
+        DrawLine(texture, 15, 29, 9, 37, Ink, 6);
+        FillEllipse(texture, 22, 18, 15, 9, TalkPlum);
+        DrawLine(texture, 15, 29, 11, 35, TalkPlum, 4);
+        FillEllipse(texture, 22, 18, 11, 6, TalkLavender);
+        FillEllipse(texture, 15, 18, 2, 2, Ink);
+        FillEllipse(texture, 22, 18, 2, 2, Ink);
+        FillEllipse(texture, 29, 18, 2, 2, Ink);
+        DrawLine(texture, 34, 11, 42, 8, Gold, 3);
+        DrawLine(texture, 36, 18, 44, 18, Gold, 3);
+        AddWatercolorTexture(texture, 59);
+        texture.Apply();
+        return texture;
+    }
+
+    private static Texture2D CreateUiCursor()
+    {
+        Texture2D texture = CreateBlankCursor("Cursor_UiClick");
+
+        DrawLine(texture, 14, 10, 14, 31, Shadow, 7);
+        DrawLine(texture, 20, 18, 20, 33, Shadow, 7);
+        DrawLine(texture, 26, 20, 26, 34, Shadow, 7);
+        DrawLine(texture, 32, 23, 32, 35, Shadow, 7);
+        FillEllipse(texture, 24, 36, 15, 8, Shadow);
+        DrawLine(texture, 12, 8, 12, 30, Ink, 7);
+        DrawLine(texture, 18, 17, 18, 32, Ink, 7);
+        DrawLine(texture, 24, 19, 24, 33, Ink, 7);
+        DrawLine(texture, 30, 22, 30, 34, Ink, 7);
+        FillEllipse(texture, 22, 34, 15, 8, Ink);
+        DrawLine(texture, 12, 8, 12, 30, UiIvory, 4);
+        DrawLine(texture, 18, 17, 18, 32, UiIvory, 4);
+        DrawLine(texture, 24, 19, 24, 33, UiIvory, 4);
+        DrawLine(texture, 30, 22, 30, 34, UiIvory, 4);
+        FillEllipse(texture, 22, 34, 12, 5, UiIvory);
+        FillRect(texture, 12, 35, 31, 41, UiBlue);
+        FillRect(texture, 14, 36, 29, 39, Brass);
+        FillEllipse(texture, 38, 12, 4, 4, Gold);
+        FillRect(texture, 37, 5, 39, 19, Gold);
+        FillRect(texture, 31, 11, 45, 13, Gold);
+        AddWatercolorTexture(texture, 71);
         texture.Apply();
         return texture;
     }
@@ -2302,17 +2394,15 @@ public static class NavigationCursorController
     {
         Texture2D texture = CreateBlankCursor(cursorName);
 
-        DrawFootprint(texture, 10, 8);
-        DrawFootprint(texture, 18, 16);
+        DrawFootprint(texture, 17, 10, false);
+        DrawFootprint(texture, 28, 21, true);
 
         if (blocked)
         {
-            DrawLine(texture, 5, 5, 27, 27, Ink, 5);
-            DrawLine(texture, 27, 5, 5, 27, Ink, 5);
-            DrawLine(texture, 5, 5, 27, 27, Warning, 3);
-            DrawLine(texture, 27, 5, 5, 27, Warning, 3);
+            DrawBlockedSlash(texture);
         }
 
+        AddWatercolorTexture(texture, blocked ? 89 : 83);
         texture.Apply();
         return texture;
     }
@@ -2321,42 +2411,65 @@ public static class NavigationCursorController
     {
         Texture2D texture = CreateBlankCursor(cursorName);
 
-        DrawLine(texture, 8, 18, 12, 11, Ink, 5);
-        DrawLine(texture, 12, 11, 17, 13, Ink, 5);
-        DrawLine(texture, 17, 13, 22, 10, Ink, 5);
-        DrawLine(texture, 22, 10, 25, 18, Ink, 5);
-        DrawLine(texture, 25, 18, 20, 24, Ink, 5);
-        DrawLine(texture, 20, 24, 12, 23, Ink, 5);
-        DrawLine(texture, 12, 23, 8, 18, Ink, 5);
-
-        DrawLine(texture, 9, 18, 13, 13, Paper, 2);
-        DrawLine(texture, 13, 13, 17, 15, Paper, 2);
-        DrawLine(texture, 17, 15, 21, 13, Paper, 2);
-        DrawLine(texture, 21, 13, 23, 18, Paper, 2);
-        DrawLine(texture, 23, 18, 19, 22, Paper, 2);
-        DrawLine(texture, 19, 22, 13, 21, Paper, 2);
-        DrawLine(texture, 13, 21, 9, 18, Paper, 2);
-        DrawLine(texture, 13, 16, 20, 20, Ink, 2);
+        DrawLine(texture, 10, 28, 16, 12, Shadow, 9);
+        DrawLine(texture, 16, 12, 24, 15, Shadow, 9);
+        DrawLine(texture, 24, 15, 32, 12, Shadow, 9);
+        DrawLine(texture, 32, 12, 39, 28, Shadow, 9);
+        DrawLine(texture, 39, 28, 30, 39, Shadow, 9);
+        DrawLine(texture, 30, 39, 17, 38, Shadow, 9);
+        DrawLine(texture, 17, 38, 10, 28, Shadow, 9);
+        DrawLine(texture, 8, 26, 15, 10, Ink, 8);
+        DrawLine(texture, 15, 10, 24, 13, Ink, 8);
+        DrawLine(texture, 24, 13, 33, 10, Ink, 8);
+        DrawLine(texture, 33, 10, 40, 26, Ink, 8);
+        DrawLine(texture, 40, 26, 30, 38, Ink, 8);
+        DrawLine(texture, 30, 38, 17, 37, Ink, 8);
+        DrawLine(texture, 17, 37, 8, 26, Ink, 8);
+        DrawLine(texture, 10, 26, 16, 13, CoatWine, 5);
+        DrawLine(texture, 16, 13, 24, 16, CoatWine, 5);
+        DrawLine(texture, 24, 16, 32, 13, CoatWine, 5);
+        DrawLine(texture, 32, 13, 37, 26, CoatWine, 5);
+        DrawLine(texture, 37, 26, 29, 35, CoatWine, 5);
+        DrawLine(texture, 29, 35, 18, 34, CoatWine, 5);
+        DrawLine(texture, 18, 34, 10, 26, CoatWine, 5);
+        DrawLine(texture, 17, 17, 30, 31, CoatHighlight, 2);
+        DrawLine(texture, 24, 16, 24, 34, InkSoft, 2);
+        FillEllipse(texture, 21, 22, 2, 2, Gold);
+        FillEllipse(texture, 25, 26, 2, 2, Gold);
 
         if (blocked)
         {
-            DrawLine(texture, 5, 5, 27, 27, Ink, 5);
-            DrawLine(texture, 27, 5, 5, 27, Ink, 5);
-            DrawLine(texture, 5, 5, 27, 27, Warning, 3);
-            DrawLine(texture, 27, 5, 5, 27, Warning, 3);
+            DrawBlockedSlash(texture);
         }
 
+        AddWatercolorTexture(texture, blocked ? 107 : 101);
         texture.Apply();
         return texture;
     }
 
-    private static void DrawFootprint(Texture2D texture, int x, int y)
+    private static void DrawFootprint(Texture2D texture, int x, int y, bool mirrored)
     {
-        FillRect(texture, x - 3, y, x + 2, y + 9, Ink);
-        FillRect(texture, x - 2, y + 1, x + 1, y + 8, Paper);
-        FillRect(texture, x - 4, y + 8, x - 3, y + 10, Ink);
-        FillRect(texture, x - 1, y + 10, x, y + 12, Ink);
-        FillRect(texture, x + 2, y + 9, x + 3, y + 11, Ink);
+        int toeDirection = mirrored ? -1 : 1;
+        FillEllipse(texture, x + 1, y + 10, 5, 8, Shadow);
+        FillEllipse(texture, x, y + 8, 5, 8, Ink);
+        FillEllipse(texture, x, y + 8, 3, 6, WalkGreen);
+        FillEllipse(texture, x - toeDirection * 4, y + 16, 2, 3, Ink);
+        FillEllipse(texture, x, y + 18, 2, 3, Ink);
+        FillEllipse(texture, x + toeDirection * 4, y + 17, 2, 3, Ink);
+        FillEllipse(texture, x - toeDirection * 4, y + 16, 1, 2, WalkHighlight);
+        FillEllipse(texture, x, y + 18, 1, 2, WalkHighlight);
+        FillEllipse(texture, x + toeDirection * 4, y + 17, 1, 2, WalkHighlight);
+    }
+
+    private static void DrawBlockedSlash(Texture2D texture)
+    {
+        DrawLine(texture, 8, 8, 40, 40, Shadow, 8);
+        DrawLine(texture, 40, 8, 8, 40, Shadow, 8);
+        DrawLine(texture, 7, 7, 39, 39, Ink, 7);
+        DrawLine(texture, 39, 7, 7, 39, Ink, 7);
+        DrawLine(texture, 7, 7, 39, 39, Warning, 4);
+        DrawLine(texture, 39, 7, 7, 39, Warning, 4);
+        DrawLine(texture, 9, 8, 37, 36, ParchmentLight, 1);
     }
 
     private static Texture2D CreateBlankCursor(string cursorName)
@@ -2391,6 +2504,28 @@ public static class NavigationCursorController
             for (int x = scaledMinX; x <= scaledMaxX; x++)
             {
                 SetPixelSafe(texture, x, y, color);
+            }
+        }
+    }
+
+    private static void FillEllipse(Texture2D texture, int centerX, int centerY, int radiusX, int radiusY, Color color)
+    {
+        int scaledCenterX = ScaleCursorCoordinate(centerX);
+        int scaledCenterY = ScaleCursorCoordinate(centerY);
+        int scaledRadiusX = Mathf.Max(1, ScaleCursorLength(radiusX));
+        int scaledRadiusY = Mathf.Max(1, ScaleCursorLength(radiusY));
+
+        for (int y = scaledCenterY - scaledRadiusY; y <= scaledCenterY + scaledRadiusY; y++)
+        {
+            for (int x = scaledCenterX - scaledRadiusX; x <= scaledCenterX + scaledRadiusX; x++)
+            {
+                float dx = (x - scaledCenterX) / (float)scaledRadiusX;
+                float dy = (y - scaledCenterY) / (float)scaledRadiusY;
+
+                if (dx * dx + dy * dy <= 1f)
+                {
+                    SetPixelSafe(texture, x, y, color);
+                }
             }
         }
     }
@@ -2460,6 +2595,35 @@ public static class NavigationCursorController
     private static int ScaleCursorThickness(int thickness)
     {
         return Mathf.Max(1, Mathf.RoundToInt(thickness * CursorSize / (float)CursorDesignSize));
+    }
+
+    private static int ScaleCursorLength(int value)
+    {
+        return Mathf.Max(1, Mathf.RoundToInt(value * CursorSize / (float)CursorDesignSize));
+    }
+
+    private static void AddWatercolorTexture(Texture2D texture, int seed)
+    {
+        for (int y = 0; y < CursorSize; y++)
+        {
+            for (int x = 0; x < CursorSize; x++)
+            {
+                Color color = texture.GetPixel(x, y);
+
+                if (color.a <= 0f)
+                {
+                    continue;
+                }
+
+                int hash = (x * 73856093) ^ (y * 19349663) ^ (seed * 83492791);
+                float tint = 0.9f + Mathf.Abs(hash % 23) / 100f;
+                float paperLift = Mathf.Abs((hash / 23) % 5) * 0.01f;
+                color.r = Mathf.Clamp01(color.r * tint + paperLift);
+                color.g = Mathf.Clamp01(color.g * tint + paperLift);
+                color.b = Mathf.Clamp01(color.b * tint + paperLift);
+                texture.SetPixel(x, y, color);
+            }
+        }
     }
 
     private static void SetPixelSafe(Texture2D texture, int x, int y, Color color)

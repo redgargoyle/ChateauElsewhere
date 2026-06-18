@@ -9,7 +9,7 @@ public sealed class NavigationCursorHoverTarget : MonoBehaviour,
     IPointerDownHandler,
     IPointerUpHandler
 {
-    [SerializeField] private NavigationCursorController.HoverIcon hoverIcon = NavigationCursorController.HoverIcon.Door;
+    [SerializeField] private NavigationCursorController.HoverIcon hoverIcon = NavigationCursorController.HoverIcon.Ui;
     [SerializeField] private Selectable selectable;
     [SerializeField] private bool requireInteractable = true;
 
