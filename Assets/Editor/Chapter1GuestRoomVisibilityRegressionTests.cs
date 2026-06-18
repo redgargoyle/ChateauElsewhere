@@ -8,6 +8,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter1SceneActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
+    private const string DrawingRoomPrefabPath = "Assets/Prefabs/Room_Drawing_Room.prefab";
+    private const string DrawingRoomPerspectivePrefabPath = "Assets/Prefabs/Room_Drawing_Room_Perspective.prefab";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
 
@@ -343,6 +345,30 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
+    public void DrawingRoomGuestsAndTeaTableUsePerspectiveDepthSorting()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string completeMethodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
+        string skipStageMethodBody = ExtractMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
+        string depthSortMethodBody = ExtractMethodBody(controllerText, "private void ApplyDrawingRoomGuestDepthSorting");
+        string gameplaySceneText = File.ReadAllText(GameplayScenePath);
+        string drawingRoomPrefabText = File.ReadAllText(DrawingRoomPrefabPath);
+        string drawingRoomPerspectivePrefabText = File.ReadAllText(DrawingRoomPerspectivePrefabPath);
+
+        Assert.That(completeMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomGuestDepthSorting\(guest, drawingRoomSpot\)"), "Normal Drawing Room arrivals should sort guests from their actual room-local foot anchor.");
+        Assert.That(skipStageMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomGuestDepthSorting\(guest, drawingRoomSpot\)"), "Chapter 2 skip staging should use the same Drawing Room depth sorting as normal play.");
+        Assert.That(depthSortMethodBody, Does.Contain("TryGetRoomLocalFootPoint(drawingRoomSpot"), "Guest sorting should use the Drawing Room anchor's local foot point.");
+        Assert.That(depthSortMethodBody, Does.Contain("TryGetPerspectiveProfileForTarget(drawingRoomSpot"), "Guest sorting should come from the target room profile, not a fixed order.");
+        Assert.That(depthSortMethodBody, Does.Contain("profile.GetSortingOrder(roomLocalFootPoint)"), "Guest sorting should use y-axis depth from the room profile.");
+        Assert.That(depthSortMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - referenceOrder"), "Depth sorting should preserve local renderer offsets such as coats or layered bodies.");
+        Assert.That(depthSortMethodBody, Does.Not.Contain("9000"), "Drawing Room depth sorting should not reuse the entrance fallback sorting band.");
+
+        AssertTeaTableUsesProjectedDepth(gameplaySceneText, "roomLocalFootPoint: {x: -80.26, y: -211.67}", "m_SortingOrder: 6627");
+        AssertTeaTableUsesProjectedDepth(drawingRoomPrefabText, "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
+        AssertTeaTableUsesProjectedDepth(drawingRoomPerspectivePrefabText, "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
+    }
+
+    [Test]
     public void DrawingRoomWaitingPoseKeepsGuestsThreeFiveSevenStanding()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
@@ -359,6 +385,34 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(standingRuleBody, Does.Contain("guest.GuestIndex == 6"), "Guest 7 should stand in the Drawing Room.");
         Assert.That(completeMethodBody, Does.Contain("guest.Seated = true"), "Visual standing should not break normal Chapter 1 progression.");
         Assert.That(skipStageMethodBody, Does.Contain("guest.Seated = true"), "Visual standing should not break Chapter 2 skip progression.");
+    }
+
+    private static void AssertTeaTableUsesProjectedDepth(string assetText, string expectedFootPoint, string expectedSortingOrder)
+    {
+        string teaTableBlock = ExtractObjectBlock(assetText, "tea_service_table");
+
+        Assert.That(teaTableBlock, Does.Contain("guid: 361e3658088b41ab98d330ae6457640b"), "The Drawing Room tea table should use RoomProjectedEntity for depth sorting.");
+        Assert.That(teaTableBlock, Does.Contain("roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267"), "The tea table should sort against the Drawing Room perspective profile.");
+        Assert.That(teaTableBlock, Does.Contain(expectedFootPoint), "The table sort point should match the authored floor/occlusion point.");
+        Assert.That(teaTableBlock, Does.Contain("applyPosition: 0"), "The table projection must not move authored art.");
+        Assert.That(teaTableBlock, Does.Contain("applyScale: 0"), "The table projection must not resize authored art.");
+        Assert.That(teaTableBlock, Does.Contain("applyTint: 0"), "The table projection must not recolor authored art.");
+        Assert.That(teaTableBlock, Does.Contain("applySorting: 1"), "The table projection should only own sorting.");
+        Assert.That(teaTableBlock, Does.Contain(expectedSortingOrder), "The serialized table order should match its profile-derived y depth.");
+    }
+
+    private static string ExtractObjectBlock(string assetText, string objectName)
+    {
+        int nameIndex = assetText.IndexOf($"m_Name: {objectName}", StringComparison.Ordinal);
+        Assert.That(nameIndex, Is.GreaterThanOrEqualTo(0), $"Could not find object '{objectName}'.");
+
+        int blockStart = assetText.LastIndexOf("--- !u!1", nameIndex, StringComparison.Ordinal);
+        Assert.That(blockStart, Is.GreaterThanOrEqualTo(0), $"Could not find object block start for '{objectName}'.");
+
+        int blockEnd = assetText.IndexOf("--- !u!1", nameIndex + objectName.Length, StringComparison.Ordinal);
+        return blockEnd >= 0
+            ? assetText.Substring(blockStart, blockEnd - blockStart)
+            : assetText.Substring(blockStart);
     }
 
     private static string ExtractMethodBody(string sourceText, string methodName)

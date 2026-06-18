@@ -63,8 +63,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0ea47fd950844bcacb0fd5556a9d880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   roomName: Drawing Room Perspective
   roomBackgroundTexture: {fileID: 2800000, guid: 28c74b6dea1ed8e2c9c7d612355f9734, type: 3}
   perspectiveProfile: {fileID: 0}
@@ -783,6 +783,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5718819531062794842}
   - component: {fileID: 7736515036983942028}
+  - component: {fileID: 2369478294726031537}
   m_Layer: 0
   m_Name: tea_service_table
   m_TagString: Untagged
@@ -852,7 +853,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1483
+  m_SortingOrder: 6570
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7836622596164935206, guid: c9c9711a41d82097fbae9cb69d6b7e6d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -864,6 +865,43 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
+--- !u!114 &2369478294726031537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2369478294726031536}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 361e3658088b41ab98d330ae6457640b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
+  visualProfile: {fileID: 0}
+  projectionMode: 4
+  roomLocalFootPoint: {x: -77.23, y: -208.14}
+  visualRoot: {fileID: 0}
+  applyPosition: 0
+  applyScale: 0
+  applyTint: 0
+  applySorting: 1
+  includeInactiveRenderers: 1
+  requireActorRoomMatch: 0
+  normalizeLogicalRootScale: 0
+  logicalRootScale: {x: 1, y: 1, z: 1}
+  sortingOffset: 0
+  cameraManager: {fileID: 0}
+  contactShadowRoot: {fileID: 0}
+  contactShadowRenderer: {fileID: 0}
+  contactShadowGraphic: {fileID: 0}
+  useRoomVisualScaleOverrides: 0
+  editorSelectedVisualScaleRoomId:
+  roomVisualScaleOverrides: []
+  authoredVisualRootScale: {x: 1, y: 1, z: 1}
+  hasAuthoredVisualRootScale: 0
+  lastAppliedVisualRootScale: {x: 1, y: 1, z: 1}
+  hasLastAppliedVisualRootScale: 0
 --- !u!1 &2421514992188431271
 GameObject:
   m_ObjectHideFlags: 0

@@ -2187,6 +2187,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.ApplyState();
         }
 
+        ApplyDrawingRoomGuestDepthSorting(guest, drawingRoomSpot);
+
         guest.MovingToDrawingRoom = false;
         guest.Seated = true;
         guest.Handled = true;
@@ -2351,6 +2353,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         HideGuestCoatVisualsForChapter2Skip(guest);
+        ApplyDrawingRoomGuestDepthSorting(guest, drawingRoomSpot);
 
         guest.WaitingOutside = false;
         guest.EnteredEntranceHall = true;
@@ -4173,6 +4176,86 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         RemoveDestroyedGuestSortingCacheEntries();
+    }
+
+    private void ApplyDrawingRoomGuestDepthSorting(GuestRuntimeState guestState, Transform drawingRoomSpot)
+    {
+        if (guestState == null ||
+            guestState.GuestObject == null ||
+            drawingRoomSpot == null ||
+            HasActiveProjection(guestState) ||
+            !TryGetRoomLocalFootPoint(drawingRoomSpot, out Vector2 roomLocalFootPoint) ||
+            !TryGetPerspectiveProfileForTarget(drawingRoomSpot, out RoomPerspectiveProfile profile))
+        {
+            return;
+        }
+
+        CacheGuestAuthoredSorting(guestState.GuestObject);
+        Renderer[] renderers = GetGuestRenderers(guestState);
+
+        if (renderers.Length == 0)
+        {
+            return;
+        }
+
+        int depthSortingOrder = profile.GetSortingOrder(roomLocalFootPoint);
+        int referenceOrder = GetGuestRendererReferenceSortingOrder(guestState, renderers);
+        string sortingLayerName = profile.SortingLayerName;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            int localOffset = GetCachedSortingOrder(renderer) - referenceOrder;
+            renderer.sortingLayerName = sortingLayerName;
+            renderer.sortingOrder = depthSortingOrder + localOffset;
+        }
+    }
+
+    private static bool TryGetPerspectiveProfileForTarget(Transform target, out RoomPerspectiveProfile profile)
+    {
+        profile = null;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        RoomContentGroup roomContent = target.GetComponentInParent<RoomContentGroup>(true);
+        return roomContent != null && roomContent.TryGetPerspectiveProfile(out profile);
+    }
+
+    private static bool TryGetRoomLocalFootPoint(Transform target, out Vector2 roomLocalFootPoint)
+    {
+        roomLocalFootPoint = Vector2.zero;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        RoomContentGroup roomContent = target.GetComponentInParent<RoomContentGroup>(true);
+
+        if (roomContent != null)
+        {
+            Vector3 localPoint = roomContent.transform.InverseTransformPoint(target.position);
+            roomLocalFootPoint = new Vector2(localPoint.x, localPoint.y);
+            return true;
+        }
+
+        if (target is RectTransform targetRectTransform)
+        {
+            roomLocalFootPoint = targetRectTransform.anchoredPosition;
+            return true;
+        }
+
+        roomLocalFootPoint = new Vector2(target.localPosition.x, target.localPosition.y);
+        return true;
     }
 
     private void ApplyEntranceBanisterSafeWalkingSorting(GuestRuntimeState guestState)
