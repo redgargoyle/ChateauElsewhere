@@ -41,6 +41,7 @@ public class ActorRoomState : MonoBehaviour
     private float boundWorldZ;
     private Vector3 boundLocalScale = Vector3.one;
     private float boundRoomStageScale = 1f;
+    private RoomPerspectiveProfile boundRoomPerspectiveProfile;
     private string boundRoomId;
     private bool subscribedToRoomChanges;
     private bool hasDiagnosticApplyState;
@@ -159,12 +160,14 @@ public class ActorRoomState : MonoBehaviour
         {
             projection.UseProfileFromRoomTarget(target);
 
-            if (projection.IsProjectionActive &&
-                projection.CanProjectTarget(target) &&
+            if (projection.CanProjectTarget(target) &&
                 projection.TrySetRoomLocalFootPointFromTarget(target))
             {
-                ClearRoomStagePointBinding();
-                return;
+                if (projection.IsProjectionActive)
+                {
+                    ClearRoomStagePointBinding();
+                    return;
+                }
             }
         }
 
@@ -214,6 +217,7 @@ public class ActorRoomState : MonoBehaviour
         boundWorldZ = targetTransform.position.z;
         boundLocalScale = targetTransform.localScale;
         boundRoomStageScale = Mathf.Max(0.0001f, roomStage.lossyScale.x);
+        boundRoomPerspectiveProfile = roomContentGroup.PerspectiveProfile;
         boundRoomId = roomContentGroup.RoomName;
         hasRoomStageLocalBinding = true;
         ClearRoomStageMotionBaseline();
@@ -226,6 +230,7 @@ public class ActorRoomState : MonoBehaviour
         boundWorldZ = 0f;
         boundLocalScale = Vector3.one;
         boundRoomStageScale = 1f;
+        boundRoomPerspectiveProfile = null;
         boundRoomId = string.Empty;
         ClearRoomStageMotionBaseline();
     }
@@ -678,10 +683,48 @@ public class ActorRoomState : MonoBehaviour
 
         worldPoint.z = boundWorldZ;
         targetTransform.position = worldPoint;
+        float scaleRatio = scaleWithRoomStageMotion
+            ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
+            : 1f;
+        float perspectiveScale = GetBoundRoomPerspectiveScale();
         targetTransform.localScale = scaleWithRoomStageMotion
-            ? ScaleXY(boundLocalScale, currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale))
+            ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
             : boundLocalScale;
         return true;
+    }
+
+    private float GetBoundRoomPerspectiveScale()
+    {
+        if (boundRoomPerspectiveProfile != null)
+        {
+            return boundRoomPerspectiveProfile.GetScale(roomStageLocalPoint);
+        }
+
+        if (string.IsNullOrWhiteSpace(boundRoomId))
+        {
+            return 1f;
+        }
+
+        RoomContentGroup[] rooms = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < rooms.Length; i++)
+        {
+            RoomContentGroup room = rooms[i];
+
+            if (room == null || !SameRoom(room.RoomName, boundRoomId))
+            {
+                continue;
+            }
+
+            if (room.TryGetPerspectiveProfile(out boundRoomPerspectiveProfile))
+            {
+                return boundRoomPerspectiveProfile.GetScale(roomStageLocalPoint);
+            }
+
+            break;
+        }
+
+        return 1f;
     }
 
     private static bool IsActorUnderRoomStage(Transform targetTransform)

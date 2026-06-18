@@ -857,6 +857,7 @@ public class Chapter2Controller : MonoBehaviour
         clockStrikeAudioSource.loop = false;
         clockStrikeAudioSource.spatialBlend = 0f;
         clockStrikeAudioSource.volume = 0.75f;
+        GameAudioSettings.EnsureBinding(clockStrikeAudioSource, GameAudioChannel.GameSounds, 0.75f);
         clockStrikeAudioSource.Stop();
         clockStrikeAudioSource.Play();
     }

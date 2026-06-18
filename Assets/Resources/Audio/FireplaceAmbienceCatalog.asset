@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 926ef3a5f44c4152b79ea814a82314a9, type: 3}
+  m_Name: FireplaceAmbienceCatalog
+  m_EditorClassIdentifier:
+  clips:
+  - {fileID: 8300000, guid: 871dcee6ddd561a008bdd7f3a57c8fc5, type: 3}
+  - {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+  - {fileID: 8300000, guid: 7f79360b8e04c81cf9bcfb3503f9101e, type: 3}
+  - {fileID: 8300000, guid: c92033866904fd943b6ddc3be17b2fb0, type: 3}
+  - {fileID: 8300000, guid: 8c0717d4e82f95ee9af371344a0d20ea, type: 3}
+  roomNames:
+  - Grand Entrance Hall
+  - Grand Entrance Hall Rear view
+  - Drawing Room
+  - Music Room
+  - Library
+  - Ballroom
+  - Dining Room
+  - Billiard Room
+  - Upper Gallery
+  - Master Bedroom
+  - Master Bedroom Suite
+  roomClipAssignments:
+  - roomName: Grand Entrance Hall
+    clip: {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+    volumeMultiplier: 0.45
+  - roomName: Grand Entrance Hall Rear view
+    clip: {fileID: 8300000, guid: 871dcee6ddd561a008bdd7f3a57c8fc5, type: 3}
+    volumeMultiplier: 1
+  - roomName: Drawing Room
+    clip: {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+    volumeMultiplier: 1
+  - roomName: Music Room
+    clip: {fileID: 8300000, guid: 7f79360b8e04c81cf9bcfb3503f9101e, type: 3}
+    volumeMultiplier: 1
+  - roomName: Library
+    clip: {fileID: 8300000, guid: c92033866904fd943b6ddc3be17b2fb0, type: 3}
+    volumeMultiplier: 1
+  - roomName: Ballroom
+    clip: {fileID: 8300000, guid: 8c0717d4e82f95ee9af371344a0d20ea, type: 3}
+    volumeMultiplier: 1
+  - roomName: Dining Room
+    clip: {fileID: 8300000, guid: 7f79360b8e04c81cf9bcfb3503f9101e, type: 3}
+    volumeMultiplier: 1
+  - roomName: Billiard Room
+    clip: {fileID: 8300000, guid: 8c0717d4e82f95ee9af371344a0d20ea, type: 3}
+    volumeMultiplier: 1
+  - roomName: Upper Gallery
+    clip: {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+    volumeMultiplier: 0.45
+  - roomName: Master Bedroom
+    clip: {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+    volumeMultiplier: 1
+  - roomName: Master Bedroom Suite
+    clip: {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+    volumeMultiplier: 1
+  baseVolume: 0.42
+  fadeSeconds: 0.65
+  minPitch: 0.96
+  maxPitch: 1.04

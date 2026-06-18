@@ -980,6 +980,13 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
+        if (RuntimeSettingsMenu.BlocksGameInput)
+        {
+            ResetHorizontalEdgeHold();
+            NavigationCursorController.SetEdgePanDirection(0);
+            return;
+        }
+
         bool shouldApply = false;
 
         if (panRoomWithMouseEdges)
@@ -1918,6 +1925,7 @@ public static class NavigationCursorController
     private static readonly Vector2 WalkHotspot = ScaleCursorHotspot(13f, 24f);
 
     private static int edgePanDirection;
+    private static bool gameplayHoverBlocked;
     private static object doorHoverOwner;
     private static HoverIcon doorHoverIcon;
     private static object walkHoverOwner;
@@ -1936,6 +1944,7 @@ public static class NavigationCursorController
     private static void ResetForPlayMode()
     {
         edgePanDirection = 0;
+        gameplayHoverBlocked = false;
         doorHoverOwner = null;
         doorHoverIcon = HoverIcon.Door;
         walkHoverOwner = null;
@@ -1947,12 +1956,37 @@ public static class NavigationCursorController
     {
         int cleanDirection = direction < 0 ? -1 : direction > 0 ? 1 : 0;
 
+        if (gameplayHoverBlocked)
+        {
+            cleanDirection = 0;
+        }
+
         if (edgePanDirection == cleanDirection)
         {
             return;
         }
 
         edgePanDirection = cleanDirection;
+        ApplyCursor();
+    }
+
+    public static void SetGameplayHoverBlocked(bool blocked)
+    {
+        if (gameplayHoverBlocked == blocked)
+        {
+            return;
+        }
+
+        gameplayHoverBlocked = blocked;
+
+        if (gameplayHoverBlocked)
+        {
+            edgePanDirection = 0;
+            doorHoverOwner = null;
+            walkHoverOwner = null;
+            walkHoverCanMove = false;
+        }
+
         ApplyCursor();
     }
 
@@ -1963,6 +1997,11 @@ public static class NavigationCursorController
 
     public static void SetDoorHover(object owner, HoverIcon icon, bool active)
     {
+        if (gameplayHoverBlocked)
+        {
+            return;
+        }
+
         if (active)
         {
             doorHoverOwner = owner;
@@ -1987,6 +2026,11 @@ public static class NavigationCursorController
 
     public static void SetWalkHover(object owner, bool active, bool canMove)
     {
+        if (gameplayHoverBlocked)
+        {
+            return;
+        }
+
         if (!active)
         {
             ClearWalkHover(owner);
@@ -2022,6 +2066,12 @@ public static class NavigationCursorController
 
     private static void ApplyCursor()
     {
+        if (gameplayHoverBlocked)
+        {
+            Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+            return;
+        }
+
         // Door hover wins because it is the most specific click action. Walk hover
         // comes next so the cursor always answers what a click would do.
         if (doorHoverOwner != null)

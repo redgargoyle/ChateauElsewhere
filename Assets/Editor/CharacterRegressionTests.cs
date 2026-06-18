@@ -207,6 +207,7 @@ public class CharacterRegressionTests
         Assert.That(guestThreeBlock, Does.Contain(firstMisterFlorianFrameGuid), "Guest 3 should preview with the forward-facing Mister Florian frame.");
         Assert.That(guestThreeBlock, Does.Contain(misterFlorianControllerGuid), "Guest 3 should use the Mister Florian override controller.");
         Assert.That(guestThreeBlock, Does.Contain("propertyPath: m_LocalScale.x"), "Guest 3 should keep the same root scale treatment as Guest 4.");
+        Assert.That(sceneText, Does.Not.Contain("m_EditorClassIdentifier: Assembly-CSharp::RoomProjectedEntity"), "Gameplay's authored Player/Guest scene instances should not carry RoomProjectedEntity components; ActorRoomState and PointClickPlayerMovement own their room scaling.");
 
         Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredMisterFlorianGuestAnimation"), "Runtime guest setup should preserve Guest 3's authored Mister Florian animation.");
         Assert.That(arrivalControllerText, Does.Contain("index == 2 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[2])"), "Only the authored Guest 3 object should keep Mister Florian animation.");

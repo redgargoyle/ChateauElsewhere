@@ -14,6 +14,7 @@ public class StaticNoisePlayer : MonoBehaviour
 
     private Coroutine playCoroutine;
     private Color baseColor = Color.white;
+    private float staticAudioBaseVolume = -1f;
 
     public bool CanPlay
     {
@@ -42,6 +43,11 @@ public class StaticNoisePlayer : MonoBehaviour
         if (staticAudio == null)
         {
             staticAudio = GetComponent<AudioSource>();
+        }
+
+        if (staticAudio != null && staticAudioBaseVolume < 0f)
+        {
+            staticAudioBaseVolume = staticAudio.volume;
         }
 
         if (targetImage != null)
@@ -95,6 +101,12 @@ public class StaticNoisePlayer : MonoBehaviour
 
         if (staticAudio != null)
         {
+            if (staticAudioBaseVolume < 0f)
+            {
+                staticAudioBaseVolume = staticAudio.volume;
+            }
+
+            GameAudioSettings.EnsureBinding(staticAudio, GameAudioChannel.GameSounds, staticAudioBaseVolume);
             staticAudio.Play();
         }
 

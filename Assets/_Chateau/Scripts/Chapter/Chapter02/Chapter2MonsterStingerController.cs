@@ -59,6 +59,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     private int nextMonsterFreezeFrameIndex;
     private Sprite originalMonsterSprite;
     private bool hasOriginalMonsterSprite;
+    private float violinAudioBaseVolume = -1f;
 
     public bool IsRunning => isRunning || stingerRoutine != null;
 
@@ -352,6 +353,13 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         violinAudioSource.playOnAwake = false;
         violinAudioSource.loop = loopViolinAudio;
         violinAudioSource.spatialBlend = 0f;
+
+        if (violinAudioBaseVolume < 0f)
+        {
+            violinAudioBaseVolume = violinAudioSource.volume;
+        }
+
+        GameAudioSettings.EnsureBinding(violinAudioSource, GameAudioChannel.GameSounds, violinAudioBaseVolume);
     }
 
     private AudioClip FindViolinClip()

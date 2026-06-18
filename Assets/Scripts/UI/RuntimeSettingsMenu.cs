@@ -10,23 +10,31 @@ public class RuntimeSettingsMenu : MonoBehaviour
 {
     private const string MenuObjectName = "RuntimeSettingsMenu";
     private const string MenuCanvasName = "Canvas_RuntimeSettingsMenu";
+    private const string SettingsOverlayName = "Panel_SettingsOverlay";
+    private const string SettingsPanelName = "Panel_SettingsModal";
+    private const string SettingsTitleName = "Text_SettingsTitle";
     private const string SettingsButtonName = "Button_Settings";
     private const string SettingsListName = "List_Settings";
+    private const string SettingsAudioListName = "List_AudioControls";
     private const string DebugListName = "List_Debug";
     private const string RoomListName = "List_TeleportRooms";
     private const string DebugTimeControlName = "Control_DebugGameTimeSpeed";
     private const string DebugButtonRowName = "List_DebugButtons";
     private const string DebugControlRowName = "List_DebugControls";
-    private const string DebugMusicControlName = "Control_DebugMusicVolume";
-    private const string DebugFxControlName = "Control_DebugFxVolume";
+    private const string DialogueAudioControlName = "Control_AudioDialogue";
+    private const string GameSoundsAudioControlName = "Control_AudioGameSounds";
+    private const string AtmosphereAudioControlName = "Control_AudioAtmosphere";
+    private const string MusicAudioControlName = "Control_AudioMusic";
     private const string ExplorationMusicObjectName = "Audio_ExplorationMusic";
     private const string ExplorationMusicClipName = "unity_dreadforge_soundscape";
     private const float ButtonWidth = 150f;
     private const float ButtonHeight = 34f;
-    private const float DebugControlWidth = 220f;
-    private const float DebugControlLabelWidth = 64f;
-    private const float DebugControlInputWidth = 44f;
-    private const float DebugControlSliderLeft = 80f;
+    private const float SettingsPanelWidth = 640f;
+    private const float SettingsPanelHeight = 560f;
+    private const float DebugControlWidth = 360f;
+    private const float DebugControlLabelWidth = 116f;
+    private const float DebugControlInputWidth = 54f;
+    private const float DebugControlSliderLeft = 132f;
     private const float MinSecondsPerGameMinute = 1f;
     private const float MaxSecondsPerGameMinute = 120f;
     private const int MenuCanvasSortingOrder = 10050;
@@ -41,14 +49,20 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private enum DebugSliderKind
     {
         Time,
-        Music,
-        Fx
+        Dialogue,
+        GameSounds,
+        Atmosphere,
+        Music
     }
 
     private RoomNavigationManager navigationManager;
     private RectTransform rootRect;
+    private RectTransform settingsOverlay;
+    private RectTransform settingsPanel;
+    private TMP_Text settingsTitle;
     private Button settingsButton;
     private RectTransform settingsList;
+    private RectTransform settingsAudioList;
     private RectTransform debugList;
     private RectTransform debugButtonRow;
     private RectTransform debugControlRow;
@@ -59,29 +73,39 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private RectTransform debugTimeSliderHandle;
     private TMP_InputField debugTimeInput;
     private TMP_Text debugTimeLabel;
-    private RectTransform debugMusicControl;
-    private RectTransform debugMusicSlider;
-    private RectTransform debugMusicSliderFill;
-    private RectTransform debugMusicSliderHandle;
-    private TMP_InputField debugMusicInput;
-    private TMP_Text debugMusicLabel;
-    private RectTransform debugFxControl;
-    private RectTransform debugFxSlider;
-    private RectTransform debugFxSliderFill;
-    private RectTransform debugFxSliderHandle;
-    private TMP_InputField debugFxInput;
-    private TMP_Text debugFxLabel;
+    private RectTransform dialogueAudioControl;
+    private RectTransform dialogueAudioSliderFill;
+    private RectTransform dialogueAudioSliderHandle;
+    private TMP_InputField dialogueAudioInput;
+    private TMP_Text dialogueAudioLabel;
+    private RectTransform gameSoundsAudioControl;
+    private RectTransform gameSoundsAudioSliderFill;
+    private RectTransform gameSoundsAudioSliderHandle;
+    private TMP_InputField gameSoundsAudioInput;
+    private TMP_Text gameSoundsAudioLabel;
+    private RectTransform atmosphereAudioControl;
+    private RectTransform atmosphereAudioSliderFill;
+    private RectTransform atmosphereAudioSliderHandle;
+    private TMP_InputField atmosphereAudioInput;
+    private TMP_Text atmosphereAudioLabel;
+    private RectTransform musicAudioControl;
+    private RectTransform musicAudioSliderFill;
+    private RectTransform musicAudioSliderHandle;
+    private TMP_InputField musicAudioInput;
+    private TMP_Text musicAudioLabel;
     private ChapterManager chapterManager;
     private ChapterClock chapterClock;
     private AudioSource explorationMusicSource;
     private float explorationMusicBaseVolume = -1f;
-    private float debugMusicVolume = 1f;
-    private float debugFxVolume = 1f;
+    private float timeScaleBeforeSettings = 1f;
     private bool settingsOpen;
     private bool debugOpen;
     private bool roomListOpen;
     private bool isUpdatingDebugTimeControl;
-    private bool isUpdatingDebugAudioControl;
+    private bool isUpdatingAudioControl;
+    private bool timeScalePausedForSettings;
+
+    public static bool BlocksGameInput { get; private set; }
 
     public static RuntimeSettingsMenu FindOrCreate(RoomNavigationManager navigationManager)
     {
@@ -113,6 +137,16 @@ public class RuntimeSettingsMenu : MonoBehaviour
         EnsureEventSystem();
         EnsureUI();
         RefreshOpenState();
+    }
+
+    private void OnDisable()
+    {
+        ClearModalGameState();
+    }
+
+    private void OnDestroy()
+    {
+        ClearModalGameState();
     }
 
     private static Canvas GetOrCreateMenuCanvas()
@@ -201,35 +235,41 @@ public class RuntimeSettingsMenu : MonoBehaviour
             canvas.sortingOrder = MenuCanvasSortingOrder;
         }
 
-        rootRect.anchorMin = new Vector2(0f, 1f);
-        rootRect.anchorMax = new Vector2(0f, 1f);
-        rootRect.pivot = new Vector2(0f, 1f);
-        rootRect.anchoredPosition = new Vector2(12f, -12f);
-        rootRect.sizeDelta = new Vector2(760f, 520f);
+        rootRect.anchorMin = Vector2.zero;
+        rootRect.anchorMax = Vector2.one;
+        rootRect.pivot = new Vector2(0.5f, 0.5f);
+        rootRect.anchoredPosition = Vector2.zero;
+        rootRect.offsetMin = Vector2.zero;
+        rootRect.offsetMax = Vector2.zero;
+        rootRect.sizeDelta = Vector2.zero;
         rootRect.localScale = Vector3.one;
         transform.SetAsLastSibling();
 
-        settingsButton = FindOrCreateButton(rootRect, SettingsButtonName, "Settings", ToggleSettings);
-        RectTransform settingsButtonRect = settingsButton.GetComponent<RectTransform>();
-        settingsButtonRect.anchorMin = new Vector2(0f, 1f);
-        settingsButtonRect.anchorMax = new Vector2(0f, 1f);
-        settingsButtonRect.pivot = new Vector2(0f, 1f);
-        settingsButtonRect.anchoredPosition = Vector2.zero;
-        settingsButtonRect.sizeDelta = new Vector2(112f, ButtonHeight);
+        settingsOverlay = FindOrCreateSettingsOverlay(rootRect);
+        settingsPanel = FindOrCreateSettingsPanel(rootRect);
+        settingsTitle = FindOrCreateSettingsTitle(settingsPanel);
 
-        settingsList = FindOrCreateList(rootRect, SettingsListName, true);
+        settingsButton = FindOrCreateButton(rootRect, SettingsButtonName, "Settings", ToggleSettings);
+        UpdateSettingsButtonLayout();
+
+        settingsList = FindOrCreateList(settingsPanel, SettingsListName, true);
         settingsList.anchorMin = new Vector2(0f, 1f);
         settingsList.anchorMax = new Vector2(0f, 1f);
         settingsList.pivot = new Vector2(0f, 1f);
-        settingsList.anchoredPosition = new Vector2(0f, -ButtonHeight - 6f);
+        settingsList.anchoredPosition = new Vector2(28f, -80f);
 
         FindOrCreateButton(settingsList, "Button_Debug", "Debug", ToggleDebug);
+        settingsAudioList = FindOrCreateList(settingsList, SettingsAudioListName, true);
+        dialogueAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, DialogueAudioControlName, GameAudioChannel.Dialogue, DebugSliderKind.Dialogue);
+        gameSoundsAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, GameSoundsAudioControlName, GameAudioChannel.GameSounds, DebugSliderKind.GameSounds);
+        atmosphereAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, AtmosphereAudioControlName, GameAudioChannel.Atmosphere, DebugSliderKind.Atmosphere);
+        musicAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, MusicAudioControlName, GameAudioChannel.Music, DebugSliderKind.Music);
 
-        debugList = FindOrCreateList(rootRect, DebugListName, true);
+        debugList = FindOrCreateList(settingsPanel, DebugListName, true);
         debugList.anchorMin = new Vector2(0f, 1f);
         debugList.anchorMax = new Vector2(0f, 1f);
         debugList.pivot = new Vector2(0f, 1f);
-        debugList.anchoredPosition = new Vector2(ButtonWidth + 10f, -ButtonHeight - 6f);
+        debugList.anchoredPosition = new Vector2(28f, -390f);
 
         debugButtonRow = FindOrCreateList(debugList, DebugButtonRowName, false);
         FindOrCreateButton(debugButtonRow, "Button_SkipToChapter2", "Skip to Chapter 2", SkipToChapter2);
@@ -238,18 +278,16 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         debugControlRow = FindOrCreateList(debugList, DebugControlRowName, false);
         debugTimeControl = FindOrCreateDebugTimeControl(debugControlRow);
-        debugMusicControl = FindOrCreateDebugVolumeControl(debugControlRow, DebugMusicControlName, "Music", "Slider_DebugMusicVolume", "Input_DebugMusicVolume", DebugSliderKind.Music);
-        debugFxControl = FindOrCreateDebugVolumeControl(debugControlRow, DebugFxControlName, "FX", "Slider_DebugFxVolume", "Input_DebugFxVolume", DebugSliderKind.Fx);
         DisableLegacyDebugChildren();
 
-        roomList = FindOrCreateList(rootRect, RoomListName, true);
+        roomList = FindOrCreateList(settingsPanel, RoomListName, true);
         roomList.anchorMin = new Vector2(0f, 1f);
         roomList.anchorMax = new Vector2(0f, 1f);
         roomList.pivot = new Vector2(0f, 1f);
-        roomList.anchoredPosition = new Vector2(ButtonWidth + 10f, -ButtonHeight * 3f - 20f);
+        roomList.anchoredPosition = new Vector2(SettingsPanelWidth - ButtonWidth - 28f, -80f);
 
-        RefreshDebugAudioControls();
-        ApplyDebugAudioVolumes();
+        RefreshAudioControls();
+        EnsureRuntimeAudioBindings();
     }
 
     private void DisableLegacyDebugChildren()
@@ -272,12 +310,16 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void Update()
     {
-        ApplyDebugAudioVolumes();
+        EnsureRuntimeAudioBindings();
+
+        if (settingsOpen)
+        {
+            RefreshAudioControls();
+        }
 
         if (settingsOpen && debugOpen)
         {
             RefreshDebugTimeControl();
-            RefreshDebugAudioControls();
         }
     }
 
@@ -342,6 +384,28 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void RefreshOpenState()
     {
+        BlocksGameInput = settingsOpen;
+        NavigationCursorController.SetGameplayHoverBlocked(settingsOpen);
+        ApplySettingsPauseState();
+        UpdateSettingsButtonLayout();
+
+        if (settingsOverlay != null)
+        {
+            settingsOverlay.gameObject.SetActive(settingsOpen);
+            settingsOverlay.SetAsFirstSibling();
+        }
+
+        if (settingsPanel != null)
+        {
+            settingsPanel.gameObject.SetActive(settingsOpen);
+            settingsPanel.SetAsLastSibling();
+        }
+
+        if (settingsButton != null)
+        {
+            settingsButton.transform.SetAsLastSibling();
+        }
+
         if (settingsList != null)
         {
             settingsList.gameObject.SetActive(settingsOpen);
@@ -354,8 +418,12 @@ public class RuntimeSettingsMenu : MonoBehaviour
             if (settingsOpen && debugOpen)
             {
                 RefreshDebugTimeControl();
-                RefreshDebugAudioControls();
             }
+        }
+
+        if (settingsOpen)
+        {
+            RefreshAudioControls();
         }
 
         if (roomList != null)
@@ -368,6 +436,77 @@ public class RuntimeSettingsMenu : MonoBehaviour
                 RebuildRoomButtons();
             }
         }
+    }
+
+    private void UpdateSettingsButtonLayout()
+    {
+        if (settingsButton == null)
+        {
+            return;
+        }
+
+        RectTransform buttonRect = settingsButton.GetComponent<RectTransform>();
+
+        if (settingsOpen)
+        {
+            buttonRect.anchorMin = new Vector2(0.5f, 0.5f);
+            buttonRect.anchorMax = new Vector2(0.5f, 0.5f);
+            buttonRect.pivot = new Vector2(1f, 1f);
+            buttonRect.anchoredPosition = new Vector2(SettingsPanelWidth * 0.5f - 24f, SettingsPanelHeight * 0.5f - 22f);
+            buttonRect.sizeDelta = new Vector2(92f, ButtonHeight);
+            SetButtonLabel(settingsButton, "Close");
+        }
+        else
+        {
+            buttonRect.anchorMin = new Vector2(0f, 1f);
+            buttonRect.anchorMax = new Vector2(0f, 1f);
+            buttonRect.pivot = new Vector2(0f, 1f);
+            buttonRect.anchoredPosition = new Vector2(12f, -12f);
+            buttonRect.sizeDelta = new Vector2(112f, ButtonHeight);
+            SetButtonLabel(settingsButton, "Settings");
+        }
+    }
+
+    private void ApplySettingsPauseState()
+    {
+        if (settingsOpen)
+        {
+            if (!timeScalePausedForSettings)
+            {
+                timeScaleBeforeSettings = Time.timeScale;
+                Time.timeScale = 0f;
+                timeScalePausedForSettings = true;
+            }
+
+            return;
+        }
+
+        RestoreSettingsPauseState();
+    }
+
+    private void RestoreSettingsPauseState()
+    {
+        if (!timeScalePausedForSettings)
+        {
+            return;
+        }
+
+        Time.timeScale = timeScaleBeforeSettings;
+        timeScalePausedForSettings = false;
+    }
+
+    private void ClearModalGameState()
+    {
+        if (settingsOpen)
+        {
+            settingsOpen = false;
+            debugOpen = false;
+            roomListOpen = false;
+        }
+
+        BlocksGameInput = false;
+        NavigationCursorController.SetGameplayHoverBlocked(false);
+        RestoreSettingsPauseState();
     }
 
     private void RebuildRoomButtons()
@@ -463,24 +602,15 @@ public class RuntimeSettingsMenu : MonoBehaviour
         RefreshDebugTimeControl();
     }
 
-    private void ApplyDebugMusicVolume(float normalizedVolume)
+    private void ApplyAudioVolume(GameAudioChannel channel, float normalizedVolume)
     {
-        debugMusicVolume = Mathf.Clamp01(normalizedVolume);
-        ApplyDebugAudioVolumes();
-        RefreshDebugAudioControls();
+        GameAudioSettings.SetVolume(channel, normalizedVolume);
+        EnsureRuntimeAudioBindings();
+        RefreshAudioControls();
     }
 
-    private void ApplyDebugFxVolume(float normalizedVolume)
+    private void EnsureRuntimeAudioBindings()
     {
-        debugFxVolume = Mathf.Clamp01(normalizedVolume);
-        ApplyDebugAudioVolumes();
-        RefreshDebugAudioControls();
-    }
-
-    private void ApplyDebugAudioVolumes()
-    {
-        AudioListener.volume = Mathf.Clamp01(debugFxVolume);
-
         AudioSource musicSource = ResolveExplorationMusicSource();
 
         if (musicSource == null)
@@ -488,8 +618,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
             return;
         }
 
-        musicSource.ignoreListenerVolume = true;
-        musicSource.volume = Mathf.Max(0f, explorationMusicBaseVolume) * Mathf.Clamp01(debugMusicVolume);
+        GameAudioSettings.EnsureBinding(musicSource, GameAudioChannel.Music, Mathf.Max(0f, explorationMusicBaseVolume));
     }
 
     private AudioSource ResolveExplorationMusicSource()
@@ -570,40 +699,54 @@ public class RuntimeSettingsMenu : MonoBehaviour
         isUpdatingDebugTimeControl = false;
     }
 
-    private void RefreshDebugAudioControls()
+    private void RefreshAudioControls()
     {
-        isUpdatingDebugAudioControl = true;
+        isUpdatingAudioControl = true;
 
-        RefreshDebugVolumeControl(
-            debugMusicLabel,
-            debugMusicInput,
-            debugMusicSliderFill,
-            debugMusicSliderHandle,
-            "Music",
-            debugMusicVolume,
-            ResolveExplorationMusicSource() != null);
-
-        RefreshDebugVolumeControl(
-            debugFxLabel,
-            debugFxInput,
-            debugFxSliderFill,
-            debugFxSliderHandle,
-            "FX",
-            debugFxVolume,
+        RefreshAudioVolumeControl(
+            dialogueAudioLabel,
+            dialogueAudioInput,
+            dialogueAudioSliderFill,
+            dialogueAudioSliderHandle,
+            GameAudioChannel.Dialogue,
             true);
 
-        isUpdatingDebugAudioControl = false;
+        RefreshAudioVolumeControl(
+            gameSoundsAudioLabel,
+            gameSoundsAudioInput,
+            gameSoundsAudioSliderFill,
+            gameSoundsAudioSliderHandle,
+            GameAudioChannel.GameSounds,
+            true);
+
+        RefreshAudioVolumeControl(
+            atmosphereAudioLabel,
+            atmosphereAudioInput,
+            atmosphereAudioSliderFill,
+            atmosphereAudioSliderHandle,
+            GameAudioChannel.Atmosphere,
+            true);
+
+        RefreshAudioVolumeControl(
+            musicAudioLabel,
+            musicAudioInput,
+            musicAudioSliderFill,
+            musicAudioSliderHandle,
+            GameAudioChannel.Music,
+            true);
+
+        isUpdatingAudioControl = false;
     }
 
-    private static void RefreshDebugVolumeControl(
+    private static void RefreshAudioVolumeControl(
         TMP_Text label,
         TMP_InputField input,
         RectTransform fill,
         RectTransform handle,
-        string labelText,
-        float normalizedVolume,
+        GameAudioChannel channel,
         bool interactable)
     {
+        float normalizedVolume = GameAudioSettings.GetVolume(channel);
         normalizedVolume = Mathf.Clamp01(normalizedVolume);
         RefreshDebugSliderVisual(fill, handle, normalizedVolume, interactable);
 
@@ -615,7 +758,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         if (label != null)
         {
-            label.text = labelText;
+            label.text = GameAudioSettings.GetDisplayName(channel);
         }
     }
 
@@ -656,11 +799,17 @@ public class RuntimeSettingsMenu : MonoBehaviour
                 float secondsPerGameMinute = Mathf.Lerp(MinSecondsPerGameMinute, MaxSecondsPerGameMinute, normalized);
                 ApplyDebugGameTimeSpeed(secondsPerGameMinute);
                 break;
-            case DebugSliderKind.Music:
-                ApplyDebugMusicVolume(normalized);
+            case DebugSliderKind.Dialogue:
+                ApplyAudioVolume(GameAudioChannel.Dialogue, normalized);
                 break;
-            case DebugSliderKind.Fx:
-                ApplyDebugFxVolume(normalized);
+            case DebugSliderKind.GameSounds:
+                ApplyAudioVolume(GameAudioChannel.GameSounds, normalized);
+                break;
+            case DebugSliderKind.Atmosphere:
+                ApplyAudioVolume(GameAudioChannel.Atmosphere, normalized);
+                break;
+            case DebugSliderKind.Music:
+                ApplyAudioVolume(GameAudioChannel.Music, normalized);
                 break;
         }
     }
@@ -694,6 +843,102 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         ConfigureSolidImage(fillImage, interactable ? new Color(0.48f, 0.48f, 0.48f, 1f) : new Color(0.24f, 0.24f, 0.24f, 1f));
         ConfigureSolidImage(handleImage, interactable ? new Color(0.72f, 0.72f, 0.72f, 1f) : new Color(0.36f, 0.36f, 0.36f, 1f));
+    }
+
+    private static RectTransform FindOrCreateSettingsOverlay(Transform parent)
+    {
+        Transform existing = parent.Find(SettingsOverlayName);
+        RectTransform rect = existing != null ? existing as RectTransform : null;
+
+        if (rect == null)
+        {
+            GameObject overlayObject = new GameObject(SettingsOverlayName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            rect = overlayObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+        }
+
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.SetAsFirstSibling();
+
+        Image image = rect.GetComponent<Image>();
+
+        if (image != null)
+        {
+            ConfigureSolidImage(image, new Color(0f, 0f, 0f, 0.82f));
+            image.raycastTarget = true;
+        }
+
+        return rect;
+    }
+
+    private static RectTransform FindOrCreateSettingsPanel(Transform parent)
+    {
+        Transform existing = parent.Find(SettingsPanelName);
+        RectTransform rect = existing != null ? existing as RectTransform : null;
+
+        if (rect == null)
+        {
+            GameObject panelObject = new GameObject(SettingsPanelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Outline));
+            rect = panelObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+        }
+
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(SettingsPanelWidth, SettingsPanelHeight);
+
+        Image image = rect.GetComponent<Image>();
+
+        if (image != null)
+        {
+            ConfigureSolidImage(image, new Color(0.02f, 0.02f, 0.024f, 0.96f));
+            image.raycastTarget = true;
+        }
+
+        Outline outline = rect.GetComponent<Outline>();
+
+        if (outline != null)
+        {
+            outline.effectColor = new Color(1f, 1f, 1f, 0.16f);
+            outline.effectDistance = new Vector2(1f, -1f);
+            outline.useGraphicAlpha = false;
+        }
+
+        return rect;
+    }
+
+    private static TMP_Text FindOrCreateSettingsTitle(Transform parent)
+    {
+        Transform existing = parent.Find(SettingsTitleName);
+        TMP_Text text = existing != null ? existing.GetComponent<TMP_Text>() : null;
+
+        if (text == null)
+        {
+            GameObject titleObject = new GameObject(SettingsTitleName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            RectTransform rect = titleObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            text = titleObject.GetComponent<TMP_Text>();
+        }
+
+        RectTransform titleRect = text.GetComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0f, 1f);
+        titleRect.anchorMax = new Vector2(0f, 1f);
+        titleRect.pivot = new Vector2(0f, 1f);
+        titleRect.anchoredPosition = new Vector2(28f, -24f);
+        titleRect.sizeDelta = new Vector2(360f, 38f);
+
+        text.text = "Settings";
+        text.fontSize = 28f;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
+        return text;
     }
 
     private static RectTransform FindOrCreateList(Transform parent, string objectName, bool vertical)
@@ -831,12 +1076,10 @@ public class RuntimeSettingsMenu : MonoBehaviour
         return rect;
     }
 
-    private RectTransform FindOrCreateDebugVolumeControl(
+    private RectTransform FindOrCreateAudioVolumeControl(
         Transform parent,
         string controlName,
-        string label,
-        string sliderName,
-        string inputName,
+        GameAudioChannel channel,
         DebugSliderKind kind)
     {
         Transform existing = parent.Find(controlName);
@@ -871,7 +1114,8 @@ public class RuntimeSettingsMenu : MonoBehaviour
             image.raycastTarget = false;
         }
 
-        TMP_Text labelText = FindOrCreateControlText(rect, $"Text_{label}Label", label, 13f, TextAlignmentOptions.MidlineLeft);
+        string label = GameAudioSettings.GetDisplayName(channel);
+        TMP_Text labelText = FindOrCreateControlText(rect, $"Text_{kind}Label", label, 13f, TextAlignmentOptions.MidlineLeft);
         RectTransform labelRect = labelText.GetComponent<RectTransform>();
         labelRect.anchorMin = new Vector2(0f, 0f);
         labelRect.anchorMax = new Vector2(0f, 1f);
@@ -879,48 +1123,53 @@ public class RuntimeSettingsMenu : MonoBehaviour
         labelRect.anchoredPosition = new Vector2(10f, 0f);
         labelRect.sizeDelta = new Vector2(DebugControlLabelWidth, 0f);
 
+        string sliderName = $"Slider_Audio{kind}";
         RectTransform slider = FindOrCreateDebugSlider(rect, sliderName, kind, out RectTransform sliderFill, out RectTransform sliderHandle);
 
+        string inputName = $"Input_Audio{kind}";
         TMP_InputField input = FindOrCreateDebugInput(rect, inputName);
         input.contentType = TMP_InputField.ContentType.IntegerNumber;
         input.onEndEdit.RemoveAllListeners();
         input.onEndEdit.AddListener(value =>
         {
-            if (isUpdatingDebugAudioControl)
+            if (isUpdatingAudioControl)
             {
                 return;
             }
 
             if (float.TryParse(value, out float parsed))
             {
-                float normalizedVolume = Mathf.Clamp01(parsed / 100f);
-
-                if (kind == DebugSliderKind.Music)
-                {
-                    ApplyDebugMusicVolume(normalizedVolume);
-                }
-                else if (kind == DebugSliderKind.Fx)
-                {
-                    ApplyDebugFxVolume(normalizedVolume);
-                }
+                ApplyAudioVolume(channel, Mathf.Clamp01(parsed / 100f));
             }
         });
 
-        if (kind == DebugSliderKind.Music)
+        if (kind == DebugSliderKind.Dialogue)
         {
-            debugMusicLabel = labelText;
-            debugMusicSlider = slider;
-            debugMusicSliderFill = sliderFill;
-            debugMusicSliderHandle = sliderHandle;
-            debugMusicInput = input;
+            dialogueAudioLabel = labelText;
+            dialogueAudioSliderFill = sliderFill;
+            dialogueAudioSliderHandle = sliderHandle;
+            dialogueAudioInput = input;
         }
-        else if (kind == DebugSliderKind.Fx)
+        else if (kind == DebugSliderKind.GameSounds)
         {
-            debugFxLabel = labelText;
-            debugFxSlider = slider;
-            debugFxSliderFill = sliderFill;
-            debugFxSliderHandle = sliderHandle;
-            debugFxInput = input;
+            gameSoundsAudioLabel = labelText;
+            gameSoundsAudioSliderFill = sliderFill;
+            gameSoundsAudioSliderHandle = sliderHandle;
+            gameSoundsAudioInput = input;
+        }
+        else if (kind == DebugSliderKind.Atmosphere)
+        {
+            atmosphereAudioLabel = labelText;
+            atmosphereAudioSliderFill = sliderFill;
+            atmosphereAudioSliderHandle = sliderHandle;
+            atmosphereAudioInput = input;
+        }
+        else if (kind == DebugSliderKind.Music)
+        {
+            musicAudioLabel = labelText;
+            musicAudioSliderFill = sliderFill;
+            musicAudioSliderHandle = sliderHandle;
+            musicAudioInput = input;
         }
 
         return rect;
@@ -1154,6 +1403,16 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         button.interactable = onClick != null;
         return button;
+    }
+
+    private static void SetButtonLabel(Button button, string label)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        FindOrCreateButtonLabel(button.transform).text = label ?? string.Empty;
     }
 
     private static TMP_Text FindOrCreateButtonLabel(Transform buttonRoot)

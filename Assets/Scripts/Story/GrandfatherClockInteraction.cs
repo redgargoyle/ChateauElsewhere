@@ -94,6 +94,7 @@ public class GrandfatherClockInteraction : MonoBehaviour
         tickingAudioSource.loop = true;
         tickingAudioSource.playOnAwake = false;
         tickingAudioSource.volume = tickingVolume;
+        GameAudioSettings.EnsureBinding(tickingAudioSource, GameAudioChannel.Atmosphere, tickingVolume);
 
         if (!tickingAudioSource.isPlaying)
         {

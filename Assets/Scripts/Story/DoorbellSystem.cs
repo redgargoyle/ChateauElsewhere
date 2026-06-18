@@ -175,6 +175,7 @@ public class DoorbellSystem : MonoBehaviour
         audioSource.spatialBlend = 0f;
         audioSource.volume = 1f;
         audioSource.ignoreListenerPause = true;
+        GameAudioSettings.EnsureBinding(audioSource, GameAudioChannel.GameSounds, 1f);
     }
 
     private static AudioClip CreateDoorbellClip()

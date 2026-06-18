@@ -22,6 +22,8 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
     public Vector2 NativeRoomReferenceSize => nativeRoomReferenceSize;
     public float NearFootY => nearFootY;
     public float FarFootY => farFootY;
+    public float NearScale => GetScaleAtDepth(0f);
+    public float FarScale => GetScaleAtDepth(1f);
     public string SortingLayerName => GetSafeSortingLayerName();
     public int SortingOrderBase => sortingOrderBase;
     public int SortingOrderRange => sortingOrderRange;
@@ -85,8 +87,32 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
 
     public float GetScale(Vector2 roomLocalFootPoint)
     {
+        return GetScaleAtDepth(GetDepth01(roomLocalFootPoint));
+    }
+
+    public float GetScaleAtDepth(float depth01)
+    {
         EnsureCurves();
-        return Mathf.Max(0.001f, scaleByDepth.Evaluate(GetDepth01(roomLocalFootPoint)));
+        return Mathf.Max(0.001f, scaleByDepth.Evaluate(Mathf.Clamp01(depth01)));
+    }
+
+    public void SetDepthYRange(float nearY, float farY)
+    {
+        nearFootY = nearY;
+        farFootY = farY;
+        Sanitize();
+    }
+
+    public void SetScaleEndpoints(float nearScale, float farScale)
+    {
+        scaleByDepth = CreateDepthScaleCurve(nearScale, farScale);
+        Sanitize();
+    }
+
+    public void ApplyScaleMultiplier(float multiplier)
+    {
+        multiplier = Mathf.Max(0.001f, multiplier);
+        SetScaleEndpoints(NearScale * multiplier, FarScale * multiplier);
     }
 
     public Color GetTint(Vector2 roomLocalFootPoint)
@@ -223,5 +249,14 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
                 new GradientAlphaKey(0.82f, 1f)
             });
         return gradient;
+    }
+
+    private static AnimationCurve CreateDepthScaleCurve(float nearScale, float farScale)
+    {
+        return AnimationCurve.EaseInOut(
+            0f,
+            Mathf.Max(0.001f, nearScale),
+            1f,
+            Mathf.Max(0.001f, farScale));
     }
 }

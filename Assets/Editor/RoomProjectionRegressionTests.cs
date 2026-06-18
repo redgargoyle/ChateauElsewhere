@@ -7,9 +7,16 @@ public class RoomProjectionRegressionTests
 {
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
+    private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
+    private const string RoomPerspectiveProfilePath = "Assets/Scripts/Characters/RoomPerspectiveProfile.cs";
+    private const string RoomProjectedEntityPath = "Assets/Scripts/Characters/RoomProjectedEntity.cs";
     private const string RoomPersonWalkerPath = "Assets/Scripts/Characters/RoomPersonWalker2D.cs";
     private const string WorldYSortPath = "Assets/Scripts/Characters/WorldYSortSpriteRenderer.cs";
     private const string NPCWaypointMoverPath = "Assets/Scripts/Story/NPCWaypointMover.cs";
+    private const string RoomPerspectiveProfileEditorPath = "Assets/Editor/RoomPerspectiveProfileEditor.cs";
+    private const string RoomProjectionCalibrationWindowPath = "Assets/Editor/RoomProjectionCalibrationWindow.cs";
+    private const string PlayModeLayoutCaptureWindowPath = "Assets/Editor/PlayModeLayoutCaptureWindow.cs";
+    private const string RoomProjectedEntityEditorPath = "Assets/Editor/RoomProjectedEntityEditor.cs";
 
     [Test]
     public void SameRoomLocalFootYProducesSameRoomScaleForProjectedEntities()
@@ -49,6 +56,87 @@ public class RoomProjectionRegressionTests
     }
 
     [Test]
+    public void RoomPerspectiveProfileExposesRoomWideYScaleControls()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+
+        try
+        {
+            profile.SetDepthYRange(-220f, 180f);
+            profile.SetScaleEndpoints(1.18f, 0.64f);
+
+            Assert.That(profile.NearFootY, Is.EqualTo(-220f));
+            Assert.That(profile.FarFootY, Is.EqualTo(180f));
+            Assert.That(profile.NearScale, Is.EqualTo(1.18f).Within(0.0001f));
+            Assert.That(profile.FarScale, Is.EqualTo(0.64f).Within(0.0001f));
+            Assert.That(profile.GetScale(new Vector2(0f, -220f)), Is.EqualTo(1.18f).Within(0.0001f));
+            Assert.That(profile.GetScale(new Vector2(0f, 180f)), Is.EqualTo(0.64f).Within(0.0001f));
+
+            profile.ApplyScaleMultiplier(1.1f);
+
+            Assert.That(profile.NearScale, Is.EqualTo(1.18f * 1.1f).Within(0.0001f));
+            Assert.That(profile.FarScale, Is.EqualTo(0.64f * 1.1f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void RoomPerspectiveProfileEditorExposesArtistFriendlyYScaleControls()
+    {
+        string profileText = File.ReadAllText(RoomPerspectiveProfilePath);
+        string editorText = File.ReadAllText(RoomPerspectiveProfileEditorPath);
+        string calibrationWindowText = File.ReadAllText(RoomProjectionCalibrationWindowPath);
+
+        Assert.That(profileText, Does.Contain("SetDepthYRange"), "Rooms should expose the y range that drives perspective scaling.");
+        Assert.That(profileText, Does.Contain("SetScaleEndpoints"), "Rooms should expose near/front and far/back scale endpoints.");
+        Assert.That(profileText, Does.Contain("ApplyScaleMultiplier"), "Rooms should support making everyone larger or smaller without changing the y-depth relationship.");
+        Assert.That(editorText, Does.Contain("[CustomEditor(typeof(RoomPerspectiveProfile))]"), "Room perspective profiles should have a focused inspector.");
+        Assert.That(editorText, Does.Contain("EditorGUILayout.FloatField(\"Front/Near Scale\""), "Artists should be able to tune the front-room scale with one number.");
+        Assert.That(editorText, Does.Contain("EditorGUILayout.FloatField(\"Back/Far Scale\""), "Artists should be able to tune the back-room scale with one number.");
+        Assert.That(editorText, Does.Contain("EditorGUILayout.FloatField(\"Uniform Multiplier\""), "Artists should be able to make the whole room larger or smaller while preserving y scaling.");
+        Assert.That(editorText, Does.Contain("RefreshProjectedEntitiesUsing"), "Changing the room profile should refresh the projected guests visible in the open scene.");
+        Assert.That(editorText, Does.Contain("RefreshPointClickMovementsUsing"), "Changing the room profile should also refresh old point-click characters visible in the open scene.");
+        Assert.That(editorText, Does.Contain("RefreshRoomPersonWalkersUsing"), "Changing the room profile should also refresh standalone RoomPersonWalker2D characters.");
+        Assert.That(calibrationWindowText, Does.Contain("Create Perspective Profiles For Scene Rooms"), "Room profile setup should be available from the Tools menu.");
+        Assert.That(calibrationWindowText, Does.Contain("Create/Assign Profiles For Scene Rooms"), "The calibration window should make one-click per-room profile assignment available.");
+        Assert.That(calibrationWindowText, Does.Contain("room.SetPerspectiveProfile(profile)"), "Creating room profiles should wire them into RoomContentGroup.");
+    }
+
+    [Test]
+    public void PlayModeLayoutCaptureCanPersistRuntimeAnchorTuning()
+    {
+        string captureWindowText = File.ReadAllText(PlayModeLayoutCaptureWindowPath);
+
+        Assert.That(captureWindowText, Does.Contain("PlayModeStateChange.EnteredEditMode"), "Captured play-mode edits should be reapplied after Unity returns to edit mode.");
+        Assert.That(captureWindowText, Does.Contain("SessionState.SetString"), "Captured transform data should survive the play/edit transition within the editor session.");
+        Assert.That(captureWindowText, Does.Contain("Capture Dining Seat Anchors"), "Dining room seats should have a focused capture action.");
+        Assert.That(captureWindowText, Does.Contain("Ch2_DiningSeat_"), "The dining seat capture should target the Chapter 2 dining anchors.");
+        Assert.That(captureWindowText, Does.Contain("RectTransform"), "UI anchors should persist anchored position and rect transform data, not only world transform data.");
+        Assert.That(captureWindowText, Does.Contain("Apply + Save Scenes"), "Artists should have a one-click path to apply captured data and save the edited scene.");
+        Assert.That(captureWindowText, Does.Contain("Application.isPlaying"), "The apply action should not try to write edit-time scene data while Unity is still in Play Mode.");
+        Assert.That(captureWindowText, Does.Contain("Stop Play Mode And Apply"), "The tool should make the play-to-edit apply handoff explicit.");
+    }
+
+    [Test]
+    public void PointClickMovementCanUseRoomPerspectiveProfileScaling()
+    {
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string applyScaleBody = ExtractMethodBody(movementText, "private void ApplyPerspectiveScale");
+
+        Assert.That(movementText, Does.Contain("useRoomPerspectiveProfileScale"), "Old point-click characters should be able to opt into room profile scaling.");
+        Assert.That(movementText, Does.Contain("TryGetCurrentRoomPerspectiveProfile"), "PointClickPlayerMovement should resolve the profile for the active room.");
+        Assert.That(movementText, Does.Contain("TryGetActiveRoomStageLocalPoint"), "PointClickPlayerMovement should convert world/logical points back into room-local profile coordinates.");
+        Assert.That(movementText, Does.Contain("TryFindRoomContentForRoom"), "Profile lookup should use the same active room name path as walkable boundaries.");
+        Assert.That(movementText, Does.Contain("RefreshPerspectiveScaleNow"), "Editor profile changes should be able to refresh point-click character scale immediately.");
+        Assert.That(movementText, Does.Contain("UsesPerspectiveProfile"), "Editor refreshes should only target point-click characters using the edited profile.");
+        Assert.That(applyScaleBody, Does.Contain("usesRoomProfileScale ? depthScale : fallbackRelativeScale"), "Room profiles should apply absolute room scale while the old fields keep relative authored-scale fallback behavior.");
+        Assert.That(applyScaleBody, Does.Contain("depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference)"), "The original point-click fallback scaling math should remain available.");
+    }
+
+    [Test]
     public void SortingOrderFollowsRoomFootYDepth()
     {
         RoomPerspectiveProfile profile = CreatePerspectiveProfile();
@@ -85,6 +173,22 @@ public class RoomProjectionRegressionTests
             UnityEngine.Object.DestroyImmediate(visualProfile);
             UnityEngine.Object.DestroyImmediate(roomProfile);
         }
+    }
+
+    [Test]
+    public void ProjectedGuestsExposeRoomSpecificVisualScaleOverrides()
+    {
+        string projectionText = File.ReadAllText(RoomProjectedEntityPath);
+        string editorText = File.ReadAllText(RoomProjectedEntityEditorPath);
+
+        Assert.That(projectionText, Does.Contain("roomVisualScaleOverrides"), "Projected guests should store per-room visual scale overrides.");
+        Assert.That(projectionText, Does.Contain("SetVisualRootScaleForRoom"), "The editor needs a safe API for room-specific scale edits.");
+        Assert.That(projectionText, Does.Contain("GetAuthoredVisualRootScaleForCurrentRoom"), "Projection scale should use a room-specific base scale before falling back to the global authored scale.");
+        Assert.That(projectionText, Does.Contain("GetCurrentVisualScaleRoomKey"), "Edit Mode room dropdown selection should be able to preview a selected room scale.");
+        Assert.That(editorText, Does.Contain("[CustomEditor(typeof(RoomProjectedEntity))]"), "RoomProjectedEntity should expose the room scale dropdown in the Inspector.");
+        Assert.That(editorText, Does.Contain("EditorGUILayout.Popup(\"Room\""), "The per-room scale workflow should use a room dropdown.");
+        Assert.That(editorText, Does.Contain("EditorGUILayout.Vector3Field(\"Visual Root Scale\""), "The selected room's transform scale values should be directly editable.");
+        Assert.That(editorText, Does.Contain("CaptureCurrentVisualRootScaleForRoom"), "Artists should be able to capture manual Scene/Inspector resizing into the selected room override.");
     }
 
     [Test]
@@ -260,10 +364,12 @@ public class RoomProjectionRegressionTests
     {
         string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
         string projectionText = File.ReadAllText("Assets/Scripts/Characters/RoomProjectedEntity.cs");
+        string placeBody = ExtractMethodBody(actorRoomStateText, "PlaceAt");
         string shouldFollowBody = ExtractMethodBody(actorRoomStateText, "ShouldFollowRoomStageMotion");
         string projectedScaleBody = ExtractMethodBody(projectionText, "ApplyProjectedScale");
 
         Assert.That(actorRoomStateText, Does.Contain("RoomProjectedEntity"), "ActorRoomState should know how to detect projection without owning perspective math.");
+        Assert.That(placeBody, Does.Match(@"projection\.CanProjectTarget\(target\)[\s\S]*projection\.TrySetRoomLocalFootPointFromTarget\(target\)[\s\S]*projection\.IsProjectionActive"), "ActorRoomState should seed projected foot points before checking whether projection is already active.");
         Assert.That(shouldFollowBody, Does.Contain("!HasActiveProjection()"), "Projection should own visual scale and room-stage positioning when present.");
         Assert.That(actorRoomStateText, Does.Contain("projection.IsProjectionActive"), "ActorRoomState should only defer to projection in the matching projected room.");
         Assert.That(actorRoomStateText, Does.Contain("ApplyState()"), "ActorRoomState should continue to own visibility and interaction state.");
@@ -283,6 +389,10 @@ public class RoomProjectionRegressionTests
 
         Assert.That(walkerApplyBody, Does.Contain("roomProjection.IsProjectionActive"), "RoomPersonWalker2D should detect active projection before writing visual transforms.");
         Assert.That(walkerApplyBody, Does.Contain("roomProjection.SetRoomLocalFootPoint"), "RoomPersonWalker2D should feed the shared foot point instead of duplicating projected scale/tint.");
+        Assert.That(walkerText, Does.Contain("RoomPerspectiveProfile"), "Standalone RoomPersonWalker2D instances should be able to share room-wide depth scaling.");
+        Assert.That(walkerText, Does.Contain("TryGetRoomPerspectiveProfile"), "Standalone RoomPersonWalker2D instances should resolve their room profile before falling back to local near/far values.");
+        Assert.That(walkerText, Does.Contain("RefreshDepthVisualsNow"), "Editor profile changes should be able to refresh standalone RoomPersonWalker2D scale immediately.");
+        Assert.That(walkerText, Does.Contain("UsesPerspectiveProfile"), "Editor refreshes should only target standalone walkers using the edited profile.");
         Assert.That(ySortApplyBody, Does.Contain("roomProjection.IsProjectionActive"), "WorldYSortSpriteRenderer should not fight projected sorting orders.");
         Assert.That(projectedTargetBody, Does.Contain("roomProjection.CanProjectTarget(target)"), "NPC waypoint movement should not project anchors from the wrong room profile.");
         Assert.That(projectedTargetBody, Does.Contain("roomProjection.IsProjectionActive"), "NPC waypoint movement should only use projected motion when projection owns the actor's current room.");
