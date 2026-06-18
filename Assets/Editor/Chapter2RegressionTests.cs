@@ -20,6 +20,7 @@ public class Chapter2RegressionTests
     private const string Chapter2GuestFindActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs";
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
     private const string Chapter2PanicLibraryAssetPath = "Assets/Resources/Chapter2/PanicAnimationLibrary.asset";
+    private const string Chapter2PanicScreamCatalogPath = "Assets/Resources/Audio/Chapter2PanicScreamCatalog.asset";
     private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
     private const string Chapter2MonsterArmSwingResourcePath = "Assets/Resources/Chapter2/Monster/ArmSwing";
     private const string Chapter2MonsterArmSwingClipPath = "Assets/Animation/Monster/Ch2_Monster_ArmSwing.anim";
@@ -315,6 +316,38 @@ public class Chapter2RegressionTests
         Assert.That(libraryAssetText, Does.Not.Contain("panicShriekDown:"), "The rejected multi-action panic stop set should not be serialized.");
         Assert.That(libraryAssetText, Does.Not.Contain("panicTurnaround:"), "The rejected multi-action panic stop set should not be serialized.");
         Assert.That(libraryAssetText, Does.Not.Contain("coverFaceCower:"), "The rejected multi-action panic stop set should not be serialized.");
+    }
+
+    [Test]
+    public void Chapter2PanicScreamCatalogCoversEveryGuest()
+    {
+        Assert.That(File.Exists(Chapter2PanicScreamCatalogPath), Is.True, "The runtime panic scream catalog should be available through Resources.");
+
+        string catalogText = File.ReadAllText(Chapter2PanicScreamCatalogPath);
+        string[] clipPaths =
+        {
+            "Assets/Audio/woman panic and scream tracks/0224_female_target_hoarse_desperate_scream_candidate_seed939827_48khz.wav",
+            "Assets/Audio/men panic screams/0241_male_target_strangled_quiet_panic_candidate_seed942295_48khz.wav",
+            "Assets/Audio/men panic screams/0161_male_target_deep_guttural_panic_scream_candidate_seed932133_48khz.wav",
+            "Assets/Audio/woman panic and scream tracks/0166_female_target_panic_scream_high_shriek_candidate_seed932805_48khz.wav",
+            "Assets/Audio/men panic screams/0237_male_short_pain_fear_grunt_candidate_seed941822_48khz.wav",
+            "Assets/Audio/woman panic and scream tracks/0155_female_target_restrained_low_volume_fear_candidate_seed931314_48khz.wav",
+            "Assets/Audio/men panic screams/0151_male_short_pain_fear_grunt_candidate_seed930942_48khz.wav",
+            "Assets/Audio/woman panic and scream tracks/0077_female_target_restrained_low_volume_fear_candidate_seed921983_48khz.wav"
+        };
+
+        for (int i = 0; i < clipPaths.Length; i++)
+        {
+            string clipPath = clipPaths[i];
+            string clipGuid = ReadGuid(clipPath + ".meta");
+            int guestNumber = i + 1;
+
+            Assert.That(File.Exists(clipPath), Is.True, $"Guest {guestNumber} panic scream clip should exist at {clipPath}.");
+            Assert.That(
+                catalogText,
+                Does.Match($@"(?s)- guestNumber: {guestNumber}\s+clip: \{{fileID: 8300000, guid: {clipGuid}, type: 3\}}\s+volume: "),
+                $"Guest {guestNumber} should be assigned to {Path.GetFileName(clipPath)}.");
+        }
     }
 
     [Test]
