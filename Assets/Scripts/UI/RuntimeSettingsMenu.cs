@@ -12,13 +12,16 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private const string MenuCanvasName = "Canvas_RuntimeSettingsMenu";
     private const string SettingsButtonName = "Button_Settings";
     private const string SettingsListName = "List_Settings";
+    private const string SettingsAudioListName = "List_AudioControls";
     private const string DebugListName = "List_Debug";
     private const string RoomListName = "List_TeleportRooms";
     private const string DebugTimeControlName = "Control_DebugGameTimeSpeed";
     private const string DebugButtonRowName = "List_DebugButtons";
     private const string DebugControlRowName = "List_DebugControls";
-    private const string DebugMusicControlName = "Control_DebugMusicVolume";
-    private const string DebugFxControlName = "Control_DebugFxVolume";
+    private const string DialogueAudioControlName = "Control_AudioDialogue";
+    private const string GameSoundsAudioControlName = "Control_AudioGameSounds";
+    private const string AtmosphereAudioControlName = "Control_AudioAtmosphere";
+    private const string MusicAudioControlName = "Control_AudioMusic";
     private const string ExplorationMusicObjectName = "Audio_ExplorationMusic";
     private const string ExplorationMusicClipName = "unity_dreadforge_soundscape";
     private const float ButtonWidth = 150f;
@@ -41,14 +44,17 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private enum DebugSliderKind
     {
         Time,
-        Music,
-        Fx
+        Dialogue,
+        GameSounds,
+        Atmosphere,
+        Music
     }
 
     private RoomNavigationManager navigationManager;
     private RectTransform rootRect;
     private Button settingsButton;
     private RectTransform settingsList;
+    private RectTransform settingsAudioList;
     private RectTransform debugList;
     private RectTransform debugButtonRow;
     private RectTransform debugControlRow;
@@ -59,29 +65,35 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private RectTransform debugTimeSliderHandle;
     private TMP_InputField debugTimeInput;
     private TMP_Text debugTimeLabel;
-    private RectTransform debugMusicControl;
-    private RectTransform debugMusicSlider;
-    private RectTransform debugMusicSliderFill;
-    private RectTransform debugMusicSliderHandle;
-    private TMP_InputField debugMusicInput;
-    private TMP_Text debugMusicLabel;
-    private RectTransform debugFxControl;
-    private RectTransform debugFxSlider;
-    private RectTransform debugFxSliderFill;
-    private RectTransform debugFxSliderHandle;
-    private TMP_InputField debugFxInput;
-    private TMP_Text debugFxLabel;
+    private RectTransform dialogueAudioControl;
+    private RectTransform dialogueAudioSliderFill;
+    private RectTransform dialogueAudioSliderHandle;
+    private TMP_InputField dialogueAudioInput;
+    private TMP_Text dialogueAudioLabel;
+    private RectTransform gameSoundsAudioControl;
+    private RectTransform gameSoundsAudioSliderFill;
+    private RectTransform gameSoundsAudioSliderHandle;
+    private TMP_InputField gameSoundsAudioInput;
+    private TMP_Text gameSoundsAudioLabel;
+    private RectTransform atmosphereAudioControl;
+    private RectTransform atmosphereAudioSliderFill;
+    private RectTransform atmosphereAudioSliderHandle;
+    private TMP_InputField atmosphereAudioInput;
+    private TMP_Text atmosphereAudioLabel;
+    private RectTransform musicAudioControl;
+    private RectTransform musicAudioSliderFill;
+    private RectTransform musicAudioSliderHandle;
+    private TMP_InputField musicAudioInput;
+    private TMP_Text musicAudioLabel;
     private ChapterManager chapterManager;
     private ChapterClock chapterClock;
     private AudioSource explorationMusicSource;
     private float explorationMusicBaseVolume = -1f;
-    private float debugMusicVolume = 1f;
-    private float debugFxVolume = 1f;
     private bool settingsOpen;
     private bool debugOpen;
     private bool roomListOpen;
     private bool isUpdatingDebugTimeControl;
-    private bool isUpdatingDebugAudioControl;
+    private bool isUpdatingAudioControl;
 
     public static RuntimeSettingsMenu FindOrCreate(RoomNavigationManager navigationManager)
     {
@@ -224,6 +236,11 @@ public class RuntimeSettingsMenu : MonoBehaviour
         settingsList.anchoredPosition = new Vector2(0f, -ButtonHeight - 6f);
 
         FindOrCreateButton(settingsList, "Button_Debug", "Debug", ToggleDebug);
+        settingsAudioList = FindOrCreateList(settingsList, SettingsAudioListName, true);
+        dialogueAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, DialogueAudioControlName, GameAudioChannel.Dialogue, DebugSliderKind.Dialogue);
+        gameSoundsAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, GameSoundsAudioControlName, GameAudioChannel.GameSounds, DebugSliderKind.GameSounds);
+        atmosphereAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, AtmosphereAudioControlName, GameAudioChannel.Atmosphere, DebugSliderKind.Atmosphere);
+        musicAudioControl = FindOrCreateAudioVolumeControl(settingsAudioList, MusicAudioControlName, GameAudioChannel.Music, DebugSliderKind.Music);
 
         debugList = FindOrCreateList(rootRect, DebugListName, true);
         debugList.anchorMin = new Vector2(0f, 1f);
@@ -238,8 +255,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         debugControlRow = FindOrCreateList(debugList, DebugControlRowName, false);
         debugTimeControl = FindOrCreateDebugTimeControl(debugControlRow);
-        debugMusicControl = FindOrCreateDebugVolumeControl(debugControlRow, DebugMusicControlName, "Music", "Slider_DebugMusicVolume", "Input_DebugMusicVolume", DebugSliderKind.Music);
-        debugFxControl = FindOrCreateDebugVolumeControl(debugControlRow, DebugFxControlName, "FX", "Slider_DebugFxVolume", "Input_DebugFxVolume", DebugSliderKind.Fx);
         DisableLegacyDebugChildren();
 
         roomList = FindOrCreateList(rootRect, RoomListName, true);
@@ -248,8 +263,8 @@ public class RuntimeSettingsMenu : MonoBehaviour
         roomList.pivot = new Vector2(0f, 1f);
         roomList.anchoredPosition = new Vector2(ButtonWidth + 10f, -ButtonHeight * 3f - 20f);
 
-        RefreshDebugAudioControls();
-        ApplyDebugAudioVolumes();
+        RefreshAudioControls();
+        EnsureRuntimeAudioBindings();
     }
 
     private void DisableLegacyDebugChildren()
@@ -272,12 +287,16 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void Update()
     {
-        ApplyDebugAudioVolumes();
+        EnsureRuntimeAudioBindings();
+
+        if (settingsOpen)
+        {
+            RefreshAudioControls();
+        }
 
         if (settingsOpen && debugOpen)
         {
             RefreshDebugTimeControl();
-            RefreshDebugAudioControls();
         }
     }
 
@@ -354,8 +373,12 @@ public class RuntimeSettingsMenu : MonoBehaviour
             if (settingsOpen && debugOpen)
             {
                 RefreshDebugTimeControl();
-                RefreshDebugAudioControls();
             }
+        }
+
+        if (settingsOpen)
+        {
+            RefreshAudioControls();
         }
 
         if (roomList != null)
@@ -463,24 +486,15 @@ public class RuntimeSettingsMenu : MonoBehaviour
         RefreshDebugTimeControl();
     }
 
-    private void ApplyDebugMusicVolume(float normalizedVolume)
+    private void ApplyAudioVolume(GameAudioChannel channel, float normalizedVolume)
     {
-        debugMusicVolume = Mathf.Clamp01(normalizedVolume);
-        ApplyDebugAudioVolumes();
-        RefreshDebugAudioControls();
+        GameAudioSettings.SetVolume(channel, normalizedVolume);
+        EnsureRuntimeAudioBindings();
+        RefreshAudioControls();
     }
 
-    private void ApplyDebugFxVolume(float normalizedVolume)
+    private void EnsureRuntimeAudioBindings()
     {
-        debugFxVolume = Mathf.Clamp01(normalizedVolume);
-        ApplyDebugAudioVolumes();
-        RefreshDebugAudioControls();
-    }
-
-    private void ApplyDebugAudioVolumes()
-    {
-        AudioListener.volume = Mathf.Clamp01(debugFxVolume);
-
         AudioSource musicSource = ResolveExplorationMusicSource();
 
         if (musicSource == null)
@@ -488,8 +502,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
             return;
         }
 
-        musicSource.ignoreListenerVolume = true;
-        musicSource.volume = Mathf.Max(0f, explorationMusicBaseVolume) * Mathf.Clamp01(debugMusicVolume);
+        GameAudioSettings.EnsureBinding(musicSource, GameAudioChannel.Music, Mathf.Max(0f, explorationMusicBaseVolume));
     }
 
     private AudioSource ResolveExplorationMusicSource()
@@ -570,40 +583,54 @@ public class RuntimeSettingsMenu : MonoBehaviour
         isUpdatingDebugTimeControl = false;
     }
 
-    private void RefreshDebugAudioControls()
+    private void RefreshAudioControls()
     {
-        isUpdatingDebugAudioControl = true;
+        isUpdatingAudioControl = true;
 
-        RefreshDebugVolumeControl(
-            debugMusicLabel,
-            debugMusicInput,
-            debugMusicSliderFill,
-            debugMusicSliderHandle,
-            "Music",
-            debugMusicVolume,
-            ResolveExplorationMusicSource() != null);
-
-        RefreshDebugVolumeControl(
-            debugFxLabel,
-            debugFxInput,
-            debugFxSliderFill,
-            debugFxSliderHandle,
-            "FX",
-            debugFxVolume,
+        RefreshAudioVolumeControl(
+            dialogueAudioLabel,
+            dialogueAudioInput,
+            dialogueAudioSliderFill,
+            dialogueAudioSliderHandle,
+            GameAudioChannel.Dialogue,
             true);
 
-        isUpdatingDebugAudioControl = false;
+        RefreshAudioVolumeControl(
+            gameSoundsAudioLabel,
+            gameSoundsAudioInput,
+            gameSoundsAudioSliderFill,
+            gameSoundsAudioSliderHandle,
+            GameAudioChannel.GameSounds,
+            true);
+
+        RefreshAudioVolumeControl(
+            atmosphereAudioLabel,
+            atmosphereAudioInput,
+            atmosphereAudioSliderFill,
+            atmosphereAudioSliderHandle,
+            GameAudioChannel.Atmosphere,
+            true);
+
+        RefreshAudioVolumeControl(
+            musicAudioLabel,
+            musicAudioInput,
+            musicAudioSliderFill,
+            musicAudioSliderHandle,
+            GameAudioChannel.Music,
+            true);
+
+        isUpdatingAudioControl = false;
     }
 
-    private static void RefreshDebugVolumeControl(
+    private static void RefreshAudioVolumeControl(
         TMP_Text label,
         TMP_InputField input,
         RectTransform fill,
         RectTransform handle,
-        string labelText,
-        float normalizedVolume,
+        GameAudioChannel channel,
         bool interactable)
     {
+        float normalizedVolume = GameAudioSettings.GetVolume(channel);
         normalizedVolume = Mathf.Clamp01(normalizedVolume);
         RefreshDebugSliderVisual(fill, handle, normalizedVolume, interactable);
 
@@ -615,7 +642,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         if (label != null)
         {
-            label.text = labelText;
+            label.text = GameAudioSettings.GetDisplayName(channel);
         }
     }
 
@@ -656,11 +683,17 @@ public class RuntimeSettingsMenu : MonoBehaviour
                 float secondsPerGameMinute = Mathf.Lerp(MinSecondsPerGameMinute, MaxSecondsPerGameMinute, normalized);
                 ApplyDebugGameTimeSpeed(secondsPerGameMinute);
                 break;
-            case DebugSliderKind.Music:
-                ApplyDebugMusicVolume(normalized);
+            case DebugSliderKind.Dialogue:
+                ApplyAudioVolume(GameAudioChannel.Dialogue, normalized);
                 break;
-            case DebugSliderKind.Fx:
-                ApplyDebugFxVolume(normalized);
+            case DebugSliderKind.GameSounds:
+                ApplyAudioVolume(GameAudioChannel.GameSounds, normalized);
+                break;
+            case DebugSliderKind.Atmosphere:
+                ApplyAudioVolume(GameAudioChannel.Atmosphere, normalized);
+                break;
+            case DebugSliderKind.Music:
+                ApplyAudioVolume(GameAudioChannel.Music, normalized);
                 break;
         }
     }
@@ -831,12 +864,10 @@ public class RuntimeSettingsMenu : MonoBehaviour
         return rect;
     }
 
-    private RectTransform FindOrCreateDebugVolumeControl(
+    private RectTransform FindOrCreateAudioVolumeControl(
         Transform parent,
         string controlName,
-        string label,
-        string sliderName,
-        string inputName,
+        GameAudioChannel channel,
         DebugSliderKind kind)
     {
         Transform existing = parent.Find(controlName);
@@ -871,7 +902,8 @@ public class RuntimeSettingsMenu : MonoBehaviour
             image.raycastTarget = false;
         }
 
-        TMP_Text labelText = FindOrCreateControlText(rect, $"Text_{label}Label", label, 13f, TextAlignmentOptions.MidlineLeft);
+        string label = GameAudioSettings.GetDisplayName(channel);
+        TMP_Text labelText = FindOrCreateControlText(rect, $"Text_{kind}Label", label, 13f, TextAlignmentOptions.MidlineLeft);
         RectTransform labelRect = labelText.GetComponent<RectTransform>();
         labelRect.anchorMin = new Vector2(0f, 0f);
         labelRect.anchorMax = new Vector2(0f, 1f);
@@ -879,48 +911,53 @@ public class RuntimeSettingsMenu : MonoBehaviour
         labelRect.anchoredPosition = new Vector2(10f, 0f);
         labelRect.sizeDelta = new Vector2(DebugControlLabelWidth, 0f);
 
+        string sliderName = $"Slider_Audio{kind}";
         RectTransform slider = FindOrCreateDebugSlider(rect, sliderName, kind, out RectTransform sliderFill, out RectTransform sliderHandle);
 
+        string inputName = $"Input_Audio{kind}";
         TMP_InputField input = FindOrCreateDebugInput(rect, inputName);
         input.contentType = TMP_InputField.ContentType.IntegerNumber;
         input.onEndEdit.RemoveAllListeners();
         input.onEndEdit.AddListener(value =>
         {
-            if (isUpdatingDebugAudioControl)
+            if (isUpdatingAudioControl)
             {
                 return;
             }
 
             if (float.TryParse(value, out float parsed))
             {
-                float normalizedVolume = Mathf.Clamp01(parsed / 100f);
-
-                if (kind == DebugSliderKind.Music)
-                {
-                    ApplyDebugMusicVolume(normalizedVolume);
-                }
-                else if (kind == DebugSliderKind.Fx)
-                {
-                    ApplyDebugFxVolume(normalizedVolume);
-                }
+                ApplyAudioVolume(channel, Mathf.Clamp01(parsed / 100f));
             }
         });
 
-        if (kind == DebugSliderKind.Music)
+        if (kind == DebugSliderKind.Dialogue)
         {
-            debugMusicLabel = labelText;
-            debugMusicSlider = slider;
-            debugMusicSliderFill = sliderFill;
-            debugMusicSliderHandle = sliderHandle;
-            debugMusicInput = input;
+            dialogueAudioLabel = labelText;
+            dialogueAudioSliderFill = sliderFill;
+            dialogueAudioSliderHandle = sliderHandle;
+            dialogueAudioInput = input;
         }
-        else if (kind == DebugSliderKind.Fx)
+        else if (kind == DebugSliderKind.GameSounds)
         {
-            debugFxLabel = labelText;
-            debugFxSlider = slider;
-            debugFxSliderFill = sliderFill;
-            debugFxSliderHandle = sliderHandle;
-            debugFxInput = input;
+            gameSoundsAudioLabel = labelText;
+            gameSoundsAudioSliderFill = sliderFill;
+            gameSoundsAudioSliderHandle = sliderHandle;
+            gameSoundsAudioInput = input;
+        }
+        else if (kind == DebugSliderKind.Atmosphere)
+        {
+            atmosphereAudioLabel = labelText;
+            atmosphereAudioSliderFill = sliderFill;
+            atmosphereAudioSliderHandle = sliderHandle;
+            atmosphereAudioInput = input;
+        }
+        else if (kind == DebugSliderKind.Music)
+        {
+            musicAudioLabel = labelText;
+            musicAudioSliderFill = sliderFill;
+            musicAudioSliderHandle = sliderHandle;
+            musicAudioInput = input;
         }
 
         return rect;

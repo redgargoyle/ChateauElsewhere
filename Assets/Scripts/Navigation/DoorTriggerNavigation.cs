@@ -1049,6 +1049,10 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         StopCurrentNavigationSound();
         activeNavigationAudioSource = doorOpenAudioSource;
         doorOpenAudioSource.Stop();
+        GameAudioSettings.EnsureBinding(
+            doorOpenAudioSource,
+            GameAudioChannel.GameSounds,
+            GameAudioSettings.GetCurrentOrBoundBaseVolume(doorOpenAudioSource, GameAudioChannel.GameSounds));
 
         if (TryGetNavigationClip(out AudioClip randomClip))
         {

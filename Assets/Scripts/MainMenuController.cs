@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -18,6 +19,7 @@ public class MainMenuController : MonoBehaviour
     private const string SettingsButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Settings.png";
     private const string ExitButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Exit.png";
     private const string TitleFontPath = "Assets/Art/UI/Fonts/LiberationSerif-Bold.ttf";
+    private const string AudioSettingsPanelName = "Panel_AudioSettings";
 
     [SerializeField] private string newGameSceneName = DefaultGameplaySceneName;
 
@@ -27,6 +29,7 @@ public class MainMenuController : MonoBehaviour
     [Tooltip("AudioSource.pitch changes playback speed and pitch together without time-stretching.")]
     [SerializeField, Range(0.01f, 3f)] private float menuSoundscapePlaybackSpeed = 0.52f;
     [SerializeField] private bool playSoundscapeOnStart = true;
+    [SerializeField] private float menuSoundscapeBaseVolume = -1f;
 
     [Header("Menu Visuals")]
     [SerializeField] private Image backgroundImage;
@@ -65,6 +68,10 @@ public class MainMenuController : MonoBehaviour
     public Vector2 buttonSize = new Vector2(960f, 240f);
     public float buttonSpacing = 128f;
 
+    private RectTransform audioSettingsPanel;
+    private readonly List<AudioSliderBinding> audioSettingsBindings = new List<AudioSliderBinding>();
+    private bool audioSettingsVisible;
+
     private void Reset()
     {
         CacheMenuReferences();
@@ -81,6 +88,16 @@ public class MainMenuController : MonoBehaviour
         ConfigureMenuSoundscape();
         ApplyPinnedMenuLayout();
         ApplyMenuVisuals();
+    }
+
+    private void OnEnable()
+    {
+        GameAudioSettings.VolumeChanged += HandleAudioSettingChanged;
+    }
+
+    private void OnDisable()
+    {
+        GameAudioSettings.VolumeChanged -= HandleAudioSettingChanged;
     }
 
     private void Start()
@@ -243,6 +260,13 @@ public class MainMenuController : MonoBehaviour
         menuSoundscapeSource.playOnAwake = false;
         menuSoundscapeSource.loop = true;
         menuSoundscapeSource.pitch = menuSoundscapePlaybackSpeed;
+
+        if (menuSoundscapeBaseVolume < 0f)
+        {
+            menuSoundscapeBaseVolume = menuSoundscapeSource.volume;
+        }
+
+        GameAudioSettings.EnsureBinding(menuSoundscapeSource, GameAudioChannel.Music, menuSoundscapeBaseVolume);
     }
 
     private void ApplyMenuVisuals()
@@ -252,6 +276,7 @@ public class MainMenuController : MonoBehaviour
         ConfigureButtonVisual(continueButton, ref continueButtonSprite, ContinueButtonPath);
         ConfigureButtonVisual(settingsButton, ref settingsButtonSprite, SettingsButtonPath);
         ConfigureButtonVisual(exitButton, ref exitButtonSprite, ExitButtonPath);
+        ConfigureSettingsButtonAction();
 
         if (menuPanel != null)
         {
@@ -321,6 +346,291 @@ public class MainMenuController : MonoBehaviour
 
         ConfigureButtonCursor(buttonRect, button);
         HideLegacyButtonText(buttonRect);
+    }
+
+    private void ConfigureSettingsButtonAction()
+    {
+        if (settingsButton == null)
+        {
+            return;
+        }
+
+        Button button = settingsButton.GetComponent<Button>();
+
+        if (button == null)
+        {
+            return;
+        }
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(ToggleAudioSettingsPanel);
+    }
+
+    private void ToggleAudioSettingsPanel()
+    {
+        EnsureAudioSettingsPanel();
+        audioSettingsVisible = !audioSettingsVisible;
+
+        if (audioSettingsPanel != null)
+        {
+            audioSettingsPanel.gameObject.SetActive(audioSettingsVisible);
+            audioSettingsPanel.SetAsLastSibling();
+        }
+
+        RefreshAudioSettingsPanel();
+    }
+
+    private void EnsureAudioSettingsPanel()
+    {
+        if (audioSettingsPanel != null)
+        {
+            return;
+        }
+
+        RectTransform parent = menuPanel != null && menuPanel.parent is RectTransform menuParent
+            ? menuParent
+            : transform as RectTransform;
+
+        if (parent == null)
+        {
+            return;
+        }
+
+        Transform existing = parent.Find(AudioSettingsPanelName);
+        audioSettingsPanel = existing as RectTransform;
+
+        if (audioSettingsPanel == null)
+        {
+            GameObject panelObject = new GameObject(AudioSettingsPanelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(VerticalLayoutGroup));
+            audioSettingsPanel = panelObject.GetComponent<RectTransform>();
+            audioSettingsPanel.SetParent(parent, false);
+        }
+
+        audioSettingsPanel.anchorMin = new Vector2(0f, 1f);
+        audioSettingsPanel.anchorMax = new Vector2(0f, 1f);
+        audioSettingsPanel.pivot = new Vector2(0f, 1f);
+        audioSettingsPanel.anchoredPosition = new Vector2(610f, -132f);
+        audioSettingsPanel.sizeDelta = new Vector2(360f, 236f);
+
+        Image panelImage = audioSettingsPanel.GetComponent<Image>();
+
+        if (panelImage != null)
+        {
+            panelImage.color = new Color(0.02f, 0.018f, 0.014f, 0.9f);
+            panelImage.raycastTarget = true;
+        }
+
+        VerticalLayoutGroup layout = audioSettingsPanel.GetComponent<VerticalLayoutGroup>();
+
+        if (layout != null)
+        {
+            layout.padding = new RectOffset(16, 16, 14, 14);
+            layout.spacing = 10f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+        }
+
+        audioSettingsBindings.Clear();
+        CreateAudioSettingsTitle(audioSettingsPanel);
+        CreateAudioSettingsSlider(audioSettingsPanel, GameAudioChannel.Dialogue);
+        CreateAudioSettingsSlider(audioSettingsPanel, GameAudioChannel.GameSounds);
+        CreateAudioSettingsSlider(audioSettingsPanel, GameAudioChannel.Atmosphere);
+        CreateAudioSettingsSlider(audioSettingsPanel, GameAudioChannel.Music);
+        audioSettingsPanel.gameObject.SetActive(audioSettingsVisible);
+    }
+
+    private void CreateAudioSettingsTitle(RectTransform parent)
+    {
+        Transform existing = parent.Find("Text_AudioSettingsTitle");
+        TMP_Text titleLabel = existing != null ? existing.GetComponent<TMP_Text>() : null;
+
+        if (titleLabel == null)
+        {
+            GameObject titleObject = new GameObject("Text_AudioSettingsTitle", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            titleObject.transform.SetParent(parent, false);
+            titleLabel = titleObject.GetComponent<TMP_Text>();
+        }
+
+        titleLabel.text = "Audio";
+        titleLabel.fontSize = 20f;
+        titleLabel.color = titleColor;
+        titleLabel.alignment = TextAlignmentOptions.Left;
+        titleLabel.raycastTarget = false;
+
+        LayoutElement layoutElement = titleLabel.GetComponent<LayoutElement>();
+
+        if (layoutElement != null)
+        {
+            layoutElement.preferredHeight = 28f;
+        }
+    }
+
+    private void CreateAudioSettingsSlider(RectTransform parent, GameAudioChannel channel)
+    {
+        string rowName = "Row_" + channel;
+        Transform existing = parent.Find(rowName);
+        RectTransform row = existing as RectTransform;
+
+        if (row == null)
+        {
+            GameObject rowObject = new GameObject(rowName, typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            row = rowObject.GetComponent<RectTransform>();
+            row.SetParent(parent, false);
+        }
+
+        LayoutElement rowLayout = row.GetComponent<LayoutElement>();
+
+        if (rowLayout != null)
+        {
+            rowLayout.preferredHeight = 32f;
+            rowLayout.minHeight = 32f;
+        }
+
+        HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
+
+        if (layout != null)
+        {
+            layout.spacing = 10f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+        }
+
+        TMP_Text label = FindOrCreateAudioPanelText(row, "Text_Label", GameAudioSettings.GetDisplayName(channel), 14f, TextAlignmentOptions.MidlineLeft, 108f);
+        Slider slider = FindOrCreateAudioPanelSlider(row, "Slider_" + channel);
+        TMP_Text valueLabel = FindOrCreateAudioPanelText(row, "Text_Value", string.Empty, 13f, TextAlignmentOptions.MidlineRight, 40f);
+
+        AudioSliderBinding binding = new AudioSliderBinding(channel, slider, valueLabel);
+        binding.Refresh();
+        audioSettingsBindings.Add(binding);
+    }
+
+    private TMP_Text FindOrCreateAudioPanelText(RectTransform parent, string objectName, string value, float fontSize, TextAlignmentOptions alignment, float width)
+    {
+        Transform existing = parent.Find(objectName);
+        TMP_Text text = existing != null ? existing.GetComponent<TMP_Text>() : null;
+
+        if (text == null)
+        {
+            GameObject textObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            textObject.transform.SetParent(parent, false);
+            text = textObject.GetComponent<TMP_Text>();
+        }
+
+        text.text = value;
+        text.fontSize = fontSize;
+        text.color = Color.white;
+        text.alignment = alignment;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
+
+        LayoutElement layoutElement = text.GetComponent<LayoutElement>();
+
+        if (layoutElement != null)
+        {
+            layoutElement.preferredWidth = width;
+            layoutElement.minWidth = width;
+        }
+
+        return text;
+    }
+
+    private Slider FindOrCreateAudioPanelSlider(RectTransform parent, string objectName)
+    {
+        Transform existing = parent.Find(objectName);
+        Slider slider = existing != null ? existing.GetComponent<Slider>() : null;
+        RectTransform sliderRect;
+
+        if (slider == null)
+        {
+            GameObject sliderObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Slider), typeof(LayoutElement));
+            sliderRect = sliderObject.GetComponent<RectTransform>();
+            sliderRect.SetParent(parent, false);
+            slider = sliderObject.GetComponent<Slider>();
+        }
+        else
+        {
+            sliderRect = slider.GetComponent<RectTransform>();
+        }
+
+        LayoutElement layoutElement = slider.GetComponent<LayoutElement>();
+
+        if (layoutElement != null)
+        {
+            layoutElement.preferredWidth = 154f;
+            layoutElement.minWidth = 154f;
+            layoutElement.preferredHeight = 26f;
+        }
+
+        Image hitArea = slider.GetComponent<Image>();
+
+        if (hitArea != null)
+        {
+            hitArea.color = new Color(0f, 0f, 0f, 0f);
+            hitArea.raycastTarget = true;
+        }
+
+        Image background = FindOrCreateSliderPart(sliderRect, "Background", new Color(0.18f, 0.16f, 0.13f, 1f), new Vector2(0f, 0.35f), new Vector2(1f, 0.65f));
+        Image fill = FindOrCreateSliderPart(sliderRect, "Fill", new Color(0.72f, 0.54f, 0.28f, 1f), new Vector2(0f, 0.35f), new Vector2(1f, 0.65f));
+        Image handle = FindOrCreateSliderPart(sliderRect, "Handle", new Color(0.96f, 0.82f, 0.55f, 1f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f));
+
+        background.raycastTarget = false;
+        fill.raycastTarget = false;
+        handle.raycastTarget = false;
+
+        RectTransform handleRect = handle.GetComponent<RectTransform>();
+        handleRect.sizeDelta = new Vector2(12f, 22f);
+
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.wholeNumbers = false;
+        slider.fillRect = fill.GetComponent<RectTransform>();
+        slider.handleRect = handleRect;
+        slider.targetGraphic = handle;
+        return slider;
+    }
+
+    private Image FindOrCreateSliderPart(RectTransform parent, string objectName, Color color, Vector2 anchorMin, Vector2 anchorMax)
+    {
+        Transform existing = parent.Find(objectName);
+        Image image = existing != null ? existing.GetComponent<Image>() : null;
+        RectTransform rect;
+
+        if (image == null)
+        {
+            GameObject partObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            rect = partObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            image = partObject.GetComponent<Image>();
+        }
+        else
+        {
+            rect = image.GetComponent<RectTransform>();
+        }
+
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        image.color = color;
+        return image;
+    }
+
+    private void RefreshAudioSettingsPanel()
+    {
+        for (int i = 0; i < audioSettingsBindings.Count; i++)
+        {
+            audioSettingsBindings[i]?.Refresh();
+        }
+    }
+
+    private void HandleAudioSettingChanged(GameAudioChannel channel, float volume)
+    {
+        RefreshAudioSettingsPanel();
     }
 
     private void ConfigureButtonCursor(RectTransform buttonRect, Button button)
@@ -567,5 +877,55 @@ public class MainMenuController : MonoBehaviour
         rectTransform.anchoredPosition = Vector2.zero;
         rectTransform.sizeDelta = Vector2.zero;
         rectTransform.localScale = Vector3.one;
+    }
+
+    private sealed class AudioSliderBinding
+    {
+        private readonly GameAudioChannel channel;
+        private readonly Slider slider;
+        private readonly TMP_Text valueLabel;
+        private bool updating;
+
+        public AudioSliderBinding(GameAudioChannel channel, Slider slider, TMP_Text valueLabel)
+        {
+            this.channel = channel;
+            this.slider = slider;
+            this.valueLabel = valueLabel;
+
+            if (this.slider != null)
+            {
+                this.slider.onValueChanged.RemoveAllListeners();
+                this.slider.onValueChanged.AddListener(HandleSliderValueChanged);
+            }
+        }
+
+        public void Refresh()
+        {
+            float volume = GameAudioSettings.GetVolume(channel);
+            updating = true;
+
+            if (slider != null)
+            {
+                slider.SetValueWithoutNotify(volume);
+            }
+
+            if (valueLabel != null)
+            {
+                valueLabel.text = Mathf.RoundToInt(volume * 100f).ToString();
+            }
+
+            updating = false;
+        }
+
+        private void HandleSliderValueChanged(float value)
+        {
+            if (updating)
+            {
+                return;
+            }
+
+            GameAudioSettings.SetVolume(channel, value);
+            Refresh();
+        }
     }
 }

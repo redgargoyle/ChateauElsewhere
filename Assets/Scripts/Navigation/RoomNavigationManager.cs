@@ -55,6 +55,7 @@ public class RoomNavigationManager : MonoBehaviour
     private bool applyVisualForNextRoomChange;
     private TMP_Text currentRoomHudText;
     private RuntimeSettingsMenu runtimeSettingsMenu;
+    private FireplaceAmbienceController fireplaceAmbienceController;
 
     public string CurrentRoom => currentRoom;
     public string StartingRoom => startingRoom;
@@ -83,6 +84,7 @@ public class RoomNavigationManager : MonoBehaviour
         RefreshDoorButtonsForCurrentRoom();
         UpdateCurrentRoomHud(currentRoom);
         EnsureRuntimeSettingsMenu();
+        EnsureFireplaceAmbienceController();
         RunNavigationSelfCheckForCurrentRoom();
     }
 
@@ -644,6 +646,7 @@ public class RoomNavigationManager : MonoBehaviour
     private void HandleCurrentRoomChanged(string roomName)
     {
         ResolveReferences();
+        EnsureFireplaceAmbienceController();
         RefreshRoomContentForCurrentRoom();
         SyncCameraRoomContent(roomName, false);
 
@@ -656,6 +659,16 @@ public class RoomNavigationManager : MonoBehaviour
         UpdateCurrentRoomHud(roomName);
         RunNavigationSelfCheckForCurrentRoom();
 
+    }
+
+    private void EnsureFireplaceAmbienceController()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        fireplaceAmbienceController = FireplaceAmbienceController.FindOrCreate(this);
     }
 
     private void ApplyRoomVisual(string roomName)
