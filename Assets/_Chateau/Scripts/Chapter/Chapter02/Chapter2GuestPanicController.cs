@@ -10,9 +10,14 @@ using UnityEngine.UI;
 public sealed class Chapter2GuestPanicController : MonoBehaviour
 {
     private const string ClickTargetName = "Ch2_ClickTarget";
+    private const string DefaultPanicScreamCatalogResourcePath = "Audio/Chapter2PanicScreamCatalog";
+    private const string PanicScreamAudioObjectName = "Audio_Ch2PanicScream";
 
     [SerializeField] private Chapter2GuestSearchController guestSearch;
     [SerializeField] private Chapter2PanicAnimationLibrary animationLibrary;
+    [SerializeField] private Chapter2PanicScreamCatalog panicScreamCatalog;
+    [SerializeField] private string panicScreamCatalogResourcePath = DefaultPanicScreamCatalogResourcePath;
+    [SerializeField] private bool playPanicScreams = true;
     [SerializeField, Min(1f)] private float frameRate = 12f;
     [SerializeField, Min(0f)] private float runDistancePixels = 150f;
     [SerializeField, Min(1f)] private float panicRoamRadiusPixels = 190f;
@@ -73,6 +78,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         isRunning = true;
+        StartParticipantPanicScreams();
         StartScriptedGuestPanicRoutines();
 
         if (HasSharedPanicParticipants())
@@ -180,10 +186,22 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             animationLibrary = Resources.Load<Chapter2PanicAnimationLibrary>(Chapter2PanicAnimationLibrary.ResourcesPath);
         }
 
+        ResolvePanicScreamCatalog();
+
         if (routePlanner == null || !IsUsableRoutePlanner(routePlanner))
         {
             routePlanner = FindRoutePlanner(routePlannerObjectName);
         }
+    }
+
+    private void ResolvePanicScreamCatalog()
+    {
+        if (panicScreamCatalog != null || string.IsNullOrWhiteSpace(panicScreamCatalogResourcePath))
+        {
+            return;
+        }
+
+        panicScreamCatalog = Resources.Load<Chapter2PanicScreamCatalog>(panicScreamCatalogResourcePath.Trim());
     }
 
     private void ResolveExitTargets()
@@ -248,6 +266,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             PanicParticipant participant = PanicParticipant.Create(actorState, animation);
             participant.ConfigureRunMotion(targetParticipants.Count, guestNumber);
+            ConfigureParticipantPanicScream(participant);
 
             if (!participant.HasSpriteTarget)
             {
@@ -258,6 +277,32 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             participant.ApplyPanicState();
             targetParticipants.Add(participant);
+        }
+    }
+
+    private void ConfigureParticipantPanicScream(PanicParticipant participant)
+    {
+        if (!playPanicScreams || participant == null || panicScreamCatalog == null)
+        {
+            return;
+        }
+
+        if (panicScreamCatalog.TryGetScreamForGuest(participant.GuestNumber, out AudioClip clip, out float volume))
+        {
+            participant.ConfigurePanicScream(clip, volume, PanicScreamAudioObjectName);
+        }
+    }
+
+    private void StartParticipantPanicScreams()
+    {
+        if (!playPanicScreams)
+        {
+            return;
+        }
+
+        for (int i = 0; i < participants.Count; i++)
+        {
+            participants[i]?.PlayPanicScream();
         }
     }
 
@@ -1170,6 +1215,9 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private Behaviour[] motionDrivers;
         private bool[] motionDriverEnabledStates;
         private Rigidbody2D rigidbody2D;
+        private AudioSource panicScreamAudioSource;
+        private AudioClip panicScreamClip;
+        private float panicScreamBaseVolume = 1f;
         private RigidbodyType2D originalRigidbodyBodyType;
         private Vector2 originalRigidbodyPosition;
         private Vector2 originalRigidbodyLinearVelocity;
@@ -1309,6 +1357,75 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         public void SetControlledByScript(bool controlled)
         {
             controlledByScript = controlled;
+        }
+
+        public void ConfigurePanicScream(AudioClip clip, float baseVolume, string audioObjectName)
+        {
+            if (clip == null || targetTransform == null)
+            {
+                return;
+            }
+
+            panicScreamClip = clip;
+            panicScreamBaseVolume = Mathf.Max(0f, baseVolume);
+            panicScreamAudioSource = FindOrCreatePanicScreamAudioSource(audioObjectName);
+
+            if (panicScreamAudioSource == null)
+            {
+                return;
+            }
+
+            panicScreamAudioSource.clip = panicScreamClip;
+            panicScreamAudioSource.playOnAwake = false;
+            panicScreamAudioSource.loop = false;
+            panicScreamAudioSource.spatialBlend = 0f;
+            panicScreamAudioSource.ignoreListenerVolume = true;
+            GameAudioSettings.EnsureBinding(panicScreamAudioSource, GameAudioChannel.GameSounds, panicScreamBaseVolume);
+        }
+
+        public void PlayPanicScream()
+        {
+            if (panicScreamAudioSource == null || panicScreamClip == null)
+            {
+                return;
+            }
+
+            GameAudioSettings.EnsureBinding(panicScreamAudioSource, GameAudioChannel.GameSounds, panicScreamBaseVolume);
+            panicScreamAudioSource.Stop();
+            panicScreamAudioSource.Play();
+        }
+
+        private void StopPanicScream()
+        {
+            if (panicScreamAudioSource != null)
+            {
+                panicScreamAudioSource.Stop();
+            }
+        }
+
+        private AudioSource FindOrCreatePanicScreamAudioSource(string audioObjectName)
+        {
+            string cleanName = string.IsNullOrWhiteSpace(audioObjectName)
+                ? PanicScreamAudioObjectName
+                : audioObjectName.Trim();
+
+            Transform existing = targetTransform.Find(cleanName);
+            GameObject audioObject = existing != null ? existing.gameObject : null;
+
+            if (audioObject == null)
+            {
+                audioObject = new GameObject(cleanName);
+                audioObject.transform.SetParent(targetTransform, false);
+            }
+
+            AudioSource source = audioObject.GetComponent<AudioSource>();
+
+            if (source == null)
+            {
+                source = audioObject.AddComponent<AudioSource>();
+            }
+
+            return source;
         }
 
         public void ApplyPanicState()
@@ -1519,6 +1636,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             hiddenAfterExitArrival = true;
+            StopPanicScream();
             StopScriptedAnimatorWalk(currentRunAction);
 
             if (actorState != null)
@@ -2257,6 +2375,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         public void Restore()
         {
+            StopPanicScream();
+
             if (spriteRenderer != null)
             {
                 spriteRenderer.sprite = originalRendererSprite;
