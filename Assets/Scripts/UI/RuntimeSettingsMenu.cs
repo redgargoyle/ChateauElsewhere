@@ -10,6 +10,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 {
     private const string MenuObjectName = "RuntimeSettingsMenu";
     private const string MenuCanvasName = "Canvas_RuntimeSettingsMenu";
+    private const string SettingsInputBlockerName = "Panel_SettingsInputBlocker";
     private const string SettingsButtonName = "Button_Settings";
     private const string SettingsListName = "List_Settings";
     private const string SettingsAudioListName = "List_AudioControls";
@@ -52,6 +53,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private RoomNavigationManager navigationManager;
     private RectTransform rootRect;
+    private RectTransform settingsInputBlocker;
     private Button settingsButton;
     private RectTransform settingsList;
     private RectTransform settingsAudioList;
@@ -221,6 +223,8 @@ public class RuntimeSettingsMenu : MonoBehaviour
         rootRect.localScale = Vector3.one;
         transform.SetAsLastSibling();
 
+        settingsInputBlocker = FindOrCreateSettingsInputBlocker(rootRect);
+
         settingsButton = FindOrCreateButton(rootRect, SettingsButtonName, "Settings", ToggleSettings);
         RectTransform settingsButtonRect = settingsButton.GetComponent<RectTransform>();
         settingsButtonRect.anchorMin = new Vector2(0f, 1f);
@@ -361,6 +365,12 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void RefreshOpenState()
     {
+        if (settingsInputBlocker != null)
+        {
+            settingsInputBlocker.gameObject.SetActive(settingsOpen);
+            settingsInputBlocker.SetAsFirstSibling();
+        }
+
         if (settingsList != null)
         {
             settingsList.gameObject.SetActive(settingsOpen);
@@ -727,6 +737,35 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         ConfigureSolidImage(fillImage, interactable ? new Color(0.48f, 0.48f, 0.48f, 1f) : new Color(0.24f, 0.24f, 0.24f, 1f));
         ConfigureSolidImage(handleImage, interactable ? new Color(0.72f, 0.72f, 0.72f, 1f) : new Color(0.36f, 0.36f, 0.36f, 1f));
+    }
+
+    private static RectTransform FindOrCreateSettingsInputBlocker(Transform parent)
+    {
+        Transform existing = parent.Find(SettingsInputBlockerName);
+        RectTransform rect = existing != null ? existing as RectTransform : null;
+
+        if (rect == null)
+        {
+            GameObject blockerObject = new GameObject(SettingsInputBlockerName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            rect = blockerObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+        }
+
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.SetAsFirstSibling();
+
+        Image image = rect.GetComponent<Image>();
+
+        if (image != null)
+        {
+            ConfigureSolidImage(image, new Color(0f, 0f, 0f, 0f));
+            image.raycastTarget = true;
+        }
+
+        return rect;
     }
 
     private static RectTransform FindOrCreateList(Transform parent, string objectName, bool vertical)

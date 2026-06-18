@@ -10,6 +10,7 @@ public sealed class FireplaceAmbienceCatalog : ScriptableObject
     {
         public string roomName;
         public AudioClip clip;
+        [Range(0f, 1f)] public float volumeMultiplier;
     }
 #pragma warning restore 0649
 
@@ -52,6 +53,16 @@ public sealed class FireplaceAmbienceCatalog : ScriptableObject
         }
 
         return TryGetRandomClip(ref lastClipIndex, out clip);
+    }
+
+    public float GetVolumeMultiplierForRoom(string roomName)
+    {
+        if (TryGetRoomClipAssignment(roomName, out RoomClipAssignment assignment))
+        {
+            return assignment.volumeMultiplier > 0f ? Mathf.Clamp01(assignment.volumeMultiplier) : 1f;
+        }
+
+        return 1f;
     }
 
     public bool TryGetRandomClip(ref int lastClipIndex, out AudioClip clip)
@@ -104,6 +115,19 @@ public sealed class FireplaceAmbienceCatalog : ScriptableObject
     private bool TryGetAssignedRoomClip(string roomName, out AudioClip clip)
     {
         clip = null;
+
+        if (TryGetRoomClipAssignment(roomName, out RoomClipAssignment assignment) && assignment.clip != null)
+        {
+            clip = assignment.clip;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryGetRoomClipAssignment(string roomName, out RoomClipAssignment assignment)
+    {
+        assignment = default;
         string normalizedRoom = NormalizeRoomName(roomName);
 
         if (string.IsNullOrEmpty(normalizedRoom) || roomClipAssignments == null)
@@ -113,11 +137,11 @@ public sealed class FireplaceAmbienceCatalog : ScriptableObject
 
         for (int i = 0; i < roomClipAssignments.Length; i++)
         {
-            RoomClipAssignment assignment = roomClipAssignments[i];
+            RoomClipAssignment candidate = roomClipAssignments[i];
 
-            if (assignment.clip != null && NormalizeRoomName(assignment.roomName) == normalizedRoom)
+            if (NormalizeRoomName(candidate.roomName) == normalizedRoom)
             {
-                clip = assignment.clip;
+                assignment = candidate;
                 return true;
             }
         }
