@@ -117,6 +117,11 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private float coatOffsetX = 34f;
     [SerializeField] private float coatOffsetY = 42f;
 
+    [Header("Subtitles")]
+    [SerializeField] private bool enableSubtitles = true;
+    [SerializeField] private bool subtitleDebugMode;
+    [SerializeField] private SubtitleService subtitleService;
+
     [Header("Debug")]
     [SerializeField] private bool verboseLogs = true;
 
@@ -348,6 +353,7 @@ public class Chapter1ArrivalController : MonoBehaviour
                 emptyDoorbellWaitingForAnswer = false;
                 doorbellSystem?.StopRinging();
                 Debug.Log("The butler answers the door. No one is there.", this);
+                ShowSubtitleLine("SUB_CH01_BUTLER_EMPTY_DOOR_001");
                 RefreshInteractionState();
                 CheckChapterCompletionGate();
                 return;
@@ -528,6 +534,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (butlerCarryingCoat)
         {
             Debug.Log($"[Chapter1] Butler already holding coat {carriedCoatId}.", this);
+            ShowSubtitleLine("SUB_CH01_BUTLER_ONE_COAT_001");
             return;
         }
 
@@ -722,6 +729,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (butlerCarryingCoat)
         {
             Debug.Log($"[Chapter1] Butler already holding coat {carriedCoatId}.", this);
+            ShowSubtitleLine("SUB_CH01_BUTLER_ONE_COAT_001");
             return;
         }
 
@@ -923,6 +931,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (!butlerCarryingCoat)
         {
             Debug.Log("Closet clicked, but the butler is not carrying a coat.", this);
+            ShowSubtitleLine("SUB_CH01_BUTLER_NO_COAT_001");
             return;
         }
 
@@ -1610,10 +1619,12 @@ public class Chapter1ArrivalController : MonoBehaviour
                 null);
             SetGuestState(guest, GuestArrivalState.AwaitingGreeting);
             LogGuestLine(guest.Config, guest.Config.GreetingLine);
+            ShowGuestSubtitle(guest, "GREETING", GetGuestGreetingLine(guest));
 
             if (guest.Annoyed)
             {
                 Debug.Log($"{guest.Config.GuestDisplayName}: {GetAnnoyedLine(guest.GuestIndex)}", this);
+                ShowGuestSubtitle(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
             }
 
             OfferGuestCoat(guest);
@@ -1659,10 +1670,12 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             SetGuestState(guest, GuestArrivalState.AwaitingGreeting);
             LogGuestLine(guest.Config, guest.Config.GreetingLine);
+            ShowGuestSubtitle(guest, "GREETING", GetGuestGreetingLine(guest));
 
             if (guest.Annoyed)
             {
                 Debug.Log($"{guest.Config.GuestDisplayName}: {GetAnnoyedLine(guest.GuestIndex)}", this);
+                ShowGuestSubtitle(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
             }
 
             OfferGuestCoat(guest);
@@ -3378,6 +3391,65 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         Debug.Log($"{guestState.Config.GuestDisplayName} ambient: {guestState.Config.AmbientLines[0]}", this);
+        ShowGuestSubtitle(guestState, "AMBIENT", guestState.Config.AmbientLines[0]);
+    }
+
+    private string GetGuestGreetingLine(GuestRuntimeState guestState)
+    {
+        if (guestState != null &&
+            guestState.Config != null &&
+            !string.IsNullOrWhiteSpace(guestState.Config.GreetingLine))
+        {
+            return guestState.Config.GreetingLine.Trim();
+        }
+
+        return GetDefaultGreeting(guestState != null ? guestState.GuestIndex : 0);
+    }
+
+    private void ShowGuestSubtitle(GuestRuntimeState guestState, string lineKind, string text)
+    {
+        if (guestState == null || guestState.Config == null || string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        string lineId = GetChapter1GuestSubtitleLineId(guestState.GuestIndex, lineKind);
+        ShowSubtitleLine(lineId, guestState.Config.GuestDisplayName, text.Trim(), false);
+    }
+
+    private static string GetChapter1GuestSubtitleLineId(int guestIndex, string lineKind)
+    {
+        int guestNumber = Mathf.Clamp(guestIndex + 1, 1, 99);
+        string cleanLineKind = string.IsNullOrWhiteSpace(lineKind) ? "GREETING" : lineKind.Trim().ToUpperInvariant();
+        return $"SUB_CH01_G{guestNumber:00}_{cleanLineKind}_001";
+    }
+
+    private void ShowSubtitleLine(string lineId)
+    {
+        SubtitleService service = ResolveSubtitleService();
+        service?.ShowLine(lineId);
+    }
+
+    private void ShowSubtitleLine(string lineId, string speaker, string text, bool requireAdvance)
+    {
+        SubtitleService service = ResolveSubtitleService();
+        service?.ShowLine(lineId, speaker, text, requireAdvance);
+    }
+
+    private SubtitleService ResolveSubtitleService()
+    {
+        if (!enableSubtitles || !Application.isPlaying)
+        {
+            return null;
+        }
+
+        if (subtitleService == null)
+        {
+            subtitleService = SubtitleService.FindOrCreate();
+        }
+
+        subtitleService?.SetDebugMode(subtitleDebugMode);
+        return subtitleService;
     }
 
     private void LogGuestLine(GuestArrivalConfig config, string line)

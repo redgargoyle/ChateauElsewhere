@@ -24,6 +24,10 @@ public class Chapter2RegressionTests
     private const string GuestFootstepAudioPath = "Assets/Scripts/Audio/GuestFootstepAudio.cs";
     private const string GuestFootstepCatalogScriptPath = "Assets/Scripts/Audio/GuestFootstepCatalog.cs";
     private const string GuestFootstepCatalogPath = "Assets/Resources/Audio/GuestFootstepCatalog.asset";
+    private const string SubtitleLinePath = "Assets/Scripts/UI/SubtitleLine.cs";
+    private const string SubtitleLineBankScriptPath = "Assets/Scripts/UI/SubtitleLineBank.cs";
+    private const string SubtitleServicePath = "Assets/Scripts/UI/SubtitleService.cs";
+    private const string SubtitleLineBankPath = "Assets/Resources/UI/SubtitleLineBank.asset";
     private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
     private const string Chapter2MonsterArmSwingResourcePath = "Assets/Resources/Chapter2/Monster/ArmSwing";
     private const string Chapter2MonsterArmSwingClipPath = "Assets/Animation/Monster/Ch2_Monster_ArmSwing.anim";
@@ -421,6 +425,95 @@ public class Chapter2RegressionTests
         Assert.That(scriptedBeginBody, Does.Contain("PlayFootsteps()"), "Scripted panic guests should play footsteps while animator walking starts.");
         Assert.That(scriptedStopBody, Does.Contain("StopFootsteps()"), "Scripted panic guests should stop footsteps when animator walking stops.");
         Assert.That(hideAfterExitBody, Does.Contain("StopFootsteps()"), "Guests hidden after leaving the room should not leave footstep loops running.");
+    }
+
+    [Test]
+    public void SubtitleLineBankDefinesChapter1AndChapter2DialogueOnlyLines()
+    {
+        Assert.That(File.Exists(SubtitleLinePath), Is.True, "Subtitle entries should have a serializable data type.");
+        Assert.That(File.Exists(SubtitleLineBankScriptPath), Is.True, "Subtitle entries should be data-driven through a line bank.");
+        Assert.That(File.Exists(SubtitleServicePath), Is.True, "Chapter 1 needs a reusable subtitle display service.");
+        Assert.That(File.Exists(SubtitleLineBankPath), Is.True, "Subtitle lines should load from Resources.");
+
+        string bankText = File.ReadAllText(SubtitleLineBankPath);
+        string serviceText = File.ReadAllText(SubtitleServicePath);
+        string combinedText = bankText + serviceText + File.ReadAllText(SubtitleLinePath) + File.ReadAllText(SubtitleLineBankScriptPath);
+        string[] bannedTerms =
+        {
+            "Chatterbox",
+            "ElevenLabs",
+            "OpenAI",
+            "TextToSpeech",
+            "AudioGenerator",
+            "generated WAV",
+            "voice playback",
+            "API"
+        };
+
+        Assert.That(bankText, Does.Contain("SUB_CH01_BUTLER_EMPTY_DOOR_001"));
+        Assert.That(bankText, Does.Contain("No one is there."));
+        Assert.That(bankText, Does.Contain("SUB_CH02_BUTLER_ADDRESS_GUESTS_001"));
+        Assert.That(bankText, Does.Contain("Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"));
+        Assert.That(serviceText, Does.Contain("Queue<QueuedSubtitle>"), "Non-choice bark subtitles should queue rather than overlap.");
+        Assert.That(serviceText, Does.Contain("WaitForSecondsRealtime"), "Subtitle auto-hide timing should not pause or own gameplay.");
+        Assert.That(serviceText, Does.Contain("Missing subtitle line"), "Missing line IDs should warn and continue.");
+
+        for (int i = 1; i <= 8; i++)
+        {
+            string guestPrefix = $"G{i:00}";
+            Assert.That(bankText, Does.Contain($"SUB_CH01_{guestPrefix}_GREETING_001"));
+            Assert.That(bankText, Does.Contain($"SUB_CH01_{guestPrefix}_ANNOYED_001"));
+            Assert.That(bankText, Does.Contain($"SUB_CH01_{guestPrefix}_AMBIENT_001"));
+            Assert.That(bankText, Does.Contain($"SUB_CH02_BUTLER_FOUND_{guestPrefix}"));
+            Assert.That(bankText, Does.Contain($"SUB_CH02_{guestPrefix}_FINAL_ACK_001"));
+        }
+
+        for (int i = 0; i < bannedTerms.Length; i++)
+        {
+            Assert.That(combinedText, Does.Not.Contain(bannedTerms[i]), $"Subtitle implementation should not reference {bannedTerms[i]}.");
+        }
+    }
+
+    [Test]
+    public void ChapterSubtitlesDecorateExistingFlowWithoutOwningGameplay()
+    {
+        string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
+        string searchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string chapter1AdmissionBody = ExtractMethodBody(chapter1Text, "private IEnumerator AdmitGuestToEntranceHall");
+        string ambientBody = ExtractMethodBody(chapter1Text, "private void StartAmbientConversation");
+        string openingSpeechBody = ExtractMethodBody(chapter2Text, "private IEnumerator RunOpeningSpeechRoutine");
+        string dinnerAnnouncementBody = ExtractMethodBody(searchText, "private void ShowDinnerAnnouncement");
+        string mealQuestionBody = ExtractMethodBody(searchText, "private void ShowMealPreferenceQuestion");
+        string smokeQuestionBody = ExtractMethodBody(searchText, "private void ShowSmokingPreferenceQuestion");
+        string completeBody = ExtractMethodBody(searchText, "private void ShowConversationComplete");
+
+        Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_EMPTY_DOOR_001\")"), "Empty 6:04 doorbell should show the short Butler subtitle.");
+        Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_ONE_COAT_001\")"), "Existing one-coat rejection should get a subtitle without changing coat state.");
+        Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_NO_COAT_001\")"), "Existing empty-handed hanger rejection should get a subtitle without changing coat state.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("ShowGuestSubtitle(guest, \"GREETING\""), "Guest greetings should be captioned when guests enter.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("ShowGuestSubtitle(guest, \"ANNOYED\""), "Delayed guests should show annoyed captions after the greeting.");
+        Assert.That(ambientBody, Does.Contain("ShowGuestSubtitle(guestState, \"AMBIENT\""), "Ambient captions should only come from the existing ambient hook.");
+
+        Assert.That(chapter2Text, Does.Contain("ShowGuestConversationWithSubtitle"), "Chapter 2 should preserve the existing dialogue panel and choices.");
+        Assert.That(openingSpeechBody, Does.Contain("ShowSubtitleLine(\"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should use the subtitle overlay for the interrupted Butler line.");
+        Assert.That(openingSpeechBody, Does.Match(@"ShowSubtitleLine\(\""SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""[\s\S]*ClearSubtitles\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "Normal subtitles should be cleared before the monster stinger.");
+        Assert.That(dinnerAnnouncementBody, Does.Contain("GetChapter2GuestSubtitleLineId(\"SUB_CH02_BUTLER_FOUND_G\", guest)"), "Found subtitles should follow the clicked guest entry.");
+        Assert.That(mealQuestionBody, Does.Contain("SUB_CH02_BUTLER_MEAL_ASK_001"));
+        Assert.That(smokeQuestionBody, Does.Contain("SUB_CH02_BUTLER_SMOKE_ASK_001"));
+        Assert.That(completeBody, Does.Contain("GetChapter2GuestSubtitleLineId(\"SUB_CH02_G\", guest, \"_FINAL_ACK_001\")"));
+
+        Assert.That(searchText, Does.Contain("\"Ask meal preference\""));
+        Assert.That(searchText, Does.Contain("firstMealOption"));
+        Assert.That(searchText, Does.Contain("secondMealOption"));
+        Assert.That(searchText, Does.Contain("\"Cigar\""));
+        Assert.That(searchText, Does.Contain("\"Pipe\""));
+        Assert.That(searchText, Does.Contain("\"No smoke\""));
+        Assert.That(searchText, Does.Contain("\"Very good\""));
+        Assert.That(searchText, Does.Contain("guest.mealPreference = preference"));
+        Assert.That(searchText, Does.Contain("guest.smokingPreference = preference"));
+        Assert.That(searchText, Does.Contain("guest.spiritBottle = $\"{GetGuestDisplayName(guest)}'s bottle of spirits\""));
+        Assert.That(searchText, Does.Contain("foundGuestIdsInOrder.Add(GetGuestIdForOrderList(guest))"));
     }
 
     [Test]

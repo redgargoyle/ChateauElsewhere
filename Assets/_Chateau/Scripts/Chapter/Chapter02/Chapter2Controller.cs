@@ -53,6 +53,11 @@ public class Chapter2Controller : MonoBehaviour
         "Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"
     };
 
+    [Header("Subtitles")]
+    [SerializeField] private bool enableSubtitles = true;
+    [SerializeField] private bool subtitleDebugMode;
+    [SerializeField] private SubtitleService subtitleService;
+
     private Coroutine fadeInRoutine;
     private Coroutine openingSpeechRoutine;
     private Coroutine monsterStingerRoutine;
@@ -177,6 +182,7 @@ public class Chapter2Controller : MonoBehaviour
             interactionHUD.SetObjective("Dinner is served.");
         }
 
+        ClearSubtitles();
         UpdateFoundGuestsHud();
         SetPhase(Chapter2Phase.Complete);
         SetPlayerInputEnabled(true);
@@ -259,14 +265,37 @@ public class Chapter2Controller : MonoBehaviour
             thirdCallback);
     }
 
+    public void ShowGuestConversationWithSubtitle(
+        string subtitleLineId,
+        string speaker,
+        string line,
+        string firstChoice,
+        System.Action firstCallback,
+        string secondChoice = null,
+        System.Action secondCallback = null,
+        string thirdChoice = null,
+        System.Action thirdCallback = null)
+    {
+        ShowGuestConversation(
+            speaker,
+            line,
+            firstChoice,
+            firstCallback,
+            secondChoice,
+            secondCallback,
+            thirdChoice,
+            thirdCallback);
+        LogSubtitleLineShown(subtitleLineId, speaker, line);
+    }
+
     public void ClearGuestConversation()
     {
-        if (interactionHUD == null)
+        if (interactionHUD != null)
         {
-            return;
+            interactionHUD.ClearDialogue();
         }
 
-        interactionHUD.ClearDialogue();
+        ClearSubtitles();
     }
 
     private void BeginDiningRoomObjective()
@@ -296,6 +325,7 @@ public class Chapter2Controller : MonoBehaviour
             interactionHUD.ShowClockStrike(chapterClock != null ? chapterClock.CurrentTimeLabel : "7:00 PM");
         }
 
+        ClearSubtitles();
         PlayClockStrikeDing();
         yield return new WaitForSeconds(GetClockStrikeCloseUpSeconds());
 
@@ -346,6 +376,7 @@ public class Chapter2Controller : MonoBehaviour
                     interactionHUD.SetStatus(line);
                 }
 
+                ShowSubtitleLine("SUB_CH02_BUTLER_ADDRESS_GUESTS_001", "Butler", line, false);
                 Debug.Log($"Butler: {line}", this);
                 yield return new WaitForSeconds(GetSpeechLineSeconds());
             }
@@ -360,6 +391,7 @@ public class Chapter2Controller : MonoBehaviour
             interactionHUD.SetObjective("A terrible sound cuts through the room...");
         }
 
+        ClearSubtitles();
         SetPhase(Chapter2Phase.MonsterStinger);
     }
 
@@ -454,6 +486,8 @@ public class Chapter2Controller : MonoBehaviour
             interactionHUD = gameObject.AddComponent<Chapter2InteractionHUD>();
         }
 
+        ResolveSubtitleService();
+
         if (monsterStinger == null)
         {
             monsterStinger = GetComponent<Chapter2MonsterStingerController>();
@@ -517,6 +551,8 @@ public class Chapter2Controller : MonoBehaviour
         {
             guestPanic.StopPanic();
         }
+
+        ClearSubtitles();
 
         if (diningObjectiveTransitionRoutine != null)
         {
@@ -931,5 +967,43 @@ public class Chapter2Controller : MonoBehaviour
             guestSearch.GetFoundGuestDisplayNamesInOrder(),
             guestSearch.FoundGuestCount,
             guestSearch.GuestCount);
+    }
+
+    public void ShowSubtitleLine(string lineId, string speaker, string text, bool requireAdvance)
+    {
+        SubtitleService service = ResolveSubtitleService();
+        service?.ShowLine(lineId, speaker, text, requireAdvance);
+    }
+
+    public void ClearSubtitles()
+    {
+        subtitleService?.ClearAll();
+    }
+
+    private SubtitleService ResolveSubtitleService()
+    {
+        if (!enableSubtitles || !Application.isPlaying)
+        {
+            return null;
+        }
+
+        if (subtitleService == null)
+        {
+            subtitleService = SubtitleService.FindOrCreate();
+        }
+
+        subtitleService?.SetDebugMode(subtitleDebugMode);
+        return subtitleService;
+    }
+
+    private void LogSubtitleLineShown(string lineId, string speaker, string text)
+    {
+        if (!subtitleDebugMode || string.IsNullOrWhiteSpace(lineId))
+        {
+            return;
+        }
+
+        string cleanSpeaker = string.IsNullOrWhiteSpace(speaker) ? "Unknown" : speaker.Trim();
+        Debug.Log($"[Subtitle] {lineId.Trim()}: {cleanSpeaker}: {text}", this);
     }
 }
