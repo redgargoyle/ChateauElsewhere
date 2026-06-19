@@ -89,7 +89,7 @@ public static class FireplaceFlamePlacement
             velocityOverLifetime.space = ParticleSystemSimulationSpace.Local;
             velocityOverLifetime.x = new ParticleSystem.MinMaxCurve(-0.08f, 0.08f);
             velocityOverLifetime.y = new ParticleSystem.MinMaxCurve(0.45f, 1.2f);
-            velocityOverLifetime.z = new ParticleSystem.MinMaxCurve(0f, 0f);
+            velocityOverLifetime.z = CreateZeroVelocityCurve();
 
             if (renderer != null)
             {
@@ -228,5 +228,12 @@ public static class FireplaceFlamePlacement
         }
 
         return false;
+    }
+
+    private static ParticleSystem.MinMaxCurve CreateZeroVelocityCurve()
+    {
+        ParticleSystem.MinMaxCurve curve = new ParticleSystem.MinMaxCurve(0f, 0f);
+        curve.mode = ParticleSystemCurveMode.TwoConstants;
+        return curve;
     }
 }
