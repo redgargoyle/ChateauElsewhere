@@ -104,7 +104,7 @@ public class ChapterIntroUI : MonoBehaviour
 
         while (elapsed < safeDuration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             float progress = Mathf.Clamp01(elapsed / safeDuration);
             SetFadeAlpha(Mathf.Lerp(1f, 0f, progress));
             SetTitleAlpha(Mathf.Lerp(1f, 0f, progress));
@@ -148,7 +148,7 @@ public class ChapterIntroUI : MonoBehaviour
 
         while (elapsed < safeDuration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             float progress = Mathf.Clamp01(elapsed / safeDuration);
             SetFadeAlpha(Mathf.Lerp(0f, 1f, progress));
             yield return null;

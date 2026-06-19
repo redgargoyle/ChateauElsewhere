@@ -386,7 +386,7 @@ public class ChapterManager : MonoBehaviour
 
         if (!skipIntro)
         {
-            yield return new WaitForSeconds(GetIntroTitleHoldSeconds());
+            yield return new WaitForSecondsRealtime(GetIntroTitleHoldSeconds());
         }
 
         SetPhase(ChapterPhase.FadeIntoRoom);
@@ -452,7 +452,7 @@ public class ChapterManager : MonoBehaviour
 
             if (delaySeconds > 0f)
             {
-                yield return new WaitForSeconds(delaySeconds);
+                yield return new WaitForSecondsRealtime(delaySeconds);
             }
         }
 

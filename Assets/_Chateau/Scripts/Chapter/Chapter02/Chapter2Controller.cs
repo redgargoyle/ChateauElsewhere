@@ -378,7 +378,7 @@ public class Chapter2Controller : MonoBehaviour
 
                 ShowSubtitleLine("SUB_CH02_BUTLER_ADDRESS_GUESTS_001", "Butler", line, false);
                 Debug.Log($"Butler: {line}", this);
-                yield return new WaitForSeconds(GetSpeechLineSeconds());
+                yield return WaitForDialogueReadOrSkip(line, GetSpeechLineSeconds());
             }
         }
 
@@ -401,7 +401,7 @@ public class Chapter2Controller : MonoBehaviour
         yield return null;
 
         introUI.ShowTitle(chapterTitle);
-        yield return new WaitForSeconds(GetChapterTitleHoldSeconds());
+        yield return new WaitForSecondsRealtime(GetChapterTitleHoldSeconds());
 
         yield return introUI.FadeFromBlack(GetFadeSeconds());
 
@@ -485,8 +485,6 @@ public class Chapter2Controller : MonoBehaviour
         {
             interactionHUD = gameObject.AddComponent<Chapter2InteractionHUD>();
         }
-
-        ResolveSubtitleService();
 
         if (monsterStinger == null)
         {
@@ -843,6 +841,30 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         return Mathf.Max(0f, speechLineSeconds);
+    }
+
+    private IEnumerator WaitForDialogueReadOrSkip(string line, float fallbackSeconds)
+    {
+        float duration = GetDialogueReadSeconds(line, fallbackSeconds);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                break;
+            }
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    private static float GetDialogueReadSeconds(string line, float fallbackSeconds)
+    {
+        float fallback = Mathf.Max(0f, fallbackSeconds);
+        float readableSeconds = 1.25f + Mathf.Max(0, string.IsNullOrEmpty(line) ? 0 : line.Length) / 24f;
+        return Mathf.Clamp(Mathf.Max(fallback, readableSeconds), fallback, 6f);
     }
 
     private float GetDiningRoomRevealSeconds()

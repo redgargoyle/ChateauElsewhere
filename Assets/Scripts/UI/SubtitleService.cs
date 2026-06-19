@@ -34,6 +34,7 @@ public sealed class SubtitleService : MonoBehaviour
     private TMP_Text lineText;
     private Coroutine autoHideRoutine;
     private bool showingPersistentLine;
+    private bool skipCurrentLineRequested;
 
     public static SubtitleService FindOrCreate()
     {
@@ -150,7 +151,16 @@ public sealed class SubtitleService : MonoBehaviour
     public void ClearAll()
     {
         queuedSubtitles.Clear();
+        skipCurrentLineRequested = false;
         HideCurrent();
+    }
+
+    private void Update()
+    {
+        if (autoHideRoutine != null && !showingPersistentLine && Input.GetKeyDown(KeyCode.Escape))
+        {
+            skipCurrentLineRequested = true;
+        }
     }
 
     private void ResolveReferences()
@@ -280,7 +290,16 @@ public sealed class SubtitleService : MonoBehaviour
         {
             QueuedSubtitle subtitle = queuedSubtitles.Dequeue();
             ShowNow(subtitle.LineId, subtitle.Speaker, subtitle.Text);
-            yield return new WaitForSecondsRealtime(GetDuration(subtitle.Text, subtitle.MinDuration, subtitle.MaxDuration));
+            float duration = GetDuration(subtitle.Text, subtitle.MinDuration, subtitle.MaxDuration);
+            float elapsed = 0f;
+
+            while (elapsed < duration && !skipCurrentLineRequested)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            skipCurrentLineRequested = false;
             SetVisible(false);
             yield return new WaitForSecondsRealtime(0.08f);
         }

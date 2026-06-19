@@ -456,6 +456,7 @@ public class Chapter2RegressionTests
         Assert.That(bankText, Does.Contain("Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"));
         Assert.That(serviceText, Does.Contain("Queue<QueuedSubtitle>"), "Non-choice bark subtitles should queue rather than overlap.");
         Assert.That(serviceText, Does.Contain("WaitForSecondsRealtime"), "Subtitle auto-hide timing should not pause or own gameplay.");
+        Assert.That(serviceText, Does.Contain("KeyCode.Escape"), "Players should be able to skip the current queued subtitle with Escape.");
         Assert.That(serviceText, Does.Contain("Missing subtitle line"), "Missing line IDs should warn and continue.");
 
         for (int i = 1; i <= 8; i++)
@@ -480,9 +481,12 @@ public class Chapter2RegressionTests
         string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
         string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
         string searchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string introText = File.ReadAllText(ChapterIntroUIPath);
+        string chapterManagerText = File.ReadAllText(ChapterManagerPath);
         string chapter1AdmissionBody = ExtractMethodBody(chapter1Text, "private IEnumerator AdmitGuestToEntranceHall");
         string ambientBody = ExtractMethodBody(chapter1Text, "private void StartAmbientConversation");
         string openingSpeechBody = ExtractMethodBody(chapter2Text, "private IEnumerator RunOpeningSpeechRoutine");
+        string chapter2ResolveBody = ExtractMethodBody(chapter2Text, "private void ResolveReferences");
         string dinnerAnnouncementBody = ExtractMethodBody(searchText, "private void ShowDinnerAnnouncement");
         string mealQuestionBody = ExtractMethodBody(searchText, "private void ShowMealPreferenceQuestion");
         string smokeQuestionBody = ExtractMethodBody(searchText, "private void ShowSmokingPreferenceQuestion");
@@ -497,7 +501,9 @@ public class Chapter2RegressionTests
 
         Assert.That(chapter2Text, Does.Contain("ShowGuestConversationWithSubtitle"), "Chapter 2 should preserve the existing dialogue panel and choices.");
         Assert.That(openingSpeechBody, Does.Contain("ShowSubtitleLine(\"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should use the subtitle overlay for the interrupted Butler line.");
+        Assert.That(openingSpeechBody, Does.Contain("WaitForDialogueReadOrSkip"), "Address Guests subtitles should pause long enough to read and support Escape skip.");
         Assert.That(openingSpeechBody, Does.Match(@"ShowSubtitleLine\(\""SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""[\s\S]*ClearSubtitles\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "Normal subtitles should be cleared before the monster stinger.");
+        Assert.That(chapter2ResolveBody, Does.Not.Contain("ResolveSubtitleService();"), "Subtitle UI should be created lazily, not during chapter intro/reference resolution.");
         Assert.That(dinnerAnnouncementBody, Does.Contain("GetChapter2GuestSubtitleLineId(\"SUB_CH02_BUTLER_FOUND_G\", guest)"), "Found subtitles should follow the clicked guest entry.");
         Assert.That(mealQuestionBody, Does.Contain("SUB_CH02_BUTLER_MEAL_ASK_001"));
         Assert.That(smokeQuestionBody, Does.Contain("SUB_CH02_BUTLER_SMOKE_ASK_001"));
@@ -514,6 +520,8 @@ public class Chapter2RegressionTests
         Assert.That(searchText, Does.Contain("guest.smokingPreference = preference"));
         Assert.That(searchText, Does.Contain("guest.spiritBottle = $\"{GetGuestDisplayName(guest)}'s bottle of spirits\""));
         Assert.That(searchText, Does.Contain("foundGuestIdsInOrder.Add(GetGuestIdForOrderList(guest))"));
+        Assert.That(introText, Does.Contain("Time.unscaledDeltaTime"), "Chapter intro fades should not freeze when gameplay is paused.");
+        Assert.That(chapterManagerText, Does.Contain("WaitForSecondsRealtime(GetIntroTitleHoldSeconds())"), "Chapter title holds should not freeze when gameplay is paused.");
     }
 
     [Test]
