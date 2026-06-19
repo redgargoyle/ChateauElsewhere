@@ -1,12 +1,15 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class GuestFootstepAudio : MonoBehaviour
+public sealed class PlayerFootstepAudio : MonoBehaviour
 {
-    private const string DefaultAudioObjectName = "Audio_GuestFootsteps";
+    private const string DefaultAudioObjectName = "Audio_ButlerFootsteps";
+    private const string DefaultCatalogResourcePath = "Audio/GuestFootstepCatalog";
 
+    [SerializeField] private GuestFootstepCatalog footstepCatalog;
+    [SerializeField] private string footstepCatalogResourcePath = DefaultCatalogResourcePath;
     [SerializeField] private AudioClip clip;
-    [SerializeField, Range(0f, 1f)] private float baseVolume = 0.28f;
+    [SerializeField, Range(0f, 1f)] private float baseVolume = 0.24f;
     [SerializeField, Min(10f)] private float highPassCutoffFrequency = 180f;
     [SerializeField, Range(0.1f, 10f)] private float highPassResonanceQ = 1.1f;
     [SerializeField, Min(10f)] private float lowPassCutoffFrequency = 9000f;
@@ -15,24 +18,36 @@ public sealed class GuestFootstepAudio : MonoBehaviour
     private AudioSource source;
     private AudioHighPassFilter highPassFilter;
     private AudioLowPassFilter lowPassFilter;
+    private bool isWalking;
 
-    public void Configure(
-        AudioClip nextClip,
-        float nextBaseVolume,
-        float nextHighPassCutoffFrequency,
-        float nextHighPassResonanceQ,
-        float nextLowPassCutoffFrequency = 9000f)
+    public void SetWalking(bool walking)
     {
-        clip = nextClip;
-        baseVolume = Mathf.Clamp01(nextBaseVolume);
-        highPassCutoffFrequency = Mathf.Max(10f, nextHighPassCutoffFrequency);
-        highPassResonanceQ = Mathf.Clamp(nextHighPassResonanceQ, 0.1f, 10f);
-        lowPassCutoffFrequency = Mathf.Max(10f, nextLowPassCutoffFrequency);
-        ApplyConfiguration();
+        if (isWalking == walking)
+        {
+            if (isWalking && (source == null || !source.isPlaying))
+            {
+                PlayWalking();
+            }
+
+            return;
+        }
+
+        isWalking = walking;
+
+        if (isWalking)
+        {
+            PlayWalking();
+        }
+        else
+        {
+            StopWalking();
+        }
     }
 
     public void PlayWalking()
     {
+        ResolveCatalogClip();
+
         if (clip == null || !EnsureAudioSource())
         {
             return;
@@ -56,7 +71,39 @@ public sealed class GuestFootstepAudio : MonoBehaviour
 
     private void OnDisable()
     {
+        isWalking = false;
         StopWalking();
+    }
+
+    private void ResolveCatalogClip()
+    {
+        if (clip != null)
+        {
+            return;
+        }
+
+        if (footstepCatalog == null)
+        {
+            string resourcePath = string.IsNullOrWhiteSpace(footstepCatalogResourcePath)
+                ? DefaultCatalogResourcePath
+                : footstepCatalogResourcePath.Trim();
+            footstepCatalog = Resources.Load<GuestFootstepCatalog>(resourcePath);
+        }
+
+        if (footstepCatalog != null &&
+            footstepCatalog.TryGetFootstepsForButler(
+                out AudioClip catalogClip,
+                out float catalogVolume,
+                out float catalogHighPassCutoffFrequency,
+                out float catalogHighPassResonanceQ,
+                out float catalogLowPassCutoffFrequency))
+        {
+            clip = catalogClip;
+            baseVolume = catalogVolume;
+            highPassCutoffFrequency = catalogHighPassCutoffFrequency;
+            highPassResonanceQ = catalogHighPassResonanceQ;
+            lowPassCutoffFrequency = catalogLowPassCutoffFrequency;
+        }
     }
 
     private void ApplyConfiguration()

@@ -15,9 +15,12 @@ public sealed class GuestFootstepCatalog : ScriptableObject
 #pragma warning restore 0649
 
     [SerializeField] private GuestFootstepAssignment[] assignments = Array.Empty<GuestFootstepAssignment>();
+    [SerializeField] private AudioClip butlerClip;
+    [SerializeField, Range(0f, 1f)] private float butlerVolume = 0.24f;
     [SerializeField, Range(0f, 1f)] private float defaultVolume = 0.28f;
     [SerializeField, Min(10f)] private float highPassCutoffFrequency = 180f;
     [SerializeField, Range(0.1f, 10f)] private float highPassResonanceQ = 1.1f;
+    [SerializeField, Min(10f)] private float lowPassCutoffFrequency = 9000f;
 
     public bool TryGetFootstepsForGuest(
         int guestNumber,
@@ -51,5 +54,20 @@ public sealed class GuestFootstepCatalog : ScriptableObject
         }
 
         return false;
+    }
+
+    public bool TryGetFootstepsForButler(
+        out AudioClip clip,
+        out float volume,
+        out float cutoffFrequency,
+        out float resonanceQ,
+        out float lowPassFrequency)
+    {
+        clip = butlerClip;
+        volume = butlerVolume > 0f ? Mathf.Clamp01(butlerVolume) : defaultVolume;
+        cutoffFrequency = Mathf.Max(10f, highPassCutoffFrequency);
+        resonanceQ = Mathf.Clamp(highPassResonanceQ, 0.1f, 10f);
+        lowPassFrequency = Mathf.Max(10f, lowPassCutoffFrequency);
+        return clip != null;
     }
 }

@@ -46,6 +46,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private Animator animator;
 	private SpriteRenderer spriteRenderer;
 	private SpriteRenderer[] spriteRenderers;
+	private PlayerFootstepAudio footstepAudio;
 	private CameraManager cameraManager;
 	private RoomNavigationManager navigationManager;
 	private Vector2 destination;
@@ -220,11 +221,13 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		UpdateAnimator();
+		UpdateFootstepAudio();
 	}
 
 	private void OnDisable()
 	{
 		NavigationCursorController.ClearWalkHover(this);
+		footstepAudio?.SetWalking(false);
 	}
 
 	private void FixedUpdate()
@@ -261,6 +264,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		if (spriteRenderers == null || spriteRenderers.Length == 0)
 			spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
+
+		if (footstepAudio == null)
+			footstepAudio = GetComponent<PlayerFootstepAudio>();
+
+		if (footstepAudio == null && Application.isPlaying)
+			footstepAudio = gameObject.AddComponent<PlayerFootstepAudio>();
 
 		if (cameraManager == null)
 			cameraManager = FindAnyObjectByType<CameraManager>();
@@ -1001,6 +1010,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 		{
 			MovementStopped?.Invoke();
 		}
+
+		UpdateFootstepAudio();
 	}
 
 	private void MoveTowardDestination()
@@ -1197,6 +1208,16 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		animatorParameters.ApplyMovement(animator, isWalking, walkDirection, runningAnimationSpeed);
 		ApplySpriteMirror();
+	}
+
+	private void UpdateFootstepAudio()
+	{
+		if (footstepAudio == null)
+		{
+			CacheReferences();
+		}
+
+		footstepAudio?.SetWalking(isWalking && isReady && enabled && gameObject.activeInHierarchy);
 	}
 
 	private void UpdateWalkDirection(Vector2 movement)

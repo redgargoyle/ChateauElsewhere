@@ -73,11 +73,95 @@ public sealed class ClockTickingAmbienceCatalog : ScriptableObject
         return false;
     }
 
+    public bool TryGetStableClipForRoom(string roomName, out AudioClip clip)
+    {
+        clip = null;
+
+        if (clips == null || clips.Length == 0)
+        {
+            return false;
+        }
+
+        int startIndex = GetStableClipIndex(roomName, clips.Length);
+
+        for (int attempt = 0; attempt < clips.Length; attempt++)
+        {
+            int index = (startIndex + attempt) % clips.Length;
+
+            if (clips[index] == null)
+            {
+                continue;
+            }
+
+            clip = clips[index];
+            return true;
+        }
+
+        return false;
+    }
+
     public float GetRandomPitch()
     {
         float low = Mathf.Min(minPitch, maxPitch);
         float high = Mathf.Max(minPitch, maxPitch);
         return UnityEngine.Random.Range(low, high);
+    }
+
+    public float GetStablePitchForRoom(string roomName)
+    {
+        float low = Mathf.Min(minPitch, maxPitch);
+        float high = Mathf.Max(minPitch, maxPitch);
+
+        if (Mathf.Approximately(low, high))
+        {
+            return low;
+        }
+
+        return Mathf.Lerp(low, high, GetStableUnitValue(roomName));
+    }
+
+    public float GetStablePlaybackTimeForRoom(string roomName, AudioClip clip, float elapsedSeconds)
+    {
+        if (clip == null || clip.length <= 0f)
+        {
+            return 0f;
+        }
+
+        float roomOffset = GetStableUnitValue(roomName) * clip.length;
+        return Mathf.Repeat(roomOffset + Mathf.Max(0f, elapsedSeconds), clip.length);
+    }
+
+    private static int GetStableClipIndex(string roomName, int clipCount)
+    {
+        if (clipCount <= 1)
+        {
+            return 0;
+        }
+
+        return Mathf.Abs(GetStableHash(roomName)) % clipCount;
+    }
+
+    private static float GetStableUnitValue(string roomName)
+    {
+        int hash = GetStableHash(roomName);
+        return (hash & 0x7fffffff) / (float)int.MaxValue;
+    }
+
+    private static int GetStableHash(string value)
+    {
+        string normalizedRoom = NormalizeRoomName(value);
+
+        unchecked
+        {
+            int hash = 23;
+
+            for (int i = 0; i < normalizedRoom.Length; i++)
+            {
+                hash = hash * 31 + normalizedRoom[i];
+            }
+
+            return hash == int.MinValue ? 0 : hash;
+        }
     }
 
     private static string NormalizeRoomName(string value)
