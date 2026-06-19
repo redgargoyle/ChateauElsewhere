@@ -107,6 +107,19 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     public static bool BlocksGameInput { get; private set; }
 
+    public static void ResetGlobalModalState()
+    {
+        BlocksGameInput = false;
+        NavigationCursorController.SetGameplayHoverBlocked(false);
+
+        RuntimeSettingsMenu existing = FindAnyObjectByType<RuntimeSettingsMenu>(FindObjectsInactive.Include);
+
+        if (existing != null)
+        {
+            existing.ResetModalStateForRuntimeReset();
+        }
+    }
+
     public static RuntimeSettingsMenu FindOrCreate(RoomNavigationManager navigationManager)
     {
         RuntimeSettingsMenu existing = FindAnyObjectByType<RuntimeSettingsMenu>(FindObjectsInactive.Include);
@@ -521,6 +534,15 @@ public class RuntimeSettingsMenu : MonoBehaviour
         BlocksGameInput = false;
         NavigationCursorController.SetGameplayHoverBlocked(false);
         RestoreSettingsPauseState();
+    }
+
+    private void ResetModalStateForRuntimeReset()
+    {
+        settingsOpen = false;
+        debugOpen = false;
+        roomListOpen = false;
+        timeScalePausedForSettings = false;
+        RefreshOpenState();
     }
 
     private void RebuildRoomButtons()

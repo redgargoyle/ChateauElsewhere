@@ -92,6 +92,7 @@ public class ChapterManager : MonoBehaviour
 
     private void Awake()
     {
+        GameplayRuntimeState.ResetForGameplayStart();
         ResolveReferences();
         EnsureDebugSkipButton();
 

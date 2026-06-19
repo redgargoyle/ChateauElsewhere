@@ -7,6 +7,9 @@ public class Chapter2RegressionTests
 {
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ChapterIntroUIPath = "Assets/Scripts/Story/ChapterIntroUI.cs";
+    private const string GameplayRuntimeStatePath = "Assets/Scripts/Story/GameplayRuntimeState.cs";
+    private const string MainMenuControllerPath = "Assets/Scripts/MainMenuController.cs";
+    private const string RuntimeSettingsMenuPath = "Assets/Scripts/UI/RuntimeSettingsMenu.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
@@ -522,6 +525,29 @@ public class Chapter2RegressionTests
         Assert.That(searchText, Does.Contain("foundGuestIdsInOrder.Add(GetGuestIdForOrderList(guest))"));
         Assert.That(introText, Does.Contain("Time.unscaledDeltaTime"), "Chapter intro fades should not freeze when gameplay is paused.");
         Assert.That(chapterManagerText, Does.Contain("WaitForSecondsRealtime(GetIntroTitleHoldSeconds())"), "Chapter title holds should not freeze when gameplay is paused.");
+    }
+
+    [Test]
+    public void NewGameAndGameplayStartResetStickyPauseState()
+    {
+        Assert.That(File.Exists(GameplayRuntimeStatePath), Is.True, "Gameplay should have a single reset point for sticky editor/runtime pause state.");
+
+        string gameplayRuntimeText = File.ReadAllText(GameplayRuntimeStatePath);
+        string mainMenuText = File.ReadAllText(MainMenuControllerPath);
+        string chapterManagerText = File.ReadAllText(ChapterManagerPath);
+        string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
+        string loadGameBody = ExtractMethodBody(mainMenuText, "private void LoadGameScene");
+        string chapterManagerAwakeBody = ExtractMethodBody(chapterManagerText, "private void Awake");
+
+        Assert.That(gameplayRuntimeText, Does.Contain("Time.timeScale = 1f"), "New game should never inherit Time.timeScale = 0 from another machine/editor session.");
+        Assert.That(gameplayRuntimeText, Does.Contain("AudioListener.pause = false"), "New game should never inherit a paused audio listener.");
+        Assert.That(gameplayRuntimeText, Does.Contain("EditorApplication.isPaused = false"), "Editor play-mode pause should be cleared at gameplay scene boundaries.");
+        Assert.That(gameplayRuntimeText, Does.Contain("SceneManager.sceneLoaded"), "Scene loads should clear sticky pause state even when Gameplay is opened directly.");
+        Assert.That(gameplayRuntimeText, Does.Contain("RuntimeSettingsMenu.ResetGlobalModalState()"), "Settings input-block state should be reset at gameplay boundaries.");
+        Assert.That(runtimeSettingsText, Does.Contain("public static void ResetGlobalModalState()"));
+        Assert.That(runtimeSettingsText, Does.Contain("BlocksGameInput = false"));
+        Assert.That(loadGameBody, Does.Contain("GameplayRuntimeState.ResetForNewGame()"));
+        Assert.That(chapterManagerAwakeBody, Does.Contain("GameplayRuntimeState.ResetForGameplayStart()"));
     }
 
     [Test]

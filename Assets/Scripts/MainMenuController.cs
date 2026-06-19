@@ -790,6 +790,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        GameplayRuntimeState.ResetForNewGame();
         StopMenuSoundscape();
         SceneManager.LoadScene(targetSceneName, LoadSceneMode.Single);
     }
