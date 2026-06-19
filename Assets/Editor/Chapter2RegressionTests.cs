@@ -21,6 +21,9 @@ public class Chapter2RegressionTests
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
     private const string Chapter2PanicLibraryAssetPath = "Assets/Resources/Chapter2/PanicAnimationLibrary.asset";
     private const string Chapter2PanicScreamCatalogPath = "Assets/Resources/Audio/Chapter2PanicScreamCatalog.asset";
+    private const string GuestFootstepAudioPath = "Assets/Scripts/Audio/GuestFootstepAudio.cs";
+    private const string GuestFootstepCatalogScriptPath = "Assets/Scripts/Audio/GuestFootstepCatalog.cs";
+    private const string GuestFootstepCatalogPath = "Assets/Resources/Audio/GuestFootstepCatalog.asset";
     private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
     private const string Chapter2MonsterArmSwingResourcePath = "Assets/Resources/Chapter2/Monster/ArmSwing";
     private const string Chapter2MonsterArmSwingClipPath = "Assets/Animation/Monster/Ch2_Monster_ArmSwing.anim";
@@ -348,6 +351,76 @@ public class Chapter2RegressionTests
                 Does.Match($@"(?s)- guestNumber: {guestNumber}\s+clip: \{{fileID: 8300000, guid: {clipGuid}, type: 3\}}\s+volume: "),
                 $"Guest {guestNumber} should be assigned to {Path.GetFileName(clipPath)}.");
         }
+    }
+
+    [Test]
+    public void GuestFootstepCatalogCoversEveryGuestAndUsesHighPassFiltering()
+    {
+        Assert.That(File.Exists(GuestFootstepAudioPath), Is.True, "Guest footsteps need a reusable audio source component.");
+        Assert.That(File.Exists(GuestFootstepCatalogScriptPath), Is.True, "Guest footsteps need an explicit per-guest catalog type.");
+        Assert.That(File.Exists(GuestFootstepCatalogPath), Is.True, "The runtime footstep catalog should be available through Resources.");
+
+        string audioText = File.ReadAllText(GuestFootstepAudioPath);
+        string catalogScriptText = File.ReadAllText(GuestFootstepCatalogScriptPath);
+        string catalogText = File.ReadAllText(GuestFootstepCatalogPath);
+        string[] clipPaths =
+        {
+            "Assets/Audio/woman-walk/01_hardwood_hallway_walk_woman_footsteps_seed510000_48khz.wav",
+            "Assets/Audio/man-walk/01_hardwood_hallway_walk_man_footsteps_seed1070000_48khz.wav",
+            "Assets/Audio/man-walk/06_slow_cautious_floorboards_man_footsteps_seed1070679_48khz.wav",
+            "Assets/Audio/woman-walk/01_hardwood_hallway_walk_woman_footsteps_seed520000_48khz.wav",
+            "Assets/Audio/man-walk/05_wood_stair_steps_man_footsteps_seed1070582_48khz.wav",
+            "Assets/Audio/woman-walk/02_thick_carpet_room_walk_woman_footsteps_seed510097_48khz.wav",
+            "Assets/Audio/man-walk/03_marble_foyer_walk_woman_footsteps_seed510194_48khz.wav",
+            "Assets/Audio/woman-walk/05_wood_stair_steps_woman_footsteps_seed510388_48khz.wav"
+        };
+
+        Assert.That(audioText, Does.Contain("AudioHighPassFilter"), "Each guest footstep source should high-pass its loop before it enters the mix.");
+        Assert.That(audioText, Does.Contain("highpassResonanceQ"), "The high-pass resonance should be serialized through the source component.");
+        Assert.That(audioText, Does.Contain("source.loop = true"), "Footsteps should loop while a guest is walking.");
+        Assert.That(audioText, Does.Contain("GameAudioChannel.GameSounds"), "Footsteps should respect the Game Sounds settings slider.");
+        Assert.That(catalogScriptText, Does.Contain("TryGetFootstepsForGuest"), "Chapter systems should resolve clips through the catalog, not filenames.");
+        Assert.That(catalogText, Does.Contain("highPassCutoffFrequency: 180"), "The catalog should apply a mix-friendly high-pass cutoff.");
+
+        for (int i = 0; i < clipPaths.Length; i++)
+        {
+            string clipPath = clipPaths[i];
+            string clipGuid = ReadGuid(clipPath + ".meta");
+            int guestNumber = i + 1;
+
+            Assert.That(File.Exists(clipPath), Is.True, $"Guest {guestNumber} footstep clip should exist at {clipPath}.");
+            Assert.That(
+                catalogText,
+                Does.Match($@"(?s)- guestNumber: {guestNumber}\s+clip: \{{fileID: 8300000, guid: {clipGuid}, type: 3\}}\s+volume: "),
+                $"Guest {guestNumber} should be assigned to {Path.GetFileName(clipPath)}.");
+        }
+    }
+
+    [Test]
+    public void GuestFootstepsFollowChapterMovementRoutines()
+    {
+        string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string panicText = File.ReadAllText(Chapter2GuestPanicControllerPath);
+        string chapter1MoveBody = ExtractMethodBody(chapter1Text, "private IEnumerator MoveGuestTo(GuestRuntimeState");
+        string chapter1BeginMoveBody = ExtractMethodBody(chapter1Text, "private void BeginGuestMoveTo");
+        string chapter1DisableBody = ExtractMethodBody(chapter1Text, "private void DisableGuestMovement");
+        string panicStepBody = ExtractMethodBody(panicText, "private bool StepParticipantsTowardAssignedTargets(float deltaTime, float moveSpeedPixels, bool hideParticipantsOnArrival)");
+        string scriptedBeginBody = ExtractMethodBody(panicText, "public bool BeginScriptedAnimatorWalk");
+        string scriptedStopBody = ExtractMethodBody(panicText, "public void StopScriptedAnimatorWalk");
+        string hideAfterExitBody = ExtractMethodBody(panicText, "public void HideAfterExitArrival");
+
+        Assert.That(chapter1Text, Does.Contain("GuestFootstepCatalog"), "Chapter 1 should use the shared footstep catalog.");
+        Assert.That(chapter1Text, Does.Contain("ConfigureGuestFootsteps(guestObject, i + 1)"), "Chapter 1 runtime state should bind each guest to their own footstep loop.");
+        Assert.That(chapter1MoveBody, Does.Match(@"StartGuestFootsteps\(guestState\)[\s\S]*mover\.MoveTo\(target\)[\s\S]*StopGuestFootsteps\(guestState\)"), "Coroutine guest movement should play footsteps only while the waypoint mover is active.");
+        Assert.That(chapter1BeginMoveBody, Does.Match(@"StartGuestFootsteps\(guestState\)[\s\S]*mover\.MoveTo\(target\)"), "Asynchronous guest movement should start footsteps before moving.");
+        Assert.That(chapter1DisableBody, Does.Match(@"StopGuestFootsteps\(guestState\)[\s\S]*guestState\.Mover\.StopMoving\(\)"), "Cancelling guest movement should stop footstep audio before disabling the mover.");
+
+        Assert.That(panicText, Does.Contain("ConfigureParticipantFootsteps(participant)"), "Chapter 2 panic participants should inherit their assigned footstep loop.");
+        Assert.That(panicStepBody, Does.Contain("participant.SetFootstepsMoving(!arrived)"), "Shared panic movement should toggle each guest's footstep source based on actual movement.");
+        Assert.That(panicText, Does.Contain("StopSharedParticipantFootsteps()"), "Shared panic footsteps should stop when a shared movement pass ends.");
+        Assert.That(scriptedBeginBody, Does.Contain("PlayFootsteps()"), "Scripted panic guests should play footsteps while animator walking starts.");
+        Assert.That(scriptedStopBody, Does.Contain("StopFootsteps()"), "Scripted panic guests should stop footsteps when animator walking stops.");
+        Assert.That(hideAfterExitBody, Does.Contain("StopFootsteps()"), "Guests hidden after leaving the room should not leave footstep loops running.");
     }
 
     [Test]
@@ -1022,6 +1095,37 @@ public class Chapter2RegressionTests
 
         Assert.That(match.Success, Is.True, $"{metaPath} should contain a Unity GUID.");
         return match.Groups[1].Value;
+    }
+
+    private static string ExtractMethodBody(string sourceText, string methodName)
+    {
+        int methodIndex = sourceText.IndexOf(methodName, System.StringComparison.Ordinal);
+        Assert.That(methodIndex, Is.GreaterThanOrEqualTo(0), $"Could not find method '{methodName}'.");
+
+        int bodyStart = sourceText.IndexOf('{', methodIndex);
+        Assert.That(bodyStart, Is.GreaterThanOrEqualTo(0), $"Could not find method body for '{methodName}'.");
+
+        int depth = 0;
+
+        for (int i = bodyStart; i < sourceText.Length; i++)
+        {
+            if (sourceText[i] == '{')
+            {
+                depth++;
+            }
+            else if (sourceText[i] == '}')
+            {
+                depth--;
+
+                if (depth == 0)
+                {
+                    return sourceText.Substring(bodyStart, i - bodyStart + 1);
+                }
+            }
+        }
+
+        Assert.Fail($"Could not find end of method body for '{methodName}'.");
+        return string.Empty;
     }
 
     private readonly struct PanicActionSpec

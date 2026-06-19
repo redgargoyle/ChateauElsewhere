@@ -13,6 +13,9 @@ public class NavigationRegressionTests
     private const string RoomContentGroupPath = "Assets/Scripts/Navigation/RoomContentGroup.cs";
     private const string DoorOpenSoundCatalogPath = "Assets/Resources/Audio/DoorOpenSoundCatalog.asset";
     private const string StairwaySoundCatalogPath = "Assets/Resources/Audio/StairwaySoundCatalog.asset";
+    private const string ClockTickingAmbienceControllerPath = "Assets/Scripts/Audio/ClockTickingAmbienceController.cs";
+    private const string ClockTickingAmbienceCatalogScriptPath = "Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs";
+    private const string ClockTickingAmbienceCatalogPath = "Assets/Resources/Audio/ClockTickingAmbienceCatalog.asset";
     private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string NavigationEditorToolsPath = "Assets/Editor/NavigationEditorTools.cs";
@@ -80,6 +83,63 @@ public class NavigationRegressionTests
 
         string[] stairClipMetaPaths = Directory.GetFiles("Assets/Audio/Sound Exports", "@hamzak - stair*.wav.meta");
         Assert.That(stairClipMetaPaths.Length, Is.EqualTo(1), "Only exact-prefix @hamzak - stair* clips should be treated as stairway clips.");
+    }
+
+    [Test]
+    public void ClockTickingAmbienceLoopsRandomTicksInClockRooms()
+    {
+        Assert.That(File.Exists(ClockTickingAmbienceControllerPath), Is.True, "Clock ambience needs a room-aware controller.");
+        Assert.That(File.Exists(ClockTickingAmbienceCatalogScriptPath), Is.True, "Clock ambience needs a runtime catalog type.");
+        Assert.That(File.Exists(ClockTickingAmbienceCatalogPath), Is.True, "Clock ambience should load from Resources.");
+
+        string navigationText = File.ReadAllText(NavigationManagerPath);
+        string controllerText = File.ReadAllText(ClockTickingAmbienceControllerPath);
+        string catalogScriptText = File.ReadAllText(ClockTickingAmbienceCatalogScriptPath);
+        string catalogText = File.ReadAllText(ClockTickingAmbienceCatalogPath);
+        string[] roomNames =
+        {
+            "Grand Entrance",
+            "Grand Entrance Hall",
+            "Drawing Room",
+            "Library",
+            "Music Room",
+            "Billiard Room",
+            "Upper Gallery"
+        };
+        string[] clockClipPaths =
+        {
+            "Assets/Audio/clock-ticking/015_soft_library_clock_ticks_seed1320574_raw16.wav",
+            "Assets/Audio/clock-ticking/014_close_gear_clockwork_ticks_seed1320533_raw16.wav",
+            "Assets/Audio/clock-ticking/12_distant_hall_clock_ticks_tangoflux_seed1221164_48khz.wav",
+            "Assets/Audio/clock-ticking/09_thin_plastic_clock_ticks_tangoflux_seed1220873_48khz.wav",
+            "Assets/Audio/clock-ticking/007_quiet_bedroom_clock_ticks_seed1320246_raw16.wav",
+            "Assets/Audio/clock-ticking/04_wristwatch_tiny_ticks_audioldm2_seed1320123_48khz.wav"
+        };
+
+        Assert.That(navigationText, Does.Contain("ClockTickingAmbienceController"), "Room navigation should create the ticking controller with the other room ambience systems.");
+        Assert.That(navigationText, Does.Match(@"EnsureFireplaceAmbienceController\(\);[\s\S]*EnsureClockTickingAmbienceController\(\);"), "Room changes should refresh fireplace and clock ambience together.");
+        Assert.That(controllerText, Does.Contain("DefaultCatalogResourcePath = \"Audio/ClockTickingAmbienceCatalog\""));
+        Assert.That(controllerText, Does.Contain("audioSource.loop = true"), "Clock ticking should loop while the player remains in a clock room.");
+        Assert.That(controllerText, Does.Contain("OnCurrentRoomChanged"), "Clock ticking should react to normal travel and debug teleports.");
+        Assert.That(controllerText, Does.Contain("GameAudioChannel.Atmosphere"), "Clock ticking should respect the Atmosphere slider.");
+        Assert.That(controllerText, Does.Contain("TryGetRandomClip(ref lastClipIndex"), "Every clock-room entry should choose a random ticking clip.");
+        Assert.That(catalogScriptText, Does.Contain("NormalizeRoomName"), "Clock rooms should match authored names robustly.");
+
+        for (int i = 0; i < roomNames.Length; i++)
+        {
+            Assert.That(catalogText, Does.Contain($"- {roomNames[i]}"), $"{roomNames[i]} should be clock-enabled.");
+        }
+
+        Assert.That(Regex.Matches(catalogText, "fileID: 8300000").Count, Is.EqualTo(clockClipPaths.Length), "The clock catalog should include every provided clock ticking clip.");
+
+        for (int i = 0; i < clockClipPaths.Length; i++)
+        {
+            string clipPath = clockClipPaths[i];
+            string clipGuid = ReadGuid(clipPath + ".meta");
+
+            Assert.That(File.Exists(clipPath), Is.True, $"{clipPath} should exist.");
+            Assert.That(catalogText, Does.Contain($"guid: {clipGuid}"), $"{clipPath} should be in the clock ticking random pool.");
+        }
     }
 
     [Test]
@@ -677,6 +737,15 @@ public class NavigationRegressionTests
 
         Assert.Fail($"Could not extract method body for '{methodName}'.");
         return string.Empty;
+    }
+
+    private static string ReadGuid(string metaPath)
+    {
+        string metaText = File.ReadAllText(metaPath);
+        Match match = Regex.Match(metaText, @"(?m)^guid: ([0-9a-f]{32})$");
+
+        Assert.That(match.Success, Is.True, $"{metaPath} should contain a Unity GUID.");
+        return match.Groups[1].Value;
     }
 
     private static void AssertScenePropSprite(string sceneText, string propName, string spriteGuid)

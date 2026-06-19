@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d153adbd70fda53513c371badfa093b, type: 3}
+  m_Name: ClockTickingAmbienceCatalog
+  m_EditorClassIdentifier:
+  clips:
+  - {fileID: 8300000, guid: 90ed8d2b12cc2ecd8881f943b543fd97, type: 3}
+  - {fileID: 8300000, guid: fc7eb70b3284514cfa22289f7ef12fdd, type: 3}
+  - {fileID: 8300000, guid: 45876613868b614ca83e9d719a3a2f63, type: 3}
+  - {fileID: 8300000, guid: 92c891a935bdf5b0fb7a32ec058c8476, type: 3}
+  - {fileID: 8300000, guid: 752ebabf043a00176986eee4e4606641, type: 3}
+  - {fileID: 8300000, guid: ff5838d0aa3cac7c38cd95b0fdc44ab8, type: 3}
+  roomNames:
+  - Grand Entrance
+  - Grand Entrance Hall
+  - Grand Entrance Hall Rear view
+  - Drawing Room
+  - Library
+  - Music Room
+  - Billiard Room
+  - Upper Gallery
+  baseVolume: 0.18
+  fadeSeconds: 0.35
+  minPitch: 0.98
+  maxPitch: 1.02

@@ -30,6 +30,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public NPCWaypointMover Mover;
         public ActorRoomState ActorState;
         public RoomProjectedEntity Projection;
+        public GuestFootstepAudio Footsteps;
     }
 
     private sealed class GuestGroupRuntimeState
@@ -97,6 +98,11 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private float worldDrawingRoomSeatSpacing = 0.75f;
     [SerializeField] private float worldGuestMoveSpeed = 2.2f;
 
+    [Header("Guest Footsteps")]
+    [SerializeField] private GuestFootstepCatalog guestFootstepCatalog;
+    [SerializeField] private string guestFootstepCatalogResourcePath = DefaultGuestFootstepCatalogResourcePath;
+    [SerializeField] private bool playGuestFootsteps = true;
+
     [Header("Entrance Sorting")]
     [SerializeField] private string entranceGuestSortingLayerName = "People";
     [SerializeField] private int entranceGuestSortingOrderBase = 9000;
@@ -156,6 +162,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
     private const string EntranceCoatHangerName = "entrance_coat_hanger_0";
     private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
+    private const string DefaultGuestFootstepCatalogResourcePath = "Audio/GuestFootstepCatalog";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
@@ -210,6 +217,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         CancelPendingCoatPickup();
         CancelPendingClosetStorage();
+        StopAllGuestFootsteps();
 
         if (guestRoomVisibilityRefreshRoutine != null)
         {
@@ -1323,6 +1331,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void ResetGuestStates(bool createFallbacks)
     {
+        StopAllGuestFootsteps();
         guestStates.Clear();
         EnsureGuestConfigs(createFallbacks);
 
@@ -1339,6 +1348,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             GameObject guestObject = config.ResolveGuestObject();
             NPCWaypointMover mover = guestObject != null ? guestObject.GetComponent<NPCWaypointMover>() : null;
             RoomProjectedEntity projection = ResolveGuestProjection(guestObject, actorState);
+            GuestFootstepAudio footsteps = ConfigureGuestFootsteps(guestObject, i + 1);
 
             if (mover == null && guestObject != null)
             {
@@ -1365,6 +1375,7 @@ public class Chapter1ArrivalController : MonoBehaviour
                 Mover = mover,
                 ActorState = actorState,
                 Projection = projection,
+                Footsteps = footsteps,
                 Seat = ResolveSeatForGuest(i)
             };
 
@@ -2199,6 +2210,80 @@ public class Chapter1ArrivalController : MonoBehaviour
         TryCompleteEntranceGroup(group);
         RefreshInteractionState();
         CheckChapterCompletionGate();
+    }
+
+    private GuestFootstepAudio ConfigureGuestFootsteps(GameObject guestObject, int guestNumber)
+    {
+        if (!playGuestFootsteps || guestObject == null)
+        {
+            return null;
+        }
+
+        ResolveGuestFootstepCatalog();
+
+        GuestFootstepAudio footsteps = guestObject.GetComponent<GuestFootstepAudio>();
+
+        if (footsteps == null)
+        {
+            footsteps = guestObject.AddComponent<GuestFootstepAudio>();
+        }
+
+        if (guestFootstepCatalog != null &&
+            guestFootstepCatalog.TryGetFootstepsForGuest(
+                guestNumber,
+                out AudioClip clip,
+                out float volume,
+                out float cutoffFrequency,
+                out float resonanceQ))
+        {
+            footsteps.Configure(clip, volume, cutoffFrequency, resonanceQ);
+        }
+
+        return footsteps;
+    }
+
+    private GuestFootstepAudio ResolveGuestFootsteps(GuestRuntimeState guestState)
+    {
+        if (!playGuestFootsteps || guestState == null || guestState.GuestObject == null)
+        {
+            return null;
+        }
+
+        if (guestState.Footsteps == null)
+        {
+            guestState.Footsteps = ConfigureGuestFootsteps(guestState.GuestObject, guestState.GuestIndex + 1);
+        }
+
+        return guestState.Footsteps;
+    }
+
+    private void StartGuestFootsteps(GuestRuntimeState guestState)
+    {
+        GuestFootstepAudio footsteps = ResolveGuestFootsteps(guestState);
+        footsteps?.PlayWalking();
+    }
+
+    private void StopGuestFootsteps(GuestRuntimeState guestState)
+    {
+        if (guestState == null)
+        {
+            return;
+        }
+
+        if (guestState.Footsteps == null && guestState.GuestObject != null)
+        {
+            guestState.Footsteps = guestState.GuestObject.GetComponent<GuestFootstepAudio>();
+        }
+
+        guestState.Footsteps?.StopWalking();
+    }
+
+    private void StopAllGuestFootsteps()
+    {
+        for (int i = 0; i < guestStates.Count; i++)
+        {
+            StopGuestFootsteps(guestStates[i]);
+        }
     }
 
     private Transform ResolveDrawingRoomEntryPointForGuest(GuestRuntimeState guest, GuestGroupRuntimeState group)
@@ -3209,6 +3294,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         mover.enabled = true;
         mover.MoveSpeed = GetMoveSpeedForGuestObject(guestState.GuestObject);
+        StartGuestFootsteps(guestState);
         mover.MoveTo(target);
 
         while (mover != null && mover.IsMoving)
@@ -3216,6 +3302,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             yield return null;
         }
 
+        StopGuestFootsteps(guestState);
         BindGuestToRoomStagePoint(guestState, target);
     }
 
@@ -3242,12 +3329,20 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         mover.enabled = true;
         mover.MoveSpeed = GetMoveSpeedForGuestObject(guestState.GuestObject);
+        StartGuestFootsteps(guestState);
         mover.MoveTo(target);
     }
 
     private void DisableGuestMovement(GuestRuntimeState guestState)
     {
-        if (guestState == null || guestState.Mover == null)
+        if (guestState == null)
+        {
+            return;
+        }
+
+        StopGuestFootsteps(guestState);
+
+        if (guestState.Mover == null)
         {
             return;
         }
@@ -4045,6 +4140,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         actorState.SetScaleWithRoomStageMotion(true);
         guestObject.transform.localScale = authoredGuestScale;
         RoomProjectedEntity projection = ResolveGuestProjection(guestObject, actorState);
+        ConfigureGuestFootsteps(guestObject, index + 1);
 
         bool preserveAuthoredSorting = ShouldPreserveAuthoredGuestSorting(guestObject);
         SpriteRenderer[] renderers = guestObject.GetComponentsInChildren<SpriteRenderer>(true);
@@ -5724,8 +5820,20 @@ public class Chapter1ArrivalController : MonoBehaviour
         ResolveReferences(true);
     }
 
+    private void ResolveGuestFootstepCatalog()
+    {
+        if (guestFootstepCatalog != null || string.IsNullOrWhiteSpace(guestFootstepCatalogResourcePath))
+        {
+            return;
+        }
+
+        guestFootstepCatalog = Resources.Load<GuestFootstepCatalog>(guestFootstepCatalogResourcePath.Trim());
+    }
+
     private void ResolveReferences(bool createFallbacks)
     {
+        ResolveGuestFootstepCatalog();
+
         if (chapterManager == null)
         {
             chapterManager = GetComponent<ChapterManager>();

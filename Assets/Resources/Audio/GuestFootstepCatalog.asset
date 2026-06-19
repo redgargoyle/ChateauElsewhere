@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e4c474e559b01dfdafba00f05810a6, type: 3}
+  m_Name: GuestFootstepCatalog
+  m_EditorClassIdentifier:
+  assignments:
+  - guestNumber: 1
+    clip: {fileID: 8300000, guid: e5f441d6029132bada0a5486d5811164, type: 3}
+    volume: 0.28
+  - guestNumber: 2
+    clip: {fileID: 8300000, guid: 59b9854ad6f6046d199ebeda9761484a, type: 3}
+    volume: 0.3
+  - guestNumber: 3
+    clip: {fileID: 8300000, guid: d2d27837522414b8db696d112519252c, type: 3}
+    volume: 0.28
+  - guestNumber: 4
+    clip: {fileID: 8300000, guid: e71c0b9817329ea398aaaef79d687f1b, type: 3}
+    volume: 0.27
+  - guestNumber: 5
+    clip: {fileID: 8300000, guid: b99a166a7276703c8b80e4ae7ca6108d, type: 3}
+    volume: 0.29
+  - guestNumber: 6
+    clip: {fileID: 8300000, guid: 8aa134ebab452cdc9a11657e4128a9ae, type: 3}
+    volume: 0.27
+  - guestNumber: 7
+    clip: {fileID: 8300000, guid: f45b064c9a19e8118a759d3e4f2aa676, type: 3}
+    volume: 0.28
+  - guestNumber: 8
+    clip: {fileID: 8300000, guid: 5b35aac4e19b2139c8f2894c9ef9c2af, type: 3}
+    volume: 0.27
+  defaultVolume: 0.28
+  highPassCutoffFrequency: 180
+  highPassResonanceQ: 1.1

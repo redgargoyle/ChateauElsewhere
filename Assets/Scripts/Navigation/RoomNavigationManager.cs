@@ -56,6 +56,7 @@ public class RoomNavigationManager : MonoBehaviour
     private TMP_Text currentRoomHudText;
     private RuntimeSettingsMenu runtimeSettingsMenu;
     private FireplaceAmbienceController fireplaceAmbienceController;
+    private ClockTickingAmbienceController clockTickingAmbienceController;
 
     public string CurrentRoom => currentRoom;
     public string StartingRoom => startingRoom;
@@ -85,6 +86,7 @@ public class RoomNavigationManager : MonoBehaviour
         UpdateCurrentRoomHud(currentRoom);
         EnsureRuntimeSettingsMenu();
         EnsureFireplaceAmbienceController();
+        EnsureClockTickingAmbienceController();
         RunNavigationSelfCheckForCurrentRoom();
     }
 
@@ -647,6 +649,7 @@ public class RoomNavigationManager : MonoBehaviour
     {
         ResolveReferences();
         EnsureFireplaceAmbienceController();
+        EnsureClockTickingAmbienceController();
         RefreshRoomContentForCurrentRoom();
         SyncCameraRoomContent(roomName, false);
 
@@ -669,6 +672,16 @@ public class RoomNavigationManager : MonoBehaviour
         }
 
         fireplaceAmbienceController = FireplaceAmbienceController.FindOrCreate(this);
+    }
+
+    private void EnsureClockTickingAmbienceController()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        clockTickingAmbienceController = ClockTickingAmbienceController.FindOrCreate(this);
     }
 
     private void ApplyRoomVisual(string roomName)

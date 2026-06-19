@@ -11,6 +11,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 {
     private const string ClickTargetName = "Ch2_ClickTarget";
     private const string DefaultPanicScreamCatalogResourcePath = "Audio/Chapter2PanicScreamCatalog";
+    private const string DefaultGuestFootstepCatalogResourcePath = "Audio/GuestFootstepCatalog";
     private const string PanicScreamAudioObjectName = "Audio_Ch2PanicScream";
 
     [SerializeField] private Chapter2GuestSearchController guestSearch;
@@ -18,6 +19,9 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField] private Chapter2PanicScreamCatalog panicScreamCatalog;
     [SerializeField] private string panicScreamCatalogResourcePath = DefaultPanicScreamCatalogResourcePath;
     [SerializeField] private bool playPanicScreams = true;
+    [SerializeField] private GuestFootstepCatalog guestFootstepCatalog;
+    [SerializeField] private string guestFootstepCatalogResourcePath = DefaultGuestFootstepCatalogResourcePath;
+    [SerializeField] private bool playGuestFootsteps = true;
     [SerializeField, Min(1f)] private float frameRate = 12f;
     [SerializeField, Min(0f)] private float runDistancePixels = 150f;
     [SerializeField, Min(1f)] private float panicRoamRadiusPixels = 190f;
@@ -187,6 +191,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         ResolvePanicScreamCatalog();
+        ResolveGuestFootstepCatalog();
 
         if (routePlanner == null || !IsUsableRoutePlanner(routePlanner))
         {
@@ -202,6 +207,16 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         panicScreamCatalog = Resources.Load<Chapter2PanicScreamCatalog>(panicScreamCatalogResourcePath.Trim());
+    }
+
+    private void ResolveGuestFootstepCatalog()
+    {
+        if (guestFootstepCatalog != null || string.IsNullOrWhiteSpace(guestFootstepCatalogResourcePath))
+        {
+            return;
+        }
+
+        guestFootstepCatalog = Resources.Load<GuestFootstepCatalog>(guestFootstepCatalogResourcePath.Trim());
     }
 
     private void ResolveExitTargets()
@@ -267,6 +282,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             PanicParticipant participant = PanicParticipant.Create(actorState, animation);
             participant.ConfigureRunMotion(targetParticipants.Count, guestNumber);
             ConfigureParticipantPanicScream(participant);
+            ConfigureParticipantFootsteps(participant);
 
             if (!participant.HasSpriteTarget)
             {
@@ -290,6 +306,24 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         if (panicScreamCatalog.TryGetScreamForGuest(participant.GuestNumber, out AudioClip clip, out float volume))
         {
             participant.ConfigurePanicScream(clip, volume, PanicScreamAudioObjectName);
+        }
+    }
+
+    private void ConfigureParticipantFootsteps(PanicParticipant participant)
+    {
+        if (!playGuestFootsteps || participant == null || guestFootstepCatalog == null)
+        {
+            return;
+        }
+
+        if (guestFootstepCatalog.TryGetFootstepsForGuest(
+            participant.GuestNumber,
+            out AudioClip clip,
+            out float volume,
+            out float cutoffFrequency,
+            out float resonanceQ))
+        {
+            participant.ConfigureFootsteps(clip, volume, cutoffFrequency, resonanceQ);
         }
     }
 
@@ -389,6 +423,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             runningScriptedGuestCount = 0;
             ReleaseScriptedGuestParticipantsForSharedMotion();
         }
+
+        StopParticipantFootsteps();
     }
 
     private IEnumerator RunScriptedGuestPanicRoutine(PanicParticipant participant)
@@ -809,6 +845,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         if (frameCount <= 0)
         {
+            StopSharedParticipantFootsteps();
             yield break;
         }
 
@@ -827,6 +864,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             if (allArrived && frameElapsed >= secondsPerFrame * 0.5f)
             {
+                StopSharedParticipantFootsteps();
                 yield break;
             }
 
@@ -840,6 +878,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             yield return null;
         }
+
+        StopSharedParticipantFootsteps();
     }
 
     private float GetSecondsPerFrame()
@@ -888,6 +928,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             bool arrived = participant.MovePanicOffsetTowardCurrentTarget(moveSpeedPixels, deltaTime);
+            participant.SetFootstepsMoving(!arrived);
 
             if (arrived)
             {
@@ -991,6 +1032,27 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         for (int i = 0; i < participants.Count; i++)
         {
             participants[i]?.Restore();
+        }
+    }
+
+    private void StopParticipantFootsteps()
+    {
+        for (int i = 0; i < participants.Count; i++)
+        {
+            participants[i]?.StopFootsteps();
+        }
+    }
+
+    private void StopSharedParticipantFootsteps()
+    {
+        for (int i = 0; i < participants.Count; i++)
+        {
+            PanicParticipant participant = participants[i];
+
+            if (participant != null && !participant.IsControlledByScript)
+            {
+                participant.StopFootsteps();
+            }
         }
     }
 
@@ -1217,6 +1279,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private Rigidbody2D rigidbody2D;
         private AudioSource panicScreamAudioSource;
         private AudioClip panicScreamClip;
+        private GuestFootstepAudio footstepAudio;
         private float panicScreamBaseVolume = 1f;
         private RigidbodyType2D originalRigidbodyBodyType;
         private Vector2 originalRigidbodyPosition;
@@ -1383,6 +1446,27 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             GameAudioSettings.EnsureBinding(panicScreamAudioSource, GameAudioChannel.GameSounds, panicScreamBaseVolume);
         }
 
+        public void ConfigureFootsteps(
+            AudioClip clip,
+            float baseVolume,
+            float highPassCutoffFrequency,
+            float highPassResonanceQ)
+        {
+            if (clip == null || targetTransform == null)
+            {
+                return;
+            }
+
+            footstepAudio = targetTransform.GetComponent<GuestFootstepAudio>();
+
+            if (footstepAudio == null)
+            {
+                footstepAudio = targetTransform.gameObject.AddComponent<GuestFootstepAudio>();
+            }
+
+            footstepAudio.Configure(clip, baseVolume, highPassCutoffFrequency, highPassResonanceQ);
+        }
+
         public void PlayPanicScream()
         {
             if (panicScreamAudioSource == null || panicScreamClip == null)
@@ -1401,6 +1485,28 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             {
                 panicScreamAudioSource.Stop();
             }
+        }
+
+        public void SetFootstepsMoving(bool moving)
+        {
+            if (moving)
+            {
+                PlayFootsteps();
+            }
+            else
+            {
+                StopFootsteps();
+            }
+        }
+
+        public void PlayFootsteps()
+        {
+            footstepAudio?.PlayWalking();
+        }
+
+        public void StopFootsteps()
+        {
+            footstepAudio?.StopWalking();
         }
 
         private AudioSource FindOrCreatePanicScreamAudioSource(string audioObjectName)
@@ -1637,6 +1743,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             hiddenAfterExitArrival = true;
             StopPanicScream();
+            StopFootsteps();
             StopScriptedAnimatorWalk(currentRunAction);
 
             if (actorState != null)
@@ -1658,6 +1765,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 targetTransform.localScale = originalLocalScale;
             }
 
+            PlayFootsteps();
             return UpdateScriptedAnimatorWalk(runAction, animationSpeed);
         }
 
@@ -1709,6 +1817,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 animator.speed = i < animatorSpeedStates.Length ? animatorSpeedStates[i] : 1f;
                 animator.enabled = false;
             }
+
+            StopFootsteps();
         }
 
         public void ChooseDirectionalRunTarget(Vector2 direction, float distancePixels)
@@ -2376,6 +2486,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         public void Restore()
         {
             StopPanicScream();
+            StopFootsteps();
 
             if (spriteRenderer != null)
             {
