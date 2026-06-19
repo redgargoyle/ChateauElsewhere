@@ -190,7 +190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.547984, b: 0.257696, a: 0.2086672}
+  m_Color: {r: 1, g: 0.547984, b: 0.257696, a: 0.18776672}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -431,7 +431,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.639712, b: 0.28, a: 0.2032684}
+  m_Color: {r: 1, g: 0.639712, b: 0.28, a: 0.2387598}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -671,7 +671,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.70192, b: 0.36409602, a: 0.18910746}
+  m_Color: {r: 1, g: 0.70192, b: 0.36409602, a: 0.1840186}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1080,7 +1080,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.121162586, b: 0.0064, a: 0.6621281}
+  m_Color: {r: 1, g: 0.121162586, b: 0.0064, a: 0.6793023}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1307,7 +1307,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.29425, b: 0.08325, a: 0.37470022}
+  m_Color: {r: 1, g: 0.29425, b: 0.08325, a: 0.4917782}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1695,7 +1695,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.682048, b: 0.35415998, a: 0.19183175}
+  m_Color: {r: 1, g: 0.682048, b: 0.35415998, a: 0.19246687}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3009,7 +3009,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.99216, g: 0.32652, b: 0.115480006, a: 0.56802905}
+  m_Color: {r: 0.99216, g: 0.32652, b: 0.115480006, a: 0.5706717}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3105,7 +3105,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.42776, b: 0.17865601, a: 0.35347328}
+  m_Color: {r: 1, g: 0.42776, b: 0.17865601, a: 0.3385585}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3797,19 +3797,20 @@ PolygonCollider2D:
   m_Points:
     m_Paths:
     - - {x: 1.997691, y: -0.2725482}
-      - {x: 1.3264482, y: -0.07611334}
-      - {x: 0.85639197, y: 0.054473713}
-      - {x: -0.82032776, y: 0.062412843}
-      - {x: -1.5959791, y: -0.060762405}
-      - {x: -2.4645698, y: -0.30277714}
-      - {x: -2.414195, y: -0.47791344}
-      - {x: -2.3290334, y: -0.8651444}
+      - {x: 1.3549644, y: -0.12246993}
+      - {x: 1.2905802, y: -0.12026667}
+      - {x: 0.86834794, y: -0.026474029}
+      - {x: -0.7994046, y: -0.020987868}
+      - {x: -1.557122, y: -0.18095756}
+      - {x: -2.276262, y: -0.36164826}
+      - {x: -2.3065906, y: -0.48036644}
+      - {x: -2.2812092, y: -0.88476807}
       - {x: -1.8581865, y: -0.8794469}
       - {x: -0.9024757, y: -0.88556653}
       - {x: 0.15770616, y: -0.8845071}
       - {x: 0.7483442, y: -0.88464725}
       - {x: 2.0932655, y: -0.88168025}
-      - {x: 2.585213, y: -0.44931704}
+      - {x: 2.1069708, y: -0.581777}
   m_UseDelaunayMesh: 1
 --- !u!1 &238371209
 GameObject:
@@ -3882,7 +3883,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.55340004, g: 0.72360003, b: 1, a: 0.110247284}
+  m_Color: {r: 0.55340004, g: 0.72360003, b: 1, a: 0.113732636}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4179,12 +4180,13 @@ PolygonCollider2D:
   m_Points:
     m_Paths:
     - - {x: 1.4331168, y: -0.6531352}
-      - {x: 1.1602725, y: -0.5580643}
-      - {x: 0.40017807, y: -0.14528127}
-      - {x: -0.85278535, y: -0.16531415}
+      - {x: 1.2758913, y: -0.6400094}
+      - {x: 1.1109666, y: -0.63324}
+      - {x: 0.37127337, y: -0.24663435}
+      - {x: -0.83439136, y: -0.29470104}
       - {x: -1.3453032, y: -0.5711044}
-      - {x: -1.8291211, y: -0.7254976}
-      - {x: -1.9713064, y: -0.78211415}
+      - {x: -1.794961, y: -0.79881686}
+      - {x: -1.9607956, y: -0.86405915}
       - {x: -1.8581865, y: -0.8794469}
       - {x: -0.9024757, y: -0.88556653}
       - {x: 0.15770616, y: -0.8845071}
@@ -4624,7 +4626,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.9972, g: 0.70199996, b: 0.3664, a: 0.15937665}
+  m_Color: {r: 0.9972, g: 0.70199996, b: 0.3664, a: 0.15802167}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6691,7 +6693,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.60216004, g: 0.78216, b: 1, a: 0.096596934}
+  m_Color: {r: 0.60216004, g: 0.78216, b: 1, a: 0.09367696}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6809,7 +6811,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 0a85e4fdd73e4714fabde63002a457e7, type: 3}
+  m_Texture: {fileID: 2800000, guid: 28c74b6dea1ed8e2c9c7d612355f9734, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -7944,7 +7946,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.55204004, g: 0.88024, b: 0.56528, a: 0.12760597}
+  m_Color: {r: 0.55204004, g: 0.88024, b: 0.56528, a: 0.1279457}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -9396,7 +9398,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.47327998, b: 0.196416, a: 0.20302305}
+  m_Color: {r: 1, g: 0.47327998, b: 0.196416, a: 0.18437544}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -9492,7 +9494,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.121162586, b: 0.0064, a: 0.6621364}
+  m_Color: {r: 1, g: 0.121162586, b: 0.0064, a: 0.6793023}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -9929,7 +9931,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.62, b: 0.28, a: 0.16931544}
+  m_Color: {r: 1, g: 0.62, b: 0.28, a: 0.18539266}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -10414,23 +10416,13 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 1.997691, y: -0.2725482}
-      - {x: 1.930153, y: 0.19156586}
-      - {x: 1.6361303, y: 0.18173507}
-      - {x: 0.8260658, y: -0.064422935}
-      - {x: -0.1019744, y: -0.07454104}
-      - {x: -0.8375623, y: -0.08256091}
-      - {x: -1.419793, y: 0.00799807}
-      - {x: -1.5321769, y: -0.0033062398}
-      - {x: -1.8395518, y: -0.05071107}
-      - {x: -2.4645698, y: -0.30277714}
-      - {x: -2.414195, y: -0.47791344}
-      - {x: -1.8581865, y: -0.8794469}
-      - {x: -0.9024757, y: -0.88556653}
-      - {x: 0.15770616, y: -0.8845071}
-      - {x: 0.7483442, y: -0.88464725}
-      - {x: 2.0932655, y: -0.88168025}
-      - {x: 2.585213, y: -0.44931704}
+    - - {x: 0.19727477, y: -0.04250884}
+      - {x: -0.88529825, y: -0.11289245}
+      - {x: -2.2015853, y: -0.14426666}
+      - {x: -2.2377198, y: -0.88015306}
+      - {x: 0.60571945, y: -0.8703411}
+      - {x: 2.0955005, y: -0.9001106}
+      - {x: 2.08987, y: -0.45140105}
   m_UseDelaunayMesh: 1
 --- !u!4 &730556826 stripped
 Transform:
@@ -10803,7 +10795,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.58224, g: 0.76224, b: 1, a: 0.08033911}
+  m_Color: {r: 0.58224, g: 0.76224, b: 1, a: 0.08003459}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -11178,7 +11170,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.121162586, b: 0.0064, a: 0.6621364}
+  m_Color: {r: 1, g: 0.121162586, b: 0.0064, a: 0.6793023}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -12035,7 +12027,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.3211, b: 0.100549996, a: 0.3775297}
+  m_Color: {r: 1, g: 0.3211, b: 0.100549996, a: 0.52795726}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -13784,8 +13776,8 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 0.17750603, y: 0.111756265}
-      - {x: -0.41734347, y: 0.11516472}
+    - - {x: 0.20141813, y: 0.038167447}
+      - {x: -0.4502226, y: 0.029311098}
       - {x: -1.8385868, y: -0.85635877}
       - {x: -0.67870295, y: -0.8907355}
       - {x: 0.5704677, y: -0.90850025}
@@ -14199,11 +14191,12 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 1.9830772, y: -0.29653433}
-      - {x: 1.7190675, y: -0.22940111}
+    - - {x: 1.968132, y: -0.5516424}
+      - {x: 1.584562, y: -0.4673384}
+      - {x: 1.0568546, y: -0.3911093}
       - {x: 0.96185404, y: -0.1738803}
-      - {x: 0.036699727, y: 0.21348289}
-      - {x: -1.2029115, y: 0.23525599}
+      - {x: -0.041014597, y: 0.08347589}
+      - {x: -1.1849773, y: 0.06354864}
       - {x: -1.5745649, y: -0.0041291565}
       - {x: -1.7751055, y: -0.1854135}
       - {x: -1.7670606, y: -0.362703}
@@ -15462,7 +15455,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.443952, b: 0.17697601, a: 0.21168494}
+  m_Color: {r: 1, g: 0.443952, b: 0.17697601, a: 0.22143245}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -15570,19 +15563,13 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 1.997691, y: -0.2725482}
-      - {x: 1.2833616, y: -0.24583873}
-      - {x: 0.84777457, y: -0.12232356}
-      - {x: -0.8375623, y: -0.08256091}
-      - {x: -1.4236326, y: -0.35070994}
-      - {x: -2.4645698, y: -0.30277714}
-      - {x: -2.414195, y: -0.47791344}
-      - {x: -1.8581865, y: -0.8794469}
-      - {x: -0.9024757, y: -0.88556653}
-      - {x: 0.15770616, y: -0.8845071}
-      - {x: 0.7483442, y: -0.88464725}
-      - {x: 2.0932655, y: -0.88168025}
-      - {x: 2.585213, y: -0.44931704}
+    - - {x: 1.8357543, y: -0.5898214}
+      - {x: 0.7589498, y: -0.22648144}
+      - {x: -0.7301293, y: -0.21486577}
+      - {x: -1.9802924, y: -0.5537329}
+      - {x: -1.9835253, y: -0.7687184}
+      - {x: 0.58778536, y: -0.80901694}
+      - {x: 1.8477609, y: -0.7667822}
   m_UseDelaunayMesh: 1
 --- !u!1001 &1308651820
 PrefabInstance:
@@ -16216,7 +16203,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1367921345
 RectTransform:
   m_ObjectHideFlags: 0
@@ -16907,7 +16894,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.64111996, g: 0.78168, b: 1, a: 0.096353374}
+  m_Color: {r: 0.64111996, g: 0.78168, b: 1, a: 0.096492894}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -17992,7 +17979,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.58224, g: 0.78191996, b: 1, a: 0.10145069}
+  m_Color: {r: 0.58224, g: 0.78191996, b: 1, a: 0.1028249}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -18378,7 +18365,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.47327998, b: 0.196416, a: 0.20360343}
+  m_Color: {r: 1, g: 0.47327998, b: 0.196416, a: 0.20684743}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -21131,7 +21118,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.121162586, b: 0.0064, a: 0.6621383}
+  m_Color: {r: 1, g: 0.121162586, b: 0.0064, a: 0.6793023}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -21535,7 +21522,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.416472, b: 0.15843199, a: 0.18150596}
+  m_Color: {r: 1, g: 0.416472, b: 0.15843199, a: 0.16899158}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -22166,7 +22153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.62514, b: 0.296112, a: 0.25698918}
+  m_Color: {r: 1, g: 0.62514, b: 0.296112, a: 0.23993559}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -22359,7 +22346,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.70192, b: 0.344224, a: 0.22089216}
+  m_Color: {r: 1, g: 0.70192, b: 0.344224, a: 0.22452205}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -24095,10 +24082,10 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 1.8474026, y: -0.34865034}
-      - {x: 0.61583745, y: 0.013280153}
-      - {x: -0.8396192, y: -0.0327251}
-      - {x: -1.9848274, y: -0.42843112}
+    - - {x: 1.8368917, y: -0.45215985}
+      - {x: 0.60007125, y: -0.103168085}
+      - {x: -0.7502774, y: -0.101731464}
+      - {x: -1.9769446, y: -0.5254713}
       - {x: -2.0423346, y: -0.83789676}
       - {x: 0.58778536, y: -0.80901694}
       - {x: 1.8425543, y: -0.83654064}
@@ -24385,7 +24372,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.57676, b: 0.247732, a: 0.2086019}
+  m_Color: {r: 1, g: 0.57676, b: 0.247732, a: 0.21464993}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -24634,7 +24621,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.5044, g: 0.704, b: 1, a: 0.12958986}
+  m_Color: {r: 0.5044, g: 0.704, b: 1, a: 0.12818013}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -24992,7 +24979,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.30416, b: 0.084060006, a: 0.7365809}
+  m_Color: {r: 1, g: 0.30416, b: 0.084060006, a: 0.8252803}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -25360,7 +25347,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.31137002, b: 0.09172, a: 0.37443724}
+  m_Color: {r: 1, g: 0.31137002, b: 0.09172, a: 0.43432474}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -25780,7 +25767,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.682048, b: 0.324352, a: 0.18407682}
+  m_Color: {r: 1, g: 0.682048, b: 0.324352, a: 0.18883382}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -27126,9 +27113,9 @@ PolygonCollider2D:
     - - {x: 2.045788, y: -0.6854759}
       - {x: 2.148438, y: -0.628217}
       - {x: 1.3882471, y: -0.38300422}
-      - {x: 0.8260658, y: -0.064422935}
-      - {x: -0.1019744, y: -0.07454104}
-      - {x: -0.8375623, y: -0.08256091}
+      - {x: 0.87687904, y: -0.20178878}
+      - {x: -0.081051305, y: -0.2217187}
+      - {x: -0.79272723, y: -0.17822641}
       - {x: -1.257004, y: -0.16506718}
       - {x: -1.606172, y: -0.26442227}
       - {x: -1.7507579, y: -0.45756623}
@@ -27846,7 +27833,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000006
 RectTransform:
   m_ObjectHideFlags: 0
@@ -32595,7 +32582,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.722688, b: 0.346336, a: 0.25210088}
+  m_Color: {r: 1, g: 0.722688, b: 0.346336, a: 0.24235447}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -32691,7 +32678,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.560936, b: 0.23078, a: 0.30426398}
+  m_Color: {r: 1, g: 0.560936, b: 0.23078, a: 0.33045715}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -32787,7 +32774,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.58072, b: 0.24071999, a: 0.33789557}
+  m_Color: {r: 1, g: 0.58072, b: 0.24071999, a: 0.29930273}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -32883,7 +32870,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.91760004, g: 0.78143996, b: 0.47636, a: 0.12714757}
+  m_Color: {r: 0.91760004, g: 0.78143996, b: 0.47636, a: 0.12719883}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -33203,7 +33190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.60532004, b: 0.2764, a: 0.49434495}
+  m_Color: {r: 1, g: 0.60532004, b: 0.2764, a: 0.4204204}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -33299,7 +33286,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.73968, g: 0.84095997, b: 0.92128, a: 0.32709485}
+  m_Color: {r: 0.73968, g: 0.84095997, b: 0.92128, a: 0.33242074}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -33437,7 +33424,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8916758, g: 0.9168429, b: 0.7363781, a: 0.3799252}
+  m_Color: {r: 0.8916758, g: 0.9168429, b: 0.7363781, a: 0.39787242}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -33570,7 +33557,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.615968, b: 0.29654402, a: 0.24249856}
+  m_Color: {r: 1, g: 0.615968, b: 0.29654402, a: 0.20286402}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -33719,7 +33706,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.74208003, b: 0.38496, a: 0.23304522}
+  m_Color: {r: 1, g: 0.74208003, b: 0.38496, a: 0.23244648}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
