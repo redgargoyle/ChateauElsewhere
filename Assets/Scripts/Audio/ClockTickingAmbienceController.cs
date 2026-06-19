@@ -132,7 +132,7 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
             return;
         }
 
-        if (!catalog.TryGetStableClipForRoom(roomName, out AudioClip clip))
+        if (!catalog.TryGetClockForRoom(roomName, out AudioClip clip, out float pitch))
         {
             currentRoomKey = string.Empty;
             FadeOutAndStop();
@@ -149,7 +149,7 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
 
         currentRoomKey = roomKey;
         audioSource.clip = clip;
-        audioSource.pitch = catalog.GetStablePitchForRoom(roomName);
+        audioSource.pitch = pitch;
         audioSource.time = catalog.GetStablePlaybackTimeForRoom(roomName, clip, Time.unscaledTime);
         audioSource.volume = 0f;
         audioSource.Play();
