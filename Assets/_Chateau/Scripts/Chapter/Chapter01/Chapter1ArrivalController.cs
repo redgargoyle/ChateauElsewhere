@@ -184,6 +184,17 @@ public class Chapter1ArrivalController : MonoBehaviour
         new[] { "Guest7", "Guest 7" },
         new[] { "Guest8", "Guest 8" }
     };
+    private static readonly string[] ChapterGuestDisplayNames =
+    {
+        "Ava",
+        "Marcus",
+        "Mister Florian Knell",
+        "Countess Elowen Dusk",
+        "Baron Hector Glass",
+        "Lady Sabine Marrow",
+        "Lord Ambrose Veil",
+        "Madame Coralie Thread"
+    };
     private static readonly string[] DoorAnswerTriggerNameAliases = { DoorAnswerTriggerName, "Door_Answer_Trigger", "DoorAnswerTrigger", "Door Answer Trigger" };
 
     public int CurrentGuestIndex => currentGuestIndex;
@@ -2780,6 +2791,16 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private string GetChapterGuestDisplayName(int index)
     {
+        if (index >= 0 && index < ChapterGuestDisplayNames.Length)
+        {
+            return ChapterGuestDisplayNames[index];
+        }
+
+        return $"Guest {index + 1}";
+    }
+
+    private string GetChapterGuestObjectName(int index)
+    {
         if (index >= 0 && index < ChapterGuestNameAliases.Length && ChapterGuestNameAliases[index].Length > 1)
         {
             return ChapterGuestNameAliases[index][1];
@@ -3793,9 +3814,10 @@ public class Chapter1ArrivalController : MonoBehaviour
             if (existingIndex >= 0)
             {
                 PrepareSceneGuestObject(guestObject, insertIndex);
+                string displayName = GetChapterGuestDisplayName(insertIndex);
                 guests[existingIndex].ConfigureRuntime(
                     MakeGuestId(guestObject.name, insertIndex),
-                    guestObject.name,
+                    displayName,
                     guestObject,
                     frontDoorArrivalPoint,
                     drawingRoomEntryPoint,
@@ -3811,9 +3833,10 @@ public class Chapter1ArrivalController : MonoBehaviour
             PrepareSceneGuestObject(guestObject, insertIndex);
 
             GuestArrivalConfig config = new GuestArrivalConfig();
+            string newDisplayName = GetChapterGuestDisplayName(insertIndex);
             config.ConfigureRuntime(
                 MakeGuestId(guestObject.name, insertIndex),
-                guestObject.name,
+                newDisplayName,
                 guestObject,
                 frontDoorArrivalPoint,
                 drawingRoomEntryPoint,
@@ -3869,9 +3892,10 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             GuestArrivalConfig config = new GuestArrivalConfig();
             string guestId = MakeGuestId(guestObject.name, i);
+            string displayName = GetChapterGuestDisplayName(i);
             config.ConfigureRuntime(
                 guestId,
-                guestObject.name,
+                displayName,
                 guestObject,
                 frontDoorArrivalPoint,
                 drawingRoomEntryPoint,
@@ -3917,7 +3941,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private GameObject CreateRuntimeGuestObject(int index)
     {
-        string guestName = GetChapterGuestDisplayName(index);
+        string guestName = GetChapterGuestObjectName(index);
         GameObject template = FindRuntimeGuestTemplate();
         Vector3 startPosition = GetWorldEntranceWaitPosition(index % Mathf.Max(1, guestsPerArrivalGroup), Mathf.Max(1, guestsPerArrivalGroup));
         GameObject guestObject;
@@ -4003,9 +4027,10 @@ public class Chapter1ArrivalController : MonoBehaviour
             GuestArrivalConfig config = new GuestArrivalConfig();
             int nextIndex = guests.Count;
             PrepareSceneGuestObject(candidate, nextIndex);
+            string displayName = GetChapterGuestDisplayName(nextIndex);
             config.ConfigureRuntime(
                 MakeGuestId(candidate.name, nextIndex),
-                candidate.name,
+                displayName,
                 candidate,
                 frontDoorArrivalPoint,
                 drawingRoomEntryPoint,
@@ -5775,34 +5800,46 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private string GetDefaultGreeting(int index)
     {
-        switch (index % 4)
+        switch (Mathf.Clamp(index, 0, 7))
         {
-            case 0: return "Good evening.";
-            case 1: return "Thank you.";
-            case 2: return "Lovely to see you.";
-            default: return "Good evening, Butler.";
+            case 0: return "Good evening. I trust the house remembers its manners better than the weather does.";
+            case 1: return "Thank you. The drive was longer in the dark than I care to admit.";
+            case 2: return "Lovely to see you, dear Butler. Tell me, are we late, early, or merely dramatic?";
+            case 3: return "Good evening, Butler. The road up here has the cheerful shape of a warning.";
+            case 4: return "Good evening. I hope the evening has not started without us.";
+            case 5: return "Thank you. I nearly mistook the bell pull for a funeral cord.";
+            case 6: return "Lovely to see you. The chateau looks almost awake tonight.";
+            default: return "Good evening, Butler. I see the house has chosen its most severe face.";
         }
     }
 
     private string GetDefaultAmbientLine(int index)
     {
-        switch (index % 4)
+        switch (Mathf.Clamp(index, 0, 7))
         {
             case 0: return "This house is colder than I expected.";
             case 1: return "The host is late, isn't he?";
             case 2: return "Did you hear something upstairs?";
+            case 3: return "The drawing room should be warmer.";
+            case 4: return "This house is colder than I expected.";
+            case 5: return "The host is late, isn't he?";
+            case 6: return "Did you hear something upstairs?";
             default: return "The drawing room should be warmer.";
         }
     }
 
     private string GetAnnoyedLine(int index)
     {
-        switch (index % 4)
+        switch (Mathf.Clamp(index, 0, 7))
         {
             case 0: return "We were beginning to wonder if anyone was home.";
             case 1: return "It is rather cold out there.";
             case 2: return "We have been waiting at the door for some time.";
-            default: return "At last.";
+            case 3: return "At last. I had begun composing my obituary in the frost.";
+            case 4: return "We were beginning to wonder if anyone was home.";
+            case 5: return "It is rather cold out there, and colder still when one is expected.";
+            case 6: return "We have been waiting at the door for some time. The house was listening with us.";
+            default: return "At last. A closed door should not feel so pleased with itself.";
         }
     }
 

@@ -265,6 +265,7 @@ public class Chapter2Controller : MonoBehaviour
             secondCallback,
             thirdChoice,
             thirdCallback);
+        interactionHUD.SetDialogueChoicesInteractable(true);
     }
 
     public void ShowGuestConversationWithSubtitle(
@@ -1142,5 +1143,10 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         ClearSubtitles();
+
+        if (currentPhase == Chapter2Phase.GuestSearch)
+        {
+            SetGuestConversationInputEnabled(true);
+        }
     }
 }

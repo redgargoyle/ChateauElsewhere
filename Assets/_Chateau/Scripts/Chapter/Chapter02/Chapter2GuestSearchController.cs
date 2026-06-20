@@ -17,6 +17,15 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private static readonly Vector2 FallbackClickTargetOffset = new Vector2(0f, 1f);
     private static readonly Vector2 FallbackClickTargetSize = new Vector2(1f, 2f);
 
+    private enum GuestConversationResumeStep
+    {
+        None,
+        AwaitMealPromptChoice,
+        AwaitMealPreferenceChoice,
+        AwaitSmokingPreferenceChoice,
+        AwaitFinishConfirmation
+    }
+
     [Serializable]
     public class GuestSearchEntry
     {
@@ -47,7 +56,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private float guestExitDistance = 0.75f;
 
     private Chapter2Controller chapter2Controller;
+    private RoomNavigationManager navigationManager;
     private GuestSearchEntry activeConversationGuest;
+    private GuestConversationResumeStep activeConversationResumeStep;
+    private Coroutine roomResumeRoutine;
+    private bool subscribedToRoomChanges;
     private readonly HashSet<string> guestsWithFallbackClickBounds = new HashSet<string>();
 
     public string DiningSeatPrefix => diningSeatPrefix;
@@ -78,13 +91,78 @@ public class Chapter2GuestSearchController : MonoBehaviour
     public void Initialize(Chapter2Controller controller)
     {
         chapter2Controller = controller;
+        ResolveRoomNavigation();
+        RegisterRoomChangeHandler();
+    }
+
+    private void OnDisable()
+    {
+        if (roomResumeRoutine != null)
+        {
+            StopCoroutine(roomResumeRoutine);
+            roomResumeRoutine = null;
+        }
+
+        UnregisterRoomChangeHandler();
+    }
+
+    private void ResolveRoomNavigation()
+    {
+        if (navigationManager == null)
+        {
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+    }
+
+    private void RegisterRoomChangeHandler()
+    {
+        if (navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        navigationManager.OnCurrentRoomChanged.AddListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = true;
+    }
+
+    private void UnregisterRoomChangeHandler()
+    {
+        if (!subscribedToRoomChanges || navigationManager == null)
+        {
+            subscribedToRoomChanges = false;
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = false;
+    }
+
+    private void HandleCurrentRoomChanged(string roomName)
+    {
+        if (roomResumeRoutine != null)
+        {
+            StopCoroutine(roomResumeRoutine);
+        }
+
+        roomResumeRoutine = StartCoroutine(ResumeActiveConversationAfterRoomChange(roomName));
+    }
+
+    private IEnumerator ResumeActiveConversationAfterRoomChange(string roomName)
+    {
+        yield return null;
+        roomResumeRoutine = null;
+        TryResumeActiveConversationForRoom(roomName);
     }
 
     public void BeginSearch()
     {
+        ResolveRoomNavigation();
+        RegisterRoomChangeHandler();
         AutoDiscoverGuestsIfNeeded();
         AutoAssignHideAnchorsIfNeeded();
         activeConversationGuest = null;
+        activeConversationResumeStep = GuestConversationResumeStep.None;
         foundOrderCounter = 0;
 
         if (foundGuestIdsInOrder == null)
@@ -138,9 +216,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     public void DebugStageAllGuestsFoundForChapter3Skip()
     {
+        ResolveRoomNavigation();
+        RegisterRoomChangeHandler();
         AutoDiscoverGuestsIfNeeded();
         AutoAssignHideAnchorsIfNeeded();
         activeConversationGuest = null;
+        activeConversationResumeStep = GuestConversationResumeStep.None;
         foundOrderCounter = 0;
 
         if (foundGuestIdsInOrder == null)
@@ -212,7 +293,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guests.Add(new GuestSearchEntry
             {
                 guestId = actorState.ActorId,
-                displayName = actorState.gameObject.name,
+                displayName = GetCanonicalGuestDisplayName(actorState),
                 actorState = actorState
             });
         }
@@ -261,6 +342,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
         if (guest.found)
         {
             return true;
+        }
+
+        if (activeConversationGuest == guest)
+        {
+            activeConversationGuest = null;
+            activeConversationResumeStep = GuestConversationResumeStep.None;
         }
 
         foundOrderCounter++;
@@ -332,6 +419,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
         if (chapter2Controller != null)
         {
             chapter2Controller.SetGuestConversationInputEnabled(false);
+        }
+
+        if (TryShowActiveConversationResumeState(guest))
+        {
+            return true;
         }
 
         ShowDinnerAnnouncement(guest);
@@ -932,6 +1024,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitMealPromptChoice);
         string guestName = GetGuestDisplayName(guest);
         string line = $"I have found you, {guestName}. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?";
         chapter2Controller.ShowGuestConversationWithSubtitle(
@@ -949,6 +1042,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitMealPreferenceChoice);
         const string line = "For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?";
         chapter2Controller.ShowGuestConversationWithSubtitle(
             "SUB_CH02_BUTLER_MEAL_ASK_001",
@@ -978,6 +1072,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSmokingPreferenceChoice);
         const string line = "After dinner, shall I prepare a cigar, a pipe, or no smoke at all?";
         chapter2Controller.ShowGuestConversationWithSubtitle(
             "SUB_CH02_BUTLER_SMOKE_ASK_001",
@@ -1012,6 +1107,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         string guestName = GetGuestDisplayName(guest);
         const string line = "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.";
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitFinishConfirmation);
         chapter2Controller.ShowGuestConversationWithSubtitle(
             GetChapter2GuestSubtitleLineId("SUB_CH02_G", guest, "_FINAL_ACK_001"),
             guestName,
@@ -1028,6 +1124,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         activeConversationGuest = null;
+        activeConversationResumeStep = GuestConversationResumeStep.None;
 
         if (chapter2Controller != null)
         {
@@ -1041,6 +1138,94 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private bool IsActiveConversationGuest(GuestSearchEntry guest)
     {
         return guest != null && activeConversationGuest == guest && !guest.found;
+    }
+
+    private void SetActiveConversationResumeStep(GuestSearchEntry guest, GuestConversationResumeStep resumeStep)
+    {
+        if (!IsActiveConversationGuest(guest))
+        {
+            return;
+        }
+
+        activeConversationResumeStep = resumeStep;
+    }
+
+    private bool TryResumeActiveConversationForRoom(string roomName)
+    {
+        if (activeConversationGuest == null ||
+            activeConversationResumeStep == GuestConversationResumeStep.None ||
+            chapter2Controller == null ||
+            !chapter2Controller.IsGuestSearchActive ||
+            activeConversationGuest.found)
+        {
+            return false;
+        }
+
+        ActorRoomState actorState = activeConversationGuest.actorState;
+
+        if (actorState == null ||
+            !actorState.IsAvailableInCurrentChapter ||
+            !actorState.IsVisibleByChapterState ||
+            !SameRoom(actorState.CurrentRoomId, roomName))
+        {
+            return false;
+        }
+
+        chapter2Controller.SetGuestConversationInputEnabled(false);
+        return TryShowActiveConversationResumeState(activeConversationGuest);
+    }
+
+    private bool TryShowActiveConversationResumeState(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest) ||
+            activeConversationResumeStep == GuestConversationResumeStep.None ||
+            chapter2Controller == null)
+        {
+            return false;
+        }
+
+        switch (activeConversationResumeStep)
+        {
+            case GuestConversationResumeStep.AwaitMealPromptChoice:
+                chapter2Controller.ShowGuestConversation(
+                    "Butler",
+                    string.Empty,
+                    "Ask meal preference",
+                    () => ShowMealPreferenceQuestion(guest));
+                return true;
+
+            case GuestConversationResumeStep.AwaitMealPreferenceChoice:
+                chapter2Controller.ShowGuestConversation(
+                    "Butler",
+                    string.Empty,
+                    firstMealOption,
+                    () => ChooseMealPreference(guest, firstMealOption),
+                    secondMealOption,
+                    () => ChooseMealPreference(guest, secondMealOption));
+                return true;
+
+            case GuestConversationResumeStep.AwaitSmokingPreferenceChoice:
+                chapter2Controller.ShowGuestConversation(
+                    "Butler",
+                    string.Empty,
+                    "Cigar",
+                    () => ChooseSmokingPreference(guest, cigarPreference),
+                    "Pipe",
+                    () => ChooseSmokingPreference(guest, pipePreference),
+                    "No smoke",
+                    () => ChooseSmokingPreference(guest, noSmokingPreference));
+                return true;
+
+            case GuestConversationResumeStep.AwaitFinishConfirmation:
+                chapter2Controller.ShowGuestConversation(
+                    GetGuestDisplayName(guest),
+                    string.Empty,
+                    "Very good",
+                    () => FinishGuestConversation(guest));
+                return true;
+        }
+
+        return false;
     }
 
     private void EnsureGuestUsesPersistentActorRoot(GuestSearchEntry guest)
@@ -1306,6 +1491,32 @@ public class Chapter2GuestSearchController : MonoBehaviour
         return string.IsNullOrWhiteSpace(guest.guestId) ? "Guest" : guest.guestId.Trim();
     }
 
+    private static string GetCanonicalGuestDisplayName(ActorRoomState actorState)
+    {
+        if (actorState == null)
+        {
+            return "Guest";
+        }
+
+        if (TryExtractTrailingGuestNumber(actorState.ActorId, out int actorIdNumber) &&
+            actorIdNumber >= 1 &&
+            actorIdNumber <= Chapter2PanicRoster.DisplayNames.Length)
+        {
+            return Chapter2PanicRoster.DisplayNames[actorIdNumber - 1];
+        }
+
+        string objectName = actorState.gameObject != null ? actorState.gameObject.name : string.Empty;
+
+        if (TryExtractTrailingGuestNumber(objectName, out int objectNameNumber) &&
+            objectNameNumber >= 1 &&
+            objectNameNumber <= Chapter2PanicRoster.DisplayNames.Length)
+        {
+            return Chapter2PanicRoster.DisplayNames[objectNameNumber - 1];
+        }
+
+        return string.IsNullOrWhiteSpace(objectName) ? "Guest" : objectName.Trim();
+    }
+
     private static bool IsLikelyChapterGuest(ActorRoomState actorState)
     {
         if (actorState == null)
@@ -1394,6 +1605,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private static bool SameId(string left, string right)
     {
         return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool SameRoom(string left, string right)
+    {
+        string cleanLeft = string.IsNullOrWhiteSpace(left) ? string.Empty : left.Trim();
+        string cleanRight = string.IsNullOrWhiteSpace(right) ? string.Empty : right.Trim();
+        return string.Equals(cleanLeft, cleanRight, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string FormatDiagnosticValue(string value)

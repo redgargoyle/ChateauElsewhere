@@ -171,8 +171,8 @@ public static class Chapter2PanicRoster
 
     public static readonly string[] DisplayNames =
     {
-        "Lady",
-        "Butler Guest",
+        "Ava",
+        "Marcus",
         "Mister Florian Knell",
         "Countess Elowen Dusk",
         "Baron Hector Glass",
