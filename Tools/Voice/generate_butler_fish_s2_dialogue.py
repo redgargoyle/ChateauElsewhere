@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import time
+import argparse
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -32,7 +33,7 @@ ORIGINAL_REFERENCE_TEXT = (
     "called cannot come to the phone at the moment. This is the butler."
 )
 HELLO_REFERENCE_TEXT = "Hello."
-ASSET_DIR = PROJECT_ROOT / "Assets" / "Audio" / "Voices" / "Butler"
+ASSET_DIR = PROJECT_ROOT / "Assets" / "Audio" / "Voice" / "Butler"
 VOICE_ROOT = PROJECT_ROOT / "Tools" / "Voice"
 GENERATED_ROOT = VOICE_ROOT / "generated_fish_s2_butler_dialogue"
 BACKUP_ROOT = VOICE_ROOT / "backups"
@@ -87,8 +88,8 @@ class GeneratedLine:
 
 
 GUEST_NAMES = {
-    1: "Lady",
-    2: "Butler Guest",
+    1: "Ava",
+    2: "Marcus",
     3: "Mister Florian Knell",
     4: "Countess Elowen Dusk",
     5: "Baron Hector Glass",
@@ -358,6 +359,7 @@ def write_report(
     backup_dir: Path | None,
     rows: list[GeneratedLine],
     failures: list[str],
+    expected_count: int,
 ) -> None:
     original_stats = wav_stats(ORIGINAL_REFERENCE_FILE)
     hello_stats = wav_stats(HELLO_REFERENCE_FILE)
@@ -387,7 +389,7 @@ def write_report(
         "",
         "## Summary",
         "",
-        f"- Expected count: {len(LINES)}",
+        f"- Expected count: {expected_count}",
         f"- Generated count: {len(rows)}",
         f"- Failed count: {len(failures)}",
         "",
@@ -412,6 +414,24 @@ def write_report(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate local Fish Audio S2-Pro Butler dialogue.")
+    parser.add_argument(
+        "--only",
+        nargs="+",
+        default=None,
+        help="Optional line IDs to generate. When omitted, all Butler dialogue lines are generated.",
+    )
+    args = parser.parse_args()
+
+    selected_lines = LINES
+    if args.only:
+        requested = {line_id.strip() for line_id in args.only if line_id.strip()}
+        selected_lines = [line for line in LINES if line.line_id in requested]
+        missing = sorted(requested - {line.line_id for line in selected_lines})
+
+        if missing:
+            raise SystemExit(f"Unknown Butler line id(s): {', '.join(missing)}")
+
     require_preflight()
     started = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_dir = GENERATED_ROOT / f"butler_fish_s2_full_dialogue_{started}"
@@ -442,8 +462,8 @@ def main() -> None:
 
     rows: list[GeneratedLine] = []
     failures: list[str] = []
-    for index, line in enumerate(LINES, start=1):
-        print(f"[Butler {index:02d}/{len(LINES):02d}] {line.line_id}", flush=True)
+    for index, line in enumerate(selected_lines, start=1):
+        print(f"[Butler {index:02d}/{len(selected_lines):02d}] {line.line_id}", flush=True)
         try:
             rows.append(
                 generate_line(
@@ -466,7 +486,7 @@ def main() -> None:
     elapsed = time.perf_counter() - t0
     report_path = REPORT_ROOT / "butler_fish_s2_generation_report.md"
     run_report_path = run_dir / "BUTLER_GENERATION_REPORT.md"
-    write_report(report_path, started, elapsed, reference_choice, backup_dir, rows, failures)
+    write_report(report_path, started, elapsed, reference_choice, backup_dir, rows, failures, len(selected_lines))
     shutil.copy2(report_path, run_report_path)
 
     if failures:

@@ -293,7 +293,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guests.Add(new GuestSearchEntry
             {
                 guestId = actorState.ActorId,
-                displayName = actorState.gameObject.name,
+                displayName = GetCanonicalGuestDisplayName(actorState),
                 actorState = actorState
             });
         }
@@ -1489,6 +1489,32 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         return string.IsNullOrWhiteSpace(guest.guestId) ? "Guest" : guest.guestId.Trim();
+    }
+
+    private static string GetCanonicalGuestDisplayName(ActorRoomState actorState)
+    {
+        if (actorState == null)
+        {
+            return "Guest";
+        }
+
+        if (TryExtractTrailingGuestNumber(actorState.ActorId, out int actorIdNumber) &&
+            actorIdNumber >= 1 &&
+            actorIdNumber <= Chapter2PanicRoster.DisplayNames.Length)
+        {
+            return Chapter2PanicRoster.DisplayNames[actorIdNumber - 1];
+        }
+
+        string objectName = actorState.gameObject != null ? actorState.gameObject.name : string.Empty;
+
+        if (TryExtractTrailingGuestNumber(objectName, out int objectNameNumber) &&
+            objectNameNumber >= 1 &&
+            objectNameNumber <= Chapter2PanicRoster.DisplayNames.Length)
+        {
+            return Chapter2PanicRoster.DisplayNames[objectNameNumber - 1];
+        }
+
+        return string.IsNullOrWhiteSpace(objectName) ? "Guest" : objectName.Trim();
     }
 
     private static bool IsLikelyChapterGuest(ActorRoomState actorState)

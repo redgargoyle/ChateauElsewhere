@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Chapter2PanicAnimationLibrary
   characters:
   - characterId: Lady
-    displayName: Lady
+    displayName: Ava
     panicHandsUp:
     - {fileID: 21300000, guid: f33784d47b84aacb4776a4e1ebe2021b, type: 3}
     - {fileID: 21300000, guid: a9436c9fae1404fa81f2c03fe06134fa, type: 3}
@@ -50,7 +50,7 @@ MonoBehaviour:
     - {fileID: -466404526560858938, guid: 8380ac1f43bd82cf9bb7ef22d88cf68e, type: 3}
     - {fileID: 7379951522246585526, guid: 076954947151e03fcbb9cf22e041144b, type: 3}
   - characterId: ButlerGuest
-    displayName: Butler Guest
+    displayName: Marcus
     panicHandsUp:
     - {fileID: 21300000, guid: a18954746ce048bbe6fd79da894a6277, type: 3}
     - {fileID: 21300000, guid: ffcfbf0b681c2a1598a1ec55e06dd2ac, type: 3}

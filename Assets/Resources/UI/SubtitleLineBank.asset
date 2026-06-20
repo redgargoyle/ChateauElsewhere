@@ -57,70 +57,70 @@ MonoBehaviour:
     requireAdvance: 0
   - lineId: SUB_CH01_G01_GREETING_001
     speakerId: Guest1
-    speakerDisplayName: Guest 1
-    text: Good evening.
+    speakerDisplayName: Ava
+    text: Good evening. I trust the house remembers its manners better than the weather does.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G02_GREETING_001
     speakerId: Guest2
-    speakerDisplayName: Guest 2
-    text: Thank you.
+    speakerDisplayName: Marcus
+    text: Thank you. The drive was longer in the dark than I care to admit.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G03_GREETING_001
     speakerId: Guest3
     speakerDisplayName: Guest 3
-    text: Lovely to see you.
+    text: Lovely to see you, dear Butler. Tell me, are we late, early, or merely dramatic?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G04_GREETING_001
     speakerId: Guest4
     speakerDisplayName: Guest 4
-    text: Good evening, Butler.
+    text: Good evening, Butler. The road up here has the cheerful shape of a warning.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G05_GREETING_001
     speakerId: Guest5
     speakerDisplayName: Guest 5
-    text: Good evening.
+    text: Good evening. I hope the evening has not started without us.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G06_GREETING_001
     speakerId: Guest6
     speakerDisplayName: Guest 6
-    text: Thank you.
+    text: Thank you. I nearly mistook the bell pull for a funeral cord.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G07_GREETING_001
     speakerId: Guest7
     speakerDisplayName: Guest 7
-    text: Lovely to see you.
+    text: Lovely to see you. The chateau looks almost awake tonight.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G08_GREETING_001
     speakerId: Guest8
     speakerDisplayName: Guest 8
-    text: Good evening, Butler.
+    text: Good evening, Butler. I see the house has chosen its most severe face.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G01_ANNOYED_001
     speakerId: Guest1
-    speakerDisplayName: Guest 1
+    speakerDisplayName: Ava
     text: We were beginning to wonder if anyone was home.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G02_ANNOYED_001
     speakerId: Guest2
-    speakerDisplayName: Guest 2
+    speakerDisplayName: Marcus
     text: It is rather cold out there.
     minDuration: 1.25
     maxDuration: 5
@@ -135,7 +135,7 @@ MonoBehaviour:
   - lineId: SUB_CH01_G04_ANNOYED_001
     speakerId: Guest4
     speakerDisplayName: Guest 4
-    text: At last.
+    text: At last. I had begun composing my obituary in the frost.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -149,34 +149,34 @@ MonoBehaviour:
   - lineId: SUB_CH01_G06_ANNOYED_001
     speakerId: Guest6
     speakerDisplayName: Guest 6
-    text: It is rather cold out there.
+    text: It is rather cold out there, and colder still when one is expected.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G07_ANNOYED_001
     speakerId: Guest7
     speakerDisplayName: Guest 7
-    text: We have been waiting at the door for some time.
+    text: We have been waiting at the door for some time. The house was listening with us.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G08_ANNOYED_001
     speakerId: Guest8
     speakerDisplayName: Guest 8
-    text: At last.
+    text: At last. A closed door should not feel so pleased with itself.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G01_AMBIENT_001
     speakerId: Guest1
-    speakerDisplayName: Guest 1
+    speakerDisplayName: Ava
     text: This house is colder than I expected.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G02_AMBIENT_001
     speakerId: Guest2
-    speakerDisplayName: Guest 2
+    speakerDisplayName: Marcus
     text: The host is late, isn't he?
     minDuration: 1.25
     maxDuration: 5
@@ -233,56 +233,56 @@ MonoBehaviour:
   - lineId: SUB_CH02_BUTLER_FOUND_G01
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Ava. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_BUTLER_FOUND_G02
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Marcus. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_BUTLER_FOUND_G03
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Mister Florian Knell. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_BUTLER_FOUND_G04
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Countess Elowen Dusk. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_BUTLER_FOUND_G05
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Baron Hector Glass. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_BUTLER_FOUND_G06
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Lady Sabine Marrow. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_BUTLER_FOUND_G07
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Lord Ambrose Veil. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_BUTLER_FOUND_G08
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Madame Coralie Thread. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
@@ -356,3 +356,1123 @@ MonoBehaviour:
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
+  - lineId: CH1_G01_ENTRY
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Good evening. I trust the house remembers its manners better than the weather does.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G01_DELAYED
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: We were beginning to wonder if anyone was home.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G01_COAT_HANDOFF
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Careful with the collar, if you please. It has survived worse evenings than this one.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G01_TO_DRAWING_ROOM
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: A proper house is judged by its wardrobe first. So far, Chateau Chantilly remains under review.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G01_AMBIENT_01
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: This house is colder than I expected.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G01_AMBIENT_02
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: The fire looks arranged rather than lit.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G01_EMPTY_BELL_REACTION
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Then who, precisely, rang?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G02_ENTRY
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: Thank you. The drive was longer in the dark than I care to admit.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G02_DELAYED
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: It is rather cold out there.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G02_COAT_HANDOFF
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: Thank you. The damp seems to cling to everything tonight.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G02_TO_DRAWING_ROOM
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: The Drawing Room sounds heavenly. I would settle for any room with a pulse of warmth.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G02_AMBIENT_01
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: The host is late, isn't he?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G02_AMBIENT_02
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: I keep thinking someone is standing just behind the curtains.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G02_EMPTY_BELL_REACTION
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: Please do not say the wind. The wind has better manners.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G03_ENTRY
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: Lovely to see you, dear Butler. Tell me, are we late, early, or merely dramatic?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G03_DELAYED
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: We have been waiting at the door for some time.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G03_COAT_HANDOFF
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: With gratitude. Do hang it somewhere it can be admired.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G03_TO_DRAWING_ROOM
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: Prepared? How promising. I adore a room that knows guests are coming.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G03_AMBIENT_01
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: Did you hear something upstairs?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G03_AMBIENT_02
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: If the house is settling, it is doing so with theatrical timing.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G03_EMPTY_BELL_REACTION
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: A phantom caller? How rude to arrive without a coat.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G04_ENTRY
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Good evening, Butler. The road up here has the cheerful shape of a warning.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G04_DELAYED
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: At last. I had begun composing my obituary in the frost.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G04_COAT_HANDOFF
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Take it before it decides to stay here without me.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G04_TO_DRAWING_ROOM
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Prepared rooms and prepared excuses often look alike. Lead on.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G04_AMBIENT_01
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: The drawing room should be warmer.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G04_AMBIENT_02
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Old houses groan. This one seems to choose its words.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G04_EMPTY_BELL_REACTION
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Doors do not summon themselves. Not respectable doors, anyway.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G05_ENTRY
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Good evening. I hope the evening has not started without us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G05_DELAYED
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: We were beginning to wonder if anyone was home.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G05_COAT_HANDOFF
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Of course. There is nothing in the pockets but travel dust and bad omens.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G05_TO_DRAWING_ROOM
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Then let us not keep the Drawing Room from its purpose.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G05_AMBIENT_01
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: This house is colder than I expected.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G05_AMBIENT_02
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: The portraits look recently offended.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G05_EMPTY_BELL_REACTION
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Let us pretend it was a mistake. Pretending is useful in old houses.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G06_ENTRY
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: Thank you. I nearly mistook the bell pull for a funeral cord.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G06_DELAYED
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: It is rather cold out there, and colder still when one is expected.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G06_COAT_HANDOFF
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: Yes, please. I have been wearing half the road since the lower gate.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G06_TO_DRAWING_ROOM
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: If the fire is real, I may forgive the road.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G06_AMBIENT_01
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: The host is late, isn't he?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G06_AMBIENT_02
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: I dislike a clock that seems to be waiting for me personally.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G06_EMPTY_BELL_REACTION
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: I should very much like that to be the last surprise before dinner.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G07_ENTRY
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: Lovely to see you. The chateau looks almost awake tonight.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G07_DELAYED
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: We have been waiting at the door for some time. The house was listening with us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G07_COAT_HANDOFF
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: Yes. And if it whispers, do not answer it.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G07_TO_DRAWING_ROOM
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: Prepared is good. Protected would be better.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G07_AMBIENT_01
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: Did you hear something upstairs?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G07_AMBIENT_02
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: The ceiling has footsteps in it, and not all of them are human.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G07_EMPTY_BELL_REACTION
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: It wanted us all in here. That is what I think.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G08_ENTRY
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Good evening, Butler. I see the house has chosen its most severe face.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G08_DELAYED
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: At last. A closed door should not feel so pleased with itself.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G08_COAT_HANDOFF
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Take it. The night has left fingerprints on the sleeves.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G08_TO_DRAWING_ROOM
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Very well. Let us see what sort of welcome the room has rehearsed.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G08_AMBIENT_01
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: The drawing room should be warmer.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G08_AMBIENT_02
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: There is a draft here that does not come from any door.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH1_G08_EMPTY_BELL_REACTION
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Then we are here. I hope it is satisfied.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_PRESPEECH_BARK
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Do begin, Butler. Formality is all that stands between dinner and nonsense.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_PRESPEECH_BARK
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: Are we all meant to be waiting like this?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_PRESPEECH_BARK
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: This is deliciously awkward. I approve, with reservations.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_PRESPEECH_BARK
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: It is never a good sign when the servants make speeches.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_PRESPEECH_BARK
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Let him speak. The hour has turned strange.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_PRESPEECH_BARK
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: I dislike a room that listens back.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_PRESPEECH_BARK
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: That sound in the walls—did anyone else hear it before the bell?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_PRESPEECH_BARK
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Say what you came to say, Butler. The room is holding its breath.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_PANIC
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Do not run! Do not—oh Lord, run!
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_PANIC
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: It has too many legs!
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_PANIC
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: That is not a dog. Someone tell me that is not a dog.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_PANIC
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Down! Get down!
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_PANIC
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Away from the windows!
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_PANIC
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: The violin—make it stop!
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_PANIC
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: I saw its hair move before it moved!
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_PANIC
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: No one touch it! No one breathe at it!
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_FOUND_START
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Announce yourself before I die of manners.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_FOUND_REPLY
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: You may record whatever prevents further surprises.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_MEAL_PLINK
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: The fresh monte genellion de plink. If one must face horrors, one should do it properly fed.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_MEAL_THYME
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Thyme with Lillums. It sounds disciplined, and discipline is wanted tonight.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_SMOKE_CIGAR
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: A cigar. Something with authority.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_SMOKE_PIPE
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: A pipe. Slower nerves make better decisions.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_SMOKE_NONE
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: No smoke. I should like my lungs available for any further screaming.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_SPIRITS_REPLY
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: See that it is not shy.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_EXIT_TO_DINING
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_CLOCK_REACTION
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Seven o’clock. At least the clock is still obedient.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G01_DINING_REVEAL
+    speakerId: Guest1
+    speakerDisplayName: Ava
+    text: Civilization survives another minute.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_FOUND_START
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: Please tell me you are real before you come any closer.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_FOUND_REPLY
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: At seven? After that thing? Yes. Yes, ordinary questions may save us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_MEAL_PLINK
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: The fresh monte genellion de plink. I cannot explain why, but the longer name feels safer.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_MEAL_THYME
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: Thyme with Lillums, please. Something gentle. Something with leaves.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_SMOKE_CIGAR
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: A cigar, though I may only hold it for courage.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_SMOKE_PIPE
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: A pipe, if it can be made to smell like a normal evening.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_SMOKE_NONE
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: No smoke at all. I have inhaled enough terror for one night.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_SPIRITS_REPLY
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: Thank you. I may ask it several questions.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_EXIT_TO_DINING
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_CLOCK_REACTION
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: Please tell me dinner has windows. No—doors. I meant doors.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G02_DINING_REVEAL
+    speakerId: Guest2
+    speakerDisplayName: Marcus
+    text: I have never been so grateful for a chair.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_FOUND_START
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: If this is a party game, I withdraw my admiration.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_FOUND_REPLY
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: Splendid. Nothing steadies the soul like being menued after a monster.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_MEAL_PLINK
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: Fresh monte genellion de plink. It sounds impossible, and I am in an impossible mood.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_MEAL_THYME
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: Thyme with Lillums. Pretty, mysterious, and likely to stain. I accept.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_SMOKE_CIGAR
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: A cigar. I intend to look magnificent while recovering.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_SMOKE_PIPE
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: A pipe. It gives one the illusion of wisdom.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_SMOKE_NONE
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: No smoke. The monster already supplied quite enough atmosphere.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_SPIRITS_REPLY
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: Make it visible. I may need to toast survival several times.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_EXIT_TO_DINING
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_CLOCK_REACTION
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: If anyone asks, I was never frightened. I was arranging my face.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G03_DINING_REVEAL
+    speakerId: Guest3
+    speakerDisplayName: Mister Florian Knell
+    text: Look at us. Pale, terrified, and still punctual.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_FOUND_START
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: If you are here to say dinner is canceled, lie more elegantly.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_FOUND_REPLY
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Good. A schedule is a flimsy shield, but it is a shield.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_MEAL_PLINK
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Fresh monte genellion de plink. If the name is a trap, I expect you to spring it first.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_MEAL_THYME
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Thyme with Lillums. Quiet food. Sensible food. Food unlikely to chase me.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_SMOKE_CIGAR
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: A cigar. If I am to be hunted by architecture, I shall smell expensive.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_SMOKE_PIPE
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: A pipe. It gives the hands something to do besides tremble.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_SMOKE_NONE
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: No smoke. I prefer to see what is coming.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_SPIRITS_REPLY
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Good. I distrust a dinner table without witnesses.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_EXIT_TO_DINING
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_CLOCK_REACTION
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: The clock sounds pleased with itself. I resent that.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G04_DINING_REVEAL
+    speakerId: Guest4
+    speakerDisplayName: Countess Elowen Dusk
+    text: If the soup screams, I am leaving.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_FOUND_START
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: I was not hiding. I was choosing a defensible position.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_FOUND_REPLY
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Proceed. The more ordinary the ritual, the less power we give the extraordinary.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_MEAL_PLINK
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Fresh monte genellion de plink. Something substantial. I dislike fleeing on an empty stomach.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_MEAL_THYME
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Thyme with Lillums. Light enough to run after, should running remain necessary.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_SMOKE_CIGAR
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: A cigar. For victory, or for pretending.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_SMOKE_PIPE
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: A pipe. Slow smoke for a slower pulse.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_SMOKE_NONE
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: No smoke. Keep the air clear and the exits clearer.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_SPIRITS_REPLY
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Place it where I can reach it without turning my back.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_EXIT_TO_DINING
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_CLOCK_REACTION
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Dining Room, then. Stay together. Walk, do not scatter.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G05_DINING_REVEAL
+    speakerId: Guest5
+    speakerDisplayName: Baron Hector Glass
+    text: Sit where you can see the doors.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_FOUND_START
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: Is it gone, or has it merely become quiet?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_FOUND_REPLY
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: Yes. Please. Ask me anything that has only two answers.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_MEAL_PLINK
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: Fresh monte genellion de plink. I refuse to fear a meal with a comic name.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_MEAL_THYME
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: Thyme with Lillums. That sounds almost medicinal. I accept.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_SMOKE_CIGAR
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: A cigar. I may need to prove I still possess hands.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_SMOKE_PIPE
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: A pipe. Something domestic against the screaming violin.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_SMOKE_NONE
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: No smoke. The room has already burned itself into my memory.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_SPIRITS_REPLY
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: Good. Tell it I am counting on its courage.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_EXIT_TO_DINING
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_CLOCK_REACTION
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: I would like the next room to contain fewer instruments.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G06_DINING_REVEAL
+    speakerId: Guest6
+    speakerDisplayName: Lady Sabine Marrow
+    text: I can hear the violin even when it is not playing.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_FOUND_START
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: I knew the house was awake. I did not know it had pets.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_FOUND_REPLY
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: Record quickly. The walls have begun pretending not to listen.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_MEAL_PLINK
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: Fresh monte genellion de plink. It sounds like a spell, and we may need one.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_MEAL_THYME
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: Thyme with Lillums. Green things know how to survive old stone.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_SMOKE_CIGAR
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: A cigar. Let the smoke mark where I have been, in case I vanish.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_SMOKE_PIPE
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: A pipe. Smoke curls like warnings when the air is honest.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_SMOKE_NONE
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: No smoke. I want to smell it if that thing returns.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_SPIRITS_REPLY
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: Then pour generously. The chateau has had enough of my nerves.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_EXIT_TO_DINING
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_CLOCK_REACTION
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: The chateau wanted us separated. Remember that.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G07_DINING_REVEAL
+    speakerId: Guest7
+    speakerDisplayName: Lord Ambrose Veil
+    text: The house is quieter now. That worries me more.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_FOUND_START
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Speak plainly. Is the room safe, or merely occupied?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_FOUND_REPLY
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: You may. I admire a household that continues taking orders after an omen.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_MEAL_PLINK
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Fresh monte genellion de plink. Boldly named food for a cowardly evening.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_MEAL_THYME
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Thyme with Lillums. Quiet, green, and unlikely to announce itself on nine legs.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_SMOKE_CIGAR
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: A cigar. I intend to leave evidence that I remained composed.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_SMOKE_PIPE
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: A pipe. The old rituals have teeth; let us use them.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_SMOKE_NONE
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: No smoke. I want nothing between myself and the door.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_SPIRITS_REPLY
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Good. It may be the most trustworthy guest here.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_EXIT_TO_DINING
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_CLOCK_REACTION
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Then let us disappoint it by arriving intact.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: CH2_G08_DINING_REVEAL
+    speakerId: Guest8
+    speakerDisplayName: Madame Coralie Thread
+    text: Serve quickly, Butler. The night is not finished with us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
