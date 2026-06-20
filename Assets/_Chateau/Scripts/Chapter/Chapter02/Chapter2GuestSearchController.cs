@@ -20,10 +20,84 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private enum GuestConversationResumeStep
     {
         None,
-        AwaitMealPromptChoice,
-        AwaitMealPreferenceChoice,
-        AwaitSmokingPreferenceChoice,
+        AwaitAnnounceDinnerPrompt,
+        AwaitFoundReplyContinue,
+        AwaitMealAskPrompt,
+        AwaitMealReplyContinue,
+        AwaitSmokeAskPrompt,
+        AwaitSmokeReplyContinue,
+        AwaitSpiritsAskPrompt,
+        AwaitSpiritsReplyContinue,
+        AwaitSendToDiningPrompt,
         AwaitFinishConfirmation
+    }
+
+    private sealed class HiddenGuestConversationSpec
+    {
+        public readonly int GuestNumber;
+        public readonly string DisplayName;
+        public readonly string HideAnchorId;
+        public readonly string FoundStartLineId;
+        public readonly string FoundStartText;
+        public readonly string ButlerFoundLineId;
+        public readonly string ButlerFoundText;
+        public readonly string FoundReplyLineId;
+        public readonly string FoundReplyText;
+        public readonly string MealReplyLineId;
+        public readonly string MealReplyText;
+        public readonly string FixedMealPreference;
+        public readonly string SmokeReplyLineId;
+        public readonly string SmokeReplyText;
+        public readonly string FixedSmokingPreference;
+        public readonly string SpiritsReplyLineId;
+        public readonly string SpiritsReplyText;
+        public readonly string FixedSpiritBottle;
+        public readonly string ExitToDiningLineId;
+        public readonly string ExitToDiningText;
+
+        public HiddenGuestConversationSpec(
+            int guestNumber,
+            string displayName,
+            string hideAnchorId,
+            string foundStartLineId,
+            string foundStartText,
+            string butlerFoundLineId,
+            string butlerFoundText,
+            string foundReplyLineId,
+            string foundReplyText,
+            string mealReplyLineId,
+            string mealReplyText,
+            string fixedMealPreference,
+            string smokeReplyLineId,
+            string smokeReplyText,
+            string fixedSmokingPreference,
+            string spiritsReplyLineId,
+            string spiritsReplyText,
+            string fixedSpiritBottle,
+            string exitToDiningLineId,
+            string exitToDiningText)
+        {
+            GuestNumber = guestNumber;
+            DisplayName = displayName;
+            HideAnchorId = hideAnchorId;
+            FoundStartLineId = foundStartLineId;
+            FoundStartText = foundStartText;
+            ButlerFoundLineId = butlerFoundLineId;
+            ButlerFoundText = butlerFoundText;
+            FoundReplyLineId = foundReplyLineId;
+            FoundReplyText = foundReplyText;
+            MealReplyLineId = mealReplyLineId;
+            MealReplyText = mealReplyText;
+            FixedMealPreference = fixedMealPreference;
+            SmokeReplyLineId = smokeReplyLineId;
+            SmokeReplyText = smokeReplyText;
+            FixedSmokingPreference = fixedSmokingPreference;
+            SpiritsReplyLineId = spiritsReplyLineId;
+            SpiritsReplyText = spiritsReplyText;
+            FixedSpiritBottle = fixedSpiritBottle;
+            ExitToDiningLineId = exitToDiningLineId;
+            ExitToDiningText = exitToDiningText;
+        }
     }
 
     [Serializable]
@@ -47,13 +121,193 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
 
     [Header("Conversation")]
-    [SerializeField] private string firstMealOption = "fresh monte genellion de plink";
-    [SerializeField] private string secondMealOption = "thyme with Lillums";
-    [SerializeField] private string cigarPreference = "cigar";
-    [SerializeField] private string pipePreference = "pipe";
-    [SerializeField] private string noSmokingPreference = "none, thank you";
     [SerializeField] private float guestExitSeconds = 0.85f;
     [SerializeField] private float guestExitDistance = 0.75f;
+
+    private const string ButlerSpeakerName = "Butler";
+    private const string MealPlinkPreference = "fresh monte genellion de plink";
+    private const string MealThymePreference = "thyme with Lillums";
+    private const string SmokeCigarPreference = "cigar";
+    private const string SmokePipePreference = "pipe";
+    private const string SmokeNonePreference = "none, thank you";
+    private const string ButlerMealAskLineId = "SUB_CH02_BUTLER_MEAL_ASK_001";
+    private const string ButlerMealAskText = "For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?";
+    private const string ButlerSmokeAskLineId = "SUB_CH02_BUTLER_SMOKE_ASK_001";
+    private const string ButlerSmokeAskText = "After dinner, shall I prepare a cigar, a pipe, or no smoke at all?";
+    private const string ButlerSpiritsAskLineId = "SUB_CH02_BUTLER_SPIRITS_ASK_001";
+    private const string ButlerSpiritsAskText = "And shall I see that your bottle of spirits is waiting at the table?";
+
+    private static readonly HiddenGuestConversationSpec[] HiddenGuestConversationSpecs =
+    {
+        new HiddenGuestConversationSpec(
+            1,
+            "Miss Isolde Wren",
+            "Ch2_Hide_Guest01",
+            "CH2_G01_FOUND_START",
+            "Announce yourself before I die of manners.",
+            "SUB_CH02_BUTLER_FOUND_G01",
+            "I have found you, Miss Isolde Wren. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            "CH2_G01_FOUND_REPLY",
+            "You may record whatever prevents further surprises.",
+            "CH2_G01_MEAL_PLINK",
+            "The fresh monte genellion de plink. If one must face horrors, one should do it properly fed.",
+            MealPlinkPreference,
+            "CH2_G01_SMOKE_PIPE",
+            "A pipe. Slower nerves make better decisions.",
+            SmokePipePreference,
+            "CH2_G01_SPIRITS_REPLY",
+            "See that it is not shy.",
+            "Miss Isolde Wren's bottle of spirits",
+            "CH2_G01_EXIT_TO_DINING",
+            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+        new HiddenGuestConversationSpec(
+            2,
+            "Professor Lucien Vale",
+            "Ch2_Hide_Guest02",
+            "CH2_G02_FOUND_START",
+            "Please tell me you are real before you come any closer.",
+            "SUB_CH02_BUTLER_FOUND_G02",
+            "I have found you, Professor Lucien Vale. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            "CH2_G02_FOUND_REPLY",
+            "At seven? After that thing? Yes. Yes, ordinary questions may save us.",
+            "CH2_G02_MEAL_THYME",
+            "Thyme with Lillums, please. Something gentle. Something with leaves.",
+            MealThymePreference,
+            "CH2_G02_SMOKE_CIGAR",
+            "A cigar, though I may only hold it for courage.",
+            SmokeCigarPreference,
+            "CH2_G02_SPIRITS_REPLY",
+            "Thank you. I may ask it several questions.",
+            "Professor Lucien Vale's bottle of spirits",
+            "CH2_G02_EXIT_TO_DINING",
+            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+        new HiddenGuestConversationSpec(
+            3,
+            "Mister Florian Knell",
+            "Ch2_Hide_Guest03",
+            "CH2_G03_FOUND_START",
+            "If this is a party game, I withdraw my admiration.",
+            "SUB_CH02_BUTLER_FOUND_G03",
+            "I have found you, Mister Florian Knell. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            "CH2_G03_FOUND_REPLY",
+            "Splendid. Nothing steadies the soul like being menued after a monster.",
+            "CH2_G03_MEAL_PLINK",
+            "Fresh monte genellion de plink. It sounds impossible, and I am in an impossible mood.",
+            MealPlinkPreference,
+            "CH2_G03_SMOKE_NONE",
+            "No smoke. The monster already supplied quite enough atmosphere.",
+            SmokeNonePreference,
+            "CH2_G03_SPIRITS_REPLY",
+            "Make it visible. I may need to toast survival several times.",
+            "Mister Florian Knell's bottle of spirits",
+            "CH2_G03_EXIT_TO_DINING",
+            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+        new HiddenGuestConversationSpec(
+            4,
+            "Countess Elowen Dusk",
+            "Ch2_Hide_Guest04",
+            "CH2_G04_FOUND_START",
+            "If you are here to say dinner is canceled, lie more elegantly.",
+            "SUB_CH02_BUTLER_FOUND_G04",
+            "I have found you, Countess Elowen Dusk. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            "CH2_G04_FOUND_REPLY",
+            "Good. A schedule is a flimsy shield, but it is a shield.",
+            "CH2_G04_MEAL_THYME",
+            "Thyme with Lillums. Quiet food. Sensible food. Food unlikely to chase me.",
+            MealThymePreference,
+            "CH2_G04_SMOKE_PIPE",
+            "A pipe. It gives the hands something to do besides tremble.",
+            SmokePipePreference,
+            "CH2_G04_SPIRITS_REPLY",
+            "Good. I distrust a dinner table without witnesses.",
+            "Countess Elowen Dusk's bottle of spirits",
+            "CH2_G04_EXIT_TO_DINING",
+            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+        new HiddenGuestConversationSpec(
+            5,
+            "Baron Hector Glass",
+            "Ch2_Hide_Guest05",
+            "CH2_G05_FOUND_START",
+            "I was not hiding. I was choosing a defensible position.",
+            "SUB_CH02_BUTLER_FOUND_G05",
+            "I have found you, Baron Hector Glass. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            "CH2_G05_FOUND_REPLY",
+            "Proceed. The more ordinary the ritual, the less power we give the extraordinary.",
+            "CH2_G05_MEAL_PLINK",
+            "Fresh monte genellion de plink. Something substantial. I dislike fleeing on an empty stomach.",
+            MealPlinkPreference,
+            "CH2_G05_SMOKE_CIGAR",
+            "A cigar. For victory, or for pretending.",
+            SmokeCigarPreference,
+            "CH2_G05_SPIRITS_REPLY",
+            "Place it where I can reach it without turning my back.",
+            "Baron Hector Glass's bottle of spirits",
+            "CH2_G05_EXIT_TO_DINING",
+            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+        new HiddenGuestConversationSpec(
+            6,
+            "Lady Sabine Marrow",
+            "Ch2_Hide_Guest06",
+            "CH2_G06_FOUND_START",
+            "Is it gone, or has it merely become quiet?",
+            "SUB_CH02_BUTLER_FOUND_G06",
+            "I have found you, Lady Sabine Marrow. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            "CH2_G06_FOUND_REPLY",
+            "Yes. Please. Ask me anything that has only two answers.",
+            "CH2_G06_MEAL_THYME",
+            "Thyme with Lillums. That sounds almost medicinal. I accept.",
+            MealThymePreference,
+            "CH2_G06_SMOKE_NONE",
+            "No smoke. The room has already burned itself into my memory.",
+            SmokeNonePreference,
+            "CH2_G06_SPIRITS_REPLY",
+            "Good. Tell it I am counting on its courage.",
+            "Lady Sabine Marrow's bottle of spirits",
+            "CH2_G06_EXIT_TO_DINING",
+            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+        new HiddenGuestConversationSpec(
+            7,
+            "Lord Ambrose Veil",
+            "Ch2_Hide_Guest07",
+            "CH2_G07_FOUND_START",
+            "I knew the house was awake. I did not know it had pets.",
+            "SUB_CH02_BUTLER_FOUND_G07",
+            "I have found you, Lord Ambrose Veil. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            "CH2_G07_FOUND_REPLY",
+            "Record quickly. The walls have begun pretending not to listen.",
+            "CH2_G07_MEAL_PLINK",
+            "Fresh monte genellion de plink. It sounds like a spell, and we may need one.",
+            MealPlinkPreference,
+            "CH2_G07_SMOKE_PIPE",
+            "A pipe. Smoke curls like warnings when the air is honest.",
+            SmokePipePreference,
+            "CH2_G07_SPIRITS_REPLY",
+            "Then pour generously. The chateau has had enough of my nerves.",
+            "Lord Ambrose Veil's bottle of spirits",
+            "CH2_G07_EXIT_TO_DINING",
+            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+        new HiddenGuestConversationSpec(
+            8,
+            "Madame Coralie Thread",
+            "Ch2_Hide_Guest08",
+            "CH2_G08_FOUND_START",
+            "Speak plainly. Is the room safe, or merely occupied?",
+            "SUB_CH02_BUTLER_FOUND_G08",
+            "I have found you, Madame Coralie Thread. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            "CH2_G08_FOUND_REPLY",
+            "You may. I admire a household that continues taking orders after an omen.",
+            "CH2_G08_MEAL_THYME",
+            "Thyme with Lillums. Quiet, green, and unlikely to announce itself on nine legs.",
+            MealThymePreference,
+            "CH2_G08_SMOKE_CIGAR",
+            "A cigar. I intend to leave evidence that I remained composed.",
+            SmokeCigarPreference,
+            "CH2_G08_SPIRITS_REPLY",
+            "Good. It may be the most trustworthy guest here.",
+            "Madame Coralie Thread's bottle of spirits",
+            "CH2_G08_EXIT_TO_DINING",
+            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+    };
 
     private Chapter2Controller chapter2Controller;
     private RoomNavigationManager navigationManager;
@@ -181,8 +435,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
                 continue;
             }
 
+            ApplyConversationSpecToGuest(guest);
             guest.found = false;
             guest.foundOrder = 0;
+            guest.mealPreference = string.Empty;
+            guest.smokingPreference = string.Empty;
+            guest.spiritBottle = string.Empty;
 
             if (guest.actorState == null)
             {
@@ -247,6 +505,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
                 continue;
             }
 
+            ApplyConversationSpecToGuest(guest);
             foundOrderCounter++;
             guest.found = true;
             guest.foundOrder = foundOrderCounter;
@@ -290,12 +549,15 @@ public class Chapter2GuestSearchController : MonoBehaviour
                 continue;
             }
 
-            guests.Add(new GuestSearchEntry
+            GuestSearchEntry guest = new GuestSearchEntry
             {
                 guestId = actorState.ActorId,
                 displayName = GetCanonicalGuestDisplayName(actorState),
                 actorState = actorState
-            });
+            };
+
+            ApplyConversationSpecToGuest(guest);
+            guests.Add(guest);
         }
     }
 
@@ -308,15 +570,38 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         RoomAnchor[] hideAnchors = FindHideAnchors();
         int anchorIndex = 0;
+        HashSet<RoomAnchor> assignedAnchors = new HashSet<RoomAnchor>();
         guests.Sort(CompareGuestIdentity);
 
         for (int i = 0; i < guests.Count; i++)
         {
             GuestSearchEntry guest = guests[i];
 
-            if (guest == null || guest.hideAnchor != null)
+            if (guest == null)
             {
                 continue;
+            }
+
+            ApplyConversationSpecToGuest(guest);
+
+            if (guest.hideAnchor != null)
+            {
+                assignedAnchors.Add(guest.hideAnchor);
+                continue;
+            }
+
+            HiddenGuestConversationSpec spec = GetConversationSpec(guest);
+
+            if (spec != null && TryFindAnchorById(hideAnchors, spec.HideAnchorId, out RoomAnchor specAnchor))
+            {
+                guest.hideAnchor = specAnchor;
+                assignedAnchors.Add(specAnchor);
+                continue;
+            }
+
+            while (anchorIndex < hideAnchors.Length && assignedAnchors.Contains(hideAnchors[anchorIndex]))
+            {
+                anchorIndex++;
             }
 
             if (anchorIndex >= hideAnchors.Length)
@@ -326,6 +611,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             }
 
             guest.hideAnchor = hideAnchors[anchorIndex];
+            assignedAnchors.Add(guest.hideAnchor);
             anchorIndex++;
         }
     }
@@ -395,6 +681,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return false;
         }
 
+        ApplyConversationSpecToGuest(guest);
+
         if (guest.found)
         {
             LogTryStartGuestConversationDiagnostic("rejected", guestId, guest, "guest-already-found");
@@ -426,7 +714,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return true;
         }
 
-        ShowDinnerAnnouncement(guest);
+        ShowGuestFoundStart(guest);
         return true;
     }
 
@@ -889,29 +1177,24 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
+        HiddenGuestConversationSpec spec = GetConversationSpec(guest);
+
+        if (spec != null)
+        {
+            guest.mealPreference = spec.FixedMealPreference;
+            guest.smokingPreference = spec.FixedSmokingPreference;
+            guest.spiritBottle = spec.FixedSpiritBottle;
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(guest.mealPreference))
         {
-            guest.mealPreference = guest.foundOrder % 2 == 1
-                ? firstMealOption
-                : secondMealOption;
+            guest.mealPreference = MealPlinkPreference;
         }
 
         if (string.IsNullOrWhiteSpace(guest.smokingPreference))
         {
-            int smokingIndex = (guest.foundOrder - 1) % 3;
-
-            if (smokingIndex == 0)
-            {
-                guest.smokingPreference = pipePreference;
-            }
-            else if (smokingIndex == 1)
-            {
-                guest.smokingPreference = cigarPreference;
-            }
-            else
-            {
-                guest.smokingPreference = noSmokingPreference;
-            }
+            guest.smokingPreference = SmokeNonePreference;
         }
 
         if (string.IsNullOrWhiteSpace(guest.spiritBottle))
@@ -1016,102 +1299,166 @@ public class Chapter2GuestSearchController : MonoBehaviour
         guest.actorState.ApplyState();
     }
 
-    private void ShowDinnerAnnouncement(GuestSearchEntry guest)
+    private void ShowGuestFoundStart(GuestSearchEntry guest)
     {
-        if (chapter2Controller == null)
+        if (chapter2Controller == null || !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
         {
             MarkGuestFound(GetGuestIdForOrderList(guest));
             return;
         }
 
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitMealPromptChoice);
-        string guestName = GetGuestDisplayName(guest);
-        string line = $"I have found you, {guestName}. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?";
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitAnnounceDinnerPrompt);
         chapter2Controller.ShowGuestConversationWithSubtitle(
-            GetChapter2GuestSubtitleLineId("SUB_CH02_BUTLER_FOUND_G", guest),
-            "Butler",
-            line,
-            "Ask meal preference",
-            () => ShowMealPreferenceQuestion(guest));
+            spec.FoundStartLineId,
+            spec.DisplayName,
+            spec.FoundStartText,
+            "Announce dinner",
+            () => ShowButlerFoundLine(guest));
     }
 
-    private void ShowMealPreferenceQuestion(GuestSearchEntry guest)
+    private void ShowButlerFoundLine(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null || !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
+        {
+            return;
+        }
+
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitFoundReplyContinue);
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            spec.ButlerFoundLineId,
+            ButlerSpeakerName,
+            spec.ButlerFoundText,
+            "Continue",
+            () => ShowGuestFoundReply(guest));
+    }
+
+    private void ShowGuestFoundReply(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null || !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
+        {
+            return;
+        }
+
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitMealAskPrompt);
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            spec.FoundReplyLineId,
+            spec.DisplayName,
+            spec.FoundReplyText,
+            "Ask supper preference",
+            () => ShowButlerMealAsk(guest));
+    }
+
+    private void ShowButlerMealAsk(GuestSearchEntry guest)
     {
         if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
         {
             return;
         }
 
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitMealPreferenceChoice);
-        const string line = "For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?";
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitMealReplyContinue);
         chapter2Controller.ShowGuestConversationWithSubtitle(
-            "SUB_CH02_BUTLER_MEAL_ASK_001",
-            "Butler",
-            line,
-            firstMealOption,
-            () => ChooseMealPreference(guest, firstMealOption),
-            secondMealOption,
-            () => ChooseMealPreference(guest, secondMealOption));
+            ButlerMealAskLineId,
+            ButlerSpeakerName,
+            ButlerMealAskText,
+            "Continue",
+            () => ShowGuestMealReply(guest));
     }
 
-    private void ChooseMealPreference(GuestSearchEntry guest, string preference)
+    private void ShowGuestMealReply(GuestSearchEntry guest)
     {
-        if (!IsActiveConversationGuest(guest))
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null || !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
         {
             return;
         }
 
-        guest.mealPreference = preference;
-        ShowSmokingPreferenceQuestion(guest);
+        guest.mealPreference = spec.FixedMealPreference;
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSmokeAskPrompt);
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            spec.MealReplyLineId,
+            spec.DisplayName,
+            spec.MealReplyText,
+            "Ask after-dinner smoke",
+            () => ShowButlerSmokeAsk(guest));
     }
 
-    private void ShowSmokingPreferenceQuestion(GuestSearchEntry guest)
+    private void ShowButlerSmokeAsk(GuestSearchEntry guest)
     {
         if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
         {
             return;
         }
 
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSmokingPreferenceChoice);
-        const string line = "After dinner, shall I prepare a cigar, a pipe, or no smoke at all?";
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSmokeReplyContinue);
         chapter2Controller.ShowGuestConversationWithSubtitle(
-            "SUB_CH02_BUTLER_SMOKE_ASK_001",
-            "Butler",
-            line,
-            "Cigar",
-            () => ChooseSmokingPreference(guest, cigarPreference),
-            "Pipe",
-            () => ChooseSmokingPreference(guest, pipePreference),
-            "No smoke",
-            () => ChooseSmokingPreference(guest, noSmokingPreference));
+            ButlerSmokeAskLineId,
+            ButlerSpeakerName,
+            ButlerSmokeAskText,
+            "Continue",
+            () => ShowGuestSmokeReply(guest));
     }
 
-    private void ChooseSmokingPreference(GuestSearchEntry guest, string preference)
+    private void ShowGuestSmokeReply(GuestSearchEntry guest)
     {
-        if (!IsActiveConversationGuest(guest))
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null || !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
         {
             return;
         }
 
-        guest.smokingPreference = preference;
-        guest.spiritBottle = $"{GetGuestDisplayName(guest)}'s bottle of spirits";
-        ShowConversationComplete(guest);
+        guest.smokingPreference = spec.FixedSmokingPreference;
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSpiritsAskPrompt);
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            spec.SmokeReplyLineId,
+            spec.DisplayName,
+            spec.SmokeReplyText,
+            "Ask about spirits",
+            () => ShowButlerSpiritsAsk(guest));
     }
 
-    private void ShowConversationComplete(GuestSearchEntry guest)
+    private void ShowButlerSpiritsAsk(GuestSearchEntry guest)
     {
         if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
         {
             return;
         }
 
-        string guestName = GetGuestDisplayName(guest);
-        const string line = "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.";
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSpiritsReplyContinue);
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            ButlerSpiritsAskLineId,
+            ButlerSpeakerName,
+            ButlerSpiritsAskText,
+            "Continue",
+            () => ShowGuestSpiritsReply(guest));
+    }
+
+    private void ShowGuestSpiritsReply(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null || !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
+        {
+            return;
+        }
+
+        guest.spiritBottle = spec.FixedSpiritBottle;
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSendToDiningPrompt);
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            spec.SpiritsReplyLineId,
+            spec.DisplayName,
+            spec.SpiritsReplyText,
+            "Send to Dining Room",
+            () => ShowGuestExitToDining(guest));
+    }
+
+    private void ShowGuestExitToDining(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null || !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
+        {
+            return;
+        }
+
         SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitFinishConfirmation);
         chapter2Controller.ShowGuestConversationWithSubtitle(
-            GetChapter2GuestSubtitleLineId("SUB_CH02_G", guest, "_FINAL_ACK_001"),
-            guestName,
-            line,
+            spec.ExitToDiningLineId,
+            spec.DisplayName,
+            spec.ExitToDiningText,
             "Very good",
             () => FinishGuestConversation(guest));
     }
@@ -1186,43 +1533,286 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         switch (activeConversationResumeStep)
         {
-            case GuestConversationResumeStep.AwaitMealPromptChoice:
-                chapter2Controller.ShowGuestConversation(
-                    "Butler",
-                    string.Empty,
-                    "Ask meal preference",
-                    () => ShowMealPreferenceQuestion(guest));
+            case GuestConversationResumeStep.AwaitAnnounceDinnerPrompt:
+                ShowResumeChoice(guest, "Announce dinner", () => ShowButlerFoundLine(guest));
                 return true;
 
-            case GuestConversationResumeStep.AwaitMealPreferenceChoice:
-                chapter2Controller.ShowGuestConversation(
-                    "Butler",
-                    string.Empty,
-                    firstMealOption,
-                    () => ChooseMealPreference(guest, firstMealOption),
-                    secondMealOption,
-                    () => ChooseMealPreference(guest, secondMealOption));
+            case GuestConversationResumeStep.AwaitFoundReplyContinue:
+                ShowResumeChoice(guest, "Continue", () => ShowGuestFoundReply(guest));
                 return true;
 
-            case GuestConversationResumeStep.AwaitSmokingPreferenceChoice:
-                chapter2Controller.ShowGuestConversation(
-                    "Butler",
-                    string.Empty,
-                    "Cigar",
-                    () => ChooseSmokingPreference(guest, cigarPreference),
-                    "Pipe",
-                    () => ChooseSmokingPreference(guest, pipePreference),
-                    "No smoke",
-                    () => ChooseSmokingPreference(guest, noSmokingPreference));
+            case GuestConversationResumeStep.AwaitMealAskPrompt:
+                ShowResumeChoice(guest, "Ask supper preference", () => ShowButlerMealAsk(guest));
+                return true;
+
+            case GuestConversationResumeStep.AwaitMealReplyContinue:
+                ShowResumeChoice(guest, "Continue", () => ShowGuestMealReply(guest));
+                return true;
+
+            case GuestConversationResumeStep.AwaitSmokeAskPrompt:
+                ShowResumeChoice(guest, "Ask after-dinner smoke", () => ShowButlerSmokeAsk(guest));
+                return true;
+
+            case GuestConversationResumeStep.AwaitSmokeReplyContinue:
+                ShowResumeChoice(guest, "Continue", () => ShowGuestSmokeReply(guest));
+                return true;
+
+            case GuestConversationResumeStep.AwaitSpiritsAskPrompt:
+                ShowResumeChoice(guest, "Ask about spirits", () => ShowButlerSpiritsAsk(guest));
+                return true;
+
+            case GuestConversationResumeStep.AwaitSpiritsReplyContinue:
+                ShowResumeChoice(guest, "Continue", () => ShowGuestSpiritsReply(guest));
+                return true;
+
+            case GuestConversationResumeStep.AwaitSendToDiningPrompt:
+                ShowResumeChoice(guest, "Send to Dining Room", () => ShowGuestExitToDining(guest));
                 return true;
 
             case GuestConversationResumeStep.AwaitFinishConfirmation:
-                chapter2Controller.ShowGuestConversation(
-                    GetGuestDisplayName(guest),
-                    string.Empty,
-                    "Very good",
-                    () => FinishGuestConversation(guest));
+                ShowResumeChoice(guest, "Very good", () => FinishGuestConversation(guest));
                 return true;
+        }
+
+        return false;
+    }
+
+    private void ShowResumeChoice(GuestSearchEntry guest, string choiceLabel, Action callback)
+    {
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
+        {
+            return;
+        }
+
+        chapter2Controller.ShowGuestConversation(
+            ButlerSpeakerName,
+            string.Empty,
+            choiceLabel,
+            callback);
+    }
+
+    private static bool TryGetConversationSpec(GuestSearchEntry guest, out HiddenGuestConversationSpec spec)
+    {
+        spec = GetConversationSpec(guest);
+        return spec != null;
+    }
+
+    private static HiddenGuestConversationSpec GetConversationSpec(GuestSearchEntry guest)
+    {
+        if (TryGetGuestIdentityNumber(guest, out int guestNumber) &&
+            guestNumber >= 1 &&
+            guestNumber <= HiddenGuestConversationSpecs.Length)
+        {
+            return HiddenGuestConversationSpecs[guestNumber - 1];
+        }
+
+        return null;
+    }
+
+    private static void ApplyConversationSpecToGuest(GuestSearchEntry guest)
+    {
+        HiddenGuestConversationSpec spec = GetConversationSpec(guest);
+
+        if (guest == null || spec == null)
+        {
+            return;
+        }
+
+        guest.displayName = spec.DisplayName;
+
+        if (string.IsNullOrWhiteSpace(guest.guestId))
+        {
+            guest.guestId = $"Guest{spec.GuestNumber:00}";
+        }
+    }
+
+    private static bool TryGetGuestIdentityNumber(GuestSearchEntry guest, out int guestNumber)
+    {
+        guestNumber = 0;
+
+        if (guest == null)
+        {
+            return false;
+        }
+
+        if (TryGetGuestIdentityNumber(guest.guestId, out guestNumber) ||
+            TryGetGuestIdentityNumber(guest.displayName, out guestNumber))
+        {
+            return true;
+        }
+
+        if (guest.actorState != null)
+        {
+            if (TryGetGuestIdentityNumber(guest.actorState.ActorId, out guestNumber))
+            {
+                return true;
+            }
+
+            string objectName = guest.actorState.gameObject != null ? guest.actorState.gameObject.name : null;
+
+            if (TryGetGuestIdentityNumber(objectName, out guestNumber))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryGetGuestIdentityNumber(string value, out int guestNumber)
+    {
+        guestNumber = 0;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        if (TryGetKnownGuestIdentityNumber(value, out guestNumber))
+        {
+            return true;
+        }
+
+        string cleanValue = NormalizeIdentityToken(value);
+
+        for (int i = 1; i <= HiddenGuestConversationSpecs.Length; i++)
+        {
+            if (cleanValue.Contains($"guest{i:00}") ||
+                cleanValue.Contains($"guest{i}") ||
+                cleanValue.Contains($"g{i:00}"))
+            {
+                guestNumber = i;
+                return true;
+            }
+        }
+
+        if (TryExtractTrailingGuestNumber(value, out guestNumber) &&
+            guestNumber >= 1 &&
+            guestNumber <= HiddenGuestConversationSpecs.Length)
+        {
+            return true;
+        }
+
+        guestNumber = 0;
+        return false;
+    }
+
+    private static bool TryGetKnownGuestIdentityNumber(string value, out int guestNumber)
+    {
+        guestNumber = 0;
+        string cleanValue = NormalizeIdentityToken(value);
+
+        if (string.IsNullOrEmpty(cleanValue))
+        {
+            return false;
+        }
+
+        if (cleanValue.Contains("ladysabinemarrow"))
+        {
+            guestNumber = 6;
+            return true;
+        }
+
+        if (cleanValue.Contains("missisoldewren") ||
+            cleanValue == "ava" ||
+            cleanValue == "lady" ||
+            cleanValue.StartsWith("ladywalk", StringComparison.Ordinal))
+        {
+            guestNumber = 1;
+            return true;
+        }
+
+        if (cleanValue.Contains("professorlucienvale") ||
+            cleanValue.Contains("butlerguest") ||
+            cleanValue == "marcus")
+        {
+            guestNumber = 2;
+            return true;
+        }
+
+        if (cleanValue.Contains("misterflorianknell") ||
+            cleanValue.Contains("florianknell") ||
+            cleanValue.Contains("guest3idle"))
+        {
+            guestNumber = 3;
+            return true;
+        }
+
+        if (cleanValue.Contains("countesselowendusk") ||
+            cleanValue.Contains("elowendusk"))
+        {
+            guestNumber = 4;
+            return true;
+        }
+
+        if (cleanValue.Contains("baronhectorglass") ||
+            cleanValue.Contains("hectorglass"))
+        {
+            guestNumber = 5;
+            return true;
+        }
+
+        if (cleanValue.Contains("lordambroseveil") ||
+            cleanValue.Contains("ambroseveil") ||
+            cleanValue.Contains("guestpair02man"))
+        {
+            guestNumber = 7;
+            return true;
+        }
+
+        if (cleanValue.Contains("madamecoraliethread") ||
+            cleanValue.Contains("coraliethread"))
+        {
+            guestNumber = 8;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string NormalizeIdentityToken(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        char[] buffer = new char[value.Length];
+        int count = 0;
+
+        for (int i = 0; i < value.Length; i++)
+        {
+            char character = value[i];
+
+            if (char.IsLetterOrDigit(character))
+            {
+                buffer[count] = char.ToLowerInvariant(character);
+                count++;
+            }
+        }
+
+        return new string(buffer, 0, count);
+    }
+
+    private static bool TryFindAnchorById(RoomAnchor[] anchors, string anchorId, out RoomAnchor foundAnchor)
+    {
+        foundAnchor = null;
+
+        if (anchors == null || string.IsNullOrWhiteSpace(anchorId))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < anchors.Length; i++)
+        {
+            RoomAnchor anchor = anchors[i];
+
+            if (anchor != null &&
+                (SameId(anchor.name, anchorId) || SameId(anchor.AnchorId, anchorId)))
+            {
+                foundAnchor = anchor;
+                return true;
+            }
         }
 
         return false;
@@ -1421,6 +2011,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     private int GetChapter2GuestSubtitleNumber(GuestSearchEntry guest)
     {
+        if (TryGetGuestIdentityNumber(guest, out int identityNumber))
+        {
+            return identityNumber;
+        }
+
         if (guest != null && guests != null)
         {
             int rosterIndex = guests.IndexOf(guest);
@@ -1476,6 +2071,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
         if (guest == null)
         {
             return "Guest";
+        }
+
+        HiddenGuestConversationSpec spec = GetConversationSpec(guest);
+
+        if (spec != null)
+        {
+            return spec.DisplayName;
         }
 
         if (!string.IsNullOrWhiteSpace(guest.displayName))
@@ -1552,6 +2154,24 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     private static int CompareGuestIdentity(GuestSearchEntry left, GuestSearchEntry right)
     {
+        bool hasLeftNumber = TryGetGuestIdentityNumber(left, out int leftNumber);
+        bool hasRightNumber = TryGetGuestIdentityNumber(right, out int rightNumber);
+
+        if (hasLeftNumber && hasRightNumber)
+        {
+            return leftNumber.CompareTo(rightNumber);
+        }
+
+        if (hasLeftNumber)
+        {
+            return -1;
+        }
+
+        if (hasRightNumber)
+        {
+            return 1;
+        }
+
         return string.Compare(GetGuestIdForOrderList(left), GetGuestIdForOrderList(right), StringComparison.OrdinalIgnoreCase);
     }
 

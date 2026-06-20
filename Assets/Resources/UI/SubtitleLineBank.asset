@@ -57,14 +57,14 @@ MonoBehaviour:
     requireAdvance: 0
   - lineId: SUB_CH01_G01_GREETING_001
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Good evening. I trust the house remembers its manners better than the weather does.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G02_GREETING_001
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Thank you. The drive was longer in the dark than I care to admit.
     minDuration: 1.25
     maxDuration: 5
@@ -113,14 +113,14 @@ MonoBehaviour:
     requireAdvance: 0
   - lineId: SUB_CH01_G01_ANNOYED_001
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: We were beginning to wonder if anyone was home.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G02_ANNOYED_001
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: It is rather cold out there.
     minDuration: 1.25
     maxDuration: 5
@@ -169,14 +169,14 @@ MonoBehaviour:
     requireAdvance: 0
   - lineId: SUB_CH01_G01_AMBIENT_001
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: This house is colder than I expected.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: SUB_CH01_G02_AMBIENT_001
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: The host is late, isn't he?
     minDuration: 1.25
     maxDuration: 5
@@ -233,14 +233,14 @@ MonoBehaviour:
   - lineId: SUB_CH02_BUTLER_FOUND_G01
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, Ava. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Miss Isolde Wren. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_BUTLER_FOUND_G02
     speakerId: Butler
     speakerDisplayName: Butler
-    text: I have found you, Marcus. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    text: I have found you, Professor Lucien Vale. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
@@ -297,6 +297,13 @@ MonoBehaviour:
     speakerId: Butler
     speakerDisplayName: Butler
     text: After dinner, shall I prepare a cigar, a pipe, or no smoke at all?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_SPIRITS_ASK_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: And shall I see that your bottle of spirits is waiting at the table?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
@@ -358,98 +365,98 @@ MonoBehaviour:
     requireAdvance: 1
   - lineId: CH1_G01_ENTRY
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Good evening. I trust the house remembers its manners better than the weather does.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G01_DELAYED
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: We were beginning to wonder if anyone was home.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G01_COAT_HANDOFF
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Careful with the collar, if you please. It has survived worse evenings than this one.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G01_TO_DRAWING_ROOM
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: A proper house is judged by its wardrobe first. So far, Chateau Chantilly remains under review.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G01_AMBIENT_01
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: This house is colder than I expected.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G01_AMBIENT_02
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: The fire looks arranged rather than lit.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G01_EMPTY_BELL_REACTION
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Then who, precisely, rang?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G02_ENTRY
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Thank you. The drive was longer in the dark than I care to admit.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G02_DELAYED
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: It is rather cold out there.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G02_COAT_HANDOFF
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Thank you. The damp seems to cling to everything tonight.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G02_TO_DRAWING_ROOM
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: The Drawing Room sounds heavenly. I would settle for any room with a pulse of warmth.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G02_AMBIENT_01
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: The host is late, isn't he?
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G02_AMBIENT_02
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: I keep thinking someone is standing just behind the curtains.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH1_G02_EMPTY_BELL_REACTION
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Please do not say the wind. The wind has better manners.
     minDuration: 1.25
     maxDuration: 5
@@ -750,14 +757,14 @@ MonoBehaviour:
     requireAdvance: 0
   - lineId: CH2_G01_PRESPEECH_BARK
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Do begin, Butler. Formality is all that stands between dinner and nonsense.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_PRESPEECH_BARK
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Are we all meant to be waiting like this?
     minDuration: 1.25
     maxDuration: 5
@@ -806,14 +813,14 @@ MonoBehaviour:
     requireAdvance: 0
   - lineId: CH2_G01_PANIC
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Do not run! Do not—oh Lord, run!
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_PANIC
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: It has too many legs!
     minDuration: 1.25
     maxDuration: 5
@@ -862,154 +869,154 @@ MonoBehaviour:
     requireAdvance: 0
   - lineId: CH2_G01_FOUND_START
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Announce yourself before I die of manners.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_FOUND_REPLY
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: You may record whatever prevents further surprises.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_MEAL_PLINK
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: The fresh monte genellion de plink. If one must face horrors, one should do it properly fed.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_MEAL_THYME
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Thyme with Lillums. It sounds disciplined, and discipline is wanted tonight.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_SMOKE_CIGAR
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: A cigar. Something with authority.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_SMOKE_PIPE
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: A pipe. Slower nerves make better decisions.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_SMOKE_NONE
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: No smoke. I should like my lungs available for any further screaming.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_SPIRITS_REPLY
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: See that it is not shy.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_EXIT_TO_DINING
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_CLOCK_REACTION
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Seven o’clock. At least the clock is still obedient.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G01_DINING_REVEAL
     speakerId: Guest1
-    speakerDisplayName: Ava
+    speakerDisplayName: Miss Isolde Wren
     text: Civilization survives another minute.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_FOUND_START
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Please tell me you are real before you come any closer.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_FOUND_REPLY
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: At seven? After that thing? Yes. Yes, ordinary questions may save us.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_MEAL_PLINK
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: The fresh monte genellion de plink. I cannot explain why, but the longer name feels safer.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_MEAL_THYME
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Thyme with Lillums, please. Something gentle. Something with leaves.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_SMOKE_CIGAR
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: A cigar, though I may only hold it for courage.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_SMOKE_PIPE
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: A pipe, if it can be made to smell like a normal evening.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_SMOKE_NONE
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: No smoke at all. I have inhaled enough terror for one night.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_SPIRITS_REPLY
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Thank you. I may ask it several questions.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_EXIT_TO_DINING
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_CLOCK_REACTION
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: Please tell me dinner has windows. No—doors. I meant doors.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_DINING_REVEAL
     speakerId: Guest2
-    speakerDisplayName: Marcus
+    speakerDisplayName: Professor Lucien Vale
     text: I have never been so grateful for a chair.
     minDuration: 1.25
     maxDuration: 5

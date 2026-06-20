@@ -470,14 +470,16 @@ public class Chapter2RegressionTests
         Assert.That(bankText, Does.Contain("It is rather cold out there, and colder still when one is expected."));
         Assert.That(bankText, Does.Contain("We have been waiting at the door for some time. The house was listening with us."));
         Assert.That(bankText, Does.Contain("At last. A closed door should not feel so pleased with itself."));
-        Assert.That(bankText, Does.Contain("I have found you, Ava. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
-        Assert.That(bankText, Does.Contain("I have found you, Marcus. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
+        Assert.That(bankText, Does.Contain("I have found you, Miss Isolde Wren. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
+        Assert.That(bankText, Does.Contain("I have found you, Professor Lucien Vale. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
         Assert.That(bankText, Does.Contain("I have found you, Mister Florian Knell. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
         Assert.That(bankText, Does.Contain("I have found you, Countess Elowen Dusk. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
         Assert.That(bankText, Does.Contain("I have found you, Baron Hector Glass. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
         Assert.That(bankText, Does.Contain("I have found you, Lady Sabine Marrow. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
         Assert.That(bankText, Does.Contain("I have found you, Lord Ambrose Veil. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
         Assert.That(bankText, Does.Contain("I have found you, Madame Coralie Thread. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
+        Assert.That(bankText, Does.Contain("SUB_CH02_BUTLER_SPIRITS_ASK_001"));
+        Assert.That(bankText, Does.Contain("And shall I see that your bottle of spirits is waiting at the table?"));
         Assert.That(Regex.Matches(bankText, @"(?m)^  - lineId: CH[12]_G\d\d_").Count, Is.EqualTo(160), "Every generated guest voice line ID should have a direct subtitle-bank entry with matching script text.");
         Assert.That(bankText, Does.Contain("CH1_G01_ENTRY"));
         Assert.That(bankText, Does.Contain("CH2_G08_DINING_REVEAL"));
@@ -515,10 +517,15 @@ public class Chapter2RegressionTests
         string ambientBody = ExtractMethodBody(chapter1Text, "private void StartAmbientConversation");
         string openingSpeechBody = ExtractMethodBody(chapter2Text, "private IEnumerator RunOpeningSpeechRoutine");
         string chapter2ResolveBody = ExtractMethodBody(chapter2Text, "private void ResolveReferences");
-        string dinnerAnnouncementBody = ExtractMethodBody(searchText, "private void ShowDinnerAnnouncement");
-        string mealQuestionBody = ExtractMethodBody(searchText, "private void ShowMealPreferenceQuestion");
-        string smokeQuestionBody = ExtractMethodBody(searchText, "private void ShowSmokingPreferenceQuestion");
-        string completeBody = ExtractMethodBody(searchText, "private void ShowConversationComplete");
+        string guestFoundStartBody = ExtractMethodBody(searchText, "private void ShowGuestFoundStart");
+        string butlerFoundBody = ExtractMethodBody(searchText, "private void ShowButlerFoundLine");
+        string mealQuestionBody = ExtractMethodBody(searchText, "private void ShowButlerMealAsk");
+        string smokeQuestionBody = ExtractMethodBody(searchText, "private void ShowButlerSmokeAsk");
+        string spiritsQuestionBody = ExtractMethodBody(searchText, "private void ShowButlerSpiritsAsk");
+        string guestMealReplyBody = ExtractMethodBody(searchText, "private void ShowGuestMealReply");
+        string guestSmokeReplyBody = ExtractMethodBody(searchText, "private void ShowGuestSmokeReply");
+        string guestSpiritsReplyBody = ExtractMethodBody(searchText, "private void ShowGuestSpiritsReply");
+        string exitToDiningBody = ExtractMethodBody(searchText, "private void ShowGuestExitToDining");
 
         Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_EMPTY_DOOR_001\")"), "Empty 6:04 doorbell should show the short Butler subtitle.");
         Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_ONE_COAT_001\")"), "Existing one-coat rejection should get a subtitle without changing coat state.");
@@ -533,25 +540,35 @@ public class Chapter2RegressionTests
         Assert.That(chapter1Text, Does.Contain("It is rather cold out there, and colder still when one is expected."), "Chapter 1 delayed fallback lines should match the generated voice script.");
 
         Assert.That(chapter2Text, Does.Contain("ShowGuestConversationWithSubtitle"), "Chapter 2 should preserve the existing dialogue panel and choices.");
-        Assert.That(openingSpeechBody, Does.Contain("ShowSubtitleLine(\"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should use the subtitle overlay for the interrupted Butler line.");
+        Assert.That(openingSpeechBody, Does.Contain("const string openingSpeechLineId = \"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should keep the interrupted Butler line ID explicit.");
+        Assert.That(openingSpeechBody, Does.Contain("ShowSubtitleLine(openingSpeechLineId, \"Butler\", line, false)"), "Address Guests should use the subtitle overlay for the interrupted Butler line.");
         Assert.That(openingSpeechBody, Does.Contain("WaitForDialogueReadOrSkip"), "Address Guests subtitles should pause long enough to read and support Escape skip.");
-        Assert.That(openingSpeechBody, Does.Match(@"ShowSubtitleLine\(\""SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""[\s\S]*ClearSubtitles\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "Normal subtitles should be cleared before the monster stinger.");
+        Assert.That(openingSpeechBody, Does.Match(@"ShowSubtitleLine\(openingSpeechLineId[\s\S]*ClearSubtitles\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "Normal subtitles should be cleared before the monster stinger.");
         Assert.That(chapter2ResolveBody, Does.Not.Contain("ResolveSubtitleService();"), "Subtitle UI should be created lazily, not during chapter intro/reference resolution.");
-        Assert.That(dinnerAnnouncementBody, Does.Contain("GetChapter2GuestSubtitleLineId(\"SUB_CH02_BUTLER_FOUND_G\", guest)"), "Found subtitles should follow the clicked guest entry.");
-        Assert.That(mealQuestionBody, Does.Contain("SUB_CH02_BUTLER_MEAL_ASK_001"));
-        Assert.That(smokeQuestionBody, Does.Contain("SUB_CH02_BUTLER_SMOKE_ASK_001"));
-        Assert.That(completeBody, Does.Contain("GetChapter2GuestSubtitleLineId(\"SUB_CH02_G\", guest, \"_FINAL_ACK_001\")"));
+        Assert.That(guestFoundStartBody, Does.Contain("spec.FoundStartLineId"), "Hidden guest conversations should begin with the clicked guest's found-start line.");
+        Assert.That(butlerFoundBody, Does.Contain("spec.ButlerFoundLineId"), "Found subtitles should follow the clicked guest identity.");
+        Assert.That(mealQuestionBody, Does.Contain("ButlerMealAskLineId"));
+        Assert.That(smokeQuestionBody, Does.Contain("ButlerSmokeAskLineId"));
+        Assert.That(spiritsQuestionBody, Does.Contain("ButlerSpiritsAskLineId"));
+        Assert.That(exitToDiningBody, Does.Contain("spec.ExitToDiningLineId"));
 
-        Assert.That(searchText, Does.Contain("\"Ask meal preference\""));
-        Assert.That(searchText, Does.Contain("firstMealOption"));
-        Assert.That(searchText, Does.Contain("secondMealOption"));
-        Assert.That(searchText, Does.Contain("\"Cigar\""));
-        Assert.That(searchText, Does.Contain("\"Pipe\""));
-        Assert.That(searchText, Does.Contain("\"No smoke\""));
+        Assert.That(searchText, Does.Contain("\"Announce dinner\""));
+        Assert.That(searchText, Does.Contain("\"Ask supper preference\""));
+        Assert.That(searchText, Does.Contain("\"Ask after-dinner smoke\""));
+        Assert.That(searchText, Does.Contain("\"Ask about spirits\""));
+        Assert.That(searchText, Does.Contain("\"Send to Dining Room\""));
+        Assert.That(searchText, Does.Contain("\"Continue\""));
         Assert.That(searchText, Does.Contain("\"Very good\""));
-        Assert.That(searchText, Does.Contain("guest.mealPreference = preference"));
-        Assert.That(searchText, Does.Contain("guest.smokingPreference = preference"));
-        Assert.That(searchText, Does.Contain("guest.spiritBottle = $\"{GetGuestDisplayName(guest)}'s bottle of spirits\""));
+        Assert.That(searchText, Does.Not.Contain("ChooseMealPreference"));
+        Assert.That(searchText, Does.Not.Contain("ChooseSmokingPreference"));
+        Assert.That(searchText, Does.Not.Contain("guest.mealPreference = preference"));
+        Assert.That(searchText, Does.Not.Contain("guest.smokingPreference = preference"));
+        Assert.That(searchText, Does.Not.Contain("\"Cigar\""));
+        Assert.That(searchText, Does.Not.Contain("\"Pipe\""));
+        Assert.That(searchText, Does.Not.Contain("\"No smoke\""));
+        Assert.That(guestMealReplyBody, Does.Contain("guest.mealPreference = spec.FixedMealPreference"));
+        Assert.That(guestSmokeReplyBody, Does.Contain("guest.smokingPreference = spec.FixedSmokingPreference"));
+        Assert.That(guestSpiritsReplyBody, Does.Contain("guest.spiritBottle = spec.FixedSpiritBottle"));
         Assert.That(searchText, Does.Contain("foundGuestIdsInOrder.Add(GetGuestIdForOrderList(guest))"));
         Assert.That(introText, Does.Contain("Time.unscaledDeltaTime"), "Chapter intro fades should not freeze when gameplay is paused.");
         Assert.That(chapterManagerText, Does.Contain("WaitForSecondsRealtime(GetIntroTitleHoldSeconds())"), "Chapter title holds should not freeze when gameplay is paused.");
@@ -564,7 +581,7 @@ public class Chapter2RegressionTests
         Assert.That(File.Exists(GuestVoiceLineCatalogPath), Is.True, "Butler dialog clips should be registered in the voice-line catalog.");
         Assert.That(Directory.Exists(ButlerVoiceFolderPath), Is.True, "Butler dialog WAVs should live beside the guest voice assets.");
 
-        string[] butlerLineIds =
+        string[] catalogedButlerLineIds =
         {
             "SUB_CH01_BUTLER_EMPTY_DOOR_001",
             "SUB_CH01_BUTLER_NO_COAT_001",
@@ -573,8 +590,6 @@ public class Chapter2RegressionTests
             "SUB_CH01_BUTLER_THIS_WAY_001",
             "SUB_CH01_BUTLER_WELCOME_001",
             "SUB_CH02_BUTLER_ADDRESS_GUESTS_001",
-            "SUB_CH02_BUTLER_FOUND_G01",
-            "SUB_CH02_BUTLER_FOUND_G02",
             "SUB_CH02_BUTLER_FOUND_G03",
             "SUB_CH02_BUTLER_FOUND_G04",
             "SUB_CH02_BUTLER_FOUND_G05",
@@ -585,16 +600,23 @@ public class Chapter2RegressionTests
             "SUB_CH02_BUTLER_SMOKE_ASK_001"
         };
 
+        string[] intentionallyUncatalogedButlerLineIds =
+        {
+            "SUB_CH02_BUTLER_FOUND_G01",
+            "SUB_CH02_BUTLER_FOUND_G02",
+            "SUB_CH02_BUTLER_SPIRITS_ASK_001"
+        };
+
         string catalogText = File.ReadAllText(GuestVoiceLineCatalogPath);
         string playbackText = File.ReadAllText(GuestVoiceLinePlaybackPath);
         string subtitleServiceText = File.ReadAllText(SubtitleServicePath);
         string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
 
-        Assert.That(Directory.GetFiles(ButlerVoiceFolderPath, "*.wav").Length, Is.EqualTo(butlerLineIds.Length), "The Butler folder should contain exactly one WAV per Butler subtitle line.");
+        Assert.That(Directory.GetFiles(ButlerVoiceFolderPath, "*.wav").Length, Is.GreaterThanOrEqualTo(catalogedButlerLineIds.Length), "Cataloged Butler lines should have imported WAVs; stale uncataloged WAVs may remain on disk until regenerated.");
 
-        for (int i = 0; i < butlerLineIds.Length; i++)
+        for (int i = 0; i < catalogedButlerLineIds.Length; i++)
         {
-            string lineId = butlerLineIds[i];
+            string lineId = catalogedButlerLineIds[i];
             string wavPath = $"{ButlerVoiceFolderPath}/{lineId}.wav";
             string metaPath = $"{wavPath}.meta";
 
@@ -603,6 +625,15 @@ public class Chapter2RegressionTests
             Assert.That(catalogText, Does.Contain($"lineId: {lineId}"), $"{lineId} should be in the voice-line catalog.");
             Assert.That(catalogText, Does.Contain(ReadGuid(metaPath)), $"{lineId} catalog entry should reference its WAV GUID.");
         }
+
+        for (int i = 0; i < intentionallyUncatalogedButlerLineIds.Length; i++)
+        {
+            Assert.That(catalogText, Does.Not.Contain($"lineId: {intentionallyUncatalogedButlerLineIds[i]}"), $"{intentionallyUncatalogedButlerLineIds[i]} should not play stale or missing Butler audio.");
+        }
+
+        Assert.That(File.Exists($"{ButlerVoiceFolderPath}/SUB_CH02_BUTLER_FOUND_G01.wav"), Is.True, "The obsolete Guest 1 Butler WAV should be left untouched until a later audio task regenerates it.");
+        Assert.That(File.Exists($"{ButlerVoiceFolderPath}/SUB_CH02_BUTLER_FOUND_G02.wav"), Is.True, "The obsolete Guest 2 Butler WAV should be left untouched until a later audio task regenerates it.");
+        Assert.That(File.Exists($"{ButlerVoiceFolderPath}/SUB_CH02_BUTLER_SPIRITS_ASK_001.wav"), Is.False, "The new spirits prompt has no generated WAV in this gameplay-only task.");
 
         Assert.That(playbackText, Does.Contain("SUB_CH01_BUTLER_"), "Chapter 1 Butler subtitle IDs should resolve directly as audio IDs.");
         Assert.That(playbackText, Does.Contain("SUB_CH02_BUTLER_"), "Chapter 2 Butler subtitle IDs should resolve directly as audio IDs.");
@@ -1102,10 +1133,20 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Contain("spiritBottle"));
         Assert.That(guestSearchText, Does.Contain("bottle of spirits"));
         Assert.That(guestSearchText, Does.Match(@"\bTryStartGuestConversation\s*\("));
-        Assert.That(guestSearchText, Does.Contain("Ask meal preference"));
-        Assert.That(guestSearchText, Does.Match(@"\bShowMealPreferenceQuestion\s*\("));
-        Assert.That(guestSearchText, Does.Match(@"\bChooseMealPreference\s*\("));
-        Assert.That(guestSearchText, Does.Match(@"\bChooseSmokingPreference\s*\("));
+        Assert.That(guestSearchText, Does.Contain("HiddenGuestConversationSpec"));
+        Assert.That(guestSearchText, Does.Contain("Miss Isolde Wren"));
+        Assert.That(guestSearchText, Does.Contain("Professor Lucien Vale"));
+        Assert.That(guestSearchText, Does.Contain("Ask supper preference"));
+        Assert.That(guestSearchText, Does.Contain("Ask after-dinner smoke"));
+        Assert.That(guestSearchText, Does.Contain("Ask about spirits"));
+        Assert.That(guestSearchText, Does.Match(@"\bShowButlerMealAsk\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bShowGuestMealReply\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bShowButlerSmokeAsk\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bShowGuestSmokeReply\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bShowButlerSpiritsAsk\s*\("));
+        Assert.That(guestSearchText, Does.Match(@"\bShowGuestSpiritsReply\s*\("));
+        Assert.That(guestSearchText, Does.Not.Match(@"\bChooseMealPreference\s*\("));
+        Assert.That(guestSearchText, Does.Not.Match(@"\bChooseSmokingPreference\s*\("));
         Assert.That(guestSearchText, Does.Match(@"\bFinishGuestConversation\s*\("));
         Assert.That(guestSearchText, Does.Contain("MarkGuestFound(GetGuestIdForOrderList(guest))"));
         Assert.That(guestSearchText, Does.Contain("HandleGuestSearchProgressChanged()"));
@@ -1124,12 +1165,15 @@ public class Chapter2RegressionTests
         string resumeAfterRoomChangeBody = ExtractMethodBody(guestSearchText, "private IEnumerator ResumeActiveConversationAfterRoomChange");
         string resumeForRoomBody = ExtractMethodBody(guestSearchText, "private bool TryResumeActiveConversationForRoom");
         string showResumeBody = ExtractMethodBody(guestSearchText, "private bool TryShowActiveConversationResumeState");
+        string showResumeChoiceBody = ExtractMethodBody(guestSearchText, "private void ShowResumeChoice");
         string finishBody = ExtractMethodBody(guestSearchText, "private void FinishGuestConversation");
 
         Assert.That(guestSearchText, Does.Contain("enum GuestConversationResumeStep"), "Guest conversations need an explicit cursor for interrupted lines.");
-        Assert.That(guestSearchText, Does.Contain("AwaitMealPromptChoice"));
-        Assert.That(guestSearchText, Does.Contain("AwaitMealPreferenceChoice"));
-        Assert.That(guestSearchText, Does.Contain("AwaitSmokingPreferenceChoice"));
+        Assert.That(guestSearchText, Does.Contain("AwaitAnnounceDinnerPrompt"));
+        Assert.That(guestSearchText, Does.Contain("AwaitMealAskPrompt"));
+        Assert.That(guestSearchText, Does.Contain("AwaitSmokeAskPrompt"));
+        Assert.That(guestSearchText, Does.Contain("AwaitSpiritsAskPrompt"));
+        Assert.That(guestSearchText, Does.Contain("AwaitSendToDiningPrompt"));
         Assert.That(guestSearchText, Does.Contain("AwaitFinishConfirmation"));
         Assert.That(startConversationBody, Does.Contain("TryShowActiveConversationResumeState(guest)"), "Clicking the same active guest should resume after the interrupted line instead of restarting.");
         Assert.That(roomChangedBody, Does.Contain("StartCoroutine(ResumeActiveConversationAfterRoomChange(roomName))"), "Room re-entry should resume active conversation state automatically.");
@@ -1138,8 +1182,9 @@ public class Chapter2RegressionTests
         Assert.That(resumeForRoomBody, Does.Contain("SameRoom(actorState.CurrentRoomId, roomName)"), "Conversation should only resume when the Butler re-enters the active guest's room.");
         Assert.That(resumeForRoomBody, Does.Contain("SetGuestConversationInputEnabled(false)"), "Restored choices should keep normal movement paused while the player answers.");
         Assert.That(showResumeBody, Does.Not.Contain("ShowGuestConversationWithSubtitle"), "Interrupted lines must not replay audio when resuming.");
-        Assert.That(showResumeBody, Does.Contain("ShowGuestConversation"));
-        Assert.That(showResumeBody, Does.Contain("string.Empty"), "The cut-off line should not be repeated as dialog text on resume.");
+        Assert.That(showResumeBody, Does.Contain("ShowResumeChoice"));
+        Assert.That(showResumeChoiceBody, Does.Contain("ShowGuestConversation"));
+        Assert.That(showResumeChoiceBody, Does.Contain("string.Empty"), "The cut-off line should not be repeated as dialog text on resume.");
         Assert.That(finishBody, Does.Contain("activeConversationResumeStep = GuestConversationResumeStep.None"), "Finishing a guest conversation should clear the resume cursor.");
         Assert.That(controllerRoomChangedBody, Does.Contain("currentPhase == Chapter2Phase.GuestSearch"));
         Assert.That(controllerRoomChangedBody, Does.Contain("SetGuestConversationInputEnabled(true)"), "Leaving a guest-search room should restore movement until a visible interrupted conversation resumes.");
