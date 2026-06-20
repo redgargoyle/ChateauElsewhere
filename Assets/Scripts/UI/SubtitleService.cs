@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
@@ -12,6 +14,8 @@ public sealed class SubtitleService : MonoBehaviour
     private const string PanelName = "Panel_Subtitle";
     private const string SpeakerTextName = "Text_SubtitleSpeaker";
     private const string LineTextName = "Text_SubtitleLine";
+    private const string SkipButtonName = "Button_SubtitleSkip";
+    private const string SkipButtonLabelName = "Text_SubtitleSkip";
     private const string DefaultLineBankResourcePath = "UI/SubtitleLineBank";
     private const float CharactersPerSecond = 24f;
 
@@ -27,7 +31,6 @@ public sealed class SubtitleService : MonoBehaviour
     [SerializeField] private SubtitleLineBank lineBank;
     [SerializeField] private string lineBankResourcePath = DefaultLineBankResourcePath;
     [SerializeField] private bool subtitleDebugMode;
-    [SerializeField] private bool playGuestVoiceAudio = true;
     [SerializeField] private GuestVoiceLinePlayback voicePlayback;
     [SerializeField] private RoomNavigationManager navigationManager;
 
@@ -35,6 +38,9 @@ public sealed class SubtitleService : MonoBehaviour
     private RectTransform panelRect;
     private TMP_Text speakerText;
     private TMP_Text lineText;
+    private Button skipButton;
+    private TMP_Text skipButtonLabel;
+    private Action skipCallback;
     private Coroutine autoHideRoutine;
     private bool showingPersistentLine;
     private bool skipCurrentLineRequested;
@@ -139,9 +145,45 @@ public sealed class SubtitleService : MonoBehaviour
         ShowPersistent(lineId, speaker, text);
     }
 
+    public bool TryResolveSpeechLine(
+        string lineId,
+        string speakerOverride,
+        string textOverride,
+        out string speaker,
+        out string text,
+        out float minDuration,
+        out float maxDuration)
+    {
+        ResolveReferences();
+        return TryResolveLine(lineId, speakerOverride, textOverride, out speaker, out text, out minDuration, out maxDuration, out _);
+    }
+
+    public void ShowSpeechLine(string lineId, string speaker, string text, bool showSkipButton, Action onSkip)
+    {
+        ResolveReferences();
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        queuedSubtitles.Clear();
+        showingPersistentLine = true;
+
+        if (autoHideRoutine != null)
+        {
+            StopCoroutine(autoHideRoutine);
+            autoHideRoutine = null;
+        }
+
+        ShowNow(lineId, speaker, text);
+        ConfigureSkipButton(showSkipButton, onSkip);
+    }
+
     public void HideCurrent()
     {
         showingPersistentLine = false;
+        ConfigureSkipButton(false, null);
 
         if (autoHideRoutine != null)
         {
@@ -191,7 +233,7 @@ public sealed class SubtitleService : MonoBehaviour
 
     private void EnsureUI()
     {
-        if (panelRect != null && speakerText != null && lineText != null)
+        if (panelRect != null && speakerText != null && lineText != null && skipButton != null)
         {
             return;
         }
@@ -200,7 +242,7 @@ public sealed class SubtitleService : MonoBehaviour
 
         if (canvas == null)
         {
-            GameObject canvasObject = new GameObject(CanvasName, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+            GameObject canvasObject = new GameObject(CanvasName, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 5000;
@@ -210,6 +252,12 @@ public sealed class SubtitleService : MonoBehaviour
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
         }
+        else if (canvas.GetComponent<GraphicRaycaster>() == null)
+        {
+            canvas.gameObject.AddComponent<GraphicRaycaster>();
+        }
+
+        EnsureEventSystem();
 
         Transform existingPanel = canvas.transform.Find(PanelName);
         GameObject panelObject = existingPanel != null ? existingPanel.gameObject : null;
@@ -233,6 +281,7 @@ public sealed class SubtitleService : MonoBehaviour
 
         speakerText = FindOrCreateText(panelObject.transform, SpeakerTextName, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -12f), new Vector2(-64f, 32f), 24f, FontStyles.Bold);
         lineText = FindOrCreateText(panelObject.transform, LineTextName, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -30f), new Vector2(-64f, 72f), 30f, FontStyles.Normal);
+        skipButton = FindOrCreateSkipButton(panelObject.transform);
         SetVisible(false);
     }
 
@@ -302,14 +351,11 @@ public sealed class SubtitleService : MonoBehaviour
         while (queuedSubtitles.Count > 0)
         {
             QueuedSubtitle subtitle = queuedSubtitles.Dequeue();
-            float voiceDuration = ShowNow(subtitle.LineId, subtitle.Speaker, subtitle.Text);
-            float duration = Mathf.Max(
-                GetDuration(subtitle.Text, subtitle.MinDuration, subtitle.MaxDuration),
-                voiceDuration + 0.1f);
-            float unskippableDuration = voiceDuration > 0f ? voiceDuration + 0.1f : 0f;
+            ShowNow(subtitle.LineId, subtitle.Speaker, subtitle.Text);
+            float duration = GetDuration(subtitle.Text, subtitle.MinDuration, subtitle.MaxDuration);
             float elapsed = 0f;
 
-            while (elapsed < duration && (!skipCurrentLineRequested || elapsed < unskippableDuration))
+            while (elapsed < duration && !skipCurrentLineRequested)
             {
                 elapsed += Time.unscaledDeltaTime;
                 yield return null;
@@ -337,7 +383,7 @@ public sealed class SubtitleService : MonoBehaviour
         ShowNow(lineId, speaker, text);
     }
 
-    private float ShowNow(string lineId, string speaker, string text)
+    private void ShowNow(string lineId, string speaker, string text)
     {
         EnsureUI();
 
@@ -354,24 +400,6 @@ public sealed class SubtitleService : MonoBehaviour
 
         SetVisible(true);
         LogShownLine(lineId, speaker, text);
-        return PlayGuestVoiceLine(lineId, speaker, text);
-    }
-
-    private float PlayGuestVoiceLine(string lineId, string speaker, string text)
-    {
-        if (!playGuestVoiceAudio || !Application.isPlaying)
-        {
-            return 0f;
-        }
-
-        if (voicePlayback == null)
-        {
-            voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
-        }
-
-        return voicePlayback != null
-            ? voicePlayback.PlayForDialogue(lineId, speaker, text)
-            : 0f;
     }
 
     private void SetVisible(bool visible)
@@ -379,6 +407,11 @@ public sealed class SubtitleService : MonoBehaviour
         if (panelRect != null)
         {
             panelRect.gameObject.SetActive(visible);
+        }
+
+        if (!visible)
+        {
+            ConfigureSkipButton(false, null);
         }
     }
 
@@ -428,6 +461,123 @@ public sealed class SubtitleService : MonoBehaviour
         SetVisible(false);
         voicePlayback?.StopCurrentLine();
         GuestVoiceLinePlayback.StopAnyCurrentLine();
+    }
+
+    private bool TryResolveLine(
+        string lineId,
+        string speakerOverride,
+        string textOverride,
+        out string speaker,
+        out string text,
+        out float minDuration,
+        out float maxDuration,
+        out bool requireAdvance)
+    {
+        speaker = string.Empty;
+        text = string.Empty;
+        minDuration = 1.25f;
+        maxDuration = 5f;
+        requireAdvance = false;
+
+        SubtitleLine line = null;
+        bool hasLine = lineBank != null && lineBank.TryGetLine(lineId, out line);
+
+        if (!hasLine && string.IsNullOrWhiteSpace(textOverride))
+        {
+            return false;
+        }
+
+        if (!hasLine && !string.IsNullOrWhiteSpace(lineId))
+        {
+            Debug.LogWarning($"[Subtitle] Missing subtitle line '{lineId}'. Showing caller-provided text.", this);
+        }
+
+        speaker = string.IsNullOrWhiteSpace(speakerOverride)
+            ? (hasLine ? line.speakerDisplayName : string.Empty)
+            : speakerOverride.Trim();
+        text = hasLine && !string.IsNullOrWhiteSpace(line.text)
+            ? line.text.Trim()
+            : string.IsNullOrWhiteSpace(textOverride) ? string.Empty : textOverride.Trim();
+        minDuration = hasLine ? line.minDuration : minDuration;
+        maxDuration = hasLine ? line.maxDuration : maxDuration;
+        requireAdvance = hasLine && line.requireAdvance;
+        return !string.IsNullOrWhiteSpace(text);
+    }
+
+    private void ConfigureSkipButton(bool visible, Action onSkip)
+    {
+        skipCallback = visible ? onSkip : null;
+
+        if (skipButton == null)
+        {
+            return;
+        }
+
+        skipButton.onClick.RemoveAllListeners();
+
+        if (visible && onSkip != null)
+        {
+            skipButton.onClick.AddListener(HandleSkipButtonClicked);
+        }
+
+        skipButton.gameObject.SetActive(visible && onSkip != null);
+    }
+
+    private void HandleSkipButtonClicked()
+    {
+        skipCallback?.Invoke();
+    }
+
+    private Button FindOrCreateSkipButton(Transform parent)
+    {
+        Transform existing = parent.Find(SkipButtonName);
+        GameObject buttonObject = existing != null ? existing.gameObject : null;
+
+        if (buttonObject == null)
+        {
+            buttonObject = new GameObject(SkipButtonName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(parent, false);
+        }
+
+        RectTransform rect = buttonObject.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(1f, 0f);
+        rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(1f, 0f);
+        rect.anchoredPosition = new Vector2(-14f, 12f);
+        rect.sizeDelta = new Vector2(92f, 30f);
+
+        Image image = buttonObject.GetComponent<Image>();
+        image.color = new Color(0.12f, 0.11f, 0.1f, 0.92f);
+        image.raycastTarget = true;
+
+        Button button = buttonObject.GetComponent<Button>();
+        button.transition = Selectable.Transition.ColorTint;
+
+        skipButtonLabel = FindOrCreateText(
+            buttonObject.transform,
+            SkipButtonLabelName,
+            Vector2.zero,
+            Vector2.one,
+            new Vector2(0.5f, 0.5f),
+            Vector2.zero,
+            Vector2.zero,
+            16f,
+            FontStyles.Bold);
+        skipButtonLabel.text = "Skip";
+        skipButtonLabel.alignment = TextAlignmentOptions.Center;
+        skipButtonLabel.raycastTarget = false;
+        buttonObject.SetActive(false);
+        return button;
+    }
+
+    private static void EnsureEventSystem()
+    {
+        if (FindAnyObjectByType<EventSystem>(FindObjectsInactive.Include) != null)
+        {
+            return;
+        }
+
+        new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
     }
 
     private void LogShownLine(string lineId, string speaker, string text)

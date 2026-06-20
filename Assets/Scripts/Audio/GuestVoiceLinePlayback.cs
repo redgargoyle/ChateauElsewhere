@@ -17,6 +17,8 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
     private bool subscribedToRoomChanges;
     private string playbackRoom = string.Empty;
 
+    public bool IsPlaying => audioSource != null && audioSource.isPlaying;
+
     public static GuestVoiceLinePlayback FindOrCreate()
     {
         GuestVoiceLinePlayback existing = FindAnyObjectByType<GuestVoiceLinePlayback>(FindObjectsInactive.Include);
@@ -35,6 +37,11 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
 
     public float PlayForDialogue(string lineId, string speaker, string text)
     {
+        return PlayForDialogue(lineId, speaker, text, false);
+    }
+
+    public float PlayForDialogue(string lineId, string speaker, string text, bool allowOverlap)
+    {
         if (!Application.isPlaying)
         {
             return 0f;
@@ -43,6 +50,11 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         if (!TryResolveClipForDialogue(lineId, speaker, text, out AudioClip clip, out float lineVolume))
         {
             return 0f;
+        }
+
+        if (allowOverlap)
+        {
+            return PlayOverlappingClip(clip, lineVolume);
         }
 
         if (!EnsureAudioSource())
@@ -66,6 +78,11 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         playbackRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
         audioSource.Play();
         return clip.length;
+    }
+
+    public bool TryGetDialogueClip(string lineId, string speaker, string text, out AudioClip clip, out float lineVolume)
+    {
+        return TryResolveClipForDialogue(lineId, speaker, text, out clip, out lineVolume);
     }
 
     public float GetDurationForDialogue(string lineId, string speaker, string text)
@@ -136,6 +153,27 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         }
 
         return true;
+    }
+
+    private float PlayOverlappingClip(AudioClip clip, float lineVolume)
+    {
+        if (clip == null)
+        {
+            return 0f;
+        }
+
+        GameObject overlapObject = new GameObject($"{PlayerObjectName}_Overlap");
+        AudioSource overlapSource = overlapObject.AddComponent<AudioSource>();
+        float sourceBaseVolume = Mathf.Clamp01(baseVolume) * Mathf.Clamp01(lineVolume);
+        overlapSource.clip = clip;
+        overlapSource.loop = false;
+        overlapSource.playOnAwake = false;
+        overlapSource.spatialBlend = 0f;
+        overlapSource.ignoreListenerVolume = true;
+        GameAudioSettings.EnsureBinding(overlapSource, GameAudioChannel.Dialogue, sourceBaseVolume);
+        overlapSource.Play();
+        Destroy(overlapObject, clip.length + 0.25f);
+        return clip.length;
     }
 
     private void OnDisable()

@@ -121,6 +121,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private bool enableSubtitles = true;
     [SerializeField] private bool subtitleDebugMode;
     [SerializeField] private SubtitleService subtitleService;
+    [SerializeField] private DialogueSpeechService speechService;
 
     [Header("Debug")]
     [SerializeField] private bool verboseLogs = true;
@@ -1630,12 +1631,12 @@ public class Chapter1ArrivalController : MonoBehaviour
                 null);
             SetGuestState(guest, GuestArrivalState.AwaitingGreeting);
             LogGuestLine(guest.Config, guest.Config.GreetingLine);
-            ShowGuestSubtitle(guest, "GREETING", GetGuestGreetingLine(guest));
+            yield return SpeakGuestLine(guest, "GREETING", GetGuestGreetingLine(guest));
 
             if (guest.Annoyed)
             {
                 Debug.Log($"{guest.Config.GuestDisplayName}: {GetAnnoyedLine(guest.GuestIndex)}", this);
-                ShowGuestSubtitle(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
+                yield return SpeakGuestLine(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
             }
 
             OfferGuestCoat(guest);
@@ -1681,12 +1682,12 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             SetGuestState(guest, GuestArrivalState.AwaitingGreeting);
             LogGuestLine(guest.Config, guest.Config.GreetingLine);
-            ShowGuestSubtitle(guest, "GREETING", GetGuestGreetingLine(guest));
+            yield return SpeakGuestLine(guest, "GREETING", GetGuestGreetingLine(guest));
 
             if (guest.Annoyed)
             {
                 Debug.Log($"{guest.Config.GuestDisplayName}: {GetAnnoyedLine(guest.GuestIndex)}", this);
-                ShowGuestSubtitle(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
+                yield return SpeakGuestLine(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
             }
 
             OfferGuestCoat(guest);
@@ -3435,7 +3436,24 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         string lineId = GetChapter1GuestSubtitleLineId(guestState.GuestIndex, lineKind);
-        ShowSubtitleLine(lineId, guestState.Config.GuestDisplayName, text.Trim(), false);
+        DialogueSpeechService service = ResolveSpeechService();
+        service?.BeginSpeakLine(lineId, guestState.Config.GuestDisplayName, text.Trim(), false, false);
+    }
+
+    private IEnumerator SpeakGuestLine(GuestRuntimeState guestState, string lineKind, string text)
+    {
+        if (guestState == null || guestState.Config == null || string.IsNullOrWhiteSpace(text))
+        {
+            yield break;
+        }
+
+        string lineId = GetChapter1GuestSubtitleLineId(guestState.GuestIndex, lineKind);
+        DialogueSpeechService service = ResolveSpeechService();
+
+        if (service != null)
+        {
+            yield return service.SpeakLine(lineId, guestState.Config.GuestDisplayName, text.Trim(), false, false);
+        }
     }
 
     private static string GetChapter1GuestSubtitleLineId(int guestIndex, string lineKind)
@@ -3447,14 +3465,29 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void ShowSubtitleLine(string lineId)
     {
-        SubtitleService service = ResolveSubtitleService();
-        service?.ShowLine(lineId);
+        DialogueSpeechService service = ResolveSpeechService();
+        service?.BeginSpeakLine(lineId, null, null, false, false);
     }
 
     private void ShowSubtitleLine(string lineId, string speaker, string text, bool requireAdvance)
     {
-        SubtitleService service = ResolveSubtitleService();
-        service?.ShowLine(lineId, speaker, text, requireAdvance);
+        DialogueSpeechService service = ResolveSpeechService();
+        service?.BeginSpeakLine(lineId, speaker, text, false, false);
+    }
+
+    private DialogueSpeechService ResolveSpeechService()
+    {
+        if (!enableSubtitles || !Application.isPlaying)
+        {
+            return null;
+        }
+
+        if (speechService == null)
+        {
+            speechService = DialogueSpeechService.FindOrCreate();
+        }
+
+        return speechService;
     }
 
     private SubtitleService ResolveSubtitleService()

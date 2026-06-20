@@ -57,6 +57,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private bool enableSubtitles = true;
     [SerializeField] private bool subtitleDebugMode;
     [SerializeField] private SubtitleService subtitleService;
+    [SerializeField] private DialogueSpeechService speechService;
 
     private Coroutine fadeInRoutine;
     private Coroutine openingSpeechRoutine;
@@ -288,8 +289,8 @@ public class Chapter2Controller : MonoBehaviour
             secondCallback,
             thirdChoice,
             thirdCallback);
-        float voiceDuration = PlayGuestVoiceLine(subtitleLineId, speaker, line);
-        HoldDialogueChoicesUntilVoiceFinishes(voiceDuration);
+
+        HoldDialogueChoicesForSpeech(subtitleLineId, speaker, line);
         LogSubtitleLineShown(subtitleLineId, speaker, line);
     }
 
@@ -384,10 +385,8 @@ public class Chapter2Controller : MonoBehaviour
                 }
 
                 const string openingSpeechLineId = "SUB_CH02_BUTLER_ADDRESS_GUESTS_001";
-                float voiceDuration = GetDialogueVoiceDuration(openingSpeechLineId, "Butler", line);
-                ShowSubtitleLine(openingSpeechLineId, "Butler", line, false);
                 Debug.Log($"Butler: {line}", this);
-                yield return WaitForDialogueReadOrSkip(line, Mathf.Max(GetSpeechLineSeconds(), voiceDuration + 0.1f), voiceDuration + 0.1f);
+                yield return SpeakLine(openingSpeechLineId, "Butler", line, false, true);
             }
         }
 
@@ -1006,12 +1005,14 @@ public class Chapter2Controller : MonoBehaviour
 
     public void ShowSubtitleLine(string lineId, string speaker, string text, bool requireAdvance)
     {
-        SubtitleService service = ResolveSubtitleService();
-        service?.ShowLine(lineId, speaker, text, requireAdvance);
+        DialogueSpeechService service = ResolveSpeechService();
+        service?.BeginSpeakLine(lineId, speaker, text, false, false);
     }
 
     public void ClearSubtitles()
     {
+        speechService?.StopCurrentSpeech();
+        DialogueSpeechService.StopAnyCurrentSpeech();
         subtitleService?.ClearAll();
     }
 
@@ -1031,6 +1032,34 @@ public class Chapter2Controller : MonoBehaviour
         return subtitleService;
     }
 
+    private DialogueSpeechService ResolveSpeechService()
+    {
+        if (!enableSubtitles || !Application.isPlaying)
+        {
+            return null;
+        }
+
+        if (speechService == null)
+        {
+            speechService = DialogueSpeechService.FindOrCreate();
+        }
+
+        return speechService;
+    }
+
+    private IEnumerator SpeakLine(string lineId, string speaker, string text, bool allowOverlap = false, bool blockInput = false)
+    {
+        DialogueSpeechService service = ResolveSpeechService();
+
+        if (service != null)
+        {
+            yield return service.SpeakLine(lineId, speaker, text, allowOverlap, blockInput);
+            yield break;
+        }
+
+        yield return WaitForDialogueReadOrSkip(text, GetSpeechLineSeconds());
+    }
+
     private void LogSubtitleLineShown(string lineId, string speaker, string text)
     {
         if (!subtitleDebugMode || string.IsNullOrWhiteSpace(lineId))
@@ -1042,63 +1071,41 @@ public class Chapter2Controller : MonoBehaviour
         Debug.Log($"[Subtitle] {lineId.Trim()}: {cleanSpeaker}: {text}", this);
     }
 
-    private float PlayGuestVoiceLine(string lineId, string speaker, string text)
-    {
-        if (!Application.isPlaying)
-        {
-            return 0f;
-        }
-
-        GuestVoiceLinePlayback voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
-        return voicePlayback != null
-            ? voicePlayback.PlayForDialogue(lineId, speaker, text)
-            : 0f;
-    }
-
-    private float GetDialogueVoiceDuration(string lineId, string speaker, string text)
-    {
-        if (!Application.isPlaying)
-        {
-            return 0f;
-        }
-
-        GuestVoiceLinePlayback voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
-        return voicePlayback != null
-            ? voicePlayback.GetDurationForDialogue(lineId, speaker, text)
-            : 0f;
-    }
-
-    private void HoldDialogueChoicesUntilVoiceFinishes(float voiceDuration)
+    private void HoldDialogueChoicesForSpeech(string lineId, string speaker, string text)
     {
         StopDialogueChoiceHold();
 
-        if (interactionHUD == null || voiceDuration <= 0f)
+        if (interactionHUD == null)
         {
-            interactionHUD?.SetDialogueChoicesInteractable(true);
+            return;
+        }
+
+        DialogueSpeechService service = ResolveSpeechService();
+
+        if (service == null)
+        {
+            interactionHUD.SetDialogueChoicesInteractable(true);
             return;
         }
 
         interactionHUD.SetDialogueChoicesInteractable(false);
-        dialogueVoiceChoiceRoutine = StartCoroutine(ReenableDialogueChoicesAfterVoice(voiceDuration));
-    }
-
-    private IEnumerator ReenableDialogueChoicesAfterVoice(float voiceDuration)
-    {
-        yield return new WaitForSecondsRealtime(Mathf.Max(0f, voiceDuration) + 0.1f);
-
-        if (interactionHUD != null)
+        dialogueVoiceChoiceRoutine = service.BeginSpeakLine(lineId, speaker, text, false, false, () =>
         {
-            interactionHUD.SetDialogueChoicesInteractable(true);
-        }
+            if (interactionHUD != null)
+            {
+                interactionHUD.SetDialogueChoicesInteractable(true);
+            }
 
-        dialogueVoiceChoiceRoutine = null;
+            dialogueVoiceChoiceRoutine = null;
+        });
     }
 
     private void StopDialogueChoiceHold()
     {
-        if (dialogueVoiceChoiceRoutine != null)
+        if (dialogueVoiceChoiceRoutine != null || speechService != null)
         {
-            StopCoroutine(dialogueVoiceChoiceRoutine);
+            speechService?.StopCurrentSpeech();
+            DialogueSpeechService.StopAnyCurrentSpeech();
             dialogueVoiceChoiceRoutine = null;
         }
 

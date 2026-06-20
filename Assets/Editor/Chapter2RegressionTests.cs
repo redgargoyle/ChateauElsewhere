@@ -30,6 +30,7 @@ public class Chapter2RegressionTests
     private const string SubtitleLinePath = "Assets/Scripts/UI/SubtitleLine.cs";
     private const string SubtitleLineBankScriptPath = "Assets/Scripts/UI/SubtitleLineBank.cs";
     private const string SubtitleServicePath = "Assets/Scripts/UI/SubtitleService.cs";
+    private const string DialogueSpeechServicePath = "Assets/Scripts/Audio/DialogueSpeechService.cs";
     private const string SubtitleLineBankPath = "Assets/Resources/UI/SubtitleLineBank.asset";
     private const string GuestVoiceLinePlaybackPath = "Assets/Scripts/Audio/GuestVoiceLinePlayback.cs";
     private const string GuestVoiceLineCatalogPath = "Assets/Resources/Audio/GuestVoiceLineCatalog.asset";
@@ -530,8 +531,8 @@ public class Chapter2RegressionTests
         Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_EMPTY_DOOR_001\")"), "Empty 6:04 doorbell should show the short Butler subtitle.");
         Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_ONE_COAT_001\")"), "Existing one-coat rejection should get a subtitle without changing coat state.");
         Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_NO_COAT_001\")"), "Existing empty-handed hanger rejection should get a subtitle without changing coat state.");
-        Assert.That(chapter1AdmissionBody, Does.Contain("ShowGuestSubtitle(guest, \"GREETING\""), "Guest greetings should be captioned when guests enter.");
-        Assert.That(chapter1AdmissionBody, Does.Contain("ShowGuestSubtitle(guest, \"ANNOYED\""), "Delayed guests should show annoyed captions after the greeting.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("yield return SpeakGuestLine(guest, \"GREETING\""), "Guest greetings should block the arrival flow until speech completes.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("yield return SpeakGuestLine(guest, \"ANNOYED\""), "Delayed guest lines should block the arrival flow until speech completes.");
         Assert.That(ambientBody, Does.Contain("ShowGuestSubtitle(guestState, \"AMBIENT\""), "Ambient captions should only come from the existing ambient hook.");
         Assert.That(chapter1Text, Does.Contain("Good evening. I trust the house remembers its manners better than the weather does."), "Chapter 1 fallback greetings should match the generated voice script.");
         Assert.That(chapter1Text, Does.Contain("Thank you. The drive was longer in the dark than I care to admit."), "Chapter 1 fallback greetings should match the generated voice script.");
@@ -541,9 +542,8 @@ public class Chapter2RegressionTests
 
         Assert.That(chapter2Text, Does.Contain("ShowGuestConversationWithSubtitle"), "Chapter 2 should preserve the existing dialogue panel and choices.");
         Assert.That(openingSpeechBody, Does.Contain("const string openingSpeechLineId = \"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should keep the interrupted Butler line ID explicit.");
-        Assert.That(openingSpeechBody, Does.Contain("ShowSubtitleLine(openingSpeechLineId, \"Butler\", line, false)"), "Address Guests should use the subtitle overlay for the interrupted Butler line.");
-        Assert.That(openingSpeechBody, Does.Contain("WaitForDialogueReadOrSkip"), "Address Guests subtitles should pause long enough to read and support Escape skip.");
-        Assert.That(openingSpeechBody, Does.Match(@"ShowSubtitleLine\(openingSpeechLineId[\s\S]*ClearSubtitles\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "Normal subtitles should be cleared before the monster stinger.");
+        Assert.That(openingSpeechBody, Does.Contain("yield return SpeakLine(openingSpeechLineId, \"Butler\", line, false, true)"), "Address Guests should use the shared speech API and block input.");
+        Assert.That(openingSpeechBody, Does.Match(@"SpeakLine\(openingSpeechLineId[\s\S]*ClearSubtitles\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "Normal subtitles should be cleared before the monster stinger.");
         Assert.That(chapter2ResolveBody, Does.Not.Contain("ResolveSubtitleService();"), "Subtitle UI should be created lazily, not during chapter intro/reference resolution.");
         Assert.That(guestFoundStartBody, Does.Contain("spec.FoundStartLineId"), "Hidden guest conversations should begin with the clicked guest's found-start line.");
         Assert.That(butlerFoundBody, Does.Contain("spec.ButlerFoundLineId"), "Found subtitles should follow the clicked guest identity.");
@@ -577,6 +577,7 @@ public class Chapter2RegressionTests
     [Test]
     public void ButlerVoiceLinesAreCatalogedAndProtectedFromRoutineCutoff()
     {
+        Assert.That(File.Exists(DialogueSpeechServicePath), Is.True, "Required dialog should use the shared speech/subtitle service.");
         Assert.That(File.Exists(GuestVoiceLinePlaybackPath), Is.True, "Butler dialog should use the shared voice-line playback component.");
         Assert.That(File.Exists(GuestVoiceLineCatalogPath), Is.True, "Butler dialog clips should be registered in the voice-line catalog.");
         Assert.That(Directory.Exists(ButlerVoiceFolderPath), Is.True, "Butler dialog WAVs should live beside the guest voice assets.");
@@ -609,6 +610,7 @@ public class Chapter2RegressionTests
 
         string catalogText = File.ReadAllText(GuestVoiceLineCatalogPath);
         string playbackText = File.ReadAllText(GuestVoiceLinePlaybackPath);
+        string speechServiceText = File.ReadAllText(DialogueSpeechServicePath);
         string subtitleServiceText = File.ReadAllText(SubtitleServicePath);
         string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
 
@@ -637,10 +639,15 @@ public class Chapter2RegressionTests
 
         Assert.That(playbackText, Does.Contain("SUB_CH01_BUTLER_"), "Chapter 1 Butler subtitle IDs should resolve directly as audio IDs.");
         Assert.That(playbackText, Does.Contain("SUB_CH02_BUTLER_"), "Chapter 2 Butler subtitle IDs should resolve directly as audio IDs.");
-        Assert.That(playbackText, Does.Contain("GetDurationForDialogue"), "Callers should be able to wait for the real clip length without double-playing it.");
+        Assert.That(playbackText, Does.Contain("PlayForDialogue(string lineId, string speaker, string text, bool allowOverlap)"), "Speech playback should support explicit overlap only when requested.");
+        Assert.That(speechServiceText, Does.Contain("while (!allowOverlap && normalSpeechActive)"), "Normal dialog should serialize through one active speech line.");
+        Assert.That(speechServiceText, Does.Contain("subtitleService.ShowSpeechLine"), "Speech playback should display the matching subtitle at voice start.");
+        Assert.That(speechServiceText, Does.Contain("voicePlayback.PlayForDialogue(lineId, speaker, text, allowOverlap)"), "Speech playback should use the resolved voice clip for the same line.");
+        Assert.That(speechServiceText, Does.Contain("Input.GetKeyDown(KeyCode.Escape)"), "Escape should skip the active speech line without advancing the next line.");
+        Assert.That(subtitleServiceText, Does.Contain("Button_SubtitleSkip"), "Subtitle UI should expose a small skip button during active speech.");
+        Assert.That(subtitleServiceText, Does.Not.Contain("PlayForDialogue("), "Subtitle-only paths must not bypass DialogueSpeechService voice serialization.");
         Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*GuestVoiceLinePlayback\.StopAnyCurrentLine\(\)"), "Room, teleport, and chapter clears should stop active dialog audio.");
-        Assert.That(chapter2Text, Does.Contain("GetDialogueVoiceDuration(openingSpeechLineId, \"Butler\", line)"), "The Butler opening speech should wait against the imported WAV length.");
-        Assert.That(chapter2Text, Does.Match(@"WaitForDialogueReadOrSkip\(line,\s*Mathf\.Max\(GetSpeechLineSeconds\(\),\s*voiceDuration \+ 0\.1f\),\s*voiceDuration \+ 0\.1f\)"), "The Butler opening speech should not be skippable until its voice clip finishes.");
+        Assert.That(chapter2Text, Does.Contain("yield return SpeakLine(openingSpeechLineId, \"Butler\", line, false, true)"), "The Butler opening speech should wait on the shared speech API.");
     }
 
     [Test]
