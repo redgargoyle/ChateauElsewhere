@@ -28,6 +28,31 @@ MonoBehaviour:
   - Music Room
   - Billiard Room
   - Upper Gallery
+  roomAssignments:
+  - roomName: Grand Entrance
+    clip: {fileID: 8300000, guid: 45876613868b614ca83e9d719a3a2f63, type: 3}
+    pitch: 1
+  - roomName: Grand Entrance Hall
+    clip: {fileID: 8300000, guid: 45876613868b614ca83e9d719a3a2f63, type: 3}
+    pitch: 1
+  - roomName: Grand Entrance Hall Rear view
+    clip: {fileID: 8300000, guid: 45876613868b614ca83e9d719a3a2f63, type: 3}
+    pitch: 1
+  - roomName: Drawing Room
+    clip: {fileID: 8300000, guid: fc7eb70b3284514cfa22289f7ef12fdd, type: 3}
+    pitch: 1
+  - roomName: Library
+    clip: {fileID: 8300000, guid: 90ed8d2b12cc2ecd8881f943b543fd97, type: 3}
+    pitch: 1
+  - roomName: Music Room
+    clip: {fileID: 8300000, guid: ff5838d0aa3cac7c38cd95b0fdc44ab8, type: 3}
+    pitch: 1
+  - roomName: Billiard Room
+    clip: {fileID: 8300000, guid: 92c891a935bdf5b0fb7a32ec058c8476, type: 3}
+    pitch: 1
+  - roomName: Upper Gallery
+    clip: {fileID: 8300000, guid: 752ebabf043a00176986eee4e4606641, type: 3}
+    pitch: 1
   baseVolume: 0.18
   fadeSeconds: 0.35
   minPitch: 0.98

@@ -12,8 +12,8 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
     [SerializeField] private string catalogResourcePath = DefaultCatalogResourcePath;
     [SerializeField] private AudioSource audioSource;
 
-    private int lastClipIndex = -1;
     private Coroutine fadeRoutine;
+    private string currentRoomKey = string.Empty;
 
     public static ClockTickingAmbienceController FindOrCreate(RoomNavigationManager navigationManager)
     {
@@ -123,21 +123,34 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
     {
         ResolveReferences();
 
+        string roomKey = NormalizeRoomKey(roomName);
+
         if (catalog == null || audioSource == null || !catalog.HasRoom(roomName))
         {
+            currentRoomKey = string.Empty;
             FadeOutAndStop();
             return;
         }
 
-        if (!catalog.TryGetRandomClip(ref lastClipIndex, out AudioClip clip))
+        if (!catalog.TryGetClockForRoom(roomName, out AudioClip clip, out float pitch))
         {
+            currentRoomKey = string.Empty;
             FadeOutAndStop();
             return;
         }
 
+        if (audioSource.isPlaying &&
+            audioSource.clip == clip &&
+            string.Equals(currentRoomKey, roomKey, System.StringComparison.Ordinal))
+        {
+            FadeTo(GameAudioSettings.GetVolume(GameAudioChannel.Atmosphere) * catalog.BaseVolume);
+            return;
+        }
+
+        currentRoomKey = roomKey;
         audioSource.clip = clip;
-        audioSource.pitch = catalog.GetRandomPitch();
-        audioSource.time = 0f;
+        audioSource.pitch = pitch;
+        audioSource.time = catalog.GetStablePlaybackTimeForRoom(roomName, clip, Time.unscaledTime);
         audioSource.volume = 0f;
         audioSource.Play();
         FadeTo(GameAudioSettings.GetVolume(GameAudioChannel.Atmosphere) * catalog.BaseVolume);
@@ -232,5 +245,15 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
     private float GetFadeSeconds()
     {
         return catalog != null ? Mathf.Max(0f, catalog.FadeSeconds) : 0f;
+    }
+
+    private static string NormalizeRoomKey(string roomName)
+    {
+        if (string.IsNullOrWhiteSpace(roomName))
+        {
+            return string.Empty;
+        }
+
+        return roomName.Trim().Replace("_", " ").ToLowerInvariant();
     }
 }

@@ -37,6 +37,9 @@ MonoBehaviour:
   - guestNumber: 8
     clip: {fileID: 8300000, guid: 5b35aac4e19b2139c8f2894c9ef9c2af, type: 3}
     volume: 0.27
+  butlerClip: {fileID: 8300000, guid: 59b9854ad6f6046d199ebeda9761484a, type: 3}
+  butlerVolume: 0.23
   defaultVolume: 0.28
   highPassCutoffFrequency: 180
   highPassResonanceQ: 1.1
+  lowPassCutoffFrequency: 9000
