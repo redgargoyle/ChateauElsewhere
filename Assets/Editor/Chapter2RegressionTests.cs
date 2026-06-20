@@ -1086,6 +1086,40 @@ public class Chapter2RegressionTests
     }
 
     [Test]
+    public void Chapter2GuestConversationsResumeAfterInterruptedLineWithoutRepeatingAudio()
+    {
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string showConversationBody = ExtractMethodBody(controllerText, "public void ShowGuestConversation");
+        string controllerRoomChangedBody = ExtractMethodBody(controllerText, "private void HandleCurrentRoomChanged");
+        string startConversationBody = ExtractMethodBody(guestSearchText, "public bool TryStartGuestConversation");
+        string roomChangedBody = ExtractMethodBody(guestSearchText, "private void HandleCurrentRoomChanged");
+        string resumeAfterRoomChangeBody = ExtractMethodBody(guestSearchText, "private IEnumerator ResumeActiveConversationAfterRoomChange");
+        string resumeForRoomBody = ExtractMethodBody(guestSearchText, "private bool TryResumeActiveConversationForRoom");
+        string showResumeBody = ExtractMethodBody(guestSearchText, "private bool TryShowActiveConversationResumeState");
+        string finishBody = ExtractMethodBody(guestSearchText, "private void FinishGuestConversation");
+
+        Assert.That(guestSearchText, Does.Contain("enum GuestConversationResumeStep"), "Guest conversations need an explicit cursor for interrupted lines.");
+        Assert.That(guestSearchText, Does.Contain("AwaitMealPromptChoice"));
+        Assert.That(guestSearchText, Does.Contain("AwaitMealPreferenceChoice"));
+        Assert.That(guestSearchText, Does.Contain("AwaitSmokingPreferenceChoice"));
+        Assert.That(guestSearchText, Does.Contain("AwaitFinishConfirmation"));
+        Assert.That(startConversationBody, Does.Contain("TryShowActiveConversationResumeState(guest)"), "Clicking the same active guest should resume after the interrupted line instead of restarting.");
+        Assert.That(roomChangedBody, Does.Contain("StartCoroutine(ResumeActiveConversationAfterRoomChange(roomName))"), "Room re-entry should resume active conversation state automatically.");
+        Assert.That(resumeAfterRoomChangeBody, Does.Contain("yield return null"), "Resume should wait one frame so subtitle/audio room cleanup runs first.");
+        Assert.That(resumeAfterRoomChangeBody, Does.Contain("TryResumeActiveConversationForRoom(roomName)"));
+        Assert.That(resumeForRoomBody, Does.Contain("SameRoom(actorState.CurrentRoomId, roomName)"), "Conversation should only resume when the Butler re-enters the active guest's room.");
+        Assert.That(resumeForRoomBody, Does.Contain("SetGuestConversationInputEnabled(false)"), "Restored choices should keep normal movement paused while the player answers.");
+        Assert.That(showResumeBody, Does.Not.Contain("ShowGuestConversationWithSubtitle"), "Interrupted lines must not replay audio when resuming.");
+        Assert.That(showResumeBody, Does.Contain("ShowGuestConversation"));
+        Assert.That(showResumeBody, Does.Contain("string.Empty"), "The cut-off line should not be repeated as dialog text on resume.");
+        Assert.That(finishBody, Does.Contain("activeConversationResumeStep = GuestConversationResumeStep.None"), "Finishing a guest conversation should clear the resume cursor.");
+        Assert.That(controllerRoomChangedBody, Does.Contain("currentPhase == Chapter2Phase.GuestSearch"));
+        Assert.That(controllerRoomChangedBody, Does.Contain("SetGuestConversationInputEnabled(true)"), "Leaving a guest-search room should restore movement until a visible interrupted conversation resumes.");
+        Assert.That(showConversationBody, Does.Contain("SetDialogueChoicesInteractable(true)"), "Non-audio resume states should restore clickable choices immediately.");
+    }
+
+    [Test]
     public void Chapter2HidesGuestsAtSevenThenSeatsGuestsOnDiningRoomReveal()
     {
         string controllerText = File.ReadAllText(Chapter2ControllerPath);
