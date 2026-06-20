@@ -1,0 +1,93 @@
+# British Victorian Guest Arrival Audition V2
+
+- Generated: 2026-06-19T15:07:21
+- Chatterbox device: cuda
+- CUDA GPU: NVIDIA GeForce RTX 5090
+- Output count: 8 final WAV files
+- Runtime seconds: 26.6
+- Scope: arrival dialogue only; Unity Assets/Audio was not modified.
+- Goal: heavier British/RP accents, classier voices, and fixes from the user review.
+
+## Review Fixes
+- Guest 01: Clear woman, but not British and too old. Make younger, brighter, upper-class RP.
+- Guest 02: Not British enough. Make unmistakably refined English.
+- Guest 03: Good tone, but not British enough. Push theatrical RP harder.
+- Guest 04: Pretty good. Keep close, slightly more aristocratic RP.
+- Guest 05: Too slow/robotic, barely British. Make classy, smoother, less heavy.
+- Guest 06: Good voice, but not British. Add refined English accent.
+- Guest 07: Too low and slow, not British enough. Lift pitch and pace, keep haunted.
+- Guest 08: Not British, too high. Lower and cool the voice, more aristocratic.
+
+## Final Files
+- Guest 01 Lady (woman)
+  - line_id: `CH1_G01_ENTRY`
+  - final: `final_mastered/Guest01_Lady_CH1_G01_ENTRY.wav`
+  - raw: `raw_chatterbox/Guest01_Lady_CH1_G01_ENTRY.wav`
+  - anchor: `generated_british_anchors/Guest01_Lady_british_anchor_v2.wav`
+  - base prompt: `/home/hamzak/Desktop/ChataeuChantilly/Voice_Auditions_Guest_Arrivals/arrival_audition_20260619_135604_pitch_checked/Guest01_Lady_CH1_G01_ENTRY.wav`
+  - profile: Young upper-class English lady; clear, poised RP, sharper and less elderly.
+  - durations: anchor=8.36s, raw=4.70s
+  - settings: seed=5101, exaggeration=0.55, cfg_weight=0.32, temperature=0.86, pitch_factor=1.085
+- Guest 02 Butler Guest (man)
+  - line_id: `CH1_G02_ENTRY`
+  - final: `final_mastered/Guest02_Butler_Guest_CH1_G02_ENTRY.wav`
+  - raw: `raw_chatterbox/Guest02_Butler_Guest_CH1_G02_ENTRY.wav`
+  - anchor: `generated_british_anchors/Guest02_Butler_Guest_british_anchor_v2.wav`
+  - base prompt: `/home/hamzak/Desktop/ChataeuChantilly/Voice_Auditions_Guest_Arrivals/arrival_audition_20260619_135604_pitch_checked/Guest02_Butler_Guest_CH1_G02_ENTRY.wav`
+  - profile: Refined English gentleman; precise RP, polite, lightly nervous, clearly British.
+  - durations: anchor=10.20s, raw=4.66s
+  - settings: seed=5202, exaggeration=0.58, cfg_weight=0.3, temperature=0.86, pitch_factor=1.01
+- Guest 03 Mister Florian Knell (man)
+  - line_id: `CH1_G03_ENTRY`
+  - final: `final_mastered/Guest03_Mister_Florian_Knell_CH1_G03_ENTRY.wav`
+  - raw: `raw_chatterbox/Guest03_Mister_Florian_Knell_CH1_G03_ENTRY.wav`
+  - anchor: `generated_british_anchors/Guest03_Mister_Florian_Knell_british_anchor_v2.wav`
+  - base prompt: `/home/hamzak/Desktop/ChataeuChantilly/Voice_Auditions_Guest_Arrivals/arrival_audition_20260619_135604_pitch_checked/Guest03_Mister_Florian_Knell_CH1_G03_ENTRY.wav`
+  - profile: Theatrical English gentleman; witty, crisp RP, classier and more British.
+  - durations: anchor=7.72s, raw=5.42s
+  - settings: seed=5303, exaggeration=0.62, cfg_weight=0.3, temperature=0.86, pitch_factor=0.985
+- Guest 04 Countess Elowen Dusk (woman)
+  - line_id: `CH1_G04_ENTRY`
+  - final: `final_mastered/Guest04_Countess_Elowen_Dusk_CH1_G04_ENTRY.wav`
+  - raw: `raw_chatterbox/Guest04_Countess_Elowen_Dusk_CH1_G04_ENTRY.wav`
+  - anchor: `generated_british_anchors/Guest04_Countess_Elowen_Dusk_british_anchor_v2.wav`
+  - base prompt: `/home/hamzak/Desktop/ChataeuChantilly/Voice_Auditions_Guest_Arrivals/arrival_audition_20260619_135604_pitch_checked/Guest04_Countess_Elowen_Dusk_CH1_G04_ENTRY.wav`
+  - profile: Countess; mature aristocratic English woman, severe, clipped RP.
+  - durations: anchor=7.68s, raw=4.70s
+  - settings: seed=5404, exaggeration=0.52, cfg_weight=0.34, temperature=0.8, pitch_factor=0.98
+- Guest 05 Baron Hector Glass (man)
+  - line_id: `CH1_G05_ENTRY`
+  - final: `final_mastered/Guest05_Baron_Hector_Glass_CH1_G05_ENTRY.wav`
+  - raw: `raw_chatterbox/Guest05_Baron_Hector_Glass_CH1_G05_ENTRY.wav`
+  - anchor: `generated_british_anchors/Guest05_Baron_Hector_Glass_british_anchor_v2.wav`
+  - base prompt: `/home/hamzak/Desktop/ChataeuChantilly/Voice_Auditions_Guest_Arrivals/arrival_audition_20260619_135604_pitch_checked/Guest05_Baron_Hector_Glass_CH1_G05_ENTRY.wav`
+  - profile: Classy English baron; smooth practical RP, less slow, less robotic, composed.
+  - durations: anchor=7.96s, raw=4.66s
+  - settings: seed=5505, exaggeration=0.56, cfg_weight=0.28, temperature=0.88, pitch_factor=0.955
+- Guest 06 Lady Sabine Marrow (woman)
+  - line_id: `CH1_G06_ENTRY`
+  - final: `final_mastered/Guest06_Lady_Sabine_Marrow_CH1_G06_ENTRY.wav`
+  - raw: `raw_chatterbox/Guest06_Lady_Sabine_Marrow_CH1_G06_ENTRY.wav`
+  - anchor: `generated_british_anchors/Guest06_Lady_Sabine_Marrow_british_anchor_v2.wav`
+  - base prompt: `/home/hamzak/Desktop/ChataeuChantilly/Voice_Auditions_Guest_Arrivals/arrival_audition_20260619_135604_pitch_checked/Guest06_Lady_Sabine_Marrow_CH1_G06_ENTRY.wav`
+  - profile: Lady Sabine; refined English woman, soft anxious RP, elegant and breath-held.
+  - durations: anchor=8.60s, raw=4.70s
+  - settings: seed=5606, exaggeration=0.6, cfg_weight=0.28, temperature=0.88, pitch_factor=1.015
+- Guest 07 Lord Ambrose Veil (man)
+  - line_id: `CH1_G07_ENTRY`
+  - final: `final_mastered/Guest07_Lord_Ambrose_Veil_CH1_G07_ENTRY.wav`
+  - raw: `raw_chatterbox/Guest07_Lord_Ambrose_Veil_CH1_G07_ENTRY.wav`
+  - anchor: `generated_british_anchors/Guest07_Lord_Ambrose_Veil_british_anchor_v2.wav`
+  - base prompt: `/home/hamzak/Desktop/ChataeuChantilly/Voice_Auditions_Guest_Arrivals/arrival_audition_20260619_135604_pitch_checked/Guest07_Lord_Ambrose_Veil_CH1_G07_ENTRY.wav`
+  - profile: Lord Ambrose; haunted English mystic, lifted from previous low/slow read.
+  - durations: anchor=13.44s, raw=5.90s
+  - settings: seed=5707, exaggeration=0.56, cfg_weight=0.27, temperature=0.86, pitch_factor=1.01
+- Guest 08 Madame Coralie Thread (woman)
+  - line_id: `CH1_G08_ENTRY`
+  - final: `final_mastered/Guest08_Madame_Coralie_Thread_CH1_G08_ENTRY.wav`
+  - raw: `raw_chatterbox/Guest08_Madame_Coralie_Thread_CH1_G08_ENTRY.wav`
+  - anchor: `generated_british_anchors/Guest08_Madame_Coralie_Thread_british_anchor_v2.wav`
+  - base prompt: `/home/hamzak/Desktop/ChataeuChantilly/Voice_Auditions_Guest_Arrivals/arrival_audition_20260619_135604_pitch_checked/Guest08_Madame_Coralie_Thread_CH1_G08_ENTRY.wav`
+  - profile: Madame Coralie; lower commanding aristocratic English woman, clipped RP.
+  - durations: anchor=8.84s, raw=4.90s
+  - settings: seed=5808, exaggeration=0.54, cfg_weight=0.3, temperature=0.84, pitch_factor=0.925
