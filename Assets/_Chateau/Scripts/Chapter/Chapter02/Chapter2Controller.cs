@@ -53,15 +53,22 @@ public class Chapter2Controller : MonoBehaviour
         "Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"
     };
 
+    [Header("Subtitles")]
+    [SerializeField] private bool enableSubtitles = true;
+    [SerializeField] private bool subtitleDebugMode;
+    [SerializeField] private SubtitleService subtitleService;
+
     private Coroutine fadeInRoutine;
     private Coroutine openingSpeechRoutine;
     private Coroutine monsterStingerRoutine;
     private Coroutine diningObjectiveTransitionRoutine;
     private Coroutine diningRoomCompletionRoutine;
+    private Coroutine dialogueVoiceChoiceRoutine;
     private AudioClip runtimeClockStrikeClip;
     private bool allGuestsFoundHandled;
     private bool dinnerSeatingHandled;
     private bool debugTeleportToDrawingRoomOnStart;
+    private bool subscribedToRoomChanges;
 
     public Chapter2Phase CurrentPhase => currentPhase;
     public string DrawingRoomId => drawingRoomId;
@@ -177,6 +184,7 @@ public class Chapter2Controller : MonoBehaviour
             interactionHUD.SetObjective("Dinner is served.");
         }
 
+        ClearSubtitles();
         UpdateFoundGuestsHud();
         SetPhase(Chapter2Phase.Complete);
         SetPlayerInputEnabled(true);
@@ -259,14 +267,41 @@ public class Chapter2Controller : MonoBehaviour
             thirdCallback);
     }
 
+    public void ShowGuestConversationWithSubtitle(
+        string subtitleLineId,
+        string speaker,
+        string line,
+        string firstChoice,
+        System.Action firstCallback,
+        string secondChoice = null,
+        System.Action secondCallback = null,
+        string thirdChoice = null,
+        System.Action thirdCallback = null)
+    {
+        ShowGuestConversation(
+            speaker,
+            line,
+            firstChoice,
+            firstCallback,
+            secondChoice,
+            secondCallback,
+            thirdChoice,
+            thirdCallback);
+        float voiceDuration = PlayGuestVoiceLine(subtitleLineId, speaker, line);
+        HoldDialogueChoicesUntilVoiceFinishes(voiceDuration);
+        LogSubtitleLineShown(subtitleLineId, speaker, line);
+    }
+
     public void ClearGuestConversation()
     {
-        if (interactionHUD == null)
+        StopDialogueChoiceHold();
+
+        if (interactionHUD != null)
         {
-            return;
+            interactionHUD.ClearDialogue();
         }
 
-        interactionHUD.ClearDialogue();
+        ClearSubtitles();
     }
 
     private void BeginDiningRoomObjective()
@@ -296,6 +331,7 @@ public class Chapter2Controller : MonoBehaviour
             interactionHUD.ShowClockStrike(chapterClock != null ? chapterClock.CurrentTimeLabel : "7:00 PM");
         }
 
+        ClearSubtitles();
         PlayClockStrikeDing();
         yield return new WaitForSeconds(GetClockStrikeCloseUpSeconds());
 
@@ -346,8 +382,11 @@ public class Chapter2Controller : MonoBehaviour
                     interactionHUD.SetStatus(line);
                 }
 
+                const string openingSpeechLineId = "SUB_CH02_BUTLER_ADDRESS_GUESTS_001";
+                float voiceDuration = GetDialogueVoiceDuration(openingSpeechLineId, "Butler", line);
+                ShowSubtitleLine(openingSpeechLineId, "Butler", line, false);
                 Debug.Log($"Butler: {line}", this);
-                yield return new WaitForSeconds(GetSpeechLineSeconds());
+                yield return WaitForDialogueReadOrSkip(line, Mathf.Max(GetSpeechLineSeconds(), voiceDuration + 0.1f), voiceDuration + 0.1f);
             }
         }
 
@@ -360,6 +399,7 @@ public class Chapter2Controller : MonoBehaviour
             interactionHUD.SetObjective("A terrible sound cuts through the room...");
         }
 
+        ClearSubtitles();
         SetPhase(Chapter2Phase.MonsterStinger);
     }
 
@@ -369,7 +409,7 @@ public class Chapter2Controller : MonoBehaviour
         yield return null;
 
         introUI.ShowTitle(chapterTitle);
-        yield return new WaitForSeconds(GetChapterTitleHoldSeconds());
+        yield return new WaitForSecondsRealtime(GetChapterTitleHoldSeconds());
 
         yield return introUI.FadeFromBlack(GetFadeSeconds());
 
@@ -393,6 +433,8 @@ public class Chapter2Controller : MonoBehaviour
         {
             navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         }
+
+        RegisterRoomChangeHandler();
 
         if (introUI == null)
         {
@@ -517,6 +559,8 @@ public class Chapter2Controller : MonoBehaviour
         {
             guestPanic.StopPanic();
         }
+
+        ClearSubtitles();
 
         if (diningObjectiveTransitionRoutine != null)
         {
@@ -809,6 +853,32 @@ public class Chapter2Controller : MonoBehaviour
         return Mathf.Max(0f, speechLineSeconds);
     }
 
+    private IEnumerator WaitForDialogueReadOrSkip(string line, float fallbackSeconds, float unskippableSeconds = 0f)
+    {
+        float duration = GetDialogueReadSeconds(line, fallbackSeconds);
+        float protectedDuration = Mathf.Max(0f, unskippableSeconds);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            if (Input.GetKeyDown(KeyCode.Escape) && elapsed >= protectedDuration)
+            {
+                break;
+            }
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    private static float GetDialogueReadSeconds(string line, float fallbackSeconds)
+    {
+        float fallback = Mathf.Max(0f, fallbackSeconds);
+        float readableSeconds = 1.25f + Mathf.Max(0, string.IsNullOrEmpty(line) ? 0 : line.Length) / 24f;
+        float maxSeconds = Mathf.Max(fallback, 6f);
+        return Mathf.Clamp(Mathf.Max(fallback, readableSeconds), fallback, maxSeconds);
+    }
+
     private float GetDiningRoomRevealSeconds()
     {
         if (debugFastMode || (chapterManager != null && chapterManager.DebugFastMode))
@@ -931,5 +1001,146 @@ public class Chapter2Controller : MonoBehaviour
             guestSearch.GetFoundGuestDisplayNamesInOrder(),
             guestSearch.FoundGuestCount,
             guestSearch.GuestCount);
+    }
+
+    public void ShowSubtitleLine(string lineId, string speaker, string text, bool requireAdvance)
+    {
+        SubtitleService service = ResolveSubtitleService();
+        service?.ShowLine(lineId, speaker, text, requireAdvance);
+    }
+
+    public void ClearSubtitles()
+    {
+        subtitleService?.ClearAll();
+    }
+
+    private SubtitleService ResolveSubtitleService()
+    {
+        if (!enableSubtitles || !Application.isPlaying)
+        {
+            return null;
+        }
+
+        if (subtitleService == null)
+        {
+            subtitleService = SubtitleService.FindOrCreate();
+        }
+
+        subtitleService?.SetDebugMode(subtitleDebugMode);
+        return subtitleService;
+    }
+
+    private void LogSubtitleLineShown(string lineId, string speaker, string text)
+    {
+        if (!subtitleDebugMode || string.IsNullOrWhiteSpace(lineId))
+        {
+            return;
+        }
+
+        string cleanSpeaker = string.IsNullOrWhiteSpace(speaker) ? "Unknown" : speaker.Trim();
+        Debug.Log($"[Subtitle] {lineId.Trim()}: {cleanSpeaker}: {text}", this);
+    }
+
+    private float PlayGuestVoiceLine(string lineId, string speaker, string text)
+    {
+        if (!Application.isPlaying)
+        {
+            return 0f;
+        }
+
+        GuestVoiceLinePlayback voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
+        return voicePlayback != null
+            ? voicePlayback.PlayForDialogue(lineId, speaker, text)
+            : 0f;
+    }
+
+    private float GetDialogueVoiceDuration(string lineId, string speaker, string text)
+    {
+        if (!Application.isPlaying)
+        {
+            return 0f;
+        }
+
+        GuestVoiceLinePlayback voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
+        return voicePlayback != null
+            ? voicePlayback.GetDurationForDialogue(lineId, speaker, text)
+            : 0f;
+    }
+
+    private void HoldDialogueChoicesUntilVoiceFinishes(float voiceDuration)
+    {
+        StopDialogueChoiceHold();
+
+        if (interactionHUD == null || voiceDuration <= 0f)
+        {
+            interactionHUD?.SetDialogueChoicesInteractable(true);
+            return;
+        }
+
+        interactionHUD.SetDialogueChoicesInteractable(false);
+        dialogueVoiceChoiceRoutine = StartCoroutine(ReenableDialogueChoicesAfterVoice(voiceDuration));
+    }
+
+    private IEnumerator ReenableDialogueChoicesAfterVoice(float voiceDuration)
+    {
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, voiceDuration) + 0.1f);
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.SetDialogueChoicesInteractable(true);
+        }
+
+        dialogueVoiceChoiceRoutine = null;
+    }
+
+    private void StopDialogueChoiceHold()
+    {
+        if (dialogueVoiceChoiceRoutine != null)
+        {
+            StopCoroutine(dialogueVoiceChoiceRoutine);
+            dialogueVoiceChoiceRoutine = null;
+        }
+
+        interactionHUD?.SetDialogueChoicesInteractable(true);
+    }
+
+    private void RegisterRoomChangeHandler()
+    {
+        if (navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        navigationManager.OnCurrentRoomChanged.AddListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = true;
+    }
+
+    private void UnregisterRoomChangeHandler()
+    {
+        if (!subscribedToRoomChanges || navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = false;
+    }
+
+    private void OnDestroy()
+    {
+        UnregisterRoomChangeHandler();
+    }
+
+    private void HandleCurrentRoomChanged(string roomName)
+    {
+        StopDialogueChoiceHold();
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearDialogue();
+        }
+
+        ClearSubtitles();
     }
 }

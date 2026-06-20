@@ -1,0 +1,547 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d2c7f4e9a0b4e4c8d5e6f708192a3b4, type: 3}
+  m_Name: GuestVoiceLineCatalog
+  m_EditorClassIdentifier:
+  assignments:
+  - lineId: CH1_G01_AMBIENT_01
+    clip: {fileID: 8300000, guid: 9fbb6bd046daef166fc9c01f6a906bab, type: 3}
+    volume: 1
+  - lineId: CH1_G01_AMBIENT_02
+    clip: {fileID: 8300000, guid: 2066551dd633c18de8389bda1b47b3b7, type: 3}
+    volume: 1
+  - lineId: CH1_G01_COAT_HANDOFF
+    clip: {fileID: 8300000, guid: cf9bcd831fe225f7592ec0d1e5b291be, type: 3}
+    volume: 1
+  - lineId: CH1_G01_DELAYED
+    clip: {fileID: 8300000, guid: 5944a410b6e9347f849945fd714051b3, type: 3}
+    volume: 1
+  - lineId: CH1_G01_EMPTY_BELL_REACTION
+    clip: {fileID: 8300000, guid: 973f7293966e9155d748343d8357677f, type: 3}
+    volume: 1
+  - lineId: CH1_G01_ENTRY
+    clip: {fileID: 8300000, guid: cdea3fbf49f8b38aad94375866fa3674, type: 3}
+    volume: 1
+  - lineId: CH1_G01_TO_DRAWING_ROOM
+    clip: {fileID: 8300000, guid: 5e2ff6d487e82531c58759d9fc9bd6c1, type: 3}
+    volume: 1
+  - lineId: CH2_G01_CLOCK_REACTION
+    clip: {fileID: 8300000, guid: 8057284b330c9da72c9554ad63066950, type: 3}
+    volume: 1
+  - lineId: CH2_G01_DINING_REVEAL
+    clip: {fileID: 8300000, guid: 6250386887284d3a5d549765c4486729, type: 3}
+    volume: 1
+  - lineId: CH2_G01_EXIT_TO_DINING
+    clip: {fileID: 8300000, guid: 21bd09e0985c2480004d8e1faa1ae8d3, type: 3}
+    volume: 1
+  - lineId: CH2_G01_FOUND_REPLY
+    clip: {fileID: 8300000, guid: 9aeedb22c2471290a85c0b9ad6eaa76b, type: 3}
+    volume: 1
+  - lineId: CH2_G01_FOUND_START
+    clip: {fileID: 8300000, guid: 236751e6cc32ebb7e2023047e3a19360, type: 3}
+    volume: 1
+  - lineId: CH2_G01_MEAL_PLINK
+    clip: {fileID: 8300000, guid: 2e969d86e3a50470a3249f6dc5f0b5bb, type: 3}
+    volume: 1
+  - lineId: CH2_G01_MEAL_THYME
+    clip: {fileID: 8300000, guid: d6dc8342f1c07d9121f6926ad202217d, type: 3}
+    volume: 1
+  - lineId: CH2_G01_PANIC
+    clip: {fileID: 8300000, guid: 885580da5c6aedd798b2a2dd78aeae12, type: 3}
+    volume: 1
+  - lineId: CH2_G01_PRESPEECH_BARK
+    clip: {fileID: 8300000, guid: 6d4579b9e46a45d3a7d85c2a7a582957, type: 3}
+    volume: 1
+  - lineId: CH2_G01_SMOKE_CIGAR
+    clip: {fileID: 8300000, guid: f5c1cd77af6f3c4d918d4bf0e8b23631, type: 3}
+    volume: 1
+  - lineId: CH2_G01_SMOKE_NONE
+    clip: {fileID: 8300000, guid: 92d908e466cfccf31f789ea8a9c3f1b9, type: 3}
+    volume: 1
+  - lineId: CH2_G01_SMOKE_PIPE
+    clip: {fileID: 8300000, guid: 6c19ef00d5259e8a6d0a548081e8967a, type: 3}
+    volume: 1
+  - lineId: CH2_G01_SPIRITS_REPLY
+    clip: {fileID: 8300000, guid: 758990e3a66b7843523ce9e62f3548ff, type: 3}
+    volume: 1
+  - lineId: CH1_G02_AMBIENT_01
+    clip: {fileID: 8300000, guid: 056d327e72961830cdb62ccb98b75d29, type: 3}
+    volume: 1
+  - lineId: CH1_G02_AMBIENT_02
+    clip: {fileID: 8300000, guid: b4bfe931ffe3369b1144f835ae75d7ce, type: 3}
+    volume: 1
+  - lineId: CH1_G02_COAT_HANDOFF
+    clip: {fileID: 8300000, guid: 8f4a70e7ae27200211a21820258bb692, type: 3}
+    volume: 1
+  - lineId: CH1_G02_DELAYED
+    clip: {fileID: 8300000, guid: 28acee5cfbc8cdd5b94f11be461a7ff6, type: 3}
+    volume: 1
+  - lineId: CH1_G02_EMPTY_BELL_REACTION
+    clip: {fileID: 8300000, guid: 58f8d8fa2c47b392b08693236197e9b7, type: 3}
+    volume: 1
+  - lineId: CH1_G02_ENTRY
+    clip: {fileID: 8300000, guid: 583bf195cc6b6a7c90c112da9712b999, type: 3}
+    volume: 1
+  - lineId: CH1_G02_TO_DRAWING_ROOM
+    clip: {fileID: 8300000, guid: 36b760bb629a1ad0f32717579d418778, type: 3}
+    volume: 1
+  - lineId: CH2_G02_CLOCK_REACTION
+    clip: {fileID: 8300000, guid: 2a03ca0c5646f38573f43b56e3d64c86, type: 3}
+    volume: 1
+  - lineId: CH2_G02_DINING_REVEAL
+    clip: {fileID: 8300000, guid: fc6c56a270430fa22e5a0ae099d8482d, type: 3}
+    volume: 1
+  - lineId: CH2_G02_EXIT_TO_DINING
+    clip: {fileID: 8300000, guid: a9e7b188b72fb1c0afa249b29502b35d, type: 3}
+    volume: 1
+  - lineId: CH2_G02_FOUND_REPLY
+    clip: {fileID: 8300000, guid: b6bb23587046c1865014ca6bc457616a, type: 3}
+    volume: 1
+  - lineId: CH2_G02_FOUND_START
+    clip: {fileID: 8300000, guid: 18f27e6268deb5cdba93c48d50515aa2, type: 3}
+    volume: 1
+  - lineId: CH2_G02_MEAL_PLINK
+    clip: {fileID: 8300000, guid: 2e3f3749c051929f7e3e9739c5b8bdec, type: 3}
+    volume: 1
+  - lineId: CH2_G02_MEAL_THYME
+    clip: {fileID: 8300000, guid: 94f47929fe7d2c3fc3691dcbf9f30446, type: 3}
+    volume: 1
+  - lineId: CH2_G02_PANIC
+    clip: {fileID: 8300000, guid: e3c56a0f40e4cf8b87feae18776327fb, type: 3}
+    volume: 1
+  - lineId: CH2_G02_PRESPEECH_BARK
+    clip: {fileID: 8300000, guid: 18aa6dd855d8c8a184905b993e42fbd5, type: 3}
+    volume: 1
+  - lineId: CH2_G02_SMOKE_CIGAR
+    clip: {fileID: 8300000, guid: 3d9a5e83fc2aa070407069d1042e98f3, type: 3}
+    volume: 1
+  - lineId: CH2_G02_SMOKE_NONE
+    clip: {fileID: 8300000, guid: 1b98da8c34325c554053f39a60cdee46, type: 3}
+    volume: 1
+  - lineId: CH2_G02_SMOKE_PIPE
+    clip: {fileID: 8300000, guid: 36c97b7cc2e112ba759e70bc13787b87, type: 3}
+    volume: 1
+  - lineId: CH2_G02_SPIRITS_REPLY
+    clip: {fileID: 8300000, guid: 1be6430efae892997052b69cadf7f7ef, type: 3}
+    volume: 1
+  - lineId: CH1_G03_AMBIENT_01
+    clip: {fileID: 8300000, guid: 5111a33310b5fb993b6afbab1ba832ea, type: 3}
+    volume: 1
+  - lineId: CH1_G03_AMBIENT_02
+    clip: {fileID: 8300000, guid: e8932b157f18df4aa1feb33213e4414b, type: 3}
+    volume: 1
+  - lineId: CH1_G03_COAT_HANDOFF
+    clip: {fileID: 8300000, guid: b2bf2921e57fbc5946562ca68b6acb4e, type: 3}
+    volume: 1
+  - lineId: CH1_G03_DELAYED
+    clip: {fileID: 8300000, guid: 50d8fc0847ce1a22d7c76c774a19ed5d, type: 3}
+    volume: 1
+  - lineId: CH1_G03_EMPTY_BELL_REACTION
+    clip: {fileID: 8300000, guid: 3934520c2bcf163570bddc5a3983abbd, type: 3}
+    volume: 1
+  - lineId: CH1_G03_ENTRY
+    clip: {fileID: 8300000, guid: 4d129985cdaec91984e6fb2670e4e512, type: 3}
+    volume: 1
+  - lineId: CH1_G03_TO_DRAWING_ROOM
+    clip: {fileID: 8300000, guid: 868261125e8c59af01ba4313c2070ce5, type: 3}
+    volume: 1
+  - lineId: CH2_G03_CLOCK_REACTION
+    clip: {fileID: 8300000, guid: 422383a5d676ff026474745d9050803c, type: 3}
+    volume: 1
+  - lineId: CH2_G03_DINING_REVEAL
+    clip: {fileID: 8300000, guid: 17e0ff32b096ffd1ad23a2964ad2bbc6, type: 3}
+    volume: 1
+  - lineId: CH2_G03_EXIT_TO_DINING
+    clip: {fileID: 8300000, guid: 66245d6dc929d17a2bbff47c0c09fdff, type: 3}
+    volume: 1
+  - lineId: CH2_G03_FOUND_REPLY
+    clip: {fileID: 8300000, guid: a6a0fee1ae18fc3a98f6f07fe08c73fa, type: 3}
+    volume: 1
+  - lineId: CH2_G03_FOUND_START
+    clip: {fileID: 8300000, guid: 9ecc201eb4d9060cf0e983b95339a813, type: 3}
+    volume: 1
+  - lineId: CH2_G03_MEAL_PLINK
+    clip: {fileID: 8300000, guid: e48a92091e97ab4073e3bd4b4cb9fc12, type: 3}
+    volume: 1
+  - lineId: CH2_G03_MEAL_THYME
+    clip: {fileID: 8300000, guid: e028fc2e3d3ae4852c95de1c121a5a45, type: 3}
+    volume: 1
+  - lineId: CH2_G03_PANIC
+    clip: {fileID: 8300000, guid: 8020477994a495cf784393703af509e1, type: 3}
+    volume: 1
+  - lineId: CH2_G03_PRESPEECH_BARK
+    clip: {fileID: 8300000, guid: 21814c9735728a590ef0e3e648bb612d, type: 3}
+    volume: 1
+  - lineId: CH2_G03_SMOKE_CIGAR
+    clip: {fileID: 8300000, guid: 9035cd25df4b47cf39636f9cf3c1ac52, type: 3}
+    volume: 1
+  - lineId: CH2_G03_SMOKE_NONE
+    clip: {fileID: 8300000, guid: cd2ada10be40b4b2344656c39cf41fec, type: 3}
+    volume: 1
+  - lineId: CH2_G03_SMOKE_PIPE
+    clip: {fileID: 8300000, guid: 06cd057557663a91213b1d31935e01dc, type: 3}
+    volume: 1
+  - lineId: CH2_G03_SPIRITS_REPLY
+    clip: {fileID: 8300000, guid: 66551013cb7c7d275b2b44fc39b843b6, type: 3}
+    volume: 1
+  - lineId: CH1_G04_AMBIENT_01
+    clip: {fileID: 8300000, guid: e5fd7510813ac1cba82753fda2e959d7, type: 3}
+    volume: 1
+  - lineId: CH1_G04_AMBIENT_02
+    clip: {fileID: 8300000, guid: 5950165adc4e5e58f53e2439fb7b6b71, type: 3}
+    volume: 1
+  - lineId: CH1_G04_COAT_HANDOFF
+    clip: {fileID: 8300000, guid: 14a679f8174c58366d40c36e7b2c9a0b, type: 3}
+    volume: 1
+  - lineId: CH1_G04_DELAYED
+    clip: {fileID: 8300000, guid: fe1f8a79309c4b2075a1eee0af098a45, type: 3}
+    volume: 1
+  - lineId: CH1_G04_EMPTY_BELL_REACTION
+    clip: {fileID: 8300000, guid: ede3eda8615b82d521dec70eae76d502, type: 3}
+    volume: 1
+  - lineId: CH1_G04_ENTRY
+    clip: {fileID: 8300000, guid: a10b9679e584ae333f124c2e90a3867d, type: 3}
+    volume: 1
+  - lineId: CH1_G04_TO_DRAWING_ROOM
+    clip: {fileID: 8300000, guid: 074c62d26c9803689330d4d0da9cb839, type: 3}
+    volume: 1
+  - lineId: CH2_G04_CLOCK_REACTION
+    clip: {fileID: 8300000, guid: d6e5f82fafd725e84676b3c11852dc9a, type: 3}
+    volume: 1
+  - lineId: CH2_G04_DINING_REVEAL
+    clip: {fileID: 8300000, guid: 6b104830aeb2ce691d7f12e2dab8ce67, type: 3}
+    volume: 1
+  - lineId: CH2_G04_EXIT_TO_DINING
+    clip: {fileID: 8300000, guid: aee635be9f9ecb9f6252e86838f716db, type: 3}
+    volume: 1
+  - lineId: CH2_G04_FOUND_REPLY
+    clip: {fileID: 8300000, guid: 6c74a5c156b69b9de487c796616479a4, type: 3}
+    volume: 1
+  - lineId: CH2_G04_FOUND_START
+    clip: {fileID: 8300000, guid: 744c32f82bdcb2f2b85cbc403a722b6e, type: 3}
+    volume: 1
+  - lineId: CH2_G04_MEAL_PLINK
+    clip: {fileID: 8300000, guid: 591bae62d507517159e9688c5ffce04b, type: 3}
+    volume: 1
+  - lineId: CH2_G04_MEAL_THYME
+    clip: {fileID: 8300000, guid: 620153a9b8c2df28037c05a7b84f9282, type: 3}
+    volume: 1
+  - lineId: CH2_G04_PANIC
+    clip: {fileID: 8300000, guid: 76cb120c408b39d1154ebd57a865935c, type: 3}
+    volume: 1
+  - lineId: CH2_G04_PRESPEECH_BARK
+    clip: {fileID: 8300000, guid: af0cf13e934f7b846efec4ac6a9b4cd5, type: 3}
+    volume: 1
+  - lineId: CH2_G04_SMOKE_CIGAR
+    clip: {fileID: 8300000, guid: 31d62f9f9fa39ca8621c3d492cc9499e, type: 3}
+    volume: 1
+  - lineId: CH2_G04_SMOKE_NONE
+    clip: {fileID: 8300000, guid: f3132e1395f65e6154dea4ea9792b657, type: 3}
+    volume: 1
+  - lineId: CH2_G04_SMOKE_PIPE
+    clip: {fileID: 8300000, guid: 965daf77505861aa3f8b2174b0292dba, type: 3}
+    volume: 1
+  - lineId: CH2_G04_SPIRITS_REPLY
+    clip: {fileID: 8300000, guid: 187cfd8d1b10dfe7a083b4f58e630fb5, type: 3}
+    volume: 1
+  - lineId: CH1_G05_AMBIENT_01
+    clip: {fileID: 8300000, guid: 2c9f44cb91b6e21a501cc43af3b1dbbe, type: 3}
+    volume: 1
+  - lineId: CH1_G05_AMBIENT_02
+    clip: {fileID: 8300000, guid: f498776f9cfe0ebbe305273c602123fc, type: 3}
+    volume: 1
+  - lineId: CH1_G05_COAT_HANDOFF
+    clip: {fileID: 8300000, guid: 75bfad306c77a016b7c440df08d2f617, type: 3}
+    volume: 1
+  - lineId: CH1_G05_DELAYED
+    clip: {fileID: 8300000, guid: a711b35d618bf64b87bf6a74b53b750d, type: 3}
+    volume: 1
+  - lineId: CH1_G05_EMPTY_BELL_REACTION
+    clip: {fileID: 8300000, guid: 301e19736fb7b85c355a9b12ebaad03d, type: 3}
+    volume: 1
+  - lineId: CH1_G05_ENTRY
+    clip: {fileID: 8300000, guid: 94f3cef14f69e935af2705633a19d1fc, type: 3}
+    volume: 1
+  - lineId: CH1_G05_TO_DRAWING_ROOM
+    clip: {fileID: 8300000, guid: 29c63f00d0a359e99ebb79da09d3bb6b, type: 3}
+    volume: 1
+  - lineId: CH2_G05_CLOCK_REACTION
+    clip: {fileID: 8300000, guid: 3dfa237720f4b33ebb72d14f90a1f996, type: 3}
+    volume: 1
+  - lineId: CH2_G05_DINING_REVEAL
+    clip: {fileID: 8300000, guid: d28d4f789daa45322ae7bb0d41ebdf60, type: 3}
+    volume: 1
+  - lineId: CH2_G05_EXIT_TO_DINING
+    clip: {fileID: 8300000, guid: f0870573991661cca4c8c47c9e87341b, type: 3}
+    volume: 1
+  - lineId: CH2_G05_FOUND_REPLY
+    clip: {fileID: 8300000, guid: cf58b7038bfe622ed7ea46e9b75ff363, type: 3}
+    volume: 1
+  - lineId: CH2_G05_FOUND_START
+    clip: {fileID: 8300000, guid: 8dc8635a5573f671326117a6dd03d80d, type: 3}
+    volume: 1
+  - lineId: CH2_G05_MEAL_PLINK
+    clip: {fileID: 8300000, guid: aba3c48fbbeafe053eb584c2b1360ed6, type: 3}
+    volume: 1
+  - lineId: CH2_G05_MEAL_THYME
+    clip: {fileID: 8300000, guid: 00c97446c5cbd285a28a2e5c591cbaf1, type: 3}
+    volume: 1
+  - lineId: CH2_G05_PANIC
+    clip: {fileID: 8300000, guid: 2aebf8ba832b83b42679a0efc6c2afc9, type: 3}
+    volume: 1
+  - lineId: CH2_G05_PRESPEECH_BARK
+    clip: {fileID: 8300000, guid: b36097c3ec3d2c0df676f4774d786362, type: 3}
+    volume: 1
+  - lineId: CH2_G05_SMOKE_CIGAR
+    clip: {fileID: 8300000, guid: 2ca747736c6c120b274cd25bb8afb645, type: 3}
+    volume: 1
+  - lineId: CH2_G05_SMOKE_NONE
+    clip: {fileID: 8300000, guid: 7373b570ddfe79b00b33c8ec0413112a, type: 3}
+    volume: 1
+  - lineId: CH2_G05_SMOKE_PIPE
+    clip: {fileID: 8300000, guid: 6fd4b024e7c394ed101ba280d39f08b4, type: 3}
+    volume: 1
+  - lineId: CH2_G05_SPIRITS_REPLY
+    clip: {fileID: 8300000, guid: e34040fdc6e8a755fdbcf4083ada75c8, type: 3}
+    volume: 1
+  - lineId: CH1_G06_AMBIENT_01
+    clip: {fileID: 8300000, guid: 6aca39208d9b6ef1d37a00b38639dd16, type: 3}
+    volume: 1
+  - lineId: CH1_G06_AMBIENT_02
+    clip: {fileID: 8300000, guid: 7c1dc7961ddd56803c801ad695f40a60, type: 3}
+    volume: 1
+  - lineId: CH1_G06_COAT_HANDOFF
+    clip: {fileID: 8300000, guid: 1a2f86bac1f1b91a40af17fe44803ad9, type: 3}
+    volume: 1
+  - lineId: CH1_G06_DELAYED
+    clip: {fileID: 8300000, guid: ad91fbb1c7fc918d35d8cffd9ced1e09, type: 3}
+    volume: 1
+  - lineId: CH1_G06_EMPTY_BELL_REACTION
+    clip: {fileID: 8300000, guid: 715fdb7aa676d60a1b621f4299c60dae, type: 3}
+    volume: 1
+  - lineId: CH1_G06_ENTRY
+    clip: {fileID: 8300000, guid: 05b86670166277212fcaf14435ad342b, type: 3}
+    volume: 1
+  - lineId: CH1_G06_TO_DRAWING_ROOM
+    clip: {fileID: 8300000, guid: 7f1f72104fd853b666e139237a329dfd, type: 3}
+    volume: 1
+  - lineId: CH2_G06_CLOCK_REACTION
+    clip: {fileID: 8300000, guid: a44288c2a4f22a65c4c520d276ae33c4, type: 3}
+    volume: 1
+  - lineId: CH2_G06_DINING_REVEAL
+    clip: {fileID: 8300000, guid: 1b8e43a5f8f2e5c2fe3b624eb1635625, type: 3}
+    volume: 1
+  - lineId: CH2_G06_EXIT_TO_DINING
+    clip: {fileID: 8300000, guid: 32a82e63d9f1deac2968a753e9187ae1, type: 3}
+    volume: 1
+  - lineId: CH2_G06_FOUND_REPLY
+    clip: {fileID: 8300000, guid: c0a753e6bb032f0741555a4718530593, type: 3}
+    volume: 1
+  - lineId: CH2_G06_FOUND_START
+    clip: {fileID: 8300000, guid: 49b5d96f5c3fb1ccfed84a299dc5b5be, type: 3}
+    volume: 1
+  - lineId: CH2_G06_MEAL_PLINK
+    clip: {fileID: 8300000, guid: 02e189685ffe59c5acf9753ee26acc91, type: 3}
+    volume: 1
+  - lineId: CH2_G06_MEAL_THYME
+    clip: {fileID: 8300000, guid: dbb9efacfdd7844947aa2c1b36073401, type: 3}
+    volume: 1
+  - lineId: CH2_G06_PANIC
+    clip: {fileID: 8300000, guid: 15acae5c7c5a19eba3396d2596ce5f87, type: 3}
+    volume: 1
+  - lineId: CH2_G06_PRESPEECH_BARK
+    clip: {fileID: 8300000, guid: 54977f2b1f3565cce78bf62fb6e9a7bb, type: 3}
+    volume: 1
+  - lineId: CH2_G06_SMOKE_CIGAR
+    clip: {fileID: 8300000, guid: bd58bd5e5ecf95d5d66e9dfb011800c1, type: 3}
+    volume: 1
+  - lineId: CH2_G06_SMOKE_NONE
+    clip: {fileID: 8300000, guid: 9932d8f7291d579c719dd23ae49444fa, type: 3}
+    volume: 1
+  - lineId: CH2_G06_SMOKE_PIPE
+    clip: {fileID: 8300000, guid: be6493715fb1ed85d8ecd279ad3f786f, type: 3}
+    volume: 1
+  - lineId: CH2_G06_SPIRITS_REPLY
+    clip: {fileID: 8300000, guid: 99d09205a376d9a35bd22cdf027fdd27, type: 3}
+    volume: 1
+  - lineId: CH1_G07_AMBIENT_01
+    clip: {fileID: 8300000, guid: 26a5bfe377600fa95b18b8811fc55ce3, type: 3}
+    volume: 1
+  - lineId: CH1_G07_AMBIENT_02
+    clip: {fileID: 8300000, guid: 589bf872499365747c7c76babff76c45, type: 3}
+    volume: 1
+  - lineId: CH1_G07_COAT_HANDOFF
+    clip: {fileID: 8300000, guid: 2be0a786f55f3076c2422d2d1bdfac29, type: 3}
+    volume: 1
+  - lineId: CH1_G07_DELAYED
+    clip: {fileID: 8300000, guid: 91a1e7c3eaf008ed9ff6bfb0dfa16308, type: 3}
+    volume: 1
+  - lineId: CH1_G07_EMPTY_BELL_REACTION
+    clip: {fileID: 8300000, guid: 761fe282b1814518a745d421a86e26d0, type: 3}
+    volume: 1
+  - lineId: CH1_G07_ENTRY
+    clip: {fileID: 8300000, guid: c40f2844291b97a54f3f36276114dbdc, type: 3}
+    volume: 1
+  - lineId: CH1_G07_TO_DRAWING_ROOM
+    clip: {fileID: 8300000, guid: 8482a98b864cc5b3942c79a7d7a32f11, type: 3}
+    volume: 1
+  - lineId: CH2_G07_CLOCK_REACTION
+    clip: {fileID: 8300000, guid: 3dfe1f568b7f2ab0ea78123212db03b9, type: 3}
+    volume: 1
+  - lineId: CH2_G07_DINING_REVEAL
+    clip: {fileID: 8300000, guid: de487cc3a8de88cb2f28d291285abc35, type: 3}
+    volume: 1
+  - lineId: CH2_G07_EXIT_TO_DINING
+    clip: {fileID: 8300000, guid: c1f8ce4e911930e23f56cc6381b97e79, type: 3}
+    volume: 1
+  - lineId: CH2_G07_FOUND_REPLY
+    clip: {fileID: 8300000, guid: 30698d12c308f52951b208af066fdf91, type: 3}
+    volume: 1
+  - lineId: CH2_G07_FOUND_START
+    clip: {fileID: 8300000, guid: 638145c2df85bc1e3bf2290e9a5bf1ee, type: 3}
+    volume: 1
+  - lineId: CH2_G07_MEAL_PLINK
+    clip: {fileID: 8300000, guid: ce4494d7b5d60021bf5d43dfd5f7e561, type: 3}
+    volume: 1
+  - lineId: CH2_G07_MEAL_THYME
+    clip: {fileID: 8300000, guid: cf9f4abd8eda5b6d78937a476b0cc68f, type: 3}
+    volume: 1
+  - lineId: CH2_G07_PANIC
+    clip: {fileID: 8300000, guid: 7a39850bce882b1b8c759e96a7be735e, type: 3}
+    volume: 1
+  - lineId: CH2_G07_PRESPEECH_BARK
+    clip: {fileID: 8300000, guid: b8cb7cc4e445d8f8dc25b916759b94da, type: 3}
+    volume: 1
+  - lineId: CH2_G07_SMOKE_CIGAR
+    clip: {fileID: 8300000, guid: 3b6672619c215b07724ab160505b9d06, type: 3}
+    volume: 1
+  - lineId: CH2_G07_SMOKE_NONE
+    clip: {fileID: 8300000, guid: 10462d05bc41940c8fb10b6c4bb5e1bc, type: 3}
+    volume: 1
+  - lineId: CH2_G07_SMOKE_PIPE
+    clip: {fileID: 8300000, guid: 48e5020a0213c7e0350cd285e59df8d1, type: 3}
+    volume: 1
+  - lineId: CH2_G07_SPIRITS_REPLY
+    clip: {fileID: 8300000, guid: ec0317abcde3d489019cee393653af92, type: 3}
+    volume: 1
+  - lineId: CH1_G08_AMBIENT_01
+    clip: {fileID: 8300000, guid: fd5d8352afaf884e1af1b9c2d9ac9733, type: 3}
+    volume: 1
+  - lineId: CH1_G08_AMBIENT_02
+    clip: {fileID: 8300000, guid: 5d02315dddb5ae47e3c7b5233b43dd28, type: 3}
+    volume: 1
+  - lineId: CH1_G08_COAT_HANDOFF
+    clip: {fileID: 8300000, guid: df0924f90a89639714ab30dee61cc065, type: 3}
+    volume: 1
+  - lineId: CH1_G08_DELAYED
+    clip: {fileID: 8300000, guid: 9f5bd4ac08ec8eb2a23a515bf1643c6f, type: 3}
+    volume: 1
+  - lineId: CH1_G08_EMPTY_BELL_REACTION
+    clip: {fileID: 8300000, guid: 7afbac18627eb72bcc5bfc2e55ce31b8, type: 3}
+    volume: 1
+  - lineId: CH1_G08_ENTRY
+    clip: {fileID: 8300000, guid: 987a05655cf593d33a70eb19a72b22da, type: 3}
+    volume: 1
+  - lineId: CH1_G08_TO_DRAWING_ROOM
+    clip: {fileID: 8300000, guid: 4ba28f06acb4c03f02ff8d4916e2c5b8, type: 3}
+    volume: 1
+  - lineId: CH2_G08_CLOCK_REACTION
+    clip: {fileID: 8300000, guid: 333a22be8471f11cf5e81946a9d221f3, type: 3}
+    volume: 1
+  - lineId: CH2_G08_DINING_REVEAL
+    clip: {fileID: 8300000, guid: 7c3d4b7bd7aae70cf7aeb95a5bc99e2e, type: 3}
+    volume: 1
+  - lineId: CH2_G08_EXIT_TO_DINING
+    clip: {fileID: 8300000, guid: b3cecf2453332d35322f90c8250ca7df, type: 3}
+    volume: 1
+  - lineId: CH2_G08_FOUND_REPLY
+    clip: {fileID: 8300000, guid: dd96085d467d0243a0b492b7997f41f5, type: 3}
+    volume: 1
+  - lineId: CH2_G08_FOUND_START
+    clip: {fileID: 8300000, guid: 98732dd34c65a7030a18a955031f36da, type: 3}
+    volume: 1
+  - lineId: CH2_G08_MEAL_PLINK
+    clip: {fileID: 8300000, guid: b64f45185a39259cf4e584fa000cab13, type: 3}
+    volume: 1
+  - lineId: CH2_G08_MEAL_THYME
+    clip: {fileID: 8300000, guid: 2c8259d97e10834c593a96a35eda8c36, type: 3}
+    volume: 1
+  - lineId: CH2_G08_PANIC
+    clip: {fileID: 8300000, guid: e80d2f7e3740b2fdfc8c84601f0f7086, type: 3}
+    volume: 1
+  - lineId: CH2_G08_PRESPEECH_BARK
+    clip: {fileID: 8300000, guid: 4f8b19a501ea1a3855a290314065f8e1, type: 3}
+    volume: 1
+  - lineId: CH2_G08_SMOKE_CIGAR
+    clip: {fileID: 8300000, guid: 756bd3b5ff20310d123aa3b0e57836e9, type: 3}
+    volume: 1
+  - lineId: CH2_G08_SMOKE_NONE
+    clip: {fileID: 8300000, guid: 2ece34e126705a2b8a846658f5c2efc6, type: 3}
+    volume: 1
+  - lineId: CH2_G08_SMOKE_PIPE
+    clip: {fileID: 8300000, guid: 4bdb6b7e332e884bbc284714e28bbcf2, type: 3}
+    volume: 1
+  - lineId: CH2_G08_SPIRITS_REPLY
+    clip: {fileID: 8300000, guid: 08125b29d9e1e5ab9048db95ea35d45e, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_EMPTY_DOOR_001
+    clip: {fileID: 8300000, guid: 47fdd62ec09640e09fda6684f30125c4, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_NO_COAT_001
+    clip: {fileID: 8300000, guid: fcbf6cc81f9d460c8ca4ba441565a740, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_ONE_COAT_001
+    clip: {fileID: 8300000, guid: d04e1099878d40ceb583e596a0bf173e, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_TAKE_COAT_001
+    clip: {fileID: 8300000, guid: 6a7419925ebc46e1bf7674b73fb198e3, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_THIS_WAY_001
+    clip: {fileID: 8300000, guid: 6df409b8c3eb4623bcbc9ed83209d05f, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_WELCOME_001
+    clip: {fileID: 8300000, guid: 84efe7bf90e143bfb05245e94cffe965, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_ADDRESS_GUESTS_001
+    clip: {fileID: 8300000, guid: b4ae3f4bf45642c88d243cc383acca77, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G01
+    clip: {fileID: 8300000, guid: 095a1989b4e4434a9be8ec12191e2721, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G02
+    clip: {fileID: 8300000, guid: f7332dab61da40e7a82cb5d6417bba1d, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G03
+    clip: {fileID: 8300000, guid: 57681a30b97f44e08d283d13699052ea, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G04
+    clip: {fileID: 8300000, guid: e057bb82ecf44e8b807256b45727d249, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G05
+    clip: {fileID: 8300000, guid: 17aecbab1cbd402893fc6ec8d0bb8c3c, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G06
+    clip: {fileID: 8300000, guid: 9cf0941d9efe450682bccb621d1f82e5, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G07
+    clip: {fileID: 8300000, guid: dc6ad5dd48b94b178205e9cc6c5aa724, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G08
+    clip: {fileID: 8300000, guid: ec722ecfb4be41d89c24634b122751c1, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_MEAL_ASK_001
+    clip: {fileID: 8300000, guid: a0c15b4b7d3c47269fe02f0597e283a5, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_SMOKE_ASK_001
+    clip: {fileID: 8300000, guid: c61ed29b95ee4491a28fb59ba7506e84, type: 3}
+    volume: 1
+  defaultVolume: 1

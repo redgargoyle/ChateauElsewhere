@@ -47,6 +47,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private TMP_Text primaryButtonLabel;
     private Action primaryActionCallback;
     private string statusOverrideText;
+    private bool dialogueChoicesInteractable = true;
 
     private void Update()
     {
@@ -157,8 +158,25 @@ public class Chapter2InteractionHUD : MonoBehaviour
         SetDialogueChoice(2, thirdLabel, thirdCallback);
     }
 
+    public void SetDialogueChoicesInteractable(bool interactable)
+    {
+        dialogueChoicesInteractable = interactable;
+
+        for (int i = 0; i < dialogueChoiceButtons.Length; i++)
+        {
+            Button button = dialogueChoiceButtons[i];
+
+            if (button != null && button.gameObject.activeSelf)
+            {
+                button.interactable = interactable && dialogueChoiceCallbacks[i] != null;
+            }
+        }
+    }
+
     public void ClearDialogue()
     {
+        dialogueChoicesInteractable = true;
+
         for (int i = 0; i < dialogueChoiceCallbacks.Length; i++)
         {
             dialogueChoiceCallbacks[i] = null;
@@ -718,7 +736,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
 
         int callbackIndex = index;
         button.onClick.AddListener(() => dialogueChoiceCallbacks[callbackIndex]?.Invoke());
-        button.interactable = true;
+        button.interactable = dialogueChoicesInteractable;
         button.gameObject.SetActive(true);
 
         if (dialogueChoiceLabels[index] != null)

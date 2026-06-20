@@ -1,0 +1,57 @@
+# Fish Audio S2-Pro Guest 3 Full Dialogue Report
+
+Generated Guest 3 only. Unity gameplay, subtitles, and playback hooks were not modified.
+
+- Started: 20260619_214017
+- Elapsed seconds: 252.5
+- Project root: `/home/hamzak/Desktop/ChataeuChantilly`
+- Fish source: `/home/hamzak/ai-tts/fish-speech-s2/fish-speech-src`
+- Fish source commit: `e5e2926`
+- Checkpoint: `/home/hamzak/ai-tts/fish-speech-s2/fish-speech-src/checkpoints/s2-pro`
+- Device: `NVIDIA GeForce RTX 5090`
+- Torch: `2.8.0+cu129`
+- CUDA available: `True`
+- nvidia-smi: `NVIDIA GeForce RTX 5090, 610.43.02, 32607 MiB`
+- Reference file: `/home/hamzak/Desktop/FishAudio_S2_YoutubeRefs_Chateau_Arrivals_Curated_20260619_210017/final_48k/Guest03_Mister_Florian_Knell_CH1_G03_ENTRY.wav`
+- Reference text: `Lovely to see you, dear Butler. Tell me, are we late, early, or merely dramatic?`
+- Reference 4-8k percent: 1.681
+- Reference 8-12k percent: 0.057
+- Sampling: temperature=0.72, top_p=0.82, top_k=30, max_new_tokens=300
+- Target text: game dialogue only. No accent/style instruction tags were inserted into generated text.
+- Output format: 44100 Hz, mono, PCM_16 WAV, peak-normalized near -3 dBFS.
+- Ending protection: 0.60s or 0.85s quiet post-roll after a short fade.
+- Run folder: `/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017`
+- Raw native folder: `/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/raw_native`
+- Final folder: `/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded`
+- Copied to Unity Assets: `True`
+- Guest03 backup: `/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/backups/guest03_before_fish_s2_20260619_214017`
+
+## Counts
+
+- Total Guest 3 WAV count: 20
+- Synthesized count: 19
+- Reference-copy count: 1
+- Failed count: 0
+
+## Generated Files
+
+- `CH1_G03_ENTRY.wav`: mode=approved_reference_copy, duration=6.916s, peak=0.7079, pre_tail_peak=0.01221, added_tail=0.60s, 4-8k=1.714%, 8-12k=0.058%, centroid=474Hz, elapsed=0.0s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH1_G03_ENTRY.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH1_G03_ENTRY.wav`
+- `CH1_G03_DELAYED.wav`: mode=fish_s2_synthesis, duration=3.061s, peak=0.7079, pre_tail_peak=0.00244, added_tail=0.60s, 4-8k=1.891%, 8-12k=0.118%, centroid=448Hz, elapsed=7.2s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH1_G03_DELAYED.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH1_G03_DELAYED.wav`
+- `CH1_G03_COAT_HANDOFF.wav`: mode=fish_s2_synthesis, duration=4.455s, peak=0.7079, pre_tail_peak=0.00250, added_tail=0.60s, 4-8k=1.742%, 8-12k=0.032%, centroid=431Hz, elapsed=11.2s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH1_G03_COAT_HANDOFF.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH1_G03_COAT_HANDOFF.wav`
+- `CH1_G03_TO_DRAWING_ROOM.wav`: mode=fish_s2_synthesis, duration=5.755s, peak=0.7079, pre_tail_peak=0.00259, added_tail=0.60s, 4-8k=0.768%, 8-12k=0.035%, centroid=443Hz, elapsed=14.8s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH1_G03_TO_DRAWING_ROOM.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH1_G03_TO_DRAWING_ROOM.wav`
+- `CH1_G03_AMBIENT_01.wav`: mode=fish_s2_synthesis, duration=2.736s, peak=0.7079, pre_tail_peak=0.00259, added_tail=0.60s, 4-8k=2.387%, 8-12k=0.128%, centroid=482Hz, elapsed=6.2s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH1_G03_AMBIENT_01.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH1_G03_AMBIENT_01.wav`
+- `CH1_G03_AMBIENT_02.wav`: mode=fish_s2_synthesis, duration=4.780s, peak=0.7079, pre_tail_peak=0.00150, added_tail=0.60s, 4-8k=2.321%, 8-12k=0.133%, centroid=465Hz, elapsed=12.0s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH1_G03_AMBIENT_02.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH1_G03_AMBIENT_02.wav`
+- `CH1_G03_EMPTY_BELL_REACTION.wav`: mode=fish_s2_synthesis, duration=4.269s, peak=0.7079, pre_tail_peak=0.01514, added_tail=0.60s, 4-8k=0.282%, 8-12k=0.011%, centroid=453Hz, elapsed=10.6s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH1_G03_EMPTY_BELL_REACTION.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH1_G03_EMPTY_BELL_REACTION.wav`
+- `CH2_G03_PRESPEECH_BARK.wav`: mode=fish_s2_synthesis, duration=5.151s, peak=0.7079, pre_tail_peak=0.00198, added_tail=0.60s, 4-8k=2.310%, 8-12k=0.048%, centroid=478Hz, elapsed=13.1s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_PRESPEECH_BARK.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_PRESPEECH_BARK.wav`
+- `CH2_G03_PANIC.wav`: mode=fish_s2_synthesis, duration=4.315s, peak=0.7079, pre_tail_peak=0.00299, added_tail=0.60s, 4-8k=1.782%, 8-12k=0.096%, centroid=519Hz, elapsed=10.7s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_PANIC.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_PANIC.wav`
+- `CH2_G03_FOUND_START.wav`: mode=fish_s2_synthesis, duration=4.176s, peak=0.7079, pre_tail_peak=0.00394, added_tail=0.60s, 4-8k=1.281%, 8-12k=0.060%, centroid=450Hz, elapsed=10.4s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_FOUND_START.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_FOUND_START.wav`
+- `CH2_G03_FOUND_REPLY.wav`: mode=fish_s2_synthesis, duration=5.616s, peak=0.7079, pre_tail_peak=0.00092, added_tail=0.60s, 4-8k=3.608%, 8-12k=0.111%, centroid=539Hz, elapsed=14.5s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_FOUND_REPLY.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_FOUND_REPLY.wav`
+- `CH2_G03_MEAL_PLINK.wav`: mode=fish_s2_synthesis, duration=6.080s, peak=0.7079, pre_tail_peak=0.00128, added_tail=0.60s, 4-8k=2.735%, 8-12k=0.326%, centroid=549Hz, elapsed=15.8s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_MEAL_PLINK.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_MEAL_PLINK.wav`
+- `CH2_G03_MEAL_THYME.wav`: mode=fish_s2_synthesis, duration=6.544s, peak=0.7079, pre_tail_peak=0.00198, added_tail=0.60s, 4-8k=3.632%, 8-12k=0.106%, centroid=598Hz, elapsed=17.1s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_MEAL_THYME.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_MEAL_THYME.wav`
+- `CH2_G03_SMOKE_CIGAR.wav`: mode=fish_s2_synthesis, duration=4.780s, peak=0.7079, pre_tail_peak=0.00198, added_tail=0.60s, 4-8k=2.817%, 8-12k=0.224%, centroid=536Hz, elapsed=12.1s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_SMOKE_CIGAR.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_SMOKE_CIGAR.wav`
+- `CH2_G03_SMOKE_PIPE.wav`: mode=fish_s2_synthesis, duration=3.804s, peak=0.7079, pre_tail_peak=0.00244, added_tail=0.60s, 4-8k=0.492%, 8-12k=0.031%, centroid=360Hz, elapsed=9.3s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_SMOKE_PIPE.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_SMOKE_PIPE.wav`
+- `CH2_G03_SMOKE_NONE.wav`: mode=fish_s2_synthesis, duration=4.826s, peak=0.7079, pre_tail_peak=0.00342, added_tail=0.60s, 4-8k=1.568%, 8-12k=0.146%, centroid=470Hz, elapsed=12.2s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_SMOKE_NONE.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_SMOKE_NONE.wav`
+- `CH2_G03_SPIRITS_REPLY.wav`: mode=fish_s2_synthesis, duration=4.919s, peak=0.7079, pre_tail_peak=0.00192, added_tail=0.60s, 4-8k=2.375%, 8-12k=0.074%, centroid=486Hz, elapsed=12.5s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_SPIRITS_REPLY.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_SPIRITS_REPLY.wav`
+- `CH2_G03_EXIT_TO_DINING.wav`: mode=fish_s2_synthesis, duration=6.637s, peak=0.7079, pre_tail_peak=0.00256, added_tail=0.60s, 4-8k=0.970%, 8-12k=0.059%, centroid=455Hz, elapsed=17.4s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_EXIT_TO_DINING.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_EXIT_TO_DINING.wav`
+- `CH2_G03_CLOCK_REACTION.wav`: mode=fish_s2_synthesis, duration=5.476s, peak=0.7079, pre_tail_peak=0.00214, added_tail=0.60s, 4-8k=0.426%, 8-12k=0.019%, centroid=365Hz, elapsed=14.1s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_CLOCK_REACTION.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_CLOCK_REACTION.wav`
+- `CH2_G03_DINING_REVEAL.wav`: mode=fish_s2_synthesis, duration=4.780s, peak=0.7079, pre_tail_peak=0.00238, added_tail=0.60s, 4-8k=4.068%, 8-12k=0.067%, centroid=608Hz, elapsed=12.1s, final=`/home/hamzak/Desktop/ChataeuChantilly/Tools/Voice/generated_fish_s2_guest_dialogue/guest03_fish_s2_full_dialogue_20260619_214017/final_44k1_tail_padded/CH2_G03_DINING_REVEAL.wav`, asset=`/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_DINING_REVEAL.wav`

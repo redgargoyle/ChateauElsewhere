@@ -1,0 +1,358 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 695dfb43a57e4ce745980f19b1666ddc, type: 3}
+  m_Name: SubtitleLineBank
+  m_EditorClassIdentifier:
+  lines:
+  - lineId: SUB_CH01_BUTLER_WELCOME_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: Good evening. Welcome to Chateau Chantilly.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_BUTLER_TAKE_COAT_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: May I take your coat?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_BUTLER_THIS_WAY_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: This way, please. The Drawing Room is prepared.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_BUTLER_ONE_COAT_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: One coat at a time, if you please.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_BUTLER_NO_COAT_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: I have no coat to hang.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_BUTLER_EMPTY_DOOR_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: No one is there.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G01_GREETING_001
+    speakerId: Guest1
+    speakerDisplayName: Guest 1
+    text: Good evening.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G02_GREETING_001
+    speakerId: Guest2
+    speakerDisplayName: Guest 2
+    text: Thank you.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G03_GREETING_001
+    speakerId: Guest3
+    speakerDisplayName: Guest 3
+    text: Lovely to see you.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G04_GREETING_001
+    speakerId: Guest4
+    speakerDisplayName: Guest 4
+    text: Good evening, Butler.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G05_GREETING_001
+    speakerId: Guest5
+    speakerDisplayName: Guest 5
+    text: Good evening.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G06_GREETING_001
+    speakerId: Guest6
+    speakerDisplayName: Guest 6
+    text: Thank you.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G07_GREETING_001
+    speakerId: Guest7
+    speakerDisplayName: Guest 7
+    text: Lovely to see you.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G08_GREETING_001
+    speakerId: Guest8
+    speakerDisplayName: Guest 8
+    text: Good evening, Butler.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G01_ANNOYED_001
+    speakerId: Guest1
+    speakerDisplayName: Guest 1
+    text: We were beginning to wonder if anyone was home.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G02_ANNOYED_001
+    speakerId: Guest2
+    speakerDisplayName: Guest 2
+    text: It is rather cold out there.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G03_ANNOYED_001
+    speakerId: Guest3
+    speakerDisplayName: Guest 3
+    text: We have been waiting at the door for some time.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G04_ANNOYED_001
+    speakerId: Guest4
+    speakerDisplayName: Guest 4
+    text: At last.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G05_ANNOYED_001
+    speakerId: Guest5
+    speakerDisplayName: Guest 5
+    text: We were beginning to wonder if anyone was home.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G06_ANNOYED_001
+    speakerId: Guest6
+    speakerDisplayName: Guest 6
+    text: It is rather cold out there.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G07_ANNOYED_001
+    speakerId: Guest7
+    speakerDisplayName: Guest 7
+    text: We have been waiting at the door for some time.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G08_ANNOYED_001
+    speakerId: Guest8
+    speakerDisplayName: Guest 8
+    text: At last.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G01_AMBIENT_001
+    speakerId: Guest1
+    speakerDisplayName: Guest 1
+    text: This house is colder than I expected.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G02_AMBIENT_001
+    speakerId: Guest2
+    speakerDisplayName: Guest 2
+    text: The host is late, isn't he?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G03_AMBIENT_001
+    speakerId: Guest3
+    speakerDisplayName: Guest 3
+    text: Did you hear something upstairs?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G04_AMBIENT_001
+    speakerId: Guest4
+    speakerDisplayName: Guest 4
+    text: The drawing room should be warmer.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G05_AMBIENT_001
+    speakerId: Guest5
+    speakerDisplayName: Guest 5
+    text: This house is colder than I expected.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G06_AMBIENT_001
+    speakerId: Guest6
+    speakerDisplayName: Guest 6
+    text: The host is late, isn't he?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G07_AMBIENT_001
+    speakerId: Guest7
+    speakerDisplayName: Guest 7
+    text: Did you hear something upstairs?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH01_G08_AMBIENT_001
+    speakerId: Guest8
+    speakerDisplayName: Guest 8
+    text: The drawing room should be warmer.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH02_BUTLER_ADDRESS_GUESTS_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 0
+  - lineId: SUB_CH02_BUTLER_FOUND_G01
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G02
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G03
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G04
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G05
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G06
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G07
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G08
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: I have found you, [Guest Name]. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_MEAL_ASK_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_BUTLER_SMOKE_ASK_001
+    speakerId: Butler
+    speakerDisplayName: Butler
+    text: After dinner, shall I prepare a cigar, a pipe, or no smoke at all?
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_G01_FINAL_ACK_001
+    speakerId: Guest1
+    speakerDisplayName: Guest
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_G02_FINAL_ACK_001
+    speakerId: Guest2
+    speakerDisplayName: Guest
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_G03_FINAL_ACK_001
+    speakerId: Guest3
+    speakerDisplayName: Guest
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_G04_FINAL_ACK_001
+    speakerId: Guest4
+    speakerDisplayName: Guest
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_G05_FINAL_ACK_001
+    speakerId: Guest5
+    speakerDisplayName: Guest
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_G06_FINAL_ACK_001
+    speakerId: Guest6
+    speakerDisplayName: Guest
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_G07_FINAL_ACK_001
+    speakerId: Guest7
+    speakerDisplayName: Guest
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1
+  - lineId: SUB_CH02_G08_FINAL_ACK_001
+    speakerId: Guest8
+    speakerDisplayName: Guest
+    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    minDuration: 1.25
+    maxDuration: 5
+    requireAdvance: 1

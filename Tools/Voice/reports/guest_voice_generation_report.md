@@ -1,0 +1,198 @@
+# Guest Voice Generation Report
+
+- Command: `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 /home/hamzak/micromamba/envs/chatterbox/bin/python Tools/Voice/generate_guest_voice_audio.py --device cuda --force`
+- Device requested: `cuda`
+- Offline mode: HF_HUB_OFFLINE=1, TRANSFORMERS_OFFLINE=1
+- Total generated count: 160
+- Total skipped count: 0
+- Total failed count: 0
+- Total guest WAV count: 160
+- Elapsed seconds: 144.4
+
+## Per-Guest Counts
+
+- Guest 01: 20 WAV files; source: generated anchor (Tools/Voice/generated_voice_anchors/guest01_anchor.wav); generated in 1 attempt(s), 4.04s peak 0.708
+- Guest 02: 20 WAV files; source: generated anchor (Tools/Voice/generated_voice_anchors/guest02_anchor.wav); generated in 1 attempt(s), 3.36s peak 0.708
+- Guest 03: 20 WAV files; source: generated anchor (Tools/Voice/generated_voice_anchors/guest03_anchor.wav); generated in 1 attempt(s), 5.20s peak 0.708
+- Guest 04: 20 WAV files; source: generated anchor (Tools/Voice/generated_voice_anchors/guest04_anchor.wav); generated in 1 attempt(s), 3.72s peak 0.708
+- Guest 05: 20 WAV files; source: generated anchor (Tools/Voice/generated_voice_anchors/guest05_anchor.wav); generated in 1 attempt(s), 3.16s peak 0.708
+- Guest 06: 20 WAV files; source: generated anchor (Tools/Voice/generated_voice_anchors/guest06_anchor.wav); generated in 1 attempt(s), 3.12s peak 0.708
+- Guest 07: 20 WAV files; source: generated anchor (Tools/Voice/generated_voice_anchors/guest07_anchor.wav); generated in 1 attempt(s), 3.40s peak 0.708
+- Guest 08: 20 WAV files; source: generated anchor (Tools/Voice/generated_voice_anchors/guest08_anchor.wav); generated in 1 attempt(s), 3.64s peak 0.708
+
+## Regenerated Lines
+
+- None
+
+## Failed Lines
+
+- None
+
+## Validation
+
+- PASS: all 160 expected guest WAVs exist.
+- PASS: each Guest01 through Guest08 folder contains exactly 20 WAV files.
+- PASS: every expected line_id has a matching WAV filename.
+
+## Expected Dialogue IDs
+
+- CH1_G01_ENTRY: Good evening. I trust the house remembers its manners better than the weather does.
+- CH1_G01_DELAYED: We were beginning to wonder if anyone was home.
+- CH1_G01_COAT_HANDOFF: Careful with the collar, if you please. It has survived worse evenings than this one.
+- CH1_G01_TO_DRAWING_ROOM: A proper house is judged by its wardrobe first. So far, Chateau Chantilly remains under review.
+- CH1_G01_AMBIENT_01: This house is colder than I expected.
+- CH1_G01_AMBIENT_02: The fire looks arranged rather than lit.
+- CH1_G01_EMPTY_BELL_REACTION: Then who, precisely, rang?
+- CH1_G02_ENTRY: Thank you. The drive was longer in the dark than I care to admit.
+- CH1_G02_DELAYED: It is rather cold out there.
+- CH1_G02_COAT_HANDOFF: Thank you. The damp seems to cling to everything tonight.
+- CH1_G02_TO_DRAWING_ROOM: The Drawing Room sounds heavenly. I would settle for any room with a pulse of warmth.
+- CH1_G02_AMBIENT_01: The host is late, isn't he?
+- CH1_G02_AMBIENT_02: I keep thinking someone is standing just behind the curtains.
+- CH1_G02_EMPTY_BELL_REACTION: Please do not say the wind. The wind has better manners.
+- CH1_G03_ENTRY: Lovely to see you, dear Butler. Tell me, are we late, early, or merely dramatic?
+- CH1_G03_DELAYED: We have been waiting at the door for some time.
+- CH1_G03_COAT_HANDOFF: With gratitude. Do hang it somewhere it can be admired.
+- CH1_G03_TO_DRAWING_ROOM: Prepared? How promising. I adore a room that knows guests are coming.
+- CH1_G03_AMBIENT_01: Did you hear something upstairs?
+- CH1_G03_AMBIENT_02: If the house is settling, it is doing so with theatrical timing.
+- CH1_G03_EMPTY_BELL_REACTION: A phantom caller? How rude to arrive without a coat.
+- CH1_G04_ENTRY: Good evening, Butler. The road up here has the cheerful shape of a warning.
+- CH1_G04_DELAYED: At last. I had begun composing my obituary in the frost.
+- CH1_G04_COAT_HANDOFF: Take it before it decides to stay here without me.
+- CH1_G04_TO_DRAWING_ROOM: Prepared rooms and prepared excuses often look alike. Lead on.
+- CH1_G04_AMBIENT_01: The drawing room should be warmer.
+- CH1_G04_AMBIENT_02: Old houses groan. This one seems to choose its words.
+- CH1_G04_EMPTY_BELL_REACTION: Doors do not summon themselves. Not respectable doors, anyway.
+- CH1_G05_ENTRY: Good evening. I hope the evening has not started without us.
+- CH1_G05_DELAYED: We were beginning to wonder if anyone was home.
+- CH1_G05_COAT_HANDOFF: Of course. There is nothing in the pockets but travel dust and bad omens.
+- CH1_G05_TO_DRAWING_ROOM: Then let us not keep the Drawing Room from its purpose.
+- CH1_G05_AMBIENT_01: This house is colder than I expected.
+- CH1_G05_AMBIENT_02: The portraits look recently offended.
+- CH1_G05_EMPTY_BELL_REACTION: Let us pretend it was a mistake. Pretending is useful in old houses.
+- CH1_G06_ENTRY: Thank you. I nearly mistook the bell pull for a funeral cord.
+- CH1_G06_DELAYED: It is rather cold out there, and colder still when one is expected.
+- CH1_G06_COAT_HANDOFF: Yes, please. I have been wearing half the road since the lower gate.
+- CH1_G06_TO_DRAWING_ROOM: If the fire is real, I may forgive the road.
+- CH1_G06_AMBIENT_01: The host is late, isn't he?
+- CH1_G06_AMBIENT_02: I dislike a clock that seems to be waiting for me personally.
+- CH1_G06_EMPTY_BELL_REACTION: I should very much like that to be the last surprise before dinner.
+- CH1_G07_ENTRY: Lovely to see you. The chateau looks almost awake tonight.
+- CH1_G07_DELAYED: We have been waiting at the door for some time. The house was listening with us.
+- CH1_G07_COAT_HANDOFF: Yes. And if it whispers, do not answer it.
+- CH1_G07_TO_DRAWING_ROOM: Prepared is good. Protected would be better.
+- CH1_G07_AMBIENT_01: Did you hear something upstairs?
+- CH1_G07_AMBIENT_02: The ceiling has footsteps in it, and not all of them are human.
+- CH1_G07_EMPTY_BELL_REACTION: It wanted us all in here. That is what I think.
+- CH1_G08_ENTRY: Good evening, Butler. I see the house has chosen its most severe face.
+- CH1_G08_DELAYED: At last. A closed door should not feel so pleased with itself.
+- CH1_G08_COAT_HANDOFF: Take it. The night has left fingerprints on the sleeves.
+- CH1_G08_TO_DRAWING_ROOM: Very well. Let us see what sort of welcome the room has rehearsed.
+- CH1_G08_AMBIENT_01: The drawing room should be warmer.
+- CH1_G08_AMBIENT_02: There is a draft here that does not come from any door.
+- CH1_G08_EMPTY_BELL_REACTION: Then we are here. I hope it is satisfied.
+- CH2_G01_PRESPEECH_BARK: Do begin, Butler. Formality is all that stands between dinner and nonsense.
+- CH2_G02_PRESPEECH_BARK: Are we all meant to be waiting like this?
+- CH2_G03_PRESPEECH_BARK: This is deliciously awkward. I approve, with reservations.
+- CH2_G04_PRESPEECH_BARK: It is never a good sign when the servants make speeches.
+- CH2_G05_PRESPEECH_BARK: Let him speak. The hour has turned strange.
+- CH2_G06_PRESPEECH_BARK: I dislike a room that listens back.
+- CH2_G07_PRESPEECH_BARK: That sound in the walls—did anyone else hear it before the bell?
+- CH2_G08_PRESPEECH_BARK: Say what you came to say, Butler. The room is holding its breath.
+- CH2_G01_PANIC: Do not run! Do not—oh Lord, run!
+- CH2_G02_PANIC: It has too many legs!
+- CH2_G03_PANIC: That is not a dog. Someone tell me that is not a dog.
+- CH2_G04_PANIC: Down! Get down!
+- CH2_G05_PANIC: Away from the windows!
+- CH2_G06_PANIC: The violin—make it stop!
+- CH2_G07_PANIC: I saw its hair move before it moved!
+- CH2_G08_PANIC: No one touch it! No one breathe at it!
+- CH2_G01_FOUND_START: Announce yourself before I die of manners.
+- CH2_G01_FOUND_REPLY: You may record whatever prevents further surprises.
+- CH2_G01_MEAL_PLINK: The fresh monte genellion de plink. If one must face horrors, one should do it properly fed.
+- CH2_G01_MEAL_THYME: Thyme with Lillums. It sounds disciplined, and discipline is wanted tonight.
+- CH2_G01_SMOKE_CIGAR: A cigar. Something with authority.
+- CH2_G01_SMOKE_PIPE: A pipe. Slower nerves make better decisions.
+- CH2_G01_SMOKE_NONE: No smoke. I should like my lungs available for any further screaming.
+- CH2_G01_SPIRITS_REPLY: See that it is not shy.
+- CH2_G01_EXIT_TO_DINING: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+- CH2_G01_CLOCK_REACTION: Seven o’clock. At least the clock is still obedient.
+- CH2_G01_DINING_REVEAL: Civilization survives another minute.
+- CH2_G02_FOUND_START: Please tell me you are real before you come any closer.
+- CH2_G02_FOUND_REPLY: At seven? After that thing? Yes. Yes, ordinary questions may save us.
+- CH2_G02_MEAL_PLINK: The fresh monte genellion de plink. I cannot explain why, but the longer name feels safer.
+- CH2_G02_MEAL_THYME: Thyme with Lillums, please. Something gentle. Something with leaves.
+- CH2_G02_SMOKE_CIGAR: A cigar, though I may only hold it for courage.
+- CH2_G02_SMOKE_PIPE: A pipe, if it can be made to smell like a normal evening.
+- CH2_G02_SMOKE_NONE: No smoke at all. I have inhaled enough terror for one night.
+- CH2_G02_SPIRITS_REPLY: Thank you. I may ask it several questions.
+- CH2_G02_EXIT_TO_DINING: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+- CH2_G02_CLOCK_REACTION: Please tell me dinner has windows. No—doors. I meant doors.
+- CH2_G02_DINING_REVEAL: I have never been so grateful for a chair.
+- CH2_G03_FOUND_START: If this is a party game, I withdraw my admiration.
+- CH2_G03_FOUND_REPLY: Splendid. Nothing steadies the soul like being menued after a monster.
+- CH2_G03_MEAL_PLINK: Fresh monte genellion de plink. It sounds impossible, and I am in an impossible mood.
+- CH2_G03_MEAL_THYME: Thyme with Lillums. Pretty, mysterious, and likely to stain. I accept.
+- CH2_G03_SMOKE_CIGAR: A cigar. I intend to look magnificent while recovering.
+- CH2_G03_SMOKE_PIPE: A pipe. It gives one the illusion of wisdom.
+- CH2_G03_SMOKE_NONE: No smoke. The monster already supplied quite enough atmosphere.
+- CH2_G03_SPIRITS_REPLY: Make it visible. I may need to toast survival several times.
+- CH2_G03_EXIT_TO_DINING: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+- CH2_G03_CLOCK_REACTION: If anyone asks, I was never frightened. I was arranging my face.
+- CH2_G03_DINING_REVEAL: Look at us. Pale, terrified, and still punctual.
+- CH2_G04_FOUND_START: If you are here to say dinner is canceled, lie more elegantly.
+- CH2_G04_FOUND_REPLY: Good. A schedule is a flimsy shield, but it is a shield.
+- CH2_G04_MEAL_PLINK: Fresh monte genellion de plink. If the name is a trap, I expect you to spring it first.
+- CH2_G04_MEAL_THYME: Thyme with Lillums. Quiet food. Sensible food. Food unlikely to chase me.
+- CH2_G04_SMOKE_CIGAR: A cigar. If I am to be hunted by architecture, I shall smell expensive.
+- CH2_G04_SMOKE_PIPE: A pipe. It gives the hands something to do besides tremble.
+- CH2_G04_SMOKE_NONE: No smoke. I prefer to see what is coming.
+- CH2_G04_SPIRITS_REPLY: Good. I distrust a dinner table without witnesses.
+- CH2_G04_EXIT_TO_DINING: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+- CH2_G04_CLOCK_REACTION: The clock sounds pleased with itself. I resent that.
+- CH2_G04_DINING_REVEAL: If the soup screams, I am leaving.
+- CH2_G05_FOUND_START: I was not hiding. I was choosing a defensible position.
+- CH2_G05_FOUND_REPLY: Proceed. The more ordinary the ritual, the less power we give the extraordinary.
+- CH2_G05_MEAL_PLINK: Fresh monte genellion de plink. Something substantial. I dislike fleeing on an empty stomach.
+- CH2_G05_MEAL_THYME: Thyme with Lillums. Light enough to run after, should running remain necessary.
+- CH2_G05_SMOKE_CIGAR: A cigar. For victory, or for pretending.
+- CH2_G05_SMOKE_PIPE: A pipe. Slow smoke for a slower pulse.
+- CH2_G05_SMOKE_NONE: No smoke. Keep the air clear and the exits clearer.
+- CH2_G05_SPIRITS_REPLY: Place it where I can reach it without turning my back.
+- CH2_G05_EXIT_TO_DINING: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+- CH2_G05_CLOCK_REACTION: Dining Room, then. Stay together. Walk, do not scatter.
+- CH2_G05_DINING_REVEAL: Sit where you can see the doors.
+- CH2_G06_FOUND_START: Is it gone, or has it merely become quiet?
+- CH2_G06_FOUND_REPLY: Yes. Please. Ask me anything that has only two answers.
+- CH2_G06_MEAL_PLINK: Fresh monte genellion de plink. I refuse to fear a meal with a comic name.
+- CH2_G06_MEAL_THYME: Thyme with Lillums. That sounds almost medicinal. I accept.
+- CH2_G06_SMOKE_CIGAR: A cigar. I may need to prove I still possess hands.
+- CH2_G06_SMOKE_PIPE: A pipe. Something domestic against the screaming violin.
+- CH2_G06_SMOKE_NONE: No smoke. The room has already burned itself into my memory.
+- CH2_G06_SPIRITS_REPLY: Good. Tell it I am counting on its courage.
+- CH2_G06_EXIT_TO_DINING: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+- CH2_G06_CLOCK_REACTION: I would like the next room to contain fewer instruments.
+- CH2_G06_DINING_REVEAL: I can hear the violin even when it is not playing.
+- CH2_G07_FOUND_START: I knew the house was awake. I did not know it had pets.
+- CH2_G07_FOUND_REPLY: Record quickly. The walls have begun pretending not to listen.
+- CH2_G07_MEAL_PLINK: Fresh monte genellion de plink. It sounds like a spell, and we may need one.
+- CH2_G07_MEAL_THYME: Thyme with Lillums. Green things know how to survive old stone.
+- CH2_G07_SMOKE_CIGAR: A cigar. Let the smoke mark where I have been, in case I vanish.
+- CH2_G07_SMOKE_PIPE: A pipe. Smoke curls like warnings when the air is honest.
+- CH2_G07_SMOKE_NONE: No smoke. I want to smell it if that thing returns.
+- CH2_G07_SPIRITS_REPLY: Then pour generously. The chateau has had enough of my nerves.
+- CH2_G07_EXIT_TO_DINING: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+- CH2_G07_CLOCK_REACTION: The chateau wanted us separated. Remember that.
+- CH2_G07_DINING_REVEAL: The house is quieter now. That worries me more.
+- CH2_G08_FOUND_START: Speak plainly. Is the room safe, or merely occupied?
+- CH2_G08_FOUND_REPLY: You may. I admire a household that continues taking orders after an omen.
+- CH2_G08_MEAL_PLINK: Fresh monte genellion de plink. Boldly named food for a cowardly evening.
+- CH2_G08_MEAL_THYME: Thyme with Lillums. Quiet, green, and unlikely to announce itself on nine legs.
+- CH2_G08_SMOKE_CIGAR: A cigar. I intend to leave evidence that I remained composed.
+- CH2_G08_SMOKE_PIPE: A pipe. The old rituals have teeth; let us use them.
+- CH2_G08_SMOKE_NONE: No smoke. I want nothing between myself and the door.
+- CH2_G08_SPIRITS_REPLY: Good. It may be the most trustworthy guest here.
+- CH2_G08_EXIT_TO_DINING: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+- CH2_G08_CLOCK_REACTION: Then let us disappoint it by arriving intact.
+- CH2_G08_DINING_REVEAL: Serve quickly, Butler. The night is not finished with us.

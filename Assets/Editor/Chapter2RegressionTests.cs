@@ -7,6 +7,9 @@ public class Chapter2RegressionTests
 {
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ChapterIntroUIPath = "Assets/Scripts/Story/ChapterIntroUI.cs";
+    private const string GameplayRuntimeStatePath = "Assets/Scripts/Story/GameplayRuntimeState.cs";
+    private const string MainMenuControllerPath = "Assets/Scripts/MainMenuController.cs";
+    private const string RuntimeSettingsMenuPath = "Assets/Scripts/UI/RuntimeSettingsMenu.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
@@ -24,6 +27,13 @@ public class Chapter2RegressionTests
     private const string GuestFootstepAudioPath = "Assets/Scripts/Audio/GuestFootstepAudio.cs";
     private const string GuestFootstepCatalogScriptPath = "Assets/Scripts/Audio/GuestFootstepCatalog.cs";
     private const string GuestFootstepCatalogPath = "Assets/Resources/Audio/GuestFootstepCatalog.asset";
+    private const string SubtitleLinePath = "Assets/Scripts/UI/SubtitleLine.cs";
+    private const string SubtitleLineBankScriptPath = "Assets/Scripts/UI/SubtitleLineBank.cs";
+    private const string SubtitleServicePath = "Assets/Scripts/UI/SubtitleService.cs";
+    private const string SubtitleLineBankPath = "Assets/Resources/UI/SubtitleLineBank.asset";
+    private const string GuestVoiceLinePlaybackPath = "Assets/Scripts/Audio/GuestVoiceLinePlayback.cs";
+    private const string GuestVoiceLineCatalogPath = "Assets/Resources/Audio/GuestVoiceLineCatalog.asset";
+    private const string ButlerVoiceFolderPath = "Assets/Audio/Voice/Butler";
     private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
     private const string Chapter2MonsterArmSwingResourcePath = "Assets/Resources/Chapter2/Monster/ArmSwing";
     private const string Chapter2MonsterArmSwingClipPath = "Assets/Animation/Monster/Ch2_Monster_ArmSwing.anim";
@@ -421,6 +431,181 @@ public class Chapter2RegressionTests
         Assert.That(scriptedBeginBody, Does.Contain("PlayFootsteps()"), "Scripted panic guests should play footsteps while animator walking starts.");
         Assert.That(scriptedStopBody, Does.Contain("StopFootsteps()"), "Scripted panic guests should stop footsteps when animator walking stops.");
         Assert.That(hideAfterExitBody, Does.Contain("StopFootsteps()"), "Guests hidden after leaving the room should not leave footstep loops running.");
+    }
+
+    [Test]
+    public void SubtitleLineBankDefinesChapter1AndChapter2DialogueOnlyLines()
+    {
+        Assert.That(File.Exists(SubtitleLinePath), Is.True, "Subtitle entries should have a serializable data type.");
+        Assert.That(File.Exists(SubtitleLineBankScriptPath), Is.True, "Subtitle entries should be data-driven through a line bank.");
+        Assert.That(File.Exists(SubtitleServicePath), Is.True, "Chapter 1 needs a reusable subtitle display service.");
+        Assert.That(File.Exists(SubtitleLineBankPath), Is.True, "Subtitle lines should load from Resources.");
+
+        string bankText = File.ReadAllText(SubtitleLineBankPath);
+        string serviceText = File.ReadAllText(SubtitleServicePath);
+        string combinedText = bankText + serviceText + File.ReadAllText(SubtitleLinePath) + File.ReadAllText(SubtitleLineBankScriptPath);
+        string[] bannedTerms =
+        {
+            "Chatterbox",
+            "ElevenLabs",
+            "OpenAI",
+            "TextToSpeech",
+            "AudioGenerator",
+            "generated WAV",
+            "voice playback",
+            "API"
+        };
+
+        Assert.That(bankText, Does.Contain("SUB_CH01_BUTLER_EMPTY_DOOR_001"));
+        Assert.That(bankText, Does.Contain("No one is there."));
+        Assert.That(bankText, Does.Contain("SUB_CH02_BUTLER_ADDRESS_GUESTS_001"));
+        Assert.That(bankText, Does.Contain("Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"));
+        Assert.That(serviceText, Does.Contain("Queue<QueuedSubtitle>"), "Non-choice bark subtitles should queue rather than overlap.");
+        Assert.That(serviceText, Does.Contain("WaitForSecondsRealtime"), "Subtitle auto-hide timing should not pause or own gameplay.");
+        Assert.That(serviceText, Does.Contain("KeyCode.Escape"), "Players should be able to skip the current queued subtitle with Escape.");
+        Assert.That(serviceText, Does.Contain("Missing subtitle line"), "Missing line IDs should warn and continue.");
+
+        for (int i = 1; i <= 8; i++)
+        {
+            string guestPrefix = $"G{i:00}";
+            Assert.That(bankText, Does.Contain($"SUB_CH01_{guestPrefix}_GREETING_001"));
+            Assert.That(bankText, Does.Contain($"SUB_CH01_{guestPrefix}_ANNOYED_001"));
+            Assert.That(bankText, Does.Contain($"SUB_CH01_{guestPrefix}_AMBIENT_001"));
+            Assert.That(bankText, Does.Contain($"SUB_CH02_BUTLER_FOUND_{guestPrefix}"));
+            Assert.That(bankText, Does.Contain($"SUB_CH02_{guestPrefix}_FINAL_ACK_001"));
+        }
+
+        for (int i = 0; i < bannedTerms.Length; i++)
+        {
+            Assert.That(combinedText, Does.Not.Contain(bannedTerms[i]), $"Subtitle implementation should not reference {bannedTerms[i]}.");
+        }
+    }
+
+    [Test]
+    public void ChapterSubtitlesDecorateExistingFlowWithoutOwningGameplay()
+    {
+        string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
+        string searchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string introText = File.ReadAllText(ChapterIntroUIPath);
+        string chapterManagerText = File.ReadAllText(ChapterManagerPath);
+        string chapter1AdmissionBody = ExtractMethodBody(chapter1Text, "private IEnumerator AdmitGuestToEntranceHall");
+        string ambientBody = ExtractMethodBody(chapter1Text, "private void StartAmbientConversation");
+        string openingSpeechBody = ExtractMethodBody(chapter2Text, "private IEnumerator RunOpeningSpeechRoutine");
+        string chapter2ResolveBody = ExtractMethodBody(chapter2Text, "private void ResolveReferences");
+        string dinnerAnnouncementBody = ExtractMethodBody(searchText, "private void ShowDinnerAnnouncement");
+        string mealQuestionBody = ExtractMethodBody(searchText, "private void ShowMealPreferenceQuestion");
+        string smokeQuestionBody = ExtractMethodBody(searchText, "private void ShowSmokingPreferenceQuestion");
+        string completeBody = ExtractMethodBody(searchText, "private void ShowConversationComplete");
+
+        Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_EMPTY_DOOR_001\")"), "Empty 6:04 doorbell should show the short Butler subtitle.");
+        Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_ONE_COAT_001\")"), "Existing one-coat rejection should get a subtitle without changing coat state.");
+        Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_NO_COAT_001\")"), "Existing empty-handed hanger rejection should get a subtitle without changing coat state.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("ShowGuestSubtitle(guest, \"GREETING\""), "Guest greetings should be captioned when guests enter.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("ShowGuestSubtitle(guest, \"ANNOYED\""), "Delayed guests should show annoyed captions after the greeting.");
+        Assert.That(ambientBody, Does.Contain("ShowGuestSubtitle(guestState, \"AMBIENT\""), "Ambient captions should only come from the existing ambient hook.");
+
+        Assert.That(chapter2Text, Does.Contain("ShowGuestConversationWithSubtitle"), "Chapter 2 should preserve the existing dialogue panel and choices.");
+        Assert.That(openingSpeechBody, Does.Contain("ShowSubtitleLine(\"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should use the subtitle overlay for the interrupted Butler line.");
+        Assert.That(openingSpeechBody, Does.Contain("WaitForDialogueReadOrSkip"), "Address Guests subtitles should pause long enough to read and support Escape skip.");
+        Assert.That(openingSpeechBody, Does.Match(@"ShowSubtitleLine\(\""SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""[\s\S]*ClearSubtitles\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "Normal subtitles should be cleared before the monster stinger.");
+        Assert.That(chapter2ResolveBody, Does.Not.Contain("ResolveSubtitleService();"), "Subtitle UI should be created lazily, not during chapter intro/reference resolution.");
+        Assert.That(dinnerAnnouncementBody, Does.Contain("GetChapter2GuestSubtitleLineId(\"SUB_CH02_BUTLER_FOUND_G\", guest)"), "Found subtitles should follow the clicked guest entry.");
+        Assert.That(mealQuestionBody, Does.Contain("SUB_CH02_BUTLER_MEAL_ASK_001"));
+        Assert.That(smokeQuestionBody, Does.Contain("SUB_CH02_BUTLER_SMOKE_ASK_001"));
+        Assert.That(completeBody, Does.Contain("GetChapter2GuestSubtitleLineId(\"SUB_CH02_G\", guest, \"_FINAL_ACK_001\")"));
+
+        Assert.That(searchText, Does.Contain("\"Ask meal preference\""));
+        Assert.That(searchText, Does.Contain("firstMealOption"));
+        Assert.That(searchText, Does.Contain("secondMealOption"));
+        Assert.That(searchText, Does.Contain("\"Cigar\""));
+        Assert.That(searchText, Does.Contain("\"Pipe\""));
+        Assert.That(searchText, Does.Contain("\"No smoke\""));
+        Assert.That(searchText, Does.Contain("\"Very good\""));
+        Assert.That(searchText, Does.Contain("guest.mealPreference = preference"));
+        Assert.That(searchText, Does.Contain("guest.smokingPreference = preference"));
+        Assert.That(searchText, Does.Contain("guest.spiritBottle = $\"{GetGuestDisplayName(guest)}'s bottle of spirits\""));
+        Assert.That(searchText, Does.Contain("foundGuestIdsInOrder.Add(GetGuestIdForOrderList(guest))"));
+        Assert.That(introText, Does.Contain("Time.unscaledDeltaTime"), "Chapter intro fades should not freeze when gameplay is paused.");
+        Assert.That(chapterManagerText, Does.Contain("WaitForSecondsRealtime(GetIntroTitleHoldSeconds())"), "Chapter title holds should not freeze when gameplay is paused.");
+    }
+
+    [Test]
+    public void ButlerVoiceLinesAreCatalogedAndProtectedFromRoutineCutoff()
+    {
+        Assert.That(File.Exists(GuestVoiceLinePlaybackPath), Is.True, "Butler dialog should use the shared voice-line playback component.");
+        Assert.That(File.Exists(GuestVoiceLineCatalogPath), Is.True, "Butler dialog clips should be registered in the voice-line catalog.");
+        Assert.That(Directory.Exists(ButlerVoiceFolderPath), Is.True, "Butler dialog WAVs should live beside the guest voice assets.");
+
+        string[] butlerLineIds =
+        {
+            "SUB_CH01_BUTLER_EMPTY_DOOR_001",
+            "SUB_CH01_BUTLER_NO_COAT_001",
+            "SUB_CH01_BUTLER_ONE_COAT_001",
+            "SUB_CH01_BUTLER_TAKE_COAT_001",
+            "SUB_CH01_BUTLER_THIS_WAY_001",
+            "SUB_CH01_BUTLER_WELCOME_001",
+            "SUB_CH02_BUTLER_ADDRESS_GUESTS_001",
+            "SUB_CH02_BUTLER_FOUND_G01",
+            "SUB_CH02_BUTLER_FOUND_G02",
+            "SUB_CH02_BUTLER_FOUND_G03",
+            "SUB_CH02_BUTLER_FOUND_G04",
+            "SUB_CH02_BUTLER_FOUND_G05",
+            "SUB_CH02_BUTLER_FOUND_G06",
+            "SUB_CH02_BUTLER_FOUND_G07",
+            "SUB_CH02_BUTLER_FOUND_G08",
+            "SUB_CH02_BUTLER_MEAL_ASK_001",
+            "SUB_CH02_BUTLER_SMOKE_ASK_001"
+        };
+
+        string catalogText = File.ReadAllText(GuestVoiceLineCatalogPath);
+        string playbackText = File.ReadAllText(GuestVoiceLinePlaybackPath);
+        string subtitleServiceText = File.ReadAllText(SubtitleServicePath);
+        string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
+
+        Assert.That(Directory.GetFiles(ButlerVoiceFolderPath, "*.wav").Length, Is.EqualTo(butlerLineIds.Length), "The Butler folder should contain exactly one WAV per Butler subtitle line.");
+
+        for (int i = 0; i < butlerLineIds.Length; i++)
+        {
+            string lineId = butlerLineIds[i];
+            string wavPath = $"{ButlerVoiceFolderPath}/{lineId}.wav";
+            string metaPath = $"{wavPath}.meta";
+
+            Assert.That(File.Exists(wavPath), Is.True, $"{lineId} should have a generated Butler WAV.");
+            Assert.That(File.Exists(metaPath), Is.True, $"{lineId} should have a Unity meta file.");
+            Assert.That(catalogText, Does.Contain($"lineId: {lineId}"), $"{lineId} should be in the voice-line catalog.");
+            Assert.That(catalogText, Does.Contain(ReadGuid(metaPath)), $"{lineId} catalog entry should reference its WAV GUID.");
+        }
+
+        Assert.That(playbackText, Does.Contain("SUB_CH01_BUTLER_"), "Chapter 1 Butler subtitle IDs should resolve directly as audio IDs.");
+        Assert.That(playbackText, Does.Contain("SUB_CH02_BUTLER_"), "Chapter 2 Butler subtitle IDs should resolve directly as audio IDs.");
+        Assert.That(playbackText, Does.Contain("GetDurationForDialogue"), "Callers should be able to wait for the real clip length without double-playing it.");
+        Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*GuestVoiceLinePlayback\.StopAnyCurrentLine\(\)"), "Room, teleport, and chapter clears should stop active dialog audio.");
+        Assert.That(chapter2Text, Does.Contain("GetDialogueVoiceDuration(openingSpeechLineId, \"Butler\", line)"), "The Butler opening speech should wait against the imported WAV length.");
+        Assert.That(chapter2Text, Does.Match(@"WaitForDialogueReadOrSkip\(line,\s*Mathf\.Max\(GetSpeechLineSeconds\(\),\s*voiceDuration \+ 0\.1f\),\s*voiceDuration \+ 0\.1f\)"), "The Butler opening speech should not be skippable until its voice clip finishes.");
+    }
+
+    [Test]
+    public void NewGameAndGameplayStartResetStickyPauseState()
+    {
+        Assert.That(File.Exists(GameplayRuntimeStatePath), Is.True, "Gameplay should have a single reset point for sticky editor/runtime pause state.");
+
+        string gameplayRuntimeText = File.ReadAllText(GameplayRuntimeStatePath);
+        string mainMenuText = File.ReadAllText(MainMenuControllerPath);
+        string chapterManagerText = File.ReadAllText(ChapterManagerPath);
+        string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
+        string loadGameBody = ExtractMethodBody(mainMenuText, "private void LoadGameScene");
+        string chapterManagerAwakeBody = ExtractMethodBody(chapterManagerText, "private void Awake");
+
+        Assert.That(gameplayRuntimeText, Does.Contain("Time.timeScale = 1f"), "New game should never inherit Time.timeScale = 0 from another machine/editor session.");
+        Assert.That(gameplayRuntimeText, Does.Contain("AudioListener.pause = false"), "New game should never inherit a paused audio listener.");
+        Assert.That(gameplayRuntimeText, Does.Contain("EditorApplication.isPaused = false"), "Editor play-mode pause should be cleared at gameplay scene boundaries.");
+        Assert.That(gameplayRuntimeText, Does.Contain("SceneManager.sceneLoaded"), "Scene loads should clear sticky pause state even when Gameplay is opened directly.");
+        Assert.That(gameplayRuntimeText, Does.Contain("RuntimeSettingsMenu.ResetGlobalModalState()"), "Settings input-block state should be reset at gameplay boundaries.");
+        Assert.That(runtimeSettingsText, Does.Contain("public static void ResetGlobalModalState()"));
+        Assert.That(runtimeSettingsText, Does.Contain("BlocksGameInput = false"));
+        Assert.That(loadGameBody, Does.Contain("GameplayRuntimeState.ResetForNewGame()"));
+        Assert.That(chapterManagerAwakeBody, Does.Contain("GameplayRuntimeState.ResetForGameplayStart()"));
     }
 
     [Test]

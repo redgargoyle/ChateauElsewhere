@@ -933,9 +933,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         string guestName = GetGuestDisplayName(guest);
-        chapter2Controller.ShowGuestConversation(
+        string line = $"I have found you, {guestName}. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?";
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            GetChapter2GuestSubtitleLineId("SUB_CH02_BUTLER_FOUND_G", guest),
             "Butler",
-            $"I have found you, {guestName}. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?",
+            line,
             "Ask meal preference",
             () => ShowMealPreferenceQuestion(guest));
     }
@@ -947,9 +949,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
-        chapter2Controller.ShowGuestConversation(
+        const string line = "For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?";
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            "SUB_CH02_BUTLER_MEAL_ASK_001",
             "Butler",
-            "For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?",
+            line,
             firstMealOption,
             () => ChooseMealPreference(guest, firstMealOption),
             secondMealOption,
@@ -974,9 +978,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
-        chapter2Controller.ShowGuestConversation(
+        const string line = "After dinner, shall I prepare a cigar, a pipe, or no smoke at all?";
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            "SUB_CH02_BUTLER_SMOKE_ASK_001",
             "Butler",
-            "After dinner, shall I prepare a cigar, a pipe, or no smoke at all?",
+            line,
             "Cigar",
             () => ChooseSmokingPreference(guest, cigarPreference),
             "Pipe",
@@ -1005,9 +1011,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         string guestName = GetGuestDisplayName(guest);
-        chapter2Controller.ShowGuestConversation(
+        const string line = "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.";
+        chapter2Controller.ShowGuestConversationWithSubtitle(
+            GetChapter2GuestSubtitleLineId("SUB_CH02_G", guest, "_FINAL_ACK_001"),
             guestName,
-            $"Very good. I shall present myself in the Dining Room and recover what dignity remains to us.",
+            line,
             "Very good",
             () => FinishGuestConversation(guest));
     }
@@ -1218,6 +1226,64 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         return GetGuestDisplayName(guest);
+    }
+
+    private string GetChapter2GuestSubtitleLineId(string prefix, GuestSearchEntry guest, string suffix = "")
+    {
+        int guestNumber = Mathf.Clamp(GetChapter2GuestSubtitleNumber(guest), 1, 99);
+        return $"{prefix}{guestNumber:00}{suffix}";
+    }
+
+    private int GetChapter2GuestSubtitleNumber(GuestSearchEntry guest)
+    {
+        if (guest != null && guests != null)
+        {
+            int rosterIndex = guests.IndexOf(guest);
+
+            if (rosterIndex >= 0)
+            {
+                return rosterIndex + 1;
+            }
+        }
+
+        if (TryExtractTrailingGuestNumber(guest != null ? guest.guestId : null, out int guestIdNumber))
+        {
+            return guestIdNumber;
+        }
+
+        if (guest != null && guest.actorState != null && TryExtractTrailingGuestNumber(guest.actorState.ActorId, out int actorIdNumber))
+        {
+            return actorIdNumber;
+        }
+
+        return guest != null && guest.foundOrder > 0 ? guest.foundOrder : 1;
+    }
+
+    private static bool TryExtractTrailingGuestNumber(string value, out int guestNumber)
+    {
+        guestNumber = 0;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        string cleanValue = value.Trim();
+        int end = cleanValue.Length - 1;
+
+        while (end >= 0 && char.IsDigit(cleanValue[end]))
+        {
+            end--;
+        }
+
+        int start = end + 1;
+
+        if (start >= cleanValue.Length)
+        {
+            return false;
+        }
+
+        return int.TryParse(cleanValue.Substring(start), out guestNumber);
     }
 
     private static string GetGuestDisplayName(GuestSearchEntry guest)
