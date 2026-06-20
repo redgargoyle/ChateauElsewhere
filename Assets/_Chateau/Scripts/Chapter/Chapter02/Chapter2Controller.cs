@@ -285,6 +285,7 @@ public class Chapter2Controller : MonoBehaviour
             secondCallback,
             thirdChoice,
             thirdCallback);
+        PlayGuestVoiceLine(subtitleLineId, speaker, line);
         LogSubtitleLineShown(subtitleLineId, speaker, line);
     }
 
@@ -1027,5 +1028,16 @@ public class Chapter2Controller : MonoBehaviour
 
         string cleanSpeaker = string.IsNullOrWhiteSpace(speaker) ? "Unknown" : speaker.Trim();
         Debug.Log($"[Subtitle] {lineId.Trim()}: {cleanSpeaker}: {text}", this);
+    }
+
+    private void PlayGuestVoiceLine(string lineId, string speaker, string text)
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        GuestVoiceLinePlayback voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
+        voicePlayback?.PlayForDialogue(lineId, speaker, text);
     }
 }

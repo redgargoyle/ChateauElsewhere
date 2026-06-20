@@ -27,6 +27,8 @@ public sealed class SubtitleService : MonoBehaviour
     [SerializeField] private SubtitleLineBank lineBank;
     [SerializeField] private string lineBankResourcePath = DefaultLineBankResourcePath;
     [SerializeField] private bool subtitleDebugMode;
+    [SerializeField] private bool playGuestVoiceAudio = true;
+    [SerializeField] private GuestVoiceLinePlayback voicePlayback;
 
     private readonly Queue<QueuedSubtitle> queuedSubtitles = new Queue<QueuedSubtitle>();
     private RectTransform panelRect;
@@ -289,11 +291,14 @@ public sealed class SubtitleService : MonoBehaviour
         while (queuedSubtitles.Count > 0)
         {
             QueuedSubtitle subtitle = queuedSubtitles.Dequeue();
-            ShowNow(subtitle.LineId, subtitle.Speaker, subtitle.Text);
-            float duration = GetDuration(subtitle.Text, subtitle.MinDuration, subtitle.MaxDuration);
+            float voiceDuration = ShowNow(subtitle.LineId, subtitle.Speaker, subtitle.Text);
+            float duration = Mathf.Max(
+                GetDuration(subtitle.Text, subtitle.MinDuration, subtitle.MaxDuration),
+                voiceDuration + 0.1f);
+            float unskippableDuration = voiceDuration > 0f ? voiceDuration + 0.1f : 0f;
             float elapsed = 0f;
 
-            while (elapsed < duration && !skipCurrentLineRequested)
+            while (elapsed < duration && (!skipCurrentLineRequested || elapsed < unskippableDuration))
             {
                 elapsed += Time.unscaledDeltaTime;
                 yield return null;
@@ -321,7 +326,7 @@ public sealed class SubtitleService : MonoBehaviour
         ShowNow(lineId, speaker, text);
     }
 
-    private void ShowNow(string lineId, string speaker, string text)
+    private float ShowNow(string lineId, string speaker, string text)
     {
         EnsureUI();
 
@@ -338,6 +343,24 @@ public sealed class SubtitleService : MonoBehaviour
 
         SetVisible(true);
         LogShownLine(lineId, speaker, text);
+        return PlayGuestVoiceLine(lineId, speaker, text);
+    }
+
+    private float PlayGuestVoiceLine(string lineId, string speaker, string text)
+    {
+        if (!playGuestVoiceAudio || !Application.isPlaying)
+        {
+            return 0f;
+        }
+
+        if (voicePlayback == null)
+        {
+            voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
+        }
+
+        return voicePlayback != null
+            ? voicePlayback.PlayForDialogue(lineId, speaker, text)
+            : 0f;
     }
 
     private void SetVisible(bool visible)
