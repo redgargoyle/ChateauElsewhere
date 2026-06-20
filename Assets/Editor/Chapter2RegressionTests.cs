@@ -514,9 +514,13 @@ public class Chapter2RegressionTests
         string searchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
         string introText = File.ReadAllText(ChapterIntroUIPath);
         string chapterManagerText = File.ReadAllText(ChapterManagerPath);
+        string chapter1AdmitGroupsBody = ExtractMethodBody(chapter1Text, "private IEnumerator AdmitQueuedGuestGroups");
         string chapter1AdmissionBody = ExtractMethodBody(chapter1Text, "private IEnumerator AdmitGuestToEntranceHall");
+        string checkActiveGroupsBody = ExtractMethodBody(chapter1Text, "private void CheckActiveGroupsReadyForDrawingRoom");
+        string moveEntranceGroupBody = ExtractMethodBody(chapter1Text, "private IEnumerator MoveEntranceGroupToDrawingRoom");
         string ambientBody = ExtractMethodBody(chapter1Text, "private void StartAmbientConversation");
         string openingSpeechBody = ExtractMethodBody(chapter2Text, "private IEnumerator RunOpeningSpeechRoutine");
+        string holdChoicesBody = ExtractMethodBody(chapter2Text, "private void HoldDialogueChoicesForSpeech");
         string chapter2ResolveBody = ExtractMethodBody(chapter2Text, "private void ResolveReferences");
         string guestFoundStartBody = ExtractMethodBody(searchText, "private void ShowGuestFoundStart");
         string butlerFoundBody = ExtractMethodBody(searchText, "private void ShowButlerFoundLine");
@@ -531,8 +535,15 @@ public class Chapter2RegressionTests
         Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_EMPTY_DOOR_001\")"), "Empty 6:04 doorbell should show the short Butler subtitle.");
         Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_ONE_COAT_001\")"), "Existing one-coat rejection should get a subtitle without changing coat state.");
         Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_NO_COAT_001\")"), "Existing empty-handed hanger rejection should get a subtitle without changing coat state.");
-        Assert.That(chapter1AdmissionBody, Does.Contain("yield return SpeakGuestLine(guest, \"GREETING\""), "Guest greetings should block the arrival flow until speech completes.");
-        Assert.That(chapter1AdmissionBody, Does.Contain("yield return SpeakGuestLine(guest, \"ANNOYED\""), "Delayed guest lines should block the arrival flow until speech completes.");
+        Assert.That(chapter1AdmitGroupsBody, Does.Contain("StartCoroutine(AdmitGuestToEntranceHall"), "Answering the door should admit all waiting guests instead of serializing them behind speech.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("QueueGuestLine(guest, \"GREETING\""), "Guest greetings should be queued while guests continue walking.");
+        Assert.That(chapter1AdmissionBody, Does.Not.Contain("yield return SpeakGuestLine"), "Guest entry movement should not wait for greeting audio.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("PrepareGuestCoatForArrival(guest)"), "The correct guest coat should be prepared before walking to the waiting spot.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("QueueButlerLine(\"SUB_CH01_BUTLER_WELCOME_001\")"), "The Butler should audibly welcome arriving guests.");
+        Assert.That(chapter1AdmissionBody, Does.Contain("QueueButlerLine(\"SUB_CH01_BUTLER_TAKE_COAT_001\")"), "The Butler should ask for coats during the entrance sequence.");
+        Assert.That(checkActiveGroupsBody, Does.Contain("CanMoveEntranceGroupToDrawingRoom(group)"), "Guests should leave the entrance by group after all coats are taken.");
+        Assert.That(moveEntranceGroupBody, Does.Contain("QueueButlerLine(\"SUB_CH01_BUTLER_THIS_WAY_001\")"), "The Butler should speak before sending the pair to the Drawing Room.");
+        Assert.That(moveEntranceGroupBody, Does.Contain("QueueGuestLine(group.Guests[i], \"TO_DRAWING_ROOM\", null)"), "Guest Drawing Room lines should be queued as the group departs.");
         Assert.That(ambientBody, Does.Contain("ShowGuestSubtitle(guestState, \"AMBIENT\""), "Ambient captions should only come from the existing ambient hook.");
         Assert.That(chapter1Text, Does.Contain("Good evening. I trust the house remembers its manners better than the weather does."), "Chapter 1 fallback greetings should match the generated voice script.");
         Assert.That(chapter1Text, Does.Contain("Thank you. The drive was longer in the dark than I care to admit."), "Chapter 1 fallback greetings should match the generated voice script.");
@@ -541,6 +552,8 @@ public class Chapter2RegressionTests
         Assert.That(chapter1Text, Does.Contain("It is rather cold out there, and colder still when one is expected."), "Chapter 1 delayed fallback lines should match the generated voice script.");
 
         Assert.That(chapter2Text, Does.Contain("ShowGuestConversationWithSubtitle"), "Chapter 2 should preserve the existing dialogue panel and choices.");
+        Assert.That(holdChoicesBody, Does.Contain("SetDialogueSkipAction(service.SkipCurrentSpeech)"), "Interactive dialog should expose skip on the dialogue panel.");
+        Assert.That(holdChoicesBody, Does.Contain("showSubtitleOverlay: false"), "Interactive dialog should not also show the subtitle overlay.");
         Assert.That(openingSpeechBody, Does.Contain("const string openingSpeechLineId = \"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should keep the interrupted Butler line ID explicit.");
         Assert.That(openingSpeechBody, Does.Contain("yield return SpeakLine(openingSpeechLineId, \"Butler\", line, false, true)"), "Address Guests should use the shared speech API and block input.");
         Assert.That(openingSpeechBody, Does.Match(@"SpeakLine\(openingSpeechLineId[\s\S]*ClearSubtitles\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "Normal subtitles should be cleared before the monster stinger.");

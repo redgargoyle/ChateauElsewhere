@@ -41,6 +41,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public bool EmptyRing;
         public bool QueuedOutside;
         public bool EnteredEntranceHall;
+        public bool MovingToDrawingRoom;
         public bool Complete;
         public float QueuedAtGameMinute;
         public readonly List<GuestRuntimeState> Guests = new List<GuestRuntimeState>();
@@ -584,6 +585,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         carriedCoatId = guestState.Config.CoatId;
         carriedCoatGuest = guestState;
         SetGuestState(guestState, GuestArrivalState.CoatTaken);
+        QueueGuestLine(guestState, "COAT_HANDOFF", null);
 
         if (guestState.CoatPickup != null)
         {
@@ -1556,6 +1558,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         int totalGuestBatchCount = CountGuestsInGroups(groupsToAdmit);
         int entranceGuestSlotCount = Mathf.Max(GetRequestedGuestCount(), totalGuestBatchCount);
 
+        int startedGuestCount = 0;
+
         for (int i = 0; i < groupsToAdmit.Count; i++)
         {
             GuestGroupRuntimeState group = groupsToAdmit[i];
@@ -1576,8 +1580,14 @@ public class Chapter1ArrivalController : MonoBehaviour
                 guest.EnteredEntranceHall = true;
                 guest.Annoyed = WasGuestWaitingLongEnoughToBeAnnoyed(guest);
                 currentGuestIndex = guest.GuestIndex;
-                yield return AdmitGuestToEntranceHall(guest, guest.GuestIndex, entranceGuestSlotCount);
+                StartCoroutine(AdmitGuestToEntranceHall(guest, guest.GuestIndex, entranceGuestSlotCount));
+                startedGuestCount++;
             }
+        }
+
+        if (startedGuestCount > 0)
+        {
+            yield return null;
         }
 
         RefreshInteractionState();
@@ -1593,17 +1603,10 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         EnsureGuestHiddenBeforeArrival(guest);
         bool useWorldSafePlacement = IsWorldSpaceGuestObject(guest.GuestObject);
-        bool useAuthoredEntrancePosition = !useWorldSafePlacement &&
-            snapGuestsIntoEntranceForFirstVisualPass &&
-            ShouldPreserveAuthoredEntrancePosition(guest.GuestObject);
 
         if (useWorldSafePlacement)
         {
             PlaceGuestAtPosition(guest, GetWorldDoorArrivalPosition(guest, indexInDoorBatch, batchCount));
-        }
-        else if (useAuthoredEntrancePosition)
-        {
-            ActivateAuthoredChapterGuestObject(guest, indexInDoorBatch, batchCount);
         }
         else
         {
@@ -1620,81 +1623,50 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         SetGuestState(guest, GuestArrivalState.Arriving);
-        bool coatOfferedBeforeWaitMovement = false;
+        ForceGuestVisibleForDoorFlow(guest);
+        PrepareGuestCoatForArrival(guest);
+        QueueButlerLine("SUB_CH01_BUTLER_WELCOME_001");
+        LogGuestLine(guest.Config, guest.Config.GreetingLine);
+        QueueGuestLine(guest, "GREETING", GetGuestGreetingLine(guest));
+
+        if (guest.Annoyed)
+        {
+            Debug.Log($"{guest.Config.GuestDisplayName}: {GetAnnoyedLine(guest.GuestIndex)}", this);
+            QueueGuestLine(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
+        }
+
+        QueueButlerLine("SUB_CH01_BUTLER_TAKE_COAT_001");
+        Transform waitSpot;
 
         if (useWorldSafePlacement)
         {
-            ForceGuestVisibleForDoorFlow(guest);
-            Transform waitSpot = CreateRuntimeAnchor(
+            waitSpot = CreateRuntimeAnchor(
                 $"EntranceWait_{guest.Config.GuestId}",
                 GetWorldEntranceWaitPosition(guest, indexInDoorBatch, batchCount),
                 null);
-            SetGuestState(guest, GuestArrivalState.AwaitingGreeting);
-            LogGuestLine(guest.Config, guest.Config.GreetingLine);
-            yield return SpeakGuestLine(guest, "GREETING", GetGuestGreetingLine(guest));
-
-            if (guest.Annoyed)
-            {
-                Debug.Log($"{guest.Config.GuestDisplayName}: {GetAnnoyedLine(guest.GuestIndex)}", this);
-                yield return SpeakGuestLine(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
-            }
-
-            OfferGuestCoat(guest);
-            coatOfferedBeforeWaitMovement = true;
-            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to entrance wait spot.", this);
-            yield return MoveGuestTo(guest, waitSpot, "entrance waiting spot");
-            if (guest.CoatTaken || guest.MovingToDrawingRoom || guest.Seated)
-            {
-                yield break;
-            }
-
-            ForceGuestVisibleForDoorFlow(guest);
-            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance wait spot.", this);
-        }
-        else if (useAuthoredEntrancePosition)
-        {
-            ForceGuestVisibleForDoorFlow(guest);
-            yield return null;
-        }
-        else if (snapGuestsIntoEntranceForFirstVisualPass)
-        {
-            Transform waitSpot = CreateRuntimeAnchor(
-                $"EntranceWait_{guest.Config.GuestId}",
-                GetEntranceWaitPosition(guest, indexInDoorBatch, batchCount),
-                frontDoorArrivalPoint);
-            PlaceGuestAt(guest, waitSpot, "entrance waiting spot");
-            ForceGuestVisibleForDoorFlow(guest);
-            yield return null;
         }
         else
         {
-            Transform waitSpot = CreateRuntimeAnchor(
+            waitSpot = CreateRuntimeAnchor(
                 $"EntranceWait_{guest.Config.GuestId}",
                 GetEntranceWaitPosition(guest, indexInDoorBatch, batchCount),
                 frontDoorArrivalPoint);
-            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to entrance wait spot.", this);
-            yield return MoveGuestTo(guest, waitSpot, "entrance waiting spot");
-            ForceGuestVisibleForDoorFlow(guest);
-            Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance wait spot.", this);
         }
 
-        if (!coatOfferedBeforeWaitMovement)
+        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to entrance wait spot.", this);
+        yield return MoveGuestTo(guest, waitSpot, "entrance waiting spot");
+
+        if (guest.CoatTaken || guest.MovingToDrawingRoom || guest.Seated)
         {
-            SetGuestState(guest, GuestArrivalState.AwaitingGreeting);
-            LogGuestLine(guest.Config, guest.Config.GreetingLine);
-            yield return SpeakGuestLine(guest, "GREETING", GetGuestGreetingLine(guest));
-
-            if (guest.Annoyed)
-            {
-                Debug.Log($"{guest.Config.GuestDisplayName}: {GetAnnoyedLine(guest.GuestIndex)}", this);
-                yield return SpeakGuestLine(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
-            }
-
-            OfferGuestCoat(guest);
+            yield break;
         }
+
+        ForceGuestVisibleForDoorFlow(guest);
+        OfferGuestCoat(guest);
+        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance wait spot.", this);
     }
 
-    private void OfferGuestCoat(GuestRuntimeState guest)
+    private void PrepareGuestCoatForArrival(GuestRuntimeState guest)
     {
         if (guest == null || guest.CoatOffered)
         {
@@ -1702,8 +1674,23 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         guest.CoatOffered = true;
-        SetGuestState(guest, GuestArrivalState.GreetingComplete);
         guest.CoatPickup = CreateCoatPickup(guest);
+    }
+
+    private void OfferGuestCoat(GuestRuntimeState guest)
+    {
+        if (guest == null)
+        {
+            return;
+        }
+
+        if (!guest.CoatOffered)
+        {
+            guest.CoatOffered = true;
+            guest.CoatPickup = CreateCoatPickup(guest);
+        }
+
+        SetGuestState(guest, GuestArrivalState.GreetingComplete);
         SetGuestState(guest, GuestArrivalState.CoatOffered);
     }
 
@@ -2126,21 +2113,34 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             GuestGroupRuntimeState group = activeEntranceGroups[i];
 
-            if (group == null || group.Complete)
+            if (group == null || group.Complete || group.MovingToDrawingRoom)
             {
                 continue;
             }
 
-            for (int guestIndex = 0; guestIndex < group.Guests.Count; guestIndex++)
+            if (CanMoveEntranceGroupToDrawingRoom(group))
             {
-                GuestRuntimeState guest = group.Guests[guestIndex];
-
-                if (CanMoveGuestToDrawingRoom(guest))
-                {
-                    StartCoroutine(MoveGuestToDrawingRoom(guest, group));
-                }
+                StartCoroutine(MoveEntranceGroupToDrawingRoom(group));
             }
         }
+    }
+
+    private bool CanMoveEntranceGroupToDrawingRoom(GuestGroupRuntimeState group)
+    {
+        if (group == null || group.Guests.Count == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            if (!CanMoveGuestToDrawingRoom(group.Guests[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private bool CanMoveGuestToDrawingRoom(GuestRuntimeState guest)
@@ -2149,6 +2149,25 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.CoatTaken &&
             !guest.MovingToDrawingRoom &&
             !guest.Seated;
+    }
+
+    private IEnumerator MoveEntranceGroupToDrawingRoom(GuestGroupRuntimeState group)
+    {
+        if (!CanMoveEntranceGroupToDrawingRoom(group))
+        {
+            yield break;
+        }
+
+        group.MovingToDrawingRoom = true;
+        QueueButlerLine("SUB_CH01_BUTLER_THIS_WAY_001");
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            QueueGuestLine(group.Guests[i], "TO_DRAWING_ROOM", null);
+            StartCoroutine(MoveGuestToDrawingRoom(group.Guests[i], group));
+        }
+
+        yield return null;
     }
 
     private IEnumerator MoveGuestToDrawingRoom(GuestRuntimeState guest, GuestGroupRuntimeState group)
@@ -2365,6 +2384,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         group.Complete = true;
+        group.MovingToDrawingRoom = false;
         activeEntranceGroups.Remove(group);
         Debug.Log($"Guest group {group.GroupIndex + 1} entered the drawing room.", this);
     }
@@ -3435,25 +3455,30 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        string lineId = GetChapter1GuestSubtitleLineId(guestState.GuestIndex, lineKind);
-        DialogueSpeechService service = ResolveSpeechService();
-        service?.BeginSpeakLine(lineId, guestState.Config.GuestDisplayName, text.Trim(), false, false);
+        QueueGuestLine(guestState, lineKind, text);
     }
 
-    private IEnumerator SpeakGuestLine(GuestRuntimeState guestState, string lineKind, string text)
+    private void QueueGuestLine(GuestRuntimeState guestState, string lineKind, string text)
     {
-        if (guestState == null || guestState.Config == null || string.IsNullOrWhiteSpace(text))
+        if (guestState == null || guestState.Config == null)
         {
-            yield break;
+            return;
         }
 
-        string lineId = GetChapter1GuestSubtitleLineId(guestState.GuestIndex, lineKind);
+        string lineId = GetChapter1GuestLineId(guestState.GuestIndex, lineKind);
         DialogueSpeechService service = ResolveSpeechService();
+        service?.BeginSpeakLine(lineId, guestState.Config.GuestDisplayName, text, false, false);
+    }
 
-        if (service != null)
+    private void QueueButlerLine(string lineId)
+    {
+        if (string.IsNullOrWhiteSpace(lineId))
         {
-            yield return service.SpeakLine(lineId, guestState.Config.GuestDisplayName, text.Trim(), false, false);
+            return;
         }
+
+        DialogueSpeechService service = ResolveSpeechService();
+        service?.BeginSpeakLine(lineId, "Butler", null, false, false);
     }
 
     private static string GetChapter1GuestSubtitleLineId(int guestIndex, string lineKind)
@@ -3461,6 +3486,32 @@ public class Chapter1ArrivalController : MonoBehaviour
         int guestNumber = Mathf.Clamp(guestIndex + 1, 1, 99);
         string cleanLineKind = string.IsNullOrWhiteSpace(lineKind) ? "GREETING" : lineKind.Trim().ToUpperInvariant();
         return $"SUB_CH01_G{guestNumber:00}_{cleanLineKind}_001";
+    }
+
+    private static string GetChapter1GuestLineId(int guestIndex, string lineKind)
+    {
+        int guestNumber = Mathf.Clamp(guestIndex + 1, 1, 99);
+        string cleanLineKind = string.IsNullOrWhiteSpace(lineKind) ? "GREETING" : lineKind.Trim().ToUpperInvariant();
+
+        switch (cleanLineKind)
+        {
+            case "ENTRY":
+            case "GREETING":
+                return GetChapter1GuestSubtitleLineId(guestIndex, "GREETING");
+            case "DELAYED":
+            case "ANNOYED":
+                return GetChapter1GuestSubtitleLineId(guestIndex, "ANNOYED");
+            case "COAT":
+            case "COAT_HANDOFF":
+                return $"CH1_G{guestNumber:00}_COAT_HANDOFF";
+            case "TO_DRAWING":
+            case "TO_DRAWING_ROOM":
+                return $"CH1_G{guestNumber:00}_TO_DRAWING_ROOM";
+            case "AMBIENT":
+                return GetChapter1GuestSubtitleLineId(guestIndex, "AMBIENT");
+            default:
+                return $"CH1_G{guestNumber:00}_{cleanLineKind}";
+        }
     }
 
     private void ShowSubtitleLine(string lineId)

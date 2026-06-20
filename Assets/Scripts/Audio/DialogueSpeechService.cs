@@ -49,10 +49,11 @@ public sealed class DialogueSpeechService : MonoBehaviour
         string fallbackText,
         bool allowOverlap = false,
         bool blockInput = false,
-        Action onComplete = null)
+        Action onComplete = null,
+        bool showSubtitleOverlay = true)
     {
         ResolveReferences();
-        return StartCoroutine(SpeakLineRoutine(lineId, speakerId, fallbackText, allowOverlap, blockInput, onComplete));
+        return StartCoroutine(SpeakLineRoutine(lineId, speakerId, fallbackText, allowOverlap, blockInput, onComplete, showSubtitleOverlay));
     }
 
     public IEnumerator SpeakLine(
@@ -60,9 +61,15 @@ public sealed class DialogueSpeechService : MonoBehaviour
         string speakerId,
         string fallbackText,
         bool allowOverlap = false,
-        bool blockInput = false)
+        bool blockInput = false,
+        bool showSubtitleOverlay = true)
     {
-        yield return SpeakLineRoutine(lineId, speakerId, fallbackText, allowOverlap, blockInput, null);
+        yield return SpeakLineRoutine(lineId, speakerId, fallbackText, allowOverlap, blockInput, null, showSubtitleOverlay);
+    }
+
+    public void SkipCurrentSpeech()
+    {
+        RequestSkip(activeSpeechToken);
     }
 
     public void StopCurrentSpeech()
@@ -80,7 +87,8 @@ public sealed class DialogueSpeechService : MonoBehaviour
         string fallbackText,
         bool allowOverlap,
         bool blockInput,
-        Action onComplete)
+        Action onComplete,
+        bool showSubtitleOverlay)
     {
         ResolveReferences();
 
@@ -131,7 +139,10 @@ public sealed class DialogueSpeechService : MonoBehaviour
             }
         }
 
-        subtitleService.ShowSpeechLine(lineId, speaker, text, true, () => RequestSkip(speechToken));
+        if (showSubtitleOverlay)
+        {
+            subtitleService.ShowSpeechLine(lineId, speaker, text, true, () => RequestSkip(speechToken));
+        }
 
         float voiceDuration = 0f;
 
@@ -173,7 +184,10 @@ public sealed class DialogueSpeechService : MonoBehaviour
                 voicePlayback?.StopCurrentLine();
             }
 
-            subtitleService.HideCurrent();
+            if (showSubtitleOverlay)
+            {
+                subtitleService.HideCurrent();
+            }
         }
 
         if (blockedMovement != null)

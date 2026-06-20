@@ -16,6 +16,8 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private const string DialoguePanelName = "Panel_Chapter2Dialogue";
     private const string DialogueSpeakerTextName = "Text_Chapter2DialogueSpeaker";
     private const string DialogueLineTextName = "Text_Chapter2DialogueLine";
+    private const string DialogueSkipButtonName = "Button_Chapter2DialogueSkip";
+    private const string DialogueSkipLabelName = "Text_Chapter2DialogueSkip";
     private const string DialogueChoiceButtonNamePrefix = "Button_Chapter2DialogueChoice";
     private const string DialogueChoiceLabelName = "Text_Chapter2DialogueChoice";
     private const string ClockStrikePanelName = "Panel_Chapter2ClockStrike";
@@ -43,6 +45,8 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private readonly Button[] dialogueChoiceButtons = new Button[DialogueChoiceCount];
     private readonly TMP_Text[] dialogueChoiceLabels = new TMP_Text[DialogueChoiceCount];
     private readonly Action[] dialogueChoiceCallbacks = new Action[DialogueChoiceCount];
+    private Button dialogueSkipButton;
+    private Action dialogueSkipCallback;
     private Button primaryButton;
     private TMP_Text primaryButtonLabel;
     private Action primaryActionCallback;
@@ -173,9 +177,30 @@ public class Chapter2InteractionHUD : MonoBehaviour
         }
     }
 
+    public void SetDialogueSkipAction(Action callback)
+    {
+        EnsureUI();
+        dialogueSkipCallback = callback;
+
+        if (dialogueSkipButton == null)
+        {
+            return;
+        }
+
+        dialogueSkipButton.onClick.RemoveAllListeners();
+
+        if (callback != null)
+        {
+            dialogueSkipButton.onClick.AddListener(HandleDialogueSkipClicked);
+        }
+
+        dialogueSkipButton.gameObject.SetActive(callback != null);
+    }
+
     public void ClearDialogue()
     {
         dialogueChoicesInteractable = true;
+        dialogueSkipCallback = null;
 
         for (int i = 0; i < dialogueChoiceCallbacks.Length; i++)
         {
@@ -185,6 +210,12 @@ public class Chapter2InteractionHUD : MonoBehaviour
         if (dialoguePanel != null)
         {
             dialoguePanel.SetActive(false);
+        }
+
+        if (dialogueSkipButton != null)
+        {
+            dialogueSkipButton.onClick.RemoveAllListeners();
+            dialogueSkipButton.gameObject.SetActive(false);
         }
 
         for (int i = 0; i < dialogueChoiceButtons.Length; i++)
@@ -276,6 +307,11 @@ public class Chapter2InteractionHUD : MonoBehaviour
         primaryActionCallback?.Invoke();
     }
 
+    private void HandleDialogueSkipClicked()
+    {
+        dialogueSkipCallback?.Invoke();
+    }
+
     private void EnsureUI()
     {
         GameObject canvasObject = GameObject.Find(CanvasName);
@@ -347,6 +383,15 @@ public class Chapter2InteractionHUD : MonoBehaviour
         lineRect.pivot = new Vector2(0.5f, 0.5f);
         lineRect.offsetMin = new Vector2(24f, 66f);
         lineRect.offsetMax = new Vector2(-24f, -48f);
+
+        dialogueSkipButton = FindOrCreateDialogueSkipButton(dialogueRect);
+        RectTransform skipRect = dialogueSkipButton.GetComponent<RectTransform>();
+        skipRect.anchorMin = new Vector2(1f, 0f);
+        skipRect.anchorMax = new Vector2(1f, 0f);
+        skipRect.pivot = new Vector2(1f, 0f);
+        skipRect.anchoredPosition = new Vector2(-18f, 18f);
+        skipRect.sizeDelta = new Vector2(78f, 30f);
+        dialogueSkipButton.gameObject.SetActive(dialogueSkipCallback != null);
 
         for (int i = 0; i < DialogueChoiceCount; i++)
         {
@@ -663,6 +708,35 @@ public class Chapter2InteractionHUD : MonoBehaviour
         return button;
     }
 
+    private Button FindOrCreateDialogueSkipButton(Transform root)
+    {
+        Transform existing = root.Find(DialogueSkipButtonName);
+        Button button = existing != null
+            ? existing.GetComponent<Button>()
+            : null;
+
+        if (button == null)
+        {
+            GameObject buttonObject = new GameObject(DialogueSkipButtonName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
+            buttonRect.SetParent(root, false);
+
+            Image buttonImage = buttonObject.GetComponent<Image>();
+            buttonImage.color = new Color(0.08f, 0.07f, 0.06f, 0.94f);
+
+            button = buttonObject.GetComponent<Button>();
+            ColorBlock colors = button.colors;
+            colors.normalColor = new Color(0.08f, 0.07f, 0.06f, 0.94f);
+            colors.highlightedColor = new Color(0.18f, 0.14f, 0.1f, 1f);
+            colors.pressedColor = new Color(0.03f, 0.025f, 0.02f, 1f);
+            colors.selectedColor = colors.highlightedColor;
+            button.colors = colors;
+        }
+
+        FindOrCreateSkipButtonLabel(button.transform);
+        return button;
+    }
+
     private TMP_Text FindOrCreateDialogueButtonLabel(Transform buttonRoot)
     {
         Transform existing = buttonRoot.Find(DialogueChoiceLabelName);
@@ -688,6 +762,36 @@ public class Chapter2InteractionHUD : MonoBehaviour
         label.color = Color.white;
         label.alignment = TextAlignmentOptions.Center;
         label.textWrappingMode = TextWrappingModes.Normal;
+        label.raycastTarget = false;
+        return label;
+    }
+
+    private static TMP_Text FindOrCreateSkipButtonLabel(Transform buttonRoot)
+    {
+        Transform existing = buttonRoot.Find(DialogueSkipLabelName);
+        TMP_Text label = existing != null
+            ? existing.GetComponent<TMP_Text>()
+            : null;
+
+        if (label != null)
+        {
+            return label;
+        }
+
+        GameObject labelObject = new GameObject(DialogueSkipLabelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+        labelRect.SetParent(buttonRoot, false);
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(8f, 0f);
+        labelRect.offsetMax = new Vector2(-8f, 0f);
+
+        label = labelObject.GetComponent<TMP_Text>();
+        label.text = "Skip";
+        label.fontSize = 14f;
+        label.color = Color.white;
+        label.alignment = TextAlignmentOptions.Center;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
         label.raycastTarget = false;
         return label;
     }

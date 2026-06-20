@@ -1089,15 +1089,24 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         interactionHUD.SetDialogueChoicesInteractable(false);
-        dialogueVoiceChoiceRoutine = service.BeginSpeakLine(lineId, speaker, text, false, false, () =>
-        {
-            if (interactionHUD != null)
+        interactionHUD.SetDialogueSkipAction(service.SkipCurrentSpeech);
+        dialogueVoiceChoiceRoutine = service.BeginSpeakLine(
+            lineId,
+            speaker,
+            text,
+            false,
+            false,
+            () =>
             {
-                interactionHUD.SetDialogueChoicesInteractable(true);
-            }
+                if (interactionHUD != null)
+                {
+                    interactionHUD.SetDialogueSkipAction(null);
+                    interactionHUD.SetDialogueChoicesInteractable(true);
+                }
 
-            dialogueVoiceChoiceRoutine = null;
-        });
+                dialogueVoiceChoiceRoutine = null;
+            },
+            showSubtitleOverlay: false);
     }
 
     private void StopDialogueChoiceHold()
@@ -1109,6 +1118,7 @@ public class Chapter2Controller : MonoBehaviour
             dialogueVoiceChoiceRoutine = null;
         }
 
+        interactionHUD?.SetDialogueSkipAction(null);
         interactionHUD?.SetDialogueChoicesInteractable(true);
     }
 
