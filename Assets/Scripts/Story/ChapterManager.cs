@@ -250,6 +250,7 @@ public class ChapterManager : MonoBehaviour
     public void SkipToChapter2ForTesting()
     {
         ResolveReferences();
+        StopActiveDialogueForChapterSkip();
 
         StopChapterCoroutines();
 
@@ -292,6 +293,7 @@ public class ChapterManager : MonoBehaviour
     public void SkipToChapter3ForTesting()
     {
         ResolveReferences();
+        StopActiveDialogueForChapterSkip();
         StopChapterCoroutines();
 
         if (eventScheduler != null)
@@ -333,6 +335,14 @@ public class ChapterManager : MonoBehaviour
             Debug.LogWarning("Skip to Chapter 3 requested, but Chapter2Controller could not be resolved.", this);
             SetPlayerInputEnabled(true);
         }
+    }
+
+    private static void StopActiveDialogueForChapterSkip()
+    {
+        GuestVoiceLinePlayback.StopAnyCurrentLine();
+
+        SubtitleService subtitleService = FindAnyObjectByType<SubtitleService>(FindObjectsInactive.Include);
+        subtitleService?.ClearAll();
     }
 
     private void StopChapterCoroutines()

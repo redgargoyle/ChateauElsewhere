@@ -29,6 +29,7 @@ public sealed class SubtitleService : MonoBehaviour
     [SerializeField] private bool subtitleDebugMode;
     [SerializeField] private bool playGuestVoiceAudio = true;
     [SerializeField] private GuestVoiceLinePlayback voicePlayback;
+    [SerializeField] private RoomNavigationManager navigationManager;
 
     private readonly Queue<QueuedSubtitle> queuedSubtitles = new Queue<QueuedSubtitle>();
     private RectTransform panelRect;
@@ -37,6 +38,7 @@ public sealed class SubtitleService : MonoBehaviour
     private Coroutine autoHideRoutine;
     private bool showingPersistentLine;
     private bool skipCurrentLineRequested;
+    private bool subscribedToRoomChanges;
 
     public static SubtitleService FindOrCreate()
     {
@@ -175,7 +177,14 @@ public sealed class SubtitleService : MonoBehaviour
             lineBank = Resources.Load<SubtitleLineBank>(resourcePath);
         }
 
+        ResolveRoomNavigation();
+        RegisterRoomChangeHandler();
         EnsureUI();
+    }
+
+    private void OnDisable()
+    {
+        UnregisterRoomChangeHandler();
     }
 
     private void EnsureUI()
@@ -369,6 +378,54 @@ public sealed class SubtitleService : MonoBehaviour
         {
             panelRect.gameObject.SetActive(visible);
         }
+    }
+
+    private void ResolveRoomNavigation()
+    {
+        if (navigationManager == null)
+        {
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+    }
+
+    private void RegisterRoomChangeHandler()
+    {
+        if (navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        navigationManager.OnCurrentRoomChanged.AddListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = true;
+    }
+
+    private void UnregisterRoomChangeHandler()
+    {
+        if (!subscribedToRoomChanges || navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = false;
+    }
+
+    private void HandleCurrentRoomChanged(string roomName)
+    {
+        queuedSubtitles.Clear();
+        skipCurrentLineRequested = false;
+        showingPersistentLine = false;
+
+        if (autoHideRoutine != null)
+        {
+            StopCoroutine(autoHideRoutine);
+            autoHideRoutine = null;
+        }
+
+        SetVisible(false);
+        voicePlayback?.StopCurrentLine();
+        GuestVoiceLinePlayback.StopAnyCurrentLine();
     }
 
     private void LogShownLine(string lineId, string speaker, string text)

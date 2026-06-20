@@ -13,6 +13,9 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
     [SerializeField] private bool logMissingVoiceLines;
 
     private AudioSource audioSource;
+    private RoomNavigationManager navigationManager;
+    private bool subscribedToRoomChanges;
+    private string playbackRoom = string.Empty;
 
     public static GuestVoiceLinePlayback FindOrCreate()
     {
@@ -73,8 +76,26 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         audioSource.spatialBlend = 0f;
         audioSource.ignoreListenerVolume = true;
         GameAudioSettings.EnsureBinding(audioSource, GameAudioChannel.Dialogue, sourceBaseVolume);
+        playbackRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
         audioSource.Play();
         return clip.length;
+    }
+
+    public void StopCurrentLine()
+    {
+        if (audioSource != null)
+        {
+            audioSource.Stop();
+            audioSource.clip = null;
+        }
+
+        playbackRoom = string.Empty;
+    }
+
+    public static void StopAnyCurrentLine()
+    {
+        GuestVoiceLinePlayback existing = FindAnyObjectByType<GuestVoiceLinePlayback>(FindObjectsInactive.Include);
+        existing?.StopCurrentLine();
     }
 
     private void ResolveReferences()
@@ -88,6 +109,13 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         }
 
         EnsureAudioSource();
+        ResolveRoomNavigation();
+        RegisterRoomChangeHandler();
+    }
+
+    private void OnDisable()
+    {
+        UnregisterRoomChangeHandler();
     }
 
     private bool EnsureAudioSource()
@@ -103,6 +131,51 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         }
 
         return audioSource != null;
+    }
+
+    private void ResolveRoomNavigation()
+    {
+        if (navigationManager == null)
+        {
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+    }
+
+    private void RegisterRoomChangeHandler()
+    {
+        if (navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        navigationManager.OnCurrentRoomChanged.AddListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = true;
+    }
+
+    private void UnregisterRoomChangeHandler()
+    {
+        if (!subscribedToRoomChanges || navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = false;
+    }
+
+    private void HandleCurrentRoomChanged(string roomName)
+    {
+        if (audioSource == null || !audioSource.isPlaying)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(playbackRoom) ||
+            !string.Equals(playbackRoom.Trim(), (roomName ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            StopCurrentLine();
+        }
     }
 
     private static bool TryResolveAudioLineId(string lineId, string speaker, string text, out string audioLineId)
@@ -317,7 +390,9 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
     {
         return !string.IsNullOrWhiteSpace(lineId) &&
             (lineId.StartsWith("CH1_G", StringComparison.OrdinalIgnoreCase) ||
-             lineId.StartsWith("CH2_G", StringComparison.OrdinalIgnoreCase));
+             lineId.StartsWith("CH2_G", StringComparison.OrdinalIgnoreCase) ||
+             lineId.StartsWith("SUB_CH01_BUTLER_", StringComparison.OrdinalIgnoreCase) ||
+             lineId.StartsWith("SUB_CH02_BUTLER_", StringComparison.OrdinalIgnoreCase));
     }
 
     private static string NormalizeDialogueText(string text)

@@ -493,4 +493,55 @@ MonoBehaviour:
   - lineId: CH2_G08_SPIRITS_REPLY
     clip: {fileID: 8300000, guid: 08125b29d9e1e5ab9048db95ea35d45e, type: 3}
     volume: 1
+  - lineId: SUB_CH01_BUTLER_EMPTY_DOOR_001
+    clip: {fileID: 8300000, guid: 47fdd62ec09640e09fda6684f30125c4, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_NO_COAT_001
+    clip: {fileID: 8300000, guid: fcbf6cc81f9d460c8ca4ba441565a740, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_ONE_COAT_001
+    clip: {fileID: 8300000, guid: d04e1099878d40ceb583e596a0bf173e, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_TAKE_COAT_001
+    clip: {fileID: 8300000, guid: 6a7419925ebc46e1bf7674b73fb198e3, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_THIS_WAY_001
+    clip: {fileID: 8300000, guid: 6df409b8c3eb4623bcbc9ed83209d05f, type: 3}
+    volume: 1
+  - lineId: SUB_CH01_BUTLER_WELCOME_001
+    clip: {fileID: 8300000, guid: 84efe7bf90e143bfb05245e94cffe965, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_ADDRESS_GUESTS_001
+    clip: {fileID: 8300000, guid: b4ae3f4bf45642c88d243cc383acca77, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G01
+    clip: {fileID: 8300000, guid: 095a1989b4e4434a9be8ec12191e2721, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G02
+    clip: {fileID: 8300000, guid: f7332dab61da40e7a82cb5d6417bba1d, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G03
+    clip: {fileID: 8300000, guid: 57681a30b97f44e08d283d13699052ea, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G04
+    clip: {fileID: 8300000, guid: e057bb82ecf44e8b807256b45727d249, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G05
+    clip: {fileID: 8300000, guid: 17aecbab1cbd402893fc6ec8d0bb8c3c, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G06
+    clip: {fileID: 8300000, guid: 9cf0941d9efe450682bccb621d1f82e5, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G07
+    clip: {fileID: 8300000, guid: dc6ad5dd48b94b178205e9cc6c5aa724, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G08
+    clip: {fileID: 8300000, guid: ec722ecfb4be41d89c24634b122751c1, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_MEAL_ASK_001
+    clip: {fileID: 8300000, guid: a0c15b4b7d3c47269fe02f0597e283a5, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_SMOKE_ASK_001
+    clip: {fileID: 8300000, guid: c61ed29b95ee4491a28fb59ba7506e84, type: 3}
+    volume: 1
   defaultVolume: 1

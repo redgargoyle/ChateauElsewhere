@@ -63,10 +63,12 @@ public class Chapter2Controller : MonoBehaviour
     private Coroutine monsterStingerRoutine;
     private Coroutine diningObjectiveTransitionRoutine;
     private Coroutine diningRoomCompletionRoutine;
+    private Coroutine dialogueVoiceChoiceRoutine;
     private AudioClip runtimeClockStrikeClip;
     private bool allGuestsFoundHandled;
     private bool dinnerSeatingHandled;
     private bool debugTeleportToDrawingRoomOnStart;
+    private bool subscribedToRoomChanges;
 
     public Chapter2Phase CurrentPhase => currentPhase;
     public string DrawingRoomId => drawingRoomId;
@@ -285,12 +287,15 @@ public class Chapter2Controller : MonoBehaviour
             secondCallback,
             thirdChoice,
             thirdCallback);
-        PlayGuestVoiceLine(subtitleLineId, speaker, line);
+        float voiceDuration = PlayGuestVoiceLine(subtitleLineId, speaker, line);
+        HoldDialogueChoicesUntilVoiceFinishes(voiceDuration);
         LogSubtitleLineShown(subtitleLineId, speaker, line);
     }
 
     public void ClearGuestConversation()
     {
+        StopDialogueChoiceHold();
+
         if (interactionHUD != null)
         {
             interactionHUD.ClearDialogue();
@@ -426,6 +431,8 @@ public class Chapter2Controller : MonoBehaviour
         {
             navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         }
+
+        RegisterRoomChangeHandler();
 
         if (introUI == null)
         {
@@ -1030,14 +1037,93 @@ public class Chapter2Controller : MonoBehaviour
         Debug.Log($"[Subtitle] {lineId.Trim()}: {cleanSpeaker}: {text}", this);
     }
 
-    private void PlayGuestVoiceLine(string lineId, string speaker, string text)
+    private float PlayGuestVoiceLine(string lineId, string speaker, string text)
     {
         if (!Application.isPlaying)
+        {
+            return 0f;
+        }
+
+        GuestVoiceLinePlayback voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
+        return voicePlayback != null
+            ? voicePlayback.PlayForDialogue(lineId, speaker, text)
+            : 0f;
+    }
+
+    private void HoldDialogueChoicesUntilVoiceFinishes(float voiceDuration)
+    {
+        StopDialogueChoiceHold();
+
+        if (interactionHUD == null || voiceDuration <= 0f)
+        {
+            interactionHUD?.SetDialogueChoicesInteractable(true);
+            return;
+        }
+
+        interactionHUD.SetDialogueChoicesInteractable(false);
+        dialogueVoiceChoiceRoutine = StartCoroutine(ReenableDialogueChoicesAfterVoice(voiceDuration));
+    }
+
+    private IEnumerator ReenableDialogueChoicesAfterVoice(float voiceDuration)
+    {
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, voiceDuration) + 0.1f);
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.SetDialogueChoicesInteractable(true);
+        }
+
+        dialogueVoiceChoiceRoutine = null;
+    }
+
+    private void StopDialogueChoiceHold()
+    {
+        if (dialogueVoiceChoiceRoutine != null)
+        {
+            StopCoroutine(dialogueVoiceChoiceRoutine);
+            dialogueVoiceChoiceRoutine = null;
+        }
+
+        interactionHUD?.SetDialogueChoicesInteractable(true);
+    }
+
+    private void RegisterRoomChangeHandler()
+    {
+        if (navigationManager == null)
         {
             return;
         }
 
-        GuestVoiceLinePlayback voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
-        voicePlayback?.PlayForDialogue(lineId, speaker, text);
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        navigationManager.OnCurrentRoomChanged.AddListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = true;
+    }
+
+    private void UnregisterRoomChangeHandler()
+    {
+        if (!subscribedToRoomChanges || navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = false;
+    }
+
+    private void OnDestroy()
+    {
+        UnregisterRoomChangeHandler();
+    }
+
+    private void HandleCurrentRoomChanged(string roomName)
+    {
+        StopDialogueChoiceHold();
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearDialogue();
+        }
+
+        ClearSubtitles();
     }
 }
