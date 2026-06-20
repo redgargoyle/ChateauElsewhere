@@ -157,6 +157,8 @@ public sealed class SubtitleService : MonoBehaviour
         queuedSubtitles.Clear();
         skipCurrentLineRequested = false;
         HideCurrent();
+        voicePlayback?.StopCurrentLine();
+        GuestVoiceLinePlayback.StopAnyCurrentLine();
     }
 
     private void Update()

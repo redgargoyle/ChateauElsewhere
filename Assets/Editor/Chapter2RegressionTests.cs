@@ -31,6 +31,9 @@ public class Chapter2RegressionTests
     private const string SubtitleLineBankScriptPath = "Assets/Scripts/UI/SubtitleLineBank.cs";
     private const string SubtitleServicePath = "Assets/Scripts/UI/SubtitleService.cs";
     private const string SubtitleLineBankPath = "Assets/Resources/UI/SubtitleLineBank.asset";
+    private const string GuestVoiceLinePlaybackPath = "Assets/Scripts/Audio/GuestVoiceLinePlayback.cs";
+    private const string GuestVoiceLineCatalogPath = "Assets/Resources/Audio/GuestVoiceLineCatalog.asset";
+    private const string ButlerVoiceFolderPath = "Assets/Audio/Voice/Butler";
     private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
     private const string Chapter2MonsterArmSwingResourcePath = "Assets/Resources/Chapter2/Monster/ArmSwing";
     private const string Chapter2MonsterArmSwingClipPath = "Assets/Animation/Monster/Ch2_Monster_ArmSwing.anim";
@@ -525,6 +528,61 @@ public class Chapter2RegressionTests
         Assert.That(searchText, Does.Contain("foundGuestIdsInOrder.Add(GetGuestIdForOrderList(guest))"));
         Assert.That(introText, Does.Contain("Time.unscaledDeltaTime"), "Chapter intro fades should not freeze when gameplay is paused.");
         Assert.That(chapterManagerText, Does.Contain("WaitForSecondsRealtime(GetIntroTitleHoldSeconds())"), "Chapter title holds should not freeze when gameplay is paused.");
+    }
+
+    [Test]
+    public void ButlerVoiceLinesAreCatalogedAndProtectedFromRoutineCutoff()
+    {
+        Assert.That(File.Exists(GuestVoiceLinePlaybackPath), Is.True, "Butler dialog should use the shared voice-line playback component.");
+        Assert.That(File.Exists(GuestVoiceLineCatalogPath), Is.True, "Butler dialog clips should be registered in the voice-line catalog.");
+        Assert.That(Directory.Exists(ButlerVoiceFolderPath), Is.True, "Butler dialog WAVs should live beside the guest voice assets.");
+
+        string[] butlerLineIds =
+        {
+            "SUB_CH01_BUTLER_EMPTY_DOOR_001",
+            "SUB_CH01_BUTLER_NO_COAT_001",
+            "SUB_CH01_BUTLER_ONE_COAT_001",
+            "SUB_CH01_BUTLER_TAKE_COAT_001",
+            "SUB_CH01_BUTLER_THIS_WAY_001",
+            "SUB_CH01_BUTLER_WELCOME_001",
+            "SUB_CH02_BUTLER_ADDRESS_GUESTS_001",
+            "SUB_CH02_BUTLER_FOUND_G01",
+            "SUB_CH02_BUTLER_FOUND_G02",
+            "SUB_CH02_BUTLER_FOUND_G03",
+            "SUB_CH02_BUTLER_FOUND_G04",
+            "SUB_CH02_BUTLER_FOUND_G05",
+            "SUB_CH02_BUTLER_FOUND_G06",
+            "SUB_CH02_BUTLER_FOUND_G07",
+            "SUB_CH02_BUTLER_FOUND_G08",
+            "SUB_CH02_BUTLER_MEAL_ASK_001",
+            "SUB_CH02_BUTLER_SMOKE_ASK_001"
+        };
+
+        string catalogText = File.ReadAllText(GuestVoiceLineCatalogPath);
+        string playbackText = File.ReadAllText(GuestVoiceLinePlaybackPath);
+        string subtitleServiceText = File.ReadAllText(SubtitleServicePath);
+        string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
+
+        Assert.That(Directory.GetFiles(ButlerVoiceFolderPath, "*.wav").Length, Is.EqualTo(butlerLineIds.Length), "The Butler folder should contain exactly one WAV per Butler subtitle line.");
+
+        for (int i = 0; i < butlerLineIds.Length; i++)
+        {
+            string lineId = butlerLineIds[i];
+            string wavPath = $"{ButlerVoiceFolderPath}/{lineId}.wav";
+            string metaPath = $"{wavPath}.meta";
+
+            Assert.That(File.Exists(wavPath), Is.True, $"{lineId} should have a generated Butler WAV.");
+            Assert.That(File.Exists(metaPath), Is.True, $"{lineId} should have a Unity meta file.");
+            Assert.That(catalogText, Does.Contain($"lineId: {lineId}"), $"{lineId} should be in the voice-line catalog.");
+            Assert.That(catalogText, Does.Contain(ReadGuid(metaPath)), $"{lineId} catalog entry should reference its WAV GUID.");
+        }
+
+        Assert.That(playbackText, Does.Contain("SUB_CH01_BUTLER_"), "Chapter 1 Butler subtitle IDs should resolve directly as audio IDs.");
+        Assert.That(playbackText, Does.Contain("SUB_CH02_BUTLER_"), "Chapter 2 Butler subtitle IDs should resolve directly as audio IDs.");
+        Assert.That(playbackText, Does.Contain("GetDurationForDialogue"), "Callers should be able to wait for the real clip length without double-playing it.");
+        Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*GuestVoiceLinePlayback\.StopAnyCurrentLine\(\)"), "Room, teleport, and chapter clears should stop active dialog audio.");
+        Assert.That(chapter2Text, Does.Contain("GetDialogueVoiceDuration(openingSpeechLineId, \"Butler\", line)"), "The Butler opening speech should wait against the imported WAV length.");
+        Assert.That(chapter2Text, Does.Match(@"WaitForDialogueReadOrSkip\(line,\s*Mathf\.Max\(GetSpeechLineSeconds\(\),\s*voiceDuration \+ 0\.1f\),\s*voiceDuration \+ 0\.1f\)"), "The Butler opening speech should not be skippable until its voice clip finishes.");
     }
 
     [Test]

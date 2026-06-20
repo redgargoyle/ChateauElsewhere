@@ -382,9 +382,11 @@ public class Chapter2Controller : MonoBehaviour
                     interactionHUD.SetStatus(line);
                 }
 
-                ShowSubtitleLine("SUB_CH02_BUTLER_ADDRESS_GUESTS_001", "Butler", line, false);
+                const string openingSpeechLineId = "SUB_CH02_BUTLER_ADDRESS_GUESTS_001";
+                float voiceDuration = GetDialogueVoiceDuration(openingSpeechLineId, "Butler", line);
+                ShowSubtitleLine(openingSpeechLineId, "Butler", line, false);
                 Debug.Log($"Butler: {line}", this);
-                yield return WaitForDialogueReadOrSkip(line, GetSpeechLineSeconds());
+                yield return WaitForDialogueReadOrSkip(line, Mathf.Max(GetSpeechLineSeconds(), voiceDuration + 0.1f), voiceDuration + 0.1f);
             }
         }
 
@@ -851,14 +853,15 @@ public class Chapter2Controller : MonoBehaviour
         return Mathf.Max(0f, speechLineSeconds);
     }
 
-    private IEnumerator WaitForDialogueReadOrSkip(string line, float fallbackSeconds)
+    private IEnumerator WaitForDialogueReadOrSkip(string line, float fallbackSeconds, float unskippableSeconds = 0f)
     {
         float duration = GetDialogueReadSeconds(line, fallbackSeconds);
+        float protectedDuration = Mathf.Max(0f, unskippableSeconds);
         float elapsed = 0f;
 
         while (elapsed < duration)
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape) && elapsed >= protectedDuration)
             {
                 break;
             }
@@ -872,7 +875,8 @@ public class Chapter2Controller : MonoBehaviour
     {
         float fallback = Mathf.Max(0f, fallbackSeconds);
         float readableSeconds = 1.25f + Mathf.Max(0, string.IsNullOrEmpty(line) ? 0 : line.Length) / 24f;
-        return Mathf.Clamp(Mathf.Max(fallback, readableSeconds), fallback, 6f);
+        float maxSeconds = Mathf.Max(fallback, 6f);
+        return Mathf.Clamp(Mathf.Max(fallback, readableSeconds), fallback, maxSeconds);
     }
 
     private float GetDiningRoomRevealSeconds()
@@ -1047,6 +1051,19 @@ public class Chapter2Controller : MonoBehaviour
         GuestVoiceLinePlayback voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
         return voicePlayback != null
             ? voicePlayback.PlayForDialogue(lineId, speaker, text)
+            : 0f;
+    }
+
+    private float GetDialogueVoiceDuration(string lineId, string speaker, string text)
+    {
+        if (!Application.isPlaying)
+        {
+            return 0f;
+        }
+
+        GuestVoiceLinePlayback voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
+        return voicePlayback != null
+            ? voicePlayback.GetDurationForDialogue(lineId, speaker, text)
             : 0f;
     }
 

@@ -40,21 +40,8 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
             return 0f;
         }
 
-        ResolveReferences();
-
-        if (catalog == null ||
-            !TryResolveAudioLineId(lineId, speaker, text, out string audioLineId))
+        if (!TryResolveClipForDialogue(lineId, speaker, text, out AudioClip clip, out float lineVolume))
         {
-            return 0f;
-        }
-
-        if (!catalog.TryGetVoiceLine(audioLineId, out AudioClip clip, out float lineVolume) || clip == null)
-        {
-            if (logMissingVoiceLines)
-            {
-                Debug.LogWarning($"[VoiceLine] Missing guest voice clip for '{audioLineId}'.", this);
-            }
-
             return 0f;
         }
 
@@ -79,6 +66,18 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         playbackRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
         audioSource.Play();
         return clip.length;
+    }
+
+    public float GetDurationForDialogue(string lineId, string speaker, string text)
+    {
+        if (!Application.isPlaying)
+        {
+            return 0f;
+        }
+
+        return TryResolveClipForDialogue(lineId, speaker, text, out AudioClip clip, out _)
+            ? clip.length
+            : 0f;
     }
 
     public void StopCurrentLine()
@@ -111,6 +110,32 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         EnsureAudioSource();
         ResolveRoomNavigation();
         RegisterRoomChangeHandler();
+    }
+
+    private bool TryResolveClipForDialogue(string lineId, string speaker, string text, out AudioClip clip, out float lineVolume)
+    {
+        clip = null;
+        lineVolume = 1f;
+
+        ResolveReferences();
+
+        if (catalog == null ||
+            !TryResolveAudioLineId(lineId, speaker, text, out string audioLineId))
+        {
+            return false;
+        }
+
+        if (!catalog.TryGetVoiceLine(audioLineId, out clip, out lineVolume) || clip == null)
+        {
+            if (logMissingVoiceLines)
+            {
+                Debug.LogWarning($"[VoiceLine] Missing voice clip for '{audioLineId}'.", this);
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     private void OnDisable()
