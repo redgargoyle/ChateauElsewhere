@@ -11,6 +11,12 @@ public static class GameAudioSettings
 
     private static int AudioChannelCount => Enum.GetValues(typeof(GameAudioChannel)).Length;
 
+    public static void ResetUnityAudioState()
+    {
+        AudioListener.pause = false;
+        AudioListener.volume = 1f;
+    }
+
     public static float GetVolume(GameAudioChannel channel)
     {
         int index = GetIndex(channel);
@@ -48,6 +54,10 @@ public static class GameAudioSettings
             return;
         }
 
+        ResetUnityAudioState();
+        source.enabled = true;
+        source.mute = false;
+        source.ignoreListenerPause = false;
         source.ignoreListenerVolume = true;
         source.volume = Mathf.Max(0f, baseVolume) * GetVolume(channel);
     }

@@ -45,7 +45,7 @@ public static class GameplayRuntimeState
     private static void ResetForSceneBoundary()
     {
         Time.timeScale = 1f;
-        AudioListener.pause = false;
+        GameAudioSettings.ResetUnityAudioState();
         RuntimeSettingsMenu.ResetGlobalModalState();
 
 #if UNITY_EDITOR

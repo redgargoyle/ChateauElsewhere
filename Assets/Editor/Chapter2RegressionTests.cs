@@ -8,6 +8,7 @@ public class Chapter2RegressionTests
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ChapterIntroUIPath = "Assets/Scripts/Story/ChapterIntroUI.cs";
     private const string GameplayRuntimeStatePath = "Assets/Scripts/Story/GameplayRuntimeState.cs";
+    private const string GameAudioSettingsPath = "Assets/Scripts/Audio/GameAudioSettings.cs";
     private const string MainMenuControllerPath = "Assets/Scripts/MainMenuController.cs";
     private const string RuntimeSettingsMenuPath = "Assets/Scripts/UI/RuntimeSettingsMenu.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
@@ -682,6 +683,7 @@ public class Chapter2RegressionTests
         Assert.That(File.Exists(GameplayRuntimeStatePath), Is.True, "Gameplay should have a single reset point for sticky editor/runtime pause state.");
 
         string gameplayRuntimeText = File.ReadAllText(GameplayRuntimeStatePath);
+        string gameAudioSettingsText = File.ReadAllText(GameAudioSettingsPath);
         string mainMenuText = File.ReadAllText(MainMenuControllerPath);
         string chapterManagerText = File.ReadAllText(ChapterManagerPath);
         string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
@@ -689,7 +691,9 @@ public class Chapter2RegressionTests
         string chapterManagerAwakeBody = ExtractMethodBody(chapterManagerText, "private void Awake");
 
         Assert.That(gameplayRuntimeText, Does.Contain("Time.timeScale = 1f"), "New game should never inherit Time.timeScale = 0 from another machine/editor session.");
-        Assert.That(gameplayRuntimeText, Does.Contain("AudioListener.pause = false"), "New game should never inherit a paused audio listener.");
+        Assert.That(gameplayRuntimeText, Does.Contain("GameAudioSettings.ResetUnityAudioState()"), "New game should reset Unity's global audio listener state.");
+        Assert.That(gameAudioSettingsText, Does.Contain("AudioListener.pause = false"), "New game should never inherit a paused audio listener.");
+        Assert.That(gameAudioSettingsText, Does.Contain("AudioListener.volume = 1f"), "New game should never inherit a muted global audio listener volume.");
         Assert.That(gameplayRuntimeText, Does.Contain("EditorApplication.isPaused = false"), "Editor play-mode pause should be cleared at gameplay scene boundaries.");
         Assert.That(gameplayRuntimeText, Does.Contain("SceneManager.sceneLoaded"), "Scene loads should clear sticky pause state even when Gameplay is opened directly.");
         Assert.That(gameplayRuntimeText, Does.Contain("RuntimeSettingsMenu.ResetGlobalModalState()"), "Settings input-block state should be reset at gameplay boundaries.");

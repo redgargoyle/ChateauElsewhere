@@ -25,6 +25,7 @@ public class NavigationRegressionTests
     private const string YSortSolidObstaclePath = "Assets/Scripts/Characters/YSortSolidObstacle2D.cs";
     private const string ChapterTimeSettingsUIPath = "Assets/Scripts/Story/ChapterTimeSettingsUI.cs";
     private const string RuntimeSettingsMenuPath = "Assets/Scripts/UI/RuntimeSettingsMenu.cs";
+    private const string GameAudioSettingsPath = "Assets/Scripts/Audio/GameAudioSettings.cs";
     private const string NavigationCursorHoverTargetPath = "Assets/Scripts/UI/NavigationCursorHoverTarget.cs";
     private const string MainMenuControllerPath = "Assets/Scripts/MainMenuController.cs";
     private const string GrandfatherClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
@@ -164,6 +165,7 @@ public class NavigationRegressionTests
     {
         string timeSettingsText = File.ReadAllText(ChapterTimeSettingsUIPath);
         string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
+        string gameAudioSettingsText = File.ReadAllText(GameAudioSettingsPath);
         string chapter1HudText = File.ReadAllText(Chapter1InteractionHUDPath);
         string chapter2HudText = File.ReadAllText(Chapter2InteractionHUDPath);
 
@@ -192,7 +194,8 @@ public class NavigationRegressionTests
         Assert.That(runtimeSettingsText, Does.Contain("Audio_ExplorationMusic"), "The music slider should target the gameplay exploration music source.");
         Assert.That(runtimeSettingsText, Does.Contain("unity_dreadforge_soundscape"), "The music slider should identify the Dreadforge soundscape clip.");
         Assert.That(runtimeSettingsText, Does.Contain("ignoreListenerVolume = true"), "The soundscape source should ignore the FX/global listener volume.");
-        Assert.That(runtimeSettingsText, Does.Contain("AudioListener.volume"), "The FX slider should control non-music audio through Unity's existing listener volume.");
+        Assert.That(gameAudioSettingsText, Does.Contain("source.ignoreListenerVolume = true"), "Channel sliders should control bound source volume instead of Unity's fragile global listener volume.");
+        Assert.That(gameAudioSettingsText, Does.Contain("source.volume = Mathf.Max(0f, baseVolume) * GetVolume(channel)"), "Channel sliders should scale each bound source by its saved channel volume.");
 
         Assert.That(chapter1HudText, Does.Not.Contain("BuildShortHudState(chapterClock.CurrentTimeLabel)"), "Chapter 1 status should not render a second clock label.");
         Assert.That(chapter2HudText, Does.Not.Contain("chapterClock.CurrentTimeLabel"), "Chapter 2 status should not render a second clock label.");
