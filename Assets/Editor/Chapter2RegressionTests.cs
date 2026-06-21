@@ -377,22 +377,37 @@ public class Chapter2RegressionTests
         string catalogText = File.ReadAllText(GuestFootstepCatalogPath);
         string[] clipPaths =
         {
-            "Assets/Audio/woman-walk/01_hardwood_hallway_walk_woman_footsteps_seed510000_48khz.wav",
-            "Assets/Audio/man-walk/01_hardwood_hallway_walk_man_footsteps_seed1070000_48khz.wav",
-            "Assets/Audio/man-walk/06_slow_cautious_floorboards_man_footsteps_seed1070679_48khz.wav",
-            "Assets/Audio/woman-walk/01_hardwood_hallway_walk_woman_footsteps_seed520000_48khz.wav",
-            "Assets/Audio/man-walk/05_wood_stair_steps_man_footsteps_seed1070582_48khz.wav",
-            "Assets/Audio/woman-walk/02_thick_carpet_room_walk_woman_footsteps_seed510097_48khz.wav",
-            "Assets/Audio/man-walk/03_marble_foyer_walk_woman_footsteps_seed510194_48khz.wav",
-            "Assets/Audio/woman-walk/05_wood_stair_steps_woman_footsteps_seed510388_48khz.wav"
+            "Assets/Audio/SFX/Footsteps/Wood/Guest/FS_Wood_Guest_Soft_01.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Guest/FS_Wood_Guest_Soft_02.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Guest/FS_Wood_Guest_Soft_03.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Guest/FS_Wood_Guest_Soft_04.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Guest/FS_Wood_Guest_Soft_05.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Guest/FS_Wood_Guest_Soft_06.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Guest/FS_Wood_Guest_Soft_07.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Guest/FS_Wood_Guest_Soft_08.wav"
+        };
+        string[] butlerClipPaths =
+        {
+            "Assets/Audio/SFX/Footsteps/Wood/Butler/FS_Wood_Butler_Soft_01.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Butler/FS_Wood_Butler_Soft_02.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Butler/FS_Wood_Butler_Soft_03.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Butler/FS_Wood_Butler_Soft_04.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Butler/FS_Wood_Butler_Soft_05.wav",
+            "Assets/Audio/SFX/Footsteps/Wood/Butler/FS_Wood_Butler_Soft_06.wav"
         };
 
-        Assert.That(audioText, Does.Contain("AudioHighPassFilter"), "Each guest footstep source should high-pass its loop before it enters the mix.");
+        Assert.That(audioText, Does.Contain("AudioHighPassFilter"), "Each guest footstep source should high-pass its one-shots before they enter the mix.");
         Assert.That(audioText, Does.Contain("highpassResonanceQ"), "The high-pass resonance should be serialized through the source component.");
-        Assert.That(audioText, Does.Contain("source.loop = true"), "Footsteps should loop while a guest is walking.");
+        Assert.That(audioText, Does.Contain("source.loop = false"), "Footsteps should trigger one-shots, not long loops.");
+        Assert.That(audioText, Does.Contain("PlayOneShot"), "Footsteps should be rhythmically triggered by code.");
+        Assert.That(audioText, Does.Contain("stepIntervalSeconds"), "Footstep cadence should be serialized through the source component.");
         Assert.That(audioText, Does.Contain("GameAudioChannel.GameSounds"), "Footsteps should respect the Game Sounds settings slider.");
-        Assert.That(catalogScriptText, Does.Contain("TryGetFootstepsForGuest"), "Chapter systems should resolve clips through the catalog, not filenames.");
+        Assert.That(catalogScriptText, Does.Contain("TryGetFootstepVariantsForGuest"), "Chapter systems should resolve clip variants through the catalog, not filenames.");
+        Assert.That(catalogScriptText, Does.Contain("TryGetButlerFootstepVariants"), "The Butler should use dedicated one-shot variants.");
         Assert.That(catalogText, Does.Contain("highPassCutoffFrequency: 180"), "The catalog should apply a mix-friendly high-pass cutoff.");
+        Assert.That(catalogText, Does.Contain("guestStepIntervalSeconds: 0.54"), "Guest footsteps should default to a normal walking cadence.");
+        Assert.That(catalogText, Does.Contain("butlerStepIntervalSeconds: 0.6"), "Butler footsteps should default to a calmer walking cadence.");
+        Assert.That(catalogText, Does.Contain("stepIntervalJitterSeconds: 0.025"), "Footsteps should have light timing jitter.");
 
         for (int i = 0; i < clipPaths.Length; i++)
         {
@@ -403,8 +418,17 @@ public class Chapter2RegressionTests
             Assert.That(File.Exists(clipPath), Is.True, $"Guest {guestNumber} footstep clip should exist at {clipPath}.");
             Assert.That(
                 catalogText,
-                Does.Match($@"(?s)- guestNumber: {guestNumber}\s+clip: \{{fileID: 8300000, guid: {clipGuid}, type: 3\}}\s+volume: "),
+                Does.Match($@"(?s)- guestNumber: {guestNumber}\s+clip: \{{fileID: 8300000, guid: {clipGuid}, type: 3\}}\s+clips: "),
                 $"Guest {guestNumber} should be assigned to {Path.GetFileName(clipPath)}.");
+        }
+
+        for (int i = 0; i < butlerClipPaths.Length; i++)
+        {
+            string clipPath = butlerClipPaths[i];
+            string clipGuid = ReadGuid(clipPath + ".meta");
+
+            Assert.That(File.Exists(clipPath), Is.True, $"Butler footstep variant should exist at {clipPath}.");
+            Assert.That(catalogText, Does.Contain($"guid: {clipGuid}"), $"Butler catalog should reference {Path.GetFileName(clipPath)}.");
         }
     }
 

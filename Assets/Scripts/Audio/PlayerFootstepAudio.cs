@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -5,11 +6,17 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
 {
     private const string DefaultAudioObjectName = "Audio_ButlerFootsteps";
     private const string DefaultCatalogResourcePath = "Audio/GuestFootstepCatalog";
+    private const float DefaultButlerStepIntervalSeconds = 0.6f;
+    private const float DefaultStepIntervalJitterSeconds = 0.025f;
 
     [SerializeField] private GuestFootstepCatalog footstepCatalog;
     [SerializeField] private string footstepCatalogResourcePath = DefaultCatalogResourcePath;
     [SerializeField] private AudioClip clip;
+    [SerializeField] private AudioClip[] clips = Array.Empty<AudioClip>();
     [SerializeField, Range(0f, 1f)] private float baseVolume = 0.24f;
+    [SerializeField, Min(0.05f)] private float stepIntervalSeconds = DefaultButlerStepIntervalSeconds;
+    [SerializeField, Min(0f)] private float stepIntervalJitterSeconds = DefaultStepIntervalJitterSeconds;
+    [SerializeField, Min(0f)] private float minimumMovementSpeed = 0.01f;
     [SerializeField, Min(10f)] private float highPassCutoffFrequency = 180f;
     [SerializeField, Range(0.1f, 10f)] private float highPassResonanceQ = 1.1f;
     [SerializeField, Min(10f)] private float lowPassCutoffFrequency = 9000f;
@@ -19,12 +26,15 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
     private AudioHighPassFilter highPassFilter;
     private AudioLowPassFilter lowPassFilter;
     private bool isWalking;
+    private float nextStepTime;
+    private int lastClipIndex = -1;
 
-    public void SetWalking(bool walking)
+    public void SetWalking(bool walking, float movementSpeed = float.PositiveInfinity)
     {
-        if (isWalking == walking)
+        bool shouldWalk = walking && movementSpeed >= minimumMovementSpeed;
+        if (isWalking == shouldWalk)
         {
-            if (isWalking && (source == null || !source.isPlaying))
+            if (isWalking && Time.time >= nextStepTime)
             {
                 PlayWalking();
             }
@@ -32,7 +42,7 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
             return;
         }
 
-        isWalking = walking;
+        isWalking = shouldWalk;
 
         if (isWalking)
         {
@@ -48,25 +58,39 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
     {
         ResolveCatalogClip();
 
-        if (clip == null || !EnsureAudioSource())
+        if (!HasClips() || !EnsureAudioSource())
         {
             return;
         }
 
         ApplyConfiguration();
+        isWalking = true;
 
-        if (!source.isPlaying)
+        if (Time.time >= nextStepTime)
         {
-            source.Play();
+            PlayStep();
         }
     }
 
     public void StopWalking()
     {
-        if (source != null && source.isPlaying)
+        isWalking = false;
+        nextStepTime = 0f;
+
+        if (source != null)
         {
             source.Stop();
         }
+    }
+
+    private void Update()
+    {
+        if (!isWalking || !HasClips() || Time.time < nextStepTime)
+        {
+            return;
+        }
+
+        PlayStep();
     }
 
     private void OnDisable()
@@ -77,7 +101,7 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
 
     private void ResolveCatalogClip()
     {
-        if (clip != null)
+        if ((clips != null && clips.Length > 0) || clip != null)
         {
             return;
         }
@@ -91,31 +115,36 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
         }
 
         if (footstepCatalog != null &&
-            footstepCatalog.TryGetFootstepsForButler(
-                out AudioClip catalogClip,
+            footstepCatalog.TryGetButlerFootstepVariants(
+                out AudioClip[] catalogClips,
                 out float catalogVolume,
                 out float catalogHighPassCutoffFrequency,
                 out float catalogHighPassResonanceQ,
-                out float catalogLowPassCutoffFrequency))
+                out float catalogLowPassCutoffFrequency,
+                out float catalogStepInterval,
+                out float catalogStepJitter))
         {
-            clip = catalogClip;
+            clips = FilterClips(catalogClips);
+            clip = clips.Length > 0 ? clips[0] : null;
             baseVolume = catalogVolume;
             highPassCutoffFrequency = catalogHighPassCutoffFrequency;
             highPassResonanceQ = catalogHighPassResonanceQ;
             lowPassCutoffFrequency = catalogLowPassCutoffFrequency;
+            stepIntervalSeconds = catalogStepInterval;
+            stepIntervalJitterSeconds = catalogStepJitter;
         }
     }
 
     private void ApplyConfiguration()
     {
-        if (clip == null || !EnsureAudioSource())
+        if (!HasClips() || !EnsureAudioSource())
         {
             return;
         }
 
-        source.clip = clip;
+        source.clip = null;
         source.playOnAwake = false;
-        source.loop = true;
+        source.loop = false;
         source.spatialBlend = 0f;
         source.ignoreListenerVolume = true;
 
@@ -132,6 +161,97 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
         }
 
         GameAudioSettings.EnsureBinding(source, GameAudioChannel.GameSounds, baseVolume);
+    }
+
+    private void PlayStep()
+    {
+        AudioClip selectedClip = SelectClip();
+        if (selectedClip == null || source == null)
+        {
+            StopWalking();
+            return;
+        }
+
+        source.PlayOneShot(selectedClip, 1f);
+        float delay = Mathf.Max(stepIntervalSeconds, selectedClip.length * 0.85f);
+        float jitter = stepIntervalJitterSeconds > 0f
+            ? UnityEngine.Random.Range(-stepIntervalJitterSeconds, stepIntervalJitterSeconds)
+            : 0f;
+        nextStepTime = Time.time + Mathf.Max(0.05f, delay + jitter);
+    }
+
+    private AudioClip SelectClip()
+    {
+        AudioClip[] variants = GetClipVariants();
+        if (variants.Length == 0)
+        {
+            return null;
+        }
+
+        if (variants.Length == 1)
+        {
+            lastClipIndex = 0;
+            return variants[0];
+        }
+
+        int index = UnityEngine.Random.Range(0, variants.Length);
+        if (index == lastClipIndex)
+        {
+            index = (index + UnityEngine.Random.Range(1, variants.Length)) % variants.Length;
+        }
+
+        lastClipIndex = index;
+        return variants[index];
+    }
+
+    private bool HasClips()
+    {
+        return GetClipVariants().Length > 0;
+    }
+
+    private AudioClip[] GetClipVariants()
+    {
+        if (clips != null && clips.Length > 0)
+        {
+            return clips;
+        }
+
+        return clip != null ? new[] { clip } : Array.Empty<AudioClip>();
+    }
+
+    private static AudioClip[] FilterClips(AudioClip[] nextClips)
+    {
+        if (nextClips == null || nextClips.Length == 0)
+        {
+            return Array.Empty<AudioClip>();
+        }
+
+        int validCount = 0;
+        for (int i = 0; i < nextClips.Length; i++)
+        {
+            if (nextClips[i] != null)
+            {
+                validCount++;
+            }
+        }
+
+        if (validCount == 0)
+        {
+            return Array.Empty<AudioClip>();
+        }
+
+        AudioClip[] filtered = new AudioClip[validCount];
+        int outputIndex = 0;
+        for (int i = 0; i < nextClips.Length; i++)
+        {
+            if (nextClips[i] != null)
+            {
+                filtered[outputIndex] = nextClips[i];
+                outputIndex++;
+            }
+        }
+
+        return filtered;
     }
 
     private bool EnsureAudioSource()

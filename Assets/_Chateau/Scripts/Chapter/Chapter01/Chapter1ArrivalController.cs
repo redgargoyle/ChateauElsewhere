@@ -2327,14 +2327,16 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         if (guestFootstepCatalog != null &&
-            guestFootstepCatalog.TryGetFootstepsForGuest(
+            guestFootstepCatalog.TryGetFootstepVariantsForGuest(
                 guestNumber,
-                out AudioClip clip,
+                out AudioClip[] clips,
                 out float volume,
                 out float cutoffFrequency,
-                out float resonanceQ))
+                out float resonanceQ,
+                out float stepInterval,
+                out float stepJitter))
         {
-            footsteps.Configure(clip, volume, cutoffFrequency, resonanceQ);
+            footsteps.Configure(clips, volume, cutoffFrequency, resonanceQ, stepInterval, stepJitter);
         }
 
         return footsteps;

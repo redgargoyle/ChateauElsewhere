@@ -22,6 +22,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField] private GuestFootstepCatalog guestFootstepCatalog;
     [SerializeField] private string guestFootstepCatalogResourcePath = DefaultGuestFootstepCatalogResourcePath;
     [SerializeField] private bool playGuestFootsteps = true;
+    [SerializeField, Min(0.05f)] private float panicFootstepIntervalSeconds = 0.42f;
     [SerializeField, Min(1f)] private float frameRate = 12f;
     [SerializeField, Min(0f)] private float runDistancePixels = 150f;
     [SerializeField, Min(1f)] private float panicRoamRadiusPixels = 190f;
@@ -316,14 +317,17 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             return;
         }
 
-        if (guestFootstepCatalog.TryGetFootstepsForGuest(
+        if (guestFootstepCatalog.TryGetFootstepVariantsForGuest(
             participant.GuestNumber,
-            out AudioClip clip,
+            out AudioClip[] clips,
             out float volume,
             out float cutoffFrequency,
-            out float resonanceQ))
+            out float resonanceQ,
+            out float stepInterval,
+            out float stepJitter))
         {
-            participant.ConfigureFootsteps(clip, volume, cutoffFrequency, resonanceQ);
+            float panicStepInterval = panicFootstepIntervalSeconds > 0f ? panicFootstepIntervalSeconds : stepInterval;
+            participant.ConfigureFootsteps(clips, volume, cutoffFrequency, resonanceQ, panicStepInterval, stepJitter);
         }
     }
 
@@ -1447,12 +1451,14 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         public void ConfigureFootsteps(
-            AudioClip clip,
+            AudioClip[] clips,
             float baseVolume,
             float highPassCutoffFrequency,
-            float highPassResonanceQ)
+            float highPassResonanceQ,
+            float stepIntervalSeconds,
+            float stepIntervalJitterSeconds)
         {
-            if (clip == null || targetTransform == null)
+            if (clips == null || clips.Length == 0 || targetTransform == null)
             {
                 return;
             }
@@ -1464,7 +1470,13 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 footstepAudio = targetTransform.gameObject.AddComponent<GuestFootstepAudio>();
             }
 
-            footstepAudio.Configure(clip, baseVolume, highPassCutoffFrequency, highPassResonanceQ);
+            footstepAudio.Configure(
+                clips,
+                baseVolume,
+                highPassCutoffFrequency,
+                highPassResonanceQ,
+                stepIntervalSeconds,
+                stepIntervalJitterSeconds);
         }
 
         public void PlayPanicScream()
