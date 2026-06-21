@@ -644,6 +644,8 @@ public class Chapter2RegressionTests
             "SUB_CH01_BUTLER_THIS_WAY_001",
             "SUB_CH01_BUTLER_WELCOME_001",
             "SUB_CH02_BUTLER_ADDRESS_GUESTS_001",
+            "SUB_CH02_BUTLER_FOUND_G01",
+            "SUB_CH02_BUTLER_FOUND_G02",
             "SUB_CH02_BUTLER_FOUND_G03",
             "SUB_CH02_BUTLER_FOUND_G04",
             "SUB_CH02_BUTLER_FOUND_G05",
@@ -651,13 +653,7 @@ public class Chapter2RegressionTests
             "SUB_CH02_BUTLER_FOUND_G07",
             "SUB_CH02_BUTLER_FOUND_G08",
             "SUB_CH02_BUTLER_MEAL_ASK_001",
-            "SUB_CH02_BUTLER_SMOKE_ASK_001"
-        };
-
-        string[] intentionallyUncatalogedButlerLineIds =
-        {
-            "SUB_CH02_BUTLER_FOUND_G01",
-            "SUB_CH02_BUTLER_FOUND_G02",
+            "SUB_CH02_BUTLER_SMOKE_ASK_001",
             "SUB_CH02_BUTLER_SPIRITS_ASK_001"
         };
 
@@ -667,7 +663,7 @@ public class Chapter2RegressionTests
         string subtitleServiceText = File.ReadAllText(SubtitleServicePath);
         string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
 
-        Assert.That(Directory.GetFiles(ButlerVoiceFolderPath, "*.wav").Length, Is.GreaterThanOrEqualTo(catalogedButlerLineIds.Length), "Cataloged Butler lines should have imported WAVs; stale uncataloged WAVs may remain on disk until regenerated.");
+        Assert.That(Directory.GetFiles(ButlerVoiceFolderPath, "*.wav").Length, Is.GreaterThanOrEqualTo(catalogedButlerLineIds.Length), "Cataloged Butler lines should have imported WAVs.");
 
         for (int i = 0; i < catalogedButlerLineIds.Length; i++)
         {
@@ -680,15 +676,6 @@ public class Chapter2RegressionTests
             Assert.That(catalogText, Does.Contain($"lineId: {lineId}"), $"{lineId} should be in the voice-line catalog.");
             Assert.That(catalogText, Does.Contain(ReadGuid(metaPath)), $"{lineId} catalog entry should reference its WAV GUID.");
         }
-
-        for (int i = 0; i < intentionallyUncatalogedButlerLineIds.Length; i++)
-        {
-            Assert.That(catalogText, Does.Not.Contain($"lineId: {intentionallyUncatalogedButlerLineIds[i]}"), $"{intentionallyUncatalogedButlerLineIds[i]} should not play stale or missing Butler audio.");
-        }
-
-        Assert.That(File.Exists($"{ButlerVoiceFolderPath}/SUB_CH02_BUTLER_FOUND_G01.wav"), Is.True, "The obsolete Guest 1 Butler WAV should be left untouched until a later audio task regenerates it.");
-        Assert.That(File.Exists($"{ButlerVoiceFolderPath}/SUB_CH02_BUTLER_FOUND_G02.wav"), Is.True, "The obsolete Guest 2 Butler WAV should be left untouched until a later audio task regenerates it.");
-        Assert.That(File.Exists($"{ButlerVoiceFolderPath}/SUB_CH02_BUTLER_SPIRITS_ASK_001.wav"), Is.False, "The new spirits prompt has no generated WAV in this gameplay-only task.");
 
         Assert.That(playbackText, Does.Contain("SUB_CH01_BUTLER_"), "Chapter 1 Butler subtitle IDs should resolve directly as audio IDs.");
         Assert.That(playbackText, Does.Contain("SUB_CH02_BUTLER_"), "Chapter 2 Butler subtitle IDs should resolve directly as audio IDs.");

@@ -514,6 +514,12 @@ MonoBehaviour:
   - lineId: SUB_CH02_BUTLER_ADDRESS_GUESTS_001
     clip: {fileID: 8300000, guid: b4ae3f4bf45642c88d243cc383acca77, type: 3}
     volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G01
+    clip: {fileID: 8300000, guid: 095a1989b4e4434a9be8ec12191e2721, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_FOUND_G02
+    clip: {fileID: 8300000, guid: f7332dab61da40e7a82cb5d6417bba1d, type: 3}
+    volume: 1
   - lineId: SUB_CH02_BUTLER_FOUND_G03
     clip: {fileID: 8300000, guid: 57681a30b97f44e08d283d13699052ea, type: 3}
     volume: 1
@@ -537,5 +543,8 @@ MonoBehaviour:
     volume: 1
   - lineId: SUB_CH02_BUTLER_SMOKE_ASK_001
     clip: {fileID: 8300000, guid: c61ed29b95ee4491a28fb59ba7506e84, type: 3}
+    volume: 1
+  - lineId: SUB_CH02_BUTLER_SPIRITS_ASK_001
+    clip: {fileID: 8300000, guid: cee9aa52ad644405daae491aefcf23b3, type: 3}
     volume: 1
   defaultVolume: 1

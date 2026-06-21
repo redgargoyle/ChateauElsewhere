@@ -6,7 +6,6 @@ Generated local Fish Audio S2-Pro Butler dialogue for Unity import.
 - Elapsed seconds: 82.6
 - Project root: `/home/hamzak/Desktop/ChataeuChantilly`
 - Asset output folder: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Butler`
-- Micromamba env: `fish-speech-s2`
 - Fish source: `/home/hamzak/ai-tts/fish-speech-s2/fish-speech-src`
 - Fish source commit: `e5e2926`
 - Checkpoint: `/home/hamzak/ai-tts/fish-speech-s2/fish-speech-src/checkpoints/s2-pro`

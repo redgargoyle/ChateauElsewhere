@@ -12,23 +12,23 @@ Butler: One coat at a time, if you please.
 Butler: I have no coat to hang.
 Butler: No one is there.
 
-### Guest 1 - Ava
-Ava: Good evening. I trust the house remembers its manners better than the weather does.
-Ava: We were beginning to wonder if anyone was home.
-Ava: Careful with the collar, if you please. It has survived worse evenings than this one.
-Ava: A proper house is judged by its wardrobe first. So far, Chateau Chantilly remains under review.
-Ava: This house is colder than I expected.
-Ava: The fire looks arranged rather than lit.
-Ava: Then who, precisely, rang?
+### Guest 1 - Miss Isolde Wren
+Miss Isolde Wren: Good evening. I trust the house remembers its manners better than the weather does.
+Miss Isolde Wren: We were beginning to wonder if anyone was home.
+Miss Isolde Wren: Careful with the collar, if you please. It has survived worse evenings than this one.
+Miss Isolde Wren: A proper house is judged by its wardrobe first. So far, Chateau Chantilly remains under review.
+Miss Isolde Wren: This house is colder than I expected.
+Miss Isolde Wren: The fire looks arranged rather than lit.
+Miss Isolde Wren: Then who, precisely, rang?
 
-### Guest 2 - Marcus
-Marcus: Thank you. The drive was longer in the dark than I care to admit.
-Marcus: It is rather cold out there.
-Marcus: Thank you. The damp seems to cling to everything tonight.
-Marcus: The Drawing Room sounds heavenly. I would settle for any room with a pulse of warmth.
-Marcus: The host is late, isn't he?
-Marcus: I keep thinking someone is standing just behind the curtains.
-Marcus: Please do not say the wind. The wind has better manners.
+### Guest 2 - Professor Lucien Vale
+Professor Lucien Vale: Thank you. The drive was longer in the dark than I care to admit.
+Professor Lucien Vale: It is rather cold out there.
+Professor Lucien Vale: Thank you. The damp seems to cling to everything tonight.
+Professor Lucien Vale: The Drawing Room sounds heavenly. I would settle for any room with a pulse of warmth.
+Professor Lucien Vale: The host is late, isn't he?
+Professor Lucien Vale: I keep thinking someone is standing just behind the curtains.
+Professor Lucien Vale: Please do not say the wind. The wind has better manners.
 
 ### Guest 3 - Mister Florian Knell
 Mister Florian Knell: Lovely to see you, dear Butler. Tell me, are we late, early, or merely dramatic?
@@ -87,8 +87,8 @@ Madame Coralie Thread: Then we are here. I hope it is satisfied.
 ## Chapter 2
 
 ### Before the Butler Speech
-Ava: Do begin, Butler. Formality is all that stands between dinner and nonsense.
-Marcus: Are we all meant to be waiting like this?
+Miss Isolde Wren: Do begin, Butler. Formality is all that stands between dinner and nonsense.
+Professor Lucien Vale: Are we all meant to be waiting like this?
 Mister Florian Knell: This is deliciously awkward. I approve, with reservations.
 Countess Elowen Dusk: It is never a good sign when the servants make speeches.
 Baron Hector Glass: Let him speak. The hour has turned strange.
@@ -100,8 +100,8 @@ Madame Coralie Thread: Say what you came to say, Butler. The room is holding its
 Butler: Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—
 
 ### Monster Panic
-Ava: Do not run! Do not—oh Lord, run!
-Marcus: It has too many legs!
+Miss Isolde Wren: Do not run! Do not—oh Lord, run!
+Professor Lucien Vale: It has too many legs!
 Mister Florian Knell: That is not a dog. Someone tell me that is not a dog.
 Countess Elowen Dusk: Down! Get down!
 Baron Hector Glass: Away from the windows!
@@ -115,33 +115,33 @@ Butler: After dinner, shall I prepare a cigar, a pipe, or no smoke at all?
 
 ### Guest Search and Dining Lines
 
-#### Guest 1 - Ava
-Ava: Announce yourself before I die of manners.
-Butler: I have found you, Ava. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
-Ava: You may record whatever prevents further surprises.
-Ava: The fresh monte genellion de plink. If one must face horrors, one should do it properly fed.
-Ava: Thyme with Lillums. It sounds disciplined, and discipline is wanted tonight.
-Ava: A cigar. Something with authority.
-Ava: A pipe. Slower nerves make better decisions.
-Ava: No smoke. I should like my lungs available for any further screaming.
-Ava: See that it is not shy.
-Ava: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
-Ava: Seven o’clock. At least the clock is still obedient.
-Ava: Civilization survives another minute.
+#### Guest 1 - Miss Isolde Wren
+Miss Isolde Wren: Announce yourself before I die of manners.
+Butler: I have found you, Miss Isolde Wren. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+Miss Isolde Wren: You may record whatever prevents further surprises.
+Miss Isolde Wren: The fresh monte genellion de plink. If one must face horrors, one should do it properly fed.
+Miss Isolde Wren: Thyme with Lillums. It sounds disciplined, and discipline is wanted tonight.
+Miss Isolde Wren: A cigar. Something with authority.
+Miss Isolde Wren: A pipe. Slower nerves make better decisions.
+Miss Isolde Wren: No smoke. I should like my lungs available for any further screaming.
+Miss Isolde Wren: See that it is not shy.
+Miss Isolde Wren: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Miss Isolde Wren: Seven o’clock. At least the clock is still obedient.
+Miss Isolde Wren: Civilization survives another minute.
 
-#### Guest 2 - Marcus
-Marcus: Please tell me you are real before you come any closer.
-Butler: I have found you, Marcus. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
-Marcus: At seven? After that thing? Yes. Yes, ordinary questions may save us.
-Marcus: The fresh monte genellion de plink. I cannot explain why, but the longer name feels safer.
-Marcus: Thyme with Lillums, please. Something gentle. Something with leaves.
-Marcus: A cigar, though I may only hold it for courage.
-Marcus: A pipe, if it can be made to smell like a normal evening.
-Marcus: No smoke at all. I have inhaled enough terror for one night.
-Marcus: Thank you. I may ask it several questions.
-Marcus: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
-Marcus: Please tell me dinner has windows. No—doors. I meant doors.
-Marcus: I have never been so grateful for a chair.
+#### Guest 2 - Professor Lucien Vale
+Professor Lucien Vale: Please tell me you are real before you come any closer.
+Butler: I have found you, Professor Lucien Vale. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?
+Professor Lucien Vale: At seven? After that thing? Yes. Yes, ordinary questions may save us.
+Professor Lucien Vale: The fresh monte genellion de plink. I cannot explain why, but the longer name feels safer.
+Professor Lucien Vale: Thyme with Lillums, please. Something gentle. Something with leaves.
+Professor Lucien Vale: A cigar, though I may only hold it for courage.
+Professor Lucien Vale: A pipe, if it can be made to smell like a normal evening.
+Professor Lucien Vale: No smoke at all. I have inhaled enough terror for one night.
+Professor Lucien Vale: Thank you. I may ask it several questions.
+Professor Lucien Vale: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Professor Lucien Vale: Please tell me dinner has windows. No—doors. I meant doors.
+Professor Lucien Vale: I have never been so grateful for a chair.
 
 #### Guest 3 - Mister Florian Knell
 Mister Florian Knell: If this is a party game, I withdraw my admiration.

@@ -88,8 +88,8 @@ class GeneratedLine:
 
 
 GUEST_NAMES = {
-    1: "Ava",
-    2: "Marcus",
+    1: "Miss Isolde Wren",
+    2: "Professor Lucien Vale",
     3: "Mister Florian Knell",
     4: "Countess Elowen Dusk",
     5: "Baron Hector Glass",
@@ -127,6 +127,11 @@ LINES = [
         "SUB_CH02_BUTLER_SMOKE_ASK_001",
         "After dinner, shall I prepare a cigar, a pipe, or no smoke at all?",
         82017,
+    ),
+    DialogueLine(
+        "SUB_CH02_BUTLER_SPIRITS_ASK_001",
+        "And shall I see that your bottle of spirits is waiting at the table?",
+        82018,
     ),
 ]
 
