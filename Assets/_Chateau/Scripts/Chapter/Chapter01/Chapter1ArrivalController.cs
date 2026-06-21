@@ -177,19 +177,19 @@ public class Chapter1ArrivalController : MonoBehaviour
     private static readonly Vector2 CoatHangerFallbackColliderSize = new Vector2(0.9f, 1.6f);
     private static readonly string[][] ChapterGuestNameAliases =
     {
-        new[] { "Guest1", "Guest 1" },
-        new[] { "Guest2", "Guest 2" },
-        new[] { "Guest3", "Guest 3" },
-        new[] { "Guest4", "Guest 4" },
-        new[] { "Guest5", "Guest 5" },
-        new[] { "Guest6", "Guest 6" },
-        new[] { "Guest7", "Guest 7" },
-        new[] { "Guest8", "Guest 8" }
+        new[] { "Guest1", "Guest 1", "Guest01", "Miss Isolde Wren", "Lady" },
+        new[] { "Guest2", "Guest 2", "Guest02", "Professor Lucien Vale", "Butler Guest" },
+        new[] { "Guest3", "Guest 3", "Guest03", "Mister Florian Knell" },
+        new[] { "Guest4", "Guest 4", "Guest04", "Countess Elowen Dusk" },
+        new[] { "Guest5", "Guest 5", "Guest05", "Baron Hector Glass" },
+        new[] { "Guest6", "Guest 6", "Guest06", "Lady Sabine Marrow" },
+        new[] { "Guest7", "Guest 7", "Guest07", "Lord Ambrose Veil" },
+        new[] { "Guest8", "Guest 8", "Guest08", "Madame Coralie Thread" }
     };
     private static readonly string[] ChapterGuestDisplayNames =
     {
-        "Ava",
-        "Marcus",
+        "Miss Isolde Wren",
+        "Professor Lucien Vale",
         "Mister Florian Knell",
         "Countess Elowen Dusk",
         "Baron Hector Glass",
@@ -1559,6 +1559,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         int entranceGuestSlotCount = Mathf.Max(GetRequestedGuestCount(), totalGuestBatchCount);
 
         int startedGuestCount = 0;
+        bool queuedWelcome = false;
 
         for (int i = 0; i < groupsToAdmit.Count; i++)
         {
@@ -1580,6 +1581,13 @@ public class Chapter1ArrivalController : MonoBehaviour
                 guest.EnteredEntranceHall = true;
                 guest.Annoyed = WasGuestWaitingLongEnoughToBeAnnoyed(guest);
                 currentGuestIndex = guest.GuestIndex;
+
+                if (!queuedWelcome)
+                {
+                    QueueButlerLine("SUB_CH01_BUTLER_WELCOME_001");
+                    queuedWelcome = true;
+                }
+
                 StartCoroutine(AdmitGuestToEntranceHall(guest, guest.GuestIndex, entranceGuestSlotCount));
                 startedGuestCount++;
             }
@@ -1618,14 +1626,12 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             guest.ActorState.SetCurrentRoom(entryRoomId);
             guest.ActorState.SetAvailableInCurrentChapter(true);
-            guest.ActorState.SetVisibleByChapterState(true);
             guest.ActorState.SetInteractable(false);
         }
 
+        PrepareGuestCoatForArrival(guest);
         SetGuestState(guest, GuestArrivalState.Arriving);
         ForceGuestVisibleForDoorFlow(guest);
-        PrepareGuestCoatForArrival(guest);
-        QueueButlerLine("SUB_CH01_BUTLER_WELCOME_001");
         LogGuestLine(guest.Config, guest.Config.GreetingLine);
         QueueGuestLine(guest, "GREETING", GetGuestGreetingLine(guest));
 
@@ -1635,7 +1641,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             QueueGuestLine(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
         }
 
-        QueueButlerLine("SUB_CH01_BUTLER_TAKE_COAT_001");
         Transform waitSpot;
 
         if (useWorldSafePlacement)
@@ -1668,13 +1673,13 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void PrepareGuestCoatForArrival(GuestRuntimeState guest)
     {
-        if (guest == null || guest.CoatOffered)
+        if (guest == null || guest.CoatPickup != null)
         {
             return;
         }
 
-        guest.CoatOffered = true;
         guest.CoatPickup = CreateCoatPickup(guest);
+        DisableCoatPickupInteraction(guest.CoatPickup);
     }
 
     private void OfferGuestCoat(GuestRuntimeState guest)
@@ -1687,11 +1692,17 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (!guest.CoatOffered)
         {
             guest.CoatOffered = true;
-            guest.CoatPickup = CreateCoatPickup(guest);
+
+            if (guest.CoatPickup == null)
+            {
+                guest.CoatPickup = CreateCoatPickup(guest);
+            }
         }
 
         SetGuestState(guest, GuestArrivalState.GreetingComplete);
         SetGuestState(guest, GuestArrivalState.CoatOffered);
+        RefreshCoatPickupVisibilityForCurrentRoom(guest);
+        QueueButlerLine("SUB_CH01_BUTLER_TAKE_COAT_001");
     }
 
     private Chapter1CoatPickup CreateCoatPickup(GuestRuntimeState guest)
@@ -2081,7 +2092,43 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (normalizedValue.Contains("professorlucienvale"))
         {
+            guestNumber = 2;
+            return true;
+        }
+
+        if (normalizedValue.Contains("misterflorianknell"))
+        {
+            guestNumber = 3;
+            return true;
+        }
+
+        if (normalizedValue.Contains("countesselowendusk"))
+        {
+            guestNumber = 4;
+            return true;
+        }
+
+        if (normalizedValue.Contains("baronhectorglass"))
+        {
+            guestNumber = 5;
+            return true;
+        }
+
+        if (normalizedValue.Contains("ladysabinemarrow"))
+        {
+            guestNumber = 6;
+            return true;
+        }
+
+        if (normalizedValue.Contains("lordambroseveil"))
+        {
             guestNumber = 7;
+            return true;
+        }
+
+        if (normalizedValue.Contains("madamecoraliethread"))
+        {
+            guestNumber = 8;
             return true;
         }
 
@@ -2146,7 +2193,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private bool CanMoveGuestToDrawingRoom(GuestRuntimeState guest)
     {
         return guest != null &&
-            guest.CoatTaken &&
+            guest.CoatStored &&
             !guest.MovingToDrawingRoom &&
             !guest.Seated;
     }
@@ -3497,10 +3544,10 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             case "ENTRY":
             case "GREETING":
-                return GetChapter1GuestSubtitleLineId(guestIndex, "GREETING");
+                return $"CH1_G{guestNumber:00}_ENTRY";
             case "DELAYED":
             case "ANNOYED":
-                return GetChapter1GuestSubtitleLineId(guestIndex, "ANNOYED");
+                return $"CH1_G{guestNumber:00}_DELAYED";
             case "COAT":
             case "COAT_HANDOFF":
                 return $"CH1_G{guestNumber:00}_COAT_HANDOFF";

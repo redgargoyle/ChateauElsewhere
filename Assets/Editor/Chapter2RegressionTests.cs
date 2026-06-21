@@ -516,6 +516,9 @@ public class Chapter2RegressionTests
         string chapterManagerText = File.ReadAllText(ChapterManagerPath);
         string chapter1AdmitGroupsBody = ExtractMethodBody(chapter1Text, "private IEnumerator AdmitQueuedGuestGroups");
         string chapter1AdmissionBody = ExtractMethodBody(chapter1Text, "private IEnumerator AdmitGuestToEntranceHall");
+        string offerGuestCoatBody = ExtractMethodBody(chapter1Text, "private void OfferGuestCoat");
+        string canMoveGuestBody = ExtractMethodBody(chapter1Text, "private bool CanMoveGuestToDrawingRoom");
+        string guestLineIdBody = ExtractMethodBody(chapter1Text, "private static string GetChapter1GuestLineId");
         string checkActiveGroupsBody = ExtractMethodBody(chapter1Text, "private void CheckActiveGroupsReadyForDrawingRoom");
         string moveEntranceGroupBody = ExtractMethodBody(chapter1Text, "private IEnumerator MoveEntranceGroupToDrawingRoom");
         string ambientBody = ExtractMethodBody(chapter1Text, "private void StartAmbientConversation");
@@ -539,9 +542,12 @@ public class Chapter2RegressionTests
         Assert.That(chapter1AdmissionBody, Does.Contain("QueueGuestLine(guest, \"GREETING\""), "Guest greetings should be queued while guests continue walking.");
         Assert.That(chapter1AdmissionBody, Does.Not.Contain("yield return SpeakGuestLine"), "Guest entry movement should not wait for greeting audio.");
         Assert.That(chapter1AdmissionBody, Does.Contain("PrepareGuestCoatForArrival(guest)"), "The correct guest coat should be prepared before walking to the waiting spot.");
-        Assert.That(chapter1AdmissionBody, Does.Contain("QueueButlerLine(\"SUB_CH01_BUTLER_WELCOME_001\")"), "The Butler should audibly welcome arriving guests.");
-        Assert.That(chapter1AdmissionBody, Does.Contain("QueueButlerLine(\"SUB_CH01_BUTLER_TAKE_COAT_001\")"), "The Butler should ask for coats during the entrance sequence.");
-        Assert.That(checkActiveGroupsBody, Does.Contain("CanMoveEntranceGroupToDrawingRoom(group)"), "Guests should leave the entrance by group after all coats are taken.");
+        Assert.That(chapter1AdmitGroupsBody, Does.Contain("QueueButlerLine(\"SUB_CH01_BUTLER_WELCOME_001\")"), "The Butler should welcome each answered door batch once.");
+        Assert.That(offerGuestCoatBody, Does.Contain("QueueButlerLine(\"SUB_CH01_BUTLER_TAKE_COAT_001\")"), "The Butler should ask for coats when guests reach the service line.");
+        Assert.That(canMoveGuestBody, Does.Contain("guest.CoatStored"), "Guest pairs should not depart before their coats have actually been stored.");
+        Assert.That(guestLineIdBody, Does.Contain("CH1_G{guestNumber:00}_ENTRY"), "Entry speech should use generated voice line IDs.");
+        Assert.That(guestLineIdBody, Does.Contain("CH1_G{guestNumber:00}_DELAYED"), "Delayed speech should use generated voice line IDs.");
+        Assert.That(checkActiveGroupsBody, Does.Contain("CanMoveEntranceGroupToDrawingRoom(group)"), "Guests should leave the entrance by group after all coats are stored.");
         Assert.That(moveEntranceGroupBody, Does.Contain("QueueButlerLine(\"SUB_CH01_BUTLER_THIS_WAY_001\")"), "The Butler should speak before sending the pair to the Drawing Room.");
         Assert.That(moveEntranceGroupBody, Does.Contain("QueueGuestLine(group.Guests[i], \"TO_DRAWING_ROOM\", null)"), "Guest Drawing Room lines should be queued as the group departs.");
         Assert.That(ambientBody, Does.Contain("ShowGuestSubtitle(guestState, \"AMBIENT\""), "Ambient captions should only come from the existing ambient hook.");
