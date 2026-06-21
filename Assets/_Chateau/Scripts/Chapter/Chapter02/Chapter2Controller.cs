@@ -294,6 +294,22 @@ public class Chapter2Controller : MonoBehaviour
         LogSubtitleLineShown(subtitleLineId, speaker, line);
     }
 
+    public void ShowGuestConversationLineWithVoice(
+        string subtitleLineId,
+        string speaker,
+        string line,
+        System.Action onComplete = null)
+    {
+        ShowGuestConversation(
+            speaker,
+            line,
+            null,
+            null);
+
+        HoldDialogueChoicesForSpeech(subtitleLineId, speaker, line, onComplete);
+        LogSubtitleLineShown(subtitleLineId, speaker, line);
+    }
+
     public void ClearGuestConversation()
     {
         StopDialogueChoiceHold();
@@ -1071,7 +1087,7 @@ public class Chapter2Controller : MonoBehaviour
         Debug.Log($"[Subtitle] {lineId.Trim()}: {cleanSpeaker}: {text}", this);
     }
 
-    private void HoldDialogueChoicesForSpeech(string lineId, string speaker, string text)
+    private void HoldDialogueChoicesForSpeech(string lineId, string speaker, string text, System.Action onComplete = null)
     {
         StopDialogueChoiceHold();
 
@@ -1085,6 +1101,7 @@ public class Chapter2Controller : MonoBehaviour
         if (service == null)
         {
             interactionHUD.SetDialogueChoicesInteractable(true);
+            onComplete?.Invoke();
             return;
         }
 
@@ -1105,6 +1122,7 @@ public class Chapter2Controller : MonoBehaviour
                 }
 
                 dialogueVoiceChoiceRoutine = null;
+                onComplete?.Invoke();
             },
             showSubtitleOverlay: false);
     }

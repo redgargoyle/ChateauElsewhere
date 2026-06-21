@@ -88,7 +88,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField, Min(1)] private int guestsPerArrivalGroup = 2;
     [SerializeField, Range(0, 23)] private int emptyDoorbellHour = 18;
     [SerializeField, Range(0, 59)] private int emptyDoorbellMinute = 4;
-    [SerializeField, Min(1f)] private float chapter1SecondsPerGameMinute = 20f;
+    [SerializeField, Min(1f)] private float chapter1SecondsPerGameMinute = 35f;
 
     [Header("Guests")]
     [SerializeField] private List<GuestArrivalConfig> guests = new List<GuestArrivalConfig>();

@@ -20,16 +20,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private enum GuestConversationResumeStep
     {
         None,
-        AwaitAnnounceDinnerPrompt,
-        AwaitFoundReplyContinue,
-        AwaitMealAskPrompt,
-        AwaitMealReplyContinue,
-        AwaitSmokeAskPrompt,
-        AwaitSmokeReplyContinue,
-        AwaitSpiritsAskPrompt,
-        AwaitSpiritsReplyContinue,
+        AwaitFoundReply,
+        AwaitPreferencePrompt,
+        AwaitMealReply,
+        AwaitSmokeReply,
+        AwaitSpiritsReply,
         AwaitSendToDiningPrompt,
-        AwaitFinishConfirmation
+        AwaitExitToDiningCompletion
     }
 
     private sealed class HiddenGuestConversationSpec
@@ -714,7 +711,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return true;
         }
 
-        ShowGuestFoundStart(guest);
+        ShowButlerFoundLine(guest);
         return true;
     }
 
@@ -1299,23 +1296,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
         guest.actorState.ApplyState();
     }
 
-    private void ShowGuestFoundStart(GuestSearchEntry guest)
-    {
-        if (chapter2Controller == null || !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
-        {
-            MarkGuestFound(GetGuestIdForOrderList(guest));
-            return;
-        }
-
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitAnnounceDinnerPrompt);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
-            spec.FoundStartLineId,
-            spec.DisplayName,
-            spec.FoundStartText,
-            "Announce dinner",
-            () => ShowButlerFoundLine(guest));
-    }
-
     private void ShowButlerFoundLine(GuestSearchEntry guest)
     {
         if (!IsActiveConversationGuest(guest) || chapter2Controller == null || !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
@@ -1323,12 +1303,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitFoundReplyContinue);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitFoundReply);
+        chapter2Controller.ShowGuestConversationLineWithVoice(
             spec.ButlerFoundLineId,
             ButlerSpeakerName,
             spec.ButlerFoundText,
-            "Continue",
             () => ShowGuestFoundReply(guest));
     }
 
@@ -1339,13 +1318,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitMealAskPrompt);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitPreferencePrompt);
+        chapter2Controller.ShowGuestConversationLineWithVoice(
             spec.FoundReplyLineId,
             spec.DisplayName,
             spec.FoundReplyText,
-            "Ask supper preference",
-            () => ShowButlerMealAsk(guest));
+            () => ShowPreferenceChoices(guest));
     }
 
     private void ShowButlerMealAsk(GuestSearchEntry guest)
@@ -1355,12 +1333,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitMealReplyContinue);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitMealReply);
+        chapter2Controller.ShowGuestConversationLineWithVoice(
             ButlerMealAskLineId,
             ButlerSpeakerName,
             ButlerMealAskText,
-            "Continue",
             () => ShowGuestMealReply(guest));
     }
 
@@ -1372,13 +1349,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         guest.mealPreference = spec.FixedMealPreference;
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSmokeAskPrompt);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitPreferencePrompt);
+        chapter2Controller.ShowGuestConversationLineWithVoice(
             spec.MealReplyLineId,
             spec.DisplayName,
             spec.MealReplyText,
-            "Ask after-dinner smoke",
-            () => ShowButlerSmokeAsk(guest));
+            () => ShowPreferenceChoices(guest));
     }
 
     private void ShowButlerSmokeAsk(GuestSearchEntry guest)
@@ -1388,12 +1364,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSmokeReplyContinue);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSmokeReply);
+        chapter2Controller.ShowGuestConversationLineWithVoice(
             ButlerSmokeAskLineId,
             ButlerSpeakerName,
             ButlerSmokeAskText,
-            "Continue",
             () => ShowGuestSmokeReply(guest));
     }
 
@@ -1405,13 +1380,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         guest.smokingPreference = spec.FixedSmokingPreference;
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSpiritsAskPrompt);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitPreferencePrompt);
+        chapter2Controller.ShowGuestConversationLineWithVoice(
             spec.SmokeReplyLineId,
             spec.DisplayName,
             spec.SmokeReplyText,
-            "Ask about spirits",
-            () => ShowButlerSpiritsAsk(guest));
+            () => ShowPreferenceChoices(guest));
     }
 
     private void ShowButlerSpiritsAsk(GuestSearchEntry guest)
@@ -1421,12 +1395,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSpiritsReplyContinue);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSpiritsReply);
+        chapter2Controller.ShowGuestConversationLineWithVoice(
             ButlerSpiritsAskLineId,
             ButlerSpeakerName,
             ButlerSpiritsAskText,
-            "Continue",
             () => ShowGuestSpiritsReply(guest));
     }
 
@@ -1438,13 +1411,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         guest.spiritBottle = spec.FixedSpiritBottle;
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitSendToDiningPrompt);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitPreferencePrompt);
+        chapter2Controller.ShowGuestConversationLineWithVoice(
             spec.SpiritsReplyLineId,
             spec.DisplayName,
             spec.SpiritsReplyText,
-            "Send to Dining Room",
-            () => ShowGuestExitToDining(guest));
+            () => ShowPreferenceChoices(guest));
     }
 
     private void ShowGuestExitToDining(GuestSearchEntry guest)
@@ -1454,13 +1426,73 @@ public class Chapter2GuestSearchController : MonoBehaviour
             return;
         }
 
-        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitFinishConfirmation);
-        chapter2Controller.ShowGuestConversationWithSubtitle(
+        SetActiveConversationResumeStep(guest, GuestConversationResumeStep.AwaitExitToDiningCompletion);
+        chapter2Controller.ShowGuestConversationLineWithVoice(
             spec.ExitToDiningLineId,
             spec.DisplayName,
             spec.ExitToDiningText,
-            "Very good",
             () => FinishGuestConversation(guest));
+    }
+
+    private void ShowPreferenceChoices(GuestSearchEntry guest)
+    {
+        if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
+        {
+            return;
+        }
+
+        SetActiveConversationResumeStep(guest, AreAllPreferencesRecorded(guest)
+            ? GuestConversationResumeStep.AwaitSendToDiningPrompt
+            : GuestConversationResumeStep.AwaitPreferencePrompt);
+
+        if (AreAllPreferencesRecorded(guest))
+        {
+            chapter2Controller.ShowGuestConversation(
+                ButlerSpeakerName,
+                string.Empty,
+                "Comfort and send to Dining Room",
+                () => ShowGuestExitToDining(guest));
+            return;
+        }
+
+        List<string> choiceLabels = new List<string>(3);
+        List<Action> choiceCallbacks = new List<Action>(3);
+
+        if (string.IsNullOrWhiteSpace(guest.mealPreference))
+        {
+            choiceLabels.Add("Ask supper preference");
+            choiceCallbacks.Add(() => ShowButlerMealAsk(guest));
+        }
+
+        if (string.IsNullOrWhiteSpace(guest.spiritBottle))
+        {
+            choiceLabels.Add("Ask drink preference");
+            choiceCallbacks.Add(() => ShowButlerSpiritsAsk(guest));
+        }
+
+        if (string.IsNullOrWhiteSpace(guest.smokingPreference))
+        {
+            choiceLabels.Add("Ask smoke preference");
+            choiceCallbacks.Add(() => ShowButlerSmokeAsk(guest));
+        }
+
+        chapter2Controller.ShowGuestConversation(
+            ButlerSpeakerName,
+            string.Empty,
+            choiceLabels.Count > 0 ? choiceLabels[0] : null,
+            choiceCallbacks.Count > 0 ? choiceCallbacks[0] : null,
+            choiceLabels.Count > 1 ? choiceLabels[1] : null,
+            choiceCallbacks.Count > 1 ? choiceCallbacks[1] : null,
+            choiceLabels.Count > 2 ? choiceLabels[2] : null,
+            choiceCallbacks.Count > 2 ? choiceCallbacks[2] : null);
+    }
+
+    private static bool AreAllPreferencesRecorded(GuestSearchEntry guest)
+    {
+        return guest != null &&
+            !string.IsNullOrWhiteSpace(guest.mealPreference) &&
+            !string.IsNullOrWhiteSpace(guest.spiritBottle) &&
+            !string.IsNullOrWhiteSpace(guest.smokingPreference);
     }
 
     private void FinishGuestConversation(GuestSearchEntry guest)
@@ -1533,62 +1565,36 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         switch (activeConversationResumeStep)
         {
-            case GuestConversationResumeStep.AwaitAnnounceDinnerPrompt:
-                ShowResumeChoice(guest, "Announce dinner", () => ShowButlerFoundLine(guest));
+            case GuestConversationResumeStep.AwaitFoundReply:
+                ShowGuestFoundReply(guest);
                 return true;
 
-            case GuestConversationResumeStep.AwaitFoundReplyContinue:
-                ShowResumeChoice(guest, "Continue", () => ShowGuestFoundReply(guest));
+            case GuestConversationResumeStep.AwaitPreferencePrompt:
+                ShowPreferenceChoices(guest);
                 return true;
 
-            case GuestConversationResumeStep.AwaitMealAskPrompt:
-                ShowResumeChoice(guest, "Ask supper preference", () => ShowButlerMealAsk(guest));
+            case GuestConversationResumeStep.AwaitMealReply:
+                ShowGuestMealReply(guest);
                 return true;
 
-            case GuestConversationResumeStep.AwaitMealReplyContinue:
-                ShowResumeChoice(guest, "Continue", () => ShowGuestMealReply(guest));
+            case GuestConversationResumeStep.AwaitSmokeReply:
+                ShowGuestSmokeReply(guest);
                 return true;
 
-            case GuestConversationResumeStep.AwaitSmokeAskPrompt:
-                ShowResumeChoice(guest, "Ask after-dinner smoke", () => ShowButlerSmokeAsk(guest));
-                return true;
-
-            case GuestConversationResumeStep.AwaitSmokeReplyContinue:
-                ShowResumeChoice(guest, "Continue", () => ShowGuestSmokeReply(guest));
-                return true;
-
-            case GuestConversationResumeStep.AwaitSpiritsAskPrompt:
-                ShowResumeChoice(guest, "Ask about spirits", () => ShowButlerSpiritsAsk(guest));
-                return true;
-
-            case GuestConversationResumeStep.AwaitSpiritsReplyContinue:
-                ShowResumeChoice(guest, "Continue", () => ShowGuestSpiritsReply(guest));
+            case GuestConversationResumeStep.AwaitSpiritsReply:
+                ShowGuestSpiritsReply(guest);
                 return true;
 
             case GuestConversationResumeStep.AwaitSendToDiningPrompt:
-                ShowResumeChoice(guest, "Send to Dining Room", () => ShowGuestExitToDining(guest));
+                ShowPreferenceChoices(guest);
                 return true;
 
-            case GuestConversationResumeStep.AwaitFinishConfirmation:
-                ShowResumeChoice(guest, "Very good", () => FinishGuestConversation(guest));
+            case GuestConversationResumeStep.AwaitExitToDiningCompletion:
+                FinishGuestConversation(guest);
                 return true;
         }
 
         return false;
-    }
-
-    private void ShowResumeChoice(GuestSearchEntry guest, string choiceLabel, Action callback)
-    {
-        if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
-        {
-            return;
-        }
-
-        chapter2Controller.ShowGuestConversation(
-            ButlerSpeakerName,
-            string.Empty,
-            choiceLabel,
-            callback);
     }
 
     private static bool TryGetConversationSpec(GuestSearchEntry guest, out HiddenGuestConversationSpec spec)
