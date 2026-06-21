@@ -88,6 +88,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField, Min(1)] private int guestsPerArrivalGroup = 2;
     [SerializeField, Range(0, 23)] private int emptyDoorbellHour = 18;
     [SerializeField, Range(0, 59)] private int emptyDoorbellMinute = 4;
+    [SerializeField, Min(1f)] private float chapter1SecondsPerGameMinute = 20f;
 
     [Header("Guests")]
     [SerializeField] private List<GuestArrivalConfig> guests = new List<GuestArrivalConfig>();
@@ -256,6 +257,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         SubscribeToRoomChanges();
 
         sequenceActive = true;
+        chapterClock?.SetSecondsPerGameMinute(chapter1SecondsPerGameMinute);
         ScheduleArrivalTimeline();
         RefreshInteractionState();
         Debug.Log("Chapter 1 entrance hall sequence armed at 5:59 PM.", this);
@@ -585,6 +587,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         carriedCoatId = guestState.Config.CoatId;
         carriedCoatGuest = guestState;
         SetGuestState(guestState, GuestArrivalState.CoatTaken);
+        QueueButlerLine("SUB_CH01_BUTLER_TAKE_COAT_001");
         QueueGuestLine(guestState, "COAT_HANDOFF", null);
 
         if (guestState.CoatPickup != null)
@@ -1509,6 +1512,11 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (group.EmptyRing)
         {
+            if (finalEmptyDoorbellOccurred)
+            {
+                return;
+            }
+
             finalEmptyDoorbellOccurred = true;
             emptyDoorbellWaitingForAnswer = pendingGuestGroups.Count == 0;
             float queuedMinute = GetOldestPendingQueuedGameMinute();
@@ -1702,7 +1710,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         SetGuestState(guest, GuestArrivalState.GreetingComplete);
         SetGuestState(guest, GuestArrivalState.CoatOffered);
         RefreshCoatPickupVisibilityForCurrentRoom(guest);
-        QueueButlerLine("SUB_CH01_BUTLER_TAKE_COAT_001");
     }
 
     private Chapter1CoatPickup CreateCoatPickup(GuestRuntimeState guest)
@@ -2206,7 +2213,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         group.MovingToDrawingRoom = true;
-        QueueButlerLine("SUB_CH01_BUTLER_THIS_WAY_001");
+        yield return SpeakButlerLine("SUB_CH01_BUTLER_THIS_WAY_001");
 
         for (int i = 0; i < group.Guests.Count; i++)
         {
@@ -2434,6 +2441,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         group.MovingToDrawingRoom = false;
         activeEntranceGroups.Remove(group);
         Debug.Log($"Guest group {group.GroupIndex + 1} entered the drawing room.", this);
+        TryFastForwardNextDoorbellIfEntranceClear();
     }
 
     private void CompleteOffscreenDrawingRoomMoves(string currentRoomName)
@@ -3526,6 +3534,21 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         DialogueSpeechService service = ResolveSpeechService();
         service?.BeginSpeakLine(lineId, "Butler", null, false, false);
+    }
+
+    private IEnumerator SpeakButlerLine(string lineId)
+    {
+        if (string.IsNullOrWhiteSpace(lineId))
+        {
+            yield break;
+        }
+
+        DialogueSpeechService service = ResolveSpeechService();
+
+        if (service != null)
+        {
+            yield return service.SpeakLine(lineId, "Butler", null, false, false);
+        }
     }
 
     private static string GetChapter1GuestSubtitleLineId(int guestIndex, string lineKind)
@@ -5810,6 +5833,61 @@ public class Chapter1ArrivalController : MonoBehaviour
             GuestGroupRuntimeState group = guestGroups[i];
 
             if (group != null && !group.EmptyRing && !group.QueuedOutside && !group.EnteredEntranceHall)
+            {
+                return group;
+            }
+        }
+
+        return null;
+    }
+
+    private void TryFastForwardNextDoorbellIfEntranceClear()
+    {
+        if (!sequenceActive ||
+            chapterCompletionRequested ||
+            butlerCarryingCoat ||
+            pendingGuestGroups.Count > 0 ||
+            activeEntranceGroups.Count > 0 ||
+            emptyDoorbellWaitingForAnswer)
+        {
+            return;
+        }
+
+        GuestGroupRuntimeState nextGroup = FindNextDoorbellGroupForFastForward();
+
+        if (nextGroup == null)
+        {
+            return;
+        }
+
+        Debug.Log(
+            $"[Chapter1] Entrance is clear; fast-forwarding doorbell for {(nextGroup.EmptyRing ? "empty final ring" : $"group {nextGroup.GroupIndex + 1}")}.",
+            this);
+        HandleScheduledDoorbell(nextGroup);
+    }
+
+    private GuestGroupRuntimeState FindNextDoorbellGroupForFastForward()
+    {
+        for (int i = 0; i < guestGroups.Count; i++)
+        {
+            GuestGroupRuntimeState group = guestGroups[i];
+
+            if (group == null)
+            {
+                continue;
+            }
+
+            if (group.EmptyRing)
+            {
+                if (!finalEmptyDoorbellOccurred)
+                {
+                    return group;
+                }
+
+                continue;
+            }
+
+            if (!group.QueuedOutside && !group.EnteredEntranceHall)
             {
                 return group;
             }
