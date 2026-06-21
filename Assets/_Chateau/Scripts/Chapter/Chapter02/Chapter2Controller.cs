@@ -383,6 +383,15 @@ public class Chapter2Controller : MonoBehaviour
 
     private IEnumerator RunOpeningSpeechRoutine()
     {
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective(string.Empty);
+            interactionHUD.SetDialogue("Butler", string.Empty);
+            interactionHUD.SetDialogueChoices(null, null);
+        }
+
         if (openingSpeechLines != null)
         {
             for (int i = 0; i < openingSpeechLines.Length; i++)
@@ -394,15 +403,9 @@ public class Chapter2Controller : MonoBehaviour
                     continue;
                 }
 
-                if (interactionHUD != null)
-                {
-                    interactionHUD.SetObjective(line);
-                    interactionHUD.SetStatus(line);
-                }
-
                 const string openingSpeechLineId = "SUB_CH02_BUTLER_ADDRESS_GUESTS_001";
                 Debug.Log($"Butler: {line}", this);
-                yield return SpeakLine(openingSpeechLineId, "Butler", line, false, true);
+                yield return SpeakLineInDialoguePanel(openingSpeechLineId, "Butler", line, false, true);
             }
         }
 
@@ -410,6 +413,7 @@ public class Chapter2Controller : MonoBehaviour
 
         if (interactionHUD != null)
         {
+            interactionHUD.ClearDialogue();
             interactionHUD.ClearPrimaryAction();
             interactionHUD.ClearStatus();
             interactionHUD.SetObjective("A terrible sound cuts through the room...");
@@ -1002,8 +1006,10 @@ public class Chapter2Controller : MonoBehaviour
             return;
         }
 
-        interactionHUD.SetObjective("Address the guests.");
-        interactionHUD.SetPrimaryAction("Address Guests", HandleAddressGuestsPrompt);
+        interactionHUD.ClearPrimaryAction();
+        interactionHUD.ClearStatus();
+        interactionHUD.SetObjective(string.Empty);
+        ShowGuestConversation("Butler", string.Empty, "Address Guests", HandleAddressGuestsPrompt);
     }
 
     private void UpdateFoundGuestsHud()
@@ -1076,6 +1082,44 @@ public class Chapter2Controller : MonoBehaviour
         yield return WaitForDialogueReadOrSkip(text, GetSpeechLineSeconds());
     }
 
+    private IEnumerator SpeakLineInDialoguePanel(string lineId, string speaker, string text, bool allowOverlap = false, bool blockInput = false)
+    {
+        if (interactionHUD == null)
+        {
+            ResolveReferences();
+            InitializeInteractionHUD();
+        }
+
+        DialogueSpeechService service = ResolveSpeechService();
+
+        if (service != null)
+        {
+            if (interactionHUD != null)
+            {
+                interactionHUD.SetDialogueSkipAction(service.SkipCurrentSpeech);
+            }
+
+            yield return service.SpeakLine(
+                lineId,
+                speaker,
+                text,
+                allowOverlap,
+                blockInput,
+                showSubtitleOverlay: false,
+                onSpeechLineStarted: SetDialoguePanelSpeechLine);
+
+            if (interactionHUD != null)
+            {
+                interactionHUD.SetDialogueSkipAction(null);
+            }
+
+            yield break;
+        }
+
+        SetDialoguePanelSpeechLine(speaker, text);
+        yield return WaitForDialogueReadOrSkip(text, GetSpeechLineSeconds());
+    }
+
     private void LogSubtitleLineShown(string lineId, string speaker, string text)
     {
         if (!subtitleDebugMode || string.IsNullOrWhiteSpace(lineId))
@@ -1124,7 +1168,18 @@ public class Chapter2Controller : MonoBehaviour
                 dialogueVoiceChoiceRoutine = null;
                 onComplete?.Invoke();
             },
-            showSubtitleOverlay: false);
+            showSubtitleOverlay: false,
+            onSpeechLineStarted: SetDialoguePanelSpeechLine);
+    }
+
+    private void SetDialoguePanelSpeechLine(string speaker, string text)
+    {
+        if (interactionHUD == null)
+        {
+            return;
+        }
+
+        interactionHUD.SetDialogue(speaker, text);
     }
 
     private void StopDialogueChoiceHold()

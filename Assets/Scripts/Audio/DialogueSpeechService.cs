@@ -50,10 +50,11 @@ public sealed class DialogueSpeechService : MonoBehaviour
         bool allowOverlap = false,
         bool blockInput = false,
         Action onComplete = null,
-        bool showSubtitleOverlay = true)
+        bool showSubtitleOverlay = true,
+        Action<string, string> onSpeechLineStarted = null)
     {
         ResolveReferences();
-        return StartCoroutine(SpeakLineRoutine(lineId, speakerId, fallbackText, allowOverlap, blockInput, onComplete, showSubtitleOverlay));
+        return StartCoroutine(SpeakLineRoutine(lineId, speakerId, fallbackText, allowOverlap, blockInput, onComplete, showSubtitleOverlay, onSpeechLineStarted));
     }
 
     public IEnumerator SpeakLine(
@@ -62,9 +63,10 @@ public sealed class DialogueSpeechService : MonoBehaviour
         string fallbackText,
         bool allowOverlap = false,
         bool blockInput = false,
-        bool showSubtitleOverlay = true)
+        bool showSubtitleOverlay = true,
+        Action<string, string> onSpeechLineStarted = null)
     {
-        yield return SpeakLineRoutine(lineId, speakerId, fallbackText, allowOverlap, blockInput, null, showSubtitleOverlay);
+        yield return SpeakLineRoutine(lineId, speakerId, fallbackText, allowOverlap, blockInput, null, showSubtitleOverlay, onSpeechLineStarted);
     }
 
     public void SkipCurrentSpeech()
@@ -88,7 +90,8 @@ public sealed class DialogueSpeechService : MonoBehaviour
         bool allowOverlap,
         bool blockInput,
         Action onComplete,
-        bool showSubtitleOverlay)
+        bool showSubtitleOverlay,
+        Action<string, string> onSpeechLineStarted)
     {
         ResolveReferences();
 
@@ -138,6 +141,8 @@ public sealed class DialogueSpeechService : MonoBehaviour
                 blockedMovement.SetInputEnabled(false);
             }
         }
+
+        onSpeechLineStarted?.Invoke(speaker, text);
 
         if (showSubtitleOverlay)
         {

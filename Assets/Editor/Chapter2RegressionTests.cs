@@ -567,9 +567,11 @@ public class Chapter2RegressionTests
         Assert.That(holdChoicesBody, Does.Contain("SetDialogueSkipAction(service.SkipCurrentSpeech)"), "Interactive dialog should expose skip on the dialogue panel.");
         Assert.That(holdChoicesBody, Does.Contain("showSubtitleOverlay: false"), "Interactive dialog should not also show the subtitle overlay.");
         Assert.That(openingSpeechBody, Does.Contain("const string openingSpeechLineId = \"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should keep the interrupted Butler line ID explicit.");
-        Assert.That(openingSpeechBody, Does.Contain("yield return SpeakLine(openingSpeechLineId, \"Butler\", line, false, true)"), "Address Guests should use the shared speech API and block input.");
-        Assert.That(openingSpeechBody, Does.Match(@"SpeakLine\(openingSpeechLineId[\s\S]*ClearSubtitles\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "Normal subtitles should be cleared before the monster stinger.");
+        Assert.That(openingSpeechBody, Does.Contain("yield return SpeakLineInDialoguePanel(openingSpeechLineId, \"Butler\", line, false, true)"), "Address Guests should use the shared speech API through the dialogue panel and block input.");
+        Assert.That(openingSpeechBody, Does.Match(@"SpeakLineInDialoguePanel\(openingSpeechLineId[\s\S]*ClearDialogue\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "The dialogue panel should clear before the monster stinger.");
         Assert.That(chapter2ResolveBody, Does.Not.Contain("ResolveSubtitleService();"), "Subtitle UI should be created lazily, not during chapter intro/reference resolution.");
+        Assert.That(chapter2Text, Does.Contain("SetDialoguePanelSpeechLine"), "Chapter 2 interactive speech should render resolved subtitles in the dialogue panel.");
+        Assert.That(chapter2Text, Does.Contain("onSpeechLineStarted: SetDialoguePanelSpeechLine"), "Dialogue-panel speech should show the exact line resolved by the speech service.");
         Assert.That(startConversationBody, Does.Contain("ShowButlerFoundLine(guest)"), "Hidden guest conversations should begin with the Butler found line, not an extra prompt gate.");
         Assert.That(searchText, Does.Not.Contain("ShowGuestFoundStart"), "Hidden guest conversations should not require the old found-start/Announce dinner click gate.");
         Assert.That(butlerFoundBody, Does.Contain("spec.ButlerFoundLineId"), "Found subtitles should follow the clicked guest identity.");
@@ -674,7 +676,9 @@ public class Chapter2RegressionTests
         Assert.That(subtitleServiceText, Does.Contain("Button_SubtitleSkip"), "Subtitle UI should expose a small skip button during active speech.");
         Assert.That(subtitleServiceText, Does.Not.Contain("PlayForDialogue("), "Subtitle-only paths must not bypass DialogueSpeechService voice serialization.");
         Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*GuestVoiceLinePlayback\.StopAnyCurrentLine\(\)"), "Room, teleport, and chapter clears should stop active dialog audio.");
-        Assert.That(chapter2Text, Does.Contain("yield return SpeakLine(openingSpeechLineId, \"Butler\", line, false, true)"), "The Butler opening speech should wait on the shared speech API.");
+        Assert.That(chapter2Text, Does.Contain("ShowGuestConversation(\"Butler\", string.Empty, \"Address Guests\", HandleAddressGuestsPrompt)"), "Address Guests should appear as a dialogue-panel choice, not a separate primary action.");
+        Assert.That(chapter2Text, Does.Contain("yield return SpeakLineInDialoguePanel(openingSpeechLineId, \"Butler\", line, false, true)"), "The Butler opening speech should show subtitles in the dialogue panel and wait on the shared speech API.");
+        Assert.That(chapter2Text, Does.Contain("interactionHUD.ClearDialogue();"), "The Chapter 2 dialogue panel should clear before the monster stinger takes over.");
     }
 
     [Test]
