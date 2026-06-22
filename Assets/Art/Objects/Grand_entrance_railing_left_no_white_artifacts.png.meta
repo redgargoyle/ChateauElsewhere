@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: ded79d01ed46eb33badec49578315707
+guid: 7e990733d4acf73ae9293b4748551c92
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7284156060709775604
-    second: upper_gallery_railing_inspect_magenta_right_lower_0
+      213: 2180837273291056526
+    second: Grand_entrance_railing_left_no_white_artifacts_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: upper_gallery_railing_inspect_magenta_right_lower_0
+      name: Grand_entrance_railing_left_no_white_artifacts_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 564
-        height: 426
+        x: 8
+        y: 8
+        width: 624
+        height: 489
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4f86d171855861560800000000000000
-      internalID: 7284156060709775604
+      spriteID: e85e17b02f3e34e10800000000000000
+      internalID: 2180837273291056526
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      upper_gallery_railing_inspect_magenta_right_lower_0: 7284156060709775604
+      Grand_entrance_railing_left_no_white_artifacts_0: 2180837273291056526
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
