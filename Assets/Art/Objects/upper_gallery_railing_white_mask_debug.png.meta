@@ -1,0 +1,4641 @@
+fileFormatVersion: 2
+guid: 21542a5a1a028c9b3b98c5fe66aed71b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6146332336284992573
+    second: upper_gallery_railing_white_mask_debug_0
+  - first:
+      213: -4646315155560479804
+    second: upper_gallery_railing_white_mask_debug_1
+  - first:
+      213: -732718996872220574
+    second: upper_gallery_railing_white_mask_debug_2
+  - first:
+      213: 7223567380969343541
+    second: upper_gallery_railing_white_mask_debug_3
+  - first:
+      213: 581101358581518673
+    second: upper_gallery_railing_white_mask_debug_4
+  - first:
+      213: 8067334238905485975
+    second: upper_gallery_railing_white_mask_debug_5
+  - first:
+      213: 2615598649920630488
+    second: upper_gallery_railing_white_mask_debug_6
+  - first:
+      213: 8178759456356469424
+    second: upper_gallery_railing_white_mask_debug_7
+  - first:
+      213: 7836842533093969984
+    second: upper_gallery_railing_white_mask_debug_8
+  - first:
+      213: 2985135824785511351
+    second: upper_gallery_railing_white_mask_debug_9
+  - first:
+      213: 999011975199060757
+    second: upper_gallery_railing_white_mask_debug_10
+  - first:
+      213: -6135998750228431890
+    second: upper_gallery_railing_white_mask_debug_11
+  - first:
+      213: -2256032251949025392
+    second: upper_gallery_railing_white_mask_debug_12
+  - first:
+      213: 3385738234044385993
+    second: upper_gallery_railing_white_mask_debug_13
+  - first:
+      213: 528628649224085365
+    second: upper_gallery_railing_white_mask_debug_14
+  - first:
+      213: 3990134133262352393
+    second: upper_gallery_railing_white_mask_debug_15
+  - first:
+      213: -630402741933731256
+    second: upper_gallery_railing_white_mask_debug_16
+  - first:
+      213: -5097148406382734366
+    second: upper_gallery_railing_white_mask_debug_17
+  - first:
+      213: 3956402161281935544
+    second: upper_gallery_railing_white_mask_debug_18
+  - first:
+      213: 8589589212115053270
+    second: upper_gallery_railing_white_mask_debug_19
+  - first:
+      213: 5938243584313233411
+    second: upper_gallery_railing_white_mask_debug_20
+  - first:
+      213: -3253592523751474493
+    second: upper_gallery_railing_white_mask_debug_21
+  - first:
+      213: 5306855828883940857
+    second: upper_gallery_railing_white_mask_debug_22
+  - first:
+      213: -2915701224164224889
+    second: upper_gallery_railing_white_mask_debug_23
+  - first:
+      213: 5486505957725646420
+    second: upper_gallery_railing_white_mask_debug_24
+  - first:
+      213: -6567461195958707629
+    second: upper_gallery_railing_white_mask_debug_25
+  - first:
+      213: -938663856146356176
+    second: upper_gallery_railing_white_mask_debug_26
+  - first:
+      213: 2749836015548429724
+    second: upper_gallery_railing_white_mask_debug_27
+  - first:
+      213: 4034633354376035814
+    second: upper_gallery_railing_white_mask_debug_28
+  - first:
+      213: -2200046113727846479
+    second: upper_gallery_railing_white_mask_debug_29
+  - first:
+      213: 2733986795412106983
+    second: upper_gallery_railing_white_mask_debug_30
+  - first:
+      213: 5388784509538510208
+    second: upper_gallery_railing_white_mask_debug_31
+  - first:
+      213: -1775505367518385429
+    second: upper_gallery_railing_white_mask_debug_32
+  - first:
+      213: -8796907199361235650
+    second: upper_gallery_railing_white_mask_debug_33
+  - first:
+      213: 3785175906711127969
+    second: upper_gallery_railing_white_mask_debug_34
+  - first:
+      213: 5797388574499118063
+    second: upper_gallery_railing_white_mask_debug_35
+  - first:
+      213: 9133638829223736797
+    second: upper_gallery_railing_white_mask_debug_36
+  - first:
+      213: 7430620148235492171
+    second: upper_gallery_railing_white_mask_debug_37
+  - first:
+      213: 8888460540533594067
+    second: upper_gallery_railing_white_mask_debug_38
+  - first:
+      213: 3184265156463060747
+    second: upper_gallery_railing_white_mask_debug_39
+  - first:
+      213: -3256696133202794584
+    second: upper_gallery_railing_white_mask_debug_40
+  - first:
+      213: 6858876210642752042
+    second: upper_gallery_railing_white_mask_debug_41
+  - first:
+      213: -9056018161949374120
+    second: upper_gallery_railing_white_mask_debug_42
+  - first:
+      213: -8176721624335940863
+    second: upper_gallery_railing_white_mask_debug_43
+  - first:
+      213: -5170477351505051181
+    second: upper_gallery_railing_white_mask_debug_44
+  - first:
+      213: 2382093005433657317
+    second: upper_gallery_railing_white_mask_debug_45
+  - first:
+      213: 4159316886989474340
+    second: upper_gallery_railing_white_mask_debug_46
+  - first:
+      213: -7872128108751179320
+    second: upper_gallery_railing_white_mask_debug_47
+  - first:
+      213: -4928634453996356788
+    second: upper_gallery_railing_white_mask_debug_48
+  - first:
+      213: -7037707538362804846
+    second: upper_gallery_railing_white_mask_debug_49
+  - first:
+      213: -609878393437009766
+    second: upper_gallery_railing_white_mask_debug_50
+  - first:
+      213: -7807831928570200931
+    second: upper_gallery_railing_white_mask_debug_51
+  - first:
+      213: -9033620003684991104
+    second: upper_gallery_railing_white_mask_debug_52
+  - first:
+      213: -4185935399817422610
+    second: upper_gallery_railing_white_mask_debug_53
+  - first:
+      213: -5354265479277095097
+    second: upper_gallery_railing_white_mask_debug_54
+  - first:
+      213: 3933003130572989111
+    second: upper_gallery_railing_white_mask_debug_55
+  - first:
+      213: 6853676665364756887
+    second: upper_gallery_railing_white_mask_debug_56
+  - first:
+      213: 8907201352580103490
+    second: upper_gallery_railing_white_mask_debug_57
+  - first:
+      213: 4546565158178446232
+    second: upper_gallery_railing_white_mask_debug_58
+  - first:
+      213: 1787099782052132129
+    second: upper_gallery_railing_white_mask_debug_59
+  - first:
+      213: 2072155825061803095
+    second: upper_gallery_railing_white_mask_debug_60
+  - first:
+      213: -7612597329344227940
+    second: upper_gallery_railing_white_mask_debug_61
+  - first:
+      213: -6606606907897486106
+    second: upper_gallery_railing_white_mask_debug_62
+  - first:
+      213: -966552556970835924
+    second: upper_gallery_railing_white_mask_debug_63
+  - first:
+      213: -5534978777387214639
+    second: upper_gallery_railing_white_mask_debug_64
+  - first:
+      213: 1810969621337723054
+    second: upper_gallery_railing_white_mask_debug_65
+  - first:
+      213: 4822010386041965615
+    second: upper_gallery_railing_white_mask_debug_66
+  - first:
+      213: 6140068130769172013
+    second: upper_gallery_railing_white_mask_debug_67
+  - first:
+      213: -2788786789902718362
+    second: upper_gallery_railing_white_mask_debug_68
+  - first:
+      213: -3272856123447018497
+    second: upper_gallery_railing_white_mask_debug_69
+  - first:
+      213: 1698524224769178867
+    second: upper_gallery_railing_white_mask_debug_70
+  - first:
+      213: 8341117809247837754
+    second: upper_gallery_railing_white_mask_debug_71
+  - first:
+      213: 2527694127649060521
+    second: upper_gallery_railing_white_mask_debug_72
+  - first:
+      213: -8477117199625109011
+    second: upper_gallery_railing_white_mask_debug_73
+  - first:
+      213: -7140456820422244386
+    second: upper_gallery_railing_white_mask_debug_74
+  - first:
+      213: -6024568093711019372
+    second: upper_gallery_railing_white_mask_debug_75
+  - first:
+      213: 6838022293988415820
+    second: upper_gallery_railing_white_mask_debug_76
+  - first:
+      213: 8713616603770732315
+    second: upper_gallery_railing_white_mask_debug_77
+  - first:
+      213: 4799468046254723142
+    second: upper_gallery_railing_white_mask_debug_78
+  - first:
+      213: 7248546495929519198
+    second: upper_gallery_railing_white_mask_debug_79
+  - first:
+      213: -8698157862563403514
+    second: upper_gallery_railing_white_mask_debug_80
+  - first:
+      213: -1185800336136553950
+    second: upper_gallery_railing_white_mask_debug_81
+  - first:
+      213: -6738903172622184647
+    second: upper_gallery_railing_white_mask_debug_82
+  - first:
+      213: -5062095628434796626
+    second: upper_gallery_railing_white_mask_debug_83
+  - first:
+      213: 5499370179899512992
+    second: upper_gallery_railing_white_mask_debug_84
+  - first:
+      213: -2456753366187520713
+    second: upper_gallery_railing_white_mask_debug_85
+  - first:
+      213: 5631704655236159853
+    second: upper_gallery_railing_white_mask_debug_86
+  - first:
+      213: 6915265498140510478
+    second: upper_gallery_railing_white_mask_debug_87
+  - first:
+      213: 2767916117605970459
+    second: upper_gallery_railing_white_mask_debug_88
+  - first:
+      213: -3720835520975728778
+    second: upper_gallery_railing_white_mask_debug_89
+  - first:
+      213: -8719421413822732102
+    second: upper_gallery_railing_white_mask_debug_90
+  - first:
+      213: 5764419098054759001
+    second: upper_gallery_railing_white_mask_debug_91
+  - first:
+      213: -6123250902427297585
+    second: upper_gallery_railing_white_mask_debug_92
+  - first:
+      213: -5218938218503001878
+    second: upper_gallery_railing_white_mask_debug_93
+  - first:
+      213: -1695814170144823224
+    second: upper_gallery_railing_white_mask_debug_94
+  - first:
+      213: 8834032936656264989
+    second: upper_gallery_railing_white_mask_debug_95
+  - first:
+      213: -358554555921338324
+    second: upper_gallery_railing_white_mask_debug_96
+  - first:
+      213: -6492849903699940588
+    second: upper_gallery_railing_white_mask_debug_97
+  - first:
+      213: -1252910170093194231
+    second: upper_gallery_railing_white_mask_debug_98
+  - first:
+      213: 5166869959523277929
+    second: upper_gallery_railing_white_mask_debug_99
+  - first:
+      213: 2602111879213357037
+    second: upper_gallery_railing_white_mask_debug_100
+  - first:
+      213: -7818305252063881596
+    second: upper_gallery_railing_white_mask_debug_101
+  - first:
+      213: 4604111615829125749
+    second: upper_gallery_railing_white_mask_debug_102
+  - first:
+      213: 6328304525168830582
+    second: upper_gallery_railing_white_mask_debug_103
+  - first:
+      213: 4545133897044676545
+    second: upper_gallery_railing_white_mask_debug_104
+  - first:
+      213: -3790851711453559245
+    second: upper_gallery_railing_white_mask_debug_105
+  - first:
+      213: 1045261778120378056
+    second: upper_gallery_railing_white_mask_debug_106
+  - first:
+      213: -2257528070784755792
+    second: upper_gallery_railing_white_mask_debug_107
+  - first:
+      213: -5440148622259363943
+    second: upper_gallery_railing_white_mask_debug_108
+  - first:
+      213: 4613351739538310385
+    second: upper_gallery_railing_white_mask_debug_109
+  - first:
+      213: 4002024951006027827
+    second: upper_gallery_railing_white_mask_debug_110
+  - first:
+      213: 8129883887645674436
+    second: upper_gallery_railing_white_mask_debug_111
+  - first:
+      213: -7043403793388431432
+    second: upper_gallery_railing_white_mask_debug_112
+  - first:
+      213: -4649169912888412749
+    second: upper_gallery_railing_white_mask_debug_113
+  - first:
+      213: 3271661153946157047
+    second: upper_gallery_railing_white_mask_debug_114
+  - first:
+      213: 6756370668067741398
+    second: upper_gallery_railing_white_mask_debug_115
+  - first:
+      213: -3125892698441272610
+    second: upper_gallery_railing_white_mask_debug_116
+  - first:
+      213: 4982306846238189950
+    second: upper_gallery_railing_white_mask_debug_117
+  - first:
+      213: -2157572778666054465
+    second: upper_gallery_railing_white_mask_debug_118
+  - first:
+      213: 3249577298630899694
+    second: upper_gallery_railing_white_mask_debug_119
+  - first:
+      213: 5188811800908567173
+    second: upper_gallery_railing_white_mask_debug_120
+  - first:
+      213: -4636163152206874065
+    second: upper_gallery_railing_white_mask_debug_121
+  - first:
+      213: -8858489774021494597
+    second: upper_gallery_railing_white_mask_debug_122
+  - first:
+      213: 5223890511515262857
+    second: upper_gallery_railing_white_mask_debug_123
+  - first:
+      213: 3807806844833500005
+    second: upper_gallery_railing_white_mask_debug_124
+  - first:
+      213: 6756078105563455254
+    second: upper_gallery_railing_white_mask_debug_125
+  - first:
+      213: 8961558910736451759
+    second: upper_gallery_railing_white_mask_debug_126
+  - first:
+      213: -8663028606645035951
+    second: upper_gallery_railing_white_mask_debug_127
+  - first:
+      213: 6029637195345338894
+    second: upper_gallery_railing_white_mask_debug_128
+  - first:
+      213: 2193616626498606826
+    second: upper_gallery_railing_white_mask_debug_129
+  - first:
+      213: -3647128024588143636
+    second: upper_gallery_railing_white_mask_debug_130
+  - first:
+      213: 5510155811552798535
+    second: upper_gallery_railing_white_mask_debug_131
+  - first:
+      213: 1583443486480484322
+    second: upper_gallery_railing_white_mask_debug_132
+  - first:
+      213: 74833446759409149
+    second: upper_gallery_railing_white_mask_debug_133
+  - first:
+      213: 3466023835554269068
+    second: upper_gallery_railing_white_mask_debug_134
+  - first:
+      213: -3069917051175530007
+    second: upper_gallery_railing_white_mask_debug_135
+  - first:
+      213: 1609251902853959684
+    second: upper_gallery_railing_white_mask_debug_136
+  - first:
+      213: -4659495419598292424
+    second: upper_gallery_railing_white_mask_debug_137
+  - first:
+      213: 6218656401148332166
+    second: upper_gallery_railing_white_mask_debug_138
+  - first:
+      213: -1184328794345999996
+    second: upper_gallery_railing_white_mask_debug_139
+  - first:
+      213: -4571204452017607708
+    second: upper_gallery_railing_white_mask_debug_140
+  - first:
+      213: -9204345363544907155
+    second: upper_gallery_railing_white_mask_debug_141
+  - first:
+      213: -5427186626806392420
+    second: upper_gallery_railing_white_mask_debug_142
+  - first:
+      213: -5945893205187070449
+    second: upper_gallery_railing_white_mask_debug_143
+  - first:
+      213: 3352404209580439676
+    second: upper_gallery_railing_white_mask_debug_144
+  - first:
+      213: -2571725234681770689
+    second: upper_gallery_railing_white_mask_debug_145
+  - first:
+      213: 8863199924376487689
+    second: upper_gallery_railing_white_mask_debug_146
+  - first:
+      213: 8935792204013941981
+    second: upper_gallery_railing_white_mask_debug_147
+  - first:
+      213: -8997656110913292680
+    second: upper_gallery_railing_white_mask_debug_148
+  - first:
+      213: -5332698748950461654
+    second: upper_gallery_railing_white_mask_debug_149
+  - first:
+      213: 6305704455050607990
+    second: upper_gallery_railing_white_mask_debug_150
+  - first:
+      213: -4740508341687231100
+    second: upper_gallery_railing_white_mask_debug_151
+  - first:
+      213: -7672211445343313219
+    second: upper_gallery_railing_white_mask_debug_152
+  - first:
+      213: 762392494238393049
+    second: upper_gallery_railing_white_mask_debug_153
+  - first:
+      213: -6900738463834155497
+    second: upper_gallery_railing_white_mask_debug_154
+  - first:
+      213: 2924396194578369027
+    second: upper_gallery_railing_white_mask_debug_155
+  - first:
+      213: 1751217045155721040
+    second: upper_gallery_railing_white_mask_debug_156
+  - first:
+      213: -6076616651922745704
+    second: upper_gallery_railing_white_mask_debug_157
+  - first:
+      213: -3417375824441705772
+    second: upper_gallery_railing_white_mask_debug_158
+  - first:
+      213: -7434869238601766214
+    second: upper_gallery_railing_white_mask_debug_159
+  - first:
+      213: -7924109268303756417
+    second: upper_gallery_railing_white_mask_debug_160
+  - first:
+      213: -2108901864171788298
+    second: upper_gallery_railing_white_mask_debug_161
+  - first:
+      213: -604031296405808117
+    second: upper_gallery_railing_white_mask_debug_162
+  - first:
+      213: -300716528306972564
+    second: upper_gallery_railing_white_mask_debug_163
+  - first:
+      213: 7962874270238801985
+    second: upper_gallery_railing_white_mask_debug_164
+  - first:
+      213: 5678821719872495708
+    second: upper_gallery_railing_white_mask_debug_165
+  - first:
+      213: -5714174403606132207
+    second: upper_gallery_railing_white_mask_debug_166
+  - first:
+      213: 3276803513701721729
+    second: upper_gallery_railing_white_mask_debug_167
+  - first:
+      213: 6134065615318080254
+    second: upper_gallery_railing_white_mask_debug_168
+  - first:
+      213: 4677972794068227667
+    second: upper_gallery_railing_white_mask_debug_169
+  - first:
+      213: 5969209101310895652
+    second: upper_gallery_railing_white_mask_debug_170
+  - first:
+      213: -1359568570186196243
+    second: upper_gallery_railing_white_mask_debug_171
+  - first:
+      213: 5164900070116218422
+    second: upper_gallery_railing_white_mask_debug_172
+  - first:
+      213: 8768090746174315630
+    second: upper_gallery_railing_white_mask_debug_173
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_0
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 433
+        width: 10
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3cb7c380e47d3baa0800000000000000
+      internalID: -6146332336284992573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 136
+        width: 80
+        height: 207
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c3cd46bbf8f48fb0800000000000000
+      internalID: -4646315155560479804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_2
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 257
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 260304754fbd4d5f0800000000000000
+      internalID: -732718996872220574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_3
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 409
+        width: 43
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53ac6c9c2444f3460800000000000000
+      internalID: 7223567380969343541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_4
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 344
+        width: 31
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1519fb85b9c701800800000000000000
+      internalID: 581101358581518673
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_5
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 133
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 79ace4a6fbde4ff60800000000000000
+      internalID: 8067334238905485975
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_6
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 447
+        width: 41
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8dea2833d197c4420800000000000000
+      internalID: 2615598649920630488
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_7
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 439
+        width: 9
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ba8e73846ac08170800000000000000
+      internalID: 8178759456356469424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_8
+      rect:
+        serializedVersion: 2
+        x: 46
+        y: 282
+        width: 6
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0401db133ce02cc60800000000000000
+      internalID: 7836842533093969984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_9
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 341
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b312aa77355d6920800000000000000
+      internalID: 2985135824785511351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_10
+      rect:
+        serializedVersion: 2
+        x: 54
+        y: 432
+        width: 20
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 513f91439143ddd00800000000000000
+      internalID: 999011975199060757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_11
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 477
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eebb46685ad88daa0800000000000000
+      internalID: -6135998750228431890
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_12
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 293
+        width: 39
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 097f0ccae96f0b0e0800000000000000
+      internalID: -2256032251949025392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_13
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 12
+        width: 344
+        height: 557
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ca8ca64cfe8cfe20800000000000000
+      internalID: 3385738234044385993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_14
+      rect:
+        serializedVersion: 2
+        x: 75
+        y: 260
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57f9817a4f0165700800000000000000
+      internalID: 528628649224085365
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_15
+      rect:
+        serializedVersion: 2
+        x: 78
+        y: 482
+        width: 16
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90083438addcf5730800000000000000
+      internalID: 3990134133262352393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_16
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 223
+        width: 34
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8429b95db0c5047f0800000000000000
+      internalID: -630402741933731256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_17
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 398
+        width: 43
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e3db1eb78a4349b0800000000000000
+      internalID: -5097148406382734366
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_18
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 356
+        width: 21
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b82cc3cdc6f7e630800000000000000
+      internalID: 3956402161281935544
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_19
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 212
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6da25aaf0e9543770800000000000000
+      internalID: 8589589212115053270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_20
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 287
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3009bb8e311e86250800000000000000
+      internalID: 5938243584313233411
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_21
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 203
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ca3de186dae8d2d0800000000000000
+      internalID: -3253592523751474493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_22
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 161
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f5a6da624db5a940800000000000000
+      internalID: 5306855828883940857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_23
+      rect:
+        serializedVersion: 2
+        x: 108
+        y: 301
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78015864f295987d0800000000000000
+      internalID: -2915701224164224889
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_24
+      rect:
+        serializedVersion: 2
+        x: 124
+        y: 146
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45e2d4c891cf32c40800000000000000
+      internalID: 5486505957725646420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_25
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 51
+        width: 12
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35a18b296d0bbd4a0800000000000000
+      internalID: -6567461195958707629
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_26
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 304
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 038e5e2323239f2f0800000000000000
+      internalID: -938663856146356176
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_27
+      rect:
+        serializedVersion: 2
+        x: 139
+        y: 193
+        width: 6
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c95f6517941692620800000000000000
+      internalID: 2749836015548429724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_28
+      rect:
+        serializedVersion: 2
+        x: 142
+        y: 292
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6edb68ec8a5edf730800000000000000
+      internalID: 4034633354376035814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_29
+      rect:
+        serializedVersion: 2
+        x: 148
+        y: 390
+        width: 21
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b7e5c547bdd771e0800000000000000
+      internalID: -2200046113727846479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_30
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 323
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7eea521518211f520800000000000000
+      internalID: 2733986795412106983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_31
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 135
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 085ab2ed5fec8ca40800000000000000
+      internalID: 5388784509538510208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_32
+      rect:
+        serializedVersion: 2
+        x: 186
+        y: 396
+        width: 17
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bea644876432c57e0800000000000000
+      internalID: -1775505367518385429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_33
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 311
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e354ffb928b1be580800000000000000
+      internalID: -8796907199361235650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_34
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 155
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a742e3be65a78430800000000000000
+      internalID: 3785175906711127969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_35
+      rect:
+        serializedVersion: 2
+        x: 225
+        y: 447
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: feb9def4136747050800000000000000
+      internalID: 5797388574499118063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_36
+      rect:
+        serializedVersion: 2
+        x: 248
+        y: 429
+        width: 15
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd578928f1431ce70800000000000000
+      internalID: 9133638829223736797
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_37
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 417
+        width: 13
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4bdf6cd7adde1760800000000000000
+      internalID: 7430620148235492171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_38
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 453
+        width: 6
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d7d49eb4c72a5b70800000000000000
+      internalID: 8888460540533594067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_39
+      rect:
+        serializedVersion: 2
+        x: 269
+        y: 98
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0762a1f948c03c20800000000000000
+      internalID: 3184265156463060747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_40
+      rect:
+        serializedVersion: 2
+        x: 270
+        y: 118
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a72f0f1f14edc2d0800000000000000
+      internalID: -3256696133202794584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_41
+      rect:
+        serializedVersion: 2
+        x: 275
+        y: 378
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a221dbdd29f9f2f50800000000000000
+      internalID: 6858876210642752042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_42
+      rect:
+        serializedVersion: 2
+        x: 277
+        y: 88
+        width: 17
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8598589667f825280800000000000000
+      internalID: -9056018161949374120
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_43
+      rect:
+        serializedVersion: 2
+        x: 285
+        y: 430
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 103833a3103768e80800000000000000
+      internalID: -8176721624335940863
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_44
+      rect:
+        serializedVersion: 2
+        x: 295
+        y: 423
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d1c6504e36ce38b0800000000000000
+      internalID: -5170477351505051181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_45
+      rect:
+        serializedVersion: 2
+        x: 300
+        y: 332
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e7d0d2b7f4ee0120800000000000000
+      internalID: 2382093005433657317
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_46
+      rect:
+        serializedVersion: 2
+        x: 301
+        y: 350
+        width: 11
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42a8a45fbacd8b930800000000000000
+      internalID: 4159316886989474340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_47
+      rect:
+        serializedVersion: 2
+        x: 309
+        y: 469
+        width: 6
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c1b483813590c290800000000000000
+      internalID: -7872128108751179320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_48
+      rect:
+        serializedVersion: 2
+        x: 309
+        y: 341
+        width: 13
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4bbbcdb319f99bb0800000000000000
+      internalID: -4928634453996356788
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_49
+      rect:
+        serializedVersion: 2
+        x: 311
+        y: 116
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 295dbcef74a055e90800000000000000
+      internalID: -7037707538362804846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_50
+      rect:
+        serializedVersion: 2
+        x: 313
+        y: 315
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a98400b15d64987f0800000000000000
+      internalID: -609878393437009766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_51
+      rect:
+        serializedVersion: 2
+        x: 315
+        y: 292
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9cbe978a3205a390800000000000000
+      internalID: -7807831928570200931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_52
+      rect:
+        serializedVersion: 2
+        x: 315
+        y: 175
+        width: 8
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08f3e74087222a280800000000000000
+      internalID: -9033620003684991104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_53
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 317
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee856219ee198e5c0800000000000000
+      internalID: -4185935399817422610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_54
+      rect:
+        serializedVersion: 2
+        x: 329
+        y: 300
+        width: 21
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7475d8a2ae3d1b5b0800000000000000
+      internalID: -5354265479277095097
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_55
+      rect:
+        serializedVersion: 2
+        x: 332
+        y: 299
+        width: 39
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b26d426285d49630800000000000000
+      internalID: 3933003130572989111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_56
+      rect:
+        serializedVersion: 2
+        x: 357
+        y: 159
+        width: 9
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 79933746d962d1f50800000000000000
+      internalID: 6853676665364756887
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_57
+      rect:
+        serializedVersion: 2
+        x: 359
+        y: 276
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24d7a63107cbc9b70800000000000000
+      internalID: 8907201352580103490
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_58
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 239
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89bd4613ce4a81f30800000000000000
+      internalID: 4546565158178446232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_59
+      rect:
+        serializedVersion: 2
+        x: 369
+        y: 101
+        width: 9
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 125356788cd0dc810800000000000000
+      internalID: 1787099782052132129
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_60
+      rect:
+        serializedVersion: 2
+        x: 382
+        y: 276
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 754b0108eb6c1cc10800000000000000
+      internalID: 2072155825061803095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_61
+      rect:
+        serializedVersion: 2
+        x: 392
+        y: 82
+        width: 13
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c95995eef0f9a5690800000000000000
+      internalID: -7612597329344227940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_62
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 245
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e4e024450e9054a0800000000000000
+      internalID: -6606606907897486106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_63
+      rect:
+        serializedVersion: 2
+        x: 396
+        y: 154
+        width: 7
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c200209029d1692f0800000000000000
+      internalID: -966552556970835924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_64
+      rect:
+        serializedVersion: 2
+        x: 396
+        y: 108
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d85286a02ecf23b0800000000000000
+      internalID: -5534978777387214639
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_65
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 251
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea0dbd2964bd12910800000000000000
+      internalID: 1810969621337723054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_66
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 231
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2c8643e5e83be240800000000000000
+      internalID: 4822010386041965615
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_67
+      rect:
+        serializedVersion: 2
+        x: 417
+        y: 169
+        width: 11
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d267137fe67e53550800000000000000
+      internalID: 6140068130769172013
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_68
+      rect:
+        serializedVersion: 2
+        x: 421
+        y: 55
+        width: 44
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66aeb81b03d3c49d0800000000000000
+      internalID: -2788786789902718362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_69
+      rect:
+        serializedVersion: 2
+        x: 423
+        y: 91
+        width: 29
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffb7af032ba7492d0800000000000000
+      internalID: -3272856123447018497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_70
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 429
+        width: 576
+        height: 166
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3fc33c388ce529710800000000000000
+      internalID: 1698524224769178867
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_71
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 206
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a3ed6e1547a91c370800000000000000
+      internalID: 8341117809247837754
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_72
+      rect:
+        serializedVersion: 2
+        x: 427
+        y: 204
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a6fc53ba6c241320800000000000000
+      internalID: 2527694127649060521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_73
+      rect:
+        serializedVersion: 2
+        x: 428
+        y: 218
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de1cdf412da3b5a80800000000000000
+      internalID: -8477117199625109011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_74
+      rect:
+        serializedVersion: 2
+        x: 432
+        y: 135
+        width: 27
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed787b48a5008ec90800000000000000
+      internalID: -7140456820422244386
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_75
+      rect:
+        serializedVersion: 2
+        x: 438
+        y: 206
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 492d3310d3f646ca0800000000000000
+      internalID: -6024568093711019372
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_76
+      rect:
+        serializedVersion: 2
+        x: 441
+        y: 185
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4991670c0985ee50800000000000000
+      internalID: 6838022293988415820
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_77
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 163
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1f33b8622cfce870800000000000000
+      internalID: 8713616603770732315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_78
+      rect:
+        serializedVersion: 2
+        x: 457
+        y: 120
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 640d9d762c22b9240800000000000000
+      internalID: 4799468046254723142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_79
+      rect:
+        serializedVersion: 2
+        x: 461
+        y: 81
+        width: 20
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5c08c332a2089460800000000000000
+      internalID: 7248546495929519198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_80
+      rect:
+        serializedVersion: 2
+        x: 467
+        y: 151
+        width: 8
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60923a1428fe94780800000000000000
+      internalID: -8698157862563403514
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_81
+      rect:
+        serializedVersion: 2
+        x: 475
+        y: 54
+        width: 19
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22aba0e70e03b8fe0800000000000000
+      internalID: -1185800336136553950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_82
+      rect:
+        serializedVersion: 2
+        x: 501
+        y: 105
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93f0a1cc44b9a72a0800000000000000
+      internalID: -6738903172622184647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_83
+      rect:
+        serializedVersion: 2
+        x: 503
+        y: 55
+        width: 32
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eaf061898d2dfb9b0800000000000000
+      internalID: -5062095628434796626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_84
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 484
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a8594daa00b15c40800000000000000
+      internalID: 5499370179899512992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_85
+      rect:
+        serializedVersion: 2
+        x: 888
+        y: 55
+        width: 12
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73dc5a374dbd7edd0800000000000000
+      internalID: -2456753366187520713
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_86
+      rect:
+        serializedVersion: 2
+        x: 909
+        y: 55
+        width: 33
+        height: 68
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d69d34fbb85d72e40800000000000000
+      internalID: 5631704655236159853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_87
+      rect:
+        serializedVersion: 2
+        x: 930
+        y: 504
+        width: 7
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e090e28f455f7ff50800000000000000
+      internalID: 6915265498140510478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_88
+      rect:
+        serializedVersion: 2
+        x: 942
+        y: 479
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b127bfd3b0d996620800000000000000
+      internalID: 2767916117605970459
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_89
+      rect:
+        serializedVersion: 2
+        x: 947
+        y: 156
+        width: 42
+        height: 61
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67f0698becfec5cc0800000000000000
+      internalID: -3720835520975728778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_90
+      rect:
+        serializedVersion: 2
+        x: 950
+        y: 55
+        width: 12
+        height: 69
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab8692eeb646ef680800000000000000
+      internalID: -8719421413822732102
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_91
+      rect:
+        serializedVersion: 2
+        x: 952
+        y: 128
+        width: 31
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9521804e0a45fff40800000000000000
+      internalID: 5764419098054759001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_92
+      rect:
+        serializedVersion: 2
+        x: 971
+        y: 55
+        width: 30
+        height: 92
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc81b322fb7d50ba0800000000000000
+      internalID: -6123250902427297585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_93
+      rect:
+        serializedVersion: 2
+        x: 986
+        y: 219
+        width: 41
+        height: 49
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae82b65675b9297b0800000000000000
+      internalID: -5218938218503001878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_94
+      rect:
+        serializedVersion: 2
+        x: 990
+        y: 151
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 848a17f3ff14778e0800000000000000
+      internalID: -1695814170144823224
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_95
+      rect:
+        serializedVersion: 2
+        x: 997
+        y: 13
+        width: 292
+        height: 562
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d1f5f73b62ac89a70800000000000000
+      internalID: 8834032936656264989
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_96
+      rect:
+        serializedVersion: 2
+        x: 999
+        y: 75
+        width: 6
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c20f5b5f788260bf0800000000000000
+      internalID: -358554555921338324
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_97
+      rect:
+        serializedVersion: 2
+        x: 1002
+        y: 125
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41b2906c963c4e5a0800000000000000
+      internalID: -6492849903699940588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_98
+      rect:
+        serializedVersion: 2
+        x: 1014
+        y: 143
+        width: 15
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 904fe18a6d4cc9ee0800000000000000
+      internalID: -1252910170093194231
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_99
+      rect:
+        serializedVersion: 2
+        x: 1014
+        y: 77
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96c950a5ad864b740800000000000000
+      internalID: 5166869959523277929
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_100
+      rect:
+        serializedVersion: 2
+        x: 1017
+        y: 185
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de71652b7fe8c1420800000000000000
+      internalID: 2602111879213357037
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_101
+      rect:
+        serializedVersion: 2
+        x: 1017
+        y: 95
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4865921ebcccf7390800000000000000
+      internalID: -7818305252063881596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_102
+      rect:
+        serializedVersion: 2
+        x: 1020
+        y: 108
+        width: 12
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57aaeb7fe1715ef30800000000000000
+      internalID: 4604111615829125749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_103
+      rect:
+        serializedVersion: 2
+        x: 1022
+        y: 83
+        width: 15
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6786f25df67a2d750800000000000000
+      internalID: 6328304525168830582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_104
+      rect:
+        serializedVersion: 2
+        x: 1028
+        y: 131
+        width: 10
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1cf4fedb23f831f30800000000000000
+      internalID: 4545133897044676545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_105
+      rect:
+        serializedVersion: 2
+        x: 1044
+        y: 89
+        width: 6
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33601a60470346bc0800000000000000
+      internalID: -3790851711453559245
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_106
+      rect:
+        serializedVersion: 2
+        x: 1047
+        y: 427
+        width: 14
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c688269c04818e00800000000000000
+      internalID: 1045261778120378056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_107
+      rect:
+        serializedVersion: 2
+        x: 1049
+        y: 154
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b7d6663e26aba0e0800000000000000
+      internalID: -2257528070784755792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_108
+      rect:
+        serializedVersion: 2
+        x: 1051
+        y: 78
+        width: 6
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99f56e4b6a5b084b0800000000000000
+      internalID: -5440148622259363943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_109
+      rect:
+        serializedVersion: 2
+        x: 1056
+        y: 302
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f48c1be6fae50040800000000000000
+      internalID: 4613351739538310385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_110
+      rect:
+        serializedVersion: 2
+        x: 1063
+        y: 171
+        width: 7
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 330e6f24d7c0a8730800000000000000
+      internalID: 4002024951006027827
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_111
+      rect:
+        serializedVersion: 2
+        x: 1064
+        y: 479
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cbca44625623d070800000000000000
+      internalID: 8129883887645674436
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_112
+      rect:
+        serializedVersion: 2
+        x: 1064
+        y: 103
+        width: 8
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b79175419dc04e90800000000000000
+      internalID: -7043403793388431432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_113
+      rect:
+        serializedVersion: 2
+        x: 1070
+        y: 419
+        width: 18
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b53ad9b894da7fb0800000000000000
+      internalID: -4649169912888412749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_114
+      rect:
+        serializedVersion: 2
+        x: 1074
+        y: 321
+        width: 15
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ffb76a4c76476d20800000000000000
+      internalID: 3271661153946157047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_115
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 243
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6dedb09635373cd50800000000000000
+      internalID: 6756370668067741398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_116
+      rect:
+        serializedVersion: 2
+        x: 1083
+        y: 308
+        width: 18
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed2bb6707299e94d0800000000000000
+      internalID: -3125892698441272610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_117
+      rect:
+        serializedVersion: 2
+        x: 1097
+        y: 410
+        width: 15
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e792604eda5b42540800000000000000
+      internalID: 4982306846238189950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_118
+      rect:
+        serializedVersion: 2
+        x: 1099
+        y: 382
+        width: 14
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbcae863df2ce02e0800000000000000
+      internalID: -2157572778666054465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_119
+      rect:
+        serializedVersion: 2
+        x: 1101
+        y: 169
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee7711b0651d81d20800000000000000
+      internalID: 3249577298630899694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_120
+      rect:
+        serializedVersion: 2
+        x: 1101
+        y: 124
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 582928767dc520840800000000000000
+      internalID: 5188811800908567173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_121
+      rect:
+        serializedVersion: 2
+        x: 1103
+        y: 343
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2a34ff2d2a09afb0800000000000000
+      internalID: -4636163152206874065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_122
+      rect:
+        serializedVersion: 2
+        x: 1103
+        y: 275
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb8b40d1c72501580800000000000000
+      internalID: -8858489774021494597
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_123
+      rect:
+        serializedVersion: 2
+        x: 1104
+        y: 182
+        width: 6
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98f966c2ebcfe7840800000000000000
+      internalID: 5223890511515262857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_124
+      rect:
+        serializedVersion: 2
+        x: 1105
+        y: 198
+        width: 6
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56b0a97962c08d430800000000000000
+      internalID: 3807806844833500005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_125
+      rect:
+        serializedVersion: 2
+        x: 1108
+        y: 447
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61f57e4ed3962cd50800000000000000
+      internalID: 6756078105563455254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_126
+      rect:
+        serializedVersion: 2
+        x: 1110
+        y: 348
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa8ce24595add5c70800000000000000
+      internalID: 8961558910736451759
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_127
+      rect:
+        serializedVersion: 2
+        x: 1118
+        y: 424
+        width: 14
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15c10e5816db6c780800000000000000
+      internalID: -8663028606645035951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_128
+      rect:
+        serializedVersion: 2
+        x: 1122
+        y: 104
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e02aa0135139da350800000000000000
+      internalID: 6029637195345338894
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_129
+      rect:
+        serializedVersion: 2
+        x: 1132
+        y: 87
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae617d313ba417e10800000000000000
+      internalID: 2193616626498606826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_130
+      rect:
+        serializedVersion: 2
+        x: 1138
+        y: 413
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce33d0c826cc26dc0800000000000000
+      internalID: -3647128024588143636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_131
+      rect:
+        serializedVersion: 2
+        x: 1138
+        y: 92
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 747a8ac3481087c40800000000000000
+      internalID: 5510155811552798535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_132
+      rect:
+        serializedVersion: 2
+        x: 1143
+        y: 122
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e74395267589f510800000000000000
+      internalID: 1583443486480484322
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_133
+      rect:
+        serializedVersion: 2
+        x: 1153
+        y: 419
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df5a9639f9cd90100800000000000000
+      internalID: 74833446759409149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_134
+      rect:
+        serializedVersion: 2
+        x: 1203
+        y: 440
+        width: 8
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c87cf3d805ac91030800000000000000
+      internalID: 3466023835554269068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_135
+      rect:
+        serializedVersion: 2
+        x: 1214
+        y: 317
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e194c205b67565d0800000000000000
+      internalID: -3069917051175530007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_136
+      rect:
+        serializedVersion: 2
+        x: 1220
+        y: 302
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4005bb75416355610800000000000000
+      internalID: 1609251902853959684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_137
+      rect:
+        serializedVersion: 2
+        x: 1223
+        y: 119
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83ab84a5a95265fb0800000000000000
+      internalID: -4659495419598292424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_138
+      rect:
+        serializedVersion: 2
+        x: 1224
+        y: 196
+        width: 6
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 688c7aa8c0b1d4650800000000000000
+      internalID: 6218656401148332166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_139
+      rect:
+        serializedVersion: 2
+        x: 1229
+        y: 129
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4817db38c3b609fe0800000000000000
+      internalID: -1184328794345999996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_140
+      rect:
+        serializedVersion: 2
+        x: 1239
+        y: 433
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4eb6ec925c1df80c0800000000000000
+      internalID: -4571204452017607708
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_141
+      rect:
+        serializedVersion: 2
+        x: 1243
+        y: 420
+        width: 6
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6264e798a8934080800000000000000
+      internalID: -9204345363544907155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_142
+      rect:
+        serializedVersion: 2
+        x: 1247
+        y: 438
+        width: 6
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9954737482cea4b0800000000000000
+      internalID: -5427186626806392420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_143
+      rect:
+        serializedVersion: 2
+        x: 1254
+        y: 315
+        width: 22
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f067a60f1a1fb7da0800000000000000
+      internalID: -5945893205187070449
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_144
+      rect:
+        serializedVersion: 2
+        x: 1261
+        y: 450
+        width: 47
+        height: 77
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c78f097edd1268e20800000000000000
+      internalID: 3352404209580439676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_145
+      rect:
+        serializedVersion: 2
+        x: 1274
+        y: 162
+        width: 133
+        height: 330
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3d82ee46856f4cd0800000000000000
+      internalID: -2571725234681770689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_146
+      rect:
+        serializedVersion: 2
+        x: 1278
+        y: 358
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 907cab93f59600b70800000000000000
+      internalID: 8863199924376487689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_147
+      rect:
+        serializedVersion: 2
+        x: 1279
+        y: 306
+        width: 14
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd4b4fa6aaf420c70800000000000000
+      internalID: 8935792204013941981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_148
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 411
+        width: 9
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 876f3e15077e12380800000000000000
+      internalID: -8997656110913292680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_149
+      rect:
+        serializedVersion: 2
+        x: 1282
+        y: 206
+        width: 15
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2343aeddb27ef5b0800000000000000
+      internalID: -5332698748950461654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_150
+      rect:
+        serializedVersion: 2
+        x: 1284
+        y: 121
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67db3e5facc528750800000000000000
+      internalID: 6305704455050607990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_151
+      rect:
+        serializedVersion: 2
+        x: 1285
+        y: 85
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48dd4fe87c4563eb0800000000000000
+      internalID: -4740508341687231100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_152
+      rect:
+        serializedVersion: 2
+        x: 1290
+        y: 277
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db220aee654d68590800000000000000
+      internalID: -7672211445343313219
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_153
+      rect:
+        serializedVersion: 2
+        x: 1290
+        y: 216
+        width: 8
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d2e0862fef849a00800000000000000
+      internalID: 762392494238393049
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_154
+      rect:
+        serializedVersion: 2
+        x: 1291
+        y: 335
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7165a47cde6ab30a0800000000000000
+      internalID: -6900738463834155497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_155
+      rect:
+        serializedVersion: 2
+        x: 1293
+        y: 251
+        width: 9
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30a095848da859820800000000000000
+      internalID: 2924396194578369027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_156
+      rect:
+        serializedVersion: 2
+        x: 1311
+        y: 285
+        width: 6
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05fad1dcf929d4810800000000000000
+      internalID: 1751217045155721040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_157
+      rect:
+        serializedVersion: 2
+        x: 1312
+        y: 487
+        width: 16
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 896dbe1b9558baba0800000000000000
+      internalID: -6076616651922745704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_158
+      rect:
+        serializedVersion: 2
+        x: 1316
+        y: 90
+        width: 33
+        height: 76
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4daf4203bca0390d0800000000000000
+      internalID: -3417375824441705772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_159
+      rect:
+        serializedVersion: 2
+        x: 1318
+        y: 249
+        width: 10
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: abaa9a1b1d902d890800000000000000
+      internalID: -7434869238601766214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_160
+      rect:
+        serializedVersion: 2
+        x: 1320
+        y: 271
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f73cf5daa98e70290800000000000000
+      internalID: -7924109268303756417
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_161
+      rect:
+        serializedVersion: 2
+        x: 1321
+        y: 216
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f7a1ef8decabb2e0800000000000000
+      internalID: -2108901864171788298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_162
+      rect:
+        serializedVersion: 2
+        x: 1322
+        y: 363
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0c53887cbc0e97f0800000000000000
+      internalID: -604031296405808117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_163
+      rect:
+        serializedVersion: 2
+        x: 1331
+        y: 365
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c689c2829e3a3dbf0800000000000000
+      internalID: -300716528306972564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_164
+      rect:
+        serializedVersion: 2
+        x: 1331
+        y: 352
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1408eaca5ffc18e60800000000000000
+      internalID: 7962874270238801985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_165
+      rect:
+        serializedVersion: 2
+        x: 1332
+        y: 255
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c50e5cb344a3fce40800000000000000
+      internalID: 5678821719872495708
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_166
+      rect:
+        serializedVersion: 2
+        x: 1334
+        y: 193
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11a4d68a7ac23b0b0800000000000000
+      internalID: -5714174403606132207
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_167
+      rect:
+        serializedVersion: 2
+        x: 1336
+        y: 336
+        width: 6
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18661f83f6b897d20800000000000000
+      internalID: 3276803513701721729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_168
+      rect:
+        serializedVersion: 2
+        x: 1337
+        y: 308
+        width: 10
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: efad8fd6d24902550800000000000000
+      internalID: 6134065615318080254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_169
+      rect:
+        serializedVersion: 2
+        x: 1339
+        y: 228
+        width: 7
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 356d063a87f7be040800000000000000
+      internalID: 4677972794068227667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_170
+      rect:
+        serializedVersion: 2
+        x: 1344
+        y: 167
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4262aa92d04e6d250800000000000000
+      internalID: 5969209101310895652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_171
+      rect:
+        serializedVersion: 2
+        x: 1346
+        y: 483
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dea1446b697d12de0800000000000000
+      internalID: -1359568570186196243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_172
+      rect:
+        serializedVersion: 2
+        x: 1368
+        y: 440
+        width: 42
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 636daabbf396da740800000000000000
+      internalID: 5164900070116218422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: upper_gallery_railing_white_mask_debug_173
+      rect:
+        serializedVersion: 2
+        x: 1378
+        y: 279
+        width: 6
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6c1c1c04148ea970800000000000000
+      internalID: 8768090746174315630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      upper_gallery_railing_white_mask_debug_0: -6146332336284992573
+      upper_gallery_railing_white_mask_debug_1: -4646315155560479804
+      upper_gallery_railing_white_mask_debug_10: 999011975199060757
+      upper_gallery_railing_white_mask_debug_100: 2602111879213357037
+      upper_gallery_railing_white_mask_debug_101: -7818305252063881596
+      upper_gallery_railing_white_mask_debug_102: 4604111615829125749
+      upper_gallery_railing_white_mask_debug_103: 6328304525168830582
+      upper_gallery_railing_white_mask_debug_104: 4545133897044676545
+      upper_gallery_railing_white_mask_debug_105: -3790851711453559245
+      upper_gallery_railing_white_mask_debug_106: 1045261778120378056
+      upper_gallery_railing_white_mask_debug_107: -2257528070784755792
+      upper_gallery_railing_white_mask_debug_108: -5440148622259363943
+      upper_gallery_railing_white_mask_debug_109: 4613351739538310385
+      upper_gallery_railing_white_mask_debug_11: -6135998750228431890
+      upper_gallery_railing_white_mask_debug_110: 4002024951006027827
+      upper_gallery_railing_white_mask_debug_111: 8129883887645674436
+      upper_gallery_railing_white_mask_debug_112: -7043403793388431432
+      upper_gallery_railing_white_mask_debug_113: -4649169912888412749
+      upper_gallery_railing_white_mask_debug_114: 3271661153946157047
+      upper_gallery_railing_white_mask_debug_115: 6756370668067741398
+      upper_gallery_railing_white_mask_debug_116: -3125892698441272610
+      upper_gallery_railing_white_mask_debug_117: 4982306846238189950
+      upper_gallery_railing_white_mask_debug_118: -2157572778666054465
+      upper_gallery_railing_white_mask_debug_119: 3249577298630899694
+      upper_gallery_railing_white_mask_debug_12: -2256032251949025392
+      upper_gallery_railing_white_mask_debug_120: 5188811800908567173
+      upper_gallery_railing_white_mask_debug_121: -4636163152206874065
+      upper_gallery_railing_white_mask_debug_122: -8858489774021494597
+      upper_gallery_railing_white_mask_debug_123: 5223890511515262857
+      upper_gallery_railing_white_mask_debug_124: 3807806844833500005
+      upper_gallery_railing_white_mask_debug_125: 6756078105563455254
+      upper_gallery_railing_white_mask_debug_126: 8961558910736451759
+      upper_gallery_railing_white_mask_debug_127: -8663028606645035951
+      upper_gallery_railing_white_mask_debug_128: 6029637195345338894
+      upper_gallery_railing_white_mask_debug_129: 2193616626498606826
+      upper_gallery_railing_white_mask_debug_13: 3385738234044385993
+      upper_gallery_railing_white_mask_debug_130: -3647128024588143636
+      upper_gallery_railing_white_mask_debug_131: 5510155811552798535
+      upper_gallery_railing_white_mask_debug_132: 1583443486480484322
+      upper_gallery_railing_white_mask_debug_133: 74833446759409149
+      upper_gallery_railing_white_mask_debug_134: 3466023835554269068
+      upper_gallery_railing_white_mask_debug_135: -3069917051175530007
+      upper_gallery_railing_white_mask_debug_136: 1609251902853959684
+      upper_gallery_railing_white_mask_debug_137: -4659495419598292424
+      upper_gallery_railing_white_mask_debug_138: 6218656401148332166
+      upper_gallery_railing_white_mask_debug_139: -1184328794345999996
+      upper_gallery_railing_white_mask_debug_14: 528628649224085365
+      upper_gallery_railing_white_mask_debug_140: -4571204452017607708
+      upper_gallery_railing_white_mask_debug_141: -9204345363544907155
+      upper_gallery_railing_white_mask_debug_142: -5427186626806392420
+      upper_gallery_railing_white_mask_debug_143: -5945893205187070449
+      upper_gallery_railing_white_mask_debug_144: 3352404209580439676
+      upper_gallery_railing_white_mask_debug_145: -2571725234681770689
+      upper_gallery_railing_white_mask_debug_146: 8863199924376487689
+      upper_gallery_railing_white_mask_debug_147: 8935792204013941981
+      upper_gallery_railing_white_mask_debug_148: -8997656110913292680
+      upper_gallery_railing_white_mask_debug_149: -5332698748950461654
+      upper_gallery_railing_white_mask_debug_15: 3990134133262352393
+      upper_gallery_railing_white_mask_debug_150: 6305704455050607990
+      upper_gallery_railing_white_mask_debug_151: -4740508341687231100
+      upper_gallery_railing_white_mask_debug_152: -7672211445343313219
+      upper_gallery_railing_white_mask_debug_153: 762392494238393049
+      upper_gallery_railing_white_mask_debug_154: -6900738463834155497
+      upper_gallery_railing_white_mask_debug_155: 2924396194578369027
+      upper_gallery_railing_white_mask_debug_156: 1751217045155721040
+      upper_gallery_railing_white_mask_debug_157: -6076616651922745704
+      upper_gallery_railing_white_mask_debug_158: -3417375824441705772
+      upper_gallery_railing_white_mask_debug_159: -7434869238601766214
+      upper_gallery_railing_white_mask_debug_16: -630402741933731256
+      upper_gallery_railing_white_mask_debug_160: -7924109268303756417
+      upper_gallery_railing_white_mask_debug_161: -2108901864171788298
+      upper_gallery_railing_white_mask_debug_162: -604031296405808117
+      upper_gallery_railing_white_mask_debug_163: -300716528306972564
+      upper_gallery_railing_white_mask_debug_164: 7962874270238801985
+      upper_gallery_railing_white_mask_debug_165: 5678821719872495708
+      upper_gallery_railing_white_mask_debug_166: -5714174403606132207
+      upper_gallery_railing_white_mask_debug_167: 3276803513701721729
+      upper_gallery_railing_white_mask_debug_168: 6134065615318080254
+      upper_gallery_railing_white_mask_debug_169: 4677972794068227667
+      upper_gallery_railing_white_mask_debug_17: -5097148406382734366
+      upper_gallery_railing_white_mask_debug_170: 5969209101310895652
+      upper_gallery_railing_white_mask_debug_171: -1359568570186196243
+      upper_gallery_railing_white_mask_debug_172: 5164900070116218422
+      upper_gallery_railing_white_mask_debug_173: 8768090746174315630
+      upper_gallery_railing_white_mask_debug_18: 3956402161281935544
+      upper_gallery_railing_white_mask_debug_19: 8589589212115053270
+      upper_gallery_railing_white_mask_debug_2: -732718996872220574
+      upper_gallery_railing_white_mask_debug_20: 5938243584313233411
+      upper_gallery_railing_white_mask_debug_21: -3253592523751474493
+      upper_gallery_railing_white_mask_debug_22: 5306855828883940857
+      upper_gallery_railing_white_mask_debug_23: -2915701224164224889
+      upper_gallery_railing_white_mask_debug_24: 5486505957725646420
+      upper_gallery_railing_white_mask_debug_25: -6567461195958707629
+      upper_gallery_railing_white_mask_debug_26: -938663856146356176
+      upper_gallery_railing_white_mask_debug_27: 2749836015548429724
+      upper_gallery_railing_white_mask_debug_28: 4034633354376035814
+      upper_gallery_railing_white_mask_debug_29: -2200046113727846479
+      upper_gallery_railing_white_mask_debug_3: 7223567380969343541
+      upper_gallery_railing_white_mask_debug_30: 2733986795412106983
+      upper_gallery_railing_white_mask_debug_31: 5388784509538510208
+      upper_gallery_railing_white_mask_debug_32: -1775505367518385429
+      upper_gallery_railing_white_mask_debug_33: -8796907199361235650
+      upper_gallery_railing_white_mask_debug_34: 3785175906711127969
+      upper_gallery_railing_white_mask_debug_35: 5797388574499118063
+      upper_gallery_railing_white_mask_debug_36: 9133638829223736797
+      upper_gallery_railing_white_mask_debug_37: 7430620148235492171
+      upper_gallery_railing_white_mask_debug_38: 8888460540533594067
+      upper_gallery_railing_white_mask_debug_39: 3184265156463060747
+      upper_gallery_railing_white_mask_debug_4: 581101358581518673
+      upper_gallery_railing_white_mask_debug_40: -3256696133202794584
+      upper_gallery_railing_white_mask_debug_41: 6858876210642752042
+      upper_gallery_railing_white_mask_debug_42: -9056018161949374120
+      upper_gallery_railing_white_mask_debug_43: -8176721624335940863
+      upper_gallery_railing_white_mask_debug_44: -5170477351505051181
+      upper_gallery_railing_white_mask_debug_45: 2382093005433657317
+      upper_gallery_railing_white_mask_debug_46: 4159316886989474340
+      upper_gallery_railing_white_mask_debug_47: -7872128108751179320
+      upper_gallery_railing_white_mask_debug_48: -4928634453996356788
+      upper_gallery_railing_white_mask_debug_49: -7037707538362804846
+      upper_gallery_railing_white_mask_debug_5: 8067334238905485975
+      upper_gallery_railing_white_mask_debug_50: -609878393437009766
+      upper_gallery_railing_white_mask_debug_51: -7807831928570200931
+      upper_gallery_railing_white_mask_debug_52: -9033620003684991104
+      upper_gallery_railing_white_mask_debug_53: -4185935399817422610
+      upper_gallery_railing_white_mask_debug_54: -5354265479277095097
+      upper_gallery_railing_white_mask_debug_55: 3933003130572989111
+      upper_gallery_railing_white_mask_debug_56: 6853676665364756887
+      upper_gallery_railing_white_mask_debug_57: 8907201352580103490
+      upper_gallery_railing_white_mask_debug_58: 4546565158178446232
+      upper_gallery_railing_white_mask_debug_59: 1787099782052132129
+      upper_gallery_railing_white_mask_debug_6: 2615598649920630488
+      upper_gallery_railing_white_mask_debug_60: 2072155825061803095
+      upper_gallery_railing_white_mask_debug_61: -7612597329344227940
+      upper_gallery_railing_white_mask_debug_62: -6606606907897486106
+      upper_gallery_railing_white_mask_debug_63: -966552556970835924
+      upper_gallery_railing_white_mask_debug_64: -5534978777387214639
+      upper_gallery_railing_white_mask_debug_65: 1810969621337723054
+      upper_gallery_railing_white_mask_debug_66: 4822010386041965615
+      upper_gallery_railing_white_mask_debug_67: 6140068130769172013
+      upper_gallery_railing_white_mask_debug_68: -2788786789902718362
+      upper_gallery_railing_white_mask_debug_69: -3272856123447018497
+      upper_gallery_railing_white_mask_debug_7: 8178759456356469424
+      upper_gallery_railing_white_mask_debug_70: 1698524224769178867
+      upper_gallery_railing_white_mask_debug_71: 8341117809247837754
+      upper_gallery_railing_white_mask_debug_72: 2527694127649060521
+      upper_gallery_railing_white_mask_debug_73: -8477117199625109011
+      upper_gallery_railing_white_mask_debug_74: -7140456820422244386
+      upper_gallery_railing_white_mask_debug_75: -6024568093711019372
+      upper_gallery_railing_white_mask_debug_76: 6838022293988415820
+      upper_gallery_railing_white_mask_debug_77: 8713616603770732315
+      upper_gallery_railing_white_mask_debug_78: 4799468046254723142
+      upper_gallery_railing_white_mask_debug_79: 7248546495929519198
+      upper_gallery_railing_white_mask_debug_8: 7836842533093969984
+      upper_gallery_railing_white_mask_debug_80: -8698157862563403514
+      upper_gallery_railing_white_mask_debug_81: -1185800336136553950
+      upper_gallery_railing_white_mask_debug_82: -6738903172622184647
+      upper_gallery_railing_white_mask_debug_83: -5062095628434796626
+      upper_gallery_railing_white_mask_debug_84: 5499370179899512992
+      upper_gallery_railing_white_mask_debug_85: -2456753366187520713
+      upper_gallery_railing_white_mask_debug_86: 5631704655236159853
+      upper_gallery_railing_white_mask_debug_87: 6915265498140510478
+      upper_gallery_railing_white_mask_debug_88: 2767916117605970459
+      upper_gallery_railing_white_mask_debug_89: -3720835520975728778
+      upper_gallery_railing_white_mask_debug_9: 2985135824785511351
+      upper_gallery_railing_white_mask_debug_90: -8719421413822732102
+      upper_gallery_railing_white_mask_debug_91: 5764419098054759001
+      upper_gallery_railing_white_mask_debug_92: -6123250902427297585
+      upper_gallery_railing_white_mask_debug_93: -5218938218503001878
+      upper_gallery_railing_white_mask_debug_94: -1695814170144823224
+      upper_gallery_railing_white_mask_debug_95: 8834032936656264989
+      upper_gallery_railing_white_mask_debug_96: -358554555921338324
+      upper_gallery_railing_white_mask_debug_97: -6492849903699940588
+      upper_gallery_railing_white_mask_debug_98: -1252910170093194231
+      upper_gallery_railing_white_mask_debug_99: 5166869959523277929
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
