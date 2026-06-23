@@ -13,6 +13,9 @@ public class Chapter2RegressionTests
     private const string RuntimeSettingsMenuPath = "Assets/Scripts/UI/RuntimeSettingsMenu.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
+    private const string DoorbellSystemPath = "Assets/Scripts/Story/DoorbellSystem.cs";
+    private const string DoorbellClipResourcePath = "Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz";
+    private const string DoorbellClipAssetPath = "Assets/Resources/Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz.wav";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter2DirectoryPath = "Assets/_Chateau/Scripts/Chapter/Chapter02";
     private const string Chapter2ControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs";
@@ -430,6 +433,21 @@ public class Chapter2RegressionTests
             Assert.That(File.Exists(clipPath), Is.True, $"Butler footstep variant should exist at {clipPath}.");
             Assert.That(catalogText, Does.Contain($"guid: {clipGuid}"), $"Butler catalog should reference {Path.GetFileName(clipPath)}.");
         }
+    }
+
+    [Test]
+    public void DoorbellSystemUsesImportedVictorianDoorbellClip()
+    {
+        Assert.That(File.Exists(DoorbellClipAssetPath), Is.True, "The doorbell should use the approved imported WAV from Resources.");
+        Assert.That(File.Exists(DoorbellClipAssetPath + ".meta"), Is.True, "The imported WAV should keep its Unity importer metadata.");
+
+        string doorbellText = File.ReadAllText(DoorbellSystemPath);
+        string doorbellMetaText = File.ReadAllText(DoorbellClipAssetPath + ".meta");
+
+        Assert.That(doorbellText, Does.Contain($"DefaultDoorbellClipResourcePath = \"{DoorbellClipResourcePath}\""), "Runtime-created doorbell systems should know where the imported clip lives.");
+        Assert.That(doorbellText, Does.Contain("Resources.Load<AudioClip>(doorbellClipResourcePath)"), "The doorbell should load the imported clip before falling back to generated tones.");
+        Assert.That(doorbellText, Does.Match(@"(?s)Resources\.Load<AudioClip>\(doorbellClipResourcePath\)[\s\S]*CreateDoorbellClip\(\)"), "The generated tone should remain only as a fallback after the imported clip is unavailable.");
+        Assert.That(doorbellMetaText, Does.Contain("preloadAudioData: 1"), "The short doorbell one-shot should be preloaded so the first ring is immediate.");
     }
 
     [Test]
