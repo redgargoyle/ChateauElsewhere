@@ -1,4 +1,5 @@
 using System.IO;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 
@@ -365,6 +366,14 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("IsWalkableWorldSegment"), "Point-click movement should reject straight-line routes that leave the walkable floor between two valid points.");
         Assert.That(playerText, Does.Contain("TryBuildPolygonMovementPath"), "Concave room boundaries should route through walkable polygon corner nodes instead of crossing banisters or stairwell voids.");
         Assert.That(playerText, Does.Contain("pathPreviousNodeIndices"), "The polygon route should choose a shortest reachable corner path, not the first authored vertex order.");
+        Assert.That(playerText, Does.Contain("TryBuildGridMovementPath"), "Hand-authored complex boundaries need a sampled fallback route when corner visibility cannot connect both sides.");
+        Assert.That(playerText, Does.Contain("GridRouteMaxNodeCount"), "The grid fallback should stay bounded enough for cursor hover checks.");
+        Assert.That(playerText, Does.Contain("SmoothGridRouteWorldPath"), "Fallback routes should be simplified before the Butler walks them.");
+        Assert.That(playerText, Does.Contain("TryProjectClickToNearbyWalkableDestination"), "Floor clicks should tolerate small art-to-collider alignment misses without letting the player cross blocked areas.");
+        Assert.That(playerText, Does.Contain("TryFindProjectedWalkableWorldPointNearClick"), "Floor-click projection should use a local search instead of the broad doorway arrival search.");
+        Assert.That(playerText, Does.Contain("GetClickProjectionMaxWorldDistance"), "Click projection should be bounded by the active room boundary size.");
+        Assert.That(playerText, Does.Contain("CanShowWalkCursor"), "The cursor should show walk when a nearby projected floor destination is reachable.");
+        Assert.That(playerText, Does.Contain("TryBuildMovementPathFromNearbyStart"), "Routes should recover when the Butler is standing on a thin authored boundary edge.");
         Assert.That(playerText, Does.Match(@"LogicalToWalkableWorldPoint\s*\([^)]*\)[\s\S]*referenceOffset \* currentRoomStageScaleRatio"), "Player logical-to-world mapping must include room-stage scale, not translation only.");
         Assert.That(playerText, Does.Match(@"ApplyPerspectiveScale\s*\([^)]*\)[\s\S]*currentRoomStageScaleRatio"), "Player sprite scale should grow and shrink with the room stage just like room objects.");
         Assert.That(playerText, Does.Contain("GetCurrentVisibleMovementWorldPoint"), "Player logical movement should anchor to the visible feet rather than the transform origin.");
@@ -376,6 +385,20 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Not.Contain("pathProbeStep"), "Movement should not sample a heavyweight path segment to reject floor clicks.");
         Assert.That(obstacleText, Does.Not.Contain("BlockPlayerMovement"), "Prop footprint components should not expose movement-blocking controls.");
         Assert.That(obstacleText, Does.Not.Contain("TryGetMovementBounds"), "Prop footprint components should not provide movement blockers.");
+    }
+
+    [Test]
+    public void UpperGalleryBoundaryKeepsRearHallwayRouteAroundStairwell()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string upperGalleryBoundary = ExtractUnityObjectBlock(sceneText, "--- !u!60 &580370978");
+        int pointCount = Regex.Matches(upperGalleryBoundary, @"(?m)^      - \{|^    - - \{").Count;
+        GetColliderPathYExtents(upperGalleryBoundary, out float minY, out float maxY);
+
+        Assert.That(upperGalleryBoundary, Does.Contain("m_GameObject: {fileID: 580370976}"), "This assertion should target the Upper Gallery PlayerBoundary.");
+        Assert.That(pointCount, Is.GreaterThanOrEqualTo(30), "Upper Gallery should keep a detailed hand-authored path around the railing and stairwell.");
+        Assert.That(maxY, Is.GreaterThan(-0.25f), "The boundary should include the rear hallway lane behind the stair railing.");
+        Assert.That(minY, Is.LessThan(-0.8f), "The boundary should keep the front walkway available below the stair railing.");
     }
 
     [Test]
@@ -761,6 +784,33 @@ public class NavigationRegressionTests
 
         Assert.Fail($"Could not extract method body for '{methodName}'.");
         return string.Empty;
+    }
+
+    private static string ExtractUnityObjectBlock(string sceneText, string objectHeader)
+    {
+        int blockStart = sceneText.IndexOf(objectHeader, System.StringComparison.Ordinal);
+        Assert.That(blockStart, Is.GreaterThanOrEqualTo(0), $"Expected to find Unity object '{objectHeader}'.");
+
+        int nextBlockStart = sceneText.IndexOf("\n--- !u!", blockStart + objectHeader.Length, System.StringComparison.Ordinal);
+        return nextBlockStart >= 0
+            ? sceneText.Substring(blockStart, nextBlockStart - blockStart)
+            : sceneText.Substring(blockStart);
+    }
+
+    private static void GetColliderPathYExtents(string colliderText, out float minY, out float maxY)
+    {
+        MatchCollection matches = Regex.Matches(colliderText, @"\by: (-?\d+(?:\.\d+)?)");
+        Assert.That(matches.Count, Is.GreaterThan(0), "Collider path should contain y coordinates.");
+
+        minY = float.PositiveInfinity;
+        maxY = float.NegativeInfinity;
+
+        for (int i = 0; i < matches.Count; i++)
+        {
+            float value = float.Parse(matches[i].Groups[1].Value, CultureInfo.InvariantCulture);
+            minY = System.Math.Min(minY, value);
+            maxY = System.Math.Max(maxY, value);
+        }
     }
 
     private static string ReadGuid(string metaPath)
