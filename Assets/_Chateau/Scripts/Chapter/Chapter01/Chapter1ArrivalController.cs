@@ -1931,6 +1931,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             coatRenderer.sortingLayerName = projection.GetSortingLayerName();
             coatRenderer.sortingOrder = projection.GetSortingOrder(coatSortingOffset);
             coatRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            CacheConfiguredCoatSorting(coatRenderer);
             return;
         }
 
@@ -1940,11 +1941,29 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             coatRenderer.sortingLayerID = guestRenderer.sortingLayerID;
             coatRenderer.sortingOrder = guestRenderer.sortingOrder + 1;
+            CacheConfiguredCoatSorting(coatRenderer);
             return;
         }
 
         coatRenderer.sortingLayerName = "People";
         coatRenderer.sortingOrder = 9000 + (guest != null ? guest.GuestIndex : 0) + 1;
+        CacheConfiguredCoatSorting(coatRenderer);
+    }
+
+    private void CacheConfiguredCoatSorting(Renderer coatRenderer)
+    {
+        if (coatRenderer == null)
+        {
+            return;
+        }
+
+        authoredGuestRendererSorting[coatRenderer] = new RendererSortingState
+        {
+            LayerName = coatRenderer.sortingLayerName,
+            Order = coatRenderer.sortingOrder
+        };
+
+        RemoveDestroyedGuestSortingCacheEntries();
     }
 
     private Sprite ResolveGuestCoatSprite(GuestRuntimeState guest)
