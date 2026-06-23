@@ -21,6 +21,13 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private const int MaxPathSegmentProbeSamples = 192;
 	private const int PathNodeRadialSamples = 16;
 	private const int PathNodeRadialRings = 4;
+	private const int GridRouteMaxNodeCount = 8192;
+	private const int GridRouteClosestSpecialConnections = 8;
+	private const float GridRouteSpecialConnectionMultiplier = 2.5f;
+	private const int ClickProjectionSearchRings = 5;
+	private const int ClickProjectionSearchSamplesPerRing = 16;
+	private const float ClickProjectionMinWorldDistance = 16f;
+	private const float ClickProjectionMaxWorldDistance = 48f;
 
 	[SerializeField] private string walkableFloorName = "PlayerBoundary_Entrance";
 	[SerializeField] private Collider2D walkableFloor;
@@ -86,6 +93,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private readonly List<float> pathNodeDistances = new List<float>();
 	private readonly List<int> pathPreviousNodeIndices = new List<int>();
 	private readonly List<bool> pathVisitedNodes = new List<bool>();
+	private readonly List<Vector2> gridRouteWorldNodes = new List<Vector2>();
+	private readonly List<int> gridRouteCellIndices = new List<int>();
+	private readonly List<int> gridRouteOpenNodes = new List<int>();
+	private readonly List<Vector2> gridRouteSmoothedPath = new List<Vector2>();
 	private static readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
 
 	public event Action ArrivedAtDestination;
@@ -166,6 +177,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			Vector2 destination,
 			bool exactPointWalkable,
 			bool hasReachableDestination,
+			bool usesProjectedDestination,
 			bool wouldMove)
 		{
 			ScreenPosition = screenPosition;
@@ -173,6 +185,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			Destination = destination;
 			ExactPointWalkable = exactPointWalkable;
 			HasReachableDestination = hasReachableDestination;
+			UsesProjectedDestination = usesProjectedDestination;
 			WouldMove = wouldMove;
 		}
 
@@ -181,6 +194,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 		public Vector2 Destination { get; }
 		public bool ExactPointWalkable { get; }
 		public bool HasReachableDestination { get; }
+		public bool UsesProjectedDestination { get; }
+		public bool CanShowWalkCursor => HasReachableDestination && (ExactPointWalkable || UsesProjectedDestination);
 		public bool WouldMove { get; }
 	}
 
@@ -503,7 +518,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, out MovementTargetQuery movementQuery))
 			return false;
 
-		if (!movementQuery.HasReachableDestination || !movementQuery.WouldMove)
+		if (!movementQuery.CanShowWalkCursor || !movementQuery.WouldMove)
 			return false;
 
 		clickPosition = movementQuery.Destination;
@@ -779,18 +794,35 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		bool exactPointWalkable = IsPointWalkable(targetPosition);
 		Vector2 destinationPosition = targetPosition;
+		bool usesProjectedDestination = false;
 
 		if (!exactPointWalkable && clampToWalkableArea)
 		{
 			destinationPosition = ClampToWalkableArea(targetPosition, logicalPosition);
+			usesProjectedDestination = Vector2.Distance(destinationPosition, targetPosition) > stopDistance;
+		}
+		else if (!exactPointWalkable &&
+			TryProjectClickToNearbyWalkableDestination(targetPosition, logicalPosition, out Vector2 projectedDestination))
+		{
+			destinationPosition = projectedDestination;
+			usesProjectedDestination = true;
 		}
 
 		if (clampToWalkableArea && !IsPointWalkable(destinationPosition))
 		{
 			destinationPosition = ClampToWalkableArea(destinationPosition, logicalPosition);
+			usesProjectedDestination = Vector2.Distance(destinationPosition, targetPosition) > stopDistance;
 		}
 
 		bool hasReachableDestination = TryBuildMovementPath(logicalPosition, destinationPosition, movementQueryPath);
+		if (!hasReachableDestination &&
+			TryFindReachableDestinationNear(targetPosition, out Vector2 reachableDestination))
+		{
+			destinationPosition = reachableDestination;
+			usesProjectedDestination = true;
+			hasReachableDestination = true;
+		}
+
 		bool wouldMove = hasReachableDestination &&
 			Vector2.Distance(logicalPosition, destinationPosition) > stopDistance;
 
@@ -800,8 +832,214 @@ public class PointClickPlayerMovement : MonoBehaviour
 			destinationPosition,
 			exactPointWalkable,
 			hasReachableDestination,
+			usesProjectedDestination,
 			wouldMove);
 		return true;
+	}
+
+	private bool TryProjectClickToNearbyWalkableDestination(
+		Vector2 requestedLogicalPoint,
+		Vector2 preferredLogicalPoint,
+		out Vector2 destination)
+	{
+		destination = requestedLogicalPoint;
+
+		if (walkableFloor == null)
+		{
+			return true;
+		}
+
+		UpdateVisualOffset(Camera.main);
+		Vector2 requestedWorldPoint = LogicalToWalkableWorldPoint(requestedLogicalPoint);
+		Vector2 preferredWorldPoint = LogicalToWalkableWorldPoint(preferredLogicalPoint);
+		float maxDistance = GetClickProjectionMaxWorldDistance();
+
+		if (!TryFindProjectedWalkableWorldPointNearClick(
+			requestedWorldPoint,
+			preferredWorldPoint,
+			maxDistance,
+			out Vector2 projectedWorldPoint))
+		{
+			return false;
+		}
+
+		Vector2 projectedLogicalPoint = WalkableWorldToLogicalPoint(projectedWorldPoint);
+		if (!IsPointWalkable(projectedLogicalPoint))
+		{
+			return false;
+		}
+
+		destination = projectedLogicalPoint;
+		return true;
+	}
+
+	private bool TryFindProjectedWalkableWorldPointNearClick(
+		Vector2 requestedWorldPoint,
+		Vector2 preferredWorldPoint,
+		float maxDistance,
+		out Vector2 projectedWorldPoint)
+	{
+		projectedWorldPoint = requestedWorldPoint;
+
+		if (walkableFloor == null)
+		{
+			return true;
+		}
+
+		if (walkableFloor.OverlapPoint(requestedWorldPoint))
+		{
+			return true;
+		}
+
+		bool foundPoint = false;
+		float bestSqrDistance = maxDistance * maxDistance;
+		Vector2 bestPoint = Vector2.zero;
+		Vector2 closestPoint = walkableFloor.ClosestPoint(requestedWorldPoint);
+
+		TryAcceptProjectedWalkableWorldPoint(
+			closestPoint,
+			requestedWorldPoint,
+			ref foundPoint,
+			ref bestSqrDistance,
+			ref bestPoint);
+
+		Vector2 insetDirection = preferredWorldPoint - closestPoint;
+		if (insetDirection.sqrMagnitude <= MovementEpsilon || !walkableFloor.OverlapPoint(preferredWorldPoint))
+		{
+			insetDirection = (Vector2)walkableFloor.bounds.center - closestPoint;
+		}
+
+		if (insetDirection.sqrMagnitude > MovementEpsilon)
+		{
+			insetDirection.Normalize();
+
+			for (int ring = 1; ring <= ClickProjectionSearchRings; ring++)
+			{
+				float radius = maxDistance * ring / ClickProjectionSearchRings;
+				Vector2 insetPoint = closestPoint + insetDirection * radius;
+				TryAcceptProjectedWalkableWorldPoint(
+					insetPoint,
+					requestedWorldPoint,
+					ref foundPoint,
+					ref bestSqrDistance,
+					ref bestPoint);
+			}
+		}
+
+		for (int ring = 1; ring <= ClickProjectionSearchRings; ring++)
+		{
+			float radius = maxDistance * ring / ClickProjectionSearchRings;
+
+			for (int sample = 0; sample < ClickProjectionSearchSamplesPerRing; sample++)
+			{
+				float angle = (Mathf.PI * 2f * sample) / ClickProjectionSearchSamplesPerRing;
+				Vector2 samplePoint = closestPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+				TryAcceptProjectedWalkableWorldPoint(
+					samplePoint,
+					requestedWorldPoint,
+					ref foundPoint,
+					ref bestSqrDistance,
+					ref bestPoint);
+			}
+		}
+
+		if (!foundPoint)
+		{
+			return false;
+		}
+
+		projectedWorldPoint = bestPoint;
+		return true;
+	}
+
+	private void TryAcceptProjectedWalkableWorldPoint(
+		Vector2 candidateWorldPoint,
+		Vector2 requestedWorldPoint,
+		ref bool foundPoint,
+		ref float bestSqrDistance,
+		ref Vector2 bestPoint)
+	{
+		if (!walkableFloor.OverlapPoint(candidateWorldPoint))
+		{
+			return;
+		}
+
+		float sqrDistance = (candidateWorldPoint - requestedWorldPoint).sqrMagnitude;
+		if (sqrDistance > bestSqrDistance)
+		{
+			return;
+		}
+
+		foundPoint = true;
+		bestSqrDistance = sqrDistance;
+		bestPoint = candidateWorldPoint;
+	}
+
+	private bool TryFindReachableDestinationNear(Vector2 requestedLogicalPoint, out Vector2 destination)
+	{
+		destination = requestedLogicalPoint;
+
+		if (walkableFloor == null)
+		{
+			return true;
+		}
+
+		UpdateVisualOffset(Camera.main);
+		float maxDistance = GetClickProjectionMaxWorldDistance();
+		Vector2 requestedWorldPoint = LogicalToWalkableWorldPoint(requestedLogicalPoint);
+		Vector2 currentWorldPoint = LogicalToWalkableWorldPoint(logicalPosition);
+
+		if (TryProjectClickToNearbyWalkableDestination(requestedLogicalPoint, logicalPosition, out Vector2 projectedDestination) &&
+			TryBuildMovementPath(logicalPosition, projectedDestination, movementQueryPath))
+		{
+			destination = projectedDestination;
+			return true;
+		}
+
+		for (int ring = 1; ring <= ClickProjectionSearchRings; ring++)
+		{
+			float radius = maxDistance * ring / ClickProjectionSearchRings;
+
+			for (int sample = 0; sample < ClickProjectionSearchSamplesPerRing; sample++)
+			{
+				float angle = (Mathf.PI * 2f * sample) / ClickProjectionSearchSamplesPerRing;
+				Vector2 candidateWorldPoint = requestedWorldPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+
+				if (!walkableFloor.OverlapPoint(candidateWorldPoint))
+				{
+					continue;
+				}
+
+				if (Vector2.Distance(requestedWorldPoint, candidateWorldPoint) > maxDistance)
+				{
+					continue;
+				}
+
+				Vector2 candidateLogicalPoint = WalkableWorldToLogicalPoint(candidateWorldPoint);
+				if (TryBuildMovementPath(logicalPosition, candidateLogicalPoint, movementQueryPath))
+				{
+					destination = candidateLogicalPoint;
+					return true;
+				}
+			}
+		}
+
+		Vector2 towardCurrent = currentWorldPoint - requestedWorldPoint;
+		if (towardCurrent.sqrMagnitude > MovementEpsilon)
+		{
+			Vector2 candidateWorldPoint = requestedWorldPoint + towardCurrent.normalized * Mathf.Min(maxDistance, towardCurrent.magnitude);
+			if (walkableFloor.OverlapPoint(candidateWorldPoint))
+			{
+				Vector2 candidateLogicalPoint = WalkableWorldToLogicalPoint(candidateWorldPoint);
+				if (TryBuildMovementPath(logicalPosition, candidateLogicalPoint, movementQueryPath))
+				{
+					destination = candidateLogicalPoint;
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	private bool TryGetLogicalPointFromScreen(Vector2 screenPosition, out Vector2 logicalPoint)
@@ -946,7 +1184,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		NavigationCursorController.SetWalkHover(
 			this,
 			true,
-			movementQuery.ExactPointWalkable && movementQuery.HasReachableDestination);
+			movementQuery.CanShowWalkCursor);
 	}
 
 	private void SetDestination(Vector2 clickPosition)
@@ -1431,6 +1669,23 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return false;
 		}
 
+		if (TryBuildMovementPathBetweenWalkable(startPosition, targetPosition, path))
+		{
+			return path.Count > 0;
+		}
+
+		if (TryBuildMovementPathFromNearbyStart(startPosition, targetPosition, path))
+		{
+			return path.Count > 0;
+		}
+
+		return false;
+	}
+
+	private bool TryBuildMovementPathBetweenWalkable(Vector2 startPosition, Vector2 targetPosition, List<Vector2> path)
+	{
+		path.Clear();
+
 		if (IsWalkableLogicalSegment(startPosition, targetPosition))
 		{
 			path.Add(targetPosition);
@@ -1440,6 +1695,55 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (TryBuildPolygonMovementPath(startPosition, targetPosition, path))
 		{
 			return path.Count > 0;
+		}
+
+		if (TryBuildGridMovementPath(startPosition, targetPosition, path))
+		{
+			return path.Count > 0;
+		}
+
+		return false;
+	}
+
+	private bool TryBuildMovementPathFromNearbyStart(Vector2 startPosition, Vector2 targetPosition, List<Vector2> path)
+	{
+		if (walkableFloor == null)
+		{
+			return false;
+		}
+
+		UpdateVisualOffset(Camera.main);
+		Vector2 startWorldPoint = LogicalToWalkableWorldPoint(startPosition);
+		float maxDistance = GetClickProjectionMaxWorldDistance() * 0.5f;
+
+		for (int ring = 1; ring <= ClickProjectionSearchRings; ring++)
+		{
+			float radius = maxDistance * ring / ClickProjectionSearchRings;
+
+			for (int sample = 0; sample < ClickProjectionSearchSamplesPerRing; sample++)
+			{
+				float angle = (Mathf.PI * 2f * sample) / ClickProjectionSearchSamplesPerRing;
+				Vector2 candidateWorldPoint = startWorldPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+
+				if (!walkableFloor.OverlapPoint(candidateWorldPoint) ||
+					!IsWalkableWorldSegment(startWorldPoint, candidateWorldPoint))
+				{
+					continue;
+				}
+
+				Vector2 candidateStartPosition = WalkableWorldToLogicalPoint(candidateWorldPoint);
+				if (!TryBuildMovementPathBetweenWalkable(candidateStartPosition, targetPosition, path))
+				{
+					continue;
+				}
+
+				if (Vector2.Distance(startPosition, candidateStartPosition) > stopDistance * 0.25f)
+				{
+					path.Insert(0, candidateStartPosition);
+				}
+
+				return path.Count > 0;
+			}
 		}
 
 		return false;
@@ -1520,6 +1824,386 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		return path.Count > 0;
+	}
+
+	private bool TryBuildGridMovementPath(Vector2 startPosition, Vector2 targetPosition, List<Vector2> path)
+	{
+		if (walkableFloor == null)
+		{
+			path.Add(targetPosition);
+			return true;
+		}
+
+		Vector2 startWorldPoint = LogicalToWalkableWorldPoint(startPosition);
+		Vector2 targetWorldPoint = LogicalToWalkableWorldPoint(targetPosition);
+		float spacing = GetGridRouteSpacing(out int columns, out int rows);
+
+		if (columns <= 0 || rows <= 0)
+		{
+			return false;
+		}
+
+		BuildGridRouteNodes(startWorldPoint, targetWorldPoint, spacing, columns, rows, gridRouteWorldNodes, gridRouteCellIndices);
+
+		if (gridRouteWorldNodes.Count <= 2)
+		{
+			return false;
+		}
+
+		int nodeCount = gridRouteWorldNodes.Count;
+		float[] gScores = new float[nodeCount];
+		float[] fScores = new float[nodeCount];
+		int[] previous = new int[nodeCount];
+		bool[] closed = new bool[nodeCount];
+		bool[] open = new bool[nodeCount];
+
+		for (int i = 0; i < nodeCount; i++)
+		{
+			gScores[i] = float.PositiveInfinity;
+			fScores[i] = float.PositiveInfinity;
+			previous[i] = -1;
+		}
+
+		gridRouteOpenNodes.Clear();
+		gScores[0] = 0f;
+		fScores[0] = Vector2.Distance(startWorldPoint, targetWorldPoint);
+		open[0] = true;
+		gridRouteOpenNodes.Add(0);
+
+		int targetIndex = 1;
+		int[] cellNodeIndices = BuildGridRouteCellIndex(gridRouteCellIndices, columns, rows);
+		float specialConnectionDistance = spacing * GridRouteSpecialConnectionMultiplier;
+
+		while (gridRouteOpenNodes.Count > 0)
+		{
+			int currentIndex = PopLowestGridRouteOpenNode(gridRouteOpenNodes, fScores);
+			open[currentIndex] = false;
+
+			if (currentIndex == targetIndex)
+			{
+				return BuildGridRouteResult(previous, targetIndex, targetPosition, path);
+			}
+
+			closed[currentIndex] = true;
+
+			if (currentIndex == 0)
+			{
+				ExploreGridRouteSpecialConnections(
+					currentIndex,
+					startWorldPoint,
+					spacing,
+					specialConnectionDistance,
+					gScores,
+					fScores,
+					previous,
+					closed,
+					open,
+					gridRouteOpenNodes);
+				continue;
+			}
+
+			int currentCellIndex = gridRouteCellIndices[currentIndex];
+			if (currentCellIndex < 0)
+			{
+				continue;
+			}
+
+			int cellX = currentCellIndex % columns;
+			int cellY = currentCellIndex / columns;
+
+			for (int yOffset = -1; yOffset <= 1; yOffset++)
+			{
+				for (int xOffset = -1; xOffset <= 1; xOffset++)
+				{
+					if (xOffset == 0 && yOffset == 0)
+					{
+						continue;
+					}
+
+					int nextX = cellX + xOffset;
+					int nextY = cellY + yOffset;
+
+					if (nextX < 0 || nextX >= columns || nextY < 0 || nextY >= rows)
+					{
+						continue;
+					}
+
+					int nextIndex = cellNodeIndices[nextY * columns + nextX];
+					if (nextIndex < 0)
+					{
+						continue;
+					}
+
+					TryRelaxGridRouteNode(currentIndex, nextIndex, targetWorldPoint, gScores, fScores, previous, closed, open, gridRouteOpenNodes);
+				}
+			}
+
+			if (Vector2.Distance(gridRouteWorldNodes[currentIndex], targetWorldPoint) <= specialConnectionDistance)
+			{
+				TryRelaxGridRouteNode(currentIndex, targetIndex, targetWorldPoint, gScores, fScores, previous, closed, open, gridRouteOpenNodes);
+			}
+		}
+
+		return false;
+	}
+
+	private void BuildGridRouteNodes(
+		Vector2 startWorldPoint,
+		Vector2 targetWorldPoint,
+		float spacing,
+		int columns,
+		int rows,
+		List<Vector2> nodes,
+		List<int> cellIndices)
+	{
+		nodes.Clear();
+		cellIndices.Clear();
+		nodes.Add(startWorldPoint);
+		cellIndices.Add(-1);
+		nodes.Add(targetWorldPoint);
+		cellIndices.Add(-1);
+
+		Bounds bounds = walkableFloor.bounds;
+		Vector2 origin = bounds.min;
+
+		for (int y = 0; y < rows; y++)
+		{
+			for (int x = 0; x < columns; x++)
+			{
+				Vector2 candidate = origin + new Vector2(x * spacing, y * spacing);
+
+				if (!walkableFloor.OverlapPoint(candidate))
+				{
+					continue;
+				}
+
+				nodes.Add(candidate);
+				cellIndices.Add(y * columns + x);
+			}
+		}
+	}
+
+	private int[] BuildGridRouteCellIndex(List<int> cellIndices, int columns, int rows)
+	{
+		int[] cellNodeIndices = new int[columns * rows];
+
+		for (int i = 0; i < cellNodeIndices.Length; i++)
+		{
+			cellNodeIndices[i] = -1;
+		}
+
+		for (int i = 2; i < cellIndices.Count; i++)
+		{
+			int cellIndex = cellIndices[i];
+			if (cellIndex >= 0 && cellIndex < cellNodeIndices.Length)
+			{
+				cellNodeIndices[cellIndex] = i;
+			}
+		}
+
+		return cellNodeIndices;
+	}
+
+	private void ExploreGridRouteSpecialConnections(
+		int currentIndex,
+		Vector2 sourceWorldPoint,
+		float spacing,
+		float specialConnectionDistance,
+		float[] gScores,
+		float[] fScores,
+		int[] previous,
+		bool[] closed,
+		bool[] open,
+		List<int> openNodes)
+	{
+		bool foundNearbyConnection = false;
+
+		for (int i = 2; i < gridRouteWorldNodes.Count; i++)
+		{
+			if (Vector2.Distance(sourceWorldPoint, gridRouteWorldNodes[i]) > specialConnectionDistance)
+			{
+				continue;
+			}
+
+			if (TryRelaxGridRouteNode(currentIndex, i, gridRouteWorldNodes[1], gScores, fScores, previous, closed, open, openNodes))
+			{
+				foundNearbyConnection = true;
+			}
+		}
+
+		if (foundNearbyConnection)
+		{
+			return;
+		}
+
+		int[] closestIndices = new int[GridRouteClosestSpecialConnections];
+		float[] closestDistances = new float[GridRouteClosestSpecialConnections];
+
+		for (int i = 0; i < closestIndices.Length; i++)
+		{
+			closestIndices[i] = -1;
+			closestDistances[i] = float.PositiveInfinity;
+		}
+
+		float maxDistance = spacing * GridRouteClosestSpecialConnections;
+
+		for (int i = 2; i < gridRouteWorldNodes.Count; i++)
+		{
+			float distance = Vector2.Distance(sourceWorldPoint, gridRouteWorldNodes[i]);
+			if (distance > maxDistance || !IsWalkableWorldSegment(sourceWorldPoint, gridRouteWorldNodes[i]))
+			{
+				continue;
+			}
+
+			for (int slot = 0; slot < closestIndices.Length; slot++)
+			{
+				if (distance >= closestDistances[slot])
+				{
+					continue;
+				}
+
+				for (int shift = closestIndices.Length - 1; shift > slot; shift--)
+				{
+					closestIndices[shift] = closestIndices[shift - 1];
+					closestDistances[shift] = closestDistances[shift - 1];
+				}
+
+				closestIndices[slot] = i;
+				closestDistances[slot] = distance;
+				break;
+			}
+		}
+
+		for (int i = 0; i < closestIndices.Length; i++)
+		{
+			if (closestIndices[i] >= 0)
+			{
+				TryRelaxGridRouteNode(currentIndex, closestIndices[i], gridRouteWorldNodes[1], gScores, fScores, previous, closed, open, openNodes);
+			}
+		}
+	}
+
+	private bool TryRelaxGridRouteNode(
+		int currentIndex,
+		int nextIndex,
+		Vector2 targetWorldPoint,
+		float[] gScores,
+		float[] fScores,
+		int[] previous,
+		bool[] closed,
+		bool[] open,
+		List<int> openNodes)
+	{
+		if (closed[nextIndex] || !IsWalkableWorldSegment(gridRouteWorldNodes[currentIndex], gridRouteWorldNodes[nextIndex]))
+		{
+			return false;
+		}
+
+		float nextScore = gScores[currentIndex] + Vector2.Distance(gridRouteWorldNodes[currentIndex], gridRouteWorldNodes[nextIndex]);
+		if (nextScore >= gScores[nextIndex])
+		{
+			return false;
+		}
+
+		previous[nextIndex] = currentIndex;
+		gScores[nextIndex] = nextScore;
+		fScores[nextIndex] = nextScore + Vector2.Distance(gridRouteWorldNodes[nextIndex], targetWorldPoint);
+
+		if (!open[nextIndex])
+		{
+			open[nextIndex] = true;
+			openNodes.Add(nextIndex);
+		}
+
+		return true;
+	}
+
+	private int PopLowestGridRouteOpenNode(List<int> openNodes, float[] fScores)
+	{
+		int bestOpenListIndex = 0;
+		float bestScore = fScores[openNodes[0]];
+
+		for (int i = 1; i < openNodes.Count; i++)
+		{
+			float score = fScores[openNodes[i]];
+			if (score >= bestScore)
+			{
+				continue;
+			}
+
+			bestOpenListIndex = i;
+			bestScore = score;
+		}
+
+		int nodeIndex = openNodes[bestOpenListIndex];
+		int lastIndex = openNodes.Count - 1;
+		openNodes[bestOpenListIndex] = openNodes[lastIndex];
+		openNodes.RemoveAt(lastIndex);
+		return nodeIndex;
+	}
+
+	private bool BuildGridRouteResult(int[] previous, int targetIndex, Vector2 targetPosition, List<Vector2> path)
+	{
+		gridRouteSmoothedPath.Clear();
+
+		int routeIndex = targetIndex;
+		while (routeIndex >= 0)
+		{
+			gridRouteSmoothedPath.Add(gridRouteWorldNodes[routeIndex]);
+
+			if (routeIndex == 0)
+			{
+				break;
+			}
+
+			routeIndex = previous[routeIndex];
+		}
+
+		if (gridRouteSmoothedPath.Count < 2 || gridRouteSmoothedPath[gridRouteSmoothedPath.Count - 1] != gridRouteWorldNodes[0])
+		{
+			gridRouteSmoothedPath.Clear();
+			return false;
+		}
+
+		gridRouteSmoothedPath.Reverse();
+		SmoothGridRouteWorldPath(gridRouteSmoothedPath);
+
+		for (int i = 1; i < gridRouteSmoothedPath.Count; i++)
+		{
+			Vector2 logicalPoint = i == gridRouteSmoothedPath.Count - 1
+				? targetPosition
+				: WalkableWorldToLogicalPoint(gridRouteSmoothedPath[i]);
+
+			if (path.Count == 0 || Vector2.Distance(path[path.Count - 1], logicalPoint) > stopDistance * 0.5f)
+			{
+				path.Add(logicalPoint);
+			}
+		}
+
+		return path.Count > 0;
+	}
+
+	private void SmoothGridRouteWorldPath(List<Vector2> route)
+	{
+		if (route.Count <= 2)
+		{
+			return;
+		}
+
+		int anchorIndex = 0;
+		int testIndex = 2;
+
+		while (testIndex < route.Count)
+		{
+			if (IsWalkableWorldSegment(route[anchorIndex], route[testIndex]))
+			{
+				route.RemoveAt(testIndex - 1);
+				continue;
+			}
+
+			anchorIndex++;
+			testIndex = anchorIndex + 2;
+		}
 	}
 
 	private void CollectPolygonPathNodes(
@@ -1778,6 +2462,53 @@ public class PointClickPlayerMovement : MonoBehaviour
 		Bounds bounds = walkableFloor.bounds;
 		float shortestSize = Mathf.Min(bounds.size.x, bounds.size.y);
 		return Mathf.Max(WalkableInsetStep, shortestSize / 160f);
+	}
+
+	private float GetGridRouteSpacing(out int columns, out int rows)
+	{
+		columns = 0;
+		rows = 0;
+
+		if (walkableFloor == null)
+		{
+			return WalkableInsetStep;
+		}
+
+		Bounds bounds = walkableFloor.bounds;
+		float shortestSize = Mathf.Max(WalkableInsetStep, Mathf.Min(bounds.size.x, bounds.size.y));
+		float spacing = Mathf.Max(WalkableInsetStep, shortestSize / 48f);
+
+		for (int attempt = 0; attempt < 16; attempt++)
+		{
+			columns = Mathf.Max(1, Mathf.CeilToInt(bounds.size.x / spacing) + 1);
+			rows = Mathf.Max(1, Mathf.CeilToInt(bounds.size.y / spacing) + 1);
+
+			if (columns * rows <= GridRouteMaxNodeCount)
+			{
+				return spacing;
+			}
+
+			spacing *= 1.18f;
+		}
+
+		columns = Mathf.Max(1, Mathf.CeilToInt(bounds.size.x / spacing) + 1);
+		rows = Mathf.Max(1, Mathf.CeilToInt(bounds.size.y / spacing) + 1);
+		return spacing;
+	}
+
+	private float GetClickProjectionMaxWorldDistance()
+	{
+		if (walkableFloor == null)
+		{
+			return ClickProjectionMinWorldDistance;
+		}
+
+		Bounds bounds = walkableFloor.bounds;
+		float shortestSize = Mathf.Min(bounds.size.x, bounds.size.y);
+		return Mathf.Clamp(
+			shortestSize / 16f,
+			ClickProjectionMinWorldDistance,
+			ClickProjectionMaxWorldDistance);
 	}
 
 	private float GetPathNodeInsetDistance()
