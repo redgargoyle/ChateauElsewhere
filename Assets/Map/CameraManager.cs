@@ -32,7 +32,9 @@ public class CameraManager : MonoBehaviour
     public float roomPanStartSpeed = 0.45f;
     public float roomPanAccelerationTime = 1.25f;
     public bool returnRoomPanToCenter;
-    public bool moveRoomVerticallyWithMouseEdges;
+    public bool moveRoomVerticallyWithMouseEdges = true;
+    [Tooltip("Keeps older scenes with vertical edge panning serialized off from trapping cropped room art above or below the viewport.")]
+    public bool autoEnableVerticalRoomPan = true;
     [Range(0f, 1f)]
     public float maxRoomVerticalPan = 1f;
     public bool invertVerticalRoomPan;
@@ -43,6 +45,8 @@ public class CameraManager : MonoBehaviour
     public float minRoomFov = 0.55f;
     [Range(0f, 1f)]
     public float maxRoomFov = 1f;
+    [Range(1f, 1.5f)]
+    public float minRoomZoom = 1f;
     [Range(1f, 1.5f)]
     public float defaultRoomZoom = 1.06f;
     [Range(1f, 1.5f)]
@@ -111,6 +115,7 @@ public class CameraManager : MonoBehaviour
     private Transform originalBackgroundParent;
     private int originalBackgroundSiblingIndex = -1;
     private readonly Vector3[] anchoredReferenceCorners = new Vector3[4];
+    private readonly Vector3[] viewportScreenCorners = new Vector3[4];
 
     public float CurrentRoomHorizontalPan => currentRoomPan;
     public float CurrentRoomVerticalPan => currentRoomVerticalPan;
@@ -1008,7 +1013,7 @@ public class CameraManager : MonoBehaviour
             NavigationCursorController.SetEdgePanDirection(0);
         }
 
-        if (moveRoomVerticallyWithMouseEdges)
+        if (ShouldMoveRoomVerticallyWithMouseEdges())
         {
             float previousVerticalPan = currentRoomVerticalPan;
             targetRoomVerticalPan = GetRoomVerticalPanTargetFromMouse();
@@ -1094,7 +1099,7 @@ public class CameraManager : MonoBehaviour
             return currentRoomPan;
         }
 
-        edgeDirection = GetHorizontalEdgeDirection(mousePosition.x);
+        edgeDirection = GetHorizontalEdgeDirection(mousePosition);
 
         if (edgeDirection == 0)
         {
@@ -1108,16 +1113,17 @@ public class CameraManager : MonoBehaviour
         return ClampHorizontalRoomPan(edgeDirection * Mathf.Clamp01(maxRoomPan));
     }
 
-    private int GetHorizontalEdgeDirection(float mouseX)
+    private int GetHorizontalEdgeDirection(Vector3 mousePosition)
     {
         float edgePixels = Mathf.Max(1f, edgePanActivationPixels);
+        Rect inputRect = GetRoomInputScreenRect();
 
-        if (mouseX <= edgePixels)
+        if (mousePosition.x <= inputRect.xMin + edgePixels)
         {
             return -1;
         }
 
-        if (mouseX >= Screen.width - edgePixels)
+        if (mousePosition.x >= inputRect.xMax - edgePixels)
         {
             return 1;
         }
@@ -1160,9 +1166,10 @@ public class CameraManager : MonoBehaviour
             return returnRoomPanToCenter ? 0f : targetRoomVerticalPan;
         }
 
-        float edgePixels = Mathf.Max(1f, Screen.height * Mathf.Clamp(mouseEdgePanZone, 0.01f, 0.5f));
-        float bottomAmount = Mathf.Clamp01((edgePixels - mousePosition.y) / edgePixels);
-        float topAmount = Mathf.Clamp01((mousePosition.y - (Screen.height - edgePixels)) / edgePixels);
+        Rect inputRect = GetRoomInputScreenRect();
+        float edgePixels = Mathf.Max(1f, inputRect.height * Mathf.Clamp(mouseEdgePanZone, 0.01f, 0.5f));
+        float bottomAmount = Mathf.Clamp01((inputRect.yMin + edgePixels - mousePosition.y) / edgePixels);
+        float topAmount = Mathf.Clamp01((mousePosition.y - (inputRect.yMax - edgePixels)) / edgePixels);
         float pan = topAmount - bottomAmount;
 
         if (invertVerticalRoomPan)
@@ -1176,6 +1183,64 @@ public class CameraManager : MonoBehaviour
         }
 
         return ClampVerticalRoomPan(pan);
+    }
+
+    private bool ShouldMoveRoomVerticallyWithMouseEdges()
+    {
+        return moveRoomVerticallyWithMouseEdges || (autoEnableVerticalRoomPan && panRoomWithMouseEdges);
+    }
+
+    private Rect GetRoomInputScreenRect()
+    {
+        if (TryGetRoomViewportScreenRect(out Rect viewportRect) &&
+            viewportRect.width > 0f &&
+            viewportRect.height > 0f)
+        {
+            return viewportRect;
+        }
+
+        return new Rect(0f, 0f, Mathf.Max(1f, Screen.width), Mathf.Max(1f, Screen.height));
+    }
+
+    private bool TryGetRoomViewportScreenRect(out Rect screenRect)
+    {
+        screenRect = new Rect(0f, 0f, 0f, 0f);
+        RectTransform viewport = null;
+
+        if (UsesRoomStageLayout())
+        {
+            viewport = activeRoomStage.parent as RectTransform;
+        }
+
+        if (viewport == null && cameraBackground != null)
+        {
+            viewport = cameraBackground.rectTransform.parent as RectTransform;
+        }
+
+        if (viewport == null)
+        {
+            return false;
+        }
+
+        Canvas canvas = viewport.GetComponentInParent<Canvas>();
+        Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+
+        viewport.GetWorldCorners(viewportScreenCorners);
+
+        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+
+        for (int i = 0; i < viewportScreenCorners.Length; i++)
+        {
+            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(canvasCamera, viewportScreenCorners[i]);
+            min = Vector2.Min(min, screenPoint);
+            max = Vector2.Max(max, screenPoint);
+        }
+
+        screenRect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        return screenRect.width > 0f && screenRect.height > 0f;
     }
 
     private bool TryGetMousePositionOnScreen(out Vector3 mousePosition)
@@ -1212,7 +1277,7 @@ public class CameraManager : MonoBehaviour
 
     private float ClampRoomZoom(float zoom)
     {
-        float minZoom = Mathf.Max(1f, defaultRoomZoom);
+        float minZoom = Mathf.Max(1f, minRoomZoom);
         float maxZoom = Mathf.Max(minZoom, maxRoomZoom);
 
         return Mathf.Clamp(zoom, minZoom, maxZoom);

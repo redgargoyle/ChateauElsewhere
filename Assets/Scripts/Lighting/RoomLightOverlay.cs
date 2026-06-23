@@ -25,6 +25,7 @@ public sealed class RoomLightOverlay : MonoBehaviour
 
     private static Sprite sharedSoftLightSprite;
     private static Sprite sharedSourceLightSprite;
+    private static Sprite sharedFlameCoreSprite;
 
     private RectTransform rectTransform;
     private Image image;
@@ -138,9 +139,19 @@ public sealed class RoomLightOverlay : MonoBehaviour
             return;
         }
 
-        image.sprite = animationStyle == RoomLightAnimationStyle.FireplaceSource
-            ? GetSourceLightSprite()
-            : GetSoftLightSprite();
+        switch (animationStyle)
+        {
+            case RoomLightAnimationStyle.FireplaceSource:
+                image.sprite = GetSourceLightSprite();
+                break;
+            case RoomLightAnimationStyle.FlameCore:
+                image.sprite = GetFlameCoreSprite();
+                break;
+            default:
+                image.sprite = GetSoftLightSprite();
+                break;
+        }
+
         image.type = Image.Type.Simple;
         image.raycastTarget = false;
     }
@@ -239,6 +250,14 @@ public sealed class RoomLightOverlay : MonoBehaviour
                     new Color(1f, 0.24f, 0.06f, 1f),
                     0.45f * Mathf.Max(flicker, drift));
 
+            case RoomLightAnimationStyle.FlameCore:
+                float flame = Mathf.Sin(t * 14.3f) + 0.42f * Mathf.Sin(t * 25.1f + 0.6f) + 0.18f * Mathf.Sin(t * 39.7f + 1.9f);
+                return new LightFrame(
+                    ClampAnimation(0.72f + 0.18f * flicker * flame),
+                    new Vector2(0.96f + 0.08f * flicker * Mathf.Sin(t * 12.5f), 1f + 0.1f * flicker * Mathf.Sin(t * 8.2f + 0.9f)),
+                    new Color(1f, 0.34f, 0.08f, 1f),
+                    0.18f * flicker);
+
             default:
                 float sconce = 0.7f * Mathf.Sin(t * 3.7f) + 0.35f * Mathf.Sin(t * 8.1f + 0.8f);
                 return new LightFrame(
@@ -334,6 +353,54 @@ public sealed class RoomLightOverlay : MonoBehaviour
         texture.Apply(false, true);
         sharedSourceLightSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), size);
         return sharedSourceLightSprite;
+    }
+
+    private static Sprite GetFlameCoreSprite()
+    {
+        if (sharedFlameCoreSprite != null)
+        {
+            return sharedFlameCoreSprite;
+        }
+
+        const int size = 96;
+        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        texture.name = "Generated_FlameCoreRoomLight";
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+
+        float center = (size - 1) * 0.5f;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float nx = (x - center) / center;
+                float ny = (y - center) / center;
+                float vertical = Mathf.InverseLerp(-0.92f, 0.84f, ny);
+                float width = Mathf.Lerp(0.46f, 0.08f, Mathf.Pow(vertical, 1.55f));
+                float body = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(width * 0.35f, width, Mathf.Abs(nx)));
+                float baseFade = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-0.92f, -0.54f, ny));
+                float tipFade = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.42f, 0.86f, ny));
+                float sway = 0.08f * Mathf.Sin(vertical * Mathf.PI * 2.4f);
+                float outer = body * baseFade * tipFade * Mathf.SmoothStep(1f, 0f, Mathf.Abs(nx - sway));
+
+                float innerWidth = width * 0.4f;
+                float inner = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(innerWidth * 0.35f, innerWidth, Mathf.Abs(nx + 0.025f)));
+                inner *= Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-0.78f, -0.42f, ny));
+                inner *= Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.12f, 0.52f, ny));
+
+                float alpha = Mathf.Clamp01(outer * 0.55f + inner * 0.32f);
+                Color outerColor = new Color(1f, 0.34f, 0.05f, alpha);
+                Color innerColor = new Color(1f, 0.86f, 0.38f, alpha);
+                Color pixel = Color.Lerp(outerColor, innerColor, Mathf.Clamp01(inner));
+                pixel.a = alpha;
+                texture.SetPixel(x, y, pixel);
+            }
+        }
+
+        texture.Apply(false, true);
+        sharedFlameCoreSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.42f), size);
+        return sharedFlameCoreSprite;
     }
 
     private readonly struct LightFrame

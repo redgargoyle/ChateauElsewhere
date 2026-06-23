@@ -336,6 +336,20 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void MainMenuLayoutScalesToShortGameViews()
+    {
+        string mainMenuText = File.ReadAllText(MainMenuControllerPath);
+
+        Assert.That(mainMenuText, Does.Contain("menuSafeMargin"), "The main menu needs a safe margin when the Game view is shorter than the reference frame.");
+        Assert.That(mainMenuText, Does.Contain("minResponsiveLayoutScale"), "Responsive menu scaling should have a floor so the art buttons remain readable.");
+        Assert.That(mainMenuText, Does.Contain("GetResponsiveMenuLayoutScale"), "The menu should compute layout scale from the resolved Canvas size.");
+        Assert.That(mainMenuText, Does.Contain("GetReferenceMenuLayoutExtents"), "The menu should fit the whole authored button stack, including the bottom Exit button.");
+        Assert.That(mainMenuText, Does.Contain("HasMenuLayoutSizeChanged"), "The menu should repair its layout when the Game view size changes after Awake.");
+        Assert.That(mainMenuText, Does.Contain("buttonSpacing * 3f)) * layoutScale"), "The Exit button position must be scaled with the rest of the stack.");
+        Assert.That(mainMenuText, Does.Contain("ApplyResponsiveTitleFont"), "The title should shrink with the menu instead of overflowing a reduced title rect.");
+    }
+
+    [Test]
     public void PlayerMovementUsesOnlyFloorBoundaryForWalkability()
     {
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
@@ -578,6 +592,10 @@ public class NavigationRegressionTests
         Assert.That(sceneText, Does.Contain("roomZoomFocus: {x: 0.5, y: 0.56}"), "Regular zoom should aim near the room vanishing point so it reads as stepping closer.");
         Assert.That(sceneText, Does.Not.Contain("scrollRoomVerticallyWithMouseWheel"), "Mouse wheel should not drive vertical shader strength; that smeared room art into stripes.");
         Assert.That(sceneText, Does.Not.Contain("scrollRoomFovWithMouseWheel"), "Mouse wheel should not drive FOV zoom; that caused the sideways drift regression.");
+        Assert.That(cameraManagerText, Does.Contain("minRoomZoom"), "Mouse-wheel zoom should be allowed to zoom back out toward the full room image.");
+        Assert.That(cameraManagerText, Does.Contain("autoEnableVerticalRoomPan"), "Old scenes serialized with vertical pan off should still allow cropped room art to be reached.");
+        Assert.That(cameraManagerText, Does.Contain("ShouldMoveRoomVerticallyWithMouseEdges"), "Vertical edge panning should be part of the room-look input path.");
+        Assert.That(cameraManagerText, Does.Contain("GetRoomInputScreenRect"), "Edge panning should use the actual room viewport rect, not assume the raw screen always matches the Canvas.");
         Assert.That(cameraManagerText, Does.Contain("return currentRoomPan;"), "Leaving the edge should hold the current pan instead of recentering.");
         Assert.That(cameraManagerText, Does.Contain("NavigationCursorController.SetEdgePanDirection"), "Edge panning should update the cursor state.");
         Assert.That(cameraManagerText, Does.Contain("SetActiveRoomContent"), "CameraManager should know which room stage owns the current background and hitboxes.");

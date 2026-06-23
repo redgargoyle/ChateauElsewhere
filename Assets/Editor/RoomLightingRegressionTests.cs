@@ -31,6 +31,14 @@ public class RoomLightingRegressionTests
         Assert.That(controllerText, Does.Contain("lightingStructureObjects"), "Lighting roots should own non-light payloads like flames, not only overlay components.");
         Assert.That(controllerText, Does.Contain("lightingStructureActiveStates"), "Turning lights back on should restore authored active states instead of enabling inactive patch candidates.");
         Assert.That(controllerText, Does.Contain("GetComponentsInChildren<Transform>(true)"), "Nested lighting roots inside room props should also be discovered.");
+        Assert.That(controllerText, Does.Contain("TrueParticleFireRootName"), "True particle fire roots should be toggled with the rest of the lights.");
+        Assert.That(controllerText, Does.Contain("LooksLikeLooseLightParticle"), "Loose duplicated candle/flame particles should still be toggled by the lights switch.");
+        Assert.That(controllerText, Does.Contain("LooseLightParticleNameFragments"), "The switch should recognize candle, flame, fire, and hearth particle objects.");
+        Assert.That(controllerText, Does.Contain("syncExistingLightsFromPreset"), "Generated room lights should be able to pick up corrected preset coordinates.");
+        Assert.That(controllerText, Does.Contain("existingOverlay.ApplyDefinition(definition)"), "Existing generated room lights should sync from the preset instead of keeping stale placements.");
+        Assert.That(controllerText, Does.Contain("removeStaleGeneratedFlameCores"), "Generated flame cores removed from the preset should not linger in open scenes.");
+        Assert.That(controllerText, Does.Contain("IsGeneratedFlameCoreSceneLightName"), "Only generated flame-core objects should be pruned automatically.");
+        Assert.That(controllerText, Does.Contain("RemoveSceneObject(childObject)"), "Stale generated flame cores should be removed instead of left rendering off-source lines.");
         Assert.That(controllerText, Does.Contain("CaptureLightingStructureActiveStates"), "Runtime object state should be captured before the controller disables lighting payloads.");
         Assert.That(controllerText, Does.Contain("ApplyLightingStructureActiveState"), "Lighting payloads should be toggled with the room lights.");
         Assert.That(controllerText, Does.Contain("SetActive(targetActive)"), "Objects under Lighting should become inactive when the lights are off.");
@@ -43,11 +51,15 @@ public class RoomLightingRegressionTests
         Assert.That(overlayText, Does.Contain("animationStyle"), "Each scene light should own its animation style.");
         Assert.That(overlayText, Does.Contain("FireplaceSource"), "Fireplace sources should have a hotter animation distinct from the room spill.");
         Assert.That(overlayText, Does.Contain("GetSourceLightSprite"), "Fireplace sources should use a tighter generated sprite than soft room spills.");
+        Assert.That(overlayText, Does.Contain("FlameCore"), "Visible candle/fire source tips should have a tiny flame-core overlay style.");
+        Assert.That(overlayText, Does.Contain("GetFlameCoreSprite"), "Flame cores should use a generated flame-shaped sprite, not a broad glow blob.");
+        Assert.That(overlayText, Does.Contain("Generated_FlameCoreRoomLight"), "The generated flame-core sprite should be named for debugging.");
         Assert.That(overlayText, Does.Contain("raycastTarget = false"), "Light overlays must never block room doors or interactables.");
         Assert.That(overlayText, Does.Contain("CaptureAuthoringScale"), "Edit-mode light resizing should not be overwritten by flicker scale animation.");
         Assert.That(overlayText, Does.Contain("if (!Application.isPlaying)"), "Transform scale animation should back off while artists resize scene lights in Edit mode.");
         Assert.That(overlayText, Does.Contain("ColorUsage(false, true)"), "Room lights should allow HDR color values so bloom can react to source glows.");
         Assert.That(presetScriptText, Does.Contain("ColorUsage(false, true)"), "Preset-authored room lights should also allow HDR color values.");
+        Assert.That(presetScriptText, Does.Contain("FlameCore"), "The preset enum should include the source-level flame core style.");
     }
 
     [Test]
@@ -115,8 +127,30 @@ public class RoomLightingRegressionTests
         Assert.That(presetText, Does.Contain("animationStyle: 3"), "Window glow should be represented.");
         Assert.That(presetText, Does.Contain("animationStyle: 4"), "Candle cluster flicker should be represented.");
         Assert.That(presetText, Does.Contain("animationStyle: 5"), "Fireplace source flicker should be represented.");
+        Assert.That(presetText, Does.Contain("animationStyle: 6"), "Visible candle and fireplace tips should use flame-core overlays.");
         Assert.That(presetText, Does.Contain("lightName: Drawing Fireplace Source"), "The fireplace source/spill example should be easy to find.");
         Assert.That(presetText, Does.Contain("lightName: Drawing Fireplace Room Spill"), "The fireplace source/spill example should be easy to compare.");
+        Assert.That(Regex.Matches(presetText, "Candle Source").Count + Regex.Matches(presetText, "Candle Sources").Count, Is.GreaterThanOrEqualTo(24), "Small candle/chandelier/sconce sources should cover the visible room candles.");
+        Assert.That(Regex.Matches(presetText, "Flame Core").Count, Is.GreaterThanOrEqualTo(500), "The active room art should have source-level flame coverage, but only at fixture tips and visible fire tongues.");
+        Assert.That(Regex.Matches(presetText, "Billiard Room .* Flame Core").Count, Is.GreaterThanOrEqualTo(30), "The billiard room chandeliers, tri-candle sconces, mantel candles, and fireplace should keep fixture-tip cores.");
+        Assert.That(Regex.Matches(presetText, "Chapel .* Flame Core").Count, Is.GreaterThanOrEqualTo(35), "The chapel altar, floor candelabras, and wall candles should stay densely lit.");
+        Assert.That(Regex.Matches(presetText, "Upper Sitting Hall .* Flame Core").Count, Is.GreaterThanOrEqualTo(30), "The upper sitting hall wall sconces and chandelier should keep fixture-tip source flames.");
+        Assert.That(Regex.Matches(presetText, @"lightName: .* Lamps? Flame Core").Count, Is.EqualTo(0), "Lamp shades should keep soft glow, not vertical flame-core sprites.");
+        Assert.That(Regex.Matches(presetText, @"lightName: .* Lantern.* Flame Core").Count, Is.EqualTo(0), "Lanterns should keep soft glow unless they have a verified candle tip.");
+        Assert.That(presetText, Does.Contain("lightName: GEH Left Tri Candle Source"), "The entrance tri-candles need their own source glows.");
+        Assert.That(presetText, Does.Contain("lightName: GEH Right Tri Candle Source"), "The entrance tri-candles need their own source glows.");
+        Assert.That(presetText, Does.Contain("lightName: Grand Entrance Hall Left Stair Sconce Flame Core 01"), "Tri-candle sconces need individual visible flame tips, not a single glow.");
+        Assert.That(presetText, Does.Contain("lightName: Grand Entrance Hall Left Stair Sconce Flame Core 02"), "Tri-candle sconces need individual visible flame tips, not a single glow.");
+        Assert.That(presetText, Does.Contain("lightName: Grand Entrance Hall Left Stair Sconce Flame Core 03"), "Tri-candle sconces need individual visible flame tips, not a single glow.");
+        Assert.That(presetText, Does.Contain("lightName: Upper Sitting Hall Main Chandelier Flame Core 10"), "Chandeliers should get separate source tips on their visible bulbs/candles.");
+        Assert.That(presetText, Does.Contain("lightName: Dining Room Chandelier Flame Core 08"), "The dining room chandelier should have multiple visible candle tips.");
+        Assert.That(presetText, Does.Contain("lightName: Billiard Room Fireplace Firebox Flame Core 03"), "The billiard room fireplace should have visible core flames in the actual firebox.");
+        Assert.That(presetText, Does.Contain("lightName: Chapel Altar Candle Row Flame Core 06"), "The chapel altar candle line should have multiple visible fixture-tip flames.");
+        Assert.That(presetText, Does.Contain("lightName: Blue Bedroom Left Hall Sconce Flame Core 02"), "Bedroom side-door sconces should not be left dark.");
+        Assert.That(presetText, Does.Contain("lightName: Music Fireplace Source"), "Music room fireplace flames should not be left dark.");
+        Assert.That(presetText, Does.Contain("lightName: Library Fireplace Source"), "Library fireplace flames should not be left dark.");
+        Assert.That(presetText, Does.Contain("lightName: Blue Bedroom Fireplace Source"), "The older blue-bedroom warm source entry should still sync to the active room art.");
+        Assert.That(presetText, Does.Contain("lightName: Chapel Altar Candle Sources"), "Chapel altar candles should have source-level glow.");
 
         Assert.That(readmeText, Does.Contain("Soft overlay lights"));
         Assert.That(readmeText, Does.Contain("Hand-painted frame swaps"));

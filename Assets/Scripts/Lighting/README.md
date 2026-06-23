@@ -4,7 +4,7 @@ The current prototype uses soft UI overlays that live as editable scene objects 
 
 `Gameplay.unity` has a visible `RoomLightingController` object. If the lights ever disappear, check that object first: it owns the preset reference, HUD toggle, and `L` key binding.
 
-The preset at `Resources/Lighting/RoomLightingPreset.asset` is a starter/template. It creates missing `RoomLight_*` objects, but once a light exists, the scene object is the thing to move, resize, recolor, and tune.
+The preset at `Resources/Lighting/RoomLightingPreset.asset` creates missing `RoomLight_*` objects and syncs generated lights back onto existing scene objects so broad placement fixes and tiny flame-core placements do not get stuck behind stale scene transforms. Generated flame cores that are removed from the preset are pruned from open scenes so old off-source vertical marks do not keep rendering.
 
 ## Fireplace Source Pattern
 
@@ -12,6 +12,7 @@ Hamza's fireplace idea works best as two separate overlays:
 
 1. **FireplaceSource**: a small, hotter core placed directly on the visible flames/embers. It flickers faster and uses a tighter generated sprite, so the room has an obvious light source.
 2. **HearthBreath**: a wider, slower spill over nearby walls, floors, and furniture. This is the piece that makes the room feel lit rather than just decorated.
+3. **FlameCore**: a tiny flame-shaped source tip placed only on individual candle flames, sconce candles, chandelier candles, and visible firebox tongues. Lamp shades and lantern bodies should use soft glows unless a real candle tip is visible in the painting.
 
 The first comparison set is in `Kitchen`, `Drawing Room`, `Dining Room`, `Master Bedroom Suite`, and `Billiard Room`. Each has a small source light paired with a larger spill so the source and room-lighting behavior can be judged independently.
 

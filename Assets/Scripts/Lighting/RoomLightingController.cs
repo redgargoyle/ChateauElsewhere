@@ -17,13 +17,18 @@ public sealed class RoomLightingController : MonoBehaviour
 {
     private const string DefaultPresetResourcePath = "Lighting/RoomLightingPreset";
     private const string LightingRootName = "Lighting";
+    private const string TrueParticleFireRootName = "TrueParticleFire";
     private const int HudSortingOrder = 7000;
+    private static readonly string[] LightingPayloadRootNames = { LightingRootName, TrueParticleFireRootName };
+    private static readonly string[] LooseLightParticleNameFragments = { "flame", "candle", "fire", "hearth" };
 
     [SerializeField] private string presetResourcePath = DefaultPresetResourcePath;
     [SerializeField] private RoomLightingPreset preset;
     [SerializeField] private KeyCode toggleKey = KeyCode.L;
     [SerializeField] private bool showHud = true;
     [SerializeField] private bool createMissingLightsFromPreset = true;
+    [SerializeField] private bool syncExistingLightsFromPreset = true;
+    [SerializeField] private bool removeStaleGeneratedFlameCores = true;
     [Header("Global Volume")]
     [SerializeField] private bool driveGlobalBloomIntensity = true;
     [SerializeField] private Volume globalVolume;
@@ -225,6 +230,8 @@ public sealed class RoomLightingController : MonoBehaviour
             return;
         }
 
+        Dictionary<string, HashSet<string>> presetSceneLightNamesByRoom = new Dictionary<string, HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
+
         for (int i = 0; i < lights.Count; i++)
         {
             RoomLightDefinition light = lights[i];
@@ -234,7 +241,59 @@ public sealed class RoomLightingController : MonoBehaviour
                 continue;
             }
 
+            if (!presetSceneLightNamesByRoom.TryGetValue(roomGroup.RoomName, out HashSet<string> presetSceneLightNames))
+            {
+                presetSceneLightNames = new HashSet<string>(System.StringComparer.Ordinal);
+                presetSceneLightNamesByRoom[roomGroup.RoomName] = presetSceneLightNames;
+            }
+
+            presetSceneLightNames.Add(GetSceneLightName(light, i));
             CreateMissingSceneLight(roomGroup, light, i);
+        }
+
+        RemoveStaleGeneratedFlameCores(roomsByName, presetSceneLightNamesByRoom);
+    }
+
+    private void RemoveStaleGeneratedFlameCores(Dictionary<string, RoomContentGroup> roomsByName, Dictionary<string, HashSet<string>> presetSceneLightNamesByRoom)
+    {
+        if (!removeStaleGeneratedFlameCores || roomsByName == null || presetSceneLightNamesByRoom == null)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<string, RoomContentGroup> roomEntry in roomsByName)
+        {
+            RoomContentGroup roomGroup = roomEntry.Value;
+
+            if (roomGroup == null || !presetSceneLightNamesByRoom.TryGetValue(roomGroup.RoomName, out HashSet<string> presetSceneLightNames))
+            {
+                continue;
+            }
+
+            Transform lightingRoot = roomGroup.transform.Find(LightingRootName);
+
+            if (lightingRoot == null)
+            {
+                continue;
+            }
+
+            for (int i = lightingRoot.childCount - 1; i >= 0; i--)
+            {
+                GameObject childObject = lightingRoot.GetChild(i).gameObject;
+
+                if (childObject == null || !IsGeneratedFlameCoreSceneLightName(childObject.name) || presetSceneLightNames.Contains(childObject.name))
+                {
+                    continue;
+                }
+
+                if (childObject.GetComponent<RoomLightOverlay>() == null)
+                {
+                    continue;
+                }
+
+                lightingStructureActiveStates.Remove(childObject);
+                RemoveSceneObject(childObject);
+            }
         }
     }
 
@@ -244,8 +303,14 @@ public sealed class RoomLightingController : MonoBehaviour
         string lightName = GetSceneLightName(definition, index);
         Transform existing = lightingRoot.Find(lightName);
 
-        if (existing != null && existing.GetComponent<RoomLightOverlay>() != null)
+        if (existing != null && existing.TryGetComponent(out RoomLightOverlay existingOverlay))
         {
+            if (syncExistingLightsFromPreset)
+            {
+                existingOverlay.ApplyDefinition(definition);
+                MarkSceneDirtyIfEditing(existingOverlay.gameObject);
+            }
+
             return;
         }
 
@@ -305,12 +370,18 @@ public sealed class RoomLightingController : MonoBehaviour
         {
             Transform candidate = roomTransforms[i];
 
-            if (candidate == null || candidate.name != LightingRootName)
+            if (candidate == null)
             {
                 continue;
             }
 
-            CacheLightingRootChildren(candidate);
+            if (IsLightingPayloadRoot(candidate.name))
+            {
+                CacheLightingRootChildren(candidate);
+                continue;
+            }
+
+            CacheLooseLightParticle(candidate, roomTransform);
         }
     }
 
@@ -320,16 +391,69 @@ public sealed class RoomLightingController : MonoBehaviour
         {
             GameObject childObject = lightingRoot.GetChild(i).gameObject;
 
-            if (!lightingStructureObjects.Contains(childObject))
-            {
-                lightingStructureObjects.Add(childObject);
-            }
+            CacheLightingStructureObject(childObject);
+        }
+    }
 
-            if (!lightingStructureActiveStates.ContainsKey(childObject))
+    private void CacheLooseLightParticle(Transform candidate, Transform roomTransform)
+    {
+        if (candidate == roomTransform || !LooksLikeLooseLightParticle(candidate.gameObject))
+        {
+            return;
+        }
+
+        CacheLightingStructureObject(candidate.gameObject);
+    }
+
+    private void CacheLightingStructureObject(GameObject lightingObject)
+    {
+        if (lightingObject == null)
+        {
+            return;
+        }
+
+        if (!lightingStructureObjects.Contains(lightingObject))
+        {
+            lightingStructureObjects.Add(lightingObject);
+        }
+
+        if (!lightingStructureActiveStates.ContainsKey(lightingObject))
+        {
+            lightingStructureActiveStates[lightingObject] = lightingObject.activeSelf;
+        }
+    }
+
+    private static bool IsLightingPayloadRoot(string objectName)
+    {
+        for (int i = 0; i < LightingPayloadRootNames.Length; i++)
+        {
+            if (string.Equals(objectName, LightingPayloadRootNames[i], System.StringComparison.Ordinal))
             {
-                lightingStructureActiveStates[childObject] = childObject.activeSelf;
+                return true;
             }
         }
+
+        return false;
+    }
+
+    private static bool LooksLikeLooseLightParticle(GameObject candidate)
+    {
+        if (candidate == null || candidate.GetComponent<ParticleSystem>() == null)
+        {
+            return false;
+        }
+
+        string objectName = candidate.name;
+
+        for (int i = 0; i < LooseLightParticleNameFragments.Length; i++)
+        {
+            if (objectName.IndexOf(LooseLightParticleNameFragments[i], System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void CaptureLightingStructureActiveStates()
@@ -549,6 +673,13 @@ public sealed class RoomLightingController : MonoBehaviour
             : $"RoomLight_{definition.lightName.Trim().Replace(' ', '_')}";
     }
 
+    private static bool IsGeneratedFlameCoreSceneLightName(string objectName)
+    {
+        return !string.IsNullOrWhiteSpace(objectName)
+            && objectName.StartsWith("RoomLight_", System.StringComparison.Ordinal)
+            && objectName.IndexOf("_Flame_Core", System.StringComparison.Ordinal) >= 0;
+    }
+
     private static GameObject CreateSceneGameObject(string objectName, params System.Type[] components)
     {
         GameObject gameObject = new GameObject(objectName, components);
@@ -582,6 +713,26 @@ public sealed class RoomLightingController : MonoBehaviour
 #endif
 
         return target.AddComponent<T>();
+    }
+
+    private static void RemoveSceneObject(GameObject target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        target.SetActive(false);
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            Undo.DestroyObjectImmediate(target);
+            return;
+        }
+#endif
+
+        Destroy(target);
     }
 
     private static void MarkSceneDirtyIfEditing(GameObject target)

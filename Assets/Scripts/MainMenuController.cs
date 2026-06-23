@@ -67,10 +67,14 @@ public class MainMenuController : MonoBehaviour
     public Vector2 buttonStartPosition = new Vector2(16f, -116f);
     public Vector2 buttonSize = new Vector2(960f, 240f);
     public float buttonSpacing = 128f;
+    public Vector2 menuSafeMargin = new Vector2(16f, 16f);
+    [Range(0.35f, 1f)]
+    public float minResponsiveLayoutScale = 0.55f;
 
     private RectTransform audioSettingsPanel;
     private readonly List<AudioSliderBinding> audioSettingsBindings = new List<AudioSliderBinding>();
     private bool audioSettingsVisible;
+    private Vector2 lastMenuLayoutSize = new Vector2(-1f, -1f);
 
     private void Reset()
     {
@@ -114,7 +118,7 @@ public class MainMenuController : MonoBehaviour
 
     private void Update()
     {
-        if (applyLayoutEveryFrame)
+        if (applyLayoutEveryFrame || HasMenuLayoutSizeChanged())
         {
             ApplyPinnedMenuLayout();
         }
@@ -243,6 +247,7 @@ public class MainMenuController : MonoBehaviour
         titleText.color = titleColor;
         titleText.alignment = TextAlignmentOptions.TopLeft;
         titleText.raycastTarget = false;
+        ApplyResponsiveTitleFont(GetResponsiveMenuLayoutScale());
     }
 
     private void ConfigureMenuSoundscape()
@@ -835,6 +840,8 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        float layoutScale = GetResponsiveMenuLayoutScale();
+
         if (menuPanel != null)
         {
             menuPanel.anchorMin = Vector2.zero;
@@ -845,11 +852,104 @@ public class MainMenuController : MonoBehaviour
             menuPanel.localScale = Vector3.one;
         }
 
-        PinTopLeft(title, titlePosition, titleSize);
-        PinTopLeft(newGameButton, buttonStartPosition, buttonSize);
-        PinTopLeft(continueButton, buttonStartPosition + new Vector2(0f, -buttonSpacing), buttonSize);
-        PinTopLeft(settingsButton, buttonStartPosition + new Vector2(0f, -buttonSpacing * 2f), buttonSize);
-        PinTopLeft(exitButton, buttonStartPosition + new Vector2(0f, -buttonSpacing * 3f), buttonSize);
+        PinTopLeft(title, titlePosition * layoutScale, titleSize * layoutScale);
+        PinTopLeft(newGameButton, buttonStartPosition * layoutScale, buttonSize * layoutScale);
+        PinTopLeft(continueButton, (buttonStartPosition + new Vector2(0f, -buttonSpacing)) * layoutScale, buttonSize * layoutScale);
+        PinTopLeft(settingsButton, (buttonStartPosition + new Vector2(0f, -buttonSpacing * 2f)) * layoutScale, buttonSize * layoutScale);
+        PinTopLeft(exitButton, (buttonStartPosition + new Vector2(0f, -buttonSpacing * 3f)) * layoutScale, buttonSize * layoutScale);
+        ApplyResponsiveTitleFont(layoutScale);
+        lastMenuLayoutSize = GetMenuLayoutViewportSize();
+    }
+
+    private float GetResponsiveMenuLayoutScale()
+    {
+        Vector2 viewportSize = GetMenuLayoutViewportSize();
+
+        if (viewportSize.x <= 0f || viewportSize.y <= 0f)
+        {
+            return 1f;
+        }
+
+        Vector2 referenceExtents = GetReferenceMenuLayoutExtents();
+
+        if (referenceExtents.x <= 0f || referenceExtents.y <= 0f)
+        {
+            return 1f;
+        }
+
+        float availableWidth = Mathf.Max(1f, viewportSize.x - Mathf.Max(0f, menuSafeMargin.x) * 2f);
+        float availableHeight = Mathf.Max(1f, viewportSize.y - Mathf.Max(0f, menuSafeMargin.y) * 2f);
+        float widthScale = availableWidth / referenceExtents.x;
+        float heightScale = availableHeight / referenceExtents.y;
+        float scale = Mathf.Min(1f, Mathf.Min(widthScale, heightScale));
+        return Mathf.Clamp(scale, Mathf.Clamp01(minResponsiveLayoutScale), 1f);
+    }
+
+    private Vector2 GetReferenceMenuLayoutExtents()
+    {
+        Vector2 extents = Vector2.zero;
+        EncapsulateTopLeftLayout(ref extents, titlePosition, titleSize);
+        EncapsulateTopLeftLayout(ref extents, buttonStartPosition, buttonSize);
+        EncapsulateTopLeftLayout(ref extents, buttonStartPosition + new Vector2(0f, -buttonSpacing), buttonSize);
+        EncapsulateTopLeftLayout(ref extents, buttonStartPosition + new Vector2(0f, -buttonSpacing * 2f), buttonSize);
+        EncapsulateTopLeftLayout(ref extents, buttonStartPosition + new Vector2(0f, -buttonSpacing * 3f), buttonSize);
+        return extents;
+    }
+
+    private void EncapsulateTopLeftLayout(ref Vector2 extents, Vector2 anchoredPosition, Vector2 size)
+    {
+        extents.x = Mathf.Max(extents.x, anchoredPosition.x + size.x);
+        extents.y = Mathf.Max(extents.y, -anchoredPosition.y + size.y);
+    }
+
+    private Vector2 GetMenuLayoutViewportSize()
+    {
+        RectTransform layoutRoot = menuPanel != null && menuPanel.parent is RectTransform menuParent
+            ? menuParent
+            : transform as RectTransform;
+
+        if (layoutRoot != null)
+        {
+            Vector2 size = layoutRoot.rect.size;
+
+            if (size.x > 0f && size.y > 0f)
+            {
+                return size;
+            }
+        }
+
+        Canvas.ForceUpdateCanvases();
+
+        if (layoutRoot != null)
+        {
+            Vector2 size = layoutRoot.rect.size;
+
+            if (size.x > 0f && size.y > 0f)
+            {
+                return size;
+            }
+        }
+
+        return referenceResolution;
+    }
+
+    private bool HasMenuLayoutSizeChanged()
+    {
+        Vector2 currentSize = GetMenuLayoutViewportSize();
+        const float layoutPixelTolerance = 0.5f;
+        return Mathf.Abs(currentSize.x - lastMenuLayoutSize.x) > layoutPixelTolerance ||
+               Mathf.Abs(currentSize.y - lastMenuLayoutSize.y) > layoutPixelTolerance;
+    }
+
+    private void ApplyResponsiveTitleFont(float layoutScale)
+    {
+        if (titleText == null)
+        {
+            return;
+        }
+
+        titleText.fontSizeMax = Mathf.Max(18f, titleFontSize * layoutScale);
+        titleText.fontSizeMin = Mathf.Min(30f, titleText.fontSizeMax);
     }
 
     private void PinTopLeft(RectTransform rectTransform, Vector2 anchoredPosition, Vector2? size)

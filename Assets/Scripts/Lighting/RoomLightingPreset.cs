@@ -39,5 +39,6 @@ public enum RoomLightAnimationStyle
     HearthBreath,
     WindowGlow,
     CandleCluster,
-    FireplaceSource
+    FireplaceSource,
+    FlameCore
 }
