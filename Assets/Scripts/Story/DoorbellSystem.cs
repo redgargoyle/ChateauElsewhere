@@ -3,10 +3,13 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class DoorbellSystem : MonoBehaviour
 {
+    private const string DefaultDoorbellClipResourcePath = "Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz";
+
     [Header("References")]
     [SerializeField] private ChapterClock chapterClock;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip doorbellClip;
+    [SerializeField] private string doorbellClipResourcePath = DefaultDoorbellClipResourcePath;
 
     [Header("Escalation")]
     [SerializeField] private float normalIntervalSeconds = 6f;
@@ -141,7 +144,7 @@ public class DoorbellSystem : MonoBehaviour
         {
             if (doorbellClip == null)
             {
-                doorbellClip = CreateDoorbellClip();
+                doorbellClip = ResolveDoorbellClip();
             }
 
             audioSource.PlayOneShot(doorbellClip, volume);
@@ -176,6 +179,26 @@ public class DoorbellSystem : MonoBehaviour
         audioSource.volume = 1f;
         audioSource.ignoreListenerPause = true;
         GameAudioSettings.EnsureBinding(audioSource, GameAudioChannel.GameSounds, 1f);
+    }
+
+    private AudioClip ResolveDoorbellClip()
+    {
+        if (doorbellClip != null)
+        {
+            return doorbellClip;
+        }
+
+        if (!string.IsNullOrWhiteSpace(doorbellClipResourcePath))
+        {
+            doorbellClip = Resources.Load<AudioClip>(doorbellClipResourcePath);
+        }
+
+        if (doorbellClip == null)
+        {
+            doorbellClip = CreateDoorbellClip();
+        }
+
+        return doorbellClip;
     }
 
     private static AudioClip CreateDoorbellClip()

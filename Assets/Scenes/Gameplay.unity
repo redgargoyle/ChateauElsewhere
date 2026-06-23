@@ -36377,8 +36377,7 @@ PrefabInstance:
       value: -1.9
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects:
-    - {fileID: 2965391939520481395, guid: fe0f8be7e9cd3e04aaa3f66ca35f2836, type: 3}
+    m_RemovedGameObjects: [{fileID: 2965391939520481395, guid: fe0f8be7e9cd3e04aaa3f66ca35f2836, type: 3}]
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fe0f8be7e9cd3e04aaa3f66ca35f2836, type: 3}
@@ -79183,7 +79182,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2300000041
 RectTransform:
   m_ObjectHideFlags: 0
