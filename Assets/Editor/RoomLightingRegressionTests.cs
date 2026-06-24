@@ -104,6 +104,19 @@ public class RoomLightingRegressionTests
     }
 
     [Test]
+    public void GameplaySceneKeepsGeneratedCandleFlameParticles()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+
+        Assert.That(Regex.Matches(sceneText, "value: FlameParticle_").Count, Is.GreaterThanOrEqualTo(300), "Generated visible candle flames should not be dropped by scene saves.");
+        Assert.That(sceneText, Does.Contain("value: FlameParticle_Grand_Entrance_Hall_Right_Room_Sideboard_Candles_01"), "Entrance view through the dining-room arch should keep the first background candle flame.");
+        Assert.That(sceneText, Does.Contain("value: FlameParticle_Grand_Entrance_Hall_Right_Room_Sideboard_Candles_02"), "Entrance view through the dining-room arch should keep the second background candle flame.");
+        Assert.That(sceneText, Does.Contain("value: FlameParticle_Grand_Entrance_Hall_Right_Room_Sideboard_Candles_03"), "Entrance view through the dining-room arch should keep the third background candle flame.");
+        Assert.That(Regex.Matches(sceneText, "propertyPath: m_SortingOrder\\s+value: 120").Count, Is.GreaterThanOrEqualTo(300), "Visible candle flames should render above the room paintings and fixtures.");
+        Assert.That(Regex.Matches(sceneText, "propertyPath: m_SortingLayerID\\s+value: 1040854321").Count, Is.GreaterThanOrEqualTo(300), "Visible candle flames should stay on the intended sorting layer.");
+    }
+
+    [Test]
     public void LightingPresetShowsSeveralPrototypeTechniques()
     {
         string presetText = File.ReadAllText(PresetPath);
