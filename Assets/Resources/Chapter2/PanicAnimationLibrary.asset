@@ -268,19 +268,19 @@ MonoBehaviour:
   - characterId: MadameCoralieThread
     displayName: Madame Coralie Thread
     panicHandsUp:
-    - {fileID: 21300000, guid: f084bc67cbe39b84cf3b72ba91211154, type: 3}
-    - {fileID: 21300000, guid: 920a19c7882798d3ec2f531935badced, type: 3}
-    - {fileID: 21300000, guid: a8ff46ed58df33e2bc488a22c391fb64, type: 3}
-    - {fileID: 21300000, guid: c165615b508c41aba5546a1f9b46f82f, type: 3}
+    - {fileID: 21300000, guid: 327e3d6a515d4c7a8fe6a8eabb6b8568, type: 3}
+    - {fileID: 21300000, guid: 6ef2490756c84096842fe9744e7256cc, type: 3}
+    - {fileID: 21300000, guid: a9920ff30fab49628bce8d0efa78b9bb, type: 3}
+    - {fileID: 21300000, guid: 35c55e6674aa4a64becfaaac57e9e0ff, type: 3}
     panicPop:
-    - {fileID: 21300000, guid: bd9d689f8d19406d8a89424f07a9f237, type: 3}
-    - {fileID: 21300000, guid: 123eaf0ee3134f71adbf92b23c73973d, type: 3}
-    - {fileID: 21300000, guid: b89ac65ede7d4b39b0d625724d8fd90f, type: 3}
-    - {fileID: 21300000, guid: e3fc8bdaa91a4a249a6cd8adbd482cdb, type: 3}
-    - {fileID: 21300000, guid: 5e6d0d2cbaf9410ab8c35220125cdfbf, type: 3}
-    - {fileID: 21300000, guid: 8287f06319654b038e1feb484aebf1b7, type: 3}
-    - {fileID: 21300000, guid: 58dcfdea8d0d40e0bf7c7d7130576083, type: 3}
-    - {fileID: 21300000, guid: 49ccb893ed7c4337bfcc5d94db8cca9a, type: 3}
+    - {fileID: 21300000, guid: f544ffcac3834baf9fa7d887e06797c3, type: 3}
+    - {fileID: 21300000, guid: a8115e613fc54f5d8208861f7b0323b1, type: 3}
+    - {fileID: 21300000, guid: 3dacbed28c03446ca6f6bf1ee107da3b, type: 3}
+    - {fileID: 21300000, guid: 3291afa314fb43fbbe0f47e9ea2e851c, type: 3}
+    - {fileID: 21300000, guid: 520ded421ec940d887d201d38a812eac, type: 3}
+    - {fileID: 21300000, guid: 0d9ccb23bf2149e1b056e731eeea6986, type: 3}
+    - {fileID: 21300000, guid: 0609356b78aa485f9f7c2600dab8e94a, type: 3}
+    - {fileID: 21300000, guid: bc291e27b5574e7b8cd06149348583c1, type: 3}
     panicRunDown:
     - {fileID: -6268437372559595839, guid: 2975d75ddee06d7c0a62634a10dfe4c8, type: 3}
     - {fileID: 1928111071478973922, guid: ddae0b3b02b3664caa00671d0394b2a2, type: 3}
