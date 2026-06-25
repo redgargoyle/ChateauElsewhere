@@ -33,6 +33,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private Collider2D walkableFloor;
 	[SerializeField] private bool useCurrentRoomBoundary = true;
 	[SerializeField] private string roomBoundaryNamePrefix = "PlayerBoundary";
+	[SerializeField] private string roomBoundaryBlockerNamePrefix = "PlayerBlocker";
 	[SerializeField] private float moveSpeed = 3.2f;
 	[SerializeField] private float stopDistance = 0.04f;
 	[SerializeField, Range(0.5f, 1f)] private float horizontalDirectionThreshold = 0.58f;
@@ -89,14 +90,22 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private readonly List<Vector2> movementPath = new List<Vector2>();
 	private readonly List<Vector2> movementQueryPath = new List<Vector2>();
 	private readonly List<Vector2> pathWorldNodes = new List<Vector2>();
-	private readonly List<int> pathRouteIndices = new List<int>();
 	private readonly List<float> pathNodeDistances = new List<float>();
 	private readonly List<int> pathPreviousNodeIndices = new List<int>();
 	private readonly List<bool> pathVisitedNodes = new List<bool>();
+	private readonly List<Vector2> polygonRouteLocalNodes = new List<Vector2>();
+	private readonly List<PolygonRouteConnection> polygonRouteConnections = new List<PolygonRouteConnection>();
+	private readonly List<int> polygonRouteStartConnections = new List<int>();
+	private readonly List<int> polygonRouteTargetConnections = new List<int>();
+	private readonly List<int> polygonRouteIndices = new List<int>();
+	private readonly List<Collider2D> walkableBlockers = new List<Collider2D>();
 	private readonly List<Vector2> gridRouteWorldNodes = new List<Vector2>();
 	private readonly List<int> gridRouteCellIndices = new List<int>();
 	private readonly List<int> gridRouteOpenNodes = new List<int>();
 	private readonly List<Vector2> gridRouteSmoothedPath = new List<Vector2>();
+	private PolygonCollider2D cachedPolygonRouteCollider;
+	private int cachedPolygonRouteShapeHash;
+	private bool polygonRouteGraphValid;
 	private static readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
 
 	public event Action ArrivedAtDestination;
@@ -441,8 +450,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryFindPlayerBoundaryForRoom(currentRoom, out Collider2D roomBoundary))
 			return;
 
+		RefreshWalkableBlockersForCurrentRoom(currentRoom, roomBoundary);
 		walkableFloor = roomBoundary;
 		currentWalkableBoundaryRoom = cleanRoom;
+		InvalidatePolygonRouteGraph();
 		ResetRoomStageVisualReference();
 
 		if (!isReady)
@@ -886,7 +897,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return true;
 		}
 
-		if (walkableFloor.OverlapPoint(requestedWorldPoint))
+		if (IsWalkableWorldPoint(requestedWorldPoint))
 		{
 			return true;
 		}
@@ -904,7 +915,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			ref bestPoint);
 
 		Vector2 insetDirection = preferredWorldPoint - closestPoint;
-		if (insetDirection.sqrMagnitude <= MovementEpsilon || !walkableFloor.OverlapPoint(preferredWorldPoint))
+		if (insetDirection.sqrMagnitude <= MovementEpsilon || !IsWalkableWorldPoint(preferredWorldPoint))
 		{
 			insetDirection = (Vector2)walkableFloor.bounds.center - closestPoint;
 		}
@@ -959,7 +970,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		ref float bestSqrDistance,
 		ref Vector2 bestPoint)
 	{
-		if (!walkableFloor.OverlapPoint(candidateWorldPoint))
+		if (!IsWalkableWorldPoint(candidateWorldPoint))
 		{
 			return;
 		}
@@ -1005,7 +1016,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 				float angle = (Mathf.PI * 2f * sample) / ClickProjectionSearchSamplesPerRing;
 				Vector2 candidateWorldPoint = requestedWorldPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
 
-				if (!walkableFloor.OverlapPoint(candidateWorldPoint))
+				if (!IsWalkableWorldPoint(candidateWorldPoint))
 				{
 					continue;
 				}
@@ -1028,7 +1039,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (towardCurrent.sqrMagnitude > MovementEpsilon)
 		{
 			Vector2 candidateWorldPoint = requestedWorldPoint + towardCurrent.normalized * Mathf.Min(maxDistance, towardCurrent.magnitude);
-			if (walkableFloor.OverlapPoint(candidateWorldPoint))
+			if (IsWalkableWorldPoint(candidateWorldPoint))
 			{
 				Vector2 candidateLogicalPoint = WalkableWorldToLogicalPoint(candidateWorldPoint);
 				if (TryBuildMovementPath(logicalPosition, candidateLogicalPoint, movementQueryPath))
@@ -1647,7 +1658,31 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private bool IsPointWalkable(Vector2 point)
 	{
 		UpdateVisualOffset(Camera.main);
-		return walkableFloor == null || walkableFloor.OverlapPoint(LogicalToWalkableWorldPoint(point));
+		return IsWalkableWorldPoint(LogicalToWalkableWorldPoint(point));
+	}
+
+	private bool IsWalkableWorldPoint(Vector2 worldPoint)
+	{
+		if (walkableFloor != null && !walkableFloor.OverlapPoint(worldPoint))
+		{
+			return false;
+		}
+
+		for (int i = 0; i < walkableBlockers.Count; i++)
+		{
+			Collider2D blocker = walkableBlockers[i];
+			if (blocker == null || !blocker.enabled || !blocker.gameObject.activeInHierarchy)
+			{
+				continue;
+			}
+
+			if (blocker.OverlapPoint(worldPoint))
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private bool TryBuildMovementPath(Vector2 startPosition, Vector2 targetPosition, List<Vector2> path)
@@ -1725,7 +1760,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 				float angle = (Mathf.PI * 2f * sample) / ClickProjectionSearchSamplesPerRing;
 				Vector2 candidateWorldPoint = startWorldPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
 
-				if (!walkableFloor.OverlapPoint(candidateWorldPoint) ||
+				if (!IsWalkableWorldPoint(candidateWorldPoint) ||
 					!IsWalkableWorldSegment(startWorldPoint, candidateWorldPoint))
 				{
 					continue;
@@ -1764,7 +1799,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return true;
 		}
 
-		if (!walkableFloor.OverlapPoint(startWorldPoint) || !walkableFloor.OverlapPoint(targetWorldPoint))
+		if (!IsWalkableWorldPoint(startWorldPoint) || !IsWalkableWorldPoint(targetWorldPoint))
 		{
 			return false;
 		}
@@ -1781,7 +1816,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		for (int i = 1; i < samples; i++)
 		{
 			Vector2 samplePoint = Vector2.Lerp(startWorldPoint, targetWorldPoint, i / (float)samples);
-			if (!walkableFloor.OverlapPoint(samplePoint))
+			if (!IsWalkableWorldPoint(samplePoint))
 			{
 				return false;
 			}
@@ -1800,22 +1835,322 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		Vector2 startWorldPoint = LogicalToWalkableWorldPoint(startPosition);
 		Vector2 targetWorldPoint = LogicalToWalkableWorldPoint(targetPosition);
-		CollectPolygonPathNodes(polygon, startWorldPoint, targetWorldPoint, pathWorldNodes);
 
-		if (pathWorldNodes.Count <= 2)
+		if (!EnsurePolygonRouteGraph(polygon))
 		{
 			return false;
 		}
 
-		if (!TryFindShortestWalkableRoute(pathWorldNodes, pathRouteIndices))
+		return TryBuildCachedPolygonRoute(polygon, startWorldPoint, targetWorldPoint, targetPosition, path);
+	}
+
+	private bool EnsurePolygonRouteGraph(PolygonCollider2D polygon)
+	{
+		if (polygon == null || polygon.pathCount == 0)
+		{
+			InvalidatePolygonRouteGraph();
+			return false;
+		}
+
+		int shapeHash = ComputePolygonRouteShapeHash(polygon);
+		if (polygonRouteGraphValid &&
+			cachedPolygonRouteCollider == polygon &&
+			cachedPolygonRouteShapeHash == shapeHash)
+		{
+			return true;
+		}
+
+		BuildPolygonRouteGraph(polygon, shapeHash);
+		return polygonRouteGraphValid;
+	}
+
+	private void BuildPolygonRouteGraph(PolygonCollider2D polygon, int shapeHash)
+	{
+		polygonRouteLocalNodes.Clear();
+		polygonRouteConnections.Clear();
+		pathWorldNodes.Clear();
+
+		CollectPolygonPathNodes(polygon, pathWorldNodes);
+		CollectPolygonBlockerPathNodes(pathWorldNodes);
+
+		for (int i = 0; i < pathWorldNodes.Count; i++)
+		{
+			polygonRouteLocalNodes.Add(PolygonWorldPointToLocal(polygon, pathWorldNodes[i]));
+		}
+
+		for (int currentIndex = 0; currentIndex < pathWorldNodes.Count; currentIndex++)
+		{
+			for (int nextIndex = currentIndex + 1; nextIndex < pathWorldNodes.Count; nextIndex++)
+			{
+				if (!IsWalkableWorldSegment(pathWorldNodes[currentIndex], pathWorldNodes[nextIndex]))
+				{
+					continue;
+				}
+
+				polygonRouteConnections.Add(new PolygonRouteConnection(currentIndex, nextIndex));
+				polygonRouteConnections.Add(new PolygonRouteConnection(nextIndex, currentIndex));
+			}
+		}
+
+		cachedPolygonRouteCollider = polygon;
+		cachedPolygonRouteShapeHash = shapeHash;
+		polygonRouteGraphValid = polygonRouteLocalNodes.Count > 0;
+	}
+
+	private void InvalidatePolygonRouteGraph()
+	{
+		cachedPolygonRouteCollider = null;
+		cachedPolygonRouteShapeHash = 0;
+		polygonRouteGraphValid = false;
+		polygonRouteLocalNodes.Clear();
+		polygonRouteConnections.Clear();
+		polygonRouteStartConnections.Clear();
+		polygonRouteTargetConnections.Clear();
+		polygonRouteIndices.Clear();
+	}
+
+	private int ComputePolygonRouteShapeHash(PolygonCollider2D polygon)
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 31 + polygon.pathCount;
+			hash = hash * 31 + polygon.offset.GetHashCode();
+			hash = hash * 31 + polygon.transform.localPosition.GetHashCode();
+			hash = hash * 31 + polygon.transform.localRotation.GetHashCode();
+			hash = hash * 31 + polygon.transform.localScale.GetHashCode();
+
+			for (int pathIndex = 0; pathIndex < polygon.pathCount; pathIndex++)
+			{
+				Vector2[] localPath = polygon.GetPath(pathIndex);
+				hash = hash * 31 + (localPath != null ? localPath.Length : 0);
+
+				if (localPath == null)
+				{
+					continue;
+				}
+
+				for (int pointIndex = 0; pointIndex < localPath.Length; pointIndex++)
+				{
+					hash = hash * 31 + localPath[pointIndex].GetHashCode();
+				}
+			}
+
+			for (int i = 0; i < walkableBlockers.Count; i++)
+			{
+				PolygonCollider2D blocker = walkableBlockers[i] as PolygonCollider2D;
+				if (blocker == null || !blocker.enabled || !blocker.gameObject.activeInHierarchy)
+				{
+					continue;
+				}
+
+				hash = hash * 31 + blocker.pathCount;
+				hash = hash * 31 + blocker.offset.GetHashCode();
+				hash = hash * 31 + blocker.transform.localPosition.GetHashCode();
+				hash = hash * 31 + blocker.transform.localRotation.GetHashCode();
+				hash = hash * 31 + blocker.transform.localScale.GetHashCode();
+
+				for (int pathIndex = 0; pathIndex < blocker.pathCount; pathIndex++)
+				{
+					Vector2[] localPath = blocker.GetPath(pathIndex);
+					hash = hash * 31 + (localPath != null ? localPath.Length : 0);
+
+					if (localPath == null)
+					{
+						continue;
+					}
+
+					for (int pointIndex = 0; pointIndex < localPath.Length; pointIndex++)
+					{
+						hash = hash * 31 + localPath[pointIndex].GetHashCode();
+					}
+				}
+			}
+
+			return hash;
+		}
+	}
+
+	private bool TryBuildCachedPolygonRoute(
+		PolygonCollider2D polygon,
+		Vector2 startWorldPoint,
+		Vector2 targetWorldPoint,
+		Vector2 targetPosition,
+		List<Vector2> path)
+	{
+		path.Clear();
+
+		if (IsWalkableWorldSegment(startWorldPoint, targetWorldPoint))
+		{
+			path.Add(targetPosition);
+			return true;
+		}
+
+		CollectDynamicPolygonRouteConnections(polygon, startWorldPoint, targetWorldPoint);
+
+		if (polygonRouteStartConnections.Count == 0 || polygonRouteTargetConnections.Count == 0)
 		{
 			return false;
 		}
 
-		for (int i = 1; i < pathRouteIndices.Count; i++)
+		int routeNodeCount = polygonRouteLocalNodes.Count + 2;
+		PreparePathScratch(routeNodeCount);
+		pathNodeDistances[0] = 0f;
+
+		for (int iteration = 0; iteration < routeNodeCount; iteration++)
 		{
-			int nodeIndex = pathRouteIndices[i];
-			Vector2 logicalPoint = WalkableWorldToLogicalPoint(pathWorldNodes[nodeIndex]);
+			int currentIndex = FindNearestUnvisitedPathNode(routeNodeCount);
+			if (currentIndex < 0)
+			{
+				break;
+			}
+
+			if (currentIndex == 1)
+			{
+				break;
+			}
+
+			pathVisitedNodes[currentIndex] = true;
+
+			if (currentIndex == 0)
+			{
+				for (int i = 0; i < polygonRouteStartConnections.Count; i++)
+				{
+					TryRelaxPolygonRouteNode(
+						polygon,
+						currentIndex,
+						polygonRouteStartConnections[i] + 2,
+						startWorldPoint,
+						targetWorldPoint);
+				}
+
+				continue;
+			}
+
+			int staticNodeIndex = currentIndex - 2;
+			if (staticNodeIndex < 0 || staticNodeIndex >= polygonRouteLocalNodes.Count)
+			{
+				continue;
+			}
+
+			if (polygonRouteTargetConnections.Contains(staticNodeIndex))
+			{
+				TryRelaxPolygonRouteNode(polygon, currentIndex, 1, startWorldPoint, targetWorldPoint);
+			}
+
+			for (int i = 0; i < polygonRouteConnections.Count; i++)
+			{
+				PolygonRouteConnection connection = polygonRouteConnections[i];
+				if (connection.From != staticNodeIndex)
+				{
+					continue;
+				}
+
+				TryRelaxPolygonRouteNode(
+					polygon,
+					currentIndex,
+					connection.To + 2,
+					startWorldPoint,
+					targetWorldPoint);
+			}
+		}
+
+		if (pathPreviousNodeIndices[1] < 0)
+		{
+			return false;
+		}
+
+		return BuildCachedPolygonRouteResult(polygon, startWorldPoint, targetWorldPoint, targetPosition, path);
+	}
+
+	private void CollectDynamicPolygonRouteConnections(
+		PolygonCollider2D polygon,
+		Vector2 startWorldPoint,
+		Vector2 targetWorldPoint)
+	{
+		polygonRouteStartConnections.Clear();
+		polygonRouteTargetConnections.Clear();
+
+		for (int nodeIndex = 0; nodeIndex < polygonRouteLocalNodes.Count; nodeIndex++)
+		{
+			Vector2 nodeWorldPoint = GetPolygonRouteNodeWorldPoint(polygon, nodeIndex);
+
+			if (IsWalkableWorldSegment(startWorldPoint, nodeWorldPoint))
+			{
+				polygonRouteStartConnections.Add(nodeIndex);
+			}
+
+			if (IsWalkableWorldSegment(targetWorldPoint, nodeWorldPoint))
+			{
+				polygonRouteTargetConnections.Add(nodeIndex);
+			}
+		}
+	}
+
+	private bool TryRelaxPolygonRouteNode(
+		PolygonCollider2D polygon,
+		int currentIndex,
+		int nextIndex,
+		Vector2 startWorldPoint,
+		Vector2 targetWorldPoint)
+	{
+		if (nextIndex < 0 ||
+			nextIndex >= pathVisitedNodes.Count ||
+			pathVisitedNodes[nextIndex])
+		{
+			return false;
+		}
+
+		Vector2 currentWorldPoint = GetPolygonRouteWorldPoint(polygon, currentIndex, startWorldPoint, targetWorldPoint);
+		Vector2 nextWorldPoint = GetPolygonRouteWorldPoint(polygon, nextIndex, startWorldPoint, targetWorldPoint);
+		float nextDistance = pathNodeDistances[currentIndex] + Vector2.Distance(currentWorldPoint, nextWorldPoint);
+
+		if (nextDistance >= pathNodeDistances[nextIndex])
+		{
+			return false;
+		}
+
+		pathNodeDistances[nextIndex] = nextDistance;
+		pathPreviousNodeIndices[nextIndex] = currentIndex;
+		return true;
+	}
+
+	private bool BuildCachedPolygonRouteResult(
+		PolygonCollider2D polygon,
+		Vector2 startWorldPoint,
+		Vector2 targetWorldPoint,
+		Vector2 targetPosition,
+		List<Vector2> path)
+	{
+		polygonRouteIndices.Clear();
+
+		int routeIndex = 1;
+		while (routeIndex >= 0)
+		{
+			polygonRouteIndices.Add(routeIndex);
+
+			if (routeIndex == 0)
+			{
+				break;
+			}
+
+			routeIndex = pathPreviousNodeIndices[routeIndex];
+		}
+
+		if (polygonRouteIndices.Count == 0 || polygonRouteIndices[polygonRouteIndices.Count - 1] != 0)
+		{
+			polygonRouteIndices.Clear();
+			return false;
+		}
+
+		polygonRouteIndices.Reverse();
+
+		for (int i = 1; i < polygonRouteIndices.Count; i++)
+		{
+			int nodeIndex = polygonRouteIndices[i];
+			Vector2 logicalPoint = nodeIndex == 1
+				? targetPosition
+				: WalkableWorldToLogicalPoint(GetPolygonRouteWorldPoint(polygon, nodeIndex, startWorldPoint, targetWorldPoint));
 
 			if (path.Count == 0 || Vector2.Distance(path[path.Count - 1], logicalPoint) > stopDistance * 0.5f)
 			{
@@ -1824,6 +2159,30 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		return path.Count > 0;
+	}
+
+	private Vector2 GetPolygonRouteWorldPoint(
+		PolygonCollider2D polygon,
+		int routeIndex,
+		Vector2 startWorldPoint,
+		Vector2 targetWorldPoint)
+	{
+		if (routeIndex == 0)
+		{
+			return startWorldPoint;
+		}
+
+		if (routeIndex == 1)
+		{
+			return targetWorldPoint;
+		}
+
+		return GetPolygonRouteNodeWorldPoint(polygon, routeIndex - 2);
+	}
+
+	private Vector2 GetPolygonRouteNodeWorldPoint(PolygonCollider2D polygon, int nodeIndex)
+	{
+		return PolygonLocalPointToWorld(polygon, polygonRouteLocalNodes[nodeIndex]);
 	}
 
 	private bool TryBuildGridMovementPath(Vector2 startPosition, Vector2 targetPosition, List<Vector2> path)
@@ -1972,7 +2331,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			{
 				Vector2 candidate = origin + new Vector2(x * spacing, y * spacing);
 
-				if (!walkableFloor.OverlapPoint(candidate))
+				if (!IsWalkableWorldPoint(candidate))
 				{
 					continue;
 				}
@@ -2208,13 +2567,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void CollectPolygonPathNodes(
 		PolygonCollider2D polygon,
-		Vector2 startWorldPoint,
-		Vector2 targetWorldPoint,
 		List<Vector2> nodes)
 	{
 		nodes.Clear();
-		nodes.Add(startWorldPoint);
-		nodes.Add(targetWorldPoint);
 
 		for (int pathIndex = 0; pathIndex < polygon.pathCount; pathIndex++)
 		{
@@ -2235,83 +2590,41 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 	}
 
-	private bool TryFindShortestWalkableRoute(List<Vector2> nodes, List<int> routeIndices)
+	private void CollectPolygonBlockerPathNodes(List<Vector2> nodes)
 	{
-		routeIndices.Clear();
-		int nodeCount = nodes.Count;
-
-		if (nodeCount < 2)
+		for (int blockerIndex = 0; blockerIndex < walkableBlockers.Count; blockerIndex++)
 		{
-			return false;
-		}
-
-		PreparePathScratch(nodeCount);
-		pathNodeDistances[0] = 0f;
-
-		for (int iteration = 0; iteration < nodeCount; iteration++)
-		{
-			int currentIndex = FindNearestUnvisitedPathNode(nodeCount);
-			if (currentIndex < 0)
+			PolygonCollider2D blocker = walkableBlockers[blockerIndex] as PolygonCollider2D;
+			if (blocker == null || !blocker.enabled || !blocker.gameObject.activeInHierarchy)
 			{
-				break;
+				continue;
 			}
 
-			if (currentIndex == 1)
+			for (int pathIndex = 0; pathIndex < blocker.pathCount; pathIndex++)
 			{
-				break;
-			}
+				Vector2[] localPath = blocker.GetPath(pathIndex);
+				Vector2 blockerCenter = GetPolygonPathWorldCenter(blocker, localPath);
 
-			pathVisitedNodes[currentIndex] = true;
-
-			for (int nextIndex = 0; nextIndex < nodeCount; nextIndex++)
-			{
-				if (nextIndex == currentIndex || pathVisitedNodes[nextIndex])
+				for (int i = 0; i < localPath.Length; i++)
 				{
-					continue;
-				}
+					Vector2 vertexWorldPoint = PolygonLocalPointToWorld(blocker, localPath[i]);
+					Vector2 awayFromBlocker = vertexWorldPoint - blockerCenter;
 
-				if (!IsWalkableWorldSegment(nodes[currentIndex], nodes[nextIndex]))
-				{
-					continue;
-				}
+					if (awayFromBlocker.sqrMagnitude <= MovementEpsilon)
+					{
+						awayFromBlocker = vertexWorldPoint - (Vector2)blocker.bounds.center;
+					}
 
-				float nextDistance = pathNodeDistances[currentIndex] + Vector2.Distance(nodes[currentIndex], nodes[nextIndex]);
-				if (nextDistance >= pathNodeDistances[nextIndex])
-				{
-					continue;
-				}
+					Vector2 preferredWalkablePoint = vertexWorldPoint + awayFromBlocker;
+					if (!TryFindWalkablePathNodeNear(vertexWorldPoint, preferredWalkablePoint, out Vector2 node))
+					{
+						continue;
+					}
 
-				pathNodeDistances[nextIndex] = nextDistance;
-				pathPreviousNodeIndices[nextIndex] = currentIndex;
+					AddDistinctPathNode(nodes, node);
+				}
 			}
 		}
-
-		if (pathPreviousNodeIndices[1] < 0)
-		{
-			return false;
-		}
-
-		int routeIndex = 1;
-		while (routeIndex >= 0)
-		{
-			routeIndices.Add(routeIndex);
-
-			if (routeIndex == 0)
-			{
-				break;
-			}
-
-			routeIndex = pathPreviousNodeIndices[routeIndex];
-		}
-
-		if (routeIndices.Count == 0 || routeIndices[routeIndices.Count - 1] != 0)
-		{
-			routeIndices.Clear();
-			return false;
-		}
-
-		routeIndices.Reverse();
-		return routeIndices.Count >= 2;
 	}
 
 	private void PreparePathScratch(int nodeCount)
@@ -2373,7 +2686,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 				float angle = (Mathf.PI * 2f * sample) / PathNodeRadialSamples;
 				Vector2 candidate = vertexWorldPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
 
-				if (walkableFloor.OverlapPoint(candidate))
+				if (IsWalkableWorldPoint(candidate))
 				{
 					node = candidate;
 					return true;
@@ -2381,7 +2694,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			}
 		}
 
-		if (walkableFloor.OverlapPoint(vertexWorldPoint))
+		if (IsWalkableWorldPoint(vertexWorldPoint))
 		{
 			node = vertexWorldPoint;
 			return true;
@@ -2404,7 +2717,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		for (int i = 1; i <= PathNodeRadialRings; i++)
 		{
 			Vector2 candidate = vertexWorldPoint + direction * (inset * i);
-			if (walkableFloor.OverlapPoint(candidate))
+			if (IsWalkableWorldPoint(candidate))
 			{
 				node = candidate;
 				return true;
@@ -2450,6 +2763,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private static Vector2 PolygonLocalPointToWorld(PolygonCollider2D polygon, Vector2 localPoint)
 	{
 		return polygon.transform.TransformPoint(localPoint + polygon.offset);
+	}
+
+	private static Vector2 PolygonWorldPointToLocal(PolygonCollider2D polygon, Vector2 worldPoint)
+	{
+		return (Vector2)polygon.transform.InverseTransformPoint(worldPoint) - polygon.offset;
 	}
 
 	private float GetPathSegmentProbeSpacing()
@@ -2558,16 +2876,16 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		UpdateVisualOffset(Camera.main);
 		Vector2 worldPoint = LogicalToWalkableWorldPoint(point);
-		if (walkableFloor.OverlapPoint(worldPoint))
+		if (IsWalkableWorldPoint(worldPoint))
 			return point;
 
 		Vector2 closestPoint = walkableFloor.ClosestPoint(worldPoint);
-		if (walkableFloor.OverlapPoint(closestPoint))
+		if (IsWalkableWorldPoint(closestPoint))
 			return WalkableWorldToLogicalPoint(closestPoint);
 
 		Vector2 preferredWorldPoint = LogicalToWalkableWorldPoint(preferredInsidePoint);
 		Vector2 insetDirection = preferredWorldPoint - closestPoint;
-		if (insetDirection.sqrMagnitude <= MovementEpsilon || !walkableFloor.OverlapPoint(preferredWorldPoint))
+		if (insetDirection.sqrMagnitude <= MovementEpsilon || !IsWalkableWorldPoint(preferredWorldPoint))
 			insetDirection = (Vector2)walkableFloor.bounds.center - closestPoint;
 
 		if (insetDirection.sqrMagnitude <= MovementEpsilon)
@@ -2578,7 +2896,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		for (int i = 1; i <= WalkableInsetAttempts; i++)
 		{
 			Vector2 insetPoint = closestPoint + insetDirection * (WalkableInsetStep * i);
-			if (walkableFloor.OverlapPoint(insetPoint))
+			if (IsWalkableWorldPoint(insetPoint))
 				return WalkableWorldToLogicalPoint(insetPoint);
 		}
 
@@ -2591,7 +2909,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 				float angle = (Mathf.PI * 2f * sample) / WalkableInsetRadialSamples;
 				Vector2 radialPoint = closestPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
 
-				if (walkableFloor.OverlapPoint(radialPoint))
+				if (IsWalkableWorldPoint(radialPoint))
 					return WalkableWorldToLogicalPoint(radialPoint);
 			}
 		}
@@ -2612,7 +2930,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return true;
 		}
 
-		if (walkableFloor.OverlapPoint(targetWorldPoint))
+		if (IsWalkableWorldPoint(targetWorldPoint))
 		{
 			walkableWorldPoint = targetWorldPoint;
 			return true;
@@ -2687,7 +3005,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		ref float bestSqrDistance,
 		ref Vector2 bestPoint)
 	{
-		if (!walkableFloor.OverlapPoint(candidateWorldPoint))
+		if (!IsWalkableWorldPoint(candidateWorldPoint))
 			return;
 
 		float sqrDistance = (candidateWorldPoint - targetWorldPoint).sqrMagnitude;
@@ -2770,6 +3088,38 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		return false;
+	}
+
+	private void RefreshWalkableBlockersForCurrentRoom(string roomName, Collider2D roomBoundary)
+	{
+		walkableBlockers.Clear();
+
+		if (string.IsNullOrWhiteSpace(roomName) ||
+			string.IsNullOrWhiteSpace(roomBoundaryBlockerNamePrefix) ||
+			!TryFindRoomContentForRoom(roomName, out RoomContentGroup room))
+		{
+			return;
+		}
+
+		string blockerPrefixKey = NormalizeBoundaryName(roomBoundaryBlockerNamePrefix);
+		Collider2D[] colliders = room.GetComponentsInChildren<Collider2D>(true);
+
+		for (int i = 0; i < colliders.Length; i++)
+		{
+			Collider2D candidate = colliders[i];
+			if (candidate == null || candidate == roomBoundary || !candidate.enabled)
+			{
+				continue;
+			}
+
+			string candidateKey = NormalizeBoundaryName(candidate.name);
+			if (!candidateKey.StartsWith(blockerPrefixKey, StringComparison.OrdinalIgnoreCase))
+			{
+				continue;
+			}
+
+			walkableBlockers.Add(candidate);
+		}
 	}
 
 	private bool TryFindPlayerBoundaryInRoom(RoomContentGroup room, string roomName, out Collider2D boundary)
@@ -2917,6 +3267,18 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return requestedLayerName;
 
 		return "Default";
+	}
+
+	private readonly struct PolygonRouteConnection
+	{
+		public PolygonRouteConnection(int from, int to)
+		{
+			From = from;
+			To = to;
+		}
+
+		public int From { get; }
+		public int To { get; }
 	}
 
 	private readonly struct AuthoredRendererSorting

@@ -392,13 +392,53 @@ public class NavigationRegressionTests
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
         string upperGalleryBoundary = ExtractUnityObjectBlock(sceneText, "--- !u!60 &580370978");
+        string upperGalleryBlocker = ExtractUnityObjectBlock(sceneText, "--- !u!60 &580370981");
         int pointCount = Regex.Matches(upperGalleryBoundary, @"(?m)^      - \{|^    - - \{").Count;
+        int pathCount = Regex.Matches(upperGalleryBoundary, @"(?m)^    - - \{").Count;
+        int blockerPointCount = Regex.Matches(upperGalleryBlocker, @"(?m)^      - \{|^    - - \{").Count;
         GetColliderPathYExtents(upperGalleryBoundary, out float minY, out float maxY);
+        GetColliderPathXExtents(upperGalleryBoundary, out float minX, out float maxX);
+        GetColliderPathYExtents(upperGalleryBlocker, out float blockerMinY, out float blockerMaxY);
+        GetColliderPathXExtents(upperGalleryBlocker, out float blockerMinX, out float blockerMaxX);
 
         Assert.That(upperGalleryBoundary, Does.Contain("m_GameObject: {fileID: 580370976}"), "This assertion should target the Upper Gallery PlayerBoundary.");
-        Assert.That(pointCount, Is.GreaterThanOrEqualTo(30), "Upper Gallery should keep a detailed hand-authored path around the railing and stairwell.");
+        Assert.That(sceneText, Does.Contain("m_Name: PlayerBlocker_UpperGallery_Stairwell"), "Upper Gallery should block the center stairwell with an explicit no-walk collider.");
+        Assert.That(pathCount, Is.EqualTo(1), "Upper Gallery walkable floor should be one broad editable outer floor polygon.");
+        Assert.That(pointCount, Is.InRange(10, 14), "Upper Gallery floor coverage should stay simple and broad, not a jagged route around the stairwell.");
         Assert.That(maxY, Is.GreaterThan(-0.25f), "The boundary should include the rear hallway lane behind the stair railing.");
         Assert.That(minY, Is.LessThan(-0.8f), "The boundary should keep the front walkway available below the stair railing.");
+        Assert.That(minX, Is.LessThan(-2.2f), "The boundary should include the lower-left open floor corner.");
+        Assert.That(maxX, Is.GreaterThan(2.2f), "The boundary should include the lower-right open floor corner.");
+        Assert.That(blockerPointCount, Is.GreaterThanOrEqualTo(14), "The stairwell blocker should be a tight rounded polygon around the visible center hole.");
+        Assert.That(blockerMaxY, Is.GreaterThan(0.12f), "The blocker should cover the rear curve of the open stairwell so arrivals cannot land inside the hole.");
+        Assert.That(blockerMinY, Is.InRange(-0.5f, -0.35f), "The blocker should stop at the front lip of the opening without swallowing the front carpet.");
+        Assert.That(blockerMinX, Is.GreaterThan(-1.25f), "The blocker should not cover the left potted-plant floor area.");
+        Assert.That(blockerMaxX, Is.LessThan(1.1f), "The blocker should not cover the right potted-plant floor area.");
+    }
+
+    [Test]
+    public void PlayerMovementCachesPolygonRouteVisibilityGraph()
+    {
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+        string polygonRouteBody = ExtractMethodBody(playerText, "private bool TryBuildPolygonMovementPath");
+        string graphBuildBody = ExtractMethodBody(playerText, "private void BuildPolygonRouteGraph");
+        string cachedRouteBody = ExtractMethodBody(playerText, "private bool TryBuildCachedPolygonRoute");
+
+        Assert.That(playerText, Does.Contain("polygonRouteLocalNodes"), "Polygon route nodes should be cached per walkable boundary instead of recreated for every hover query.");
+        Assert.That(playerText, Does.Contain("polygonRouteConnections"), "Static polygon visibility edges should be cached once per boundary.");
+        Assert.That(playerText, Does.Contain("InvalidatePolygonRouteGraph"), "Changing rooms must discard the cached boundary graph.");
+        Assert.That(playerText, Does.Contain("roomBoundaryBlockerNamePrefix = \"PlayerBlocker\""), "Rooms should be able to mark no-walk holes separately from the editable floor boundary.");
+        Assert.That(playerText, Does.Contain("RefreshWalkableBlockersForCurrentRoom"), "Changing rooms should collect the current room's no-walk hole colliders.");
+        Assert.That(playerText, Does.Contain("IsWalkableWorldPoint"), "Every route query should use blocker-aware walkability.");
+        Assert.That(polygonRouteBody, Does.Contain("EnsurePolygonRouteGraph(polygon)"), "Polygon routes should build or reuse a cached visibility graph.");
+        Assert.That(polygonRouteBody, Does.Contain("TryBuildCachedPolygonRoute"), "Per-query route work should only connect the current start and target to the cached graph.");
+        Assert.That(polygonRouteBody, Does.Not.Contain("TryFindShortestWalkableRoute"), "Movement hover should not rebuild all pairwise polygon visibility every frame.");
+        Assert.That(graphBuildBody, Does.Contain("PolygonWorldPointToLocal"), "Cached polygon nodes should survive room-stage panning and zooming by storing collider-local points.");
+        Assert.That(graphBuildBody, Does.Contain("CollectPolygonBlockerPathNodes"), "Route graphs should include no-walk hole vertices so paths can hug blocker edges.");
+        Assert.That(graphBuildBody, Does.Contain("polygonRouteConnections.Add(new PolygonRouteConnection"), "The expensive static visibility checks should be done while building the cache.");
+        Assert.That(playerText, Does.Not.Contain("localToWorldMatrix.GetHashCode()"), "Room-stage pan or zoom should not invalidate the route graph when the authored collider has not changed.");
+        Assert.That(cachedRouteBody, Does.Contain("CollectDynamicPolygonRouteConnections"), "Each hover/click should only test the live start and target against cached nodes.");
+        Assert.That(cachedRouteBody, Does.Not.Contain("CollectPolygonPathNodes"), "Per-query routing should not recreate polygon corner nodes.");
     }
 
     [Test]
@@ -495,6 +535,9 @@ public class NavigationRegressionTests
         AssertScenePropSorting(sceneText, "dog_toy_nursery_0", 1605);
         AssertScenePropSorting(sceneText, "Grand_entrance_railing_left_0", 1601);
         AssertScenePropSorting(sceneText, "grand_entrance_railing_right_0", 1616);
+        AssertScenePropSorting(sceneText, "upper_gallery_railing", 1300);
+        AssertScenePropSorting(sceneText, "upper_gallery_left_plant_0", 1500);
+        AssertScenePropSorting(sceneText, "upper_gallery_right_plant_0", 2000);
     }
 
     [Test]
@@ -799,7 +842,7 @@ public class NavigationRegressionTests
 
     private static void GetColliderPathYExtents(string colliderText, out float minY, out float maxY)
     {
-        MatchCollection matches = Regex.Matches(colliderText, @"\by: (-?\d+(?:\.\d+)?)");
+        MatchCollection matches = Regex.Matches(colliderText, @"(?m)^\s*- (?:- )?\{x: -?\d+(?:\.\d+)?, y: (-?\d+(?:\.\d+)?)\}");
         Assert.That(matches.Count, Is.GreaterThan(0), "Collider path should contain y coordinates.");
 
         minY = float.PositiveInfinity;
@@ -810,6 +853,22 @@ public class NavigationRegressionTests
             float value = float.Parse(matches[i].Groups[1].Value, CultureInfo.InvariantCulture);
             minY = System.Math.Min(minY, value);
             maxY = System.Math.Max(maxY, value);
+        }
+    }
+
+    private static void GetColliderPathXExtents(string colliderText, out float minX, out float maxX)
+    {
+        MatchCollection matches = Regex.Matches(colliderText, @"(?m)^\s*- (?:- )?\{x: (-?\d+(?:\.\d+)?), y: -?\d+(?:\.\d+)?\}");
+        Assert.That(matches.Count, Is.GreaterThan(0), "Collider path should contain x coordinates.");
+
+        minX = float.PositiveInfinity;
+        maxX = float.NegativeInfinity;
+
+        for (int i = 0; i < matches.Count; i++)
+        {
+            float value = float.Parse(matches[i].Groups[1].Value, CultureInfo.InvariantCulture);
+            minX = System.Math.Min(minX, value);
+            maxX = System.Math.Max(maxX, value);
         }
     }
 
