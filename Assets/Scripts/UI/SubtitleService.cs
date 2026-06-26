@@ -199,6 +199,7 @@ public sealed class SubtitleService : MonoBehaviour
         queuedSubtitles.Clear();
         skipCurrentLineRequested = false;
         HideCurrent();
+        SpeakingCharacterIndicator.HideAnyCurrent();
         voicePlayback?.StopCurrentLine();
         GuestVoiceLinePlayback.StopAnyCurrentLine();
     }
@@ -459,6 +460,7 @@ public sealed class SubtitleService : MonoBehaviour
         }
 
         SetVisible(false);
+        SpeakingCharacterIndicator.HideAnyCurrent();
         voicePlayback?.StopCurrentLine();
         GuestVoiceLinePlayback.StopAnyCurrentLine();
     }

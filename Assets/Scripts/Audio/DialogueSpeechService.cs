@@ -13,6 +13,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
 
     [SerializeField] private SubtitleService subtitleService;
     [SerializeField] private GuestVoiceLinePlayback voicePlayback;
+    [SerializeField] private SpeakingCharacterIndicator speakingIndicator;
     [SerializeField] private bool logMissingVoiceLines;
 
     private bool normalSpeechActive;
@@ -81,6 +82,8 @@ public sealed class DialogueSpeechService : MonoBehaviour
         normalSpeechActive = false;
         voicePlayback?.StopCurrentLine();
         subtitleService?.HideCurrent();
+        speakingIndicator?.Hide();
+        SpeakingCharacterIndicator.HideAnyCurrent();
     }
 
     private IEnumerator SpeakLineRoutine(
@@ -143,6 +146,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
         }
 
         onSpeechLineStarted?.Invoke(speaker, text);
+        speakingIndicator?.ShowForSpeechLine(speechToken, lineId, speaker, text);
 
         if (showSubtitleOverlay)
         {
@@ -193,6 +197,8 @@ public sealed class DialogueSpeechService : MonoBehaviour
             {
                 subtitleService.HideCurrent();
             }
+
+            speakingIndicator?.HideForSpeechToken(speechToken);
         }
 
         if (blockedMovement != null)
@@ -231,6 +237,11 @@ public sealed class DialogueSpeechService : MonoBehaviour
         if (voicePlayback == null)
         {
             voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
+        }
+
+        if (speakingIndicator == null)
+        {
+            speakingIndicator = SpeakingCharacterIndicator.FindOrCreate();
         }
     }
 

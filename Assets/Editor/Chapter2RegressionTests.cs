@@ -35,6 +35,8 @@ public class Chapter2RegressionTests
     private const string SubtitleLineBankScriptPath = "Assets/Scripts/UI/SubtitleLineBank.cs";
     private const string SubtitleServicePath = "Assets/Scripts/UI/SubtitleService.cs";
     private const string DialogueSpeechServicePath = "Assets/Scripts/Audio/DialogueSpeechService.cs";
+    private const string SpeakingCharacterIndicatorPath = "Assets/Scripts/UI/SpeakingCharacterIndicator.cs";
+    private const string SpeakingCharacterIndicatorSpritePath = "Assets/Resources/UI/chat_bubble.png";
     private const string SubtitleLineBankPath = "Assets/Resources/UI/SubtitleLineBank.asset";
     private const string GuestVoiceLinePlaybackPath = "Assets/Scripts/Audio/GuestVoiceLinePlayback.cs";
     private const string GuestVoiceLineCatalogPath = "Assets/Resources/Audio/GuestVoiceLineCatalog.asset";
@@ -649,6 +651,9 @@ public class Chapter2RegressionTests
     public void ButlerVoiceLinesAreCatalogedAndProtectedFromRoutineCutoff()
     {
         Assert.That(File.Exists(DialogueSpeechServicePath), Is.True, "Required dialog should use the shared speech/subtitle service.");
+        Assert.That(File.Exists(SpeakingCharacterIndicatorPath), Is.True, "Voiced dialog should mark the currently speaking character in-world.");
+        Assert.That(File.Exists(SpeakingCharacterIndicatorSpritePath), Is.True, "The approved transparent chat bubble cutout should be available through Resources.");
+        Assert.That(File.Exists(SpeakingCharacterIndicatorSpritePath + ".meta"), Is.True, "The chat bubble cutout should import as a Sprite.");
         Assert.That(File.Exists(GuestVoiceLinePlaybackPath), Is.True, "Butler dialog should use the shared voice-line playback component.");
         Assert.That(File.Exists(GuestVoiceLineCatalogPath), Is.True, "Butler dialog clips should be registered in the voice-line catalog.");
         Assert.That(Directory.Exists(ButlerVoiceFolderPath), Is.True, "Butler dialog WAVs should live beside the guest voice assets.");
@@ -678,6 +683,7 @@ public class Chapter2RegressionTests
         string catalogText = File.ReadAllText(GuestVoiceLineCatalogPath);
         string playbackText = File.ReadAllText(GuestVoiceLinePlaybackPath);
         string speechServiceText = File.ReadAllText(DialogueSpeechServicePath);
+        string speakingIndicatorText = File.ReadAllText(SpeakingCharacterIndicatorPath);
         string subtitleServiceText = File.ReadAllText(SubtitleServicePath);
         string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
 
@@ -701,10 +707,19 @@ public class Chapter2RegressionTests
         Assert.That(speechServiceText, Does.Contain("while (!allowOverlap && normalSpeechActive)"), "Normal dialog should serialize through one active speech line.");
         Assert.That(speechServiceText, Does.Contain("subtitleService.ShowSpeechLine"), "Speech playback should display the matching subtitle at voice start.");
         Assert.That(speechServiceText, Does.Contain("voicePlayback.PlayForDialogue(lineId, speaker, text, allowOverlap)"), "Speech playback should use the resolved voice clip for the same line.");
+        Assert.That(speechServiceText, Does.Contain("SpeakingCharacterIndicator.FindOrCreate()"), "Speech playback should lazily create the speaker marker with the other dialogue services.");
+        Assert.That(speechServiceText, Does.Contain("speakingIndicator.ShowForSpeechLine(speechToken, lineId, speaker, text)"), "The speaker marker should appear when the resolved speech line starts.");
+        Assert.That(speechServiceText, Does.Contain("speakingIndicator.HideForSpeechToken(speechToken)"), "The speaker marker should clear only for the speech line that owns it.");
         Assert.That(speechServiceText, Does.Contain("Input.GetKeyDown(KeyCode.Escape)"), "Escape should skip the active speech line without advancing the next line.");
         Assert.That(subtitleServiceText, Does.Contain("Button_SubtitleSkip"), "Subtitle UI should expose a small skip button during active speech.");
         Assert.That(subtitleServiceText, Does.Not.Contain("PlayForDialogue("), "Subtitle-only paths must not bypass DialogueSpeechService voice serialization.");
         Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*GuestVoiceLinePlayback\.StopAnyCurrentLine\(\)"), "Room, teleport, and chapter clears should stop active dialog audio.");
+        Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*SpeakingCharacterIndicator\.HideAnyCurrent\(\)"), "Room, teleport, and chapter clears should also remove the speaker marker.");
+        Assert.That(speakingIndicatorText, Does.Contain("DefaultSpriteResourcePath = \"UI/chat_bubble\""), "The marker should load the approved cutout chat bubble sprite from Resources.");
+        Assert.That(speakingIndicatorText, Does.Contain("FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include)"), "Guest speech should resolve to the visible ActorRoomState instead of a fixed screen coordinate.");
+        Assert.That(speakingIndicatorText, Does.Contain("GuestDisplayNames"), "Display-name dialogue should map back to the correct guest actor.");
+        Assert.That(speakingIndicatorText, Does.Contain("bounds.max.y + verticalDistance"), "The marker should sit above the actor bounds without covering the head.");
+        Assert.That(speakingIndicatorText, Does.Contain("sortingOrder + sortingOrderOffset"), "The marker should render above the speaking actor.");
         Assert.That(chapter2Text, Does.Contain("ShowGuestConversation(\"Butler\", string.Empty, \"Address Guests\", HandleAddressGuestsPrompt)"), "Address Guests should appear as a dialogue-panel choice, not a separate primary action.");
         Assert.That(chapter2Text, Does.Contain("yield return SpeakLineInDialoguePanel(openingSpeechLineId, \"Butler\", line, false, true)"), "The Butler opening speech should show subtitles in the dialogue panel and wait on the shared speech API.");
         Assert.That(chapter2Text, Does.Contain("interactionHUD.ClearDialogue();"), "The Chapter 2 dialogue panel should clear before the monster stinger takes over.");
