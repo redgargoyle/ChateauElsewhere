@@ -368,15 +368,18 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(depthSortMethodBody, Does.Not.Contain("9000"), "Drawing Room depth sorting should not reuse the entrance fallback sorting band.");
 
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "tea_service_table", "roomLocalFootPoint: {x: -80.26, y: -211.67}", "m_SortingOrder: 6627");
+        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawing_room_red_chair_guest6", "roomLocalFootPoint: {x: 59, y: -208.5}", "m_SortingOrder: 800", "sortingOffset: -5776");
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -479.54, y: -281.56}", "m_SortingOrder: 7745");
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair[_0", "roomLocalFootPoint: {x: -408.72, y: -261.91}", "m_SortingOrder: 7431");
 
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "tea_service_table", "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
+        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "drawing_room_red_chair_guest6", "roomLocalFootPoint: {x: 59, y: -208.5}", "m_SortingOrder: 800", "sortingOffset: -5776");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -490.46, y: -282.58}", "m_SortingOrder: 7761");
 
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "tea_service_table", "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
+        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "drawing_room_red_chair_guest6", "roomLocalFootPoint: {x: 59, y: -208.5}", "m_SortingOrder: 800", "sortingOffset: -5776");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -490.46, y: -282.58}", "m_SortingOrder: 7761");
     }
@@ -400,7 +403,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(skipStageMethodBody, Does.Contain("guest.Seated = true"), "Visual standing should not break Chapter 2 skip progression.");
     }
 
-    private static void AssertDrawingRoomProjectedOccluderDepth(string assetText, string objectName, string expectedFootPoint, string expectedSortingOrder)
+    private static void AssertDrawingRoomProjectedOccluderDepth(string assetText, string objectName, string expectedFootPoint, string expectedSortingOrder, string expectedSortingOffset = null)
     {
         string objectBlock = ExtractObjectBlock(assetText, objectName);
 
@@ -412,6 +415,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(objectBlock, Does.Contain("applyTint: 0"), $"The Drawing Room object '{objectName}' projection must not recolor authored art.");
         Assert.That(objectBlock, Does.Contain("applySorting: 1"), $"The Drawing Room object '{objectName}' projection should only own sorting.");
         Assert.That(objectBlock, Does.Contain(expectedSortingOrder), $"The Drawing Room object '{objectName}' serialized order should match its profile-derived y depth.");
+        if (!string.IsNullOrEmpty(expectedSortingOffset))
+        {
+            Assert.That(objectBlock, Does.Contain(expectedSortingOffset), $"The Drawing Room object '{objectName}' should keep its authored projection sorting offset.");
+        }
     }
 
     private static string ExtractObjectBlock(string assetText, string objectName)
