@@ -878,6 +878,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetAvailableInCurrentChapter(true);
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(false);
+            guest.actorState.ResetAnimatorToAuthoredState();
             guest.actorState.SetSeated(true);
             guest.actorState.ApplyState();
         }
@@ -1919,23 +1920,20 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     private List<GuestSearchEntry> GetGuestsInDiningSeatOrder()
     {
-        List<GuestSearchEntry> orderedGuests = GetFoundGuestsInOrder();
+        List<GuestSearchEntry> orderedGuests = new List<GuestSearchEntry>();
 
-        if (guests == null)
+        if (guests != null)
         {
-            return orderedGuests;
-        }
-
-        for (int i = 0; i < guests.Count; i++)
-        {
-            GuestSearchEntry guest = guests[i];
-
-            if (guest != null && !orderedGuests.Contains(guest))
+            for (int i = 0; i < guests.Count; i++)
             {
-                orderedGuests.Add(guest);
+                if (guests[i] != null)
+                {
+                    orderedGuests.Add(guests[i]);
+                }
             }
         }
 
+        orderedGuests.Sort(CompareGuestIdentity);
         return orderedGuests;
     }
 

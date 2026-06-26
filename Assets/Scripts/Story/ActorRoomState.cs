@@ -142,6 +142,24 @@ public class ActorRoomState : MonoBehaviour
         ApplySeatedAnimatorState();
     }
 
+    public void ResetAnimatorToAuthoredState()
+    {
+        RefreshComponentCache();
+
+        for (int i = 0; i < animators.Length; i++)
+        {
+            Animator animator = animators[i];
+
+            if (animator == null || animator.runtimeAnimatorController == null || !animator.isActiveAndEnabled)
+            {
+                continue;
+            }
+
+            animator.Rebind();
+            animator.Update(0f);
+        }
+    }
+
     public void SetScaleWithRoomStageMotion(bool value)
     {
         scaleWithRoomStageMotion = value;
