@@ -1381,6 +1381,17 @@ public class Chapter2RegressionTests
         Assert.That(hudText, Does.Contain("Text_Chapter2FoundList"));
         Assert.That(hudText, Does.Contain("Panel_Chapter2Dialogue"));
         Assert.That(hudText, Does.Contain("Panel_Chapter2ClockStrike"));
+        Assert.That(hudText, Does.Contain("ClockStrikeSecondHandName"), "The 7:00 clock-strike close-up should draw a runtime second hand.");
+        Assert.That(hudText, Does.Contain("ClockStrikeSecondTailName"), "The second hand should have a visible counterweight so it reads as a designed hand, not a plain debug line.");
+        Assert.That(hudText, Does.Contain("ClockStrikeSecondTicksPerSecond"), "The strike close-up second hand should tick independently of gameplay clock alignment.");
+        Assert.That(hudText, Does.Match(@"(?s)\bUpdate\s*\([^)]*\)\s*\{.*RefreshClockStrikeHands\(\)"), "The second hand must keep ticking while the strike graphic is visible.");
+        Assert.That(hudText, Does.Match(@"(?s)\bShowClockStrike\s*\([^)]*\)\s*\{.*clockStrikeStartedAt\s*=\s*Time\.unscaledTime.*RefreshClockStrikeHands\(true\)"), "Showing the strike graphic should reset and immediately render the ticking second hand.");
+        Assert.That(hudText, Does.Match(@"(?s)clockStrikeRect\.sizeDelta\s*=\s*new Vector2\(880f,\s*900f\)"), "The clock-strike graphic should be much larger and closer than the old 660x560 panel.");
+        Assert.That(hudText, Does.Match(@"(?s)clockStrikeImageRect\.sizeDelta\s*=\s*new Vector2\(760f,\s*1350f\)"), "The grandfather clock sprite should be scaled up so the face reads as a close-up.");
+        Assert.That(hudText, Does.Contain("RectMask2D"), "The enlarged clock sprite should be clipped by the close-up panel.");
+        Assert.That(hudText, Does.Contain("SetClockStrikeHand(clockStrikeHourHand"), "The strike close-up should draw the stationary thicker hour hand.");
+        Assert.That(hudText, Does.Contain("SetClockStrikeHand(clockStrikeMinuteHand"), "The strike close-up should draw the stationary thicker minute hand.");
+        Assert.That(hudText, Does.Contain("SetClockStrikeHand(clockStrikeSecondHand"), "The strike close-up should animate the second hand around the clock.");
         Assert.That(hudText, Does.Contain("IReadOnlyList<string>"));
         Assert.That(hudText, Does.Match(@"(?s)\bSetDialogueChoices\s*\([^)]*\)\s*\{.*EnsureUI\s*\(\s*\).*dialoguePanel\.SetActive\(true\).*SetDialogueChoice\(0"), "The first visible guest dialogue should not be hidden by EnsureUI before choices are installed.");
     }
