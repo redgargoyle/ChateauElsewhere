@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 public class RoomProjectionRegressionTests
@@ -246,10 +247,14 @@ public class RoomProjectionRegressionTests
 
         Assert.That(editorText, Does.Contain("[CustomEditor(typeof(PointClickPlayerMovement))]"), "The Butler calibration controls should live on the player movement inspector.");
         Assert.That(editorText, Does.Contain("Butler Room Scale Calibration"), "The inspector should clearly label Butler-only scale calibration.");
-        Assert.That(editorText, Does.Contain("Set Front Here"), "Artists should be able to capture the front endpoint from the current Butler position.");
-        Assert.That(editorText, Does.Contain("Set Back Here"), "Artists should be able to capture the back endpoint from the current Butler position.");
-        Assert.That(editorText, Does.Contain("Apply Current Depth Preview"), "Artists should be able to preview interpolation at the Butler's current depth.");
-        Assert.That(editorText, Does.Contain("Remove Room Override"), "Artists should be able to remove a stored calibration.");
+        Assert.That(editorText, Does.Contain("Preview FRONT Size"), "Artists should be able to preview the front endpoint scale without saving.");
+        Assert.That(editorText, Does.Contain("Save FRONT: Current Position + Scale"), "Artists should be able to save the front endpoint from the current player position.");
+        Assert.That(editorText, Does.Contain("Preview BACK Size"), "Artists should be able to preview the back endpoint scale without saving.");
+        Assert.That(editorText, Does.Contain("Save BACK: Current Position + Scale"), "Artists should be able to save the back endpoint from the current player position.");
+        Assert.That(editorText, Does.Contain("Preview Saved Room Scaling Here"), "Artists should be able to preview interpolation at the player's current depth.");
+        Assert.That(editorText, Does.Contain("Initialize Room From Existing Perspective"), "Artists should be able to seed room calibration from the old perspective behavior.");
+        Assert.That(editorText, Does.Contain("Clear Saved Scale For This Room"), "Artists should be able to remove a stored calibration.");
+        Assert.That(editorText, Does.Contain("PLAY MODE: preview only"), "The inspector should make play-mode calibration preview-only.");
     }
 
     [Test]
@@ -260,10 +265,58 @@ public class RoomProjectionRegressionTests
         string windowText = File.ReadAllText(ButlerRoomScaleCalibrationWindowPath);
 
         Assert.That(windowText, Does.Contain("[MenuItem(\"Tools/Butler/Room Scale Calibration\")]"), "The calibration window should have the requested Tools menu path.");
+        Assert.That(windowText, Does.Contain("Find Scene Player"), "The calibration window should use a clear, player-specific finder label.");
+        Assert.That(windowText, Does.Contain("Butler / Player Object"), "The object field should make clear that the scene player object is expected.");
         Assert.That(windowText, Does.Contain("Previous Room"), "The calibration window should support stepping to the previous room.");
         Assert.That(windowText, Does.Contain("Next Room"), "The calibration window should support stepping to the next room.");
-        Assert.That(windowText, Does.Contain("Set Front Here"), "The calibration window should capture the front endpoint.");
-        Assert.That(windowText, Does.Contain("Set Back Here"), "The calibration window should capture the back endpoint.");
+        Assert.That(windowText, Does.Contain("Preview FRONT Size"), "The calibration window should preview the front endpoint scale without saving.");
+        Assert.That(windowText, Does.Contain("Save FRONT: Current Position + Scale"), "The calibration window should capture the front endpoint.");
+        Assert.That(windowText, Does.Contain("Preview BACK Size"), "The calibration window should preview the back endpoint scale without saving.");
+        Assert.That(windowText, Does.Contain("Save BACK: Current Position + Scale"), "The calibration window should capture the back endpoint.");
+        Assert.That(windowText, Does.Contain("Preview Saved Room Scaling Here"), "The calibration window should preview saved room interpolation at the current position.");
+        Assert.That(windowText, Does.Contain("PLAY MODE: preview only"), "The calibration window should warn that play mode is preview-only.");
+        Assert.That(windowText, Does.Contain("Detected PointClickPlayerMovement Objects"), "The calibration window should expose candidate debugging.");
+        Assert.That(windowText, Does.Contain("No safe player object found"), "The calibration window should refuse to silently select guest-looking candidates.");
+        Assert.That(windowText, Does.Contain("DrawScaleSliderNumericNudge"), "The scale UI should include slider, numeric, and nudge controls.");
+        Assert.That(windowText, Does.Contain("HorizontalSlider"), "The scale UI should include a slider.");
+        Assert.That(windowText, Does.Contain("\"-0.05\""), "The scale UI should include a negative nudge button.");
+        Assert.That(windowText, Does.Contain("\"+0.05\""), "The scale UI should include a positive nudge button.");
+    }
+
+    [Test]
+    public void ButlerRoomScaleFinderPrefersPlayerNamedObjectOverGuests()
+    {
+        GameObject previousSelection = Selection.activeGameObject;
+        GameObject guest = new GameObject("Guest 3");
+        GameObject player = new GameObject("player");
+
+        try
+        {
+            guest.AddComponent<Rigidbody2D>();
+            guest.AddComponent<Animator>();
+            PointClickPlayerMovement guestMovement = guest.AddComponent<PointClickPlayerMovement>();
+            guest.AddComponent<RoomProjectedEntity>();
+
+            player.AddComponent<Rigidbody2D>();
+            player.AddComponent<Animator>();
+            PointClickPlayerMovement playerMovement = player.AddComponent<PointClickPlayerMovement>();
+
+            Selection.activeGameObject = guest;
+
+            PointClickPlayerMovement found = ButlerRoomScaleCalibrationWindow.FindScenePlayer();
+
+            Assert.That(found, Is.Not.Null, "A scene object named player should be considered a safe player candidate.");
+            Assert.That(string.Equals(found.gameObject.name, "player", StringComparison.OrdinalIgnoreCase), Is.True, "The finder should prefer a scene object named player over guest-looking PointClickPlayerMovement objects.");
+            Assert.That(found, Is.Not.EqualTo(guestMovement), "The finder should not silently select Guest objects when a safe player object exists.");
+            Assert.That(ButlerRoomScaleCalibrationWindow.IsSafePlayerObjectForSaving(guestMovement), Is.False, "Guest-looking objects should be blocked from saving Butler calibration.");
+            Assert.That(ButlerRoomScaleCalibrationWindow.IsSafePlayerObjectForSaving(playerMovement), Is.True, "The scene object named player should be safe for saving Butler calibration.");
+        }
+        finally
+        {
+            Selection.activeGameObject = previousSelection;
+            UnityEngine.Object.DestroyImmediate(guest);
+            UnityEngine.Object.DestroyImmediate(player);
+        }
     }
 
     [Test]

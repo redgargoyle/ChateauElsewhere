@@ -8,12 +8,19 @@ using UnityEngine;
 [CanEditMultipleObjects]
 public sealed class PointClickPlayerMovementEditor : Editor
 {
+    private const string PlayModeWarning =
+        "PLAY MODE: preview only. Calibration changes will not be saved to the scene. Exit Play Mode to save FRONT/BACK room scale.";
+    private const string MatchingEndpointWarning =
+        "Front and Back positions are the same. Move the player to the front and save FRONT, then move to the back and save BACK.";
+
     private static readonly string[] HiddenButlerScaleFields =
     {
         "m_Script",
         "editorSelectedButlerScaleRoomId",
         "butlerRoomScaleOverrides"
     };
+
+    private static readonly Dictionary<string, float> DraftScales = new Dictionary<string, float>();
 
     public override void OnInspectorGUI()
     {
@@ -29,6 +36,11 @@ public sealed class PointClickPlayerMovementEditor : Editor
     {
         EditorGUILayout.LabelField("Butler Room Scale Calibration", EditorStyles.boldLabel);
 
+        if (Application.isPlaying)
+        {
+            EditorGUILayout.HelpBox(PlayModeWarning, MessageType.Warning);
+        }
+
         if (targets.Length != 1)
         {
             EditorGUILayout.HelpBox("Select one Butler at a time to edit per-room scale calibration.", MessageType.Info);
@@ -36,6 +48,8 @@ public sealed class PointClickPlayerMovementEditor : Editor
         }
 
         PointClickPlayerMovement movement = (PointClickPlayerMovement)target;
+        ButlerRoomScaleCalibrationWindow.DrawSelectedPlayerWarnings(movement);
+
         string[] roomOptions = BuildRoomOptions(movement);
 
         if (roomOptions.Length == 0)
@@ -63,6 +77,8 @@ public sealed class PointClickPlayerMovementEditor : Editor
         movement.TryGetCurrentButlerRoomLocalFootPoint(out Vector2 footPoint);
         bool hasOverride = movement.TryGetButlerRoomScaleOverride(selectedRoom, out PointClickPlayerMovement.ButlerRoomScaleOverrideData data);
         float currentScale = movement.CaptureCurrentButlerScaleMultiplier();
+        bool safePlayerForSaving = ButlerRoomScaleCalibrationWindow.IsSafePlayerObjectForSaving(movement);
+        bool canSaveCalibration = !Application.isPlaying && safePlayerForSaving;
 
         using (new EditorGUI.DisabledScope(true))
         {
@@ -72,33 +88,40 @@ public sealed class PointClickPlayerMovementEditor : Editor
             EditorGUILayout.Toggle("Complete Override", hasOverride && data.IsComplete);
         }
 
-        DrawEndpointControls(movement, selectedRoom, data, footPoint, currentScale, true);
-        DrawEndpointControls(movement, selectedRoom, data, footPoint, currentScale, false);
+        if (HasMatchingSavedEndpoints(data))
+        {
+            EditorGUILayout.HelpBox(MatchingEndpointWarning, MessageType.Warning);
+        }
+
+        DrawEndpointControls(movement, selectedRoom, data, footPoint, currentScale, true, canSaveCalibration);
+        DrawEndpointControls(movement, selectedRoom, data, footPoint, currentScale, false, canSaveCalibration);
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            if (GUILayout.Button("Apply Current Depth Preview"))
+            if (GUILayout.Button("Preview Saved Room Scaling Here"))
             {
-                RecordMovementAndTransform(movement, "Preview Butler Current Depth Scale");
-                float scale = movement.GetButlerScaleForRoomAtY(selectedRoom, footPoint.y, currentScale);
-                movement.ApplyButlerScalePreview(scale);
-                MarkDirty(movement);
+                PreviewScale(movement, movement.GetButlerScaleForRoomAtY(selectedRoom, footPoint.y, currentScale), "Preview Butler Current Depth Scale");
             }
 
-            if (GUILayout.Button("Initialize Selected Room From Current Perspective"))
+            using (new EditorGUI.DisabledScope(!canSaveCalibration))
             {
-                RecordMovementAndTransform(movement, "Initialize Butler Room Scale");
-                movement.InitializeButlerScaleOverrideForRoomFromCurrentPerspective(selectedRoom);
-                MarkDirty(movement);
+                if (GUILayout.Button("Initialize Room From Existing Perspective"))
+                {
+                    RecordMovementAndTransform(movement, "Initialize Butler Room Scale");
+                    movement.InitializeButlerScaleOverrideForRoomFromCurrentPerspective(selectedRoom);
+                    ClearEndpointDrafts(movement, selectedRoom);
+                    MarkDirty(movement);
+                }
             }
         }
 
-        using (new EditorGUI.DisabledScope(!hasOverride))
+        using (new EditorGUI.DisabledScope(!hasOverride || !canSaveCalibration))
         {
-            if (GUILayout.Button("Remove Room Override"))
+            if (GUILayout.Button("Clear Saved Scale For This Room"))
             {
                 RecordMovementAndTransform(movement, "Remove Butler Room Scale");
                 movement.RemoveButlerScaleOverrideForRoom(selectedRoom);
+                ClearEndpointDrafts(movement, selectedRoom);
                 MarkDirty(movement);
             }
         }
@@ -114,65 +137,99 @@ public sealed class PointClickPlayerMovementEditor : Editor
         PointClickPlayerMovement.ButlerRoomScaleOverrideData data,
         Vector2 footPoint,
         float currentScale,
-        bool front)
+        bool front,
+        bool canSaveCalibration)
     {
         string label = front ? "Front" : "Back";
         bool hasEndpoint = front ? data.HasFront : data.HasBack;
         float endpointY = hasEndpoint ? (front ? data.FrontFootY : data.BackFootY) : footPoint.y;
-        float endpointScale = hasEndpoint ? (front ? data.FrontScale : data.BackScale) : currentScale;
+        float storedScale = hasEndpoint ? (front ? data.FrontScale : data.BackScale) : currentScale;
+        string draftKey = GetDraftScaleKey(movement, selectedRoom, front);
+        float endpointScale = GetDraftScale(draftKey, storedScale);
+        string previewButtonLabel = front ? "Preview FRONT Size" : "Preview BACK Size";
+        string saveButtonLabel = front ? "Save FRONT: Current Position + Scale" : "Save BACK: Current Position + Scale";
 
         EditorGUILayout.Space(4f);
         EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
 
-        EditorGUI.BeginChangeCheck();
-        endpointY = EditorGUILayout.FloatField($"{label} Y", endpointY);
-        endpointScale = Mathf.Max(0.001f, EditorGUILayout.FloatField($"{label} Scale", endpointScale));
-
-        if (EditorGUI.EndChangeCheck())
+        using (new EditorGUI.DisabledScope(true))
         {
-            RecordMovementAndTransform(movement, $"Edit Butler {label} Scale");
+            EditorGUILayout.TextField($"{label} saved", hasEndpoint ? "Yes" : "No");
+            EditorGUILayout.FloatField($"{label} Y", endpointY);
+            EditorGUILayout.FloatField($"{label} Scale", storedScale);
+        }
 
-            if (front)
-            {
-                movement.SetButlerFrontScaleForRoom(selectedRoom, endpointY, endpointScale, false);
-            }
-            else
-            {
-                movement.SetButlerBackScaleForRoom(selectedRoom, endpointY, endpointScale, false);
-            }
+        endpointScale = ButlerRoomScaleCalibrationWindow.DrawScaleSliderNumericNudge($"{label} Scale", endpointScale, out bool scaleChanged);
 
-            MarkDirty(movement);
+        if (scaleChanged)
+        {
+            DraftScales[draftKey] = endpointScale;
+            PreviewScale(movement, endpointScale, $"Preview Butler {label} Scale");
         }
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            string previewButtonLabel = front ? "Apply Front Preview" : "Apply Back Preview";
-            string setButtonLabel = front ? "Set Front Here" : "Set Back Here";
-
             if (GUILayout.Button(previewButtonLabel))
             {
-                RecordMovementAndTransform(movement, $"Preview Butler {label} Scale");
-                movement.ApplyButlerScalePreview(endpointScale);
-                MarkDirty(movement);
+                PreviewScale(movement, endpointScale, $"Preview Butler {label} Scale");
             }
 
-            if (GUILayout.Button(setButtonLabel))
+            using (new EditorGUI.DisabledScope(!canSaveCalibration))
             {
-                RecordMovementAndTransform(movement, $"Set Butler {label} Scale");
-                float capturedScale = movement.CaptureCurrentButlerScaleMultiplier();
-
-                if (front)
+                if (GUILayout.Button(saveButtonLabel))
                 {
-                    movement.SetButlerFrontScaleForRoom(selectedRoom, footPoint.y, capturedScale);
-                }
-                else
-                {
-                    movement.SetButlerBackScaleForRoom(selectedRoom, footPoint.y, capturedScale);
-                }
+                    RecordMovementAndTransform(movement, $"Set Butler {label} Scale");
 
-                MarkDirty(movement);
+                    if (front)
+                    {
+                        movement.SetButlerFrontScaleForRoom(selectedRoom, footPoint.y, endpointScale);
+                    }
+                    else
+                    {
+                        movement.SetButlerBackScaleForRoom(selectedRoom, footPoint.y, endpointScale);
+                    }
+
+                    DraftScales[draftKey] = endpointScale;
+                    MarkDirty(movement);
+                }
             }
         }
+    }
+
+    private static float GetDraftScale(string key, float fallbackScale)
+    {
+        return DraftScales.TryGetValue(key, out float draftScale)
+            ? Mathf.Max(0.001f, draftScale)
+            : Mathf.Max(0.001f, fallbackScale);
+    }
+
+    private static string GetDraftScaleKey(PointClickPlayerMovement movement, string roomId, bool front)
+    {
+        return $"{movement.GetEntityId()}:{NormalizeRoomName(roomId)}:{(front ? "front" : "back")}";
+    }
+
+    private static void ClearEndpointDrafts(PointClickPlayerMovement movement, string roomId)
+    {
+        DraftScales.Remove(GetDraftScaleKey(movement, roomId, true));
+        DraftScales.Remove(GetDraftScaleKey(movement, roomId, false));
+    }
+
+    private static void PreviewScale(PointClickPlayerMovement movement, float scale, string actionName)
+    {
+        RecordMovementAndTransform(movement, actionName);
+        movement.ApplyButlerScalePreview(scale);
+
+        if (!Application.isPlaying)
+        {
+            MarkDirty(movement);
+        }
+    }
+
+    private static bool HasMatchingSavedEndpoints(PointClickPlayerMovement.ButlerRoomScaleOverrideData data)
+    {
+        return data.HasFront &&
+            data.HasBack &&
+            Mathf.Abs(data.FrontFootY - data.BackFootY) < PointClickPlayerMovement.ButlerRoomScaleEndpointEpsilon;
     }
 
     private static string ResolveSelectedRoom(PointClickPlayerMovement movement, string[] roomOptions)
@@ -278,7 +335,7 @@ public sealed class PointClickPlayerMovementEditor : Editor
 
     private static void MarkDirty(PointClickPlayerMovement movement)
     {
-        if (movement == null)
+        if (movement == null || Application.isPlaying)
         {
             return;
         }

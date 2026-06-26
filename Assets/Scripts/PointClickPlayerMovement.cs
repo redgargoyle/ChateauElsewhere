@@ -28,6 +28,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private const int ClickProjectionSearchSamplesPerRing = 16;
 	private const float ClickProjectionMinWorldDistance = 16f;
 	private const float ClickProjectionMaxWorldDistance = 48f;
+	public const float ButlerRoomScaleEndpointEpsilon = 0.01f;
 
 	[SerializeField] private string walkableFloorName = "PlayerBoundary_Entrance";
 	[SerializeField] private Collider2D walkableFloor;
@@ -150,7 +151,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		public bool HasBack { get; }
 		public float BackFootY { get; }
 		public float BackScale { get; }
-		public bool IsComplete => HasFront && HasBack;
+		public bool IsComplete => HasFront && HasBack && Mathf.Abs(FrontFootY - BackFootY) >= ButlerRoomScaleEndpointEpsilon;
 	}
 
 	public void SetInputEnabled(bool enabled)
@@ -220,11 +221,6 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryGetButlerRoomScaleOverride(roomId, out ButlerRoomScaleOverrideData data) || !data.IsComplete)
 		{
 			return SanitizeButlerScale(fallbackScale);
-		}
-
-		if (Mathf.Approximately(data.FrontFootY, data.BackFootY))
-		{
-			return data.FrontScale;
 		}
 
 		float depth = Mathf.Clamp01(Mathf.InverseLerp(data.FrontFootY, data.BackFootY, roomLocalFootY));
