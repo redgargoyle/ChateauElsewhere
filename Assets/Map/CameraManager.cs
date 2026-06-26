@@ -1970,10 +1970,19 @@ public static class NavigationCursorController
     public enum HoverIcon
     {
         Door,
+        ExitLeaveRoom,
         Stairway,
+        StairsUp,
+        StairsDown,
+        Inspect,
+        PickUpTake,
+        PickUpCoat,
         Coat,
+        PlaceHangCoat,
         BlockedCoat,
         Talk,
+        Locked,
+        Unavailable,
         Ui
     }
 
@@ -2016,10 +2025,19 @@ public static class NavigationCursorController
     private static Texture2D leftArrowCursor;
     private static Texture2D rightArrowCursor;
     private static Texture2D doorCursor;
+    private static Texture2D exitLeaveRoomCursor;
     private static Texture2D stairwayCursor;
+    private static Texture2D stairsUpCursor;
+    private static Texture2D stairsDownCursor;
+    private static Texture2D inspectCursor;
+    private static Texture2D pickUpTakeCursor;
+    private static Texture2D pickUpCoatCursor;
     private static Texture2D coatCursor;
+    private static Texture2D placeHangCoatCursor;
     private static Texture2D blockedCoatCursor;
     private static Texture2D talkCursor;
+    private static Texture2D lockedCursor;
+    private static Texture2D unavailableCursor;
     private static Texture2D uiCursor;
     private static Texture2D walkCursor;
     private static Texture2D blockedWalkCursor;
@@ -2033,7 +2051,34 @@ public static class NavigationCursorController
         doorHoverIcon = HoverIcon.Door;
         walkHoverOwner = null;
         walkHoverCanMove = false;
+        ClearCursorTextureCache();
         ApplyCursor();
+    }
+
+    public static int[] GetAvailableCursorStyles()
+    {
+        return CursorStyleCatalog.GetAvailableStyleIndices();
+    }
+
+    public static int GetSelectedCursorStyle()
+    {
+        return CursorStyleCatalog.GetSelectedStyleIndex();
+    }
+
+    public static void SetCursorStyle(int styleIndex)
+    {
+        if (!CursorStyleCatalog.SetSelectedStyleIndex(styleIndex))
+        {
+            return;
+        }
+
+        ClearCursorTextureCache();
+        ApplyCursor();
+    }
+
+    public static Texture2D LoadCursorStylePreview(int styleIndex, CursorStyleCatalog.CursorAction action)
+    {
+        return CursorStyleCatalog.LoadTexture(styleIndex, action);
     }
 
     public static void SetEdgePanDirection(int direction)
@@ -2163,15 +2208,57 @@ public static class NavigationCursorController
         // comes next so the cursor always answers what a click would do.
         if (doorHoverOwner != null)
         {
+            if (doorHoverIcon == HoverIcon.ExitLeaveRoom)
+            {
+                Cursor.SetCursor(GetExitLeaveRoomCursor(), DoorHotspot, CursorMode.Auto);
+                return;
+            }
+
+            if (doorHoverIcon == HoverIcon.StairsUp)
+            {
+                Cursor.SetCursor(GetStairsUpCursor(), StairwayHotspot, CursorMode.Auto);
+                return;
+            }
+
+            if (doorHoverIcon == HoverIcon.StairsDown)
+            {
+                Cursor.SetCursor(GetStairsDownCursor(), StairwayHotspot, CursorMode.Auto);
+                return;
+            }
+
             if (doorHoverIcon == HoverIcon.Stairway)
             {
                 Cursor.SetCursor(GetStairwayCursor(), StairwayHotspot, CursorMode.Auto);
                 return;
             }
 
+            if (doorHoverIcon == HoverIcon.Inspect)
+            {
+                Cursor.SetCursor(GetInspectCursor(), UiHotspot, CursorMode.Auto);
+                return;
+            }
+
+            if (doorHoverIcon == HoverIcon.PickUpTake)
+            {
+                Cursor.SetCursor(GetPickUpTakeCursor(), CoatHotspot, CursorMode.Auto);
+                return;
+            }
+
+            if (doorHoverIcon == HoverIcon.PickUpCoat)
+            {
+                Cursor.SetCursor(GetPickUpCoatCursor(), CoatHotspot, CursorMode.Auto);
+                return;
+            }
+
             if (doorHoverIcon == HoverIcon.Coat)
             {
                 Cursor.SetCursor(GetCoatCursor(), CoatHotspot, CursorMode.Auto);
+                return;
+            }
+
+            if (doorHoverIcon == HoverIcon.PlaceHangCoat)
+            {
+                Cursor.SetCursor(GetPlaceHangCoatCursor(), CoatHotspot, CursorMode.Auto);
                 return;
             }
 
@@ -2184,6 +2271,18 @@ public static class NavigationCursorController
             if (doorHoverIcon == HoverIcon.Talk)
             {
                 Cursor.SetCursor(GetTalkCursor(), TalkHotspot, CursorMode.Auto);
+                return;
+            }
+
+            if (doorHoverIcon == HoverIcon.Locked)
+            {
+                Cursor.SetCursor(GetLockedCursor(), CoatHotspot, CursorMode.Auto);
+                return;
+            }
+
+            if (doorHoverIcon == HoverIcon.Unavailable)
+            {
+                Cursor.SetCursor(GetUnavailableCursor(), WalkHotspot, CursorMode.Auto);
                 return;
             }
 
@@ -2243,82 +2342,125 @@ public static class NavigationCursorController
 
     private static Texture2D GetDoorCursor()
     {
-        if (doorCursor == null)
-        {
-            doorCursor = CreateDoorCursor();
-        }
+        return GetStyledCursorTexture(ref doorCursor, CursorStyleCatalog.CursorAction.OpenDoor, CreateDoorCursor);
+    }
 
-        return doorCursor;
+    private static Texture2D GetExitLeaveRoomCursor()
+    {
+        return GetStyledCursorTexture(ref exitLeaveRoomCursor, CursorStyleCatalog.CursorAction.ExitLeaveRoom, CreateDoorCursor);
     }
 
     private static Texture2D GetStairwayCursor()
     {
-        if (stairwayCursor == null)
-        {
-            stairwayCursor = CreateStairwayCursor();
-        }
+        return GetStyledCursorTexture(ref stairwayCursor, CursorStyleCatalog.CursorAction.StairsUp, CreateStairwayCursor);
+    }
 
-        return stairwayCursor;
+    private static Texture2D GetStairsUpCursor()
+    {
+        return GetStyledCursorTexture(ref stairsUpCursor, CursorStyleCatalog.CursorAction.StairsUp, CreateStairwayCursor);
+    }
+
+    private static Texture2D GetStairsDownCursor()
+    {
+        return GetStyledCursorTexture(ref stairsDownCursor, CursorStyleCatalog.CursorAction.StairsDown, CreateStairwayCursor);
+    }
+
+    private static Texture2D GetInspectCursor()
+    {
+        return GetStyledCursorTexture(ref inspectCursor, CursorStyleCatalog.CursorAction.InspectLook, CreateUiCursor);
+    }
+
+    private static Texture2D GetPickUpTakeCursor()
+    {
+        return GetStyledCursorTexture(ref pickUpTakeCursor, CursorStyleCatalog.CursorAction.PickUpTake, () => CreateCoatCursor("Cursor_PickUpTake", false));
+    }
+
+    private static Texture2D GetPickUpCoatCursor()
+    {
+        return GetStyledCursorTexture(ref pickUpCoatCursor, CursorStyleCatalog.CursorAction.PickUpCoat, () => CreateCoatCursor("Cursor_PickUpCoat", false));
     }
 
     private static Texture2D GetCoatCursor()
     {
-        if (coatCursor == null)
-        {
-            coatCursor = CreateCoatCursor("Cursor_Coat", false);
-        }
+        return GetStyledCursorTexture(ref coatCursor, CursorStyleCatalog.CursorAction.PickUpCoat, () => CreateCoatCursor("Cursor_Coat", false));
+    }
 
-        return coatCursor;
+    private static Texture2D GetPlaceHangCoatCursor()
+    {
+        return GetStyledCursorTexture(ref placeHangCoatCursor, CursorStyleCatalog.CursorAction.PlaceHangCoat, () => CreateCoatCursor("Cursor_PlaceHangCoat", false));
     }
 
     private static Texture2D GetBlockedCoatCursor()
     {
-        if (blockedCoatCursor == null)
-        {
-            blockedCoatCursor = CreateCoatCursor("Cursor_CoatBlocked", true);
-        }
-
-        return blockedCoatCursor;
+        return GetStyledCursorTexture(ref blockedCoatCursor, CursorStyleCatalog.CursorAction.LockedCannotUse, () => CreateCoatCursor("Cursor_CoatBlocked", true));
     }
 
     private static Texture2D GetTalkCursor()
     {
-        if (talkCursor == null)
-        {
-            talkCursor = CreateTalkCursor();
-        }
+        return GetStyledCursorTexture(ref talkCursor, CursorStyleCatalog.CursorAction.TalkConverse, CreateTalkCursor);
+    }
 
-        return talkCursor;
+    private static Texture2D GetLockedCursor()
+    {
+        return GetStyledCursorTexture(ref lockedCursor, CursorStyleCatalog.CursorAction.LockedCannotUse, () => CreateCoatCursor("Cursor_Locked", true));
+    }
+
+    private static Texture2D GetUnavailableCursor()
+    {
+        return GetStyledCursorTexture(ref unavailableCursor, CursorStyleCatalog.CursorAction.NotAvailableDisabled, () => CreateWalkCursor("Cursor_Unavailable", true));
     }
 
     private static Texture2D GetUiCursor()
     {
-        if (uiCursor == null)
-        {
-            uiCursor = CreateUiCursor();
-        }
-
-        return uiCursor;
+        return GetStyledCursorTexture(ref uiCursor, CursorStyleCatalog.CursorAction.UseInteract, CreateUiCursor);
     }
 
     private static Texture2D GetWalkCursor()
     {
-        if (walkCursor == null)
-        {
-            walkCursor = CreateWalkCursor("Cursor_Walk", false);
-        }
-
-        return walkCursor;
+        return GetStyledCursorTexture(ref walkCursor, CursorStyleCatalog.CursorAction.WalkMove, () => CreateWalkCursor("Cursor_Walk", false));
     }
 
     private static Texture2D GetBlockedWalkCursor()
     {
-        if (blockedWalkCursor == null)
+        return GetStyledCursorTexture(ref blockedWalkCursor, CursorStyleCatalog.CursorAction.NotAvailableDisabled, () => CreateWalkCursor("Cursor_WalkBlocked", true));
+    }
+
+    private static Texture2D GetStyledCursorTexture(
+        ref Texture2D cache,
+        CursorStyleCatalog.CursorAction action,
+        System.Func<Texture2D> fallbackFactory)
+    {
+        if (cache != null)
         {
-            blockedWalkCursor = CreateWalkCursor("Cursor_WalkBlocked", true);
+            return cache;
         }
 
-        return blockedWalkCursor;
+        Texture2D styledTexture = CursorStyleCatalog.LoadSelectedTexture(action);
+        cache = styledTexture != null ? styledTexture : fallbackFactory();
+        return cache;
+    }
+
+    private static void ClearCursorTextureCache()
+    {
+        leftArrowCursor = null;
+        rightArrowCursor = null;
+        doorCursor = null;
+        exitLeaveRoomCursor = null;
+        stairwayCursor = null;
+        stairsUpCursor = null;
+        stairsDownCursor = null;
+        inspectCursor = null;
+        pickUpTakeCursor = null;
+        pickUpCoatCursor = null;
+        coatCursor = null;
+        placeHangCoatCursor = null;
+        blockedCoatCursor = null;
+        talkCursor = null;
+        lockedCursor = null;
+        unavailableCursor = null;
+        uiCursor = null;
+        walkCursor = null;
+        blockedWalkCursor = null;
     }
 
     private static Texture2D CreateArrowCursor(string cursorName, int direction)

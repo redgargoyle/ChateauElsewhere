@@ -20,6 +20,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         Stairway
     }
 
+    public enum StairwayDirection
+    {
+        Auto,
+        Up,
+        Down
+    }
+
     private const string DefaultDoorOpenSoundCatalogResourcePath = "Audio/DoorOpenSoundCatalog";
     private const string DefaultStairwaySoundCatalogResourcePath = "Audio/StairwaySoundCatalog";
     private const float ApproachTriggerDistanceWeight = 10f;
@@ -38,6 +45,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     [SerializeField] private bool requirePlayerInSourceRoom = true;
     [SerializeField] private bool useCameraSequence = true;
     [SerializeField] private NavigationTriggerKind triggerKind = NavigationTriggerKind.Door;
+    [SerializeField] private StairwayDirection stairwayDirection = StairwayDirection.Auto;
 
     [Header("References")]
     [SerializeField] private RoomNavigationManager navigationManager;
@@ -1008,9 +1016,64 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private NavigationCursorController.HoverIcon GetNavigationCursorIcon()
     {
-        return IsStairway
-            ? NavigationCursorController.HoverIcon.Stairway
-            : NavigationCursorController.HoverIcon.Door;
+        if (!IsStairway)
+        {
+            return NavigationCursorController.HoverIcon.Door;
+        }
+
+        switch (GetEffectiveStairwayDirection())
+        {
+            case StairwayDirection.Up:
+                return NavigationCursorController.HoverIcon.StairsUp;
+            case StairwayDirection.Down:
+                return NavigationCursorController.HoverIcon.StairsDown;
+            default:
+                return NavigationCursorController.HoverIcon.Stairway;
+        }
+    }
+
+    private StairwayDirection GetEffectiveStairwayDirection()
+    {
+        if (stairwayDirection != StairwayDirection.Auto)
+        {
+            return stairwayDirection;
+        }
+
+        if (ContainsNavigationToken(name, "Down") ||
+            ContainsNavigationToken(DoorName, "Down") ||
+            ContainsNavigationToken(DestinationRoom, "Downstairs") ||
+            ContainsNavigationToken(DestinationRoom, "Lower"))
+        {
+            return StairwayDirection.Down;
+        }
+
+        if (ContainsNavigationToken(name, "Up") ||
+            ContainsNavigationToken(DoorName, "Up") ||
+            ContainsNavigationToken(DestinationRoom, "Upstairs") ||
+            ContainsNavigationToken(DestinationRoom, "Upper"))
+        {
+            return StairwayDirection.Up;
+        }
+
+        if (ContainsNavigationToken(SourceRoom, "Upper") &&
+            !ContainsNavigationToken(DestinationRoom, "Upper"))
+        {
+            return StairwayDirection.Down;
+        }
+
+        if (!ContainsNavigationToken(SourceRoom, "Upper") &&
+            ContainsNavigationToken(DestinationRoom, "Upper"))
+        {
+            return StairwayDirection.Up;
+        }
+
+        return StairwayDirection.Auto;
+    }
+
+    private static bool ContainsNavigationToken(string value, string token)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            value.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private NavigationTriggerKind GetEffectiveTriggerKind()

@@ -58,8 +58,13 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return;
         }
 
-        if (UsesManualPointerPolling() &&
-            TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
+        if (!UsesManualPointerPolling())
+        {
+            SetDoorCursorHover(IsActionCurrentlyAvailable());
+            return;
+        }
+
+        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
             IsPointerInsideActionBounds(screenPosition) &&
             IsActionCurrentlyAvailable())
         {
@@ -453,11 +458,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void SetDoorCursorHover(bool active)
     {
-        if (!UsesManualPointerPolling())
-        {
-            active = false;
-        }
-
         NavigationCursorController.HoverIcon nextIcon = GetActionHoverIcon();
 
         if (cursorHoverActive == active && cursorHoverIcon == nextIcon)
@@ -482,8 +482,18 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         {
             ResolveReferences();
             return arrivalController != null && arrivalController.ButlerCarryingCoat
-                ? NavigationCursorController.HoverIcon.Coat
-                : NavigationCursorController.HoverIcon.BlockedCoat;
+                ? NavigationCursorController.HoverIcon.PlaceHangCoat
+                : NavigationCursorController.HoverIcon.Locked;
+        }
+
+        if (actionType == Chapter1SceneActionType.GrandfatherClock)
+        {
+            return NavigationCursorController.HoverIcon.Inspect;
+        }
+
+        if (actionType == Chapter1SceneActionType.DrawingRoomExit)
+        {
+            return NavigationCursorController.HoverIcon.ExitLeaveRoom;
         }
 
         return NavigationCursorController.HoverIcon.Door;

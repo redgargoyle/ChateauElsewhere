@@ -15,7 +15,7 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
     [SerializeField] private string coatId;
 
     private bool cursorHoverActive;
-    private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.Coat;
+    private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.PickUpCoat;
 
     public string GuestId => guestId;
     public string CoatId => coatId;
@@ -95,8 +95,8 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
     private void SetCoatCursorHover(bool active)
     {
         NavigationCursorController.HoverIcon nextIcon = CanTakeThisCoat()
-            ? NavigationCursorController.HoverIcon.Coat
-            : NavigationCursorController.HoverIcon.BlockedCoat;
+            ? NavigationCursorController.HoverIcon.PickUpCoat
+            : NavigationCursorController.HoverIcon.Locked;
 
         if (cursorHoverActive == active && (!active || cursorHoverIcon == nextIcon))
         {

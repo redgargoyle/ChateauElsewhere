@@ -29,11 +29,21 @@ public class NavigationRegressionTests
     private const string GameAudioSettingsPath = "Assets/Scripts/Audio/GameAudioSettings.cs";
     private const string NavigationCursorHoverTargetPath = "Assets/Scripts/UI/NavigationCursorHoverTarget.cs";
     private const string MainMenuControllerPath = "Assets/Scripts/MainMenuController.cs";
+    private const string CursorStyleCatalogPath = "Assets/Scripts/UI/CursorStyleCatalog.cs";
+    private const string CursorIconImportPostprocessorPath = "Assets/Editor/CursorIconImportPostprocessor.cs";
+    private const string CursorSourceSheetPath = "Assets/Art/UI/Cursors/source/vintage_cursor_icon_concept_sheet.png";
+    private const string CursorPreviewSheetPath = "Assets/Art/UI/Cursors/preview/cursor_styles_contact_sheet.png";
+    private const string CursorResourceRoot = "Assets/Resources/UI/Cursors/styles";
+    private const string CursorExtractionScriptPath = "scripts/extract_cursor_icons.py";
+    private const string PickupObjectPath = "Assets/Scripts/PickupObject.cs";
     private const string GrandfatherClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string Chapter1CoatPickupPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs";
+    private const string Chapter1SceneActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs";
     private const string Chapter1InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs";
+    private const string Chapter2GuestFindActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
     private const string GameplayPlayModeGuardPath = "Assets/Editor/GameplayPlayModeGuard.cs";
     private const string ButlerIdleFolderPath = "Assets/Art/Characters/butler/butler_idle";
@@ -307,7 +317,8 @@ public class NavigationRegressionTests
 
         Assert.That(playerText, Does.Contain("UpdateWalkCursor"), "The player movement script should continuously describe what a floor click would do.");
         Assert.That(playerText, Does.Contain("SetWalkHover"), "Valid and invalid floor clicks should drive the shared cursor controller.");
-        Assert.That(playerText, Does.Contain("movementQuery.ExactPointWalkable && movementQuery.HasReachableDestination"), "The walk cursor should describe exact floor validity, not the player's current distance from that point.");
+        Assert.That(playerText, Does.Contain("CanShowWalkCursor => HasReachableDestination && (ExactPointWalkable || UsesProjectedDestination)"), "The walk cursor should describe reachable floor validity, not the player's current distance from that point.");
+        Assert.That(playerText, Does.Contain("movementQuery.CanShowWalkCursor"), "Walk-hover updates should use the shared movement query verdict.");
         Assert.That(cameraManagerText, Does.Contain("CreateWalkCursor"), "The cursor controller should generate a walk cursor without needing imported art.");
         Assert.That(cameraManagerText, Does.Contain("Cursor_WalkBlocked"), "Invalid movement should show a distinct blocked-walk cursor.");
         Assert.That(cameraManagerText, Does.Contain("private const int CursorSize = 72"), "Movement cursors should be large enough to read quickly.");
@@ -334,6 +345,116 @@ public class NavigationRegressionTests
         Assert.That(runtimeSettingsText, Does.Contain("ConfigureUiCursor(rect, null)"), "Runtime settings sliders should advertise UI drag/click regions.");
         Assert.That(mainMenuText, Does.Contain("ConfigureControlCursor(sliderRect, slider)"), "Main menu audio sliders should share the UI cursor contract.");
         Assert.That(mainMenuText, Does.Contain("NavigationCursorController.HoverIcon.Ui"), "Main menu buttons should use the UI cursor, not the door cursor.");
+    }
+
+    [Test]
+    public void NewGameShowsCursorStyleChooserBeforeGameplay()
+    {
+        string mainMenuText = File.ReadAllText(MainMenuControllerPath);
+        string mainMenuSceneText = File.ReadAllText(MainMenuScenePath);
+        string newGameBody = ExtractMethodBody(mainMenuText, "public void NewGame");
+        string continueBody = ExtractMethodBody(mainMenuText, "public void ContinueGame");
+        string selectStyleBody = ExtractMethodBody(mainMenuText, "private void SelectCursorStyleAndStart");
+
+        Assert.That(mainMenuSceneText, Does.Contain("m_MethodName: NewGame"), "The authored New Game button should still call MainMenuController.NewGame.");
+        Assert.That(newGameBody, Does.Contain("ShowCursorStyleChooser"), "New Game should open the cursor chooser before gameplay starts.");
+        Assert.That(newGameBody, Does.Not.Contain("LoadGameScene"), "New Game should not bypass the cursor chooser.");
+        Assert.That(continueBody, Does.Contain("LoadGameScene(\"Continue\")"), "Continue should keep the existing direct continue flow.");
+        Assert.That(selectStyleBody, Does.Contain("NavigationCursorController.SetCursorStyle(styleIndex)"), "Selecting a style should persist it through the cursor controller.");
+        Assert.That(selectStyleBody, Does.Contain("LoadGameScene(\"New Game\")"), "After selection, the original New Game scene-load path should run.");
+        Assert.That(mainMenuText, Does.Contain("CursorStyleCatalog.ChooserPreviewActions"), "Each style card should preview the gameplay action icons.");
+        Assert.That(mainMenuText, Does.Contain("GridLayoutGroup.Constraint.FixedColumnCount"), "The chooser should show all ten styles at once in a fixed grid.");
+    }
+
+    [Test]
+    public void CursorStyleCatalogProvidesGeneratedRuntimeAssets()
+    {
+        Assert.That(File.Exists(CursorStyleCatalogPath), Is.True, "Cursor styles need one central runtime catalog.");
+        Assert.That(File.Exists(CursorIconImportPostprocessorPath), Is.True, "Cursor PNGs should import as Unity cursor textures.");
+        Assert.That(File.Exists(CursorExtractionScriptPath), Is.True, "The sheet slicing script should stay in the repo.");
+        Assert.That(File.Exists(CursorSourceSheetPath), Is.True, "The original approved cursor sheet should stay with the project.");
+        Assert.That(File.Exists(CursorPreviewSheetPath), Is.True, "The extraction script should generate a contact-sheet preview.");
+
+        string catalogText = File.ReadAllText(CursorStyleCatalogPath);
+        string importText = File.ReadAllText(CursorIconImportPostprocessorPath);
+        string scriptText = File.ReadAllText(CursorExtractionScriptPath);
+        string[] actions =
+        {
+            "walk_move",
+            "open_door",
+            "exit_leave_room",
+            "stairs_up",
+            "stairs_down",
+            "inspect_look",
+            "talk_converse",
+            "pick_up_take",
+            "pick_up_coat",
+            "place_hang_coat",
+            "use_interact",
+            "locked_cannot_use",
+            "not_available_disabled"
+        };
+
+        Assert.That(catalogText, Does.Contain("PlayerPrefsKey = \"Dreadforge.CursorStyle\""), "Cursor style should persist with the project's PlayerPrefs naming pattern.");
+        Assert.That(catalogText, Does.Contain("SanitizeStyleIndex"), "Invalid style indices should safely fall back to style 1.");
+        Assert.That(catalogText, Does.Contain("CursorAction.UseInteract"), "Unknown cursor actions should fall back to use_interact.");
+        Assert.That(catalogText, Does.Contain("Resources.Load<Texture2D>"), "Gameplay cursors should load the selected sliced PNGs from Resources.");
+        Assert.That(importText, Does.Contain("TextureImporterType.Cursor"), "Generated runtime PNGs should import as cursor textures.");
+        Assert.That(scriptText, Does.Contain("9: 10"), "The current source sheet is missing column 9; style_09 should be explicitly documented as a column 10 duplicate.");
+
+        for (int styleIndex = 1; styleIndex <= 10; styleIndex++)
+        {
+            string styleFolder = Path.Combine(CursorResourceRoot, $"style_{styleIndex:00}");
+            Assert.That(Directory.Exists(styleFolder), Is.True, $"Missing cursor style folder {styleFolder}.");
+
+            for (int actionIndex = 0; actionIndex < actions.Length; actionIndex++)
+            {
+                string iconPath = Path.Combine(styleFolder, actions[actionIndex] + ".png");
+                Assert.That(File.Exists(iconPath), Is.True, $"Missing cursor icon {iconPath}.");
+                Assert.That(new FileInfo(iconPath).Length, Is.GreaterThan(0), $"Cursor icon {iconPath} should not be empty.");
+            }
+        }
+
+        Assert.That(Directory.GetFiles(CursorResourceRoot, "*.png", SearchOption.AllDirectories).Length, Is.EqualTo(130), "The sheet should produce 10 styles x 13 runtime action icons.");
+    }
+
+    [Test]
+    public void GameplayInteractionsMapToCursorStyleActions()
+    {
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
+        string doorTriggerText = File.ReadAllText(DoorTriggerNavigationPath);
+        string coatPickupText = File.ReadAllText(Chapter1CoatPickupPath);
+        string sceneActionText = File.ReadAllText(Chapter1SceneActionPath);
+        string guestFindText = File.ReadAllText(Chapter2GuestFindActionPath);
+        string pickupObjectText = File.ReadAllText(PickupObjectPath);
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+
+        Assert.That(cameraManagerText, Does.Contain("CursorStyleCatalog.LoadSelectedTexture"), "The existing cursor controller should consume selected style assets.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.WalkMove"), "Walkable floor hover should use walk_move.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.NotAvailableDisabled"), "Blocked floor hover should use not_available_disabled.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.OpenDoor"), "Door hover should use open_door.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.ExitLeaveRoom"), "Room-exit hover should use exit_leave_room.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.StairsUp"), "Upstairs hover should use stairs_up.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.StairsDown"), "Downstairs hover should use stairs_down.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.InspectLook"), "Inspectable hover should use inspect_look.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.TalkConverse"), "Guest/talk hover should use talk_converse.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.PickUpTake"), "Generic pickup hover should have a pick_up_take action.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.PickUpCoat"), "Coat pickup hover should use pick_up_coat.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.PlaceHangCoat"), "Coat placement hover should use place_hang_coat.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.UseInteract"), "UI/generic interaction hover should use use_interact.");
+        Assert.That(cameraManagerText, Does.Contain("CursorAction.LockedCannotUse"), "Progression-blocked interactions should use locked_cannot_use.");
+
+        Assert.That(doorTriggerText, Does.Contain("StairwayDirection"), "Stairway triggers need metadata for up/down cursor selection.");
+        Assert.That(doorTriggerText, Does.Contain("HoverIcon.StairsUp"));
+        Assert.That(doorTriggerText, Does.Contain("HoverIcon.StairsDown"));
+        Assert.That(coatPickupText, Does.Contain("HoverIcon.PickUpCoat"));
+        Assert.That(coatPickupText, Does.Contain("HoverIcon.Locked"));
+        Assert.That(pickupObjectText, Does.Contain("HoverIcon.PickUpTake"));
+        Assert.That(sceneActionText, Does.Contain("HoverIcon.PlaceHangCoat"));
+        Assert.That(sceneActionText, Does.Contain("HoverIcon.Inspect"));
+        Assert.That(sceneActionText, Does.Contain("HoverIcon.ExitLeaveRoom"));
+        Assert.That(guestFindText, Does.Contain("HoverIcon.Talk"));
+        Assert.That(playerText, Does.Contain("SetWalkHover"), "Floor hover should keep driving selected walk/blocked cursor actions.");
     }
 
     [Test]
