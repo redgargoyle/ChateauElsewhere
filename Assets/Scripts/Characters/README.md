@@ -39,16 +39,22 @@ The controllable Butler uses `PointClickPlayerMovement` Butler room scale overri
 Workflow:
 
 1. Open Tools > Butler > Room Scale Calibration.
-2. Select the Butler.
+2. Select/find the Butler.
 3. Pick a room.
-4. Move the Butler to the front/closest walkable floor area.
-5. Adjust Preview Butler Size Here until he looks right, roughly 3/4 of a matching door height or 1.5x a matching chair.
+4. Move the Butler to the front/closest walkable area.
+5. Adjust Preview Final Butler Local Scale until the Butler looks correct.
 6. Click SAVE FRONT.
-7. Move the Butler to the back/farthest walkable floor area.
-8. Adjust Preview Butler Size Here again.
+7. Move the Butler to the back/farthest walkable area.
+8. Adjust Preview Final Butler Local Scale again.
 9. Click SAVE BACK.
-10. Test saved scaling by moving the Butler or clicking TEST SAVED SCALING AT CURRENT POSITION.
-11. Save the scene.
+10. Optionally click PREVIEW SAVED SIZE AT CURRENT POSITION.
+11. Use RESTORE BUTLER START TRANSFORM before saving the scene.
+12. Save Scene.
+13. Test in Play Mode by walking the Butler around the room.
+
+Visual target:
+- roughly 3/4 of a matching door height
+- or roughly 1.5x a matching chair
 
 Do not edit Transform scale manually for calibration. Do not use Advanced reset buttons unless intentionally resetting. Guests are unchanged.
 

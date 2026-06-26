@@ -194,10 +194,10 @@ public class RoomProjectionRegressionTests
     }
 
     [Test]
-    public void PointClickMovementExposesStableButlerRoomScaleCalibration()
+    public void ButlerCalibrationStoresFinalLocalScaleValues()
     {
         string movementText = File.ReadAllText(PointClickPlayerMovementPath);
-        string applyScaleBody = ExtractMethodBody(movementText, "private void ApplyPerspectiveScale");
+        string windowText = File.ReadAllText(ButlerRoomScaleCalibrationWindowPath);
 
         Assert.That(movementText, Does.Contain("hasButlerCalibrationBaseLocalScale"), "Butler calibration should serialize whether a stable base local scale has been captured.");
         Assert.That(movementText, Does.Contain("butlerCalibrationBaseLocalScale"), "Butler calibration should serialize the stable base local scale used by editor previews and runtime.");
@@ -207,18 +207,105 @@ public class RoomProjectionRegressionTests
         Assert.That(movementText, Does.Contain("ButlerRoomScaleOverride"), "The controllable Butler should store dedicated per-room front/back calibration.");
         Assert.That(movementText, Does.Contain("frontRoomLocalFootY"), "The Butler front endpoint should store room-local foot Y.");
         Assert.That(movementText, Does.Contain("backRoomLocalFootY"), "The Butler back endpoint should store room-local foot Y.");
+        Assert.That(movementText, Does.Contain("frontFinalLocalScaleY"), "The Butler front endpoint should store final visible localScale.y, not a hidden multiplier.");
+        Assert.That(movementText, Does.Contain("backFinalLocalScaleY"), "The Butler back endpoint should store final visible localScale.y, not a hidden multiplier.");
+        Assert.That(movementText, Does.Contain("BuildButlerFinalLocalScale"), "Final localScale construction should be centralized.");
         Assert.That(movementText, Does.Contain("TryGetButlerCalibrationContext"), "Saving, preview, and runtime should share one room-local foot point path.");
+        Assert.That(movementText, Does.Contain("TryGetRoomLocalFootPointForButlerCalibration"), "Butler calibration should convert through the selected room's coordinate frame instead of whatever room stage is currently active.");
+        Assert.That(movementText, Does.Contain("TryGetRoomStageLocalPointForRoom(roomId"), "Butler save/test/runtime scale evaluation should use the chosen room id for room-local foot Y.");
         Assert.That(movementText, Does.Contain("preferCurrentTransformInEditMode"), "Edit Mode calibration should be able to use the current visible Transform instead of stale runtime logicalPosition.");
-        Assert.That(movementText, Does.Contain("TryEvaluateButlerRoomScale"), "Runtime and editor test preview should share the front/back scale interpolation helper.");
-        Assert.That(applyScaleBody, Does.Contain("TryEvaluateButlerRoomScale"), "Complete Butler room calibration should be able to replace the old depth scale.");
-        Assert.That(applyScaleBody, Does.Contain("CalculateExistingPerspectiveScale"), "Rooms without Butler calibration should keep the old profile/fallback behavior.");
-        Assert.That(applyScaleBody, Does.Contain("butlerCalibrationBaseLocalScale.x * finalScale"), "Calibrated rooms should scale from the stable Butler base, not a temporary preview transform scale.");
-        Assert.That(movementText, Does.Contain("usesRoomProfileScale ? depthScale : fallbackRelativeScale"), "The original profile-vs-fallback scale path should remain available for uncalibrated rooms.");
-        Assert.That(movementText, Does.Not.Contain("TryEvaluateButlerRoomScale(out float calibratedScale)"), "Runtime evaluation should use explicit room-local Y instead of mixing saved room-local data with logicalPosition.y.");
+        Assert.That(movementText, Does.Contain("TryEvaluateButlerCalibratedFinalLocalScale"), "Runtime should evaluate saved final local scale directly.");
+        Assert.That(windowText, Does.Contain("Preview Final Butler Local Scale"), "The editor should expose final visible local scale instead of multiplier wording.");
+        Assert.That(windowText, Does.Not.Contain("Preview Butler Size Here"), "The old ambiguous multiplier wording should be gone.");
     }
 
     [Test]
-    public void ButlerRoomScaleCalibrationWindowUsesStepBasedWorkflow()
+    public void ButlerSavedScalePreviewIsIdempotent()
+    {
+        GameObject player = CreatePointClickPlayer("player", new Vector3(1f, 1f, 1f));
+
+        try
+        {
+            PointClickPlayerMovement movement = player.GetComponent<PointClickPlayerMovement>();
+            movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
+            movement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -6f, 1.93f, false);
+            movement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", -2f, 1.12f, false);
+
+            Vector3 firstScale = Vector3.zero;
+
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.That(
+                    movement.TryEvaluateButlerFinalLocalScaleForRoomAtY("Drawing Room", -4f, out _, out _, out float finalLocalScaleY),
+                    Is.True);
+
+                movement.ApplyButlerFinalLocalScalePreview(finalLocalScaleY);
+
+                if (i == 0)
+                {
+                    firstScale = player.transform.localScale;
+                }
+                else
+                {
+                    Assert.That(player.transform.localScale.x, Is.EqualTo(firstScale.x).Within(0.0001f));
+                    Assert.That(player.transform.localScale.y, Is.EqualTo(firstScale.y).Within(0.0001f));
+                    Assert.That(player.transform.localScale.z, Is.EqualTo(firstScale.z).Within(0.0001f));
+                }
+            }
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(player);
+        }
+    }
+
+    [Test]
+    public void ButlerRuntimeUsesFinalLocalScaleDirectly()
+    {
+        GameObject player = CreatePointClickPlayer("player", new Vector3(2f, 2f, 5f));
+
+        try
+        {
+            PointClickPlayerMovement movement = player.GetComponent<PointClickPlayerMovement>();
+            movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
+            movement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -6f, 1.93f, false);
+            movement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", -2f, 1.12f, false);
+
+            Assert.That(
+                movement.TryEvaluateButlerFinalLocalScaleForRoomAtY("Drawing Room", -6f, out Vector3 frontScale, out _, out float frontFinalLocalScaleY),
+                Is.True);
+            Assert.That(
+                movement.TryEvaluateButlerFinalLocalScaleForRoomAtY("Drawing Room", -2f, out Vector3 backScale, out _, out float backFinalLocalScaleY),
+                Is.True);
+
+            Assert.That(frontFinalLocalScaleY, Is.EqualTo(1.93f).Within(0.0001f));
+            Assert.That(backFinalLocalScaleY, Is.EqualTo(1.12f).Within(0.0001f));
+            Assert.That(frontScale.y, Is.EqualTo(1.93f).Within(0.0001f));
+            Assert.That(backScale.y, Is.EqualTo(1.12f).Within(0.0001f));
+            Assert.That(Mathf.Abs(frontScale.y - (2f * 1.93f)), Is.GreaterThan(0.0001f), "Saved final localScale.y must not be multiplied by the authored/base scale again.");
+            Assert.That(Mathf.Abs(backScale.y - (2f * 1.12f)), Is.GreaterThan(0.0001f), "Saved final localScale.y must not be multiplied by the authored/base scale again.");
+            Assert.That(frontScale.z, Is.EqualTo(5f).Within(0.0001f), "Calibrated Butler scale should preserve the reference Z scale.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(player);
+        }
+    }
+
+    [Test]
+    public void ButlerUncalibratedRoomsKeepOldScaleBehavior()
+    {
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string applyScaleBody = ExtractMethodBody(movementText, "private void ApplyPerspectiveScale");
+
+        Assert.That(applyScaleBody, Does.Contain("TryEvaluateButlerCalibratedFinalLocalScale"), "Complete Butler room calibration should be able to replace the old depth scale.");
+        Assert.That(applyScaleBody, Does.Contain("CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio"), "Rooms without Butler calibration should keep the old profile/fallback behavior.");
+        Assert.That(applyScaleBody, Does.Contain("authoredLocalScale.x * scale"), "Uncalibrated rooms should still scale from the original authored local scale.");
+        Assert.That(movementText, Does.Contain("usesRoomProfileScale ? depthScale : fallbackRelativeScale"), "The original profile-vs-fallback scale path should remain available for uncalibrated rooms.");
+    }
+
+    [Test]
+    public void ButlerScaleWindowUsesClearLabels()
     {
         Assert.That(File.Exists(ButlerRoomScaleCalibrationWindowPath), Is.True, "Butler room scale calibration should be available as a focused window.");
 
@@ -228,11 +315,11 @@ public class RoomProjectionRegressionTests
         Assert.That(windowText, Does.Contain("Butler Room Scale"), "The calibration window should use the requested title.");
         Assert.That(windowText, Does.Contain("Butler / Player Object"), "The object field should make clear that the scene player object is expected.");
         Assert.That(windowText, Does.Contain("Find Scene Player"), "The calibration window should expose a safe player finder.");
-        Assert.That(windowText, Does.Contain("Preview Butler Size Here"), "The primary workflow should have one obvious size preview control.");
-        Assert.That(windowText, Does.Contain("SAVE FRONT: Current Position + Current Size"), "The front save button should store current position plus current preview size.");
-        Assert.That(windowText, Does.Contain("SAVE BACK: Current Position + Current Size"), "The back save button should store current position plus current preview size.");
-        Assert.That(windowText, Does.Contain("TEST SAVED SCALING AT CURRENT POSITION"), "Saved interpolation testing should be explicit and non-destructive.");
-        Assert.That(windowText, Does.Contain("RESTORE BASE SIZE PREVIEW"), "Designers should be able to undo temporary preview sizing.");
+        Assert.That(windowText, Does.Contain("Preview Final Butler Local Scale"), "The primary workflow should have one obvious final local scale preview control.");
+        Assert.That(windowText, Does.Contain("SAVE FRONT: Current Position + Current Visible Size"), "The front save button should store current position plus current visible size.");
+        Assert.That(windowText, Does.Contain("SAVE BACK: Current Position + Current Visible Size"), "The back save button should store current position plus current visible size.");
+        Assert.That(windowText, Does.Contain("PREVIEW SAVED SIZE AT CURRENT POSITION (does not save)"), "Saved interpolation preview should be explicit and non-destructive.");
+        Assert.That(windowText, Does.Contain("RESTORE BUTLER START TRANSFORM"), "Designers should be able to restore the calibration session start Transform before saving the scene.");
         Assert.That(windowText, Does.Contain("Advanced / Reset Tools"), "Destructive reset/delete controls should be hidden in an advanced foldout.");
         Assert.That(windowText, Does.Contain("RESET THIS ROOM TO OLD DEFAULT SCALE VALUES"), "The old perspective initializer should be renamed as a destructive reset.");
         Assert.That(windowText, Does.Contain("DELETE THIS ROOM"), "Deleting room calibration should be explicit and destructive.");
@@ -265,7 +352,7 @@ public class RoomProjectionRegressionTests
 
         Assert.That(projectionText, Does.Not.Contain("ButlerRoomScaleOverride"), "Guest projection should not receive Butler-specific runtime calibration.");
         Assert.That(projectionText, Does.Not.Contain("butlerCalibrationBaseLocalScale"), "Guest projection should not use the Butler base scale.");
-        Assert.That(projectionEditorText, Does.Not.Contain("Preview Butler Size Here"), "Guest projection editor should not expose Butler-only calibration workflow.");
+        Assert.That(projectionEditorText, Does.Not.Contain("Preview Final Butler Local Scale"), "Guest projection editor should not expose Butler-only calibration workflow.");
     }
 
     [Test]
@@ -507,6 +594,16 @@ public class RoomProjectionRegressionTests
         entity.SetVisualProfile(visualProfile);
         entity.SetRoomLocalFootPoint(footPoint);
         return entity;
+    }
+
+    private static GameObject CreatePointClickPlayer(string name, Vector3 localScale)
+    {
+        GameObject player = new GameObject(name);
+        player.transform.localScale = localScale;
+        player.AddComponent<Rigidbody2D>();
+        player.AddComponent<Animator>();
+        player.AddComponent<PointClickPlayerMovement>();
+        return player;
     }
 
     private static void DestroyEntity(RoomProjectedEntity entity)

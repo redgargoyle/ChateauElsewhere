@@ -7,7 +7,7 @@ using UnityEngine;
 public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 {
     private const string InstructionText =
-        "Use this in EDIT MODE. For each room: move the Butler to the FRONT, adjust Preview Butler Size Here, click SAVE FRONT. Then move him to the BACK, adjust Preview Butler Size Here, click SAVE BACK. Do not edit the Butler Transform scale manually.";
+        "Use this in EDIT MODE. For each room: move the Butler to the FRONT, adjust Preview Final Butler Local Scale, click SAVE FRONT. Then move him to the BACK, adjust Preview Final Butler Local Scale, click SAVE BACK. Do not edit the Butler Transform scale manually.";
     private const string PlayModeWarning = "Stop Play Mode to save calibration.";
     private const string NoSafePlayerMessage =
         "No safe player object found. Drag the scene object named 'player' into the Butler / Player Object field.";
@@ -25,6 +25,10 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
     private bool candidatesFoldout;
     private float previewSize = 1f;
     private string lastStatus = string.Empty;
+    private bool hasSessionStartTransform;
+    private Vector3 sessionStartPosition;
+    private Quaternion sessionStartRotation = Quaternion.identity;
+    private Vector3 sessionStartLocalScale = Vector3.one;
 
     [MenuItem("Tools/Butler/Room Scale Calibration")]
     public static void Open()
@@ -112,8 +116,7 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
             {
                 if (GUILayout.Button("Save Scene"))
                 {
-                    SaveButlerScene(selectedButler);
-                    lastStatus = "Scene saved.";
+                    SaveButlerSceneWithTransformConfirmation(selectedButler);
                 }
             }
         }
@@ -178,11 +181,58 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
             EditorGUILayout.Vector3Field("Current Transform localScale", movement.transform.localScale);
             EditorGUILayout.Vector3Field("Butler Base Local Scale", movement.ButlerCalibrationBaseLocalScale);
             EditorGUILayout.TextField("Calibration Status", GetCalibrationStatus(hasOverride, data));
+
+            if (hasOverride)
+            {
+                EditorGUILayout.TextField("Front saved", YesNo(data.HasFront));
+                EditorGUILayout.FloatField("Front Y", data.FrontRoomLocalFootY);
+                EditorGUILayout.FloatField("Front Final Local Scale Y", data.FrontFinalLocalScaleY);
+                EditorGUILayout.TextField("Back saved", YesNo(data.HasBack));
+                EditorGUILayout.FloatField("Back Y", data.BackRoomLocalFootY);
+                EditorGUILayout.FloatField("Back Final Local Scale Y", data.BackFinalLocalScaleY);
+            }
         }
+
+        if (hasOverride && data.HasFront && data.HasBack &&
+            Mathf.Abs(data.FrontRoomLocalFootY - data.BackRoomLocalFootY) < PointClickPlayerMovement.ButlerRoomScaleEndpointEpsilon)
+        {
+            EditorGUILayout.HelpBox(
+                "Front and Back positions are the same. Move the player to the front and save FRONT, then move to the back and save BACK.",
+                MessageType.Warning);
+        }
+
+        DrawRuntimeDiagnostics(movement);
 
         if (!string.IsNullOrWhiteSpace(lastStatus))
         {
             EditorGUILayout.HelpBox(lastStatus, MessageType.None);
+        }
+    }
+
+    private static void DrawRuntimeDiagnostics(PointClickPlayerMovement movement)
+    {
+        if (!Application.isPlaying || movement == null)
+        {
+            return;
+        }
+
+        EditorGUILayout.Space(4f);
+        EditorGUILayout.LabelField("Play Mode Diagnostics", EditorStyles.boldLabel);
+
+        if (!movement.TryGetButlerScaleDebugSnapshot(out PointClickPlayerMovement.ButlerScaleDebugSnapshot snapshot))
+        {
+            EditorGUILayout.HelpBox("Runtime Butler scale snapshot is unavailable.", MessageType.Warning);
+            return;
+        }
+
+        using (new EditorGUI.DisabledScope(true))
+        {
+            EditorGUILayout.TextField("Current runtime room", snapshot.RoomId);
+            EditorGUILayout.FloatField("Current runtime room-local foot Y", snapshot.RoomLocalFootY);
+            EditorGUILayout.TextField("Has complete calibration?", YesNo(snapshot.HasCompleteCalibration));
+            EditorGUILayout.FloatField("Runtime depth t", snapshot.Depth01);
+            EditorGUILayout.FloatField("Runtime final local scale Y", snapshot.EvaluatedFinalLocalScaleY);
+            EditorGUILayout.Vector3Field("Current Transform localScale", snapshot.CurrentTransformLocalScale);
         }
     }
 
@@ -205,7 +255,7 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 
             using (new EditorGUI.DisabledScope(!canSave))
             {
-                if (GUILayout.Button("SAVE FRONT: Current Position + Current Size"))
+                if (GUILayout.Button("SAVE FRONT: Current Position + Current Visible Size"))
                 {
                     SaveEndpoint(movement, selectedRoom, true);
                 }
@@ -215,7 +265,7 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 
             using (new EditorGUI.DisabledScope(!canSave))
             {
-                if (GUILayout.Button("SAVE BACK: Current Position + Current Size"))
+                if (GUILayout.Button("SAVE BACK: Current Position + Current Visible Size"))
                 {
                     SaveEndpoint(movement, selectedRoom, false);
                 }
@@ -225,19 +275,15 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 
             using (new EditorGUI.DisabledScope(!CanTestSavedScaling(movement, selectedRoom)))
             {
-                if (GUILayout.Button("TEST SAVED SCALING AT CURRENT POSITION"))
+                if (GUILayout.Button("PREVIEW SAVED SIZE AT CURRENT POSITION (does not save)"))
                 {
                     TestSavedScaling(movement, selectedRoom);
                 }
             }
 
-            if (GUILayout.Button("RESTORE BASE SIZE PREVIEW"))
+            if (GUILayout.Button("RESTORE BUTLER START TRANSFORM"))
             {
-                RecordMovementAndTransform(movement, "Restore Butler Base Size Preview");
-                movement.RestoreButlerCalibrationBaseScalePreview();
-                previewSize = 1f;
-                MarkTransformDirty(movement);
-                lastStatus = "Restored Butler preview to the stored base size.";
+                RestoreButlerStartTransform(movement);
             }
         }
     }
@@ -288,7 +334,7 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
             {
                 RecordMovementAndTransform(movement, "Capture Butler Base Scale");
                 movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
-                previewSize = 1f;
+                previewSize = movement.CaptureCurrentButlerFinalLocalScaleY();
                 MarkDirty(movement);
                 lastStatus = "Captured current Transform localScale as Butler base scale.";
             }
@@ -312,7 +358,7 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            EditorGUILayout.PrefixLabel("Preview Butler Size Here");
+            EditorGUILayout.PrefixLabel("Preview Final Butler Local Scale");
 
             EditorGUI.BeginChangeCheck();
             nextValue = GUILayout.HorizontalSlider(nextValue, 0.20f, 2.50f);
@@ -358,13 +404,13 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 
         if (front)
         {
-            movement.SetButlerFrontScaleForRoom(roomId, footPoint.y, previewSize, false);
-            lastStatus = $"Saved FRONT for {roomId}: Y {footPoint.y:0.###}, Size {previewSize:0.###}.";
+            movement.SetButlerFrontFinalLocalScaleForRoom(roomId, footPoint.y, previewSize, false);
+            lastStatus = $"Saved FRONT for {roomId}: Y={footPoint.y:0.###}, final local scale={previewSize:0.###}";
         }
         else
         {
-            movement.SetButlerBackScaleForRoom(roomId, footPoint.y, previewSize, false);
-            lastStatus = $"Saved BACK for {roomId}: Y {footPoint.y:0.###}, Size {previewSize:0.###}.";
+            movement.SetButlerBackFinalLocalScaleForRoom(roomId, footPoint.y, previewSize, false);
+            lastStatus = $"Saved BACK for {roomId}: Y={footPoint.y:0.###}, final local scale={previewSize:0.###}";
         }
 
         MarkDirty(movement);
@@ -372,26 +418,26 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 
     private void PreviewCurrentSize(PointClickPlayerMovement movement)
     {
-        RecordMovementAndTransform(movement, "Preview Butler Size Here");
-        movement.ApplyButlerScalePreview(previewSize);
+        RecordMovementAndTransform(movement, "Preview Final Butler Local Scale");
+        movement.ApplyButlerFinalLocalScalePreview(previewSize);
         MarkTransformDirty(movement);
-        lastStatus = $"Previewing Butler size {previewSize:0.###}. This has not saved FRONT or BACK.";
+        lastStatus = $"Previewing final Butler local scale {previewSize:0.###}. This has not saved FRONT or BACK.";
     }
 
     private void TestSavedScaling(PointClickPlayerMovement movement, string selectedRoom)
     {
         if (!movement.TryGetButlerCalibrationContext(selectedRoom, true, out string roomId, out Vector2 footPoint) ||
-            !movement.TryEvaluateButlerRoomScale(roomId, footPoint.y, out float calibratedScale))
+            !movement.TryEvaluateButlerFinalLocalScaleForRoomAtY(roomId, footPoint.y, out _, out float depth01, out float finalLocalScaleY))
         {
             lastStatus = "Saved FRONT and BACK are required before testing room scaling.";
             return;
         }
 
-        previewSize = calibratedScale;
+        previewSize = finalLocalScaleY;
         RecordMovementAndTransform(movement, "Test Saved Butler Scaling");
-        movement.ApplyButlerScalePreview(previewSize);
+        movement.ApplyButlerFinalLocalScalePreview(previewSize);
         MarkTransformDirty(movement);
-        lastStatus = $"Tested saved scaling at Y {footPoint.y:0.###}: Size {previewSize:0.###}.";
+        lastStatus = $"Previewed saved size here: final local scale={previewSize:0.###}, depth t={depth01:0.###}";
     }
 
     private static bool CanTestSavedScaling(PointClickPlayerMovement movement, string selectedRoom)
@@ -399,7 +445,7 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
         return !Application.isPlaying &&
             movement != null &&
             movement.TryGetButlerCalibrationContext(selectedRoom, true, out string roomId, out Vector2 footPoint) &&
-            movement.TryEvaluateButlerRoomScale(roomId, footPoint.y, out _);
+            movement.TryEvaluateButlerFinalLocalScaleForRoomAtY(roomId, footPoint.y, out _, out _, out _);
     }
 
     private void InitializeMissingRooms(PointClickPlayerMovement movement, string[] rooms)
@@ -436,12 +482,48 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 
         if (selectedButler == null)
         {
+            hasSessionStartTransform = false;
+            lastStatus = status;
             return;
         }
 
         selectedButler.EnsureButlerCalibrationBaseScale();
-        previewSize = selectedButler.CaptureCurrentButlerPreviewScale();
+        CaptureSessionStartTransform(selectedButler);
+        previewSize = selectedButler.CaptureCurrentButlerFinalLocalScaleY();
         lastStatus = status;
+    }
+
+    private void CaptureSessionStartTransform(PointClickPlayerMovement movement)
+    {
+        if (movement == null)
+        {
+            hasSessionStartTransform = false;
+            return;
+        }
+
+        Transform targetTransform = movement.transform;
+        sessionStartPosition = targetTransform.position;
+        sessionStartRotation = targetTransform.rotation;
+        sessionStartLocalScale = targetTransform.localScale;
+        hasSessionStartTransform = true;
+    }
+
+    private void RestoreButlerStartTransform(PointClickPlayerMovement movement)
+    {
+        if (movement == null || !hasSessionStartTransform)
+        {
+            lastStatus = "No Butler start Transform has been captured for this calibration session.";
+            return;
+        }
+
+        RecordMovementAndTransform(movement, "Restore Butler Start Transform");
+        Transform targetTransform = movement.transform;
+        targetTransform.position = sessionStartPosition;
+        targetTransform.rotation = sessionStartRotation;
+        targetTransform.localScale = sessionStartLocalScale;
+        previewSize = movement.CaptureCurrentButlerFinalLocalScaleY();
+        MarkTransformDirty(movement);
+        lastStatus = "Restored Butler start Transform for this calibration session.";
     }
 
     internal static PointClickPlayerMovement FindScenePlayer()
@@ -698,6 +780,51 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
             EditorGUIUtility.PingObject(roomContentGroup.gameObject);
             return;
         }
+    }
+
+    private void SaveButlerSceneWithTransformConfirmation(PointClickPlayerMovement movement)
+    {
+        if (movement == null || Application.isPlaying)
+        {
+            return;
+        }
+
+        if (HasButlerTransformChanged(movement))
+        {
+            int choice = EditorUtility.DisplayDialogComplex(
+                "Save Butler Calibration",
+                "The Butler has been moved or preview-scaled during calibration. Restore the start Transform before saving the scene?",
+                "Restore Transform + Save Scene",
+                "Save Anyway",
+                "Cancel");
+
+            if (choice == 2)
+            {
+                lastStatus = "Scene save canceled.";
+                return;
+            }
+
+            if (choice == 0)
+            {
+                RestoreButlerStartTransform(movement);
+            }
+        }
+
+        SaveButlerScene(movement);
+        lastStatus = "Scene saved.";
+    }
+
+    private bool HasButlerTransformChanged(PointClickPlayerMovement movement)
+    {
+        if (movement == null || !hasSessionStartTransform)
+        {
+            return false;
+        }
+
+        Transform targetTransform = movement.transform;
+        return (targetTransform.position - sessionStartPosition).sqrMagnitude > 0.000001f ||
+            Quaternion.Angle(targetTransform.rotation, sessionStartRotation) > 0.001f ||
+            (targetTransform.localScale - sessionStartLocalScale).sqrMagnitude > 0.000001f;
     }
 
     private static void SaveButlerScene(PointClickPlayerMovement movement)
