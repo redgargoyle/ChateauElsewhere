@@ -1488,7 +1488,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             GameAudioSettings.EnsureBinding(panicScreamAudioSource, GameAudioChannel.GameSounds, panicScreamBaseVolume);
             panicScreamAudioSource.Stop();
-            panicScreamAudioSource.Play();
+            GameAudioSettings.TryPlay(panicScreamAudioSource);
         }
 
         private void StopPanicScream()

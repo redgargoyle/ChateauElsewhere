@@ -62,6 +62,41 @@ public static class GameAudioSettings
         source.volume = Mathf.Max(0f, baseVolume) * GetVolume(channel);
     }
 
+    public static bool CanPlay(AudioSource source)
+    {
+        return source != null &&
+            source.enabled &&
+            source.gameObject != null &&
+            source.gameObject.activeInHierarchy;
+    }
+
+    public static bool TryPlay(AudioSource source)
+    {
+        if (!PrepareForPlayback(source, source != null ? source.clip : null) || source.clip == null)
+        {
+            return false;
+        }
+
+        source.Play();
+        return true;
+    }
+
+    public static bool TryPlayOneShot(AudioSource source, AudioClip clip)
+    {
+        return TryPlayOneShot(source, clip, 1f);
+    }
+
+    public static bool TryPlayOneShot(AudioSource source, AudioClip clip, float volumeScale)
+    {
+        if (clip == null || !PrepareForPlayback(source, clip))
+        {
+            return false;
+        }
+
+        source.PlayOneShot(clip, Mathf.Max(0f, volumeScale));
+        return true;
+    }
+
     public static GameAudioSourceVolume EnsureBinding(AudioSource source, GameAudioChannel channel, float baseVolume)
     {
         if (source == null)
@@ -123,5 +158,46 @@ public static class GameAudioSettings
     private static string GetPrefsKey(GameAudioChannel channel)
     {
         return PlayerPrefsPrefix + channel;
+    }
+
+    private static bool PrepareForPlayback(AudioSource source, AudioClip clip)
+    {
+        if (source == null)
+        {
+            return false;
+        }
+
+        ResetUnityAudioState();
+        source.enabled = true;
+        source.mute = false;
+        source.ignoreListenerPause = false;
+        source.spatialBlend = 0f;
+
+        if (!EnsureClipLoaded(clip))
+        {
+            return false;
+        }
+
+        return CanPlay(source);
+    }
+
+    private static bool EnsureClipLoaded(AudioClip clip)
+    {
+        if (clip == null)
+        {
+            return true;
+        }
+
+        if (clip.loadState == AudioDataLoadState.Loaded)
+        {
+            return true;
+        }
+
+        if (clip.loadState == AudioDataLoadState.Loading)
+        {
+            return true;
+        }
+
+        return clip.LoadAudioData() || clip.loadState == AudioDataLoadState.Loaded;
     }
 }

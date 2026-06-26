@@ -278,6 +278,7 @@ public class MainMenuController : MonoBehaviour
         menuSoundscapeSource.playOnAwake = false;
         menuSoundscapeSource.loop = true;
         menuSoundscapeSource.pitch = menuSoundscapePlaybackSpeed;
+        menuSoundscapeSource.spatialBlend = 0f;
 
         if (menuSoundscapeBaseVolume < 0f)
         {
@@ -1231,7 +1232,10 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        menuSoundscapeSource.Play();
+        if (!GameAudioSettings.TryPlay(menuSoundscapeSource))
+        {
+            Debug.LogWarning("Main menu soundscape did not start. Check the Audio_Music source and soundscape clip.", this);
+        }
     }
 
     private void StopMenuSoundscape()

@@ -141,7 +141,11 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
         audioSource.pitch = catalog.GetRandomPitch();
         audioSource.time = 0f;
         audioSource.volume = 0f;
-        audioSource.Play();
+        if (!GameAudioSettings.TryPlay(audioSource))
+        {
+            return;
+        }
+
         FadeTo(GameAudioSettings.GetVolume(GameAudioChannel.Atmosphere) * activeBaseVolume);
     }
 

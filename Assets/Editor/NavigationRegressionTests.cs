@@ -2,6 +2,8 @@ using System.IO;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 public class NavigationRegressionTests
 {
@@ -15,8 +17,14 @@ public class NavigationRegressionTests
     private const string DoorOpenSoundCatalogPath = "Assets/Resources/Audio/DoorOpenSoundCatalog.asset";
     private const string StairwaySoundCatalogPath = "Assets/Resources/Audio/StairwaySoundCatalog.asset";
     private const string ClockTickingAmbienceControllerPath = "Assets/Scripts/Audio/ClockTickingAmbienceController.cs";
+    private const string FireplaceAmbienceControllerPath = "Assets/Scripts/Audio/FireplaceAmbienceController.cs";
+    private const string PlayerFootstepAudioPath = "Assets/Scripts/Audio/PlayerFootstepAudio.cs";
+    private const string GuestFootstepAudioPath = "Assets/Scripts/Audio/GuestFootstepAudio.cs";
+    private const string GuestVoiceLinePlaybackPath = "Assets/Scripts/Audio/GuestVoiceLinePlayback.cs";
+    private const string StaticNoisePlayerPath = "Assets/Scripts/StaticNoisePlayer.cs";
     private const string ClockTickingAmbienceCatalogScriptPath = "Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs";
     private const string ClockTickingAmbienceCatalogPath = "Assets/Resources/Audio/ClockTickingAmbienceCatalog.asset";
+    private const string DoorbellSystemPath = "Assets/Scripts/Story/DoorbellSystem.cs";
     private const string DoorPromptSequenceControllerPath = "Assets/Scripts/Navigation/DoorPromptSequenceController.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string NavigationEditorToolsPath = "Assets/Editor/NavigationEditorTools.cs";
@@ -45,6 +53,9 @@ public class NavigationRegressionTests
     private const string Chapter1InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs";
     private const string Chapter2GuestFindActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
+    private const string Chapter2ControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs";
+    private const string Chapter2GuestPanicControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs";
+    private const string Chapter2MonsterStingerControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs";
     private const string GameplayPlayModeGuardPath = "Assets/Editor/GameplayPlayModeGuard.cs";
     private const string ButlerIdleFolderPath = "Assets/Art/Characters/butler/butler_idle";
     private const string PlayerIdleClipPath = "Assets/Animation/Player/Player_Idle.anim";
@@ -151,6 +162,82 @@ public class NavigationRegressionTests
 
             Assert.That(File.Exists(clipPath), Is.True, $"{clipPath} should exist.");
             Assert.That(catalogText, Does.Contain($"guid: {clipGuid}"), $"{clipPath} should be in the clock ticking random pool.");
+        }
+    }
+
+    [Test]
+    public void AudioPlaybackGuardsAgainstDisabledSources()
+    {
+        string gameAudioSettingsText = File.ReadAllText(GameAudioSettingsPath);
+        string grandfatherClockText = File.ReadAllText(GrandfatherClockInteractionPath);
+        string mainMenuText = File.ReadAllText(MainMenuControllerPath);
+        string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
+
+        Assert.That(gameAudioSettingsText, Does.Contain("public static bool TryPlay(AudioSource source)"));
+        Assert.That(gameAudioSettingsText, Does.Contain("public static bool TryPlayOneShot(AudioSource source, AudioClip clip"));
+        Assert.That(gameAudioSettingsText, Does.Contain("source.gameObject.activeInHierarchy"), "Audio playback should not call Unity Play on inactive scene objects.");
+        Assert.That(gameAudioSettingsText, Does.Contain("source.enabled = true"), "Safe playback should recover sources disabled by editor/session state.");
+        Assert.That(gameAudioSettingsText, Does.Contain("source.mute = false"), "Safe playback should recover sources muted by editor/session state.");
+        Assert.That(gameAudioSettingsText, Does.Contain("source.spatialBlend = 0f"), "House/game UI audio should not disappear through 3D distance attenuation.");
+        Assert.That(gameAudioSettingsText, Does.Contain("clip.LoadAudioData()"), "Playback should not depend on imported clips being preloaded.");
+        Assert.That(gameAudioSettingsText, Does.Contain("source.clip == null"), "TryPlay should not report success when an AudioSource has no assigned clip.");
+        Assert.That(mainMenuText, Does.Contain("GameAudioSettings.TryPlay(menuSoundscapeSource)"), "Main menu audio should use the safe playback path.");
+        Assert.That(runtimeSettingsText, Does.Contain("GameAudioSettings.TryPlay(musicSource)"), "Gameplay should explicitly start exploration music instead of only relying on Play On Awake.");
+        Assert.That(grandfatherClockText, Does.Contain("private void OnEnable()"), "Runtime-created clock audio should retry when an inactive room becomes active.");
+        Assert.That(grandfatherClockText, Does.Contain("GameAudioSettings.TryPlay(tickingAudioSource)"), "Clock ticking should not call Play directly on possibly inactive clock props.");
+
+        string[] playbackScriptPaths =
+        {
+            MainMenuControllerPath,
+            ClockTickingAmbienceControllerPath,
+            FireplaceAmbienceControllerPath,
+            PlayerFootstepAudioPath,
+            GuestFootstepAudioPath,
+            GuestVoiceLinePlaybackPath,
+            StaticNoisePlayerPath,
+            DoorbellSystemPath,
+            DoorTriggerNavigationPath,
+            GrandfatherClockInteractionPath,
+            Chapter2ControllerPath,
+            Chapter2GuestPanicControllerPath,
+            Chapter2MonsterStingerControllerPath
+        };
+
+        for (int i = 0; i < playbackScriptPaths.Length; i++)
+        {
+            string scriptText = File.ReadAllText(playbackScriptPaths[i]);
+            Assert.That(
+                Regex.Matches(scriptText, @"(?<!Try)\.Play(?:OneShot)?\s*\(").Count,
+                Is.EqualTo(0),
+                $"{playbackScriptPaths[i]} should route AudioSource playback through GameAudioSettings.TryPlay/TryPlayOneShot.");
+        }
+    }
+
+    [Test]
+    public void AudioSafePlaybackSkipsInactiveSourceWithoutUnityWarning()
+    {
+        GameObject audioObject = new GameObject("AudioSafePlaybackSmoke");
+
+        try
+        {
+            AudioSource source = audioObject.AddComponent<AudioSource>();
+            audioObject.SetActive(false);
+            source.enabled = false;
+            source.mute = true;
+            AudioListener.pause = true;
+            AudioListener.volume = 0f;
+
+            Assert.That(GameAudioSettings.TryPlay(source), Is.False);
+            Assert.That(AudioListener.pause, Is.False, "Safe playback should clear sticky listener pause even when the source is inactive.");
+            Assert.That(AudioListener.volume, Is.EqualTo(1f), "Safe playback should clear sticky listener volume even when the source is inactive.");
+            Assert.That(source.enabled, Is.True, "Safe playback should recover disabled source components.");
+            Assert.That(source.mute, Is.False, "Safe playback should recover muted source components.");
+            LogAssert.NoUnexpectedReceived();
+        }
+        finally
+        {
+            Object.DestroyImmediate(audioObject);
+            GameAudioSettings.ResetUnityAudioState();
         }
     }
 

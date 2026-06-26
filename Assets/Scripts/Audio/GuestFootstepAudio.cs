@@ -154,7 +154,12 @@ public sealed class GuestFootstepAudio : MonoBehaviour
             return;
         }
 
-        source.PlayOneShot(selectedClip, 1f);
+        if (!GameAudioSettings.TryPlayOneShot(source, selectedClip, 1f))
+        {
+            StopWalking();
+            return;
+        }
+
         float delay = Mathf.Max(stepIntervalSeconds, selectedClip.length * 0.85f);
         float jitter = stepIntervalJitterSeconds > 0f
             ? UnityEngine.Random.Range(-stepIntervalJitterSeconds, stepIntervalJitterSeconds)

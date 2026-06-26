@@ -107,7 +107,7 @@ public class StaticNoisePlayer : MonoBehaviour
             }
 
             GameAudioSettings.EnsureBinding(staticAudio, GameAudioChannel.GameSounds, staticAudioBaseVolume);
-            staticAudio.Play();
+            GameAudioSettings.TryPlay(staticAudio);
         }
 
         playCoroutine = StartCoroutine(Co_Play());

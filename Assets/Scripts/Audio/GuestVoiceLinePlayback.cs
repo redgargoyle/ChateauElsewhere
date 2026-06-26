@@ -76,8 +76,7 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         audioSource.ignoreListenerVolume = true;
         GameAudioSettings.EnsureBinding(audioSource, GameAudioChannel.Dialogue, sourceBaseVolume);
         playbackRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
-        audioSource.Play();
-        return clip.length;
+        return GameAudioSettings.TryPlay(audioSource) ? clip.length : 0f;
     }
 
     public bool TryGetDialogueClip(string lineId, string speaker, string text, out AudioClip clip, out float lineVolume)
@@ -171,7 +170,12 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         overlapSource.spatialBlend = 0f;
         overlapSource.ignoreListenerVolume = true;
         GameAudioSettings.EnsureBinding(overlapSource, GameAudioChannel.Dialogue, sourceBaseVolume);
-        overlapSource.Play();
+        if (!GameAudioSettings.TryPlay(overlapSource))
+        {
+            Destroy(overlapObject);
+            return 0f;
+        }
+
         Destroy(overlapObject, clip.length + 0.25f);
         return clip.length;
     }

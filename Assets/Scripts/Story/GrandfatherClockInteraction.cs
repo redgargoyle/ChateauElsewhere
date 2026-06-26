@@ -28,6 +28,11 @@ public class GrandfatherClockInteraction : MonoBehaviour
         DisableCloseUpIfNeeded();
     }
 
+    private void OnEnable()
+    {
+        StartTicking();
+    }
+
     private void Update()
     {
         if (panel != null && panel.gameObject.activeSelf)
@@ -98,7 +103,7 @@ public class GrandfatherClockInteraction : MonoBehaviour
 
         if (!tickingAudioSource.isPlaying)
         {
-            tickingAudioSource.Play();
+            GameAudioSettings.TryPlay(tickingAudioSource);
         }
     }
 

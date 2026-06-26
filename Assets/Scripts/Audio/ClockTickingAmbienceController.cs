@@ -152,7 +152,11 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
         audioSource.pitch = pitch;
         audioSource.time = catalog.GetStablePlaybackTimeForRoom(roomName, clip, Time.unscaledTime);
         audioSource.volume = 0f;
-        audioSource.Play();
+        if (!GameAudioSettings.TryPlay(audioSource))
+        {
+            return;
+        }
+
         FadeTo(GameAudioSettings.GetVolume(GameAudioChannel.Atmosphere) * catalog.BaseVolume);
     }
 

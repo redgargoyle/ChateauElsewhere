@@ -97,6 +97,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private ChapterClock chapterClock;
     private AudioSource explorationMusicSource;
     private float explorationMusicBaseVolume = -1f;
+    private bool loggedExplorationMusicStartFailure;
     private float timeScaleBeforeSettings = 1f;
     private bool settingsOpen;
     private bool debugOpen;
@@ -659,7 +660,29 @@ public class RuntimeSettingsMenu : MonoBehaviour
             return;
         }
 
+        musicSource.playOnAwake = false;
+        musicSource.loop = true;
+        musicSource.spatialBlend = 0f;
+        musicSource.ignoreListenerVolume = true;
         GameAudioSettings.EnsureBinding(musicSource, GameAudioChannel.Music, Mathf.Max(0f, explorationMusicBaseVolume));
+
+        if (!musicSource.isPlaying)
+        {
+            bool started = GameAudioSettings.TryPlay(musicSource);
+
+            if (!started && !loggedExplorationMusicStartFailure)
+            {
+                string clipName = musicSource.clip != null ? musicSource.clip.name : "<none>";
+                Debug.LogWarning(
+                    $"Exploration music did not start. source={musicSource.name} clip={clipName} active={musicSource.gameObject.activeInHierarchy} enabled={musicSource.enabled} volume={musicSource.volume:0.###}",
+                    musicSource);
+                loggedExplorationMusicStartFailure = true;
+            }
+            else if (started)
+            {
+                loggedExplorationMusicStartFailure = false;
+            }
+        }
     }
 
     private AudioSource ResolveExplorationMusicSource()

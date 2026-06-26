@@ -870,7 +870,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
         if (!violinAudioSource.isPlaying)
         {
-            violinAudioSource.Play();
+            GameAudioSettings.TryPlay(violinAudioSource);
         }
     }
 

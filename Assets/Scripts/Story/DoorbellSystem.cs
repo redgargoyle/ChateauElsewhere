@@ -147,7 +147,7 @@ public class DoorbellSystem : MonoBehaviour
                 doorbellClip = ResolveDoorbellClip();
             }
 
-            audioSource.PlayOneShot(doorbellClip, volume);
+            GameAudioSettings.TryPlayOneShot(audioSource, doorbellClip, volume);
         }
 
         Debug.Log(hasWaitingGuests ? $"Doorbell rings. Intensity {currentIntensityLevel}." : "Doorbell rings, but no new guests arrive.", this);

@@ -1149,14 +1149,24 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         if (TryGetNavigationClip(out AudioClip randomClip))
         {
-            doorOpenAudioSource.PlayOneShot(randomClip);
-            return true;
+            if (GameAudioSettings.TryPlayOneShot(doorOpenAudioSource, randomClip))
+            {
+                return true;
+            }
+
+            activeNavigationAudioSource = null;
+            return false;
         }
 
         if (!IsStairway && doorOpenAudioSource.clip != null)
         {
-            doorOpenAudioSource.PlayOneShot(doorOpenAudioSource.clip);
-            return true;
+            if (GameAudioSettings.TryPlayOneShot(doorOpenAudioSource, doorOpenAudioSource.clip))
+            {
+                return true;
+            }
+
+            activeNavigationAudioSource = null;
+            return false;
         }
 
         activeNavigationAudioSource = null;
