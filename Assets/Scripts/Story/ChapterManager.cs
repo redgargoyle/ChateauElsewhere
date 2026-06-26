@@ -24,6 +24,8 @@ public class ChapterManager : MonoBehaviour
     public const string Chapter2Id = "chapter_02_guest_search";
     public const string Chapter3PendingId = "chapter_03_dinner_pending";
     private const string Chapter1Title = "Chapter 1";
+    private const string Chapter2Title = "Chapter 2";
+    private const string Chapter3Title = "Chapter 3";
     private const string DebugCanvasName = "Canvas_ChapterDebug";
     private const string SkipChapter2ButtonName = "Button_SkipToChapter2";
 
@@ -313,7 +315,7 @@ public class ChapterManager : MonoBehaviour
 
         SetPlayerInputEnabled(false);
         currentChapterId = Chapter3PendingId;
-        displayedTitle = "Chapter 3";
+        displayedTitle = Chapter3Title;
         chapterStarted = true;
         SetPhase(ChapterPhase.Complete);
         UpdateDebugSkipButtonVisibility();
@@ -482,6 +484,7 @@ public class ChapterManager : MonoBehaviour
         if (IsChapter2Request(cleanNextChapterId))
         {
             currentChapterId = Chapter2Id;
+            displayedTitle = GetChapterTitle(cleanNextChapterId);
             chapterCompleteRoutine = null;
             chapter2Controller = ResolveChapter2Controller(true);
 
@@ -497,6 +500,8 @@ public class ChapterManager : MonoBehaviour
             yield break;
         }
 
+        currentChapterId = cleanNextChapterId;
+        displayedTitle = GetChapterTitle(cleanNextChapterId);
         Debug.Log($"Next chapter requested: {cleanNextChapterId}", this);
         chapterCompleteRoutine = null;
     }
@@ -510,7 +515,23 @@ public class ChapterManager : MonoBehaviour
     {
         return string.Equals(nextChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
             string.Equals(nextChapterId, "chapter_02_pending", System.StringComparison.OrdinalIgnoreCase) ||
-            nextChapterId.StartsWith("chapter_02", System.StringComparison.OrdinalIgnoreCase);
+            (!string.IsNullOrWhiteSpace(nextChapterId) && nextChapterId.StartsWith("chapter_02", System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string GetChapterTitle(string chapterId)
+    {
+        if (IsChapter2Request(chapterId))
+        {
+            return Chapter2Title;
+        }
+
+        if (string.Equals(chapterId, Chapter3PendingId, System.StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrWhiteSpace(chapterId) && chapterId.StartsWith("chapter_03", System.StringComparison.OrdinalIgnoreCase)))
+        {
+            return Chapter3Title;
+        }
+
+        return string.IsNullOrWhiteSpace(chapterId) ? Chapter1Title : chapterId.Trim();
     }
 
     private bool IsCurrentChapter(string chapterId)

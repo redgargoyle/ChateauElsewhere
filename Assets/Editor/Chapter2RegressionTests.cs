@@ -1278,7 +1278,10 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Match(@"\bStageGuestForDiningRoomReveal\s*\("));
         Assert.That(guestSearchText, Does.Match(@"(?s)\bStageGuestForDiningRoomReveal\s*\([^)]*\)\s*\{.*SetCurrentRoom\(targetRoom\).*SetVisibleByChapterState\(false\).*SetSeated\(true\).*ApplyState\(\)"), "Spoken-to guests should leave the search room and wait hidden/seated for the Dining Room reveal.");
         Assert.That(guestSearchText, Does.Match(@"(?s)\bHideGuestForDiningRoomTransfer\s*\([^)]*\)\s*\{.*SetVisibleByChapterState\(false\).*ApplyState\(\)"), "Guests should be hidden from their search rooms before being moved to Dining Room seats.");
-        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*HideGuestForDiningRoomTransfer\(guest\).*SetCurrentRoom\(diningSeat\.RoomId\).*PlaceAt\(diningSeat\.transform\).*SetVisibleByChapterState\(true\).*SetSeated\(true\).*ApplyState\(\)"), "Dining seating should hide, assign Dining Room, move, mark seated, then restore visibility through ActorRoomState.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bGetGuestsInDiningSeatOrder\s*\([^)]*\)\s*\{.*new List<GuestSearchEntry>\(\).*orderedGuests\.Add\(guests\[i\]\).*orderedGuests\.Sort\(CompareGuestIdentity\)"), "Dining Room seats must use canonical guest identity order so normal playthrough matches the Chapter 3 debug skip regardless of discovery order.");
+        Assert.That(guestSearchText, Does.Not.Match(@"(?s)\bGetGuestsInDiningSeatOrder\s*\([^)]*\)\s*\{.*GetFoundGuestsInOrder\(\)"), "Dining seating should not depend on the order the player found guests.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*HideGuestForDiningRoomTransfer\(guest\).*SetCurrentRoom\(diningSeat\.RoomId\).*PlaceAt\(diningSeat\.transform\).*SetVisibleByChapterState\(true\).*ResetAnimatorToAuthoredState\(\).*SetSeated\(true\).*ApplyState\(\)"), "Dining seating should hide, assign Dining Room, move, reset any search/panic facing state, mark seated, then restore visibility through ActorRoomState.");
+        Assert.That(File.ReadAllText("Assets/Scripts/Story/ActorRoomState.cs"), Does.Match(@"(?s)\bResetAnimatorToAuthoredState\s*\([^)]*\)\s*\{.*animator\.Rebind\(\).*animator\.Update\(0f\)"), "Normal playthrough Dining Room reveal should reset guests to the same authored/default animator pose used by debug skip before applying seated.");
         Assert.That(guestSearchText, Does.Not.Contain("ApplyDiningRoomGuestSorting"), "Dining seating should preserve the scene-authored guest/chair/table sorting instead of overriding it at runtime.");
         Assert.That(guestSearchText, Does.Not.Contain("diningGuestSortingOrderBase"), "Dining guest sorting should stay authored on the scene sprites.");
         Assert.That(guestSearchText, Does.Contain("SetCurrentRoom(diningSeat.RoomId)"));
@@ -1313,12 +1316,18 @@ public class Chapter2RegressionTests
     [Test]
     public void Chapter3DebugSkipStagesFoundGuestsInDiningRoom()
     {
+        string managerText = File.ReadAllText(ChapterManagerPath);
         string controllerText = File.ReadAllText(Chapter2ControllerPath);
         string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string managerSkipBody = ExtractMethodBody(managerText, "public void SkipToChapter3ForTesting");
+        string completeRoutineBody = ExtractMethodBody(managerText, "private IEnumerator CompleteChapterRoutine");
+        string debugStageBody = ExtractMethodBody(guestSearchText, "public void DebugStageAllGuestsFoundForChapter3Skip");
 
-        Assert.That(controllerText, Does.Match(@"(?s)\bDebugSkipToChapter3ForTesting\s*\([^)]*\)\s*\{.*MoveToDiningRoomForDebugSkip\s*\(\).*guestSearch\.Initialize\(this\).*guestSearch\.DebugStageAllGuestsFoundForChapter3Skip\(\)"), "Chapter 3 debug skip should move to Dining Room before seating found guests.");
-        Assert.That(guestSearchText, Does.Match(@"(?s)\bDebugStageAllGuestsFoundForChapter3Skip\s*\([^)]*\)\s*\{.*AutoDiscoverGuestsIfNeeded\s*\(\).*AutoAssignHideAnchorsIfNeeded\s*\(\).*foundOrderCounter\+\+.*guest\.found\s*=\s*true.*SeatGuestsInDiningRoom\(GetFoundGuestsInOrder\(\)\)"), "Chapter 3 debug skip should discover guests, mark them found, then seat them in found order.");
-        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*SetSeated\(true\).*ApplyState\(\)"), "Chapter 3 debug skip seating should make guests visible while preserving authored Dining Room sorting.");
+        Assert.That(managerSkipBody, Does.Contain("currentChapterId = Chapter3PendingId"), "The Chapter 3 debug skip should preserve the known-good direct Chapter 3 staging path.");
+        Assert.That(completeRoutineBody, Does.Match(@"(?s)currentChapterId\s*=\s*cleanNextChapterId.*displayedTitle\s*=\s*GetChapterTitle\(cleanNextChapterId\)"), "The normal chapter handoff should apply the same Chapter 3 pending id that debug skip uses.");
+        Assert.That(controllerText, Does.Match(@"(?s)\bDebugSkipToChapter3ForTesting\s*\([^)]*\)\s*\{.*MoveToDiningRoomForDebugSkip\s*\(\).*guestSearch\.Initialize\(this\).*guestSearch\.DebugStageAllGuestsFoundForChapter3Skip\(\)"), "Chapter 3 debug skip should keep using the direct staging path that has correct dining orientations.");
+        Assert.That(debugStageBody, Does.Match(@"(?s)AutoDiscoverGuestsIfNeeded\(\).*AutoAssignHideAnchorsIfNeeded\(\).*guests\.Sort\(CompareGuestIdentity\).*foundOrderCounter\+\+.*guest\.found\s*=\s*true.*SeatGuestsInDiningRoom\(GetFoundGuestsInOrder\(\)\)"), "Chapter 3 debug skip should discover guests, mark them found in canonical identity order, then seat them.");
+        Assert.That(guestSearchText, Does.Match(@"(?s)\bSeatGuestsInDiningRoom\s*\(\s*List<GuestSearchEntry>\s+guestsToSeat\s*\)\s*\{.*SetCurrentRoom\(diningSeat\.RoomId\).*SetVisibleByChapterState\(true\).*ResetAnimatorToAuthoredState\(\).*SetSeated\(true\).*ApplyState\(\)"), "Chapter 3 debug skip seating should make guests visible while preserving authored Dining Room sorting.");
     }
 
     [Test]
