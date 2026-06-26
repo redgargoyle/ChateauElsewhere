@@ -32,6 +32,26 @@ Chapter controllers should place guests by authored room anchors such as `Drawin
 
 To calibrate the Drawing Room, open `Tools > Room Projection > Calibration Window`, create the Drawing Room perspective profile, then assign it to the Drawing Room `RoomContentGroup` and to any `RoomProjectedEntity` that is not under the room stage. Adjust near/far Y until a standard adult preview matches the painting at the front and back of the floor, then tune the scale/tint/sorting curves. Add `RoomProjectedEntity` to guests, set their `Visual Root` to the animated sprite child, assign a suitable `CharacterVisualProfile`, and move only the room-local foot point or the existing `DrawingRoomGuestPoint_##` anchors.
 
+## Butler Room Scale Calibration
+
+The controllable Butler uses `PointClickPlayerMovement` Butler room scale overrides. Guests are unchanged and still use `RoomProjectedEntity` projection and room visual scale tools.
+
+Workflow:
+
+1. Open Tools > Butler > Room Scale Calibration.
+2. Select the Butler.
+3. Pick a room.
+4. Move the Butler to the front/closest walkable floor area.
+5. Adjust Preview Butler Size Here until he looks right, roughly 3/4 of a matching door height or 1.5x a matching chair.
+6. Click SAVE FRONT.
+7. Move the Butler to the back/farthest walkable floor area.
+8. Adjust Preview Butler Size Here again.
+9. Click SAVE BACK.
+10. Test saved scaling by moving the Butler or clicking TEST SAVED SCALING AT CURRENT POSITION.
+11. Save the scene.
+
+Do not edit Transform scale manually for calibration. Do not use Advanced reset buttons unless intentionally resetting. Guests are unchanged.
+
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 
 Useful tweaks:

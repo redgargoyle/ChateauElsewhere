@@ -17,6 +17,8 @@ public class RoomProjectionRegressionTests
     private const string RoomProjectionCalibrationWindowPath = "Assets/Editor/RoomProjectionCalibrationWindow.cs";
     private const string PlayModeLayoutCaptureWindowPath = "Assets/Editor/PlayModeLayoutCaptureWindow.cs";
     private const string RoomProjectedEntityEditorPath = "Assets/Editor/RoomProjectedEntityEditor.cs";
+    private const string PointClickPlayerMovementEditorPath = "Assets/Editor/PointClickPlayerMovementEditor.cs";
+    private const string ButlerRoomScaleCalibrationWindowPath = "Assets/Editor/ButlerRoomScaleCalibrationWindow.cs";
 
     [Test]
     public void SameRoomLocalFootYProducesSameRoomScaleForProjectedEntities()
@@ -132,8 +134,8 @@ public class RoomProjectionRegressionTests
         Assert.That(movementText, Does.Contain("TryFindRoomContentForRoom"), "Profile lookup should use the same active room name path as walkable boundaries.");
         Assert.That(movementText, Does.Contain("RefreshPerspectiveScaleNow"), "Editor profile changes should be able to refresh point-click character scale immediately.");
         Assert.That(movementText, Does.Contain("UsesPerspectiveProfile"), "Editor refreshes should only target point-click characters using the edited profile.");
-        Assert.That(applyScaleBody, Does.Contain("usesRoomProfileScale ? depthScale : fallbackRelativeScale"), "Room profiles should apply absolute room scale while the old fields keep relative authored-scale fallback behavior.");
-        Assert.That(applyScaleBody, Does.Contain("depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference)"), "The original point-click fallback scaling math should remain available.");
+        Assert.That(movementText, Does.Contain("usesRoomProfileScale ? depthScale : fallbackRelativeScale"), "Room profiles should apply absolute room scale while the old fields keep relative authored-scale fallback behavior.");
+        Assert.That(movementText, Does.Contain("depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference)"), "The original point-click fallback scaling math should remain available.");
     }
 
     [Test]
@@ -189,6 +191,81 @@ public class RoomProjectionRegressionTests
         Assert.That(editorText, Does.Contain("EditorGUILayout.Popup(\"Room\""), "The per-room scale workflow should use a room dropdown.");
         Assert.That(editorText, Does.Contain("EditorGUILayout.Vector3Field(\"Visual Root Scale\""), "The selected room's transform scale values should be directly editable.");
         Assert.That(editorText, Does.Contain("CaptureCurrentVisualRootScaleForRoom"), "Artists should be able to capture manual Scene/Inspector resizing into the selected room override.");
+    }
+
+    [Test]
+    public void PointClickMovementExposesStableButlerRoomScaleCalibration()
+    {
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string applyScaleBody = ExtractMethodBody(movementText, "private void ApplyPerspectiveScale");
+
+        Assert.That(movementText, Does.Contain("hasButlerCalibrationBaseLocalScale"), "Butler calibration should serialize whether a stable base local scale has been captured.");
+        Assert.That(movementText, Does.Contain("butlerCalibrationBaseLocalScale"), "Butler calibration should serialize the stable base local scale used by editor previews and runtime.");
+        Assert.That(movementText, Does.Contain("EnsureButlerCalibrationBaseScale"), "The editor should be able to capture the Butler base scale once without preview drift.");
+        Assert.That(movementText, Does.Contain("CaptureCurrentTransformAsButlerCalibrationBaseScale"), "The advanced editor path should be able to intentionally recapture the setup base scale.");
+        Assert.That(movementText, Does.Contain("RestoreButlerCalibrationBaseScalePreview"), "The editor should be able to restore the visible preview to the stored base scale.");
+        Assert.That(movementText, Does.Contain("ButlerRoomScaleOverride"), "The controllable Butler should store dedicated per-room front/back calibration.");
+        Assert.That(movementText, Does.Contain("frontRoomLocalFootY"), "The Butler front endpoint should store room-local foot Y.");
+        Assert.That(movementText, Does.Contain("backRoomLocalFootY"), "The Butler back endpoint should store room-local foot Y.");
+        Assert.That(movementText, Does.Contain("TryGetButlerCalibrationContext"), "Saving, preview, and runtime should share one room-local foot point path.");
+        Assert.That(movementText, Does.Contain("preferCurrentTransformInEditMode"), "Edit Mode calibration should be able to use the current visible Transform instead of stale runtime logicalPosition.");
+        Assert.That(movementText, Does.Contain("TryEvaluateButlerRoomScale"), "Runtime and editor test preview should share the front/back scale interpolation helper.");
+        Assert.That(applyScaleBody, Does.Contain("TryEvaluateButlerRoomScale"), "Complete Butler room calibration should be able to replace the old depth scale.");
+        Assert.That(applyScaleBody, Does.Contain("CalculateExistingPerspectiveScale"), "Rooms without Butler calibration should keep the old profile/fallback behavior.");
+        Assert.That(applyScaleBody, Does.Contain("butlerCalibrationBaseLocalScale.x * finalScale"), "Calibrated rooms should scale from the stable Butler base, not a temporary preview transform scale.");
+        Assert.That(movementText, Does.Contain("usesRoomProfileScale ? depthScale : fallbackRelativeScale"), "The original profile-vs-fallback scale path should remain available for uncalibrated rooms.");
+        Assert.That(movementText, Does.Not.Contain("TryEvaluateButlerRoomScale(out float calibratedScale)"), "Runtime evaluation should use explicit room-local Y instead of mixing saved room-local data with logicalPosition.y.");
+    }
+
+    [Test]
+    public void ButlerRoomScaleCalibrationWindowUsesStepBasedWorkflow()
+    {
+        Assert.That(File.Exists(ButlerRoomScaleCalibrationWindowPath), Is.True, "Butler room scale calibration should be available as a focused window.");
+
+        string windowText = File.ReadAllText(ButlerRoomScaleCalibrationWindowPath);
+
+        Assert.That(windowText, Does.Contain("[MenuItem(\"Tools/Butler/Room Scale Calibration\")]"), "The calibration window should have the requested Tools menu path.");
+        Assert.That(windowText, Does.Contain("Butler Room Scale"), "The calibration window should use the requested title.");
+        Assert.That(windowText, Does.Contain("Butler / Player Object"), "The object field should make clear that the scene player object is expected.");
+        Assert.That(windowText, Does.Contain("Find Scene Player"), "The calibration window should expose a safe player finder.");
+        Assert.That(windowText, Does.Contain("Preview Butler Size Here"), "The primary workflow should have one obvious size preview control.");
+        Assert.That(windowText, Does.Contain("SAVE FRONT: Current Position + Current Size"), "The front save button should store current position plus current preview size.");
+        Assert.That(windowText, Does.Contain("SAVE BACK: Current Position + Current Size"), "The back save button should store current position plus current preview size.");
+        Assert.That(windowText, Does.Contain("TEST SAVED SCALING AT CURRENT POSITION"), "Saved interpolation testing should be explicit and non-destructive.");
+        Assert.That(windowText, Does.Contain("RESTORE BASE SIZE PREVIEW"), "Designers should be able to undo temporary preview sizing.");
+        Assert.That(windowText, Does.Contain("Advanced / Reset Tools"), "Destructive reset/delete controls should be hidden in an advanced foldout.");
+        Assert.That(windowText, Does.Contain("RESET THIS ROOM TO OLD DEFAULT SCALE VALUES"), "The old perspective initializer should be renamed as a destructive reset.");
+        Assert.That(windowText, Does.Contain("DELETE THIS ROOM"), "Deleting room calibration should be explicit and destructive.");
+        Assert.That(windowText, Does.Contain("This overwrites the saved FRONT and BACK calibration for"), "Resetting old defaults should require confirmation.");
+        Assert.That(windowText, Does.Contain("Stop Play Mode to save calibration."), "The window should make Play Mode read-only for saving.");
+        Assert.That(windowText, Does.Not.Contain("Preview FRONT Size"), "The old separate front preview button should be removed from the primary workflow.");
+        Assert.That(windowText, Does.Not.Contain("Preview BACK Size"), "The old separate back preview button should be removed from the primary workflow.");
+        Assert.That(windowText, Does.Not.Contain("Initialize Room From Existing Perspective"), "The old initializer label should not appear in the primary workflow.");
+        Assert.That(windowText, Does.Not.Contain("Clear Saved Scale For This Room"), "The old clear label should not appear in the primary workflow.");
+    }
+
+    [Test]
+    public void PointClickPlayerMovementInspectorOpensButlerScaleWindow()
+    {
+        Assert.That(File.Exists(PointClickPlayerMovementEditorPath), Is.True, "PointClickPlayerMovement should have a focused inspector extension for Butler calibration.");
+
+        string editorText = File.ReadAllText(PointClickPlayerMovementEditorPath);
+
+        Assert.That(editorText, Does.Contain("[CustomEditor(typeof(PointClickPlayerMovement))]"), "The inspector extension should target PointClickPlayerMovement.");
+        Assert.That(editorText, Does.Contain("Open Butler Room Scale Calibration Window"), "The inspector should send designers to the safer step-based calibration window.");
+        Assert.That(editorText, Does.Not.Contain("Preview FRONT Size"), "The inspector should not keep the old confusing endpoint preview workflow.");
+        Assert.That(editorText, Does.Not.Contain("Preview BACK Size"), "The inspector should not keep the old confusing endpoint preview workflow.");
+    }
+
+    [Test]
+    public void ButlerCalibrationDoesNotChangeGuestProjectionRuntime()
+    {
+        string projectionText = File.ReadAllText(RoomProjectedEntityPath);
+        string projectionEditorText = File.ReadAllText(RoomProjectedEntityEditorPath);
+
+        Assert.That(projectionText, Does.Not.Contain("ButlerRoomScaleOverride"), "Guest projection should not receive Butler-specific runtime calibration.");
+        Assert.That(projectionText, Does.Not.Contain("butlerCalibrationBaseLocalScale"), "Guest projection should not use the Butler base scale.");
+        Assert.That(projectionEditorText, Does.Not.Contain("Preview Butler Size Here"), "Guest projection editor should not expose Butler-only calibration workflow.");
     }
 
     [Test]
