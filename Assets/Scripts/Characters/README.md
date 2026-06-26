@@ -28,6 +28,14 @@ Props that need a custom base footprint can also use `YSortSolidObstacle2D` plus
 
 `ActorRoomState` still owns story identity, current room, visibility, interactability, chapter availability, and seated state. When a projected entity is active for the actor's current room, `ActorRoomState` leaves room-stage projection scale/motion to `RoomProjectedEntity`.
 
+## Butler Room Scale Calibration
+
+Guests still use `RoomProjectedEntity` room visual scale overrides. The controllable Butler uses `PointClickPlayerMovement` Butler room scale overrides so his apparent size can be tuned per room without changing guest projection behavior.
+
+For each room, tune front and back endpoints. Use door height as the preferred reference: the Butler should read at roughly 3/4 door height. Use chair height as a secondary reference: the Butler should read at roughly 1.5x chair height. Rooms without Butler calibration use the old `PointClickPlayerMovement` scaling behavior unchanged.
+
+Open the Butler inspector or `Tools > Butler > Room Scale Calibration`, select the room, place the Butler near the front/closest part of the floor, and use `Set Front Here`. Then place him near the back/farthest part of the floor and use `Set Back Here`. The Butler interpolates between those saved room-local foot Y endpoints while walking. After Butler scaling feels correct, the same endpoint concept can later be generalized to guests.
+
 Chapter controllers should place guests by authored room anchors such as `DrawingRoomGuestPoint_01`, then let `RoomProjectedEntity` convert that anchor into a room-local foot point. Existing transform and `ActorRoomState.PlaceAt` paths remain as compatibility fallbacks for guests that have not migrated yet.
 
 To calibrate the Drawing Room, open `Tools > Room Projection > Calibration Window`, create the Drawing Room perspective profile, then assign it to the Drawing Room `RoomContentGroup` and to any `RoomProjectedEntity` that is not under the room stage. Adjust near/far Y until a standard adult preview matches the painting at the front and back of the floor, then tune the scale/tint/sorting curves. Add `RoomProjectedEntity` to guests, set their `Visual Root` to the animated sprite child, assign a suitable `CharacterVisualProfile`, and move only the room-local foot point or the existing `DrawingRoomGuestPoint_##` anchors.
