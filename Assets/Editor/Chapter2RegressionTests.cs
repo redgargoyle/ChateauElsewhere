@@ -49,6 +49,7 @@ public class Chapter2RegressionTests
     private const string Chapter2PanicClipRoot = "Assets/Animation/Chapter2Panic";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
+    private const string NPCWaypointMoverPath = "Assets/Scripts/Story/NPCWaypointMover.cs";
     private static readonly string[] PanicRosterCharacters =
     {
         "Lady",
@@ -1326,6 +1327,96 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Not.Contain("diningRoomFadeDelayGameMinutes"));
         Assert.That(controllerText, Does.Not.Contain("TrySeatDinnerGuestsAtDinnerTime"));
         Assert.That(controllerText, Does.Not.Contain("HasReachedDiningRoomFadeTime"));
+    }
+
+    [Test]
+    public void Chapter2GuestPreferenceExitWalksToDoorBeforeDiningTransfer()
+    {
+        string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        string waypointText = File.ReadAllText(NPCWaypointMoverPath);
+        string markFoundBody = ExtractMethodBody(guestSearchText, "public bool MarkGuestFound");
+        string exitBody = ExtractMethodBody(guestSearchText, "private IEnumerator RunGuestExitToDiningRoomRoutine");
+        string exitSpeedBody = ExtractMethodBody(guestSearchText, "private float GetGuestExitMoveSpeed");
+        string routeBody = ExtractMethodBody(guestSearchText, "private Transform FindExitDoorTowardDiningRoom");
+        string prepareTransferBody = ExtractMethodBody(guestSearchText, "public void PrepareGuestsForDiningTransfer");
+        string hideTransferBody = ExtractMethodBody(guestSearchText, "private void HideGuestForDiningRoomTransfer");
+        string notifyExitBody = ExtractMethodBody(guestSearchText, "private void NotifyGuestExitToDiningComplete");
+        string requestAllFoundBody = ExtractMethodBody(guestSearchText, "private void RequestAllGuestsFoundTransitionWhenReady");
+        string controllerAllFoundBody = ExtractMethodBody(controllerText, "public void HandleAllGuestsFound");
+        string tryProjectedTargetBody = ExtractMethodBody(waypointText, "private bool TryGetProjectedTarget");
+        string tryPlaceProjectedBody = ExtractMethodBody(waypointText, "private bool TryPlaceProjectedAtTarget");
+
+        Assert.That(exitBody, Does.Contain("FindExitDoorTowardDiningRoom(guest)"), "Preference conversations should choose a real room door as the guest exit target.");
+        Assert.That(exitBody, Does.Contain("LogGuestExitPlan"), "Preference exits should log guest/source room/door/start/target/distance once per exit.");
+        Assert.That(exitBody, Does.Contain("GetOrCreateGuestExitMover(actorState)"), "Dinner-preference exits should reuse the same NPCWaypointMover helper as the working Chapter 1 coat exit.");
+        Assert.That(exitBody, Does.Contain("mover.MoveSpeed = GetGuestExitMoveSpeed(actorState)"), "The shared mover should use the existing guest-exit speed scale.");
+        Assert.That(exitBody, Does.Contain("mover.MoveTo(exitTarget)"), "Dinner-preference exits must call the same underlying movement helper as the working coat exit instead of a third movement implementation.");
+        Assert.That(exitBody, Does.Match(@"(?s)mover\.MoveTo\(exitTarget\).*while\s*\([^)]*mover\.IsMoving"), "The guest should remain visible while the shared mover walks toward the door.");
+        Assert.That(guestSearchText, Does.Not.Contain("guestExitDistance"), "Dinner-preference exits must not use the old tiny hardcoded offset path.");
+        Assert.That(guestSearchText, Does.Not.Contain("guestExitSeconds"), "Dinner-preference exits must not time a fake slide instead of walking to a door.");
+        Assert.That(guestSearchText, Does.Not.Contain("RunFallbackGuestExitSlide"), "The broken fake slide fallback should not remain callable.");
+        Assert.That(guestSearchText, Does.Not.Contain("Vector3.Lerp(startPosition, exitPosition"), "Dinner-preference exits must not interpolate a hardcoded offset.");
+        Assert.That(guestSearchText, Does.Not.Contain("startPosition + new Vector3"), "Dinner-preference exits must not synthesize a fake local exit target.");
+        Assert.That(guestSearchText, Does.Not.Contain("GuestDoorExitPlan"), "Dinner-preference exits should not keep a separate movement planner.");
+        Assert.That(guestSearchText, Does.Not.Contain("GuestDoorExitMotionMode"), "Dinner-preference exits should not define a third movement mode system.");
+        Assert.That(guestSearchText, Does.Not.Contain("RunProjectedGuestExitWalk"), "Projected movement must come from NPCWaypointMover, matching existing movement systems.");
+        Assert.That(guestSearchText, Does.Not.Contain("RunTransformGuestExitWalk"), "Transform movement must come from NPCWaypointMover, matching existing movement systems.");
+        Assert.That(guestSearchText, Does.Not.Contain("GuestExitAnimator"), "Dinner-preference exits should not own a separate animation driver.");
+        Assert.That(guestSearchText, Does.Contain("mover=NPCWaypointMover.MoveTo"), "Diagnostics should prove the shared movement helper is being used.");
+        Assert.That(guestSearchText, Does.Contain("GetGuestExitDiagnosticPoints"), "Diagnostics should record the visible foot point used by the shared mover.");
+        Assert.That(guestSearchText, Does.Contain("FormatVector(startPoint)"), "Diagnostics should include the selected start foot point.");
+        Assert.That(guestSearchText, Does.Contain("FormatVector(targetPoint)"), "Diagnostics should include the selected door foot point.");
+        Assert.That(waypointText, Does.Contain("public static bool CanUseProjectionAsMotionOwner"), "The shared mover should own the projection guard so all callers share the same behavior.");
+        Assert.That(tryProjectedTargetBody, Does.Contain("CanUseProjectionAsMotionOwner(roomProjection)"), "The shared mover must not move a detached projection and leave the visible guest walking in place.");
+        Assert.That(tryPlaceProjectedBody, Does.Contain("CanUseProjectionAsMotionOwner(roomProjection)"), "Instant placement should use the same projection ownership guard as movement.");
+        Assert.That(waypointText, Does.Contain("MoveProjectedToRoutine"), "The shared mover still supports the same projection foot-point movement used by working room-projected actors.");
+        Assert.That(waypointText, Does.Contain("roomProjection.SetRoomLocalFootPoint(nextPosition)"), "Projected actors should have their visible room-local foot point advanced every frame by the shared mover.");
+        Assert.That(waypointText, Does.Contain("transform.position = nextPosition"), "Detached/world-space actors should have their visible transform advanced every frame by the shared mover.");
+        Assert.That(exitBody, Does.Contain("StageGuestForDiningRoomReveal(guest)"));
+        Assert.That(exitSpeedBody, Does.Contain("NPCWaypointMover.CanUseProjectionAsMotionOwner"), "Projected guest exits should use the shared mover's projection-ownership test before selecting pixel speed.");
+        Assert.That(exitSpeedBody, Does.Contain("MinimumProjectedGuestExitMoveSpeed"), "Projection-owned exits should be clamped to the established pixel-speed scale.");
+        Assert.That(guestSearchText, Does.Contain("guestExitMoveSpeed = 520f"), "The default hidden-guest exit speed should match the existing Chapter 2 door-exit pixel speed.");
+        Assert.That(guestSearchText, Does.Contain("GuestExitWorldMoveSpeed = 2.2f"), "World-space fallback movement should mirror the Chapter 1 guest mover scale.");
+
+        int moveIndex = exitBody.IndexOf("mover.MoveTo(exitTarget)", System.StringComparison.Ordinal);
+        int stageIndex = exitBody.IndexOf("StageGuestForDiningRoomReveal(guest)", System.StringComparison.Ordinal);
+        Assert.That(moveIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(stageIndex, Is.GreaterThan(moveIndex), "Guests must not be staged hidden for Dining Room until after the door walk starts.");
+
+        Assert.That(routeBody, Does.Contain("DoorTriggerNavigation"), "The exit target should come from authored room door triggers, not a fixed screen-space offset.");
+        Assert.That(routeBody, Does.Contain("FindFirstDoorOnRouteToRoom(doors, sourceRoom, diningRoom)"), "Guests should pick the first door on the route toward Dining Room.");
+        Assert.That(routeBody, Does.Contain("FindNearestDoorInRoom"), "Guests should still leave through a local door if a route cannot be resolved.");
+        Assert.That(guestSearchText, Does.Contain("NormalizeRoomRouteKey"), "Door routing should compare room names robustly across spaces and punctuation.");
+        Assert.That(guestSearchText, Does.Contain("guestsExitingToDining"), "The all-found transition should wait for all pending guest exits.");
+        Assert.That(guestSearchText, Does.Contain("HasPendingGuestExitsToDining"), "Chapter2Controller should be able to refuse early all-found transitions while exits are pending.");
+        Assert.That(markFoundBody, Does.Not.Contain("HandleAllGuestsFound()"), "The final clock strike should wait until the last found guest has actually walked out.");
+        Assert.That(markFoundBody, Does.Contain("RequestAllGuestsFoundTransitionWhenReady()"), "Finding the final guest should request the all-found transition through the pending-exit gate.");
+        Assert.That(notifyExitBody, Does.Contain("RequestAllGuestsFoundTransitionWhenReady()"), "The all-found transition should be rechecked after the guest reaches the door.");
+        Assert.That(requestAllFoundBody, Does.Match(@"(?s)guestsExitingToDining\.Count\s*>\s*0.*allGuestsFoundDeferredUntilExitsComplete\s*=\s*true.*return"), "All-found should be deferred while any guest exit is pending.");
+        Assert.That(requestAllFoundBody, Does.Match(@"(?s)allGuestsFoundDeferredUntilExitsComplete\s*=\s*false.*HandleAllGuestsFound\(\)"), "Deferred all-found should fire only after pending exits reach zero.");
+        Assert.That(controllerAllFoundBody, Does.Match(@"(?s)HasPendingGuestExitsToDining.*return.*BeginDiningRoomObjective\(\)"), "Chapter2Controller should not prepare Dining Room transfer while a guest is still exiting.");
+        Assert.That(prepareTransferBody, Does.Match(@"(?s)IsGuestExitingToDining\(guest\).*continue.*HideGuestForDiningRoomTransfer\(guest\)"), "PrepareGuestsForDiningTransfer must not hide an actively exiting guest.");
+        Assert.That(hideTransferBody, Does.Match(@"(?s)IsGuestExitingToDining\(guest\).*return.*SetVisibleByChapterState\(false\)"), "The hide helper itself must refuse to hide an actively exiting guest.");
+    }
+
+    [Test]
+    public void Chapter2AllGuestsFoundCannotRunBeforePendingGuestExitCompletes()
+    {
+        string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        string markFoundBody = ExtractMethodBody(guestSearchText, "public bool MarkGuestFound");
+        string beginExitBody = ExtractMethodBody(guestSearchText, "private void BeginGuestExitToDining");
+        string notifyExitBody = ExtractMethodBody(guestSearchText, "private void NotifyGuestExitToDiningComplete");
+        string requestAllFoundBody = ExtractMethodBody(guestSearchText, "private void RequestAllGuestsFoundTransitionWhenReady");
+        string controllerAllFoundBody = ExtractMethodBody(controllerText, "public void HandleAllGuestsFound");
+
+        Assert.That(beginExitBody, Does.Contain("guestsExitingToDining.Add(guest)"), "Starting the visible exit must mark the guest as pending before all-found can be requested.");
+        Assert.That(markFoundBody, Does.Match(@"(?s)SendGuestToDiningRoomAfterConversation\(guest\).*RequestAllGuestsFoundTransitionWhenReady\(\)"), "The final guest should request all-found only through the pending-exit gate.");
+        Assert.That(markFoundBody, Does.Not.Contain("HandleAllGuestsFound()"), "MarkGuestFound must not fire the Dining Room transfer directly.");
+        Assert.That(requestAllFoundBody, Does.Match(@"(?s)guestsExitingToDining\.Count\s*>\s*0.*allGuestsFoundDeferredUntilExitsComplete\s*=\s*true.*return"), "All-found must be deferred while any guest exit is still active.");
+        Assert.That(notifyExitBody, Does.Match(@"(?s)guestsExitingToDining\.Remove\(guest\).*RequestAllGuestsFoundTransitionWhenReady\(\)"), "Exit completion should release the pending gate and recheck all-found.");
+        Assert.That(controllerAllFoundBody, Does.Match(@"(?s)HasPendingGuestExitsToDining.*return.*BeginDiningRoomObjective\(\)"), "The controller must also refuse to start the Dining Room transfer before pending exits finish.");
     }
 
     [Test]

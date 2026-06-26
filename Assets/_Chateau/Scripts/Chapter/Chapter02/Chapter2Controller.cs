@@ -148,6 +148,12 @@ public class Chapter2Controller : MonoBehaviour
 
     public void HandleAllGuestsFound()
     {
+        if (guestSearch != null && guestSearch.HasPendingGuestExitsToDining)
+        {
+            Debug.Log("[Ch2GuestExit] all guests found transition ignored until pending guest exits complete.", this);
+            return;
+        }
+
         BeginDiningRoomObjective();
     }
 
