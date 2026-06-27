@@ -19,7 +19,11 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
     private SpriteRenderer[] spriteRenderers;
     private RoomProjectedEntity roomProjection;
     private YSortSolidObstacle2D solidObstacle;
+    private YSortOcclusionFootprint2D occlusionFootprint;
     private PointClickPlayerMovement player;
+    private int currentSortingOrder;
+
+    public int CurrentSortingOrder => currentSortingOrder;
 
     private void Reset()
     {
@@ -73,29 +77,29 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
             return;
         }
 
-        Transform reference = yReference != null ? yReference : transform;
-        string layerName = GetSortingLayerName(sortingLayerName);
-        float sortingY = GetSortingY(reference);
-        int sortingOrder = sortingOrderBase - Mathf.RoundToInt(sortingY * sortingOrderPerYUnit) + sortingOrderOffset;
-        sortingOrder = ResolveOcclusionSafeSortingOrder(sortingOrder);
+        Vector2 worldBasePoint = GetSortingWorldPoint();
+        string layerName;
+        int sortingOrder;
 
-        for (int i = 0; i < spriteRenderers.Length; i++)
+        if (TryGetProfileSorting(worldBasePoint, out string profileLayerName, out int profileSortingOrder))
         {
-            SpriteRenderer spriteRenderer = spriteRenderers[i];
-
-            if (spriteRenderer == null)
-            {
-                continue;
-            }
-
-            spriteRenderer.sortingLayerName = layerName;
-            spriteRenderer.sortingOrder = sortingOrder;
-
-            if (forcePivotSortPoint)
-            {
-                spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
-            }
+            layerName = profileLayerName;
+            sortingOrder = profileSortingOrder;
         }
+        else
+        {
+            layerName = YAxisDepthSortUtility.GetSafeSortingLayerName(sortingLayerName);
+            sortingOrder = YAxisDepthSortUtility.GetWorldSortingOrder(
+                worldBasePoint.y,
+                sortingOrderBase,
+                sortingOrderPerYUnit,
+                sortingOrderOffset);
+        }
+
+        sortingOrder = ResolveOcclusionSafeSortingOrder(sortingOrder);
+        currentSortingOrder = sortingOrder;
+
+        YAxisDepthSortUtility.ApplyToRenderers(spriteRenderers, layerName, sortingOrder, forcePivotSortPoint);
     }
 
     private void RefreshRenderers()
@@ -115,6 +119,21 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
         if (solidObstacle == null)
         {
             solidObstacle = GetComponent<YSortSolidObstacle2D>();
+
+            if (solidObstacle == null)
+            {
+                solidObstacle = GetComponentInChildren<YSortSolidObstacle2D>(true);
+            }
+        }
+
+        if (occlusionFootprint == null)
+        {
+            occlusionFootprint = GetComponent<YSortOcclusionFootprint2D>();
+
+            if (occlusionFootprint == null)
+            {
+                occlusionFootprint = GetComponentInChildren<YSortOcclusionFootprint2D>(true);
+            }
         }
 
         if (player == null)
@@ -125,9 +144,11 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
 
     private int ResolveOcclusionSafeSortingOrder(int defaultSortingOrder)
     {
+        int resolvedSortingOrder = ResolveFootprintSortingOrder(defaultSortingOrder);
+
         if (!forceBehindPlayerInsidePhysicalBounds)
         {
-            return defaultSortingOrder;
+            return resolvedSortingOrder;
         }
 
         ResolveOptionalReferences();
@@ -137,40 +158,71 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
             !solidObstacle.DisableOcclusionWhilePlayerInside ||
             !solidObstacle.ShouldDisableOcclusionForPoint(player.transform.position))
         {
-            return defaultSortingOrder;
+            return resolvedSortingOrder;
         }
 
         int highestOrderBehindPlayer = player.CurrentSortingOrder + behindPlayerSortingOffset;
-        return Mathf.Min(defaultSortingOrder, highestOrderBehindPlayer);
+        return Mathf.Min(resolvedSortingOrder, highestOrderBehindPlayer);
     }
 
-    private float GetSortingY(Transform reference)
+    private int ResolveFootprintSortingOrder(int defaultSortingOrder)
     {
         ResolveOptionalReferences();
+
+        if (occlusionFootprint == null ||
+            !occlusionFootprint.AffectPlayer ||
+            player == null)
+        {
+            return defaultSortingOrder;
+        }
+
+        return occlusionFootprint.TryGetRelativeSortingOrderForActorFoot(
+            player.transform.position,
+            player.CurrentSortingOrder,
+            defaultSortingOrder,
+            out int footprintSortingOrder)
+            ? footprintSortingOrder
+            : defaultSortingOrder;
+    }
+
+    private Vector2 GetSortingWorldPoint()
+    {
+        ResolveOptionalReferences();
+
+        if (occlusionFootprint != null && occlusionFootprint.TryGetDefaultBasePoint(out Vector2 footprintBasePoint))
+        {
+            return footprintBasePoint;
+        }
 
         if (sortSolidObstacleFromPhysicalBottom &&
             solidObstacle != null &&
             solidObstacle.TryGetPhysicalBounds(out Bounds physicalBounds))
         {
-            return physicalBounds.min.y;
+            return new Vector2(physicalBounds.center.x, physicalBounds.min.y);
         }
 
-        return reference.position.y;
+        Transform reference = yReference != null ? yReference : transform;
+        return reference.position;
     }
 
-    private static string GetSortingLayerName(string requestedLayerName)
+    private bool TryGetProfileSorting(Vector2 worldBasePoint, out string profileLayerName, out int profileSortingOrder)
     {
-        if (string.IsNullOrWhiteSpace(requestedLayerName))
+        profileLayerName = string.Empty;
+        profileSortingOrder = 0;
+
+        RoomContentGroup roomContent = GetComponentInParent<RoomContentGroup>(true);
+
+        if (roomContent == null || !roomContent.TryGetPerspectiveProfile(out RoomPerspectiveProfile profile))
         {
-            return "Default";
+            return false;
         }
 
-        if (string.Equals(requestedLayerName, "Default", System.StringComparison.OrdinalIgnoreCase) ||
-            SortingLayer.NameToID(requestedLayerName) != 0)
-        {
-            return requestedLayerName;
-        }
-
-        return "Default";
+        Vector3 localPoint = roomContent.transform.InverseTransformPoint(worldBasePoint);
+        profileLayerName = profile.SortingLayerName;
+        profileSortingOrder = YAxisDepthSortUtility.GetProfileSortingOrder(
+            profile,
+            new Vector2(localPoint.x, localPoint.y),
+            sortingOrderOffset);
+        return true;
     }
 }

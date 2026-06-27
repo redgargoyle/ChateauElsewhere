@@ -14,9 +14,15 @@ If a character's original sheet is side-only, add an explicit `directional/align
 
 `ButlerClassic` currently has the most complete player-facing setup: `Assets/Animation/ButlerClassic/ButlerClassic.controller` uses persistent `IsFacingUp`, `IsFacingDown`, `IsFacingLeft`, and `IsFacingRight` Animator parameters to pick one of four looping directional idle clips. Its source idle and walk frames live in `Assets/Art/Characters/butler`.
 
-World-space SpriteRenderer props use `WorldYSortSpriteRenderer` when they need to depth-sort against the controllable butler and are not using room projection. It mirrors `PointClickPlayerMovement`'s player sorting rule: Sorting Layer `People`, order `1000 - y * 100`, and Sprite Sort Point `Pivot`. If an active `RoomProjectedEntity` is present, projection owns sorting and `WorldYSortSpriteRenderer` does not write orders. The player sorts from the bottom of the visible SpriteRenderer bounds, and props can sort from the bottom of an editable physical footprint. A copied tutorial prop will not y-sort just because its pivot is bottom-center; it also needs this dynamic sorting order.
+Dynamic room occlusion is y-depth based by default. Inside a profiled room, `RoomPerspectiveProfile` is the shared sorting domain for the Butler/player, projected guests, UI Image room people, and y-sorted room props. Objects at the same room-local foot/base Y should receive effectively the same base sorting order. Outside a profiled room, world objects fall back to the old `1000 - y * 100` style sorting.
 
-Props that need a custom base footprint can also use `YSortSolidObstacle2D` plus a 2D trigger collider around the base area. That footprint drives sorting and optional occlusion safety only; player movement is intentionally controlled by the active `PlayerBoundary` floor collider. Keep the collider tight around the physical base, not the full painted sprite. Keep `Force Behind Player Inside Physical Bounds` off for grouped props like mushrooms so nearby props do not reorder while the player moves between them.
+Use `RoomProjectedEntity` for projected guests/people. UI Image guests sort through a local override-sorting `Canvas` owned by `RoomProjectedEntity`; they should not rely on transform sibling order. Use `WorldYSortSpriteRenderer` for world SpriteRenderer props and occluders that the Butler can walk in front of or behind. If an active `RoomProjectedEntity` is present, projection owns sorting and `WorldYSortSpriteRenderer` does not write orders.
+
+Use `YSortSolidObstacle2D` when a prop needs an editable physical base for sorting/occlusion safety. Use `YSortOcclusionFootprint2D` for large or diagonal objects whose pivot cannot describe their footprint, such as pool tables, beds, carts, desks, and coffee tables. Author a depth line across the object so the prop can make a tiny local correction relative to the actor when the actor is near the footprint. Do not fix normal occlusion with arbitrary per-room or per-object absolute sorting orders.
+
+Some single sprites cannot represent partial occlusion correctly. Split that art into a back/top/base sprite that y-sorts normally and a foreground rail, edge, leg, or table-front sprite with a small deliberate local offset. Use this for beds, pool-table rails, desk fronts, and coffee-table fronts when the object must hide only part of a character.
+
+Manual sorting offsets are reserved for true exceptions: sitting, lying, coat/body layering, shadows, held items, and deliberate foreground art. Use `DepthPoseSortingOverride` or small visual-profile offsets for those cases; normal walking/object occlusion should still come from foot/base y-depth.
 
 ## Room Projection
 
@@ -70,5 +76,6 @@ Useful tweaks:
 - Keep `Preview Path In Edit Mode` off while placing people. The animation frames still preview, but the scene object will not quietly walk away while you edit.
 - Keep `Snap To Whole Pixels` off for scaled room walkers unless a specific character needs crunchy pixel locking. Subpixel motion reads smoother while the room stage pans and zooms.
 - Use the motion polish fields for tiny stride bob, sway, endpoint pauses, and idle breathing. These are only offsets on the card; the path points remain the stable foot positions.
-- Add `WorldYSortSpriteRenderer` to any world SpriteRenderer prop that should sort in front of or behind the butler by base/pivot Y.
+- Add `WorldYSortSpriteRenderer` to any world SpriteRenderer prop that should sort in front of or behind the Butler by base/pivot Y.
 - Add `YSortSolidObstacle2D` to props that need an editable base footprint, then resize the trigger collider to the base area used for sorting and occlusion safety.
+- Add `YSortOcclusionFootprint2D` and an authored depth line to wide or diagonal props such as pool tables, beds, desks, carts, and coffee tables.
