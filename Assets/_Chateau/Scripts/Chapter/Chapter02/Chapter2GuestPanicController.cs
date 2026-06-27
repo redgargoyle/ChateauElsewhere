@@ -19,6 +19,9 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField] private Chapter2PanicScreamCatalog panicScreamCatalog;
     [SerializeField] private string panicScreamCatalogResourcePath = DefaultPanicScreamCatalogResourcePath;
     [SerializeField] private bool playPanicScreams = true;
+    [SerializeField, Range(0f, 1f)] private float panicScreamMixVolumeMultiplier = 0.28f;
+    [SerializeField, Min(10f)] private float panicScreamHighPassCutoffFrequency = 140f;
+    [SerializeField, Range(0.1f, 10f)] private float panicScreamHighPassResonanceQ = 0.8f;
     [SerializeField] private GuestFootstepCatalog guestFootstepCatalog;
     [SerializeField] private string guestFootstepCatalogResourcePath = DefaultGuestFootstepCatalogResourcePath;
     [SerializeField] private bool playGuestFootsteps = true;
@@ -306,7 +309,13 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         if (panicScreamCatalog.TryGetScreamForGuest(participant.GuestNumber, out AudioClip clip, out float volume))
         {
-            participant.ConfigurePanicScream(clip, volume, PanicScreamAudioObjectName);
+            participant.ConfigurePanicScream(
+                clip,
+                volume,
+                Mathf.Clamp01(panicScreamMixVolumeMultiplier),
+                Mathf.Max(10f, panicScreamHighPassCutoffFrequency),
+                Mathf.Clamp(panicScreamHighPassResonanceQ, 0.1f, 10f),
+                PanicScreamAudioObjectName);
         }
     }
 
@@ -1282,6 +1291,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private bool[] motionDriverEnabledStates;
         private Rigidbody2D rigidbody2D;
         private AudioSource panicScreamAudioSource;
+        private AudioHighPassFilter panicScreamHighPassFilter;
         private AudioClip panicScreamClip;
         private GuestFootstepAudio footstepAudio;
         private float panicScreamBaseVolume = 1f;
@@ -1426,7 +1436,13 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             controlledByScript = controlled;
         }
 
-        public void ConfigurePanicScream(AudioClip clip, float baseVolume, string audioObjectName)
+        public void ConfigurePanicScream(
+            AudioClip clip,
+            float baseVolume,
+            float mixVolumeMultiplier,
+            float highPassCutoffFrequency,
+            float highPassResonanceQ,
+            string audioObjectName)
         {
             if (clip == null || targetTransform == null)
             {
@@ -1434,7 +1450,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             panicScreamClip = clip;
-            panicScreamBaseVolume = Mathf.Max(0f, baseVolume);
+            panicScreamBaseVolume = Mathf.Max(0f, baseVolume) * Mathf.Clamp01(mixVolumeMultiplier);
             panicScreamAudioSource = FindOrCreatePanicScreamAudioSource(audioObjectName);
 
             if (panicScreamAudioSource == null)
@@ -1447,7 +1463,29 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             panicScreamAudioSource.loop = false;
             panicScreamAudioSource.spatialBlend = 0f;
             panicScreamAudioSource.ignoreListenerVolume = true;
+            ConfigurePanicScreamHighPassFilter(highPassCutoffFrequency, highPassResonanceQ);
             GameAudioSettings.EnsureBinding(panicScreamAudioSource, GameAudioChannel.GameSounds, panicScreamBaseVolume);
+        }
+
+        private void ConfigurePanicScreamHighPassFilter(float cutoffFrequency, float resonanceQ)
+        {
+            if (panicScreamAudioSource == null)
+            {
+                return;
+            }
+
+            if (panicScreamHighPassFilter == null)
+            {
+                panicScreamHighPassFilter = panicScreamAudioSource.GetComponent<AudioHighPassFilter>();
+            }
+
+            if (panicScreamHighPassFilter == null)
+            {
+                panicScreamHighPassFilter = panicScreamAudioSource.gameObject.AddComponent<AudioHighPassFilter>();
+            }
+
+            panicScreamHighPassFilter.cutoffFrequency = Mathf.Max(10f, cutoffFrequency);
+            panicScreamHighPassFilter.highpassResonanceQ = Mathf.Clamp(resonanceQ, 0.1f, 10f);
         }
 
         public void ConfigureFootsteps(

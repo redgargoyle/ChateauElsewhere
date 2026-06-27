@@ -216,6 +216,10 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("violinscreech"));
         Assert.That(stingerText, Does.Contain("loopViolinAudio = true"));
         Assert.That(stingerText, Does.Contain(".loop = loopViolinAudio"));
+        Assert.That(stingerText, Does.Contain("violinAudioMixVolumeMultiplier = 0.32f"), "The scare stinger should be trimmed before it enters the Game Sounds mix.");
+        Assert.That(stingerText, Does.Contain("violinHighPassCutoffFrequency = 140f"), "The scare stinger should lose sub/rumble energy before playback.");
+        Assert.That(stingerText, Does.Contain("AudioHighPassFilter"), "The scare stinger should keep a runtime high-pass filter attached to its source.");
+        Assert.That(stingerText, Does.Contain("GetTrimmedViolinBaseVolume"), "The scare stinger should bind the trimmed base volume, not the full authored level.");
         Assert.That(stingerText, Does.Contain("drawingRoomId = \"Drawing Room\""));
         Assert.That(stingerText, Does.Contain("maxVisibleSeconds = 12f"));
         Assert.That(stingerText, Does.Contain("OnCurrentRoomChanged"));
@@ -343,6 +347,7 @@ public class Chapter2RegressionTests
     {
         Assert.That(File.Exists(Chapter2PanicScreamCatalogPath), Is.True, "The runtime panic scream catalog should be available through Resources.");
 
+        string panicText = File.ReadAllText(Chapter2GuestPanicControllerPath);
         string catalogText = File.ReadAllText(Chapter2PanicScreamCatalogPath);
         string[] clipPaths =
         {
@@ -368,6 +373,11 @@ public class Chapter2RegressionTests
                 Does.Match($@"(?s)- guestNumber: {guestNumber}\s+clip: \{{fileID: 8300000, guid: {clipGuid}, type: 3\}}\s+volume: "),
                 $"Guest {guestNumber} should be assigned to {Path.GetFileName(clipPath)}.");
         }
+
+        Assert.That(panicText, Does.Contain("panicScreamMixVolumeMultiplier = 0.28f"), "Layered panic screams should be substantially quieter than their authored catalog levels.");
+        Assert.That(panicText, Does.Contain("panicScreamHighPassCutoffFrequency = 140f"), "Layered panic screams should be high-passed to keep the scare sequence out of the low-end rumble range.");
+        Assert.That(panicText, Does.Contain("ConfigurePanicScreamHighPassFilter"), "Every panic scream source should configure its own high-pass filter.");
+        Assert.That(panicText, Does.Contain("AudioHighPassFilter"), "Panic scream sources should carry a Unity high-pass filter component.");
     }
 
     [Test]

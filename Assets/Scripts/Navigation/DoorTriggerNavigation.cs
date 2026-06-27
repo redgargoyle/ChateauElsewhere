@@ -68,6 +68,9 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     [Header("Audio")]
     [SerializeField] private bool playDoorOpenSound = true;
     [SerializeField] private string doorOpenAudioObjectName = "Audio_DoorOpen";
+    [SerializeField, Range(0f, 1f)] private float doorOpenMixVolumeMultiplier = 0.45f;
+    [SerializeField, Min(10f)] private float doorOpenHighPassCutoffFrequency = 180f;
+    [SerializeField, Range(0.1f, 10f)] private float doorOpenHighPassResonanceQ = 0.9f;
     [SerializeField] private DoorOpenSoundCatalog doorOpenSoundCatalog;
     [SerializeField] private string doorOpenSoundCatalogResourcePath = DefaultDoorOpenSoundCatalogResourcePath;
     [SerializeField] private DoorOpenSoundCatalog stairwaySoundCatalog;
@@ -92,6 +95,8 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     private static AudioSource activeNavigationAudioSource;
     private static int lastDoorOpenClipIndex = -1;
     private static int lastStairwayClipIndex = -1;
+    private float doorOpenAudioBaseVolume = -1f;
+    private AudioHighPassFilter doorOpenHighPassFilter;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStaticState()
@@ -1142,10 +1147,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         StopCurrentNavigationSound();
         activeNavigationAudioSource = doorOpenAudioSource;
         doorOpenAudioSource.Stop();
+        ConfigureDoorOpenAudioMix();
         GameAudioSettings.EnsureBinding(
             doorOpenAudioSource,
             GameAudioChannel.GameSounds,
-            GameAudioSettings.GetCurrentOrBoundBaseVolume(doorOpenAudioSource, GameAudioChannel.GameSounds));
+            GetTrimmedDoorOpenBaseVolume());
 
         if (TryGetNavigationClip(out AudioClip randomClip))
         {
@@ -1192,17 +1198,62 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private void ResolveDoorOpenAudioSource()
     {
-        if (doorOpenAudioSource != null)
+        if (doorOpenAudioSource == null)
+        {
+            GameObject audioObject = GameObject.Find(doorOpenAudioObjectName);
+
+            if (audioObject != null)
+            {
+                doorOpenAudioSource = audioObject.GetComponent<AudioSource>();
+            }
+        }
+
+        ConfigureDoorOpenAudioMix();
+    }
+
+    private void ConfigureDoorOpenAudioMix()
+    {
+        if (doorOpenAudioSource == null)
         {
             return;
         }
 
-        GameObject audioObject = GameObject.Find(doorOpenAudioObjectName);
-
-        if (audioObject != null)
+        if (doorOpenAudioBaseVolume < 0f)
         {
-            doorOpenAudioSource = audioObject.GetComponent<AudioSource>();
+            doorOpenAudioBaseVolume = GameAudioSettings.GetCurrentOrBoundBaseVolume(doorOpenAudioSource, GameAudioChannel.GameSounds);
         }
+
+        doorOpenAudioSource.playOnAwake = false;
+        doorOpenAudioSource.loop = false;
+        doorOpenAudioSource.spatialBlend = 0f;
+        doorOpenAudioSource.ignoreListenerVolume = true;
+        ConfigureDoorOpenHighPassFilter();
+    }
+
+    private void ConfigureDoorOpenHighPassFilter()
+    {
+        if (doorOpenAudioSource == null)
+        {
+            return;
+        }
+
+        if (doorOpenHighPassFilter == null)
+        {
+            doorOpenHighPassFilter = doorOpenAudioSource.GetComponent<AudioHighPassFilter>();
+        }
+
+        if (doorOpenHighPassFilter == null)
+        {
+            doorOpenHighPassFilter = doorOpenAudioSource.gameObject.AddComponent<AudioHighPassFilter>();
+        }
+
+        doorOpenHighPassFilter.cutoffFrequency = Mathf.Max(10f, doorOpenHighPassCutoffFrequency);
+        doorOpenHighPassFilter.highpassResonanceQ = Mathf.Clamp(doorOpenHighPassResonanceQ, 0.1f, 10f);
+    }
+
+    private float GetTrimmedDoorOpenBaseVolume()
+    {
+        return Mathf.Max(0f, doorOpenAudioBaseVolume) * Mathf.Clamp01(doorOpenMixVolumeMultiplier);
     }
 
     private bool TryGetNavigationClip(out AudioClip clip)

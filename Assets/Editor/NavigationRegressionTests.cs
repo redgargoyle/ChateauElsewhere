@@ -81,6 +81,10 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("TryGetRandomClip"), "Door clicks should pick one door-open clip at random.");
         Assert.That(triggerText, Does.Contain("TryPlayNavigationSoundNow"), "Door sound should start immediately when the door is clicked, before navigation work finishes.");
         Assert.That(triggerText, Does.Contain("StopCurrentNavigationSound"), "Starting a door creak should stop any previous navigation sound.");
+        Assert.That(triggerText, Does.Contain("doorOpenMixVolumeMultiplier = 0.45f"), "Door creaks should sit quieter than the rest of the game mix.");
+        Assert.That(triggerText, Does.Contain("doorOpenHighPassCutoffFrequency = 180f"), "Door creaks should be high-passed to remove low-end thumps.");
+        Assert.That(triggerText, Does.Contain("AudioHighPassFilter"), "Door creaks should route through a runtime high-pass filter.");
+        Assert.That(triggerText, Does.Contain("GetTrimmedDoorOpenBaseVolume"), "Door creaks should bind a trimmed base volume through GameAudioSettings.");
         Assert.That(triggerText, Does.Not.Contain("PlayDoorOpenSoundIfSuccessful"), "Door audio should not wait for the full navigation transition before starting.");
         Assert.That(catalogText, Does.Not.Contain("a599035f4d65f7614a7cb90bfb65c96d"), "The stair climb noise should not be part of door-open randomization.");
         Assert.That(catalogText, Does.Not.Contain("a7718dd1d7db61a4490bf5be4b919568"), "The pot clang should not be part of door-open randomization.");

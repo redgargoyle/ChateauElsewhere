@@ -21,6 +21,9 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     [SerializeField] private AudioClip violinAudioClip;
     [SerializeField] private string fallbackViolinClipName = "violinscreech";
     [SerializeField] private bool loopViolinAudio = true;
+    [SerializeField, Range(0f, 1f)] private float violinAudioMixVolumeMultiplier = 0.32f;
+    [SerializeField, Min(10f)] private float violinHighPassCutoffFrequency = 140f;
+    [SerializeField, Range(0.1f, 10f)] private float violinHighPassResonanceQ = 0.8f;
     [SerializeField] private bool forceMonsterToFront = true;
     [SerializeField] private string monsterSortingLayerName = "People";
     [SerializeField] private int monsterSortingOrder = 9999;
@@ -60,6 +63,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     private Sprite originalMonsterSprite;
     private bool hasOriginalMonsterSprite;
     private float violinAudioBaseVolume = -1f;
+    private AudioHighPassFilter violinHighPassFilter;
 
     public bool IsRunning => isRunning || stingerRoutine != null;
 
@@ -353,13 +357,41 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         violinAudioSource.playOnAwake = false;
         violinAudioSource.loop = loopViolinAudio;
         violinAudioSource.spatialBlend = 0f;
+        violinAudioSource.ignoreListenerVolume = true;
 
         if (violinAudioBaseVolume < 0f)
         {
             violinAudioBaseVolume = violinAudioSource.volume;
         }
 
-        GameAudioSettings.EnsureBinding(violinAudioSource, GameAudioChannel.GameSounds, violinAudioBaseVolume);
+        ConfigureViolinHighPassFilter();
+        GameAudioSettings.EnsureBinding(violinAudioSource, GameAudioChannel.GameSounds, GetTrimmedViolinBaseVolume());
+    }
+
+    private void ConfigureViolinHighPassFilter()
+    {
+        if (violinAudioSource == null)
+        {
+            return;
+        }
+
+        if (violinHighPassFilter == null)
+        {
+            violinHighPassFilter = violinAudioSource.GetComponent<AudioHighPassFilter>();
+        }
+
+        if (violinHighPassFilter == null)
+        {
+            violinHighPassFilter = violinAudioSource.gameObject.AddComponent<AudioHighPassFilter>();
+        }
+
+        violinHighPassFilter.cutoffFrequency = Mathf.Max(10f, violinHighPassCutoffFrequency);
+        violinHighPassFilter.highpassResonanceQ = Mathf.Clamp(violinHighPassResonanceQ, 0.1f, 10f);
+    }
+
+    private float GetTrimmedViolinBaseVolume()
+    {
+        return Mathf.Max(0f, violinAudioBaseVolume) * Mathf.Clamp01(violinAudioMixVolumeMultiplier);
     }
 
     private AudioClip FindViolinClip()
@@ -870,6 +902,8 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
         if (!violinAudioSource.isPlaying)
         {
+            ConfigureViolinHighPassFilter();
+            GameAudioSettings.EnsureBinding(violinAudioSource, GameAudioChannel.GameSounds, GetTrimmedViolinBaseVolume());
             GameAudioSettings.TryPlay(violinAudioSource);
         }
     }
