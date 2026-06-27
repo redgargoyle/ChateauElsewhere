@@ -1,5 +1,7 @@
 using System.IO;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
@@ -577,8 +579,12 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("TryBuildGridMovementPath"), "Hand-authored complex boundaries need a sampled fallback route when corner visibility cannot connect both sides.");
         Assert.That(playerText, Does.Contain("GridRouteMaxNodeCount"), "The grid fallback should stay bounded enough for cursor hover checks.");
         Assert.That(playerText, Does.Contain("SmoothGridRouteWorldPath"), "Fallback routes should be simplified before the Butler walks them.");
-        Assert.That(playerText, Does.Contain("TryProjectClickToNearbyWalkableDestination"), "Floor clicks should tolerate small art-to-collider alignment misses without letting the player cross blocked areas.");
-        Assert.That(playerText, Does.Contain("TryFindProjectedWalkableWorldPointNearClick"), "Floor-click projection should use a local search instead of the broad doorway arrival search.");
+        Assert.That(playerText, Does.Contain("TryResolveClosestReachableWalkDestination"), "Floor clicks should resolve off-floor clicks through one nearest reachable destination query.");
+        Assert.That(playerText, Does.Contain("CollectPolygonColliderBoundaryAnchors"), "Floor-click projection should inspect actual polygon edges instead of collider bounds.");
+        Assert.That(playerText, Does.Contain("ClosestPointOnSegment"), "Concave floor clicks should measure to real polygon segments, not the AABB.");
+        Assert.That(playerText, Does.Contain("walkDestinationCandidates.Sort(CompareWalkDestinationCandidates)"), "Projected click candidates must be sorted by distance to the requested click before route testing.");
+        Assert.That(playerText, Does.Contain("CollectBlockerBoundaryDestinationCandidates"), "Clicks inside PlayerBlocker colliders should resolve to nearby blocker edges.");
+        Assert.That(playerText, Does.Not.Contain("TryFindReachableDestinationNear"), "The old first-reachable ring fallback should not decide click destinations.");
         Assert.That(playerText, Does.Contain("GetClickProjectionMaxWorldDistance"), "Click projection should be bounded by the active room boundary size.");
         Assert.That(playerText, Does.Contain("CanShowWalkCursor"), "The cursor should show walk when a nearby projected floor destination is reachable.");
         Assert.That(playerText, Does.Contain("TryBuildMovementPathFromNearbyStart"), "Routes should recover when the Butler is standing on a thin authored boundary edge.");
@@ -593,6 +599,124 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Not.Contain("pathProbeStep"), "Movement should not sample a heavyweight path segment to reject floor clicks.");
         Assert.That(obstacleText, Does.Not.Contain("BlockPlayerMovement"), "Prop footprint components should not expose movement-blocking controls.");
         Assert.That(obstacleText, Does.Not.Contain("TryGetMovementBounds"), "Prop footprint components should not provide movement blockers.");
+    }
+
+    [Test]
+    public void PlayerMovementResolvesOutsideRectangleToNearestInsetEdge()
+    {
+        GameObject floor = null;
+        GameObject player = null;
+
+        try
+        {
+            PointClickPlayerMovement movement = CreateConfiguredPointClickMovement(
+                new[]
+                {
+                    new Vector2(0f, 0f),
+                    new Vector2(4f, 0f),
+                    new Vector2(4f, 4f),
+                    new Vector2(0f, 4f)
+                },
+                new Vector2(2f, 2f),
+                out floor,
+                out player);
+
+            bool resolved = movement.TryFindClosestReachableDestinationToWorldPoint(new Vector2(5f, 2f), out Vector2 destination);
+
+            Assert.That(resolved, Is.True, "A click just outside a simple room should resolve to the nearest in-bounds edge.");
+            Assert.That(destination.x, Is.InRange(3.85f, 4.01f), "The destination should stay on the clicked edge, not jump toward the room center.");
+            Assert.That(destination.y, Is.InRange(1.9f, 2.1f), "The destination should preserve the clicked edge's y position.");
+        }
+        finally
+        {
+            DestroyImmediateIfNeeded(player);
+            DestroyImmediateIfNeeded(floor);
+        }
+    }
+
+    [Test]
+    public void PlayerMovementResolvesConcaveGapToNearestPolygonEdge()
+    {
+        GameObject floor = null;
+        GameObject player = null;
+
+        try
+        {
+            PointClickPlayerMovement movement = CreateConfiguredPointClickMovement(
+                new[]
+                {
+                    new Vector2(0f, 0f),
+                    new Vector2(4f, 0f),
+                    new Vector2(4f, 4f),
+                    new Vector2(3f, 4f),
+                    new Vector2(3f, 1f),
+                    new Vector2(1f, 1f),
+                    new Vector2(1f, 4f),
+                    new Vector2(0f, 4f)
+                },
+                new Vector2(0.5f, 0.5f),
+                out floor,
+                out player);
+
+            bool resolved = movement.TryFindClosestReachableDestinationToWorldPoint(new Vector2(2f, 1.2f), out Vector2 destination);
+
+            Assert.That(resolved, Is.True, "A click inside a concave void should resolve to the nearest actual floor edge.");
+            Assert.That(destination.x, Is.InRange(1.85f, 2.15f), "The resolver should choose the nearby bottom edge of the concavity.");
+            Assert.That(destination.y, Is.InRange(0.85f, 1.01f), "The destination should be slightly inset inside the floor polygon.");
+        }
+        finally
+        {
+            DestroyImmediateIfNeeded(player);
+            DestroyImmediateIfNeeded(floor);
+        }
+    }
+
+    [Test]
+    public void PlayerMovementResolvesBlockerClickToNearestWalkableBlockerEdge()
+    {
+        GameObject floor = null;
+        GameObject player = null;
+        GameObject blockerObject = null;
+
+        try
+        {
+            PointClickPlayerMovement movement = CreateConfiguredPointClickMovement(
+                new[]
+                {
+                    new Vector2(0f, 0f),
+                    new Vector2(4f, 0f),
+                    new Vector2(4f, 4f),
+                    new Vector2(0f, 4f)
+                },
+                new Vector2(0.5f, 2f),
+                out floor,
+                out player);
+
+            PolygonCollider2D blocker = CreatePolygonCollider(
+                "PlayerBlocker_Test",
+                new[]
+                {
+                    new Vector2(1.5f, 1.5f),
+                    new Vector2(2.5f, 1.5f),
+                    new Vector2(2.5f, 2.5f),
+                    new Vector2(1.5f, 2.5f)
+                },
+                out blockerObject);
+
+            AddWalkableBlocker(movement, blocker);
+
+            bool resolved = movement.TryFindClosestReachableDestinationToWorldPoint(new Vector2(2f, 2f), out Vector2 destination);
+
+            Assert.That(resolved, Is.True, "A click inside a PlayerBlocker should resolve to the nearest reachable point outside it.");
+            Assert.That(destination.x, Is.InRange(1.35f, 1.5f), "The destination should hug the nearest blocker edge from the current side.");
+            Assert.That(destination.y, Is.InRange(1.9f, 2.1f), "The destination should preserve the click's y position around the blocker.");
+        }
+        finally
+        {
+            DestroyImmediateIfNeeded(blockerObject);
+            DestroyImmediateIfNeeded(player);
+            DestroyImmediateIfNeeded(floor);
+        }
     }
 
     [Test]
@@ -996,6 +1120,70 @@ public class NavigationRegressionTests
 
         AssertButlerIdleClipReferences(PlayerIdleClipPath, expectedFrameGuids, 1);
         AssertButlerIdleClipReferences(ButlerClassicIdleClipPath, expectedFrameGuids, 2);
+    }
+
+    private static PointClickPlayerMovement CreateConfiguredPointClickMovement(
+        Vector2[] floorPath,
+        Vector2 startPosition,
+        out GameObject floorObject,
+        out GameObject playerObject)
+    {
+        PolygonCollider2D floor = CreatePolygonCollider("PlayerBoundary_Test", floorPath, out floorObject);
+        playerObject = new GameObject("Player");
+        playerObject.AddComponent<Rigidbody2D>();
+        playerObject.AddComponent<Animator>();
+        PointClickPlayerMovement movement = playerObject.AddComponent<PointClickPlayerMovement>();
+
+        SetPrivateField(movement, "useCurrentRoomBoundary", false);
+        SetPrivateField(movement, "walkableFloor", floor);
+        SetPrivateField(movement, "isReady", true);
+        SetPrivateField(movement, "logicalPosition", startPosition);
+        SetPrivateField(movement, "destination", startPosition);
+        SetPrivateField(movement, "finalDestination", startPosition);
+        SetPrivateField(movement, "currentVisualOffset", Vector3.zero);
+        SetPrivateField(movement, "hasRoomStageVisualReference", false);
+
+        Physics2D.SyncTransforms();
+        return movement;
+    }
+
+    private static PolygonCollider2D CreatePolygonCollider(string name, Vector2[] path, out GameObject owner)
+    {
+        owner = new GameObject(name);
+        PolygonCollider2D collider = owner.AddComponent<PolygonCollider2D>();
+        collider.pathCount = 1;
+        collider.SetPath(0, path);
+        Physics2D.SyncTransforms();
+        return collider;
+    }
+
+    private static void AddWalkableBlocker(PointClickPlayerMovement movement, Collider2D blocker)
+    {
+        FieldInfo field = GetPointClickField("walkableBlockers");
+        List<Collider2D> blockers = (List<Collider2D>)field.GetValue(movement);
+        blockers.Clear();
+        blockers.Add(blocker);
+        Physics2D.SyncTransforms();
+    }
+
+    private static void SetPrivateField<T>(PointClickPlayerMovement movement, string fieldName, T value)
+    {
+        GetPointClickField(fieldName).SetValue(movement, value);
+    }
+
+    private static FieldInfo GetPointClickField(string fieldName)
+    {
+        FieldInfo field = typeof(PointClickPlayerMovement).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"PointClickPlayerMovement should have private field '{fieldName}'.");
+        return field;
+    }
+
+    private static void DestroyImmediateIfNeeded(GameObject target)
+    {
+        if (target != null)
+        {
+            UnityEngine.Object.DestroyImmediate(target);
+        }
     }
 
     private static void AssertScenePropSorting(string sceneText, string propName, int sortingOrder)

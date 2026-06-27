@@ -27,6 +27,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private const float GridRouteSpecialConnectionMultiplier = 2.5f;
 	private const int ClickProjectionSearchRings = 5;
 	private const int ClickProjectionSearchSamplesPerRing = 16;
+	private const int ClickProjectionBoundaryCandidateLimit = 12;
 	private const float ClickProjectionMinWorldDistance = 16f;
 	private const float ClickProjectionMaxWorldDistance = 48f;
 	public const float ButlerRoomScaleEndpointEpsilon = 0.01f;
@@ -105,6 +106,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private readonly List<int> polygonRouteStartConnections = new List<int>();
 	private readonly List<int> polygonRouteTargetConnections = new List<int>();
 	private readonly List<int> polygonRouteIndices = new List<int>();
+	private readonly List<WalkDestinationCandidate> walkDestinationCandidates = new List<WalkDestinationCandidate>();
+	private readonly List<BoundaryAnchorCandidate> walkDestinationBoundaryCandidates = new List<BoundaryAnchorCandidate>();
 	private readonly List<Collider2D> walkableBlockers = new List<Collider2D>();
 	private readonly List<Vector2> gridRouteWorldNodes = new List<Vector2>();
 	private readonly List<int> gridRouteCellIndices = new List<int>();
@@ -587,6 +590,30 @@ public class PointClickPlayerMovement : MonoBehaviour
 		public bool WouldMove { get; }
 	}
 
+	private readonly struct WalkDestinationCandidate
+	{
+		public WalkDestinationCandidate(Vector2 worldPoint, Vector2 requestedWorldPoint)
+		{
+			WorldPoint = worldPoint;
+			SqrDistanceToRequested = (worldPoint - requestedWorldPoint).sqrMagnitude;
+		}
+
+		public Vector2 WorldPoint { get; }
+		public float SqrDistanceToRequested { get; }
+	}
+
+	private readonly struct BoundaryAnchorCandidate
+	{
+		public BoundaryAnchorCandidate(Vector2 worldPoint, Vector2 requestedWorldPoint)
+		{
+			WorldPoint = worldPoint;
+			SqrDistanceToRequested = (worldPoint - requestedWorldPoint).sqrMagnitude;
+		}
+
+		public Vector2 WorldPoint { get; }
+		public float SqrDistanceToRequested { get; }
+	}
+
 	private void Awake()
 	{
 		CacheReferences();
@@ -621,10 +648,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 		{
 			UpdateWalkCursor();
 
-			if (TryGetFloorClick(out Vector2 clickPosition, out Vector2 screenPosition, out bool pointerOverUi))
+			if (TryGetFloorClick(out Vector2 clickPosition, out Vector2 screenPosition, out bool pointerOverUi, out MovementTargetQuery movementQuery))
 			{
 				SetDestination(clickPosition);
-				LogAcceptedFloorClick(screenPosition, pointerOverUi, clickPosition, hasDestination);
+				LogAcceptedFloorClick(screenPosition, pointerOverUi, movementQuery, hasDestination, movementPath.Count);
 			}
 		}
 		else
@@ -882,11 +909,16 @@ public class PointClickPlayerMovement : MonoBehaviour
 		ApplyPlayerSorting();
 	}
 
-	private bool TryGetFloorClick(out Vector2 clickPosition, out Vector2 screenPosition, out bool pointerOverUi)
+	private bool TryGetFloorClick(
+		out Vector2 clickPosition,
+		out Vector2 screenPosition,
+		out bool pointerOverUi,
+		out MovementTargetQuery movementQuery)
 	{
 		clickPosition = Vector2.zero;
 		screenPosition = Vector2.zero;
 		pointerOverUi = false;
+		movementQuery = default;
 
 		if (RuntimeSettingsMenu.BlocksGameInput)
 			return false;
@@ -905,7 +937,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (pointerOverUi)
 			return false;
 
-		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, out MovementTargetQuery movementQuery))
+		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, out movementQuery))
 			return false;
 
 		if (!movementQuery.CanShowWalkCursor || !movementQuery.WouldMove)
@@ -915,12 +947,24 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return true;
 	}
 
-	private void LogAcceptedFloorClick(Vector2 screenPosition, bool pointerOverUi, Vector2 destination, bool movementStarted)
+	private void LogAcceptedFloorClick(
+		Vector2 screenPosition,
+		bool pointerOverUi,
+		MovementTargetQuery movementQuery,
+		bool movementStarted,
+		int movementPathCount)
 	{
+		float projectedDistance = Vector2.Distance(movementQuery.RequestedLogicalPosition, movementQuery.Destination);
 		Debug.Log(
 			$"{DiagnosticPrefix} PlayerMovement accepted floor click frame={Time.frameCount} " +
 			$"screen={FormatDiagnosticVector(screenPosition)} pointerOverUi={pointerOverUi} " +
-			$"destination={FormatDiagnosticVector(destination)} movementStarted={movementStarted}",
+			$"requested={FormatDiagnosticVector(movementQuery.RequestedLogicalPosition)} " +
+			$"destination={FormatDiagnosticVector(movementQuery.Destination)} " +
+			$"exactPointWalkable={movementQuery.ExactPointWalkable} " +
+			$"usesProjectedDestination={movementQuery.UsesProjectedDestination} " +
+			$"projectedDistance={projectedDistance:0.###} " +
+			$"pathReachable={movementQuery.HasReachableDestination} " +
+			$"movementPathCount={movementPathCount} movementStarted={movementStarted}",
 			this);
 	}
 
@@ -1007,28 +1051,18 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		Vector2 logicalPoint = WalkableWorldToLogicalPoint(worldPoint);
 		Vector2 preferredLogicalPoint = WalkableWorldToLogicalPoint(preferredWorldPoint);
-		Vector2 candidateDestination = IsPointWalkable(logicalPoint)
-			? logicalPoint
-			: ClampToWalkableArea(logicalPoint, preferredLogicalPoint);
-
-		if (TryBuildMovementPath(logicalPosition, candidateDestination, movementQueryPath))
+		if (!TryResolveClosestReachableWalkDestination(
+			logicalPoint,
+			logicalPosition,
+			preferredLogicalPoint,
+			out destination,
+			out _,
+			out _))
 		{
-			destination = candidateDestination;
-			return true;
+			return false;
 		}
 
-		if (TryFindWalkableWorldPointNear(worldPoint, preferredWorldPoint, out Vector2 walkableWorldPoint))
-		{
-			Vector2 walkableLogicalPoint = WalkableWorldToLogicalPoint(walkableWorldPoint);
-
-			if (TryBuildMovementPath(logicalPosition, walkableLogicalPoint, movementQueryPath))
-			{
-				destination = walkableLogicalPoint;
-				return true;
-			}
-		}
-
-		return false;
+		return true;
 	}
 
 	public bool TryEvaluateMovementAtScreenPoint(Vector2 screenPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)
@@ -1138,16 +1172,19 @@ public class PointClickPlayerMovement : MonoBehaviour
 		Vector2 startLogicalPoint = WalkableWorldToLogicalPoint(startWorldPoint);
 		Vector2 targetLogicalPoint = WalkableWorldToLogicalPoint(targetWorldPoint);
 		Vector2 destinationLogicalPoint = targetLogicalPoint;
-		bool exactPointWalkable = IsPointWalkable(targetLogicalPoint);
 
-		if (!exactPointWalkable && clampToWalkableArea)
+		if (clampToWalkableArea)
 		{
-			destinationLogicalPoint = ClampToWalkableArea(targetLogicalPoint, startLogicalPoint);
-		}
-
-		if (clampToWalkableArea && !IsPointWalkable(destinationLogicalPoint))
-		{
-			destinationLogicalPoint = ClampToWalkableArea(destinationLogicalPoint, startLogicalPoint);
+			if (!TryResolveClosestReachableWalkDestination(
+				targetLogicalPoint,
+				startLogicalPoint,
+				startLogicalPoint,
+				out destinationLogicalPoint,
+				out _,
+				out _))
+			{
+				return false;
+			}
 		}
 
 		if (!TryBuildMovementPath(startLogicalPoint, destinationLogicalPoint, movementQueryPath) ||
@@ -1182,36 +1219,13 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		RefreshWalkableFloorForCurrentRoom();
 
-		bool exactPointWalkable = IsPointWalkable(targetPosition);
-		Vector2 destinationPosition = targetPosition;
-		bool usesProjectedDestination = false;
-
-		if (!exactPointWalkable && clampToWalkableArea)
-		{
-			destinationPosition = ClampToWalkableArea(targetPosition, logicalPosition);
-			usesProjectedDestination = Vector2.Distance(destinationPosition, targetPosition) > stopDistance;
-		}
-		else if (!exactPointWalkable &&
-			TryProjectClickToNearbyWalkableDestination(targetPosition, logicalPosition, out Vector2 projectedDestination))
-		{
-			destinationPosition = projectedDestination;
-			usesProjectedDestination = true;
-		}
-
-		if (clampToWalkableArea && !IsPointWalkable(destinationPosition))
-		{
-			destinationPosition = ClampToWalkableArea(destinationPosition, logicalPosition);
-			usesProjectedDestination = Vector2.Distance(destinationPosition, targetPosition) > stopDistance;
-		}
-
-		bool hasReachableDestination = TryBuildMovementPath(logicalPosition, destinationPosition, movementQueryPath);
-		if (!hasReachableDestination &&
-			TryFindReachableDestinationNear(targetPosition, out Vector2 reachableDestination))
-		{
-			destinationPosition = reachableDestination;
-			usesProjectedDestination = true;
-			hasReachableDestination = true;
-		}
+		bool hasReachableDestination = TryResolveClosestReachableWalkDestination(
+			targetPosition,
+			logicalPosition,
+			logicalPosition,
+			out Vector2 destinationPosition,
+			out bool exactPointWalkable,
+			out bool usesProjectedDestination);
 
 		bool wouldMove = hasReachableDestination &&
 			Vector2.Distance(logicalPosition, destinationPosition) > stopDistance;
@@ -1227,209 +1241,332 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return true;
 	}
 
-	private bool TryProjectClickToNearbyWalkableDestination(
+	private bool TryResolveClosestReachableWalkDestination(
 		Vector2 requestedLogicalPoint,
+		Vector2 startLogicalPoint,
 		Vector2 preferredLogicalPoint,
-		out Vector2 destination)
+		out Vector2 destinationLogicalPoint,
+		out bool exactPointWalkable,
+		out bool usesProjectedDestination)
 	{
-		destination = requestedLogicalPoint;
+		destinationLogicalPoint = requestedLogicalPoint;
+		usesProjectedDestination = false;
+		exactPointWalkable = IsPointWalkable(requestedLogicalPoint);
 
-		if (walkableFloor == null)
+		if (exactPointWalkable && TryBuildMovementPath(startLogicalPoint, requestedLogicalPoint, movementQueryPath))
 		{
 			return true;
 		}
 
+		if (walkableFloor == null)
+		{
+			return false;
+		}
+
 		UpdateVisualOffset(Camera.main);
 		Vector2 requestedWorldPoint = LogicalToWalkableWorldPoint(requestedLogicalPoint);
+		Vector2 startWorldPoint = LogicalToWalkableWorldPoint(startLogicalPoint);
 		Vector2 preferredWorldPoint = LogicalToWalkableWorldPoint(preferredLogicalPoint);
-		float maxDistance = GetClickProjectionMaxWorldDistance();
 
-		if (!TryFindProjectedWalkableWorldPointNearClick(
+		CollectClosestReachableWalkDestinationCandidates(
 			requestedWorldPoint,
-			preferredWorldPoint,
-			maxDistance,
-			out Vector2 projectedWorldPoint))
+			startWorldPoint,
+			preferredWorldPoint);
+
+		if (walkDestinationCandidates.Count == 0)
 		{
 			return false;
 		}
 
-		Vector2 projectedLogicalPoint = WalkableWorldToLogicalPoint(projectedWorldPoint);
-		if (!IsPointWalkable(projectedLogicalPoint))
+		walkDestinationCandidates.Sort(CompareWalkDestinationCandidates);
+
+		for (int i = 0; i < walkDestinationCandidates.Count; i++)
 		{
-			return false;
-		}
-
-		destination = projectedLogicalPoint;
-		return true;
-	}
-
-	private bool TryFindProjectedWalkableWorldPointNearClick(
-		Vector2 requestedWorldPoint,
-		Vector2 preferredWorldPoint,
-		float maxDistance,
-		out Vector2 projectedWorldPoint)
-	{
-		projectedWorldPoint = requestedWorldPoint;
-
-		if (walkableFloor == null)
-		{
-			return true;
-		}
-
-		if (IsWalkableWorldPoint(requestedWorldPoint))
-		{
-			return true;
-		}
-
-		bool foundPoint = false;
-		float bestSqrDistance = maxDistance * maxDistance;
-		Vector2 bestPoint = Vector2.zero;
-		Vector2 closestPoint = walkableFloor.ClosestPoint(requestedWorldPoint);
-
-		TryAcceptProjectedWalkableWorldPoint(
-			closestPoint,
-			requestedWorldPoint,
-			ref foundPoint,
-			ref bestSqrDistance,
-			ref bestPoint);
-
-		Vector2 insetDirection = preferredWorldPoint - closestPoint;
-		if (insetDirection.sqrMagnitude <= MovementEpsilon || !IsWalkableWorldPoint(preferredWorldPoint))
-		{
-			insetDirection = (Vector2)walkableFloor.bounds.center - closestPoint;
-		}
-
-		if (insetDirection.sqrMagnitude > MovementEpsilon)
-		{
-			insetDirection.Normalize();
-
-			for (int ring = 1; ring <= ClickProjectionSearchRings; ring++)
+			Vector2 candidateLogicalPoint = WalkableWorldToLogicalPoint(walkDestinationCandidates[i].WorldPoint);
+			if (!IsPointWalkable(candidateLogicalPoint))
 			{
-				float radius = maxDistance * ring / ClickProjectionSearchRings;
-				Vector2 insetPoint = closestPoint + insetDirection * radius;
-				TryAcceptProjectedWalkableWorldPoint(
-					insetPoint,
-					requestedWorldPoint,
-					ref foundPoint,
-					ref bestSqrDistance,
-					ref bestPoint);
+				continue;
 			}
-		}
 
-		for (int ring = 1; ring <= ClickProjectionSearchRings; ring++)
-		{
-			float radius = maxDistance * ring / ClickProjectionSearchRings;
-
-			for (int sample = 0; sample < ClickProjectionSearchSamplesPerRing; sample++)
+			if (!TryBuildMovementPath(startLogicalPoint, candidateLogicalPoint, movementQueryPath))
 			{
-				float angle = (Mathf.PI * 2f * sample) / ClickProjectionSearchSamplesPerRing;
-				Vector2 samplePoint = closestPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-				TryAcceptProjectedWalkableWorldPoint(
-					samplePoint,
-					requestedWorldPoint,
-					ref foundPoint,
-					ref bestSqrDistance,
-					ref bestPoint);
+				continue;
 			}
-		}
 
-		if (!foundPoint)
-		{
-			return false;
-		}
-
-		projectedWorldPoint = bestPoint;
-		return true;
-	}
-
-	private void TryAcceptProjectedWalkableWorldPoint(
-		Vector2 candidateWorldPoint,
-		Vector2 requestedWorldPoint,
-		ref bool foundPoint,
-		ref float bestSqrDistance,
-		ref Vector2 bestPoint)
-	{
-		if (!IsWalkableWorldPoint(candidateWorldPoint))
-		{
-			return;
-		}
-
-		float sqrDistance = (candidateWorldPoint - requestedWorldPoint).sqrMagnitude;
-		if (sqrDistance > bestSqrDistance)
-		{
-			return;
-		}
-
-		foundPoint = true;
-		bestSqrDistance = sqrDistance;
-		bestPoint = candidateWorldPoint;
-	}
-
-	private bool TryFindReachableDestinationNear(Vector2 requestedLogicalPoint, out Vector2 destination)
-	{
-		destination = requestedLogicalPoint;
-
-		if (walkableFloor == null)
-		{
+			destinationLogicalPoint = candidateLogicalPoint;
+			usesProjectedDestination = true;
 			return true;
-		}
-
-		UpdateVisualOffset(Camera.main);
-		float maxDistance = GetClickProjectionMaxWorldDistance();
-		Vector2 requestedWorldPoint = LogicalToWalkableWorldPoint(requestedLogicalPoint);
-		Vector2 currentWorldPoint = LogicalToWalkableWorldPoint(logicalPosition);
-
-		if (TryProjectClickToNearbyWalkableDestination(requestedLogicalPoint, logicalPosition, out Vector2 projectedDestination) &&
-			TryBuildMovementPath(logicalPosition, projectedDestination, movementQueryPath))
-		{
-			destination = projectedDestination;
-			return true;
-		}
-
-		for (int ring = 1; ring <= ClickProjectionSearchRings; ring++)
-		{
-			float radius = maxDistance * ring / ClickProjectionSearchRings;
-
-			for (int sample = 0; sample < ClickProjectionSearchSamplesPerRing; sample++)
-			{
-				float angle = (Mathf.PI * 2f * sample) / ClickProjectionSearchSamplesPerRing;
-				Vector2 candidateWorldPoint = requestedWorldPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-
-				if (!IsWalkableWorldPoint(candidateWorldPoint))
-				{
-					continue;
-				}
-
-				if (Vector2.Distance(requestedWorldPoint, candidateWorldPoint) > maxDistance)
-				{
-					continue;
-				}
-
-				Vector2 candidateLogicalPoint = WalkableWorldToLogicalPoint(candidateWorldPoint);
-				if (TryBuildMovementPath(logicalPosition, candidateLogicalPoint, movementQueryPath))
-				{
-					destination = candidateLogicalPoint;
-					return true;
-				}
-			}
-		}
-
-		Vector2 towardCurrent = currentWorldPoint - requestedWorldPoint;
-		if (towardCurrent.sqrMagnitude > MovementEpsilon)
-		{
-			Vector2 candidateWorldPoint = requestedWorldPoint + towardCurrent.normalized * Mathf.Min(maxDistance, towardCurrent.magnitude);
-			if (IsWalkableWorldPoint(candidateWorldPoint))
-			{
-				Vector2 candidateLogicalPoint = WalkableWorldToLogicalPoint(candidateWorldPoint);
-				if (TryBuildMovementPath(logicalPosition, candidateLogicalPoint, movementQueryPath))
-				{
-					destination = candidateLogicalPoint;
-					return true;
-				}
-			}
 		}
 
 		return false;
+	}
+
+	private void CollectClosestReachableWalkDestinationCandidates(
+		Vector2 requestedWorldPoint,
+		Vector2 startWorldPoint,
+		Vector2 preferredWorldPoint)
+	{
+		walkDestinationCandidates.Clear();
+
+		float maxDistance = GetClickProjectionMaxWorldDistance();
+		TryAddWalkDestinationCandidate(requestedWorldPoint, requestedWorldPoint, maxDistance);
+		CollectColliderBoundaryDestinationCandidates(walkableFloor, requestedWorldPoint, startWorldPoint, preferredWorldPoint, maxDistance);
+		CollectBlockerBoundaryDestinationCandidates(requestedWorldPoint, startWorldPoint, preferredWorldPoint, maxDistance);
+		CollectLocalWalkDestinationCandidates(requestedWorldPoint, maxDistance);
+	}
+
+	private void CollectColliderBoundaryDestinationCandidates(
+		Collider2D collider,
+		Vector2 requestedWorldPoint,
+		Vector2 startWorldPoint,
+		Vector2 preferredWorldPoint,
+		float maxDistance)
+	{
+		if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
+		{
+			return;
+		}
+
+		walkDestinationBoundaryCandidates.Clear();
+
+		if (collider is PolygonCollider2D polygon && polygon.pathCount > 0)
+		{
+			CollectPolygonColliderBoundaryAnchors(polygon, requestedWorldPoint, maxDistance);
+		}
+		else
+		{
+			AddBoundaryAnchorCandidate(collider.ClosestPoint(requestedWorldPoint), requestedWorldPoint, maxDistance);
+		}
+
+		walkDestinationBoundaryCandidates.Sort(CompareBoundaryAnchorCandidates);
+		int candidateCount = Mathf.Min(walkDestinationBoundaryCandidates.Count, ClickProjectionBoundaryCandidateLimit);
+		for (int i = 0; i < candidateCount; i++)
+		{
+			CollectInsetWalkDestinationCandidates(
+				walkDestinationBoundaryCandidates[i].WorldPoint,
+				requestedWorldPoint,
+				startWorldPoint,
+				preferredWorldPoint,
+				maxDistance);
+		}
+	}
+
+	private void CollectPolygonColliderBoundaryAnchors(
+		PolygonCollider2D polygon,
+		Vector2 requestedWorldPoint,
+		float maxDistance)
+	{
+		for (int pathIndex = 0; pathIndex < polygon.pathCount; pathIndex++)
+		{
+			Vector2[] localPath = polygon.GetPath(pathIndex);
+			if (localPath == null || localPath.Length == 0)
+			{
+				continue;
+			}
+
+			for (int pointIndex = 0; pointIndex < localPath.Length; pointIndex++)
+			{
+				Vector2 start = PolygonLocalPointToWorld(polygon, localPath[pointIndex]);
+				Vector2 end = PolygonLocalPointToWorld(polygon, localPath[(pointIndex + 1) % localPath.Length]);
+				Vector2 closestPoint = ClosestPointOnSegment(start, end, requestedWorldPoint);
+				AddBoundaryAnchorCandidate(closestPoint, requestedWorldPoint, maxDistance);
+			}
+		}
+	}
+
+	private void CollectBlockerBoundaryDestinationCandidates(
+		Vector2 requestedWorldPoint,
+		Vector2 startWorldPoint,
+		Vector2 preferredWorldPoint,
+		float maxDistance)
+	{
+		for (int i = 0; i < walkableBlockers.Count; i++)
+		{
+			Collider2D blocker = walkableBlockers[i];
+			if (blocker == null || !blocker.enabled || !blocker.gameObject.activeInHierarchy)
+			{
+				continue;
+			}
+
+			Vector2 closestPoint = blocker.ClosestPoint(requestedWorldPoint);
+			if (!blocker.OverlapPoint(requestedWorldPoint) &&
+				(closestPoint - requestedWorldPoint).sqrMagnitude > maxDistance * maxDistance)
+			{
+				continue;
+			}
+
+			CollectColliderBoundaryDestinationCandidates(
+				blocker,
+				requestedWorldPoint,
+				startWorldPoint,
+				preferredWorldPoint,
+				maxDistance);
+		}
+	}
+
+	private void CollectInsetWalkDestinationCandidates(
+		Vector2 boundaryWorldPoint,
+		Vector2 requestedWorldPoint,
+		Vector2 startWorldPoint,
+		Vector2 preferredWorldPoint,
+		float maxDistance)
+	{
+		TryAddWalkDestinationCandidate(boundaryWorldPoint, requestedWorldPoint, maxDistance);
+
+		if (IsWalkableWorldPoint(startWorldPoint))
+		{
+			CollectDirectionalInsetWalkDestinationCandidates(
+				boundaryWorldPoint,
+				startWorldPoint - boundaryWorldPoint,
+				requestedWorldPoint,
+				maxDistance);
+		}
+
+		if (IsWalkableWorldPoint(preferredWorldPoint) &&
+			(preferredWorldPoint - startWorldPoint).sqrMagnitude > MovementEpsilon)
+		{
+			CollectDirectionalInsetWalkDestinationCandidates(
+				boundaryWorldPoint,
+				preferredWorldPoint - boundaryWorldPoint,
+				requestedWorldPoint,
+				maxDistance);
+		}
+
+		float inset = Mathf.Max(WalkableInsetStep, GetPathNodeInsetDistance());
+		for (int ring = 1; ring <= WalkableInsetAttempts; ring++)
+		{
+			float radius = inset * ring;
+
+			for (int sample = 0; sample < WalkableInsetRadialSamples; sample++)
+			{
+				float angle = (Mathf.PI * 2f * sample) / WalkableInsetRadialSamples;
+				Vector2 samplePoint = boundaryWorldPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+				TryAddWalkDestinationCandidate(samplePoint, requestedWorldPoint, maxDistance);
+			}
+		}
+	}
+
+	private void CollectDirectionalInsetWalkDestinationCandidates(
+		Vector2 boundaryWorldPoint,
+		Vector2 direction,
+		Vector2 requestedWorldPoint,
+		float maxDistance)
+	{
+		if (direction.sqrMagnitude <= MovementEpsilon)
+		{
+			return;
+		}
+
+		direction.Normalize();
+		float inset = Mathf.Max(WalkableInsetStep, GetPathNodeInsetDistance());
+		for (int i = 1; i <= WalkableInsetAttempts; i++)
+		{
+			Vector2 candidateWorldPoint = boundaryWorldPoint + direction * (inset * i);
+			TryAddWalkDestinationCandidate(candidateWorldPoint, requestedWorldPoint, maxDistance);
+		}
+	}
+
+	private void CollectLocalWalkDestinationCandidates(Vector2 requestedWorldPoint, float maxDistance)
+	{
+		float radius = Mathf.Max(WalkableInsetStep, GetPathNodeInsetDistance());
+
+		for (int ring = 1; ring <= WalkableSearchRings && radius <= maxDistance + MovementEpsilon; ring++)
+		{
+			for (int sample = 0; sample < ClickProjectionSearchSamplesPerRing; sample++)
+			{
+				float angle = (Mathf.PI * 2f * sample) / ClickProjectionSearchSamplesPerRing;
+				Vector2 samplePoint = requestedWorldPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+				TryAddWalkDestinationCandidate(samplePoint, requestedWorldPoint, maxDistance);
+			}
+
+			radius = Mathf.Min(maxDistance, Mathf.Max(radius + WalkableInsetStep, radius * 1.35f));
+		}
+	}
+
+	private void AddBoundaryAnchorCandidate(
+		Vector2 candidateWorldPoint,
+		Vector2 requestedWorldPoint,
+		float maxDistance)
+	{
+		float sqrDistance = (candidateWorldPoint - requestedWorldPoint).sqrMagnitude;
+		if (sqrDistance > maxDistance * maxDistance)
+		{
+			return;
+		}
+
+		float duplicateDistance = Mathf.Max(WalkableInsetStep, GetPathNodeInsetDistance()) * 0.5f;
+		float duplicateSqrDistance = duplicateDistance * duplicateDistance;
+		for (int i = 0; i < walkDestinationBoundaryCandidates.Count; i++)
+		{
+			if ((walkDestinationBoundaryCandidates[i].WorldPoint - candidateWorldPoint).sqrMagnitude <= duplicateSqrDistance)
+			{
+				return;
+			}
+		}
+
+		walkDestinationBoundaryCandidates.Add(new BoundaryAnchorCandidate(candidateWorldPoint, requestedWorldPoint));
+	}
+
+	private bool TryAddWalkDestinationCandidate(
+		Vector2 candidateWorldPoint,
+		Vector2 requestedWorldPoint,
+		float maxDistance)
+	{
+		float sqrDistance = (candidateWorldPoint - requestedWorldPoint).sqrMagnitude;
+		if (sqrDistance > maxDistance * maxDistance || !IsWalkableWorldPoint(candidateWorldPoint))
+		{
+			return false;
+		}
+
+		float duplicateDistance = Mathf.Max(WalkableInsetStep, GetPathNodeInsetDistance()) * 0.5f;
+		float duplicateSqrDistance = duplicateDistance * duplicateDistance;
+		for (int i = 0; i < walkDestinationCandidates.Count; i++)
+		{
+			if ((walkDestinationCandidates[i].WorldPoint - candidateWorldPoint).sqrMagnitude <= duplicateSqrDistance)
+			{
+				return false;
+			}
+		}
+
+		walkDestinationCandidates.Add(new WalkDestinationCandidate(candidateWorldPoint, requestedWorldPoint));
+		return true;
+	}
+
+	private static int CompareWalkDestinationCandidates(WalkDestinationCandidate a, WalkDestinationCandidate b)
+	{
+		int distanceComparison = a.SqrDistanceToRequested.CompareTo(b.SqrDistanceToRequested);
+		if (distanceComparison != 0)
+		{
+			return distanceComparison;
+		}
+
+		int xComparison = a.WorldPoint.x.CompareTo(b.WorldPoint.x);
+		return xComparison != 0 ? xComparison : a.WorldPoint.y.CompareTo(b.WorldPoint.y);
+	}
+
+	private static int CompareBoundaryAnchorCandidates(BoundaryAnchorCandidate a, BoundaryAnchorCandidate b)
+	{
+		int distanceComparison = a.SqrDistanceToRequested.CompareTo(b.SqrDistanceToRequested);
+		if (distanceComparison != 0)
+		{
+			return distanceComparison;
+		}
+
+		int xComparison = a.WorldPoint.x.CompareTo(b.WorldPoint.x);
+		return xComparison != 0 ? xComparison : a.WorldPoint.y.CompareTo(b.WorldPoint.y);
+	}
+
+	private static Vector2 ClosestPointOnSegment(Vector2 start, Vector2 end, Vector2 point)
+	{
+		Vector2 segment = end - start;
+		float segmentLengthSqr = segment.sqrMagnitude;
+		if (segmentLengthSqr <= MovementEpsilon)
+		{
+			return start;
+		}
+
+		float t = Vector2.Dot(point - start, segment) / segmentLengthSqr;
+		return start + segment * Mathf.Clamp01(t);
 	}
 
 	private bool TryGetLogicalPointFromScreen(Vector2 screenPosition, out Vector2 logicalPoint)
@@ -3328,17 +3465,33 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private Vector2 ClampToWalkableArea(Vector2 point, Vector2 preferredInsidePoint)
 	{
+		return TryClampToWalkableArea(point, preferredInsidePoint, out Vector2 clampedPoint)
+			? clampedPoint
+			: point;
+	}
+
+	private bool TryClampToWalkableArea(Vector2 point, Vector2 preferredInsidePoint, out Vector2 clampedPoint)
+	{
 		if (walkableFloor == null)
-			return point;
+		{
+			clampedPoint = point;
+			return true;
+		}
 
 		UpdateVisualOffset(Camera.main);
 		Vector2 worldPoint = LogicalToWalkableWorldPoint(point);
 		if (IsWalkableWorldPoint(worldPoint))
-			return point;
+		{
+			clampedPoint = point;
+			return true;
+		}
 
 		Vector2 closestPoint = walkableFloor.ClosestPoint(worldPoint);
 		if (IsWalkableWorldPoint(closestPoint))
-			return WalkableWorldToLogicalPoint(closestPoint);
+		{
+			clampedPoint = WalkableWorldToLogicalPoint(closestPoint);
+			return true;
+		}
 
 		Vector2 preferredWorldPoint = LogicalToWalkableWorldPoint(preferredInsidePoint);
 		Vector2 insetDirection = preferredWorldPoint - closestPoint;
@@ -3346,7 +3499,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 			insetDirection = (Vector2)walkableFloor.bounds.center - closestPoint;
 
 		if (insetDirection.sqrMagnitude <= MovementEpsilon)
-			return WalkableWorldToLogicalPoint(closestPoint);
+		{
+			clampedPoint = point;
+			return false;
+		}
 
 		insetDirection.Normalize();
 
@@ -3354,7 +3510,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 		{
 			Vector2 insetPoint = closestPoint + insetDirection * (WalkableInsetStep * i);
 			if (IsWalkableWorldPoint(insetPoint))
-				return WalkableWorldToLogicalPoint(insetPoint);
+			{
+				clampedPoint = WalkableWorldToLogicalPoint(insetPoint);
+				return true;
+			}
 		}
 
 		for (int i = 1; i <= WalkableInsetAttempts; i++)
@@ -3367,14 +3526,21 @@ public class PointClickPlayerMovement : MonoBehaviour
 				Vector2 radialPoint = closestPoint + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
 
 				if (IsWalkableWorldPoint(radialPoint))
-					return WalkableWorldToLogicalPoint(radialPoint);
+				{
+					clampedPoint = WalkableWorldToLogicalPoint(radialPoint);
+					return true;
+				}
 			}
 		}
 
 		if (TryFindWalkableWorldPointNear(worldPoint, preferredWorldPoint, out Vector2 searchedPoint))
-			return WalkableWorldToLogicalPoint(searchedPoint);
+		{
+			clampedPoint = WalkableWorldToLogicalPoint(searchedPoint);
+			return true;
+		}
 
-		return WalkableWorldToLogicalPoint(closestPoint);
+		clampedPoint = point;
+		return false;
 	}
 
 	private bool TryFindWalkableWorldPointNear(Vector2 targetWorldPoint, Vector2 preferredWorldPoint, out Vector2 walkableWorldPoint)
