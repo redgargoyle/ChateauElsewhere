@@ -1,11 +1,13 @@
 using System.IO;
 using NUnit.Framework;
+using UnityEditor;
 
 public sealed class SubtitlePresentationRegressionTests
 {
     private const string SubtitleServicePath = "Assets/Scripts/UI/SubtitleService.cs";
     private const string SubtitleLineBankPath = "Assets/Scripts/UI/SubtitleLineBank.cs";
     private const string SubtitleLineBankAssetPath = "Assets/Resources/UI/SubtitleLineBank.asset";
+    private const string SubtitlePortraitRoot = "Assets/Resources/UI/SubtitlePortraits";
 
     [Test]
     public void SubtitleServiceUsesSpeakerPortraitCardLayout()
@@ -50,6 +52,72 @@ public sealed class SubtitlePresentationRegressionTests
         Assert.That(assetText, Does.Contain("speakerId: Guest7"));
         Assert.That(assetText, Does.Contain("speakerId: Guest8"));
         Assert.That(assetText, Does.Contain("portrait: {fileID:"), "Each speaker binding should be able to reference a Sprite asset.");
+    }
+
+    [Test]
+    public void SubtitleLineBankUsesTwoByFourGuestPortraitSheetSlices()
+    {
+        string assetText = File.ReadAllText(SubtitleLineBankAssetPath);
+        string[] portraitAssetNames =
+        {
+            "Guest1_MissIsoldeWren.png",
+            "Guest2_ProfessorLucienVale.png",
+            "Guest3_MisterFlorianKnell.png",
+            "Guest4_CountessElowenDusk.png",
+            "Guest5_BaronHectorGlass.png",
+            "Guest6_LadySabineMarrow.png",
+            "Guest7_LordAmbroseVeil.png",
+            "Guest8_MadameCoralieThread.png"
+        };
+
+        for (int i = 0; i < portraitAssetNames.Length; i++)
+        {
+            string portraitPath = $"{SubtitlePortraitRoot}/{portraitAssetNames[i]}";
+            string portraitGuid = AssetDatabase.AssetPathToGUID(portraitPath);
+
+            Assert.That(File.Exists(portraitPath), Is.True, $"Missing generated subtitle portrait slice at {portraitPath}.");
+            Assert.That(portraitGuid, Is.Not.Empty, $"Unity should know the generated subtitle portrait slice at {portraitPath}.");
+            Assert.That(assetText, Does.Contain($"speakerId: Guest{i + 1}"));
+            Assert.That(assetText, Does.Contain($"guid: {portraitGuid}"), $"Guest{i + 1} should use the generated sheet slice {portraitAssetNames[i]}.");
+        }
+    }
+
+    [Test]
+    public void SubtitlePortraitsRemovePlaqueNamesAndFillTheFrame()
+    {
+        string serviceText = File.ReadAllText(SubtitleServicePath);
+
+        Assert.That(serviceText, Does.Contain("new Vector2(98f, 206f)"), "The portrait frame should match the decorative character-card aspect ratio so no empty frame box shows.");
+        Assert.That(serviceText, Does.Contain("RemoveOutline(portraitFrame.gameObject)"), "The portrait should rely on the illustrated gold border instead of an extra UI outline.");
+        Assert.That(serviceText, Does.Not.Contain("ApplyOutline(portraitFrame.gameObject"), "The extra portrait-frame outline should not be visible around the illustrated card.");
+        Assert.That(serviceText, Does.Not.Contain("new Vector2(112f, 192f)"), "The previous portrait frame still left a visible box around the art.");
+        Assert.That(serviceText, Does.Not.Contain("new Vector2(-8f, -8f)"), "The portrait image should fill the frame bounds instead of shrinking inward.");
+        Assert.That(serviceText, Does.Not.Contain("new Vector2(140f, 178f)"), "The old portrait frame made the character art too small.");
+        Assert.That(serviceText, Does.Not.Contain("new Vector2(-20f, -18f)"), "The old portrait inset made the card sit too far inside the frame.");
+
+        string[] portraitAssetNames =
+        {
+            "Guest1_MissIsoldeWren.png",
+            "Guest2_ProfessorLucienVale.png",
+            "Guest3_MisterFlorianKnell.png",
+            "Guest4_CountessElowenDusk.png",
+            "Guest5_BaronHectorGlass.png",
+            "Guest6_LadySabineMarrow.png",
+            "Guest7_LordAmbroseVeil.png",
+            "Guest8_MadameCoralieThread.png"
+        };
+
+        foreach (string portraitAssetName in portraitAssetNames)
+        {
+            string portraitPath = $"{SubtitlePortraitRoot}/{portraitAssetName}";
+            TextureImporter importer = AssetImporter.GetAtPath(portraitPath) as TextureImporter;
+
+            Assert.That(importer, Is.Not.Null, $"Missing texture importer for generated subtitle portrait at {portraitPath}.");
+            importer.GetSourceTextureWidthAndHeight(out int width, out int height);
+
+            Assert.That(height, Is.LessThanOrEqualTo(590), $"The generated portrait should crop out the bottom name plaque: {portraitPath}.");
+            Assert.That((float)width / height, Is.GreaterThan(0.45f), $"The plaque-free portrait card should be less tall and fill the UI frame better: {portraitPath}.");
+        }
     }
 
     [Test]

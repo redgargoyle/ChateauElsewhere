@@ -1487,18 +1487,18 @@ MonoBehaviour:
   - speakerId: Butler
     portrait: {fileID: 21300000, guid: 9a2046e6b0fa4d1283ff4e9c5104d89f, type: 3}
   - speakerId: Guest1
-    portrait: {fileID: 21300000, guid: 9e3e3f2c0cc31a00d9b3b95dd849546d, type: 3}
+    portrait: {fileID: 21300000, guid: d9d52c900a6442bb80c2f74b9b5b0f41, type: 3}
   - speakerId: Guest2
-    portrait: {fileID: 21300000, guid: d031199abcea43178222b05cce673fdc, type: 3}
+    portrait: {fileID: 21300000, guid: cec8268d17414ecfa40463a5ab506db9, type: 3}
   - speakerId: Guest3
-    portrait: {fileID: 21300000, guid: 7ba14734fa97c16f4fa98e8915615157, type: 3}
+    portrait: {fileID: 21300000, guid: 46a410560e154c8da0878866adc66ad5, type: 3}
   - speakerId: Guest4
-    portrait: {fileID: 21300000, guid: 910acae49911ce07a6efdcedc0151d56, type: 3}
+    portrait: {fileID: 21300000, guid: 8edb563f6c524c359eee90a0547050a1, type: 3}
   - speakerId: Guest5
-    portrait: {fileID: 21300000, guid: 0783ae158c8b057d93bac22328a957fc, type: 3}
+    portrait: {fileID: 21300000, guid: 51d2634426d04785ad891c08446f3e6b, type: 3}
   - speakerId: Guest6
-    portrait: {fileID: 21300000, guid: ba451238b59d81636f11b543cfa0129f, type: 3}
+    portrait: {fileID: 21300000, guid: a2461786088640109c047395fffdacf4, type: 3}
   - speakerId: Guest7
-    portrait: {fileID: 21300000, guid: 10006cae91e24c649193054ad5cb7417, type: 3}
+    portrait: {fileID: 21300000, guid: 04a0436b9e994f44a63a88970efabbe0, type: 3}
   - speakerId: Guest8
-    portrait: {fileID: 21300000, guid: b1820f0f08d95dde585de318fbc856c5, type: 3}
+    portrait: {fileID: 21300000, guid: 573ac611cede498b8d6349dbc6c6df3f, type: 3}

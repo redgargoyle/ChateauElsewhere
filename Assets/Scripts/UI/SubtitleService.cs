@@ -297,10 +297,10 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
-            new Vector2(22f, -18f),
-            new Vector2(140f, 178f),
-            new Color(0.1f, 0.07f, 0.055f, 0.96f));
-        ApplyOutline(portraitFrame.gameObject, new Color(0.96f, 0.78f, 0.34f, 0.96f), new Vector2(2f, -2f));
+            new Vector2(22f, -10f),
+            new Vector2(98f, 206f),
+            new Color(1f, 1f, 1f, 0f));
+        RemoveOutline(portraitFrame.gameObject);
         speakerPortraitFrame = portraitFrame.GetComponent<RectTransform>();
 
         speakerPortraitImage = FindOrCreateImage(
@@ -310,7 +310,7 @@ public sealed class SubtitleService : MonoBehaviour
             Vector2.one,
             new Vector2(0.5f, 0.5f),
             Vector2.zero,
-            new Vector2(-20f, -18f),
+            Vector2.zero,
             Color.white);
         speakerPortraitImage.preserveAspect = true;
         speakerPortraitImage.raycastTarget = false;
@@ -321,8 +321,8 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
-            new Vector2(184f, -24f),
-            new Vector2(560f, 38f),
+            new Vector2(146f, -24f),
+            new Vector2(598f, 38f),
             new Color(0.36f, 0.16f, 0.13f, 0.94f));
         ApplyOutline(speakerNameplate.gameObject, new Color(0.96f, 0.78f, 0.34f, 0.9f), new Vector2(1.5f, -1.5f));
 
@@ -332,8 +332,8 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 0.5f),
-            new Vector2(184f, -78f),
-            new Vector2(560f, 2f),
+            new Vector2(146f, -78f),
+            new Vector2(598f, 2f),
             new Color(0.86f, 0.61f, 0.27f, 0.88f));
         dividerLine.raycastTarget = false;
 
@@ -343,8 +343,8 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
-            new Vector2(202f, -29f),
-            new Vector2(524f, 28f),
+            new Vector2(164f, -29f),
+            new Vector2(562f, 28f),
             23f,
             FontStyles.Bold,
             TextAlignmentOptions.Left);
@@ -356,8 +356,8 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
-            new Vector2(184f, -94f),
-            new Vector2(560f, 82f),
+            new Vector2(146f, -94f),
+            new Vector2(598f, 82f),
             25f,
             FontStyles.Normal,
             TextAlignmentOptions.TopLeft);
@@ -456,6 +456,25 @@ public sealed class SubtitleService : MonoBehaviour
         outline.effectColor = color;
         outline.effectDistance = distance;
         outline.useGraphicAlpha = true;
+    }
+
+    private static void RemoveOutline(GameObject target)
+    {
+        Outline outline = target.GetComponent<Outline>();
+
+        if (outline == null)
+        {
+            return;
+        }
+
+        if (Application.isPlaying)
+        {
+            Destroy(outline);
+        }
+        else
+        {
+            DestroyImmediate(outline);
+        }
     }
 
     private void QueueLine(string lineId, string speakerId, string speaker, string text, float minDuration, float maxDuration)
