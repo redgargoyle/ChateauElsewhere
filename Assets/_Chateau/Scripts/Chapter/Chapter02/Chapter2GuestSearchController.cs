@@ -523,6 +523,59 @@ public class Chapter2GuestSearchController : MonoBehaviour
         SeatGuestsInDiningRoom(GetFoundGuestsInOrder());
     }
 
+    public void DebugStageAllGuestsFoundForSevenPMSkip()
+    {
+        ResolveRoomNavigation();
+        RegisterRoomChangeHandler();
+        AutoDiscoverGuestsIfNeeded();
+        AutoAssignHideAnchorsIfNeeded();
+        activeConversationGuest = null;
+        activeConversationResumeStep = GuestConversationResumeStep.None;
+        foundOrderCounter = 0;
+
+        if (foundGuestIdsInOrder == null)
+        {
+            foundGuestIdsInOrder = new List<string>();
+        }
+
+        foundGuestIdsInOrder.Clear();
+
+        if (guests == null)
+        {
+            return;
+        }
+
+        guests.Sort(CompareGuestIdentity);
+
+        for (int i = 0; i < guests.Count; i++)
+        {
+            GuestSearchEntry guest = guests[i];
+
+            if (guest == null)
+            {
+                continue;
+            }
+
+            ApplyConversationSpecToGuest(guest);
+            foundOrderCounter++;
+            guest.found = true;
+            guest.foundOrder = foundOrderCounter;
+            foundGuestIdsInOrder.Add(GetGuestIdForOrderList(guest));
+            FillDefaultPreferences(guest);
+            EnsureGuestUsesPersistentActorRoot(guest);
+            DisableGuestFindAction(guest);
+
+            if (guest.actorState == null)
+            {
+                Debug.LogWarning($"7:00 PM skip missing ActorRoomState for guest '{GetGuestIdForOrderList(guest)}'.", this);
+                continue;
+            }
+
+            guest.actorState.enabled = true;
+            StageGuestForDiningRoomReveal(guest);
+        }
+    }
+
     public void AutoDiscoverGuestsIfNeeded()
     {
         if (guests == null)

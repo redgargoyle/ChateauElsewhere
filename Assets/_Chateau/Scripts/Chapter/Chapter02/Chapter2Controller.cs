@@ -191,6 +191,58 @@ public class Chapter2Controller : MonoBehaviour
         SetPlayerInputEnabled(true);
     }
 
+    public void DebugSkipToSevenPMForTesting(ChapterManager manager)
+    {
+        chapterManager = manager != null ? manager : chapterManager;
+        ResolveReferences();
+        StopChapter2Coroutines();
+        SetPlayerInputEnabled(false);
+        SetDinnerClockAndStop();
+        InitializeInteractionHUD();
+
+        if (monsterStinger != null)
+        {
+            monsterStinger.StopStinger();
+        }
+
+        if (guestPanic != null)
+        {
+            guestPanic.StopPanic();
+        }
+
+        if (clockStrikeAudioSource != null)
+        {
+            clockStrikeAudioSource.Stop();
+        }
+
+        if (introUI != null)
+        {
+            introUI.HideOverlay();
+        }
+
+        if (guestSearch != null)
+        {
+            guestSearch.Initialize(this);
+            guestSearch.DebugStageAllGuestsFoundForSevenPMSkip();
+        }
+
+        allGuestsFoundHandled = false;
+        dinnerSeatingHandled = false;
+
+        if (interactionHUD != null)
+        {
+            interactionHUD.ClearDialogue();
+            interactionHUD.ClearClockStrike();
+            interactionHUD.ClearPrimaryAction();
+            interactionHUD.ClearStatus();
+            interactionHUD.SetObjective(string.Empty);
+        }
+
+        ClearSubtitles();
+        UpdateFoundGuestsHud();
+        BeginDiningRoomObjective();
+    }
+
     public void DebugResetForChapter2Skip(ChapterManager manager)
     {
         chapterManager = manager != null ? manager : chapterManager;

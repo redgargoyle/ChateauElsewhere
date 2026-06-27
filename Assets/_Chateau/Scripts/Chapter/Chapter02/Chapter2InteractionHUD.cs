@@ -36,8 +36,8 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private const string PrimaryButtonName = "Button_Chapter2PrimaryAction";
     private const string PrimaryButtonLabelName = "Text_Chapter2PrimaryAction";
     private const int DialogueChoiceCount = 3;
-    private const float ClockStrikeFaceCenterYOffset = 0.205f;
-    private const float ClockStrikeHandsDiameterScale = 0.29f;
+    private const float ClockStrikeFaceCenterYOffset = 0.267f;
+    private const float ClockStrikeHandsDiameterScale = 0.22f;
     private const float ClockStrikeSecondTicksPerSecond = 6f;
 
     private Chapter2Controller controller;
@@ -457,12 +457,12 @@ public class Chapter2InteractionHUD : MonoBehaviour
         clockStrikeImage.gameObject.SetActive(false);
 
         clockStrikeHandsRoot = FindOrCreateClockStrikeHandsRoot(clockStrikeRect);
-        clockStrikeHourHighlight = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeHourHighlightName, new Color(1f, 0.66f, 0.18f, 0.78f), 26f, false);
-        clockStrikeHourHand = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeHourHandName, new Color(0.02f, 0.012f, 0.004f, 1f), 18f, false);
-        clockStrikeMinuteHighlight = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeMinuteHighlightName, new Color(1f, 0.72f, 0.22f, 0.74f), 22f, false);
-        clockStrikeMinuteHand = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeMinuteHandName, new Color(0.02f, 0.012f, 0.004f, 1f), 14f, false);
-        clockStrikeSecondHand = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeSecondHandName, new Color(0.52f, 0.03f, 0.02f, 1f), 5f, false);
-        clockStrikeSecondTail = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeSecondTailName, new Color(0.9f, 0.58f, 0.12f, 1f), 4f, true);
+        clockStrikeHourHighlight = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeHourHighlightName, new Color(0.95f, 0.58f, 0.14f, 0.42f), 10f, false);
+        clockStrikeHourHand = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeHourHandName, new Color(0.02f, 0.012f, 0.004f, 0.92f), 7f, false);
+        clockStrikeMinuteHighlight = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeMinuteHighlightName, new Color(0.95f, 0.58f, 0.14f, 0.38f), 8f, false);
+        clockStrikeMinuteHand = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeMinuteHandName, new Color(0.02f, 0.012f, 0.004f, 0.92f), 5f, false);
+        clockStrikeSecondHand = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeSecondHandName, new Color(0.52f, 0.03f, 0.02f, 0.96f), 3f, false);
+        clockStrikeSecondTail = FindOrCreateClockStrikeHand(clockStrikeHandsRoot, ClockStrikeSecondTailName, new Color(0.9f, 0.58f, 0.12f, 0.88f), 2f, true);
         clockStrikeCenterPin = FindOrCreateClockStrikeCenterPin(clockStrikeHandsRoot);
         LayoutClockStrikeHands();
 
@@ -589,17 +589,17 @@ public class Chapter2InteractionHUD : MonoBehaviour
         LayoutClockStrikeHands();
 
         float radius = Mathf.Min(clockStrikeHandsRoot.rect.width, clockStrikeHandsRoot.rect.height) * 0.5f;
-        SetClockStrikeHand(clockStrikeHourHand, clockStrikeHourHighlight, 7f / 12f, radius * 0.48f);
-        SetClockStrikeHand(clockStrikeMinuteHand, clockStrikeMinuteHighlight, 0f, radius * 0.71f);
+        SetClockStrikeHand(clockStrikeHourHand, clockStrikeHourHighlight, 7f / 12f, radius * 0.31f);
+        SetClockStrikeHand(clockStrikeMinuteHand, clockStrikeMinuteHighlight, 0f, radius * 0.45f);
 
         int secondTick = Mathf.FloorToInt(Mathf.Max(0f, Time.unscaledTime - clockStrikeStartedAt) * ClockStrikeSecondTicksPerSecond);
         float secondProgress = Mathf.Repeat(secondTick / 60f, 1f);
-        SetClockStrikeHand(clockStrikeSecondHand, null, secondProgress, radius * 0.8f);
-        SetClockStrikeHand(clockStrikeSecondTail, null, secondProgress, radius * 0.18f);
+        SetClockStrikeHand(clockStrikeSecondHand, null, secondProgress, radius * 0.52f);
+        SetClockStrikeHand(clockStrikeSecondTail, null, secondProgress, radius * 0.08f);
 
         if (clockStrikeCenterPin != null)
         {
-            float pinSize = Mathf.Max(22f, radius * 0.14f);
+            float pinSize = Mathf.Max(12f, radius * 0.055f);
             clockStrikeCenterPin.sizeDelta = new Vector2(pinSize, pinSize);
         }
     }

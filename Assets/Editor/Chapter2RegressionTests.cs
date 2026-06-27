@@ -1346,6 +1346,34 @@ public class Chapter2RegressionTests
     }
 
     [Test]
+    public void Chapter2SevenPmDebugSkipRunsClockStrikeObjectiveBeforeDiningReveal()
+    {
+        string settingsText = File.ReadAllText(RuntimeSettingsMenuPath);
+        string managerText = File.ReadAllText(ChapterManagerPath);
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string managerSkipBody = ExtractMethodBody(managerText, "public void SkipToSevenPMForTesting");
+        string controllerSkipBody = ExtractMethodBody(controllerText, "public void DebugSkipToSevenPMForTesting");
+        string debugStageBody = ExtractMethodBody(guestSearchText, "public void DebugStageAllGuestsFoundForSevenPMSkip");
+
+        Assert.That(settingsText, Does.Contain("Button_SkipToSevenPM"));
+        Assert.That(settingsText, Does.Contain("\"Skip to 7:00 PM\""));
+        Assert.That(settingsText, Does.Contain("manager.SkipToSevenPMForTesting()"));
+        Assert.That(managerSkipBody, Does.Contain("currentChapterId = Chapter2Id"), "The 7:00 PM skip should stay in Chapter 2, not jump to Chapter 3.");
+        Assert.That(managerSkipBody, Does.Contain("displayedTitle = Chapter2Title"));
+        Assert.That(managerSkipBody, Does.Contain("chapter2Controller.DebugSkipToSevenPMForTesting(this)"));
+        Assert.That(managerSkipBody, Does.Not.Contain("Chapter3PendingId"), "The 7:00 PM skip must not use the Chapter 3 pending id.");
+        Assert.That(controllerSkipBody, Does.Contain("SetDinnerClockAndStop()"));
+        Assert.That(controllerSkipBody, Does.Contain("guestSearch.DebugStageAllGuestsFoundForSevenPMSkip()"));
+        Assert.That(controllerSkipBody, Does.Contain("BeginDiningRoomObjective()"), "The skip should run the same clock-strike / go-to-Dining-Room objective sequence as normal play.");
+        Assert.That(controllerSkipBody, Does.Not.Contain("MoveToDiningRoomForDebugSkip"), "The 7:00 PM skip should not teleport directly to the dining table.");
+        Assert.That(controllerSkipBody, Does.Not.Contain("DebugStageAllGuestsFoundForChapter3Skip"), "The 7:00 PM skip should not use the direct Chapter 3 seating path.");
+        Assert.That(debugStageBody, Does.Match(@"(?s)guests\.Sort\(CompareGuestIdentity\).*guest\.found\s*=\s*true.*FillDefaultPreferences\(guest\).*StageGuestForDiningRoomReveal\(guest\)"), "The 7:00 PM skip should mark every guest found and stage them hidden for the Dining Room reveal.");
+        Assert.That(debugStageBody, Does.Not.Contain("SeatGuestsInDiningRoom"), "Guests should only be seated after the player reaches the Dining Room objective.");
+        Assert.That(controllerText, Does.Contain("The clock strikes 7:00. Go to the Dining Room."));
+    }
+
+    [Test]
     public void Chapter2HideAnchorsAreAuthoredAcrossHouse()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
@@ -1392,6 +1420,10 @@ public class Chapter2RegressionTests
         Assert.That(hudText, Does.Contain("SetClockStrikeHand(clockStrikeHourHand"), "The strike close-up should draw the stationary thicker hour hand.");
         Assert.That(hudText, Does.Contain("SetClockStrikeHand(clockStrikeMinuteHand"), "The strike close-up should draw the stationary thicker minute hand.");
         Assert.That(hudText, Does.Contain("SetClockStrikeHand(clockStrikeSecondHand"), "The strike close-up should animate the second hand around the clock.");
+        Assert.That(hudText, Does.Contain("ClockStrikeFaceCenterYOffset = 0.267f"), "The close-up hands should be centered on the baked clock-face pivot.");
+        Assert.That(hudText, Does.Contain("ClockStrikeHandsDiameterScale = 0.22f"), "The close-up hands should stay inside the clock-face circle.");
+        Assert.That(hudText, Does.Contain("radius * 0.45f"), "The minute hand should fit within the clock-face circle.");
+        Assert.That(hudText, Does.Contain("radius * 0.52f"), "The ticking second hand should fit within the clock-face circle.");
         Assert.That(hudText, Does.Contain("IReadOnlyList<string>"));
         Assert.That(hudText, Does.Match(@"(?s)\bSetDialogueChoices\s*\([^)]*\)\s*\{.*EnsureUI\s*\(\s*\).*dialoguePanel\.SetActive\(true\).*SetDialogueChoice\(0"), "The first visible guest dialogue should not be hidden by EnsureUI before choices are installed.");
     }

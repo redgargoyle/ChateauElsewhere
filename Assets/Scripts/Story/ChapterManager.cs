@@ -339,6 +339,54 @@ public class ChapterManager : MonoBehaviour
         }
     }
 
+    [ContextMenu("Skip To 7:00 PM For Testing")]
+    public void SkipToSevenPMForTesting()
+    {
+        ResolveReferences();
+        StopActiveDialogueForChapterSkip();
+        StopChapterCoroutines();
+
+        if (eventScheduler != null)
+        {
+            eventScheduler.Clear();
+        }
+
+        if (chapterClock != null)
+        {
+            chapterClock.StopClock();
+        }
+
+        if (introUI != null)
+        {
+            introUI.HideOverlay();
+        }
+
+        SetPlayerInputEnabled(false);
+        currentChapterId = Chapter2Id;
+        displayedTitle = Chapter2Title;
+        chapterStarted = true;
+        SetPhase(ChapterPhase.Complete);
+        UpdateDebugSkipButtonVisibility();
+
+        if (chapter1ArrivalController != null)
+        {
+            chapter1ArrivalController.PrepareGuestsForChapter2Skip();
+            chapter1ArrivalController.HideGuestCoatsForChapter2Skip();
+        }
+
+        chapter2Controller = ResolveChapter2Controller(true);
+
+        if (chapter2Controller != null)
+        {
+            chapter2Controller.DebugSkipToSevenPMForTesting(this);
+        }
+        else
+        {
+            Debug.LogWarning("Skip to 7:00 PM requested, but Chapter2Controller could not be resolved.", this);
+            SetPlayerInputEnabled(true);
+        }
+    }
+
     private static void StopActiveDialogueForChapterSkip()
     {
         GuestVoiceLinePlayback.StopAnyCurrentLine();

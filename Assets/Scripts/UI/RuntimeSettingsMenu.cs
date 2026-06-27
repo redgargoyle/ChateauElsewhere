@@ -287,6 +287,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         debugButtonRow = FindOrCreateList(debugList, DebugButtonRowName, false);
         FindOrCreateButton(debugButtonRow, "Button_SkipToChapter2", "Skip to Chapter 2", SkipToChapter2);
+        FindOrCreateButton(debugButtonRow, "Button_SkipToSevenPM", "Skip to 7:00 PM", SkipToSevenPM);
         FindOrCreateButton(debugButtonRow, "Button_SkipToChapter3", "Skip to Chapter 3", SkipToChapter3);
         FindOrCreateButton(debugButtonRow, "Button_TeleportToRoom", "Teleport to Room", ToggleRoomList);
 
@@ -396,6 +397,21 @@ public class RuntimeSettingsMenu : MonoBehaviour
         CloseSettingsForGameplayCommand();
         GuestVoiceLinePlayback.StopAnyCurrentLine();
         manager.SkipToChapter3ForTesting();
+    }
+
+    private void SkipToSevenPM()
+    {
+        ChapterManager manager = ResolveChapterManager();
+
+        if (manager == null)
+        {
+            return;
+        }
+
+        roomListOpen = false;
+        CloseSettingsForGameplayCommand();
+        GuestVoiceLinePlayback.StopAnyCurrentLine();
+        manager.SkipToSevenPMForTesting();
     }
 
     private void CloseSettingsForGameplayCommand()
