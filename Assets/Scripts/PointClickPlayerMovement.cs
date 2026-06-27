@@ -359,6 +359,105 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return true;
 	}
 
+	public static bool TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
+		string roomId,
+		float roomLocalFootY,
+		out float finalLocalScaleY)
+	{
+		return TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
+			roomId,
+			roomLocalFootY,
+			null,
+			out _,
+			out finalLocalScaleY);
+	}
+
+	public static bool TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
+		string roomId,
+		float roomLocalFootY,
+		out Vector3 finalLocalScale,
+		out float finalLocalScaleY)
+	{
+		return TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
+			roomId,
+			roomLocalFootY,
+			null,
+			out finalLocalScale,
+			out _,
+			out finalLocalScaleY);
+	}
+
+	public static bool TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
+		string roomId,
+		float roomLocalFootY,
+		PointClickPlayerMovement requester,
+		out float depth01,
+		out float finalLocalScaleY)
+	{
+		return TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
+			roomId,
+			roomLocalFootY,
+			requester,
+			out _,
+			out depth01,
+			out finalLocalScaleY);
+	}
+
+	public static bool TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
+		string roomId,
+		float roomLocalFootY,
+		PointClickPlayerMovement requester,
+		out Vector3 finalLocalScale,
+		out float depth01,
+		out float finalLocalScaleY)
+	{
+		depth01 = 0f;
+		finalLocalScaleY = 0f;
+		finalLocalScale = Vector3.one;
+		string cleanRoomId = CleanRoomName(roomId);
+
+		if (string.IsNullOrWhiteSpace(cleanRoomId))
+		{
+			return false;
+		}
+
+		if (requester != null &&
+			requester.TryEvaluateButlerFinalLocalScaleForRoomAtY(
+				cleanRoomId,
+				roomLocalFootY,
+				out finalLocalScale,
+				out depth01,
+				out finalLocalScaleY))
+		{
+			return true;
+		}
+
+		if (!TryFindSharedButlerRoomScaleSource(cleanRoomId, requester, out PointClickPlayerMovement source))
+		{
+			return false;
+		}
+
+		return source.TryEvaluateButlerFinalLocalScaleForRoomAtY(
+			cleanRoomId,
+			roomLocalFootY,
+			out finalLocalScale,
+			out depth01,
+			out finalLocalScaleY);
+	}
+
+	public static Vector3 BuildRoomFinalLocalScaleFromReference(Vector3 referenceScale, float finalLocalScaleY)
+	{
+		float safeFinalY = SanitizeButlerFinalLocalScaleY(finalLocalScaleY);
+		float referenceY = Mathf.Max(0.001f, Mathf.Abs(referenceScale.y));
+		float xOverY = referenceScale.x / referenceY;
+		float ySign = Mathf.Approximately(referenceScale.y, 0f) ? 1f : Mathf.Sign(referenceScale.y);
+
+		return new Vector3(
+			xOverY * safeFinalY,
+			ySign * safeFinalY,
+			referenceScale.z);
+	}
+
 	public void SetButlerFrontScaleForRoom(string roomId, float roomLocalFootY, float scale, bool applyImmediately = true)
 	{
 		SetButlerFrontFinalLocalScaleForRoom(roomId, roomLocalFootY, scale, applyImmediately);
@@ -1898,9 +1997,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return false;
 		}
 
-		return TryEvaluateButlerFinalLocalScaleForRoomAtY(
+		return TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
 			roomId,
 			roomLocalFootPoint.y,
+			this,
 			out finalLocalScale,
 			out _,
 			out _);
@@ -3812,6 +3912,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		CacheReferences();
 
+		ActorRoomState actorState = GetComponent<ActorRoomState>();
+		if (actorState != null && !string.IsNullOrWhiteSpace(actorState.CurrentRoomId))
+		{
+			return CleanRoomName(actorState.CurrentRoomId);
+		}
+
 		string currentRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
 
 		if (!string.IsNullOrWhiteSpace(currentRoom))
@@ -3901,6 +4007,46 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return roomScale;
 	}
 
+	private static bool TryFindSharedButlerRoomScaleSource(
+		string roomId,
+		PointClickPlayerMovement requester,
+		out PointClickPlayerMovement source)
+	{
+		source = null;
+		string cleanRoomId = CleanRoomName(roomId);
+
+		if (string.IsNullOrWhiteSpace(cleanRoomId))
+		{
+			return false;
+		}
+
+		PointClickPlayerMovement fallbackSource = null;
+		PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+
+		for (int i = 0; i < candidates.Length; i++)
+		{
+			PointClickPlayerMovement candidate = candidates[i];
+
+			if (candidate == null ||
+				ReferenceEquals(candidate, requester) ||
+				!candidate.HasCompleteButlerRoomScaleOverride(cleanRoomId))
+			{
+				continue;
+			}
+
+			if (candidate.HasButlerCalibrationBaseLocalScale)
+			{
+				source = candidate;
+				return true;
+			}
+
+			fallbackSource ??= candidate;
+		}
+
+		source = fallbackSource;
+		return source != null;
+	}
+
 	private int GetButlerScaleOverrideIndex(string roomId)
 	{
 		if (butlerRoomScaleOverrides == null)
@@ -3956,16 +4102,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private Vector3 BuildButlerFinalLocalScale(float finalLocalScaleY)
 	{
-		Vector3 reference = GetButlerScaleReference();
-		float safeFinalY = SanitizeButlerFinalLocalScaleY(finalLocalScaleY);
-		float referenceY = Mathf.Max(0.001f, Mathf.Abs(reference.y));
-		float xOverY = reference.x / referenceY;
-		float ySign = Mathf.Approximately(reference.y, 0f) ? 1f : Mathf.Sign(reference.y);
-
-		return new Vector3(
-			xOverY * safeFinalY,
-			ySign * safeFinalY,
-			reference.z);
+		return BuildRoomFinalLocalScaleFromReference(GetButlerScaleReference(), finalLocalScaleY);
 	}
 
 	private float ConvertExistingPerspectiveScaleToFinalLocalScaleY(float perspectiveScale)

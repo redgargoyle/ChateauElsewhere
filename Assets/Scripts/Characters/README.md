@@ -34,7 +34,7 @@ To calibrate the Drawing Room, open `Tools > Room Projection > Calibration Windo
 
 ## Butler Room Scale Calibration
 
-The controllable Butler uses `PointClickPlayerMovement` Butler room scale overrides. Guests are unchanged and still use `RoomProjectedEntity` projection and room visual scale tools.
+The controllable Butler stores the shared room scale calibration in `PointClickPlayerMovement` Butler room scale overrides. Other characters use those saved front/back room rules too: point-click guests fall back to the scene Butler's complete room override, projected floor-character guests use the same final local scale before their projection fallback, and legacy `RoomPersonWalker2D` characters use it when no active projection owns them.
 
 Workflow:
 
@@ -56,7 +56,7 @@ Visual target:
 - roughly 3/4 of a matching door height
 - or roughly 1.5x a matching chair
 
-Do not edit Transform scale manually for calibration. Do not use Advanced reset buttons unless intentionally resetting. Guests are unchanged.
+Do not edit Transform scale manually for calibration. Do not use Advanced reset buttons unless intentionally resetting. Guest-specific height differences should come from their sprite art or visual profile; the room-depth scale comes from the Butler calibration.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 

@@ -35,6 +35,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     [SerializeField] private Transform contactShadowRoot;
     [SerializeField] private SpriteRenderer contactShadowRenderer;
     [SerializeField] private Graphic contactShadowGraphic;
+    [SerializeField] private bool useButlerRoomScaleRules = true;
     [SerializeField] private bool useRoomVisualScaleOverrides = true;
     [SerializeField, HideInInspector] private string editorSelectedVisualScaleRoomId = string.Empty;
     [SerializeField, HideInInspector] private List<RoomVisualScaleOverride> roomVisualScaleOverrides = new List<RoomVisualScaleOverride>();
@@ -67,6 +68,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public float CurrentScale => currentScale;
     public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;
+    public bool UsesButlerRoomScaleRules => useButlerRoomScaleRules;
     public bool UsesRoomVisualScaleOverrides => useRoomVisualScaleOverrides;
     public string EditorSelectedVisualScaleRoomId => editorSelectedVisualScaleRoomId;
     public string CurrentVisualScaleRoomId => GetCurrentVisualScaleRoomKey();
@@ -582,6 +584,15 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
         float appliedScale = currentScale * currentRoomStageScaleMultiplier;
         Vector3 baseScale = GetAuthoredVisualRootScaleForCurrentRoom();
+
+        if (TryGetButlerRoomFinalVisualScale(out Vector3 calibratedScale))
+        {
+            targetRoot.localScale = calibratedScale;
+            lastAppliedVisualRootScale = calibratedScale;
+            hasLastAppliedVisualRootScale = true;
+            return;
+        }
+
         Vector3 projectedScale = new Vector3(
             baseScale.x * appliedScale,
             baseScale.y * appliedScale,
@@ -590,6 +601,34 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         targetRoot.localScale = projectedScale;
         lastAppliedVisualRootScale = projectedScale;
         hasLastAppliedVisualRootScale = true;
+    }
+
+    private bool TryGetButlerRoomFinalVisualScale(out Vector3 finalScale)
+    {
+        finalScale = Vector3.one;
+
+        if (!useButlerRoomScaleRules || projectionMode != ProjectionMode.FloorCharacter)
+        {
+            return false;
+        }
+
+        string roomKey = GetCurrentVisualScaleRoomKey();
+
+        if (!PointClickPlayerMovement.TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
+            roomKey,
+            roomLocalFootPoint.y,
+            out Vector3 calibratedLocalScale,
+            out _))
+        {
+            return false;
+        }
+
+        float stageScale = currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : 1f;
+        finalScale = new Vector3(
+            calibratedLocalScale.x * Mathf.Max(0.001f, stageScale),
+            calibratedLocalScale.y * Mathf.Max(0.001f, stageScale),
+            calibratedLocalScale.z);
+        return true;
     }
 
     private void ApplyProjectedTint()

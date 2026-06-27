@@ -24,6 +24,7 @@ public class ActorRoomState : MonoBehaviour
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private bool followRoomStageMotion = true;
     [SerializeField] private bool scaleWithRoomStageMotion = true;
+    [SerializeField] private bool useButlerRoomScaleRules = true;
 
     private Renderer[] renderers = new Renderer[0];
     private Graphic[] graphics = new Graphic[0];
@@ -704,10 +705,20 @@ public class ActorRoomState : MonoBehaviour
         float scaleRatio = scaleWithRoomStageMotion
             ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
             : 1f;
-        float perspectiveScale = GetBoundRoomPerspectiveScale();
-        targetTransform.localScale = scaleWithRoomStageMotion
-            ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
-            : boundLocalScale;
+
+        if (scaleWithRoomStageMotion &&
+            TryGetBoundRoomButlerFinalLocalScale(out Vector3 butlerFinalScale))
+        {
+            targetTransform.localScale = butlerFinalScale;
+        }
+        else
+        {
+            float perspectiveScale = GetBoundRoomPerspectiveScale();
+            targetTransform.localScale = scaleWithRoomStageMotion
+                ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
+                : boundLocalScale;
+        }
+
         return true;
     }
 
@@ -743,6 +754,31 @@ public class ActorRoomState : MonoBehaviour
         }
 
         return 1f;
+    }
+
+    private bool TryGetBoundRoomButlerFinalLocalScale(out Vector3 finalLocalScale)
+    {
+        finalLocalScale = Vector3.one;
+
+        if (!useButlerRoomScaleRules)
+        {
+            return false;
+        }
+
+        string roomId = !string.IsNullOrWhiteSpace(boundRoomId)
+            ? boundRoomId
+            : currentRoomId;
+
+        if (!PointClickPlayerMovement.TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
+            roomId,
+            roomStageLocalPoint.y,
+            out finalLocalScale,
+            out _))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private static bool IsActorUnderRoomStage(Transform targetTransform)
