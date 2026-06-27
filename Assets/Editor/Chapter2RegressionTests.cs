@@ -11,6 +11,9 @@ public class Chapter2RegressionTests
     private const string GameAudioSettingsPath = "Assets/Scripts/Audio/GameAudioSettings.cs";
     private const string MainMenuControllerPath = "Assets/Scripts/MainMenuController.cs";
     private const string RuntimeSettingsMenuPath = "Assets/Scripts/UI/RuntimeSettingsMenu.cs";
+    private const string FlamePrefabPath = "Assets/Prefabs/Flame.prefab";
+    private const string FlameParticleMaterialRepairPath = "Assets/Editor/FlameParticleMaterialRepair.cs";
+    private const string FireplaceFlamePlacementPath = "Assets/Editor/FireplaceFlamePlacement.cs";
     private const string CameraManagerPath = "Assets/Map/CameraManager.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string DoorbellSystemPath = "Assets/Scripts/Story/DoorbellSystem.cs";
@@ -749,6 +752,23 @@ public class Chapter2RegressionTests
         Assert.That(runtimeSettingsText, Does.Contain("BlocksGameInput = false"));
         Assert.That(loadGameBody, Does.Contain("GameplayRuntimeState.ResetForNewGame()"));
         Assert.That(chapterManagerAwakeBody, Does.Contain("GameplayRuntimeState.ResetForGameplayStart()"));
+    }
+
+    [Test]
+    public void FlameParticleVelocityAxesUseConsistentCurveModes()
+    {
+        Assert.That(File.Exists(FlamePrefabPath), Is.True, "Gameplay uses the Flame prefab heavily; invalid velocity curve modes can flood Editor.log on scene load.");
+
+        string flamePrefabText = File.ReadAllText(FlamePrefabPath);
+        string repairText = File.ReadAllText(FlameParticleMaterialRepairPath);
+        string placementText = File.ReadAllText(FireplaceFlamePlacementPath);
+        string velocityBody = ExtractYamlBlock(flamePrefabText, "  VelocityModule:", "  InheritVelocityModule:");
+
+        Assert.That(velocityBody, Does.Contain("enabled: 1"));
+        Assert.That(CountMatches(velocityBody, "minMaxState: 3"), Is.GreaterThanOrEqualTo(3), "Velocity X/Y/Z should all use two-constant mode to avoid Unity's particle warning spam.");
+        Assert.That(velocityBody, Does.Match(@"(?s)x:\s*\n\s*serializedVersion: 2\s*\n\s*minMaxState: 3[\s\S]*y:\s*\n\s*serializedVersion: 2\s*\n\s*minMaxState: 3[\s\S]*z:\s*\n\s*serializedVersion: 2\s*\n\s*minMaxState: 3"));
+        Assert.That(repairText, Does.Contain("curve.mode = ParticleSystemCurveMode.TwoConstants"));
+        Assert.That(placementText, Does.Contain("curve.mode = ParticleSystemCurveMode.TwoConstants"));
     }
 
     [Test]
@@ -1556,6 +1576,22 @@ public class Chapter2RegressionTests
 
         Assert.Fail($"Could not find end of method body for '{methodName}'.");
         return string.Empty;
+    }
+
+    private static string ExtractYamlBlock(string sourceText, string startMarker, string endMarker)
+    {
+        int startIndex = sourceText.IndexOf(startMarker, System.StringComparison.Ordinal);
+        Assert.That(startIndex, Is.GreaterThanOrEqualTo(0), $"Could not find YAML block start '{startMarker}'.");
+
+        int endIndex = sourceText.IndexOf(endMarker, startIndex + startMarker.Length, System.StringComparison.Ordinal);
+        Assert.That(endIndex, Is.GreaterThan(startIndex), $"Could not find YAML block end '{endMarker}'.");
+
+        return sourceText.Substring(startIndex, endIndex - startIndex);
+    }
+
+    private static int CountMatches(string sourceText, string value)
+    {
+        return Regex.Matches(sourceText, Regex.Escape(value)).Count;
     }
 
     private readonly struct PanicActionSpec
