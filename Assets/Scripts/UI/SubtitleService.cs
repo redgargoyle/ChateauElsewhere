@@ -12,6 +12,11 @@ public sealed class SubtitleService : MonoBehaviour
     private const string ServiceObjectName = "SubtitleService";
     private const string CanvasName = "Canvas_Subtitles";
     private const string PanelName = "Panel_Subtitle";
+    private const string PanelInteriorName = "Image_SubtitleInterior";
+    private const string PortraitFrameName = "Frame_SubtitleSpeakerPortrait";
+    private const string PortraitImageName = "Image_SubtitleSpeakerPortrait";
+    private const string SpeakerNameplateName = "Image_SubtitleSpeakerNameplate";
+    private const string DividerLineName = "Image_SubtitleDivider";
     private const string SpeakerTextName = "Text_SubtitleSpeaker";
     private const string LineTextName = "Text_SubtitleLine";
     private const string SkipButtonName = "Button_SubtitleSkip";
@@ -22,6 +27,7 @@ public sealed class SubtitleService : MonoBehaviour
     private struct QueuedSubtitle
     {
         public string LineId;
+        public string SpeakerId;
         public string Speaker;
         public string Text;
         public float MinDuration;
@@ -36,6 +42,8 @@ public sealed class SubtitleService : MonoBehaviour
 
     private readonly Queue<QueuedSubtitle> queuedSubtitles = new Queue<QueuedSubtitle>();
     private RectTransform panelRect;
+    private RectTransform speakerPortraitFrame;
+    private Image speakerPortraitImage;
     private TMP_Text speakerText;
     private TMP_Text lineText;
     private Button skipButton;
@@ -76,44 +84,29 @@ public sealed class SubtitleService : MonoBehaviour
     {
         ResolveReferences();
 
-        SubtitleLine line = null;
-        bool hasLine = lineBank != null && lineBank.TryGetLine(lineId, out line);
-
-        if (!hasLine && string.IsNullOrWhiteSpace(textOverride))
+        if (!TryResolveLine(
+                lineId,
+                speakerOverride,
+                textOverride,
+                out string speakerId,
+                out string speaker,
+                out string text,
+                out float minDuration,
+                out float maxDuration,
+                out bool lineRequiresAdvance))
         {
-            Debug.LogWarning($"[Subtitle] Missing subtitle line '{lineId}'.", this);
             return;
         }
 
-        if (!hasLine)
-        {
-            Debug.LogWarning($"[Subtitle] Missing subtitle line '{lineId}'. Showing caller-provided text.", this);
-        }
-
-        string speaker = string.IsNullOrWhiteSpace(speakerOverride)
-            ? (hasLine ? line.speakerDisplayName : string.Empty)
-            : speakerOverride.Trim();
-        string text = string.IsNullOrWhiteSpace(textOverride)
-            ? (hasLine ? line.text : string.Empty)
-            : textOverride.Trim();
-
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            Debug.LogWarning($"[Subtitle] Subtitle line '{lineId}' has no text.", this);
-            return;
-        }
-
-        bool requireAdvance = requireAdvanceOverride ?? (hasLine && line.requireAdvance);
+        bool requireAdvance = requireAdvanceOverride ?? lineRequiresAdvance;
 
         if (requireAdvance)
         {
-            ShowPersistent(lineId, speaker, text);
+            ShowPersistent(lineId, speakerId, speaker, text);
             return;
         }
 
-        float minDuration = hasLine ? line.minDuration : 1.25f;
-        float maxDuration = hasLine ? line.maxDuration : 5f;
-        QueueLine(lineId, speaker, text, minDuration, maxDuration);
+        QueueLine(lineId, speakerId, speaker, text, minDuration, maxDuration);
     }
 
     public void ShowLine(string speaker, string text)
@@ -130,7 +123,7 @@ public sealed class SubtitleService : MonoBehaviour
             return;
         }
 
-        QueueLine(lineId, speaker, text, 1.25f, 5f);
+        QueueLine(lineId, ResolveSpeakerId(lineId, speaker), speaker, text, 1.25f, 5f);
     }
 
     public void ShowPersistentLine(string lineId, string speaker, string text)
@@ -142,7 +135,7 @@ public sealed class SubtitleService : MonoBehaviour
             return;
         }
 
-        ShowPersistent(lineId, speaker, text);
+        ShowPersistent(lineId, ResolveSpeakerId(lineId, speaker), speaker, text);
     }
 
     public bool TryResolveSpeechLine(
@@ -155,7 +148,7 @@ public sealed class SubtitleService : MonoBehaviour
         out float maxDuration)
     {
         ResolveReferences();
-        return TryResolveLine(lineId, speakerOverride, textOverride, out speaker, out text, out minDuration, out maxDuration, out _);
+        return TryResolveLine(lineId, speakerOverride, textOverride, out _, out speaker, out text, out minDuration, out maxDuration, out _);
     }
 
     public void ShowSpeechLine(string lineId, string speaker, string text, bool showSkipButton, Action onSkip)
@@ -176,7 +169,7 @@ public sealed class SubtitleService : MonoBehaviour
             autoHideRoutine = null;
         }
 
-        ShowNow(lineId, speaker, text);
+        ShowNow(lineId, ResolveSpeakerId(lineId, speaker), speaker, text);
         ConfigureSkipButton(showSkipButton, onSkip);
     }
 
@@ -234,7 +227,12 @@ public sealed class SubtitleService : MonoBehaviour
 
     private void EnsureUI()
     {
-        if (panelRect != null && speakerText != null && lineText != null && skipButton != null)
+        if (panelRect != null &&
+            speakerPortraitFrame != null &&
+            speakerPortraitImage != null &&
+            speakerText != null &&
+            lineText != null &&
+            skipButton != null)
         {
             return;
         }
@@ -270,18 +268,101 @@ public sealed class SubtitleService : MonoBehaviour
         }
 
         panelRect = panelObject.GetComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.5f, 0f);
-        panelRect.anchorMax = new Vector2(0.5f, 0f);
-        panelRect.pivot = new Vector2(0.5f, 0f);
-        panelRect.anchoredPosition = new Vector2(0f, 58f);
-        panelRect.sizeDelta = new Vector2(1120f, 126f);
+        panelRect.anchorMin = new Vector2(0f, 1f);
+        panelRect.anchorMax = new Vector2(0f, 1f);
+        panelRect.pivot = new Vector2(0f, 1f);
+        panelRect.anchoredPosition = new Vector2(32f, -150f);
+        panelRect.sizeDelta = new Vector2(780f, 225f);
 
         Image panelImage = panelObject.GetComponent<Image>();
-        panelImage.color = new Color(0f, 0f, 0f, 0.72f);
+        panelImage.color = new Color(0.07f, 0.045f, 0.035f, 0.9f);
         panelImage.raycastTarget = false;
+        ApplyOutline(panelObject, new Color(0.9f, 0.64f, 0.24f, 0.95f), new Vector2(3f, -3f));
 
-        speakerText = FindOrCreateText(panelObject.transform, SpeakerTextName, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -12f), new Vector2(-64f, 32f), 24f, FontStyles.Bold);
-        lineText = FindOrCreateText(panelObject.transform, LineTextName, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -30f), new Vector2(-64f, 72f), 30f, FontStyles.Normal);
+        Image panelInterior = FindOrCreateImage(
+            panelObject.transform,
+            PanelInteriorName,
+            new Vector2(0f, 0f),
+            new Vector2(1f, 1f),
+            new Vector2(0.5f, 0.5f),
+            Vector2.zero,
+            new Vector2(-18f, -18f),
+            new Color(0.18f, 0.105f, 0.075f, 0.66f));
+
+        panelInterior.raycastTarget = false;
+
+        Image portraitFrame = FindOrCreateImage(
+            panelObject.transform,
+            PortraitFrameName,
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(22f, -18f),
+            new Vector2(140f, 178f),
+            new Color(0.1f, 0.07f, 0.055f, 0.96f));
+        ApplyOutline(portraitFrame.gameObject, new Color(0.96f, 0.78f, 0.34f, 0.96f), new Vector2(2f, -2f));
+        speakerPortraitFrame = portraitFrame.GetComponent<RectTransform>();
+
+        speakerPortraitImage = FindOrCreateImage(
+            portraitFrame.transform,
+            PortraitImageName,
+            Vector2.zero,
+            Vector2.one,
+            new Vector2(0.5f, 0.5f),
+            Vector2.zero,
+            new Vector2(-20f, -18f),
+            Color.white);
+        speakerPortraitImage.preserveAspect = true;
+        speakerPortraitImage.raycastTarget = false;
+
+        Image speakerNameplate = FindOrCreateImage(
+            panelObject.transform,
+            SpeakerNameplateName,
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(184f, -24f),
+            new Vector2(560f, 38f),
+            new Color(0.36f, 0.16f, 0.13f, 0.94f));
+        ApplyOutline(speakerNameplate.gameObject, new Color(0.96f, 0.78f, 0.34f, 0.9f), new Vector2(1.5f, -1.5f));
+
+        Image dividerLine = FindOrCreateImage(
+            panelObject.transform,
+            DividerLineName,
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(0f, 0.5f),
+            new Vector2(184f, -78f),
+            new Vector2(560f, 2f),
+            new Color(0.86f, 0.61f, 0.27f, 0.88f));
+        dividerLine.raycastTarget = false;
+
+        speakerText = FindOrCreateText(
+            panelObject.transform,
+            SpeakerTextName,
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(202f, -29f),
+            new Vector2(524f, 28f),
+            23f,
+            FontStyles.Bold,
+            TextAlignmentOptions.Left);
+        speakerText.color = new Color(1f, 0.9f, 0.68f, 1f);
+
+        lineText = FindOrCreateText(
+            panelObject.transform,
+            LineTextName,
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(184f, -94f),
+            new Vector2(560f, 82f),
+            25f,
+            FontStyles.Normal,
+            TextAlignmentOptions.TopLeft);
+        lineText.color = new Color(0.96f, 0.9f, 0.78f, 1f);
+
         skipButton = FindOrCreateSkipButton(panelObject.transform);
         SetVisible(false);
     }
@@ -290,6 +371,38 @@ public sealed class SubtitleService : MonoBehaviour
     {
         GameObject canvasObject = GameObject.Find(CanvasName);
         return canvasObject != null ? canvasObject.GetComponent<Canvas>() : null;
+    }
+
+    private Image FindOrCreateImage(
+        Transform parent,
+        string objectName,
+        Vector2 anchorMin,
+        Vector2 anchorMax,
+        Vector2 pivot,
+        Vector2 anchoredPosition,
+        Vector2 sizeDelta,
+        Color color)
+    {
+        Transform existing = parent.Find(objectName);
+        GameObject imageObject = existing != null ? existing.gameObject : null;
+
+        if (imageObject == null)
+        {
+            imageObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            imageObject.transform.SetParent(parent, false);
+        }
+
+        RectTransform rect = imageObject.GetComponent<RectTransform>();
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.pivot = pivot;
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = sizeDelta;
+
+        Image image = imageObject.GetComponent<Image>();
+        image.color = color;
+        image.raycastTarget = false;
+        return image;
     }
 
     private TMP_Text FindOrCreateText(
@@ -301,7 +414,8 @@ public sealed class SubtitleService : MonoBehaviour
         Vector2 anchoredPosition,
         Vector2 sizeDelta,
         float fontSize,
-        FontStyles fontStyle)
+        FontStyles fontStyle,
+        TextAlignmentOptions alignment = TextAlignmentOptions.Center)
     {
         Transform existing = parent.Find(objectName);
         GameObject textObject = existing != null ? existing.gameObject : null;
@@ -323,18 +437,33 @@ public sealed class SubtitleService : MonoBehaviour
         text.raycastTarget = false;
         text.textWrappingMode = TextWrappingModes.Normal;
         text.overflowMode = TextOverflowModes.Ellipsis;
-        text.alignment = TextAlignmentOptions.Center;
+        text.alignment = alignment;
         text.fontSize = fontSize;
         text.fontStyle = fontStyle;
         text.color = Color.white;
         return text;
     }
 
-    private void QueueLine(string lineId, string speaker, string text, float minDuration, float maxDuration)
+    private static void ApplyOutline(GameObject target, Color color, Vector2 distance)
+    {
+        Outline outline = target.GetComponent<Outline>();
+
+        if (outline == null)
+        {
+            outline = target.AddComponent<Outline>();
+        }
+
+        outline.effectColor = color;
+        outline.effectDistance = distance;
+        outline.useGraphicAlpha = true;
+    }
+
+    private void QueueLine(string lineId, string speakerId, string speaker, string text, float minDuration, float maxDuration)
     {
         queuedSubtitles.Enqueue(new QueuedSubtitle
         {
             LineId = lineId,
+            SpeakerId = speakerId,
             Speaker = speaker,
             Text = text,
             MinDuration = minDuration,
@@ -352,7 +481,7 @@ public sealed class SubtitleService : MonoBehaviour
         while (queuedSubtitles.Count > 0)
         {
             QueuedSubtitle subtitle = queuedSubtitles.Dequeue();
-            ShowNow(subtitle.LineId, subtitle.Speaker, subtitle.Text);
+            ShowNow(subtitle.LineId, subtitle.SpeakerId, subtitle.Speaker, subtitle.Text);
             float duration = GetDuration(subtitle.Text, subtitle.MinDuration, subtitle.MaxDuration);
             float elapsed = 0f;
 
@@ -370,7 +499,7 @@ public sealed class SubtitleService : MonoBehaviour
         autoHideRoutine = null;
     }
 
-    private void ShowPersistent(string lineId, string speaker, string text)
+    private void ShowPersistent(string lineId, string speakerId, string speaker, string text)
     {
         queuedSubtitles.Clear();
         showingPersistentLine = true;
@@ -381,16 +510,17 @@ public sealed class SubtitleService : MonoBehaviour
             autoHideRoutine = null;
         }
 
-        ShowNow(lineId, speaker, text);
+        ShowNow(lineId, speakerId, speaker, text);
     }
 
-    private void ShowNow(string lineId, string speaker, string text)
+    private void ShowNow(string lineId, string speakerId, string speaker, string text)
     {
         EnsureUI();
+        UpdateSpeakerPortrait(speakerId, lineId, speaker);
 
         if (speakerText != null)
         {
-            speakerText.text = string.IsNullOrWhiteSpace(speaker) ? string.Empty : speaker.Trim();
+            speakerText.text = string.IsNullOrWhiteSpace(speaker) ? string.Empty : speaker.Trim().ToUpperInvariant();
             speakerText.gameObject.SetActive(!string.IsNullOrWhiteSpace(speakerText.text));
         }
 
@@ -401,6 +531,30 @@ public sealed class SubtitleService : MonoBehaviour
 
         SetVisible(true);
         LogShownLine(lineId, speaker, text);
+    }
+
+    private void UpdateSpeakerPortrait(string speakerId, string lineId, string speaker)
+    {
+        string resolvedSpeakerId = string.IsNullOrWhiteSpace(speakerId)
+            ? ResolveSpeakerId(lineId, speaker)
+            : speakerId.Trim();
+        Sprite portrait = null;
+        bool hasPortrait = lineBank != null &&
+            lineBank.TryGetSpeakerPortrait(resolvedSpeakerId, out portrait);
+
+        if (speakerPortraitFrame != null)
+        {
+            speakerPortraitFrame.gameObject.SetActive(hasPortrait);
+        }
+
+        if (speakerPortraitImage == null)
+        {
+            return;
+        }
+
+        speakerPortraitImage.sprite = hasPortrait ? portrait : null;
+        speakerPortraitImage.enabled = hasPortrait;
+        speakerPortraitImage.color = Color.white;
     }
 
     private void SetVisible(bool visible)
@@ -469,12 +623,14 @@ public sealed class SubtitleService : MonoBehaviour
         string lineId,
         string speakerOverride,
         string textOverride,
+        out string speakerId,
         out string speaker,
         out string text,
         out float minDuration,
         out float maxDuration,
         out bool requireAdvance)
     {
+        speakerId = string.Empty;
         speaker = string.Empty;
         text = string.Empty;
         minDuration = 1.25f;
@@ -486,6 +642,7 @@ public sealed class SubtitleService : MonoBehaviour
 
         if (!hasLine && string.IsNullOrWhiteSpace(textOverride))
         {
+            Debug.LogWarning($"[Subtitle] Missing subtitle line '{lineId}'.", this);
             return false;
         }
 
@@ -494,6 +651,9 @@ public sealed class SubtitleService : MonoBehaviour
             Debug.LogWarning($"[Subtitle] Missing subtitle line '{lineId}'. Showing caller-provided text.", this);
         }
 
+        speakerId = hasLine && !string.IsNullOrWhiteSpace(line.speakerId)
+            ? line.speakerId.Trim()
+            : string.IsNullOrWhiteSpace(speakerOverride) ? string.Empty : speakerOverride.Trim();
         speaker = string.IsNullOrWhiteSpace(speakerOverride)
             ? (hasLine ? line.speakerDisplayName : string.Empty)
             : speakerOverride.Trim();
@@ -504,6 +664,18 @@ public sealed class SubtitleService : MonoBehaviour
         maxDuration = hasLine ? line.maxDuration : maxDuration;
         requireAdvance = hasLine && line.requireAdvance;
         return !string.IsNullOrWhiteSpace(text);
+    }
+
+    private string ResolveSpeakerId(string lineId, string speaker)
+    {
+        if (lineBank != null &&
+            lineBank.TryGetLine(lineId, out SubtitleLine line) &&
+            !string.IsNullOrWhiteSpace(line.speakerId))
+        {
+            return line.speakerId.Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(speaker) ? string.Empty : speaker.Trim();
     }
 
     private void ConfigureSkipButton(bool visible, Action onSkip)
