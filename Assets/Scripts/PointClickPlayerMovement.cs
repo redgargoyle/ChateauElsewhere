@@ -586,7 +586,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		public bool ExactPointWalkable { get; }
 		public bool HasReachableDestination { get; }
 		public bool UsesProjectedDestination { get; }
-		public bool CanShowWalkCursor => HasReachableDestination && (ExactPointWalkable || UsesProjectedDestination);
+		public bool CanShowWalkCursor => HasReachableDestination && ExactPointWalkable;
 		public bool WouldMove { get; }
 	}
 
@@ -1219,13 +1219,27 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		RefreshWalkableFloorForCurrentRoom();
 
-		bool hasReachableDestination = TryResolveClosestReachableWalkDestination(
-			targetPosition,
-			logicalPosition,
-			logicalPosition,
-			out Vector2 destinationPosition,
-			out bool exactPointWalkable,
-			out bool usesProjectedDestination);
+		bool exactPointWalkable;
+		bool usesProjectedDestination;
+		bool hasReachableDestination;
+		Vector2 destinationPosition = targetPosition;
+
+		if (clampToWalkableArea)
+		{
+			hasReachableDestination = TryResolveClosestReachableWalkDestination(
+				targetPosition,
+				logicalPosition,
+				logicalPosition,
+				out destinationPosition,
+				out exactPointWalkable,
+				out usesProjectedDestination);
+		}
+		else
+		{
+			usesProjectedDestination = false;
+			exactPointWalkable = IsPointWalkable(targetPosition);
+			hasReachableDestination = exactPointWalkable && TryBuildMovementPath(logicalPosition, targetPosition, movementQueryPath);
+		}
 
 		bool wouldMove = hasReachableDestination &&
 			Vector2.Distance(logicalPosition, destinationPosition) > stopDistance;

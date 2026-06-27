@@ -406,7 +406,7 @@ public class NavigationRegressionTests
 
         Assert.That(playerText, Does.Contain("UpdateWalkCursor"), "The player movement script should continuously describe what a floor click would do.");
         Assert.That(playerText, Does.Contain("SetWalkHover"), "Valid and invalid floor clicks should drive the shared cursor controller.");
-        Assert.That(playerText, Does.Contain("CanShowWalkCursor => HasReachableDestination && (ExactPointWalkable || UsesProjectedDestination)"), "The walk cursor should describe reachable floor validity, not the player's current distance from that point.");
+        Assert.That(playerText, Does.Contain("CanShowWalkCursor => HasReachableDestination && ExactPointWalkable"), "The walk cursor should only show for the exact floor point under the pointer.");
         Assert.That(playerText, Does.Contain("movementQuery.CanShowWalkCursor"), "Walk-hover updates should use the shared movement query verdict.");
         Assert.That(cameraManagerText, Does.Contain("CreateWalkCursor"), "The cursor controller should generate a walk cursor without needing imported art.");
         Assert.That(cameraManagerText, Does.Contain("Cursor_WalkBlocked"), "Invalid movement should show a distinct blocked-walk cursor.");
@@ -579,14 +579,15 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("TryBuildGridMovementPath"), "Hand-authored complex boundaries need a sampled fallback route when corner visibility cannot connect both sides.");
         Assert.That(playerText, Does.Contain("GridRouteMaxNodeCount"), "The grid fallback should stay bounded enough for cursor hover checks.");
         Assert.That(playerText, Does.Contain("SmoothGridRouteWorldPath"), "Fallback routes should be simplified before the Butler walks them.");
-        Assert.That(playerText, Does.Contain("TryResolveClosestReachableWalkDestination"), "Floor clicks should resolve off-floor clicks through one nearest reachable destination query.");
-        Assert.That(playerText, Does.Contain("CollectPolygonColliderBoundaryAnchors"), "Floor-click projection should inspect actual polygon edges instead of collider bounds.");
+        Assert.That(playerText, Does.Match(@"(?s)if\s*\(clampToWalkableArea\)\s*\{.*hasReachableDestination\s*=\s*TryResolveClosestReachableWalkDestination"), "Normal floor clicks should not project out-of-bounds clicks unless a caller explicitly asks for clamping.");
+        Assert.That(playerText, Does.Contain("TryResolveClosestReachableWalkDestination"), "Explicitly clamped movement queries should still resolve off-floor points through one nearest reachable destination query.");
+        Assert.That(playerText, Does.Contain("CollectPolygonColliderBoundaryAnchors"), "Explicit click projection should inspect actual polygon edges instead of collider bounds.");
         Assert.That(playerText, Does.Contain("ClosestPointOnSegment"), "Concave floor clicks should measure to real polygon segments, not the AABB.");
         Assert.That(playerText, Does.Contain("walkDestinationCandidates.Sort(CompareWalkDestinationCandidates)"), "Projected click candidates must be sorted by distance to the requested click before route testing.");
         Assert.That(playerText, Does.Contain("CollectBlockerBoundaryDestinationCandidates"), "Clicks inside PlayerBlocker colliders should resolve to nearby blocker edges.");
         Assert.That(playerText, Does.Not.Contain("TryFindReachableDestinationNear"), "The old first-reachable ring fallback should not decide click destinations.");
         Assert.That(playerText, Does.Contain("GetClickProjectionMaxWorldDistance"), "Click projection should be bounded by the active room boundary size.");
-        Assert.That(playerText, Does.Contain("CanShowWalkCursor"), "The cursor should show walk when a nearby projected floor destination is reachable.");
+        Assert.That(playerText, Does.Contain("CanShowWalkCursor"), "The cursor should show blocked state for out-of-bounds pointer positions.");
         Assert.That(playerText, Does.Contain("TryBuildMovementPathFromNearbyStart"), "Routes should recover when the Butler is standing on a thin authored boundary edge.");
         Assert.That(playerText, Does.Match(@"LogicalToWalkableWorldPoint\s*\([^)]*\)[\s\S]*referenceOffset \* currentRoomStageScaleRatio"), "Player logical-to-world mapping must include room-stage scale, not translation only.");
         Assert.That(playerText, Does.Match(@"ApplyPerspectiveScale\s*\([^)]*\)[\s\S]*currentRoomStageScaleRatio"), "Player sprite scale should grow and shrink with the room stage just like room objects.");
@@ -996,8 +997,14 @@ public class NavigationRegressionTests
         Assert.That(cameraManagerText, Does.Contain("minRoomZoom"), "Mouse-wheel zoom should be allowed to zoom back out toward the full room image.");
         Assert.That(cameraManagerText, Does.Contain("autoEnableVerticalRoomPan"), "Old scenes serialized with vertical pan off should still allow cropped room art to be reached.");
         Assert.That(cameraManagerText, Does.Contain("ShouldMoveRoomVerticallyWithMouseEdges"), "Vertical edge panning should be part of the room-look input path.");
+        Assert.That(cameraManagerText, Does.Contain("GetVerticalEdgeDirection"), "Vertical panning should use edge direction, not proportional drift back toward center.");
         Assert.That(cameraManagerText, Does.Contain("GetRoomInputScreenRect"), "Edge panning should use the actual room viewport rect, not assume the raw screen always matches the Canvas.");
         Assert.That(cameraManagerText, Does.Contain("return currentRoomPan;"), "Leaving the edge should hold the current pan instead of recentering.");
+        Assert.That(cameraManagerText, Does.Contain("return currentRoomVerticalPan;"), "Leaving the top or bottom edge should hold the current vertical pan instead of recentering.");
+        Assert.That(cameraManagerText, Does.Contain("NavigationCursorController.SetEdgePanDirection(currentHorizontalEdgeDirection, currentVerticalEdgeDirection)"), "Edge panning should publish both horizontal and vertical cursor directions.");
+        Assert.That(cameraManagerText, Does.Contain("GetUpArrowCursor"), "Top-edge panning should show an up arrow cursor.");
+        Assert.That(cameraManagerText, Does.Contain("GetDownArrowCursor"), "Bottom-edge panning should show a down arrow cursor.");
+        Assert.That(cameraManagerText, Does.Not.Contain("returnRoomPanToCenter"), "Runtime camera panning should not expose any automatic recentering path.");
         Assert.That(cameraManagerText, Does.Contain("NavigationCursorController.SetEdgePanDirection"), "Edge panning should update the cursor state.");
         Assert.That(cameraManagerText, Does.Contain("SetActiveRoomContent"), "CameraManager should know which room stage owns the current background and hitboxes.");
         Assert.That(cameraManagerText, Does.Contain("TryApplyRoomStageLayout"), "Runtime panning must move the active room stage, not reproject door rectangles.");

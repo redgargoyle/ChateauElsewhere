@@ -31,7 +31,6 @@ public class CameraManager : MonoBehaviour
     public float roomPanSpeed = 3.5f;
     public float roomPanStartSpeed = 0.45f;
     public float roomPanAccelerationTime = 1.25f;
-    public bool returnRoomPanToCenter;
     public bool moveRoomVerticallyWithMouseEdges = true;
     [Tooltip("Keeps older scenes with vertical edge panning serialized off from trapping cropped room art above or below the viewport.")]
     public bool autoEnableVerticalRoomPan = true;
@@ -98,6 +97,8 @@ public class CameraManager : MonoBehaviour
     private float roomZoomVelocity;
     private float horizontalEdgeHoldTime;
     private int lastHorizontalEdgeDirection;
+    private int currentHorizontalEdgeDirection;
+    private int currentVerticalEdgeDirection;
     private Texture currentBaseBackgroundTexture;
     private RenderTexture anchoredAnimationTexture;
     private Material anchoredAnimationCompositeMaterial;
@@ -974,7 +975,9 @@ public class CameraManager : MonoBehaviour
         targetRoomZoom = currentRoomZoom;
         roomZoomVelocity = 0f;
         ResetHorizontalEdgeHold();
-        NavigationCursorController.SetEdgePanDirection(0);
+        currentHorizontalEdgeDirection = 0;
+        currentVerticalEdgeDirection = 0;
+        NavigationCursorController.SetEdgePanDirection(0, 0);
         MarkRoomLayoutDirty();
     }
 
@@ -988,7 +991,9 @@ public class CameraManager : MonoBehaviour
         if (RuntimeSettingsMenu.BlocksGameInput)
         {
             ResetHorizontalEdgeHold();
-            NavigationCursorController.SetEdgePanDirection(0);
+            currentHorizontalEdgeDirection = 0;
+            currentVerticalEdgeDirection = 0;
+            NavigationCursorController.SetEdgePanDirection(0, 0);
             return;
         }
 
@@ -997,9 +1002,8 @@ public class CameraManager : MonoBehaviour
         if (panRoomWithMouseEdges)
         {
             float previousPan = currentRoomPan;
-            targetRoomPan = GetRoomHorizontalPanTargetFromMouse(out int edgeDirection);
-            currentRoomPan = ClampHorizontalRoomPan(MoveValue(currentRoomPan, targetRoomPan, GetCurrentHorizontalPanSpeed(edgeDirection)));
-            NavigationCursorController.SetEdgePanDirection(edgeDirection);
+            targetRoomPan = GetRoomHorizontalPanTargetFromMouse(out currentHorizontalEdgeDirection);
+            currentRoomPan = ClampHorizontalRoomPan(MoveValue(currentRoomPan, targetRoomPan, GetCurrentHorizontalPanSpeed(currentHorizontalEdgeDirection)));
             if (!Mathf.Approximately(previousPan, currentRoomPan))
             {
                 ApplyBackgroundLayout();
@@ -1010,13 +1014,13 @@ public class CameraManager : MonoBehaviour
         else
         {
             ResetHorizontalEdgeHold();
-            NavigationCursorController.SetEdgePanDirection(0);
+            currentHorizontalEdgeDirection = 0;
         }
 
         if (ShouldMoveRoomVerticallyWithMouseEdges())
         {
             float previousVerticalPan = currentRoomVerticalPan;
-            targetRoomVerticalPan = GetRoomVerticalPanTargetFromMouse();
+            targetRoomVerticalPan = GetRoomVerticalPanTargetFromMouse(out currentVerticalEdgeDirection);
             currentRoomVerticalPan = ClampVerticalRoomPan(MoveValue(currentRoomVerticalPan, targetRoomVerticalPan, roomPanSpeed));
             if (!Mathf.Approximately(previousVerticalPan, currentRoomVerticalPan))
             {
@@ -1025,13 +1029,13 @@ public class CameraManager : MonoBehaviour
 
             shouldApply = true;
         }
-        else if (!Mathf.Approximately(currentRoomVerticalPan, 0f) || !Mathf.Approximately(targetRoomVerticalPan, 0f))
+        else
         {
-            targetRoomVerticalPan = 0f;
-            currentRoomVerticalPan = 0f;
-            ApplyBackgroundLayout();
-            shouldApply = true;
+            currentVerticalEdgeDirection = 0;
+            targetRoomVerticalPan = currentRoomVerticalPan;
         }
+
+        NavigationCursorController.SetEdgePanDirection(currentHorizontalEdgeDirection, currentVerticalEdgeDirection);
 
         if (zoomRoomWithMouseWheel)
         {
@@ -1159,30 +1163,46 @@ public class CameraManager : MonoBehaviour
         lastHorizontalEdgeDirection = 0;
     }
 
-    private float GetRoomVerticalPanTargetFromMouse()
+    private float GetRoomVerticalPanTargetFromMouse(out int edgeDirection)
     {
+        edgeDirection = 0;
+
         if (!TryGetMousePositionOnScreen(out Vector3 mousePosition))
         {
-            return returnRoomPanToCenter ? 0f : targetRoomVerticalPan;
+            return currentRoomVerticalPan;
         }
 
-        Rect inputRect = GetRoomInputScreenRect();
-        float edgePixels = Mathf.Max(1f, inputRect.height * Mathf.Clamp(mouseEdgePanZone, 0.01f, 0.5f));
-        float bottomAmount = Mathf.Clamp01((inputRect.yMin + edgePixels - mousePosition.y) / edgePixels);
-        float topAmount = Mathf.Clamp01((mousePosition.y - (inputRect.yMax - edgePixels)) / edgePixels);
-        float pan = topAmount - bottomAmount;
+        edgeDirection = GetVerticalEdgeDirection(mousePosition);
 
         if (invertVerticalRoomPan)
         {
-            pan = -pan;
+            edgeDirection = -edgeDirection;
         }
 
-        if (Mathf.Approximately(pan, 0f) && !returnRoomPanToCenter)
+        if (edgeDirection == 0)
         {
-            return targetRoomVerticalPan;
+            return currentRoomVerticalPan;
         }
 
-        return ClampVerticalRoomPan(pan);
+        return ClampVerticalRoomPan(edgeDirection * Mathf.Clamp01(maxRoomVerticalPan));
+    }
+
+    private int GetVerticalEdgeDirection(Vector3 mousePosition)
+    {
+        float edgePixels = Mathf.Max(1f, edgePanActivationPixels);
+        Rect inputRect = GetRoomInputScreenRect();
+
+        if (mousePosition.y <= inputRect.yMin + edgePixels)
+        {
+            return -1;
+        }
+
+        if (mousePosition.y >= inputRect.yMax - edgePixels)
+        {
+            return 1;
+        }
+
+        return 0;
     }
 
     private bool ShouldMoveRoomVerticallyWithMouseEdges()
@@ -2016,7 +2036,8 @@ public static class NavigationCursorController
     private static readonly Vector2 WalkHotspot = ScaleCursorHotspot(22f, 37f);
     private static readonly Vector2 UiHotspot = ScaleCursorHotspot(13f, 10f);
 
-    private static int edgePanDirection;
+    private static int edgePanHorizontalDirection;
+    private static int edgePanVerticalDirection;
     private static bool gameplayHoverBlocked;
     private static object doorHoverOwner;
     private static HoverIcon doorHoverIcon;
@@ -2024,6 +2045,8 @@ public static class NavigationCursorController
     private static bool walkHoverCanMove;
     private static Texture2D leftArrowCursor;
     private static Texture2D rightArrowCursor;
+    private static Texture2D upArrowCursor;
+    private static Texture2D downArrowCursor;
     private static Texture2D doorCursor;
     private static Texture2D exitLeaveRoomCursor;
     private static Texture2D stairwayCursor;
@@ -2045,7 +2068,8 @@ public static class NavigationCursorController
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void ResetForPlayMode()
     {
-        edgePanDirection = 0;
+        edgePanHorizontalDirection = 0;
+        edgePanVerticalDirection = 0;
         gameplayHoverBlocked = false;
         doorHoverOwner = null;
         doorHoverIcon = HoverIcon.Door;
@@ -2083,19 +2107,28 @@ public static class NavigationCursorController
 
     public static void SetEdgePanDirection(int direction)
     {
-        int cleanDirection = direction < 0 ? -1 : direction > 0 ? 1 : 0;
+        SetEdgePanDirection(direction, 0);
+    }
+
+    public static void SetEdgePanDirection(int horizontalDirection, int verticalDirection)
+    {
+        int cleanHorizontalDirection = horizontalDirection < 0 ? -1 : horizontalDirection > 0 ? 1 : 0;
+        int cleanVerticalDirection = verticalDirection < 0 ? -1 : verticalDirection > 0 ? 1 : 0;
 
         if (gameplayHoverBlocked)
         {
-            cleanDirection = 0;
+            cleanHorizontalDirection = 0;
+            cleanVerticalDirection = 0;
         }
 
-        if (edgePanDirection == cleanDirection)
+        if (edgePanHorizontalDirection == cleanHorizontalDirection &&
+            edgePanVerticalDirection == cleanVerticalDirection)
         {
             return;
         }
 
-        edgePanDirection = cleanDirection;
+        edgePanHorizontalDirection = cleanHorizontalDirection;
+        edgePanVerticalDirection = cleanVerticalDirection;
         ApplyCursor();
     }
 
@@ -2110,7 +2143,8 @@ public static class NavigationCursorController
 
         if (gameplayHoverBlocked)
         {
-            edgePanDirection = 0;
+            edgePanHorizontalDirection = 0;
+            edgePanVerticalDirection = 0;
             if (doorHoverIcon != HoverIcon.Ui)
             {
                 doorHoverOwner = null;
@@ -2204,8 +2238,8 @@ public static class NavigationCursorController
             return;
         }
 
-        // Door hover wins because it is the most specific click action. Walk hover
-        // comes next so the cursor always answers what a click would do.
+        // Door hover wins because it is the most specific click action. Edge
+        // panning comes next so the cursor matches the camera movement gesture.
         if (doorHoverOwner != null)
         {
             if (doorHoverIcon == HoverIcon.ExitLeaveRoom)
@@ -2296,24 +2330,36 @@ public static class NavigationCursorController
             return;
         }
 
+        if (edgePanHorizontalDirection < 0)
+        {
+            Cursor.SetCursor(GetLeftArrowCursor(), ArrowHotspot, CursorMode.Auto);
+            return;
+        }
+
+        if (edgePanHorizontalDirection > 0)
+        {
+            Cursor.SetCursor(GetRightArrowCursor(), ArrowHotspot, CursorMode.Auto);
+            return;
+        }
+
+        if (edgePanVerticalDirection > 0)
+        {
+            Cursor.SetCursor(GetUpArrowCursor(), ArrowHotspot, CursorMode.Auto);
+            return;
+        }
+
+        if (edgePanVerticalDirection < 0)
+        {
+            Cursor.SetCursor(GetDownArrowCursor(), ArrowHotspot, CursorMode.Auto);
+            return;
+        }
+
         if (walkHoverOwner != null)
         {
             Cursor.SetCursor(
                 walkHoverCanMove ? GetWalkCursor() : GetBlockedWalkCursor(),
                 WalkHotspot,
                 CursorMode.Auto);
-            return;
-        }
-
-        if (edgePanDirection < 0)
-        {
-            Cursor.SetCursor(GetLeftArrowCursor(), ArrowHotspot, CursorMode.Auto);
-            return;
-        }
-
-        if (edgePanDirection > 0)
-        {
-            Cursor.SetCursor(GetRightArrowCursor(), ArrowHotspot, CursorMode.Auto);
             return;
         }
 
@@ -2338,6 +2384,26 @@ public static class NavigationCursorController
         }
 
         return rightArrowCursor;
+    }
+
+    private static Texture2D GetUpArrowCursor()
+    {
+        if (upArrowCursor == null)
+        {
+            upArrowCursor = CreateVerticalArrowCursor("Cursor_UpEdgeArrow", 1);
+        }
+
+        return upArrowCursor;
+    }
+
+    private static Texture2D GetDownArrowCursor()
+    {
+        if (downArrowCursor == null)
+        {
+            downArrowCursor = CreateVerticalArrowCursor("Cursor_DownEdgeArrow", -1);
+        }
+
+        return downArrowCursor;
     }
 
     private static Texture2D GetDoorCursor()
@@ -2444,6 +2510,8 @@ public static class NavigationCursorController
     {
         leftArrowCursor = null;
         rightArrowCursor = null;
+        upArrowCursor = null;
+        downArrowCursor = null;
         doorCursor = null;
         exitLeaveRoomCursor = null;
         stairwayCursor = null;
@@ -2482,6 +2550,29 @@ public static class NavigationCursorController
         DrawLine(texture, tipX + direction * 2, 23, backX, 13, Gold, 2);
         DrawLine(texture, tipX + direction * 2, 25, tailX - direction * 4, 25, ParchmentLight, 2);
         AddWatercolorTexture(texture, 17);
+        texture.Apply();
+        return texture;
+    }
+
+    private static Texture2D CreateVerticalArrowCursor(string cursorName, int direction)
+    {
+        Texture2D texture = CreateBlankCursor(cursorName);
+        int tipY = direction > 0 ? 40 : 7;
+        int backY = direction > 0 ? 16 : 31;
+        int tailY = direction > 0 ? 6 : 41;
+
+        DrawLine(texture, 24 + 2, tipY + direction, 9 + 2, backY + direction, Shadow, 8);
+        DrawLine(texture, 24 + 2, tipY + direction, 39 + 2, backY + direction, Shadow, 8);
+        DrawLine(texture, 24 + 2, tipY + direction, 24 + 2, tailY + direction, Shadow, 8);
+        DrawLine(texture, 24, tipY, 9, backY, Ink, 8);
+        DrawLine(texture, 24, tipY, 39, backY, Ink, 8);
+        DrawLine(texture, 24, tipY, 24, tailY, Ink, 8);
+        DrawLine(texture, 24, tipY, 9, backY, Brass, 5);
+        DrawLine(texture, 24, tipY, 39, backY, Brass, 5);
+        DrawLine(texture, 24, tipY, 24, tailY, Brass, 5);
+        DrawLine(texture, 23, tipY + direction * 2, 13, backY, Gold, 2);
+        DrawLine(texture, 25, tipY + direction * 2, 25, tailY - direction * 4, ParchmentLight, 2);
+        AddWatercolorTexture(texture, 19);
         texture.Apply();
         return texture;
     }
