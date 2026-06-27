@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -28,6 +29,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private const int ClickProjectionSearchSamplesPerRing = 16;
 	private const float ClickProjectionMinWorldDistance = 16f;
 	private const float ClickProjectionMaxWorldDistance = 48f;
+	public const float ButlerRoomScaleEndpointEpsilon = 0.01f;
 
 	[SerializeField] private string walkableFloorName = "PlayerBoundary_Entrance";
 	[SerializeField] private Collider2D walkableFloor;
@@ -47,6 +49,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private float nearScale = 1f;
 	[SerializeField] private float farScale = 0.58f;
 	[SerializeField] private bool useRoomPerspectiveProfileScale = true;
+	[SerializeField] private bool useButlerRoomScaleOverrides = true;
+	[SerializeField] private bool hasButlerCalibrationBaseLocalScale;
+	[SerializeField] private Vector3 butlerCalibrationBaseLocalScale = Vector3.one;
+	[SerializeField, HideInInspector] private string editorSelectedButlerScaleRoomId = string.Empty;
+	[SerializeField, HideInInspector] private List<ButlerRoomScaleOverride> butlerRoomScaleOverrides = new List<ButlerRoomScaleOverride>();
 	[SerializeField] private bool applyPerspectiveScale = true;
 	[SerializeField] private bool applyPlayerSorting = true;
 	[SerializeField] private float runningAnimationSpeed = 40f;
@@ -116,6 +123,87 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public bool InputEnabled => inputEnabled;
 	public bool AppliesPerspectiveScale => applyPerspectiveScale;
 	public bool AppliesPlayerSorting => applyPlayerSorting;
+	public bool UsesButlerRoomScaleOverrides => useButlerRoomScaleOverrides;
+	public bool HasButlerCalibrationBaseLocalScale => hasButlerCalibrationBaseLocalScale;
+	public Vector3 ButlerCalibrationBaseLocalScale => butlerCalibrationBaseLocalScale;
+	public string EditorSelectedButlerScaleRoomId => editorSelectedButlerScaleRoomId;
+	public string CurrentButlerScaleRoomId => GetCurrentButlerScaleRoomId();
+	public string CurrentRoomPerspectiveProfileRoomId
+	{
+		get
+		{
+			TryGetCurrentRoomPerspectiveProfile(out _);
+			return currentRoomPerspectiveProfileRoom;
+		}
+	}
+
+	public readonly struct ButlerRoomScaleOverrideData
+	{
+		public ButlerRoomScaleOverrideData(
+			string roomId,
+			bool hasFront,
+			float frontRoomLocalFootY,
+			float frontFinalLocalScaleY,
+			bool hasBack,
+			float backRoomLocalFootY,
+			float backFinalLocalScaleY)
+		{
+			RoomId = CleanRoomName(roomId);
+			HasFront = hasFront;
+			FrontRoomLocalFootY = frontRoomLocalFootY;
+			FrontFinalLocalScaleY = SanitizeButlerFinalLocalScaleY(frontFinalLocalScaleY);
+			HasBack = hasBack;
+			BackRoomLocalFootY = backRoomLocalFootY;
+			BackFinalLocalScaleY = SanitizeButlerFinalLocalScaleY(backFinalLocalScaleY);
+		}
+
+		public string RoomId { get; }
+		public bool HasFront { get; }
+		public float FrontRoomLocalFootY { get; }
+		public float FrontFinalLocalScaleY { get; }
+		public bool HasBack { get; }
+		public float BackRoomLocalFootY { get; }
+		public float BackFinalLocalScaleY { get; }
+		public bool IsComplete => HasFront && HasBack && Mathf.Abs(FrontRoomLocalFootY - BackRoomLocalFootY) >= ButlerRoomScaleEndpointEpsilon;
+	}
+
+	public readonly struct ButlerScaleDebugSnapshot
+	{
+		public ButlerScaleDebugSnapshot(
+			string roomId,
+			float roomLocalFootY,
+			bool hasCompleteCalibration,
+			float frontY,
+			float frontFinalLocalScaleY,
+			float backY,
+			float backFinalLocalScaleY,
+			float depth01,
+			float evaluatedFinalLocalScaleY,
+			Vector3 currentTransformLocalScale)
+		{
+			RoomId = CleanRoomName(roomId);
+			RoomLocalFootY = roomLocalFootY;
+			HasCompleteCalibration = hasCompleteCalibration;
+			FrontY = frontY;
+			FrontFinalLocalScaleY = frontFinalLocalScaleY;
+			BackY = backY;
+			BackFinalLocalScaleY = backFinalLocalScaleY;
+			Depth01 = depth01;
+			EvaluatedFinalLocalScaleY = evaluatedFinalLocalScaleY;
+			CurrentTransformLocalScale = currentTransformLocalScale;
+		}
+
+		public string RoomId { get; }
+		public float RoomLocalFootY { get; }
+		public bool HasCompleteCalibration { get; }
+		public float FrontY { get; }
+		public float FrontFinalLocalScaleY { get; }
+		public float BackY { get; }
+		public float BackFinalLocalScaleY { get; }
+		public float Depth01 { get; }
+		public float EvaluatedFinalLocalScaleY { get; }
+		public Vector3 CurrentTransformLocalScale { get; }
+	}
 
 	public void SetInputEnabled(bool enabled)
 	{
@@ -153,6 +241,297 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return profile != null &&
 			TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile currentProfile) &&
 			currentProfile == profile;
+	}
+
+	public void EnsureButlerCalibrationBaseScale()
+	{
+		if (hasButlerCalibrationBaseLocalScale)
+		{
+			return;
+		}
+
+		butlerCalibrationBaseLocalScale = transform.localScale;
+		hasButlerCalibrationBaseLocalScale = true;
+	}
+
+	public void CaptureCurrentTransformAsButlerCalibrationBaseScale()
+	{
+		butlerCalibrationBaseLocalScale = transform.localScale;
+		hasButlerCalibrationBaseLocalScale = true;
+	}
+
+	public void RestoreButlerCalibrationBaseScalePreview()
+	{
+		EnsureButlerCalibrationBaseScale();
+		transform.localScale = butlerCalibrationBaseLocalScale;
+	}
+
+	public void ApplyButlerScalePreview(float scale)
+	{
+		ApplyButlerFinalLocalScalePreview(scale);
+	}
+
+	public void ApplyButlerFinalLocalScalePreview(float finalLocalScaleY)
+	{
+		EnsureButlerCalibrationBaseScale();
+		transform.localScale = BuildButlerFinalLocalScale(finalLocalScaleY);
+	}
+
+	public float CaptureCurrentButlerPreviewScale()
+	{
+		return CaptureCurrentButlerFinalLocalScaleY();
+	}
+
+	public float CaptureCurrentButlerFinalLocalScaleY()
+	{
+		EnsureButlerCalibrationBaseScale();
+		return SanitizeButlerFinalLocalScaleY(transform.localScale.y);
+	}
+
+	public Vector3 BuildButlerFinalLocalScaleForPreview(float finalLocalScaleY)
+	{
+		return BuildButlerFinalLocalScale(finalLocalScaleY);
+	}
+
+	public void SetEditorSelectedButlerScaleRoomId(string roomId)
+	{
+		editorSelectedButlerScaleRoomId = CleanRoomName(roomId);
+	}
+
+	public bool TryGetButlerRoomScaleOverride(string roomId, out ButlerRoomScaleOverrideData data)
+	{
+		data = default;
+		int existingIndex = GetButlerScaleOverrideIndex(roomId);
+
+		if (existingIndex < 0)
+		{
+			return false;
+		}
+
+		data = butlerRoomScaleOverrides[existingIndex].ToData();
+		return true;
+	}
+
+	public bool HasCompleteButlerRoomScaleOverride(string roomId)
+	{
+		return TryGetButlerRoomScaleOverride(roomId, out ButlerRoomScaleOverrideData data) && data.IsComplete;
+	}
+
+	public float GetButlerScaleForRoomAtY(string roomId, float roomLocalFootY, float fallbackScale)
+	{
+		return TryEvaluateButlerFinalLocalScaleForRoomAtY(roomId, roomLocalFootY, out _, out _, out float finalLocalScaleY)
+			? finalLocalScaleY
+			: SanitizeButlerFinalLocalScaleY(fallbackScale);
+	}
+
+	public bool TryEvaluateButlerRoomScale(string roomId, float roomLocalFootY, out float calibratedScale)
+	{
+		return TryEvaluateButlerFinalLocalScaleForRoomAtY(roomId, roomLocalFootY, out _, out _, out calibratedScale);
+	}
+
+	public bool TryEvaluateButlerFinalLocalScaleForRoomAtY(
+		string roomId,
+		float roomLocalFootY,
+		out Vector3 finalLocalScale,
+		out float depth01,
+		out float finalLocalScaleY)
+	{
+		finalLocalScale = transform.localScale;
+		depth01 = 0f;
+		finalLocalScaleY = 0f;
+
+		if (!useButlerRoomScaleOverrides ||
+			!TryGetButlerRoomScaleOverride(roomId, out ButlerRoomScaleOverrideData data) ||
+			!data.IsComplete)
+		{
+			return false;
+		}
+
+		depth01 = Mathf.Clamp01(Mathf.InverseLerp(data.FrontRoomLocalFootY, data.BackRoomLocalFootY, roomLocalFootY));
+		finalLocalScaleY = SanitizeButlerFinalLocalScaleY(Mathf.Lerp(
+			data.FrontFinalLocalScaleY,
+			data.BackFinalLocalScaleY,
+			depth01));
+		finalLocalScale = BuildButlerFinalLocalScale(finalLocalScaleY);
+		return true;
+	}
+
+	public void SetButlerFrontScaleForRoom(string roomId, float roomLocalFootY, float scale, bool applyImmediately = true)
+	{
+		SetButlerFrontFinalLocalScaleForRoom(roomId, roomLocalFootY, scale, applyImmediately);
+	}
+
+	public void SetButlerFrontFinalLocalScaleForRoom(string roomId, float roomLocalFootY, float finalLocalScaleY, bool applyImmediately = true)
+	{
+		ButlerRoomScaleOverride roomScale = GetOrCreateButlerScaleOverride(roomId);
+
+		if (roomScale == null)
+		{
+			return;
+		}
+
+		EnsureButlerCalibrationBaseScale();
+		roomScale.SetFront(roomLocalFootY, finalLocalScaleY);
+		useButlerRoomScaleOverrides = true;
+		SetEditorSelectedButlerScaleRoomId(roomScale.RoomId);
+
+		if (applyImmediately)
+		{
+			ApplyButlerFinalLocalScalePreview(finalLocalScaleY);
+		}
+	}
+
+	public void SetButlerBackScaleForRoom(string roomId, float roomLocalFootY, float scale, bool applyImmediately = true)
+	{
+		SetButlerBackFinalLocalScaleForRoom(roomId, roomLocalFootY, scale, applyImmediately);
+	}
+
+	public void SetButlerBackFinalLocalScaleForRoom(string roomId, float roomLocalFootY, float finalLocalScaleY, bool applyImmediately = true)
+	{
+		ButlerRoomScaleOverride roomScale = GetOrCreateButlerScaleOverride(roomId);
+
+		if (roomScale == null)
+		{
+			return;
+		}
+
+		EnsureButlerCalibrationBaseScale();
+		roomScale.SetBack(roomLocalFootY, finalLocalScaleY);
+		useButlerRoomScaleOverrides = true;
+		SetEditorSelectedButlerScaleRoomId(roomScale.RoomId);
+
+		if (applyImmediately)
+		{
+			ApplyButlerFinalLocalScalePreview(finalLocalScaleY);
+		}
+	}
+
+	public bool RemoveButlerScaleOverrideForRoom(string roomId, bool applyImmediately = true)
+	{
+		int existingIndex = GetButlerScaleOverrideIndex(roomId);
+
+		if (existingIndex < 0)
+		{
+			return false;
+		}
+
+		butlerRoomScaleOverrides.RemoveAt(existingIndex);
+
+		if (applyImmediately)
+		{
+			RefreshPerspectiveScaleNow(true);
+		}
+
+		return true;
+	}
+
+	public void GetButlerScaleOverrideRoomIds(List<string> results)
+	{
+		if (results == null || butlerRoomScaleOverrides == null)
+		{
+			return;
+		}
+
+		for (int i = 0; i < butlerRoomScaleOverrides.Count; i++)
+		{
+			string roomId = butlerRoomScaleOverrides[i].RoomId;
+
+			if (!string.IsNullOrWhiteSpace(roomId) && !ContainsRoomName(results, roomId))
+			{
+				results.Add(roomId);
+			}
+		}
+	}
+
+	public bool TryGetButlerCalibrationContext(
+		string preferredRoomId,
+		bool preferCurrentTransformInEditMode,
+		out string roomId,
+		out Vector2 roomLocalFootPoint)
+	{
+		CacheReferences();
+		UpdateVisualOffset(Camera.main);
+
+		roomId = CleanRoomName(preferredRoomId);
+
+		if (string.IsNullOrWhiteSpace(roomId))
+		{
+			roomId = GetCurrentButlerScaleRoomId();
+		}
+
+		Vector2 logicalFootPoint = logicalPosition;
+
+		if (!Application.isPlaying && preferCurrentTransformInEditMode)
+		{
+			logicalFootPoint = WalkableWorldToLogicalPoint(GetCurrentVisibleMovementWorldPoint());
+		}
+
+		if (TryGetRoomLocalFootPointForButlerCalibration(roomId, logicalFootPoint, out roomLocalFootPoint))
+		{
+			return !string.IsNullOrWhiteSpace(roomId);
+		}
+
+		roomLocalFootPoint = logicalFootPoint;
+		return !string.IsNullOrWhiteSpace(roomId);
+	}
+
+	public bool InitializeButlerScaleOverrideForRoomFromCurrentPerspective(string roomId, bool applyImmediately = true)
+	{
+		if (!TryGetExistingPerspectiveEndpointsForRoom(roomId, out float frontY, out float frontScale, out float backY, out float backScale))
+		{
+			return false;
+		}
+
+		EnsureButlerCalibrationBaseScale();
+		SetButlerFrontFinalLocalScaleForRoom(roomId, frontY, ConvertExistingPerspectiveScaleToFinalLocalScaleY(frontScale), false);
+		SetButlerBackFinalLocalScaleForRoom(roomId, backY, ConvertExistingPerspectiveScaleToFinalLocalScaleY(backScale), applyImmediately);
+		return true;
+	}
+
+	public bool TryGetButlerScaleDebugSnapshot(out ButlerScaleDebugSnapshot snapshot)
+	{
+		snapshot = default;
+
+		if (!TryGetButlerCalibrationContext(string.Empty, !Application.isPlaying, out string roomId, out Vector2 roomLocalFootPoint))
+		{
+			return false;
+		}
+
+		bool hasCompleteCalibration = false;
+		float frontY = 0f;
+		float frontFinalLocalScaleY = 0f;
+		float backY = 0f;
+		float backFinalLocalScaleY = 0f;
+		float depth01 = 0f;
+		float evaluatedFinalLocalScaleY = 0f;
+
+		if (TryGetButlerRoomScaleOverride(roomId, out ButlerRoomScaleOverrideData data))
+		{
+			hasCompleteCalibration = data.IsComplete;
+			frontY = data.FrontRoomLocalFootY;
+			frontFinalLocalScaleY = data.FrontFinalLocalScaleY;
+			backY = data.BackRoomLocalFootY;
+			backFinalLocalScaleY = data.BackFinalLocalScaleY;
+
+			if (hasCompleteCalibration &&
+				TryEvaluateButlerFinalLocalScaleForRoomAtY(roomId, roomLocalFootPoint.y, out _, out depth01, out float finalLocalScaleY))
+			{
+				evaluatedFinalLocalScaleY = finalLocalScaleY;
+			}
+		}
+
+		snapshot = new ButlerScaleDebugSnapshot(
+			roomId,
+			roomLocalFootPoint.y,
+			hasCompleteCalibration,
+			frontY,
+			frontFinalLocalScaleY,
+			backY,
+			backFinalLocalScaleY,
+			depth01,
+			evaluatedFinalLocalScaleY,
+			transform.localScale);
+		return true;
 	}
 
 	public void SetPerspectiveScaleEnabled(bool value, bool restoreAuthoredScale = true)
@@ -1344,13 +1723,43 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		UpdateVisualOffset(Camera.main);
-		TryGetPerspectiveScaleForY(logicalPosition.y, out float depthScale, out bool usesRoomProfileScale);
-		float fallbackRelativeScale = depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference);
-		float scale = (usesRoomProfileScale ? depthScale : fallbackRelativeScale) * currentRoomStageScaleRatio;
+
+		if (useButlerRoomScaleOverrides &&
+			TryEvaluateButlerCalibratedFinalLocalScale(out Vector3 calibratedLocalScale))
+		{
+			transform.localScale = calibratedLocalScale;
+			return;
+		}
+
+		float scale = CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio;
 		transform.localScale = new Vector3(
 			authoredLocalScale.x * scale,
 			authoredLocalScale.y * scale,
 			authoredLocalScale.z);
+	}
+
+	private bool TryEvaluateButlerCalibratedFinalLocalScale(out Vector3 finalLocalScale)
+	{
+		finalLocalScale = transform.localScale;
+
+		if (!TryGetButlerCalibrationContext(string.Empty, false, out string roomId, out Vector2 roomLocalFootPoint))
+		{
+			return false;
+		}
+
+		return TryEvaluateButlerFinalLocalScaleForRoomAtY(
+			roomId,
+			roomLocalFootPoint.y,
+			out finalLocalScale,
+			out _,
+			out _);
+	}
+
+	private float CalculateExistingPerspectiveScale()
+	{
+		TryGetPerspectiveScaleForY(logicalPosition.y, out float depthScale, out bool usesRoomProfileScale);
+		float fallbackRelativeScale = depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference);
+		return usesRoomProfileScale ? depthScale : fallbackRelativeScale;
 	}
 
 	private float GetPerspectiveScaleForY(float y)
@@ -1415,6 +1824,54 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		Vector2 worldPoint = LogicalToWalkableWorldPoint(logicalPoint);
 		return cameraManager.TryGetActiveRoomStageLocalPoint(worldPoint, out roomLocalPoint);
+	}
+
+	private bool TryGetRoomLocalFootPointForButlerCalibration(string roomId, Vector2 logicalPoint, out Vector2 roomLocalFootPoint)
+	{
+		if (TryGetRoomStageLocalPointForRoom(roomId, logicalPoint, out roomLocalFootPoint))
+		{
+			return true;
+		}
+
+		return TryGetRoomStageLocalPoint(logicalPoint, out roomLocalFootPoint);
+	}
+
+	private bool TryGetRoomStageLocalPointForRoom(string roomId, Vector2 logicalPoint, out Vector2 roomLocalPoint)
+	{
+		roomLocalPoint = Vector2.zero;
+		string cleanRoomId = CleanRoomName(roomId);
+
+		if (string.IsNullOrWhiteSpace(cleanRoomId) ||
+			!TryFindRoomContentForRoom(cleanRoomId, out RoomContentGroup roomContent) ||
+			roomContent == null)
+		{
+			return false;
+		}
+
+		Vector2 worldPoint = LogicalToWalkableWorldPoint(logicalPoint);
+		RectTransform roomStage = roomContent.transform as RectTransform;
+		Camera mainCamera = Camera.main;
+
+		if (roomStage != null && mainCamera != null)
+		{
+			Canvas canvas = roomStage.GetComponentInParent<Canvas>();
+			Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+				? canvas.worldCamera
+				: null;
+			Vector2 screenPoint = mainCamera.WorldToScreenPoint(worldPoint);
+			return RectTransformUtility.ScreenPointToLocalPointInRectangle(
+				roomStage,
+				screenPoint,
+				canvasCamera,
+				out roomLocalPoint);
+		}
+
+		Vector3 localPoint = roomContent.transform.InverseTransformPoint(new Vector3(
+			worldPoint.x,
+			worldPoint.y,
+			roomContent.transform.position.z));
+		roomLocalPoint = new Vector2(localPoint.x, localPoint.y);
+		return true;
 	}
 
 	private bool TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile profile)
@@ -3166,6 +3623,177 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return string.Equals(NormalizeBoundaryName(first), NormalizeBoundaryName(second), StringComparison.OrdinalIgnoreCase);
 	}
 
+	private string GetCurrentButlerScaleRoomId()
+	{
+		if (!Application.isPlaying && !string.IsNullOrWhiteSpace(editorSelectedButlerScaleRoomId))
+		{
+			return CleanRoomName(editorSelectedButlerScaleRoomId);
+		}
+
+		CacheReferences();
+
+		string currentRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
+
+		if (!string.IsNullOrWhiteSpace(currentRoom))
+		{
+			return CleanRoomName(currentRoom);
+		}
+
+		if (TryGetCurrentRoomPerspectiveProfile(out _))
+		{
+			return CleanRoomName(currentRoomPerspectiveProfileRoom);
+		}
+
+		RoomContentGroup parentRoom = GetComponentInParent<RoomContentGroup>(true);
+		return parentRoom != null ? CleanRoomName(parentRoom.RoomName) : string.Empty;
+	}
+
+	private bool TryGetExistingPerspectiveEndpointsForRoom(
+		string roomId,
+		out float frontY,
+		out float frontScale,
+		out float backY,
+		out float backScale)
+	{
+		string cleanRoomId = CleanRoomName(roomId);
+
+		if (!string.IsNullOrWhiteSpace(cleanRoomId) &&
+			TryFindRoomContentForRoom(cleanRoomId, out RoomContentGroup roomContent) &&
+			roomContent.TryGetPerspectiveProfile(out RoomPerspectiveProfile profile))
+		{
+			frontY = profile.NearFootY;
+			backY = profile.FarFootY;
+			frontScale = profile.NearScale;
+			backScale = profile.FarScale;
+			return true;
+		}
+
+		frontY = nearY;
+		backY = farY;
+		frontScale = CalculateExistingPerspectiveScaleForRoomLocalY(cleanRoomId, frontY);
+		backScale = CalculateExistingPerspectiveScaleForRoomLocalY(cleanRoomId, backY);
+		return true;
+	}
+
+	private float CalculateExistingPerspectiveScaleForRoomLocalY(string roomId, float roomLocalFootY)
+	{
+		CaptureAuthoredLocalScaleIfNeeded();
+
+		if (!string.IsNullOrWhiteSpace(roomId) &&
+			TryFindRoomContentForRoom(roomId, out RoomContentGroup roomContent) &&
+			roomContent.TryGetPerspectiveProfile(out RoomPerspectiveProfile profile))
+		{
+			return SanitizeButlerScale(profile.GetScale(new Vector2(0f, roomLocalFootY)));
+		}
+
+		float depthScale = GetFallbackPerspectiveScaleForY(roomLocalFootY);
+		return SanitizeButlerScale(depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference));
+	}
+
+	private ButlerRoomScaleOverride GetOrCreateButlerScaleOverride(string roomId)
+	{
+		string cleanRoomId = CleanRoomName(roomId);
+
+		if (string.IsNullOrWhiteSpace(cleanRoomId))
+		{
+			cleanRoomId = GetCurrentButlerScaleRoomId();
+		}
+
+		if (string.IsNullOrWhiteSpace(cleanRoomId))
+		{
+			return null;
+		}
+
+		if (butlerRoomScaleOverrides == null)
+		{
+			butlerRoomScaleOverrides = new List<ButlerRoomScaleOverride>();
+		}
+
+		int existingIndex = GetButlerScaleOverrideIndex(cleanRoomId);
+
+		if (existingIndex >= 0)
+		{
+			return butlerRoomScaleOverrides[existingIndex];
+		}
+
+		ButlerRoomScaleOverride roomScale = new ButlerRoomScaleOverride(cleanRoomId);
+		butlerRoomScaleOverrides.Add(roomScale);
+		return roomScale;
+	}
+
+	private int GetButlerScaleOverrideIndex(string roomId)
+	{
+		if (butlerRoomScaleOverrides == null)
+		{
+			return -1;
+		}
+
+		for (int i = 0; i < butlerRoomScaleOverrides.Count; i++)
+		{
+			ButlerRoomScaleOverride roomScale = butlerRoomScaleOverrides[i];
+
+			if (roomScale != null && roomScale.Matches(roomId))
+			{
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private static bool ContainsRoomName(List<string> rooms, string roomId)
+	{
+		if (rooms == null)
+		{
+			return false;
+		}
+
+		for (int i = 0; i < rooms.Count; i++)
+		{
+			if (SameRoomName(rooms[i], roomId))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static float SanitizeButlerScale(float scale)
+	{
+		return Mathf.Max(0.001f, scale);
+	}
+
+	private static float SanitizeButlerFinalLocalScaleY(float finalLocalScaleY)
+	{
+		return Mathf.Max(0.001f, Mathf.Abs(finalLocalScaleY));
+	}
+
+	private Vector3 GetButlerScaleReference()
+	{
+		return hasButlerCalibrationBaseLocalScale ? butlerCalibrationBaseLocalScale : Vector3.one;
+	}
+
+	private Vector3 BuildButlerFinalLocalScale(float finalLocalScaleY)
+	{
+		Vector3 reference = GetButlerScaleReference();
+		float safeFinalY = SanitizeButlerFinalLocalScaleY(finalLocalScaleY);
+		float referenceY = Mathf.Max(0.001f, Mathf.Abs(reference.y));
+		float xOverY = reference.x / referenceY;
+		float ySign = Mathf.Approximately(reference.y, 0f) ? 1f : Mathf.Sign(reference.y);
+
+		return new Vector3(
+			xOverY * safeFinalY,
+			ySign * safeFinalY,
+			reference.z);
+	}
+
+	private float ConvertExistingPerspectiveScaleToFinalLocalScaleY(float perspectiveScale)
+	{
+		Vector3 reference = GetButlerScaleReference();
+		return SanitizeButlerFinalLocalScaleY(reference.y * SanitizeButlerScale(perspectiveScale));
+	}
+
 	private static string CleanRoomName(string value)
 	{
 		return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
@@ -3295,6 +3923,67 @@ public class PointClickPlayerMovement : MonoBehaviour
 		public int SortingLayerId { get; }
 		public int SortingOrder { get; }
 		public SpriteSortPoint SpriteSortPoint { get; }
+	}
+
+	[Serializable]
+	private sealed class ButlerRoomScaleOverride
+	{
+		public string roomId;
+		public bool hasFront;
+		public float frontRoomLocalFootY;
+		[FormerlySerializedAs("frontScale")] public float frontFinalLocalScaleY = 1f;
+		public bool hasBack;
+		public float backRoomLocalFootY;
+		[FormerlySerializedAs("backScale")] public float backFinalLocalScaleY = 1f;
+
+		private ButlerRoomScaleOverride()
+		{
+			roomId = string.Empty;
+			frontFinalLocalScaleY = 1f;
+			backFinalLocalScaleY = 1f;
+		}
+
+		public ButlerRoomScaleOverride(string roomId)
+		{
+			this.roomId = CleanRoomName(roomId);
+			frontFinalLocalScaleY = 1f;
+			backFinalLocalScaleY = 1f;
+		}
+
+		public string RoomId => CleanRoomName(roomId);
+
+		public void SetFront(float roomLocalFootY, float scale)
+		{
+			roomId = CleanRoomName(roomId);
+			hasFront = true;
+			frontRoomLocalFootY = roomLocalFootY;
+			frontFinalLocalScaleY = SanitizeButlerFinalLocalScaleY(scale);
+		}
+
+		public void SetBack(float roomLocalFootY, float scale)
+		{
+			roomId = CleanRoomName(roomId);
+			hasBack = true;
+			backRoomLocalFootY = roomLocalFootY;
+			backFinalLocalScaleY = SanitizeButlerFinalLocalScaleY(scale);
+		}
+
+		public ButlerRoomScaleOverrideData ToData()
+		{
+			return new ButlerRoomScaleOverrideData(
+				roomId,
+				hasFront,
+				frontRoomLocalFootY,
+				frontFinalLocalScaleY,
+				hasBack,
+				backRoomLocalFootY,
+				backFinalLocalScaleY);
+		}
+
+		public bool Matches(string otherRoomId)
+		{
+			return SameRoomName(roomId, otherRoomId);
+		}
 	}
 
 }
