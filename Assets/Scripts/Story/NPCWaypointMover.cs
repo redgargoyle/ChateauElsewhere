@@ -154,6 +154,12 @@ public class NPCWaypointMover : MonoBehaviour
         }
     }
 
+    public static bool CanUseProjectionAsMotionOwner(RoomProjectedEntity projection)
+    {
+        return projection != null &&
+            projection.transform.GetComponentInParent<RoomContentGroup>(true) != null;
+    }
+
     private Vector3 GetTargetPosition(Transform target)
     {
         Vector3 targetPosition = target.position;
@@ -196,7 +202,8 @@ public class NPCWaypointMover : MonoBehaviour
         }
 
         roomProjection.UseProfileFromRoomTarget(target);
-        return roomProjection.IsProjectionActive &&
+        return CanUseProjectionAsMotionOwner(roomProjection) &&
+            roomProjection.IsProjectionActive &&
             roomProjection.CanProjectTarget(target) &&
             roomProjection.TrySetRoomLocalFootPointFromTarget(target);
     }
@@ -212,7 +219,8 @@ public class NPCWaypointMover : MonoBehaviour
         }
 
         roomProjection.UseProfileFromRoomTarget(target);
-        return roomProjection.IsProjectionActive &&
+        return CanUseProjectionAsMotionOwner(roomProjection) &&
+            roomProjection.IsProjectionActive &&
             roomProjection.CanProjectTarget(target) &&
             roomProjection.TryGetRoomLocalFootPointForTarget(target, out targetFootPoint);
     }

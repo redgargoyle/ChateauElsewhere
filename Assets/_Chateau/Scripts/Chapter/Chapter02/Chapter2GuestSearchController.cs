@@ -10,9 +10,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private const string PersistentActorRootName = "ChapterActors_Runtime";
     private const string DiagnosticPrefix = "[Ch2ClickDiag]";
     private const string GuestClickDiagnosticPrefix = "[Chapter2GuestClick]";
+    private const string GuestExitDiagnosticPrefix = "[Ch2GuestExit]";
     private const string ClickTargetName = "Ch2_ClickTarget";
     private const float ClickTargetWidthPadding = 1.15f;
     private const float ClickTargetHeightPadding = 1.15f;
+    private const float MinimumProjectedGuestExitMoveSpeed = 180f;
+    private const float GuestExitWorldMoveSpeed = 2.2f;
     private static readonly Vector2 MinimumClickTargetSize = new Vector2(1f, 2f);
     private static readonly Vector2 FallbackClickTargetOffset = new Vector2(0f, 1f);
     private static readonly Vector2 FallbackClickTargetSize = new Vector2(1f, 2f);
@@ -118,8 +121,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
 
     [Header("Conversation")]
-    [SerializeField] private float guestExitSeconds = 0.85f;
-    [SerializeField] private float guestExitDistance = 0.75f;
+    [SerializeField, Min(1f)] private float guestExitMoveSpeed = 520f;
+    [SerializeField, Min(0.1f)] private float guestExitTimeoutSeconds = 8f;
 
     private const string ButlerSpeakerName = "Butler";
     private const string MealPlinkPreference = "fresh monte genellion de plink";
@@ -312,11 +315,14 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private GuestConversationResumeStep activeConversationResumeStep;
     private Coroutine roomResumeRoutine;
     private bool subscribedToRoomChanges;
+    private bool allGuestsFoundDeferredUntilExitsComplete;
+    private readonly HashSet<GuestSearchEntry> guestsExitingToDining = new HashSet<GuestSearchEntry>();
     private readonly HashSet<string> guestsWithFallbackClickBounds = new HashSet<string>();
 
     public string DiningSeatPrefix => diningSeatPrefix;
     public int GuestCount => CountGuests();
     public int FoundGuestCount => CountFoundGuests();
+    public bool HasPendingGuestExitsToDining => guestsExitingToDining.Count > 0;
 
     public bool AllGuestsFound
     {
@@ -414,6 +420,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
         AutoAssignHideAnchorsIfNeeded();
         activeConversationGuest = null;
         activeConversationResumeStep = GuestConversationResumeStep.None;
+        guestsExitingToDining.Clear();
+        allGuestsFoundDeferredUntilExitsComplete = false;
         foundOrderCounter = 0;
 
         if (foundGuestIdsInOrder == null)
@@ -477,6 +485,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
         AutoAssignHideAnchorsIfNeeded();
         activeConversationGuest = null;
         activeConversationResumeStep = GuestConversationResumeStep.None;
+        guestsExitingToDining.Clear();
+        allGuestsFoundDeferredUntilExitsComplete = false;
         foundOrderCounter = 0;
 
         if (foundGuestIdsInOrder == null)
@@ -707,15 +717,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
         DisableGuestFindAction(guest);
         LogGuestFound(guest);
         SendGuestToDiningRoomAfterConversation(guest);
+        RequestAllGuestsFoundTransitionWhenReady();
 
         if (chapter2Controller != null)
         {
             chapter2Controller.HandleGuestSearchProgressChanged();
-        }
-
-        if (AllGuestsFound && chapter2Controller != null)
-        {
-            chapter2Controller.HandleAllGuestsFound();
         }
 
         return true;
@@ -897,6 +903,15 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
             EnsureGuestUsesPersistentActorRoot(guest);
             DisableGuestFindAction(guest);
+
+            if (IsGuestExitingToDining(guest))
+            {
+                Debug.Log(
+                    $"{GuestExitDiagnosticPrefix} guest={GetGuestIdForOrderList(guest)} transfer-hide skipped; exit still pending",
+                    this);
+                continue;
+            }
+
             HideGuestForDiningRoomTransfer(guest);
         }
     }
@@ -924,6 +939,14 @@ public class Chapter2GuestSearchController : MonoBehaviour
             EnsureGuestUsesPersistentActorRoot(guest);
             DisableGuestFindAction(guest);
 
+            if (IsGuestExitingToDining(guest))
+            {
+                Debug.Log(
+                    $"{GuestExitDiagnosticPrefix} guest={GetGuestIdForOrderList(guest)} dining-seat skipped; exit still pending",
+                    this);
+                continue;
+            }
+
             guest.actorState.enabled = true;
             HideGuestForDiningRoomTransfer(guest);
             guest.actorState.SetCurrentRoom(diningSeat.RoomId);
@@ -941,6 +964,14 @@ public class Chapter2GuestSearchController : MonoBehaviour
     {
         if (guest == null || guest.actorState == null)
         {
+            return;
+        }
+
+        if (IsGuestExitingToDining(guest))
+        {
+            Debug.Log(
+                $"{GuestExitDiagnosticPrefix} guest={GetGuestIdForOrderList(guest)} hide skipped; exit still pending",
+                this);
             return;
         }
 
@@ -1291,18 +1322,26 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     private void SendGuestToDiningRoomAfterConversation(GuestSearchEntry guest)
     {
-        if (guest == null || guest.actorState == null)
+        if (guest == null)
         {
+            return;
+        }
+
+        if (guest.actorState == null)
+        {
+            NotifyGuestExitToDiningComplete(guest);
             return;
         }
 
         if (Application.isPlaying && isActiveAndEnabled)
         {
+            BeginGuestExitToDining(guest);
             StartCoroutine(RunGuestExitToDiningRoomRoutine(guest));
             return;
         }
 
         StageGuestForDiningRoomReveal(guest);
+        NotifyGuestExitToDiningComplete(guest);
     }
 
     private IEnumerator RunGuestExitToDiningRoomRoutine(GuestSearchEntry guest)
@@ -1311,24 +1350,370 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         if (actorState == null || actorState.gameObject == null)
         {
+            NotifyGuestExitToDiningComplete(guest);
             yield break;
         }
 
-        Transform actorTransform = actorState.gameObject.transform;
-        Vector3 startPosition = actorTransform.position;
-        Vector3 exitPosition = startPosition + new Vector3(guestExitDistance, 0f, 0f);
-        float duration = Mathf.Max(0.01f, guestExitSeconds);
-        float elapsed = 0f;
+        PrepareGuestForExitWalk(actorState);
 
-        while (elapsed < duration && actorState != null && actorState.IsVisibleInCurrentRoom)
+        string sourceRoom = GetGuestExitSourceRoom(guest);
+        Transform exitTarget = FindExitDoorTowardDiningRoom(guest);
+
+        if (exitTarget != null)
         {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            actorTransform.position = Vector3.Lerp(startPosition, exitPosition, t);
-            yield return null;
+            NPCWaypointMover mover = GetOrCreateGuestExitMover(actorState);
+
+            if (mover != null)
+            {
+                LogGuestExitPlan(guest, actorState, sourceRoom, exitTarget);
+                mover.enabled = true;
+                mover.MoveSpeed = GetGuestExitMoveSpeed(actorState);
+                mover.MoveTo(exitTarget);
+                yield return null;
+
+                float elapsed = 0f;
+                float timeout = Mathf.Max(0.1f, guestExitTimeoutSeconds);
+
+                while (mover != null &&
+                    mover.IsMoving &&
+                    actorState != null &&
+                    actorState.IsVisibleInCurrentRoom &&
+                    elapsed < timeout)
+                {
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+
+                if (mover != null && mover.IsMoving)
+                {
+                    mover.StopMoving();
+                    Debug.LogWarning(
+                        $"{GuestExitDiagnosticPrefix} guest={GetGuestIdForOrderList(guest)} door={exitTarget.name} timed out; staging for Dining Room",
+                        this);
+                }
+                else
+                {
+                    Debug.Log(
+                        $"{GuestExitDiagnosticPrefix} guest={GetGuestIdForOrderList(guest)} arrived; staging for Dining Room",
+                        this);
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"{GuestExitDiagnosticPrefix} guest={GetGuestIdForOrderList(guest)} sourceRoom={FormatDiagnosticValue(sourceRoom)} door=<none>; staging for Dining Room",
+                this);
         }
 
         StageGuestForDiningRoomReveal(guest);
+        NotifyGuestExitToDiningComplete(guest);
+    }
+
+    private void PrepareGuestForExitWalk(ActorRoomState actorState)
+    {
+        if (actorState == null)
+        {
+            return;
+        }
+
+        actorState.SetSeated(false);
+        actorState.SetAvailableInCurrentChapter(true);
+        actorState.SetVisibleByChapterState(true);
+        actorState.SetInteractable(false);
+        actorState.ApplyState();
+    }
+
+    private NPCWaypointMover GetOrCreateGuestExitMover(ActorRoomState actorState)
+    {
+        if (actorState == null || actorState.gameObject == null)
+        {
+            return null;
+        }
+
+        NPCWaypointMover mover = actorState.gameObject.GetComponent<NPCWaypointMover>();
+
+        if (mover == null)
+        {
+            mover = actorState.gameObject.AddComponent<NPCWaypointMover>();
+        }
+
+        return mover;
+    }
+
+    private void LogGuestExitPlan(GuestSearchEntry guest, ActorRoomState actorState, string sourceRoom, Transform exitTarget)
+    {
+        if (guest == null || actorState == null || exitTarget == null)
+        {
+            return;
+        }
+
+        GetGuestExitDiagnosticPoints(actorState, exitTarget, out Vector2 startPoint, out Vector2 targetPoint, out string motionOwner);
+        float distance = Vector2.Distance(startPoint, targetPoint);
+
+        Debug.Log(
+            $"{GuestExitDiagnosticPrefix} guest={GetGuestIdForOrderList(guest)} " +
+            $"sourceRoom={FormatDiagnosticValue(sourceRoom)} door={exitTarget.name} " +
+            $"mover=NPCWaypointMover.MoveTo owner={motionOwner} start={FormatVector(startPoint)} " +
+            $"target={FormatVector(targetPoint)} distance={distance:0.##}",
+            this);
+    }
+
+    private static void GetGuestExitDiagnosticPoints(
+        ActorRoomState actorState,
+        Transform exitTarget,
+        out Vector2 startPoint,
+        out Vector2 targetPoint,
+        out string motionOwner)
+    {
+        startPoint = Vector2.zero;
+        targetPoint = Vector2.zero;
+        motionOwner = "transform";
+
+        RoomProjectedEntity projection = actorState != null ? actorState.Projection : null;
+
+        if (projection != null &&
+            NPCWaypointMover.CanUseProjectionAsMotionOwner(projection) &&
+            projection.TryGetRoomLocalFootPointForTarget(exitTarget, out Vector2 projectedTarget))
+        {
+            startPoint = projection.RoomLocalFootPoint;
+            targetPoint = projectedTarget;
+            motionOwner = "projection";
+            return;
+        }
+
+        Transform actorTransform = actorState != null ? actorState.transform : null;
+
+        if (actorTransform != null)
+        {
+            startPoint = new Vector2(actorTransform.position.x, actorTransform.position.y);
+        }
+
+        targetPoint = new Vector2(exitTarget.position.x, exitTarget.position.y);
+    }
+
+    private float GetGuestExitMoveSpeed(ActorRoomState actorState)
+    {
+        if (actorState != null &&
+            actorState.Projection != null &&
+            NPCWaypointMover.CanUseProjectionAsMotionOwner(actorState.Projection))
+        {
+            return Mathf.Max(MinimumProjectedGuestExitMoveSpeed, guestExitMoveSpeed);
+        }
+
+        return actorState != null && actorState.transform is RectTransform
+            ? Mathf.Max(0.01f, guestExitMoveSpeed)
+            : GuestExitWorldMoveSpeed;
+    }
+
+    private Transform FindExitDoorTowardDiningRoom(GuestSearchEntry guest)
+    {
+        string sourceRoom = GetGuestExitSourceRoom(guest);
+        string diningRoom = chapter2Controller != null && !string.IsNullOrWhiteSpace(chapter2Controller.DiningRoomId)
+            ? chapter2Controller.DiningRoomId
+            : "Dining Room";
+
+        if (string.IsNullOrWhiteSpace(sourceRoom) || SameRoom(sourceRoom, diningRoom))
+        {
+            return null;
+        }
+
+        DoorTriggerNavigation[] doors = FindObjectsByType<DoorTriggerNavigation>(FindObjectsInactive.Include);
+        DoorTriggerNavigation routeDoor = FindFirstDoorOnRouteToRoom(doors, sourceRoom, diningRoom);
+
+        if (routeDoor == null)
+        {
+            routeDoor = FindNearestDoorInRoom(doors, sourceRoom, guest != null ? guest.actorState : null);
+        }
+
+        return routeDoor != null ? routeDoor.transform : null;
+    }
+
+    private static DoorTriggerNavigation FindFirstDoorOnRouteToRoom(
+        DoorTriggerNavigation[] doors,
+        string sourceRoom,
+        string targetRoom)
+    {
+        if (doors == null || string.IsNullOrWhiteSpace(sourceRoom) || string.IsNullOrWhiteSpace(targetRoom))
+        {
+            return null;
+        }
+
+        string sourceKey = NormalizeRoomRouteKey(sourceRoom);
+        string targetKey = NormalizeRoomRouteKey(targetRoom);
+
+        if (string.IsNullOrWhiteSpace(sourceKey) || string.IsNullOrWhiteSpace(targetKey) || sourceKey == targetKey)
+        {
+            return null;
+        }
+
+        Queue<string> pendingRooms = new Queue<string>();
+        HashSet<string> visitedRooms = new HashSet<string>();
+        Dictionary<string, DoorTriggerNavigation> firstDoorByRoom = new Dictionary<string, DoorTriggerNavigation>();
+
+        pendingRooms.Enqueue(sourceRoom.Trim());
+        visitedRooms.Add(sourceKey);
+
+        while (pendingRooms.Count > 0)
+        {
+            string currentRoom = pendingRooms.Dequeue();
+            string currentKey = NormalizeRoomRouteKey(currentRoom);
+
+            for (int i = 0; i < doors.Length; i++)
+            {
+                DoorTriggerNavigation door = doors[i];
+
+                if (door == null ||
+                    !SameRoom(door.SourceRoom, currentRoom) ||
+                    string.IsNullOrWhiteSpace(door.DestinationRoom))
+                {
+                    continue;
+                }
+
+                string destinationRoom = door.DestinationRoom;
+                string destinationKey = NormalizeRoomRouteKey(destinationRoom);
+
+                if (string.IsNullOrWhiteSpace(destinationKey) || visitedRooms.Contains(destinationKey))
+                {
+                    continue;
+                }
+
+                DoorTriggerNavigation firstDoor = sourceKey == currentKey
+                    ? door
+                    : firstDoorByRoom.TryGetValue(currentKey, out DoorTriggerNavigation existingFirstDoor)
+                        ? existingFirstDoor
+                        : door;
+
+                if (destinationKey == targetKey)
+                {
+                    return firstDoor;
+                }
+
+                visitedRooms.Add(destinationKey);
+                firstDoorByRoom[destinationKey] = firstDoor;
+                pendingRooms.Enqueue(destinationRoom);
+            }
+        }
+
+        return null;
+    }
+
+    private static DoorTriggerNavigation FindNearestDoorInRoom(
+        DoorTriggerNavigation[] doors,
+        string sourceRoom,
+        ActorRoomState actorState)
+    {
+        if (doors == null || string.IsNullOrWhiteSpace(sourceRoom))
+        {
+            return null;
+        }
+
+        DoorTriggerNavigation bestDoor = null;
+        float bestScore = float.MaxValue;
+        RoomProjectedEntity projection = actorState != null ? actorState.Projection : null;
+
+        for (int i = 0; i < doors.Length; i++)
+        {
+            DoorTriggerNavigation door = doors[i];
+
+            if (door == null || !SameRoom(door.SourceRoom, sourceRoom))
+            {
+                continue;
+            }
+
+            float score = i;
+
+            if (projection != null &&
+                projection.TryGetRoomLocalFootPointForTarget(door.transform, out Vector2 doorFootPoint))
+            {
+                score = Vector2.SqrMagnitude(doorFootPoint - projection.RoomLocalFootPoint);
+            }
+
+            if (score < bestScore)
+            {
+                bestScore = score;
+                bestDoor = door;
+            }
+        }
+
+        return bestDoor;
+    }
+
+    private string GetGuestExitSourceRoom(GuestSearchEntry guest)
+    {
+        if (guest == null)
+        {
+            return string.Empty;
+        }
+
+        if (guest.actorState != null && !string.IsNullOrWhiteSpace(guest.actorState.CurrentRoomId))
+        {
+            return guest.actorState.CurrentRoomId.Trim();
+        }
+
+        if (guest.hideAnchor != null && !string.IsNullOrWhiteSpace(guest.hideAnchor.RoomId))
+        {
+            return guest.hideAnchor.RoomId.Trim();
+        }
+
+        ResolveRoomNavigation();
+        return navigationManager != null && !string.IsNullOrWhiteSpace(navigationManager.CurrentRoom)
+            ? navigationManager.CurrentRoom.Trim()
+            : string.Empty;
+    }
+
+    private void BeginGuestExitToDining(GuestSearchEntry guest)
+    {
+        if (guest != null)
+        {
+            guestsExitingToDining.Add(guest);
+        }
+    }
+
+    private void NotifyGuestExitToDiningComplete(GuestSearchEntry guest)
+    {
+        if (guest != null)
+        {
+            guestsExitingToDining.Remove(guest);
+        }
+
+        RequestAllGuestsFoundTransitionWhenReady();
+    }
+
+    private void RequestAllGuestsFoundTransitionWhenReady()
+    {
+        if (!AllGuestsFound || chapter2Controller == null)
+        {
+            return;
+        }
+
+        if (guestsExitingToDining.Count > 0)
+        {
+            if (!allGuestsFoundDeferredUntilExitsComplete)
+            {
+                Debug.Log(
+                    $"{GuestExitDiagnosticPrefix} all guests found deferred until pending exits complete; pending={guestsExitingToDining.Count}",
+                    this);
+            }
+
+            allGuestsFoundDeferredUntilExitsComplete = true;
+            return;
+        }
+
+        if (allGuestsFoundDeferredUntilExitsComplete)
+        {
+            Debug.Log(
+                $"{GuestExitDiagnosticPrefix} pending exits complete; firing all-guests-found transition",
+                this);
+        }
+
+        allGuestsFoundDeferredUntilExitsComplete = false;
+        chapter2Controller.HandleAllGuestsFound();
+    }
+
+    private bool IsGuestExitingToDining(GuestSearchEntry guest)
+    {
+        return guest != null && guestsExitingToDining.Contains(guest);
     }
 
     private void StageGuestForDiningRoomReveal(GuestSearchEntry guest)
@@ -2291,9 +2676,38 @@ public class Chapter2GuestSearchController : MonoBehaviour
         return string.Equals(cleanLeft, cleanRight, StringComparison.OrdinalIgnoreCase);
     }
 
+    private static string NormalizeRoomRouteKey(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        char[] buffer = new char[value.Length];
+        int count = 0;
+
+        for (int i = 0; i < value.Length; i++)
+        {
+            char character = value[i];
+
+            if (char.IsLetterOrDigit(character))
+            {
+                buffer[count] = char.ToLowerInvariant(character);
+                count++;
+            }
+        }
+
+        return new string(buffer, 0, count);
+    }
+
     private static string FormatDiagnosticValue(string value)
     {
         return string.IsNullOrWhiteSpace(value) ? "<empty>" : value.Trim();
+    }
+
+    private static string FormatVector(Vector2 value)
+    {
+        return $"({value.x:0.##}, {value.y:0.##})";
     }
 
     private static bool ContainsAny(string value, params string[] fragments)
