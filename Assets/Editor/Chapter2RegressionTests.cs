@@ -582,9 +582,9 @@ public class Chapter2RegressionTests
         string guestSpiritsReplyBody = ExtractMethodBody(searchText, "private void ShowGuestSpiritsReply");
         string exitToDiningBody = ExtractMethodBody(searchText, "private void ShowGuestExitToDining");
 
-        Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_EMPTY_DOOR_001\")"), "Empty 6:04 doorbell should show the short Butler subtitle.");
-        Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_ONE_COAT_001\")"), "Existing one-coat rejection should get a subtitle without changing coat state.");
-        Assert.That(chapter1Text, Does.Contain("ShowSubtitleLine(\"SUB_CH01_BUTLER_NO_COAT_001\")"), "Existing empty-handed hanger rejection should get a subtitle without changing coat state.");
+        Assert.That(chapter1Text, Does.Contain("ShowButlerErrorLine(ButlerEmptyDoorLineId)"), "Empty door rejections should use the voiced Butler error line.");
+        Assert.That(chapter1Text, Does.Contain("ShowButlerErrorLine(ButlerOneCoatLineId)"), "Existing one-coat rejection should get voiced Butler feedback without changing coat state.");
+        Assert.That(chapter1Text, Does.Contain("ShowButlerErrorLine(ButlerNoCoatLineId)"), "Existing empty-handed hanger rejection should get voiced Butler feedback without changing coat state.");
         Assert.That(chapter1AdmitGroupsBody, Does.Contain("StartCoroutine(AdmitGuestToEntranceHall"), "Answering the door should admit all waiting guests instead of serializing them behind speech.");
         Assert.That(chapter1AdmissionBody, Does.Contain("QueueGuestLine(guest, \"GREETING\""), "Guest greetings should be queued while guests continue walking.");
         Assert.That(chapter1AdmissionBody, Does.Not.Contain("yield return SpeakGuestLine"), "Guest entry movement should not wait for greeting audio.");

@@ -171,6 +171,9 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const string EntranceCoatHangerName = "entrance_coat_hanger_0";
     private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
     private const string DefaultGuestFootstepCatalogResourcePath = "Audio/GuestFootstepCatalog";
+    private const string ButlerEmptyDoorLineId = "SUB_CH01_BUTLER_EMPTY_DOOR_001";
+    private const string ButlerNoCoatLineId = "SUB_CH01_BUTLER_NO_COAT_001";
+    private const string ButlerOneCoatLineId = "SUB_CH01_BUTLER_ONE_COAT_001";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
@@ -368,13 +371,14 @@ public class Chapter1ArrivalController : MonoBehaviour
                 emptyDoorbellWaitingForAnswer = false;
                 doorbellSystem?.StopRinging();
                 Debug.Log("The butler answers the door. No one is there.", this);
-                ShowSubtitleLine("SUB_CH01_BUTLER_EMPTY_DOOR_001");
+                ShowButlerErrorLine(ButlerEmptyDoorLineId);
                 RefreshInteractionState();
                 CheckChapterCompletionGate();
                 return;
             }
 
             Debug.Log("Front door clicked, but no guests are waiting outside.", this);
+            ShowButlerErrorLine(ButlerEmptyDoorLineId);
             return;
         }
 
@@ -549,7 +553,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (butlerCarryingCoat)
         {
             Debug.Log($"[Chapter1] Butler already holding coat {carriedCoatId}.", this);
-            ShowSubtitleLine("SUB_CH01_BUTLER_ONE_COAT_001");
+            ShowButlerErrorLine(ButlerOneCoatLineId);
             return;
         }
 
@@ -577,6 +581,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             if (butlerCarryingCoat)
             {
                 Debug.Log($"[Chapter1] Butler already holding coat {carriedCoatId}.", this);
+                ShowButlerErrorLine(ButlerOneCoatLineId);
             }
 
             return;
@@ -746,7 +751,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (butlerCarryingCoat)
         {
             Debug.Log($"[Chapter1] Butler already holding coat {carriedCoatId}.", this);
-            ShowSubtitleLine("SUB_CH01_BUTLER_ONE_COAT_001");
+            ShowButlerErrorLine(ButlerOneCoatLineId);
             return;
         }
 
@@ -948,7 +953,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (!butlerCarryingCoat)
         {
             Debug.Log("Closet clicked, but the butler is not carrying a coat.", this);
-            ShowSubtitleLine("SUB_CH01_BUTLER_NO_COAT_001");
+            ShowButlerErrorLine(ButlerNoCoatLineId);
             return;
         }
 
@@ -1007,8 +1012,14 @@ public class Chapter1ArrivalController : MonoBehaviour
         Vector2 destination = pendingClosetApproachDestination;
         CancelPendingClosetStorage();
 
-        if (!butlerCarryingCoat ||
-            !(hasDestination
+        if (!butlerCarryingCoat)
+        {
+            Debug.Log("Closet storage completed, but the butler is no longer carrying a coat.", this);
+            ShowButlerErrorLine(ButlerNoCoatLineId);
+            return;
+        }
+
+        if (!(hasDestination
                 ? IsButlerCloseToCloset(destination)
                 : IsButlerCloseToCloset()))
         {
@@ -1115,6 +1126,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         if (!butlerCarryingCoat)
         {
+            ShowButlerErrorLine(ButlerNoCoatLineId);
             return;
         }
 
@@ -3609,6 +3621,17 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         DialogueSpeechService service = ResolveSpeechService();
         service?.BeginSpeakLine(lineId, null, null, false, false);
+    }
+
+    private void ShowButlerErrorLine(string lineId)
+    {
+        if (string.IsNullOrWhiteSpace(lineId))
+        {
+            return;
+        }
+
+        DialogueSpeechService service = ResolveSpeechService();
+        service?.BeginSpeakLine(lineId, "Butler", null, false, false);
     }
 
     private void ShowSubtitleLine(string lineId, string speaker, string text, bool requireAdvance)
