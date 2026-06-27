@@ -35,6 +35,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     [SerializeField] private Transform contactShadowRoot;
     [SerializeField] private SpriteRenderer contactShadowRenderer;
     [SerializeField] private Graphic contactShadowGraphic;
+    [SerializeField] private Canvas sortingCanvas;
+    [SerializeField] private bool sortGraphicsWithCanvas = true;
+    [SerializeField] private bool createSortingCanvasForGraphics = true;
     [SerializeField] private bool useRoomVisualScaleOverrides = true;
     [SerializeField, HideInInspector] private string editorSelectedVisualScaleRoomId = string.Empty;
     [SerializeField, HideInInspector] private List<RoomVisualScaleOverride> roomVisualScaleOverrides = new List<RoomVisualScaleOverride>();
@@ -67,6 +70,8 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public float CurrentScale => currentScale;
     public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;
+    public Canvas SortingCanvas => sortingCanvas;
+    public string CurrentSortingLayerName => GetSortingLayerName();
     public bool UsesRoomVisualScaleOverrides => useRoomVisualScaleOverrides;
     public string EditorSelectedVisualScaleRoomId => editorSelectedVisualScaleRoomId;
     public string CurrentVisualScaleRoomId => GetCurrentVisualScaleRoomKey();
@@ -396,6 +401,8 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         {
             graphicBaseColors[i] = graphics[i] != null ? graphics[i].color : Color.white;
         }
+
+        ResolveSortingCanvasForGraphics();
     }
 
     public void ApplyProjection()
@@ -622,6 +629,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private void ApplyProjectedSorting()
     {
         string layerName = GetSortingLayerName();
+        int baseOrder = currentSortingOrder;
 
         for (int i = 0; i < spriteRenderers.Length; i++)
         {
@@ -635,10 +643,97 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             int localOffset = visualProfile != null
                 ? visualProfile.GetSortingOffsetForRenderer(spriteRenderer.transform)
                 : 0;
-            spriteRenderer.sortingLayerName = layerName;
-            spriteRenderer.sortingOrder = GetSortingOrder(localOffset);
-            spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            YAxisDepthSortUtility.ApplyToRenderer(spriteRenderer, layerName, baseOrder + localOffset);
         }
+
+        if (sortGraphicsWithCanvas && HasGraphics())
+        {
+            ResolveSortingCanvasForGraphics();
+            YAxisDepthSortUtility.ApplyToCanvas(sortingCanvas, layerName, baseOrder);
+        }
+    }
+
+    private void ResolveSortingCanvasForGraphics()
+    {
+        if (!sortGraphicsWithCanvas || !HasGraphics())
+        {
+            return;
+        }
+
+        Transform targetRoot = VisualRoot;
+
+        if (IsOwnedSortingCanvas(sortingCanvas, targetRoot))
+        {
+            return;
+        }
+
+        sortingCanvas = null;
+        Canvas rootCanvas = targetRoot.GetComponent<Canvas>();
+
+        if (IsOwnedSortingCanvas(rootCanvas, targetRoot))
+        {
+            sortingCanvas = rootCanvas;
+            return;
+        }
+
+        Canvas[] childCanvases = targetRoot.GetComponentsInChildren<Canvas>(includeInactiveRenderers);
+
+        for (int i = 0; i < childCanvases.Length; i++)
+        {
+            Canvas candidate = childCanvases[i];
+
+            if (candidate == rootCanvas)
+            {
+                continue;
+            }
+
+            if (IsOwnedSortingCanvas(candidate, targetRoot))
+            {
+                sortingCanvas = candidate;
+                return;
+            }
+        }
+
+        if (createSortingCanvasForGraphics && targetRoot != null)
+        {
+            sortingCanvas = targetRoot.gameObject.AddComponent<Canvas>();
+        }
+    }
+
+    private bool HasGraphics()
+    {
+        if (graphics == null || graphics.Length == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            if (graphics[i] != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsOwnedSortingCanvas(Canvas candidate, Transform targetRoot)
+    {
+        if (candidate == null || targetRoot == null)
+        {
+            return false;
+        }
+
+        Transform candidateTransform = candidate.transform;
+
+        if (candidateTransform != targetRoot && !candidateTransform.IsChildOf(targetRoot))
+        {
+            return false;
+        }
+
+        RoomProjectedEntity owner = candidate.GetComponentInParent<RoomProjectedEntity>(true);
+        return owner == null || owner == this;
     }
 
     private void ApplyContactShadow()

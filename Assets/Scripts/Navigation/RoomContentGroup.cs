@@ -97,12 +97,21 @@ public class RoomContentGroup : MonoBehaviour
                 continue;
             }
 
-            NormalizeRendererDepth(spriteRenderer.transform);
+            bool isDepthSorted = IsDepthSortedRenderer(spriteRenderer);
+
+            if (!isDepthSorted)
+            {
+                NormalizeRendererDepth(spriteRenderer.transform);
+            }
 
             if (applyVisibleDefaultsToChildRenderers)
             {
                 spriteRenderer.enabled = true;
-                ApplyDefaultSorting(spriteRenderer, defaultSpriteSortingOrder);
+
+                if (!isDepthSorted)
+                {
+                    ApplyDefaultSorting(spriteRenderer, defaultSpriteSortingOrder);
+                }
             }
         }
 
@@ -142,6 +151,11 @@ public class RoomContentGroup : MonoBehaviour
                 continue;
             }
 
+            if (IsDepthSortedImagePlayer(imagePlayer))
+            {
+                continue;
+            }
+
             imagePlayer.playOnEnable = true;
             imagePlayer.overrideSpriteSorting = true;
 
@@ -156,6 +170,33 @@ public class RoomContentGroup : MonoBehaviour
                 imagePlayer.spriteSortingOrder = defaultSpriteSortingOrder;
             }
         }
+    }
+
+    private static bool IsDepthSortedRenderer(SpriteRenderer renderer)
+    {
+        if (renderer == null)
+        {
+            return false;
+        }
+
+        Transform rendererTransform = renderer.transform;
+        return rendererTransform.GetComponentInParent<RoomProjectedEntity>(true) != null ||
+            rendererTransform.GetComponentInParent<WorldYSortSpriteRenderer>(true) != null ||
+            rendererTransform.GetComponentInParent<YSortSolidObstacle2D>(true) != null ||
+            rendererTransform.GetComponentInParent<YSortOcclusionFootprint2D>(true) != null;
+    }
+
+    private static bool IsDepthSortedImagePlayer(StaticSetImagePlayer imagePlayer)
+    {
+        if (imagePlayer == null)
+        {
+            return false;
+        }
+
+        Transform playerTransform = imagePlayer.transform;
+        return playerTransform.GetComponentInParent<RoomProjectedEntity>(true) != null ||
+            playerTransform.GetComponentInParent<WorldYSortSpriteRenderer>(true) != null ||
+            playerTransform.GetComponentInParent<YSortOcclusionFootprint2D>(true) != null;
     }
 
     private void RefreshChildSpriteRenderers()

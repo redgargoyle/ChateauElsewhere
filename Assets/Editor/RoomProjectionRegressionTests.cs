@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class RoomProjectionRegressionTests
 {
@@ -12,6 +14,11 @@ public class RoomProjectionRegressionTests
     private const string RoomProjectedEntityPath = "Assets/Scripts/Characters/RoomProjectedEntity.cs";
     private const string RoomPersonWalkerPath = "Assets/Scripts/Characters/RoomPersonWalker2D.cs";
     private const string WorldYSortPath = "Assets/Scripts/Characters/WorldYSortSpriteRenderer.cs";
+    private const string YAxisDepthSortUtilityPath = "Assets/Scripts/Characters/YAxisDepthSortUtility.cs";
+    private const string YSortOcclusionFootprintPath = "Assets/Scripts/Characters/YSortOcclusionFootprint2D.cs";
+    private const string RoomContentGroupPath = "Assets/Scripts/Navigation/RoomContentGroup.cs";
+    private const string StaticSetImagePlayerPath = "Assets/Scripts/StaticSetImagePlayer.cs";
+    private const string YAxisDepthSortingValidatorPath = "Assets/Editor/YAxisDepthSortingValidator.cs";
     private const string NPCWaypointMoverPath = "Assets/Scripts/Story/NPCWaypointMover.cs";
     private const string RoomPerspectiveProfileEditorPath = "Assets/Editor/RoomPerspectiveProfileEditor.cs";
     private const string RoomProjectionCalibrationWindowPath = "Assets/Editor/RoomProjectionCalibrationWindow.cs";
@@ -542,6 +549,312 @@ public class RoomProjectionRegressionTests
     }
 
     [Test]
+    public void YAxisDepthSortUtilityCentralizesWorldAndProfileSorting()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+
+        try
+        {
+            Assert.That(YAxisDepthSortUtility.GetWorldSortingOrder(2.25f), Is.EqualTo(775));
+            Assert.That(YAxisDepthSortUtility.GetWorldSortingOrder(2.25f, 1000, 100f, 7), Is.EqualTo(782));
+            Assert.That(
+                YAxisDepthSortUtility.GetProfileSortingOrder(profile, new Vector2(12f, -120f), 5),
+                Is.EqualTo(profile.GetSortingOrder(new Vector2(12f, -120f), 5)));
+            Assert.That(YAxisDepthSortUtility.GetSafeSortingLayerName("Default"), Is.EqualTo("Default"));
+            Assert.That(YAxisDepthSortUtility.GetSafeSortingLayerName(string.Empty), Is.EqualTo("People"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void ProjectedEntitySortsUiGraphicsWithCanvas()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject root = new GameObject("UiProjectedGuest");
+        GameObject visual = new GameObject("Visual", typeof(RectTransform));
+        visual.transform.SetParent(root.transform, false);
+        Image image = visual.AddComponent<Image>();
+        RoomProjectedEntity entity = root.AddComponent<RoomProjectedEntity>();
+        entity.SetVisualRoot(visual.transform);
+        entity.SetRoomProfile(profile);
+        entity.SetRoomLocalFootPoint(new Vector2(25f, -80f));
+
+        try
+        {
+            entity.ApplyProjection();
+
+            Assert.That(image.GetComponentInParent<Canvas>(), Is.EqualTo(entity.SortingCanvas));
+            Assert.That(entity.SortingCanvas, Is.Not.Null);
+            Assert.That(entity.SortingCanvas.gameObject, Is.EqualTo(visual));
+            Assert.That(entity.SortingCanvas.overrideSorting, Is.True);
+            Assert.That(entity.SortingCanvas.sortingLayerName, Is.EqualTo(profile.SortingLayerName));
+            Assert.That(entity.SortingCanvas.sortingOrder, Is.EqualTo(profile.GetSortingOrder(new Vector2(25f, -80f))));
+            Assert.That(entity.SortingCanvas.GetComponent<GraphicRaycaster>(), Is.Null);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void ProjectedEntityRendererAndCanvasShareBaseOrder()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject root = new GameObject("MixedProjectedGuest");
+        GameObject visual = new GameObject("Visual", typeof(RectTransform));
+        visual.transform.SetParent(root.transform, false);
+        SpriteRenderer renderer = visual.AddComponent<SpriteRenderer>();
+        visual.AddComponent<Image>();
+        RoomProjectedEntity entity = root.AddComponent<RoomProjectedEntity>();
+        entity.SetVisualRoot(visual.transform);
+        entity.SetRoomProfile(profile);
+        entity.SetRoomLocalFootPoint(new Vector2(-35f, 40f));
+
+        try
+        {
+            entity.ApplyProjection();
+            int expectedOrder = profile.GetSortingOrder(new Vector2(-35f, 40f));
+
+            Assert.That(renderer.sortingLayerName, Is.EqualTo(profile.SortingLayerName));
+            Assert.That(renderer.sortingOrder, Is.EqualTo(expectedOrder));
+            Assert.That(entity.SortingCanvas, Is.Not.Null);
+            Assert.That(entity.SortingCanvas.sortingLayerName, Is.EqualTo(profile.SortingLayerName));
+            Assert.That(entity.SortingCanvas.sortingOrder, Is.EqualTo(expectedOrder));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void PlayerUsesRoomProfileSortingWhenAvailable()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject room = new GameObject("Room_Drawing Room");
+        RoomContentGroup group = room.AddComponent<RoomContentGroup>();
+        group.SetPerspectiveProfile(profile);
+        GameObject player = CreatePointClickPlayer("player", Vector3.one);
+        player.transform.SetParent(room.transform, false);
+        player.transform.localPosition = new Vector3(0f, -80f, 0f);
+        SpriteRenderer renderer = player.AddComponent<SpriteRenderer>();
+        PointClickPlayerMovement movement = player.GetComponent<PointClickPlayerMovement>();
+        SetPrivateField(movement, "spriteRenderers", new[] { renderer });
+        SetPrivateField(movement, "logicalPosition", new Vector2(0f, -80f));
+        SetPrivateField(movement, "currentVisualOffset", Vector3.zero);
+        SetPrivateField(movement, "hasRoomStageVisualReference", false);
+        SetPrivateField(movement, "currentRoomStageScaleRatio", 1f);
+        SetPrivateField(movement, "sortPlayerByVisibleFeet", false);
+
+        try
+        {
+            InvokePrivateMethod(movement, "ApplyPlayerSorting");
+
+            Assert.That(renderer.sortingLayerName, Is.EqualTo(profile.SortingLayerName));
+            Assert.That(renderer.sortingOrder, Is.EqualTo(profile.GetSortingOrder(new Vector2(0f, -80f))));
+            Assert.That(movement.CurrentSortingOrder, Is.EqualTo(profile.GetSortingOrder(new Vector2(0f, -80f))));
+            Assert.That(renderer.sortingOrder, Is.Not.EqualTo(YAxisDepthSortUtility.GetWorldSortingOrder(-80f)));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(player);
+            UnityEngine.Object.DestroyImmediate(room);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void WorldYSortSpriteRendererUsesRoomProfileWhenAvailable()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject room = new GameObject("Room_Drawing Room");
+        RoomContentGroup group = room.AddComponent<RoomContentGroup>();
+        group.SetPerspectiveProfile(profile);
+        GameObject prop = new GameObject("CoffeeTable");
+        prop.transform.SetParent(room.transform, false);
+        prop.transform.localPosition = new Vector3(42f, -80f, 0f);
+        SpriteRenderer renderer = prop.AddComponent<SpriteRenderer>();
+        WorldYSortSpriteRenderer sorter = prop.AddComponent<WorldYSortSpriteRenderer>();
+
+        try
+        {
+            sorter.ApplySorting();
+
+            Assert.That(renderer.sortingLayerName, Is.EqualTo(profile.SortingLayerName));
+            Assert.That(renderer.sortingOrder, Is.EqualTo(profile.GetSortingOrder(new Vector2(42f, -80f))));
+            Assert.That(renderer.sortingOrder, Is.Not.EqualTo(YAxisDepthSortUtility.GetWorldSortingOrder(-80f)));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(prop);
+            UnityEngine.Object.DestroyImmediate(room);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void WorldYSortSpriteRendererFallsBackOutsideProfile()
+    {
+        GameObject prop = new GameObject("LooseOccluder");
+        prop.transform.position = new Vector3(0f, 2.25f, 0f);
+        SpriteRenderer renderer = prop.AddComponent<SpriteRenderer>();
+        WorldYSortSpriteRenderer sorter = prop.AddComponent<WorldYSortSpriteRenderer>();
+
+        try
+        {
+            sorter.ApplySorting();
+
+            Assert.That(renderer.sortingLayerName, Is.EqualTo("People"));
+            Assert.That(renderer.sortingOrder, Is.EqualTo(YAxisDepthSortUtility.GetWorldSortingOrder(2.25f)));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(prop);
+        }
+    }
+
+    [Test]
+    public void RoomContentGroupSkipsDepthSortedRenderers()
+    {
+        GameObject room = new GameObject("Room_Drawing Room");
+        RoomContentGroup group = room.AddComponent<RoomContentGroup>();
+        GameObject projected = new GameObject("ProjectedGuest");
+        projected.transform.SetParent(room.transform, false);
+        SpriteRenderer projectedRenderer = projected.AddComponent<SpriteRenderer>();
+        projected.AddComponent<RoomProjectedEntity>();
+        GameObject ySorted = new GameObject("YSortedProp");
+        ySorted.transform.SetParent(room.transform, false);
+        SpriteRenderer ySortedRenderer = ySorted.AddComponent<SpriteRenderer>();
+        ySorted.AddComponent<WorldYSortSpriteRenderer>();
+
+        try
+        {
+            projectedRenderer.sortingLayerName = "People";
+            projectedRenderer.sortingOrder = 321;
+            ySortedRenderer.sortingLayerName = "People";
+            ySortedRenderer.sortingOrder = 654;
+
+            group.ApplyChildRendererVisibilityDefaults();
+
+            Assert.That(projectedRenderer.sortingLayerName, Is.EqualTo("People"));
+            Assert.That(projectedRenderer.sortingOrder, Is.EqualTo(321));
+            Assert.That(ySortedRenderer.sortingLayerName, Is.EqualTo("People"));
+            Assert.That(ySortedRenderer.sortingOrder, Is.EqualTo(654));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(room);
+        }
+    }
+
+    [Test]
+    public void StaticSetImagePlayerDoesNotFightDepthSorting()
+    {
+        GameObject parent = new GameObject("UiParent", typeof(RectTransform));
+        GameObject root = new GameObject("ProjectedUiGuest", typeof(RectTransform));
+        GameObject laterSibling = new GameObject("LaterSibling", typeof(RectTransform));
+        root.transform.SetParent(parent.transform, false);
+        laterSibling.transform.SetParent(parent.transform, false);
+        root.transform.SetSiblingIndex(0);
+        RoomProjectedEntity projection = root.AddComponent<RoomProjectedEntity>();
+        Image image = root.AddComponent<Image>();
+        StaticSetImagePlayer player = root.AddComponent<StaticSetImagePlayer>();
+        player.targetImage = image;
+        player.bringImageToFront = true;
+        player.overrideSpriteSorting = true;
+
+        try
+        {
+            MethodInfo configureImage = typeof(StaticSetImagePlayer).GetMethod("ConfigureImage", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(configureImage, Is.Not.Null);
+            configureImage.Invoke(player, null);
+
+            Assert.That(player.transform.GetSiblingIndex(), Is.EqualTo(0), "Depth-owned UI Images should not use sibling order as a hidden sorting authority.");
+
+            GameObject spriteChild = new GameObject("AnimatedSprite");
+            spriteChild.transform.SetParent(root.transform, false);
+            SpriteRenderer renderer = spriteChild.AddComponent<SpriteRenderer>();
+            StaticSetImagePlayer spritePlayer = spriteChild.AddComponent<StaticSetImagePlayer>();
+            spritePlayer.targetSpriteRenderer = renderer;
+            spritePlayer.overrideSpriteSorting = true;
+            spritePlayer.spriteSortingLayerName = "Background";
+            spritePlayer.spriteSortingOrder = 20;
+            renderer.sortingLayerName = "People";
+            renderer.sortingOrder = 777;
+            MethodInfo configureSprite = typeof(StaticSetImagePlayer).GetMethod("ConfigureSpriteRenderer", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(configureSprite, Is.Not.Null);
+
+            configureSprite.Invoke(spritePlayer, null);
+
+            Assert.That(renderer.sortingLayerName, Is.EqualTo("People"));
+            Assert.That(renderer.sortingOrder, Is.EqualTo(777));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(parent);
+        }
+    }
+
+    [Test]
+    public void DiagonalFootprintSortsPoolTableCase()
+    {
+        GameObject prop = new GameObject("PoolTable");
+        GameObject lineStart = new GameObject("DepthLineStart");
+        GameObject lineEnd = new GameObject("DepthLineEnd");
+        lineStart.transform.SetParent(prop.transform, false);
+        lineEnd.transform.SetParent(prop.transform, false);
+        lineStart.transform.position = new Vector3(-2f, 0f, 0f);
+        lineEnd.transform.position = new Vector3(2f, 2f, 0f);
+        YSortOcclusionFootprint2D footprint = prop.AddComponent<YSortOcclusionFootprint2D>();
+        footprint.ConfigureDepthLine(lineStart.transform, lineEnd.transform, 0.5f, 1);
+
+        try
+        {
+            Assert.That(
+                footprint.TryGetRelativeSortingOrderForActorFoot(new Vector2(1f, -0.1f), 500, 450, out int nearSideOrder),
+                Is.True);
+            Assert.That(nearSideOrder, Is.EqualTo(499), "The table should sort just behind a near/front actor.");
+
+            Assert.That(
+                footprint.TryGetRelativeSortingOrderForActorFoot(new Vector2(1f, 2.1f), 500, 450, out int farSideOrder),
+                Is.True);
+            Assert.That(farSideOrder, Is.EqualTo(501), "The table should sort just in front of a far/back actor.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(prop);
+        }
+    }
+
+    [Test]
+    public void DepthSortingSourceContractsStayExplicit()
+    {
+        string projectionText = File.ReadAllText(RoomProjectedEntityPath);
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string ySortText = File.ReadAllText(WorldYSortPath);
+        string roomText = File.ReadAllText(RoomContentGroupPath);
+        string staticImageText = File.ReadAllText(StaticSetImagePlayerPath);
+
+        Assert.That(File.Exists(YAxisDepthSortUtilityPath), Is.True, "Shared y-depth sorting math should live in one utility.");
+        Assert.That(File.Exists(YSortOcclusionFootprintPath), Is.True, "Large/diagonal props should have a footprint/depth-line escape hatch.");
+        Assert.That(File.Exists(YAxisDepthSortingValidatorPath), Is.True, "Scenes need a validator for mixed sorting authority problems.");
+        Assert.That(projectionText, Does.Contain("sortGraphicsWithCanvas"), "Projected UI Graphics should be sorted by a local Canvas.");
+        Assert.That(projectionText, Does.Contain("ApplyToCanvas"), "RoomProjectedEntity should apply projected sorting to a Canvas for UI Images.");
+        Assert.That(movementText, Does.Contain("GetProfileSortingOrder"), "Player sorting should prefer RoomPerspectiveProfile sorting when available.");
+        Assert.That(movementText, Does.Contain("GetWorldSortingOrder"), "Player sorting should keep the old world-y fallback.");
+        Assert.That(ySortText, Does.Contain("RoomContentGroup"), "WorldYSortSpriteRenderer should be profile-aware inside rooms.");
+        Assert.That(ySortText, Does.Contain("YSortOcclusionFootprint2D"), "WorldYSortSpriteRenderer should support footprint/depth-line local correction.");
+        Assert.That(roomText, Does.Contain("IsDepthSortedRenderer"), "RoomContentGroup should skip renderers owned by projection/y-sort.");
+        Assert.That(staticImageText, Does.Contain("IsDepthSortingOwnedByProjectionOrYSort"), "StaticSetImagePlayer should defer to projection/y-sort sorting authority.");
+    }
+
+    [Test]
     public void LegacyWalkerAndWorldYSortDeferToActiveProjection()
     {
         string walkerText = File.ReadAllText(RoomPersonWalkerPath);
@@ -614,9 +927,23 @@ public class RoomProjectionRegressionTests
         }
     }
 
+    private static void SetPrivateField<T>(object target, string fieldName, T value)
+    {
+        FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"Could not find private field '{fieldName}' on {target.GetType().Name}.");
+        field.SetValue(target, value);
+    }
+
+    private static void InvokePrivateMethod(object target, string methodName)
+    {
+        MethodInfo method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(method, Is.Not.Null, $"Could not find private method '{methodName}' on {target.GetType().Name}.");
+        method.Invoke(target, null);
+    }
+
     private static string ExtractMethodBody(string sourceText, string methodName)
     {
-        int methodIndex = sourceText.IndexOf(methodName, StringComparison.Ordinal);
+        int methodIndex = FindMethodDeclarationIndex(sourceText, methodName);
         Assert.That(methodIndex, Is.GreaterThanOrEqualTo(0), $"Could not find method '{methodName}'.");
 
         int bodyStart = sourceText.IndexOf('{', methodIndex);
@@ -643,5 +970,39 @@ public class RoomProjectionRegressionTests
 
         Assert.Fail($"Could not find end of method body for '{methodName}'.");
         return string.Empty;
+    }
+
+    private static int FindMethodDeclarationIndex(string sourceText, string methodName)
+    {
+        int searchIndex = 0;
+
+        while (searchIndex < sourceText.Length)
+        {
+            int methodIndex = sourceText.IndexOf(methodName, searchIndex, StringComparison.Ordinal);
+
+            if (methodIndex < 0)
+            {
+                return -1;
+            }
+
+            int lineStart = sourceText.LastIndexOf('\n', methodIndex);
+            lineStart = lineStart < 0 ? 0 : lineStart + 1;
+            int lineEnd = sourceText.IndexOf('\n', methodIndex);
+            lineEnd = lineEnd < 0 ? sourceText.Length : lineEnd;
+            string line = sourceText.Substring(lineStart, lineEnd - lineStart);
+
+            if (line.Contains("(") &&
+                (line.Contains("private ") ||
+                    line.Contains("public ") ||
+                    line.Contains("protected ") ||
+                    line.Contains("internal ")))
+            {
+                return methodIndex;
+            }
+
+            searchIndex = methodIndex + methodName.Length;
+        }
+
+        return -1;
     }
 }

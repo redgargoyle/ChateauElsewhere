@@ -67,7 +67,10 @@ public class StaticSetImagePlayer : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (bringImageToFront && targetImage != null && targetImage.transform.parent != null)
+        if (bringImageToFront &&
+            targetImage != null &&
+            targetImage.transform.parent != null &&
+            !IsDepthSortingOwnedByProjectionOrYSort())
         {
             targetImage.transform.SetAsLastSibling();
         }
@@ -265,7 +268,7 @@ public class StaticSetImagePlayer : MonoBehaviour
             targetImage.raycastTarget = false;
         }
 
-        if (bringImageToFront)
+        if (bringImageToFront && !IsDepthSortingOwnedByProjectionOrYSort())
         {
             targetImage.transform.SetAsLastSibling();
         }
@@ -273,7 +276,7 @@ public class StaticSetImagePlayer : MonoBehaviour
 
     private void ConfigureSpriteRenderer()
     {
-        if (targetSpriteRenderer == null || !overrideSpriteSorting)
+        if (targetSpriteRenderer == null || !overrideSpriteSorting || IsDepthSortingOwnedByProjectionOrYSort())
         {
             return;
         }
@@ -284,5 +287,12 @@ public class StaticSetImagePlayer : MonoBehaviour
         }
 
         targetSpriteRenderer.sortingOrder = spriteSortingOrder;
+    }
+
+    private bool IsDepthSortingOwnedByProjectionOrYSort()
+    {
+        return GetComponentInParent<RoomProjectedEntity>(true) != null ||
+            GetComponentInParent<WorldYSortSpriteRenderer>(true) != null ||
+            GetComponentInParent<YSortOcclusionFootprint2D>(true) != null;
     }
 }

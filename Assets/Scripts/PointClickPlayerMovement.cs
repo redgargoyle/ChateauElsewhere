@@ -1942,7 +1942,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		scale = 1f;
 
-		if (!TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
+		if (!TryGetCurrentRoomPerspectiveProfileForSorting(out RoomPerspectiveProfile profile))
 		{
 			return false;
 		}
@@ -1975,6 +1975,19 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		Vector2 worldPoint = LogicalToWalkableWorldPoint(logicalPoint);
 		return cameraManager.TryGetActiveRoomStageLocalPoint(worldPoint, out roomLocalPoint);
+	}
+
+	private bool TryGetActiveRoomStageLocalPoint(Vector2 worldPoint, out Vector2 roomLocalPoint)
+	{
+		roomLocalPoint = Vector2.zero;
+
+		if (cameraManager == null)
+		{
+			cameraManager = FindAnyObjectByType<CameraManager>();
+		}
+
+		return cameraManager != null &&
+			cameraManager.TryGetActiveRoomStageLocalPoint(worldPoint, out roomLocalPoint);
 	}
 
 	private bool TryGetRoomLocalFootPointForButlerCalibration(string roomId, Vector2 logicalPoint, out Vector2 roomLocalFootPoint)
@@ -2057,7 +2070,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return true;
 		}
 
-		RoomContentGroup parentRoom = GetComponentInParent<RoomContentGroup>(true);
+		RoomContentGroup parentRoom = GetParentRoomContentGroup();
 		if (parentRoom != null && parentRoom.TryGetPerspectiveProfile(out profile))
 		{
 			currentRoomPerspectiveProfile = profile;
@@ -3824,7 +3837,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return CleanRoomName(currentRoomPerspectiveProfileRoom);
 		}
 
-		RoomContentGroup parentRoom = GetComponentInParent<RoomContentGroup>(true);
+		RoomContentGroup parentRoom = GetParentRoomContentGroup();
 		return parentRoom != null ? CleanRoomName(parentRoom.RoomName) : string.Empty;
 	}
 
@@ -4019,8 +4032,22 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 
 		string sortingLayerName = GetSortingLayerName(playerSortingLayerName);
-		float sortingY = GetPlayerSortingY();
-		int sortingOrder = playerSortingOrderBase - Mathf.RoundToInt(sortingY * playerSortingOrderPerYUnit);
+		int sortingOrder;
+
+		if (TryGetPlayerRoomProfileSorting(out string profileSortingLayerName, out int profileSortingOrder))
+		{
+			sortingLayerName = profileSortingLayerName;
+			sortingOrder = profileSortingOrder;
+		}
+		else
+		{
+			float sortingY = GetPlayerSortingY();
+			sortingOrder = YAxisDepthSortUtility.GetWorldSortingOrder(
+				sortingY,
+				playerSortingOrderBase,
+				playerSortingOrderPerYUnit);
+		}
+
 		currentSortingOrder = sortingOrder;
 
 		for (int i = 0; i < spriteRenderers.Length; i++)
@@ -4029,9 +4056,142 @@ public class PointClickPlayerMovement : MonoBehaviour
 			if (targetRenderer == null)
 				continue;
 
-			targetRenderer.sortingLayerName = sortingLayerName;
-			targetRenderer.sortingOrder = sortingOrder;
+			YAxisDepthSortUtility.ApplyToRenderer(targetRenderer, sortingLayerName, sortingOrder, false);
 		}
+	}
+
+	private bool TryGetPlayerRoomProfileSorting(out string sortingLayerName, out int sortingOrder)
+	{
+		sortingLayerName = string.Empty;
+		sortingOrder = 0;
+
+		if (!TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
+		{
+			return false;
+		}
+
+		Vector2 worldFootPoint = GetPlayerSortingWorldFootPoint();
+
+		if (!TryConvertPlayerSortingFootPointToRoomLocal(worldFootPoint, out Vector2 roomLocalFootPoint))
+		{
+			return false;
+		}
+
+		sortingLayerName = profile.SortingLayerName;
+		sortingOrder = YAxisDepthSortUtility.GetProfileSortingOrder(profile, roomLocalFootPoint);
+		return true;
+	}
+
+	private bool TryGetCurrentRoomPerspectiveProfileForSorting(out RoomPerspectiveProfile profile)
+	{
+		RoomContentGroup parentRoom = GetComponentInParent<RoomContentGroup>(true);
+
+		if (parentRoom != null && parentRoom.TryGetPerspectiveProfile(out profile))
+		{
+			return true;
+		}
+
+		if (TryGetCurrentRoomPerspectiveProfile(out profile))
+		{
+			return true;
+		}
+
+		if (navigationManager == null)
+		{
+			navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+		}
+
+		string currentRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
+
+		if (!string.IsNullOrWhiteSpace(currentRoom) &&
+			TryFindRoomContentForRoom(currentRoom, out RoomContentGroup roomContent) &&
+			roomContent.TryGetPerspectiveProfile(out profile))
+		{
+			return true;
+		}
+
+		profile = null;
+		return false;
+	}
+
+	private Vector2 GetPlayerSortingWorldFootPoint()
+	{
+		if (sortPlayerByVisibleFeet)
+		{
+			bool foundRendererBounds = false;
+			float lowestVisibleY = float.PositiveInfinity;
+			float lowestVisibleX = transform.position.x;
+
+			for (int i = 0; i < spriteRenderers.Length; i++)
+			{
+				SpriteRenderer targetRenderer = spriteRenderers[i];
+
+				if (targetRenderer == null || !targetRenderer.enabled || targetRenderer.sprite == null)
+				{
+					continue;
+				}
+
+				if (targetRenderer.bounds.min.y < lowestVisibleY)
+				{
+					lowestVisibleY = targetRenderer.bounds.min.y;
+					lowestVisibleX = targetRenderer.bounds.center.x;
+					foundRendererBounds = true;
+				}
+			}
+
+			if (foundRendererBounds)
+			{
+				return new Vector2(lowestVisibleX, lowestVisibleY + playerSortingYOffset);
+			}
+		}
+
+		Vector2 logicalWorldPoint = LogicalToWalkableWorldPoint(logicalPosition);
+		logicalWorldPoint.y += playerSortingYOffset;
+		return logicalWorldPoint;
+	}
+
+	private bool TryConvertPlayerSortingFootPointToRoomLocal(Vector2 worldFootPoint, out Vector2 roomLocalFootPoint)
+	{
+		RoomContentGroup parentRoom = GetComponentInParent<RoomContentGroup>(true);
+
+		if (parentRoom != null && parentRoom.TryGetPerspectiveProfile(out _))
+		{
+			Vector3 localPoint = parentRoom.transform.InverseTransformPoint(worldFootPoint);
+			roomLocalFootPoint = new Vector2(localPoint.x, localPoint.y);
+			return true;
+		}
+
+		if (TryGetActiveRoomStageLocalPoint(worldFootPoint, out roomLocalFootPoint))
+		{
+			return true;
+		}
+
+		roomLocalFootPoint = Vector2.zero;
+		return false;
+	}
+
+	private RoomContentGroup GetParentRoomContentGroup()
+	{
+		RoomContentGroup parentRoom = GetComponentInParent<RoomContentGroup>(true);
+
+		if (parentRoom != null)
+		{
+			return parentRoom;
+		}
+
+		Transform cursor = transform.parent;
+
+		while (cursor != null)
+		{
+			if (cursor.TryGetComponent(out parentRoom))
+			{
+				return parentRoom;
+			}
+
+			cursor = cursor.parent;
+		}
+
+		return null;
 	}
 
 	private float GetPlayerSortingY()
