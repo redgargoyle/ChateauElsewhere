@@ -22,6 +22,8 @@ public sealed class RoomProjectedEntityEditor : Editor
 
         EditorGUILayout.Space(8f);
         DrawRoomVisualScaleControls();
+        EditorGUILayout.Space(8f);
+        DrawSharedCharacterScaleDiagnostics();
     }
 
     private void DrawRoomVisualScaleControls()
@@ -111,6 +113,31 @@ public sealed class RoomProjectedEntityEditor : Editor
         EditorGUILayout.HelpBox(
             "Pick a room, edit Visual Root Scale, then use Apply Preview. The stored scale is only used when this actor is projected in that room.",
             MessageType.None);
+    }
+
+    private void DrawSharedCharacterScaleDiagnostics()
+    {
+        EditorGUILayout.LabelField("Shared Character Scale", EditorStyles.boldLabel);
+
+        if (targets.Length != 1)
+        {
+            EditorGUILayout.HelpBox("Select one projected character at a time to inspect shared character scaling.", MessageType.Info);
+            return;
+        }
+
+        RoomProjectedEntity entity = (RoomProjectedEntity)target;
+
+        using (new EditorGUI.DisabledScope(true))
+        {
+            EditorGUILayout.Toggle("Use Shared Character Room Scale", entity.UseButlerCharacterScaleRules);
+            EditorGUILayout.ObjectField("Scale Source", entity.ButlerScaleSource, typeof(PointClickPlayerMovement), true);
+            EditorGUILayout.Toggle("Using Shared Scale Now", entity.IsUsingButlerCharacterScaleRules);
+            EditorGUILayout.FloatField("Shared Depth", entity.CurrentButlerCharacterDepth01);
+            EditorGUILayout.FloatField("Shared Room Scale", entity.CurrentButlerCharacterScale);
+            EditorGUILayout.Toggle(
+                "Ignoring Old Room Visual Override",
+                entity.IsUsingButlerCharacterScaleRules && entity.IgnoreRoomVisualScaleOverridesWhenUsingButlerRules);
+        }
     }
 
     private static string ResolveSelectedRoom(RoomProjectedEntity entity, string[] roomOptions)
