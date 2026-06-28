@@ -10,6 +10,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
     [SerializeField] private bool includeInactiveInEditMode = true;
     [SerializeField] private bool applyToRoomProjectedEntities = true;
     [SerializeField] private bool applyToRoomPersonWalkers = true;
+    [SerializeField] private bool applyToActorRoomStates = true;
     [SerializeField] private bool skipButlerObject = true;
     [SerializeField] private bool logSummary;
     [SerializeField, HideInInspector] private float debugGuestScaleMultiplier = 1f;
@@ -84,6 +85,11 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         if (applyToRoomPersonWalkers)
         {
             ApplyToWalkers(source, ref summary);
+        }
+
+        if (applyToActorRoomStates)
+        {
+            ApplyToActorRoomStates(source, ref summary);
         }
 
         if (logSummary)
@@ -178,6 +184,49 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         }
     }
 
+    private void ApplyToActorRoomStates(PointClickPlayerMovement source, ref GuestScaleApplySummary summary)
+    {
+        ActorRoomState[] actors = FindObjectsByType<ActorRoomState>(GetFindObjectsInactiveMode());
+
+        for (int i = 0; i < actors.Length; i++)
+        {
+            ActorRoomState actor = actors[i];
+
+            if (!IsLoadedSceneObject(actor))
+            {
+                continue;
+            }
+
+            summary.ActorStatesFound++;
+
+            if (skipButlerObject && IsButlerObjectOrChild(actor.transform, source))
+            {
+                summary.Skipped++;
+                continue;
+            }
+
+            if (!LooksLikeGuestActor(actor))
+            {
+                summary.Skipped++;
+                continue;
+            }
+
+            if (actor.TryGetButlerCharacterScaleSample(source, out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
+            {
+                if (actor.ApplyButlerCharacterScaleNow(source, debugGuestScaleMultiplier))
+                {
+                    summary.Scaled++;
+                    summary.UsingButlerRules++;
+                    summary.IncludeScale(sample.ButlerFinalLocalScaleY * debugGuestScaleMultiplier);
+                }
+            }
+            else
+            {
+                summary.MissingCalibration++;
+            }
+        }
+    }
+
     private FindObjectsInactive GetFindObjectsInactiveMode()
     {
         return Application.isPlaying || !includeInactiveInEditMode
@@ -250,7 +299,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
     private void LogSummary(GuestScaleApplySummary summary)
     {
-        string key = $"{summary.SourceName}|{summary.ProjectedFound}|{summary.WalkersFound}|{summary.Scaled}|{summary.MissingCalibration}|{summary.MinScale:0.###}|{summary.MaxScale:0.###}";
+        string key = $"{summary.SourceName}|{summary.ProjectedFound}|{summary.WalkersFound}|{summary.ActorStatesFound}|{summary.Scaled}|{summary.MissingCalibration}|{summary.MinScale:0.###}|{summary.MaxScale:0.###}";
 
         if (key == lastSummaryKey)
         {
@@ -266,7 +315,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         }
 
         Debug.Log(
-            $"[GuestButlerScale] scaled {summary.Scaled} guests ({summary.ProjectedFound} RoomProjectedEntity, {summary.WalkersFound} walkers), {summary.Skipped} skipped, {summary.MissingCalibration} missing calibration, source={summary.SourceName}, scale range={summary.MinScale:0.###}-{summary.MaxScale:0.###}",
+            $"[GuestButlerScale] scaled {summary.Scaled} guests ({summary.ProjectedFound} RoomProjectedEntity, {summary.WalkersFound} walkers, {summary.ActorStatesFound} actor states), {summary.Skipped} skipped, {summary.MissingCalibration} missing calibration, source={summary.SourceName}, scale range={summary.MinScale:0.###}-{summary.MaxScale:0.###}",
             this);
     }
 
@@ -293,6 +342,20 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             value.IndexOf("Butler", System.StringComparison.OrdinalIgnoreCase) >= 0);
     }
 
+    private static bool LooksLikeGuestActor(ActorRoomState actor)
+    {
+        return actor != null &&
+            (ContainsGuest(actor.ActorId) ||
+            ContainsGuest(actor.name) ||
+            ContainsGuest(actor.gameObject.name));
+    }
+
+    private static bool ContainsGuest(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            value.IndexOf("Guest", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
     public struct GuestScaleApplySummary
     {
         public static readonly GuestScaleApplySummary Empty = new GuestScaleApplySummary(string.Empty);
@@ -302,6 +365,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             SourceName = sourceName;
             ProjectedFound = 0;
             WalkersFound = 0;
+            ActorStatesFound = 0;
             UsingButlerRules = 0;
             Skipped = 0;
             MissingCalibration = 0;
@@ -313,6 +377,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         public string SourceName;
         public int ProjectedFound;
         public int WalkersFound;
+        public int ActorStatesFound;
         public int UsingButlerRules;
         public int Skipped;
         public int MissingCalibration;

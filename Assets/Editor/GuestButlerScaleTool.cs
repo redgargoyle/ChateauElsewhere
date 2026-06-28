@@ -161,6 +161,7 @@ public sealed class GuestButlerScaleTool : EditorWindow
         GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
         int projected = 0;
         int walkers = 0;
+        int actors = 0;
 
         RoomProjectedEntity[] entities = FindObjectsByType<RoomProjectedEntity>(FindObjectsInactive.Include);
         for (int i = 0; i < entities.Length; i++)
@@ -202,9 +203,33 @@ public sealed class GuestButlerScaleTool : EditorWindow
             walkers++;
         }
 
+        ActorRoomState[] actorStates = FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
+        for (int i = 0; i < actorStates.Length; i++)
+        {
+            ActorRoomState actor = actorStates[i];
+
+            if (!IsLoadedSceneObject(actor) ||
+                IsButlerObjectOrChild(actor.transform) ||
+                !LooksLikeGuestActor(actor))
+            {
+                continue;
+            }
+
+            Undo.RecordObject(actor, "Enable Butler Scaling On Actor");
+
+            if (!Application.isPlaying)
+            {
+                actor.ResetAuthoredActorScaleForEditor();
+            }
+
+            actor.ApplyButlerCharacterScaleNow(selectedButler);
+            MarkDirty(actor);
+            actors++;
+        }
+
         harmonizer?.RefreshNow();
         MarkSceneDirtyFromButler();
-        lastStatus = $"Enabled Butler scaling on {projected} projected guest(s) and {walkers} walker(s).";
+        lastStatus = $"Enabled Butler scaling on {projected} projected guest(s), {walkers} walker(s), and {actors} actor guest(s).";
     }
 
     private int BypassOldRoomVisualScaleOverrides()
@@ -243,7 +268,7 @@ public sealed class GuestButlerScaleTool : EditorWindow
             return;
         }
 
-        Dictionary<Component, Vector3> before = CaptureGuestScales();
+        Dictionary<Component, Vector3> before = CaptureProofGuestScales();
         harmonizer.SetDebugGuestScaleMultiplier(multiplier);
         GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
         LogUnchangedProofGuests(before, multiplier);
@@ -281,7 +306,7 @@ public sealed class GuestButlerScaleTool : EditorWindow
         Repaint();
     }
 
-    private Dictionary<Component, Vector3> CaptureGuestScales()
+    private Dictionary<Component, Vector3> CaptureProofGuestScales()
     {
         Dictionary<Component, Vector3> result = new Dictionary<Component, Vector3>();
 
@@ -292,7 +317,8 @@ public sealed class GuestButlerScaleTool : EditorWindow
 
             if (IsLoadedSceneObject(entity) &&
                 entity.Mode == RoomProjectedEntity.ProjectionMode.FloorCharacter &&
-                !IsButlerObjectOrChild(entity.transform))
+                !IsButlerObjectOrChild(entity.transform) &&
+                entity.TryGetButlerCharacterScaleSample(out _))
             {
                 result[entity] = entity.VisualRoot != null ? entity.VisualRoot.localScale : entity.transform.localScale;
             }
@@ -303,9 +329,25 @@ public sealed class GuestButlerScaleTool : EditorWindow
         {
             RoomPersonWalker2D walker = walkers[i];
 
-            if (IsLoadedSceneObject(walker) && !IsButlerObjectOrChild(walker.transform))
+            if (IsLoadedSceneObject(walker) &&
+                !IsButlerObjectOrChild(walker.transform) &&
+                walker.TryGetButlerCharacterScaleSample(out _))
             {
                 result[walker] = walker.transform.localScale;
+            }
+        }
+
+        ActorRoomState[] actors = FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
+        for (int i = 0; i < actors.Length; i++)
+        {
+            ActorRoomState actor = actors[i];
+
+            if (IsLoadedSceneObject(actor) &&
+                !IsButlerObjectOrChild(actor.transform) &&
+                LooksLikeGuestActor(actor) &&
+                actor.TryGetButlerCharacterScaleSample(selectedButler, out _))
+            {
+                result[actor] = actor.transform.localScale;
             }
         }
 
@@ -401,6 +443,22 @@ public sealed class GuestButlerScaleTool : EditorWindow
             rows.Add(BuildWalkerAuditRow(walker));
         }
 
+        ActorRoomState[] actors = FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < actors.Length; i++)
+        {
+            ActorRoomState actor = actors[i];
+
+            if (!IsLoadedSceneObject(actor) ||
+                IsButlerObjectOrChild(actor.transform) ||
+                !LooksLikeGuestActor(actor))
+            {
+                continue;
+            }
+
+            rows.Add(BuildActorAuditRow(actor));
+        }
+
         rows.Sort((left, right) => string.Compare(left.ObjectPath, right.ObjectPath, StringComparison.OrdinalIgnoreCase));
         return rows;
     }
@@ -489,6 +547,47 @@ public sealed class GuestButlerScaleTool : EditorWindow
             walker.ButlerScaleSource != null || selectedButler != null,
             hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
             walker.transform.localScale.ToString(),
+            false,
+            warning);
+    }
+
+    private GuestAuditRow BuildActorAuditRow(ActorRoomState actor)
+    {
+        bool hasSample = actor.TryGetButlerCharacterScaleSample(selectedButler, out PointClickPlayerMovement.ButlerCharacterScaleSample sample);
+        string roomId = actor.CurrentRoomId;
+        string warning = string.Empty;
+
+        if (selectedButler == null)
+        {
+            warning = AppendWarning(warning, "No Butler source");
+        }
+
+        if (string.IsNullOrWhiteSpace(roomId))
+        {
+            warning = AppendWarning(warning, "ActorRoomState has no current room id");
+        }
+
+        if (!hasSample)
+        {
+            warning = AppendWarning(warning, "No complete Butler calibration or room-local foot point for this actor");
+        }
+
+        RoomProjectedEntity projection = actor.Projection;
+
+        if (projection != null && projection.IsProjectionActive)
+        {
+            warning = AppendWarning(warning, "Actor has active RoomProjectedEntity; projection should own scale");
+        }
+
+        return new GuestAuditRow(
+            GetObjectPath(actor.transform),
+            "ActorRoomState",
+            roomId,
+            hasSample ? sample.RoomLocalFootPoint.y.ToString("0.###") : "-",
+            actor.IsUsingButlerCharacterScaleRules,
+            selectedButler != null,
+            hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
+            actor.transform.localScale.ToString(),
             false,
             warning);
     }
@@ -637,6 +736,20 @@ public sealed class GuestButlerScaleTool : EditorWindow
         return !string.IsNullOrWhiteSpace(value) &&
             (value.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0 ||
             value.IndexOf("Butler", StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+
+    private static bool LooksLikeGuestActor(ActorRoomState actor)
+    {
+        return actor != null &&
+            (ContainsGuest(actor.ActorId) ||
+            ContainsGuest(actor.name) ||
+            ContainsGuest(actor.gameObject.name));
+    }
+
+    private static bool ContainsGuest(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private static string YesNo(bool value)

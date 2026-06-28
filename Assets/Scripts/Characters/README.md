@@ -62,7 +62,7 @@ Do not edit Transform scale manually for calibration. Do not use Advanced reset 
 
 The manually calibrated Butler room scale is now the shared depth scale source for guests. Guests do not copy the Butler's raw size. Guests use the Butler's normalized room/depth scale multiplier, then keep their own authored scale, sitting/standing art proportions, and `CharacterVisualProfile.HeightScaleMultiplier`.
 
-`RoomProjectedEntity` and `RoomPersonWalker2D` both consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result.
+`RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result.
 
 To enable:
 

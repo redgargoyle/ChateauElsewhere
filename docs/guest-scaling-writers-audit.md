@@ -13,4 +13,4 @@ These are the scale writers found before implementing Butler-derived guest scali
 - Scene and prefab YAML contain authored `m_LocalScale`, `m_SizeDelta`, `roomVisualScaleOverrides`, `nearScale`, and `farScale` values that can affect the visible size of UI/Image-based and projected guests.
 - `PlayModeLayoutCaptureWindow` can persist play-mode `localScale` and `sizeDelta` changes back into scenes.
 
-`GuestButlerScaleHarmonizer` now runs late and calls `ApplyButlerCharacterScaleNow` on `RoomProjectedEntity` and `RoomPersonWalker2D` so these older scale writers cannot silently hide the Butler-derived guest scale.
+`GuestButlerScaleHarmonizer` now runs late and calls `ApplyButlerCharacterScaleNow` on `RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests so these older scale writers cannot silently hide the Butler-derived guest scale.
