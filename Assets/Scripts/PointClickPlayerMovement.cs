@@ -3750,7 +3750,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 			}
 
 			string candidateKey = NormalizeBoundaryName(candidate.name);
-			if (!candidateKey.StartsWith(blockerPrefixKey, StringComparison.OrdinalIgnoreCase))
+			bool hasExplicitObjectBlocker = candidate.GetComponent<ObjectMovementBlocker2D>() != null;
+
+			if (!hasExplicitObjectBlocker &&
+				!candidateKey.StartsWith(blockerPrefixKey, StringComparison.OrdinalIgnoreCase))
 			{
 				continue;
 			}
