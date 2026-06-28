@@ -121,11 +121,13 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
         GuestScaleApplySummary summary = new GuestScaleApplySummary(source != null ? source.name : name);
         List<GuestScaleTarget> targets = BuildGuestScaleTargets(source, camera, ref summary);
+        float standingHumanReferenceScreenHeight = 0f;
+        string butlerReferenceDiagnostic = string.Empty;
         bool hasButlerReferenceHeight = source != null &&
             source.TryGetButlerHumanScaleReference(
                 camera,
-                out float standingHumanReferenceScreenHeight,
-                out string butlerReferenceDiagnostic);
+                out standingHumanReferenceScreenHeight,
+                out butlerReferenceDiagnostic);
 
         for (int i = 0; i < targets.Count; i++)
         {
