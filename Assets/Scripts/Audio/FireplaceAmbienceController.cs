@@ -6,15 +6,19 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
 {
     private const string ControllerObjectName = "Audio_FireplaceAmbience";
     private const string DefaultCatalogResourcePath = "Audio/FireplaceAmbienceCatalog";
+    private const float DefaultHighPassCutoffFrequency = 200f;
 
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private FireplaceAmbienceCatalog catalog;
     [SerializeField] private string catalogResourcePath = DefaultCatalogResourcePath;
     [SerializeField] private AudioSource audioSource;
+    [SerializeField, Min(10f)] private float highPassCutoffFrequency = DefaultHighPassCutoffFrequency;
+    [SerializeField, Range(0.1f, 10f)] private float highPassResonanceQ = 1f;
 
     private int lastClipIndex = -1;
     private float activeBaseVolume;
     private Coroutine fadeRoutine;
+    private AudioHighPassFilter highPassFilter;
 
     public static FireplaceAmbienceController FindOrCreate(RoomNavigationManager navigationManager)
     {
@@ -85,6 +89,20 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
         audioSource.loop = true;
         audioSource.spatialBlend = 0f;
         audioSource.ignoreListenerVolume = true;
+
+        if (highPassFilter == null)
+        {
+            highPassFilter = GetComponent<AudioHighPassFilter>();
+        }
+
+        if (highPassFilter == null)
+        {
+            highPassFilter = gameObject.AddComponent<AudioHighPassFilter>();
+        }
+
+        highPassFilter.enabled = true;
+        highPassFilter.cutoffFrequency = ResolveHighPassCutoffFrequency();
+        highPassFilter.highpassResonanceQ = Mathf.Clamp(highPassResonanceQ, 0.1f, 10f);
 
         if (catalog == null)
         {
@@ -238,5 +256,12 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
     private float GetFadeSeconds()
     {
         return catalog != null ? Mathf.Max(0f, catalog.FadeSeconds) : 0f;
+    }
+
+    private float ResolveHighPassCutoffFrequency()
+    {
+        return highPassCutoffFrequency > 0f
+            ? Mathf.Max(DefaultHighPassCutoffFrequency, highPassCutoffFrequency)
+            : DefaultHighPassCutoffFrequency;
     }
 }

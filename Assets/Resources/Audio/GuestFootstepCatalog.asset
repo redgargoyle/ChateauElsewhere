@@ -130,6 +130,6 @@ MonoBehaviour:
   guestStepIntervalSeconds: 0.54
   butlerStepIntervalSeconds: 0.6
   stepIntervalJitterSeconds: 0.025
-  highPassCutoffFrequency: 180
+  highPassCutoffFrequency: 200
   highPassResonanceQ: 1.1
   lowPassCutoffFrequency: 9000

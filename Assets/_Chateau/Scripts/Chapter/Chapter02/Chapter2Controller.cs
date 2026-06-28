@@ -17,6 +17,9 @@ public enum Chapter2Phase
 [DisallowMultipleComponent]
 public class Chapter2Controller : MonoBehaviour
 {
+    private const string DefaultClockStrikeClipResourcePath = "Audio/SFX/06_heavy_wooden_case_clock_gong_seed1442486_tangoflux_raw_44k1";
+    private const float DefaultClockStrikeVolume = 0.4f;
+
     [Header("References")]
     [SerializeField] private ChapterManager chapterManager;
     [SerializeField] private RoomNavigationManager navigationManager;
@@ -44,6 +47,9 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField] private float clockStrikeCloseUpSeconds = 5f;
     [SerializeField, Min(0.1f)] private float monsterStingerTimeoutSeconds = 14f;
     [SerializeField] private AudioSource clockStrikeAudioSource;
+    [SerializeField] private AudioClip clockStrikeClip;
+    [SerializeField] private string clockStrikeClipResourcePath = DefaultClockStrikeClipResourcePath;
+    [SerializeField, Range(0f, 1f)] private float clockStrikeVolume = DefaultClockStrikeVolume;
 
     [Header("Speech")]
     [SerializeField] private float speechLineSeconds = 1.75f;
@@ -994,20 +1000,44 @@ public class Chapter2Controller : MonoBehaviour
             return;
         }
 
-        if (clockStrikeAudioSource.clip == null)
-        {
-            clockStrikeAudioSource.clip = runtimeClockStrikeClip != null
-                ? runtimeClockStrikeClip
-                : CreateRuntimeClockStrikeClip();
-        }
+        clockStrikeAudioSource.clip = ResolveClockStrikeClip();
 
         clockStrikeAudioSource.playOnAwake = false;
         clockStrikeAudioSource.loop = false;
         clockStrikeAudioSource.spatialBlend = 0f;
-        clockStrikeAudioSource.volume = 0.75f;
-        GameAudioSettings.EnsureBinding(clockStrikeAudioSource, GameAudioChannel.GameSounds, 0.75f);
+        float baseVolume = ResolveClockStrikeVolume();
+        clockStrikeAudioSource.volume = baseVolume;
+        GameAudioSettings.EnsureBinding(clockStrikeAudioSource, GameAudioChannel.GameSounds, baseVolume);
         clockStrikeAudioSource.Stop();
         GameAudioSettings.TryPlay(clockStrikeAudioSource);
+    }
+
+    private AudioClip ResolveClockStrikeClip()
+    {
+        if (clockStrikeClip != null)
+        {
+            return clockStrikeClip;
+        }
+
+        string resourcePath = string.IsNullOrWhiteSpace(clockStrikeClipResourcePath)
+            ? DefaultClockStrikeClipResourcePath
+            : clockStrikeClipResourcePath.Trim();
+
+        clockStrikeClip = Resources.Load<AudioClip>(resourcePath);
+
+        if (clockStrikeClip != null)
+        {
+            return clockStrikeClip;
+        }
+
+        return runtimeClockStrikeClip != null
+            ? runtimeClockStrikeClip
+            : CreateRuntimeClockStrikeClip();
+    }
+
+    private float ResolveClockStrikeVolume()
+    {
+        return clockStrikeVolume > 0f ? Mathf.Clamp01(clockStrikeVolume) : DefaultClockStrikeVolume;
     }
 
     private AudioClip CreateRuntimeClockStrikeClip()

@@ -84,6 +84,7 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
         audioSource.loop = true;
         audioSource.spatialBlend = 0f;
         audioSource.ignoreListenerVolume = true;
+        DisableAttachedFilters();
 
         if (catalog == null)
         {
@@ -97,6 +98,21 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
         if (navigationManager == null)
         {
             navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+    }
+
+    private void DisableAttachedFilters()
+    {
+        AudioHighPassFilter highPassFilter = GetComponent<AudioHighPassFilter>();
+        if (highPassFilter != null)
+        {
+            highPassFilter.enabled = false;
+        }
+
+        AudioLowPassFilter lowPassFilter = GetComponent<AudioLowPassFilter>();
+        if (lowPassFilter != null)
+        {
+            lowPassFilter.enabled = false;
         }
     }
 
