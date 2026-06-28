@@ -62,29 +62,26 @@ Do not edit Transform scale manually for calibration. Do not use Advanced reset 
 
 The manually calibrated Butler room scale is now the shared depth scale source for guests. Guests do not copy the Butler's raw size. Guests use the Butler's normalized room/depth scale multiplier, then keep their own authored scale, sitting/standing art proportions, and `CharacterVisualProfile.HeightScaleMultiplier`.
 
-Guest scaling also uses a final visual-height fitter. The Butler's manually calibrated room scale gives the depth rule, but guests are finally resized by measured rendered height, not by raw `localScale`. This is necessary because the Butler and guests may live in different coordinate systems.
+Guest scaling also uses a final visual-height fitter. The Butler's manually calibrated room scale gives the depth rule, but guests are finally resized by measured rendered height, not by raw `localScale`. This is necessary because the Butler and guests may live in different coordinate systems. The fitter resolves visible art first, then keeps separate `BoundsRoot`, `ScaleRoot`, and primary visual targets so containers and room stages do not accidentally become the measured character.
 
 `RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result, then uses `CharacterVisualBoundsUtility` to fit each guest's visible screen height to the Butler-derived target height.
-
-The final guest scaler measures visible `Renderer` and UI `Graphic` bounds, not broad container `RectTransform`s like `Canvas_Background`, `Rooms`, room stages, or `People` folders. `RoomPersonWalker2D` guests prefer their actual `targetGraphic` as the scale root so path/movement code can keep owning the walker controller transform.
-
-Proof mode is a write-access and visual-target test. It should visibly affect every detected guest, even rooms without Butler calibration. Real mode only applies Butler room scaling in rooms with saved front/back Butler scale calibration. If proof fails, the guest likely has no detectable `Renderer`/`Graphic` visual target or the selected visual root is wrong; the tool audit lists the bounds root, scale root, primary visual, measured heights, and fit diagnostics.
 
 To enable:
 
 1. Open `Tools > Characters > Apply Butler Scaling To Guests`.
 2. Click `Find Scene Butler`.
 3. Click `Add/Ensure GuestButlerScaleHarmonizer`.
-4. Click `Enable Butler Scaling On All Guests`.
-5. Click `Bypass Old Room Visual Scale Overrides For All Guests`.
-6. Click `Refresh Guest Scaling Now`.
-7. Use `PROOF: Make All Guest Butler Scales 50% For 2 Seconds` and `PROOF: Make All Guest Butler Scales 150% For 2 Seconds`.
+4. Click `ENABLE FINAL HUMAN SCALE FOR ALL GUESTS`.
+5. Click `PRINT SCALE WRITER AUDIT`.
+6. Click `REFRESH FINAL HUMAN SCALE NOW`.
+7. Use `PROOF 50%` and `PROOF 150%`.
    Every detected guest should visibly change, even if that room has no Butler calibration.
 8. Check `Room Calibration Coverage`.
    Any room with guests and no Butler calibration must be calibrated or aliased before real Butler scaling can affect those guests.
-9. If a previous failed proof made a guest enormous, click `EMERGENCY: Restore Proof Baselines / Clamp Huge Guest Scales`.
-10. Save Scene.
-11. Test in Play Mode by standing the Butler next to guests and confirming their visual height/scale belongs to the same room system.
+9. Click `SAVE SCENE`.
+10. Test in Play Mode by standing the Butler next to guests and confirming their visual height/scale belongs to the same room system.
+
+Use `Tools > Characters > Human Scale Audit` or `PRINT ALL GUEST SCALE WRITERS` when a guest still looks wrong. The report lists each guest-like object's controller type, visible art, scale root, room-local foot Y, seated state, current/target visual height, and competing writers such as room visual overrides, profile height multipliers, walker near/far scale, room-stage scale motion, and Animator localScale curves.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 

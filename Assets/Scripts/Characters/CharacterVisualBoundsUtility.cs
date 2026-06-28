@@ -1,84 +1,188 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public static class CharacterVisualBoundsUtility
 {
     private const float MinScreenSize = 0.01f;
-    private const float FitTolerancePixels = 0.5f;
+    private const float FitTolerancePixels = 0.75f;
 
-    public struct VisualBoundsOptions
+    private static readonly string[] ForbiddenContainerNames =
     {
-        public bool includeInactive;
-        public bool includeContainerRectTransforms;
-        public bool preferGraphicsAndRenderersOnly;
+        "Canvas",
+        "Canvas_Background",
+        "Rooms",
+        "People",
+        "RoomContentGroup"
+    };
 
-        public static VisualBoundsOptions Default => new VisualBoundsOptions
+    private static readonly string[] IgnoredVisualNameFragments =
+    {
+        "Shadow",
+        "Bubble",
+        "Speech",
+        "Thought",
+        "Cursor",
+        "Marker",
+        "Icon",
+        "Tooltip",
+        "Prompt",
+        "Interact",
+        "Highlight"
+    };
+
+    public readonly struct CharacterVisualTarget
+    {
+        public CharacterVisualTarget(
+            Transform boundsRoot,
+            Transform scaleRoot,
+            Transform primaryVisual,
+            Rect screenRect,
+            float screenHeight,
+            string diagnostic)
         {
-            includeInactive = false,
-            includeContainerRectTransforms = false,
-            preferGraphicsAndRenderersOnly = true
-        };
+            BoundsRoot = boundsRoot;
+            ScaleRoot = scaleRoot;
+            PrimaryVisual = primaryVisual;
+            ScreenRect = screenRect;
+            ScreenHeight = screenHeight;
+            Diagnostic = diagnostic ?? string.Empty;
+        }
+
+        public Transform BoundsRoot { get; }
+        public Transform ScaleRoot { get; }
+        public Transform PrimaryVisual { get; }
+        public Rect ScreenRect { get; }
+        public float ScreenHeight { get; }
+        public string Diagnostic { get; }
     }
 
-    public readonly struct VisualFitResult
+    public readonly struct CharacterVisualFitResult
     {
-        public VisualFitResult(
-            bool success,
-            bool usedFallbackDirectScale,
+        public CharacterVisualFitResult(
             float beforeHeight,
             float targetHeight,
             float afterHeight,
             Vector3 beforeScale,
             Vector3 afterScale,
-            string scaleRootPath,
-            string boundsRootPath,
-            string primaryVisualPath,
+            Transform primaryVisual,
+            bool usedFallback,
             string diagnostic)
         {
-            Success = success;
-            UsedFallbackDirectScale = usedFallbackDirectScale;
             BeforeHeight = beforeHeight;
             TargetHeight = targetHeight;
             AfterHeight = afterHeight;
             BeforeScale = beforeScale;
             AfterScale = afterScale;
-            ScaleRootPath = scaleRootPath;
-            BoundsRootPath = boundsRootPath;
-            PrimaryVisualPath = primaryVisualPath;
-            Diagnostic = diagnostic;
+            PrimaryVisual = primaryVisual;
+            UsedFallback = usedFallback;
+            Diagnostic = diagnostic ?? string.Empty;
         }
 
-        public bool Success { get; }
-        public bool UsedFallbackDirectScale { get; }
         public float BeforeHeight { get; }
         public float TargetHeight { get; }
         public float AfterHeight { get; }
         public Vector3 BeforeScale { get; }
         public Vector3 AfterScale { get; }
-        public string ScaleRootPath { get; }
-        public string BoundsRootPath { get; }
-        public string PrimaryVisualPath { get; }
+        public Transform PrimaryVisual { get; }
+        public bool UsedFallback { get; }
         public string Diagnostic { get; }
     }
 
-    public static bool TryGetScreenRect(
-        Transform root,
+    public static bool TryResolveCharacterVisualTarget(
+        Transform candidateRoot,
         Camera camera,
-        out Rect screenRect,
+        out CharacterVisualTarget target,
         bool includeInactive = false)
     {
-        VisualBoundsOptions options = VisualBoundsOptions.Default;
-        options.includeInactive = includeInactive;
-        return TryGetVisualScreenRect(root, camera, out screenRect, out _, out _, options);
+        target = default;
+
+        if (candidateRoot == null)
+        {
+            return false;
+        }
+
+        List<VisualCandidate> candidates = new List<VisualCandidate>();
+        CollectRendererCandidates(candidateRoot, camera, includeInactive, candidates);
+        CollectGraphicCandidates(candidateRoot, camera, includeInactive, candidates);
+
+        bool usedRectTransformFallback = false;
+
+        if (candidates.Count == 0)
+        {
+            CollectRectTransformFallbackCandidates(candidateRoot, camera, includeInactive, candidates);
+            usedRectTransformFallback = candidates.Count > 0;
+        }
+
+        if (candidates.Count == 0)
+        {
+            return false;
+        }
+
+        VisualCandidate primary = candidates[0];
+
+        for (int i = 1; i < candidates.Count; i++)
+        {
+            if (candidates[i].Area > primary.Area)
+            {
+                primary = candidates[i];
+            }
+        }
+
+        Transform boundsRoot = primary.Transform;
+        Rect boundsRect = primary.ScreenRect;
+        string diagnostic = primary.Source;
+
+        if (candidates.Count > 1)
+        {
+            Transform commonRoot = GetLowestCommonAncestor(candidates);
+
+            if (commonRoot != null && !LooksLikeForbiddenContainer(commonRoot))
+            {
+                boundsRoot = commonRoot;
+                boundsRect = CombineRects(candidates);
+                diagnostic = usedRectTransformFallback
+                    ? $"RectTransform fallback on {candidates.Count} visual target(s)"
+                    : $"Visible art target from {candidates.Count} renderer/graphic target(s)";
+            }
+            else
+            {
+                diagnostic = usedRectTransformFallback
+                    ? "RectTransform fallback; broad common container ignored"
+                    : "Visible art target; broad common container ignored";
+            }
+        }
+        else if (usedRectTransformFallback)
+        {
+            diagnostic = $"RectTransform fallback: {primary.Transform.name}";
+        }
+
+        target = new CharacterVisualTarget(
+            boundsRoot,
+            boundsRoot,
+            primary.Transform,
+            boundsRect,
+            boundsRect.height,
+            diagnostic);
+        return boundsRect.height > MinScreenSize;
     }
 
     public static bool TryGetScreenRect(
         Transform root,
         Camera camera,
         out Rect screenRect,
-        VisualBoundsOptions options)
+        bool includeInactive = false)
     {
-        return TryGetVisualScreenRect(root, camera, out screenRect, out _, out _, options);
+        screenRect = default;
+
+        if (!TryResolveCharacterVisualTarget(root, camera, out CharacterVisualTarget target, includeInactive))
+        {
+            return false;
+        }
+
+        screenRect = target.ScreenRect;
+        return true;
     }
 
     public static bool TryGetScreenHeight(
@@ -86,21 +190,10 @@ public static class CharacterVisualBoundsUtility
         Camera camera,
         out float height,
         bool includeInactive = false)
-    {
-        VisualBoundsOptions options = VisualBoundsOptions.Default;
-        options.includeInactive = includeInactive;
-        return TryGetScreenHeight(root, camera, out height, options);
-    }
-
-    public static bool TryGetScreenHeight(
-        Transform root,
-        Camera camera,
-        out float height,
-        VisualBoundsOptions options)
     {
         height = 0f;
 
-        if (!TryGetVisualScreenRect(root, camera, out Rect rect, out _, out _, options))
+        if (!TryGetScreenRect(root, camera, out Rect rect, includeInactive))
         {
             return false;
         }
@@ -109,120 +202,168 @@ public static class CharacterVisualBoundsUtility
         return height > MinScreenSize;
     }
 
-    public static bool TryGetVisualScreenRect(
-        Transform root,
+    public static bool TryApplyTargetScreenHeight(
+        Transform scaleRoot,
+        Transform boundsRoot,
         Camera camera,
-        out Rect screenRect,
-        out Transform primaryVisualTransform,
-        out string diagnostic,
-        VisualBoundsOptions options)
+        float targetHeight,
+        out CharacterVisualFitResult result,
+        bool includeInactive = false)
     {
-        screenRect = default;
-        primaryVisualTransform = null;
-        diagnostic = string.Empty;
+        result = default;
 
-        if (root == null)
+        if (scaleRoot == null ||
+            boundsRoot == null ||
+            !IsFinite(targetHeight) ||
+            targetHeight <= MinScreenSize)
         {
-            diagnostic = "Root missing";
+            result = new CharacterVisualFitResult(
+                0f,
+                targetHeight,
+                0f,
+                scaleRoot != null ? scaleRoot.localScale : Vector3.one,
+                scaleRoot != null ? scaleRoot.localScale : Vector3.one,
+                null,
+                false,
+                "Invalid scale root, bounds root, or target height");
             return false;
         }
 
-        bool hasRect = false;
-        bool hasArtRect = false;
-        Vector2 min = Vector2.zero;
-        Vector2 max = Vector2.zero;
-        float primaryHeight = 0f;
-
-        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(options.includeInactive);
-        for (int i = 0; i < renderers.Length; i++)
+        if (!TryResolveCharacterVisualTarget(boundsRoot, camera, out CharacterVisualTarget target, includeInactive))
         {
-            Renderer renderer = renderers[i];
-
-            if (renderer == null ||
-                !renderer.enabled ||
-                (!options.includeInactive && !renderer.gameObject.activeInHierarchy) ||
-                !IsValidBounds(renderer.bounds) ||
-                camera == null)
-            {
-                continue;
-            }
-
-            if (!TryGetWorldBoundsScreenRect(camera, renderer.bounds, out Rect rendererRect))
-            {
-                continue;
-            }
-
-            EncapsulateRect(rendererRect, ref hasRect, ref min, ref max);
-            hasArtRect = true;
-            SetPrimaryIfLarger(renderer.transform, rendererRect, ref primaryVisualTransform, ref primaryHeight);
+            result = new CharacterVisualFitResult(
+                0f,
+                targetHeight,
+                0f,
+                scaleRoot.localScale,
+                scaleRoot.localScale,
+                null,
+                false,
+                "No Renderer or Graphic visual bounds found");
+            return false;
         }
 
-        Graphic[] graphics = root.GetComponentsInChildren<Graphic>(options.includeInactive);
-        for (int i = 0; i < graphics.Length; i++)
+        float beforeHeight = target.ScreenHeight;
+        Vector3 rootBeforeScale = scaleRoot.localScale;
+
+        if (beforeHeight <= MinScreenSize)
         {
-            Graphic graphic = graphics[i];
-
-            if (graphic == null ||
-                !graphic.enabled ||
-                (!options.includeInactive && !graphic.gameObject.activeInHierarchy) ||
-                graphic.rectTransform == null)
-            {
-                continue;
-            }
-
-            if (!TryGetRectTransformScreenRect(graphic.rectTransform, ResolveGraphicCamera(graphic, camera), out Rect graphicRect))
-            {
-                continue;
-            }
-
-            EncapsulateRect(graphicRect, ref hasRect, ref min, ref max);
-            hasArtRect = true;
-            SetPrimaryIfLarger(graphic.transform, graphicRect, ref primaryVisualTransform, ref primaryHeight);
+            result = new CharacterVisualFitResult(
+                beforeHeight,
+                targetHeight,
+                beforeHeight,
+                rootBeforeScale,
+                rootBeforeScale,
+                target.PrimaryVisual,
+                false,
+                target.Diagnostic);
+            return false;
         }
 
-        if (!hasArtRect &&
-            options.includeContainerRectTransforms &&
-            !options.preferGraphicsAndRenderersOnly)
+        if (Mathf.Abs(beforeHeight - targetHeight) <= Mathf.Max(FitTolerancePixels, targetHeight * 0.04f))
         {
-            RectTransform[] rectTransforms = root.GetComponentsInChildren<RectTransform>(options.includeInactive);
-            for (int i = 0; i < rectTransforms.Length; i++)
-            {
-                RectTransform rectTransform = rectTransforms[i];
+            result = new CharacterVisualFitResult(
+                beforeHeight,
+                targetHeight,
+                beforeHeight,
+                rootBeforeScale,
+                rootBeforeScale,
+                target.PrimaryVisual,
+                false,
+                target.Diagnostic);
+            return true;
+        }
 
-                if (rectTransform == null ||
-                    LooksLikeForbiddenContainer(rectTransform) ||
-                    (!options.includeInactive && !rectTransform.gameObject.activeInHierarchy) ||
-                    !TryGetRectTransformScreenRect(rectTransform, ResolveRectTransformCamera(rectTransform, camera), out Rect rectTransformRect))
+        if (!LooksLikeForbiddenContainer(scaleRoot))
+        {
+            float ratio = targetHeight / beforeHeight;
+
+            if (IsFinite(ratio) && ratio > 0f)
+            {
+                scaleRoot.localScale = ScaleXY(rootBeforeScale, ratio);
+
+                if (TryResolveCharacterVisualTarget(boundsRoot, camera, out CharacterVisualTarget afterTarget, includeInactive) &&
+                    DidScaleMoveVisualHeight(beforeHeight, afterTarget.ScreenHeight, targetHeight, rootBeforeScale, scaleRoot.localScale))
                 {
-                    continue;
+                    result = new CharacterVisualFitResult(
+                        beforeHeight,
+                        targetHeight,
+                        afterTarget.ScreenHeight,
+                        rootBeforeScale,
+                        scaleRoot.localScale,
+                        afterTarget.PrimaryVisual,
+                        false,
+                        afterTarget.Diagnostic);
+                    return true;
                 }
-
-                EncapsulateRect(rectTransformRect, ref hasRect, ref min, ref max);
-                SetPrimaryIfLarger(rectTransform, rectTransformRect, ref primaryVisualTransform, ref primaryHeight);
             }
 
-            if (hasRect)
-            {
-                diagnostic = "RectTransform fallback";
-            }
+            scaleRoot.localScale = rootBeforeScale;
         }
 
-        if (!hasRect ||
-            max.x - min.x <= MinScreenSize ||
-            max.y - min.y <= MinScreenSize)
+        Transform primaryVisual = target.PrimaryVisual;
+
+        if (primaryVisual == null || primaryVisual == scaleRoot || LooksLikeForbiddenContainer(primaryVisual))
         {
-            screenRect = default;
-            diagnostic = string.IsNullOrWhiteSpace(diagnostic)
-                ? "No visible Renderer or Graphic bounds found"
-                : diagnostic;
+            result = new CharacterVisualFitResult(
+                beforeHeight,
+                targetHeight,
+                beforeHeight,
+                rootBeforeScale,
+                scaleRoot.localScale,
+                primaryVisual,
+                false,
+                LooksLikeForbiddenContainer(scaleRoot)
+                    ? "Scale root is a forbidden broad container"
+                    : "Scaling root did not affect measured visual bounds");
             return false;
         }
 
-        screenRect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
-        diagnostic = string.IsNullOrWhiteSpace(diagnostic)
-            ? $"Measured visible art via {GetPath(primaryVisualTransform)}"
-            : diagnostic;
-        return true;
+        Vector3 primaryBeforeScale = primaryVisual.localScale;
+        float primaryRatio = targetHeight / beforeHeight;
+
+        if (!IsFinite(primaryRatio) || primaryRatio <= 0f)
+        {
+            result = new CharacterVisualFitResult(
+                beforeHeight,
+                targetHeight,
+                beforeHeight,
+                primaryBeforeScale,
+                primaryBeforeScale,
+                primaryVisual,
+                true,
+                "Invalid primary visual scale ratio");
+            return false;
+        }
+
+        primaryVisual.localScale = ScaleXY(primaryBeforeScale, primaryRatio);
+
+        if (TryResolveCharacterVisualTarget(boundsRoot, camera, out CharacterVisualTarget primaryAfterTarget, includeInactive) &&
+            DidScaleMoveVisualHeight(beforeHeight, primaryAfterTarget.ScreenHeight, targetHeight, primaryBeforeScale, primaryVisual.localScale))
+        {
+            result = new CharacterVisualFitResult(
+                beforeHeight,
+                targetHeight,
+                primaryAfterTarget.ScreenHeight,
+                primaryBeforeScale,
+                primaryVisual.localScale,
+                primaryAfterTarget.PrimaryVisual,
+                true,
+                $"Used primary visual fallback. {primaryAfterTarget.Diagnostic}");
+            return true;
+        }
+
+        primaryVisual.localScale = primaryBeforeScale;
+        result = new CharacterVisualFitResult(
+            beforeHeight,
+            targetHeight,
+            beforeHeight,
+            primaryBeforeScale,
+            primaryBeforeScale,
+            primaryVisual,
+            true,
+            "Scaling root and primary visual did not affect measured visual bounds");
+        return false;
     }
 
     public static bool TryFitScreenHeight(
@@ -233,178 +374,172 @@ public static class CharacterVisualBoundsUtility
         out Vector3 nextLocalScale,
         int maxPasses = 2)
     {
-        bool success = TryScaleTransformForScreenHeight(
-            root,
-            root,
-            camera,
-            targetScreenHeight,
-            out VisualFitResult result,
-            VisualBoundsOptions.Default,
-            maxPasses);
+        previousLocalScale = root != null ? root.localScale : Vector3.one;
+        nextLocalScale = previousLocalScale;
+
+        if (!TryApplyTargetScreenHeight(root, root, camera, targetScreenHeight, out CharacterVisualFitResult result))
+        {
+            nextLocalScale = root != null ? root.localScale : nextLocalScale;
+            return false;
+        }
+
         previousLocalScale = result.BeforeScale;
         nextLocalScale = result.AfterScale;
-        return success;
+        return true;
     }
 
-    public static bool TryScaleTransformForScreenHeight(
-        Transform scaleRoot,
-        Transform boundsRoot,
-        Camera camera,
-        float targetScreenHeight,
-        out VisualFitResult result,
-        VisualBoundsOptions options,
-        int maxPasses = 2)
+    public static bool LooksLikeForbiddenContainer(Transform target)
     {
-        Vector3 beforeScale = scaleRoot != null ? scaleRoot.localScale : Vector3.one;
-        result = new VisualFitResult(
-            false,
-            false,
-            0f,
-            targetScreenHeight,
-            0f,
-            beforeScale,
-            beforeScale,
-            GetPath(scaleRoot),
-            GetPath(boundsRoot),
-            string.Empty,
-            string.Empty);
-
-        if (scaleRoot == null)
+        if (target == null)
         {
-            result = BuildFitResult(false, false, 0f, targetScreenHeight, 0f, beforeScale, beforeScale, scaleRoot, boundsRoot, null, "Scale root missing");
             return false;
         }
 
-        if (boundsRoot == null)
+        string name = target.name;
+
+        if (string.IsNullOrWhiteSpace(name))
         {
-            result = BuildFitResult(false, false, 0f, targetScreenHeight, 0f, beforeScale, scaleRoot.localScale, scaleRoot, boundsRoot, null, "Bounds root missing");
             return false;
         }
 
-        if (!IsFinite(targetScreenHeight) || targetScreenHeight <= MinScreenSize)
+        if (name.StartsWith("Room_", StringComparison.OrdinalIgnoreCase))
         {
-            result = BuildFitResult(false, false, 0f, targetScreenHeight, 0f, beforeScale, scaleRoot.localScale, scaleRoot, boundsRoot, null, "Invalid target height");
-            return false;
-        }
-
-        if (!TryGetVisualScreenRect(boundsRoot, camera, out Rect beforeRect, out Transform primaryVisual, out string diagnostic, options))
-        {
-            result = BuildFitResult(false, false, 0f, targetScreenHeight, 0f, beforeScale, scaleRoot.localScale, scaleRoot, boundsRoot, primaryVisual, diagnostic);
-            return false;
-        }
-
-        float beforeHeight = beforeRect.height;
-        int passes = Mathf.Clamp(maxPasses, 1, 4);
-
-        for (int i = 0; i < passes; i++)
-        {
-            if (!TryGetScreenHeight(boundsRoot, camera, out float currentHeight, options) ||
-                currentHeight <= MinScreenSize)
-            {
-                break;
-            }
-
-            if (Mathf.Abs(currentHeight - targetScreenHeight) <= FitTolerancePixels)
-            {
-                result = BuildFitResult(true, false, beforeHeight, targetScreenHeight, currentHeight, beforeScale, scaleRoot.localScale, scaleRoot, boundsRoot, primaryVisual, diagnostic);
-                return true;
-            }
-
-            float ratio = targetScreenHeight / currentHeight;
-
-            if (!TryScaleXY(scaleRoot, ratio))
-            {
-                result = BuildFitResult(false, false, beforeHeight, targetScreenHeight, currentHeight, beforeScale, scaleRoot.localScale, scaleRoot, boundsRoot, primaryVisual, "Exact fit produced invalid scale");
-                return false;
-            }
-        }
-
-        if (TryGetScreenHeight(boundsRoot, camera, out float exactAfterHeight, options) &&
-            Mathf.Abs(exactAfterHeight - targetScreenHeight) <= Mathf.Max(FitTolerancePixels, targetScreenHeight * 0.02f))
-        {
-            result = BuildFitResult(true, false, beforeHeight, targetScreenHeight, exactAfterHeight, beforeScale, scaleRoot.localScale, scaleRoot, boundsRoot, primaryVisual, diagnostic);
             return true;
         }
 
-        scaleRoot.localScale = beforeScale;
-        float fallbackRatio = targetScreenHeight / Mathf.Max(MinScreenSize, beforeHeight);
-
-        if (!TryScaleXY(scaleRoot, fallbackRatio))
+        for (int i = 0; i < ForbiddenContainerNames.Length; i++)
         {
-            result = BuildFitResult(false, true, beforeHeight, targetScreenHeight, exactAfterHeight, beforeScale, scaleRoot.localScale, scaleRoot, boundsRoot, primaryVisual, "Fallback direct scale produced invalid scale");
+            if (string.Equals(name, ForbiddenContainerNames[i], StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool LooksLikeIgnoredVisual(Transform target)
+    {
+        if (target == null)
+        {
             return false;
         }
 
-        TryGetScreenHeight(boundsRoot, camera, out float fallbackAfterHeight, options);
-        bool movedTowardTarget = MovedTowardTarget(beforeHeight, fallbackAfterHeight, targetScreenHeight);
-        bool changedScale = !Approximately(beforeScale, scaleRoot.localScale);
-        bool success = changedScale && movedTowardTarget;
-        result = BuildFitResult(
-            success,
-            true,
-            beforeHeight,
-            targetScreenHeight,
-            fallbackAfterHeight,
-            beforeScale,
-            scaleRoot.localScale,
-            scaleRoot,
-            boundsRoot,
-            primaryVisual,
-            success ? "Fallback direct visual scale" : "Fallback direct visual scale did not move height toward target");
-        return success;
+        string name = target.name;
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < IgnoredVisualNameFragments.Length; i++)
+        {
+            if (name.IndexOf(IgnoredVisualNameFragments[i], StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    private static VisualFitResult BuildFitResult(
-        bool success,
-        bool usedFallbackDirectScale,
-        float beforeHeight,
-        float targetHeight,
-        float afterHeight,
-        Vector3 beforeScale,
-        Vector3 afterScale,
-        Transform scaleRoot,
-        Transform boundsRoot,
-        Transform primaryVisual,
-        string diagnostic)
+    private static void CollectRendererCandidates(
+        Transform root,
+        Camera camera,
+        bool includeInactive,
+        List<VisualCandidate> candidates)
     {
-        return new VisualFitResult(
-            success,
-            usedFallbackDirectScale,
-            beforeHeight,
-            targetHeight,
-            afterHeight,
-            beforeScale,
-            afterScale,
-            GetPath(scaleRoot),
-            GetPath(boundsRoot),
-            GetPath(primaryVisual),
-            diagnostic);
+        if (camera == null)
+        {
+            return;
+        }
+
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(includeInactive);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer == null ||
+                !renderer.enabled ||
+                (!includeInactive && !renderer.gameObject.activeInHierarchy) ||
+                LooksLikeIgnoredVisual(renderer.transform) ||
+                LooksLikeForbiddenContainer(renderer.transform) ||
+                !IsValidBounds(renderer.bounds) ||
+                !TryGetWorldBoundsScreenRect(camera, renderer.bounds, out Rect screenRect))
+            {
+                continue;
+            }
+
+            candidates.Add(new VisualCandidate(renderer.transform, screenRect, "Renderer bounds"));
+        }
     }
 
-    private static Camera ResolveGraphicCamera(Graphic graphic, Camera fallbackCamera)
+    private static void CollectGraphicCandidates(
+        Transform root,
+        Camera camera,
+        bool includeInactive,
+        List<VisualCandidate> candidates)
+    {
+        Graphic[] graphics = root.GetComponentsInChildren<Graphic>(includeInactive);
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            Graphic graphic = graphics[i];
+
+            if (graphic == null ||
+                !graphic.enabled ||
+                (!includeInactive && !graphic.gameObject.activeInHierarchy) ||
+                graphic.color.a <= 0.001f ||
+                graphic.rectTransform == null ||
+                LooksLikeIgnoredVisual(graphic.transform) ||
+                LooksLikeForbiddenContainer(graphic.transform) ||
+                !TryGetRectTransformScreenRect(graphic.rectTransform, ResolveGraphicCamera(graphic, camera), out Rect screenRect))
+            {
+                continue;
+            }
+
+            candidates.Add(new VisualCandidate(graphic.transform, screenRect, "Graphic rect"));
+        }
+    }
+
+    private static void CollectRectTransformFallbackCandidates(
+        Transform root,
+        Camera camera,
+        bool includeInactive,
+        List<VisualCandidate> candidates)
+    {
+        RectTransform[] rectTransforms = root.GetComponentsInChildren<RectTransform>(includeInactive);
+
+        for (int i = 0; i < rectTransforms.Length; i++)
+        {
+            RectTransform rectTransform = rectTransforms[i];
+
+            if (rectTransform == null ||
+                (!includeInactive && !rectTransform.gameObject.activeInHierarchy) ||
+                LooksLikeIgnoredVisual(rectTransform) ||
+                LooksLikeForbiddenContainer(rectTransform) ||
+                !TryGetRectTransformScreenRect(rectTransform, camera, out Rect screenRect))
+            {
+                continue;
+            }
+
+            candidates.Add(new VisualCandidate(rectTransform, screenRect, "RectTransform fallback"));
+        }
+    }
+
+    private static Camera ResolveGraphicCamera(Graphic graphic, Camera suppliedCamera)
     {
         if (graphic == null)
         {
-            return fallbackCamera;
+            return suppliedCamera;
         }
 
-        Canvas canvas = graphic.canvas != null
-            ? graphic.canvas
-            : graphic.GetComponentInParent<Canvas>(true);
-        return ResolveCanvasCamera(canvas, fallbackCamera);
-    }
+        Canvas canvas = graphic.canvas;
 
-    private static Camera ResolveRectTransformCamera(RectTransform rectTransform, Camera fallbackCamera)
-    {
-        Canvas canvas = rectTransform != null ? rectTransform.GetComponentInParent<Canvas>(true) : null;
-        return ResolveCanvasCamera(canvas, fallbackCamera);
-    }
-
-    private static Camera ResolveCanvasCamera(Canvas canvas, Camera fallbackCamera)
-    {
         if (canvas == null)
         {
-            return fallbackCamera;
+            return suppliedCamera;
         }
 
         if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
@@ -412,12 +547,12 @@ public static class CharacterVisualBoundsUtility
             return null;
         }
 
-        return canvas.worldCamera != null ? canvas.worldCamera : fallbackCamera;
+        return canvas.worldCamera != null ? canvas.worldCamera : suppliedCamera;
     }
 
-    private static bool TryGetWorldBoundsScreenRect(Camera camera, Bounds bounds, out Rect rect)
+    private static bool TryGetWorldBoundsScreenRect(Camera camera, Bounds bounds, out Rect screenRect)
     {
-        rect = default;
+        screenRect = default;
 
         if (camera == null || !IsValidBounds(bounds))
         {
@@ -439,18 +574,15 @@ public static class CharacterVisualBoundsUtility
         EncapsulateScreenPoint(camera.WorldToScreenPoint(center + new Vector3(extents.x, extents.y, -extents.z)), ref hasRect, ref min, ref max);
         EncapsulateScreenPoint(camera.WorldToScreenPoint(center + new Vector3(extents.x, extents.y, extents.z)), ref hasRect, ref min, ref max);
 
-        if (!hasRect || max.x - min.x <= MinScreenSize || max.y - min.y <= MinScreenSize)
-        {
-            return false;
-        }
-
-        rect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
-        return true;
+        return TryBuildRect(hasRect, min, max, out screenRect);
     }
 
-    private static bool TryGetRectTransformScreenRect(RectTransform rectTransform, Camera camera, out Rect rect)
+    private static bool TryGetRectTransformScreenRect(
+        RectTransform rectTransform,
+        Camera camera,
+        out Rect screenRect)
     {
-        rect = default;
+        screenRect = default;
 
         if (rectTransform == null ||
             rectTransform.rect.width <= MinScreenSize ||
@@ -470,52 +602,22 @@ public static class CharacterVisualBoundsUtility
             EncapsulateScreenPoint(RectTransformUtility.WorldToScreenPoint(camera, corners[i]), ref hasRect, ref min, ref max);
         }
 
-        if (!hasRect || max.x - min.x <= MinScreenSize || max.y - min.y <= MinScreenSize)
+        return TryBuildRect(hasRect, min, max, out screenRect);
+    }
+
+    private static bool TryBuildRect(bool hasRect, Vector2 min, Vector2 max, out Rect screenRect)
+    {
+        screenRect = default;
+
+        if (!hasRect ||
+            max.x - min.x <= MinScreenSize ||
+            max.y - min.y <= MinScreenSize)
         {
             return false;
         }
 
-        rect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        screenRect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
         return true;
-    }
-
-    private static void EncapsulateRect(Rect rect, ref bool hasRect, ref Vector2 min, ref Vector2 max)
-    {
-        if (rect.width <= MinScreenSize || rect.height <= MinScreenSize)
-        {
-            return;
-        }
-
-        Vector2 rectMin = rect.min;
-        Vector2 rectMax = rect.max;
-
-        if (!hasRect)
-        {
-            min = rectMin;
-            max = rectMax;
-            hasRect = true;
-            return;
-        }
-
-        min = Vector2.Min(min, rectMin);
-        max = Vector2.Max(max, rectMax);
-    }
-
-    private static void SetPrimaryIfLarger(
-        Transform candidate,
-        Rect rect,
-        ref Transform primaryVisualTransform,
-        ref float primaryHeight)
-    {
-        if (candidate == null ||
-            LooksLikeForbiddenContainer(candidate) ||
-            rect.height <= primaryHeight)
-        {
-            return;
-        }
-
-        primaryVisualTransform = candidate;
-        primaryHeight = rect.height;
     }
 
     private static void EncapsulateScreenPoint(
@@ -545,67 +647,102 @@ public static class CharacterVisualBoundsUtility
         max = Vector2.Max(max, point);
     }
 
-    private static void EncapsulateScreenPoint(
-        Vector2 screenPoint,
-        ref bool hasRect,
-        ref Vector2 min,
-        ref Vector2 max)
+    private static Rect CombineRects(List<VisualCandidate> candidates)
     {
-        EncapsulateScreenPoint(new Vector3(screenPoint.x, screenPoint.y, 1f), ref hasRect, ref min, ref max);
+        if (candidates == null || candidates.Count == 0)
+        {
+            return default;
+        }
+
+        Vector2 min = new Vector2(candidates[0].ScreenRect.xMin, candidates[0].ScreenRect.yMin);
+        Vector2 max = new Vector2(candidates[0].ScreenRect.xMax, candidates[0].ScreenRect.yMax);
+
+        for (int i = 1; i < candidates.Count; i++)
+        {
+            Rect rect = candidates[i].ScreenRect;
+            min = Vector2.Min(min, new Vector2(rect.xMin, rect.yMin));
+            max = Vector2.Max(max, new Vector2(rect.xMax, rect.yMax));
+        }
+
+        return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
     }
 
-    private static bool TryScaleXY(Transform target, float ratio)
+    private static Transform GetLowestCommonAncestor(List<VisualCandidate> candidates)
     {
-        if (target == null || !IsFinite(ratio) || ratio <= 0f)
+        if (candidates == null || candidates.Count == 0)
+        {
+            return null;
+        }
+
+        Transform common = candidates[0].Transform;
+
+        for (int i = 1; i < candidates.Count && common != null; i++)
+        {
+            common = GetLowestCommonAncestor(common, candidates[i].Transform);
+        }
+
+        return common;
+    }
+
+    private static Transform GetLowestCommonAncestor(Transform first, Transform second)
+    {
+        if (first == null || second == null)
+        {
+            return null;
+        }
+
+        HashSet<Transform> ancestors = new HashSet<Transform>();
+        Transform current = first;
+
+        while (current != null)
+        {
+            ancestors.Add(current);
+            current = current.parent;
+        }
+
+        current = second;
+
+        while (current != null)
+        {
+            if (ancestors.Contains(current))
+            {
+                return current;
+            }
+
+            current = current.parent;
+        }
+
+        return null;
+    }
+
+    private static bool DidScaleMoveVisualHeight(
+        float beforeHeight,
+        float afterHeight,
+        float targetHeight,
+        Vector3 beforeScale,
+        Vector3 afterScale)
+    {
+        if (afterHeight <= MinScreenSize || Approximately(beforeScale, afterScale))
         {
             return false;
         }
 
-        Vector3 currentScale = target.localScale;
-        Vector3 nextScale = new Vector3(
-            ScaleSignedAxis(currentScale.x, ratio),
-            ScaleSignedAxis(currentScale.y, ratio),
-            currentScale.z);
-
-        if (!IsFinite(nextScale.x) || !IsFinite(nextScale.y) || !IsFinite(nextScale.z))
+        if (Mathf.Abs(afterHeight - targetHeight) <= Mathf.Max(FitTolerancePixels, targetHeight * 0.04f))
         {
-            return false;
+            return true;
         }
 
-        target.localScale = nextScale;
+        if (targetHeight > beforeHeight)
+        {
+            return afterHeight > beforeHeight + FitTolerancePixels;
+        }
+
+        if (targetHeight < beforeHeight)
+        {
+            return afterHeight < beforeHeight - FitTolerancePixels;
+        }
+
         return true;
-    }
-
-    private static bool MovedTowardTarget(float beforeHeight, float afterHeight, float targetHeight)
-    {
-        if (!IsFinite(afterHeight) || afterHeight <= MinScreenSize)
-        {
-            return false;
-        }
-
-        return Mathf.Abs(afterHeight - targetHeight) < Mathf.Abs(beforeHeight - targetHeight);
-    }
-
-    private static bool Approximately(Vector3 left, Vector3 right)
-    {
-        return Mathf.Approximately(left.x, right.x) &&
-            Mathf.Approximately(left.y, right.y) &&
-            Mathf.Approximately(left.z, right.z);
-    }
-
-    private static bool LooksLikeForbiddenContainer(Transform target)
-    {
-        if (target == null)
-        {
-            return false;
-        }
-
-        string name = target.name;
-        return string.Equals(name, "Canvas", System.StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(name, "Canvas_Background", System.StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(name, "Rooms", System.StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(name, "People", System.StringComparison.OrdinalIgnoreCase) ||
-            name.StartsWith("Room_", System.StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsValidBounds(Bounds bounds)
@@ -622,6 +759,14 @@ public static class CharacterVisualBoundsUtility
         return !float.IsNaN(value) && !float.IsInfinity(value);
     }
 
+    private static Vector3 ScaleXY(Vector3 scale, float ratio)
+    {
+        return new Vector3(
+            ScaleSignedAxis(scale.x, ratio),
+            ScaleSignedAxis(scale.y, ratio),
+            scale.z);
+    }
+
     private static float ScaleSignedAxis(float value, float ratio)
     {
         if (Mathf.Approximately(value, 0f))
@@ -632,22 +777,26 @@ public static class CharacterVisualBoundsUtility
         return value * ratio;
     }
 
-    private static string GetPath(Transform target)
+    private static bool Approximately(Vector3 left, Vector3 right)
     {
-        if (target == null)
+        return Mathf.Approximately(left.x, right.x) &&
+            Mathf.Approximately(left.y, right.y) &&
+            Mathf.Approximately(left.z, right.z);
+    }
+
+    private readonly struct VisualCandidate
+    {
+        public VisualCandidate(Transform transform, Rect screenRect, string source)
         {
-            return string.Empty;
+            Transform = transform;
+            ScreenRect = screenRect;
+            Area = Mathf.Max(0f, screenRect.width) * Mathf.Max(0f, screenRect.height);
+            Source = source ?? string.Empty;
         }
 
-        string path = target.name;
-        Transform current = target.parent;
-
-        while (current != null)
-        {
-            path = current.name + "/" + path;
-            current = current.parent;
-        }
-
-        return path;
+        public Transform Transform { get; }
+        public Rect ScreenRect { get; }
+        public float Area { get; }
+        public string Source { get; }
     }
 }

@@ -430,11 +430,58 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return referenceScreenHeight > 0.01f;
 	}
 
+	public bool TryGetButlerHumanScaleReference(
+		Camera camera,
+		out float standingHumanReferenceScreenHeight,
+		out string diagnostic)
+	{
+		standingHumanReferenceScreenHeight = 0f;
+		diagnostic = string.Empty;
+
+		if (camera == null)
+		{
+			diagnostic = "No camera";
+			return false;
+		}
+
+		if (!CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(
+			transform,
+			camera,
+			out CharacterVisualBoundsUtility.CharacterVisualTarget target))
+		{
+			diagnostic = "No Butler visible art bounds";
+			return false;
+		}
+
+		float normalizedScale;
+
+		if (TryEvaluateCurrentButlerCharacterScale(out ButlerCharacterScaleSample currentSample))
+		{
+			normalizedScale = Mathf.Max(0.001f, currentSample.NormalizedScale);
+			diagnostic = $"Butler current calibration {currentSample.RoomId} depth={currentSample.Depth01:0.###}; {target.Diagnostic}";
+		}
+		else
+		{
+			float baseLocalScaleY = Mathf.Max(0.001f, Mathf.Abs(GetButlerScaleReference().y));
+			float currentLocalScaleY = Mathf.Max(0.001f, Mathf.Abs(transform.localScale.y));
+			normalizedScale = currentLocalScaleY / baseLocalScaleY;
+			diagnostic = $"Fallback from Butler localScale.y/baseLocalScale.y; {target.Diagnostic}";
+		}
+
+		standingHumanReferenceScreenHeight = target.ScreenHeight / Mathf.Max(0.001f, normalizedScale);
+		return standingHumanReferenceScreenHeight > 0.01f;
+	}
+
 	public bool TryGetButlerReferenceScreenHeightForRoomScale(
 		Camera camera,
 		out float referenceScreenHeight)
 	{
 		referenceScreenHeight = 0f;
+
+		if (TryGetButlerHumanScaleReference(camera, out referenceScreenHeight, out _))
+		{
+			return true;
+		}
 
 		if (TryGetCurrentButlerReferenceScreenHeight(camera, out referenceScreenHeight, out _))
 		{

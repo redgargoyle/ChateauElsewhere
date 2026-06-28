@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class ActorRoomState : MonoBehaviour
 {
     private const string DiagnosticPrefix = "[Ch2ClickDiag]";
+    private const float DefaultSeatedHumanHeightRatio = 0.68f;
     private static readonly int IsCrouchingHash = Animator.StringToHash("IsCrouching");
 
     [Header("Actor")]
@@ -66,6 +67,7 @@ public class ActorRoomState : MonoBehaviour
     public float CurrentButlerCharacterScale => currentButlerCharacterScale;
     public float CurrentButlerCharacterDepth01 => currentButlerCharacterDepth01;
     public string CurrentButlerCharacterScaleSource => currentButlerCharacterScaleSource;
+    public bool ScaleWithRoomStageMotion => scaleWithRoomStageMotion;
 
     private void Reset()
     {
@@ -202,22 +204,26 @@ public class ActorRoomState : MonoBehaviour
         return actorObject != null ? actorObject.transform : transform;
     }
 
-    public Transform GetGuestBoundsRoot()
-    {
-        return GetGuestScaleRoot();
-    }
-
     public float GetGuestRelativeHeightMultiplier()
     {
         return 1f;
     }
 
-    public bool HasGuestScaleControllerChild()
+    public float GetGuestPoseHeightMultiplier()
     {
-        Transform root = actorObject != null ? actorObject.transform : transform;
-        return root != null &&
-            (root.GetComponentInChildren<RoomProjectedEntity>(true) != null ||
-            root.GetComponentInChildren<RoomPersonWalker2D>(true) != null);
+        if (!IsSeated && !ContainsSeatedHint(GetHierarchyPath(actorObject != null ? actorObject.transform : transform)))
+        {
+            return 1f;
+        }
+
+        CharacterVisualProfile visualProfile = GetComponentInChildren<RoomProjectedEntity>(true)?.VisualProfile;
+
+        if (visualProfile != null)
+        {
+            return visualProfile.GetPoseHeightMultiplier(true);
+        }
+
+        return DefaultSeatedHumanHeightRatio;
     }
 
     public bool TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 roomLocalFootPoint)
@@ -570,6 +576,34 @@ public class ActorRoomState : MonoBehaviour
     {
         return !string.IsNullOrWhiteSpace(value) &&
             value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool ContainsSeatedHint(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            (value.IndexOf("Seated", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            value.IndexOf("Sitting", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            value.IndexOf("Chair", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            value.IndexOf("Dining", StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+
+    private static string GetHierarchyPath(Transform target)
+    {
+        if (target == null)
+        {
+            return string.Empty;
+        }
+
+        string path = target.name;
+        Transform current = target.parent;
+
+        while (current != null)
+        {
+            path = current.name + "/" + path;
+            current = current.parent;
+        }
+
+        return path;
     }
 
     private int CountEnabledCollider2D()

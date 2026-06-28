@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -141,9 +142,11 @@ public sealed class GuestButlerScaleRegressionTests
         string harmonizerText = File.ReadAllText(HarmonizerPath);
 
         Assert.That(harmonizerText, Does.Contain("[DefaultExecutionOrder(10000)]"));
-        Assert.That(harmonizerText, Does.Contain("CharacterVisualBoundsUtility.TryFitScreenHeight"));
+        Assert.That(harmonizerText, Does.Contain("CharacterVisualBoundsUtility.TryApplyTargetScreenHeight"));
+        Assert.That(harmonizerText, Does.Contain("BoundsRoot"));
+        Assert.That(harmonizerText, Does.Contain("ScaleRoot"));
         Assert.That(harmonizerText, Does.Contain("BuildGuestScaleTargets"));
-        Assert.That(harmonizerText, Does.Contain("ApplyToActorRoomStates"));
+        Assert.That(harmonizerText, Does.Contain("applyToActorRoomStates"));
         Assert.That(harmonizerText, Does.Contain("IsButlerObjectOrChild"));
     }
 
@@ -210,55 +213,97 @@ public sealed class GuestButlerScaleRegressionTests
     }
 
     [Test]
-    public void CharacterVisualBoundsUtilityIgnoresContainerRectTransformsByDefault()
+    public void CharacterVisualBoundsIgnoresContainerRectTransforms()
     {
         Camera camera = CreateTestCamera();
-        GameObject root = new GameObject("Container", typeof(RectTransform));
+        GameObject root = new GameObject("HugeContainer", typeof(RectTransform));
         RectTransform rootRect = root.GetComponent<RectTransform>();
-        rootRect.sizeDelta = new Vector2(1000f, 1000f);
-        GameObject child = CreateUiVisual("CharacterImage", new Vector2(80f, 120f), Vector3.one);
+        rootRect.sizeDelta = new Vector2(2000f, 2000f);
+        GameObject child = CreateUiVisual("GuestBody", new Vector2(100f, 200f), Vector3.one);
         child.transform.SetParent(root.transform, false);
 
         try
         {
-            Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(root.transform, camera, out float measuredHeight), Is.True);
-            Assert.That(measuredHeight, Is.LessThan(300f));
+            Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(child.transform, camera, out float childHeight), Is.True);
+            Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(root.transform, camera, out float rootHeight), Is.True);
+            Assert.That(rootHeight, Is.EqualTo(childHeight).Within(1f));
         }
         finally
         {
+            UnityEngine.Object.DestroyImmediate(child);
             UnityEngine.Object.DestroyImmediate(root);
             UnityEngine.Object.DestroyImmediate(camera.gameObject);
         }
     }
 
     [Test]
-    public void CharacterVisualBoundsUtilityUsesNullCameraForOverlayCanvas()
+    public void OverlayCanvasGraphicMeasuresWithNullCamera()
     {
-        GameObject canvasObject = new GameObject("Canvas", typeof(Canvas));
+        GameObject canvasObject = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
         Canvas canvas = canvasObject.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        GameObject graphic = CreateUiVisual("OverlayCharacter", new Vector2(90f, 180f), Vector3.one);
-        graphic.transform.SetParent(canvasObject.transform, false);
+        GameObject child = CreateUiVisual("OverlayGuestBody", new Vector2(100f, 200f), Vector3.one);
+        child.transform.SetParent(canvasObject.transform, false);
 
         try
         {
-            Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(canvasObject.transform, null, out float height), Is.True);
-            Assert.That(height, Is.GreaterThan(0f));
+            Assert.That(
+                CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(
+                    canvasObject.transform,
+                    null,
+                    out CharacterVisualBoundsUtility.CharacterVisualTarget target),
+                Is.True);
+            Assert.That(target.ScreenHeight, Is.GreaterThan(0f));
+            Assert.That(target.PrimaryVisual, Is.EqualTo(child.transform));
         }
         finally
         {
+            UnityEngine.Object.DestroyImmediate(child);
             UnityEngine.Object.DestroyImmediate(canvasObject);
         }
     }
 
     [Test]
-    public void VisualFitSupportsFallbackDirectScaleDiagnostics()
+    public void RoomPersonWalkerUsesTargetGraphicForFinalScale()
     {
-        string utilityText = File.ReadAllText(VisualBoundsUtilityPath);
+        Camera camera = CreateTestCamera();
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+        GuestButlerScaleHarmonizer harmonizer = butler.AddComponent<GuestButlerScaleHarmonizer>();
+        GameObject room = new GameObject("Room_Uncalibrated");
+        room.AddComponent<RoomContentGroup>().SetRoomName("Uncalibrated Room");
+        GameObject walkerRoot = new GameObject("Walker_With_TargetGraphic", typeof(RectTransform));
+        walkerRoot.transform.SetParent(room.transform, false);
+        GameObject graphicObject = CreateUiVisual("WalkerBodyGraphic", new Vector2(100f, 200f), Vector3.one);
+        graphicObject.transform.SetParent(walkerRoot.transform, false);
+        Image image = graphicObject.GetComponent<Image>();
+        RoomPersonWalker2D walker = walkerRoot.AddComponent<RoomPersonWalker2D>();
+        SerializedObject serializedWalker = new SerializedObject(walker);
+        serializedWalker.FindProperty("targetGraphic").objectReferenceValue = image;
+        serializedWalker.ApplyModifiedPropertiesWithoutUndo();
 
-        Assert.That(utilityText, Does.Contain("TryScaleTransformForScreenHeight"));
-        Assert.That(utilityText, Does.Contain("UsedFallbackDirectScale"));
-        Assert.That(utilityText, Does.Contain("Fallback direct visual scale"));
+        try
+        {
+            harmonizer.SetButlerScaleSource(movement);
+            walker.SetButlerScaleSource(movement, false);
+            Vector3 rootScale = walkerRoot.transform.localScale;
+            Vector3 graphicScale = graphicObject.transform.localScale;
+
+            harmonizer.SetDebugGuestScaleMultiplier(0.5f);
+            GuestButlerScaleHarmonizer.GuestScaleApplySummary proofSummary = harmonizer.RefreshNow();
+
+            Assert.That(proofSummary.Scaled, Is.GreaterThanOrEqualTo(1));
+            Assert.That(walkerRoot.transform.localScale, Is.EqualTo(rootScale));
+            Assert.That(graphicObject.transform.localScale.y, Is.EqualTo(graphicScale.y * 0.5f).Within(0.02f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(graphicObject);
+            UnityEngine.Object.DestroyImmediate(walkerRoot);
+            UnityEngine.Object.DestroyImmediate(room);
+            UnityEngine.Object.DestroyImmediate(butler);
+            UnityEngine.Object.DestroyImmediate(camera.gameObject);
+        }
     }
 
     [Test]
@@ -300,33 +345,9 @@ public sealed class GuestButlerScaleRegressionTests
     }
 
     [Test]
-    public void RoomPersonWalkerUsesTargetGraphicAsScaleRoot()
+    public void ProofModeChangesGuestWithoutButlerCalibration()
     {
-        GameObject walkerObject = new GameObject("Walker", typeof(RectTransform));
-        GameObject visual = CreateUiVisual("WalkerImage", new Vector2(100f, 200f), Vector3.one);
-        visual.transform.SetParent(walkerObject.transform, false);
-        RoomPersonWalker2D walker = walkerObject.AddComponent<RoomPersonWalker2D>();
-
-        try
-        {
-            Assert.That(walker.TargetGraphic, Is.EqualTo(visual.GetComponent<Graphic>()));
-            Assert.That(walker.GetGuestScaleRoot(), Is.EqualTo(visual.transform));
-            Assert.That(walker.GetGuestBoundsRoot(), Is.EqualTo(visual.transform));
-        }
-        finally
-        {
-            UnityEngine.Object.DestroyImmediate(walkerObject);
-        }
-    }
-
-    [Test]
-    public void ActorRoomStateSkippedWhenProjectedOrWalkerChildExists()
-    {
-        string actorText = File.ReadAllText(ActorRoomStatePath);
-        string harmonizerText = File.ReadAllText(HarmonizerPath);
-
-        Assert.That(actorText, Does.Contain("HasGuestScaleControllerChild"));
-        Assert.That(harmonizerText, Does.Contain("actor.HasGuestScaleControllerChild()"));
+        ProofModeChangesGuestsWithoutCalibration();
     }
 
     [Test]
@@ -348,7 +369,7 @@ public sealed class GuestButlerScaleRegressionTests
             ConfigureHalfScaleButler(movement);
             harmonizer.SetButlerScaleSource(movement);
             walker.SetButlerScaleSource(movement, false);
-            Assert.That(movement.TryGetButlerReferenceScreenHeightForRoomScale(camera, out float referenceHeight), Is.True);
+            Assert.That(movement.TryGetButlerHumanScaleReference(camera, out float referenceHeight, out _), Is.True);
 
             GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
             Assert.That(summary.Scaled, Is.GreaterThanOrEqualTo(1));
@@ -448,23 +469,136 @@ public sealed class GuestButlerScaleRegressionTests
     }
 
     [Test]
+    public void SeatedGuestUsesSeatedHeightRatio()
+    {
+        Camera camera = CreateTestCamera();
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        butler.AddComponent<SpriteRenderer>().sprite = CreateTestSprite();
+        PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+        ConfigureHalfScaleButler(movement);
+        GuestButlerScaleHarmonizer harmonizer = butler.AddComponent<GuestButlerScaleHarmonizer>();
+        GameObject room = new GameObject("Room_Drawing");
+        room.AddComponent<RoomContentGroup>().SetRoomName("Drawing Room");
+        GameObject guest = CreateUiVisual("Guest_Seated", new Vector2(100f, 300f), Vector3.one);
+        guest.transform.SetParent(room.transform, false);
+        ActorRoomState actor = guest.AddComponent<ActorRoomState>();
+        actor.SetActorId("Guest Seated");
+        actor.SetCurrentRoom("Drawing Room");
+        actor.SetSeated(true);
+
+        try
+        {
+            harmonizer.SetButlerScaleSource(movement);
+            Assert.That(movement.TryGetButlerHumanScaleReference(camera, out float referenceHeight, out _), Is.True);
+            GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
+
+            Assert.That(summary.Scaled, Is.GreaterThanOrEqualTo(1));
+            Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(guest.transform, camera, out float guestHeight), Is.True);
+            Assert.That(guestHeight, Is.EqualTo(referenceHeight * 0.5f * 0.68f).Within(2f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+            UnityEngine.Object.DestroyImmediate(room);
+            UnityEngine.Object.DestroyImmediate(butler);
+            UnityEngine.Object.DestroyImmediate(camera.gameObject);
+        }
+    }
+
+    [Test]
+    public void RoomProjectedEntityBypassesOldScaleOverridesInFinalHumanScale()
+    {
+        Camera camera = CreateTestCamera();
+        RoomPerspectiveProfile profile = CreateProfile(1f, 1f);
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        butler.AddComponent<SpriteRenderer>().sprite = CreateTestSprite();
+        PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+        ConfigureHalfScaleButler(movement);
+        GuestButlerScaleHarmonizer harmonizer = butler.AddComponent<GuestButlerScaleHarmonizer>();
+        RoomProjectedEntity entity = CreateProjectedEntity("ProjectedGuest_FinalHumanScale", profile, null, Vector2.zero);
+        GameObject visual = entity.VisualRoot.gameObject;
+        visual.GetComponent<SpriteRenderer>().sprite = CreateTestSprite();
+
+        try
+        {
+            entity.SetVisualRootScaleForRoom("Drawing Room", new Vector3(0.05f, 0.05f, 1f), false);
+            entity.SetButlerScaleSource(movement, false);
+            entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
+            entity.SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(true, false);
+            harmonizer.SetButlerScaleSource(movement);
+            Assert.That(movement.TryGetButlerHumanScaleReference(camera, out float referenceHeight, out _), Is.True);
+
+            GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
+
+            Assert.That(summary.Scaled, Is.GreaterThanOrEqualTo(1));
+            Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(visual.transform, camera, out float guestHeight), Is.True);
+            Assert.That(guestHeight, Is.EqualTo(referenceHeight * 0.5f).Within(2f));
+        }
+        finally
+        {
+            DestroyEntity(entity);
+            UnityEngine.Object.DestroyImmediate(butler);
+            UnityEngine.Object.DestroyImmediate(profile);
+            UnityEngine.Object.DestroyImmediate(camera.gameObject);
+        }
+    }
+
+    [Test]
+    public void FinalHumanScaleWinsAfterRoomProjectedEntityApplyProjection()
+    {
+        Camera camera = CreateTestCamera();
+        RoomPerspectiveProfile profile = CreateProfile(1f, 1f);
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        butler.AddComponent<SpriteRenderer>().sprite = CreateTestSprite();
+        PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+        ConfigureHalfScaleButler(movement);
+        GuestButlerScaleHarmonizer harmonizer = butler.AddComponent<GuestButlerScaleHarmonizer>();
+        RoomProjectedEntity entity = CreateProjectedEntity("ProjectedGuest_AfterProjection", profile, null, Vector2.zero);
+        GameObject visual = entity.VisualRoot.gameObject;
+        visual.GetComponent<SpriteRenderer>().sprite = CreateTestSprite();
+
+        try
+        {
+            entity.SetButlerScaleSource(movement, false);
+            entity.SetButlerCharacterScaleRulesEnabled(true, false);
+            entity.ApplyProjection();
+            harmonizer.SetButlerScaleSource(movement);
+            Assert.That(movement.TryGetButlerHumanScaleReference(camera, out float referenceHeight, out _), Is.True);
+
+            GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
+
+            Assert.That(summary.Scaled, Is.GreaterThanOrEqualTo(1));
+            Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(visual.transform, camera, out float guestHeight), Is.True);
+            Assert.That(guestHeight, Is.EqualTo(referenceHeight * 0.5f).Within(2f));
+        }
+        finally
+        {
+            DestroyEntity(entity);
+            UnityEngine.Object.DestroyImmediate(butler);
+            UnityEngine.Object.DestroyImmediate(profile);
+            UnityEngine.Object.DestroyImmediate(camera.gameObject);
+        }
+    }
+
+    [Test]
     public void EditorToolContainsRequiredButtons()
     {
         string toolText = File.ReadAllText(ToolPath);
 
-        Assert.That(toolText, Does.Contain("Enable Butler Scaling On All Guests"));
-        Assert.That(toolText, Does.Contain("Refresh Guest Scaling Now"));
-        Assert.That(toolText, Does.Contain("PROOF: Make All Guest Butler Scales 50% For 2 Seconds"));
+        Assert.That(toolText, Does.Contain("ENABLE FINAL HUMAN SCALE FOR ALL GUESTS"));
+        Assert.That(toolText, Does.Contain("REFRESH FINAL HUMAN SCALE NOW"));
+        Assert.That(toolText, Does.Contain("PROOF 50%"));
+        Assert.That(toolText, Does.Contain("PROOF 150%"));
         Assert.That(toolText, Does.Contain("Restore Real Butler Scaling"));
+        Assert.That(toolText, Does.Contain("PRINT SCALE WRITER AUDIT"));
+        Assert.That(toolText, Does.Contain("PRINT ALL GUEST SCALE WRITERS"));
+        Assert.That(toolText, Does.Contain("EMERGENCY: Restore Proof Baselines / Clamp Bad Guest Scales"));
         Assert.That(toolText, Does.Contain("Bypass Old Room Visual Scale Overrides For All Guests"));
         Assert.That(toolText, Does.Contain("Current Visual Height px"));
         Assert.That(toolText, Does.Contain("Target Visual Height px"));
-        Assert.That(toolText, Does.Contain("Bounds Root"));
-        Assert.That(toolText, Does.Contain("Scale Root"));
-        Assert.That(toolText, Does.Contain("Primary Visual"));
-        Assert.That(toolText, Does.Contain("EMERGENCY: Restore Proof Baselines / Clamp Huge Guest Scales"));
         Assert.That(toolText, Does.Contain("Room Calibration Coverage"));
-        Assert.That(File.ReadAllText(VisualBoundsUtilityPath), Does.Contain("TryFitScreenHeight"));
+        Assert.That(File.ReadAllText(VisualBoundsUtilityPath), Does.Contain("TryResolveCharacterVisualTarget"));
+        Assert.That(File.ReadAllText(VisualBoundsUtilityPath), Does.Contain("TryApplyTargetScreenHeight"));
         Assert.That(File.ReadAllText(ActorRoomStatePath), Does.Contain("ApplyButlerCharacterScaleNow"));
     }
 
