@@ -844,12 +844,13 @@ public sealed class GuestButlerScaleTool : EditorWindow
         string visibleVisualRoot = "-";
         string boundsRoot = "-";
         string visualDiagnostic = string.Empty;
+        CharacterVisualBoundsUtility.CharacterVisualTarget visualTarget = default;
         bool hasCurrentHeight = camera != null &&
             root != null &&
             CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(
                 root,
                 camera,
-                out CharacterVisualBoundsUtility.CharacterVisualTarget visualTarget,
+                out visualTarget,
                 includeInactive: true);
 
         if (hasCurrentHeight)
