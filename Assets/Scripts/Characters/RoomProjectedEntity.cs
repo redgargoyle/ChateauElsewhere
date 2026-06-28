@@ -88,6 +88,29 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public bool UsesRoomVisualScaleOverrides => useRoomVisualScaleOverrides;
     public string EditorSelectedVisualScaleRoomId => editorSelectedVisualScaleRoomId;
     public string CurrentVisualScaleRoomId => GetCurrentVisualScaleRoomKey();
+    public int RoomVisualScaleOverrideCount => roomVisualScaleOverrides != null ? roomVisualScaleOverrides.Count : 0;
+    public int NonEmptyRoomVisualScaleOverrideCount
+    {
+        get
+        {
+            if (roomVisualScaleOverrides == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+
+            for (int i = 0; i < roomVisualScaleOverrides.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(roomVisualScaleOverrides[i].RoomId))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+    }
 
     private void Reset()
     {

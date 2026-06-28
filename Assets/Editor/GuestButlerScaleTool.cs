@@ -83,8 +83,29 @@ public sealed class GuestButlerScaleTool : EditorWindow
 
     private void DrawActions()
     {
+        if (GUILayout.Button("Open Manual Guest Scale Calibration"))
+        {
+            GuestScaleCalibrationWindow.Open();
+        }
+
+        if (GUILayout.Button("Run Guest Scale Override Audit"))
+        {
+            GuestScaleOverrideAuditSummary audit = GuestScaleOverrideAudit.WriteReport();
+            lastStatus = $"Wrote GuestScaleOverrideAudit.md. Overrides {audit.RoomProjectedEntityOverrideEntries}, non-1 profile multipliers {audit.NonOneCharacterHeightMultipliers}, custom walker scales {audit.CustomWalkerScaleEntries}.";
+        }
+
         using (new EditorGUI.DisabledScope(selectedButler == null))
         {
+            if (GUILayout.Button("Apply Saved Manual Guest Calibrations Now"))
+            {
+                GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
+                EnsureCalibrationStore();
+                GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer != null
+                    ? harmonizer.RefreshNow()
+                    : GuestButlerScaleHarmonizer.GuestScaleApplySummary.Empty;
+                lastStatus = $"Applied saved manual guest calibrations. Scaled {summary.Scaled}, missing calibration {summary.MissingCalibration}, failed {summary.FitFailed + summary.NoVisualBounds}.";
+            }
+
             if (GUILayout.Button("ENABLE FINAL HUMAN SCALE FOR ALL GUESTS"))
             {
                 EnableButlerScalingOnAllGuests();
@@ -119,6 +140,11 @@ public sealed class GuestButlerScaleTool : EditorWindow
             {
                 EmergencyRestoreProofBaselinesAndClampBadGuestScales();
             }
+
+            if (GUILayout.Button("Emergency Restore / Clamp Bad Guest Scales"))
+            {
+                EmergencyRestoreProofBaselinesAndClampBadGuestScales();
+            }
         }
 
         if (GUILayout.Button("SAVE SCENE"))
@@ -135,6 +161,21 @@ public sealed class GuestButlerScaleTool : EditorWindow
 
         using (new EditorGUI.DisabledScope(selectedButler == null))
         {
+            if (GUILayout.Button("Proof 50% Using Manual Roots"))
+            {
+                RunProof(0.5f);
+            }
+
+            if (GUILayout.Button("Proof 150% Using Manual Roots"))
+            {
+                RunProof(1.5f);
+            }
+
+            if (GUILayout.Button("Restore Proof Baselines"))
+            {
+                RestoreProof();
+            }
+
             if (GUILayout.Button("PROOF 50%"))
             {
                 RunProof(0.5f);
@@ -340,6 +381,7 @@ public sealed class GuestButlerScaleTool : EditorWindow
             return;
         }
 
+        EnsureCalibrationStore();
         harmonizer.SetDebugGuestScaleMultiplier(multiplier);
         GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
         LogProofFailures(summary, multiplier);
@@ -473,6 +515,38 @@ public sealed class GuestButlerScaleTool : EditorWindow
         harmonizer.SetButlerScaleSource(selectedButler);
         MarkDirty(harmonizer);
         return harmonizer;
+    }
+
+    private GuestScaleCalibrationStore EnsureCalibrationStore()
+    {
+        if (selectedButler == null)
+        {
+            selectedButler = FindSceneButler();
+        }
+
+        if (selectedButler == null)
+        {
+            return null;
+        }
+
+        GuestScaleCalibrationStore store = selectedButler.GetComponent<GuestScaleCalibrationStore>();
+
+        if (store == null)
+        {
+            store = Undo.AddComponent<GuestScaleCalibrationStore>(selectedButler.gameObject);
+        }
+
+        GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
+
+        if (harmonizer != null)
+        {
+            Undo.RecordObject(harmonizer, "Assign Guest Scale Calibration Store");
+            harmonizer.SetCalibrationStore(store);
+            MarkDirty(harmonizer);
+        }
+
+        MarkDirty(store);
+        return store;
     }
 
     private List<RoomCalibrationCoverageRow> BuildRoomCalibrationCoverageRows()

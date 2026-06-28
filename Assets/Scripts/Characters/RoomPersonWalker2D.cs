@@ -80,6 +80,8 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	public string CurrentButlerCharacterScaleSource => currentButlerCharacterScaleSource;
 	public Vector2 CurrentPosition => currentPosition;
 	public float CurrentDepthScale => GetDepthScale();
+	public float NearScale => nearScale;
+	public float FarScale => farScale;
 
 #if UNITY_EDITOR
 	private double lastEditorTime;

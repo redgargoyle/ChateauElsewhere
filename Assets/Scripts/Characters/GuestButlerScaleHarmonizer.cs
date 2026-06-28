@@ -7,6 +7,7 @@ using UnityEngine;
 public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 {
     [SerializeField] private PointClickPlayerMovement butlerScaleSource;
+    [SerializeField] private GuestScaleCalibrationStore calibrationStore;
     [SerializeField] private bool applyInPlayMode = true;
     [SerializeField] private bool previewInEditMode = true;
     [SerializeField] private bool includeInactiveInEditMode = true;
@@ -25,6 +26,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
     private string lastSummaryKey = string.Empty;
 
     public PointClickPlayerMovement ButlerScaleSource => ResolveButlerScaleSource();
+    public GuestScaleCalibrationStore CalibrationStore => ResolveCalibrationStore();
     public float DebugGuestScaleMultiplier => debugGuestScaleMultiplier;
     public bool ProofModeActive => proofModeActive;
 
@@ -46,6 +48,24 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
     public void SetButlerScaleSource(PointClickPlayerMovement source)
     {
         butlerScaleSource = source;
+    }
+
+    public void SetCalibrationStore(GuestScaleCalibrationStore store)
+    {
+        calibrationStore = store;
+    }
+
+    public GuestScaleCalibrationStore EnsureCalibrationStore()
+    {
+        GuestScaleCalibrationStore store = ResolveCalibrationStore();
+
+        if (store == null)
+        {
+            store = gameObject.AddComponent<GuestScaleCalibrationStore>();
+            calibrationStore = store;
+        }
+
+        return store;
     }
 
     public void SetDebugGuestScaleMultiplier(float multiplier)
@@ -120,7 +140,8 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         }
 
         GuestScaleApplySummary summary = new GuestScaleApplySummary(source != null ? source.name : name);
-        List<GuestScaleTarget> targets = BuildGuestScaleTargets(source, camera, ref summary);
+        GuestScaleCalibrationStore store = ResolveCalibrationStore();
+        List<GuestScaleTarget> targets = BuildGuestScaleTargets(source, store, camera, ref summary);
         float standingHumanReferenceScreenHeight = 0f;
         string butlerReferenceDiagnostic = string.Empty;
         bool hasButlerReferenceHeight = source != null &&
@@ -164,7 +185,8 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
         PointClickPlayerMovement source = ResolveButlerScaleSource();
         GuestScaleApplySummary ignoredSummary = GuestScaleApplySummary.Empty;
-        List<GuestScaleTarget> targets = BuildGuestScaleTargets(source, camera, ref ignoredSummary);
+        GuestScaleCalibrationStore store = ResolveCalibrationStore();
+        List<GuestScaleTarget> targets = BuildGuestScaleTargets(source, store, camera, ref ignoredSummary);
 
         for (int i = 0; i < targets.Count; i++)
         {
@@ -223,6 +245,16 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         {
             summary.FitFailed++;
             summary.AddProofFailure(target.Path, "Scale root or bounds root missing");
+            LogFitFailure(
+                target,
+                null,
+                0f,
+                0f,
+                0f,
+                target.ScaleRoot != null ? target.ScaleRoot.localScale : Vector3.one,
+                target.ScaleRoot != null ? target.ScaleRoot.localScale : Vector3.one,
+                "Scale root or bounds root missing",
+                proofMode);
             return;
         }
 
@@ -239,6 +271,16 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         {
             summary.NoVisualBounds++;
             summary.AddProofFailure(target.Path, "No visible Renderer or Graphic found");
+            LogFitFailure(
+                target,
+                null,
+                0f,
+                0f,
+                0f,
+                target.ScaleRoot.localScale,
+                target.ScaleRoot.localScale,
+                "No visible Renderer or Graphic found",
+                proofMode);
             return;
         }
 
@@ -269,13 +311,24 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         {
             summary.FitFailed++;
             summary.AddProofFailure(target.Path, failureReason);
+            LogFitFailure(
+                target,
+                visualTarget.PrimaryVisual,
+                visualTarget.ScreenHeight,
+                targetHeight,
+                visualTarget.ScreenHeight,
+                target.ScaleRoot.localScale,
+                target.ScaleRoot.localScale,
+                failureReason,
+                proofMode);
             return;
         }
 
         Transform scaleRoot = target.ScaleRoot;
         Transform boundsRoot = target.BoundsRoot;
 
-        if (CharacterVisualBoundsUtility.LooksLikeForbiddenContainer(scaleRoot) &&
+        if (target.ManualCalibration == null &&
+            CharacterVisualBoundsUtility.LooksLikeForbiddenContainer(scaleRoot) &&
             visualTarget.PrimaryVisual != null)
         {
             scaleRoot = visualTarget.PrimaryVisual;
@@ -293,6 +346,16 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         {
             summary.FitFailed++;
             summary.AddProofFailure(target.Path, fitResult.Diagnostic);
+            LogFitFailure(
+                target,
+                fitResult.PrimaryVisual,
+                fitResult.BeforeHeight,
+                fitResult.TargetHeight,
+                fitResult.AfterHeight,
+                fitResult.BeforeScale,
+                fitResult.AfterScale,
+                fitResult.Diagnostic,
+                proofMode);
             return;
         }
 
@@ -310,6 +373,42 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
         summary.IncludeVisualHeight(fitResult.AfterHeight);
         lastFittedLocalScales[scaleRoot] = scaleRoot.localScale;
+    }
+
+    private void LogFitFailure(
+        GuestScaleTarget target,
+        Transform primaryVisual,
+        float beforeHeight,
+        float targetHeight,
+        float afterHeight,
+        Vector3 beforeScale,
+        Vector3 afterScale,
+        string reason,
+        bool proofMode)
+    {
+        if (target.ManualCalibration == null && !proofMode && !logSummary)
+        {
+            return;
+        }
+
+        Debug.LogWarning(
+            "[GuestButlerScale] Guest fit failed " +
+            $"guest={target.Path} room={target.RoomId} pose={GetPoseLabel(target)} " +
+            $"scaleRoot={GetObjectPath(target.ScaleRoot)} boundsRoot={GetObjectPath(target.BoundsRoot)} " +
+            $"primaryVisual={GetObjectPath(primaryVisual != null ? primaryVisual : target.PrimaryVisual)} " +
+            $"beforeHeight={beforeHeight:0.###} targetHeight={targetHeight:0.###} afterHeight={afterHeight:0.###} " +
+            $"localScaleBefore={beforeScale} localScaleAfter={afterScale} reason={reason}",
+            target.ScaleRoot != null ? target.ScaleRoot : target.BoundsRoot);
+    }
+
+    private string GetPoseLabel(GuestScaleTarget target)
+    {
+        if (target.ManualCalibration != null)
+        {
+            return target.ManualCalibration.pose.ToString();
+        }
+
+        return target.IsSeated ? "Seated" : "Standing";
     }
 
     private bool TryGetTargetScreenHeight(
@@ -356,6 +455,19 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             return false;
         }
 
+        if (target.ManualCalibration != null)
+        {
+            float manualPoseHeight = GetManualPoseHeightRatio(target);
+            float manualFineTune = GuestScaleCalibrationStore.SanitizeFineTune(target.ManualCalibration.manualFineTuneMultiplier);
+            targetHeight =
+                standingHumanReferenceScreenHeight *
+                Mathf.Max(0.001f, sample.NormalizedScale) *
+                manualPoseHeight *
+                manualFineTune *
+                Mathf.Max(0.001f, debugGuestScaleMultiplier);
+            return targetHeight > 0.01f;
+        }
+
         float relativeHeight = Mathf.Clamp(
             target.RelativeHeightMultiplier * Mathf.Max(0.001f, defaultGuestRelativeHeightMultiplier),
             0.25f,
@@ -368,6 +480,23 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             relativeHeight *
             Mathf.Max(0.001f, debugGuestScaleMultiplier);
         return targetHeight > 0.01f;
+    }
+
+    private float GetManualPoseHeightRatio(GuestScaleTarget target)
+    {
+        GuestScaleCalibrationEntry entry = target.ManualCalibration;
+
+        if (entry == null)
+        {
+            return Mathf.Clamp(target.PoseHeightMultiplier, 0.25f, 1.25f);
+        }
+
+        if (entry.pose == GuestPose.Auto)
+        {
+            return Mathf.Clamp(target.PoseHeightMultiplier, 0.25f, 1.25f);
+        }
+
+        return GuestScaleCalibrationStore.SanitizeRatio(entry.heightRatioToButlerStanding);
     }
 
     private void PrepareControllerForFinalHumanScale(GuestScaleTarget target, PointClickPlayerMovement source)
@@ -402,6 +531,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
     private List<GuestScaleTarget> BuildGuestScaleTargets(
         PointClickPlayerMovement source,
+        GuestScaleCalibrationStore store,
         Camera camera,
         ref GuestScaleApplySummary summary)
     {
@@ -446,14 +576,33 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                     continue;
                 }
 
-                ResolveProjectedVisualRoots(
+                ActorRoomState actor = entity.GetComponentInParent<ActorRoomState>(true);
+                GuestScaleCalibrationEntry manualEntry = ResolveManualCalibration(
+                    store,
                     entity,
+                    walker,
+                    actor,
+                    roomId,
+                    entity.GetGuestScaleRoot());
+
+                if (!TryResolveManualVisualRoots(
+                    manualEntry,
                     camera,
                     includeInactive,
                     out Transform boundsRoot,
                     out Transform scaleRoot,
                     out Transform primaryVisual,
-                    out string diagnostic);
+                    out string diagnostic))
+                {
+                    ResolveProjectedVisualRoots(
+                        entity,
+                        camera,
+                        includeInactive,
+                        out boundsRoot,
+                        out scaleRoot,
+                        out primaryVisual,
+                        out diagnostic);
+                }
 
                 AddTarget(
                     targets,
@@ -465,14 +614,15 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                         primaryVisual,
                         entity,
                         null,
-                        null,
+                        actor,
                         walker != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomProjectedEntity",
                         roomId,
                         footPoint,
                         entity.GetGuestRelativeHeightMultiplier(),
                         entity.GetGuestPoseHeightMultiplier(),
                         entity.IsGuestSeated(),
-                        diagnostic),
+                        diagnostic,
+                        manualEntry),
                     source,
                     ref summary);
             }
@@ -515,14 +665,33 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                     continue;
                 }
 
-                ResolveWalkerVisualRoots(
+                ActorRoomState actor = walker.GetComponentInParent<ActorRoomState>(true);
+                GuestScaleCalibrationEntry manualEntry = ResolveManualCalibration(
+                    store,
+                    null,
                     walker,
+                    actor,
+                    roomId,
+                    walker.GetGuestScaleRoot());
+
+                if (!TryResolveManualVisualRoots(
+                    manualEntry,
                     camera,
                     includeInactive,
                     out Transform boundsRoot,
                     out Transform scaleRoot,
                     out Transform primaryVisual,
-                    out string diagnostic);
+                    out string diagnostic))
+                {
+                    ResolveWalkerVisualRoots(
+                        walker,
+                        camera,
+                        includeInactive,
+                        out boundsRoot,
+                        out scaleRoot,
+                        out primaryVisual,
+                        out diagnostic);
+                }
 
                 AddTarget(
                     targets,
@@ -534,14 +703,15 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                         primaryVisual,
                         null,
                         walker,
-                        null,
+                        actor,
                         projection != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomPersonWalker2D",
                         roomId,
                         footPoint,
                         walker.GetGuestRelativeHeightMultiplier(),
                         walker.GetGuestPoseHeightMultiplier(),
                         walker.IsGuestSeated(),
-                        diagnostic),
+                        diagnostic,
+                        manualEntry),
                     source,
                     ref summary);
             }
@@ -586,14 +756,32 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                     continue;
                 }
 
-                ResolveActorVisualRoots(
+                GuestScaleCalibrationEntry manualEntry = ResolveManualCalibration(
+                    store,
+                    null,
+                    null,
                     actor,
+                    roomId,
+                    actor.GetGuestScaleRoot());
+
+                if (!TryResolveManualVisualRoots(
+                    manualEntry,
                     camera,
                     includeInactive,
                     out Transform boundsRoot,
                     out Transform scaleRoot,
                     out Transform primaryVisual,
-                    out string diagnostic);
+                    out string diagnostic))
+                {
+                    ResolveActorVisualRoots(
+                        actor,
+                        camera,
+                        includeInactive,
+                        out boundsRoot,
+                        out scaleRoot,
+                        out primaryVisual,
+                        out diagnostic);
+                }
 
                 AddTarget(
                     targets,
@@ -612,13 +800,79 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                         actor.GetGuestRelativeHeightMultiplier(),
                         actor.GetGuestPoseHeightMultiplier(),
                         actor.IsSeated,
-                        diagnostic),
+                        diagnostic,
+                        manualEntry),
                     source,
                     ref summary);
             }
         }
 
         return targets;
+    }
+
+    private GuestScaleCalibrationEntry ResolveManualCalibration(
+        GuestScaleCalibrationStore store,
+        RoomProjectedEntity projectedEntity,
+        RoomPersonWalker2D walker,
+        ActorRoomState actor,
+        string roomId,
+        Transform scaleRoot)
+    {
+        if (store == null)
+        {
+            return null;
+        }
+
+        return store.TryGetCalibrationForGuest(projectedEntity, walker, actor, roomId, scaleRoot, out GuestScaleCalibrationEntry entry)
+            ? entry
+            : null;
+    }
+
+    private bool TryResolveManualVisualRoots(
+        GuestScaleCalibrationEntry entry,
+        Camera camera,
+        bool includeInactive,
+        out Transform boundsRoot,
+        out Transform scaleRoot,
+        out Transform primaryVisual,
+        out string diagnostic)
+    {
+        boundsRoot = null;
+        scaleRoot = null;
+        primaryVisual = null;
+        diagnostic = string.Empty;
+
+        if (entry == null || !entry.enabled)
+        {
+            return false;
+        }
+
+        scaleRoot = entry.scaleRoot;
+        boundsRoot = entry.boundsRoot != null ? entry.boundsRoot : scaleRoot;
+        diagnostic = "Manual GuestScaleCalibrationStore entry";
+
+        if (boundsRoot != null &&
+            CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(
+                boundsRoot,
+                camera,
+                out CharacterVisualBoundsUtility.CharacterVisualTarget target,
+                includeInactive))
+        {
+            primaryVisual = target.PrimaryVisual;
+            diagnostic = $"{diagnostic}; {target.Diagnostic}";
+
+            if (entry.boundsRoot == null)
+            {
+                boundsRoot = target.BoundsRoot;
+            }
+
+            if (scaleRoot == null)
+            {
+                scaleRoot = target.ScaleRoot;
+            }
+        }
+
+        return boundsRoot != null || scaleRoot != null;
     }
 
     private void ResolveProjectedVisualRoots(
@@ -828,6 +1082,36 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         return butlerScaleSource;
     }
 
+    private GuestScaleCalibrationStore ResolveCalibrationStore()
+    {
+        if (calibrationStore != null)
+        {
+            return calibrationStore;
+        }
+
+        calibrationStore = GetComponent<GuestScaleCalibrationStore>();
+
+        if (calibrationStore != null)
+        {
+            return calibrationStore;
+        }
+
+        PointClickPlayerMovement source = ResolveButlerScaleSource();
+
+        if (source != null)
+        {
+            calibrationStore = source.GetComponent<GuestScaleCalibrationStore>();
+
+            if (calibrationStore != null)
+            {
+                return calibrationStore;
+            }
+        }
+
+        calibrationStore = FindAnyObjectByType<GuestScaleCalibrationStore>(FindObjectsInactive.Include);
+        return calibrationStore;
+    }
+
     private Camera ResolveCamera()
     {
         if (Camera.main != null)
@@ -1002,7 +1286,8 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             float relativeHeightMultiplier,
             float poseHeightMultiplier,
             bool isSeated,
-            string visualDiagnostic)
+            string visualDiagnostic,
+            GuestScaleCalibrationEntry manualCalibration)
         {
             BoundsRoot = boundsRoot;
             ScaleRoot = scaleRoot;
@@ -1010,6 +1295,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             ProjectedEntity = projectedEntity;
             Walker = walker;
             Actor = actor;
+            ManualCalibration = manualCalibration;
             ControllerType = controllerType;
             RoomId = string.IsNullOrWhiteSpace(roomId) ? string.Empty : roomId.Trim();
             RoomLocalFootPoint = roomLocalFootPoint;
@@ -1026,6 +1312,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         public RoomProjectedEntity ProjectedEntity { get; }
         public RoomPersonWalker2D Walker { get; }
         public ActorRoomState Actor { get; }
+        public GuestScaleCalibrationEntry ManualCalibration { get; }
         public string ControllerType { get; }
         public string RoomId { get; }
         public Vector2 RoomLocalFootPoint { get; }

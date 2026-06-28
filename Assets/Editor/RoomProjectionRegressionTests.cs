@@ -19,6 +19,10 @@ public class RoomProjectionRegressionTests
     private const string RoomProjectedEntityEditorPath = "Assets/Editor/RoomProjectedEntityEditor.cs";
     private const string PointClickPlayerMovementEditorPath = "Assets/Editor/PointClickPlayerMovementEditor.cs";
     private const string ButlerRoomScaleCalibrationWindowPath = "Assets/Editor/ButlerRoomScaleCalibrationWindow.cs";
+    private const string GuestScaleCalibrationStorePath = "Assets/Scripts/Characters/GuestScaleCalibrationStore.cs";
+    private const string GuestButlerScaleHarmonizerPath = "Assets/Scripts/Characters/GuestButlerScaleHarmonizer.cs";
+    private const string GuestScaleCalibrationWindowPath = "Assets/Editor/GuestScaleCalibrationWindow.cs";
+    private const string GuestButlerScaleToolPath = "Assets/Editor/GuestButlerScaleTool.cs";
 
     [Test]
     public void SameRoomLocalFootYProducesSameRoomScaleForProjectedEntities()
@@ -563,6 +567,155 @@ public class RoomProjectionRegressionTests
         Assert.That(projectedTargetBody, Does.Contain("roomProjection.IsProjectionActive"), "NPC waypoint movement should only use projected motion when projection owns the actor's current room.");
     }
 
+    [Test]
+    public void GuestScaleCalibrationStoreSavesManualEntry()
+    {
+        GameObject storeObject = new GameObject("ButlerScaleStore");
+        GameObject guestObject = new GameObject("GuestManualRoot");
+        RoomProjectedEntity projection = guestObject.AddComponent<RoomProjectedEntity>();
+        GuestScaleCalibrationStore store = storeObject.AddComponent<GuestScaleCalibrationStore>();
+
+        try
+        {
+            GuestScaleCalibrationEntry saved = store.SetCalibrationForGuest(
+                projection,
+                "Drawing Room",
+                GuestPose.Seated,
+                guestObject.transform,
+                guestObject.transform,
+                0.68f,
+                1.12f);
+
+            Assert.That(saved.pose, Is.EqualTo(GuestPose.Seated));
+            Assert.That(saved.heightRatioToButlerStanding, Is.EqualTo(0.68f).Within(0.0001f));
+            Assert.That(saved.manualFineTuneMultiplier, Is.EqualTo(1.12f).Within(0.0001f));
+            Assert.That(store.TryGetCalibrationForGuest(projection, "Drawing Room", null, out GuestScaleCalibrationEntry byComponent), Is.True);
+            Assert.That(byComponent, Is.EqualTo(saved));
+            Assert.That(store.TryGetCalibrationForGuest(null, "Drawing Room", guestObject.transform, out GuestScaleCalibrationEntry byRoot), Is.True);
+            Assert.That(byRoot, Is.EqualTo(saved));
+            Assert.That(store.GetAllEntries().Count, Is.EqualTo(1));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guestObject);
+            UnityEngine.Object.DestroyImmediate(storeObject);
+        }
+    }
+
+    [Test]
+    public void ManualGuestCalibrationOverridesOldRoomVisualScale()
+    {
+        string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
+        string prepareBody = ExtractMethodBody(harmonizerText, "private void PrepareControllerForFinalHumanScale");
+        string targetHeightBody = ExtractMethodBody(harmonizerText, "private bool TryGetTargetScreenHeight");
+
+        Assert.That(harmonizerText, Does.Contain("ResolveManualCalibration"), "The final harmonizer should look up saved manual guest calibration entries.");
+        Assert.That(harmonizerText, Does.Contain("TryResolveManualVisualRoots"), "Saved manual roots should be applied before automatic visual-root selection.");
+        Assert.That(prepareBody, Does.Contain("SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true"), "Old roomVisualScaleOverrides should be bypassed when final human scaling is active.");
+        Assert.That(targetHeightBody.IndexOf("target.ManualCalibration != null", StringComparison.Ordinal), Is.LessThan(targetHeightBody.IndexOf("target.RelativeHeightMultiplier", StringComparison.Ordinal)), "Manual target height should be resolved before the old relative-height path.");
+    }
+
+    [Test]
+    public void ManualGuestCalibrationBypassesCharacterHeightMultiplier()
+    {
+        string projectionText = File.ReadAllText(RoomProjectedEntityPath);
+        string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
+        string prepareBody = ExtractMethodBody(harmonizerText, "private void PrepareControllerForFinalHumanScale");
+        string manualBranch = ExtractBetween(harmonizerText, "if (target.ManualCalibration != null)", "float relativeHeight =");
+
+        Assert.That(projectionText, Does.Contain("SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules"), "Projection should expose the profile-height bypass.");
+        Assert.That(prepareBody, Does.Contain("SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(true"), "Final human scaling should turn the profile-height bypass on.");
+        Assert.That(manualBranch, Does.Not.Contain("HeightScaleMultiplier"), "Manual target height must not multiply by CharacterVisualProfile.HeightScaleMultiplier.");
+        Assert.That(manualBranch, Does.Not.Contain("RelativeHeightMultiplier"), "Manual target height must not use the legacy relative-height multiplier path.");
+    }
+
+    [Test]
+    public void RoomPersonWalkerManualCalibrationUsesTargetGraphic()
+    {
+        string windowText = File.ReadAllText(GuestScaleCalibrationWindowPath);
+        string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
+
+        Assert.That(windowText, Does.Contain("Use TargetGraphic As Scale Root"), "The manual tool should expose the requested targetGraphic root shortcut.");
+        Assert.That(windowText, Does.Contain("candidate.Walker.TargetGraphic.rectTransform"), "The targetGraphic shortcut should use the Graphic RectTransform as the scale root.");
+        Assert.That(harmonizerText, Does.Contain("walker.TargetGraphic.rectTransform"), "Automatic walker root detection should continue to prefer targetGraphic when present.");
+    }
+
+    [Test]
+    public void SeatedGuestManualCalibrationUsesSeatedRatio()
+    {
+        GameObject storeObject = new GameObject("Store");
+        GameObject actorObject = new GameObject("DiningGuestActor");
+        GuestScaleCalibrationStore store = storeObject.AddComponent<GuestScaleCalibrationStore>();
+        ActorRoomState actor = actorObject.AddComponent<ActorRoomState>();
+
+        try
+        {
+            actor.SetActorId("Guest_Dining_01");
+            actor.SetSeated(true);
+            GuestScaleCalibrationEntry entry = store.GetOrCreateEntry(null, null, actor, "Dining Room", actorObject.transform);
+
+            Assert.That(entry.pose, Is.EqualTo(GuestPose.Seated));
+            Assert.That(entry.heightRatioToButlerStanding, Is.EqualTo(0.68f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(actorObject);
+            UnityEngine.Object.DestroyImmediate(storeObject);
+        }
+    }
+
+    [Test]
+    public void ManualCalibrationDoesNotMultiplyByGuestBaseScale()
+    {
+        string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
+        string manualBranch = ExtractBetween(harmonizerText, "if (target.ManualCalibration != null)", "float relativeHeight =");
+
+        Assert.That(manualBranch, Does.Contain("standingHumanReferenceScreenHeight"), "Manual calibration should target a visible height derived from the Butler standing reference.");
+        Assert.That(manualBranch, Does.Contain("sample.NormalizedScale"), "Manual calibration should still use the Butler room/depth scale.");
+        Assert.That(manualBranch, Does.Contain("manualFineTune"), "Manual calibration should apply the saved fine-tune multiplier.");
+        Assert.That(manualBranch, Does.Not.Contain("localScale"), "Manual target height must not multiply by the guest's base localScale.");
+    }
+
+    [Test]
+    public void ManualCalibrationProofChangesGuestWithoutButlerRoomCalibration()
+    {
+        string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
+        string targetHeightBody = ExtractMethodBody(harmonizerText, "private bool TryGetTargetScreenHeight");
+
+        Assert.That(targetHeightBody.IndexOf("if (proofMode)", StringComparison.Ordinal), Is.LessThan(targetHeightBody.IndexOf("if (!hasSample)", StringComparison.Ordinal)), "Proof mode should run before missing Butler calibration fails the target.");
+        Assert.That(targetHeightBody, Does.Contain("baseline.ScreenHeight * Mathf.Max(0.001f, debugGuestScaleMultiplier)"), "Proof mode should use captured baseline visible height.");
+        Assert.That(targetHeightBody, Does.Contain("currentScreenHeight * Mathf.Max(0.001f, debugGuestScaleMultiplier)"), "Proof mode should still change guests without a saved proof baseline.");
+    }
+
+    [Test]
+    public void FinalHarmonizerUsesManualCalibrationWhenPresent()
+    {
+        string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
+
+        Assert.That(harmonizerText, Does.Contain("GuestScaleCalibrationStore store"), "The final harmonizer should resolve the manual calibration store.");
+        Assert.That(harmonizerText, Does.Contain("ResolveManualCalibration"), "The final harmonizer should query manual calibration entries.");
+        Assert.That(harmonizerText, Does.Contain("TryResolveManualVisualRoots"), "The final harmonizer should honor saved manual roots.");
+        Assert.That(harmonizerText, Does.Contain("ManualCalibration = manualCalibration"), "Each scale target should carry the resolved manual entry.");
+        Assert.That(harmonizerText, Does.Contain("target.ManualCalibration.manualFineTuneMultiplier"), "The final target height should use the saved fine-tune multiplier.");
+    }
+
+    [Test]
+    public void ManualToolContainsRequiredButtons()
+    {
+        string windowText = File.ReadAllText(GuestScaleCalibrationWindowPath);
+        string toolText = File.ReadAllText(GuestButlerScaleToolPath);
+
+        Assert.That(windowText, Does.Contain("Auto Match Guest To Butler Here"));
+        Assert.That(windowText, Does.Contain("Save Calibration For This Guest In This Room"));
+        Assert.That(windowText, Does.Contain("Use Selected Object As Scale Root"));
+        Assert.That(windowText, Does.Contain("Use Selected Object As Bounds Root"));
+        Assert.That(windowText, Does.Contain("Capture Current Scale Root As Base"));
+        Assert.That(windowText, Does.Contain("Restore Scale Root Base"));
+        Assert.That(toolText, Does.Contain("Open Manual Guest Scale Calibration"));
+        Assert.That(toolText, Does.Contain("Proof 50% Using Manual Roots"));
+        Assert.That(toolText, Does.Contain("Proof 150% Using Manual Roots"));
+    }
+
     private static RoomPerspectiveProfile CreatePerspectiveProfile()
     {
         RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
@@ -644,5 +797,16 @@ public class RoomProjectionRegressionTests
 
         Assert.Fail($"Could not find end of method body for '{methodName}'.");
         return string.Empty;
+    }
+
+    private static string ExtractBetween(string sourceText, string startText, string endText)
+    {
+        int startIndex = sourceText.IndexOf(startText, StringComparison.Ordinal);
+        Assert.That(startIndex, Is.GreaterThanOrEqualTo(0), $"Could not find start text '{startText}'.");
+
+        int endIndex = sourceText.IndexOf(endText, startIndex, StringComparison.Ordinal);
+        Assert.That(endIndex, Is.GreaterThan(startIndex), $"Could not find end text '{endText}'.");
+
+        return sourceText.Substring(startIndex, endIndex - startIndex);
     }
 }

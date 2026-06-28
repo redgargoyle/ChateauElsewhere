@@ -66,6 +66,21 @@ Guest scaling also uses a final visual-height fitter. The Butler's manually cali
 
 `RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result, then uses `CharacterVisualBoundsUtility` to fit each guest's visible screen height to the Butler-derived target height.
 
+Manual guest scale calibration is available from `Tools > Characters > Manual Guest Scale Calibration`. This stores per-guest/per-room entries in `GuestScaleCalibrationStore` on the Butler or harmonizer object. A saved entry can choose the exact `scaleRoot` to resize and the `boundsRoot` to measure, which is the escape hatch when automatic root detection picks a room/container instead of the visible guest art.
+
+Manual entries do not create per-guest front/back room curves. The Butler room calibration remains the room/depth source. A manual guest target height is:
+
+`Butler standing reference height * Butler normalized room/depth scale * pose ratio * manual fine tune`
+
+The manual path bypasses old guest visible-height inputs while the final fitter is active: `RoomProjectedEntity.roomVisualScaleOverrides`, `CharacterVisualProfile.HeightScaleMultiplier`, `RoomPersonWalker2D` near/far/profile scale, and `ActorRoomState` room-stage scale writes may still exist for compatibility, but the final harmonizer writes the visible result last.
+
+Pose ratios:
+
+- Standing: `1.0`
+- Seated: `0.68` by default, or `SittingVisualHeight / StandingVisualHeight` from `CharacterVisualProfile` clamped to `0.55-0.80`
+- Crouching: `0.75`
+- Lying: `0.45`
+
 To enable:
 
 1. Open `Tools > Characters > Apply Butler Scaling To Guests`.
@@ -81,7 +96,22 @@ To enable:
 9. Click `SAVE SCENE`.
 10. Test in Play Mode by standing the Butler next to guests and confirming their visual height/scale belongs to the same room system.
 
+Manual workflow:
+
+1. Open `Tools > Characters > Manual Guest Scale Calibration`.
+2. Click `Find Scene Butler`.
+3. Click `Ensure Calibration Store`.
+4. Pick a room and guest.
+5. Verify the selected scale root is the visible character art, not the room/container.
+6. Set pose: `Standing`, `Seated`, `Crouching`, or `Lying`.
+7. Click `Auto Match Guest To Butler Here`.
+8. Adjust `Manual Fine Tune` if needed.
+9. Click `Save Calibration For This Guest In This Room`.
+10. Use `Next Guest` and repeat, then `Save Scene`.
+
 Use `Tools > Characters > Human Scale Audit` or `PRINT ALL GUEST SCALE WRITERS` when a guest still looks wrong. The report lists each guest-like object's controller type, visible art, scale root, room-local foot Y, seated state, current/target visual height, and competing writers such as room visual overrides, profile height multipliers, walker near/far scale, room-stage scale motion, and Animator localScale curves.
+
+Use `Tools > Characters > Guest Scale Override Audit` to write `Assets/Editor/Reports/GuestScaleOverrideAudit.md`. The audit summarizes old room visual overrides, non-1 character profile height multipliers, custom walker scale values, room-stage scaling actors, non-1 guest visual roots, Butler room calibrations, and rooms that contain guests without complete Butler calibration.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 
