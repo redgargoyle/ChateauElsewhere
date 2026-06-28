@@ -80,6 +80,7 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
         EditorGUILayout.HelpBox(InstructionText, MessageType.Info);
         DrawStatus(selectedButler, selectedRoom);
         DrawPrimaryWorkflow(selectedButler, selectedRoom);
+        DrawGuestSharedScalingTools(selectedButler);
         DrawAdvancedTools(selectedButler, selectedRoom, rooms);
 
         EditorGUILayout.EndScrollView();
@@ -414,6 +415,12 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
         }
 
         MarkDirty(movement);
+        int refreshedCount = RefreshGuestSharedScalingPreviewTargets(false);
+
+        if (refreshedCount > 0)
+        {
+            lastStatus += $" Refreshed {refreshedCount} guest shared scaling preview(s).";
+        }
     }
 
     private void PreviewCurrentSize(PointClickPlayerMovement movement)
@@ -474,6 +481,185 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
         }
 
         lastStatus = $"Initialized {initializedCount} missing rooms from old default scale values.";
+    }
+
+    private void DrawGuestSharedScalingTools(PointClickPlayerMovement movement)
+    {
+        CountFloorCharactersUsingSharedScaling(out int usingSharedCount, out int floorCharacterCount);
+
+        EditorGUILayout.Space(8f);
+        EditorGUILayout.LabelField("Apply Butler Room Scaling To Guests", EditorStyles.boldLabel);
+
+        using (new EditorGUI.DisabledScope(true))
+        {
+            EditorGUILayout.LabelField(
+                "Floor characters using shared scaling:",
+                $"{usingSharedCount} / {floorCharacterCount}");
+        }
+
+        using (new EditorGUI.DisabledScope(Application.isPlaying))
+        {
+            if (GUILayout.Button("Enable Shared Butler Scaling For All Floor Characters"))
+            {
+                int changedCount = SetSharedButlerScalingForFloorCharacters(movement, true);
+                lastStatus = $"Enabled shared Butler scaling on {changedCount} floor character(s).";
+            }
+
+            if (GUILayout.Button("Disable Shared Butler Scaling For All Floor Characters"))
+            {
+                int changedCount = SetSharedButlerScalingForFloorCharacters(movement, false);
+                lastStatus = $"Disabled shared Butler scaling on {changedCount} floor character(s).";
+            }
+
+            if (GUILayout.Button("Refresh Guest Shared Scaling Preview"))
+            {
+                int refreshedCount = RefreshGuestSharedScalingPreviewTargets(true);
+                lastStatus = $"Refreshed shared Butler scaling preview on {refreshedCount} floor character(s).";
+            }
+        }
+    }
+
+    private static int SetSharedButlerScalingForFloorCharacters(PointClickPlayerMovement movement, bool enabled)
+    {
+        int changedCount = 0;
+        RoomProjectedEntity[] entities = FindLoadedSceneProjectedEntities();
+        string actionName = enabled
+            ? "Enable Shared Butler Scaling For Floor Characters"
+            : "Disable Shared Butler Scaling For Floor Characters";
+
+        for (int i = 0; i < entities.Length; i++)
+        {
+            RoomProjectedEntity entity = entities[i];
+
+            if (entity == null || entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
+            {
+                continue;
+            }
+
+            RecordProjectedEntityAndVisualRoot(entity, actionName);
+            entity.SetSharedCharacterRoomScaleEnabled(enabled, false);
+
+            if (enabled)
+            {
+                entity.SetSharedCharacterScaleSource(movement, false);
+                entity.SetIgnoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale(true, false);
+            }
+
+            entity.ApplyProjection();
+            MarkProjectedEntityDirty(entity);
+            changedCount++;
+        }
+
+        return changedCount;
+    }
+
+    private static int RefreshGuestSharedScalingPreviewTargets(bool recordUndo)
+    {
+        int refreshedCount = 0;
+        RoomProjectedEntity[] entities = FindLoadedSceneProjectedEntities();
+
+        for (int i = 0; i < entities.Length; i++)
+        {
+            RoomProjectedEntity entity = entities[i];
+
+            if (entity == null ||
+                entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter ||
+                !entity.UseSharedCharacterRoomScale)
+            {
+                continue;
+            }
+
+            if (recordUndo)
+            {
+                RecordProjectedEntityAndVisualRoot(entity, "Refresh Guest Shared Scaling Preview");
+            }
+
+            entity.ApplyProjection();
+            MarkProjectedEntityDirty(entity);
+            refreshedCount++;
+        }
+
+        return refreshedCount;
+    }
+
+    private static void CountFloorCharactersUsingSharedScaling(out int usingSharedCount, out int floorCharacterCount)
+    {
+        usingSharedCount = 0;
+        floorCharacterCount = 0;
+        RoomProjectedEntity[] entities = FindLoadedSceneProjectedEntities();
+
+        for (int i = 0; i < entities.Length; i++)
+        {
+            RoomProjectedEntity entity = entities[i];
+
+            if (entity == null || entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
+            {
+                continue;
+            }
+
+            floorCharacterCount++;
+
+            if (entity.UseSharedCharacterRoomScale)
+            {
+                usingSharedCount++;
+            }
+        }
+    }
+
+    private static RoomProjectedEntity[] FindLoadedSceneProjectedEntities()
+    {
+        RoomProjectedEntity[] allEntities = Resources.FindObjectsOfTypeAll<RoomProjectedEntity>();
+        List<RoomProjectedEntity> loadedSceneEntities = new List<RoomProjectedEntity>();
+
+        for (int i = 0; i < allEntities.Length; i++)
+        {
+            RoomProjectedEntity entity = allEntities[i];
+
+            if (entity != null &&
+                entity.gameObject != null &&
+                entity.gameObject.scene.IsValid() &&
+                entity.gameObject.scene.isLoaded)
+            {
+                loadedSceneEntities.Add(entity);
+            }
+        }
+
+        return loadedSceneEntities.ToArray();
+    }
+
+    private static void RecordProjectedEntityAndVisualRoot(RoomProjectedEntity entity, string actionName)
+    {
+        if (entity == null)
+        {
+            return;
+        }
+
+        Undo.RecordObject(entity, actionName);
+
+        if (entity.VisualRoot != null)
+        {
+            Undo.RecordObject(entity.VisualRoot, actionName);
+        }
+    }
+
+    private static void MarkProjectedEntityDirty(RoomProjectedEntity entity)
+    {
+        if (entity == null || Application.isPlaying)
+        {
+            return;
+        }
+
+        EditorUtility.SetDirty(entity);
+
+        if (entity.VisualRoot != null)
+        {
+            EditorUtility.SetDirty(entity.VisualRoot);
+        }
+
+        if (entity.gameObject.scene.IsValid())
+        {
+            EditorSceneManager.MarkSceneDirty(entity.gameObject.scene);
+        }
     }
 
     private void SetSelectedButler(PointClickPlayerMovement movement, string status)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 [ExecuteAlways]
@@ -35,7 +36,10 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     [SerializeField] private Transform contactShadowRoot;
     [SerializeField] private SpriteRenderer contactShadowRenderer;
     [SerializeField] private Graphic contactShadowGraphic;
-    [SerializeField] private bool useButlerRoomScaleRules = true;
+    [FormerlySerializedAs("useButlerRoomScaleRules")]
+    [SerializeField] private bool useSharedCharacterRoomScale = true;
+    [SerializeField] private PointClickPlayerMovement sharedCharacterScaleSource;
+    [SerializeField] private bool ignoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale = true;
     [SerializeField] private bool useRoomVisualScaleOverrides = true;
     [SerializeField, HideInInspector] private string editorSelectedVisualScaleRoomId = string.Empty;
     [SerializeField, HideInInspector] private List<RoomVisualScaleOverride> roomVisualScaleOverrides = new List<RoomVisualScaleOverride>();
@@ -54,6 +58,11 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private float currentScale = 1f;
     private float currentRoomStageScaleMultiplier = 1f;
     private int currentSortingOrder;
+    private bool isUsingSharedCharacterRoomScale;
+    private float currentSharedCharacterDepth01;
+    private float currentSharedCharacterRoomScale = 1f;
+    private PointClickPlayerMovement cachedSharedCharacterScaleSource;
+    private bool hasSearchedSharedCharacterScaleSource;
     private bool hasRoomStageScaleReference;
     private float roomStageScaleReference = 1f;
     private string roomStageScaleReferenceRoom = string.Empty;
@@ -68,7 +77,12 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public float CurrentScale => currentScale;
     public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;
-    public bool UsesButlerRoomScaleRules => useButlerRoomScaleRules;
+    public bool UseSharedCharacterRoomScale => useSharedCharacterRoomScale;
+    public PointClickPlayerMovement SharedCharacterScaleSource => sharedCharacterScaleSource;
+    public bool IgnoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale => ignoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale;
+    public bool IsUsingSharedCharacterRoomScale => isUsingSharedCharacterRoomScale;
+    public float CurrentSharedCharacterDepth01 => currentSharedCharacterDepth01;
+    public float CurrentSharedCharacterRoomScale => currentSharedCharacterRoomScale;
     public bool UsesRoomVisualScaleOverrides => useRoomVisualScaleOverrides;
     public string EditorSelectedVisualScaleRoomId => editorSelectedVisualScaleRoomId;
     public string CurrentVisualScaleRoomId => GetCurrentVisualScaleRoomKey();
@@ -151,6 +165,38 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         CaptureAuthoredVisualScale(true);
         RefreshVisualTargets();
         ApplyProjection();
+    }
+
+    public void SetSharedCharacterRoomScaleEnabled(bool value, bool applyImmediately = true)
+    {
+        useSharedCharacterRoomScale = value;
+
+        if (applyImmediately)
+        {
+            ApplyProjection();
+        }
+    }
+
+    public void SetSharedCharacterScaleSource(PointClickPlayerMovement source, bool applyImmediately = true)
+    {
+        sharedCharacterScaleSource = source;
+        cachedSharedCharacterScaleSource = source;
+        hasSearchedSharedCharacterScaleSource = source != null;
+
+        if (applyImmediately)
+        {
+            ApplyProjection();
+        }
+    }
+
+    public void SetIgnoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale(bool value, bool applyImmediately = true)
+    {
+        ignoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale = value;
+
+        if (applyImmediately)
+        {
+            ApplyProjection();
+        }
     }
 
     public void SetEditorSelectedVisualScaleRoomId(string roomId)
@@ -407,6 +453,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
         if (!ShouldApplyProjection())
         {
+            ClearSharedCharacterScaleDebug();
             ClearRoomStageScaleReference();
             return;
         }
@@ -445,7 +492,21 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
     public float GetProjectedScale()
     {
-        float profileScale = roomProfile != null ? roomProfile.GetScale(roomLocalFootPoint) : 1f;
+        float profileScale;
+
+        if (TryGetSharedCharacterRoomScale(out float sharedScale, out float sharedDepth01))
+        {
+            profileScale = sharedScale;
+            isUsingSharedCharacterRoomScale = true;
+            currentSharedCharacterDepth01 = sharedDepth01;
+            currentSharedCharacterRoomScale = sharedScale;
+        }
+        else
+        {
+            profileScale = roomProfile != null ? roomProfile.GetScale(roomLocalFootPoint) : 1f;
+            ClearSharedCharacterScaleDebug();
+        }
+
         float visualScale = visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
         return Mathf.Max(0.001f, profileScale * visualScale);
     }
@@ -583,15 +644,10 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         float appliedScale = currentScale * currentRoomStageScaleMultiplier;
-        Vector3 baseScale = GetAuthoredVisualRootScaleForCurrentRoom();
-
-        if (TryGetButlerRoomFinalVisualScale(out Vector3 calibratedScale))
-        {
-            targetRoot.localScale = calibratedScale;
-            lastAppliedVisualRootScale = calibratedScale;
-            hasLastAppliedVisualRootScale = true;
-            return;
-        }
+        Vector3 baseScale = isUsingSharedCharacterRoomScale &&
+            ignoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale
+                ? GetDefaultAuthoredVisualRootScale()
+                : GetAuthoredVisualRootScaleForCurrentRoom();
 
         Vector3 projectedScale = new Vector3(
             baseScale.x * appliedScale,
@@ -603,32 +659,26 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         hasLastAppliedVisualRootScale = true;
     }
 
-    private bool TryGetButlerRoomFinalVisualScale(out Vector3 finalScale)
+    private bool TryGetSharedCharacterRoomScale(out float sharedScale, out float sharedDepth01)
     {
-        finalScale = Vector3.one;
+        sharedScale = 1f;
+        sharedDepth01 = 0f;
 
-        if (!useButlerRoomScaleRules || projectionMode != ProjectionMode.FloorCharacter)
+        if (!useSharedCharacterRoomScale || projectionMode != ProjectionMode.FloorCharacter)
         {
             return false;
         }
 
-        string roomKey = GetCurrentVisualScaleRoomKey();
+        string roomKey = GetCurrentProjectionRoomKey();
 
-        if (!PointClickPlayerMovement.TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
-            roomKey,
-            roomLocalFootPoint.y,
-            out Vector3 calibratedLocalScale,
-            out _))
+        if (string.IsNullOrWhiteSpace(roomKey))
         {
             return false;
         }
 
-        float stageScale = currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : 1f;
-        finalScale = new Vector3(
-            calibratedLocalScale.x * Mathf.Max(0.001f, stageScale),
-            calibratedLocalScale.y * Mathf.Max(0.001f, stageScale),
-            calibratedLocalScale.z);
-        return true;
+        PointClickPlayerMovement source = ResolveSharedCharacterScaleSource(roomKey);
+        return source != null &&
+            source.TryEvaluateSharedCharacterRoomScale(roomKey, roomLocalFootPoint, out sharedScale, out sharedDepth01);
     }
 
     private void ApplyProjectedTint()
@@ -844,6 +894,73 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return roomProfile != null ? roomProfile.RoomId : string.Empty;
     }
 
+    private PointClickPlayerMovement ResolveSharedCharacterScaleSource(string roomId)
+    {
+        if (sharedCharacterScaleSource != null)
+        {
+            return sharedCharacterScaleSource;
+        }
+
+        if (cachedSharedCharacterScaleSource != null)
+        {
+            return cachedSharedCharacterScaleSource;
+        }
+
+        if (hasSearchedSharedCharacterScaleSource)
+        {
+            return null;
+        }
+
+        hasSearchedSharedCharacterScaleSource = true;
+        string cleanRoomId = CleanRoomId(roomId);
+        PointClickPlayerMovement activeFallbackSource = null;
+        PointClickPlayerMovement inactiveCalibratedFallbackSource = null;
+        PointClickPlayerMovement inactiveFallbackSource = null;
+        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            bool isActive = candidate.gameObject != null && candidate.gameObject.activeInHierarchy;
+
+            if (!string.IsNullOrWhiteSpace(cleanRoomId) &&
+                candidate.HasCompleteButlerRoomScaleOverride(cleanRoomId))
+            {
+                if (isActive)
+                {
+                    cachedSharedCharacterScaleSource = candidate;
+                    return cachedSharedCharacterScaleSource;
+                }
+
+                inactiveCalibratedFallbackSource ??= candidate;
+                continue;
+            }
+
+            if (isActive)
+            {
+                activeFallbackSource ??= candidate;
+            }
+            else
+            {
+                inactiveFallbackSource ??= candidate;
+            }
+        }
+
+        cachedSharedCharacterScaleSource =
+            inactiveCalibratedFallbackSource != null
+                ? inactiveCalibratedFallbackSource
+                : activeFallbackSource != null
+                    ? activeFallbackSource
+                    : inactiveFallbackSource;
+        return cachedSharedCharacterScaleSource;
+    }
+
     private int GetVisualScaleOverrideIndex(string roomId)
     {
         if (roomVisualScaleOverrides == null || string.IsNullOrWhiteSpace(roomId))
@@ -862,6 +979,13 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         return -1;
+    }
+
+    private void ClearSharedCharacterScaleDebug()
+    {
+        isUsingSharedCharacterRoomScale = false;
+        currentSharedCharacterDepth01 = 0f;
+        currentSharedCharacterRoomScale = 1f;
     }
 
     private void ClearRoomStageScaleReference()

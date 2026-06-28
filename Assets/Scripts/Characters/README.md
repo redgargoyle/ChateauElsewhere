@@ -34,7 +34,7 @@ To calibrate the Drawing Room, open `Tools > Room Projection > Calibration Windo
 
 ## Butler Room Scale Calibration
 
-The controllable Butler stores the shared room scale calibration in `PointClickPlayerMovement` Butler room scale overrides. Other characters use those saved front/back room rules too: point-click guests fall back to the scene Butler's complete room override, projected floor-character guests use the same final local scale before their projection fallback, and legacy `RoomPersonWalker2D` characters use it when no active projection owns them.
+The controllable Butler stores per-room front/back scale calibration in `PointClickPlayerMovement` Butler room scale overrides.
 
 Workflow:
 
@@ -57,6 +57,14 @@ Visual target:
 - or roughly 1.5x a matching chair
 
 Do not edit Transform scale manually for calibration. Do not use Advanced reset buttons unless intentionally resetting. Guest-specific height differences should come from their sprite art or visual profile; the room-depth scale comes from the Butler calibration.
+
+## Shared Butler/Guest Room Scaling
+
+The Butler calibration defines each room's front/back character scale curve. Projected guests can opt into that same curve through `RoomProjectedEntity.useSharedCharacterRoomScale`.
+
+Guests do not use the Butler's raw Transform scale. `PointClickPlayerMovement.TryEvaluateSharedCharacterRoomScale` converts the Butler's saved final localScale Y into a normalized room scale multiplier relative to the Butler base scale. `RoomProjectedEntity` then applies that multiplier to the guest's own `CharacterVisualProfile.HeightScaleMultiplier` and authored visual-root scale, so character-specific proportions stay intact.
+
+Use the Butler Scale tool button "Enable Shared Butler Scaling For All Floor Characters" after calibrating rooms. Existing guest room visual overrides can be ignored while shared scaling is active to avoid old manual guest scaling fighting the new room scale.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 

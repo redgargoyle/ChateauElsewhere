@@ -10,6 +10,9 @@ public sealed class RoomProjectedEntityEditor : Editor
     private static readonly string[] HiddenRoomScaleFields =
     {
         "m_Script",
+        "useSharedCharacterRoomScale",
+        "sharedCharacterScaleSource",
+        "ignoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale",
         "editorSelectedVisualScaleRoomId",
         "roomVisualScaleOverrides"
     };
@@ -18,10 +21,59 @@ public sealed class RoomProjectedEntityEditor : Editor
     {
         serializedObject.Update();
         DrawPropertiesExcluding(serializedObject, HiddenRoomScaleFields);
-        serializedObject.ApplyModifiedProperties();
+
+        EditorGUILayout.Space(8f);
+        DrawSharedCharacterScaleControls();
+
+        bool serializedChanged = serializedObject.ApplyModifiedProperties();
+
+        if (serializedChanged)
+        {
+            RefreshProjectionTargets();
+        }
 
         EditorGUILayout.Space(8f);
         DrawRoomVisualScaleControls();
+    }
+
+    private void DrawSharedCharacterScaleControls()
+    {
+        EditorGUILayout.LabelField("Shared Character Scale", EditorStyles.boldLabel);
+
+        SerializedProperty useSharedScale = serializedObject.FindProperty("useSharedCharacterRoomScale");
+        SerializedProperty scaleSource = serializedObject.FindProperty("sharedCharacterScaleSource");
+        SerializedProperty ignoreOldOverride = serializedObject.FindProperty("ignoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale");
+
+        if (useSharedScale != null)
+        {
+            EditorGUILayout.PropertyField(useSharedScale, new GUIContent("Use Shared Character Room Scale"));
+        }
+
+        if (scaleSource != null)
+        {
+            EditorGUILayout.PropertyField(scaleSource, new GUIContent("Scale Source"));
+        }
+
+        if (ignoreOldOverride != null)
+        {
+            EditorGUILayout.PropertyField(ignoreOldOverride, new GUIContent("Ignoring Old Room Visual Override"));
+        }
+
+        using (new EditorGUI.DisabledScope(true))
+        {
+            if (targets.Length == 1 && target is RoomProjectedEntity entity)
+            {
+                EditorGUILayout.Toggle("Using Shared Scale Now", entity.IsUsingSharedCharacterRoomScale);
+                EditorGUILayout.FloatField("Shared Depth", entity.CurrentSharedCharacterDepth01);
+                EditorGUILayout.FloatField("Shared Room Scale", entity.CurrentSharedCharacterRoomScale);
+            }
+            else
+            {
+                EditorGUILayout.TextField("Using Shared Scale Now", "-");
+                EditorGUILayout.TextField("Shared Depth", "-");
+                EditorGUILayout.TextField("Shared Room Scale", "-");
+            }
+        }
     }
 
     private void DrawRoomVisualScaleControls()
@@ -208,6 +260,20 @@ public sealed class RoomProjectedEntityEditor : Editor
         if (entity.VisualRoot != null)
         {
             EditorUtility.SetDirty(entity.VisualRoot);
+        }
+    }
+
+    private void RefreshProjectionTargets()
+    {
+        for (int i = 0; i < targets.Length; i++)
+        {
+            if (targets[i] is not RoomProjectedEntity entity)
+            {
+                continue;
+            }
+
+            entity.ApplyProjection();
+            MarkDirty(entity);
         }
     }
 

@@ -38,7 +38,6 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	[Header("Painted-Room Depth")]
 	[SerializeField] private RoomPerspectiveProfile roomProfile;
 	[SerializeField] private bool useRoomPerspectiveProfileScale = true;
-	[SerializeField] private bool useButlerRoomScaleRules = true;
 	[SerializeField] private float nearY = -360f;
 	[SerializeField] private float farY = 150f;
 	[SerializeField] [Min(0.01f)] private float nearScale = 1f;
@@ -359,7 +358,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		{
 			rectTransform.anchoredPosition = GetRenderedPosition(currentPosition + GetMotionOffset());
 
-			Vector3 scale = GetDepthLocalScale();
+			Vector3 scale = Vector3.one * GetDepthScale();
 			scale.x *= facingSign;
 			rectTransform.localScale = scale;
 		}
@@ -404,29 +403,6 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		return Mathf.Lerp(nearScale, farScale, GetDepth01());
 	}
 
-	private Vector3 GetDepthLocalScale()
-	{
-		if (TryGetButlerRoomScale(out Vector3 finalLocalScale))
-			return finalLocalScale;
-
-		return Vector3.one * GetDepthScale();
-	}
-
-	private bool TryGetButlerRoomScale(out Vector3 finalLocalScale)
-	{
-		finalLocalScale = Vector3.one;
-
-		if (!useButlerRoomScaleRules)
-			return false;
-
-		string roomId = GetCurrentRoomId();
-		return PointClickPlayerMovement.TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
-			roomId,
-			currentPosition.y,
-			out finalLocalScale,
-			out _);
-	}
-
 	private Color GetDepthTint()
 	{
 		if (TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
@@ -453,17 +429,6 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 			return true;
 
 		return false;
-	}
-
-	private string GetCurrentRoomId()
-	{
-		if (roomProfile != null && !string.IsNullOrWhiteSpace(roomProfile.RoomId))
-		{
-			return roomProfile.RoomId;
-		}
-
-		RoomContentGroup roomContent = GetComponentInParent<RoomContentGroup>(true);
-		return roomContent != null ? roomContent.RoomName : string.Empty;
 	}
 
 	private Vector2 GetRenderedPosition(Vector2 position)

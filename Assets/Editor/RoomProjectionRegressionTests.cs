@@ -167,6 +167,7 @@ public class RoomProjectionRegressionTests
 
         try
         {
+            entity.SetSharedCharacterRoomScaleEnabled(false);
             Assert.That(entity.CurrentScale, Is.EqualTo(roomProfile.GetScale(footPoint) * 1.25f).Within(0.0001f));
         }
         finally
@@ -345,68 +346,107 @@ public class RoomProjectionRegressionTests
     }
 
     [Test]
-    public void ButlerCalibrationCanDriveGuestProjectionRuntime()
+    public void RoomProjectedEntityCanUseSharedButlerRoomScale()
     {
         string movementText = File.ReadAllText(PointClickPlayerMovementPath);
         string projectionText = File.ReadAllText(RoomProjectedEntityPath);
         string projectionEditorText = File.ReadAllText(RoomProjectedEntityEditorPath);
-        string walkerText = File.ReadAllText(RoomPersonWalkerPath);
-        string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
 
-        Assert.That(movementText, Does.Contain("TryEvaluateSharedButlerFinalLocalScaleForRoomAtY"), "All character scale paths should be able to read the scene Butler's saved room calibration.");
-        Assert.That(movementText, Does.Contain("out Vector3 finalLocalScale"), "Shared room scale should return the same final Butler scale vector to every character at the same room-local Y.");
-        Assert.That(projectionText, Does.Contain("useButlerRoomScaleRules"), "Projected guests should opt into the shared Butler room scale rules.");
-        Assert.That(projectionText, Does.Contain("TryGetButlerRoomFinalVisualScale"), "Projected guests should try the Butler room scale before falling back to room profile scale.");
-        Assert.That(walkerText, Does.Contain("TryGetButlerRoomScale"), "Legacy room walkers should also use the shared Butler room scale when available.");
-        Assert.That(actorRoomStateText, Does.Contain("TryGetBoundRoomButlerFinalLocalScale"), "Room-stage-bound guests should not overwrite shared Butler scaling with the old profile curve.");
-        Assert.That(projectionEditorText, Does.Not.Contain("Preview Final Butler Local Scale"), "Guest projection editor should not expose Butler-only calibration workflow.");
-    }
+        Assert.That(projectionText, Does.Contain("useSharedCharacterRoomScale"), "Projected floor characters should opt into the shared room character scale curve.");
+        Assert.That(projectionText, Does.Contain("sharedCharacterScaleSource"), "Projected floor characters should be able to use a specific Butler/player scale source.");
+        Assert.That(movementText, Does.Contain("TryEvaluateSharedCharacterRoomScale"), "The Butler should expose normalized shared room scale evaluation.");
+        Assert.That(projectionText, Does.Contain("TryGetSharedCharacterRoomScale"), "Projected guests should try shared character scale before falling back to the room profile.");
+        Assert.That(projectionText, Does.Contain("roomProfile.GetScale(roomLocalFootPoint)"), "Projected guests should retain the old room-profile fallback.");
+        Assert.That(projectionEditorText, Does.Contain("Shared Character Scale"), "The guest projection inspector should expose shared-scale diagnostics.");
 
-    [Test]
-    public void PointClickGuestsCanUseSharedButlerRoomScaleCalibration()
-    {
-        GameObject butler = CreatePointClickPlayer("Butler", new Vector3(2f, 2f, 5f));
-        GameObject guest = CreatePointClickPlayer("Guest", new Vector3(1.1f, 0.9f, 1.3f));
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject butler = CreatePointClickPlayer("Butler", new Vector3(2f, 2f, 1f));
+        RoomProjectedEntity entity = CreateProjectedEntity("ProjectedGuest", profile, null, new Vector2(0f, 0f));
 
         try
         {
             PointClickPlayerMovement butlerMovement = butler.GetComponent<PointClickPlayerMovement>();
-            PointClickPlayerMovement guestMovement = guest.GetComponent<PointClickPlayerMovement>();
             butlerMovement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
-            butlerMovement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -6f, 2f, false);
-            butlerMovement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", -2f, 1f, false);
+            butlerMovement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -100f, 2f, false);
+            butlerMovement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", 100f, 1f, false);
 
-            Assert.That(
-                PointClickPlayerMovement.TryEvaluateSharedButlerFinalLocalScaleForRoomAtY(
-                    "Drawing Room",
-                    -4f,
-                    guestMovement,
-                    out Vector3 guestScale,
-                    out _,
-                    out float finalLocalScaleY),
-                Is.True);
+            entity.SetSharedCharacterScaleSource(butlerMovement, false);
+            entity.SetSharedCharacterRoomScaleEnabled(true);
 
-            Assert.That(finalLocalScaleY, Is.EqualTo(1.5f).Within(0.0001f));
-            Assert.That(guestScale.x, Is.EqualTo(1.5f).Within(0.0001f));
-            Assert.That(guestScale.y, Is.EqualTo(1.5f).Within(0.0001f));
-            Assert.That(guestScale.z, Is.EqualTo(5f).Within(0.0001f));
+            Assert.That(entity.IsUsingSharedCharacterRoomScale, Is.True);
+            Assert.That(entity.CurrentSharedCharacterRoomScale, Is.EqualTo(0.75f).Within(0.0001f));
+            Assert.That(entity.CurrentScale, Is.EqualTo(0.75f).Within(0.0001f));
         }
         finally
         {
+            DestroyEntity(entity);
             UnityEngine.Object.DestroyImmediate(butler);
-            UnityEngine.Object.DestroyImmediate(guest);
+            UnityEngine.Object.DestroyImmediate(profile);
         }
     }
 
     [Test]
-    public void ProjectedFloorCharactersUseSharedButlerRoomScaleCalibration()
+    public void SharedCharacterScaleDoesNotUseRawButlerFinalLocalScale()
+    {
+        GameObject butler = CreatePointClickPlayer("Butler", new Vector3(2f, 2f, 1f));
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
+            movement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -6f, 1f, false);
+            movement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", -2f, 1f, false);
+
+            Assert.That(
+                movement.TryEvaluateSharedCharacterRoomScale(
+                    "Drawing Room",
+                    new Vector2(0f, -4f),
+                    out float normalizedRoomScale,
+                    out _),
+                Is.True);
+
+            Assert.That(normalizedRoomScale, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(normalizedRoomScale, Is.Not.EqualTo(1f).Within(0.0001f), "Shared guest scale should be normalized against the Butler base scale, not the Butler raw final localScale.y.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
+    public void RoomProjectedEntityFallsBackWithoutButlerCalibration()
     {
         RoomPerspectiveProfile profile = CreatePerspectiveProfile();
-        GameObject butler = CreatePointClickPlayer("Butler", Vector3.one);
+        GameObject butler = CreatePointClickPlayer("Butler", new Vector3(2f, 2f, 1f));
+        RoomProjectedEntity entity = CreateProjectedEntity("ProjectedGuest", profile, null, new Vector2(0f, 0f));
+
+        try
+        {
+            entity.SetSharedCharacterScaleSource(butler.GetComponent<PointClickPlayerMovement>(), false);
+            entity.SetSharedCharacterRoomScaleEnabled(true);
+            entity.ApplyProjection();
+
+            Assert.That(entity.IsUsingSharedCharacterRoomScale, Is.False);
+            Assert.That(entity.CurrentScale, Is.EqualTo(profile.GetScale(new Vector2(0f, 0f))).Within(0.0001f));
+        }
+        finally
+        {
+            DestroyEntity(entity);
+            UnityEngine.Object.DestroyImmediate(butler);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void SharedCharacterScaleCanIgnoreOldGuestVisualOverrides()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject butler = CreatePointClickPlayer("Butler", new Vector3(2f, 2f, 1f));
         GameObject root = new GameObject("ProjectedGuest");
         GameObject visual = new GameObject("Visual");
         visual.transform.SetParent(root.transform, false);
-        visual.transform.localScale = new Vector3(1.2f, 0.8f, 1.5f);
+        visual.transform.localScale = new Vector3(2f, 3f, 4f);
         visual.AddComponent<SpriteRenderer>();
         RoomProjectedEntity entity = root.AddComponent<RoomProjectedEntity>();
         entity.SetVisualRoot(visual.transform);
@@ -417,19 +457,69 @@ public class RoomProjectionRegressionTests
         {
             PointClickPlayerMovement butlerMovement = butler.GetComponent<PointClickPlayerMovement>();
             butlerMovement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
-            butlerMovement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -100f, 2f, false);
+            butlerMovement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -100f, 1f, false);
             butlerMovement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", 100f, 1f, false);
 
-            entity.ApplyProjection();
+            entity.SetVisualRootScaleForRoom("Drawing Room", new Vector3(0.25f, 0.5f, 6f), false);
+            entity.SetSharedCharacterScaleSource(butlerMovement, false);
+            entity.SetSharedCharacterRoomScaleEnabled(true, false);
 
-            Assert.That(visual.transform.localScale.x, Is.EqualTo(1.5f).Within(0.0001f));
+            entity.SetIgnoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale(true);
+            Assert.That(entity.IsUsingSharedCharacterRoomScale, Is.True);
+            Assert.That(visual.transform.localScale.x, Is.EqualTo(1f).Within(0.0001f));
             Assert.That(visual.transform.localScale.y, Is.EqualTo(1.5f).Within(0.0001f));
-            Assert.That(visual.transform.localScale.z, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(visual.transform.localScale.z, Is.EqualTo(4f).Within(0.0001f));
+
+            entity.SetIgnoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale(false);
+            Assert.That(visual.transform.localScale.x, Is.EqualTo(0.125f).Within(0.0001f));
+            Assert.That(visual.transform.localScale.y, Is.EqualTo(0.25f).Within(0.0001f));
+            Assert.That(visual.transform.localScale.z, Is.EqualTo(6f).Within(0.0001f));
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(root);
             UnityEngine.Object.DestroyImmediate(butler);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void ButlerCalibrationWindowCanEnableSharedScalingForFloorCharacters()
+    {
+        string windowText = File.ReadAllText(ButlerRoomScaleCalibrationWindowPath);
+
+        Assert.That(windowText, Does.Contain("Enable Shared Butler Scaling For All Floor Characters"));
+        Assert.That(windowText, Does.Contain("Disable Shared Butler Scaling For All Floor Characters"));
+        Assert.That(windowText, Does.Contain("Refresh Guest Shared Scaling Preview"));
+    }
+
+    [Test]
+    public void GuestsAndButlerShareDepthCurve()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        CharacterVisualProfile visualProfile = ScriptableObject.CreateInstance<CharacterVisualProfile>();
+        visualProfile.Configure("TallGuest", 1.25f, 320f, 240f, new Vector2(0.5f, 0f), 0, 1, -2);
+        GameObject butler = CreatePointClickPlayer("Butler", new Vector3(2f, 2f, 1f));
+        RoomProjectedEntity entity = CreateProjectedEntity("ProjectedGuest", profile, visualProfile, new Vector2(0f, -100f));
+
+        try
+        {
+            PointClickPlayerMovement butlerMovement = butler.GetComponent<PointClickPlayerMovement>();
+            butlerMovement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
+            butlerMovement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -100f, 2f, false);
+            butlerMovement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", 100f, 1f, false);
+
+            entity.SetSharedCharacterScaleSource(butlerMovement, false);
+            entity.SetSharedCharacterRoomScaleEnabled(true, false);
+
+            AssertSharedGuestScaleAtY(butlerMovement, entity, -100f, 1f, 1.25f);
+            AssertSharedGuestScaleAtY(butlerMovement, entity, 100f, 0.5f, 0.625f);
+        }
+        finally
+        {
+            DestroyEntity(entity);
+            UnityEngine.Object.DestroyImmediate(butler);
+            UnityEngine.Object.DestroyImmediate(visualProfile);
             UnityEngine.Object.DestroyImmediate(profile);
         }
     }
@@ -683,6 +773,29 @@ public class RoomProjectionRegressionTests
         player.AddComponent<Animator>();
         player.AddComponent<PointClickPlayerMovement>();
         return player;
+    }
+
+    private static void AssertSharedGuestScaleAtY(
+        PointClickPlayerMovement butlerMovement,
+        RoomProjectedEntity entity,
+        float roomLocalFootY,
+        float expectedSharedRoomScale,
+        float expectedProjectedScale)
+    {
+        Assert.That(
+            butlerMovement.TryEvaluateSharedCharacterRoomScale(
+                "Drawing Room",
+                new Vector2(0f, roomLocalFootY),
+                out float butlerSharedScale,
+                out _),
+            Is.True);
+
+        entity.SetRoomLocalFootPoint(new Vector2(0f, roomLocalFootY));
+
+        Assert.That(entity.IsUsingSharedCharacterRoomScale, Is.True);
+        Assert.That(butlerSharedScale, Is.EqualTo(expectedSharedRoomScale).Within(0.0001f));
+        Assert.That(entity.CurrentSharedCharacterRoomScale, Is.EqualTo(butlerSharedScale).Within(0.0001f));
+        Assert.That(entity.CurrentScale, Is.EqualTo(expectedProjectedScale).Within(0.0001f));
     }
 
     private static void DestroyEntity(RoomProjectedEntity entity)
