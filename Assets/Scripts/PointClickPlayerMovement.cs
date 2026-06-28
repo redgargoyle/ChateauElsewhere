@@ -170,6 +170,38 @@ public class PointClickPlayerMovement : MonoBehaviour
 		public bool IsComplete => HasFront && HasBack && Mathf.Abs(FrontRoomLocalFootY - BackRoomLocalFootY) >= ButlerRoomScaleEndpointEpsilon;
 	}
 
+	public readonly struct ButlerCharacterScaleSample
+	{
+		public ButlerCharacterScaleSample(
+			string roomId,
+			Vector2 roomLocalFootPoint,
+			bool hasCalibration,
+			float depth01,
+			float normalizedScale,
+			float butlerFinalLocalScaleY,
+			float butlerBaseLocalScaleY,
+			string source)
+		{
+			RoomId = CleanRoomName(roomId);
+			RoomLocalFootPoint = roomLocalFootPoint;
+			HasCalibration = hasCalibration;
+			Depth01 = Mathf.Clamp01(depth01);
+			NormalizedScale = SanitizeButlerScale(normalizedScale);
+			ButlerFinalLocalScaleY = SanitizeButlerFinalLocalScaleY(butlerFinalLocalScaleY);
+			ButlerBaseLocalScaleY = SanitizeButlerFinalLocalScaleY(butlerBaseLocalScaleY);
+			Source = string.IsNullOrWhiteSpace(source) ? "Butler calibration" : source;
+		}
+
+		public string RoomId { get; }
+		public Vector2 RoomLocalFootPoint { get; }
+		public bool HasCalibration { get; }
+		public float Depth01 { get; }
+		public float NormalizedScale { get; }
+		public float ButlerFinalLocalScaleY { get; }
+		public float ButlerBaseLocalScaleY { get; }
+		public string Source { get; }
+	}
+
 	public readonly struct ButlerScaleDebugSnapshot
 	{
 		public ButlerScaleDebugSnapshot(
@@ -343,19 +375,76 @@ public class PointClickPlayerMovement : MonoBehaviour
 		depth01 = 0f;
 		finalLocalScaleY = 0f;
 
-		if (!useButlerRoomScaleOverrides ||
-			!TryGetButlerRoomScaleOverride(roomId, out ButlerRoomScaleOverrideData data) ||
+		if (!TryEvaluateButlerCharacterScaleInternal(
+			roomId,
+			new Vector2(0f, roomLocalFootY),
+			out ButlerCharacterScaleSample sample))
+		{
+			return false;
+		}
+
+		depth01 = sample.Depth01;
+		finalLocalScaleY = sample.ButlerFinalLocalScaleY;
+		finalLocalScale = BuildButlerFinalLocalScale(finalLocalScaleY);
+		return true;
+	}
+
+	public bool TryEvaluateButlerCharacterScale(
+		string roomId,
+		Vector2 roomLocalFootPoint,
+		out ButlerCharacterScaleSample sample)
+	{
+		return TryEvaluateButlerCharacterScaleInternal(roomId, roomLocalFootPoint, out sample);
+	}
+
+	public bool TryEvaluateCurrentButlerCharacterScale(out ButlerCharacterScaleSample sample)
+	{
+		sample = default;
+
+		if (!TryGetButlerCalibrationContext(string.Empty, false, out string roomId, out Vector2 roomLocalFootPoint))
+		{
+			return false;
+		}
+
+		return TryEvaluateButlerCharacterScaleInternal(roomId, roomLocalFootPoint, out sample);
+	}
+
+	private bool TryEvaluateButlerCharacterScaleInternal(
+		string roomId,
+		Vector2 roomLocalFootPoint,
+		out ButlerCharacterScaleSample sample)
+	{
+		sample = default;
+		string cleanRoomId = CleanRoomName(roomId);
+
+		if (string.IsNullOrWhiteSpace(cleanRoomId) ||
+			!useButlerRoomScaleOverrides ||
+			!TryGetButlerRoomScaleOverride(cleanRoomId, out ButlerRoomScaleOverrideData data) ||
 			!data.IsComplete)
 		{
 			return false;
 		}
 
-		depth01 = Mathf.Clamp01(Mathf.InverseLerp(data.FrontRoomLocalFootY, data.BackRoomLocalFootY, roomLocalFootY));
-		finalLocalScaleY = SanitizeButlerFinalLocalScaleY(Mathf.Lerp(
+		float depth01 = Mathf.Clamp01(Mathf.InverseLerp(
+			data.FrontRoomLocalFootY,
+			data.BackRoomLocalFootY,
+			roomLocalFootPoint.y));
+		float finalLocalScaleY = SanitizeButlerFinalLocalScaleY(Mathf.Lerp(
 			data.FrontFinalLocalScaleY,
 			data.BackFinalLocalScaleY,
 			depth01));
-		finalLocalScale = BuildButlerFinalLocalScale(finalLocalScaleY);
+		float baseLocalScaleY = SanitizeButlerFinalLocalScaleY(GetButlerScaleReference().y);
+		float normalizedScale = SanitizeButlerScale(finalLocalScaleY / Mathf.Max(0.001f, baseLocalScaleY));
+
+		sample = new ButlerCharacterScaleSample(
+			cleanRoomId,
+			roomLocalFootPoint,
+			true,
+			depth01,
+			normalizedScale,
+			finalLocalScaleY,
+			baseLocalScaleY,
+			"Manual Butler room scale override");
 		return true;
 	}
 
@@ -1893,17 +1982,13 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		finalLocalScale = transform.localScale;
 
-		if (!TryGetButlerCalibrationContext(string.Empty, false, out string roomId, out Vector2 roomLocalFootPoint))
+		if (!TryEvaluateCurrentButlerCharacterScale(out ButlerCharacterScaleSample sample))
 		{
 			return false;
 		}
 
-		return TryEvaluateButlerFinalLocalScaleForRoomAtY(
-			roomId,
-			roomLocalFootPoint.y,
-			out finalLocalScale,
-			out _,
-			out _);
+		finalLocalScale = BuildButlerFinalLocalScale(sample.ButlerFinalLocalScaleY);
+		return true;
 	}
 
 	private float CalculateExistingPerspectiveScale()

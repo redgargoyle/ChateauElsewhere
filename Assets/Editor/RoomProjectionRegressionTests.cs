@@ -345,13 +345,14 @@ public class RoomProjectionRegressionTests
     }
 
     [Test]
-    public void ButlerCalibrationDoesNotChangeGuestProjectionRuntime()
+    public void GuestProjectionUsesButlerScaleApiWithoutOwningCalibrationData()
     {
         string projectionText = File.ReadAllText(RoomProjectedEntityPath);
         string projectionEditorText = File.ReadAllText(RoomProjectedEntityEditorPath);
 
-        Assert.That(projectionText, Does.Not.Contain("ButlerRoomScaleOverride"), "Guest projection should not receive Butler-specific runtime calibration.");
-        Assert.That(projectionText, Does.Not.Contain("butlerCalibrationBaseLocalScale"), "Guest projection should not use the Butler base scale.");
+        Assert.That(projectionText, Does.Contain("TryEvaluateButlerCharacterScale"), "Guest projection should consume the shared Butler scale evaluator.");
+        Assert.That(projectionText, Does.Not.Contain("ButlerRoomScaleOverride"), "Guest projection should not serialize its own Butler room calibration data.");
+        Assert.That(projectionText, Does.Not.Contain("butlerCalibrationBaseLocalScale"), "Guest projection should not copy the Butler base scale field.");
         Assert.That(projectionEditorText, Does.Not.Contain("Preview Final Butler Local Scale"), "Guest projection editor should not expose Butler-only calibration workflow.");
     }
 
