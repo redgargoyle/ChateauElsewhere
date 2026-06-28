@@ -1624,7 +1624,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (useWorldSafePlacement)
         {
             PlaceGuestAtPosition(guest, GetWorldDoorArrivalPosition(guest, indexInDoorBatch, batchCount));
-            ApplyGuestSharedRoomScaleForTarget(guest, guest.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint));
+            ApplyGuestRoomProfileScaleForTarget(guest, guest.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint));
         }
         else
         {
@@ -3108,14 +3108,14 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             guestState.GuestObject.transform.position = worldPosition;
             BindGuestToRoomStagePoint(guestState, target);
-            ApplyGuestSharedRoomScaleForTarget(guestState, target);
+            ApplyGuestRoomProfileScaleForTarget(guestState, target);
             return;
         }
 
         if (guestState.ActorState != null)
         {
             guestState.ActorState.PlaceAt(target);
-            ApplyGuestSharedRoomScaleForTarget(guestState, target);
+            ApplyGuestRoomProfileScaleForTarget(guestState, target);
             return;
         }
 
@@ -3125,7 +3125,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             targetPosition.z = guestState.GuestObject.transform.position.z;
             guestState.GuestObject.transform.position = targetPosition;
             BindGuestToRoomStagePoint(guestState, target);
-            ApplyGuestSharedRoomScaleForTarget(guestState, target);
+            ApplyGuestRoomProfileScaleForTarget(guestState, target);
         }
     }
 
@@ -3232,62 +3232,36 @@ public class Chapter1ArrivalController : MonoBehaviour
             : guestObject.transform.localScale;
     }
 
-    private void ApplyGuestSharedRoomScaleForTarget(GuestRuntimeState guestState, Transform target)
+    private void ApplyGuestRoomProfileScaleForTarget(GuestRuntimeState guestState, Transform target)
     {
         if (guestState == null ||
             guestState.GuestObject == null ||
             !IsWorldSpaceGuestObject(guestState.GuestObject) ||
             HasActiveProjection(guestState) ||
-            !TryEvaluateSharedCharacterRoomScaleForTarget(target, out float sharedRoomScale))
+            !TryEvaluateRoomProfileScaleForTarget(target, out float roomProfileScale))
         {
             return;
         }
 
         Vector3 authoredScale = GetGuestAuthoredScale(guestState.GuestObject);
         guestState.GuestObject.transform.localScale = new Vector3(
-            authoredScale.x * sharedRoomScale,
-            authoredScale.y * sharedRoomScale,
+            authoredScale.x * roomProfileScale,
+            authoredScale.y * roomProfileScale,
             authoredScale.z);
     }
 
-    private bool TryEvaluateSharedCharacterRoomScaleForTarget(Transform target, out float sharedRoomScale)
+    private static bool TryEvaluateRoomProfileScaleForTarget(Transform target, out float roomProfileScale)
     {
-        sharedRoomScale = 1f;
+        roomProfileScale = 1f;
 
-        if (!TryGetRoomScaleContextForTarget(target, out string roomId, out Vector2 roomLocalFootPoint))
+        if (!TryGetRoomScaleContextForTarget(target, out _, out Vector2 roomLocalFootPoint) ||
+            !TryGetPerspectiveProfileForTarget(target, out RoomPerspectiveProfile profile))
         {
             return false;
         }
 
-        if (playerMovement == null)
-        {
-            playerMovement = FindAnyObjectByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
-        }
-
-        if (playerMovement != null &&
-            playerMovement.TryEvaluateSharedCharacterRoomScale(roomId, roomLocalFootPoint, out sharedRoomScale, out _))
-        {
-            return true;
-        }
-
-        PointClickPlayerMovement[] movements = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < movements.Length; i++)
-        {
-            PointClickPlayerMovement movement = movements[i];
-
-            if (movement == null ||
-                movement == playerMovement ||
-                !movement.TryEvaluateSharedCharacterRoomScale(roomId, roomLocalFootPoint, out sharedRoomScale, out _))
-            {
-                continue;
-            }
-
-            playerMovement = movement;
-            return true;
-        }
-
-        return false;
+        roomProfileScale = profile.GetScale(roomLocalFootPoint);
+        return true;
     }
 
     private static bool TryGetRoomScaleContextForTarget(Transform target, out string roomId, out Vector2 roomLocalFootPoint)
@@ -3561,7 +3535,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         StopGuestFootsteps(guestState);
         BindGuestToRoomStagePoint(guestState, target);
-        ApplyGuestSharedRoomScaleForTarget(guestState, target);
+        ApplyGuestRoomProfileScaleForTarget(guestState, target);
     }
 
     private void BeginGuestMoveTo(GuestRuntimeState guestState, Transform target, string fieldName)

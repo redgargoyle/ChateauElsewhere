@@ -109,6 +109,18 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
         Sanitize();
     }
 
+    public void SetCharacterScaleCalibration(
+        float frontRoomLocalFootY,
+        float frontScale,
+        float backRoomLocalFootY,
+        float backScale)
+    {
+        SetDepthYRange(frontRoomLocalFootY, backRoomLocalFootY);
+        SetScaleEndpoints(
+            Mathf.Max(0.001f, frontScale),
+            Mathf.Max(0.001f, backScale));
+    }
+
     public void ApplyScaleMultiplier(float multiplier)
     {
         multiplier = Mathf.Max(0.001f, multiplier);

@@ -63,6 +63,11 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	private double lastEditorTime;
 #endif
 
+	public RoomPerspectiveProfile RoomProfile => roomProfile;
+	public bool UsesRoomPerspectiveProfileScale => useRoomPerspectiveProfileScale;
+	public Vector2 CurrentPosition => currentPosition;
+	public float CurrentDepthScale => GetDepthScale();
+
 	private void Reset()
 	{
 		ResolveReferences();
@@ -102,6 +107,26 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	{
 		ResolveReferences();
 		ApplyVisuals();
+	}
+
+	public void SetRoomPerspectiveProfile(RoomPerspectiveProfile profile, bool refreshImmediately = true)
+	{
+		roomProfile = profile;
+
+		if (refreshImmediately)
+		{
+			RefreshDepthVisualsNow();
+		}
+	}
+
+	public void SetRoomPerspectiveProfileScaleEnabled(bool value, bool refreshImmediately = true)
+	{
+		useRoomPerspectiveProfileScale = value;
+
+		if (refreshImmediately)
+		{
+			RefreshDepthVisualsNow();
+		}
 	}
 
 	public bool UsesPerspectiveProfile(RoomPerspectiveProfile profile)

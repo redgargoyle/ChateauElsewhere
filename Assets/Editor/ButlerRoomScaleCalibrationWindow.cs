@@ -6,34 +6,37 @@ using UnityEngine;
 
 public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 {
-    private const string InstructionText =
-        "Use this in EDIT MODE. For each room: move the Butler to the FRONT, adjust Preview Final Butler Local Scale, click SAVE FRONT. Then move him to the BACK, adjust Preview Final Butler Local Scale, click SAVE BACK. Do not edit the Butler Transform scale manually.";
-    private const string PlayModeWarning = "Stop Play Mode to save calibration.";
-    private const string NoSafePlayerMessage =
-        "No safe player object found. Drag the scene object named 'player' into the Butler / Player Object field.";
-    private const string GuestSelectionWarning =
-        "Warning: selected object looks like a guest. The actual Butler/player should be the scene object named 'player'. Drag 'player' into this field before saving calibration.";
-    private const string GuestProjectionWarning =
-        "Warning: selected object has guest projection components. Confirm this is not a guest before saving.";
-    private const string UnexpectedPlayerWarning =
-        "Warning: selected object does not look like the main player. Expected object name: player.";
+    private const string PlayModeWarning = "Stop Play Mode before saving room profile calibration.";
+    private const string NoPlayerWarning = "No safe player object found. Drag the scene object named 'player' into the Player / Butler Object field.";
+    private const string OldCalibrationWarning =
+        "Old Butler calibration data used final local scale and may need manual review. The new source of truth is RoomPerspectiveProfile.";
 
     private PointClickPlayerMovement selectedButler;
+    private RoomPerspectiveProfile selectedProfile;
     private int selectedRoomIndex;
+    private float previewProfileScale = 1f;
     private Vector2 scroll;
+    private bool livePreview = true;
     private bool advancedFoldout;
-    private bool candidatesFoldout;
-    private float previewSize = 1f;
     private string lastStatus = string.Empty;
-    private bool hasSessionStartTransform;
-    private Vector3 sessionStartPosition;
-    private Quaternion sessionStartRotation = Quaternion.identity;
-    private Vector3 sessionStartLocalScale = Vector3.one;
 
-    [MenuItem("Tools/Butler/Room Scale Calibration")]
+    private RoomPerspectiveProfile proofProfile;
+    private float proofFrontY;
+    private float proofBackY;
+    private float proofFrontScale = 1f;
+    private float proofBackScale = 1f;
+    private bool hasProofSnapshot;
+
+    [MenuItem("Tools/Characters/Room Character Scale Calibration")]
     public static void Open()
     {
-        GetWindow<ButlerRoomScaleCalibrationWindow>("Butler Room Scale");
+        GetWindow<ButlerRoomScaleCalibrationWindow>("Room Character Scale");
+    }
+
+    [MenuItem("Tools/Butler/Room Scale Calibration")]
+    public static void OpenLegacyMenu()
+    {
+        Open();
     }
 
     private void OnEnable()
@@ -43,13 +46,10 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 
     private void OnGUI()
     {
-        PlayerCandidateInfo[] candidates = BuildPlayerCandidateInfos();
-
         scroll = EditorGUILayout.BeginScrollView(scroll);
-        EditorGUILayout.LabelField("Butler Room Scale", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Room Character Scale", EditorStyles.boldLabel);
 
-        DrawTopControls(candidates);
-        DrawCandidateFoldout(candidates);
+        DrawTopControls();
 
         if (Application.isPlaying)
         {
@@ -58,53 +58,67 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
 
         if (selectedButler == null)
         {
-            EditorGUILayout.HelpBox(NoSafePlayerMessage, MessageType.Warning);
+            EditorGUILayout.HelpBox(NoPlayerWarning, MessageType.Warning);
             EditorGUILayout.EndScrollView();
             return;
         }
 
-        DrawSelectedPlayerWarnings(selectedButler);
-
-        string[] rooms = BuildRoomOptions(selectedButler);
+        string[] rooms = BuildRoomOptions();
 
         if (rooms.Length == 0)
         {
-            EditorGUILayout.HelpBox("No scene RoomContentGroup rooms were found.", MessageType.Warning);
+            EditorGUILayout.HelpBox("No loaded scene RoomContentGroup rooms were found.", MessageType.Warning);
             EditorGUILayout.EndScrollView();
             return;
         }
 
-        string selectedRoom = ResolveSelectedRoom(selectedButler, rooms, ref selectedRoomIndex);
-        DrawRoomSelection(selectedButler, rooms, ref selectedRoomIndex, ref selectedRoom);
+        string selectedRoom = ResolveSelectedRoom(rooms);
+        DrawRoomSelection(rooms, ref selectedRoom);
 
-        EditorGUILayout.HelpBox(InstructionText, MessageType.Info);
-        DrawStatus(selectedButler, selectedRoom);
-        DrawPrimaryWorkflow(selectedButler, selectedRoom);
-        DrawGuestSharedScalingTools(selectedButler);
-        DrawAdvancedTools(selectedButler, selectedRoom, rooms);
+        RoomContentGroup roomContent = FindRoomContent(selectedRoom);
+        DrawProfileSelection(roomContent);
+
+        if (selectedProfile == null)
+        {
+            EditorGUILayout.HelpBox("The selected room does not have a RoomPerspectiveProfile assigned.", MessageType.Warning);
+            DrawApplyProfileTools();
+            DrawAdvancedTools(selectedRoom);
+            EditorGUILayout.EndScrollView();
+            return;
+        }
+
+        if (!TryGetCurrentRoomLocalFootPoint(selectedRoom, out Vector2 roomLocalFootPoint))
+        {
+            roomLocalFootPoint = Vector2.zero;
+        }
+
+        DrawStatus(selectedRoom, roomLocalFootPoint);
+        DrawPrimaryWorkflow(selectedRoom, roomLocalFootPoint);
+        DrawApplyProfileTools();
+        DrawAdvancedTools(selectedRoom);
 
         EditorGUILayout.EndScrollView();
     }
 
-    private void DrawTopControls(PlayerCandidateInfo[] candidates)
+    private void DrawTopControls()
     {
         EditorGUI.BeginChangeCheck();
         PointClickPlayerMovement nextButler = (PointClickPlayerMovement)EditorGUILayout.ObjectField(
-            "Butler / Player Object",
+            "Player / Butler Object",
             selectedButler,
             typeof(PointClickPlayerMovement),
             true);
 
         if (EditorGUI.EndChangeCheck())
         {
-            SetSelectedButler(nextButler, "Selected Butler / Player Object.");
+            SetSelectedButler(nextButler, "Selected Player / Butler Object.");
         }
 
         using (new EditorGUILayout.HorizontalScope())
         {
             if (GUILayout.Button("Find Scene Player"))
             {
-                SetSelectedButler(FindScenePlayer(candidates), "Found scene player.");
+                SetSelectedButler(FindScenePlayer(), "Found scene player.");
 
                 if (selectedButler != null)
                 {
@@ -113,96 +127,64 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
                 }
             }
 
-            using (new EditorGUI.DisabledScope(selectedButler == null || Application.isPlaying))
+            if (GUILayout.Button("Audit Character Scaling"))
             {
-                if (GUILayout.Button("Save Scene"))
-                {
-                    SaveButlerSceneWithTransformConfirmation(selectedButler);
-                }
+                CharacterScalingAuditWindow.Open();
             }
         }
     }
 
-    private static void DrawRoomSelection(
-        PointClickPlayerMovement movement,
-        string[] rooms,
-        ref int selectedIndex,
-        ref string selectedRoom)
+    private void DrawRoomSelection(string[] rooms, ref string selectedRoom)
     {
         EditorGUI.BeginChangeCheck();
-        selectedIndex = EditorGUILayout.Popup("Current Room", selectedIndex, rooms);
+        selectedRoomIndex = EditorGUILayout.Popup("Selected Room", selectedRoomIndex, rooms);
 
         if (EditorGUI.EndChangeCheck())
         {
-            selectedRoom = rooms[selectedIndex];
-            RecordMovementAndTransform(movement, "Select Butler Scale Room");
-            movement.SetEditorSelectedButlerScaleRoomId(selectedRoom);
-            movement.RefreshPerspectiveScaleNow(true);
-            MarkDirty(movement);
+            selectedRoom = rooms[selectedRoomIndex];
+            selectedButler.SetEditorSelectedButlerScaleRoomId(selectedRoom);
+            selectedProfile = FindProfileForRoom(selectedRoom);
+            SyncPreviewScaleFromProfile(selectedRoom);
+            selectedButler.RefreshPerspectiveScaleNow(true);
+            MarkDirty(selectedButler);
         }
+    }
 
-        using (new EditorGUILayout.HorizontalScope())
+    private void DrawProfileSelection(RoomContentGroup roomContent)
+    {
+        EditorGUI.BeginChangeCheck();
+        RoomPerspectiveProfile nextProfile = (RoomPerspectiveProfile)EditorGUILayout.ObjectField(
+            "Selected RoomPerspectiveProfile",
+            selectedProfile,
+            typeof(RoomPerspectiveProfile),
+            false);
+
+        if (EditorGUI.EndChangeCheck())
         {
-            if (GUILayout.Button("Previous Room"))
-            {
-                selectedIndex = (selectedIndex - 1 + rooms.Length) % rooms.Length;
-                selectedRoom = rooms[selectedIndex];
-                RecordMovementAndTransform(movement, "Select Previous Butler Scale Room");
-                movement.SetEditorSelectedButlerScaleRoomId(selectedRoom);
-                movement.RefreshPerspectiveScaleNow(true);
-                MarkDirty(movement);
-            }
+            selectedProfile = nextProfile;
 
-            if (GUILayout.Button("Next Room"))
+            if (roomContent != null && !Application.isPlaying)
             {
-                selectedIndex = (selectedIndex + 1) % rooms.Length;
-                selectedRoom = rooms[selectedIndex];
-                RecordMovementAndTransform(movement, "Select Next Butler Scale Room");
-                movement.SetEditorSelectedButlerScaleRoomId(selectedRoom);
-                movement.RefreshPerspectiveScaleNow(true);
-                MarkDirty(movement);
-            }
-
-            if (GUILayout.Button("Ping RoomContentGroup"))
-            {
-                PingRoom(selectedRoom);
+                Undo.RecordObject(roomContent, "Assign Room Perspective Profile");
+                roomContent.SetPerspectiveProfile(selectedProfile);
+                MarkDirty(roomContent);
             }
         }
     }
 
-    private void DrawStatus(PointClickPlayerMovement movement, string selectedRoom)
+    private void DrawStatus(string selectedRoom, Vector2 roomLocalFootPoint)
     {
-        movement.TryGetButlerCalibrationContext(selectedRoom, true, out _, out Vector2 footPoint);
-        bool hasOverride = movement.TryGetButlerRoomScaleOverride(selectedRoom, out PointClickPlayerMovement.ButlerRoomScaleOverrideData data);
+        float currentProfileScale = selectedProfile.GetScale(roomLocalFootPoint);
 
         using (new EditorGUI.DisabledScope(true))
         {
             EditorGUILayout.TextField("Selected Room", selectedRoom);
-            EditorGUILayout.FloatField("Current Room-Local Foot Y", footPoint.y);
-            EditorGUILayout.Vector3Field("Current Transform localScale", movement.transform.localScale);
-            EditorGUILayout.Vector3Field("Butler Base Local Scale", movement.ButlerCalibrationBaseLocalScale);
-            EditorGUILayout.TextField("Calibration Status", GetCalibrationStatus(hasOverride, data));
-
-            if (hasOverride)
-            {
-                EditorGUILayout.TextField("Front saved", YesNo(data.HasFront));
-                EditorGUILayout.FloatField("Front Y", data.FrontRoomLocalFootY);
-                EditorGUILayout.FloatField("Front Final Local Scale Y", data.FrontFinalLocalScaleY);
-                EditorGUILayout.TextField("Back saved", YesNo(data.HasBack));
-                EditorGUILayout.FloatField("Back Y", data.BackRoomLocalFootY);
-                EditorGUILayout.FloatField("Back Final Local Scale Y", data.BackFinalLocalScaleY);
-            }
+            EditorGUILayout.FloatField("Current Room-Local Foot Y", roomLocalFootPoint.y);
+            EditorGUILayout.FloatField("Current Profile Scale Here", currentProfileScale);
+            EditorGUILayout.FloatField("Preview Room Character Scale Here", previewProfileScale);
+            EditorGUILayout.FloatField("Current Room Stage Scale Ratio", selectedButler.CurrentRoomStageScaleRatio);
+            EditorGUILayout.Vector3Field("Current Transform localScale", selectedButler.transform.localScale);
         }
-
-        if (hasOverride && data.HasFront && data.HasBack &&
-            Mathf.Abs(data.FrontRoomLocalFootY - data.BackRoomLocalFootY) < PointClickPlayerMovement.ButlerRoomScaleEndpointEpsilon)
-        {
-            EditorGUILayout.HelpBox(
-                "Front and Back positions are the same. Move the player to the front and save FRONT, then move to the back and save BACK.",
-                MessageType.Warning);
-        }
-
-        DrawRuntimeDiagnostics(movement);
 
         if (!string.IsNullOrWhiteSpace(lastStatus))
         {
@@ -210,159 +192,150 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
         }
     }
 
-    private static void DrawRuntimeDiagnostics(PointClickPlayerMovement movement)
+    private void DrawPrimaryWorkflow(string selectedRoom, Vector2 roomLocalFootPoint)
     {
-        if (!Application.isPlaying || movement == null)
-        {
-            return;
-        }
-
-        EditorGUILayout.Space(4f);
-        EditorGUILayout.LabelField("Play Mode Diagnostics", EditorStyles.boldLabel);
-
-        if (!movement.TryGetButlerScaleDebugSnapshot(out PointClickPlayerMovement.ButlerScaleDebugSnapshot snapshot))
-        {
-            EditorGUILayout.HelpBox("Runtime Butler scale snapshot is unavailable.", MessageType.Warning);
-            return;
-        }
-
-        using (new EditorGUI.DisabledScope(true))
-        {
-            EditorGUILayout.TextField("Current runtime room", snapshot.RoomId);
-            EditorGUILayout.FloatField("Current runtime room-local foot Y", snapshot.RoomLocalFootY);
-            EditorGUILayout.TextField("Has complete calibration?", YesNo(snapshot.HasCompleteCalibration));
-            EditorGUILayout.FloatField("Runtime depth t", snapshot.Depth01);
-            EditorGUILayout.FloatField("Runtime final local scale Y", snapshot.EvaluatedFinalLocalScaleY);
-            EditorGUILayout.Vector3Field("Current Transform localScale", snapshot.CurrentTransformLocalScale);
-        }
-    }
-
-    private void DrawPrimaryWorkflow(PointClickPlayerMovement movement, string selectedRoom)
-    {
-        bool safeForSaving = IsSafePlayerObjectForSaving(movement);
-        bool canSave = !Application.isPlaying && safeForSaving;
-
         using (new EditorGUI.DisabledScope(Application.isPlaying))
         {
-            previewSize = DrawPreviewSizeControl(previewSize, out bool previewChanged);
+            previewProfileScale = DrawPreviewProfileScaleControl(previewProfileScale, out bool previewChanged);
+            livePreview = EditorGUILayout.Toggle("Live Preview", livePreview);
 
-            if (previewChanged)
+            if (previewChanged && livePreview)
             {
-                PreviewCurrentSize(movement);
+                PreviewProfileScaleOnButler();
             }
 
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("STEP 1 - FRONT / closest to camera", EditorStyles.boldLabel);
 
-            using (new EditorGUI.DisabledScope(!canSave))
+            if (GUILayout.Button("SAVE FRONT TO ROOM PROFILE: Current Position + Preview Scale"))
             {
-                if (GUILayout.Button("SAVE FRONT: Current Position + Current Visible Size"))
-                {
-                    SaveEndpoint(movement, selectedRoom, true);
-                }
+                SaveProfileEndpoint(selectedRoom, roomLocalFootPoint.y, true);
             }
 
             EditorGUILayout.LabelField("STEP 2 - BACK / farthest from camera", EditorStyles.boldLabel);
 
-            using (new EditorGUI.DisabledScope(!canSave))
+            if (GUILayout.Button("SAVE BACK TO ROOM PROFILE: Current Position + Preview Scale"))
             {
-                if (GUILayout.Button("SAVE BACK: Current Position + Current Visible Size"))
-                {
-                    SaveEndpoint(movement, selectedRoom, false);
-                }
+                SaveProfileEndpoint(selectedRoom, roomLocalFootPoint.y, false);
             }
 
-            EditorGUILayout.LabelField("STEP 3 - TEST", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("STEP 3 - REFRESH / TEST", EditorStyles.boldLabel);
 
-            using (new EditorGUI.DisabledScope(!CanTestSavedScaling(movement, selectedRoom)))
+            if (GUILayout.Button("REFRESH ALL CHARACTERS USING THIS ROOM PROFILE"))
             {
-                if (GUILayout.Button("PREVIEW SAVED SIZE AT CURRENT POSITION (does not save)"))
-                {
-                    TestSavedScaling(movement, selectedRoom);
-                }
+                int refreshedCount = RefreshAllCharactersUsingProfile(selectedProfile, true);
+                lastStatus = $"Refreshed {refreshedCount} character(s) using {selectedProfile.name}.";
             }
 
-            if (GUILayout.Button("RESTORE BUTLER START TRANSFORM"))
+            if (GUILayout.Button("PREVIEW PROFILE SCALE AT CURRENT POSITION"))
             {
-                RestoreButlerStartTransform(movement);
+                previewProfileScale = selectedProfile.GetScale(roomLocalFootPoint);
+                PreviewProfileScaleOnButler();
+                lastStatus = $"Previewing profile scale {previewProfileScale:0.###} at Y={roomLocalFootPoint.y:0.###}.";
+            }
+        }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("SAVE PROFILE ASSET"))
+            {
+                EditorUtility.SetDirty(selectedProfile);
+                AssetDatabase.SaveAssets();
+                lastStatus = $"Saved profile asset {selectedProfile.name}.";
+            }
+
+            if (GUILayout.Button("SAVE SCENE"))
+            {
+                EditorSceneManager.SaveOpenScenes();
+                lastStatus = "Saved open scene(s).";
             }
         }
     }
 
-    private void DrawAdvancedTools(PointClickPlayerMovement movement, string selectedRoom, string[] rooms)
+    private void DrawApplyProfileTools()
     {
-        advancedFoldout = EditorGUILayout.Foldout(advancedFoldout, "Advanced / Reset Tools", true);
+        CountAssignedRoomPeople(out int projectedWithProfiles, out int projectedCount, out int walkersWithProfiles, out int walkerCount);
+
+        EditorGUILayout.Space(8f);
+        EditorGUILayout.LabelField("Apply Profile Scaling To All Characters In Loaded Scenes", EditorStyles.boldLabel);
+
+        using (new EditorGUI.DisabledScope(true))
+        {
+            EditorGUILayout.LabelField("Floor characters with room profiles:", $"{projectedWithProfiles} / {projectedCount}");
+            EditorGUILayout.LabelField("Room walkers using room profiles:", $"{walkersWithProfiles} / {walkerCount}");
+        }
+
+        using (new EditorGUI.DisabledScope(Application.isPlaying))
+        {
+            if (GUILayout.Button("ASSIGN ROOM PROFILES TO ALL ROOM PEOPLE"))
+            {
+                AssignRoomProfilesToAllRoomPeople(out int projectedChanged, out int walkersChanged);
+                lastStatus = $"Assigned room profiles to {projectedChanged} projected floor character(s) and {walkersChanged} walker(s).";
+            }
+        }
+    }
+
+    private void DrawAdvancedTools(string selectedRoom)
+    {
+        advancedFoldout = EditorGUILayout.Foldout(advancedFoldout, "Advanced", true);
 
         if (!advancedFoldout)
         {
             return;
         }
 
-        using (new EditorGUI.DisabledScope(Application.isPlaying))
+        EditorGUILayout.HelpBox(OldCalibrationWarning, MessageType.Info);
+
+        using (new EditorGUI.DisabledScope(Application.isPlaying || selectedProfile == null || selectedButler == null))
         {
-            if (GUILayout.Button("RESET THIS ROOM TO OLD DEFAULT SCALE VALUES") &&
-                EditorUtility.DisplayDialog(
-                    "Reset Butler Room Scale",
-                    $"This overwrites the saved FRONT and BACK calibration for {selectedRoom}. Continue?",
-                    "Continue",
-                    "Cancel"))
+            if (GUILayout.Button("MIGRATE OLD BUTLER CALIBRATION INTO ROOM PROFILE"))
             {
-                RecordMovementAndTransform(movement, "Reset Butler Room Scale To Old Defaults");
-                movement.InitializeButlerScaleOverrideForRoomFromCurrentPerspective(selectedRoom, false);
-                MarkDirty(movement);
-                lastStatus = $"Reset {selectedRoom} to old default scale values.";
+                MigrateOldButlerCalibration(selectedRoom);
             }
 
-            if (GUILayout.Button("DELETE THIS ROOM'S BUTLER CALIBRATION") &&
-                EditorUtility.DisplayDialog(
-                    "Delete Butler Room Scale",
-                    $"Delete the saved Butler calibration for {selectedRoom}?",
-                    "Delete",
-                    "Cancel"))
+            if (GUILayout.Button("DISABLE OLD PER-ROOM GUEST VISUAL SCALE OVERRIDES"))
             {
-                RecordMovementAndTransform(movement, "Delete Butler Room Scale");
-                movement.RemoveButlerScaleOverrideForRoom(selectedRoom, false);
-                MarkDirty(movement);
-                lastStatus = $"Deleted Butler calibration for {selectedRoom}.";
+                int changedCount = SetOldGuestVisualScaleOverrides(false);
+                lastStatus = $"Disabled old per-room guest visual scale overrides on {changedCount} floor character(s).";
             }
 
-            if (GUILayout.Button("CAPTURE CURRENT TRANSFORM AS BUTLER BASE SCALE") &&
-                EditorUtility.DisplayDialog(
-                    "Capture Butler Base Scale",
-                    "This replaces the stable Butler base scale with the current Transform localScale. Use only to fix setup issues. Continue?",
-                    "Capture",
-                    "Cancel"))
+            if (GUILayout.Button("ENABLE OLD PER-ROOM GUEST VISUAL SCALE OVERRIDES"))
             {
-                RecordMovementAndTransform(movement, "Capture Butler Base Scale");
-                movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
-                previewSize = movement.CaptureCurrentButlerFinalLocalScaleY();
-                MarkDirty(movement);
-                lastStatus = "Captured current Transform localScale as Butler base scale.";
+                int changedCount = SetOldGuestVisualScaleOverrides(true);
+                lastStatus = $"Enabled old per-room guest visual scale overrides on {changedCount} floor character(s).";
             }
 
-            if (GUILayout.Button("INITIALIZE MISSING ROOMS FROM OLD DEFAULTS") &&
+            if (GUILayout.Button("PROOF TEST: Temporarily Double This Room Profile Scale") &&
                 EditorUtility.DisplayDialog(
-                    "Initialize Missing Butler Room Scales",
-                    "This creates old-default Butler calibration only for rooms with no saved Butler calibration. Existing rooms are not overwritten. Continue?",
-                    "Initialize Missing",
+                    "Proof Test Room Profile Scale",
+                    "This temporarily doubles the selected profile's front/back scale and refreshes characters in loaded scenes. Continue?",
+                    "Double Temporarily",
                     "Cancel"))
             {
-                InitializeMissingRooms(movement, rooms);
+                RunProofDoubleScale();
+            }
+
+            using (new EditorGUI.DisabledScope(!hasProofSnapshot))
+            {
+                if (GUILayout.Button("UNDO PROOF TEST / RESTORE PROFILE SCALE"))
+                {
+                    RestoreProofScale();
+                }
             }
         }
     }
 
-    private static float DrawPreviewSizeControl(float currentValue, out bool changed)
+    private static float DrawPreviewProfileScaleControl(float currentValue, out bool changed)
     {
         changed = false;
         float nextValue = Mathf.Max(0.001f, currentValue);
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            EditorGUILayout.PrefixLabel("Preview Final Butler Local Scale");
+            EditorGUILayout.PrefixLabel("Preview Room Character Scale Here");
 
             EditorGUI.BeginChangeCheck();
-            nextValue = GUILayout.HorizontalSlider(nextValue, 0.20f, 2.50f);
+            nextValue = GUILayout.HorizontalSlider(nextValue, 0.10f, 3.00f);
             if (EditorGUI.EndChangeCheck())
             {
                 changed = true;
@@ -391,160 +364,268 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
         return Mathf.Max(0.001f, nextValue);
     }
 
-    private void SaveEndpoint(PointClickPlayerMovement movement, string selectedRoom, bool front)
+    private void SaveProfileEndpoint(string selectedRoom, float roomLocalFootY, bool front)
     {
-        movement.EnsureButlerCalibrationBaseScale();
-
-        if (!movement.TryGetButlerCalibrationContext(selectedRoom, true, out string roomId, out Vector2 footPoint))
+        if (selectedProfile == null)
         {
-            lastStatus = "Could not resolve the current room-local foot point.";
+            lastStatus = "No RoomPerspectiveProfile is selected.";
             return;
         }
 
-        RecordMovementAndTransform(movement, front ? "Save Butler Front Scale" : "Save Butler Back Scale");
+        Undo.RecordObject(selectedProfile, front ? "Save Front Room Character Scale" : "Save Back Room Character Scale");
 
-        if (front)
-        {
-            movement.SetButlerFrontFinalLocalScaleForRoom(roomId, footPoint.y, previewSize, false);
-            lastStatus = $"Saved FRONT for {roomId}: Y={footPoint.y:0.###}, final local scale={previewSize:0.###}";
-        }
-        else
-        {
-            movement.SetButlerBackFinalLocalScaleForRoom(roomId, footPoint.y, previewSize, false);
-            lastStatus = $"Saved BACK for {roomId}: Y={footPoint.y:0.###}, final local scale={previewSize:0.###}";
-        }
+        float frontY = front ? roomLocalFootY : selectedProfile.NearFootY;
+        float frontScale = front ? previewProfileScale : selectedProfile.NearScale;
+        float backY = front ? selectedProfile.FarFootY : roomLocalFootY;
+        float backScale = front ? selectedProfile.FarScale : previewProfileScale;
 
-        MarkDirty(movement);
-        int refreshedCount = RefreshGuestSharedScalingPreviewTargets(false);
-
-        if (refreshedCount > 0)
-        {
-            lastStatus += $" Refreshed {refreshedCount} guest shared scaling preview(s).";
-        }
+        selectedProfile.SetCharacterScaleCalibration(frontY, frontScale, backY, backScale);
+        EditorUtility.SetDirty(selectedProfile);
+        int refreshedCount = RefreshAllCharactersUsingProfile(selectedProfile, true);
+        PreviewProfileScaleOnButler();
+        lastStatus = $"Saved {(front ? "FRONT" : "BACK")} to {selectedProfile.name} for {selectedRoom}: Y={roomLocalFootY:0.###}, scale={previewProfileScale:0.###}. Refreshed {refreshedCount} character(s).";
     }
 
-    private void PreviewCurrentSize(PointClickPlayerMovement movement)
+    private void PreviewProfileScaleOnButler()
     {
-        RecordMovementAndTransform(movement, "Preview Final Butler Local Scale");
-        movement.ApplyButlerFinalLocalScalePreview(previewSize);
-        MarkTransformDirty(movement);
-        lastStatus = $"Previewing final Butler local scale {previewSize:0.###}. This has not saved FRONT or BACK.";
-    }
-
-    private void TestSavedScaling(PointClickPlayerMovement movement, string selectedRoom)
-    {
-        if (!movement.TryGetButlerCalibrationContext(selectedRoom, true, out string roomId, out Vector2 footPoint) ||
-            !movement.TryEvaluateButlerFinalLocalScaleForRoomAtY(roomId, footPoint.y, out _, out float depth01, out float finalLocalScaleY))
+        if (selectedButler == null)
         {
-            lastStatus = "Saved FRONT and BACK are required before testing room scaling.";
             return;
         }
 
-        previewSize = finalLocalScaleY;
-        RecordMovementAndTransform(movement, "Test Saved Butler Scaling");
-        movement.ApplyButlerFinalLocalScalePreview(previewSize);
-        MarkTransformDirty(movement);
-        lastStatus = $"Previewed saved size here: final local scale={previewSize:0.###}, depth t={depth01:0.###}";
+        Undo.RecordObject(selectedButler.transform, "Preview Room Character Scale");
+        selectedButler.EnsureButlerCalibrationBaseScale();
+        Vector3 referenceScale = selectedButler.ButlerCalibrationBaseLocalScale;
+        float roomStageScale = Mathf.Max(0.001f, selectedButler.CurrentRoomStageScaleRatio);
+        float scale = Mathf.Max(0.001f, previewProfileScale) * roomStageScale;
+        selectedButler.transform.localScale = new Vector3(
+            referenceScale.x * scale,
+            referenceScale.y * scale,
+            referenceScale.z);
+        MarkTransformDirty(selectedButler);
     }
 
-    private static bool CanTestSavedScaling(PointClickPlayerMovement movement, string selectedRoom)
+    private void MigrateOldButlerCalibration(string selectedRoom)
     {
-        return !Application.isPlaying &&
-            movement != null &&
-            movement.TryGetButlerCalibrationContext(selectedRoom, true, out string roomId, out Vector2 footPoint) &&
-            movement.TryEvaluateButlerFinalLocalScaleForRoomAtY(roomId, footPoint.y, out _, out _, out _);
+        if (!selectedButler.TryGetButlerRoomScaleOverride(selectedRoom, out PointClickPlayerMovement.ButlerRoomScaleOverrideData data) ||
+            !data.IsComplete)
+        {
+            lastStatus = $"No complete old Butler calibration exists for {selectedRoom}.";
+            return;
+        }
+
+        Undo.RecordObject(selectedProfile, "Migrate Old Butler Calibration Into Room Profile");
+        float referenceY = Mathf.Max(0.001f, Mathf.Abs(selectedButler.ButlerCalibrationBaseLocalScale.y));
+        float frontScale = Mathf.Max(0.001f, data.FrontFinalLocalScaleY / referenceY);
+        float backScale = Mathf.Max(0.001f, data.BackFinalLocalScaleY / referenceY);
+        selectedProfile.SetCharacterScaleCalibration(
+            data.FrontRoomLocalFootY,
+            frontScale,
+            data.BackRoomLocalFootY,
+            backScale);
+        EditorUtility.SetDirty(selectedProfile);
+        previewProfileScale = frontScale;
+        int refreshedCount = RefreshAllCharactersUsingProfile(selectedProfile, true);
+        lastStatus = $"Migrated old Butler calibration into {selectedProfile.name}. Review manually. Refreshed {refreshedCount} character(s).";
     }
 
-    private void InitializeMissingRooms(PointClickPlayerMovement movement, string[] rooms)
+    private void RunProofDoubleScale()
     {
-        int initializedCount = 0;
-        RecordMovementAndTransform(movement, "Initialize Missing Butler Room Scales");
-
-        for (int i = 0; i < rooms.Length; i++)
+        if (selectedProfile == null)
         {
-            string room = rooms[i];
-
-            if (movement.TryGetButlerRoomScaleOverride(room, out _))
-            {
-                continue;
-            }
-
-            if (movement.InitializeButlerScaleOverrideForRoomFromCurrentPerspective(room, false))
-            {
-                initializedCount++;
-            }
+            return;
         }
 
-        if (initializedCount > 0)
-        {
-            MarkDirty(movement);
-        }
+        proofProfile = selectedProfile;
+        proofFrontY = selectedProfile.NearFootY;
+        proofBackY = selectedProfile.FarFootY;
+        proofFrontScale = selectedProfile.NearScale;
+        proofBackScale = selectedProfile.FarScale;
+        hasProofSnapshot = true;
 
-        lastStatus = $"Initialized {initializedCount} missing rooms from old default scale values.";
+        Undo.RecordObject(selectedProfile, "Proof Double Room Profile Scale");
+        selectedProfile.SetCharacterScaleCalibration(
+            proofFrontY,
+            proofFrontScale * 2f,
+            proofBackY,
+            proofBackScale * 2f);
+        EditorUtility.SetDirty(selectedProfile);
+        int refreshedCount = RefreshAllCharactersUsingProfile(selectedProfile, true);
+        lastStatus = $"Proof test doubled {selectedProfile.name}. Refreshed {refreshedCount} character(s). Use UNDO PROOF TEST before saving.";
     }
 
-    private void DrawGuestSharedScalingTools(PointClickPlayerMovement movement)
+    private void RestoreProofScale()
     {
-        CountFloorCharactersUsingSharedScaling(out int usingSharedCount, out int floorCharacterCount);
-
-        EditorGUILayout.Space(8f);
-        EditorGUILayout.LabelField("Apply Butler Room Scaling To Guests", EditorStyles.boldLabel);
-
-        using (new EditorGUI.DisabledScope(true))
+        if (!hasProofSnapshot || proofProfile == null)
         {
-            EditorGUILayout.LabelField(
-                "Floor characters using shared scaling:",
-                $"{usingSharedCount} / {floorCharacterCount}");
+            return;
         }
 
-        using (new EditorGUI.DisabledScope(Application.isPlaying))
-        {
-            if (GUILayout.Button("Enable Shared Butler Scaling For All Floor Characters"))
-            {
-                int changedCount = SetSharedButlerScalingForFloorCharacters(movement, true);
-                lastStatus = $"Enabled shared Butler scaling on {changedCount} floor character(s).";
-            }
-
-            if (GUILayout.Button("Disable Shared Butler Scaling For All Floor Characters"))
-            {
-                int changedCount = SetSharedButlerScalingForFloorCharacters(movement, false);
-                lastStatus = $"Disabled shared Butler scaling on {changedCount} floor character(s).";
-            }
-
-            if (GUILayout.Button("Refresh Guest Shared Scaling Preview"))
-            {
-                int refreshedCount = RefreshGuestSharedScalingPreviewTargets(true);
-                lastStatus = $"Refreshed shared Butler scaling preview on {refreshedCount} floor character(s).";
-            }
-        }
+        Undo.RecordObject(proofProfile, "Restore Proof Room Profile Scale");
+        proofProfile.SetCharacterScaleCalibration(proofFrontY, proofFrontScale, proofBackY, proofBackScale);
+        EditorUtility.SetDirty(proofProfile);
+        int refreshedCount = RefreshAllCharactersUsingProfile(proofProfile, true);
+        hasProofSnapshot = false;
+        lastStatus = $"Restored proof test scale for {proofProfile.name}. Refreshed {refreshedCount} character(s).";
     }
 
-    private static int SetSharedButlerScalingForFloorCharacters(PointClickPlayerMovement movement, bool enabled)
+    private static int RefreshAllCharactersUsingProfile(RoomPerspectiveProfile profile, bool recordUndo)
     {
-        int changedCount = 0;
-        RoomProjectedEntity[] entities = FindLoadedSceneProjectedEntities();
-        string actionName = enabled
-            ? "Enable Shared Butler Scaling For Floor Characters"
-            : "Disable Shared Butler Scaling For Floor Characters";
+        if (profile == null)
+        {
+            return 0;
+        }
+
+        int refreshedCount = 0;
+        RoomProjectedEntity[] entities = Resources.FindObjectsOfTypeAll<RoomProjectedEntity>();
 
         for (int i = 0; i < entities.Length; i++)
         {
             RoomProjectedEntity entity = entities[i];
 
-            if (entity == null || entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
+            if (!IsLoadedSceneObject(entity) || entity.RoomProfile != profile)
             {
                 continue;
             }
 
-            RecordProjectedEntityAndVisualRoot(entity, actionName);
-            entity.SetSharedCharacterRoomScaleEnabled(enabled, false);
-
-            if (enabled)
+            if (recordUndo)
             {
-                entity.SetSharedCharacterScaleSource(movement, false);
-                entity.SetIgnoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale(true, false);
+                Undo.RecordObject(entity, "Refresh Room Profile Projection");
+                if (entity.VisualRoot != null)
+                {
+                    Undo.RecordObject(entity.VisualRoot, "Refresh Room Profile Projection");
+                }
             }
 
+            entity.RefreshVisualTargets();
+            entity.ApplyProjection();
+            MarkProjectedEntityDirty(entity);
+            refreshedCount++;
+        }
+
+        RoomPersonWalker2D[] walkers = Resources.FindObjectsOfTypeAll<RoomPersonWalker2D>();
+
+        for (int i = 0; i < walkers.Length; i++)
+        {
+            RoomPersonWalker2D walker = walkers[i];
+
+            if (!IsLoadedSceneObject(walker) || !walker.UsesPerspectiveProfile(profile))
+            {
+                continue;
+            }
+
+            if (recordUndo)
+            {
+                Undo.RecordObject(walker, "Refresh Room Profile Walker");
+                Undo.RecordObject(walker.transform, "Refresh Room Profile Walker");
+            }
+
+            walker.RefreshDepthVisualsNow();
+            MarkDirty(walker);
+            refreshedCount++;
+        }
+
+        PointClickPlayerMovement[] movements = Resources.FindObjectsOfTypeAll<PointClickPlayerMovement>();
+
+        for (int i = 0; i < movements.Length; i++)
+        {
+            PointClickPlayerMovement movement = movements[i];
+
+            if (!IsLoadedSceneObject(movement) || !movement.UsesPerspectiveProfile(profile))
+            {
+                continue;
+            }
+
+            if (recordUndo)
+            {
+                Undo.RecordObject(movement.transform, "Refresh Room Profile Player");
+            }
+
+            movement.RefreshPerspectiveScaleNow(true);
+            MarkDirty(movement);
+            refreshedCount++;
+        }
+
+        SceneView.RepaintAll();
+        return refreshedCount;
+    }
+
+    private static void AssignRoomProfilesToAllRoomPeople(out int projectedChanged, out int walkersChanged)
+    {
+        projectedChanged = 0;
+        walkersChanged = 0;
+
+        RoomProjectedEntity[] entities = Resources.FindObjectsOfTypeAll<RoomProjectedEntity>();
+
+        for (int i = 0; i < entities.Length; i++)
+        {
+            RoomProjectedEntity entity = entities[i];
+
+            if (!IsLoadedSceneObject(entity) || entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
+            {
+                continue;
+            }
+
+            RoomContentGroup roomContent = entity.GetComponentInParent<RoomContentGroup>(true);
+            RoomPerspectiveProfile profile = roomContent != null ? roomContent.PerspectiveProfile : entity.RoomProfile;
+
+            if (profile == null)
+            {
+                continue;
+            }
+
+            Undo.RecordObject(entity, "Assign Room Profile To Floor Character");
+            entity.SetRoomProfile(profile);
+            entity.SetApplyScale(true, false);
+            entity.SetIgnoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale(true, false);
+            entity.ApplyProjection();
+            MarkProjectedEntityDirty(entity);
+            projectedChanged++;
+        }
+
+        RoomPersonWalker2D[] walkers = Resources.FindObjectsOfTypeAll<RoomPersonWalker2D>();
+
+        for (int i = 0; i < walkers.Length; i++)
+        {
+            RoomPersonWalker2D walker = walkers[i];
+
+            if (!IsLoadedSceneObject(walker))
+            {
+                continue;
+            }
+
+            RoomContentGroup roomContent = walker.GetComponentInParent<RoomContentGroup>(true);
+
+            if (roomContent == null || roomContent.PerspectiveProfile == null)
+            {
+                continue;
+            }
+
+            Undo.RecordObject(walker, "Assign Room Profile To Walker");
+            walker.SetRoomPerspectiveProfile(roomContent.PerspectiveProfile, false);
+            walker.SetRoomPerspectiveProfileScaleEnabled(true, false);
+            walker.RefreshDepthVisualsNow();
+            MarkDirty(walker);
+            walkersChanged++;
+        }
+    }
+
+    private static int SetOldGuestVisualScaleOverrides(bool enabled)
+    {
+        int changedCount = 0;
+        RoomProjectedEntity[] entities = Resources.FindObjectsOfTypeAll<RoomProjectedEntity>();
+
+        for (int i = 0; i < entities.Length; i++)
+        {
+            RoomProjectedEntity entity = entities[i];
+
+            if (!IsLoadedSceneObject(entity) || entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
+            {
+                continue;
+            }
+
+            Undo.RecordObject(entity, enabled ? "Enable Old Guest Visual Scale Overrides" : "Disable Old Guest Visual Scale Overrides");
+            entity.SetRoomVisualScaleOverridesEnabled(enabled, false);
             entity.ApplyProjection();
             MarkProjectedEntityDirty(entity);
             changedCount++;
@@ -553,354 +634,149 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
         return changedCount;
     }
 
-    private static int RefreshGuestSharedScalingPreviewTargets(bool recordUndo)
+    private static void CountAssignedRoomPeople(
+        out int projectedWithProfiles,
+        out int projectedCount,
+        out int walkersWithProfiles,
+        out int walkerCount)
     {
-        int refreshedCount = 0;
-        RoomProjectedEntity[] entities = FindLoadedSceneProjectedEntities();
+        projectedWithProfiles = 0;
+        projectedCount = 0;
+        walkersWithProfiles = 0;
+        walkerCount = 0;
+
+        RoomProjectedEntity[] entities = Resources.FindObjectsOfTypeAll<RoomProjectedEntity>();
 
         for (int i = 0; i < entities.Length; i++)
         {
             RoomProjectedEntity entity = entities[i];
 
-            if (entity == null ||
-                entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter ||
-                !entity.UseSharedCharacterRoomScale)
+            if (!IsLoadedSceneObject(entity) || entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
             {
                 continue;
             }
 
-            if (recordUndo)
-            {
-                RecordProjectedEntityAndVisualRoot(entity, "Refresh Guest Shared Scaling Preview");
-            }
+            projectedCount++;
 
-            entity.ApplyProjection();
-            MarkProjectedEntityDirty(entity);
-            refreshedCount++;
+            if (entity.RoomProfile != null && entity.ApplyScale)
+            {
+                projectedWithProfiles++;
+            }
         }
 
-        return refreshedCount;
-    }
+        RoomPersonWalker2D[] walkers = Resources.FindObjectsOfTypeAll<RoomPersonWalker2D>();
 
-    private static void CountFloorCharactersUsingSharedScaling(out int usingSharedCount, out int floorCharacterCount)
-    {
-        usingSharedCount = 0;
-        floorCharacterCount = 0;
-        RoomProjectedEntity[] entities = FindLoadedSceneProjectedEntities();
-
-        for (int i = 0; i < entities.Length; i++)
+        for (int i = 0; i < walkers.Length; i++)
         {
-            RoomProjectedEntity entity = entities[i];
+            RoomPersonWalker2D walker = walkers[i];
 
-            if (entity == null || entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
+            if (!IsLoadedSceneObject(walker))
             {
                 continue;
             }
 
-            floorCharacterCount++;
+            walkerCount++;
 
-            if (entity.UseSharedCharacterRoomScale)
+            if (walker.RoomProfile != null && walker.UsesRoomPerspectiveProfileScale)
             {
-                usingSharedCount++;
+                walkersWithProfiles++;
             }
-        }
-    }
-
-    private static RoomProjectedEntity[] FindLoadedSceneProjectedEntities()
-    {
-        RoomProjectedEntity[] allEntities = Resources.FindObjectsOfTypeAll<RoomProjectedEntity>();
-        List<RoomProjectedEntity> loadedSceneEntities = new List<RoomProjectedEntity>();
-
-        for (int i = 0; i < allEntities.Length; i++)
-        {
-            RoomProjectedEntity entity = allEntities[i];
-
-            if (entity != null &&
-                entity.gameObject != null &&
-                entity.gameObject.scene.IsValid() &&
-                entity.gameObject.scene.isLoaded)
-            {
-                loadedSceneEntities.Add(entity);
-            }
-        }
-
-        return loadedSceneEntities.ToArray();
-    }
-
-    private static void RecordProjectedEntityAndVisualRoot(RoomProjectedEntity entity, string actionName)
-    {
-        if (entity == null)
-        {
-            return;
-        }
-
-        Undo.RecordObject(entity, actionName);
-
-        if (entity.VisualRoot != null)
-        {
-            Undo.RecordObject(entity.VisualRoot, actionName);
-        }
-    }
-
-    private static void MarkProjectedEntityDirty(RoomProjectedEntity entity)
-    {
-        if (entity == null || Application.isPlaying)
-        {
-            return;
-        }
-
-        EditorUtility.SetDirty(entity);
-
-        if (entity.VisualRoot != null)
-        {
-            EditorUtility.SetDirty(entity.VisualRoot);
-        }
-
-        if (entity.gameObject.scene.IsValid())
-        {
-            EditorSceneManager.MarkSceneDirty(entity.gameObject.scene);
         }
     }
 
     private void SetSelectedButler(PointClickPlayerMovement movement, string status)
     {
         selectedButler = movement;
+        lastStatus = status;
 
         if (selectedButler == null)
         {
-            hasSessionStartTransform = false;
-            lastStatus = status;
             return;
         }
 
         selectedButler.EnsureButlerCalibrationBaseScale();
-        CaptureSessionStartTransform(selectedButler);
-        previewSize = selectedButler.CaptureCurrentButlerFinalLocalScaleY();
-        lastStatus = status;
+        selectedButler.SetEditorSelectedButlerScaleRoomId(selectedButler.CurrentButlerScaleRoomId);
+        selectedProfile = FindProfileForRoom(selectedButler.CurrentButlerScaleRoomId);
+        SyncPreviewScaleFromProfile(selectedButler.CurrentButlerScaleRoomId);
     }
 
-    private void CaptureSessionStartTransform(PointClickPlayerMovement movement)
+    private void SyncPreviewScaleFromProfile(string selectedRoom)
     {
-        if (movement == null)
+        if (selectedProfile == null || !TryGetCurrentRoomLocalFootPoint(selectedRoom, out Vector2 footPoint))
         {
-            hasSessionStartTransform = false;
+            previewProfileScale = 1f;
             return;
         }
 
-        Transform targetTransform = movement.transform;
-        sessionStartPosition = targetTransform.position;
-        sessionStartRotation = targetTransform.rotation;
-        sessionStartLocalScale = targetTransform.localScale;
-        hasSessionStartTransform = true;
+        previewProfileScale = selectedProfile.GetScale(footPoint);
     }
 
-    private void RestoreButlerStartTransform(PointClickPlayerMovement movement)
+    private bool TryGetCurrentRoomLocalFootPoint(string selectedRoom, out Vector2 roomLocalFootPoint)
     {
-        if (movement == null || !hasSessionStartTransform)
-        {
-            lastStatus = "No Butler start Transform has been captured for this calibration session.";
-            return;
-        }
-
-        RecordMovementAndTransform(movement, "Restore Butler Start Transform");
-        Transform targetTransform = movement.transform;
-        targetTransform.position = sessionStartPosition;
-        targetTransform.rotation = sessionStartRotation;
-        targetTransform.localScale = sessionStartLocalScale;
-        previewSize = movement.CaptureCurrentButlerFinalLocalScaleY();
-        MarkTransformDirty(movement);
-        lastStatus = "Restored Butler start Transform for this calibration session.";
+        roomLocalFootPoint = Vector2.zero;
+        return selectedButler != null &&
+            selectedButler.TryGetButlerCalibrationContext(selectedRoom, true, out _, out roomLocalFootPoint);
     }
 
     internal static PointClickPlayerMovement FindScenePlayer()
     {
-        return FindScenePlayer(BuildPlayerCandidateInfos());
-    }
-
-    private static PointClickPlayerMovement FindScenePlayer(PlayerCandidateInfo[] candidates)
-    {
-        PlayerCandidateInfo bestCandidate = null;
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            PlayerCandidateInfo candidate = candidates[i];
-
-            if (!candidate.AutoSelectable)
-            {
-                continue;
-            }
-
-            if (bestCandidate == null || candidate.Priority < bestCandidate.Priority)
-            {
-                bestCandidate = candidate;
-            }
-        }
-
-        return bestCandidate != null ? bestCandidate.Movement : null;
-    }
-
-    private void DrawCandidateFoldout(PlayerCandidateInfo[] candidates)
-    {
-        candidatesFoldout = EditorGUILayout.Foldout(candidatesFoldout, "Detected PointClickPlayerMovement Objects", true);
-
-        if (!candidatesFoldout)
-        {
-            return;
-        }
-
-        if (candidates == null || candidates.Length == 0)
-        {
-            EditorGUILayout.LabelField("None", EditorStyles.miniLabel);
-            return;
-        }
-
-        PointClickPlayerMovement preferred = FindScenePlayer(candidates);
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            PlayerCandidateInfo candidate = candidates[i];
-            bool selected = selectedButler != null && candidate.Movement == selectedButler;
-            bool preferredCandidate = preferred != null && candidate.Movement == preferred;
-            string status = !candidate.AutoSelectable
-                ? $"rejected: {candidate.RejectionReason}"
-                : selected && preferredCandidate
-                    ? "selected, preferred"
-                    : selected
-                        ? "selected"
-                        : preferredCandidate
-                            ? "preferred"
-                            : "candidate";
-
-            EditorGUILayout.LabelField(
-                $"{candidate.ObjectName} | scene: {candidate.SceneName} | active: {candidate.IsActive} | tag: {candidate.Tag} | Guest name: {YesNo(candidate.NameContainsGuest)} | RoomProjectedEntity: {YesNo(candidate.HasRoomProjectedEntity)} | {status}",
-                EditorStyles.miniLabel);
-        }
-    }
-
-    private static PlayerCandidateInfo[] BuildPlayerCandidateInfos()
-    {
-        PointClickPlayerMovement selected = Selection.activeGameObject != null
-            ? Selection.activeGameObject.GetComponentInParent<PointClickPlayerMovement>(true)
-            : null;
         PointClickPlayerMovement[] movements = Resources.FindObjectsOfTypeAll<PointClickPlayerMovement>();
-        List<PlayerCandidateInfo> candidates = new List<PlayerCandidateInfo>();
+        PointClickPlayerMovement fallback = null;
 
         for (int i = 0; i < movements.Length; i++)
         {
             PointClickPlayerMovement movement = movements[i];
 
-            if (movement == null)
+            if (!IsLoadedSceneObject(movement))
             {
                 continue;
             }
 
-            candidates.Add(new PlayerCandidateInfo(movement, movement == selected));
+            fallback ??= movement;
+
+            if (string.Equals(movement.gameObject.name, "player", StringComparison.OrdinalIgnoreCase))
+            {
+                return movement;
+            }
         }
 
-        candidates.Sort((left, right) =>
-        {
-            int priorityComparison = left.Priority.CompareTo(right.Priority);
-            return priorityComparison != 0
-                ? priorityComparison
-                : string.Compare(left.ObjectName, right.ObjectName, StringComparison.OrdinalIgnoreCase);
-        });
-
-        return candidates.ToArray();
+        return fallback;
     }
 
-    internal static bool IsSafePlayerObjectForSaving(PointClickPlayerMovement movement)
+    private string ResolveSelectedRoom(string[] rooms)
     {
-        return movement != null && new PlayerCandidateInfo(movement, false).SafeForSaving;
-    }
+        string selectedRoom = selectedButler != null ? selectedButler.EditorSelectedButlerScaleRoomId : string.Empty;
 
-    private static void DrawSelectedPlayerWarnings(PointClickPlayerMovement movement)
-    {
-        PlayerCandidateInfo info = new PlayerCandidateInfo(movement, false);
-
-        if (info.NameContainsGuest)
+        if (string.IsNullOrWhiteSpace(selectedRoom) && selectedButler != null)
         {
-            EditorGUILayout.HelpBox(GuestSelectionWarning, MessageType.Warning);
-        }
-
-        if (info.HasRoomProjectedEntity)
-        {
-            EditorGUILayout.HelpBox(GuestProjectionWarning, MessageType.Warning);
-        }
-
-        if (!info.LooksLikePlayer)
-        {
-            EditorGUILayout.HelpBox(UnexpectedPlayerWarning, MessageType.Warning);
-        }
-    }
-
-    private static string GetCalibrationStatus(bool hasOverride, PointClickPlayerMovement.ButlerRoomScaleOverrideData data)
-    {
-        if (!hasOverride)
-        {
-            return "Not started";
-        }
-
-        if (data.IsComplete)
-        {
-            return "Complete";
-        }
-
-        if (data.HasFront)
-        {
-            return "Front saved only";
-        }
-
-        if (data.HasBack)
-        {
-            return "Back saved only";
-        }
-
-        return "Not started";
-    }
-
-    private static string ResolveSelectedRoom(PointClickPlayerMovement movement, string[] rooms, ref int selectedIndex)
-    {
-        string selectedRoom = movement.EditorSelectedButlerScaleRoomId;
-
-        if (string.IsNullOrWhiteSpace(selectedRoom))
-        {
-            selectedRoom = movement.CurrentButlerScaleRoomId;
+            selectedRoom = selectedButler.CurrentButlerScaleRoomId;
         }
 
         for (int i = 0; i < rooms.Length; i++)
         {
             if (SameRoom(rooms[i], selectedRoom))
             {
-                selectedIndex = i;
+                selectedRoomIndex = i;
+                selectedProfile = FindProfileForRoom(rooms[i]);
                 return rooms[i];
             }
         }
 
-        selectedIndex = Mathf.Clamp(selectedIndex, 0, rooms.Length - 1);
-        return rooms[selectedIndex];
+        selectedRoomIndex = Mathf.Clamp(selectedRoomIndex, 0, rooms.Length - 1);
+        selectedProfile = FindProfileForRoom(rooms[selectedRoomIndex]);
+        return rooms[selectedRoomIndex];
     }
 
-    private static string[] BuildRoomOptions(PointClickPlayerMovement movement)
+    private static string[] BuildRoomOptions()
     {
         List<string> rooms = new List<string>();
-
-        AddRoom(rooms, movement.EditorSelectedButlerScaleRoomId);
-        AddRoom(rooms, movement.CurrentButlerScaleRoomId);
-        AddRoom(rooms, movement.CurrentRoomPerspectiveProfileRoomId);
-
-        RoomNavigationManager navigationManager = FindSceneNavigationManager();
-        AddRoom(rooms, navigationManager != null ? navigationManager.CurrentRoom : string.Empty);
-        movement.GetButlerScaleOverrideRoomIds(rooms);
-
         RoomContentGroup[] roomContentGroups = Resources.FindObjectsOfTypeAll<RoomContentGroup>();
 
         for (int i = 0; i < roomContentGroups.Length; i++)
         {
             RoomContentGroup roomContentGroup = roomContentGroups[i];
 
-            if (roomContentGroup != null &&
-                roomContentGroup.gameObject != null &&
-                roomContentGroup.gameObject.scene.IsValid())
+            if (IsLoadedSceneObject(roomContentGroup))
             {
                 AddRoom(rooms, roomContentGroup.RoomName);
             }
@@ -910,23 +786,81 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
         return rooms.ToArray();
     }
 
-    private static RoomNavigationManager FindSceneNavigationManager()
+    private static RoomPerspectiveProfile FindProfileForRoom(string roomId)
     {
-        RoomNavigationManager[] navigationManagers = Resources.FindObjectsOfTypeAll<RoomNavigationManager>();
+        RoomContentGroup roomContent = FindRoomContent(roomId);
+        return roomContent != null ? roomContent.PerspectiveProfile : null;
+    }
 
-        for (int i = 0; i < navigationManagers.Length; i++)
+    private static RoomContentGroup FindRoomContent(string roomId)
+    {
+        RoomContentGroup[] roomContentGroups = Resources.FindObjectsOfTypeAll<RoomContentGroup>();
+
+        for (int i = 0; i < roomContentGroups.Length; i++)
         {
-            RoomNavigationManager navigationManager = navigationManagers[i];
+            RoomContentGroup roomContentGroup = roomContentGroups[i];
 
-            if (navigationManager != null &&
-                navigationManager.gameObject != null &&
-                navigationManager.gameObject.scene.IsValid())
+            if (IsLoadedSceneObject(roomContentGroup) && SameRoom(roomContentGroup.RoomName, roomId))
             {
-                return navigationManager;
+                return roomContentGroup;
             }
         }
 
         return null;
+    }
+
+    private static bool IsLoadedSceneObject(Component component)
+    {
+        return component != null &&
+            component.gameObject != null &&
+            component.gameObject.scene.IsValid() &&
+            component.gameObject.scene.isLoaded &&
+            !EditorUtility.IsPersistent(component);
+    }
+
+    private static void MarkProjectedEntityDirty(RoomProjectedEntity entity)
+    {
+        if (entity == null)
+        {
+            return;
+        }
+
+        MarkDirty(entity);
+
+        if (entity.VisualRoot != null)
+        {
+            EditorUtility.SetDirty(entity.VisualRoot);
+        }
+    }
+
+    private static void MarkTransformDirty(PointClickPlayerMovement movement)
+    {
+        if (movement == null)
+        {
+            return;
+        }
+
+        EditorUtility.SetDirty(movement.transform);
+
+        if (!Application.isPlaying && movement.gameObject.scene.IsValid())
+        {
+            EditorSceneManager.MarkSceneDirty(movement.gameObject.scene);
+        }
+    }
+
+    private static void MarkDirty(Component component)
+    {
+        if (component == null)
+        {
+            return;
+        }
+
+        EditorUtility.SetDirty(component);
+
+        if (!Application.isPlaying && component.gameObject.scene.IsValid())
+        {
+            EditorSceneManager.MarkSceneDirty(component.gameObject.scene);
+        }
     }
 
     private static void AddRoom(List<string> rooms, string roomId)
@@ -949,118 +883,6 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
         rooms.Add(cleanRoomId);
     }
 
-    private static void PingRoom(string roomId)
-    {
-        RoomContentGroup[] roomContentGroups = Resources.FindObjectsOfTypeAll<RoomContentGroup>();
-
-        for (int i = 0; i < roomContentGroups.Length; i++)
-        {
-            RoomContentGroup roomContentGroup = roomContentGroups[i];
-
-            if (roomContentGroup == null || !SameRoom(roomContentGroup.RoomName, roomId))
-            {
-                continue;
-            }
-
-            Selection.activeGameObject = roomContentGroup.gameObject;
-            EditorGUIUtility.PingObject(roomContentGroup.gameObject);
-            return;
-        }
-    }
-
-    private void SaveButlerSceneWithTransformConfirmation(PointClickPlayerMovement movement)
-    {
-        if (movement == null || Application.isPlaying)
-        {
-            return;
-        }
-
-        if (HasButlerTransformChanged(movement))
-        {
-            int choice = EditorUtility.DisplayDialogComplex(
-                "Save Butler Calibration",
-                "The Butler has been moved or preview-scaled during calibration. Restore the start Transform before saving the scene?",
-                "Restore Transform + Save Scene",
-                "Save Anyway",
-                "Cancel");
-
-            if (choice == 2)
-            {
-                lastStatus = "Scene save canceled.";
-                return;
-            }
-
-            if (choice == 0)
-            {
-                RestoreButlerStartTransform(movement);
-            }
-        }
-
-        SaveButlerScene(movement);
-        lastStatus = "Scene saved.";
-    }
-
-    private bool HasButlerTransformChanged(PointClickPlayerMovement movement)
-    {
-        if (movement == null || !hasSessionStartTransform)
-        {
-            return false;
-        }
-
-        Transform targetTransform = movement.transform;
-        return (targetTransform.position - sessionStartPosition).sqrMagnitude > 0.000001f ||
-            Quaternion.Angle(targetTransform.rotation, sessionStartRotation) > 0.001f ||
-            (targetTransform.localScale - sessionStartLocalScale).sqrMagnitude > 0.000001f;
-    }
-
-    private static void SaveButlerScene(PointClickPlayerMovement movement)
-    {
-        if (movement == null || Application.isPlaying || !movement.gameObject.scene.IsValid())
-        {
-            return;
-        }
-
-        EditorSceneManager.MarkSceneDirty(movement.gameObject.scene);
-        EditorSceneManager.SaveScene(movement.gameObject.scene);
-    }
-
-    private static void RecordMovementAndTransform(PointClickPlayerMovement movement, string actionName)
-    {
-        if (movement == null)
-        {
-            return;
-        }
-
-        Undo.RecordObject(movement, actionName);
-        Undo.RecordObject(movement.transform, actionName);
-    }
-
-    private static void MarkDirty(PointClickPlayerMovement movement)
-    {
-        if (movement == null || Application.isPlaying)
-        {
-            return;
-        }
-
-        EditorUtility.SetDirty(movement);
-        MarkTransformDirty(movement);
-    }
-
-    private static void MarkTransformDirty(PointClickPlayerMovement movement)
-    {
-        if (movement == null || Application.isPlaying)
-        {
-            return;
-        }
-
-        EditorUtility.SetDirty(movement.transform);
-
-        if (movement.gameObject.scene.IsValid())
-        {
-            EditorSceneManager.MarkSceneDirty(movement.gameObject.scene);
-        }
-    }
-
     private static bool SameRoom(string left, string right)
     {
         return string.Equals(NormalizeRoomName(left), NormalizeRoomName(right), StringComparison.OrdinalIgnoreCase);
@@ -1073,151 +895,22 @@ public sealed class ButlerRoomScaleCalibrationWindow : EditorWindow
             return string.Empty;
         }
 
-        return value.Trim()
-            .Replace("_", string.Empty)
-            .Replace(" ", string.Empty)
-            .Replace("-", string.Empty);
-    }
+        char[] normalized = new char[value.Length];
+        int count = 0;
 
-    private static string YesNo(bool value)
-    {
-        return value ? "Yes" : "No";
-    }
-
-    private static bool Contains(string value, string token)
-    {
-        return value != null && value.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
-    }
-
-    private static string GetTagSafely(GameObject gameObject)
-    {
-        if (gameObject == null)
+        for (int i = 0; i < value.Length; i++)
         {
-            return string.Empty;
+            char character = value[i];
+
+            if (!char.IsLetterOrDigit(character))
+            {
+                continue;
+            }
+
+            normalized[count] = char.ToLowerInvariant(character);
+            count++;
         }
 
-        try
-        {
-            return gameObject.tag;
-        }
-        catch (UnityException)
-        {
-            return string.Empty;
-        }
-    }
-
-    private sealed class PlayerCandidateInfo
-    {
-        public PlayerCandidateInfo(PointClickPlayerMovement movement, bool isCurrentSelection)
-        {
-            Movement = movement;
-            GameObject gameObject = movement != null ? movement.gameObject : null;
-            ObjectName = gameObject != null ? gameObject.name : string.Empty;
-            SceneName = gameObject != null && gameObject.scene.IsValid() ? gameObject.scene.name : "<no scene>";
-            IsActive = gameObject != null && gameObject.activeInHierarchy;
-            Tag = GetTagSafely(gameObject);
-            IsCurrentSelection = isCurrentSelection;
-            IsPersistentAsset = movement == null ||
-                gameObject == null ||
-                EditorUtility.IsPersistent(movement) ||
-                EditorUtility.IsPersistent(gameObject);
-            IsLoadedSceneObject = gameObject != null && gameObject.scene.IsValid() && gameObject.scene.isLoaded && !IsPersistentAsset;
-            NameContainsGuest = Contains(ObjectName, "Guest");
-            HasRoomProjectedEntity = movement != null &&
-                (movement.GetComponentInParent<RoomProjectedEntity>(true) != null ||
-                    movement.GetComponentInChildren<RoomProjectedEntity>(true) != null);
-            ExactNamePlayer = string.Equals(ObjectName, "player", StringComparison.OrdinalIgnoreCase);
-            TaggedPlayer = string.Equals(Tag, "Player", StringComparison.OrdinalIgnoreCase);
-            NameContainsButler = Contains(ObjectName, "Butler");
-            NameContainsPlayer = Contains(ObjectName, "Player");
-            LooksLikePlayer = ExactNamePlayer || TaggedPlayer || NameContainsButler || NameContainsPlayer;
-            SafeForSaving = IsLoadedSceneObject && !NameContainsGuest && !HasRoomProjectedEntity && LooksLikePlayer;
-            AutoSelectable = IsLoadedSceneObject &&
-                !NameContainsGuest &&
-                !HasRoomProjectedEntity &&
-                (IsCurrentSelection || LooksLikePlayer);
-            Priority = CalculatePriority();
-            RejectionReason = CalculateRejectionReason();
-        }
-
-        public PointClickPlayerMovement Movement { get; }
-        public string ObjectName { get; }
-        public string SceneName { get; }
-        public bool IsActive { get; }
-        public string Tag { get; }
-        public bool IsCurrentSelection { get; }
-        public bool IsPersistentAsset { get; }
-        public bool IsLoadedSceneObject { get; }
-        public bool NameContainsGuest { get; }
-        public bool HasRoomProjectedEntity { get; }
-        public bool ExactNamePlayer { get; }
-        public bool TaggedPlayer { get; }
-        public bool NameContainsButler { get; }
-        public bool NameContainsPlayer { get; }
-        public bool LooksLikePlayer { get; }
-        public bool SafeForSaving { get; }
-        public bool AutoSelectable { get; }
-        public int Priority { get; }
-        public string RejectionReason { get; }
-
-        private int CalculatePriority()
-        {
-            if (!AutoSelectable)
-            {
-                return 1000;
-            }
-
-            if (IsCurrentSelection)
-            {
-                return 0;
-            }
-
-            if (ExactNamePlayer)
-            {
-                return 1;
-            }
-
-            if (TaggedPlayer)
-            {
-                return 2;
-            }
-
-            if (NameContainsButler)
-            {
-                return 3;
-            }
-
-            if (NameContainsPlayer)
-            {
-                return 4;
-            }
-
-            return 50;
-        }
-
-        private string CalculateRejectionReason()
-        {
-            if (AutoSelectable)
-            {
-                return string.Empty;
-            }
-
-            if (!IsLoadedSceneObject || IsPersistentAsset)
-            {
-                return "not a loaded scene object";
-            }
-
-            if (NameContainsGuest)
-            {
-                return "name contains Guest";
-            }
-
-            if (HasRoomProjectedEntity)
-            {
-                return "has RoomProjectedEntity";
-            }
-
-            return "does not look like player";
-        }
+        return new string(normalized, 0, count);
     }
 }

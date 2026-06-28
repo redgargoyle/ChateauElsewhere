@@ -23,7 +23,7 @@ public sealed class RoomProjectedEntityEditor : Editor
         DrawPropertiesExcluding(serializedObject, HiddenRoomScaleFields);
 
         EditorGUILayout.Space(8f);
-        DrawSharedCharacterScaleControls();
+        DrawRoomProfileScaleControls();
 
         bool serializedChanged = serializedObject.ApplyModifiedProperties();
 
@@ -36,42 +36,33 @@ public sealed class RoomProjectedEntityEditor : Editor
         DrawRoomVisualScaleControls();
     }
 
-    private void DrawSharedCharacterScaleControls()
+    private void DrawRoomProfileScaleControls()
     {
-        EditorGUILayout.LabelField("Shared Character Scale", EditorStyles.boldLabel);
-
-        SerializedProperty useSharedScale = serializedObject.FindProperty("useSharedCharacterRoomScale");
-        SerializedProperty scaleSource = serializedObject.FindProperty("sharedCharacterScaleSource");
+        EditorGUILayout.LabelField("Room Profile Character Scale", EditorStyles.boldLabel);
         SerializedProperty ignoreOldOverride = serializedObject.FindProperty("ignoreRoomVisualScaleOverridesWhenUsingSharedCharacterScale");
-
-        if (useSharedScale != null)
-        {
-            EditorGUILayout.PropertyField(useSharedScale, new GUIContent("Use Shared Character Room Scale"));
-        }
-
-        if (scaleSource != null)
-        {
-            EditorGUILayout.PropertyField(scaleSource, new GUIContent("Scale Source"));
-        }
 
         if (ignoreOldOverride != null)
         {
-            EditorGUILayout.PropertyField(ignoreOldOverride, new GUIContent("Ignoring Old Room Visual Override"));
+            EditorGUILayout.PropertyField(
+                ignoreOldOverride,
+                new GUIContent("Ignore Old Room Visual Override When Profile Active"));
         }
 
         using (new EditorGUI.DisabledScope(true))
         {
             if (targets.Length == 1 && target is RoomProjectedEntity entity)
             {
-                EditorGUILayout.Toggle("Using Shared Scale Now", entity.IsUsingSharedCharacterRoomScale);
-                EditorGUILayout.FloatField("Shared Depth", entity.CurrentSharedCharacterDepth01);
-                EditorGUILayout.FloatField("Shared Room Scale", entity.CurrentSharedCharacterRoomScale);
+                EditorGUILayout.Toggle("Using Room Profile Scale Now", entity.IsUsingRoomProfileScale);
+                EditorGUILayout.FloatField("Profile Depth", entity.CurrentRoomProfileDepth01);
+                EditorGUILayout.FloatField("Profile Room Scale", entity.CurrentRoomProfileScale);
+                EditorGUILayout.FloatField("Visual Height Multiplier", entity.VisualProfile != null ? entity.VisualProfile.HeightScaleMultiplier : 1f);
             }
             else
             {
-                EditorGUILayout.TextField("Using Shared Scale Now", "-");
-                EditorGUILayout.TextField("Shared Depth", "-");
-                EditorGUILayout.TextField("Shared Room Scale", "-");
+                EditorGUILayout.TextField("Using Room Profile Scale Now", "-");
+                EditorGUILayout.TextField("Profile Depth", "-");
+                EditorGUILayout.TextField("Profile Room Scale", "-");
+                EditorGUILayout.TextField("Visual Height Multiplier", "-");
             }
         }
     }

@@ -32,39 +32,31 @@ Chapter controllers should place guests by authored room anchors such as `Drawin
 
 To calibrate the Drawing Room, open `Tools > Room Projection > Calibration Window`, create the Drawing Room perspective profile, then assign it to the Drawing Room `RoomContentGroup` and to any `RoomProjectedEntity` that is not under the room stage. Adjust near/far Y until a standard adult preview matches the painting at the front and back of the floor, then tune the scale/tint/sorting curves. Add `RoomProjectedEntity` to guests, set their `Visual Root` to the animated sprite child, assign a suitable `CharacterVisualProfile`, and move only the room-local foot point or the existing `DrawingRoomGuestPoint_##` anchors.
 
-## Butler Room Scale Calibration
+## Room Character Scale Calibration
 
-The controllable Butler stores per-room front/back scale calibration in `PointClickPlayerMovement` Butler room scale overrides.
+`RoomPerspectiveProfile` is now the source of truth for character scale in each room. The Butler calibration tool uses the Butler as the visual measuring object, but saves FRONT/BACK scale into the selected room's `RoomPerspectiveProfile`.
+
+Guests using `RoomProjectedEntity` automatically use the same profile scale. Guests using `RoomPersonWalker2D` also use the same profile scale when `useRoomPerspectiveProfileScale` is enabled. Do not calibrate guests one by one, and do not store final Butler `localScale` as the room scale.
+
+If guests do not change, run `Tools > Characters > Audit Character Scaling` and use `ASSIGN ROOM PROFILES TO ALL ROOM PEOPLE`. If old guest visual overrides fight the profile, use `DISABLE OLD PER-ROOM GUEST VISUAL SCALE OVERRIDES`.
 
 Workflow:
 
-1. Open Tools > Butler > Room Scale Calibration.
+1. Open `Tools > Characters > Room Character Scale Calibration`.
 2. Select/find the Butler.
-3. Pick a room.
-4. Move the Butler to the front/closest walkable area.
-5. Adjust Preview Final Butler Local Scale until the Butler looks correct.
-6. Click SAVE FRONT.
-7. Move the Butler to the back/farthest walkable area.
-8. Adjust Preview Final Butler Local Scale again.
-9. Click SAVE BACK.
-10. Optionally click PREVIEW SAVED SIZE AT CURRENT POSITION.
-11. Use RESTORE BUTLER START TRANSFORM before saving the scene.
-12. Save Scene.
-13. Test in Play Mode by walking the Butler around the room.
-
-Visual target:
-- roughly 3/4 of a matching door height
-- or roughly 1.5x a matching chair
-
-Do not edit Transform scale manually for calibration. Do not use Advanced reset buttons unless intentionally resetting. Guest-specific height differences should come from their sprite art or visual profile; the room-depth scale comes from the Butler calibration.
-
-## Shared Butler/Guest Room Scaling
-
-The Butler calibration defines each room's front/back character scale curve. Projected guests can opt into that same curve through `RoomProjectedEntity.useSharedCharacterRoomScale`.
-
-Guests do not use the Butler's raw Transform scale. `PointClickPlayerMovement.TryEvaluateSharedCharacterRoomScale` converts the Butler's saved final localScale Y into a normalized room scale multiplier relative to the Butler base scale. `RoomProjectedEntity` then applies that multiplier to the guest's own `CharacterVisualProfile.HeightScaleMultiplier` and authored visual-root scale, so character-specific proportions stay intact.
-
-Use the Butler Scale tool button "Enable Shared Butler Scaling For All Floor Characters" after calibrating rooms. Existing guest room visual overrides can be ignored while shared scaling is active to avoid old manual guest scaling fighting the new room scale.
+3. Pick the room.
+4. Confirm the selected `RoomPerspectiveProfile` is assigned.
+5. Click `ASSIGN ROOM PROFILES TO ALL ROOM PEOPLE`.
+6. Move Butler to the front/closest walkable floor area.
+7. Adjust `Preview Room Character Scale Here` until Butler looks right.
+8. Click `SAVE FRONT TO ROOM PROFILE`.
+9. Move Butler to the back/farthest walkable floor area.
+10. Adjust `Preview Room Character Scale Here` until Butler looks right.
+11. Click `SAVE BACK TO ROOM PROFILE`.
+12. Click `REFRESH ALL CHARACTERS USING THIS ROOM PROFILE`.
+13. Save Profile Asset and Save Scene.
+14. Enter Play Mode and verify Butler and guests scale together.
+15. If something does not move/scale, run Audit Character Scaling.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 

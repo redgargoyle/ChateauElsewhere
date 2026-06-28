@@ -21,12 +21,12 @@ public sealed class PointClickPlayerMovementEditor : Editor
         serializedObject.ApplyModifiedProperties();
 
         EditorGUILayout.Space(8f);
-        EditorGUILayout.LabelField("Butler Room Scale Calibration", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Room Character Scale Calibration", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Use the step-based window for Butler/player room scale calibration. Guests are still calibrated through RoomProjectedEntity.",
+            "Use the room character scale window to calibrate the selected room profile. The Butler is only the measuring object; RoomPerspectiveProfile drives all characters.",
             MessageType.Info);
 
-        if (GUILayout.Button("Open Butler Room Scale Calibration Window"))
+        if (GUILayout.Button("Open Room Character Scale Calibration Window"))
         {
             ButlerRoomScaleCalibrationWindow.Open();
         }

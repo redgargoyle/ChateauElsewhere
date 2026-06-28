@@ -127,8 +127,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public bool AppliesPerspectiveScale => applyPerspectiveScale;
 	public bool AppliesPlayerSorting => applyPlayerSorting;
 	public bool UsesButlerRoomScaleOverrides => useButlerRoomScaleOverrides;
+	public bool UsesRoomPerspectiveProfileScale => useRoomPerspectiveProfileScale;
 	public bool HasButlerCalibrationBaseLocalScale => hasButlerCalibrationBaseLocalScale;
 	public Vector3 ButlerCalibrationBaseLocalScale => butlerCalibrationBaseLocalScale;
+	public float CurrentRoomStageScaleRatio => currentRoomStageScaleRatio;
 	public string EditorSelectedButlerScaleRoomId => editorSelectedButlerScaleRoomId;
 	public string CurrentButlerScaleRoomId => GetCurrentButlerScaleRoomId();
 	public string CurrentRoomPerspectiveProfileRoomId
@@ -244,6 +246,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return profile != null &&
 			TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile currentProfile) &&
 			currentProfile == profile;
+	}
+
+	public bool TryGetCurrentRoomPerspectiveProfileForAudit(out RoomPerspectiveProfile profile)
+	{
+		return TryGetCurrentRoomPerspectiveProfile(out profile);
 	}
 
 	public void EnsureButlerCalibrationBaseScale()
@@ -1919,39 +1926,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		UpdateVisualOffset(Camera.main);
 
-		if (useButlerRoomScaleOverrides &&
-			TryEvaluateButlerCalibratedFinalLocalScale(out Vector3 calibratedLocalScale))
-		{
-			float roomStageScale = Mathf.Max(0.001f, currentRoomStageScaleRatio);
-			transform.localScale = new Vector3(
-				calibratedLocalScale.x * roomStageScale,
-				calibratedLocalScale.y * roomStageScale,
-				calibratedLocalScale.z);
-			return;
-		}
-
 		float scale = CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio;
 		transform.localScale = new Vector3(
 			authoredLocalScale.x * scale,
 			authoredLocalScale.y * scale,
 			authoredLocalScale.z);
-	}
-
-	private bool TryEvaluateButlerCalibratedFinalLocalScale(out Vector3 finalLocalScale)
-	{
-		finalLocalScale = transform.localScale;
-
-		if (!TryGetButlerCalibrationContext(string.Empty, false, out string roomId, out Vector2 roomLocalFootPoint))
-		{
-			return false;
-		}
-
-		return TryEvaluateButlerFinalLocalScaleForRoomAtY(
-			roomId,
-			roomLocalFootPoint.y,
-			out finalLocalScale,
-			out _,
-			out _);
 	}
 
 	private float CalculateExistingPerspectiveScale()
