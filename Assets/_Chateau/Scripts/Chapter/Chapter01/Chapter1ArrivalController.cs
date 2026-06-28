@@ -134,6 +134,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private readonly List<GuestGroupRuntimeState> activeEntranceGroups = new List<GuestGroupRuntimeState>();
     private readonly List<Transform> runtimeSeatAnchors = new List<Transform>();
     private readonly HashSet<GameObject> runtimeGeneratedGuestObjects = new HashSet<GameObject>();
+    private readonly Dictionary<GameObject, Vector3> authoredGuestLocalScales = new Dictionary<GameObject, Vector3>();
     private readonly Dictionary<Renderer, RendererSortingState> authoredGuestRendererSorting = new Dictionary<Renderer, RendererSortingState>();
     private readonly Dictionary<string, Sprite> guestCoatSpriteCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
     private int currentGuestIndex = -1;
@@ -1623,6 +1624,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (useWorldSafePlacement)
         {
             PlaceGuestAtPosition(guest, GetWorldDoorArrivalPosition(guest, indexInDoorBatch, batchCount));
+            ApplyGuestSharedRoomScaleForTarget(guest, guest.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint));
         }
         else
         {
@@ -1656,7 +1658,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             waitSpot = CreateRuntimeAnchor(
                 $"EntranceWait_{guest.Config.GuestId}",
                 GetWorldEntranceWaitPosition(guest, indexInDoorBatch, batchCount),
-                null);
+                GetEntranceHallGuestAnchor());
         }
         else
         {
@@ -2421,7 +2423,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         return CreateRuntimeAnchor(
             $"DrawingRoomEntry_{guest.Config.GuestId}",
             GetWorldDrawingRoomEntryPosition(guest, slotInGroup, groupSize),
-            null);
+            FindAnchor(DrawingRoomDoorTargetAnchorId, entryRoomId) ?? drawingRoomEntryPoint);
     }
 
     private void GetDrawingRoomGroupSlot(
@@ -2778,7 +2780,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             return CreateRuntimeAnchor(
                 $"DrawingRoomSeat_{guest.Config.GuestId}",
                 GetWorldDrawingRoomSeatPosition(guest.GuestIndex),
-                null);
+                drawingRoomEntryPoint);
         }
 
         return guest.Seat != null ? guest.Seat : ResolveSeatForGuest(guest.GuestIndex);
@@ -3106,12 +3108,14 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             guestState.GuestObject.transform.position = worldPosition;
             BindGuestToRoomStagePoint(guestState, target);
+            ApplyGuestSharedRoomScaleForTarget(guestState, target);
             return;
         }
 
         if (guestState.ActorState != null)
         {
             guestState.ActorState.PlaceAt(target);
+            ApplyGuestSharedRoomScaleForTarget(guestState, target);
             return;
         }
 
@@ -3121,6 +3125,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             targetPosition.z = guestState.GuestObject.transform.position.z;
             guestState.GuestObject.transform.position = targetPosition;
             BindGuestToRoomStagePoint(guestState, target);
+            ApplyGuestSharedRoomScaleForTarget(guestState, target);
         }
     }
 
@@ -3175,6 +3180,16 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void PreserveGuestAuthoredScale(GameObject guestObject, ActorRoomState actorState)
     {
+        if (guestObject != null)
+        {
+            CacheGuestAuthoredScale(guestObject);
+
+            if (!HasActiveProjection(guestObject))
+            {
+                guestObject.transform.localScale = GetGuestAuthoredScale(guestObject);
+            }
+        }
+
         if (guestObject != null && guestObject != playerButlerReference)
         {
             PointClickPlayerMovement[] pointClickMovements = guestObject.GetComponentsInChildren<PointClickPlayerMovement>(true);
@@ -3192,6 +3207,117 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             actorState.SetScaleWithRoomStageMotion(true);
         }
+    }
+
+    private void CacheGuestAuthoredScale(GameObject guestObject)
+    {
+        if (guestObject == null || authoredGuestLocalScales.ContainsKey(guestObject))
+        {
+            return;
+        }
+
+        authoredGuestLocalScales.Add(guestObject, guestObject.transform.localScale);
+    }
+
+    private Vector3 GetGuestAuthoredScale(GameObject guestObject)
+    {
+        if (guestObject == null)
+        {
+            return Vector3.one;
+        }
+
+        CacheGuestAuthoredScale(guestObject);
+        return authoredGuestLocalScales.TryGetValue(guestObject, out Vector3 authoredScale)
+            ? authoredScale
+            : guestObject.transform.localScale;
+    }
+
+    private void ApplyGuestSharedRoomScaleForTarget(GuestRuntimeState guestState, Transform target)
+    {
+        if (guestState == null ||
+            guestState.GuestObject == null ||
+            !IsWorldSpaceGuestObject(guestState.GuestObject) ||
+            HasActiveProjection(guestState) ||
+            !TryEvaluateSharedCharacterRoomScaleForTarget(target, out float sharedRoomScale))
+        {
+            return;
+        }
+
+        Vector3 authoredScale = GetGuestAuthoredScale(guestState.GuestObject);
+        guestState.GuestObject.transform.localScale = new Vector3(
+            authoredScale.x * sharedRoomScale,
+            authoredScale.y * sharedRoomScale,
+            authoredScale.z);
+    }
+
+    private bool TryEvaluateSharedCharacterRoomScaleForTarget(Transform target, out float sharedRoomScale)
+    {
+        sharedRoomScale = 1f;
+
+        if (!TryGetRoomScaleContextForTarget(target, out string roomId, out Vector2 roomLocalFootPoint))
+        {
+            return false;
+        }
+
+        if (playerMovement == null)
+        {
+            playerMovement = FindAnyObjectByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+        }
+
+        if (playerMovement != null &&
+            playerMovement.TryEvaluateSharedCharacterRoomScale(roomId, roomLocalFootPoint, out sharedRoomScale, out _))
+        {
+            return true;
+        }
+
+        PointClickPlayerMovement[] movements = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < movements.Length; i++)
+        {
+            PointClickPlayerMovement movement = movements[i];
+
+            if (movement == null ||
+                movement == playerMovement ||
+                !movement.TryEvaluateSharedCharacterRoomScale(roomId, roomLocalFootPoint, out sharedRoomScale, out _))
+            {
+                continue;
+            }
+
+            playerMovement = movement;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryGetRoomScaleContextForTarget(Transform target, out string roomId, out Vector2 roomLocalFootPoint)
+    {
+        roomId = string.Empty;
+        roomLocalFootPoint = Vector2.zero;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        RoomAnchor roomAnchor = target.GetComponent<RoomAnchor>();
+        RoomContentGroup roomContent = target.GetComponentInParent<RoomContentGroup>(true);
+
+        if (roomAnchor != null && !string.IsNullOrWhiteSpace(roomAnchor.RoomId))
+        {
+            roomId = roomAnchor.RoomId;
+        }
+        else if (roomContent != null)
+        {
+            roomId = roomContent.RoomName;
+        }
+
+        if (!TryGetRoomLocalFootPoint(target, out roomLocalFootPoint))
+        {
+            return false;
+        }
+
+        return !string.IsNullOrWhiteSpace(roomId);
     }
 
     private void ClearGuestRoomStagePointBinding(GuestRuntimeState guestState)
@@ -3435,6 +3561,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         StopGuestFootsteps(guestState);
         BindGuestToRoomStagePoint(guestState, target);
+        ApplyGuestSharedRoomScaleForTarget(guestState, target);
     }
 
     private void BeginGuestMoveTo(GuestRuntimeState guestState, Transform target, string fieldName)
@@ -4141,6 +4268,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         runtimeGeneratedGuestObjects.Add(guestObject);
+        CacheGuestAuthoredScale(guestObject);
         guestObject.SetActive(false);
         return guestObject;
     }
@@ -4396,7 +4524,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         DisablePlayerOnlyComponents(guestObject);
-        Vector3 authoredGuestScale = guestObject.transform.localScale;
+        CacheGuestAuthoredScale(guestObject);
+        Vector3 authoredGuestScale = GetGuestAuthoredScale(guestObject);
         DisableAmbientWalkers(guestObject);
         ConfigureGuestPhysicsForScriptedMovement(guestObject);
         ConfigureGuestAnimatorForIndex(guestObject, index);

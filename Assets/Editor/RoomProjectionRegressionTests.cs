@@ -300,6 +300,7 @@ public class RoomProjectionRegressionTests
         string applyScaleBody = ExtractMethodBody(movementText, "private void ApplyPerspectiveScale");
 
         Assert.That(applyScaleBody, Does.Contain("TryEvaluateButlerCalibratedFinalLocalScale"), "Complete Butler room calibration should be able to replace the old depth scale.");
+        Assert.That(applyScaleBody, Does.Match(@"calibratedLocalScale\.x \* roomStageScale[\s\S]*calibratedLocalScale\.y \* roomStageScale"), "Calibrated Butler scale should still follow room-stage zoom.");
         Assert.That(applyScaleBody, Does.Contain("CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio"), "Rooms without Butler calibration should keep the old profile/fallback behavior.");
         Assert.That(applyScaleBody, Does.Contain("authoredLocalScale.x * scale"), "Uncalibrated rooms should still scale from the original authored local scale.");
         Assert.That(movementText, Does.Contain("usesRoomProfileScale ? depthScale : fallbackRelativeScale"), "The original profile-vs-fallback scale path should remain available for uncalibrated rooms.");
@@ -690,6 +691,21 @@ public class RoomProjectionRegressionTests
         Assert.That(bindBody, Does.Contain("HasActiveProjection(guestState)"), "Projected guests should not also receive ActorRoomState room-stage scale binding.");
         Assert.That(coatSortingBody, Does.Contain("projection.GetSortingOrder"), "Coats should sort relative to projected foot-point order when projection is active.");
         Assert.That(projectedPlacementBody, Does.Contain("projection.TrySetRoomLocalFootPointFromTarget(target)"), "Chapter 1 should set logical projected foot points when a room target is projectable.");
+    }
+
+    [Test]
+    public void Chapter1WorldSpaceGuestsUseSharedButlerRoomScale()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
+
+        Assert.That(controllerText, Does.Contain("authoredGuestLocalScales"), "Chapter 1 should remember each guest's authored base scale before applying room scale.");
+        Assert.That(controllerText, Does.Contain("ApplyGuestSharedRoomScaleForTarget"), "Non-projected world-space guests should get the shared Butler room scale at placement targets.");
+        Assert.That(controllerText, Does.Contain("TryEvaluateSharedCharacterRoomScaleForTarget"), "Chapter 1 should evaluate shared room scale from the same target anchors used for placement.");
+        Assert.That(controllerText, Does.Contain("GetEntranceHallGuestAnchor()"), "Runtime entrance wait anchors should stay parented to the entrance room so room-local scaling can resolve.");
+        Assert.That(controllerText, Does.Contain("TryEvaluateSharedCharacterRoomScale"), "Chapter 1 should use the normalized Butler shared scale API, not raw Butler localScale.");
+        Assert.That(actorRoomStateText, Does.Contain("TryGetBoundSharedCharacterRoomScale"), "Room-stage-bound world guests should keep using shared Butler scale after placement.");
+        Assert.That(actorRoomStateText, Does.Contain("TryEvaluateSharedCharacterRoomScale"), "ActorRoomState should use the normalized shared scale API before falling back to RoomPerspectiveProfile.");
     }
 
     [Test]

@@ -43,6 +43,7 @@ public class ActorRoomState : MonoBehaviour
     private float boundRoomStageScale = 1f;
     private RoomPerspectiveProfile boundRoomPerspectiveProfile;
     private string boundRoomId;
+    private PointClickPlayerMovement sharedCharacterScaleSource;
     private bool subscribedToRoomChanges;
     private bool hasDiagnosticApplyState;
     private bool lastDiagnosticShouldBeVisible;
@@ -715,6 +716,11 @@ public class ActorRoomState : MonoBehaviour
 
     private float GetBoundRoomPerspectiveScale()
     {
+        if (TryGetBoundSharedCharacterRoomScale(out float sharedRoomScale))
+        {
+            return sharedRoomScale;
+        }
+
         if (boundRoomPerspectiveProfile != null)
         {
             return boundRoomPerspectiveProfile.GetScale(roomStageLocalPoint);
@@ -745,6 +751,45 @@ public class ActorRoomState : MonoBehaviour
         }
 
         return 1f;
+    }
+
+    private bool TryGetBoundSharedCharacterRoomScale(out float sharedRoomScale)
+    {
+        sharedRoomScale = 1f;
+        string roomId = !string.IsNullOrWhiteSpace(boundRoomId) ? boundRoomId : currentRoomId;
+
+        if (string.IsNullOrWhiteSpace(roomId))
+        {
+            return false;
+        }
+
+        if (sharedCharacterScaleSource != null &&
+            sharedCharacterScaleSource.TryEvaluateSharedCharacterRoomScale(
+                roomId,
+                roomStageLocalPoint,
+                out sharedRoomScale,
+                out _))
+        {
+            return true;
+        }
+
+        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (candidate == null ||
+                !candidate.TryEvaluateSharedCharacterRoomScale(roomId, roomStageLocalPoint, out sharedRoomScale, out _))
+            {
+                continue;
+            }
+
+            sharedCharacterScaleSource = candidate;
+            return true;
+        }
+
+        return false;
     }
 
     private static bool IsActorUnderRoomStage(Transform targetTransform)
