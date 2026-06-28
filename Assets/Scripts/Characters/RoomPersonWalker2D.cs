@@ -78,6 +78,14 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	public string CurrentButlerCharacterScaleSource => currentButlerCharacterScaleSource;
 	public Vector2 CurrentPosition => currentPosition;
 	public float CurrentDepthScale => GetDepthScale();
+	public Graphic TargetGraphic
+	{
+		get
+		{
+			ResolveReferences();
+			return targetGraphic;
+		}
+	}
 
 #if UNITY_EDITOR
 	private double lastEditorTime;
@@ -202,12 +210,26 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 	public Transform GetGuestScaleRoot()
 	{
+		ResolveReferences();
+
 		if (roomProjection != null && roomProjection.IsProjectionActive)
 		{
 			return roomProjection.GetGuestScaleRoot();
 		}
 
-		return transform;
+		return targetGraphic != null ? targetGraphic.transform : transform;
+	}
+
+	public Transform GetGuestBoundsRoot()
+	{
+		ResolveReferences();
+
+		if (roomProjection != null && roomProjection.IsProjectionActive)
+		{
+			return roomProjection.GetGuestScaleRoot();
+		}
+
+		return targetGraphic != null ? targetGraphic.transform : transform;
 	}
 
 	public float GetGuestRelativeHeightMultiplier()
@@ -270,6 +292,9 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 		if (targetGraphic == null)
 			targetGraphic = GetComponent<Graphic>();
+
+		if (targetGraphic == null)
+			targetGraphic = GetComponentInChildren<Graphic>(true);
 
 		if (roomProjection == null)
 			roomProjection = GetComponent<RoomProjectedEntity>();

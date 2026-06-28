@@ -702,6 +702,11 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return VisualRoot;
     }
 
+    public Transform GetGuestBoundsRoot()
+    {
+        return VisualRoot;
+    }
+
     public float GetGuestRelativeHeightMultiplier()
     {
         float multiplier = visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;

@@ -202,9 +202,22 @@ public class ActorRoomState : MonoBehaviour
         return actorObject != null ? actorObject.transform : transform;
     }
 
+    public Transform GetGuestBoundsRoot()
+    {
+        return GetGuestScaleRoot();
+    }
+
     public float GetGuestRelativeHeightMultiplier()
     {
         return 1f;
+    }
+
+    public bool HasGuestScaleControllerChild()
+    {
+        Transform root = actorObject != null ? actorObject.transform : transform;
+        return root != null &&
+            (root.GetComponentInChildren<RoomProjectedEntity>(true) != null ||
+            root.GetComponentInChildren<RoomPersonWalker2D>(true) != null);
     }
 
     public bool TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 roomLocalFootPoint)

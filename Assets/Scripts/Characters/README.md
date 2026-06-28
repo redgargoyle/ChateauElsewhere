@@ -66,6 +66,10 @@ Guest scaling also uses a final visual-height fitter. The Butler's manually cali
 
 `RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result, then uses `CharacterVisualBoundsUtility` to fit each guest's visible screen height to the Butler-derived target height.
 
+The final guest scaler measures visible `Renderer` and UI `Graphic` bounds, not broad container `RectTransform`s like `Canvas_Background`, `Rooms`, room stages, or `People` folders. `RoomPersonWalker2D` guests prefer their actual `targetGraphic` as the scale root so path/movement code can keep owning the walker controller transform.
+
+Proof mode is a write-access and visual-target test. It should visibly affect every detected guest, even rooms without Butler calibration. Real mode only applies Butler room scaling in rooms with saved front/back Butler scale calibration. If proof fails, the guest likely has no detectable `Renderer`/`Graphic` visual target or the selected visual root is wrong; the tool audit lists the bounds root, scale root, primary visual, measured heights, and fit diagnostics.
+
 To enable:
 
 1. Open `Tools > Characters > Apply Butler Scaling To Guests`.
@@ -78,8 +82,9 @@ To enable:
    Every detected guest should visibly change, even if that room has no Butler calibration.
 8. Check `Room Calibration Coverage`.
    Any room with guests and no Butler calibration must be calibrated or aliased before real Butler scaling can affect those guests.
-9. Save Scene.
-10. Test in Play Mode by standing the Butler next to guests and confirming their visual height/scale belongs to the same room system.
+9. If a previous failed proof made a guest enormous, click `EMERGENCY: Restore Proof Baselines / Clamp Huge Guest Scales`.
+10. Save Scene.
+11. Test in Play Mode by standing the Butler next to guests and confirming their visual height/scale belongs to the same room system.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 

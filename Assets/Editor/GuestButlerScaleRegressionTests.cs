@@ -210,6 +210,58 @@ public sealed class GuestButlerScaleRegressionTests
     }
 
     [Test]
+    public void CharacterVisualBoundsUtilityIgnoresContainerRectTransformsByDefault()
+    {
+        Camera camera = CreateTestCamera();
+        GameObject root = new GameObject("Container", typeof(RectTransform));
+        RectTransform rootRect = root.GetComponent<RectTransform>();
+        rootRect.sizeDelta = new Vector2(1000f, 1000f);
+        GameObject child = CreateUiVisual("CharacterImage", new Vector2(80f, 120f), Vector3.one);
+        child.transform.SetParent(root.transform, false);
+
+        try
+        {
+            Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(root.transform, camera, out float measuredHeight), Is.True);
+            Assert.That(measuredHeight, Is.LessThan(300f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(camera.gameObject);
+        }
+    }
+
+    [Test]
+    public void CharacterVisualBoundsUtilityUsesNullCameraForOverlayCanvas()
+    {
+        GameObject canvasObject = new GameObject("Canvas", typeof(Canvas));
+        Canvas canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        GameObject graphic = CreateUiVisual("OverlayCharacter", new Vector2(90f, 180f), Vector3.one);
+        graphic.transform.SetParent(canvasObject.transform, false);
+
+        try
+        {
+            Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(canvasObject.transform, null, out float height), Is.True);
+            Assert.That(height, Is.GreaterThan(0f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(canvasObject);
+        }
+    }
+
+    [Test]
+    public void VisualFitSupportsFallbackDirectScaleDiagnostics()
+    {
+        string utilityText = File.ReadAllText(VisualBoundsUtilityPath);
+
+        Assert.That(utilityText, Does.Contain("TryScaleTransformForScreenHeight"));
+        Assert.That(utilityText, Does.Contain("UsedFallbackDirectScale"));
+        Assert.That(utilityText, Does.Contain("Fallback direct visual scale"));
+    }
+
+    [Test]
     public void ProofModeChangesGuestsWithoutCalibration()
     {
         Camera camera = CreateTestCamera();
@@ -245,6 +297,36 @@ public sealed class GuestButlerScaleRegressionTests
             UnityEngine.Object.DestroyImmediate(butler);
             UnityEngine.Object.DestroyImmediate(camera.gameObject);
         }
+    }
+
+    [Test]
+    public void RoomPersonWalkerUsesTargetGraphicAsScaleRoot()
+    {
+        GameObject walkerObject = new GameObject("Walker", typeof(RectTransform));
+        GameObject visual = CreateUiVisual("WalkerImage", new Vector2(100f, 200f), Vector3.one);
+        visual.transform.SetParent(walkerObject.transform, false);
+        RoomPersonWalker2D walker = walkerObject.AddComponent<RoomPersonWalker2D>();
+
+        try
+        {
+            Assert.That(walker.TargetGraphic, Is.EqualTo(visual.GetComponent<Graphic>()));
+            Assert.That(walker.GetGuestScaleRoot(), Is.EqualTo(visual.transform));
+            Assert.That(walker.GetGuestBoundsRoot(), Is.EqualTo(visual.transform));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(walkerObject);
+        }
+    }
+
+    [Test]
+    public void ActorRoomStateSkippedWhenProjectedOrWalkerChildExists()
+    {
+        string actorText = File.ReadAllText(ActorRoomStatePath);
+        string harmonizerText = File.ReadAllText(HarmonizerPath);
+
+        Assert.That(actorText, Does.Contain("HasGuestScaleControllerChild"));
+        Assert.That(harmonizerText, Does.Contain("actor.HasGuestScaleControllerChild()"));
     }
 
     [Test]
@@ -377,6 +459,10 @@ public sealed class GuestButlerScaleRegressionTests
         Assert.That(toolText, Does.Contain("Bypass Old Room Visual Scale Overrides For All Guests"));
         Assert.That(toolText, Does.Contain("Current Visual Height px"));
         Assert.That(toolText, Does.Contain("Target Visual Height px"));
+        Assert.That(toolText, Does.Contain("Bounds Root"));
+        Assert.That(toolText, Does.Contain("Scale Root"));
+        Assert.That(toolText, Does.Contain("Primary Visual"));
+        Assert.That(toolText, Does.Contain("EMERGENCY: Restore Proof Baselines / Clamp Huge Guest Scales"));
         Assert.That(toolText, Does.Contain("Room Calibration Coverage"));
         Assert.That(File.ReadAllText(VisualBoundsUtilityPath), Does.Contain("TryFitScreenHeight"));
         Assert.That(File.ReadAllText(ActorRoomStatePath), Does.Contain("ApplyButlerCharacterScaleNow"));
