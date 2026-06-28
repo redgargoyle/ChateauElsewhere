@@ -79,27 +79,6 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         RefreshNow();
     }
 
-    public int EmergencyClampHugeGuestScales(float maxAbsScale = 20f)
-    {
-        Camera camera = ResolveCamera();
-        PointClickPlayerMovement source = ResolveButlerScaleSource();
-        GuestScaleApplySummary ignoredSummary = GuestScaleApplySummary.Empty;
-        List<GuestScaleTarget> targets = BuildGuestScaleTargets(source, camera, ref ignoredSummary);
-        int clamped = 0;
-
-        for (int i = 0; i < targets.Count; i++)
-        {
-            clamped += ClampHugeScale(targets[i].ScaleRoot, maxAbsScale);
-
-            if (targets[i].PrimaryVisualRoot != targets[i].ScaleRoot)
-            {
-                clamped += ClampHugeScale(targets[i].PrimaryVisualRoot, maxAbsScale);
-            }
-        }
-
-        return clamped;
-    }
-
     public GuestScaleApplySummary RefreshNow()
     {
         return ApplyGuestScaling(true);
@@ -107,6 +86,8 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
     public GuestScaleApplySummary ApplyGuestScaling(bool requestedFromTool)
     {
+        bool proofMode = proofModeActive && !Mathf.Approximately(debugGuestScaleMultiplier, 1f);
+
         if (!Application.isPlaying && !previewInEditMode && !requestedFromTool)
         {
             return GuestScaleApplySummary.Empty;
@@ -114,11 +95,11 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
         PointClickPlayerMovement source = ResolveButlerScaleSource();
 
-        if (source == null)
+        if (source == null && !proofMode)
         {
             if (logSummary)
             {
-                Debug.LogError("[GuestButlerScale] No Butler scale source found. Run Tools > Characters > Apply Butler Scaling To Guests > Audit.", this);
+                Debug.LogWarning("[GuestButlerScale] No Butler scale source found. Run Tools > Characters > Human Scale Audit.", this);
             }
 
             return GuestScaleApplySummary.Empty;
@@ -133,15 +114,20 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                 Debug.LogError("[GuestButlerScale] No camera found for visual-height fitting.", this);
             }
 
-            GuestScaleApplySummary noCameraSummary = new GuestScaleApplySummary(source.name);
+            GuestScaleApplySummary noCameraSummary = new GuestScaleApplySummary(source != null ? source.name : name);
             noCameraSummary.FitFailed++;
             return noCameraSummary;
         }
 
-        GuestScaleApplySummary summary = new GuestScaleApplySummary(source.name);
+        GuestScaleApplySummary summary = new GuestScaleApplySummary(source != null ? source.name : name);
         List<GuestScaleTarget> targets = BuildGuestScaleTargets(source, camera, ref summary);
-        bool hasButlerReferenceHeight = source.TryGetButlerReferenceScreenHeightForRoomScale(camera, out float butlerReferenceScreenHeight);
-        bool proofMode = proofModeActive && !Mathf.Approximately(debugGuestScaleMultiplier, 1f);
+        float standingHumanReferenceScreenHeight = 0f;
+        string butlerReferenceDiagnostic = string.Empty;
+        bool hasButlerReferenceHeight = source != null &&
+            source.TryGetButlerHumanScaleReference(
+                camera,
+                out standingHumanReferenceScreenHeight,
+                out butlerReferenceDiagnostic);
 
         for (int i = 0; i < targets.Count; i++)
         {
@@ -150,7 +136,8 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                 source,
                 camera,
                 hasButlerReferenceHeight,
-                butlerReferenceScreenHeight,
+                standingHumanReferenceScreenHeight,
+                butlerReferenceDiagnostic,
                 proofMode,
                 ref summary);
         }
@@ -169,46 +156,42 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         proofBaselines.Clear();
 
         Camera camera = ResolveCamera();
-        PointClickPlayerMovement source = ResolveButlerScaleSource();
 
         if (camera == null)
         {
             return;
         }
 
+        PointClickPlayerMovement source = ResolveButlerScaleSource();
         GuestScaleApplySummary ignoredSummary = GuestScaleApplySummary.Empty;
         List<GuestScaleTarget> targets = BuildGuestScaleTargets(source, camera, ref ignoredSummary);
-        CharacterVisualBoundsUtility.VisualBoundsOptions options = GetBoundsOptions();
 
         for (int i = 0; i < targets.Count; i++)
         {
             GuestScaleTarget target = targets[i];
-            Transform key = target.ScaleRoot != null ? target.ScaleRoot : target.PrimaryVisualRoot;
 
-            if (key == null)
+            if (target.ScaleRoot == null)
             {
                 continue;
             }
 
-            bool hasHeight = CharacterVisualBoundsUtility.TryGetVisualScreenRect(
+            bool hasHeight = CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(
                 target.BoundsRoot,
                 camera,
-                out Rect screenRect,
-                out Transform primaryVisual,
-                out _,
-                options);
-            Transform primary = primaryVisual != null ? primaryVisual : target.PrimaryVisualRoot;
-            proofBaselines[key] = new ProofBaseline(
+                out CharacterVisualBoundsUtility.CharacterVisualTarget visualTarget,
+                includeInactive: !Application.isPlaying && includeInactiveInEditMode);
+            Transform primaryVisual = hasHeight ? visualTarget.PrimaryVisual : target.PrimaryVisual;
+            proofBaselines[target.ScaleRoot] = new ProofBaseline(
                 target.ScaleRoot,
-                target.ScaleRoot != null ? target.ScaleRoot.localScale : Vector3.one,
-                primary,
-                primary != null ? primary.localScale : Vector3.one,
-                hasHeight ? screenRect.height : 0f,
+                target.ScaleRoot.localScale,
+                primaryVisual,
+                primaryVisual != null ? primaryVisual.localScale : Vector3.one,
+                hasHeight ? visualTarget.ScreenHeight : 0f,
                 hasHeight);
         }
     }
 
-    private void RestoreProofBaselines()
+    public void RestoreProofBaselines()
     {
         foreach (KeyValuePair<Transform, ProofBaseline> pair in proofBaselines)
         {
@@ -219,9 +202,9 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                 baseline.ScaleRoot.localScale = baseline.ScaleRootLocalScale;
             }
 
-            if (baseline.PrimaryVisualRoot != null && baseline.PrimaryVisualRoot != baseline.ScaleRoot)
+            if (baseline.PrimaryVisual != null && baseline.PrimaryVisual != baseline.ScaleRoot)
             {
-                baseline.PrimaryVisualRoot.localScale = baseline.PrimaryVisualLocalScale;
+                baseline.PrimaryVisual.localScale = baseline.PrimaryVisualLocalScale;
             }
         }
     }
@@ -231,18 +214,33 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         PointClickPlayerMovement source,
         Camera camera,
         bool hasButlerReferenceHeight,
-        float butlerReferenceScreenHeight,
+        float standingHumanReferenceScreenHeight,
+        string butlerReferenceDiagnostic,
         bool proofMode,
         ref GuestScaleApplySummary summary)
     {
-        if (target.ScaleRoot == null && target.PrimaryVisualRoot == null)
+        if (target.ScaleRoot == null || target.BoundsRoot == null)
         {
             summary.FitFailed++;
-            summary.AddProofFailure(target.Path, target.BuildDiagnostic("No visual scale root found"));
+            summary.AddProofFailure(target.Path, "Scale root or bounds root missing");
             return;
         }
 
         WarnIfScaleWasOverwritten(target);
+        PrepareControllerForFinalHumanScale(target, source);
+
+        bool includeInactive = !Application.isPlaying && includeInactiveInEditMode;
+
+        if (!CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(
+            target.BoundsRoot,
+            camera,
+            out CharacterVisualBoundsUtility.CharacterVisualTarget visualTarget,
+            includeInactive))
+        {
+            summary.NoVisualBounds++;
+            summary.AddProofFailure(target.Path, "No visible Renderer or Graphic found");
+            return;
+        }
 
         PointClickPlayerMovement.ButlerCharacterScaleSample sample = default;
         bool hasSample = source != null &&
@@ -252,77 +250,49 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                 target.RoomLocalFootPoint,
                 out sample);
 
-        if (hasSample)
-        {
-            ApplyControllerScaleSample(target, source);
-        }
-        else
+        if (!hasSample)
         {
             summary.MissingCalibration++;
-
-            if (!proofMode)
-            {
-                return;
-            }
         }
-
-        CharacterVisualBoundsUtility.VisualBoundsOptions options = GetBoundsOptions();
-
-        if (!CharacterVisualBoundsUtility.TryGetVisualScreenRect(
-                target.BoundsRoot,
-                camera,
-                out Rect currentRect,
-                out Transform measuredPrimary,
-                out string measureDiagnostic,
-                options))
-        {
-            if (proofMode && target.PrimaryVisualRoot != null && ApplyProofDirectScale(target))
-            {
-                summary.Scaled++;
-                summary.IncludeScale(debugGuestScaleMultiplier);
-                summary.AddFitDiagnosticText(target.Path, target.BuildDiagnostic("Fallback direct visual scale after missing measured bounds"));
-                return;
-            }
-
-            summary.NoVisualBounds++;
-            summary.AddProofFailure(target.Path, target.BuildDiagnostic(measureDiagnostic));
-            return;
-        }
-
-        GuestScaleTarget measuredTarget = target.WithPrimaryVisual(measuredPrimary);
 
         if (!TryGetTargetScreenHeight(
-                measuredTarget,
-                hasSample,
-                sample,
-                hasButlerReferenceHeight,
-                butlerReferenceScreenHeight,
-                proofMode,
-                currentRect.height,
-                out float targetHeight,
-                out string failureReason))
+            target,
+            hasSample,
+            sample,
+            hasButlerReferenceHeight,
+            standingHumanReferenceScreenHeight,
+            butlerReferenceDiagnostic,
+            proofMode,
+            visualTarget.ScreenHeight,
+            out float targetHeight,
+            out string failureReason))
         {
             summary.FitFailed++;
-            summary.AddProofFailure(target.Path, measuredTarget.BuildDiagnostic(failureReason));
+            summary.AddProofFailure(target.Path, failureReason);
             return;
         }
 
-        CharacterVisualBoundsUtility.VisualFitResult fitResult;
-        bool fitSucceeded = TryFitTarget(measuredTarget, camera, targetHeight, options, out fitResult);
+        Transform scaleRoot = target.ScaleRoot;
+        Transform boundsRoot = target.BoundsRoot;
 
-        if (!fitSucceeded && proofMode && ApplyProofDirectScale(measuredTarget))
+        if (CharacterVisualBoundsUtility.LooksLikeForbiddenContainer(scaleRoot) &&
+            visualTarget.PrimaryVisual != null)
         {
-            summary.Scaled++;
-            summary.IncludeScale(debugGuestScaleMultiplier);
-            summary.IncludeVisualHeight(fitResult.AfterHeight);
-            summary.AddFitDiagnosticText(measuredTarget.Path, measuredTarget.BuildDiagnostic("Fallback direct visual scale after fitter miss", fitResult));
-            return;
+            scaleRoot = visualTarget.PrimaryVisual;
         }
+
+        bool fitSucceeded = CharacterVisualBoundsUtility.TryApplyTargetScreenHeight(
+            scaleRoot,
+            boundsRoot,
+            camera,
+            targetHeight,
+            out CharacterVisualBoundsUtility.CharacterVisualFitResult fitResult,
+            includeInactive);
 
         if (!fitSucceeded)
         {
             summary.FitFailed++;
-            summary.AddProofFailure(measuredTarget.Path, measuredTarget.BuildDiagnostic(fitResult.Diagnostic, fitResult));
+            summary.AddProofFailure(target.Path, fitResult.Diagnostic);
             return;
         }
 
@@ -339,86 +309,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         }
 
         summary.IncludeVisualHeight(fitResult.AfterHeight);
-        Transform fittedScaleRoot = measuredTarget.ScaleRoot != null
-            ? measuredTarget.ScaleRoot
-            : measuredTarget.PrimaryVisualRoot;
-
-        if (fittedScaleRoot != null)
-        {
-            lastFittedLocalScales[fittedScaleRoot] = fittedScaleRoot.localScale;
-        }
-
-        summary.AddFitDiagnostic(measuredTarget.Path, fitResult);
-    }
-
-    private bool TryFitTarget(
-        GuestScaleTarget target,
-        Camera camera,
-        float targetHeight,
-        CharacterVisualBoundsUtility.VisualBoundsOptions options,
-        out CharacterVisualBoundsUtility.VisualFitResult result)
-    {
-        Transform scaleRoot = target.ScaleRoot != null ? target.ScaleRoot : target.PrimaryVisualRoot;
-
-        if (LooksLikeForbiddenScaleRoot(scaleRoot) && target.PrimaryVisualRoot != null)
-        {
-            scaleRoot = target.PrimaryVisualRoot;
-        }
-
-        if (CharacterVisualBoundsUtility.TryScaleTransformForScreenHeight(
-                scaleRoot,
-                target.BoundsRoot,
-                camera,
-                targetHeight,
-                out result,
-                options,
-                2))
-        {
-            return true;
-        }
-
-        if (target.PrimaryVisualRoot != null && target.PrimaryVisualRoot != scaleRoot)
-        {
-            return CharacterVisualBoundsUtility.TryScaleTransformForScreenHeight(
-                target.PrimaryVisualRoot,
-                target.BoundsRoot,
-                camera,
-                targetHeight,
-                out result,
-                options,
-                2);
-        }
-
-        return false;
-    }
-
-    private bool ApplyProofDirectScale(GuestScaleTarget target)
-    {
-        Transform key = target.ScaleRoot != null ? target.ScaleRoot : target.PrimaryVisualRoot;
-        Transform scaleRoot = target.PrimaryVisualRoot != null && (target.ScaleRoot == null || LooksLikeForbiddenScaleRoot(target.ScaleRoot))
-            ? target.PrimaryVisualRoot
-            : target.ScaleRoot;
-
-        if (scaleRoot == null)
-        {
-            return false;
-        }
-
-        if (proofBaselines.TryGetValue(key, out ProofBaseline baseline))
-        {
-            if (scaleRoot == baseline.PrimaryVisualRoot)
-            {
-                scaleRoot.localScale = ScaleBaseline(baseline.PrimaryVisualLocalScale, debugGuestScaleMultiplier);
-                return !Approximately(scaleRoot.localScale, baseline.PrimaryVisualLocalScale);
-            }
-
-            scaleRoot.localScale = ScaleBaseline(baseline.ScaleRootLocalScale, debugGuestScaleMultiplier);
-            return !Approximately(scaleRoot.localScale, baseline.ScaleRootLocalScale);
-        }
-
-        Vector3 previous = scaleRoot.localScale;
-        scaleRoot.localScale = ScaleBaseline(previous, debugGuestScaleMultiplier);
-        return !Approximately(previous, scaleRoot.localScale);
+        lastFittedLocalScales[scaleRoot] = scaleRoot.localScale;
     }
 
     private bool TryGetTargetScreenHeight(
@@ -426,7 +317,8 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         bool hasSample,
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,
         bool hasButlerReferenceHeight,
-        float butlerReferenceScreenHeight,
+        float standingHumanReferenceScreenHeight,
+        string butlerReferenceDiagnostic,
         bool proofMode,
         float currentScreenHeight,
         out float targetHeight,
@@ -435,48 +327,63 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         targetHeight = 0f;
         failureReason = string.Empty;
 
-        if (hasSample && hasButlerReferenceHeight)
+        if (proofMode)
         {
-            float relativeHeight = Mathf.Clamp(target.RelativeHeightMultiplier * Mathf.Max(0.001f, defaultGuestRelativeHeightMultiplier), 0.25f, 3f);
-            targetHeight =
-                butlerReferenceScreenHeight *
-                Mathf.Max(0.001f, sample.NormalizedScale) *
-                relativeHeight *
-                Mathf.Max(0.001f, debugGuestScaleMultiplier);
+            if (target.ScaleRoot != null &&
+                proofBaselines.TryGetValue(target.ScaleRoot, out ProofBaseline baseline) &&
+                baseline.HasScreenHeight)
+            {
+                targetHeight = baseline.ScreenHeight * Mathf.Max(0.001f, debugGuestScaleMultiplier);
+                return targetHeight > 0.01f;
+            }
+
+            targetHeight = currentScreenHeight * Mathf.Max(0.001f, debugGuestScaleMultiplier);
+            failureReason = "Proof baseline missing; used current visible height";
             return targetHeight > 0.01f;
         }
 
-        if (!proofMode)
+        if (!hasSample)
         {
-            failureReason = hasSample
-                ? "No Butler reference visual height"
-                : "No complete Butler calibration for this room";
+            failureReason = "No complete Butler calibration for this room";
             return false;
         }
 
-        Transform key = target.ScaleRoot != null ? target.ScaleRoot : target.PrimaryVisualRoot;
-
-        if (key != null &&
-            proofBaselines.TryGetValue(key, out ProofBaseline baseline) &&
-            baseline.HasScreenHeight)
+        if (!hasButlerReferenceHeight)
         {
-            targetHeight = baseline.ScreenHeight * Mathf.Max(0.001f, debugGuestScaleMultiplier);
-            return targetHeight > 0.01f;
+            failureReason = string.IsNullOrWhiteSpace(butlerReferenceDiagnostic)
+                ? "No Butler reference visual height"
+                : butlerReferenceDiagnostic;
+            return false;
         }
 
-        targetHeight = currentScreenHeight * Mathf.Max(0.001f, debugGuestScaleMultiplier);
-        failureReason = "Proof baseline missing";
+        float relativeHeight = Mathf.Clamp(
+            target.RelativeHeightMultiplier * Mathf.Max(0.001f, defaultGuestRelativeHeightMultiplier),
+            0.25f,
+            3f);
+        float poseHeight = Mathf.Clamp(target.PoseHeightMultiplier, 0.25f, 1.25f);
+        targetHeight =
+            standingHumanReferenceScreenHeight *
+            Mathf.Max(0.001f, sample.NormalizedScale) *
+            poseHeight *
+            relativeHeight *
+            Mathf.Max(0.001f, debugGuestScaleMultiplier);
         return targetHeight > 0.01f;
     }
 
-    private void ApplyControllerScaleSample(GuestScaleTarget target, PointClickPlayerMovement source)
+    private void PrepareControllerForFinalHumanScale(GuestScaleTarget target, PointClickPlayerMovement source)
     {
         if (target.ProjectedEntity != null)
         {
             target.ProjectedEntity.SetButlerScaleSource(source, false);
             target.ProjectedEntity.SetButlerCharacterScaleRulesEnabled(true, false);
             target.ProjectedEntity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
-            target.ProjectedEntity.ApplyButlerCharacterScaleNow(source);
+            target.ProjectedEntity.SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(true, false);
+
+            if (!Application.isPlaying)
+            {
+                target.ProjectedEntity.ApplyProjection();
+            }
+
             return;
         }
 
@@ -485,13 +392,11 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             target.Walker.SetButlerScaleSource(source, false);
             target.Walker.SetButlerCharacterScaleRulesEnabled(true, false);
             target.Walker.SetPreserveAuthoredLocalScaleWhenUsingButlerRules(true, false);
-            target.Walker.ApplyButlerCharacterScaleNow(source);
-            return;
-        }
 
-        if (target.Actor != null)
-        {
-            target.Actor.ApplyButlerCharacterScaleNow(source);
+            if (!Application.isPlaying)
+            {
+                target.Walker.RefreshDepthVisualsNow();
+            }
         }
     }
 
@@ -501,8 +406,9 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         ref GuestScaleApplySummary summary)
     {
         List<GuestScaleTarget> targets = new List<GuestScaleTarget>();
-        HashSet<Transform> claimedRoots = new HashSet<Transform>();
-        CharacterVisualBoundsUtility.VisualBoundsOptions options = GetBoundsOptions();
+        HashSet<Transform> claimedScaleRoots = new HashSet<Transform>();
+        HashSet<Transform> claimedPrimaryVisuals = new HashSet<Transform>();
+        bool includeInactive = !Application.isPlaying && includeInactiveInEditMode;
 
         if (applyToRoomProjectedEntities)
         {
@@ -540,22 +446,33 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                     continue;
                 }
 
+                ResolveProjectedVisualRoots(
+                    entity,
+                    camera,
+                    includeInactive,
+                    out Transform boundsRoot,
+                    out Transform scaleRoot,
+                    out Transform primaryVisual,
+                    out string diagnostic);
+
                 AddTarget(
                     targets,
-                    claimedRoots,
-                    CreateTarget(
-                        entity.GetGuestScaleRoot(),
-                        entity.GetGuestBoundsRoot(),
-                        entity.GetGuestScaleRoot(),
+                    claimedScaleRoots,
+                    claimedPrimaryVisuals,
+                    new GuestScaleTarget(
+                        boundsRoot,
+                        scaleRoot,
+                        primaryVisual,
                         entity,
                         null,
                         null,
-                        "RoomProjectedEntity",
+                        walker != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomProjectedEntity",
                         roomId,
                         footPoint,
                         entity.GetGuestRelativeHeightMultiplier(),
-                        camera,
-                        options),
+                        entity.GetGuestPoseHeightMultiplier(),
+                        entity.IsGuestSeated(),
+                        diagnostic),
                     source,
                     ref summary);
             }
@@ -598,22 +515,33 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                     continue;
                 }
 
+                ResolveWalkerVisualRoots(
+                    walker,
+                    camera,
+                    includeInactive,
+                    out Transform boundsRoot,
+                    out Transform scaleRoot,
+                    out Transform primaryVisual,
+                    out string diagnostic);
+
                 AddTarget(
                     targets,
-                    claimedRoots,
-                    CreateTarget(
-                        walker.GetGuestScaleRoot(),
-                        walker.GetGuestBoundsRoot(),
-                        walker.GetGuestScaleRoot(),
+                    claimedScaleRoots,
+                    claimedPrimaryVisuals,
+                    new GuestScaleTarget(
+                        boundsRoot,
+                        scaleRoot,
+                        primaryVisual,
                         null,
                         walker,
                         null,
-                        "RoomPersonWalker2D",
+                        projection != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomPersonWalker2D",
                         roomId,
                         footPoint,
                         walker.GetGuestRelativeHeightMultiplier(),
-                        camera,
-                        options),
+                        walker.GetGuestPoseHeightMultiplier(),
+                        walker.IsGuestSeated(),
+                        diagnostic),
                     source,
                     ref summary);
             }
@@ -640,7 +568,13 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                     continue;
                 }
 
-                if (!LooksLikeGuestActor(actor) || actor.HasGuestScaleControllerChild())
+                if (!LooksLikeGuestActor(actor))
+                {
+                    summary.Skipped++;
+                    continue;
+                }
+
+                if (ActorContainsProjectionOrWalker(actor))
                 {
                     summary.Skipped++;
                     continue;
@@ -652,14 +586,23 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                     continue;
                 }
 
-                Transform actorRoot = actor.GetGuestScaleRoot();
+                ResolveActorVisualRoots(
+                    actor,
+                    camera,
+                    includeInactive,
+                    out Transform boundsRoot,
+                    out Transform scaleRoot,
+                    out Transform primaryVisual,
+                    out string diagnostic);
+
                 AddTarget(
                     targets,
-                    claimedRoots,
-                    CreateTarget(
-                        actorRoot,
-                        actor.GetGuestBoundsRoot(),
-                        actorRoot,
+                    claimedScaleRoots,
+                    claimedPrimaryVisuals,
+                    new GuestScaleTarget(
+                        boundsRoot,
+                        scaleRoot,
+                        primaryVisual,
                         null,
                         null,
                         actor,
@@ -667,8 +610,9 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                         roomId,
                         footPoint,
                         actor.GetGuestRelativeHeightMultiplier(),
-                        camera,
-                        options),
+                        actor.GetGuestPoseHeightMultiplier(),
+                        actor.IsSeated,
+                        diagnostic),
                     source,
                     ref summary);
             }
@@ -677,110 +621,141 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         return targets;
     }
 
-    private GuestScaleTarget CreateTarget(
-        Transform scaleRoot,
-        Transform boundsRoot,
-        Transform defaultPrimaryRoot,
-        RoomProjectedEntity projectedEntity,
-        RoomPersonWalker2D walker,
-        ActorRoomState actor,
-        string controllerType,
-        string roomId,
-        Vector2 roomLocalFootPoint,
-        float relativeHeightMultiplier,
+    private void ResolveProjectedVisualRoots(
+        RoomProjectedEntity entity,
         Camera camera,
-        CharacterVisualBoundsUtility.VisualBoundsOptions options)
+        bool includeInactive,
+        out Transform boundsRoot,
+        out Transform scaleRoot,
+        out Transform primaryVisual,
+        out string diagnostic)
     {
-        Transform safeBoundsRoot = boundsRoot != null ? boundsRoot : scaleRoot;
-        Transform primaryVisual = null;
-        string visualDiagnostic = string.Empty;
+        boundsRoot = entity != null ? entity.VisualRoot : null;
+        scaleRoot = boundsRoot;
+        primaryVisual = null;
+        diagnostic = string.Empty;
 
-        if (safeBoundsRoot != null &&
-            CharacterVisualBoundsUtility.TryGetVisualScreenRect(
-                safeBoundsRoot,
-                camera,
-                out _,
-                out Transform measuredPrimary,
-                out visualDiagnostic,
-                options) &&
-            measuredPrimary != null)
+        if (boundsRoot != null &&
+            CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(boundsRoot, camera, out CharacterVisualBoundsUtility.CharacterVisualTarget target, includeInactive))
         {
-            primaryVisual = measuredPrimary;
+            boundsRoot = target.BoundsRoot;
+            primaryVisual = target.PrimaryVisual;
+            diagnostic = target.Diagnostic;
+
+            if (CharacterVisualBoundsUtility.LooksLikeForbiddenContainer(scaleRoot))
+            {
+                scaleRoot = primaryVisual;
+            }
+        }
+    }
+
+    private void ResolveWalkerVisualRoots(
+        RoomPersonWalker2D walker,
+        Camera camera,
+        bool includeInactive,
+        out Transform boundsRoot,
+        out Transform scaleRoot,
+        out Transform primaryVisual,
+        out string diagnostic)
+    {
+        boundsRoot = walker != null ? walker.transform : null;
+        scaleRoot = boundsRoot;
+        primaryVisual = null;
+        diagnostic = string.Empty;
+
+        if (walker != null && walker.TargetGraphic != null)
+        {
+            boundsRoot = walker.TargetGraphic.transform;
+            scaleRoot = walker.TargetGraphic.rectTransform;
+            primaryVisual = walker.TargetGraphic.transform;
+            diagnostic = "RoomPersonWalker2D targetGraphic";
+            return;
         }
 
-        Transform safeScaleRoot = scaleRoot != null ? scaleRoot : primaryVisual != null ? primaryVisual : defaultPrimaryRoot;
-
-        if (LooksLikeForbiddenScaleRoot(safeScaleRoot) && primaryVisual != null)
+        if (boundsRoot != null &&
+            CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(boundsRoot, camera, out CharacterVisualBoundsUtility.CharacterVisualTarget target, includeInactive))
         {
-            safeScaleRoot = primaryVisual;
+            boundsRoot = target.BoundsRoot;
+            scaleRoot = target.PrimaryVisual != null ? target.PrimaryVisual : target.BoundsRoot;
+            primaryVisual = target.PrimaryVisual;
+            diagnostic = target.Diagnostic;
         }
+    }
 
-        return new GuestScaleTarget(
-            safeScaleRoot,
-            safeBoundsRoot,
-            primaryVisual,
-            projectedEntity,
-            walker,
-            actor,
-            controllerType,
-            roomId,
-            roomLocalFootPoint,
-            relativeHeightMultiplier,
-            visualDiagnostic);
+    private void ResolveActorVisualRoots(
+        ActorRoomState actor,
+        Camera camera,
+        bool includeInactive,
+        out Transform boundsRoot,
+        out Transform scaleRoot,
+        out Transform primaryVisual,
+        out string diagnostic)
+    {
+        boundsRoot = actor != null ? actor.GetGuestScaleRoot() : null;
+        scaleRoot = boundsRoot;
+        primaryVisual = null;
+        diagnostic = string.Empty;
+
+        if (boundsRoot != null &&
+            CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(boundsRoot, camera, out CharacterVisualBoundsUtility.CharacterVisualTarget target, includeInactive))
+        {
+            boundsRoot = target.BoundsRoot;
+            primaryVisual = target.PrimaryVisual;
+            scaleRoot = target.PrimaryVisual != null ? target.PrimaryVisual : target.BoundsRoot;
+
+            if (target.PrimaryVisual == actor.transform && !CharacterVisualBoundsUtility.LooksLikeForbiddenContainer(actor.transform))
+            {
+                scaleRoot = actor.transform;
+            }
+
+            diagnostic = target.Diagnostic;
+        }
     }
 
     private void AddTarget(
         List<GuestScaleTarget> targets,
-        HashSet<Transform> claimedRoots,
+        HashSet<Transform> claimedScaleRoots,
+        HashSet<Transform> claimedPrimaryVisuals,
         GuestScaleTarget target,
         PointClickPlayerMovement source,
         ref GuestScaleApplySummary summary)
     {
-        if (target.BoundsRoot == null && target.ScaleRoot == null && target.PrimaryVisualRoot == null)
+        Transform duplicateKey = target.ScaleRoot != null ? target.ScaleRoot : target.BoundsRoot;
+
+        if (duplicateKey == null)
         {
             summary.Skipped++;
             return;
         }
 
-        if ((skipButlerObject && IsButlerObjectOrChild(target.ScaleRoot, source)) ||
-            (skipButlerObject && IsButlerObjectOrChild(target.BoundsRoot, source)) ||
-            (skipButlerObject && IsButlerObjectOrChild(target.PrimaryVisualRoot, source)))
+        if (skipButlerObject &&
+            (IsButlerObjectOrChild(duplicateKey, source) ||
+            IsButlerObjectOrChild(target.PrimaryVisual, source)))
         {
             summary.Skipped++;
             return;
         }
 
-        if ((target.ScaleRoot != null && claimedRoots.Contains(target.ScaleRoot)) ||
-            (target.BoundsRoot != null && claimedRoots.Contains(target.BoundsRoot)) ||
-            (target.PrimaryVisualRoot != null && claimedRoots.Contains(target.PrimaryVisualRoot)))
+        if (claimedScaleRoots.Contains(duplicateKey))
         {
             summary.Skipped++;
             return;
         }
 
-        if (target.ScaleRoot != null)
+        if (target.PrimaryVisual != null && claimedPrimaryVisuals.Contains(target.PrimaryVisual))
         {
-            claimedRoots.Add(target.ScaleRoot);
+            summary.Skipped++;
+            return;
         }
 
-        if (target.BoundsRoot != null)
-        {
-            claimedRoots.Add(target.BoundsRoot);
-        }
+        claimedScaleRoots.Add(duplicateKey);
 
-        if (target.PrimaryVisualRoot != null)
+        if (target.PrimaryVisual != null)
         {
-            claimedRoots.Add(target.PrimaryVisualRoot);
+            claimedPrimaryVisuals.Add(target.PrimaryVisual);
         }
 
         targets.Add(target);
-    }
-
-    private CharacterVisualBoundsUtility.VisualBoundsOptions GetBoundsOptions()
-    {
-        CharacterVisualBoundsUtility.VisualBoundsOptions options = CharacterVisualBoundsUtility.VisualBoundsOptions.Default;
-        options.includeInactive = !Application.isPlaying && includeInactiveInEditMode;
-        return options;
     }
 
     private FindObjectsInactive GetFindObjectsInactiveMode()
@@ -876,7 +851,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
         if (summary.Scaled <= 0)
         {
-            Debug.LogError("[GuestButlerScale] No guests were scaled. Run Tools > Characters > Apply Butler Scaling To Guests > Audit.", this);
+            Debug.LogWarning("[GuestButlerScale] No guests were scaled. Run Tools > Characters > Human Scale Audit.", this);
             return;
         }
 
@@ -901,30 +876,8 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
         scaleOverwriteWarnings.Add(target.ScaleRoot);
         Debug.LogWarning(
-            $"[GuestButlerScale] Another script changed guest scale after harmonizer: {target.Path}",
+            $"[GuestButlerScale] Another script changed guest scale before final harmonizer pass: {target.Path}",
             target.ScaleRoot);
-    }
-
-    private static int ClampHugeScale(Transform target, float maxAbsScale)
-    {
-        if (target == null)
-        {
-            return 0;
-        }
-
-        Vector3 scale = target.localScale;
-
-        if (Mathf.Abs(scale.x) <= maxAbsScale && Mathf.Abs(scale.y) <= maxAbsScale)
-        {
-            return 0;
-        }
-
-        target.localScale = new Vector3(
-            Mathf.Sign(Mathf.Approximately(scale.x, 0f) ? 1f : scale.x),
-            Mathf.Sign(Mathf.Approximately(scale.y, 0f) ? 1f : scale.y),
-            scale.z);
-        Debug.LogWarning($"[GuestButlerScale] Clamped huge guest scale on {GetObjectPath(target)} from {scale} to {target.localScale}.", target);
-        return 1;
     }
 
     private bool IsLoadedSceneObject(Component component)
@@ -935,37 +888,30 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             component.gameObject.scene.isLoaded;
     }
 
+    private static bool ActorContainsProjectionOrWalker(ActorRoomState actor)
+    {
+        if (actor == null)
+        {
+            return false;
+        }
+
+        RoomProjectedEntity projection = actor.GetComponentInChildren<RoomProjectedEntity>(true);
+
+        if (projection != null && projection.IsProjectionActive)
+        {
+            return true;
+        }
+
+        RoomPersonWalker2D walker = actor.GetComponentInChildren<RoomPersonWalker2D>(true);
+        return walker != null;
+    }
+
     private static bool IsButlerObjectOrChild(Transform target, PointClickPlayerMovement source)
     {
         return target != null &&
             source != null &&
             source.transform != null &&
             (target == source.transform || target.IsChildOf(source.transform));
-    }
-
-    private static Vector3 ScaleBaseline(Vector3 baseline, float multiplier)
-    {
-        float safeMultiplier = Mathf.Max(0.001f, multiplier);
-        return new Vector3(
-            baseline.x * safeMultiplier,
-            baseline.y * safeMultiplier,
-            baseline.z);
-    }
-
-    private static bool LooksLikeForbiddenScaleRoot(Transform target)
-    {
-        if (target == null)
-        {
-            return false;
-        }
-
-        string name = target.name;
-        return string.Equals(name, "Canvas", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(name, "Canvas_Background", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(name, "Rooms", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(name, "People", StringComparison.OrdinalIgnoreCase) ||
-            name.StartsWith("Room_", StringComparison.OrdinalIgnoreCase) ||
-            target.GetComponent<RoomContentGroup>() != null;
     }
 
     private static bool Approximately(Vector3 left, Vector3 right)
@@ -1020,14 +966,14 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         public ProofBaseline(
             Transform scaleRoot,
             Vector3 scaleRootLocalScale,
-            Transform primaryVisualRoot,
+            Transform primaryVisual,
             Vector3 primaryVisualLocalScale,
             float screenHeight,
             bool hasScreenHeight)
         {
             ScaleRoot = scaleRoot;
             ScaleRootLocalScale = scaleRootLocalScale;
-            PrimaryVisualRoot = primaryVisualRoot;
+            PrimaryVisual = primaryVisual;
             PrimaryVisualLocalScale = primaryVisualLocalScale;
             ScreenHeight = screenHeight;
             HasScreenHeight = hasScreenHeight;
@@ -1035,7 +981,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
         public Transform ScaleRoot { get; }
         public Vector3 ScaleRootLocalScale { get; }
-        public Transform PrimaryVisualRoot { get; }
+        public Transform PrimaryVisual { get; }
         public Vector3 PrimaryVisualLocalScale { get; }
         public float ScreenHeight { get; }
         public bool HasScreenHeight { get; }
@@ -1044,9 +990,9 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
     private readonly struct GuestScaleTarget
     {
         public GuestScaleTarget(
-            Transform scaleRoot,
             Transform boundsRoot,
-            Transform primaryVisualRoot,
+            Transform scaleRoot,
+            Transform primaryVisual,
             RoomProjectedEntity projectedEntity,
             RoomPersonWalker2D walker,
             ActorRoomState actor,
@@ -1054,11 +1000,13 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             string roomId,
             Vector2 roomLocalFootPoint,
             float relativeHeightMultiplier,
+            float poseHeightMultiplier,
+            bool isSeated,
             string visualDiagnostic)
         {
-            ScaleRoot = scaleRoot;
             BoundsRoot = boundsRoot;
-            PrimaryVisualRoot = primaryVisualRoot;
+            ScaleRoot = scaleRoot;
+            PrimaryVisual = primaryVisual;
             ProjectedEntity = projectedEntity;
             Walker = walker;
             Actor = actor;
@@ -1066,13 +1014,15 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             RoomId = string.IsNullOrWhiteSpace(roomId) ? string.Empty : roomId.Trim();
             RoomLocalFootPoint = roomLocalFootPoint;
             RelativeHeightMultiplier = Mathf.Clamp(relativeHeightMultiplier, 0.5f, 1.5f);
-            VisualDiagnostic = visualDiagnostic;
-            Path = GetObjectPath(scaleRoot != null ? scaleRoot : boundsRoot != null ? boundsRoot : primaryVisualRoot);
+            PoseHeightMultiplier = Mathf.Clamp(poseHeightMultiplier <= 0f ? 1f : poseHeightMultiplier, 0.25f, 1.25f);
+            IsSeated = isSeated;
+            VisualDiagnostic = visualDiagnostic ?? string.Empty;
+            Path = GetObjectPath(scaleRoot != null ? scaleRoot : boundsRoot);
         }
 
-        public Transform ScaleRoot { get; }
         public Transform BoundsRoot { get; }
-        public Transform PrimaryVisualRoot { get; }
+        public Transform ScaleRoot { get; }
+        public Transform PrimaryVisual { get; }
         public RoomProjectedEntity ProjectedEntity { get; }
         public RoomPersonWalker2D Walker { get; }
         public ActorRoomState Actor { get; }
@@ -1080,34 +1030,10 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         public string RoomId { get; }
         public Vector2 RoomLocalFootPoint { get; }
         public float RelativeHeightMultiplier { get; }
+        public float PoseHeightMultiplier { get; }
+        public bool IsSeated { get; }
         public string VisualDiagnostic { get; }
         public string Path { get; }
-
-        public GuestScaleTarget WithPrimaryVisual(Transform primaryVisualRoot)
-        {
-            return new GuestScaleTarget(
-                ScaleRoot,
-                BoundsRoot,
-                primaryVisualRoot != null ? primaryVisualRoot : PrimaryVisualRoot,
-                ProjectedEntity,
-                Walker,
-                Actor,
-                ControllerType,
-                RoomId,
-                RoomLocalFootPoint,
-                RelativeHeightMultiplier,
-                VisualDiagnostic);
-        }
-
-        public string BuildDiagnostic(string reason)
-        {
-            return $"{reason}; controller={ControllerType}; boundsRoot={GetObjectPath(BoundsRoot)}; scaleRoot={GetObjectPath(ScaleRoot)}; primaryVisual={GetObjectPath(PrimaryVisualRoot)}; room={RoomId}; initialDiagnostic={VisualDiagnostic}";
-        }
-
-        public string BuildDiagnostic(string reason, CharacterVisualBoundsUtility.VisualFitResult result)
-        {
-            return $"{BuildDiagnostic(reason)}; before={result.BeforeHeight:0.##}; target={result.TargetHeight:0.##}; after={result.AfterHeight:0.##}; fit={result.Diagnostic}; fitScaleRoot={result.ScaleRootPath}; fitBoundsRoot={result.BoundsRootPath}; fitPrimary={result.PrimaryVisualPath}";
-        }
     }
 
     public struct GuestScaleApplySummary
@@ -1131,7 +1057,6 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             MinVisualHeight = float.PositiveInfinity;
             MaxVisualHeight = 0f;
             ProofFailures = new List<string>();
-            FitDiagnostics = new List<string>();
         }
 
         public string SourceName;
@@ -1149,7 +1074,6 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         public float MinVisualHeight;
         public float MaxVisualHeight;
         public List<string> ProofFailures;
-        public List<string> FitDiagnostics;
 
         public void IncludeScale(float scale)
         {
@@ -1171,27 +1095,6 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             }
 
             ProofFailures.Add($"{path}: {reason}");
-        }
-
-        public void AddFitDiagnostic(string path, CharacterVisualBoundsUtility.VisualFitResult result)
-        {
-            if (FitDiagnostics == null)
-            {
-                FitDiagnostics = new List<string>();
-            }
-
-            FitDiagnostics.Add(
-                $"{path}: {(result.UsedFallbackDirectScale ? "Fallback direct visual scale" : "Exact visual fit")} before={result.BeforeHeight:0.##} target={result.TargetHeight:0.##} after={result.AfterHeight:0.##} scaleRoot={result.ScaleRootPath} boundsRoot={result.BoundsRootPath} primaryVisual={result.PrimaryVisualPath} diagnostic={result.Diagnostic}");
-        }
-
-        public void AddFitDiagnosticText(string path, string diagnostic)
-        {
-            if (FitDiagnostics == null)
-            {
-                FitDiagnostics = new List<string>();
-            }
-
-            FitDiagnostics.Add($"{path}: {diagnostic}");
         }
     }
 }

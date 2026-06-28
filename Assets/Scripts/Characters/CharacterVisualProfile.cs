@@ -58,6 +58,19 @@ public sealed class CharacterVisualProfile : ScriptableObject
         return seated ? sittingVisualHeight : standingVisualHeight;
     }
 
+    public float GetPoseHeightMultiplier(bool seated)
+    {
+        if (!seated)
+        {
+            return 1f;
+        }
+
+        return Mathf.Clamp(
+            sittingVisualHeight / Mathf.Max(1f, standingVisualHeight),
+            0.55f,
+            0.8f);
+    }
+
     public Vector2 GetStateOffset(bool seated)
     {
         return seated ? sittingVisualOffset : standingVisualOffset;

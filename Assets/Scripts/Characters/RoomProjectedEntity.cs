@@ -8,6 +8,8 @@ using UnityEngine.UI;
 [AddComponentMenu("Dreadforge/Characters/Room Projected Entity")]
 public sealed class RoomProjectedEntity : MonoBehaviour
 {
+    private const float DefaultSeatedHumanHeightRatio = 0.68f;
+
     public enum ProjectionMode
     {
         FloorCharacter,
@@ -38,6 +40,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     [SerializeField] private bool useButlerCharacterScaleRules = true;
     [SerializeField] private PointClickPlayerMovement butlerScaleSource;
     [SerializeField] private bool ignoreRoomVisualScaleOverridesWhenUsingButlerRules = true;
+    [SerializeField] private bool ignoreVisualProfileHeightMultiplierWhenUsingButlerRules = true;
     [SerializeField] private bool useButlerRulesOnlyForFloorCharacters = true;
     [SerializeField] private bool useRoomVisualScaleOverrides = true;
     [SerializeField, HideInInspector] private string editorSelectedVisualScaleRoomId = string.Empty;
@@ -76,6 +79,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public bool UseButlerCharacterScaleRules => useButlerCharacterScaleRules;
     public PointClickPlayerMovement ButlerScaleSource => butlerScaleSource;
     public bool IgnoreRoomVisualScaleOverridesWhenUsingButlerRules => ignoreRoomVisualScaleOverridesWhenUsingButlerRules;
+    public bool IgnoreVisualProfileHeightMultiplierWhenUsingButlerRules => ignoreVisualProfileHeightMultiplierWhenUsingButlerRules;
     public bool UseButlerRulesOnlyForFloorCharacters => useButlerRulesOnlyForFloorCharacters;
     public bool IsUsingButlerCharacterScaleRules => isUsingButlerCharacterScaleRules;
     public float CurrentButlerCharacterScale => currentButlerCharacterScale;
@@ -188,6 +192,16 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public void SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(bool value, bool applyImmediately = true)
     {
         ignoreRoomVisualScaleOverridesWhenUsingButlerRules = value;
+
+        if (applyImmediately)
+        {
+            ApplyProjection();
+        }
+    }
+
+    public void SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(bool value, bool applyImmediately = true)
+    {
+        ignoreVisualProfileHeightMultiplierWhenUsingButlerRules = value;
 
         if (applyImmediately)
         {
@@ -524,7 +538,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             ClearButlerCharacterScaleDebug();
         }
 
-        float visualScale = visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
+        float visualScale = ShouldIgnoreVisualProfileHeightMultiplierForButlerRules()
+            ? 1f
+            : visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
         return Mathf.Max(0.001f, profileScale * visualScale);
     }
 
@@ -709,8 +725,37 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
     public float GetGuestRelativeHeightMultiplier()
     {
-        float multiplier = visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
+        float multiplier = ignoreVisualProfileHeightMultiplierWhenUsingButlerRules && useButlerCharacterScaleRules
+            ? 1f
+            : visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
         return Mathf.Clamp(multiplier, 0.5f, 1.5f);
+    }
+
+    public float GetGuestPoseHeightMultiplier()
+    {
+        if (!IsGuestSeated())
+        {
+            return 1f;
+        }
+
+        if (visualProfile != null)
+        {
+            return visualProfile.GetPoseHeightMultiplier(true);
+        }
+
+        return DefaultSeatedHumanHeightRatio;
+    }
+
+    public bool IsGuestSeated()
+    {
+        ResolveReferences();
+
+        if (actorRoomState != null)
+        {
+            return actorRoomState.IsSeated;
+        }
+
+        return ContainsSeatedHint(GetHierarchyPath(transform));
     }
 
     public bool TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 roomLocalFootPoint)
@@ -736,7 +781,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         currentButlerCharacterDepth01 = sample.Depth01;
         currentButlerCharacterScaleSource = sample.Source;
 
-        float visualScale = visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
+        float visualScale = ShouldIgnoreVisualProfileHeightMultiplierForButlerRules()
+            ? 1f
+            : visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
         float appliedScale =
             Mathf.Max(0.001f, sample.NormalizedScale) *
             Mathf.Max(0.001f, debugScaleMultiplier) *
@@ -752,6 +799,12 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
         targetRoot.localScale = projectedScale;
         currentScale = Mathf.Max(0.001f, sample.NormalizedScale * visualScale);
+    }
+
+    private bool ShouldIgnoreVisualProfileHeightMultiplierForButlerRules()
+    {
+        return ignoreVisualProfileHeightMultiplierWhenUsingButlerRules &&
+            isUsingButlerCharacterScaleRules;
     }
 
     private void ApplyProjectedTint()
@@ -1134,6 +1187,34 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return !string.IsNullOrWhiteSpace(value) &&
             (value.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0 ||
             value.IndexOf("Butler", StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+
+    private static bool ContainsSeatedHint(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            (value.IndexOf("Seated", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            value.IndexOf("Sitting", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            value.IndexOf("Chair", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            value.IndexOf("Dining", StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+
+    private static string GetHierarchyPath(Transform target)
+    {
+        if (target == null)
+        {
+            return string.Empty;
+        }
+
+        string path = target.name;
+        Transform current = target.parent;
+
+        while (current != null)
+        {
+            path = current.name + "/" + path;
+            current = current.parent;
+        }
+
+        return path;
     }
 
     private static string CleanRoomId(string value)
