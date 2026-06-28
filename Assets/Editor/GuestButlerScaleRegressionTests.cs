@@ -176,7 +176,7 @@ public sealed class GuestButlerScaleRegressionTests
             Assert.That(actor.ApplyButlerCharacterScaleNow(movement), Is.True);
             Assert.That(actor.IsUsingButlerCharacterScaleRules, Is.True);
             Assert.That(actor.CurrentButlerCharacterScale, Is.EqualTo(0.5f).Within(0.0001f));
-            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.1f).Within(0.0001f));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1f).Within(0.0001f));
         }
         finally
         {
@@ -184,6 +184,41 @@ public sealed class GuestButlerScaleRegressionTests
             UnityEngine.Object.DestroyImmediate(room);
             UnityEngine.Object.DestroyImmediate(butler);
             UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void ActorRoomStateDoesNotMultiplyButlerFinalScaleByGuestAuthoredScale()
+    {
+        GameObject room = new GameObject("Room_Grand_Entrance_Hall");
+        room.AddComponent<RoomContentGroup>().SetRoomName("Grand Entrance Hall");
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        GameObject guest = new GameObject("Guest 1");
+        guest.transform.SetParent(room.transform, false);
+        guest.transform.localPosition = Vector3.zero;
+        guest.transform.localScale = new Vector3(100f, 100f, 73f);
+        ActorRoomState actor = guest.AddComponent<ActorRoomState>();
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
+            movement.SetButlerFrontFinalLocalScaleForRoom("Grand Entrance Hall", -100f, 1f, false);
+            movement.SetButlerBackFinalLocalScaleForRoom("Grand Entrance Hall", 100f, 1f, false);
+            actor.SetActorId("Guest 1");
+            actor.SetCurrentRoom("Grand Entrance Hall");
+            actor.ResetAuthoredActorScaleForEditor();
+
+            Assert.That(actor.ApplyButlerCharacterScaleNow(movement), Is.True);
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(guest.transform.localScale.x, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(guest.transform.localScale.z, Is.EqualTo(73f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+            UnityEngine.Object.DestroyImmediate(room);
+            UnityEngine.Object.DestroyImmediate(butler);
         }
     }
 

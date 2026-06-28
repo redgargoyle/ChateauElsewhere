@@ -917,7 +917,6 @@ public class ActorRoomState : MonoBehaviour
         float baseY = Mathf.Max(0.001f, Mathf.Abs(safeBaseScale.y));
         float xOverY = safeBaseScale.x / baseY;
         float finalY = Mathf.Max(0.001f, sample.ButlerFinalLocalScaleY) *
-            baseY *
             Mathf.Max(0.001f, debugScaleMultiplier);
 
         return new Vector3(
