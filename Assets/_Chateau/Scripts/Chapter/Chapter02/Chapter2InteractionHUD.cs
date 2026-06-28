@@ -38,7 +38,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private const int DialogueChoiceCount = 3;
     private const float ClockStrikeFaceCenterYOffset = 0.267f;
     private const float ClockStrikeHandsDiameterScale = 0.22f;
-    private const float ClockStrikeSecondTicksPerSecond = 6f;
+    private const float ClockStrikeRealtimeSecondsPerTick = 1f;
 
     private Chapter2Controller controller;
     private ChapterClock chapterClock;
@@ -433,10 +433,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
         }
 
         clockStrikePanel = FindOrCreatePanel(root, ClockStrikePanelName, new Color(0f, 0f, 0f, 0.78f));
-        if (clockStrikePanel.GetComponent<RectMask2D>() == null)
-        {
-            clockStrikePanel.AddComponent<RectMask2D>();
-        }
 
         RectTransform clockStrikeRect = clockStrikePanel.GetComponent<RectTransform>();
         clockStrikeRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -450,7 +446,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
         clockStrikeImageRect.anchorMin = new Vector2(0.5f, 0.5f);
         clockStrikeImageRect.anchorMax = new Vector2(0.5f, 0.5f);
         clockStrikeImageRect.pivot = new Vector2(0.5f, 0.5f);
-        clockStrikeImageRect.anchoredPosition = new Vector2(0f, -125f);
+        clockStrikeImageRect.anchoredPosition = new Vector2(0f, -185f);
         clockStrikeImageRect.sizeDelta = new Vector2(760f, 1350f);
         clockStrikeImage.preserveAspect = true;
         clockStrikeImage.color = Color.white;
@@ -592,7 +588,7 @@ public class Chapter2InteractionHUD : MonoBehaviour
         SetClockStrikeHand(clockStrikeHourHand, clockStrikeHourHighlight, 7f / 12f, radius * 0.31f);
         SetClockStrikeHand(clockStrikeMinuteHand, clockStrikeMinuteHighlight, 0f, radius * 0.45f);
 
-        int secondTick = Mathf.FloorToInt(Mathf.Max(0f, Time.unscaledTime - clockStrikeStartedAt) * ClockStrikeSecondTicksPerSecond);
+        int secondTick = Mathf.FloorToInt(Mathf.Max(0f, Time.unscaledTime - clockStrikeStartedAt) / ClockStrikeRealtimeSecondsPerTick);
         float secondProgress = Mathf.Repeat(secondTick / 60f, 1f);
         SetClockStrikeHand(clockStrikeSecondHand, null, secondProgress, radius * 0.52f);
         SetClockStrikeHand(clockStrikeSecondTail, null, secondProgress, radius * 0.08f);

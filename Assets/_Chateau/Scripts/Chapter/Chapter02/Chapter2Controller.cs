@@ -41,7 +41,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField, Range(0, 23)] private int dinnerHour = 19;
     [SerializeField, Range(0, 59)] private int dinnerMinute;
     [SerializeField] private float diningRoomRevealSeconds = 5f;
-    [SerializeField] private float clockStrikeCloseUpSeconds = 2.25f;
+    [SerializeField] private float clockStrikeCloseUpSeconds = 5f;
     [SerializeField, Min(0.1f)] private float monsterStingerTimeoutSeconds = 14f;
     [SerializeField] private AudioSource clockStrikeAudioSource;
 
