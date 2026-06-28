@@ -697,6 +697,24 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return TryGetButlerCharacterScaleForThisEntity(out sample);
     }
 
+    public Transform GetGuestScaleRoot()
+    {
+        return VisualRoot;
+    }
+
+    public float GetGuestRelativeHeightMultiplier()
+    {
+        float multiplier = visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
+        return Mathf.Clamp(multiplier, 0.5f, 1.5f);
+    }
+
+    public bool TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 roomLocalFootPoint)
+    {
+        roomId = GetCurrentProjectionRoomKey();
+        roomLocalFootPoint = this.roomLocalFootPoint;
+        return !string.IsNullOrWhiteSpace(roomId);
+    }
+
     private void ForceApplyButlerCharacterScale(
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,
         float debugScaleMultiplier)

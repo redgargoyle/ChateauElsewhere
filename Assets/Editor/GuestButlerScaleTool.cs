@@ -36,6 +36,7 @@ public sealed class GuestButlerScaleTool : EditorWindow
         DrawTopControls();
         DrawActions();
         DrawProofControls();
+        DrawRoomCalibrationCoverage();
         DrawAuditTable();
 
         if (!string.IsNullOrWhiteSpace(lastStatus))
@@ -129,6 +130,44 @@ public sealed class GuestButlerScaleTool : EditorWindow
         }
     }
 
+    private void DrawRoomCalibrationCoverage()
+    {
+        EditorGUILayout.Space(8f);
+        EditorGUILayout.LabelField("Room Calibration Coverage", EditorStyles.boldLabel);
+
+        if (selectedButler == null)
+        {
+            EditorGUILayout.HelpBox("No Butler/player selected.", MessageType.Warning);
+            return;
+        }
+
+        if (GUILayout.Button("Print Missing Guest Room Calibrations"))
+        {
+            PrintMissingGuestRoomCalibrations();
+        }
+
+        List<RoomCalibrationCoverageRow> rows = BuildRoomCalibrationCoverageRows();
+
+        for (int i = 0; i < rows.Count; i++)
+        {
+            RoomCalibrationCoverageRow row = rows[i];
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField(row.RoomId, EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Complete Butler Calibration?", YesNo(row.HasCompleteCalibration));
+            EditorGUILayout.LabelField("Guest Count", row.GuestCount.ToString());
+            EditorGUILayout.LabelField("Possible Matching Calibration Ids", row.PossibleMatches);
+
+            if (!row.HasCompleteCalibration && row.GuestCount > 0)
+            {
+                EditorGUILayout.HelpBox(
+                    $"Missing Butler calibration for {row.RoomId}. {row.GuestCount} guest(s) in this room cannot use real Butler scale until this room is calibrated or aliased.",
+                    MessageType.Warning);
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+    }
+
     private void DrawAuditTable()
     {
         EditorGUILayout.Space(8f);
@@ -143,8 +182,13 @@ public sealed class GuestButlerScaleTool : EditorWindow
             EditorGUILayout.LabelField("Room-Local Foot Y", row.RoomLocalFootY);
             EditorGUILayout.LabelField("Using Butler Rules?", YesNo(row.UsingButlerRules));
             EditorGUILayout.LabelField("Butler Scale Source Found?", YesNo(row.ButlerScaleSourceFound));
+            EditorGUILayout.LabelField("Has Butler Calibration For Room?", YesNo(row.HasButlerCalibrationForRoom));
             EditorGUILayout.LabelField("Normalized Butler Scale", row.NormalizedButlerScale);
+            EditorGUILayout.LabelField("Current Visual Height px", row.CurrentVisualHeightPx);
+            EditorGUILayout.LabelField("Target Visual Height px", row.TargetVisualHeightPx);
+            EditorGUILayout.LabelField("Last Fit Result", row.LastFitResult);
             EditorGUILayout.LabelField("Final Current localScale", row.FinalLocalScale);
+            EditorGUILayout.LabelField("Proof Can Force Scale?", YesNo(row.ProofCanForceScale));
             EditorGUILayout.LabelField("Hidden Old Room Visual Override Active?", YesNo(row.HiddenOldOverrideActive));
 
             if (!string.IsNullOrWhiteSpace(row.Warning))
@@ -268,15 +312,14 @@ public sealed class GuestButlerScaleTool : EditorWindow
             return;
         }
 
-        Dictionary<Component, Vector3> before = CaptureProofGuestScales();
         harmonizer.SetDebugGuestScaleMultiplier(multiplier);
         GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
-        LogUnchangedProofGuests(before, multiplier);
+        LogProofFailures(summary, multiplier);
         activeProofHarmonizer = harmonizer;
         proofRestoreAt = EditorApplication.timeSinceStartup + 2.0;
         EditorApplication.update -= ProofUpdate;
         EditorApplication.update += ProofUpdate;
-        lastStatus = $"Proof multiplier {multiplier:0.##} applied to {summary.Scaled} guest scale writer(s).";
+        lastStatus = $"Proof multiplier {multiplier:0.##} fit {summary.Scaled} guest visual target(s), {summary.FitFailed + summary.NoVisualBounds} failed.";
     }
 
     private void RestoreProof()
@@ -306,84 +349,15 @@ public sealed class GuestButlerScaleTool : EditorWindow
         Repaint();
     }
 
-    private Dictionary<Component, Vector3> CaptureProofGuestScales()
+    private void LogProofFailures(GuestButlerScaleHarmonizer.GuestScaleApplySummary summary, float multiplier)
     {
-        Dictionary<Component, Vector3> result = new Dictionary<Component, Vector3>();
-
-        RoomProjectedEntity[] entities = FindObjectsByType<RoomProjectedEntity>(FindObjectsInactive.Include);
-        for (int i = 0; i < entities.Length; i++)
-        {
-            RoomProjectedEntity entity = entities[i];
-
-            if (IsLoadedSceneObject(entity) &&
-                entity.Mode == RoomProjectedEntity.ProjectionMode.FloorCharacter &&
-                !IsButlerObjectOrChild(entity.transform) &&
-                entity.TryGetButlerCharacterScaleSample(out _))
-            {
-                result[entity] = entity.VisualRoot != null ? entity.VisualRoot.localScale : entity.transform.localScale;
-            }
-        }
-
-        RoomPersonWalker2D[] walkers = FindObjectsByType<RoomPersonWalker2D>(FindObjectsInactive.Include);
-        for (int i = 0; i < walkers.Length; i++)
-        {
-            RoomPersonWalker2D walker = walkers[i];
-
-            if (IsLoadedSceneObject(walker) &&
-                !IsButlerObjectOrChild(walker.transform) &&
-                walker.TryGetButlerCharacterScaleSample(out _))
-            {
-                result[walker] = walker.transform.localScale;
-            }
-        }
-
-        ActorRoomState[] actors = FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
-        for (int i = 0; i < actors.Length; i++)
-        {
-            ActorRoomState actor = actors[i];
-
-            if (IsLoadedSceneObject(actor) &&
-                !IsButlerObjectOrChild(actor.transform) &&
-                LooksLikeGuestActor(actor) &&
-                actor.TryGetButlerCharacterScaleSample(selectedButler, out _))
-            {
-                result[actor] = actor.transform.localScale;
-            }
-        }
-
-        return result;
-    }
-
-    private void LogUnchangedProofGuests(Dictionary<Component, Vector3> before, float multiplier)
-    {
-        List<string> unchanged = new List<string>();
-
-        foreach (KeyValuePair<Component, Vector3> pair in before)
-        {
-            Component component = pair.Key;
-
-            if (component == null)
-            {
-                continue;
-            }
-
-            Vector3 currentScale = component is RoomProjectedEntity entity && entity.VisualRoot != null
-                ? entity.VisualRoot.localScale
-                : component.transform.localScale;
-
-            if (Approximately(pair.Value, currentScale))
-            {
-                unchanged.Add(GetObjectPath(component.transform));
-            }
-        }
-
-        if (unchanged.Count <= 0)
+        if (summary.ProofFailures == null || summary.ProofFailures.Count <= 0)
         {
             return;
         }
 
         Debug.LogError(
-            $"[GuestButlerScale] Proof multiplier {multiplier:0.##} did not change {unchanged.Count} guest scale(s): {string.Join(", ", unchanged)}",
+            $"[GuestButlerScale] Proof multiplier {multiplier:0.##} could not fit {summary.ProofFailures.Count} guest visual target(s): {string.Join(", ", summary.ProofFailures)}",
             selectedButler);
     }
 
@@ -410,6 +384,108 @@ public sealed class GuestButlerScaleTool : EditorWindow
         harmonizer.SetButlerScaleSource(selectedButler);
         MarkDirty(harmonizer);
         return harmonizer;
+    }
+
+    private List<RoomCalibrationCoverageRow> BuildRoomCalibrationCoverageRows()
+    {
+        List<RoomCalibrationCoverageRow> rows = new List<RoomCalibrationCoverageRow>();
+        Dictionary<string, int> guestCounts = BuildGuestCountsByRoom();
+        RoomContentGroup[] rooms = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < rooms.Length; i++)
+        {
+            RoomContentGroup room = rooms[i];
+
+            if (!IsLoadedSceneObject(room) || string.IsNullOrWhiteSpace(room.RoomName))
+            {
+                continue;
+            }
+
+            string roomId = room.RoomName.Trim();
+            int guestCount = guestCounts.TryGetValue(NormalizeRoomName(roomId), out int count) ? count : 0;
+            bool complete = selectedButler != null && selectedButler.HasCompleteButlerRoomScaleOverride(roomId);
+            rows.Add(new RoomCalibrationCoverageRow(
+                roomId,
+                complete,
+                guestCount,
+                GetPossibleCalibrationMatches(roomId)));
+        }
+
+        rows.Sort((left, right) => string.Compare(left.RoomId, right.RoomId, StringComparison.OrdinalIgnoreCase));
+        return rows;
+    }
+
+    private Dictionary<string, int> BuildGuestCountsByRoom()
+    {
+        Dictionary<string, int> counts = new Dictionary<string, int>();
+
+        foreach (GuestAuditRow row in BuildAuditRows())
+        {
+            if (string.IsNullOrWhiteSpace(row.RoomId))
+            {
+                continue;
+            }
+
+            string key = NormalizeRoomName(row.RoomId);
+            counts.TryGetValue(key, out int count);
+            counts[key] = count + 1;
+        }
+
+        return counts;
+    }
+
+    private void PrintMissingGuestRoomCalibrations()
+    {
+        List<RoomCalibrationCoverageRow> rows = BuildRoomCalibrationCoverageRows();
+
+        for (int i = 0; i < rows.Count; i++)
+        {
+            RoomCalibrationCoverageRow row = rows[i];
+
+            if (row.HasCompleteCalibration || row.GuestCount <= 0)
+            {
+                continue;
+            }
+
+            Debug.LogWarning(
+                $"[GuestButlerScale] Missing Butler calibration for {row.RoomId}. {row.GuestCount} guests in this room cannot use real Butler scale until this room is calibrated or aliased. Possible matches: {row.PossibleMatches}",
+                selectedButler);
+        }
+
+        lastStatus = "Printed missing guest room calibration report to the Console.";
+    }
+
+    private string GetPossibleCalibrationMatches(string roomId)
+    {
+        if (selectedButler == null || string.IsNullOrWhiteSpace(roomId))
+        {
+            return "-";
+        }
+
+        List<string> calibrationRooms = new List<string>();
+        selectedButler.GetButlerScaleOverrideRoomIds(calibrationRooms);
+        string normalizedRoom = NormalizeRoomName(roomId);
+        List<string> matches = new List<string>();
+
+        for (int i = 0; i < calibrationRooms.Count; i++)
+        {
+            string calibrationRoom = calibrationRooms[i];
+            string normalizedCalibration = NormalizeRoomName(calibrationRoom);
+
+            if (string.IsNullOrWhiteSpace(normalizedCalibration))
+            {
+                continue;
+            }
+
+            if (string.Equals(normalizedCalibration, normalizedRoom, StringComparison.OrdinalIgnoreCase) ||
+                normalizedCalibration.Contains(normalizedRoom) ||
+                normalizedRoom.Contains(normalizedCalibration))
+            {
+                matches.Add(calibrationRoom);
+            }
+        }
+
+        return matches.Count > 0 ? string.Join(", ", matches) : "-";
     }
 
     private List<GuestAuditRow> BuildAuditRows()
@@ -467,7 +543,12 @@ public sealed class GuestButlerScaleTool : EditorWindow
     {
         List<string> overrideRooms = new List<string>();
         entity.GetVisualScaleOverrideRoomIds(overrideRooms);
-        bool hasSample = entity.TryGetButlerCharacterScaleSample(out PointClickPlayerMovement.ButlerCharacterScaleSample sample);
+        bool hasRoomAndFoot = entity.TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 footPoint);
+        VisualAudit visualAudit = BuildVisualAudit(
+            entity.GetGuestScaleRoot(),
+            roomId,
+            footPoint,
+            entity.GetGuestRelativeHeightMultiplier());
         string warning = string.Empty;
 
         if (selectedButler == null)
@@ -475,9 +556,19 @@ public sealed class GuestButlerScaleTool : EditorWindow
             warning = AppendWarning(warning, "No Butler source");
         }
 
-        if (!hasSample)
+        if (!hasRoomAndFoot)
+        {
+            warning = AppendWarning(warning, "RoomProjectedEntity has no room id");
+        }
+
+        if (!visualAudit.HasButlerCalibrationForRoom)
         {
             warning = AppendWarning(warning, "No complete Butler calibration for this room");
+        }
+
+        if (!visualAudit.ProofCanForceScale)
+        {
+            warning = AppendWarning(warning, "No visual bounds found");
         }
 
         if (entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
@@ -488,6 +579,10 @@ public sealed class GuestButlerScaleTool : EditorWindow
         if (overrideRooms.Count > 0 && !entity.IgnoreRoomVisualScaleOverridesWhenUsingButlerRules)
         {
             warning = AppendWarning(warning, "RoomProjectedEntity has roomVisualScaleOverrides and bypass is off");
+        }
+        else if (overrideRooms.Count > 0)
+        {
+            warning = AppendWarning(warning, "Old room visual override exists but final visual fitter will override visible height");
         }
 
         RoomPersonWalker2D walker = entity.GetComponent<RoomPersonWalker2D>();
@@ -500,20 +595,29 @@ public sealed class GuestButlerScaleTool : EditorWindow
         return new GuestAuditRow(
             GetObjectPath(entity.transform),
             walker != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomProjectedEntity",
-            ResolveProjectedRoomId(entity),
-            entity.RoomLocalFootPoint.y.ToString("0.###"),
+            roomId,
+            hasRoomAndFoot ? footPoint.y.ToString("0.###") : "-",
             entity.IsUsingButlerCharacterScaleRules,
             entity.ButlerScaleSource != null || selectedButler != null,
-            hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
-            entity.VisualRoot != null ? entity.VisualRoot.localScale.ToString() : entity.transform.localScale.ToString(),
+            visualAudit.HasButlerCalibrationForRoom,
+            visualAudit.NormalizedButlerScale,
+            visualAudit.CurrentVisualHeightPx,
+            visualAudit.TargetVisualHeightPx,
+            visualAudit.LastFitResult,
+            entity.GetGuestScaleRoot() != null ? entity.GetGuestScaleRoot().localScale.ToString() : entity.transform.localScale.ToString(),
+            visualAudit.ProofCanForceScale,
             overrideRooms.Count > 0 && entity.UsesRoomVisualScaleOverrides,
             warning);
     }
 
     private GuestAuditRow BuildWalkerAuditRow(RoomPersonWalker2D walker)
     {
-        bool hasSample = walker.TryGetButlerCharacterScaleSample(out PointClickPlayerMovement.ButlerCharacterScaleSample sample);
-        string roomId = ResolveWalkerRoomId(walker);
+        bool hasRoomAndFoot = walker.TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 footPoint);
+        VisualAudit visualAudit = BuildVisualAudit(
+            walker.GetGuestScaleRoot(),
+            roomId,
+            footPoint,
+            walker.GetGuestRelativeHeightMultiplier());
         string warning = string.Empty;
 
         if (selectedButler == null)
@@ -521,14 +625,19 @@ public sealed class GuestButlerScaleTool : EditorWindow
             warning = AppendWarning(warning, "No Butler source");
         }
 
-        if (string.IsNullOrWhiteSpace(roomId))
+        if (!hasRoomAndFoot)
         {
             warning = AppendWarning(warning, "RoomPersonWalker2D has no room id");
         }
 
-        if (!hasSample)
+        if (!visualAudit.HasButlerCalibrationForRoom)
         {
             warning = AppendWarning(warning, "No complete Butler calibration for this room");
+        }
+
+        if (!visualAudit.ProofCanForceScale)
+        {
+            warning = AppendWarning(warning, "No visual bounds found");
         }
 
         RoomProjectedEntity projection = walker.GetComponent<RoomProjectedEntity>();
@@ -542,19 +651,28 @@ public sealed class GuestButlerScaleTool : EditorWindow
             GetObjectPath(walker.transform),
             projection != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomPersonWalker2D",
             roomId,
-            walker.CurrentPosition.y.ToString("0.###"),
+            hasRoomAndFoot ? footPoint.y.ToString("0.###") : "-",
             walker.IsUsingButlerCharacterScaleRules,
             walker.ButlerScaleSource != null || selectedButler != null,
-            hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
-            walker.transform.localScale.ToString(),
+            visualAudit.HasButlerCalibrationForRoom,
+            visualAudit.NormalizedButlerScale,
+            visualAudit.CurrentVisualHeightPx,
+            visualAudit.TargetVisualHeightPx,
+            visualAudit.LastFitResult,
+            walker.GetGuestScaleRoot() != null ? walker.GetGuestScaleRoot().localScale.ToString() : walker.transform.localScale.ToString(),
+            visualAudit.ProofCanForceScale,
             false,
             warning);
     }
 
     private GuestAuditRow BuildActorAuditRow(ActorRoomState actor)
     {
-        bool hasSample = actor.TryGetButlerCharacterScaleSample(selectedButler, out PointClickPlayerMovement.ButlerCharacterScaleSample sample);
-        string roomId = actor.CurrentRoomId;
+        bool hasRoomAndFoot = actor.TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 footPoint);
+        VisualAudit visualAudit = BuildVisualAudit(
+            actor.GetGuestScaleRoot(),
+            roomId,
+            footPoint,
+            actor.GetGuestRelativeHeightMultiplier());
         string warning = string.Empty;
 
         if (selectedButler == null)
@@ -562,14 +680,19 @@ public sealed class GuestButlerScaleTool : EditorWindow
             warning = AppendWarning(warning, "No Butler source");
         }
 
-        if (string.IsNullOrWhiteSpace(roomId))
+        if (!hasRoomAndFoot)
         {
             warning = AppendWarning(warning, "ActorRoomState has no current room id");
         }
 
-        if (!hasSample)
+        if (!visualAudit.HasButlerCalibrationForRoom)
         {
             warning = AppendWarning(warning, "No complete Butler calibration or room-local foot point for this actor");
+        }
+
+        if (!visualAudit.ProofCanForceScale)
+        {
+            warning = AppendWarning(warning, "No visual bounds found");
         }
 
         RoomProjectedEntity projection = actor.Projection;
@@ -583,13 +706,76 @@ public sealed class GuestButlerScaleTool : EditorWindow
             GetObjectPath(actor.transform),
             "ActorRoomState",
             roomId,
-            hasSample ? sample.RoomLocalFootPoint.y.ToString("0.###") : "-",
+            hasRoomAndFoot ? footPoint.y.ToString("0.###") : "-",
             actor.IsUsingButlerCharacterScaleRules,
             selectedButler != null,
-            hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
-            actor.transform.localScale.ToString(),
+            visualAudit.HasButlerCalibrationForRoom,
+            visualAudit.NormalizedButlerScale,
+            visualAudit.CurrentVisualHeightPx,
+            visualAudit.TargetVisualHeightPx,
+            visualAudit.LastFitResult,
+            actor.GetGuestScaleRoot() != null ? actor.GetGuestScaleRoot().localScale.ToString() : actor.transform.localScale.ToString(),
+            visualAudit.ProofCanForceScale,
             false,
             warning);
+    }
+
+    private VisualAudit BuildVisualAudit(
+        Transform root,
+        string roomId,
+        Vector2 roomLocalFootPoint,
+        float relativeHeightMultiplier)
+    {
+        Camera camera = ResolveCamera();
+        float currentHeight = 0f;
+        bool hasCurrentHeight = camera != null &&
+            root != null &&
+            CharacterVisualBoundsUtility.TryGetScreenHeight(root, camera, out currentHeight, includeInactive: true);
+        PointClickPlayerMovement.ButlerCharacterScaleSample sample = default;
+        bool hasSample = selectedButler != null &&
+            !string.IsNullOrWhiteSpace(roomId) &&
+            selectedButler.TryEvaluateButlerCharacterScale(
+                roomId,
+                roomLocalFootPoint,
+                out sample);
+        float butlerReferenceHeight = 0f;
+        bool hasReferenceHeight = selectedButler != null &&
+            camera != null &&
+            selectedButler.TryGetButlerReferenceScreenHeightForRoomScale(camera, out butlerReferenceHeight);
+        bool hasTargetHeight = hasSample && hasReferenceHeight;
+        float targetHeight = hasTargetHeight
+            ? butlerReferenceHeight *
+                Mathf.Max(0.001f, sample.NormalizedScale) *
+                Mathf.Clamp(relativeHeightMultiplier, 0.5f, 1.5f)
+            : 0f;
+        string lastFitResult = hasTargetHeight
+            ? "Ready"
+            : hasSample
+                ? "No Butler reference visual height"
+                : "No complete Butler calibration for this room";
+
+        if (!hasCurrentHeight)
+        {
+            lastFitResult = "No visual bounds found";
+        }
+
+        return new VisualAudit(
+            hasSample,
+            hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
+            hasCurrentHeight ? currentHeight.ToString("0.#") : "-",
+            hasTargetHeight ? targetHeight.ToString("0.#") : "-",
+            lastFitResult,
+            hasCurrentHeight);
+    }
+
+    private Camera ResolveCamera()
+    {
+        if (Camera.main != null)
+        {
+            return Camera.main;
+        }
+
+        return FindAnyObjectByType<Camera>(FindObjectsInactive.Exclude);
     }
 
     private string ResolveProjectedRoomId(RoomProjectedEntity entity)
@@ -752,6 +938,20 @@ public sealed class GuestButlerScaleTool : EditorWindow
             value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
+    private static string NormalizeRoomName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return value.Trim()
+            .Replace("_", string.Empty)
+            .Replace(" ", string.Empty)
+            .Replace("-", string.Empty)
+            .ToLowerInvariant();
+    }
+
     private static string YesNo(bool value)
     {
         return value ? "yes" : "no";
@@ -766,8 +966,13 @@ public sealed class GuestButlerScaleTool : EditorWindow
             string roomLocalFootY,
             bool usingButlerRules,
             bool butlerScaleSourceFound,
+            bool hasButlerCalibrationForRoom,
             string normalizedButlerScale,
+            string currentVisualHeightPx,
+            string targetVisualHeightPx,
+            string lastFitResult,
             string finalLocalScale,
+            bool proofCanForceScale,
             bool hiddenOldOverrideActive,
             string warning)
         {
@@ -777,8 +982,13 @@ public sealed class GuestButlerScaleTool : EditorWindow
             RoomLocalFootY = roomLocalFootY;
             UsingButlerRules = usingButlerRules;
             ButlerScaleSourceFound = butlerScaleSourceFound;
+            HasButlerCalibrationForRoom = hasButlerCalibrationForRoom;
             NormalizedButlerScale = normalizedButlerScale;
+            CurrentVisualHeightPx = currentVisualHeightPx;
+            TargetVisualHeightPx = targetVisualHeightPx;
+            LastFitResult = lastFitResult;
             FinalLocalScale = finalLocalScale;
+            ProofCanForceScale = proofCanForceScale;
             HiddenOldOverrideActive = hiddenOldOverrideActive;
             Warning = warning;
         }
@@ -789,9 +999,60 @@ public sealed class GuestButlerScaleTool : EditorWindow
         public string RoomLocalFootY { get; }
         public bool UsingButlerRules { get; }
         public bool ButlerScaleSourceFound { get; }
+        public bool HasButlerCalibrationForRoom { get; }
         public string NormalizedButlerScale { get; }
+        public string CurrentVisualHeightPx { get; }
+        public string TargetVisualHeightPx { get; }
+        public string LastFitResult { get; }
         public string FinalLocalScale { get; }
+        public bool ProofCanForceScale { get; }
         public bool HiddenOldOverrideActive { get; }
         public string Warning { get; }
+    }
+
+    private readonly struct VisualAudit
+    {
+        public VisualAudit(
+            bool hasButlerCalibrationForRoom,
+            string normalizedButlerScale,
+            string currentVisualHeightPx,
+            string targetVisualHeightPx,
+            string lastFitResult,
+            bool proofCanForceScale)
+        {
+            HasButlerCalibrationForRoom = hasButlerCalibrationForRoom;
+            NormalizedButlerScale = normalizedButlerScale;
+            CurrentVisualHeightPx = currentVisualHeightPx;
+            TargetVisualHeightPx = targetVisualHeightPx;
+            LastFitResult = lastFitResult;
+            ProofCanForceScale = proofCanForceScale;
+        }
+
+        public bool HasButlerCalibrationForRoom { get; }
+        public string NormalizedButlerScale { get; }
+        public string CurrentVisualHeightPx { get; }
+        public string TargetVisualHeightPx { get; }
+        public string LastFitResult { get; }
+        public bool ProofCanForceScale { get; }
+    }
+
+    private readonly struct RoomCalibrationCoverageRow
+    {
+        public RoomCalibrationCoverageRow(
+            string roomId,
+            bool hasCompleteCalibration,
+            int guestCount,
+            string possibleMatches)
+        {
+            RoomId = roomId;
+            HasCompleteCalibration = hasCompleteCalibration;
+            GuestCount = guestCount;
+            PossibleMatches = possibleMatches;
+        }
+
+        public string RoomId { get; }
+        public bool HasCompleteCalibration { get; }
+        public int GuestCount { get; }
+        public string PossibleMatches { get; }
     }
 }

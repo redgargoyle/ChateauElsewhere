@@ -197,6 +197,21 @@ public class ActorRoomState : MonoBehaviour
         return source.TryEvaluateButlerCharacterScale(roomId, roomLocalFootPoint, out sample);
     }
 
+    public Transform GetGuestScaleRoot()
+    {
+        return actorObject != null ? actorObject.transform : transform;
+    }
+
+    public float GetGuestRelativeHeightMultiplier()
+    {
+        return 1f;
+    }
+
+    public bool TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 roomLocalFootPoint)
+    {
+        return TryGetButlerScaleRoomAndFootPoint(out roomId, out roomLocalFootPoint);
+    }
+
     public bool ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier = 1f)
     {
         if (HasActiveProjection())

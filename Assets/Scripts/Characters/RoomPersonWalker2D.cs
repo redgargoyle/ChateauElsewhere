@@ -200,6 +200,30 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		return TryGetButlerCharacterScaleForWalker(out sample);
 	}
 
+	public Transform GetGuestScaleRoot()
+	{
+		if (roomProjection != null && roomProjection.IsProjectionActive)
+		{
+			return roomProjection.GetGuestScaleRoot();
+		}
+
+		return transform;
+	}
+
+	public float GetGuestRelativeHeightMultiplier()
+	{
+		return roomProjection != null && roomProjection.IsProjectionActive
+			? roomProjection.GetGuestRelativeHeightMultiplier()
+			: 1f;
+	}
+
+	public bool TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 roomLocalFootPoint)
+	{
+		roomId = ResolveButlerScaleRoomId();
+		roomLocalFootPoint = currentPosition;
+		return !string.IsNullOrWhiteSpace(roomId);
+	}
+
 	public bool UsesPerspectiveProfile(RoomPerspectiveProfile profile)
 	{
 		return profile != null &&

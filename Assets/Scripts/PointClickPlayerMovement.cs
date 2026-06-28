@@ -409,6 +409,53 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return TryEvaluateButlerCharacterScaleInternal(roomId, roomLocalFootPoint, out sample);
 	}
 
+	public bool TryGetCurrentButlerReferenceScreenHeight(
+		Camera camera,
+		out float referenceScreenHeight,
+		out ButlerCharacterScaleSample currentSample)
+	{
+		referenceScreenHeight = 0f;
+		currentSample = default;
+		float currentHeight = 0f;
+
+		if (camera == null ||
+			!CharacterVisualBoundsUtility.TryGetScreenHeight(transform, camera, out currentHeight) ||
+			!TryEvaluateCurrentButlerCharacterScale(out currentSample))
+		{
+			return false;
+		}
+
+		float normalizedScale = Mathf.Max(0.001f, currentSample.NormalizedScale);
+		referenceScreenHeight = currentHeight / normalizedScale;
+		return referenceScreenHeight > 0.01f;
+	}
+
+	public bool TryGetButlerReferenceScreenHeightForRoomScale(
+		Camera camera,
+		out float referenceScreenHeight)
+	{
+		referenceScreenHeight = 0f;
+
+		if (TryGetCurrentButlerReferenceScreenHeight(camera, out referenceScreenHeight, out _))
+		{
+			return true;
+		}
+
+		float currentHeight = 0f;
+
+		if (camera == null ||
+			!CharacterVisualBoundsUtility.TryGetScreenHeight(transform, camera, out currentHeight))
+		{
+			return false;
+		}
+
+		float baseLocalScaleY = Mathf.Max(0.001f, Mathf.Abs(GetButlerScaleReference().y));
+		float currentLocalScaleY = Mathf.Max(0.001f, Mathf.Abs(transform.localScale.y));
+		float currentNormalizedScale = currentLocalScaleY / baseLocalScaleY;
+		referenceScreenHeight = currentHeight / Mathf.Max(0.001f, currentNormalizedScale);
+		return referenceScreenHeight > 0.01f;
+	}
+
 	private bool TryEvaluateButlerCharacterScaleInternal(
 		string roomId,
 		Vector2 roomLocalFootPoint,

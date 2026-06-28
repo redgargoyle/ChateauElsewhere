@@ -62,7 +62,9 @@ Do not edit Transform scale manually for calibration. Do not use Advanced reset 
 
 The manually calibrated Butler room scale is now the shared depth scale source for guests. Guests do not copy the Butler's raw size. Guests use the Butler's normalized room/depth scale multiplier, then keep their own authored scale, sitting/standing art proportions, and `CharacterVisualProfile.HeightScaleMultiplier`.
 
-`RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result.
+Guest scaling also uses a final visual-height fitter. The Butler's manually calibrated room scale gives the depth rule, but guests are finally resized by measured rendered height, not by raw `localScale`. This is necessary because the Butler and guests may live in different coordinate systems.
+
+`RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result, then uses `CharacterVisualBoundsUtility` to fit each guest's visible screen height to the Butler-derived target height.
 
 To enable:
 
@@ -72,9 +74,12 @@ To enable:
 4. Click `Enable Butler Scaling On All Guests`.
 5. Click `Bypass Old Room Visual Scale Overrides For All Guests`.
 6. Click `Refresh Guest Scaling Now`.
-7. Use the Proof Test buttons to confirm guests visibly change.
-8. Save Scene.
-9. Test in Play Mode.
+7. Use `PROOF: Make All Guest Butler Scales 50% For 2 Seconds` and `PROOF: Make All Guest Butler Scales 150% For 2 Seconds`.
+   Every detected guest should visibly change, even if that room has no Butler calibration.
+8. Check `Room Calibration Coverage`.
+   Any room with guests and no Butler calibration must be calibrated or aliased before real Butler scaling can affect those guests.
+9. Save Scene.
+10. Test in Play Mode by standing the Butler next to guests and confirming their visual height/scale belongs to the same room system.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 
