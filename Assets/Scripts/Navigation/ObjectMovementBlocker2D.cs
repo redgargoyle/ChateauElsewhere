@@ -12,7 +12,16 @@ public sealed class ObjectMovementBlocker2D : MonoBehaviour
     [SerializeField] private string category;
     [SerializeField] [Min(0.001f)] private float footprintHeightFraction = 0.3f;
     [SerializeField] private bool generatedByCollisionBoxTool = true;
+    [SerializeField] private bool sortSourceRenderers = true;
+    [SerializeField] private string sourceSortingLayerName = "People";
+    [SerializeField] private int sourceSortingOrderBase = 1000;
+    [SerializeField] private float sourceSortingOrderPerYUnit = 100f;
+    [SerializeField] private int sourceSortingOrderOffset;
+    [SerializeField] private bool forceSourcePivotSortPoint = true;
     [SerializeField] [TextArea(2, 5)] private string authoringNote;
+
+    private Object cachedSourceObject;
+    private SpriteRenderer[] sourceRenderers;
 
     public Object SourceObject => sourceObject;
     public string SourceObjectName => sourceObjectName;
@@ -20,6 +29,8 @@ public sealed class ObjectMovementBlocker2D : MonoBehaviour
     public string Category => category;
     public float FootprintHeightFraction => footprintHeightFraction;
     public bool GeneratedByCollisionBoxTool => generatedByCollisionBoxTool;
+    public bool SortSourceRenderers => sortSourceRenderers;
+    public int CurrentSortingOrder { get; private set; }
     public string AuthoringNote => authoringNote;
     public Collider2D BlockingCollider => GetComponent<Collider2D>();
 
@@ -31,12 +42,21 @@ public sealed class ObjectMovementBlocker2D : MonoBehaviour
     private void OnEnable()
     {
         ConfigureCollider();
+        RefreshSourceRenderers();
+        ApplySourceSortingNow();
     }
 
     private void OnValidate()
     {
         footprintHeightFraction = Mathf.Max(0.001f, footprintHeightFraction);
         ConfigureCollider();
+        RefreshSourceRenderers();
+        ApplySourceSortingNow();
+    }
+
+    private void LateUpdate()
+    {
+        ApplySourceSortingNow();
     }
 
     public void Configure(
@@ -55,6 +75,56 @@ public sealed class ObjectMovementBlocker2D : MonoBehaviour
         authoringNote = note ?? string.Empty;
         generatedByCollisionBoxTool = generated;
         ConfigureCollider();
+        RefreshSourceRenderers();
+        ApplySourceSortingNow();
+    }
+
+    public void ApplySourceSortingNow()
+    {
+        if (!sortSourceRenderers)
+        {
+            return;
+        }
+
+        Collider2D collider = BlockingCollider;
+
+        if (collider == null || !collider.enabled)
+        {
+            return;
+        }
+
+        if (sourceRenderers == null || cachedSourceObject != sourceObject)
+        {
+            RefreshSourceRenderers();
+        }
+
+        if (sourceRenderers == null || sourceRenderers.Length == 0)
+        {
+            return;
+        }
+
+        string layerName = GetSortingLayerName(sourceSortingLayerName);
+        CurrentSortingOrder = sourceSortingOrderBase -
+            Mathf.RoundToInt(collider.bounds.min.y * sourceSortingOrderPerYUnit) +
+            sourceSortingOrderOffset;
+
+        for (int i = 0; i < sourceRenderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = sourceRenderers[i];
+
+            if (spriteRenderer == null)
+            {
+                continue;
+            }
+
+            spriteRenderer.sortingLayerName = layerName;
+            spriteRenderer.sortingOrder = CurrentSortingOrder;
+
+            if (forceSourcePivotSortPoint)
+            {
+                spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            }
+        }
     }
 
     private void ConfigureCollider()
@@ -65,5 +135,45 @@ public sealed class ObjectMovementBlocker2D : MonoBehaviour
         {
             collider.isTrigger = true;
         }
+    }
+
+    private void RefreshSourceRenderers()
+    {
+        cachedSourceObject = sourceObject;
+        GameObject sourceGameObject = GetSourceGameObject();
+        sourceRenderers = sourceGameObject != null
+            ? sourceGameObject.GetComponentsInChildren<SpriteRenderer>(true)
+            : null;
+    }
+
+    private GameObject GetSourceGameObject()
+    {
+        if (sourceObject is GameObject gameObjectSource)
+        {
+            return gameObjectSource;
+        }
+
+        if (sourceObject is Component componentSource)
+        {
+            return componentSource.gameObject;
+        }
+
+        return null;
+    }
+
+    private static string GetSortingLayerName(string requestedLayerName)
+    {
+        if (string.IsNullOrWhiteSpace(requestedLayerName))
+        {
+            return "Default";
+        }
+
+        if (string.Equals(requestedLayerName, "Default", System.StringComparison.OrdinalIgnoreCase) ||
+            SortingLayer.NameToID(requestedLayerName) != 0)
+        {
+            return requestedLayerName;
+        }
+
+        return "Default";
     }
 }

@@ -64,14 +64,14 @@ public sealed class ObjectCollisionBoxAuthoringWindow : EditorWindow
     public static void GenerateMenu()
     {
         int created = ObjectCollisionBoxAuthoring.GenerateMissingPlayerBlockersForActiveScene();
-        Debug.Log($"Generated {created} missing PlayerBlocker object collision box(es).");
+        Debug.Log($"Generated or synced {created} PlayerBlocker object collision box(es).");
     }
 
     private void OnGUI()
     {
         EditorGUILayout.LabelField("Object Collision Box Authoring", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Movement blockers should describe the object's floor-contact footprint, not the whole painted image. A chair blocks around legs/seat base; its backrest belongs to occlusion sorting, not no-walk collision.",
+            "Movement blockers should describe the object's floor-contact footprint, not the whole painted image. A chair blocks around legs/seat base; its backrest belongs to occlusion sorting, not no-walk collision. Generate / Sync also makes each blocker sort its source SpriteRenderer props from the same footprint.",
             MessageType.Info);
 
         using (new EditorGUILayout.HorizontalScope())
@@ -83,12 +83,12 @@ public sealed class ObjectCollisionBoxAuthoringWindow : EditorWindow
                 status = $"Found {ObjectCollisionBoxAuthoring.CountGeneratable(scanResults)} candidate blocker(s).";
             }
 
-            if (GUILayout.Button("Generate Missing PlayerBlockers"))
+            if (GUILayout.Button("Generate / Sync PlayerBlockers"))
             {
                 int created = ObjectCollisionBoxAuthoring.GenerateMissingPlayerBlockersForActiveScene();
                 scanResults.Clear();
                 scanResults.AddRange(ObjectCollisionBoxAuthoring.ScanActiveScene());
-                status = $"Generated {created} missing blocker(s).";
+                status = $"Generated or synced {created} blocker(s).";
             }
 
             if (GUILayout.Button("Delete Generated PlayerBlockers"))
@@ -134,6 +134,7 @@ public sealed class ObjectCollisionBoxAuthoringWindow : EditorWindow
 
 public static class ObjectCollisionBoxAuthoring
 {
+    private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string PlayerBlockerPrefix = "PlayerBlocker_";
     private const float MinimumFootprintSize = 0.02f;
 
@@ -315,27 +316,55 @@ public static class ObjectCollisionBoxAuthoring
     public static int GenerateMissingPlayerBlockersForActiveScene()
     {
         List<ScanResult> results = ScanActiveScene();
-        int created = 0;
+        int changed = 0;
 
         for (int i = 0; i < results.Count; i++)
         {
             ScanResult result = results[i];
 
-            if (!result.ShouldGenerate || result.Room == null || result.Source == null)
+            if ((!result.ShouldGenerate && !result.AlreadyHasBlocker) ||
+                result.Room == null ||
+                result.Source == null)
             {
                 continue;
             }
 
             CreateOrUpdatePlayerBlocker(result.Room, result.Source, result.Footprint);
-            created++;
+            changed++;
         }
 
-        if (created > 0)
+        if (changed > 0)
         {
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
         }
 
-        return created;
+        return changed;
+    }
+
+    [MenuItem("Dreadforge/Object Collision/Sync Gameplay PlayerBlocker Sorting")]
+    public static void SyncGameplayScenePlayerBlockerSorting()
+    {
+        int changed = SyncScenePlayerBlockerSorting(GameplayScenePath, true);
+        Debug.Log($"Synced {changed} Gameplay PlayerBlocker sorting reference(s).");
+    }
+
+    public static int SyncScenePlayerBlockerSorting(string scenePath, bool saveScene)
+    {
+        if (string.IsNullOrWhiteSpace(scenePath))
+        {
+            Debug.LogError("Cannot sync object collision sorting because the scene path is empty.");
+            return 0;
+        }
+
+        Scene openedScene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        int changed = GenerateMissingPlayerBlockersForActiveScene();
+
+        if (saveScene && changed > 0)
+        {
+            EditorSceneManager.SaveScene(openedScene);
+        }
+
+        return changed;
     }
 
     public static PolygonCollider2D CreateOrUpdatePlayerBlocker(

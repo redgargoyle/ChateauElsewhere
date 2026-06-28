@@ -32,11 +32,12 @@ Large diagonal objects may still need an occlusion footprint or split art after 
 1. Open the gameplay scene in Edit Mode.
 2. Open `Dreadforge > Object Collision > Collision Box Authoring`.
 3. Click `Dry Run` and inspect the proposed blockers.
-4. Click `Generate Missing PlayerBlockers` only after the dry run looks reasonable.
+4. Click `Generate / Sync PlayerBlockers` only after the dry run looks reasonable.
 5. Inspect generated `PlayerBlocker_*` colliders room by room.
 6. Move/reshape generated colliders manually when needed.
-7. Test walking in Play Mode.
-8. Keep unusual occlusion cases for the y-depth/occlusion branch, not this movement-blocker pass.
+7. Confirm generated `ObjectMovementBlocker2D` markers keep source SpriteRenderer props sorted from the blocker footprint.
+8. Test walking in Play Mode.
+9. Keep unusual diagonal/partial occlusion cases for the y-depth/occlusion branch, not this movement-blocker pass.
 
 ## Codex implementation prompt
 
@@ -68,6 +69,7 @@ Implementation requirements:
    - Generate child objects under the matching `RoomContentGroup`.
    - Name them `PlayerBlocker_<sourceObjectName>`.
    - Add `PolygonCollider2D` and `ObjectMovementBlocker2D`.
+   - Let each `ObjectMovementBlocker2D` sort its referenced SpriteRenderer source prop from the same blocker footprint front edge.
    - Mark the scene dirty after generation/deletion.
 
 5. Use conservative lower-footprint heuristics.
@@ -97,5 +99,6 @@ Acceptance criteria:
 - Chairs and similar props block only their floor-contact region, not their backrests.
 - Existing `PlayerBlocker_*` colliders still work.
 - Generated blockers are reviewable, named, and editable in the scene.
+- SpriteRenderer props with generated blockers sort from the same footprint that blocks movement.
 - Occlusion components remain visual-depth-only.
 - The scene is not filled with arbitrary per-object full-image colliders.

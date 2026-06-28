@@ -51,6 +51,7 @@ public class ObjectCollisionBoxRegressionTests
             sourceObject = new GameObject("Dining Chair");
             sourceObject.transform.SetParent(roomObject.transform, false);
             sourceObject.transform.position = new Vector3(3f, 2f, 0f);
+            sourceObject.AddComponent<SpriteRenderer>();
 
             ObjectCollisionFootprint footprint = new ObjectCollisionFootprint(
                 ObjectCollisionBoxCategory.Chair,
@@ -65,6 +66,9 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(collider.isTrigger, Is.True, "Movement blockers are point-click no-walk holes, not physics collision bodies.");
             Assert.That(collider.transform.parent, Is.EqualTo(roomObject.transform));
             Assert.That(collider.GetComponent<ObjectMovementBlocker2D>(), Is.Not.Null);
+
+            ObjectMovementBlocker2D marker = collider.GetComponent<ObjectMovementBlocker2D>();
+            Assert.That(marker.SortSourceRenderers, Is.True, "Generated blockers should sort their source prop against the same physical footprint.");
         }
         finally
         {
@@ -76,6 +80,50 @@ public class ObjectCollisionBoxRegressionTests
             if (roomObject != null)
             {
                 Object.DestroyImmediate(roomObject);
+            }
+        }
+    }
+
+    [Test]
+    public void ObjectMovementBlockerSortsSourceRendererFromFrontEdge()
+    {
+        GameObject sourceObject = null;
+        GameObject blockerObject = null;
+
+        try
+        {
+            sourceObject = new GameObject("Dining Chair");
+            sourceObject.transform.position = new Vector3(0f, 10f, 0f);
+            SpriteRenderer renderer = sourceObject.AddComponent<SpriteRenderer>();
+
+            blockerObject = new GameObject("PlayerBlocker_Dining_Chair");
+            blockerObject.transform.position = Vector3.zero;
+            BoxCollider2D collider = blockerObject.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(1f, 0.4f);
+            collider.offset = new Vector2(0f, 1.4f);
+
+            ObjectMovementBlocker2D marker = blockerObject.AddComponent<ObjectMovementBlocker2D>();
+            marker.Configure(sourceObject, "Test Room", "Chair", 0.3f, "test blocker", true);
+
+            Physics2D.SyncTransforms();
+            marker.ApplySourceSortingNow();
+
+            int expectedOrderFromBlockerFrontEdge = 1000 - Mathf.RoundToInt(collider.bounds.min.y * 100f);
+            int wrongOrderFromSourcePivot = 1000 - Mathf.RoundToInt(sourceObject.transform.position.y * 100f);
+
+            Assert.That(renderer.sortingOrder, Is.EqualTo(expectedOrderFromBlockerFrontEdge));
+            Assert.That(renderer.sortingOrder, Is.Not.EqualTo(wrongOrderFromSourcePivot), "Prop sorting should follow its physical blocker, not its visual pivot.");
+        }
+        finally
+        {
+            if (blockerObject != null)
+            {
+                Object.DestroyImmediate(blockerObject);
+            }
+
+            if (sourceObject != null)
+            {
+                Object.DestroyImmediate(sourceObject);
             }
         }
     }
@@ -100,6 +148,8 @@ public class ObjectCollisionBoxRegressionTests
         string planText = File.ReadAllText(PlanPath);
 
         Assert.That(authoringText, Does.Contain("Dreadforge/Object Collision/Collision Box Authoring"));
+        Assert.That(authoringText, Does.Contain("Dreadforge/Object Collision/Sync Gameplay PlayerBlocker Sorting"));
+        Assert.That(authoringText, Does.Contain("Generate / Sync PlayerBlockers"));
         Assert.That(authoringText, Does.Contain("Generate Missing PlayerBlockers"));
         Assert.That(authoringText, Does.Contain("Dry Run"));
         Assert.That(planText, Does.Contain("physical blocker equals floor-contact footprint"));
