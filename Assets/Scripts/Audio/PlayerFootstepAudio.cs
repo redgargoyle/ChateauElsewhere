@@ -17,7 +17,7 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
     [SerializeField, Min(0.05f)] private float stepIntervalSeconds = DefaultButlerStepIntervalSeconds;
     [SerializeField, Min(0f)] private float stepIntervalJitterSeconds = DefaultStepIntervalJitterSeconds;
     [SerializeField, Min(0f)] private float minimumMovementSpeed = 0.01f;
-    [SerializeField, Min(10f)] private float highPassCutoffFrequency = 180f;
+    [SerializeField, Min(10f)] private float highPassCutoffFrequency = 200f;
     [SerializeField, Range(0.1f, 10f)] private float highPassResonanceQ = 1.1f;
     [SerializeField, Min(10f)] private float lowPassCutoffFrequency = 9000f;
     [SerializeField] private string audioObjectName = DefaultAudioObjectName;
