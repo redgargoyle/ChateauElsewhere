@@ -31,6 +31,8 @@ public class Chapter2RegressionTests
     private const string Chapter2ScriptPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Script.md";
     private const string Chapter2PanicLibraryAssetPath = "Assets/Resources/Chapter2/PanicAnimationLibrary.asset";
     private const string Chapter2PanicScreamCatalogPath = "Assets/Resources/Audio/Chapter2PanicScreamCatalog.asset";
+    private const string Chapter2SevenOClockFacePath = "Assets/Art/clockcutout7oclock.png";
+    private const string Chapter2SevenOClockFaceMetaPath = "Assets/Art/clockcutout7oclock.png.meta";
     private const string GuestFootstepAudioPath = "Assets/Scripts/Audio/GuestFootstepAudio.cs";
     private const string GuestFootstepCatalogScriptPath = "Assets/Scripts/Audio/GuestFootstepCatalog.cs";
     private const string GuestFootstepCatalogPath = "Assets/Resources/Audio/GuestFootstepCatalog.asset";
@@ -1330,6 +1332,7 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Contain("PlayClockStrikeDing"));
         Assert.That(controllerText, Does.Contain("RuntimeChapter2ClockStrikeDing"));
         Assert.That(controllerText, Does.Contain("ClearClockStrike"));
+        Assert.That(controllerText, Does.Contain("clockStrikeCloseUpSeconds = 5f"), "The 7:00 clock strike needs a readable five-second close-up hold.");
         Assert.That(controllerText, Does.Contain("SeatGuestsInDiningRoom()"));
         Assert.That(controllerText, Does.Contain("guestSearch.SeatGuestsInDiningRoom()"));
         Assert.That(controllerText, Does.Contain("diningRoomRevealSeconds = 5f"));
@@ -1505,6 +1508,7 @@ public class Chapter2RegressionTests
         Assert.That(File.Exists(Chapter2InteractionHUDPath), Is.True, "Chapter 2 should have a dedicated runtime HUD.");
 
         string hudText = File.ReadAllText(Chapter2InteractionHUDPath);
+        string refreshClockHandsBody = ExtractMethodBody(hudText, "private void RefreshClockStrikeHands");
         Assert.That(hudText, Does.Contain("DisallowMultipleComponent"));
         Assert.That(hudText, Does.Contain("Canvas_Chapter2HUD"));
         Assert.That(hudText, Does.Match(@"\bInitialize\s*\("));
@@ -1522,12 +1526,17 @@ public class Chapter2RegressionTests
         Assert.That(hudText, Does.Contain("Panel_Chapter2ClockStrike"));
         Assert.That(hudText, Does.Contain("ClockStrikeSecondHandName"), "The 7:00 clock-strike close-up should draw a runtime second hand.");
         Assert.That(hudText, Does.Contain("ClockStrikeSecondTailName"), "The second hand should have a visible counterweight so it reads as a designed hand, not a plain debug line.");
-        Assert.That(hudText, Does.Contain("ClockStrikeSecondTicksPerSecond"), "The strike close-up second hand should tick independently of gameplay clock alignment.");
+        Assert.That(hudText, Does.Contain("ClockStrikeRealtimeSecondsPerTick = 1f"), "The strike close-up second hand should tick once per real unscaled second.");
         Assert.That(hudText, Does.Match(@"(?s)\bUpdate\s*\([^)]*\)\s*\{.*RefreshClockStrikeHands\(\)"), "The second hand must keep ticking while the strike graphic is visible.");
         Assert.That(hudText, Does.Match(@"(?s)\bShowClockStrike\s*\([^)]*\)\s*\{.*clockStrikeStartedAt\s*=\s*Time\.unscaledTime.*RefreshClockStrikeHands\(true\)"), "Showing the strike graphic should reset and immediately render the ticking second hand.");
+        Assert.That(refreshClockHandsBody, Does.Contain("Time.unscaledTime - clockStrikeStartedAt"), "The strike second hand should use real elapsed seconds during this moment.");
+        Assert.That(refreshClockHandsBody, Does.Contain("/ ClockStrikeRealtimeSecondsPerTick"), "The second hand should advance by discrete real-second ticks, not a gameplay clock multiplier.");
+        Assert.That(refreshClockHandsBody, Does.Not.Contain("SecondsPerGameMinute"), "The 7:00 strike animation must ignore the editable gameplay time speed.");
+        Assert.That(refreshClockHandsBody, Does.Not.Contain("chapterClock"), "The 7:00 strike animation must not derive second-hand movement from the gameplay clock.");
         Assert.That(hudText, Does.Match(@"(?s)clockStrikeRect\.sizeDelta\s*=\s*new Vector2\(880f,\s*900f\)"), "The clock-strike graphic should be much larger and closer than the old 660x560 panel.");
+        Assert.That(hudText, Does.Match(@"(?s)clockStrikeImageRect\.anchoredPosition\s*=\s*new Vector2\(0f,\s*-185f\)"), "The clock face should sit lower so the 7:00 face is not clipped by the screen top.");
         Assert.That(hudText, Does.Match(@"(?s)clockStrikeImageRect\.sizeDelta\s*=\s*new Vector2\(760f,\s*1350f\)"), "The grandfather clock sprite should be scaled up so the face reads as a close-up.");
-        Assert.That(hudText, Does.Contain("RectMask2D"), "The enlarged clock sprite should be clipped by the close-up panel.");
+        Assert.That(hudText, Does.Not.Contain("RectMask2D"), "The seven-o'clock cutout should use transparent art instead of clipping a black-backed rectangle.");
         Assert.That(hudText, Does.Contain("SetClockStrikeHand(clockStrikeHourHand"), "The strike close-up should draw the stationary thicker hour hand.");
         Assert.That(hudText, Does.Contain("SetClockStrikeHand(clockStrikeMinuteHand"), "The strike close-up should draw the stationary thicker minute hand.");
         Assert.That(hudText, Does.Contain("SetClockStrikeHand(clockStrikeSecondHand"), "The strike close-up should animate the second hand around the clock.");
@@ -1537,6 +1546,22 @@ public class Chapter2RegressionTests
         Assert.That(hudText, Does.Contain("radius * 0.52f"), "The ticking second hand should fit within the clock-face circle.");
         Assert.That(hudText, Does.Contain("IReadOnlyList<string>"));
         Assert.That(hudText, Does.Match(@"(?s)\bSetDialogueChoices\s*\([^)]*\)\s*\{.*EnsureUI\s*\(\s*\).*dialoguePanel\.SetActive\(true\).*SetDialogueChoice\(0"), "The first visible guest dialogue should not be hidden by EnsureUI before choices are installed.");
+    }
+
+    [Test]
+    public void Chapter2SevenOClockClockFaceIsTransparentCutout()
+    {
+        Assert.That(File.Exists(Chapter2SevenOClockFacePath), Is.True, "The 7:00 strike close-up should have a dedicated clock face image.");
+        Assert.That(File.Exists(Chapter2SevenOClockFaceMetaPath), Is.True, "The 7:00 clock image should have a Unity importer.");
+
+        byte[] pngBytes = File.ReadAllBytes(Chapter2SevenOClockFacePath);
+        Assert.That(pngBytes.Length, Is.GreaterThan(25));
+        Assert.That(pngBytes[25], Is.EqualTo(6), "The 7:00 clock image must be RGBA so the black background is cut out.");
+
+        string metaText = File.ReadAllText(Chapter2SevenOClockFaceMetaPath);
+        Assert.That(metaText, Does.Contain("alphaIsTransparency: 1"));
+        Assert.That(metaText, Does.Match(@"width:\s*4[0-9]{2}"), "The imported 7:00 sprite should crop to the clock body instead of the full black rectangle.");
+        Assert.That(metaText, Does.Not.Contain("width: 941"), "The imported 7:00 sprite must not use the full black-backed source width.");
     }
 
     [Test]
