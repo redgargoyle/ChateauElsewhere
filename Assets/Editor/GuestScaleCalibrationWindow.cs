@@ -24,6 +24,18 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
     private Transform selectedBoundsRoot;
     private string lastStatus = string.Empty;
 
+    private static readonly KnownGuestDefinition[] KnownChapterGuests =
+    {
+        new KnownGuestDefinition("actor:guest_1", "Guest 01", "Miss Isolde Wren", new[] { "Guest1", "Guest 1", "Guest01", "Lady", "Miss Isolde Wren" }),
+        new KnownGuestDefinition("actor:guest_2", "Guest 02", "Professor Lucien Vale", new[] { "Guest2", "Guest 2", "Guest02", "ButlerGuest", "Butler Guest", "Professor Lucien Vale" }),
+        new KnownGuestDefinition("actor:guest_3", "Guest 03", "Mister Florian Knell", new[] { "Guest3", "Guest 3", "Guest03", "Mister Florian Knell" }),
+        new KnownGuestDefinition("actor:guest_4", "Guest 04", "Countess Elowen Dusk", new[] { "Guest4", "Guest 4", "Guest04", "Countess Elowen Dusk" }),
+        new KnownGuestDefinition("actor:guest_5", "Guest 05", "Baron Hector Glass", new[] { "Guest5", "Guest 5", "Guest05", "Baron Hector Glass" }),
+        new KnownGuestDefinition("actor:guest_6", "Guest 06", "Lady Sabine Marrow", new[] { "Guest6", "Guest 6", "Guest06", "Lady Sabine Marrow" }),
+        new KnownGuestDefinition("actor:guest_7", "Guest 07", "Lord Ambrose Veil", new[] { "Guest7", "Guest 7", "Guest07", "Lord Ambrose Veil" }),
+        new KnownGuestDefinition("actor:guest_8", "Guest 08", "Madame Coralie Thread", new[] { "Guest8", "Guest 8", "Guest08", "Madame Coralie Thread" })
+    };
+
     [MenuItem("Tools/Characters/Manual Guest Scale Calibration")]
     public static void Open()
     {
@@ -176,8 +188,9 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
         EditorGUILayout.Space(8f);
         EditorGUILayout.LabelField("Guest Details", EditorStyles.boldLabel);
         EditorGUILayout.LabelField("Controller type", candidate.ControllerType);
-        EditorGUILayout.LabelField("Room id", candidate.RoomId);
-        EditorGUILayout.LabelField("Room-local foot Y", candidate.FootPoint.y.ToString("0.###"));
+        EditorGUILayout.LabelField("Room id", GetSelectedRoomId());
+        EditorGUILayout.LabelField("Guest current/native room", string.IsNullOrWhiteSpace(candidate.RoomId) ? "-" : candidate.RoomId);
+        EditorGUILayout.LabelField("Room-local foot Y", GetCalibrationFootPoint(candidate).y.ToString("0.###"));
         EditorGUILayout.LabelField("Pose", selectedPose.ToString());
 
         CalibrationMetrics metrics = BuildMetrics(candidate);
@@ -188,6 +201,7 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
         EditorGUILayout.LabelField("Current boundsRoot", selectedBoundsRoot != null ? GetObjectPath(selectedBoundsRoot) : "-");
         EditorGUILayout.LabelField("Current scaleRoot", selectedScaleRoot != null ? GetObjectPath(selectedScaleRoot) : "-");
         EditorGUILayout.LabelField("Existing manual calibration?", GetManualEntry(candidate) != null ? "yes" : "no");
+        EditorGUILayout.LabelField("Guest key", string.IsNullOrWhiteSpace(candidate.GuestKey) ? "-" : candidate.GuestKey);
     }
 
     private void DrawManualControls()
@@ -320,7 +334,8 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
         candidates.Clear();
         roomNames.Clear();
         Camera camera = ResolveCamera();
-        HashSet<Transform> claimed = new HashSet<Transform>();
+        HashSet<Transform> claimedRoots = new HashSet<Transform>();
+        HashSet<string> claimedGuestKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         RoomProjectedEntity[] entities = FindObjectsByType<RoomProjectedEntity>(FindObjectsInactive.Include);
         for (int i = 0; i < entities.Length; i++)
@@ -332,14 +347,33 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
                 continue;
             }
 
+            RoomPersonWalker2D walker = entity.GetComponent<RoomPersonWalker2D>();
+            ActorRoomState actor = entity.GetComponentInParent<ActorRoomState>(true);
+
+            if (walker == null && !LooksLikeGuestScaleTarget(entity.gameObject, actor))
+            {
+                continue;
+            }
+
             if (!entity.TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 footPoint))
             {
                 roomId = entity.RoomProfile != null ? entity.RoomProfile.RoomId : string.Empty;
             }
 
-            RoomPersonWalker2D walker = entity.GetComponent<RoomPersonWalker2D>();
-            ActorRoomState actor = entity.GetComponentInParent<ActorRoomState>(true);
-            AddCandidate(new GuestCandidate(entity, walker, actor, entity.transform, "RoomProjectedEntity" + (walker != null ? " + RoomPersonWalker2D" : string.Empty), roomId, footPoint), camera, claimed);
+            AddCandidate(
+                new GuestCandidate(
+                    entity,
+                    walker,
+                    actor,
+                    entity.transform,
+                    "RoomProjectedEntity" + (walker != null ? " + RoomPersonWalker2D" : string.Empty),
+                    roomId,
+                    footPoint,
+                    BuildGuestKey(entity, walker, actor, entity.transform),
+                    BuildGuestDisplayName(entity.gameObject, actor)),
+                camera,
+                claimedRoots,
+                claimedGuestKeys);
         }
 
         RoomPersonWalker2D[] walkers = FindObjectsByType<RoomPersonWalker2D>(FindObjectsInactive.Include);
@@ -361,7 +395,20 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
 
             walker.TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 footPoint);
             ActorRoomState actor = walker.GetComponentInParent<ActorRoomState>(true);
-            AddCandidate(new GuestCandidate(null, walker, actor, walker.transform, projection != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomPersonWalker2D", roomId, footPoint), camera, claimed);
+            AddCandidate(
+                new GuestCandidate(
+                    null,
+                    walker,
+                    actor,
+                    walker.transform,
+                    projection != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomPersonWalker2D",
+                    roomId,
+                    footPoint,
+                    BuildGuestKey(null, walker, actor, walker.transform),
+                    BuildGuestDisplayName(walker.gameObject, actor)),
+                camera,
+                claimedRoots,
+                claimedGuestKeys);
         }
 
         ActorRoomState[] actors = FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
@@ -371,45 +418,69 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
 
             if (!IsLoadedSceneObject(actor) ||
                 IsButlerObjectOrChild(actor.transform) ||
-                !LooksLikeGuestActor(actor) ||
-                actor.GetComponentInChildren<RoomProjectedEntity>(true) != null ||
-                actor.GetComponentInChildren<RoomPersonWalker2D>(true) != null)
+                !LooksLikeGuestActor(actor))
             {
                 continue;
             }
 
             actor.TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 footPoint);
-            AddCandidate(new GuestCandidate(null, null, actor, actor.transform, "ActorRoomState", roomId, footPoint), camera, claimed);
+            AddCandidate(
+                new GuestCandidate(
+                    null,
+                    null,
+                    actor,
+                    actor.transform,
+                    "ActorRoomState",
+                    roomId,
+                    footPoint,
+                    BuildGuestKey(null, null, actor, actor.transform),
+                    BuildGuestDisplayName(actor.gameObject, actor)),
+                camera,
+                claimedRoots,
+                claimedGuestKeys);
         }
 
+        AddLooseSceneGuestCandidates(camera, claimedRoots, claimedGuestKeys);
+        AddKnownChapterGuestCandidates(camera, claimedRoots, claimedGuestKeys);
+        BuildRoomChoices();
+
         candidates.Sort((left, right) => string.Compare(left.Label, right.Label, StringComparison.OrdinalIgnoreCase));
-        roomNames.Sort(StringComparer.OrdinalIgnoreCase);
         selectedRoomIndex = Mathf.Clamp(selectedRoomIndex, 0, Mathf.Max(0, roomNames.Count - 1));
         selectedGuestIndex = Mathf.Clamp(selectedGuestIndex, 0, Mathf.Max(0, GetCandidatesForSelectedRoom().Count - 1));
         LoadSelectionFromCurrentGuest();
     }
 
-    private void AddCandidate(GuestCandidate candidate, Camera camera, HashSet<Transform> claimed)
+    private void AddCandidate(
+        GuestCandidate candidate,
+        Camera camera,
+        HashSet<Transform> claimedRoots,
+        HashSet<string> claimedGuestKeys)
     {
         ResolveAutoRoots(candidate, camera);
         Transform key = candidate.AutoScaleRoot != null ? candidate.AutoScaleRoot : candidate.Root;
+        string guestKey = string.IsNullOrWhiteSpace(candidate.GuestKey) ? string.Empty : NormalizeGuestKey(candidate.GuestKey);
 
-        if (key != null && claimed.Contains(key))
+        if (!string.IsNullOrWhiteSpace(guestKey) && claimedGuestKeys.Contains(guestKey))
+        {
+            return;
+        }
+
+        if (key != null && claimedRoots.Contains(key))
         {
             return;
         }
 
         if (key != null)
         {
-            claimed.Add(key);
+            claimedRoots.Add(key);
+        }
+
+        if (!string.IsNullOrWhiteSpace(guestKey))
+        {
+            claimedGuestKeys.Add(guestKey);
         }
 
         candidates.Add(candidate);
-
-        if (!ContainsRoom(roomNames, candidate.RoomId))
-        {
-            roomNames.Add(string.IsNullOrWhiteSpace(candidate.RoomId) ? "<no room>" : candidate.RoomId);
-        }
     }
 
     private void ResolveAutoRoots(GuestCandidate candidate, Camera camera)
@@ -442,6 +513,466 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
                 : root;
             candidate.PrimaryVisual = target.PrimaryVisual;
         }
+    }
+
+    private void AddLooseSceneGuestCandidates(
+        Camera camera,
+        HashSet<Transform> claimedRoots,
+        HashSet<string> claimedGuestKeys)
+    {
+        GameObject[] objects = Resources.FindObjectsOfTypeAll<GameObject>();
+
+        for (int i = 0; i < objects.Length; i++)
+        {
+            GameObject guestObject = GetLooseSceneGuestRoot(objects[i]);
+
+            if (guestObject == null)
+            {
+                continue;
+            }
+
+            ActorRoomState actor = guestObject.GetComponent<ActorRoomState>();
+            RoomProjectedEntity projection = guestObject.GetComponent<RoomProjectedEntity>();
+            RoomPersonWalker2D walker = guestObject.GetComponent<RoomPersonWalker2D>();
+            string roomId = ResolveRoomId(guestObject.transform, projection, walker, actor);
+            Vector2 footPoint = ResolveFootPoint(guestObject.transform, projection, walker, actor);
+            string guestKey = BuildGuestKey(projection, walker, actor, guestObject.transform);
+            AddCandidate(
+                new GuestCandidate(
+                    projection,
+                    walker,
+                    actor,
+                    guestObject.transform,
+                    "Scene Guest Object",
+                    roomId,
+                    footPoint,
+                    guestKey,
+                    BuildGuestDisplayName(guestObject, actor)),
+                camera,
+                claimedRoots,
+                claimedGuestKeys);
+        }
+    }
+
+    private void AddKnownChapterGuestCandidates(
+        Camera camera,
+        HashSet<Transform> claimedRoots,
+        HashSet<string> claimedGuestKeys)
+    {
+        for (int i = 0; i < KnownChapterGuests.Length; i++)
+        {
+            KnownGuestDefinition guest = KnownChapterGuests[i];
+            GameObject sceneObject = FindKnownGuestSceneObject(guest);
+            ActorRoomState actor = sceneObject != null ? sceneObject.GetComponent<ActorRoomState>() : null;
+            RoomProjectedEntity projection = sceneObject != null ? sceneObject.GetComponent<RoomProjectedEntity>() : null;
+            RoomPersonWalker2D walker = sceneObject != null ? sceneObject.GetComponent<RoomPersonWalker2D>() : null;
+            Transform root = sceneObject != null ? sceneObject.transform : null;
+            string roomId = sceneObject != null ? ResolveRoomId(root, projection, walker, actor) : string.Empty;
+            Vector2 footPoint = sceneObject != null ? ResolveFootPoint(root, projection, walker, actor) : Vector2.zero;
+
+            AddCandidate(
+                new GuestCandidate(
+                    projection,
+                    walker,
+                    actor,
+                    root,
+                    sceneObject != null ? "Known Chapter Guest" : "Known Chapter Guest (runtime/synthetic)",
+                    roomId,
+                    footPoint,
+                    guest.GuestKey,
+                    $"{guest.ShortName} - {guest.DisplayName}"),
+                camera,
+                claimedRoots,
+                claimedGuestKeys);
+        }
+    }
+
+    private void BuildRoomChoices()
+    {
+        roomNames.Clear();
+
+        if (selectedButler != null)
+        {
+            List<string> calibrationRooms = new List<string>();
+            selectedButler.GetButlerScaleOverrideRoomIds(calibrationRooms);
+
+            for (int i = 0; i < calibrationRooms.Count; i++)
+            {
+                AddRoomChoice(calibrationRooms[i]);
+            }
+        }
+
+        AddNavigationRoomChoices();
+        AddRoomVisualCatalogChoices();
+        AddDoorCameraSequenceRoomChoices();
+        AddRoomPerspectiveProfileChoices();
+
+        RoomContentGroup[] roomContents = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
+        for (int i = 0; i < roomContents.Length; i++)
+        {
+            RoomContentGroup room = roomContents[i];
+
+            if (room != null && room.gameObject.scene.IsValid())
+            {
+                AddRoomChoice(room.RoomName);
+            }
+        }
+
+        if (calibrationStore != null)
+        {
+            IReadOnlyList<GuestScaleCalibrationEntry> entries = calibrationStore.GetAllEntries();
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                AddRoomChoice(entries[i]?.roomId);
+            }
+        }
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            AddRoomChoice(candidates[i].RoomId);
+        }
+
+        if (roomNames.Count == 0)
+        {
+            roomNames.Add("<no room>");
+        }
+
+        roomNames.Sort(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void AddRoomChoice(string roomId)
+    {
+        string cleanRoomId = string.IsNullOrWhiteSpace(roomId) ? string.Empty : roomId.Trim();
+
+        if (string.IsNullOrWhiteSpace(cleanRoomId))
+        {
+            return;
+        }
+
+        if (!ContainsRoom(roomNames, cleanRoomId))
+        {
+            roomNames.Add(cleanRoomId);
+        }
+    }
+
+    private void AddNavigationRoomChoices()
+    {
+        RoomNavigationManager[] navigationManagers = FindObjectsByType<RoomNavigationManager>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < navigationManagers.Length; i++)
+        {
+            RoomNavigationManager navigationManager = navigationManagers[i];
+
+            if (navigationManager == null ||
+                !navigationManager.gameObject.scene.IsValid() ||
+                !navigationManager.gameObject.scene.isLoaded)
+            {
+                continue;
+            }
+
+            List<string> knownRoomNames = navigationManager.GetKnownRoomNames();
+
+            for (int roomIndex = 0; roomIndex < knownRoomNames.Count; roomIndex++)
+            {
+                AddRoomChoice(knownRoomNames[roomIndex]);
+            }
+        }
+    }
+
+    private void AddRoomVisualCatalogChoices()
+    {
+        string[] guids = AssetDatabase.FindAssets("t:RoomVisualCatalog");
+
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            RoomVisualCatalog catalog = AssetDatabase.LoadAssetAtPath<RoomVisualCatalog>(path);
+
+            if (catalog == null || catalog.rooms == null)
+            {
+                continue;
+            }
+
+            for (int roomIndex = 0; roomIndex < catalog.rooms.Length; roomIndex++)
+            {
+                RoomVisualEntry entry = catalog.rooms[roomIndex];
+                AddRoomChoice(entry != null ? entry.roomName : null);
+            }
+        }
+    }
+
+    private void AddDoorCameraSequenceRoomChoices()
+    {
+        string[] guids = AssetDatabase.FindAssets("t:DoorCameraSequence");
+
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            DoorCameraSequence sequence = AssetDatabase.LoadAssetAtPath<DoorCameraSequence>(path);
+
+            if (sequence == null)
+            {
+                continue;
+            }
+
+            AddRoomChoice(sequence.startingRoom);
+            AddRoomChoice(sequence.loopStartRoom);
+
+            if (sequence.roomOrder == null)
+            {
+                continue;
+            }
+
+            for (int roomIndex = 0; roomIndex < sequence.roomOrder.Length; roomIndex++)
+            {
+                AddRoomChoice(sequence.roomOrder[roomIndex]);
+            }
+        }
+    }
+
+    private void AddRoomPerspectiveProfileChoices()
+    {
+        string[] guids = AssetDatabase.FindAssets("t:RoomPerspectiveProfile");
+
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            RoomPerspectiveProfile profile = AssetDatabase.LoadAssetAtPath<RoomPerspectiveProfile>(path);
+            AddRoomChoice(profile != null ? profile.RoomId : null);
+        }
+    }
+
+    private GameObject GetLooseSceneGuestRoot(GameObject candidate)
+    {
+        if (!IsLooseSceneGuestCandidate(candidate))
+        {
+            return null;
+        }
+
+        Transform current = candidate.transform.parent;
+
+        while (current != null)
+        {
+            if (IsLooseSceneGuestCandidate(current.gameObject))
+            {
+                return null;
+            }
+
+            current = current.parent;
+        }
+
+        return candidate;
+    }
+
+    private bool IsLooseSceneGuestCandidate(GameObject candidate)
+    {
+        if (candidate == null ||
+            !candidate.scene.IsValid() ||
+            !candidate.scene.isLoaded ||
+            IsButlerObjectOrChild(candidate.transform))
+        {
+            return false;
+        }
+
+        if (!LooksLikeKnownGuestObject(candidate) && !LooksLikeGuestName(candidate.name))
+        {
+            return false;
+        }
+
+        if (ContainsIgnoreCase(candidate.name, "arrival") ||
+            ContainsIgnoreCase(candidate.name, "anchor") ||
+            ContainsIgnoreCase(candidate.name, "point") ||
+            ContainsIgnoreCase(candidate.name, "target") ||
+            ContainsIgnoreCase(candidate.name, "coat"))
+        {
+            return false;
+        }
+
+        return candidate.GetComponentInChildren<Renderer>(true) != null ||
+            candidate.GetComponentInChildren<UnityEngine.UI.Graphic>(true) != null ||
+            candidate.GetComponentInChildren<Animator>(true) != null;
+    }
+
+    private static bool LooksLikeKnownGuestObject(GameObject candidate)
+    {
+        if (candidate == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < KnownChapterGuests.Length; i++)
+        {
+            if (KnownChapterGuests[i].Matches(candidate.name))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    internal static bool LooksLikeGuestScaleTarget(GameObject gameObject, ActorRoomState actor)
+    {
+        return LooksLikeGuestActor(actor) ||
+            LooksLikeKnownGuestObject(gameObject) ||
+            (gameObject != null && LooksLikeGuestName(gameObject.name));
+    }
+
+    private static bool LooksLikeGuestName(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0 &&
+            value.IndexOf("GuestArrival", StringComparison.OrdinalIgnoreCase) < 0 &&
+            value.IndexOf("GuestPoint", StringComparison.OrdinalIgnoreCase) < 0 &&
+            value.IndexOf("GuestAnchor", StringComparison.OrdinalIgnoreCase) < 0;
+    }
+
+    private static string BuildGuestKey(
+        RoomProjectedEntity projection,
+        RoomPersonWalker2D walker,
+        ActorRoomState actor,
+        Transform root)
+    {
+        string knownKey = TryGetKnownGuestKey(actor != null ? actor.ActorId : null);
+
+        if (!string.IsNullOrWhiteSpace(knownKey))
+        {
+            return knownKey;
+        }
+
+        knownKey = TryGetKnownGuestKey(root != null ? root.name : null);
+
+        if (!string.IsNullOrWhiteSpace(knownKey))
+        {
+            return knownKey;
+        }
+
+        return GuestScaleCalibrationStore.BuildGuestKey(projection, walker, actor, root);
+    }
+
+    private static string BuildGuestDisplayName(GameObject gameObject, ActorRoomState actor)
+    {
+        string knownName = TryGetKnownGuestDisplayName(actor != null ? actor.ActorId : null);
+
+        if (!string.IsNullOrWhiteSpace(knownName))
+        {
+            return knownName;
+        }
+
+        knownName = TryGetKnownGuestDisplayName(gameObject != null ? gameObject.name : null);
+
+        if (!string.IsNullOrWhiteSpace(knownName))
+        {
+            return knownName;
+        }
+
+        if (actor != null && !string.IsNullOrWhiteSpace(actor.ActorId))
+        {
+            return actor.ActorId;
+        }
+
+        return gameObject != null ? gameObject.name : "Guest";
+    }
+
+    private static string TryGetKnownGuestKey(string value)
+    {
+        for (int i = 0; i < KnownChapterGuests.Length; i++)
+        {
+            if (KnownChapterGuests[i].Matches(value))
+            {
+                return KnownChapterGuests[i].GuestKey;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static string TryGetKnownGuestDisplayName(string value)
+    {
+        for (int i = 0; i < KnownChapterGuests.Length; i++)
+        {
+            if (KnownChapterGuests[i].Matches(value))
+            {
+                return $"{KnownChapterGuests[i].ShortName} - {KnownChapterGuests[i].DisplayName}";
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static GameObject FindKnownGuestSceneObject(KnownGuestDefinition guest)
+    {
+        GameObject[] objects = Resources.FindObjectsOfTypeAll<GameObject>();
+
+        for (int i = 0; i < objects.Length; i++)
+        {
+            GameObject candidate = objects[i];
+
+            if (candidate != null &&
+                candidate.scene.IsValid() &&
+                candidate.scene.isLoaded &&
+                guest.Matches(candidate.name))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static string ResolveRoomId(
+        Transform root,
+        RoomProjectedEntity projection,
+        RoomPersonWalker2D walker,
+        ActorRoomState actor)
+    {
+        if (projection != null && projection.TryResolveGuestRoomAndFootPoint(out string projectionRoom, out _))
+        {
+            return projectionRoom;
+        }
+
+        if (walker != null && walker.TryResolveGuestRoomAndFootPoint(out string walkerRoom, out _))
+        {
+            return walkerRoom;
+        }
+
+        if (actor != null && actor.TryResolveGuestRoomAndFootPoint(out string actorRoom, out _))
+        {
+            return actorRoom;
+        }
+
+        RoomContentGroup room = root != null ? root.GetComponentInParent<RoomContentGroup>(true) : null;
+        return room != null ? room.RoomName : string.Empty;
+    }
+
+    private static Vector2 ResolveFootPoint(
+        Transform root,
+        RoomProjectedEntity projection,
+        RoomPersonWalker2D walker,
+        ActorRoomState actor)
+    {
+        if (projection != null && projection.TryResolveGuestRoomAndFootPoint(out _, out Vector2 projectionFootPoint))
+        {
+            return projectionFootPoint;
+        }
+
+        if (walker != null && walker.TryResolveGuestRoomAndFootPoint(out _, out Vector2 walkerFootPoint))
+        {
+            return walkerFootPoint;
+        }
+
+        if (actor != null && actor.TryResolveGuestRoomAndFootPoint(out _, out Vector2 actorFootPoint))
+        {
+            return actorFootPoint;
+        }
+
+        if (root is RectTransform rectTransform)
+        {
+            return rectTransform.anchoredPosition;
+        }
+
+        return root != null ? new Vector2(root.localPosition.x, root.localPosition.y) : Vector2.zero;
     }
 
     private void LoadSelectionFromCurrentGuest()
@@ -495,17 +1026,28 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
         }
 
         Undo.RecordObject(calibrationStore, "Save Guest Scale Calibration");
-        GuestScaleCalibrationEntry entry = calibrationStore.SetCalibrationForGuest(
-            candidate.ProjectedEntity != null ? (Component)candidate.ProjectedEntity : candidate.Walker != null ? candidate.Walker : candidate.Actor,
-            candidate.RoomId,
-            selectedPose,
-            selectedScaleRoot,
-            selectedBoundsRoot,
-            heightRatioToButlerStanding,
-            manualFineTuneMultiplier);
+        string roomId = GetSelectedRoomId();
+        GuestScaleCalibrationEntry entry = string.IsNullOrWhiteSpace(candidate.GuestKey)
+            ? calibrationStore.SetCalibrationForGuest(
+                candidate.ProjectedEntity != null ? (Component)candidate.ProjectedEntity : candidate.Walker != null ? candidate.Walker : candidate.Actor,
+                roomId,
+                selectedPose,
+                selectedScaleRoot,
+                selectedBoundsRoot,
+                heightRatioToButlerStanding,
+                manualFineTuneMultiplier)
+            : calibrationStore.SetCalibrationForGuest(
+                candidate.GuestKey,
+                candidate.Label,
+                roomId,
+                selectedPose,
+                selectedScaleRoot,
+                selectedBoundsRoot,
+                heightRatioToButlerStanding,
+                manualFineTuneMultiplier);
         entry.displayName = candidate.Label;
         MarkDirty(calibrationStore);
-        lastStatus = $"Saved manual calibration for {candidate.Label} in {candidate.RoomId}.";
+        lastStatus = $"Saved manual calibration for {candidate.Label} in {roomId}.";
     }
 
     private void RemoveSelectedCalibration()
@@ -518,12 +1060,19 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
         }
 
         Undo.RecordObject(calibrationStore, "Remove Guest Scale Calibration");
-        bool removed = calibrationStore.RemoveCalibrationForGuest(
-            candidate.ProjectedEntity,
-            candidate.Walker,
-            candidate.Actor,
-            candidate.RoomId,
-            selectedScaleRoot);
+        string roomId = GetSelectedRoomId();
+        bool removed = !string.IsNullOrWhiteSpace(candidate.GuestKey) &&
+            calibrationStore.RemoveCalibrationForGuest(candidate.GuestKey, candidate.Label, roomId);
+
+        if (!removed)
+        {
+            removed = calibrationStore.RemoveCalibrationForGuest(
+                candidate.ProjectedEntity,
+                candidate.Walker,
+                candidate.Actor,
+                roomId,
+                selectedScaleRoot);
+        }
         MarkDirty(calibrationStore);
         lastStatus = removed ? $"Removed manual calibration for {candidate.Label}." : "No matching manual calibration found.";
     }
@@ -538,7 +1087,16 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
         }
 
         calibrationStore = EnsureCalibrationStore();
-        GuestScaleCalibrationEntry entry = calibrationStore.GetOrCreateEntry(candidate.ProjectedEntity, candidate.Walker, candidate.Actor, candidate.RoomId, selectedScaleRoot);
+
+        if (calibrationStore == null)
+        {
+            lastStatus = "No calibration store available.";
+            return;
+        }
+
+        GuestScaleCalibrationEntry entry = !string.IsNullOrWhiteSpace(candidate.GuestKey)
+            ? calibrationStore.GetOrCreateEntry(candidate.GuestKey, candidate.Label, GetSelectedRoomId())
+            : calibrationStore.GetOrCreateEntry(candidate.ProjectedEntity, candidate.Walker, candidate.Actor, GetSelectedRoomId(), selectedScaleRoot);
         entry.scaleRoot = selectedScaleRoot;
         Undo.RecordObject(calibrationStore, "Capture Guest Scale Base");
         bool captured = calibrationStore.CaptureBaseScale(entry);
@@ -559,7 +1117,9 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
 
         if (entry == null && calibrationStore != null)
         {
-            entry = calibrationStore.GetOrCreateEntry(candidate.ProjectedEntity, candidate.Walker, candidate.Actor, candidate.RoomId, selectedScaleRoot);
+            entry = !string.IsNullOrWhiteSpace(candidate.GuestKey)
+                ? calibrationStore.GetOrCreateEntry(candidate.GuestKey, candidate.Label, GetSelectedRoomId())
+                : calibrationStore.GetOrCreateEntry(candidate.ProjectedEntity, candidate.Walker, candidate.Actor, GetSelectedRoomId(), selectedScaleRoot);
         }
 
         if (entry == null)
@@ -567,7 +1127,13 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
             return;
         }
 
-        Undo.RecordObject(entry.scaleRoot != null ? entry.scaleRoot : candidate.Root, "Restore Guest Scale Base");
+        Transform undoTarget = entry.scaleRoot != null ? entry.scaleRoot : candidate.Root;
+
+        if (undoTarget != null)
+        {
+            Undo.RecordObject(undoTarget, "Restore Guest Scale Base");
+        }
+
         bool restored = calibrationStore.RestoreBaseScale(entry);
 
         if (entry.scaleRoot != null)
@@ -656,7 +1222,10 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
             return false;
         }
 
-        if (!selectedButler.TryEvaluateButlerCharacterScale(candidate.RoomId, candidate.FootPoint, out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
+        string roomId = GetSelectedRoomId();
+        Vector2 footPoint = GetCalibrationFootPoint(candidate);
+
+        if (!selectedButler.TryEvaluateButlerCharacterScale(roomId, footPoint, out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
         {
             diagnostic = "No Butler calibration for this room";
             return false;
@@ -708,7 +1277,7 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
         List<string> warnings = new List<string>();
 
         if (selectedButler == null ||
-            !selectedButler.TryEvaluateButlerCharacterScale(candidate.RoomId, candidate.FootPoint, out _))
+            !selectedButler.TryEvaluateButlerCharacterScale(GetSelectedRoomId(), GetCalibrationFootPoint(candidate), out _))
         {
             warnings.Add("No Butler calibration for this room");
         }
@@ -766,7 +1335,7 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
             candidate.ProjectedEntity,
             candidate.Walker,
             candidate.Actor,
-            candidate.RoomId,
+            GetSelectedRoomId(),
             selectedScaleRoot != null ? selectedScaleRoot : candidate.AutoScaleRoot,
             out GuestScaleCalibrationEntry entry)
             ? entry
@@ -775,19 +1344,44 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
 
     private List<GuestCandidate> GetCandidatesForSelectedRoom()
     {
-        List<GuestCandidate> rows = new List<GuestCandidate>();
-        string selectedRoom = roomNames.Count > 0 ? roomNames[Mathf.Clamp(selectedRoomIndex, 0, roomNames.Count - 1)] : string.Empty;
+        return new List<GuestCandidate>(candidates);
+    }
 
-        for (int i = 0; i < candidates.Count; i++)
+    private string GetSelectedRoomId()
+    {
+        if (roomNames.Count == 0)
         {
-            if (SameRoom(selectedRoom, candidates[i].RoomId) ||
-                (selectedRoom == "<no room>" && string.IsNullOrWhiteSpace(candidates[i].RoomId)))
+            return string.Empty;
+        }
+
+        string roomId = roomNames[Mathf.Clamp(selectedRoomIndex, 0, roomNames.Count - 1)];
+        return roomId == "<no room>" ? string.Empty : roomId;
+    }
+
+    private Vector2 GetCalibrationFootPoint(GuestCandidate candidate)
+    {
+        if (candidate == null)
+        {
+            return Vector2.zero;
+        }
+
+        string selectedRoom = GetSelectedRoomId();
+
+        if (candidate.Root != null)
+        {
+            RoomContentGroup room = candidate.Root.GetComponentInParent<RoomContentGroup>(true);
+            RectTransform roomStage = room != null ? room.transform as RectTransform : null;
+
+            if (roomStage != null && (string.IsNullOrWhiteSpace(selectedRoom) || SameRoom(room.RoomName, selectedRoom)))
             {
-                rows.Add(candidates[i]);
+                Vector3 localPoint = roomStage.InverseTransformPoint(candidate.Root.position);
+                return new Vector2(localPoint.x, localPoint.y);
             }
         }
 
-        return rows;
+        return SameRoom(candidate.RoomId, selectedRoom) || string.IsNullOrWhiteSpace(selectedRoom)
+            ? candidate.FootPoint
+            : Vector2.zero;
     }
 
     private GuestCandidate GetSelectedCandidate()
@@ -891,7 +1485,7 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
     {
         Debug.LogWarning(
             "[GuestScaleCalibration] Apply failed " +
-            $"guest={candidate.Label} path={GetObjectPath(candidate.Root)} room={candidate.RoomId} pose={selectedPose} " +
+            $"guest={candidate.Label} path={GetObjectPath(candidate.Root)} room={GetSelectedRoomId()} pose={selectedPose} " +
             $"scaleRoot={GetObjectPath(selectedScaleRoot)} boundsRoot={GetObjectPath(selectedBoundsRoot)} " +
             $"primaryVisual={GetObjectPath(candidate.PrimaryVisual)} beforeHeight={beforeHeight:0.###} " +
             $"targetHeight={targetHeight:0.###} afterHeight={afterHeight:0.###} " +
@@ -1010,6 +1604,13 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
             value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
+    private static bool ContainsIgnoreCase(string value, string fragment)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            !string.IsNullOrWhiteSpace(fragment) &&
+            value.IndexOf(fragment, StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
     private static bool NameLooksLikePlayerOrButler(string value)
     {
         return !string.IsNullOrWhiteSpace(value) &&
@@ -1050,6 +1651,37 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
             .ToLowerInvariant();
     }
 
+    private static string NormalizeGuestKey(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        string normalized = value.Trim()
+            .ToLowerInvariant()
+            .Replace("actor:", string.Empty)
+            .Replace("root:", string.Empty)
+            .Replace("projected:", string.Empty)
+            .Replace("walker:", string.Empty)
+            .Replace("_", string.Empty)
+            .Replace(" ", string.Empty)
+            .Replace("-", string.Empty)
+            .Replace("'", string.Empty);
+
+        if (normalized.StartsWith("guest0", StringComparison.OrdinalIgnoreCase))
+        {
+            int index = "guest".Length;
+
+            while (index < normalized.Length - 1 && normalized[index] == '0')
+            {
+                normalized = normalized.Remove(index, 1);
+            }
+        }
+
+        return normalized;
+    }
+
     private static string GetObjectPath(Transform target)
     {
         return target != null ? GuestScaleCalibrationStore.GetStableSceneObjectPath(target) : "-";
@@ -1083,7 +1715,9 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
             Transform root,
             string controllerType,
             string roomId,
-            Vector2 footPoint)
+            Vector2 footPoint,
+            string guestKey,
+            string label)
         {
             ProjectedEntity = projectedEntity;
             Walker = walker;
@@ -1092,6 +1726,8 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
             ControllerType = controllerType;
             RoomId = string.IsNullOrWhiteSpace(roomId) ? string.Empty : roomId.Trim();
             FootPoint = footPoint;
+            GuestKey = guestKey ?? string.Empty;
+            labelOverride = label ?? string.Empty;
         }
 
         public RoomProjectedEntity ProjectedEntity { get; }
@@ -1101,11 +1737,54 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
         public string ControllerType { get; }
         public string RoomId { get; }
         public Vector2 FootPoint { get; }
+        public string GuestKey { get; }
         public Transform AutoScaleRoot { get; set; }
         public Transform AutoBoundsRoot { get; set; }
         public Transform PrimaryVisual { get; set; }
         public bool IsSeated => Actor != null ? Actor.IsSeated : ProjectedEntity != null ? ProjectedEntity.IsGuestSeated() : Walker != null && Walker.IsGuestSeated();
-        public string Label => Root != null ? $"{Root.name} ({ControllerType})" : ControllerType;
+        public string Label => !string.IsNullOrWhiteSpace(labelOverride)
+            ? $"{labelOverride} ({ControllerType})"
+            : Root != null ? $"{Root.name} ({ControllerType})" : ControllerType;
+
+        private readonly string labelOverride;
+    }
+
+    private readonly struct KnownGuestDefinition
+    {
+        public KnownGuestDefinition(string guestKey, string shortName, string displayName, string[] aliases)
+        {
+            GuestKey = guestKey;
+            ShortName = shortName;
+            DisplayName = displayName;
+            Aliases = aliases ?? Array.Empty<string>();
+        }
+
+        public string GuestKey { get; }
+        public string ShortName { get; }
+        public string DisplayName { get; }
+        public string[] Aliases { get; }
+
+        public bool Matches(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            string normalized = NormalizeGuestKey(value);
+
+            for (int i = 0; i < Aliases.Length; i++)
+            {
+                if (string.Equals(normalized, NormalizeGuestKey(Aliases[i]), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return string.Equals(normalized, NormalizeGuestKey(GuestKey), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, NormalizeGuestKey(DisplayName), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, NormalizeGuestKey(ShortName), StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     private readonly struct CalibrationMetrics
@@ -1181,6 +1860,9 @@ public static class GuestScaleOverrideAudit
                 continue;
             }
 
+            ActorRoomState actor = entity.GetComponentInParent<ActorRoomState>(true);
+            RoomPersonWalker2D walker = entity.GetComponent<RoomPersonWalker2D>();
+            bool looksLikeGuestEntity = walker != null || GuestScaleCalibrationWindow.LooksLikeGuestScaleTarget(entity.gameObject, actor);
             SerializedProperty overrides = new SerializedObject(entity).FindProperty("roomVisualScaleOverrides");
             int entryCount = overrides != null && overrides.isArray ? overrides.arraySize : 0;
             summary.RoomProjectedEntityOverrideEntries += entryCount;
@@ -1196,6 +1878,11 @@ public static class GuestScaleOverrideAudit
                 string overrideRoomId = item.FindPropertyRelative("roomId")?.stringValue ?? string.Empty;
                 Vector3 scale = item.FindPropertyRelative("visualRootScale")?.vector3Value ?? Vector3.one;
                 string line = $"- {GetObjectPath(entity.transform)} room={Format(overrideRoomId)} scale={scale}";
+
+                if (!looksLikeGuestEntity)
+                {
+                    continue;
+                }
 
                 if (SameRoom(overrideRoomId, "Drawing Room"))
                 {
@@ -1214,7 +1901,10 @@ public static class GuestScaleOverrideAudit
                 }
             }
 
-            TrackGuestRoom(entity.TryResolveGuestRoomAndFootPoint(out string roomId, out _) ? roomId : string.Empty, guestRooms);
+            if (looksLikeGuestEntity)
+            {
+                TrackGuestRoom(entity.TryResolveGuestRoomAndFootPoint(out string roomId, out _) ? roomId : string.Empty, guestRooms);
+            }
         }
 
         builder.AppendLine($"RoomProjectedEntity roomVisualScaleOverrides: {summary.RoomProjectedEntityOverrideEntries}");
@@ -1361,7 +2051,13 @@ public static class GuestScaleOverrideAudit
 
             if (IsLoadedSceneObject(entity))
             {
-                AppendVisualRoot(builder, entity.GetGuestScaleRoot(), entity.name, seen, ref summary);
+                ActorRoomState actor = entity.GetComponentInParent<ActorRoomState>(true);
+                RoomPersonWalker2D walker = entity.GetComponent<RoomPersonWalker2D>();
+
+                if (walker != null || GuestScaleCalibrationWindow.LooksLikeGuestScaleTarget(entity.gameObject, actor))
+                {
+                    AppendVisualRoot(builder, entity.GetGuestScaleRoot(), entity.name, seen, ref summary);
+                }
             }
         }
 

@@ -47,6 +47,18 @@ public sealed class GuestScaleCalibrationStore : MonoBehaviour
 
     [SerializeField] private List<GuestScaleCalibrationEntry> entries = new List<GuestScaleCalibrationEntry>();
 
+    private static readonly string[][] KnownGuestAliases =
+    {
+        new[] { "guest1", "guest01", "guest_1", "guest_01", "lady", "missisoldewren", "miss_isolde_wren" },
+        new[] { "guest2", "guest02", "guest_2", "guest_02", "butlerguest", "professorlucienvale", "professor_lucien_vale" },
+        new[] { "guest3", "guest03", "guest_3", "guest_03", "misterflorianknell", "mister_florian_knell" },
+        new[] { "guest4", "guest04", "guest_4", "guest_04", "countesselowendusk", "countess_elowen_dusk" },
+        new[] { "guest5", "guest05", "guest_5", "guest_05", "baronhectorglass", "baron_hector_glass" },
+        new[] { "guest6", "guest06", "guest_6", "guest_06", "ladysabinemarrow", "lady_sabine_marrow" },
+        new[] { "guest7", "guest07", "guest_7", "guest_07", "lordambroseveil", "lord_ambrose_veil" },
+        new[] { "guest8", "guest08", "guest_8", "guest_08", "madamecoraliethread", "madame_coralie_thread" }
+    };
+
     public IReadOnlyList<GuestScaleCalibrationEntry> GetAllEntries()
     {
         EnsureEntriesList();
@@ -133,6 +145,40 @@ public sealed class GuestScaleCalibrationStore : MonoBehaviour
         return entry;
     }
 
+    public GuestScaleCalibrationEntry GetOrCreateEntry(
+        string guestKey,
+        string displayName,
+        string roomId)
+    {
+        EnsureEntriesList();
+        string cleanGuestKey = CleanGuestKey(guestKey);
+        string cleanRoomId = CleanRoomId(roomId);
+
+        for (int i = 0; i < entries.Count; i++)
+        {
+            GuestScaleCalibrationEntry entry = entries[i];
+
+            if (entry != null &&
+                IsUsableEntryForRoom(entry, cleanRoomId) &&
+                SameGuestIdentity(entry.guestKey, cleanGuestKey, entry.displayName, displayName))
+            {
+                return entry;
+            }
+        }
+
+        GuestScaleCalibrationEntry created = new GuestScaleCalibrationEntry
+        {
+            displayName = string.IsNullOrWhiteSpace(displayName) ? cleanGuestKey : displayName.Trim(),
+            roomId = cleanRoomId,
+            guestKey = cleanGuestKey,
+            pose = GuestPose.Auto,
+            heightRatioToButlerStanding = 1f,
+            manualFineTuneMultiplier = 1f
+        };
+        entries.Add(created);
+        return created;
+    }
+
     public void SetCalibrationForGuest(GuestScaleCalibrationEntry sourceEntry)
     {
         if (sourceEntry == null)
@@ -184,6 +230,29 @@ public sealed class GuestScaleCalibrationStore : MonoBehaviour
         return entry;
     }
 
+    public GuestScaleCalibrationEntry SetCalibrationForGuest(
+        string guestKey,
+        string displayName,
+        string roomId,
+        GuestPose pose,
+        Transform scaleRoot,
+        Transform boundsRoot,
+        float heightRatioToButlerStanding,
+        float manualFineTuneMultiplier)
+    {
+        GuestScaleCalibrationEntry entry = GetOrCreateEntry(guestKey, displayName, roomId);
+        entry.enabled = true;
+        entry.displayName = string.IsNullOrWhiteSpace(displayName) ? entry.displayName : displayName.Trim();
+        entry.roomId = CleanRoomId(roomId);
+        entry.guestKey = CleanGuestKey(guestKey);
+        entry.pose = pose;
+        entry.scaleRoot = scaleRoot;
+        entry.boundsRoot = boundsRoot != null ? boundsRoot : scaleRoot;
+        entry.heightRatioToButlerStanding = SanitizeRatio(heightRatioToButlerStanding);
+        entry.manualFineTuneMultiplier = SanitizeFineTune(manualFineTuneMultiplier);
+        return entry;
+    }
+
     public bool RemoveCalibrationForGuest(
         Component guestComponent,
         string roomId,
@@ -211,6 +280,27 @@ public sealed class GuestScaleCalibrationStore : MonoBehaviour
             GuestScaleCalibrationEntry entry = entries[i];
 
             if (EntryMatches(entry, projectedEntity, walker, actor, roomId, scaleRoot))
+            {
+                entries.RemoveAt(i);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool RemoveCalibrationForGuest(string guestKey, string displayName, string roomId)
+    {
+        EnsureEntriesList();
+        string cleanGuestKey = CleanGuestKey(guestKey);
+
+        for (int i = entries.Count - 1; i >= 0; i--)
+        {
+            GuestScaleCalibrationEntry entry = entries[i];
+
+            if (entry != null &&
+                IsUsableEntryForRoom(entry, roomId) &&
+                SameGuestIdentity(entry.guestKey, cleanGuestKey, entry.displayName, displayName))
             {
                 entries.RemoveAt(i);
                 return true;
@@ -447,7 +537,8 @@ public sealed class GuestScaleCalibrationStore : MonoBehaviour
             }
 
             if ((entry.actor != null && SameActorId(entry.actor, actor)) ||
-                (!string.IsNullOrWhiteSpace(actorKey) && string.Equals(entry.guestKey, actorKey, StringComparison.OrdinalIgnoreCase)))
+                (!string.IsNullOrWhiteSpace(actorKey) &&
+                SameGuestIdentity(entry.guestKey, actorKey, entry.displayName, actor.ActorId)))
             {
                 match = entry;
                 return true;
@@ -480,10 +571,10 @@ public sealed class GuestScaleCalibrationStore : MonoBehaviour
                 continue;
             }
 
-            if (SameKey(entry.guestKey, projectedKey) ||
-                SameKey(entry.guestKey, walkerKey) ||
-                SameKey(entry.guestKey, actorKey) ||
-                SameKey(entry.guestKey, rootKey))
+            if (SameGuestIdentity(entry.guestKey, projectedKey, entry.displayName, string.Empty) ||
+                SameGuestIdentity(entry.guestKey, walkerKey, entry.displayName, string.Empty) ||
+                SameGuestIdentity(entry.guestKey, actorKey, entry.displayName, actor != null ? actor.ActorId : string.Empty) ||
+                SameGuestIdentity(entry.guestKey, rootKey, entry.displayName, string.Empty))
             {
                 match = entry;
                 return true;
@@ -508,7 +599,7 @@ public sealed class GuestScaleCalibrationStore : MonoBehaviour
             (actor != null && entry.actor == actor) ||
             (scaleRoot != null && entry.scaleRoot == scaleRoot) ||
             (actor != null && SameActorId(entry.actor, actor)) ||
-            SameKey(entry.guestKey, BuildGuestKey(projectedEntity, walker, actor, scaleRoot)));
+            SameGuestIdentity(entry.guestKey, BuildGuestKey(projectedEntity, walker, actor, scaleRoot), entry.displayName, actor != null ? actor.ActorId : string.Empty));
     }
 
     private static bool IsUsableEntryForRoom(GuestScaleCalibrationEntry entry, string roomId)
@@ -589,6 +680,119 @@ public sealed class GuestScaleCalibrationStore : MonoBehaviour
         return !string.IsNullOrWhiteSpace(left) &&
             !string.IsNullOrWhiteSpace(right) &&
             string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool SameGuestIdentity(string leftKey, string rightKey, string leftDisplayName, string rightDisplayName)
+    {
+        if (SameKey(leftKey, rightKey))
+        {
+            return true;
+        }
+
+        string left = NormalizeGuestIdentity(RemoveIdentityPrefix(leftKey));
+        string right = NormalizeGuestIdentity(RemoveIdentityPrefix(rightKey));
+
+        if (!string.IsNullOrWhiteSpace(left) &&
+            !string.IsNullOrWhiteSpace(right) &&
+            string.Equals(left, right, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (KnownGuestAliasMatch(left, right))
+        {
+            return true;
+        }
+
+        string leftName = NormalizeGuestIdentity(leftDisplayName);
+        string rightName = NormalizeGuestIdentity(rightDisplayName);
+
+        if (KnownGuestAliasMatch(left, rightName) ||
+            KnownGuestAliasMatch(leftName, right) ||
+            KnownGuestAliasMatch(leftName, rightName))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool KnownGuestAliasMatch(string left, string right)
+    {
+        if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+        {
+            return false;
+        }
+
+        for (int groupIndex = 0; groupIndex < KnownGuestAliases.Length; groupIndex++)
+        {
+            bool hasLeft = false;
+            bool hasRight = false;
+            string[] aliases = KnownGuestAliases[groupIndex];
+
+            for (int aliasIndex = 0; aliasIndex < aliases.Length; aliasIndex++)
+            {
+                string alias = NormalizeGuestIdentity(aliases[aliasIndex]);
+                hasLeft |= string.Equals(left, alias, StringComparison.OrdinalIgnoreCase);
+                hasRight |= string.Equals(right, alias, StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (hasLeft && hasRight)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string RemoveIdentityPrefix(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        int prefixIndex = value.IndexOf(':');
+        return prefixIndex >= 0 ? value.Substring(prefixIndex + 1) : value;
+    }
+
+    private static string CleanGuestKey(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private static string NormalizeGuestIdentity(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        string normalized = value.Trim()
+            .ToLowerInvariant()
+            .Replace("_", string.Empty)
+            .Replace(" ", string.Empty)
+            .Replace("-", string.Empty)
+            .Replace("'", string.Empty)
+            .Replace(":", string.Empty);
+
+        if (normalized.StartsWith("actor", StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = normalized.Substring("actor".Length);
+        }
+
+        if (normalized.StartsWith("guest0", StringComparison.OrdinalIgnoreCase))
+        {
+            int index = "guest".Length;
+
+            while (index < normalized.Length - 1 && normalized[index] == '0')
+            {
+                normalized = normalized.Remove(index, 1);
+            }
+        }
+
+        return normalized;
     }
 
     private static string CleanRoomId(string value)

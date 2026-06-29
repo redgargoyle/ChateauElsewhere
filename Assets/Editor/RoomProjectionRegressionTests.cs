@@ -711,6 +711,11 @@ public class RoomProjectionRegressionTests
         Assert.That(windowText, Does.Contain("Use Selected Object As Bounds Root"));
         Assert.That(windowText, Does.Contain("Capture Current Scale Root As Base"));
         Assert.That(windowText, Does.Contain("Restore Scale Root Base"));
+        Assert.That(windowText, Does.Contain("KnownChapterGuests"), "The manual tool should offer known chapter guests even before runtime guest objects exist.");
+        Assert.That(windowText, Does.Contain("GetButlerScaleOverrideRoomIds"), "The room dropdown should come from Butler calibration rooms, not only rooms where old guest scale overrides/components exist.");
+        Assert.That(windowText, Does.Contain("AddNavigationRoomChoices"), "The room dropdown should include navigation/catalog rooms even when no guest is currently authored there.");
+        Assert.That(windowText, Does.Contain("return new List<GuestCandidate>(candidates)"), "Selecting a room should not hide guests that are not currently placed in that room.");
+        Assert.That(windowText, Does.Contain("LooksLikeGuestScaleTarget"), "Projected furniture/props should not be treated as guest calibration candidates just because they have RoomProjectedEntity.");
         Assert.That(toolText, Does.Contain("Open Manual Guest Scale Calibration"));
         Assert.That(toolText, Does.Contain("Proof 50% Using Manual Roots"));
         Assert.That(toolText, Does.Contain("Proof 150% Using Manual Roots"));
