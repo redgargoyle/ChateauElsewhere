@@ -725,7 +725,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
     public float GetGuestRelativeHeightMultiplier()
     {
-        float multiplier = ignoreVisualProfileHeightMultiplierWhenUsingButlerRules && useButlerCharacterScaleRules
+        float multiplier = ignoreVisualProfileHeightMultiplierWhenUsingButlerRules
             ? 1f
             : visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
         return Mathf.Clamp(multiplier, 0.5f, 1.5f);

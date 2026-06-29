@@ -7,6 +7,10 @@ public static class CharacterVisualBoundsUtility
 {
     private const float MinScreenSize = 0.01f;
     private const float FitTolerancePixels = 0.75f;
+    private const byte AlphaBoundsThreshold = 8;
+
+    private static readonly Dictionary<int, Rect> SpriteAlphaPixelRectCache = new Dictionary<int, Rect>();
+    private static readonly HashSet<int> SpriteAlphaPixelRectFailures = new HashSet<int>();
 
     private static readonly string[] ForbiddenContainerNames =
     {
@@ -464,14 +468,27 @@ public static class CharacterVisualBoundsUtility
                 !renderer.enabled ||
                 (!includeInactive && !renderer.gameObject.activeInHierarchy) ||
                 LooksLikeIgnoredVisual(renderer.transform) ||
-                LooksLikeForbiddenContainer(renderer.transform) ||
-                !IsValidBounds(renderer.bounds) ||
-                !TryGetWorldBoundsScreenRect(camera, renderer.bounds, out Rect screenRect))
+                LooksLikeForbiddenContainer(renderer.transform))
             {
                 continue;
             }
 
-            candidates.Add(new VisualCandidate(renderer.transform, screenRect, "Renderer bounds"));
+            string source = "Renderer bounds";
+
+            if (!TryGetSpriteRendererAlphaScreenRect(renderer as SpriteRenderer, camera, out Rect screenRect))
+            {
+                if (!IsValidBounds(renderer.bounds) ||
+                    !TryGetWorldBoundsScreenRect(camera, renderer.bounds, out screenRect))
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                source = "SpriteRenderer alpha bounds";
+            }
+
+            candidates.Add(new VisualCandidate(renderer.transform, screenRect, source));
         }
     }
 
@@ -493,13 +510,27 @@ public static class CharacterVisualBoundsUtility
                 graphic.color.a <= 0.001f ||
                 graphic.rectTransform == null ||
                 LooksLikeIgnoredVisual(graphic.transform) ||
-                LooksLikeForbiddenContainer(graphic.transform) ||
-                !TryGetRectTransformScreenRect(graphic.rectTransform, ResolveGraphicCamera(graphic, camera), out Rect screenRect))
+                LooksLikeForbiddenContainer(graphic.transform))
             {
                 continue;
             }
 
-            candidates.Add(new VisualCandidate(graphic.transform, screenRect, "Graphic rect"));
+            Camera graphicCamera = ResolveGraphicCamera(graphic, camera);
+            string source = "Graphic rect";
+
+            if (!TryGetImageSpriteAlphaScreenRect(graphic as Image, graphicCamera, out Rect screenRect))
+            {
+                if (!TryGetRectTransformScreenRect(graphic.rectTransform, graphicCamera, out screenRect))
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                source = "Image sprite alpha bounds";
+            }
+
+            candidates.Add(new VisualCandidate(graphic.transform, screenRect, source));
         }
     }
 
@@ -603,6 +634,347 @@ public static class CharacterVisualBoundsUtility
         }
 
         return TryBuildRect(hasRect, min, max, out screenRect);
+    }
+
+    private static bool TryGetImageSpriteAlphaScreenRect(Image image, Camera camera, out Rect screenRect)
+    {
+        screenRect = default;
+
+        if (image == null ||
+            image.type != Image.Type.Simple ||
+            image.sprite == null ||
+            image.rectTransform == null ||
+            !TryGetSpriteAlphaPixelRect(image.sprite, out Rect alphaPixelRect))
+        {
+            return false;
+        }
+
+        Rect spriteRect = image.sprite.rect;
+
+        if (spriteRect.width <= MinScreenSize || spriteRect.height <= MinScreenSize)
+        {
+            return false;
+        }
+
+        Rect drawRect = GetImageDrawRect(image);
+        float xMin = Mathf.Lerp(drawRect.xMin, drawRect.xMax, Mathf.Clamp01(alphaPixelRect.xMin / spriteRect.width));
+        float xMax = Mathf.Lerp(drawRect.xMin, drawRect.xMax, Mathf.Clamp01(alphaPixelRect.xMax / spriteRect.width));
+        float yMin = Mathf.Lerp(drawRect.yMin, drawRect.yMax, Mathf.Clamp01(alphaPixelRect.yMin / spriteRect.height));
+        float yMax = Mathf.Lerp(drawRect.yMin, drawRect.yMax, Mathf.Clamp01(alphaPixelRect.yMax / spriteRect.height));
+
+        return TryGetLocalRectScreenRect(
+            image.rectTransform,
+            new Vector2(xMin, yMin),
+            new Vector2(xMax, yMax),
+            camera,
+            out screenRect);
+    }
+
+    private static Rect GetImageDrawRect(Image image)
+    {
+        Rect drawRect = image.rectTransform.rect;
+
+        if (!image.preserveAspect ||
+            image.sprite == null ||
+            drawRect.width <= MinScreenSize ||
+            drawRect.height <= MinScreenSize)
+        {
+            return drawRect;
+        }
+
+        Rect spriteRect = image.sprite.rect;
+
+        if (spriteRect.width <= MinScreenSize || spriteRect.height <= MinScreenSize)
+        {
+            return drawRect;
+        }
+
+        float spriteAspect = spriteRect.width / spriteRect.height;
+        float rectAspect = drawRect.width / drawRect.height;
+
+        if (!IsFinite(spriteAspect) || !IsFinite(rectAspect) || spriteAspect <= 0f || rectAspect <= 0f)
+        {
+            return drawRect;
+        }
+
+        if (rectAspect > spriteAspect)
+        {
+            float width = drawRect.height * spriteAspect;
+            float xMin = drawRect.center.x - width * 0.5f;
+            return new Rect(xMin, drawRect.yMin, width, drawRect.height);
+        }
+
+        float height = drawRect.width / spriteAspect;
+        float yMin = drawRect.center.y - height * 0.5f;
+        return new Rect(drawRect.xMin, yMin, drawRect.width, height);
+    }
+
+    private static bool TryGetSpriteRendererAlphaScreenRect(
+        SpriteRenderer spriteRenderer,
+        Camera camera,
+        out Rect screenRect)
+    {
+        screenRect = default;
+
+        if (spriteRenderer == null ||
+            camera == null ||
+            spriteRenderer.sprite == null ||
+            spriteRenderer.drawMode != SpriteDrawMode.Simple ||
+            !TryGetSpriteAlphaPixelRect(spriteRenderer.sprite, out Rect alphaPixelRect))
+        {
+            return false;
+        }
+
+        Sprite sprite = spriteRenderer.sprite;
+        float pixelsPerUnit = sprite.pixelsPerUnit;
+
+        if (pixelsPerUnit <= MinScreenSize)
+        {
+            return false;
+        }
+
+        Vector2 pivot = sprite.pivot;
+        float xMin = (alphaPixelRect.xMin - pivot.x) / pixelsPerUnit;
+        float xMax = (alphaPixelRect.xMax - pivot.x) / pixelsPerUnit;
+        float yMin = (alphaPixelRect.yMin - pivot.y) / pixelsPerUnit;
+        float yMax = (alphaPixelRect.yMax - pivot.y) / pixelsPerUnit;
+
+        if (spriteRenderer.flipX)
+        {
+            float flippedMin = -xMax;
+            xMax = -xMin;
+            xMin = flippedMin;
+        }
+
+        if (spriteRenderer.flipY)
+        {
+            float flippedMin = -yMax;
+            yMax = -yMin;
+            yMin = flippedMin;
+        }
+
+        bool hasRect = false;
+        Vector2 min = Vector2.zero;
+        Vector2 max = Vector2.zero;
+        Transform transform = spriteRenderer.transform;
+
+        EncapsulateScreenPoint(camera.WorldToScreenPoint(transform.TransformPoint(new Vector3(xMin, yMin, 0f))), ref hasRect, ref min, ref max);
+        EncapsulateScreenPoint(camera.WorldToScreenPoint(transform.TransformPoint(new Vector3(xMin, yMax, 0f))), ref hasRect, ref min, ref max);
+        EncapsulateScreenPoint(camera.WorldToScreenPoint(transform.TransformPoint(new Vector3(xMax, yMin, 0f))), ref hasRect, ref min, ref max);
+        EncapsulateScreenPoint(camera.WorldToScreenPoint(transform.TransformPoint(new Vector3(xMax, yMax, 0f))), ref hasRect, ref min, ref max);
+
+        return TryBuildRect(hasRect, min, max, out screenRect);
+    }
+
+    private static bool TryGetLocalRectScreenRect(
+        RectTransform rectTransform,
+        Vector2 localMin,
+        Vector2 localMax,
+        Camera camera,
+        out Rect screenRect)
+    {
+        screenRect = default;
+
+        if (rectTransform == null ||
+            localMax.x - localMin.x <= MinScreenSize ||
+            localMax.y - localMin.y <= MinScreenSize)
+        {
+            return false;
+        }
+
+        bool hasRect = false;
+        Vector2 min = Vector2.zero;
+        Vector2 max = Vector2.zero;
+
+        EncapsulateScreenPoint(RectTransformUtility.WorldToScreenPoint(camera, rectTransform.TransformPoint(new Vector3(localMin.x, localMin.y, 0f))), ref hasRect, ref min, ref max);
+        EncapsulateScreenPoint(RectTransformUtility.WorldToScreenPoint(camera, rectTransform.TransformPoint(new Vector3(localMin.x, localMax.y, 0f))), ref hasRect, ref min, ref max);
+        EncapsulateScreenPoint(RectTransformUtility.WorldToScreenPoint(camera, rectTransform.TransformPoint(new Vector3(localMax.x, localMin.y, 0f))), ref hasRect, ref min, ref max);
+        EncapsulateScreenPoint(RectTransformUtility.WorldToScreenPoint(camera, rectTransform.TransformPoint(new Vector3(localMax.x, localMax.y, 0f))), ref hasRect, ref min, ref max);
+
+        return TryBuildRect(hasRect, min, max, out screenRect);
+    }
+
+    private static bool TryGetSpriteAlphaPixelRect(Sprite sprite, out Rect alphaPixelRect)
+    {
+        alphaPixelRect = default;
+
+        if (sprite == null || sprite.texture == null)
+        {
+            return false;
+        }
+
+        int cacheKey = sprite.GetInstanceID();
+
+        if (SpriteAlphaPixelRectCache.TryGetValue(cacheKey, out alphaPixelRect))
+        {
+            return true;
+        }
+
+        if (SpriteAlphaPixelRectFailures.Contains(cacheKey))
+        {
+            return false;
+        }
+
+        if (sprite.packed && sprite.packingRotation != SpritePackingRotation.None)
+        {
+            return TryCacheSpriteMeshPixelRect(sprite, cacheKey, out alphaPixelRect);
+        }
+
+        Rect textureRect;
+
+        try
+        {
+            textureRect = sprite.textureRect;
+        }
+        catch (UnityException)
+        {
+            return TryCacheSpriteMeshPixelRect(sprite, cacheKey, out alphaPixelRect);
+        }
+
+        if (textureRect.width <= MinScreenSize || textureRect.height <= MinScreenSize)
+        {
+            return TryCacheSpriteMeshPixelRect(sprite, cacheKey, out alphaPixelRect);
+        }
+
+        Texture2D texture = sprite.texture;
+        Color32[] pixels;
+
+        try
+        {
+            pixels = texture.GetPixels32();
+        }
+        catch (UnityException)
+        {
+            return TryCacheSpriteMeshPixelRect(sprite, cacheKey, out alphaPixelRect);
+        }
+        catch (ArgumentException)
+        {
+            return TryCacheSpriteMeshPixelRect(sprite, cacheKey, out alphaPixelRect);
+        }
+
+        if (pixels == null || pixels.Length == 0)
+        {
+            return TryCacheSpriteMeshPixelRect(sprite, cacheKey, out alphaPixelRect);
+        }
+
+        int textureWidth = texture.width;
+        int textureHeight = texture.height;
+        int xStart = Mathf.Clamp(Mathf.FloorToInt(textureRect.xMin), 0, textureWidth - 1);
+        int xEnd = Mathf.Clamp(Mathf.CeilToInt(textureRect.xMax) - 1, 0, textureWidth - 1);
+        int yStart = Mathf.Clamp(Mathf.FloorToInt(textureRect.yMin), 0, textureHeight - 1);
+        int yEnd = Mathf.Clamp(Mathf.CeilToInt(textureRect.yMax) - 1, 0, textureHeight - 1);
+
+        bool hasAlpha = false;
+        int minX = xEnd;
+        int maxX = xStart;
+        int minY = yEnd;
+        int maxY = yStart;
+
+        for (int y = yStart; y <= yEnd; y++)
+        {
+            int row = y * textureWidth;
+
+            for (int x = xStart; x <= xEnd; x++)
+            {
+                if (pixels[row + x].a <= AlphaBoundsThreshold)
+                {
+                    continue;
+                }
+
+                minX = Mathf.Min(minX, x);
+                maxX = Mathf.Max(maxX, x);
+                minY = Mathf.Min(minY, y);
+                maxY = Mathf.Max(maxY, y);
+                hasAlpha = true;
+            }
+        }
+
+        if (!hasAlpha)
+        {
+            return TryCacheSpriteMeshPixelRect(sprite, cacheKey, out alphaPixelRect);
+        }
+
+        float spriteXMin = Mathf.Clamp(minX - textureRect.xMin, 0f, textureRect.width);
+        float spriteXMax = Mathf.Clamp(maxX + 1f - textureRect.xMin, 0f, textureRect.width);
+        float spriteYMin = Mathf.Clamp(minY - textureRect.yMin, 0f, textureRect.height);
+        float spriteYMax = Mathf.Clamp(maxY + 1f - textureRect.yMin, 0f, textureRect.height);
+
+        alphaPixelRect = Rect.MinMaxRect(spriteXMin, spriteYMin, spriteXMax, spriteYMax);
+
+        if (alphaPixelRect.width <= MinScreenSize || alphaPixelRect.height <= MinScreenSize)
+        {
+            return TryCacheSpriteMeshPixelRect(sprite, cacheKey, out alphaPixelRect);
+        }
+
+        SpriteAlphaPixelRectCache[cacheKey] = alphaPixelRect;
+        return true;
+    }
+
+    private static bool TryCacheSpriteMeshPixelRect(Sprite sprite, int cacheKey, out Rect pixelRect)
+    {
+        if (TryGetSpriteMeshPixelRect(sprite, out pixelRect))
+        {
+            SpriteAlphaPixelRectCache[cacheKey] = pixelRect;
+            return true;
+        }
+
+        SpriteAlphaPixelRectFailures.Add(cacheKey);
+        return false;
+    }
+
+    private static bool TryGetSpriteMeshPixelRect(Sprite sprite, out Rect pixelRect)
+    {
+        pixelRect = default;
+
+        if (sprite == null || sprite.vertices == null || sprite.vertices.Length == 0)
+        {
+            return false;
+        }
+
+        float pixelsPerUnit = sprite.pixelsPerUnit;
+
+        if (pixelsPerUnit <= MinScreenSize)
+        {
+            return false;
+        }
+
+        Vector2 pivot = sprite.pivot;
+        bool hasRect = false;
+        Vector2 min = Vector2.zero;
+        Vector2 max = Vector2.zero;
+        Vector2[] vertices = sprite.vertices;
+
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            Vector2 point = vertices[i] * pixelsPerUnit + pivot;
+
+            if (!hasRect)
+            {
+                min = point;
+                max = point;
+                hasRect = true;
+                continue;
+            }
+
+            min = Vector2.Min(min, point);
+            max = Vector2.Max(max, point);
+        }
+
+        Rect spriteRect = sprite.rect;
+        min.x = Mathf.Clamp(min.x, 0f, spriteRect.width);
+        max.x = Mathf.Clamp(max.x, 0f, spriteRect.width);
+        min.y = Mathf.Clamp(min.y, 0f, spriteRect.height);
+        max.y = Mathf.Clamp(max.y, 0f, spriteRect.height);
+
+        if (!hasRect ||
+            max.x - min.x <= MinScreenSize ||
+            max.y - min.y <= MinScreenSize)
+        {
+            return false;
+        }
+
+        pixelRect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        return true;
     }
 
     private static bool TryBuildRect(bool hasRect, Vector2 min, Vector2 max, out Rect screenRect)

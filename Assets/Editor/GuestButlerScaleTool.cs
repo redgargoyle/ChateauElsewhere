@@ -251,6 +251,7 @@ public sealed class GuestButlerScaleTool : EditorWindow
             entity.SetButlerScaleSource(selectedButler, false);
             entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
             entity.SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(true, false);
+            entity.SetRoomVisualScaleOverridesEnabled(false, false);
             entity.ApplyButlerCharacterScaleNow(selectedButler);
             MarkDirty(entity);
             projected++;
@@ -320,8 +321,10 @@ public sealed class GuestButlerScaleTool : EditorWindow
                 continue;
             }
 
-            Undo.RecordObject(entity, "Bypass Old Room Visual Scale Overrides");
-            entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true);
+            Undo.RecordObject(entity, "Disable Old Room Visual Scale Overrides");
+            entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
+            entity.SetRoomVisualScaleOverridesEnabled(false, false);
+            entity.ApplyProjection();
             MarkDirty(entity);
             changed++;
         }
@@ -637,7 +640,6 @@ public sealed class GuestButlerScaleTool : EditorWindow
             entity.GetGuestScaleRoot(),
             roomId,
             footPoint,
-            entity.GetGuestRelativeHeightMultiplier(),
             entity.GetGuestPoseHeightMultiplier());
         string warning = string.Empty;
 
@@ -717,7 +719,6 @@ public sealed class GuestButlerScaleTool : EditorWindow
             walker.GetGuestScaleRoot(),
             roomId,
             footPoint,
-            walker.GetGuestRelativeHeightMultiplier(),
             walker.GetGuestPoseHeightMultiplier());
         string warning = string.Empty;
 
@@ -778,7 +779,6 @@ public sealed class GuestButlerScaleTool : EditorWindow
             actor.GetGuestScaleRoot(),
             roomId,
             footPoint,
-            actor.GetGuestRelativeHeightMultiplier(),
             actor.GetGuestPoseHeightMultiplier());
         string warning = string.Empty;
 
@@ -836,7 +836,6 @@ public sealed class GuestButlerScaleTool : EditorWindow
         Transform root,
         string roomId,
         Vector2 roomLocalFootPoint,
-        float relativeHeightMultiplier,
         float poseHeightMultiplier)
     {
         Camera camera = ResolveCamera();
@@ -868,6 +867,15 @@ public sealed class GuestButlerScaleTool : EditorWindow
                 roomId,
                 roomLocalFootPoint,
                 out sample);
+        bool hasExactRoomSample = hasSample;
+
+        if (!hasSample &&
+            selectedButler != null &&
+            selectedButler.TryEvaluateCurrentButlerCharacterScale(out sample))
+        {
+            hasSample = true;
+        }
+
         float butlerReferenceHeight = 0f;
         bool hasReferenceHeight = selectedButler != null &&
             camera != null &&
@@ -876,11 +884,12 @@ public sealed class GuestButlerScaleTool : EditorWindow
         float targetHeight = hasTargetHeight
             ? butlerReferenceHeight *
                 Mathf.Max(0.001f, sample.NormalizedScale) *
-                Mathf.Clamp(relativeHeightMultiplier, 0.5f, 1.5f) *
                 Mathf.Clamp(poseHeightMultiplier, 0.25f, 1.25f)
             : 0f;
         string lastFitResult = hasTargetHeight
-            ? string.IsNullOrWhiteSpace(visualDiagnostic) ? "Ready" : visualDiagnostic
+            ? hasExactRoomSample
+                ? string.IsNullOrWhiteSpace(visualDiagnostic) ? "Ready" : visualDiagnostic
+                : $"Using current Butler scale fallback; {visualDiagnostic}"
             : hasSample
                 ? "No Butler reference visual height"
                 : "No complete Butler calibration for this room";
@@ -891,8 +900,8 @@ public sealed class GuestButlerScaleTool : EditorWindow
         }
 
         return new VisualAudit(
-            hasSample,
-            hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
+            hasExactRoomSample,
+            hasSample ? (hasExactRoomSample ? sample.NormalizedScale.ToString("0.###") : $"{sample.NormalizedScale:0.###} fallback") : "-",
             hasCurrentHeight ? currentHeight.ToString("0.#") : "-",
             hasTargetHeight ? targetHeight.ToString("0.#") : "-",
             lastFitResult,

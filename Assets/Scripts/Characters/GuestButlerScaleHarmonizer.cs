@@ -253,6 +253,13 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         if (!hasSample)
         {
             summary.MissingCalibration++;
+
+            if (!proofMode &&
+                source != null &&
+                source.TryEvaluateCurrentButlerCharacterScale(out sample))
+            {
+                hasSample = true;
+            }
         }
 
         if (!TryGetTargetScreenHeight(
@@ -357,7 +364,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         }
 
         float relativeHeight = Mathf.Clamp(
-            target.RelativeHeightMultiplier * Mathf.Max(0.001f, defaultGuestRelativeHeightMultiplier),
+            Mathf.Max(0.001f, defaultGuestRelativeHeightMultiplier),
             0.25f,
             3f);
         float poseHeight = Mathf.Clamp(target.PoseHeightMultiplier, 0.25f, 1.25f);
@@ -378,6 +385,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             target.ProjectedEntity.SetButlerCharacterScaleRulesEnabled(true, false);
             target.ProjectedEntity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
             target.ProjectedEntity.SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(true, false);
+            target.ProjectedEntity.SetRoomVisualScaleOverridesEnabled(false, false);
 
             if (!Application.isPlaying)
             {
