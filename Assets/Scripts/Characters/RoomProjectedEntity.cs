@@ -38,9 +38,12 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     [SerializeField] private SpriteRenderer contactShadowRenderer;
     [SerializeField] private Graphic contactShadowGraphic;
     [SerializeField] private bool useButlerCharacterScaleRules = true;
+    [SerializeField] private bool useFinalHumanScaleFromButler = true;
     [SerializeField] private PointClickPlayerMovement butlerScaleSource;
     [SerializeField] private bool ignoreRoomVisualScaleOverridesWhenUsingButlerRules = true;
     [SerializeField] private bool ignoreVisualProfileHeightMultiplierWhenUsingButlerRules = true;
+    [SerializeField] private bool bypassRoomVisualScaleOverridesForFinalHumanScale = true;
+    [SerializeField] private bool bypassVisualProfileHeightMultiplierForFinalHumanScale = true;
     [SerializeField] private bool useButlerRulesOnlyForFloorCharacters = true;
     [SerializeField] private bool useRoomVisualScaleOverrides = true;
     [SerializeField, HideInInspector] private string editorSelectedVisualScaleRoomId = string.Empty;
@@ -76,10 +79,13 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public float CurrentScale => currentScale;
     public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;
-    public bool UseButlerCharacterScaleRules => useButlerCharacterScaleRules;
+    public bool UseButlerCharacterScaleRules => useButlerCharacterScaleRules || useFinalHumanScaleFromButler;
+    public bool UseFinalHumanScaleFromButler => useFinalHumanScaleFromButler;
     public PointClickPlayerMovement ButlerScaleSource => butlerScaleSource;
-    public bool IgnoreRoomVisualScaleOverridesWhenUsingButlerRules => ignoreRoomVisualScaleOverridesWhenUsingButlerRules;
-    public bool IgnoreVisualProfileHeightMultiplierWhenUsingButlerRules => ignoreVisualProfileHeightMultiplierWhenUsingButlerRules;
+    public bool IgnoreRoomVisualScaleOverridesWhenUsingButlerRules => ignoreRoomVisualScaleOverridesWhenUsingButlerRules || bypassRoomVisualScaleOverridesForFinalHumanScale;
+    public bool IgnoreVisualProfileHeightMultiplierWhenUsingButlerRules => ignoreVisualProfileHeightMultiplierWhenUsingButlerRules || bypassVisualProfileHeightMultiplierForFinalHumanScale;
+    public bool BypassRoomVisualScaleOverridesForFinalHumanScale => bypassRoomVisualScaleOverridesForFinalHumanScale;
+    public bool BypassVisualProfileHeightMultiplierForFinalHumanScale => bypassVisualProfileHeightMultiplierForFinalHumanScale;
     public bool UseButlerRulesOnlyForFloorCharacters => useButlerRulesOnlyForFloorCharacters;
     public bool IsUsingButlerCharacterScaleRules => isUsingButlerCharacterScaleRules;
     public float CurrentButlerCharacterScale => currentButlerCharacterScale;
@@ -195,6 +201,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public void SetButlerCharacterScaleRulesEnabled(bool value, bool applyImmediately = true)
     {
         useButlerCharacterScaleRules = value;
+        useFinalHumanScaleFromButler = value;
 
         if (applyImmediately)
         {
@@ -215,6 +222,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public void SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(bool value, bool applyImmediately = true)
     {
         ignoreRoomVisualScaleOverridesWhenUsingButlerRules = value;
+        bypassRoomVisualScaleOverridesForFinalHumanScale = value;
 
         if (applyImmediately)
         {
@@ -225,6 +233,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public void SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(bool value, bool applyImmediately = true)
     {
         ignoreVisualProfileHeightMultiplierWhenUsingButlerRules = value;
+        bypassVisualProfileHeightMultiplierForFinalHumanScale = value;
 
         if (applyImmediately)
         {
@@ -694,7 +703,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         float appliedScale = currentScale * currentRoomStageScaleMultiplier;
-        Vector3 baseScale = isUsingButlerCharacterScaleRules && ignoreRoomVisualScaleOverridesWhenUsingButlerRules
+        Vector3 baseScale = isUsingButlerCharacterScaleRules && IgnoreRoomVisualScaleOverridesWhenUsingButlerRules
             ? GetDefaultAuthoredVisualRootScale()
             : GetAuthoredVisualRootScaleForCurrentRoom();
         Vector3 projectedScale = new Vector3(
@@ -705,11 +714,13 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         targetRoot.localScale = projectedScale;
     }
 
+    [Obsolete("Final human scale is applied by GuestButlerScaleHarmonizer.")]
     public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source = null)
     {
         ApplyButlerCharacterScaleNow(source, 1f);
     }
 
+    [Obsolete("Final human scale is applied by GuestButlerScaleHarmonizer.")]
     public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier)
     {
         if (source != null)
@@ -748,7 +759,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
     public float GetGuestRelativeHeightMultiplier()
     {
-        float multiplier = ignoreVisualProfileHeightMultiplierWhenUsingButlerRules && useButlerCharacterScaleRules
+        float multiplier = IgnoreVisualProfileHeightMultiplierWhenUsingButlerRules && UseButlerCharacterScaleRules
             ? 1f
             : visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
         return Mathf.Clamp(multiplier, 0.5f, 1.5f);
@@ -788,6 +799,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return !string.IsNullOrWhiteSpace(roomId);
     }
 
+    [Obsolete("Final human scale is applied by GuestButlerScaleHarmonizer.")]
     private void ForceApplyButlerCharacterScale(
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,
         float debugScaleMultiplier)
@@ -812,7 +824,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             Mathf.Max(0.001f, debugScaleMultiplier) *
             Mathf.Max(0.001f, visualScale) *
             Mathf.Max(0.001f, currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : GetRoomStageScaleMultiplier());
-        Vector3 baseScale = ignoreRoomVisualScaleOverridesWhenUsingButlerRules
+        Vector3 baseScale = IgnoreRoomVisualScaleOverridesWhenUsingButlerRules
             ? GetDefaultAuthoredVisualRootScale()
             : GetAuthoredVisualRootScaleForCurrentRoom();
         Vector3 projectedScale = new Vector3(
@@ -826,7 +838,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
     private bool ShouldIgnoreVisualProfileHeightMultiplierForButlerRules()
     {
-        return ignoreVisualProfileHeightMultiplierWhenUsingButlerRules &&
+        return IgnoreVisualProfileHeightMultiplierWhenUsingButlerRules &&
             isUsingButlerCharacterScaleRules;
     }
 
@@ -1060,7 +1072,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     {
         sample = default;
 
-        if (!useButlerCharacterScaleRules ||
+        if (!UseButlerCharacterScaleRules ||
             (useButlerRulesOnlyForFloorCharacters && projectionMode != ProjectionMode.FloorCharacter))
         {
             return false;

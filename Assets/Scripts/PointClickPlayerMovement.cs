@@ -473,6 +473,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return standingHumanReferenceScreenHeight > 0.01f;
 	}
 
+	public bool TryGetButlerStandingHumanReferenceScreenHeight(
+		Camera camera,
+		out float standingReferenceHeight,
+		out string diagnostic)
+	{
+		return TryGetButlerHumanScaleReference(camera, out standingReferenceHeight, out diagnostic);
+	}
+
 	public bool TryGetButlerTargetScreenHeight(
 		Camera camera,
 		ButlerCharacterScaleSample sample,

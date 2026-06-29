@@ -231,6 +231,7 @@ public class ActorRoomState : MonoBehaviour
         return TryGetButlerScaleRoomAndFootPoint(out roomId, out roomLocalFootPoint);
     }
 
+    [Obsolete("Final human scale is applied by GuestButlerScaleHarmonizer.")]
     public bool ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier = 1f)
     {
         if (HasActiveProjection())
@@ -908,6 +909,7 @@ public class ActorRoomState : MonoBehaviour
         return false;
     }
 
+    [Obsolete("Final human scale is applied by GuestButlerScaleHarmonizer.")]
     private static Vector3 BuildButlerActorScale(
         Vector3 baseScale,
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,

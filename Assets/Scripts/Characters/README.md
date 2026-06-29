@@ -60,19 +60,20 @@ Do not edit Transform scale manually for calibration. Do not use Advanced reset 
 
 ## Guest Scaling From Butler Rules
 
-The manually calibrated Butler room scale is now the shared depth scale source for guests. Guests do not copy the Butler's raw size. Guests use the Butler's normalized room/depth scale multiplier, then keep their own authored scale, sitting/standing art proportions, and `CharacterVisualProfile.HeightScaleMultiplier`.
+The manually calibrated Butler room scale is now the shared room human-scale calibration. Guests do not copy the Butler's raw `localScale`, and they do not keep old hidden guest multipliers in the final fit. `RoomHumanScaleService` reads the Butler front/back room calibration and returns a normalized standing human scale for any room-local foot point.
 
-Guest scaling also uses a final visual-height fitter. The Butler's manually calibrated room scale gives the depth rule, but guests are finally resized by measured rendered height, not by raw `localScale`. This is necessary because the Butler and guests may live in different coordinate systems. The fitter resolves visible art first, then keeps separate `BoundsRoot`, `ScaleRoot`, and primary visual targets so containers and room stages do not accidentally become the measured character.
+`GuestButlerScaleHarmonizer` is the final visible-size writer for guests. It runs late, resolves the visible art, asks `RoomHumanScaleService` for the room/depth standing scale, then fits the guest's measured screen height to:
 
-`RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result, then uses `CharacterVisualBoundsUtility` to fit each guest's visible screen height to the Butler-derived target height.
+`Butler standing reference height * normalized standing room scale * pose ratio * manual fine tune`
 
-Manual guest scale calibration is available from `Tools > Characters > Manual Guest Scale Calibration`. This stores per-guest/per-room entries in `GuestScaleCalibrationStore` on the Butler or harmonizer object. A saved entry can choose the exact `scaleRoot` to resize and the `boundsRoot` to measure, which is the escape hatch when automatic root detection picks a room/container instead of the visible guest art.
+The final fit must not multiply by guest local scale, guest authored scale, `CharacterVisualProfile.HeightScaleMultiplier`, `RoomProjectedEntity.roomVisualScaleOverrides`, `RoomPersonWalker2D` near/far/profile scale, or `ActorRoomState` authored scale. Those older data paths can remain for compatibility, but final human scaling bypasses them and writes the visible result last.
 
-Manual entries do not create per-guest front/back room curves. The Butler room calibration remains the room/depth source. A manual guest target height is:
+Use `GuestPoseScaleOverrideStore` only for intentional exceptions:
 
-`Butler standing reference height * Butler normalized room/depth scale * pose ratio * manual fine tune`
-
-The manual path bypasses old guest visible-height inputs while the final fitter is active: `RoomProjectedEntity.roomVisualScaleOverrides`, `CharacterVisualProfile.HeightScaleMultiplier`, `RoomPersonWalker2D` near/far/profile scale, and `ActorRoomState` room-stage scale writes may still exist for compatibility, but the final harmonizer writes the visible result last.
+- seated Drawing Room guests
+- seated Dining Room guests
+- special crouching, lying, or hiding poses
+- furniture-specific fine tuning
 
 Pose ratios:
 
@@ -86,28 +87,18 @@ To enable:
 1. Open `Tools > Characters > Apply Butler Scaling To Guests`.
 2. Click `Find Scene Butler`.
 3. Click `Add/Ensure GuestButlerScaleHarmonizer`.
-4. Click `ENABLE FINAL HUMAN SCALE FOR ALL GUESTS`.
-5. Click `PRINT SCALE WRITER AUDIT`.
-6. Click `REFRESH FINAL HUMAN SCALE NOW`.
-7. Use `PROOF 50%` and `PROOF 150%`.
+4. Click `RUN HUMAN SCALE AUDIT`.
+5. Click `ENABLE FINAL HUMAN SCALE FROM BUTLER FOR ALL GUESTS`.
+6. Click `BYPASS OLD GUEST ROOM SCALE OVERRIDES`.
+7. Click `REFRESH FINAL HUMAN SCALE NOW`.
+8. Use `PROOF: SHRINK ALL GUESTS TO 50%` and `PROOF: GROW ALL GUESTS TO 150%`.
    Every detected guest should visibly change, even if that room has no Butler calibration.
-8. Check `Room Calibration Coverage`.
+9. Check `Room Calibration Coverage`.
    Any room with guests and no Butler calibration must be calibrated or aliased before real Butler scaling can affect those guests.
-9. Click `SAVE SCENE`.
-10. Test in Play Mode by standing the Butler next to guests and confirming their visual height/scale belongs to the same room system.
-
-Manual workflow:
-
-1. Open `Tools > Characters > Manual Guest Scale Calibration`.
-2. Click `Find Scene Butler`.
-3. Click `Ensure Calibration Store`.
-4. Pick a room and guest.
-5. Verify the selected scale root is the visible character art, not the room/container.
-6. Set pose: `Standing`, `Seated`, `Crouching`, or `Lying`.
-7. Click `Auto Match Guest To Butler Here`.
-8. Adjust `Manual Fine Tune` if needed.
-9. Click `Save Calibration For This Guest In This Room`.
-10. Use `Next Guest` and repeat, then `Save Scene`.
+10. Use `RESTORE PROOF BASELINES`.
+11. Use `OPEN POSE / FURNITURE OVERRIDE TOOL` only for seated or special pose exceptions.
+12. Click `SAVE SCENE`.
+13. Test in Play Mode by standing the Butler next to guests and confirming their visual height belongs to the same room human-scale system.
 
 Use `Tools > Characters > Human Scale Audit` or `PRINT ALL GUEST SCALE WRITERS` when a guest still looks wrong. The report lists each guest-like object's controller type, visible art, scale root, room-local foot Y, seated state, current/target visual height, and competing writers such as room visual overrides, profile height multipliers, walker near/far scale, room-stage scale motion, and Animator localScale curves.
 

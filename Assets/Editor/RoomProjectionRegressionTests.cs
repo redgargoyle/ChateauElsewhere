@@ -612,9 +612,10 @@ public class RoomProjectionRegressionTests
         Assert.That(harmonizerText, Does.Contain("ResolveManualCalibration"), "The final harmonizer should look up saved manual guest calibration entries.");
         Assert.That(harmonizerText, Does.Contain("TryResolveManualVisualRoots"), "Saved manual roots should be applied before automatic visual-root selection.");
         Assert.That(prepareBody, Does.Contain("SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true"), "Old roomVisualScaleOverrides should be bypassed when final human scaling is active.");
-        Assert.That(targetHeightBody, Does.Contain("TryGetButlerTargetScreenHeight"), "Final scaling should use the baked Butler final local scale as the visual-height target.");
+        Assert.That(targetHeightBody, Does.Contain("TryGetButlerStandingHumanReferenceScreenHeight"), "Final scaling should use the Butler standing reference height.");
+        Assert.That(targetHeightBody, Does.Contain("sample.NormalizedStandingScale"), "Final scaling should apply the shared room human scale sample.");
         Assert.That(targetHeightBody, Does.Not.Contain("target.RelativeHeightMultiplier"), "Automatic final scaling must not shrink guests through legacy relative-height multipliers.");
-        Assert.That(targetHeightBody, Does.Not.Contain("target.PoseHeightMultiplier"), "Automatic final scaling must not shrink seated guests unless a manual calibration explicitly requests it.");
+        Assert.That(targetHeightBody, Does.Not.Contain("target.PoseHeightMultiplier"), "Automatic final scaling must not use legacy guest pose multipliers.");
     }
 
     [Test]
@@ -623,12 +624,12 @@ public class RoomProjectionRegressionTests
         string projectionText = File.ReadAllText(RoomProjectedEntityPath);
         string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
         string prepareBody = ExtractMethodBody(harmonizerText, "private void PrepareControllerForFinalHumanScale");
-        string manualBranch = ExtractBetween(harmonizerText, "if (target.ManualCalibration != null)", "targetHeight = butlerTargetHeight *");
+        string poseRatioBody = ExtractMethodBody(harmonizerText, "private float ResolvePoseHeightRatio");
 
         Assert.That(projectionText, Does.Contain("SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules"), "Projection should expose the profile-height bypass.");
         Assert.That(prepareBody, Does.Contain("SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(true"), "Final human scaling should turn the profile-height bypass on.");
-        Assert.That(manualBranch, Does.Not.Contain("HeightScaleMultiplier"), "Manual target height must not multiply by CharacterVisualProfile.HeightScaleMultiplier.");
-        Assert.That(manualBranch, Does.Not.Contain("RelativeHeightMultiplier"), "Manual target height must not use the legacy relative-height multiplier path.");
+        Assert.That(poseRatioBody, Does.Not.Contain("HeightScaleMultiplier"), "Pose ratios must not multiply by CharacterVisualProfile.HeightScaleMultiplier.");
+        Assert.That(poseRatioBody, Does.Not.Contain("RelativeHeightMultiplier"), "Pose ratios must not use the legacy relative-height multiplier path.");
     }
 
     [Test]
@@ -670,12 +671,12 @@ public class RoomProjectionRegressionTests
     public void ManualCalibrationDoesNotMultiplyByGuestBaseScale()
     {
         string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
-        string manualBranch = ExtractBetween(harmonizerText, "if (target.ManualCalibration != null)", "targetHeight = butlerTargetHeight *");
+        string targetHeightBody = ExtractMethodBody(harmonizerText, "private bool TryGetTargetScreenHeight");
 
-        Assert.That(manualBranch, Does.Contain("butlerTargetHeight"), "Manual calibration should target the baked Butler final local scale for the selected room/depth.");
-        Assert.That(manualBranch, Does.Contain("manualFineTune"), "Manual calibration should apply the saved fine-tune multiplier.");
-        Assert.That(manualBranch, Does.Not.Contain("sample.NormalizedScale"), "Manual calibration must not use normalized reference math after the baked Butler height has been resolved.");
-        Assert.That(manualBranch, Does.Not.Contain("localScale"), "Manual target height must not multiply by the guest's base localScale.");
+        Assert.That(targetHeightBody, Does.Contain("standingReferenceHeight"), "Final calibration should target the shared standing human reference height.");
+        Assert.That(targetHeightBody, Does.Contain("fineTune"), "Pose/furniture exceptions should apply the saved fine-tune multiplier.");
+        Assert.That(targetHeightBody, Does.Not.Contain("sample.NormalizedScale"), "Final target height must use the character-agnostic HumanScaleSample naming.");
+        Assert.That(targetHeightBody, Does.Not.Contain("localScale"), "Final target height must not multiply by the guest's base localScale.");
     }
 
     [Test]
@@ -718,9 +719,12 @@ public class RoomProjectionRegressionTests
         Assert.That(windowText, Does.Contain("AddNavigationRoomChoices"), "The room dropdown should include navigation/catalog rooms even when no guest is currently authored there.");
         Assert.That(windowText, Does.Contain("return new List<GuestCandidate>(candidates)"), "Selecting a room should not hide guests that are not currently placed in that room.");
         Assert.That(windowText, Does.Contain("LooksLikeGuestScaleTarget"), "Projected furniture/props should not be treated as guest calibration candidates just because they have RoomProjectedEntity.");
-        Assert.That(toolText, Does.Contain("Open Manual Guest Scale Calibration"));
-        Assert.That(toolText, Does.Contain("Proof 50% Using Manual Roots"));
-        Assert.That(toolText, Does.Contain("Proof 150% Using Manual Roots"));
+        Assert.That(toolText, Does.Contain("RUN HUMAN SCALE AUDIT"));
+        Assert.That(toolText, Does.Contain("ENABLE FINAL HUMAN SCALE FROM BUTLER FOR ALL GUESTS"));
+        Assert.That(toolText, Does.Contain("BYPASS OLD GUEST ROOM SCALE OVERRIDES"));
+        Assert.That(toolText, Does.Contain("PROOF: SHRINK ALL GUESTS TO 50%"));
+        Assert.That(toolText, Does.Contain("PROOF: GROW ALL GUESTS TO 150%"));
+        Assert.That(toolText, Does.Contain("OPEN POSE / FURNITURE OVERRIDE TOOL"));
     }
 
     private static RoomPerspectiveProfile CreatePerspectiveProfile()

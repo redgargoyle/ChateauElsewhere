@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -167,11 +168,13 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		RefreshDepthVisualsNow();
 	}
 
+	[Obsolete("Final human scale is applied by GuestButlerScaleHarmonizer.")]
 	public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source = null)
 	{
 		ApplyButlerCharacterScaleNow(source, 1f);
 	}
 
+	[Obsolete("Final human scale is applied by GuestButlerScaleHarmonizer.")]
 	public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier)
 	{
 		if (source != null)
@@ -258,7 +261,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	public bool TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 roomLocalFootPoint)
 	{
 		roomId = ResolveButlerScaleRoomId();
-		roomLocalFootPoint = currentPosition;
+		roomLocalFootPoint = GetCurrentScaleFootPoint();
 		return !string.IsNullOrWhiteSpace(roomId);
 	}
 
@@ -567,10 +570,12 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 	private float GetDepth01()
 	{
-		if (TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
-			return profile.GetDepth01(currentPosition);
+		Vector2 footPoint = GetCurrentScaleFootPoint();
 
-		return Mathf.Clamp01(Mathf.InverseLerp(nearY, farY, currentPosition.y));
+		if (TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
+			return profile.GetDepth01(footPoint);
+
+		return Mathf.Clamp01(Mathf.InverseLerp(nearY, farY, footPoint.y));
 	}
 
 	private float GetDepthScale()
@@ -580,10 +585,27 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 		ClearButlerCharacterScaleDebug();
 
+		Vector2 footPoint = GetCurrentScaleFootPoint();
+
 		if (TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile profile))
-			return profile.GetScale(currentPosition);
+			return profile.GetScale(footPoint);
 
 		return Mathf.Lerp(nearScale, farScale, GetDepth01());
+	}
+
+	private Vector2 GetCurrentScaleFootPoint()
+	{
+		if (roomProjection != null && roomProjection.IsProjectionActive)
+		{
+			return roomProjection.RoomLocalFootPoint;
+		}
+
+		if (!Application.isPlaying && rectTransform != null)
+		{
+			return rectTransform.anchoredPosition;
+		}
+
+		return currentPosition;
 	}
 
 	private Vector3 BuildDepthScaleVector(float depthScale, bool useAuthoredScale, float debugScaleMultiplier)
@@ -604,6 +626,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 			baseScale.z);
 	}
 
+	[Obsolete("Final human scale is applied by GuestButlerScaleHarmonizer.")]
 	private void ApplyButlerScaleSample(PointClickPlayerMovement.ButlerCharacterScaleSample sample, float debugScaleMultiplier)
 	{
 		isUsingButlerCharacterScaleRules = true;
@@ -631,7 +654,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 		PointClickPlayerMovement source = ResolveButlerScaleSource();
 
-		if (source == null || !source.TryEvaluateButlerCharacterScale(roomId, currentPosition, out sample))
+		if (source == null || !source.TryEvaluateButlerCharacterScale(roomId, GetCurrentScaleFootPoint(), out sample))
 		{
 			return false;
 		}

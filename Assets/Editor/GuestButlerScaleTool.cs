@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -88,6 +89,12 @@ public sealed class GuestButlerScaleTool : EditorWindow
             GuestScaleCalibrationWindow.Open();
         }
 
+        if (GUILayout.Button("RUN HUMAN SCALE AUDIT"))
+        {
+            HumanScaleAuditSummary audit = HumanScaleAudit.WriteReportForLoadedScenes();
+            lastStatus = $"Wrote HumanScaleAudit.md. Overrides {audit.RoomProjectedEntityOverrideEntries}, Drawing {audit.DrawingRoomOverrideEntries}, Dining {audit.DiningRoomOverrideEntries}, Entrance {audit.EntranceOverrideEntries}.";
+        }
+
         if (GUILayout.Button("Run Guest Scale Override Audit"))
         {
             GuestScaleOverrideAuditSummary audit = GuestScaleOverrideAudit.WriteReport();
@@ -96,17 +103,7 @@ public sealed class GuestButlerScaleTool : EditorWindow
 
         using (new EditorGUI.DisabledScope(selectedButler == null))
         {
-            if (GUILayout.Button("Apply Saved Manual Guest Calibrations Now"))
-            {
-                GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
-                EnsureCalibrationStore();
-                GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer != null
-                    ? harmonizer.RefreshNow()
-                    : GuestButlerScaleHarmonizer.GuestScaleApplySummary.Empty;
-                lastStatus = $"Applied saved manual guest calibrations. Scaled {summary.Scaled}, missing calibration {summary.MissingCalibration}, failed {summary.FitFailed + summary.NoVisualBounds}.";
-            }
-
-            if (GUILayout.Button("ENABLE FINAL HUMAN SCALE FOR ALL GUESTS"))
+            if (GUILayout.Button("ENABLE FINAL HUMAN SCALE FROM BUTLER FOR ALL GUESTS"))
             {
                 EnableButlerScalingOnAllGuests();
             }
@@ -121,7 +118,7 @@ public sealed class GuestButlerScaleTool : EditorWindow
                 PrintScaleWriterAudit();
             }
 
-            if (GUILayout.Button("Bypass Old Room Visual Scale Overrides For All Guests"))
+            if (GUILayout.Button("BYPASS OLD GUEST ROOM SCALE OVERRIDES"))
             {
                 int changed = BypassOldRoomVisualScaleOverrides();
                 lastStatus = $"Bypassed old room visual scale overrides on {changed} projected guest(s).";
@@ -136,12 +133,14 @@ public sealed class GuestButlerScaleTool : EditorWindow
                 lastStatus = $"Refreshed guest scaling. Scaled {summary.Scaled}, missing calibration {summary.MissingCalibration}, skipped {summary.Skipped}.";
             }
 
-            if (GUILayout.Button("EMERGENCY: Restore Proof Baselines / Clamp Bad Guest Scales"))
+            if (GUILayout.Button("OPEN POSE / FURNITURE OVERRIDE TOOL"))
             {
-                EmergencyRestoreProofBaselinesAndClampBadGuestScales();
+                GuestPoseScaleOverrideStore store = EnsurePoseOverrideStore();
+                Selection.activeObject = store;
+                lastStatus = store != null ? "Selected the GuestPoseScaleOverrideStore for pose/furniture exceptions." : "No Butler/player selected for pose override store.";
             }
 
-            if (GUILayout.Button("Emergency Restore / Clamp Bad Guest Scales"))
+            if (GUILayout.Button("EMERGENCY: RESTORE / CLAMP BAD GUEST SCALES"))
             {
                 EmergencyRestoreProofBaselinesAndClampBadGuestScales();
             }
@@ -161,32 +160,17 @@ public sealed class GuestButlerScaleTool : EditorWindow
 
         using (new EditorGUI.DisabledScope(selectedButler == null))
         {
-            if (GUILayout.Button("Proof 50% Using Manual Roots"))
+            if (GUILayout.Button("PROOF: SHRINK ALL GUESTS TO 50%"))
             {
                 RunProof(0.5f);
             }
 
-            if (GUILayout.Button("Proof 150% Using Manual Roots"))
+            if (GUILayout.Button("PROOF: GROW ALL GUESTS TO 150%"))
             {
                 RunProof(1.5f);
             }
 
-            if (GUILayout.Button("Restore Proof Baselines"))
-            {
-                RestoreProof();
-            }
-
-            if (GUILayout.Button("PROOF 50%"))
-            {
-                RunProof(0.5f);
-            }
-
-            if (GUILayout.Button("PROOF 150%"))
-            {
-                RunProof(1.5f);
-            }
-
-            if (GUILayout.Button("Restore Real Butler Scaling"))
+            if (GUILayout.Button("RESTORE PROOF BASELINES"))
             {
                 RestoreProof();
             }
@@ -292,7 +276,6 @@ public sealed class GuestButlerScaleTool : EditorWindow
             entity.SetButlerScaleSource(selectedButler, false);
             entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
             entity.SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(true, false);
-            entity.ApplyButlerCharacterScaleNow(selectedButler);
             MarkDirty(entity);
             projected++;
         }
@@ -311,7 +294,6 @@ public sealed class GuestButlerScaleTool : EditorWindow
             walker.SetButlerCharacterScaleRulesEnabled(true, false);
             walker.SetButlerScaleSource(selectedButler, false);
             walker.SetPreserveAuthoredLocalScaleWhenUsingButlerRules(true, false);
-            walker.ApplyButlerCharacterScaleNow(selectedButler);
             MarkDirty(walker);
             walkers++;
         }
@@ -335,11 +317,11 @@ public sealed class GuestButlerScaleTool : EditorWindow
                 actor.ResetAuthoredActorScaleForEditor();
             }
 
-            actor.ApplyButlerCharacterScaleNow(selectedButler);
             MarkDirty(actor);
             actors++;
         }
 
+        EnsurePoseOverrideStore();
         harmonizer?.RefreshNow();
         MarkSceneDirtyFromButler();
         lastStatus = $"Enabled Butler scaling on {projected} projected guest(s), {walkers} walker(s), and {actors} actor guest(s).";
@@ -543,6 +525,29 @@ public sealed class GuestButlerScaleTool : EditorWindow
             Undo.RecordObject(harmonizer, "Assign Guest Scale Calibration Store");
             harmonizer.SetCalibrationStore(store);
             MarkDirty(harmonizer);
+        }
+
+        MarkDirty(store);
+        return store;
+    }
+
+    private GuestPoseScaleOverrideStore EnsurePoseOverrideStore()
+    {
+        if (selectedButler == null)
+        {
+            selectedButler = FindSceneButler();
+        }
+
+        if (selectedButler == null)
+        {
+            return null;
+        }
+
+        GuestPoseScaleOverrideStore store = selectedButler.GetComponent<GuestPoseScaleOverrideStore>();
+
+        if (store == null)
+        {
+            store = Undo.AddComponent<GuestPoseScaleOverrideStore>(selectedButler.gameObject);
         }
 
         MarkDirty(store);
@@ -1517,5 +1522,759 @@ public sealed class GuestButlerScaleTool : EditorWindow
         public bool HasCompleteCalibration { get; }
         public int GuestCount { get; }
         public string PossibleMatches { get; }
+    }
+}
+
+public struct HumanScaleAuditSummary
+{
+    public int ButlerRoomScaleOverrideEntries;
+    public int CompleteButlerRoomScaleOverrides;
+    public int RoomProjectedEntityComponents;
+    public int RoomProjectedEntityFloorCharacters;
+    public int RoomProjectedEntityUsingRoomVisualScaleOverrides;
+    public int RoomProjectedEntityWithNonEmptyOverrides;
+    public int RoomProjectedEntityOverrideEntries;
+    public int DrawingRoomOverrideEntries;
+    public int DiningRoomOverrideEntries;
+    public int EntranceOverrideEntries;
+    public int RoomPersonWalkerComponents;
+    public int CustomWalkerScaleEntries;
+    public int ActorRoomStateComponents;
+    public int ActorRoomStageScaleEntries;
+    public int CharacterVisualProfileAssets;
+    public int NonOneCharacterHeightMultipliers;
+    public int AnimationClipsWithScaleCurves;
+    public int AnimationScaleCurveBindings;
+    public int GuestTransformOrBaseScaleMismatches;
+    public int RoomsWithGuestsButNoButlerCalibration;
+}
+
+public static class HumanScaleAudit
+{
+    public const string ReportPath = "Assets/Editor/Reports/HumanScaleAudit.md";
+
+    [MenuItem("Tools/Characters/Human Scale Audit/Write Report")]
+    public static void WriteReportMenu()
+    {
+        HumanScaleAuditSummary summary = WriteReportForLoadedScenes();
+        Debug.Log(
+            $"[HumanScaleAudit] Wrote {ReportPath}. " +
+            $"RoomProjectedEntity overrides={summary.RoomProjectedEntityOverrideEntries}, " +
+            $"Drawing={summary.DrawingRoomOverrideEntries}, Dining={summary.DiningRoomOverrideEntries}, Entrance={summary.EntranceOverrideEntries}.");
+    }
+
+    public static void WriteGameplayReportForBatch()
+    {
+        const string gameplayScenePath = "Assets/Scenes/Gameplay.unity";
+
+        if (File.Exists(gameplayScenePath))
+        {
+            EditorSceneManager.OpenScene(gameplayScenePath, OpenSceneMode.Single);
+        }
+
+        WriteReportMenu();
+    }
+
+    public static HumanScaleAuditSummary WriteReportForLoadedScenes()
+    {
+        HumanScaleAuditSummary summary = BuildReportForLoadedScenes(out string report);
+        string directory = Path.GetDirectoryName(ReportPath);
+
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        File.WriteAllText(ReportPath, report, Encoding.UTF8);
+        AssetDatabase.Refresh();
+        return summary;
+    }
+
+    public static HumanScaleAuditSummary BuildReportForLoadedScenes(out string report)
+    {
+        HumanScaleAuditSummary summary = new HumanScaleAuditSummary();
+        StringBuilder builder = new StringBuilder(64 * 1024);
+        PointClickPlayerMovement butler = FindSceneButler();
+        Dictionary<string, bool> butlerCompleteRooms = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> guestRooms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        builder.AppendLine("# Human Scale Audit");
+        builder.AppendLine();
+        builder.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        builder.AppendLine();
+
+        AppendButlerScaleData(builder, butler, ref summary, butlerCompleteRooms);
+        AppendRoomProjectedEntityData(builder, ref summary, guestRooms);
+        AppendRoomPersonWalkerData(builder, ref summary, guestRooms);
+        AppendActorRoomStateData(builder, ref summary, guestRooms);
+        AppendCharacterVisualProfileData(builder, ref summary);
+        AppendAnimationScaleCurveData(builder, ref summary);
+        AppendRuntimeScaleWriters(builder);
+        AppendMissingCalibrationData(builder, butlerCompleteRooms, guestRooms, ref summary);
+        AppendSummary(builder, summary);
+        AppendLikelyBlockers(builder, summary);
+
+        report = builder.ToString();
+        return summary;
+    }
+
+    private static void AppendButlerScaleData(
+        StringBuilder builder,
+        PointClickPlayerMovement butler,
+        ref HumanScaleAuditSummary summary,
+        Dictionary<string, bool> completeRooms)
+    {
+        builder.AppendLine("## Butler Scale Data");
+
+        if (butler == null)
+        {
+            builder.AppendLine("- Butler object path: not found");
+            builder.AppendLine();
+            return;
+        }
+
+        SerializedObject serialized = new SerializedObject(butler);
+        SerializedProperty overrides = serialized.FindProperty("butlerRoomScaleOverrides");
+        SerializedProperty authoredLocalScale = serialized.FindProperty("authoredLocalScale");
+        SerializedProperty calibrationBase = serialized.FindProperty("butlerCalibrationBaseLocalScale");
+
+        builder.AppendLine($"- Butler object path: {GetObjectPath(butler.transform)}");
+        builder.AppendLine($"- butlerCalibrationBaseLocalScale: {FormatVector3(calibrationBase != null ? calibrationBase.vector3Value : butler.ButlerCalibrationBaseLocalScale)}");
+        builder.AppendLine($"- current transform.localScale: {FormatVector3(butler.transform.localScale)}");
+        builder.AppendLine($"- authoredLocalScale: {FormatVector3(authoredLocalScale != null ? authoredLocalScale.vector3Value : Vector3.one)}");
+
+        int overrideCount = overrides != null && overrides.isArray ? overrides.arraySize : 0;
+        summary.ButlerRoomScaleOverrideEntries = overrideCount;
+        builder.AppendLine($"- total butlerRoomScaleOverrides: {overrideCount}");
+
+        if (overrides != null && overrides.isArray)
+        {
+            for (int i = 0; i < overrides.arraySize; i++)
+            {
+                SerializedProperty entry = overrides.GetArrayElementAtIndex(i);
+                string roomId = GetString(entry, "roomId");
+                bool hasFront = GetBool(entry, "hasFront");
+                bool hasBack = GetBool(entry, "hasBack");
+                float frontY = GetFloat(entry, "frontRoomLocalFootY");
+                float backY = GetFloat(entry, "backRoomLocalFootY");
+                float frontScale = GetFloat(entry, "frontFinalLocalScaleY");
+                float backScale = GetFloat(entry, "backFinalLocalScaleY");
+                bool complete = hasFront && hasBack && Mathf.Abs(frontY - backY) >= 0.01f;
+
+                if (!string.IsNullOrWhiteSpace(roomId))
+                {
+                    completeRooms[NormalizeRoom(roomId)] = complete;
+                }
+
+                if (complete)
+                {
+                    summary.CompleteButlerRoomScaleOverrides++;
+                }
+
+                builder.AppendLine(
+                    $"- {roomId}: hasFront={YesNo(hasFront)}, frontY={frontY:0.###}, frontFinalLocalScaleY={frontScale:0.###}, " +
+                    $"hasBack={YesNo(hasBack)}, backY={backY:0.###}, backFinalLocalScaleY={backScale:0.###}, complete={YesNo(complete)}");
+            }
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendRoomProjectedEntityData(
+        StringBuilder builder,
+        ref HumanScaleAuditSummary summary,
+        HashSet<string> guestRooms)
+    {
+        builder.AppendLine("## RoomProjectedEntity Guest Scale Data");
+        Dictionary<string, int> entriesByRoom = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        RoomProjectedEntity[] entities = UnityEngine.Object.FindObjectsByType<RoomProjectedEntity>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < entities.Length; i++)
+        {
+            RoomProjectedEntity entity = entities[i];
+
+            if (!IsLoadedSceneObject(entity))
+            {
+                continue;
+            }
+
+            summary.RoomProjectedEntityComponents++;
+
+            if (entity.Mode == RoomProjectedEntity.ProjectionMode.FloorCharacter)
+            {
+                summary.RoomProjectedEntityFloorCharacters++;
+            }
+
+            SerializedObject serialized = new SerializedObject(entity);
+            bool usesOverrides = GetBool(serialized, "useRoomVisualScaleOverrides");
+            SerializedProperty overrides = serialized.FindProperty("roomVisualScaleOverrides");
+            int nonEmptyEntries = 0;
+
+            if (usesOverrides)
+            {
+                summary.RoomProjectedEntityUsingRoomVisualScaleOverrides++;
+            }
+
+            if (entity.TryResolveGuestRoomAndFootPoint(out string currentRoomId, out _))
+            {
+                AddRoom(guestRooms, currentRoomId);
+            }
+
+            if (overrides != null && overrides.isArray)
+            {
+                for (int entryIndex = 0; entryIndex < overrides.arraySize; entryIndex++)
+                {
+                    SerializedProperty entry = overrides.GetArrayElementAtIndex(entryIndex);
+                    string roomId = GetString(entry, "roomId");
+
+                    if (string.IsNullOrWhiteSpace(roomId))
+                    {
+                        continue;
+                    }
+
+                    nonEmptyEntries++;
+                    summary.RoomProjectedEntityOverrideEntries++;
+                    IncrementRoomCount(entriesByRoom, roomId);
+                    CountNamedRoomEntry(roomId, ref summary);
+                    AddRoom(guestRooms, roomId);
+                }
+            }
+
+            if (nonEmptyEntries > 0)
+            {
+                summary.RoomProjectedEntityWithNonEmptyOverrides++;
+            }
+
+            CharacterVisualProfile profile = entity.VisualProfile;
+            Transform visualRoot = entity.VisualRoot;
+            SerializedProperty authoredScale = serialized.FindProperty("authoredVisualRootScale");
+
+            if (entity.Mode == RoomProjectedEntity.ProjectionMode.FloorCharacter &&
+                visualRoot != null &&
+                (!ApproximatelyOne(visualRoot.localScale) ||
+                !ApproximatelyOne(authoredScale != null ? authoredScale.vector3Value : Vector3.one)))
+            {
+                summary.GuestTransformOrBaseScaleMismatches++;
+            }
+
+            builder.AppendLine($"### {GetObjectPath(entity.transform)}");
+            builder.AppendLine($"- mode: {entity.Mode}");
+            builder.AppendLine($"- useRoomVisualScaleOverrides: {YesNo(usesOverrides)}");
+            builder.AppendLine($"- non-empty roomVisualScaleOverride entries: {nonEmptyEntries}");
+            builder.AppendLine($"- current room id: {currentRoomId}");
+            builder.AppendLine($"- visualRoot path: {GetObjectPath(visualRoot)}");
+            builder.AppendLine($"- authoredVisualRootScale: {FormatVector3(authoredScale != null ? authoredScale.vector3Value : Vector3.one)}");
+            builder.AppendLine($"- current visualRoot localScale: {FormatVector3(visualRoot != null ? visualRoot.localScale : Vector3.one)}");
+            builder.AppendLine($"- visualRoot lossyScale: {FormatVector3(visualRoot != null ? visualRoot.lossyScale : Vector3.one)}");
+            builder.AppendLine($"- CharacterVisualProfile path: {GetAssetPath(profile)}");
+            builder.AppendLine($"- CharacterVisualProfile.HeightScaleMultiplier: {(profile != null ? profile.HeightScaleMultiplier : 1f):0.###}");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("### Entries Grouped By Room");
+        AppendRoomCounts(builder, entriesByRoom);
+        builder.AppendLine();
+    }
+
+    private static void AppendRoomPersonWalkerData(
+        StringBuilder builder,
+        ref HumanScaleAuditSummary summary,
+        HashSet<string> guestRooms)
+    {
+        builder.AppendLine("## RoomPersonWalker2D Scale Data");
+        RoomPersonWalker2D[] walkers = UnityEngine.Object.FindObjectsByType<RoomPersonWalker2D>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < walkers.Length; i++)
+        {
+            RoomPersonWalker2D walker = walkers[i];
+
+            if (!IsLoadedSceneObject(walker))
+            {
+                continue;
+            }
+
+            summary.RoomPersonWalkerComponents++;
+            SerializedObject serialized = new SerializedObject(walker);
+            bool customScale = !Mathf.Approximately(walker.NearScale, 1f) || !Mathf.Approximately(walker.FarScale, 0.42f);
+
+            if (customScale)
+            {
+                summary.CustomWalkerScaleEntries++;
+            }
+
+            walker.TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 footPoint);
+            AddRoom(guestRooms, roomId);
+
+            Transform targetGraphic = walker.TargetGraphic != null ? walker.TargetGraphic.transform : null;
+            Vector3 authoredWalkerScale = GetVector3(serialized, "authoredWalkerLocalScale", Vector3.one);
+
+            if (!ApproximatelyOne(walker.transform.localScale) ||
+                !ApproximatelyOne(authoredWalkerScale) ||
+                (targetGraphic != null && !ApproximatelyOne(targetGraphic.localScale)))
+            {
+                summary.GuestTransformOrBaseScaleMismatches++;
+            }
+
+            builder.AppendLine($"### {GetObjectPath(walker.transform)}");
+            builder.AppendLine($"- room id: {roomId}");
+            builder.AppendLine($"- currentPosition: {FormatVector2(walker.CurrentPosition)}");
+            builder.AppendLine($"- room-local foot point: {FormatVector2(footPoint)}");
+            builder.AppendLine($"- targetGraphic path: {GetObjectPath(targetGraphic)}");
+            builder.AppendLine($"- transform localScale: {FormatVector3(walker.transform.localScale)}");
+            builder.AppendLine($"- targetGraphic localScale: {FormatVector3(targetGraphic != null ? targetGraphic.localScale : Vector3.one)}");
+            builder.AppendLine($"- authoredWalkerLocalScale: {FormatVector3(authoredWalkerScale)}");
+            builder.AppendLine($"- nearScale/farScale: {walker.NearScale:0.###}/{walker.FarScale:0.###}");
+            builder.AppendLine($"- roomProfile: {GetAssetPath(GetObjectReference<RoomPerspectiveProfile>(serialized, "roomProfile"))}");
+            builder.AppendLine($"- useRoomPerspectiveProfileScale: {YesNo(GetBool(serialized, "useRoomPerspectiveProfileScale"))}");
+            builder.AppendLine($"- useButlerCharacterScaleRules: {YesNo(walker.UseButlerCharacterScaleRules)}");
+            builder.AppendLine($"- preserveAuthoredLocalScaleWhenUsingButlerRules: {YesNo(walker.PreserveAuthoredLocalScaleWhenUsingButlerRules)}");
+            builder.AppendLine($"- also has RoomProjectedEntity: {YesNo(walker.GetComponent<RoomProjectedEntity>() != null)}");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendActorRoomStateData(
+        StringBuilder builder,
+        ref HumanScaleAuditSummary summary,
+        HashSet<string> guestRooms)
+    {
+        builder.AppendLine("## ActorRoomState Scale Data");
+        ActorRoomState[] actors = UnityEngine.Object.FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < actors.Length; i++)
+        {
+            ActorRoomState actor = actors[i];
+
+            if (!IsLoadedSceneObject(actor))
+            {
+                continue;
+            }
+
+            summary.ActorRoomStateComponents++;
+            SerializedObject serialized = new SerializedObject(actor);
+
+            if (actor.ScaleWithRoomStageMotion)
+            {
+                summary.ActorRoomStageScaleEntries++;
+            }
+
+            actor.TryResolveGuestRoomAndFootPoint(out string roomId, out Vector2 footPoint);
+            AddRoom(guestRooms, roomId);
+            Transform actorObject = GetObjectReference<Transform>(serialized, "actorObject");
+            Transform target = actorObject != null ? actorObject : actor.transform;
+            Vector3 authoredScale = GetVector3(serialized, "authoredActorLocalScale", Vector3.one);
+
+            if (!ApproximatelyOne(target.localScale) || !ApproximatelyOne(authoredScale))
+            {
+                summary.GuestTransformOrBaseScaleMismatches++;
+            }
+
+            builder.AppendLine($"### {GetObjectPath(actor.transform)}");
+            builder.AppendLine($"- actorId: {actor.ActorId}");
+            builder.AppendLine($"- currentRoomId: {actor.CurrentRoomId}");
+            builder.AppendLine($"- resolved room id: {roomId}");
+            builder.AppendLine($"- room-local foot point: {FormatVector2(footPoint)}");
+            builder.AppendLine($"- actorObject path: {GetObjectPath(actorObject)}");
+            builder.AppendLine($"- isSeated: {YesNo(actor.IsSeated)}");
+            builder.AppendLine($"- actorObject localScale/lossyScale: {FormatVector3(target.localScale)} / {FormatVector3(target.lossyScale)}");
+            builder.AppendLine($"- authoredActorLocalScale: {FormatVector3(authoredScale)}");
+            builder.AppendLine($"- followRoomStageMotion: {YesNo(GetBool(serialized, "followRoomStageMotion"))}");
+            builder.AppendLine($"- scaleWithRoomStageMotion: {YesNo(actor.ScaleWithRoomStageMotion)}");
+            builder.AppendLine($"- child RoomProjectedEntity: {YesNo(actor.GetComponentInChildren<RoomProjectedEntity>(true) != null)}");
+            builder.AppendLine($"- child RoomPersonWalker2D: {YesNo(actor.GetComponentInChildren<RoomPersonWalker2D>(true) != null)}");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendCharacterVisualProfileData(StringBuilder builder, ref HumanScaleAuditSummary summary)
+    {
+        builder.AppendLine("## CharacterVisualProfile Assets");
+        string[] guids = AssetDatabase.FindAssets("t:CharacterVisualProfile");
+        summary.CharacterVisualProfileAssets = guids.Length;
+
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            CharacterVisualProfile profile = AssetDatabase.LoadAssetAtPath<CharacterVisualProfile>(path);
+
+            if (profile == null)
+            {
+                continue;
+            }
+
+            if (!Mathf.Approximately(profile.HeightScaleMultiplier, 1f))
+            {
+                summary.NonOneCharacterHeightMultipliers++;
+            }
+
+            float ratio = profile.SittingVisualHeight / Mathf.Max(1f, profile.StandingVisualHeight);
+            builder.AppendLine(
+                $"- {path}: characterId={profile.CharacterId}, heightScaleMultiplier={profile.HeightScaleMultiplier:0.###}, " +
+                $"standingVisualHeight={profile.StandingVisualHeight:0.###}, sittingVisualHeight={profile.SittingVisualHeight:0.###}, sitting/standing ratio={ratio:0.###}");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendAnimationScaleCurveData(StringBuilder builder, ref HumanScaleAuditSummary summary)
+    {
+        builder.AppendLine("## Animation Scale Curves");
+        string[] guids = AssetDatabase.FindAssets("t:AnimationClip");
+
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+
+            if (clip == null)
+            {
+                continue;
+            }
+
+            EditorCurveBinding[] bindings = AnimationUtility.GetCurveBindings(clip);
+            bool clipHasScale = false;
+
+            for (int bindingIndex = 0; bindingIndex < bindings.Length; bindingIndex++)
+            {
+                string property = bindings[bindingIndex].propertyName;
+
+                if (property == "m_LocalScale.x" ||
+                    property == "m_LocalScale.y" ||
+                    property == "m_LocalScale.z")
+                {
+                    if (!clipHasScale)
+                    {
+                        summary.AnimationClipsWithScaleCurves++;
+                        clipHasScale = true;
+                        builder.AppendLine($"- {path}");
+                    }
+
+                    summary.AnimationScaleCurveBindings++;
+                    builder.AppendLine($"  - {bindings[bindingIndex].path}: {property}");
+                }
+            }
+        }
+
+        if (summary.AnimationScaleCurveBindings == 0)
+        {
+            builder.AppendLine("- none found");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendRuntimeScaleWriters(StringBuilder builder)
+    {
+        builder.AppendLine("## Runtime Scale Writers");
+        builder.AppendLine("- RoomProjectedEntity.ApplyProjectedScale");
+        builder.AppendLine("- RoomProjectedEntity.ForceApplyButlerCharacterScale");
+        builder.AppendLine("- RoomPersonWalker2D.ApplyVisuals");
+        builder.AppendLine("- RoomPersonWalker2D.ApplyButlerScaleSample");
+        builder.AppendLine("- ActorRoomState.ApplyRoomStageMotionDeltaIfNeeded");
+        builder.AppendLine("- ActorRoomState.ApplyButlerCharacterScaleNow");
+        builder.AppendLine("- ActorRoomState.BuildButlerActorScale");
+        builder.AppendLine("- GuestButlerScaleHarmonizer");
+        builder.AppendLine("- Animator scale curves");
+        builder.AppendLine();
+    }
+
+    private static void AppendMissingCalibrationData(
+        StringBuilder builder,
+        Dictionary<string, bool> butlerCompleteRooms,
+        HashSet<string> guestRooms,
+        ref HumanScaleAuditSummary summary)
+    {
+        builder.AppendLine("## Rooms With Guests But No Complete Butler Calibration");
+
+        foreach (string room in guestRooms)
+        {
+            if (string.IsNullOrWhiteSpace(room))
+            {
+                continue;
+            }
+
+            string normalized = NormalizeRoom(room);
+            bool complete = butlerCompleteRooms.TryGetValue(normalized, out bool hasComplete) && hasComplete;
+
+            if (complete)
+            {
+                continue;
+            }
+
+            summary.RoomsWithGuestsButNoButlerCalibration++;
+            builder.AppendLine($"- {room}");
+        }
+
+        if (summary.RoomsWithGuestsButNoButlerCalibration == 0)
+        {
+            builder.AppendLine("- none");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendSummary(StringBuilder builder, HumanScaleAuditSummary summary)
+    {
+        builder.AppendLine("## Report Summary");
+        builder.AppendLine($"- RoomProjectedEntity override entries: {summary.RoomProjectedEntityOverrideEntries}");
+        builder.AppendLine($"- Drawing Room override entries: {summary.DrawingRoomOverrideEntries}");
+        builder.AppendLine($"- Dining Room override entries: {summary.DiningRoomOverrideEntries}");
+        builder.AppendLine($"- Entrance / Grand Entrance Hall override entries: {summary.EntranceOverrideEntries}");
+        builder.AppendLine($"- CharacterVisualProfile assets with non-1 heightScaleMultiplier: {summary.NonOneCharacterHeightMultipliers}");
+        builder.AppendLine($"- RoomPersonWalker2D components with custom near/far scale: {summary.CustomWalkerScaleEntries}");
+        builder.AppendLine($"- ActorRoomState guests with scaleWithRoomStageMotion: {summary.ActorRoomStageScaleEntries}");
+        builder.AppendLine($"- guest roots with non-1 localScale or large authored visual scale: {summary.GuestTransformOrBaseScaleMismatches}");
+        builder.AppendLine($"- rooms with guests but no Butler calibration: {summary.RoomsWithGuestsButNoButlerCalibration}");
+        builder.AppendLine();
+    }
+
+    private static void AppendLikelyBlockers(StringBuilder builder, HumanScaleAuditSummary summary)
+    {
+        builder.AppendLine("## Ranked Likely Blockers");
+        int rank = 1;
+
+        if (summary.RoomsWithGuestsButNoButlerCalibration > 0)
+        {
+            builder.AppendLine($"{rank++}. Guests exist in rooms that do not have complete Butler front/back calibration.");
+        }
+
+        if (summary.RoomProjectedEntityOverrideEntries > 0)
+        {
+            builder.AppendLine($"{rank++}. RoomProjectedEntity roomVisualScaleOverrides can still fight final human scale unless bypassed.");
+        }
+
+        if (summary.NonOneCharacterHeightMultipliers > 0)
+        {
+            builder.AppendLine($"{rank++}. CharacterVisualProfile heightScaleMultiplier values can create non-human-size guest differences unless bypassed for final fitting.");
+        }
+
+        if (summary.CustomWalkerScaleEntries > 0)
+        {
+            builder.AppendLine($"{rank++}. RoomPersonWalker2D near/far custom scale values can keep standalone guests in a separate scale domain.");
+        }
+
+        if (summary.ActorRoomStageScaleEntries > 0)
+        {
+            builder.AppendLine($"{rank++}. ActorRoomState scaleWithRoomStageMotion can write guest transforms before the final harmonizer pass.");
+        }
+
+        if (summary.AnimationScaleCurveBindings > 0)
+        {
+            builder.AppendLine($"{rank++}. Animator local scale curves can overwrite or compound scale during animation playback.");
+        }
+
+        if (rank == 1)
+        {
+            builder.AppendLine("1. No obvious scale blockers found in loaded scene data.");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static PointClickPlayerMovement FindSceneButler()
+    {
+        PointClickPlayerMovement[] candidates = UnityEngine.Object.FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+        PointClickPlayerMovement tagged = null;
+        PointClickPlayerMovement namedPlayer = null;
+        PointClickPlayerMovement namedButler = null;
+        PointClickPlayerMovement first = null;
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PointClickPlayerMovement candidate = candidates[i];
+
+            if (!IsLoadedSceneObject(candidate))
+            {
+                continue;
+            }
+
+            first ??= candidate;
+
+            if (candidate.CompareTag("Player"))
+            {
+                tagged ??= candidate;
+            }
+
+            if (string.Equals(candidate.gameObject.name, "player", StringComparison.OrdinalIgnoreCase))
+            {
+                namedPlayer ??= candidate;
+            }
+
+            if (candidate.gameObject.name.IndexOf("Butler", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                namedButler ??= candidate;
+            }
+        }
+
+        return namedPlayer != null ? namedPlayer : tagged != null ? tagged : namedButler != null ? namedButler : first;
+    }
+
+    private static void AppendRoomCounts(StringBuilder builder, Dictionary<string, int> counts)
+    {
+        if (counts.Count == 0)
+        {
+            builder.AppendLine("- none");
+            return;
+        }
+
+        List<string> rooms = new List<string>(counts.Keys);
+        rooms.Sort(StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < rooms.Count; i++)
+        {
+            builder.AppendLine($"- {rooms[i]}: {counts[rooms[i]]}");
+        }
+    }
+
+    private static void CountNamedRoomEntry(string roomId, ref HumanScaleAuditSummary summary)
+    {
+        string normalized = NormalizeRoom(roomId);
+
+        if (normalized == NormalizeRoom("Drawing Room"))
+        {
+            summary.DrawingRoomOverrideEntries++;
+        }
+
+        if (normalized == NormalizeRoom("Dining Room"))
+        {
+            summary.DiningRoomOverrideEntries++;
+        }
+
+        if (normalized == NormalizeRoom("Entrance") ||
+            normalized == NormalizeRoom("Grand Entrance Hall"))
+        {
+            summary.EntranceOverrideEntries++;
+        }
+    }
+
+    private static void IncrementRoomCount(Dictionary<string, int> counts, string roomId)
+    {
+        if (string.IsNullOrWhiteSpace(roomId))
+        {
+            return;
+        }
+
+        string cleanRoom = roomId.Trim();
+        counts.TryGetValue(cleanRoom, out int count);
+        counts[cleanRoom] = count + 1;
+    }
+
+    private static void AddRoom(HashSet<string> rooms, string roomId)
+    {
+        if (!string.IsNullOrWhiteSpace(roomId))
+        {
+            rooms.Add(roomId.Trim());
+        }
+    }
+
+    private static bool IsLoadedSceneObject(Component component)
+    {
+        return component != null &&
+            component.gameObject != null &&
+            component.gameObject.scene.IsValid() &&
+            component.gameObject.scene.isLoaded;
+    }
+
+    private static bool GetBool(SerializedObject serialized, string propertyName)
+    {
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        return property != null && property.boolValue;
+    }
+
+    private static bool GetBool(SerializedProperty parent, string propertyName)
+    {
+        SerializedProperty property = parent.FindPropertyRelative(propertyName);
+        return property != null && property.boolValue;
+    }
+
+    private static float GetFloat(SerializedProperty parent, string propertyName)
+    {
+        SerializedProperty property = parent.FindPropertyRelative(propertyName);
+        return property != null ? property.floatValue : 0f;
+    }
+
+    private static string GetString(SerializedProperty parent, string propertyName)
+    {
+        SerializedProperty property = parent.FindPropertyRelative(propertyName);
+        return property != null ? property.stringValue : string.Empty;
+    }
+
+    private static Vector3 GetVector3(SerializedObject serialized, string propertyName, Vector3 fallback)
+    {
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        return property != null ? property.vector3Value : fallback;
+    }
+
+    private static T GetObjectReference<T>(SerializedObject serialized, string propertyName)
+        where T : UnityEngine.Object
+    {
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        return property != null ? property.objectReferenceValue as T : null;
+    }
+
+    private static string GetAssetPath(UnityEngine.Object asset)
+    {
+        if (asset == null)
+        {
+            return string.Empty;
+        }
+
+        string path = AssetDatabase.GetAssetPath(asset);
+        return string.IsNullOrWhiteSpace(path) ? asset.name : path;
+    }
+
+    private static bool ApproximatelyOne(Vector3 scale)
+    {
+        return Mathf.Approximately(scale.x, 1f) &&
+            Mathf.Approximately(scale.y, 1f) &&
+            Mathf.Approximately(scale.z, 1f);
+    }
+
+    private static string FormatVector2(Vector2 value)
+    {
+        return $"({value.x:0.###}, {value.y:0.###})";
+    }
+
+    private static string FormatVector3(Vector3 value)
+    {
+        return $"({value.x:0.###}, {value.y:0.###}, {value.z:0.###})";
+    }
+
+    private static string GetObjectPath(Transform target)
+    {
+        if (target == null)
+        {
+            return string.Empty;
+        }
+
+        string path = target.name;
+        Transform current = target.parent;
+
+        while (current != null)
+        {
+            path = current.name + "/" + path;
+            current = current.parent;
+        }
+
+        string scene = target.gameObject.scene.IsValid() ? target.gameObject.scene.name : "No Scene";
+        return $"{scene}/{path}";
+    }
+
+    private static string NormalizeRoom(string value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? string.Empty
+            : value.Trim()
+                .Replace("_", string.Empty)
+                .Replace(" ", string.Empty)
+                .Replace("-", string.Empty)
+                .ToLowerInvariant();
+    }
+
+    private static string YesNo(bool value)
+    {
+        return value ? "Yes" : "No";
     }
 }

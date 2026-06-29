@@ -77,9 +77,17 @@ public static class CharacterVisualBoundsUtility
             AfterScale = afterScale;
             PrimaryVisual = primaryVisual;
             UsedFallback = usedFallback;
+            BoundsRootPath = string.Empty;
+            ScaleRootPath = string.Empty;
+            PrimaryVisualPath = primaryVisual != null ? GetObjectPath(primaryVisual) : string.Empty;
             Diagnostic = diagnostic ?? string.Empty;
         }
 
+        public bool Success =>
+            AfterHeight > MinScreenSize &&
+            TargetHeight > MinScreenSize &&
+            Mathf.Abs(AfterHeight - TargetHeight) <= Mathf.Max(FitTolerancePixels, TargetHeight * 0.04f);
+        public bool UsedPrimaryVisualFallback => UsedFallback;
         public float BeforeHeight { get; }
         public float TargetHeight { get; }
         public float AfterHeight { get; }
@@ -87,6 +95,9 @@ public static class CharacterVisualBoundsUtility
         public Vector3 AfterScale { get; }
         public Transform PrimaryVisual { get; }
         public bool UsedFallback { get; }
+        public string BoundsRootPath { get; }
+        public string ScaleRootPath { get; }
+        public string PrimaryVisualPath { get; }
         public string Diagnostic { get; }
     }
 
@@ -106,14 +117,6 @@ public static class CharacterVisualBoundsUtility
         List<VisualCandidate> candidates = new List<VisualCandidate>();
         CollectRendererCandidates(candidateRoot, camera, includeInactive, candidates);
         CollectGraphicCandidates(candidateRoot, camera, includeInactive, candidates);
-
-        bool usedRectTransformFallback = false;
-
-        if (candidates.Count == 0)
-        {
-            CollectRectTransformFallbackCandidates(candidateRoot, camera, includeInactive, candidates);
-            usedRectTransformFallback = candidates.Count > 0;
-        }
 
         if (candidates.Count == 0)
         {
@@ -142,20 +145,12 @@ public static class CharacterVisualBoundsUtility
             {
                 boundsRoot = commonRoot;
                 boundsRect = CombineRects(candidates);
-                diagnostic = usedRectTransformFallback
-                    ? $"RectTransform fallback on {candidates.Count} visual target(s)"
-                    : $"Visible art target from {candidates.Count} renderer/graphic target(s)";
+                diagnostic = $"Visible art target from {candidates.Count} renderer/graphic target(s)";
             }
             else
             {
-                diagnostic = usedRectTransformFallback
-                    ? "RectTransform fallback; broad common container ignored"
-                    : "Visible art target; broad common container ignored";
+                diagnostic = "Visible art target; broad common container ignored";
             }
-        }
-        else if (usedRectTransformFallback)
-        {
-            diagnostic = $"RectTransform fallback: {primary.Transform.name}";
         }
 
         target = new CharacterVisualTarget(
@@ -503,31 +498,6 @@ public static class CharacterVisualBoundsUtility
         }
     }
 
-    private static void CollectRectTransformFallbackCandidates(
-        Transform root,
-        Camera camera,
-        bool includeInactive,
-        List<VisualCandidate> candidates)
-    {
-        RectTransform[] rectTransforms = root.GetComponentsInChildren<RectTransform>(includeInactive);
-
-        for (int i = 0; i < rectTransforms.Length; i++)
-        {
-            RectTransform rectTransform = rectTransforms[i];
-
-            if (rectTransform == null ||
-                (!includeInactive && !rectTransform.gameObject.activeInHierarchy) ||
-                LooksLikeIgnoredVisual(rectTransform) ||
-                LooksLikeForbiddenContainer(rectTransform) ||
-                !TryGetRectTransformScreenRect(rectTransform, camera, out Rect screenRect))
-            {
-                continue;
-            }
-
-            candidates.Add(new VisualCandidate(rectTransform, screenRect, "RectTransform fallback"));
-        }
-    }
-
     private static Camera ResolveGraphicCamera(Graphic graphic, Camera suppliedCamera)
     {
         if (graphic == null)
@@ -757,6 +727,25 @@ public static class CharacterVisualBoundsUtility
     private static bool IsFinite(float value)
     {
         return !float.IsNaN(value) && !float.IsInfinity(value);
+    }
+
+    private static string GetObjectPath(Transform target)
+    {
+        if (target == null)
+        {
+            return string.Empty;
+        }
+
+        string path = target.name;
+        Transform current = target.parent;
+
+        while (current != null)
+        {
+            path = current.name + "/" + path;
+            current = current.parent;
+        }
+
+        return path;
     }
 
     private static Vector3 ScaleXY(Vector3 scale, float ratio)
