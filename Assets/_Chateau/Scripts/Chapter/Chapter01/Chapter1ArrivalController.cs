@@ -3397,6 +3397,30 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         ApplyEntranceHallGuestSorting(guestState);
         RefreshCoatPickupVisibilityForCurrentRoom(guestState);
+        ApplyFinalGuestScaleNow();
+    }
+
+    private void ApplyFinalGuestScaleNow()
+    {
+        if (playerMovement == null)
+        {
+            ResolveReferences();
+        }
+
+        if (playerMovement == null)
+        {
+            return;
+        }
+
+        GuestButlerScaleHarmonizer harmonizer = playerMovement.GetComponent<GuestButlerScaleHarmonizer>();
+
+        if (harmonizer == null)
+        {
+            harmonizer = playerMovement.gameObject.AddComponent<GuestButlerScaleHarmonizer>();
+        }
+
+        harmonizer.SetButlerScaleSource(playerMovement);
+        harmonizer.RefreshNow();
     }
 
     private void RefreshAllGuestRoomVisibility()
@@ -4937,6 +4961,16 @@ public class Chapter1ArrivalController : MonoBehaviour
                 pointClickMovements[i].SetPerspectiveScaleEnabled(false);
                 pointClickMovements[i].SetPlayerSortingEnabled(false);
                 pointClickMovements[i].enabled = false;
+            }
+        }
+
+        GuestButlerScaleHarmonizer[] harmonizers = guestObject.GetComponentsInChildren<GuestButlerScaleHarmonizer>(true);
+
+        for (int i = 0; i < harmonizers.Length; i++)
+        {
+            if (harmonizers[i] != null)
+            {
+                harmonizers[i].enabled = false;
             }
         }
 

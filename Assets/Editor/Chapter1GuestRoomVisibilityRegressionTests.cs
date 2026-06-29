@@ -132,6 +132,9 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string placeDoorBody = ExtractMethodBody(controllerText, "private void PlaceGuestAtDoorArrival");
         string projectedDoorBody = ExtractMethodBody(controllerText, "private bool TryPlaceProjectedGuestFeetAtTarget");
         string placeFeetBody = ExtractMethodBody(controllerText, "private void PlaceGuestFeetAtPosition");
+        string forceVisibleBody = ExtractMethodBody(controllerText, "private void ForceGuestVisibleForDoorFlow");
+        string finalScaleBody = ExtractMethodBody(controllerText, "private void ApplyFinalGuestScaleNow");
+        string disablePlayerBody = ExtractMethodBody(controllerText, "private void DisablePlayerOnlyComponents");
         string doorArrivalBody = ExtractMethodBody(controllerText, "private Vector3 GetWorldDoorArrivalPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)");
         string doorArrivalIndexBody = ExtractMethodBody(controllerText, "private Vector3 GetWorldDoorArrivalPosition(int indexInBatch, int batchCount)");
         string doorPairOffsetBody = ExtractMethodBody(controllerText, "private Vector2 GetDoorArrivalPairSlotOffset");
@@ -158,6 +161,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(placeFeetBody, Does.Contain("TryGetGuestFeetWorldPoint"), "Door arrival should compensate for the guest's visible foot offset.");
         Assert.That(placeFeetBody, Does.Contain("targetPosition.x -= feetOffset.x"), "Door arrival should align the guest feet horizontally with the door answer spot.");
         Assert.That(placeFeetBody, Does.Contain("targetPosition.y -= feetOffset.y"), "Door arrival should align the guest feet vertically with the door answer spot.");
+        Assert.That(forceVisibleBody, Does.Contain("ApplyFinalGuestScaleNow"), "Door-spawned guests should be final-scaled immediately after becoming visible.");
+        Assert.That(finalScaleBody, Does.Contain("GuestButlerScaleHarmonizer"), "Door flow should use the player-owned final guest scaler.");
+        Assert.That(finalScaleBody, Does.Contain("RefreshNow()"), "Door flow should not wait for a later frame to correct front-door guest scale.");
+        Assert.That(disablePlayerBody, Does.Contain("GuestButlerScaleHarmonizer"), "Guest clones must not keep copied final-scaler components that can fight the player harmonizer.");
         Assert.That(doorArrivalBody, Does.Contain("GetWorldDoorArrivalBasePosition(guestState)"), "Door-answer spawning should begin at the front-door point before guests walk inward.");
         Assert.That(doorArrivalBody, Does.Contain("GetDoorArrivalPairSlotOffset"), "Door-answer spawning should split guests in the same pair so they do not stack.");
         Assert.That(doorArrivalBody, Does.Not.Contain("GetWorldEntranceGroupOffset"), "Door-answer spawning should not stagger later arrival pairs away from the front door.");
