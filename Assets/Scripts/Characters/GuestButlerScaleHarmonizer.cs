@@ -16,7 +16,6 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
     [SerializeField] private bool applyToActorRoomStates = true;
     [SerializeField] private bool skipButlerObject = true;
     [SerializeField] private bool logSummary;
-    [SerializeField] private float defaultGuestRelativeHeightMultiplier = 1f;
     [SerializeField, HideInInspector] private float debugGuestScaleMultiplier = 1f;
 
     private readonly Dictionary<Transform, ProofBaseline> proofBaselines = new Dictionary<Transform, ProofBaseline>();
@@ -142,13 +141,6 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         GuestScaleApplySummary summary = new GuestScaleApplySummary(source != null ? source.name : name);
         GuestScaleCalibrationStore store = ResolveCalibrationStore();
         List<GuestScaleTarget> targets = BuildGuestScaleTargets(source, store, camera, ref summary);
-        float standingHumanReferenceScreenHeight = 0f;
-        string butlerReferenceDiagnostic = string.Empty;
-        bool hasButlerReferenceHeight = source != null &&
-            source.TryGetButlerHumanScaleReference(
-                camera,
-                out standingHumanReferenceScreenHeight,
-                out butlerReferenceDiagnostic);
 
         for (int i = 0; i < targets.Count; i++)
         {
@@ -156,9 +148,6 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
                 targets[i],
                 source,
                 camera,
-                hasButlerReferenceHeight,
-                standingHumanReferenceScreenHeight,
-                butlerReferenceDiagnostic,
                 proofMode,
                 ref summary);
         }
@@ -235,9 +224,6 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         GuestScaleTarget target,
         PointClickPlayerMovement source,
         Camera camera,
-        bool hasButlerReferenceHeight,
-        float standingHumanReferenceScreenHeight,
-        string butlerReferenceDiagnostic,
         bool proofMode,
         ref GuestScaleApplySummary summary)
     {
@@ -299,11 +285,10 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
         if (!TryGetTargetScreenHeight(
             target,
+            source,
+            camera,
             hasSample,
             sample,
-            hasButlerReferenceHeight,
-            standingHumanReferenceScreenHeight,
-            butlerReferenceDiagnostic,
             proofMode,
             visualTarget.ScreenHeight,
             out float targetHeight,
@@ -413,11 +398,10 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
     private bool TryGetTargetScreenHeight(
         GuestScaleTarget target,
+        PointClickPlayerMovement source,
+        Camera camera,
         bool hasSample,
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,
-        bool hasButlerReferenceHeight,
-        float standingHumanReferenceScreenHeight,
-        string butlerReferenceDiagnostic,
         bool proofMode,
         float currentScreenHeight,
         out float targetHeight,
@@ -447,11 +431,15 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             return false;
         }
 
-        if (!hasButlerReferenceHeight)
+        float butlerTargetHeight = 0f;
+        string butlerTargetDiagnostic = string.Empty;
+
+        if (source == null ||
+            !source.TryGetButlerTargetScreenHeight(camera, sample, out butlerTargetHeight, out butlerTargetDiagnostic))
         {
-            failureReason = string.IsNullOrWhiteSpace(butlerReferenceDiagnostic)
-                ? "No Butler reference visual height"
-                : butlerReferenceDiagnostic;
+            failureReason = string.IsNullOrWhiteSpace(butlerTargetDiagnostic)
+                ? "No baked Butler target visual height"
+                : butlerTargetDiagnostic;
             return false;
         }
 
@@ -460,25 +448,14 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             float manualPoseHeight = GetManualPoseHeightRatio(target);
             float manualFineTune = GuestScaleCalibrationStore.SanitizeFineTune(target.ManualCalibration.manualFineTuneMultiplier);
             targetHeight =
-                standingHumanReferenceScreenHeight *
-                Mathf.Max(0.001f, sample.NormalizedScale) *
+                butlerTargetHeight *
                 manualPoseHeight *
                 manualFineTune *
                 Mathf.Max(0.001f, debugGuestScaleMultiplier);
             return targetHeight > 0.01f;
         }
 
-        float relativeHeight = Mathf.Clamp(
-            target.RelativeHeightMultiplier * Mathf.Max(0.001f, defaultGuestRelativeHeightMultiplier),
-            0.25f,
-            3f);
-        float poseHeight = Mathf.Clamp(target.PoseHeightMultiplier, 0.25f, 1.25f);
-        targetHeight =
-            standingHumanReferenceScreenHeight *
-            Mathf.Max(0.001f, sample.NormalizedScale) *
-            poseHeight *
-            relativeHeight *
-            Mathf.Max(0.001f, debugGuestScaleMultiplier);
+        targetHeight = butlerTargetHeight * Mathf.Max(0.001f, debugGuestScaleMultiplier);
         return targetHeight > 0.01f;
     }
 

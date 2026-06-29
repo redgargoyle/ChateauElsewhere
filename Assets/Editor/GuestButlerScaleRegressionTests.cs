@@ -139,8 +139,11 @@ public sealed class GuestButlerScaleRegressionTests
     [Test]
     public void GuestButlerScaleHarmonizerRunsAsFinalWriter()
     {
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
         string harmonizerText = File.ReadAllText(HarmonizerPath);
 
+        Assert.That(movementText, Does.Contain("EnsureGuestButlerScaleHarmonizer"), "The Player should install the final guest scaler at runtime instead of depending on manual scene setup.");
+        Assert.That(movementText, Does.Contain("autoEnsureGuestScaleHarmonizer"));
         Assert.That(harmonizerText, Does.Contain("[DefaultExecutionOrder(10000)]"));
         Assert.That(harmonizerText, Does.Contain("CharacterVisualBoundsUtility.TryApplyTargetScreenHeight"));
         Assert.That(harmonizerText, Does.Contain("BoundsRoot"));
@@ -369,12 +372,12 @@ public sealed class GuestButlerScaleRegressionTests
             ConfigureHalfScaleButler(movement);
             harmonizer.SetButlerScaleSource(movement);
             walker.SetButlerScaleSource(movement, false);
-            Assert.That(movement.TryGetButlerHumanScaleReference(camera, out float referenceHeight, out _), Is.True);
+            float bakedButlerTargetHeight = GetBakedButlerTargetHeight(movement, camera, "Drawing Room", Vector2.zero);
 
             GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
             Assert.That(summary.Scaled, Is.GreaterThanOrEqualTo(1));
             Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(guest.transform, camera, out float guestHeight), Is.True);
-            Assert.That(guestHeight, Is.EqualTo(referenceHeight * 0.5f).Within(2f));
+            Assert.That(guestHeight, Is.EqualTo(bakedButlerTargetHeight).Within(2f));
             Assert.That(guest.transform.localScale.y, Is.Not.EqualTo(butler.transform.localScale.y).Within(0.0001f));
         }
         finally
@@ -469,7 +472,7 @@ public sealed class GuestButlerScaleRegressionTests
     }
 
     [Test]
-    public void SeatedGuestUsesSeatedHeightRatio()
+    public void AutomaticScalingDoesNotShrinkSeatedGuestsWithoutManualCalibration()
     {
         Camera camera = CreateTestCamera();
         GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
@@ -484,17 +487,17 @@ public sealed class GuestButlerScaleRegressionTests
         ActorRoomState actor = guest.AddComponent<ActorRoomState>();
         actor.SetActorId("Guest Seated");
         actor.SetCurrentRoom("Drawing Room");
-        actor.SetSeated(true);
+            actor.SetSeated(true);
 
         try
         {
             harmonizer.SetButlerScaleSource(movement);
-            Assert.That(movement.TryGetButlerHumanScaleReference(camera, out float referenceHeight, out _), Is.True);
+            float bakedButlerTargetHeight = GetBakedButlerTargetHeight(movement, camera, "Drawing Room", Vector2.zero);
             GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
 
             Assert.That(summary.Scaled, Is.GreaterThanOrEqualTo(1));
             Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(guest.transform, camera, out float guestHeight), Is.True);
-            Assert.That(guestHeight, Is.EqualTo(referenceHeight * 0.5f * 0.68f).Within(2f));
+            Assert.That(guestHeight, Is.EqualTo(bakedButlerTargetHeight).Within(2f));
         }
         finally
         {
@@ -526,13 +529,13 @@ public sealed class GuestButlerScaleRegressionTests
             entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
             entity.SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(true, false);
             harmonizer.SetButlerScaleSource(movement);
-            Assert.That(movement.TryGetButlerHumanScaleReference(camera, out float referenceHeight, out _), Is.True);
+            float bakedButlerTargetHeight = GetBakedButlerTargetHeight(movement, camera, "Drawing Room", Vector2.zero);
 
             GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
 
             Assert.That(summary.Scaled, Is.GreaterThanOrEqualTo(1));
             Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(visual.transform, camera, out float guestHeight), Is.True);
-            Assert.That(guestHeight, Is.EqualTo(referenceHeight * 0.5f).Within(2f));
+            Assert.That(guestHeight, Is.EqualTo(bakedButlerTargetHeight).Within(2f));
         }
         finally
         {
@@ -563,13 +566,13 @@ public sealed class GuestButlerScaleRegressionTests
             entity.SetButlerCharacterScaleRulesEnabled(true, false);
             entity.ApplyProjection();
             harmonizer.SetButlerScaleSource(movement);
-            Assert.That(movement.TryGetButlerHumanScaleReference(camera, out float referenceHeight, out _), Is.True);
+            float bakedButlerTargetHeight = GetBakedButlerTargetHeight(movement, camera, "Drawing Room", Vector2.zero);
 
             GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
 
             Assert.That(summary.Scaled, Is.GreaterThanOrEqualTo(1));
             Assert.That(CharacterVisualBoundsUtility.TryGetScreenHeight(visual.transform, camera, out float guestHeight), Is.True);
-            Assert.That(guestHeight, Is.EqualTo(referenceHeight * 0.5f).Within(2f));
+            Assert.That(guestHeight, Is.EqualTo(bakedButlerTargetHeight).Within(2f));
         }
         finally
         {
@@ -623,6 +626,17 @@ public sealed class GuestButlerScaleRegressionTests
         movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
         movement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -100f, 1f, false);
         movement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", 100f, 1f, false);
+    }
+
+    private static float GetBakedButlerTargetHeight(
+        PointClickPlayerMovement movement,
+        Camera camera,
+        string roomId,
+        Vector2 roomLocalFootPoint)
+    {
+        Assert.That(movement.TryEvaluateButlerCharacterScale(roomId, roomLocalFootPoint, out PointClickPlayerMovement.ButlerCharacterScaleSample sample), Is.True);
+        Assert.That(movement.TryGetButlerTargetScreenHeight(camera, sample, out float bakedButlerTargetHeight, out _), Is.True);
+        return bakedButlerTargetHeight;
     }
 
     private static RoomProjectedEntity CreateProjectedEntity(

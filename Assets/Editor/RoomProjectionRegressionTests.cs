@@ -612,7 +612,9 @@ public class RoomProjectionRegressionTests
         Assert.That(harmonizerText, Does.Contain("ResolveManualCalibration"), "The final harmonizer should look up saved manual guest calibration entries.");
         Assert.That(harmonizerText, Does.Contain("TryResolveManualVisualRoots"), "Saved manual roots should be applied before automatic visual-root selection.");
         Assert.That(prepareBody, Does.Contain("SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true"), "Old roomVisualScaleOverrides should be bypassed when final human scaling is active.");
-        Assert.That(targetHeightBody.IndexOf("target.ManualCalibration != null", StringComparison.Ordinal), Is.LessThan(targetHeightBody.IndexOf("target.RelativeHeightMultiplier", StringComparison.Ordinal)), "Manual target height should be resolved before the old relative-height path.");
+        Assert.That(targetHeightBody, Does.Contain("TryGetButlerTargetScreenHeight"), "Final scaling should use the baked Butler final local scale as the visual-height target.");
+        Assert.That(targetHeightBody, Does.Not.Contain("target.RelativeHeightMultiplier"), "Automatic final scaling must not shrink guests through legacy relative-height multipliers.");
+        Assert.That(targetHeightBody, Does.Not.Contain("target.PoseHeightMultiplier"), "Automatic final scaling must not shrink seated guests unless a manual calibration explicitly requests it.");
     }
 
     [Test]
@@ -621,7 +623,7 @@ public class RoomProjectionRegressionTests
         string projectionText = File.ReadAllText(RoomProjectedEntityPath);
         string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
         string prepareBody = ExtractMethodBody(harmonizerText, "private void PrepareControllerForFinalHumanScale");
-        string manualBranch = ExtractBetween(harmonizerText, "if (target.ManualCalibration != null)", "float relativeHeight =");
+        string manualBranch = ExtractBetween(harmonizerText, "if (target.ManualCalibration != null)", "targetHeight = butlerTargetHeight *");
 
         Assert.That(projectionText, Does.Contain("SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules"), "Projection should expose the profile-height bypass.");
         Assert.That(prepareBody, Does.Contain("SetIgnoreVisualProfileHeightMultiplierWhenUsingButlerRules(true"), "Final human scaling should turn the profile-height bypass on.");
@@ -668,11 +670,11 @@ public class RoomProjectionRegressionTests
     public void ManualCalibrationDoesNotMultiplyByGuestBaseScale()
     {
         string harmonizerText = File.ReadAllText(GuestButlerScaleHarmonizerPath);
-        string manualBranch = ExtractBetween(harmonizerText, "if (target.ManualCalibration != null)", "float relativeHeight =");
+        string manualBranch = ExtractBetween(harmonizerText, "if (target.ManualCalibration != null)", "targetHeight = butlerTargetHeight *");
 
-        Assert.That(manualBranch, Does.Contain("standingHumanReferenceScreenHeight"), "Manual calibration should target a visible height derived from the Butler standing reference.");
-        Assert.That(manualBranch, Does.Contain("sample.NormalizedScale"), "Manual calibration should still use the Butler room/depth scale.");
+        Assert.That(manualBranch, Does.Contain("butlerTargetHeight"), "Manual calibration should target the baked Butler final local scale for the selected room/depth.");
         Assert.That(manualBranch, Does.Contain("manualFineTune"), "Manual calibration should apply the saved fine-tune multiplier.");
+        Assert.That(manualBranch, Does.Not.Contain("sample.NormalizedScale"), "Manual calibration must not use normalized reference math after the baked Butler height has been resolved.");
         Assert.That(manualBranch, Does.Not.Contain("localScale"), "Manual target height must not multiply by the guest's base localScale.");
     }
 

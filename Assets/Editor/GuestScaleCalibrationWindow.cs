@@ -195,7 +195,7 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
 
         CalibrationMetrics metrics = BuildMetrics(candidate);
         EditorGUILayout.LabelField("Current visual height px", metrics.CurrentVisualHeight);
-        EditorGUILayout.LabelField("Butler target standing height px", metrics.ButlerStandingHeight);
+        EditorGUILayout.LabelField("Butler baked target height px", metrics.ButlerStandingHeight);
         EditorGUILayout.LabelField("Target guest height px", metrics.TargetGuestHeight);
         EditorGUILayout.LabelField("Current scaleRoot localScale", selectedScaleRoot != null ? selectedScaleRoot.localScale.ToString() : "-");
         EditorGUILayout.LabelField("Current boundsRoot", selectedBoundsRoot != null ? GetObjectPath(selectedBoundsRoot) : "-");
@@ -1231,14 +1231,13 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
             return false;
         }
 
-        if (!selectedButler.TryGetButlerHumanScaleReference(camera, out float standingReferenceHeight, out diagnostic))
+        if (!selectedButler.TryGetButlerTargetScreenHeight(camera, sample, out float butlerTargetHeight, out diagnostic))
         {
             return false;
         }
 
         targetHeight =
-            standingReferenceHeight *
-            Mathf.Max(0.001f, sample.NormalizedScale) *
+            butlerTargetHeight *
             GuestScaleCalibrationStore.SanitizeRatio(heightRatioToButlerStanding) *
             GuestScaleCalibrationStore.SanitizeFineTune(manualFineTuneMultiplier);
         return targetHeight > 0.01f;
@@ -1258,10 +1257,12 @@ public sealed class GuestScaleCalibrationWindow : EditorWindow
             currentHeight = height.ToString("0.#");
         }
 
-        if (selectedButler != null && camera != null &&
-            selectedButler.TryGetButlerHumanScaleReference(camera, out float standingReferenceHeight, out _))
+        if (selectedButler != null &&
+            camera != null &&
+            selectedButler.TryEvaluateButlerCharacterScale(GetSelectedRoomId(), GetCalibrationFootPoint(candidate), out PointClickPlayerMovement.ButlerCharacterScaleSample sample) &&
+            selectedButler.TryGetButlerTargetScreenHeight(camera, sample, out float bakedButlerTargetHeight, out _))
         {
-            standingHeight = standingReferenceHeight.ToString("0.#");
+            standingHeight = bakedButlerTargetHeight.ToString("0.#");
         }
 
         if (TryCalculateTargetHeight(candidate, out float guestTargetHeight, out _))

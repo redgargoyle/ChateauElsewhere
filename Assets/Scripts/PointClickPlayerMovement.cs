@@ -51,6 +51,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private float farScale = 0.58f;
 	[SerializeField] private bool useRoomPerspectiveProfileScale = true;
 	[SerializeField] private bool useButlerRoomScaleOverrides = true;
+	[SerializeField] private bool autoEnsureGuestScaleHarmonizer = true;
 	[SerializeField] private bool hasButlerCalibrationBaseLocalScale;
 	[SerializeField] private Vector3 butlerCalibrationBaseLocalScale = Vector3.one;
 	[SerializeField, HideInInspector] private string editorSelectedButlerScaleRoomId = string.Empty;
@@ -472,6 +473,45 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return standingHumanReferenceScreenHeight > 0.01f;
 	}
 
+	public bool TryGetButlerTargetScreenHeight(
+		Camera camera,
+		ButlerCharacterScaleSample sample,
+		out float targetScreenHeight,
+		out string diagnostic)
+	{
+		targetScreenHeight = 0f;
+		diagnostic = string.Empty;
+
+		if (camera == null)
+		{
+			diagnostic = "No camera";
+			return false;
+		}
+
+		if (!sample.HasCalibration)
+		{
+			diagnostic = "No Butler calibration sample";
+			return false;
+		}
+
+		if (!CharacterVisualBoundsUtility.TryResolveCharacterVisualTarget(
+			transform,
+			camera,
+			out CharacterVisualBoundsUtility.CharacterVisualTarget target))
+		{
+			diagnostic = "No Butler visible art bounds";
+			return false;
+		}
+
+		float currentLocalScaleY = Mathf.Max(0.001f, Mathf.Abs(transform.localScale.y));
+		float bakedFinalLocalScaleY = Mathf.Max(0.001f, sample.ButlerFinalLocalScaleY);
+		targetScreenHeight = target.ScreenHeight * bakedFinalLocalScaleY / currentLocalScaleY;
+		diagnostic =
+			$"Baked Butler final localScale.y {bakedFinalLocalScaleY:0.###} for {sample.RoomId} depth={sample.Depth01:0.###}; " +
+			$"current localScale.y {transform.localScale.y:0.###}; {target.Diagnostic}";
+		return targetScreenHeight > 0.01f;
+	}
+
 	public bool TryGetButlerReferenceScreenHeightForRoomScale(
 		Camera camera,
 		out float referenceScreenHeight)
@@ -800,10 +840,28 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private void Awake()
 	{
 		CacheReferences();
+		EnsureGuestButlerScaleHarmonizer();
 		CaptureAuthoredLocalScaleIfNeeded();
 		CaptureAuthoredRendererSortingIfNeeded();
 		CacheAnimatorParameters();
 		InitializeVisualStateFromTransform();
+	}
+
+	private void EnsureGuestButlerScaleHarmonizer()
+	{
+		if (!Application.isPlaying || !autoEnsureGuestScaleHarmonizer)
+		{
+			return;
+		}
+
+		GuestButlerScaleHarmonizer harmonizer = GetComponent<GuestButlerScaleHarmonizer>();
+
+		if (harmonizer == null)
+		{
+			harmonizer = gameObject.AddComponent<GuestButlerScaleHarmonizer>();
+		}
+
+		harmonizer.SetButlerScaleSource(this);
 	}
 
 	private void Start()
