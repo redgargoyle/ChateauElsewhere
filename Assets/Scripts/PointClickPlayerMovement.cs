@@ -1971,7 +1971,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 		}
 
-		float scale = CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio;
+		float scale = CalculateExistingPerspectiveScale();
 		transform.localScale = new Vector3(
 			authoredLocalScale.x * scale,
 			authoredLocalScale.y * scale,

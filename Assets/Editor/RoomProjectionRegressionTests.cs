@@ -299,7 +299,8 @@ public class RoomProjectionRegressionTests
         string applyScaleBody = ExtractMethodBody(movementText, "private void ApplyPerspectiveScale");
 
         Assert.That(applyScaleBody, Does.Contain("TryEvaluateButlerCalibratedFinalLocalScale"), "Complete Butler room calibration should be able to replace the old depth scale.");
-        Assert.That(applyScaleBody, Does.Contain("CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio"), "Rooms without Butler calibration should keep the old profile/fallback behavior.");
+        Assert.That(applyScaleBody, Does.Contain("CalculateExistingPerspectiveScale()"), "Rooms without Butler calibration should keep the old profile/fallback behavior.");
+        Assert.That(applyScaleBody, Does.Not.Contain("CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio"), "Mouse-wheel room zoom must not change the Butler's transform.localScale.");
         Assert.That(applyScaleBody, Does.Contain("authoredLocalScale.x * scale"), "Uncalibrated rooms should still scale from the original authored local scale.");
         Assert.That(movementText, Does.Contain("usesRoomProfileScale ? depthScale : fallbackRelativeScale"), "The original profile-vs-fallback scale path should remain available for uncalibrated rooms.");
     }
