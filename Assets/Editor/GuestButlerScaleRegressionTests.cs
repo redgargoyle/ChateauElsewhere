@@ -1150,6 +1150,9 @@ public sealed class GuestRoomScaleRegressionTests
         Assert.That(text, Does.Contain("Guest Depth Scale Curve"));
         Assert.That(text, Does.Contain("Selected Guest"));
         Assert.That(text, Does.Contain("Manual Guest Scale"));
+        Assert.That(text, Does.Contain("Closest Guest Scale"));
+        Assert.That(text, Does.Contain("Furthest Guest Scale"));
+        Assert.That(text, Does.Contain("DrawDepthPointScaleControls"));
         Assert.That(text, Does.Contain("PREVIEW SELECTED GUEST SIZE"));
         Assert.That(text, Does.Contain("LOAD FROM BUTLER SCALE"));
         Assert.That(text, Does.Contain("SAVE CLOSEST POINT FROM SELECTED GUEST"));
@@ -1214,6 +1217,47 @@ public sealed class GuestRoomScaleRegressionTests
                 diagnostic);
             Assert.That(savedScale, Is.EqualTo(1.45f).Within(0.0001f));
             Assert.That(diagnostic, Does.Contain("Fixed manual guest scale"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+        }
+    }
+
+    [Test]
+    public void GuestSizeMasterSavesExplicitClosestAndFurthestCurveScales()
+    {
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+
+            GuestRoomScaleMasterWindow.SaveGuestDepthCurvePointForCalibration(
+                calibration,
+                "Dining Room",
+                -180f,
+                2.25f,
+                true);
+            GuestRoomScaleMasterWindow.SaveGuestDepthCurvePointForCalibration(
+                calibration,
+                "Dining Room",
+                -20f,
+                0.8f,
+                false);
+
+            Assert.That(
+                calibration.TryEvaluateGuestScale(
+                    "Dining Room",
+                    -100f,
+                    out float savedScale,
+                    out float depth,
+                    out string diagnostic),
+                Is.True,
+                diagnostic);
+            Assert.That(depth, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(savedScale, Is.EqualTo(1.525f).Within(0.0001f));
+            Assert.That(diagnostic, Does.Contain("Custom guest curve"));
         }
         finally
         {

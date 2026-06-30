@@ -341,6 +341,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         EditorGUILayout.LabelField("Selected Guest Y", allGuestsSelected ? "varies" : selectedGuest != null ? selectedGuest.ResolveRoomLocalY().ToString("0.###") : "n/a");
         EditorGUILayout.LabelField("Saved Closest", FormatManualCurvePoint(true));
         EditorGUILayout.LabelField("Saved Furthest", FormatManualCurvePoint(false));
+        DrawDepthPointScaleControls(selectedRoom, selectedGuest);
 
         bool canPreviewManualScale = allRoomsSelected
             ? FindGuestParticipants().Length > 0
@@ -459,6 +460,68 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         float y = front ? customFrontY : customBackY;
         float scale = front ? customFrontScale : customBackScale;
         return $"Y {y:0.###}, scale {scale:0.###}";
+    }
+
+    private void DrawDepthPointScaleControls(string selectedRoom, GuestScaleParticipant selectedGuest)
+    {
+        EditorGUI.BeginChangeCheck();
+        customFrontScale = EditorGUILayout.Slider("Closest Guest Scale", customFrontScale, MinManualGuestScale, MaxManualGuestScale);
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            HandleDepthPointScaleChanged(selectedRoom, selectedGuest, true);
+        }
+
+        EditorGUI.BeginChangeCheck();
+        customBackScale = EditorGUILayout.Slider("Furthest Guest Scale", customBackScale, MinManualGuestScale, MaxManualGuestScale);
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            HandleDepthPointScaleChanged(selectedRoom, selectedGuest, false);
+        }
+    }
+
+    private void HandleDepthPointScaleChanged(
+        string selectedRoom,
+        GuestScaleParticipant selectedGuest,
+        bool closest)
+    {
+        if (string.IsNullOrWhiteSpace(selectedRoom))
+        {
+            return;
+        }
+
+        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+
+        if (calibration != null && HasSavedDepthPoint(calibration, selectedRoom, closest))
+        {
+            Undo.RecordObject(calibration, closest ? "Set Closest Guest Scale" : "Set Furthest Guest Scale");
+            float y = closest ? customFrontY : customBackY;
+            float scale = closest ? customFrontScale : customBackScale;
+            SaveGuestDepthCurvePointForCalibration(calibration, selectedRoom, y, scale, closest);
+            EditorUtility.SetDirty(calibration);
+            EditorSceneManager.MarkAllScenesDirty();
+
+            if (HasCompleteManualCurve(calibration, selectedRoom))
+            {
+                GuestScaleApplyResult result = RefreshRoomWithUndo(selectedRoom, "Preview Guest Depth Curve");
+                lastAction = $"Updated {(closest ? "closest" : "furthest")} guest scale for {selectedRoom}; applied {result.Applied}, changed {result.Changed}.";
+                return;
+            }
+        }
+
+        manualGuestScale = closest ? customFrontScale : customBackScale;
+        PreviewSelectedGuestManualScale(selectedGuest);
+    }
+
+    private static bool HasSavedDepthPoint(
+        GuestRoomScaleCalibration calibration,
+        string selectedRoom,
+        bool closest)
+    {
+        return calibration != null &&
+            calibration.TryGetRoom(selectedRoom, out GuestRoomScaleEntry entry) &&
+            (closest ? entry.hasFront : entry.hasBack);
     }
 
     private void PreviewSelectedGuestManualScale(GuestScaleParticipant selectedGuest)
@@ -593,26 +656,19 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         GuestRoomScaleCalibration calibration = EnsureCalibration(FindButler());
         Undo.RecordObject(calibration, front ? "Save Guest Front Scale" : "Save Guest Back Scale");
         float roomLocalY = selectedGuest.ResolveRoomLocalY();
+        float pointScale = front ? customFrontScale : customBackScale;
 
-        if (front)
-        {
-            calibration.SetFront(selectedRoom, roomLocalY, manualGuestScale);
-            customHasFront = true;
-            customFrontY = roomLocalY;
-            customFrontScale = manualGuestScale;
-        }
-        else
-        {
-            calibration.SetBack(selectedRoom, roomLocalY, manualGuestScale);
-            customHasBack = true;
-            customBackY = roomLocalY;
-            customBackScale = manualGuestScale;
-        }
+        SaveGuestDepthCurvePointForCalibration(calibration, selectedRoom, roomLocalY, pointScale, front);
+        customHasFront = front || customHasFront;
+        customHasBack = !front || customHasBack;
+        customFrontY = front ? roomLocalY : customFrontY;
+        customBackY = front ? customBackY : roomLocalY;
 
         selectedRoomMultiplier = 1f;
         calibration.SetRoomMultiplier(selectedRoom, 1f);
         float referenceStageScale = SaveCurrentRoomStageReference(calibration, selectedRoom);
         EditorUtility.SetDirty(calibration);
+        EditorSceneManager.MarkAllScenesDirty();
 
         if (HasCompleteManualCurve(calibration, selectedRoom))
         {
@@ -626,6 +682,30 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         Debug.Log($"[Guest Size Master] {lastAction}");
+    }
+
+    internal static void SaveGuestDepthCurvePointForCalibration(
+        GuestRoomScaleCalibration calibration,
+        string selectedRoom,
+        float roomLocalY,
+        float guestScale,
+        bool closest)
+    {
+        if (calibration == null || string.IsNullOrWhiteSpace(selectedRoom))
+        {
+            return;
+        }
+
+        if (closest)
+        {
+            calibration.SetFront(selectedRoom, roomLocalY, guestScale);
+        }
+        else
+        {
+            calibration.SetBack(selectedRoom, roomLocalY, guestScale);
+        }
+
+        calibration.SetRoomMultiplier(selectedRoom, 1f);
     }
 
     private void LoadDepthCurveFromButlerScale(string selectedRoom)
