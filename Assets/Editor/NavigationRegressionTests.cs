@@ -357,6 +357,9 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("GetClosestApproachPointInTriggerBounds"), "Door approaches should prefer the lower threshold line so the butler's feet reach the door.");
         Assert.That(triggerText, Does.Contain("TryFindBestApproachDestination"), "Door approaches should sample the trigger and choose the closest reachable floor point.");
         Assert.That(triggerText, Does.Contain("CollectTriggerApproachSamples"), "Door approaches should consider trigger edges and bottom points, not a single screen point.");
+        Assert.That(triggerText, Does.Contain("ActivateDoor(eventData.position)"), "Pointer clicks should pass their exact screen position into broad door/stair trigger approach routing.");
+        Assert.That(triggerText, Does.Contain("triggerUnderPointer.ActivateDoor(screenPosition)"), "Fallback trigger clicks should also preserve the clicked screen position.");
+        Assert.That(triggerText, Does.Contain("preferredScreenPosition"), "Broad hitboxes should try the clicked point before scanning the whole trigger rectangle.");
         Assert.That(triggerText, Does.Match(@"GetPlayerScreenPosition\s*\([^)]*\)[\s\S]*TryGetScreenPointFromLogicalPosition\(playerMovement\.LogicalPosition"), "Door proximity should measure the butler's visible feet, not the visual transform origin.");
         Assert.That(triggerText, Does.Contain("MovementStopped"), "Pending door approaches should clean up whether the player arrives or gets blocked.");
         Assert.That(triggerText, Does.Contain("ResetStaticState"), "Door trigger static state should reset between Play Mode sessions, including when domain reload is disabled.");
@@ -414,6 +417,21 @@ public class NavigationRegressionTests
         Assert.That(cameraManagerText, Does.Contain("ScaleCursorHotspot"), "Generated cursor art and hotspots should scale together.");
         Assert.That(cameraManagerText, Does.Contain("AddWatercolorTexture"), "Generated cursors should keep the game's painted texture language instead of flat monochrome glyphs.");
         Assert.That(cameraManagerText, Does.Contain("DrawBlockedSlash"), "Blocked cursor states should stay visually distinct from valid click actions.");
+    }
+
+    [Test]
+    public void PlayerMovementKeepsHoverPathingCheapAndReusesClickPath()
+    {
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+        string updateWalkCursorBody = ExtractMethodBody(playerText, "private void UpdateWalkCursor");
+        string tryGetFloorClickBody = ExtractMethodBody(playerText, "private bool TryGetFloorClick");
+        string setDestinationFromQueryBody = ExtractMethodBody(playerText, "private void SetDestinationFromMovementQuery");
+
+        Assert.That(updateWalkCursorBody, Does.Contain("TryEvaluateMovementAtScreenPoint(screenPosition, false, false"), "Cursor hover should only do cheap exact-point walkability, not full route construction every frame.");
+        Assert.That(tryGetFloorClickBody, Does.Contain("TryEvaluateMovementAtScreenPoint(screenPosition, false, true"), "Actual clicks should still require a full reachable route.");
+        Assert.That(playerText, Does.Contain("SetDestinationFromMovementQuery(movementQuery)"), "The click path should reuse the route already computed by the click evaluation.");
+        Assert.That(setDestinationFromQueryBody, Does.Contain("movementQueryPath"), "The cached query path should become the active movement path instead of being discarded.");
+        Assert.That(playerText, Does.Not.Contain("SetDestination(clickPosition);"), "Click handling should not rebuild the same path immediately after evaluating it.");
     }
 
     [Test]
@@ -1073,6 +1091,9 @@ public class NavigationRegressionTests
         Assert.That(editorToolsText, Does.Contain("IsSelectedChapter2HideAnchor"), "Chapter 2 hide-anchor placement should not depend on the generic room auto-preview preference.");
         Assert.That(editorToolsText, Does.Match(@"!NavigationEditorTools\.AutoPreviewSelectedRoom && !forcePreviewSelection"), "Selecting Room_* objects or Ch2_Hide_* anchors should force room preview even if generic auto-preview is off.");
         Assert.That(editorToolsText, Does.Match(@"EditorApplication\.delayCall \+= QueuePreviewForCurrentSelection"), "Reopening Unity should preview the currently selected Ch2_Hide_* anchor room after scripts reload.");
+        Assert.That(editorToolsText, Does.Contain("lastAutoPreviewSelectionObject"), "Selection auto-preview should remember the last previewed selection so hierarchy changes from the preview do not spam the console.");
+        Assert.That(editorToolsText, Does.Contain("ResetLastAutoPreview"), "Changing editor selection should allow a new preview while repeated hierarchy changes for the same selection stay quiet.");
+        Assert.That(editorToolsText, Does.Match(@"if\s*\(\s*pingRoom\s*\)[\s\S]*Debug\.Log\(\$""Previewing"), "Automatic background room previews should stay silent so they do not bury diagnostic logs.");
         Assert.That(cameraManagerText, Does.Not.Contain("TryCaptureShaderAnchoredRect"), "CameraManager should not expose old capture APIs.");
         Assert.That(cameraManagerText, Does.Not.Contain("TryApplySourceImageRect"), "CameraManager should not expose a projection bridge for door hitboxes.");
         Assert.That(editorToolsText, Does.Not.Contain("CaptureVisibleDoorTriggerAnchorsForCurrentPreview"), "Editor previews should not save hitbox locations as a side effect.");

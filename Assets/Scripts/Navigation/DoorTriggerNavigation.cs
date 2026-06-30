@@ -200,7 +200,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return;
         }
 
-        ActivateDoor();
+        ActivateDoor(eventData.position);
     }
 
     public static bool IsPointerOverActiveTrigger(Vector2 screenPosition)
@@ -215,13 +215,18 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void ActivateDoor()
     {
+        ActivateDoor(null);
+    }
+
+    private void ActivateDoor(Vector2? preferredScreenPosition)
+    {
         if (Application.isPlaying && lastPointerActivationFrame == Time.frameCount)
         {
             return;
         }
 
         lastPointerActivationFrame = Time.frameCount;
-        ActivateDoor(true);
+        ActivateDoor(true, preferredScreenPosition);
     }
 
     private void Update()
@@ -229,7 +234,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         UpdateFallbackPointerHoverAndClick();
     }
 
-    private void ActivateDoor(bool allowPlayerApproach)
+    private void ActivateDoor(bool allowPlayerApproach, Vector2? preferredScreenPosition)
     {
         ResolveReferences();
 
@@ -248,7 +253,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         if (!IsPlayerCloseEnough())
         {
-            if (allowPlayerApproach && TryStartPlayerApproach())
+            if (allowPlayerApproach && TryStartPlayerApproach(preferredScreenPosition))
             {
                 return;
             }
@@ -282,7 +287,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         Debug.LogWarning($"Door trigger '{name}' has no destination room.", this);
     }
 
-    private bool TryStartPlayerApproach()
+    private bool TryStartPlayerApproach(Vector2? preferredScreenPosition)
     {
         if (!walkPlayerToTriggerWhenFar)
         {
@@ -306,7 +311,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         CancelAnyPendingApproach();
 
-        if (!TryFindBestApproachDestination(playerMovement, true, out Vector2 approachDestination))
+        if (!TryFindBestApproachDestination(playerMovement, true, out Vector2 approachDestination, preferredScreenPosition))
         {
             LogApproachFailure("no reachable walkable point could be found near the trigger");
             return false;
@@ -326,7 +331,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
                 return false;
             }
 
-            ActivateDoor(false);
+            ActivateDoor(false, null);
             return true;
         }
 
@@ -408,7 +413,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         bestDestination = candidateDestination;
     }
 
-    private bool TryFindBestApproachDestination(PointClickPlayerMovement playerMovement, bool requireMovement, out Vector2 destination)
+    private bool TryFindBestApproachDestination(
+        PointClickPlayerMovement playerMovement,
+        bool requireMovement,
+        out Vector2 destination,
+        Vector2? preferredScreenPosition = null)
     {
         destination = Vector2.zero;
 
@@ -418,7 +427,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         Vector2 playerScreenPosition = GetPlayerScreenPosition();
-        CollectTriggerApproachSamples(playerScreenPosition, min, max);
+        CollectTriggerApproachSamples(playerScreenPosition, min, max, preferredScreenPosition);
 
         bool foundDestination = false;
         float bestScore = float.MaxValue;
@@ -454,6 +463,15 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             bestScore = score;
             bestDestination = movementQuery.Destination;
             foundDestination = true;
+
+            if (preferredScreenPosition.HasValue &&
+                i == 0 &&
+                movementQuery.ExactPointWalkable &&
+                triggerDistance <= 1f)
+            {
+                destination = bestDestination;
+                return true;
+            }
         }
 
         if (!foundDestination)
@@ -476,7 +494,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         if (autoActivateAfterApproach && isActiveAndEnabled && IsPlayerCloseEnough())
         {
-            ActivateDoor(false);
+            ActivateDoor(false, null);
             return;
         }
 
@@ -576,7 +594,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         return true;
     }
 
-    private void CollectTriggerApproachSamples(Vector2 playerScreenPosition, Vector2 min, Vector2 max)
+    private void CollectTriggerApproachSamples(
+        Vector2 playerScreenPosition,
+        Vector2 min,
+        Vector2 max,
+        Vector2? preferredScreenPosition)
     {
         triggerScreenSamples.Clear();
 
@@ -586,6 +608,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         float upperY = max.y;
         float leftX = min.x;
         float rightX = max.x;
+
+        if (preferredScreenPosition.HasValue)
+        {
+            AddUniqueApproachSample(GetClosestApproachPointInTriggerBounds(preferredScreenPosition.Value, min, max));
+        }
 
         AddUniqueApproachSample(GetClosestApproachPointInTriggerBounds(playerScreenPosition, min, max));
         AddUniqueApproachSample(new Vector2(centerX, lowerY));
@@ -808,7 +835,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         if (triggerUnderPointer != null && primaryPointerDown)
         {
             triggerUnderPointer.LogDoorFallbackDiagnostic("hover/click", screenPosition, true, true);
-            triggerUnderPointer.ActivateDoor();
+            triggerUnderPointer.ActivateDoor(screenPosition);
         }
     }
 

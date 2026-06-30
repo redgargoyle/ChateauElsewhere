@@ -456,7 +456,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         EditorGUILayout.LabelField("Guest Depth Scale Curve", EditorStyles.boldLabel);
         DrawManualGuestSelection(roomGuests);
         EditorGUILayout.LabelField("Selected Guest", allRoomsSelected ? AllGuestsInAllRoomsSelectionLabel : allGuestsSelected ? AllGuestsSelectionLabel : selectedGuest != null ? selectedGuest.CharacterId : "none");
-        EditorGUILayout.LabelField("Selected Guest Y", allGuestsSelected ? "varies" : selectedGuest != null ? selectedGuest.ResolveRoomLocalY().ToString("0.###") : "n/a");
+        EditorGUILayout.LabelField("Selected Guest Y", allGuestsSelected ? "varies" : selectedGuest != null ? selectedGuest.ResolveRoomLocalY(selectedRoom).ToString("0.###") : "n/a");
         EditorGUILayout.LabelField("Saved Closest", FormatManualCurvePoint(true));
         EditorGUILayout.LabelField("Saved Furthest", FormatManualCurvePoint(false));
         DrawDepthPointScaleControls(selectedRoom, selectedGuest);
@@ -772,7 +772,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         GuestRoomScaleCalibration calibration = EnsureCalibration(FindButler());
         Undo.RecordObject(calibration, front ? "Save Guest Front Scale" : "Save Guest Back Scale");
-        float roomLocalY = selectedGuest.ResolveRoomLocalY();
+        float roomLocalY = selectedGuest.ResolveRoomLocalY(selectedRoom);
         float pointScale = front ? customFrontScale : customBackScale;
 
         SaveGuestDepthCurvePointForCalibration(calibration, selectedRoom, roomLocalY, pointScale, front);
@@ -1199,7 +1199,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             if (guest == null ||
                 guest.ExcludeFromGuestScaling ||
                 guest.IsButler ||
-                !applier.TryComputeParticipantScale(guest, out GuestScaleComputation computation))
+                !applier.TryComputeParticipantScale(guest, selectedRoom, out GuestScaleComputation computation))
             {
                 continue;
             }
@@ -1515,7 +1515,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             !guest.IsButler &&
             !GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(guest.gameObject) &&
             GuestRoomScaleApplier.IsManagedGuestParticipant(guest) &&
-            GuestRoomScaleCalibration.SameRoom(guest.ResolveRoomId(), selectedRoom);
+            GuestRoomScaleApplier.ShouldApplyParticipantForRoomContext(guest, selectedRoom);
     }
 
     private static float GetGuestCurrentScale(
@@ -1535,7 +1535,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             if (calibration != null &&
                 calibration.TryEvaluateGuestScale(
                     selectedRoom,
-                    selectedGuest.ResolveRoomLocalY(),
+                    selectedGuest.ResolveRoomLocalY(selectedRoom),
                     out float evaluatedScale,
                     out _,
                     out _))

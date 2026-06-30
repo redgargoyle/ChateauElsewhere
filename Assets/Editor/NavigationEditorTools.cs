@@ -326,7 +326,11 @@ public static class NavigationEditorTools
         FinishNavigationPreviewUndo(undoGroup);
         MarkOpenScenesDirty();
         SceneView.RepaintAll();
-        Debug.Log($"Previewing '{roomName}' on the full room image. Showing {preparedTriggerCount} door trigger(s) under '{roomContentGroup.name}' for editing.");
+
+        if (pingRoom)
+        {
+            Debug.Log($"Previewing '{roomName}' on the full room image. Showing {preparedTriggerCount} door trigger(s) under '{roomContentGroup.name}' for editing.");
+        }
     }
 
     private static int ValidateDestinations(StringBuilder report, DoorDataParseResult parseResult)
@@ -1040,6 +1044,8 @@ public static class NavigationSelectionAutoPreview
 {
     private static bool isPreviewingSelection;
     private static bool isHierarchyPreviewQueued;
+    private static UnityEngine.Object lastAutoPreviewSelectionObject;
+    private static RoomContentGroup lastAutoPreviewRoomContentGroup;
 
     static NavigationSelectionAutoPreview()
     {
@@ -1050,6 +1056,7 @@ public static class NavigationSelectionAutoPreview
 
     private static void HandleSelectionChanged()
     {
+        ResetLastAutoPreview();
         QueuePreviewForCurrentSelection();
     }
 
@@ -1091,6 +1098,11 @@ public static class NavigationSelectionAutoPreview
 
         if (roomContentGroup != null)
         {
+            if (!TryMarkCurrentSelectionForAutoPreview(roomContentGroup))
+            {
+                return;
+            }
+
             EditorApplication.delayCall += () =>
             {
                 if (roomContentGroup == null || EditorApplication.isPlayingOrWillChangePlaymode)
@@ -1112,5 +1124,31 @@ public static class NavigationSelectionAutoPreview
 
             return;
         }
+    }
+
+    private static void ResetLastAutoPreview()
+    {
+        lastAutoPreviewSelectionObject = null;
+        lastAutoPreviewRoomContentGroup = null;
+    }
+
+    private static bool TryMarkCurrentSelectionForAutoPreview(RoomContentGroup roomContentGroup)
+    {
+        if (roomContentGroup == null)
+        {
+            return false;
+        }
+
+        UnityEngine.Object selectedObject = Selection.activeObject;
+
+        if (selectedObject == lastAutoPreviewSelectionObject &&
+            roomContentGroup == lastAutoPreviewRoomContentGroup)
+        {
+            return false;
+        }
+
+        lastAutoPreviewSelectionObject = selectedObject;
+        lastAutoPreviewRoomContentGroup = roomContentGroup;
+        return true;
     }
 }

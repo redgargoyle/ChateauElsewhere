@@ -739,7 +739,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 			if (TryGetFloorClick(out Vector2 clickPosition, out Vector2 screenPosition, out bool pointerOverUi, out MovementTargetQuery movementQuery))
 			{
-				SetDestination(clickPosition);
+				SetDestinationFromMovementQuery(movementQuery);
 				LogAcceptedFloorClick(screenPosition, pointerOverUi, movementQuery, hasDestination, movementPath.Count);
 			}
 		}
@@ -1026,7 +1026,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (pointerOverUi)
 			return false;
 
-		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, out movementQuery))
+		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, true, out movementQuery))
 			return false;
 
 		if (!movementQuery.CanShowWalkCursor || !movementQuery.WouldMove)
@@ -1071,7 +1071,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			!movementQuery.HasReachableDestination)
 			return false;
 
-		SetDestination(movementQuery.Destination);
+		SetDestinationFromMovementQuery(movementQuery);
 		return true;
 	}
 
@@ -1089,7 +1089,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			!movementQuery.HasReachableDestination)
 			return false;
 
-		SetDestination(movementQuery.Destination);
+		SetDestinationFromMovementQuery(movementQuery);
 		return true;
 	}
 
@@ -1156,6 +1156,15 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	public bool TryEvaluateMovementAtScreenPoint(Vector2 screenPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)
 	{
+		return TryEvaluateMovementAtScreenPoint(screenPosition, clampToWalkableArea, true, out movementQuery);
+	}
+
+	private bool TryEvaluateMovementAtScreenPoint(
+		Vector2 screenPosition,
+		bool clampToWalkableArea,
+		bool requireReachablePath,
+		out MovementTargetQuery movementQuery)
+	{
 		movementQuery = default;
 
 		if (!isReady)
@@ -1166,7 +1175,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryGetLogicalPointFromScreen(screenPosition, out Vector2 targetPosition))
 			return false;
 
-		return TryEvaluateMovementTarget(targetPosition, clampToWalkableArea, screenPosition, out movementQuery);
+		return TryEvaluateMovementTarget(
+			targetPosition,
+			clampToWalkableArea,
+			screenPosition,
+			requireReachablePath,
+			out movementQuery);
 	}
 
 	public bool TryGetScreenPointFromLogicalPosition(Vector2 logicalPoint, out Vector2 screenPoint)
@@ -1301,6 +1315,21 @@ public class PointClickPlayerMovement : MonoBehaviour
 		Vector2 screenPosition,
 		out MovementTargetQuery movementQuery)
 	{
+		return TryEvaluateMovementTarget(
+			targetPosition,
+			clampToWalkableArea,
+			screenPosition,
+			true,
+			out movementQuery);
+	}
+
+	private bool TryEvaluateMovementTarget(
+		Vector2 targetPosition,
+		bool clampToWalkableArea,
+		Vector2 screenPosition,
+		bool requireReachablePath,
+		out MovementTargetQuery movementQuery)
+	{
 		movementQuery = default;
 
 		if (!isReady)
@@ -1313,7 +1342,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 		bool hasReachableDestination;
 		Vector2 destinationPosition = targetPosition;
 
-		if (clampToWalkableArea)
+		if (!requireReachablePath && !clampToWalkableArea)
+		{
+			usesProjectedDestination = false;
+			exactPointWalkable = IsPointWalkable(targetPosition);
+			hasReachableDestination = exactPointWalkable;
+			movementQueryPath.Clear();
+		}
+		else if (clampToWalkableArea)
 		{
 			hasReachableDestination = TryResolveClosestReachableWalkDestination(
 				targetPosition,
@@ -1805,7 +1841,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 		}
 
-		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, out MovementTargetQuery movementQuery))
+		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, false, out MovementTargetQuery movementQuery))
 		{
 			NavigationCursorController.ClearWalkHover(this);
 			return;
@@ -1815,6 +1851,28 @@ public class PointClickPlayerMovement : MonoBehaviour
 			this,
 			true,
 			movementQuery.CanShowWalkCursor);
+	}
+
+	private void SetDestinationFromMovementQuery(MovementTargetQuery movementQuery)
+	{
+		finalDestination = movementQuery.Destination;
+		movementPathIndex = 0;
+		movementPath.Clear();
+
+		if (movementQuery.HasReachableDestination && movementQueryPath.Count > 0)
+		{
+			movementPath.AddRange(movementQueryPath);
+		}
+		else if (!TryBuildMovementPath(logicalPosition, movementQuery.Destination, movementPath) ||
+			movementPath.Count == 0)
+		{
+			destination = logicalPosition;
+			hasDestination = false;
+			isWalking = false;
+			return;
+		}
+
+		BeginFollowingMovementPath();
 	}
 
 	private void SetDestination(Vector2 clickPosition)
@@ -1831,6 +1889,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 		}
 
+		BeginFollowingMovementPath();
+	}
+
+	private void BeginFollowingMovementPath()
+	{
 		destination = movementPath[0];
 		Vector2 movement = destination - logicalPosition;
 		hasDestination = movement.magnitude > stopDistance;

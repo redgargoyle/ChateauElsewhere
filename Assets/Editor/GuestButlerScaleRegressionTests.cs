@@ -972,6 +972,74 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestRoomScaleMasterTreatsVisibleGuestsAsSelectedRoomInEditMode()
+    {
+        GuestScaleParticipant[] guests = new GuestScaleParticipant[8];
+        GameObject[] guestObjects = new GameObject[8];
+
+        try
+        {
+            for (int i = 0; i < guests.Length; i++)
+            {
+                guestObjects[i] = new GameObject($"Guest {i + 1}");
+                guestObjects[i].AddComponent<SpriteRenderer>();
+                guests[i] = guestObjects[i].AddComponent<GuestScaleParticipant>();
+                guests[i].SetCharacterId($"Guest {i + 1}");
+                guests[i].SetRoomIdOverride(i < 4 ? "Grand Entrance Hall" : "Drawing Room");
+                guests[i].SetCurrentRoomId("Drawing Room");
+            }
+
+            MethodInfo method = typeof(GuestRoomScaleMasterWindow).GetMethod(
+                "FindGuestsInRoom",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+
+            GuestScaleParticipant[] roomGuests = (GuestScaleParticipant[])method.Invoke(
+                null,
+                new object[] { guests, "Grand Entrance Hall" });
+
+            Assert.That(roomGuests, Has.Length.EqualTo(8));
+        }
+        finally
+        {
+            for (int i = 0; i < guestObjects.Length; i++)
+            {
+                UnityEngine.Object.DestroyImmediate(guestObjects[i]);
+            }
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierAppliesExplicitRoomContextDespiteStaleCurrentRoom()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1f);
+        GameObject guest = new GameObject("Guest 1");
+
+        try
+        {
+            guest.AddComponent<SpriteRenderer>();
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetCharacterId("Guest 1");
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.SetCurrentRoomId("Drawing Room");
+            participant.SetScaleRoot(guest.transform);
+            participant.CaptureBaseScale(true);
+
+            scene.Calibration.SetFixedGuestScale("Grand Entrance Hall", 1.5f);
+            scene.Calibration.SetFixedGuestScale("Drawing Room", 0.5f);
+            GuestScaleApplyResult result = scene.Applier.RefreshRoomNow("Grand Entrance Hall");
+
+            Assert.That(result.Applied, Is.EqualTo(1));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.5f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+            DestroyScaleTestScene(scene);
+        }
+    }
+
+    [Test]
     public void GuestRoomScaleMasterCanAdoptVisibleGuestsIntoSelectedRoomForManualEditing()
     {
         GuestScaleParticipant[] guests = new GuestScaleParticipant[8];

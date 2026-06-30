@@ -213,12 +213,12 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         {
             GuestScaleParticipant participant = participants[i];
 
-            if (participant == null || !GuestRoomScaleCalibration.SameRoom(participant.ResolveRoomId(), roomId))
+            if (!ShouldApplyParticipantForRoomContext(participant, roomId))
             {
                 continue;
             }
 
-            if (RefreshParticipantNow(participant, out bool participantChanged))
+            if (RefreshParticipantNow(participant, out bool participantChanged, roomId))
             {
                 applied++;
 
@@ -239,9 +239,14 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
     public bool RefreshParticipantNow(GuestScaleParticipant participant, out bool changed)
     {
+        return RefreshParticipantNow(participant, out changed, string.Empty);
+    }
+
+    private bool RefreshParticipantNow(GuestScaleParticipant participant, out bool changed, string roomContext)
+    {
         ResolveCalibration();
 
-        if (!TryComputeParticipantScale(participant, out GuestScaleComputation computation))
+        if (!TryComputeParticipantScale(participant, roomContext, out GuestScaleComputation computation))
         {
             changed = false;
             return false;
@@ -261,6 +266,14 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
     public bool TryComputeParticipantScale(GuestScaleParticipant participant, out GuestScaleComputation computation)
     {
+        return TryComputeParticipantScale(participant, string.Empty, out computation);
+    }
+
+    public bool TryComputeParticipantScale(
+        GuestScaleParticipant participant,
+        string roomContext,
+        out GuestScaleComputation computation)
+    {
         ResolveCalibration();
         computation = default;
 
@@ -273,8 +286,10 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             return false;
         }
 
-        string roomId = participant.ResolveRoomId();
-        float roomLocalY = participant.ResolveRoomLocalY();
+        string roomId = string.IsNullOrWhiteSpace(roomContext)
+            ? participant.ResolveRoomId()
+            : participant.ResolveRoomIdForScaleContext(roomContext);
+        float roomLocalY = participant.ResolveRoomLocalY(roomId);
         float roomScale = 1f;
         string roomScaleDiagnostic = "No guest room scale calibration.";
 
@@ -336,6 +351,19 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             roomStageZoomDiagnostic,
             inheritedRoomStageZoomDiagnostic);
         return true;
+    }
+
+    public static bool ShouldApplyParticipantForRoomContext(
+        GuestScaleParticipant participant,
+        string roomId)
+    {
+        if (participant == null || string.IsNullOrWhiteSpace(roomId))
+        {
+            return false;
+        }
+
+        string resolvedRoomId = participant.ResolveRoomIdForScaleContext(roomId);
+        return GuestRoomScaleCalibration.SameRoom(resolvedRoomId, roomId);
     }
 
     public static float CalculateTargetLocalScale(

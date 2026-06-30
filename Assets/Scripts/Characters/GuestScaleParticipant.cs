@@ -212,6 +212,21 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         return ResolveCurrentRoomId();
     }
 
+    public string ResolveRoomIdForScaleContext(string selectedRoom)
+    {
+        string cleanSelectedRoom = GuestRoomScaleCalibration.CleanRoomId(selectedRoom);
+
+        if (!Application.isPlaying &&
+            !string.IsNullOrWhiteSpace(cleanSelectedRoom) &&
+            IsActiveVisibleManagedChapterGuest())
+        {
+            lastRoomResolutionSource = "SelectedRoomManualContext";
+            return cleanSelectedRoom;
+        }
+
+        return ResolveCurrentRoomId();
+    }
+
     public string ResolveCurrentRoomId()
     {
         if (TryResolveCurrentRoomId(out string roomId, out string source))
@@ -236,7 +251,7 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         bool hasActiveNavigationRoom = TryResolveActiveNavigationRoomId(out string activeNavigationRoomId);
         string cleanOverrideRoomId = GuestRoomScaleCalibration.CleanRoomId(roomIdOverride);
         bool hasAuthoredNameRoom = GuestRoomScaleApplier.TryInferChapterGuestNameRoomId(gameObject.name, out string authoredNameRoomId);
-        string finalRoomId = ResolveRoomId();
+        string finalRoomId = ResolveRoomIdForScaleContext(cleanSelectedRoom);
         bool included = !string.IsNullOrWhiteSpace(cleanSelectedRoom) &&
             GuestRoomScaleCalibration.SameRoom(finalRoomId, cleanSelectedRoom) &&
             GuestRoomScaleApplier.IsManagedGuestParticipant(this);
@@ -263,6 +278,12 @@ public sealed class GuestScaleParticipant : MonoBehaviour
 
     private bool TryResolveCurrentRoomId(out string roomId, out string source)
     {
+        if (TryResolveActiveNavigationRoomId(out roomId))
+        {
+            source = "ActiveNavigation";
+            return true;
+        }
+
         if (TryResolveExplicitCurrentRoomId(out roomId))
         {
             source = "CurrentRoomId";
@@ -278,12 +299,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         if (TryResolveParentRoomId(out roomId))
         {
             source = "ParentRoomContent";
-            return true;
-        }
-
-        if (TryResolveActiveNavigationRoomId(out roomId))
-        {
-            source = "ActiveNavigation";
             return true;
         }
 
@@ -558,6 +573,11 @@ public sealed class GuestScaleParticipant : MonoBehaviour
 
     public float ResolveRoomLocalY()
     {
+        return ResolveRoomLocalY(ResolveRoomId());
+    }
+
+    public float ResolveRoomLocalY(string roomContext)
+    {
         RoomPersonWalker2D walker = GetComponent<RoomPersonWalker2D>();
 
         if (walker != null)
@@ -581,7 +601,7 @@ public sealed class GuestScaleParticipant : MonoBehaviour
             return localPoint.y;
         }
 
-        if (TryFindResolvedRoomContent(out RoomContentGroup resolvedRoomContent))
+        if (TryFindResolvedRoomContent(roomContext, out RoomContentGroup resolvedRoomContent))
         {
             Vector3 localPoint = resolvedRoomContent.transform.InverseTransformPoint(root.position);
             return localPoint.y;
@@ -694,10 +714,9 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         return candidate != null && !NameLooksExcludedFromBodyScale(candidate.name);
     }
 
-    private bool TryFindResolvedRoomContent(out RoomContentGroup roomContent)
+    private bool TryFindResolvedRoomContent(string roomId, out RoomContentGroup roomContent)
     {
         roomContent = null;
-        string roomId = ResolveRoomId();
 
         if (string.IsNullOrWhiteSpace(roomId))
         {
