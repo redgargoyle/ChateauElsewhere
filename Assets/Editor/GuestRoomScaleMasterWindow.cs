@@ -7,8 +7,10 @@ using UnityEngine;
 public sealed class GuestRoomScaleMasterWindow : EditorWindow
 {
     public const string ActiveSelectionGuestOptionLabel = "Active Hierarchy Selection";
-    public const string AllGuestsSelectionLabel = "All Guests In Room";
-    public const string ApplyManualSizeToAllGuestsButtonLabel = "APPLY MANUAL SIZE TO ALL GUESTS IN ROOM";
+    public const string AllGuestsSelectionLabel = "All Guests In Selected Room";
+    public const string AllGuestsInAllRoomsSelectionLabel = "All Guests In All Rooms";
+    public const string ApplyManualSizeToAllGuestsButtonLabel = "APPLY MANUAL SIZE TO SELECTED ROOM";
+    public const string ApplyManualSizeToAllRoomsButtonLabel = "APPLY MANUAL SIZE TO ALL ROOMS";
 
     private const float MinMultiplier = 0.25f;
     private const float MaxMultiplier = 3f;
@@ -16,6 +18,8 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
     private const float MaxManualGuestScale = 5f;
     private const int ActiveSelectionGuestOptionIndex = 0;
     private const int AllGuestsSelectionOptionIndex = 1;
+    private const int AllGuestsInAllRoomsSelectionOptionIndex = 2;
+    private const int FirstExplicitGuestOptionIndex = 3;
 
     private int selectedRoomIndex;
     private int selectedManualGuestOptionIndex;
@@ -40,15 +44,17 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
     private readonly struct ManualGuestSelection
     {
-        public ManualGuestSelection(GuestScaleParticipant selectedGuest, bool allGuests, string selectionKey)
+        public ManualGuestSelection(GuestScaleParticipant selectedGuest, bool allGuests, bool allRooms, string selectionKey)
         {
             SelectedGuest = selectedGuest;
             AllGuests = allGuests;
+            AllRooms = allRooms;
             SelectionKey = selectionKey;
         }
 
         public GuestScaleParticipant SelectedGuest { get; }
         public bool AllGuests { get; }
+        public bool AllRooms { get; }
         public string SelectionKey { get; }
     }
 
@@ -132,7 +138,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         if (!string.Equals(loadedManualGuestKey, manualSelection.SelectionKey, StringComparison.Ordinal))
         {
             manualGuestScale = manualSelection.AllGuests
-                ? GetAverageGuestCurrentScale(roomGuests)
+                ? GetAverageGuestCurrentScale(manualSelection.AllRooms ? guests : roomGuests)
                 : GetGuestCurrentScale(selectedGuest, calibration, selectedRoom);
             loadedManualGuestKey = manualSelection.SelectionKey;
         }
@@ -147,7 +153,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             PreviewSelectedRoom(selectedRoom);
         }
 
-        DrawManualFrontBackGuestCurve(selectedRoom, selectedGuest, manualSelection.AllGuests, roomGuests);
+        DrawManualFrontBackGuestCurve(selectedRoom, selectedGuest, manualSelection.AllGuests, manualSelection.AllRooms, roomGuests);
 
         if (GUILayout.Button("SAVE ROOM GUEST SIZE"))
         {
@@ -238,17 +244,20 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         string selectedRoom,
         GuestScaleParticipant selectedGuest,
         bool allGuestsSelected,
+        bool allRoomsSelected,
         GuestScaleParticipant[] roomGuests)
     {
         EditorGUILayout.Space(8f);
         EditorGUILayout.LabelField("Manual Front/Back Guest Curve", EditorStyles.boldLabel);
         DrawManualGuestSelection(roomGuests);
-        EditorGUILayout.LabelField("Selected Guest", allGuestsSelected ? AllGuestsSelectionLabel : selectedGuest != null ? selectedGuest.CharacterId : "none");
+        EditorGUILayout.LabelField("Selected Guest", allRoomsSelected ? AllGuestsInAllRoomsSelectionLabel : allGuestsSelected ? AllGuestsSelectionLabel : selectedGuest != null ? selectedGuest.CharacterId : "none");
         EditorGUILayout.LabelField("Selected Guest Y", allGuestsSelected ? "varies" : selectedGuest != null ? selectedGuest.ResolveRoomLocalY().ToString("0.###") : "n/a");
         EditorGUILayout.LabelField("Saved Front", FormatManualCurvePoint(true));
         EditorGUILayout.LabelField("Saved Back", FormatManualCurvePoint(false));
 
-        bool canPreviewManualScale = allGuestsSelected ? roomGuests != null && roomGuests.Length > 0 : selectedGuest != null;
+        bool canPreviewManualScale = allRoomsSelected
+            ? FindGuestParticipants().Length > 0
+            : allGuestsSelected ? roomGuests != null && roomGuests.Length > 0 : selectedGuest != null;
 
         using (new EditorGUI.DisabledScope(!canPreviewManualScale))
         {
@@ -259,7 +268,14 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             {
                 if (allGuestsSelected)
                 {
-                    PreviewAllGuestsManualScale(selectedRoom);
+                    if (allRoomsSelected)
+                    {
+                        PreviewAllRoomsManualScale();
+                    }
+                    else
+                    {
+                        PreviewAllGuestsManualScale(selectedRoom);
+                    }
                 }
                 else
                 {
@@ -269,9 +285,20 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
             if (allGuestsSelected)
             {
-                if (GUILayout.Button(ApplyManualSizeToAllGuestsButtonLabel))
+                string buttonLabel = allRoomsSelected
+                    ? ApplyManualSizeToAllRoomsButtonLabel
+                    : ApplyManualSizeToAllGuestsButtonLabel;
+
+                if (GUILayout.Button(buttonLabel))
                 {
-                    PreviewAllGuestsManualScale(selectedRoom);
+                    if (allRoomsSelected)
+                    {
+                        PreviewAllRoomsManualScale();
+                    }
+                    else
+                    {
+                        PreviewAllGuestsManualScale(selectedRoom);
+                    }
                 }
             }
             else if (GUILayout.Button("PREVIEW SELECTED GUEST SIZE"))
@@ -411,6 +438,53 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         SceneView.RepaintAll();
         Repaint();
         lastAction = $"Previewed {applied} guests in {selectedRoom} at scale {manualGuestScale:0.###}; changed {changed}.";
+        Debug.Log($"[Guest Size Master] {lastAction}");
+    }
+
+    private void PreviewAllRoomsManualScale()
+    {
+        GuestScaleParticipant[] guests = FindGuestParticipants();
+
+        if (guests.Length == 0)
+        {
+            lastAction = "Manual preview skipped: no guests found.";
+            return;
+        }
+
+        List<Transform> scaleRoots = CollectParticipantScaleRoots(guests);
+        RecordScaleRoots(scaleRoots, "Preview Manual Size For All Guests");
+
+        int applied = 0;
+        int changed = 0;
+
+        for (int i = 0; i < guests.Length; i++)
+        {
+            GuestScaleParticipant guest = guests[i];
+
+            if (guest == null)
+            {
+                continue;
+            }
+
+            Transform scaleRoot = guest.ResolveScaleRoot();
+
+            if (scaleRoot == null)
+            {
+                continue;
+            }
+
+            if (guest.ApplyFinalScale(manualGuestScale))
+            {
+                changed++;
+            }
+
+            EditorUtility.SetDirty(scaleRoot);
+            applied++;
+        }
+
+        SceneView.RepaintAll();
+        Repaint();
+        lastAction = $"Previewed {applied} guests across all rooms at scale {manualGuestScale:0.###}; changed {changed}.";
         Debug.Log($"[Guest Size Master] {lastAction}");
     }
 
@@ -614,18 +688,22 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
     private static List<Transform> CollectParticipantScaleRoots(string selectedRoom)
     {
+        return CollectParticipantScaleRoots(FindGuestsInRoom(FindGuestParticipants(), selectedRoom));
+    }
+
+    private static List<Transform> CollectParticipantScaleRoots(GuestScaleParticipant[] guests)
+    {
         List<Transform> scaleRoots = new List<Transform>();
         HashSet<Transform> seen = new HashSet<Transform>();
-        GuestScaleParticipant[] guests = FindGuestParticipants();
 
-        for (int i = 0; i < guests.Length; i++)
+        for (int i = 0; guests != null && i < guests.Length; i++)
         {
             GuestScaleParticipant guest = guests[i];
 
             if (guest == null ||
                 guest.ExcludeFromGuestScaling ||
                 guest.IsButler ||
-                !GuestRoomScaleCalibration.SameRoom(guest.ResolveRoomId(), selectedRoom))
+                !GuestRoomScaleApplier.IsManagedGuestParticipant(guest))
             {
                 continue;
             }
@@ -903,18 +981,23 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         selectedManualGuestOptionIndex = Mathf.Clamp(
             selectedManualGuestOptionIndex,
             0,
-            AllGuestsSelectionOptionIndex + roomGuestCount);
+            FirstExplicitGuestOptionIndex + roomGuestCount - 1);
 
         string roomKey = GuestRoomScaleCalibration.NormalizeRoomName(selectedRoom);
 
         if (selectedManualGuestOptionIndex == AllGuestsSelectionOptionIndex)
         {
-            return new ManualGuestSelection(null, true, $"{roomKey}|all");
+            return new ManualGuestSelection(null, true, false, $"{roomKey}|all-selected-room");
         }
 
-        if (selectedManualGuestOptionIndex > AllGuestsSelectionOptionIndex)
+        if (selectedManualGuestOptionIndex == AllGuestsInAllRoomsSelectionOptionIndex)
         {
-            int guestIndex = selectedManualGuestOptionIndex - AllGuestsSelectionOptionIndex - 1;
+            return new ManualGuestSelection(null, true, true, "all-rooms");
+        }
+
+        if (selectedManualGuestOptionIndex >= FirstExplicitGuestOptionIndex)
+        {
+            int guestIndex = selectedManualGuestOptionIndex - FirstExplicitGuestOptionIndex;
             GuestScaleParticipant explicitGuest = guestIndex >= 0 && guestIndex < roomGuestCount
                 ? roomGuests[guestIndex]
                 : null;
@@ -924,6 +1007,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
                 return new ManualGuestSelection(
                     explicitGuest,
                     false,
+                    false,
                     $"{roomKey}|explicit|{GetGuestSelectionKey(explicitGuest)}");
             }
         }
@@ -931,6 +1015,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         GuestScaleParticipant selectedGuest = ResolveSelectedGuest(selectedRoom, roomGuests);
         return new ManualGuestSelection(
             selectedGuest,
+            false,
             false,
             $"{roomKey}|active|{GetGuestSelectionKey(selectedGuest)}");
     }
@@ -1070,13 +1155,14 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
     private static string[] BuildManualGuestOptions(GuestScaleParticipant[] roomGuests)
     {
         int roomGuestCount = roomGuests != null ? roomGuests.Length : 0;
-        string[] options = new string[AllGuestsSelectionOptionIndex + 1 + roomGuestCount];
+        string[] options = new string[FirstExplicitGuestOptionIndex + roomGuestCount];
         options[ActiveSelectionGuestOptionIndex] = ActiveSelectionGuestOptionLabel;
         options[AllGuestsSelectionOptionIndex] = AllGuestsSelectionLabel;
+        options[AllGuestsInAllRoomsSelectionOptionIndex] = AllGuestsInAllRoomsSelectionLabel;
 
         for (int i = 0; i < roomGuestCount; i++)
         {
-            options[AllGuestsSelectionOptionIndex + 1 + i] = FormatManualGuestOption(roomGuests[i]);
+            options[FirstExplicitGuestOptionIndex + i] = FormatManualGuestOption(roomGuests[i]);
         }
 
         return options;

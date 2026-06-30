@@ -717,11 +717,14 @@ public sealed class GuestRoomScaleRegressionTests
         string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
 
         Assert.That(GuestRoomScaleMasterWindow.ActiveSelectionGuestOptionLabel, Is.EqualTo("Active Hierarchy Selection"));
-        Assert.That(GuestRoomScaleMasterWindow.AllGuestsSelectionLabel, Is.EqualTo("All Guests In Room"));
-        Assert.That(GuestRoomScaleMasterWindow.ApplyManualSizeToAllGuestsButtonLabel, Is.EqualTo("APPLY MANUAL SIZE TO ALL GUESTS IN ROOM"));
+        Assert.That(GuestRoomScaleMasterWindow.AllGuestsSelectionLabel, Is.EqualTo("All Guests In Selected Room"));
+        Assert.That(GuestRoomScaleMasterWindow.AllGuestsInAllRoomsSelectionLabel, Is.EqualTo("All Guests In All Rooms"));
+        Assert.That(GuestRoomScaleMasterWindow.ApplyManualSizeToAllGuestsButtonLabel, Is.EqualTo("APPLY MANUAL SIZE TO SELECTED ROOM"));
+        Assert.That(GuestRoomScaleMasterWindow.ApplyManualSizeToAllRoomsButtonLabel, Is.EqualTo("APPLY MANUAL SIZE TO ALL ROOMS"));
         Assert.That(text, Does.Contain("OnSelectionChange"));
         Assert.That(text, Does.Contain("DrawManualGuestSelection"));
         Assert.That(text, Does.Contain("PreviewAllGuestsManualScale"));
+        Assert.That(text, Does.Contain("PreviewAllRoomsManualScale"));
         Assert.That(text, Does.Contain("Manual Guest"));
     }
 
