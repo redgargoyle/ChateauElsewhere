@@ -664,12 +664,8 @@ public class ActorRoomState : MonoBehaviour
                 targetTransform.position = correctedWorldPosition;
             }
 
-            if (scaleWithRoomStageMotion &&
-                !isUsingButlerCharacterScaleRules &&
-                !Mathf.Approximately(scaleRatio, 1f))
-            {
-                targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio);
-            }
+            // Room-stage zoom moves anchored actors with the room, but human character size
+            // is owned by perspective/final character scale and must not change on scroll zoom.
         }
 
         lastRoomStageScreenCenter = currentCenter;
@@ -795,13 +791,8 @@ public class ActorRoomState : MonoBehaviour
 
         if (!isUsingButlerCharacterScaleRules)
         {
-            float scaleRatio = scaleWithRoomStageMotion
-                ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
-                : 1f;
             float perspectiveScale = GetBoundRoomPerspectiveScale();
-            targetTransform.localScale = scaleWithRoomStageMotion
-                ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
-                : boundLocalScale;
+            targetTransform.localScale = ScaleXY(boundLocalScale, perspectiveScale);
         }
 
         return true;

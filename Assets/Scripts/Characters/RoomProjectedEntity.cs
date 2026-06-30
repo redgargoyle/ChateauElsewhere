@@ -326,8 +326,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         {
             float projectionMultiplier = Mathf.Max(
                 0.001f,
-                Mathf.Max(0.001f, currentScale > 0f ? currentScale : GetProjectedScale()) *
-                Mathf.Max(0.001f, currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : 1f));
+                currentScale > 0f ? currentScale : GetProjectedScale());
             currentVisualRootScale = new Vector3(
                 currentVisualRootScale.x / projectionMultiplier,
                 currentVisualRootScale.y / projectionMultiplier,
@@ -668,7 +667,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             return;
         }
 
-        float appliedScale = currentScale * currentRoomStageScaleMultiplier;
+        float appliedScale = currentScale;
         Vector3 projectedScale = new Vector3(
             baseScale.x * appliedScale,
             baseScale.y * appliedScale,

@@ -240,17 +240,22 @@ public sealed class GuestButlerScaleRegressionTests
         string actorText = File.ReadAllText(ActorRoomStatePath);
         string playerScaleBody = ExtractMethodBody(movementText, "private void ApplyPerspectiveScale");
         string projectedScaleBody = ExtractMethodBody(projectedText, "private void ApplyProjectedScale");
+        string captureVisualScaleBody = ExtractMethodBody(projectedText, "public Vector3 CaptureCurrentVisualRootScaleForRoom");
         string forceScaleBody = ExtractMethodBody(projectedText, "private void ForceApplyButlerCharacterScale");
         string roomStageMotionBody = ExtractMethodBody(actorText, "private void ApplyRoomStageMotionDeltaIfNeeded");
         string roomStageBindingBody = ExtractMethodBody(actorText, "private bool TryApplyRoomStageLocalBindingIfNeeded");
 
         Assert.That(playerScaleBody, Does.Contain("transform.localScale = calibratedLocalScale"), "The calibrated Butler should use the saved final local scale directly.");
         Assert.That(playerScaleBody, Does.Not.Contain("calibratedLocalScale.x * roomStageScale"), "The calibrated Butler must not grow/shrink when scroll zoom changes the room stage.");
+        Assert.That(playerScaleBody, Does.Not.Contain("CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio"), "The uncalibrated Butler fallback must not grow/shrink when scroll zoom changes the room stage.");
         Assert.That(projectedScaleBody, Does.Contain("currentButlerCharacterFinalLocalScaleY"), "Projected guests should still use the Butler final local-scale value.");
         Assert.That(projectedScaleBody, Does.Not.Contain("currentButlerCharacterFinalLocalScaleY * currentRoomStageScaleMultiplier"), "Final Butler guest scale must not grow/shrink again when scroll zoom changes the room stage.");
+        Assert.That(projectedScaleBody, Does.Not.Contain("currentScale * currentRoomStageScaleMultiplier"), "Legacy projected guest scale must not grow/shrink when scroll zoom changes the room stage.");
+        Assert.That(captureVisualScaleBody, Does.Not.Contain("currentRoomStageScaleMultiplier"), "Saving guest visual scale must not bake the current scroll zoom into the stored room scale.");
         Assert.That(forceScaleBody, Does.Not.Contain("currentRoomStageScaleMultiplier > 0f"), "Tool/runtime force-apply should be idempotent and independent from current room-stage zoom.");
-        Assert.That(roomStageMotionBody, Does.Contain("!isUsingButlerCharacterScaleRules"), "ActorRoomState room-stage motion should not scale actors after final Butler guest scaling is active.");
-        Assert.That(roomStageBindingBody, Does.Contain("!isUsingButlerCharacterScaleRules"), "Bound world actors using final Butler guest scale should keep position binding but not room-stage scale multiplication.");
+        Assert.That(roomStageMotionBody, Does.Not.Contain("targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio)"), "ActorRoomState room-stage motion must move actors with the room without scaling human characters.");
+        Assert.That(roomStageBindingBody, Does.Not.Contain("scaleRatio * perspectiveScale"), "Bound world actors should not multiply perspective scale by room-stage zoom.");
+        Assert.That(roomStageBindingBody, Does.Contain("ScaleXY(boundLocalScale, perspectiveScale)"), "Bound world actors may still apply perspective depth scale from their authored baseline.");
     }
 
     private static RoomPerspectiveProfile CreateProfile(float nearScale, float farScale)
