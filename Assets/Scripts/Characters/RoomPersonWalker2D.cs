@@ -694,6 +694,26 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	{
 		GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
 
+		if (participant == null)
+		{
+			participant = GetComponentInParent<GuestScaleParticipant>(true);
+		}
+
+		if (participant == null)
+		{
+			participant = GetComponentInChildren<GuestScaleParticipant>(true);
+		}
+
+		if (participant == null && targetGraphic != null)
+		{
+			participant = targetGraphic.GetComponentInParent<GuestScaleParticipant>(true);
+		}
+
+		if (participant == null && targetGraphic != null)
+		{
+			participant = targetGraphic.GetComponentInChildren<GuestScaleParticipant>(true);
+		}
+
 		if (participant == null ||
 			participant.ExcludeFromGuestScaling ||
 			participant.IsButler)

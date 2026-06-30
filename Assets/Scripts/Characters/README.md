@@ -64,6 +64,8 @@ The manually calibrated Butler room scale is the trusted room/depth source. Gues
 
 `GuestScaleParticipant` marks the visible human body root. Coats, speech bubbles, shadows, prompts, highlights, icons, cursors, and tooltips must not be selected as body roots. `RoomProjectedEntity`, `RoomPersonWalker2D`, and `ActorRoomState` still own placement, movement, sorting, tint, and story state, but they are no longer final guest body-size writers when a participant is present.
 
+Guest room sizes are saved with a `referenceRoomStageScale`. At runtime and in editor previews, `GuestRoomScaleApplier` multiplies the saved guest size by the current room-stage zoom ratio, then divides out inherited room-stage zoom only for guests already parented under the scaled room stage. This makes guests zoom with the room and Butler without double-scaling room-stage children.
+
 Workflow:
 
 1. Open `Tools > Characters > Guest Size Master`.

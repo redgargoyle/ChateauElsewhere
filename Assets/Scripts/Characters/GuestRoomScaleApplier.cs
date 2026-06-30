@@ -13,6 +13,50 @@ public readonly struct GuestScaleApplyResult
     public int Changed { get; }
 }
 
+public readonly struct GuestScaleComputation
+{
+    public GuestScaleComputation(
+        string roomId,
+        float roomLocalY,
+        float roomScale,
+        float poseRatio,
+        float fineTune,
+        float baseGuestScale,
+        float roomStageZoomRatio,
+        float inheritedRoomStageZoomRatio,
+        float targetLocalScale,
+        string roomScaleDiagnostic,
+        string roomStageZoomDiagnostic,
+        string inheritedRoomStageZoomDiagnostic)
+    {
+        RoomId = roomId;
+        RoomLocalY = roomLocalY;
+        RoomScale = roomScale;
+        PoseRatio = poseRatio;
+        FineTune = fineTune;
+        BaseGuestScale = baseGuestScale;
+        RoomStageZoomRatio = roomStageZoomRatio;
+        InheritedRoomStageZoomRatio = inheritedRoomStageZoomRatio;
+        TargetLocalScale = targetLocalScale;
+        RoomScaleDiagnostic = roomScaleDiagnostic;
+        RoomStageZoomDiagnostic = roomStageZoomDiagnostic;
+        InheritedRoomStageZoomDiagnostic = inheritedRoomStageZoomDiagnostic;
+    }
+
+    public string RoomId { get; }
+    public float RoomLocalY { get; }
+    public float RoomScale { get; }
+    public float PoseRatio { get; }
+    public float FineTune { get; }
+    public float BaseGuestScale { get; }
+    public float RoomStageZoomRatio { get; }
+    public float InheritedRoomStageZoomRatio { get; }
+    public float TargetLocalScale { get; }
+    public string RoomScaleDiagnostic { get; }
+    public string RoomStageZoomDiagnostic { get; }
+    public string InheritedRoomStageZoomDiagnostic { get; }
+}
+
 [DefaultExecutionOrder(10000)]
 [DisallowMultipleComponent]
 [AddComponentMenu("Dreadforge/Characters/Guest Room Scale Applier")]
@@ -21,10 +65,16 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
     [SerializeField] private GuestRoomScaleCalibration calibration;
     [SerializeField] private GuestPoseScaleOverrideStore poseOverrideStore;
     [SerializeField] private bool includeInactiveParticipants = true;
+    [SerializeField] private bool logScaleDiagnostics;
 
     private readonly List<GuestScaleParticipant> participants = new List<GuestScaleParticipant>();
 
     public GuestRoomScaleCalibration Calibration => calibration;
+    public bool LogScaleDiagnostics
+    {
+        get => logScaleDiagnostics;
+        set => logScaleDiagnostics = value;
+    }
 
     private void LateUpdate()
     {
@@ -180,33 +230,112 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
     public bool RefreshParticipantNow(GuestScaleParticipant participant, out bool changed)
     {
-        if (participant == null ||
-            IsGuestScaleInfrastructureObject(participant.gameObject) ||
-            participant.ExcludeFromGuestScaling ||
-            participant.IsButler)
+        ResolveCalibration();
+
+        if (!TryComputeParticipantScale(participant, out GuestScaleComputation computation))
         {
             changed = false;
             return false;
         }
 
-        string roomId = participant.ResolveRoomId();
-        float roomLocalY = participant.ResolveRoomLocalY();
+        changed = participant.ApplyFinalScale(computation.TargetLocalScale);
 
-        float roomScale = 1f;
-
-        if (calibration != null &&
-            calibration.TryEvaluateGuestScale(roomId, roomLocalY, out float evaluatedScale, out _, out _))
+        if (logScaleDiagnostics)
         {
-            roomScale = evaluatedScale;
+            Debug.Log(
+                $"[GuestScale] {participant.CharacterId} room={computation.RoomId} base={computation.BaseGuestScale:0.####} zoomRatio={computation.RoomStageZoomRatio:0.####} inherited={computation.InheritedRoomStageZoomRatio:0.####} applied={computation.TargetLocalScale:0.####}",
+                participant);
         }
 
-        float finalMultiplier =
-            Mathf.Max(0.001f, roomScale) *
-            ResolveExplicitPoseRatio(participant, roomId) *
-            participant.ManualFineTuneMultiplier;
-
-        changed = participant.ApplyFinalScale(finalMultiplier);
         return true;
+    }
+
+    public bool TryComputeParticipantScale(GuestScaleParticipant participant, out GuestScaleComputation computation)
+    {
+        ResolveCalibration();
+        computation = default;
+
+        if (participant == null ||
+            IsGuestScaleInfrastructureObject(participant.gameObject) ||
+            participant.ExcludeFromGuestScaling ||
+            participant.IsButler)
+        {
+            return false;
+        }
+
+        string roomId = participant.ResolveRoomId();
+        float roomLocalY = participant.ResolveRoomLocalY();
+        float roomScale = 1f;
+        string roomScaleDiagnostic = "No guest room scale calibration.";
+
+        if (calibration != null &&
+            calibration.TryEvaluateGuestScale(roomId, roomLocalY, out float evaluatedScale, out _, out string evaluatedDiagnostic))
+        {
+            roomScale = evaluatedScale;
+            roomScaleDiagnostic = evaluatedDiagnostic;
+        }
+
+        float poseRatio = ResolveExplicitPoseRatio(participant, roomId);
+        float fineTune = participant.ManualFineTuneMultiplier;
+        float baseGuestScale =
+            Mathf.Max(0.001f, roomScale) *
+            Mathf.Max(0.001f, poseRatio) *
+            Mathf.Max(0.001f, fineTune);
+
+        float roomStageZoomRatio = 1f;
+        string roomStageZoomDiagnostic = string.Empty;
+
+        if (!GuestRoomStageScaleUtility.TryGetCurrentRoomStageZoomRatio(
+            calibration,
+            roomId,
+            out roomStageZoomRatio,
+            out roomStageZoomDiagnostic))
+        {
+            roomStageZoomRatio = 1f;
+        }
+
+        float inheritedRoomStageZoomRatio = 1f;
+        string inheritedRoomStageZoomDiagnostic = string.Empty;
+
+        if (!GuestRoomStageScaleUtility.TryGetInheritedRoomStageZoomRatio(
+            participant,
+            calibration,
+            roomId,
+            out inheritedRoomStageZoomRatio,
+            out inheritedRoomStageZoomDiagnostic))
+        {
+            inheritedRoomStageZoomRatio = 1f;
+        }
+
+        float targetLocalScale = CalculateTargetLocalScale(
+            baseGuestScale,
+            roomStageZoomRatio,
+            inheritedRoomStageZoomRatio);
+
+        computation = new GuestScaleComputation(
+            roomId,
+            roomLocalY,
+            roomScale,
+            poseRatio,
+            fineTune,
+            baseGuestScale,
+            roomStageZoomRatio,
+            inheritedRoomStageZoomRatio,
+            targetLocalScale,
+            roomScaleDiagnostic,
+            roomStageZoomDiagnostic,
+            inheritedRoomStageZoomDiagnostic);
+        return true;
+    }
+
+    public static float CalculateTargetLocalScale(
+        float baseGuestScale,
+        float roomStageZoomRatio,
+        float inheritedRoomStageZoomRatio)
+    {
+        return Mathf.Max(0.001f, baseGuestScale) *
+            Mathf.Max(0.0001f, roomStageZoomRatio) /
+            Mathf.Max(0.0001f, inheritedRoomStageZoomRatio);
     }
 
     public int EnsureParticipantsForSceneGuests()

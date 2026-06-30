@@ -15,6 +15,7 @@ public sealed class GuestRoomScaleRegressionTests
     private const string GuestRoomScaleCalibrationPath = "Assets/Scripts/Characters/GuestRoomScaleCalibration.cs";
     private const string GuestScaleParticipantPath = "Assets/Scripts/Characters/GuestScaleParticipant.cs";
     private const string GuestRoomScaleApplierPath = "Assets/Scripts/Characters/GuestRoomScaleApplier.cs";
+    private const string GuestRoomStageScaleUtilityPath = "Assets/Scripts/Characters/GuestRoomStageScaleUtility.cs";
     private const string GuestPoseScaleOverrideStorePath = "Assets/Scripts/Characters/GuestPoseScaleOverrideStore.cs";
     private const string GuestRoomScaleMasterWindowPath = "Assets/Editor/GuestRoomScaleMasterWindow.cs";
     private const string GuestScaleAuditPath = "Assets/Editor/GuestScaleAudit.cs";
@@ -164,6 +165,76 @@ public sealed class GuestRoomScaleRegressionTests
             UnityEngine.Object.DestroyImmediate(calibrationObject);
             UnityEngine.Object.DestroyImmediate(butler);
         }
+    }
+
+    [Test]
+    public void SavingRoomGuestSizeStoresReferenceRoomStageScale()
+    {
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+
+            calibration.SetReferenceRoomStageScale("Grand Entrance Hall", 1.75f);
+
+            Assert.That(
+                calibration.TryGetReferenceRoomStageScale("Grand_Entrance-Hall", out float stageScale),
+                Is.True);
+            Assert.That(stageScale, Is.EqualTo(1.75f).Within(0.0001f));
+
+            calibration.SetReferenceRoomStageScale("Grand Entrance Hall", 0f);
+            Assert.That(calibration.TryGetReferenceRoomStageScale("Grand Entrance Hall", out stageScale), Is.True);
+            Assert.That(stageScale, Is.EqualTo(0.0001f).Within(0.00001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierAppliesRoomZoomToGuestsOutsideStage()
+    {
+        float targetLocalScale = GuestRoomScaleApplier.CalculateTargetLocalScale(
+            baseGuestScale: 2f,
+            roomStageZoomRatio: 1.5f,
+            inheritedRoomStageZoomRatio: 1f);
+
+        Assert.That(targetLocalScale, Is.EqualTo(3f).Within(0.0001f));
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierDoesNotDoubleZoomGuestsInsideStage()
+    {
+        float targetLocalScale = GuestRoomScaleApplier.CalculateTargetLocalScale(
+            baseGuestScale: 2f,
+            roomStageZoomRatio: 1.5f,
+            inheritedRoomStageZoomRatio: 1.5f);
+
+        Assert.That(targetLocalScale, Is.EqualTo(2f).Within(0.0001f));
+    }
+
+    [Test]
+    public void GuestEffectiveScaleMatchesRoomZoom()
+    {
+        float targetLocalScale = GuestRoomScaleApplier.CalculateTargetLocalScale(
+            baseGuestScale: 2f,
+            roomStageZoomRatio: 1.5f,
+            inheritedRoomStageZoomRatio: 1.2f);
+        float effectiveScale = targetLocalScale * 1.2f;
+
+        Assert.That(effectiveScale, Is.EqualTo(2f * 1.5f).Within(0.0001f));
+    }
+
+    [Test]
+    public void GuestRoomStageScaleUtilityCalculatesRoomZoomFromReferenceScale()
+    {
+        Assert.That(
+            GuestRoomStageScaleUtility.CalculateRoomStageZoomRatio(
+                currentRoomStageScale: 3f,
+                referenceRoomStageScale: 2f),
+            Is.EqualTo(1.5f).Within(0.0001f));
     }
 
     [Test]
@@ -529,10 +600,13 @@ public sealed class GuestRoomScaleRegressionTests
         string movementText = File.ReadAllText(PointClickPlayerMovementPath);
         string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
         string projectedText = File.ReadAllText(RoomProjectedEntityPath);
+        string walkerText = File.ReadAllText(RoomPersonWalkerPath);
 
         Assert.That(movementText, Does.Contain("HasActiveGuestScaleParticipant"), "PointClickPlayerMovement should not apply perspective or room-stage zoom scale to guests.");
         Assert.That(actorRoomStateText, Does.Contain("GetComponentInChildren<GuestScaleParticipant>"), "ActorRoomState should find guest ownership even when the checked transform is not the participant root.");
         Assert.That(projectedText, Does.Contain("GetComponentInChildren<GuestScaleParticipant>"), "RoomProjectedEntity should find guest ownership even when the visual root and participant live on different transforms.");
+        Assert.That(walkerText, Does.Contain("GetComponentInParent<GuestScaleParticipant>"), "RoomPersonWalker2D should find guest ownership when the walker is not the participant root.");
+        Assert.That(walkerText, Does.Contain("GetComponentInChildren<GuestScaleParticipant>"), "RoomPersonWalker2D should find guest ownership when the target graphic contains the participant.");
     }
 
     [Test]
@@ -577,13 +651,26 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
-    public void GuestScaleApplierDoesNotReadCameraOrRoomStageZoom()
+    public void GuestRoomScaleMasterShowsStageScaleStatus()
+    {
+        string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+
+        Assert.That(text, Does.Contain("Current room-stage scale"));
+        Assert.That(text, Does.Contain("Saved reference room-stage scale"));
+        Assert.That(text, Does.Contain("Computed room-stage zoom ratio"));
+        Assert.That(text, Does.Contain("Guests in selected room"));
+        Assert.That(text, Does.Contain("SetReferenceRoomStageScale"));
+    }
+
+    [Test]
+    public void GuestScaleApplierReadsRoomStageZoomThroughUtility()
     {
         string applierText = File.ReadAllText(GuestRoomScaleApplierPath);
 
-        Assert.That(applierText, Does.Not.Contain("Camera"));
-        Assert.That(applierText, Does.Not.Contain("currentRoomStageScaleRatio"));
-        Assert.That(applierText, Does.Not.Contain("roomStageScale"));
+        Assert.That(applierText, Does.Contain("GuestRoomStageScaleUtility.TryGetCurrentRoomStageZoomRatio"));
+        Assert.That(applierText, Does.Contain("GuestRoomStageScaleUtility.TryGetInheritedRoomStageZoomRatio"));
+        Assert.That(applierText, Does.Contain("CalculateTargetLocalScale"));
+        Assert.That(applierText, Does.Not.Contain("Camera.main"));
     }
 
     [Test]
@@ -631,6 +718,7 @@ public sealed class GuestRoomScaleRegressionTests
         Assert.That(File.Exists(GuestRoomScaleCalibrationPath), Is.True);
         Assert.That(File.Exists(GuestScaleParticipantPath), Is.True);
         Assert.That(File.Exists(GuestRoomScaleApplierPath), Is.True);
+        Assert.That(File.Exists(GuestRoomStageScaleUtilityPath), Is.True);
         Assert.That(File.Exists(GuestPoseScaleOverrideStorePath), Is.True);
         Assert.That(File.Exists(GuestScaleAuditPath), Is.True);
     }

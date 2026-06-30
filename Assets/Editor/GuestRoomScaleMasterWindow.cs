@@ -65,6 +65,18 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         EditorGUILayout.LabelField($"Guests found: {guests.Length}");
         EditorGUILayout.LabelField($"Guests ready: {CountReadyGuests(guests)}");
         EditorGUILayout.LabelField($"Current selected room: {(string.IsNullOrWhiteSpace(selectedRoom) ? "none" : selectedRoom)}");
+        bool hasCurrentRoomStageScale = GuestRoomStageScaleUtility.TryGetActiveRoomStageScale(out float currentRoomStageScale);
+        float referenceRoomStageScale = 1f;
+        bool hasReferenceRoomStageScale = calibration != null &&
+            calibration.TryGetReferenceRoomStageScale(selectedRoom, out referenceRoomStageScale);
+        referenceRoomStageScale = hasReferenceRoomStageScale ? referenceRoomStageScale : 1f;
+        float roomStageZoomRatio = hasCurrentRoomStageScale
+            ? GuestRoomStageScaleUtility.CalculateRoomStageZoomRatio(currentRoomStageScale, referenceRoomStageScale)
+            : 1f;
+        EditorGUILayout.LabelField($"Current room-stage scale: {FormatScaleStatus(hasCurrentRoomStageScale, currentRoomStageScale)}");
+        EditorGUILayout.LabelField($"Saved reference room-stage scale: {FormatScaleStatus(hasReferenceRoomStageScale, referenceRoomStageScale)}");
+        EditorGUILayout.LabelField($"Computed room-stage zoom ratio: {roomStageZoomRatio:0.####}");
+        EditorGUILayout.LabelField($"Guests in selected room: {CountGuestsInRoom(guests, selectedRoom)}");
         EditorGUILayout.LabelField($"Last action: {lastAction}");
         EditorGUILayout.Space(8f);
 
@@ -103,22 +115,11 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             PreviewSelectedRoom(selectedRoom);
         }
 
-        if (GUILayout.Button("MATCH BUTLER SIZE IN ROOM"))
-        {
-            selectedRoomMultiplier = 1f;
-            PreviewSelectedRoom(selectedRoom);
-        }
-
         DrawManualFrontBackGuestCurve(selectedRoom, selectedGuest);
 
         if (GUILayout.Button("SAVE ROOM GUEST SIZE"))
         {
             SaveSelectedRoom(calibration, selectedRoom);
-        }
-
-        if (GUILayout.Button("APPLY TO ALL GUESTS IN ROOM"))
-        {
-            ApplySelectedRoom(selectedRoom);
         }
 
         if (GUILayout.Button("SAVE SCENE"))
@@ -145,6 +146,12 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             lastAction = "Audit written.";
         }
 
+        if (GUILayout.Button("Log Guest Scale Diagnostics"))
+        {
+            LogGuestScaleDiagnostics(selectedRoom);
+            lastAction = "Guest scale diagnostics logged.";
+        }
+
         if (GUILayout.Button("Reset Selected Room Multiplier"))
         {
             GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
@@ -157,6 +164,17 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
                 EditorUtility.SetDirty(calibration);
                 lastAction = $"Reset {selectedRoom} multiplier.";
             }
+        }
+
+        if (GUILayout.Button("MATCH BUTLER SIZE IN ROOM"))
+        {
+            selectedRoomMultiplier = 1f;
+            PreviewSelectedRoom(selectedRoom);
+        }
+
+        if (GUILayout.Button("APPLY TO ALL GUESTS IN ROOM"))
+        {
+            ApplySelectedRoom(selectedRoom);
         }
 
         if (GUILayout.Button("Proof shrink guests"))
@@ -301,17 +319,18 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         selectedRoomMultiplier = 1f;
         calibration.SetRoomMultiplier(selectedRoom, 1f);
+        float referenceStageScale = SaveCurrentRoomStageReference(calibration, selectedRoom);
         EditorUtility.SetDirty(calibration);
 
         if (HasCompleteManualCurve(calibration, selectedRoom))
         {
             GuestScaleApplyResult result = RefreshRoomWithUndo(selectedRoom, "Preview Manual Guest Curve");
-            lastAction = $"Saved {(front ? "front" : "back")} guest scale for {selectedRoom}; applied {result.Applied}, changed {result.Changed}.";
+            lastAction = $"Saved {(front ? "front" : "back")} guest scale for {selectedRoom}; reference stage {referenceStageScale:0.####}; applied {result.Applied}, changed {result.Changed}.";
         }
         else
         {
             PreviewSelectedGuestManualScale(selectedGuest);
-            lastAction = $"Saved {(front ? "front" : "back")} guest scale for {selectedRoom}; save the other point next.";
+            lastAction = $"Saved {(front ? "front" : "back")} guest scale for {selectedRoom}; reference stage {referenceStageScale:0.####}; save the other point next.";
         }
 
         Debug.Log($"[Guest Size Master] {lastAction}");
@@ -418,7 +437,8 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         EditorUtility.SetDirty(applier);
         SceneView.RepaintAll();
         Repaint();
-        lastAction = $"Previewed {selectedRoom}; applied {result.Applied}, changed {result.Changed}.";
+        float zoomRatio = GetRoomStageZoomRatio(calibration, selectedRoom);
+        lastAction = $"Previewed {selectedRoom}; zoom {zoomRatio:0.####}; applied {result.Applied}, changed {result.Changed}.";
         Debug.Log($"[Guest Size Master] {lastAction}");
     }
 
@@ -430,10 +450,13 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             return;
         }
 
+        Undo.RecordObject(calibration, "Save Room Guest Size");
         calibration.SetRoomMultiplier(selectedRoom, selectedRoomMultiplier);
+        float referenceStageScale = SaveCurrentRoomStageReference(calibration, selectedRoom);
+        GuestScaleApplyResult result = RefreshRoomWithUndo(selectedRoom, "Save Room Guest Size");
         EditorUtility.SetDirty(calibration);
         EditorSceneManager.MarkAllScenesDirty();
-        lastAction = $"Saved guest size for {selectedRoom}.";
+        lastAction = $"Saved guest size for {selectedRoom}; reference stage {referenceStageScale:0.####}; applied {result.Applied}, changed {result.Changed}.";
     }
 
     private void ApplySelectedRoom(string selectedRoom)
@@ -551,6 +574,124 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             guest.CaptureBaseScale(false);
             guest.ApplyFinalScale(multiplier);
         }
+    }
+
+    private static void LogGuestScaleDiagnostics(string selectedRoom)
+    {
+        GuestRoomScaleApplier applier = FindAnyObjectByType<GuestRoomScaleApplier>(FindObjectsInactive.Include);
+        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+
+        if (applier == null)
+        {
+            Debug.LogWarning("[GuestScale Diagnostic] GuestRoomScaleApplier not found.");
+            return;
+        }
+
+        if (calibration != null)
+        {
+            applier.SetCalibration(calibration);
+        }
+
+        GuestScaleParticipant[] guests = FindGuestParticipants();
+
+        for (int i = 0; i < guests.Length; i++)
+        {
+            GuestScaleParticipant guest = guests[i];
+
+            if (guest == null ||
+                guest.ExcludeFromGuestScaling ||
+                guest.IsButler ||
+                !applier.TryComputeParticipantScale(guest, out GuestScaleComputation computation))
+            {
+                continue;
+            }
+
+            Transform scaleRoot = guest.ResolveScaleRoot();
+            bool hasRoomStage = GuestRoomStageScaleUtility.TryGetParticipantRoomStage(
+                guest,
+                computation.RoomId,
+                out RoomContentGroup roomStage);
+            bool hasCurrentStageScale = GuestRoomStageScaleUtility.TryGetActiveRoomStageScale(out float currentStageScale);
+            float referenceStageScale = 1f;
+            bool hasReferenceStageScale = calibration != null &&
+                calibration.TryGetReferenceRoomStageScale(computation.RoomId, out referenceStageScale);
+            referenceStageScale = hasReferenceStageScale ? referenceStageScale : 1f;
+            bool underActiveRoomStage = hasRoomStage &&
+                roomStage != null &&
+                roomStage.gameObject.activeInHierarchy &&
+                IsScaleNearActiveStage(roomStage.transform.lossyScale.x, currentStageScale, hasCurrentStageScale);
+            bool hasPointClickPlayerMovement = HasPointClickPlayerMovement(guest);
+            bool pointClickSkippedByGuestParticipant = hasPointClickPlayerMovement &&
+                !guest.ExcludeFromGuestScaling &&
+                !guest.IsButler;
+
+            Debug.Log(
+                "[GuestScale Diagnostic] " +
+                $"guest={GetTransformPath(guest.transform)} " +
+                $"room={computation.RoomId} " +
+                $"roomLocalY={computation.RoomLocalY:0.###} " +
+                $"scaleRoot={GetTransformPath(scaleRoot)} " +
+                $"scaleRootLocalScale={FormatVector(scaleRoot != null ? scaleRoot.localScale : Vector3.one)} " +
+                $"scaleRootLossyScale={FormatVector(scaleRoot != null ? scaleRoot.lossyScale : Vector3.one)} " +
+                $"parentRoomContent={GetTransformPath(hasRoomStage && roomStage != null ? roomStage.transform : null)} " +
+                $"underActiveRoomStage={underActiveRoomStage} " +
+                $"currentRoomStageScale={FormatScaleStatus(hasCurrentStageScale, currentStageScale)} " +
+                $"savedReferenceRoomStageScale={FormatScaleStatus(hasReferenceStageScale, referenceStageScale)} " +
+                $"roomStageZoomRatio={computation.RoomStageZoomRatio:0.####} " +
+                $"inheritedRoomStageZoomRatio={computation.InheritedRoomStageZoomRatio:0.####} " +
+                $"baseGuestScale={computation.BaseGuestScale:0.####} " +
+                $"targetLocalScale={computation.TargetLocalScale:0.####} " +
+                $"pointClickPlayerMovementExists={hasPointClickPlayerMovement} " +
+                $"pointClickSkippedByGuestParticipant={pointClickSkippedByGuestParticipant} " +
+                $"roomScaleDiagnostic='{computation.RoomScaleDiagnostic}' " +
+                $"roomStageDiagnostic='{computation.RoomStageZoomDiagnostic}' " +
+                $"inheritedStageDiagnostic='{computation.InheritedRoomStageZoomDiagnostic}'",
+                guest);
+        }
+
+        PointClickPlayerMovement butler = FindButler();
+
+        if (butler != null)
+        {
+            bool hasCurrentStageScale = GuestRoomStageScaleUtility.TryGetActiveRoomStageScale(out float currentStageScale);
+            bool hasButlerSample = butler.TryEvaluateCurrentButlerCharacterScale(out PointClickPlayerMovement.ButlerCharacterScaleSample sample);
+            float zoomRatio = GetRoomStageZoomRatio(calibration, selectedRoom);
+            Debug.Log(
+                "[GuestScale Diagnostic] " +
+                $"butler={GetTransformPath(butler.transform)} " +
+                $"localScale={FormatVector(butler.transform.localScale)} " +
+                $"currentRoomStageScale={FormatScaleStatus(hasCurrentStageScale, currentStageScale)} " +
+                $"currentRoomStageZoomRatio={zoomRatio:0.####} " +
+                $"butlerRoomScaleSample={(hasButlerSample ? sample.ButlerFinalLocalScaleY.ToString("0.####") : "not available")}",
+                butler);
+        }
+    }
+
+    private static bool HasPointClickPlayerMovement(GuestScaleParticipant guest)
+    {
+        return guest != null &&
+            (guest.GetComponent<PointClickPlayerMovement>() != null ||
+            guest.GetComponentInParent<PointClickPlayerMovement>(true) != null ||
+            guest.GetComponentInChildren<PointClickPlayerMovement>(true) != null);
+    }
+
+    private static bool IsScaleNearActiveStage(
+        float candidateScale,
+        float activeStageScale,
+        bool hasActiveStageScale)
+    {
+        if (!hasActiveStageScale)
+        {
+            return false;
+        }
+
+        float safeActiveStageScale = Mathf.Max(0.0001f, activeStageScale);
+        return Mathf.Abs(candidateScale - safeActiveStageScale) <= Mathf.Max(0.001f, safeActiveStageScale * 0.001f);
+    }
+
+    private static string FormatVector(Vector3 value)
+    {
+        return $"({value.x:0.####}, {value.y:0.####}, {value.z:0.####})";
     }
 
     private static GuestScaleParticipant[] FindGuestParticipants()
@@ -797,6 +938,57 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         return ready;
+    }
+
+    private static int CountGuestsInRoom(GuestScaleParticipant[] guests, string roomId)
+    {
+        int count = 0;
+
+        for (int i = 0; i < guests.Length; i++)
+        {
+            GuestScaleParticipant guest = guests[i];
+
+            if (IsRoomGuest(guest, roomId))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static string FormatScaleStatus(bool hasScale, float scale)
+    {
+        return hasScale ? scale.ToString("0.####") : "not available";
+    }
+
+    private static float SaveCurrentRoomStageReference(
+        GuestRoomScaleCalibration calibration,
+        string roomId)
+    {
+        float referenceStageScale = GuestRoomStageScaleUtility.TryGetActiveRoomStageScale(out float currentStageScale)
+            ? currentStageScale
+            : 1f;
+        calibration.SetReferenceRoomStageScale(roomId, referenceStageScale);
+        return referenceStageScale;
+    }
+
+    private static float GetRoomStageZoomRatio(
+        GuestRoomScaleCalibration calibration,
+        string roomId)
+    {
+        if (!GuestRoomStageScaleUtility.TryGetActiveRoomStageScale(out float currentStageScale))
+        {
+            return 1f;
+        }
+
+        float referenceStageScale = calibration != null &&
+            calibration.TryGetReferenceRoomStageScale(roomId, out float savedReferenceScale)
+                ? savedReferenceScale
+                : 1f;
+        return GuestRoomStageScaleUtility.CalculateRoomStageZoomRatio(
+            currentStageScale,
+            referenceStageScale);
     }
 
     private static PointClickPlayerMovement FindButler()

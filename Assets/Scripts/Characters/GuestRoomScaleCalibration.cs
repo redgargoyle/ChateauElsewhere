@@ -16,6 +16,8 @@ public sealed class GuestRoomScaleEntry
     public bool hasBack;
     public float backRoomLocalY;
     [Min(0.001f)] public float backGuestScale = 1f;
+    public bool hasReferenceRoomStageScale;
+    [Min(0.0001f)] public float referenceRoomStageScale = 1f;
 
     public GuestRoomScaleEntry()
     {
@@ -43,6 +45,9 @@ public sealed class GuestRoomScaleEntry
         roomGuestScaleMultiplier = Mathf.Max(0.001f, roomGuestScaleMultiplier);
         frontGuestScale = Mathf.Max(0.001f, frontGuestScale);
         backGuestScale = Mathf.Max(0.001f, backGuestScale);
+        referenceRoomStageScale = hasReferenceRoomStageScale
+            ? Mathf.Max(0.0001f, referenceRoomStageScale)
+            : 1f;
     }
 
     private static string CleanRoomId(string value)
@@ -214,6 +219,27 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         entry.roomGuestScaleMultiplier = Mathf.Max(0.001f, multiplier);
     }
 
+    public void SetReferenceRoomStageScale(string roomId, float stageScale)
+    {
+        GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+        entry.hasReferenceRoomStageScale = true;
+        entry.referenceRoomStageScale = SanitizeRoomStageScale(stageScale);
+    }
+
+    public bool TryGetReferenceRoomStageScale(string roomId, out float stageScale)
+    {
+        stageScale = 1f;
+
+        if (!TryGetRoom(roomId, out GuestRoomScaleEntry entry) ||
+            !entry.hasReferenceRoomStageScale)
+        {
+            return false;
+        }
+
+        stageScale = SanitizeRoomStageScale(entry.referenceRoomStageScale);
+        return true;
+    }
+
     public void SetFront(string roomId, float roomLocalY, float guestScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
@@ -276,6 +302,10 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         List<string> butlerRooms = new List<string>();
         butler.GetButlerScaleOverrideRoomIds(butlerRooms);
 
+        float referenceRoomStageScale = GuestRoomStageScaleUtility.TryGetActiveRoomStageScale(out float activeStageScale)
+            ? activeStageScale
+            : 1f;
+
         for (int i = 0; i < butlerRooms.Count; i++)
         {
             string roomId = butlerRooms[i];
@@ -285,7 +315,13 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
                 continue;
             }
 
-            GetOrCreateRoom(roomId);
+            GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+
+            if (!entry.hasReferenceRoomStageScale)
+            {
+                entry.hasReferenceRoomStageScale = true;
+                entry.referenceRoomStageScale = SanitizeRoomStageScale(referenceRoomStageScale);
+            }
         }
     }
 
@@ -352,6 +388,11 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
     public static string CleanRoomId(string value)
     {
         return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    public static float SanitizeRoomStageScale(float value)
+    {
+        return Mathf.Max(0.0001f, value);
     }
 
     public static string NormalizeRoomName(string value)
