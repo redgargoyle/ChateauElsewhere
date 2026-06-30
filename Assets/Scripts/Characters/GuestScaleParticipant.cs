@@ -72,7 +72,7 @@ public readonly struct GuestRoomResolutionTrace
 public sealed class GuestScaleParticipant : MonoBehaviour
 {
     [SerializeField] private string characterId;
-    [SerializeField] private string currentRoomId;
+    [NonSerialized] private string currentRoomId;
     [SerializeField] private string roomIdOverride;
     [SerializeField, HideInInspector] private string lastRoomResolutionSource;
     [SerializeField] private CharacterPose pose = CharacterPose.Auto;

@@ -145,7 +145,7 @@ public sealed class GuestRoomScaleRegressionTests
                 manualDiagnostic);
             Assert.That(manualDepth, Is.EqualTo(0.5f).Within(0.0001f));
             Assert.That(manualScale, Is.EqualTo(1.8f).Within(0.0001f));
-            Assert.That(manualDiagnostic, Does.Contain("Custom guest curve"));
+            Assert.That(manualDiagnostic, Does.Contain("Depth guest curve"));
 
             calibration.ClearCustomCurve("Grand Entrance Hall");
 
@@ -166,6 +166,109 @@ public sealed class GuestRoomScaleRegressionTests
             UnityEngine.Object.DestroyImmediate(calibrationObject);
             UnityEngine.Object.DestroyImmediate(butler);
         }
+    }
+
+    [Test]
+    public void GuestRoomScaleCalibrationUsesOneExplicitScaleMode()
+    {
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            ConfigureButlerRoom(movement, "Dining Room");
+
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            calibration.SetButlerScaleSource(movement);
+            calibration.InitializeMissingRoomsFromButler(movement);
+            calibration.SetFixedGuestScale("Dining Room", 1.42f);
+
+            Assert.That(calibration.TryGetRoom("Dining Room", out GuestRoomScaleEntry entry), Is.True);
+            Assert.That(entry.ResolvedScaleMode, Is.EqualTo(GuestRoomScaleMode.Fixed));
+
+            calibration.SetFront("Dining Room", -200f, 2.2f);
+            calibration.SetBack("Dining Room", 100f, 0.8f);
+
+            Assert.That(entry.ResolvedScaleMode, Is.EqualTo(GuestRoomScaleMode.DepthCurve));
+            Assert.That(entry.useFixedGuestScale, Is.False);
+            Assert.That(entry.useButlerRoomCurve, Is.False);
+            Assert.That(entry.useCustomGuestCurve, Is.True);
+
+            Assert.That(
+                calibration.TryEvaluateGuestScale(
+                    "Dining Room",
+                    -50f,
+                    out float depthScale,
+                    out float depth,
+                    out string depthDiagnostic),
+                Is.True,
+                depthDiagnostic);
+            Assert.That(depth, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(depthScale, Is.EqualTo(1.5f).Within(0.0001f));
+            Assert.That(depthDiagnostic, Does.Contain("Depth guest curve"));
+
+            calibration.UseButlerRoomCurve("Dining Room", 1f);
+
+            Assert.That(entry.ResolvedScaleMode, Is.EqualTo(GuestRoomScaleMode.ButlerCurve));
+            Assert.That(entry.useFixedGuestScale, Is.False);
+            Assert.That(entry.useCustomGuestCurve, Is.False);
+            Assert.That(entry.useButlerRoomCurve, Is.True);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleCalibrationDepthModeDoesNotFallBackToOtherModes()
+    {
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            ConfigureButlerRoom(movement, "Dining Room");
+
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            calibration.SetButlerScaleSource(movement);
+            calibration.InitializeMissingRoomsFromButler(movement);
+            calibration.SetFixedGuestScale("Dining Room", 1.42f);
+            calibration.SetFront("Dining Room", -200f, 2.2f);
+
+            Assert.That(calibration.TryGetRoom("Dining Room", out GuestRoomScaleEntry entry), Is.True);
+            Assert.That(entry.ResolvedScaleMode, Is.EqualTo(GuestRoomScaleMode.DepthCurve));
+
+            Assert.That(
+                calibration.TryEvaluateGuestScale(
+                    "Dining Room",
+                    -50f,
+                    out _,
+                    out _,
+                    out string diagnostic),
+                Is.False);
+            Assert.That(diagnostic, Does.Contain("incomplete"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
+    public void GuestSizeMasterExposesSingleScaleModeWorkflow()
+    {
+        string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+
+        Assert.That(text, Does.Contain("Guest Scale Mode"));
+        Assert.That(text, Does.Contain("Follows Butler Depth"));
+        Assert.That(text, Does.Contain("Fixed Size / Seated Exception"));
+        Assert.That(text, Does.Contain("Custom Front/Back Curve"));
+        Assert.That(text, Does.Contain("SetRoomScaleMode"));
     }
 
     [Test]
@@ -226,7 +329,7 @@ public sealed class GuestRoomScaleRegressionTests
                 Is.True,
                 diagnostic);
             Assert.That(curveScale, Is.EqualTo(1.8f).Within(0.0001f));
-            Assert.That(diagnostic, Does.Contain("Custom guest curve"));
+            Assert.That(diagnostic, Does.Contain("Depth guest curve"));
         }
         finally
         {
@@ -270,7 +373,7 @@ public sealed class GuestRoomScaleRegressionTests
                 diagnostic);
             Assert.That(depth, Is.EqualTo(0.5f).Within(0.0001f));
             Assert.That(scale, Is.EqualTo(1.8f).Within(0.0001f));
-            Assert.That(diagnostic, Does.Contain("Custom guest curve"));
+            Assert.That(diagnostic, Does.Contain("Depth guest curve"));
         }
         finally
         {
@@ -972,50 +1075,15 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
-    public void GuestRoomScaleMasterCanAdoptVisibleGuestsIntoSelectedRoomForManualEditing()
+    public void MainToolDoesNotPersistCurrentRoomIdFromStatusSync()
     {
-        GuestScaleParticipant[] guests = new GuestScaleParticipant[8];
-        GameObject[] guestObjects = new GameObject[8];
+        string windowText = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+        string participantText = File.ReadAllText(GuestScaleParticipantPath);
 
-        try
-        {
-            for (int i = 0; i < guests.Length; i++)
-            {
-                guestObjects[i] = new GameObject($"Guest {i + 1}");
-                guestObjects[i].AddComponent<SpriteRenderer>();
-                guests[i] = guestObjects[i].AddComponent<GuestScaleParticipant>();
-                guests[i].SetCharacterId($"Guest {i + 1}");
-                guests[i].SetRoomIdOverride(i < 4 ? "Grand Entrance Hall" : "Drawing Room");
-            }
-
-            int synced = GuestRoomScaleMasterWindow.SyncVisibleGuestsToSelectedRoomForManualEditing(
-                guests,
-                "Drawing Room");
-
-            MethodInfo findMethod = typeof(GuestRoomScaleMasterWindow).GetMethod(
-                "FindGuestsInRoom",
-                BindingFlags.Static | BindingFlags.NonPublic);
-            Assert.That(findMethod, Is.Not.Null);
-
-            GuestScaleParticipant[] roomGuests = (GuestScaleParticipant[])findMethod.Invoke(
-                null,
-                new object[] { guests, "Drawing Room" });
-
-            Assert.That(synced, Is.EqualTo(8));
-            Assert.That(roomGuests, Has.Length.EqualTo(8));
-
-            for (int i = 0; i < guests.Length; i++)
-            {
-                Assert.That(guests[i].CurrentRoomId, Is.EqualTo("Drawing Room"));
-            }
-        }
-        finally
-        {
-            for (int i = 0; i < guestObjects.Length; i++)
-            {
-                UnityEngine.Object.DestroyImmediate(guestObjects[i]);
-            }
-        }
+        Assert.That(windowText, Does.Not.Contain("SyncVisibleGuestsToSelectedRoomForManualEditing"));
+        Assert.That(windowText, Does.Not.Contain("Assign Visible Guest Room"));
+        Assert.That(windowText, Does.Not.Contain("SetCurrentRoomId(cleanSelectedRoom)"));
+        Assert.That(participantText, Does.Contain("[NonSerialized] private string currentRoomId"));
     }
 
     [Test]
@@ -1129,17 +1197,37 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
-    public void GuestSizeMasterHasSimplePrimaryWorkflow()
+    public void AdvancedButtonsAreNotRequiredForPrimaryWorkflow()
+    {
+        string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+        int advancedIndex = text.IndexOf("Advanced / Optional Tools", StringComparison.Ordinal);
+
+        Assert.That(text, Does.Contain("Guest Size Master"));
+        Assert.That(text, Does.Contain("DrawPrimaryGuestCalibrationWorkflow"));
+        Assert.That(text, Does.Contain("SET UP / REPAIR GUEST SCALING"));
+        Assert.That(text, Does.Contain("PREVIEW SELECTED ROOM"));
+        Assert.That(text, Does.Contain("SAVE SELECTED ROOM"));
+        Assert.That(text, Does.Contain("SAVE SCENE"));
+        Assert.That(text, Does.Contain("Advanced / Optional Tools"));
+        Assert.That(advancedIndex, Is.GreaterThan(0));
+        Assert.That(text.IndexOf("DrawManualFrontBackGuestCurve", advancedIndex, StringComparison.Ordinal), Is.GreaterThan(advancedIndex));
+        Assert.That(text.IndexOf("Proof shrink", StringComparison.Ordinal), Is.GreaterThan(advancedIndex));
+        Assert.That(text.IndexOf("Emergency restore captured base scales", StringComparison.Ordinal), Is.GreaterThan(advancedIndex));
+        Assert.That(text.IndexOf("Run Guest Scale Audit", StringComparison.Ordinal), Is.GreaterThan(advancedIndex));
+    }
+
+    [Test]
+    public void GuestSizeMasterLabelsExplainModes()
     {
         string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
 
-        Assert.That(text, Does.Contain("Guest Size Master"));
-        Assert.That(text, Does.Contain("Guest Size In This Room"));
-        Assert.That(text, Does.Contain("SET UP GUEST SCALING"));
-        Assert.That(text, Does.Contain("PREVIEW ROOM GUEST SIZE"));
-        Assert.That(text, Does.Contain("SAVE ROOM GUEST SIZE"));
-        Assert.That(text, Does.Contain("APPLY TO ALL GUESTS IN ROOM"));
-        Assert.That(text, Does.Contain("SAVE SCENE"));
+        Assert.That(text, Does.Contain("Follows Butler Depth"));
+        Assert.That(text, Does.Contain("Fixed Size / Seated Exception"));
+        Assert.That(text, Does.Contain("Custom Front/Back Curve"));
+        Assert.That(text, Does.Contain("Guest Size Multiplier"));
+        Assert.That(text, Does.Contain("Keeps Butler-style front/back room scaling, then adjusts all guests in this room larger/smaller."));
+        Assert.That(text, Does.Contain("Fixed Guest Size"));
+        Assert.That(text, Does.Contain("Use only for seated/furniture/cinematic cases."));
     }
 
     [Test]
@@ -1191,7 +1279,7 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
-    public void GuestSizeMasterSavesManualRoomSizeAsFixedCalibration()
+    public void ButlerCurveModeSavesRoomMultiplier()
     {
         GameObject calibrationObject = new GameObject("GuestScaleCalibration");
 
@@ -1202,9 +1290,39 @@ public sealed class GuestRoomScaleRegressionTests
             GuestRoomScaleMasterWindow.SaveRoomGuestSizeForCalibration(
                 calibration,
                 "Drawing Room",
-                0.25f,
                 1.45f,
-                true);
+                0.25f,
+                false,
+                GuestRoomScaleMode.ButlerCurve);
+
+            Assert.That(calibration.TryGetRoom("Drawing Room", out GuestRoomScaleEntry entry), Is.True);
+            Assert.That(entry.ResolvedScaleMode, Is.EqualTo(GuestRoomScaleMode.ButlerCurve));
+            Assert.That(entry.roomGuestScaleMultiplier, Is.EqualTo(1.45f).Within(0.0001f));
+            Assert.That(entry.useFixedGuestScale, Is.False);
+            Assert.That(entry.useCustomGuestCurve, Is.False);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+        }
+    }
+
+    [Test]
+    public void FixedModeSavesFixedScale()
+    {
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+
+            GuestRoomScaleMasterWindow.SaveRoomGuestSizeForCalibration(
+                calibration,
+                "Drawing Room",
+                1.45f,
+                0.25f,
+                false,
+                GuestRoomScaleMode.Fixed);
 
             Assert.That(
                 calibration.TryEvaluateGuestScale(
@@ -1217,6 +1335,8 @@ public sealed class GuestRoomScaleRegressionTests
                 diagnostic);
             Assert.That(savedScale, Is.EqualTo(1.45f).Within(0.0001f));
             Assert.That(diagnostic, Does.Contain("Fixed manual guest scale"));
+            Assert.That(calibration.TryGetRoom("Drawing Room", out GuestRoomScaleEntry entry), Is.True);
+            Assert.That(entry.ResolvedScaleMode, Is.EqualTo(GuestRoomScaleMode.Fixed));
         }
         finally
         {
@@ -1257,7 +1377,7 @@ public sealed class GuestRoomScaleRegressionTests
                 diagnostic);
             Assert.That(depth, Is.EqualTo(0.5f).Within(0.0001f));
             Assert.That(savedScale, Is.EqualTo(1.525f).Within(0.0001f));
-            Assert.That(diagnostic, Does.Contain("Custom guest curve"));
+            Assert.That(diagnostic, Does.Contain("Depth guest curve"));
         }
         finally
         {
@@ -1289,13 +1409,30 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
-    public void DebugButtonsAreAdvancedOnly()
+    public void GuestRoomScaleApplierStillUsesZoomCompensation()
     {
-        string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+        Assert.That(
+            GuestRoomScaleApplier.CalculateTargetLocalScale(2f, 3f, 4f),
+            Is.EqualTo(1.5f).Within(0.0001f));
+    }
 
-        Assert.That(text, Does.Contain("advancedFoldout"));
-        Assert.That(text.IndexOf("Proof shrink", StringComparison.Ordinal), Is.GreaterThan(text.IndexOf("advancedFoldout", StringComparison.Ordinal)));
-        Assert.That(text.IndexOf("Emergency restore captured base scales", StringComparison.Ordinal), Is.GreaterThan(text.IndexOf("advancedFoldout", StringComparison.Ordinal)));
+    [Test]
+    public void OldScaleWritersInactiveWhenGuestParticipantActive()
+    {
+        string applierText = File.ReadAllText(GuestRoomScaleApplierPath);
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
+        string projectedText = File.ReadAllText(RoomProjectedEntityPath);
+        string walkerText = File.ReadAllText(RoomPersonWalkerPath);
+
+        Assert.That(applierText, Does.Not.Contain("ApplyButlerCharacterScaleNow"));
+        Assert.That(applierText, Does.Not.Contain("ForceApplyButlerCharacterScale"));
+        Assert.That(applierText, Does.Not.Contain("ApplyButlerScaleSample"));
+        Assert.That(applierText, Does.Not.Contain("BuildButlerActorScale"));
+        Assert.That(movementText, Does.Contain("HasActiveGuestScaleParticipant"));
+        Assert.That(actorRoomStateText, Does.Contain("GetComponentInChildren<GuestScaleParticipant>"));
+        Assert.That(projectedText, Does.Contain("GetComponentInChildren<GuestScaleParticipant>"));
+        Assert.That(walkerText, Does.Contain("HasActiveGuestScaleParticipant"));
     }
 
     [Test]

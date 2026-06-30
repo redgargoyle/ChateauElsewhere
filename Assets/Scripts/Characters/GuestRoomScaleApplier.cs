@@ -278,9 +278,18 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         float roomScale = 1f;
         string roomScaleDiagnostic = "No guest room scale calibration.";
 
-        if (calibration != null &&
-            calibration.TryEvaluateGuestScale(roomId, roomLocalY, out float evaluatedScale, out _, out string evaluatedDiagnostic))
+        if (calibration != null)
         {
+            if (!calibration.TryEvaluateGuestScale(
+                roomId,
+                roomLocalY,
+                out float evaluatedScale,
+                out _,
+                out string evaluatedDiagnostic))
+            {
+                return false;
+            }
+
             roomScale = evaluatedScale;
             roomScaleDiagnostic = evaluatedDiagnostic;
         }

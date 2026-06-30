@@ -2,11 +2,20 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum GuestRoomScaleMode
+{
+    Inferred = 0,
+    ButlerCurve = 1,
+    Fixed = 2,
+    DepthCurve = 3
+}
+
 [Serializable]
 public sealed class GuestRoomScaleEntry
 {
     public string roomId;
     public bool enabled = true;
+    public GuestRoomScaleMode scaleMode = GuestRoomScaleMode.Inferred;
     [Min(0.001f)] public float roomGuestScaleMultiplier = 1f;
     public bool useButlerRoomCurve = true;
     public bool useFixedGuestScale;
@@ -36,6 +45,29 @@ public sealed class GuestRoomScaleEntry
         hasBack &&
         Mathf.Abs(frontRoomLocalY - backRoomLocalY) >= PointClickPlayerMovement.ButlerRoomScaleEndpointEpsilon;
 
+    public GuestRoomScaleMode ResolvedScaleMode
+    {
+        get
+        {
+            if (scaleMode != GuestRoomScaleMode.Inferred)
+            {
+                return scaleMode;
+            }
+
+            if (useCustomGuestCurve && HasCompleteCustomCurve)
+            {
+                return GuestRoomScaleMode.DepthCurve;
+            }
+
+            if (useFixedGuestScale)
+            {
+                return GuestRoomScaleMode.Fixed;
+            }
+
+            return GuestRoomScaleMode.ButlerCurve;
+        }
+    }
+
     public bool Matches(string otherRoomId)
     {
         return SameRoom(roomId, otherRoomId);
@@ -44,6 +76,11 @@ public sealed class GuestRoomScaleEntry
     internal void Sanitize()
     {
         roomId = CleanRoomId(roomId);
+        if (!Enum.IsDefined(typeof(GuestRoomScaleMode), scaleMode))
+        {
+            scaleMode = GuestRoomScaleMode.Inferred;
+        }
+
         roomGuestScaleMultiplier = Mathf.Max(0.001f, roomGuestScaleMultiplier);
         fixedGuestScale = Mathf.Max(0.001f, fixedGuestScale);
         frontGuestScale = Mathf.Max(0.001f, frontGuestScale);
@@ -51,6 +88,33 @@ public sealed class GuestRoomScaleEntry
         referenceRoomStageScale = hasReferenceRoomStageScale
             ? Mathf.Max(0.0001f, referenceRoomStageScale)
             : 1f;
+    }
+
+    internal void UseButlerCurve(float multiplier)
+    {
+        scaleMode = GuestRoomScaleMode.ButlerCurve;
+        useButlerRoomCurve = true;
+        useFixedGuestScale = false;
+        fixedGuestScale = 1f;
+        useCustomGuestCurve = false;
+        roomGuestScaleMultiplier = Mathf.Max(0.001f, multiplier);
+    }
+
+    internal void UseFixedScale(float guestScale)
+    {
+        scaleMode = GuestRoomScaleMode.Fixed;
+        useButlerRoomCurve = false;
+        useFixedGuestScale = true;
+        fixedGuestScale = Mathf.Max(0.001f, guestScale);
+        useCustomGuestCurve = false;
+    }
+
+    internal void UseDepthCurve()
+    {
+        scaleMode = GuestRoomScaleMode.DepthCurve;
+        useButlerRoomCurve = false;
+        useFixedGuestScale = false;
+        useCustomGuestCurve = true;
     }
 
     private static string CleanRoomId(string value)
@@ -187,15 +251,23 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
             return true;
         }
 
-        if (entry.useCustomGuestCurve && entry.HasCompleteCustomCurve)
+        GuestRoomScaleMode mode = entry.ResolvedScaleMode;
+
+        if (mode == GuestRoomScaleMode.DepthCurve)
         {
+            if (!entry.HasCompleteCustomCurve)
+            {
+                diagnostic = $"Depth guest curve for '{entry.roomId}' is incomplete.";
+                return false;
+            }
+
             depth01 = Mathf.Clamp01(Mathf.InverseLerp(entry.frontRoomLocalY, entry.backRoomLocalY, roomLocalY));
             scale = Mathf.Lerp(entry.frontGuestScale, entry.backGuestScale, depth01);
-            diagnostic = $"Custom guest curve {entry.roomId} depth={depth01:0.###}.";
+            diagnostic = $"Depth guest curve {entry.roomId} depth={depth01:0.###}.";
             return true;
         }
 
-        if (entry.useFixedGuestScale)
+        if (mode == GuestRoomScaleMode.Fixed)
         {
             scale = Mathf.Max(0.001f, entry.fixedGuestScale);
             diagnostic = $"Fixed manual guest scale for '{entry.roomId}'.";
@@ -204,7 +276,7 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
 
         PointClickPlayerMovement source = ResolveButlerScaleSource();
 
-        if (entry.useButlerRoomCurve &&
+        if (mode == GuestRoomScaleMode.ButlerCurve &&
             source != null &&
             source.TryEvaluateButlerCharacterScale(
                 entry.roomId,
@@ -218,9 +290,8 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
             return true;
         }
 
-        scale = Mathf.Max(0.001f, entry.roomGuestScaleMultiplier);
-        diagnostic = $"Fallback guest multiplier for '{entry.roomId}'.";
-        return true;
+        diagnostic = $"Butler guest scale unavailable for '{entry.roomId}'.";
+        return false;
     }
 
     public void SetRoomMultiplier(string roomId, float multiplier)
@@ -229,14 +300,36 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         entry.roomGuestScaleMultiplier = Mathf.Max(0.001f, multiplier);
     }
 
+    public void SetRoomScaleMode(string roomId, GuestRoomScaleMode mode)
+    {
+        GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+
+        switch (mode)
+        {
+            case GuestRoomScaleMode.Fixed:
+                entry.UseFixedScale(entry.fixedGuestScale);
+                break;
+            case GuestRoomScaleMode.DepthCurve:
+                entry.UseDepthCurve();
+                break;
+            case GuestRoomScaleMode.ButlerCurve:
+            case GuestRoomScaleMode.Inferred:
+            default:
+                entry.UseButlerCurve(entry.roomGuestScaleMultiplier);
+                break;
+        }
+    }
+
+    public void UseButlerRoomCurve(string roomId, float multiplier = 1f)
+    {
+        GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+        entry.UseButlerCurve(multiplier);
+    }
+
     public void SetFixedGuestScale(string roomId, float guestScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
-        entry.useFixedGuestScale = true;
-        entry.fixedGuestScale = Mathf.Max(0.001f, guestScale);
-        entry.useCustomGuestCurve = false;
-        entry.hasFront = false;
-        entry.hasBack = false;
+        entry.UseFixedScale(guestScale);
     }
 
     public void ClearFixedGuestScale(string roomId)
@@ -244,6 +337,11 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
         entry.useFixedGuestScale = false;
         entry.fixedGuestScale = 1f;
+
+        if (entry.ResolvedScaleMode == GuestRoomScaleMode.Fixed)
+        {
+            entry.UseButlerCurve(entry.roomGuestScaleMultiplier);
+        }
     }
 
     public bool LoadCustomCurveFromButlerScale(PointClickPlayerMovement butler, string roomId)
@@ -259,16 +357,13 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         }
 
         GuestRoomScaleEntry entry = GetOrCreateRoom(data.RoomId);
-        entry.useFixedGuestScale = false;
-        entry.fixedGuestScale = 1f;
-        entry.useCustomGuestCurve = true;
+        entry.UseDepthCurve();
         entry.hasFront = true;
         entry.frontRoomLocalY = data.FrontRoomLocalFootY;
         entry.frontGuestScale = Mathf.Max(0.001f, data.FrontFinalLocalScaleY);
         entry.hasBack = true;
         entry.backRoomLocalY = data.BackRoomLocalFootY;
         entry.backGuestScale = Mathf.Max(0.001f, data.BackFinalLocalScaleY);
-        entry.roomGuestScaleMultiplier = 1f;
         return true;
     }
 
@@ -296,8 +391,7 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
     public void SetFront(string roomId, float roomLocalY, float guestScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
-        entry.useFixedGuestScale = false;
-        entry.useCustomGuestCurve = true;
+        entry.UseDepthCurve();
         entry.hasFront = true;
         entry.frontRoomLocalY = roomLocalY;
         entry.frontGuestScale = Mathf.Max(0.001f, guestScale);
@@ -306,8 +400,7 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
     public void SetBack(string roomId, float roomLocalY, float guestScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
-        entry.useFixedGuestScale = false;
-        entry.useCustomGuestCurve = true;
+        entry.UseDepthCurve();
         entry.hasBack = true;
         entry.backRoomLocalY = roomLocalY;
         entry.backGuestScale = Mathf.Max(0.001f, guestScale);
@@ -323,6 +416,11 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         entry.hasBack = false;
         entry.backRoomLocalY = 0f;
         entry.backGuestScale = 1f;
+
+        if (entry.ResolvedScaleMode == GuestRoomScaleMode.DepthCurve)
+        {
+            entry.UseButlerCurve(entry.roomGuestScaleMultiplier);
+        }
     }
 
     public bool RemoveRoom(string roomId)

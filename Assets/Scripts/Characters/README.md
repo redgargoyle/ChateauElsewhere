@@ -64,23 +64,23 @@ The manually calibrated Butler room scale is the trusted room/depth source. Gues
 
 `GuestScaleParticipant` marks the visible human body root. Coats, speech bubbles, shadows, prompts, highlights, icons, cursors, and tooltips must not be selected as body roots. `RoomProjectedEntity`, `RoomPersonWalker2D`, and `ActorRoomState` still own placement, movement, sorting, tint, and story state, but they are no longer final guest body-size writers when a participant is present.
 
-`GuestScaleParticipant.CurrentRoomId` is the live room-membership source used by the guest scale tool and applier. Gameplay code should set it whenever a guest is staged, placed, or moved into a known room. `roomIdOverride` is only an authored fallback for setup and should not be treated as current room state.
+`GuestScaleParticipant.CurrentRoomId` is live runtime room state used by the guest scale tool and applier. Gameplay code should set it whenever a guest is staged, placed, or moved into a known room. The editor tool must not persistently rewrite this value just because a room is selected. `roomIdOverride` is only an authored fallback for setup and should not be treated as current room state.
 
 Guest room sizes are saved with a `referenceRoomStageScale`. At runtime and in editor previews, `GuestRoomScaleApplier` multiplies the saved guest size by the current room-stage zoom ratio, then divides out inherited room-stage zoom only for guests already parented under the scaled room stage. This makes guests zoom with the room and Butler without double-scaling room-stage children.
 
-Workflow:
+Demo Version 1 normal guest workflow:
 
 1. Open `Tools > Characters > Guest Size Master`.
-2. Click `SET UP GUEST SCALING`.
-3. Choose a room.
-4. Select a guest standing near the front of the room.
-5. Adjust `Manual Guest Scale` until that selected guest visually matches the Butler at that depth.
-6. Click `SAVE FRONT FROM SELECTED GUEST`.
-7. Select or move to a guest near the back of the room.
-8. Adjust `Manual Guest Scale` again, then click `SAVE BACK FROM SELECTED GUEST`.
-9. Click `PREVIEW MANUAL CURVE IN ROOM`, then `SAVE SCENE`.
+2. Select the room.
+3. Set `Guest Scale Mode` to `Follows Butler Depth`.
+4. Adjust `Guest Size Multiplier`.
+5. Click `PREVIEW SELECTED ROOM`.
+6. Click `SAVE SELECTED ROOM`.
+7. Click `SAVE SCENE`.
 
-`MATCH BUTLER SIZE IN ROOM` resets the Butler-derived fine tune to `1`. `CLEAR MANUAL CURVE` removes the front/back guest curve and returns that room to Butler-derived matching. The manual front/back guest curve is the safer workflow when source-art proportions do not visually match the Butler.
+Use `Fixed Size / Seated Exception` only for seated, furniture-locked, or cinematic guests that must keep one room size. Use `Custom Front/Back Curve` only when Butler depth scaling cannot match the room. For custom curves, select a guest at the closest useful point, set `Closest Guest Scale`, click `SAVE CLOSEST POINT FROM SELECTED GUEST`, select a guest at the furthest useful point, set `Furthest Guest Scale`, then click `SAVE FURTHEST POINT FROM SELECTED GUEST`, `PREVIEW SELECTED ROOM`, `SAVE SELECTED ROOM`, and `SAVE SCENE`.
+
+`Reset Selected Room Multiplier` returns a normal Butler-depth room to multiplier `1`. `CLEAR MANUAL CURVE` removes custom guest front/back data and returns that room to Butler-depth matching.
 
 Use `Tools > Characters > Guest Scale Audit` when checking scene setup. The obsolete `GuestButlerScaleHarmonizer` and old Butler-scale tool are compatibility shells only.
 
