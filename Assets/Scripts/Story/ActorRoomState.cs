@@ -197,6 +197,7 @@ public class ActorRoomState : MonoBehaviour
         return source.TryEvaluateButlerCharacterScale(roomId, roomLocalFootPoint, out sample);
     }
 
+    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
     public bool ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier = 1f)
     {
         if (HasActiveProjection())
@@ -207,7 +208,7 @@ public class ActorRoomState : MonoBehaviour
 
         Transform targetTransform = actorObject != null ? actorObject.transform : transform;
 
-        if (targetTransform == null || targetTransform is RectTransform)
+        if (targetTransform == null || targetTransform is RectTransform || HasActiveGuestScaleParticipant(targetTransform))
         {
             ClearButlerCharacterScaleDebug();
             return false;
@@ -664,7 +665,9 @@ public class ActorRoomState : MonoBehaviour
                 targetTransform.position = correctedWorldPosition;
             }
 
-            if (scaleWithRoomStageMotion && !Mathf.Approximately(scaleRatio, 1f))
+            if (scaleWithRoomStageMotion &&
+                !Mathf.Approximately(scaleRatio, 1f) &&
+                !HasActiveGuestScaleParticipant(targetTransform))
             {
                 targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio);
             }
@@ -794,9 +797,13 @@ public class ActorRoomState : MonoBehaviour
             ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
             : 1f;
         float perspectiveScale = GetBoundRoomPerspectiveScale();
-        targetTransform.localScale = scaleWithRoomStageMotion
-            ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
-            : boundLocalScale;
+        if (!HasActiveGuestScaleParticipant(targetTransform))
+        {
+            targetTransform.localScale = scaleWithRoomStageMotion
+                ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
+                : boundLocalScale;
+        }
+
         return true;
     }
 
@@ -846,6 +853,7 @@ public class ActorRoomState : MonoBehaviour
         return false;
     }
 
+    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
     private static Vector3 BuildButlerActorScale(
         Vector3 baseScale,
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,
@@ -902,6 +910,17 @@ public class ActorRoomState : MonoBehaviour
     {
         return targetTransform != null &&
             targetTransform.GetComponentInParent<RoomContentGroup>(true) != null;
+    }
+
+    private bool HasActiveGuestScaleParticipant(Transform targetTransform)
+    {
+        GuestScaleParticipant participant = targetTransform != null
+            ? targetTransform.GetComponentInParent<GuestScaleParticipant>(true)
+            : GetComponentInParent<GuestScaleParticipant>(true);
+
+        return participant != null &&
+            !participant.ExcludeFromGuestScaling &&
+            !participant.IsButler;
     }
 
     private static Vector3 ScaleXY(Vector3 scale, float ratio)

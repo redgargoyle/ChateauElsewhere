@@ -58,23 +58,21 @@ Visual target:
 
 Do not edit Transform scale manually for calibration. Do not use Advanced reset buttons unless intentionally resetting.
 
-## Guest Scaling From Butler Rules
+## Guest Room Scale
 
-The manually calibrated Butler room scale is now the shared depth scale source for guests. Guests do not copy the Butler's raw size. Guests use the Butler's normalized room/depth scale multiplier, then keep their own authored scale, sitting/standing art proportions, and `CharacterVisualProfile.HeightScaleMultiplier`.
+The manually calibrated Butler room scale is the trusted room/depth source. Guests use a separate scene-level `GuestRoomScaleCalibration` room multiplier, keep their own captured authored base scale, and receive final body size only from `GuestRoomScaleApplier`.
 
-`RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result.
+`GuestScaleParticipant` marks the visible human body root. Coats, speech bubbles, shadows, prompts, highlights, icons, cursors, and tooltips must not be selected as body roots. `RoomProjectedEntity`, `RoomPersonWalker2D`, and `ActorRoomState` still own placement, movement, sorting, tint, and story state, but they are no longer final guest body-size writers when a participant is present.
 
-To enable:
+Workflow:
 
-1. Open `Tools > Characters > Apply Butler Scaling To Guests`.
-2. Click `Find Scene Butler`.
-3. Click `Add/Ensure GuestButlerScaleHarmonizer`.
-4. Click `Enable Butler Scaling On All Guests`.
-5. Click `Bypass Old Room Visual Scale Overrides For All Guests`.
-6. Click `Refresh Guest Scaling Now`.
-7. Use the Proof Test buttons to confirm guests visibly change.
-8. Save Scene.
-9. Test in Play Mode.
+1. Open `Tools > Characters > Guest Size Master`.
+2. Click `SET UP GUEST SCALING`.
+3. Choose a room.
+4. Adjust `Guest Size In This Room`.
+5. Click `PREVIEW ROOM GUEST SIZE`, then `SAVE ROOM GUEST SIZE`, then `SAVE SCENE`.
+
+Use `Tools > Characters > Guest Scale Audit` when checking scene setup. The obsolete `GuestButlerScaleHarmonizer` and old Butler-scale tool are compatibility shells only.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 

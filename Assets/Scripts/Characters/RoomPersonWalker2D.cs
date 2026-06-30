@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -69,6 +70,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	[SerializeField, HideInInspector] private bool hasAuthoredWalkerLocalScale;
 
 	public RoomPerspectiveProfile RoomProfile => roomProfile;
+	public Graphic TargetGraphic => targetGraphic;
 	public bool UseButlerCharacterScaleRules => useButlerCharacterScaleRules;
 	public PointClickPlayerMovement ButlerScaleSource => butlerScaleSource;
 	public bool PreserveAuthoredLocalScaleWhenUsingButlerRules => preserveAuthoredLocalScaleWhenUsingButlerRules;
@@ -163,13 +165,21 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		RefreshDepthVisualsNow();
 	}
 
+	[Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
 	public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source = null)
 	{
 		ApplyButlerCharacterScaleNow(source, 1f);
 	}
 
+	[Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
 	public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier)
 	{
+		if (HasActiveGuestScaleParticipant())
+		{
+			ClearButlerCharacterScaleDebug();
+			return;
+		}
+
 		if (source != null)
 		{
 			butlerScaleSource = source;
@@ -476,7 +486,11 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		else if (rectTransform != null)
 		{
 			rectTransform.anchoredPosition = GetRenderedPosition(currentPosition + GetMotionOffset());
-			rectTransform.localScale = BuildDepthScaleVector(GetDepthScale(), isUsingButlerCharacterScaleRules, 1f);
+
+			if (!HasActiveGuestScaleParticipant())
+			{
+				rectTransform.localScale = BuildDepthScaleVector(GetDepthScale(), isUsingButlerCharacterScaleRules, 1f);
+			}
 		}
 
 		animatorParameters.ApplyMovement(animator, movingAlongPath, walkDirection, animationSpeed);
@@ -513,6 +527,16 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 	private float GetDepthScale()
 	{
+		if (HasActiveGuestScaleParticipant())
+		{
+			ClearButlerCharacterScaleDebug();
+
+			if (TryGetRoomPerspectiveProfile(out RoomPerspectiveProfile participantProfile))
+				return participantProfile.GetScale(currentPosition);
+
+			return Mathf.Lerp(nearScale, farScale, GetDepth01());
+		}
+
 		if (TryGetButlerCharacterScaleForWalker(out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
 			return sample.NormalizedScale;
 
@@ -544,6 +568,12 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 	private void ApplyButlerScaleSample(PointClickPlayerMovement.ButlerCharacterScaleSample sample, float debugScaleMultiplier)
 	{
+		if (HasActiveGuestScaleParticipant())
+		{
+			ClearButlerCharacterScaleDebug();
+			return;
+		}
+
 		isUsingButlerCharacterScaleRules = true;
 		currentButlerCharacterScale = sample.NormalizedScale;
 		currentButlerCharacterDepth01 = sample.Depth01;
@@ -554,6 +584,11 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	private bool TryGetButlerCharacterScaleForWalker(out PointClickPlayerMovement.ButlerCharacterScaleSample sample)
 	{
 		sample = default;
+
+		if (HasActiveGuestScaleParticipant())
+		{
+			return false;
+		}
 
 		if (!useButlerCharacterScaleRules)
 		{
@@ -653,6 +688,23 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 						? firstActive
 						: firstInactive;
 		return butlerScaleSource;
+	}
+
+	private bool HasActiveGuestScaleParticipant()
+	{
+		GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
+
+		if (participant == null ||
+			participant.ExcludeFromGuestScaling ||
+			participant.IsButler)
+		{
+			return false;
+		}
+
+		Transform participantRoot = participant.ResolveScaleRoot();
+		return participantRoot == transform ||
+			(rectTransform != null && participantRoot == rectTransform) ||
+			(targetGraphic != null && participantRoot == targetGraphic.rectTransform);
 	}
 
 	private Color GetDepthTint()

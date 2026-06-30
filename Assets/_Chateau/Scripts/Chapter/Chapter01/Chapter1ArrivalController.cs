@@ -32,6 +32,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public ActorRoomState ActorState;
         public RoomProjectedEntity Projection;
         public GuestFootstepAudio Footsteps;
+        public GuestScaleParticipant ScaleParticipant;
     }
 
     private sealed class GuestGroupRuntimeState
@@ -595,6 +596,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             DisableCoatPickupInteraction(guestState.CoatPickup);
         }
 
+        RefreshGuestScalingNow();
         Debug.Log($"Coat taken from guest: {carriedCoatId}", this);
         RefreshInteractionState();
         CheckActiveGroupsReadyForDrawingRoom();
@@ -1182,6 +1184,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             carriedCoatVisual = null;
         }
 
+        RefreshGuestScalingNow();
         butlerCarryingCoat = false;
         carriedCoatId = string.Empty;
         carriedCoatGuest = null;
@@ -1447,6 +1450,8 @@ public class Chapter1ArrivalController : MonoBehaviour
                 actorState.SetSeated(false);
             }
 
+            runtimeState.ScaleParticipant = EnsureGuestScaleParticipant(runtimeState, entryRoomId, CharacterPose.Standing);
+
             if (runtimeState.CoatPickup != null)
             {
                 runtimeState.CoatPickup.gameObject.SetActive(false);
@@ -1454,6 +1459,8 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             guestStates.Add(runtimeState);
         }
+
+        RefreshGuestScalingNow();
     }
 
     private void BuildGuestGroups()
@@ -1667,6 +1674,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.SetInteractable(false);
         }
 
+        EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing);
+        RefreshGuestScalingNow();
         PrepareGuestCoatForArrival(guest);
         SetGuestState(guest, GuestArrivalState.Arriving);
         ForceGuestVisibleForDoorFlow(guest);
@@ -1705,6 +1714,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         ForceGuestVisibleForDoorFlow(guest);
+        EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing);
+        RefreshGuestScalingNow();
         OfferGuestCoat(guest);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance wait spot.", this);
     }
@@ -2345,6 +2356,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.ApplyState();
         }
 
+        EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
+        RefreshGuestScalingNow();
         ApplyDrawingRoomGuestDepthSorting(guest, drawingRoomSpot);
 
         guest.MovingToDrawingRoom = false;
@@ -2588,6 +2601,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.ApplyState();
         }
 
+        EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
+        RefreshGuestScalingNow();
         HideGuestCoatVisualsForChapter2Skip(guest);
         ApplyDrawingRoomGuestDepthSorting(guest, drawingRoomSpot);
 
@@ -3574,6 +3589,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (mover == null)
         {
             PlaceGuestAt(guestState, target, fieldName);
+            EnsureGuestScaleParticipant(guestState, ResolveGuestScaleRoomId(guestState), ResolveGuestScalePose(guestState));
+            RefreshGuestScalingNow();
             yield break;
         }
 
@@ -3589,6 +3606,8 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         StopGuestFootsteps(guestState);
         BindGuestToRoomStagePoint(guestState, target);
+        EnsureGuestScaleParticipant(guestState, ResolveGuestScaleRoomId(guestState), ResolveGuestScalePose(guestState));
+        RefreshGuestScalingNow();
     }
 
     private void BeginGuestMoveTo(GuestRuntimeState guestState, Transform target, string fieldName)
@@ -5366,6 +5385,107 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return guestObject != null ? guestObject.GetComponentInChildren<RoomProjectedEntity>(true) : null;
+    }
+
+    private GuestScaleParticipant EnsureGuestScaleParticipant(
+        GuestRuntimeState guestState,
+        string roomId,
+        CharacterPose pose)
+    {
+        if (guestState == null || guestState.GuestObject == null)
+        {
+            return null;
+        }
+
+        GuestRoomScaleApplier applier = EnsureGuestScaleApplier();
+        GuestScaleParticipant participant = GuestRoomScaleApplier.EnsureParticipantForGuestObject(
+            guestState.GuestObject,
+            guestState.Config != null ? guestState.Config.GuestId : guestState.GuestObject.name,
+            roomId,
+            pose);
+
+        if (participant == null)
+        {
+            return null;
+        }
+
+        participant.SetIsButler(false);
+        participant.ResolveScaleRoot();
+        participant.CaptureBaseScale(false);
+        guestState.ScaleParticipant = participant;
+        applier.RefreshParticipantNow(participant);
+        return participant;
+    }
+
+    private GuestRoomScaleApplier EnsureGuestScaleApplier()
+    {
+        GuestRoomScaleApplier applier = GuestRoomScaleApplier.EnsureInScene();
+        applier.SetCalibration(EnsureGuestScaleCalibration());
+        return applier;
+    }
+
+    private GuestRoomScaleCalibration EnsureGuestScaleCalibration()
+    {
+        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+
+        if (calibration == null)
+        {
+            GameObject calibrationObject = new GameObject("GuestRoomScaleCalibration");
+            calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+        }
+
+        ResolveReferences(false);
+        PointClickPlayerMovement butler = playerMovement != null ? playerMovement : FindPlayerMovement();
+
+        if (butler != null)
+        {
+            calibration.InitializeMissingRoomsFromButler(butler);
+            calibration.SetButlerScaleSource(butler);
+        }
+
+        return calibration;
+    }
+
+    private void RefreshGuestScalingNow()
+    {
+        GuestRoomScaleApplier applier = EnsureGuestScaleApplier();
+        applier.RefreshAllNow();
+    }
+
+    private string ResolveGuestScaleRoomId(GuestRuntimeState guestState)
+    {
+        if (guestState == null)
+        {
+            return entryRoomId;
+        }
+
+        if (guestState.ActorState != null && !string.IsNullOrWhiteSpace(guestState.ActorState.CurrentRoomId))
+        {
+            return guestState.ActorState.CurrentRoomId;
+        }
+
+        if (guestState.Seated || guestState.MovingToDrawingRoom)
+        {
+            return drawingRoomId;
+        }
+
+        return entryRoomId;
+    }
+
+    private CharacterPose ResolveGuestScalePose(GuestRuntimeState guestState)
+    {
+        if (guestState == null)
+        {
+            return CharacterPose.Standing;
+        }
+
+        if (SameRoom(ResolveGuestScaleRoomId(guestState), drawingRoomId) &&
+            !ShouldUseStandingDrawingRoomPose(guestState))
+        {
+            return CharacterPose.Seated;
+        }
+
+        return guestState.Seated ? CharacterPose.Seated : CharacterPose.Standing;
     }
 
     private float GetMoveSpeedForGuestObject(GameObject guestObject)

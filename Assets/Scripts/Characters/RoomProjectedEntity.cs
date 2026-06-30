@@ -654,6 +654,11 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             return;
         }
 
+        if (HasActiveGuestScaleParticipant(targetRoot))
+        {
+            return;
+        }
+
         float appliedScale = currentScale * currentRoomStageScaleMultiplier;
         Vector3 baseScale = isUsingButlerCharacterScaleRules && ignoreRoomVisualScaleOverridesWhenUsingButlerRules
             ? GetDefaultAuthoredVisualRootScale()
@@ -666,13 +671,21 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         targetRoot.localScale = projectedScale;
     }
 
+    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
     public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source = null)
     {
         ApplyButlerCharacterScaleNow(source, 1f);
     }
 
+    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
     public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier)
     {
+        if (HasActiveGuestScaleParticipant(VisualRoot))
+        {
+            ClearButlerCharacterScaleDebug();
+            return;
+        }
+
         if (source != null)
         {
             butlerScaleSource = source;
@@ -697,13 +710,14 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return TryGetButlerCharacterScaleForThisEntity(out sample);
     }
 
+    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
     private void ForceApplyButlerCharacterScale(
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,
         float debugScaleMultiplier)
     {
         Transform targetRoot = VisualRoot;
 
-        if (targetRoot == null)
+        if (targetRoot == null || HasActiveGuestScaleParticipant(targetRoot))
         {
             return;
         }
@@ -961,6 +975,11 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     {
         sample = default;
 
+        if (HasActiveGuestScaleParticipant(VisualRoot))
+        {
+            return false;
+        }
+
         if (!useButlerCharacterScaleRules ||
             (useButlerRulesOnlyForFloorCharacters && projectionMode != ProjectionMode.FloorCharacter))
         {
@@ -977,6 +996,26 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         PointClickPlayerMovement source = ResolveButlerScaleSource();
         return source != null &&
             source.TryEvaluateButlerCharacterScale(roomId, roomLocalFootPoint, out sample);
+    }
+
+    private bool HasActiveGuestScaleParticipant(Transform targetRoot)
+    {
+        GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
+
+        if (participant == null && targetRoot != null)
+        {
+            participant = targetRoot.GetComponentInParent<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null ||
+            participant.ExcludeFromGuestScaling ||
+            participant.IsButler)
+        {
+            return false;
+        }
+
+        Transform participantRoot = participant.ResolveScaleRoot();
+        return participantRoot == targetRoot || participantRoot == transform;
     }
 
     private PointClickPlayerMovement ResolveButlerScaleSource()

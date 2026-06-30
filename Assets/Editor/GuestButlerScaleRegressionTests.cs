@@ -2,8 +2,9 @@ using System;
 using System.IO;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UI;
 
-public sealed class GuestButlerScaleRegressionTests
+public sealed class GuestRoomScaleRegressionTests
 {
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string RoomProjectedEntityPath = "Assets/Scripts/Characters/RoomProjectedEntity.cs";
@@ -11,6 +12,12 @@ public sealed class GuestButlerScaleRegressionTests
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
     private const string HarmonizerPath = "Assets/Scripts/Characters/GuestButlerScaleHarmonizer.cs";
     private const string ToolPath = "Assets/Editor/GuestButlerScaleTool.cs";
+    private const string GuestRoomScaleCalibrationPath = "Assets/Scripts/Characters/GuestRoomScaleCalibration.cs";
+    private const string GuestScaleParticipantPath = "Assets/Scripts/Characters/GuestScaleParticipant.cs";
+    private const string GuestRoomScaleApplierPath = "Assets/Scripts/Characters/GuestRoomScaleApplier.cs";
+    private const string GuestPoseScaleOverrideStorePath = "Assets/Scripts/Characters/GuestPoseScaleOverrideStore.cs";
+    private const string GuestRoomScaleMasterWindowPath = "Assets/Editor/GuestRoomScaleMasterWindow.cs";
+    private const string GuestScaleAuditPath = "Assets/Editor/GuestScaleAudit.cs";
 
     [Test]
     public void PointClickPlayerMovementExposesSharedButlerScaleEvaluator()
@@ -44,196 +51,380 @@ public sealed class GuestButlerScaleRegressionTests
     }
 
     [Test]
-    public void RoomProjectedEntityUsesButlerRulesBeforeRoomProfile()
+    public void GuestRoomScaleCalibrationInitializesFromButler()
     {
-        RoomPerspectiveProfile profile = CreateProfile(1f, 1f);
         GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
-        RoomProjectedEntity entity = CreateProjectedEntity("ProjectedGuest", profile, null, Vector2.zero);
-
-        try
-        {
-            ConfigureHalfScaleButler(butler.GetComponent<PointClickPlayerMovement>());
-            entity.SetButlerScaleSource(butler.GetComponent<PointClickPlayerMovement>(), false);
-            entity.SetButlerCharacterScaleRulesEnabled(true);
-
-            Assert.That(entity.IsUsingButlerCharacterScaleRules, Is.True);
-            Assert.That(entity.CurrentScale, Is.EqualTo(0.5f).Within(0.0001f));
-        }
-        finally
-        {
-            DestroyEntity(entity);
-            UnityEngine.Object.DestroyImmediate(butler);
-            UnityEngine.Object.DestroyImmediate(profile);
-        }
-    }
-
-    [Test]
-    public void RoomProjectedEntityBypassesOldVisualOverridesWhenUsingButlerRules()
-    {
-        RoomPerspectiveProfile profile = CreateProfile(1f, 1f);
-        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
-        GameObject root = new GameObject("ProjectedGuest");
-        GameObject visual = new GameObject("Visual");
-        visual.transform.SetParent(root.transform, false);
-        visual.transform.localScale = new Vector3(2f, 3f, 4f);
-        visual.AddComponent<SpriteRenderer>();
-        RoomProjectedEntity entity = root.AddComponent<RoomProjectedEntity>();
-        entity.SetVisualRoot(visual.transform);
-        entity.SetRoomProfile(profile);
-        entity.SetRoomLocalFootPoint(Vector2.zero);
-
-        try
-        {
-            ConfigureHalfScaleButler(butler.GetComponent<PointClickPlayerMovement>());
-            entity.SetVisualRootScaleForRoom("Drawing Room", new Vector3(0.1f, 0.1f, 8f), false);
-            entity.SetButlerScaleSource(butler.GetComponent<PointClickPlayerMovement>(), false);
-            entity.SetButlerCharacterScaleRulesEnabled(true, false);
-            entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
-            entity.ApplyButlerCharacterScaleNow();
-
-            Assert.That(visual.transform.localScale.x, Is.EqualTo(1f).Within(0.0001f));
-            Assert.That(visual.transform.localScale.y, Is.EqualTo(1.5f).Within(0.0001f));
-            Assert.That(visual.transform.localScale.z, Is.EqualTo(4f).Within(0.0001f));
-        }
-        finally
-        {
-            UnityEngine.Object.DestroyImmediate(root);
-            UnityEngine.Object.DestroyImmediate(butler);
-            UnityEngine.Object.DestroyImmediate(profile);
-        }
-    }
-
-    [Test]
-    public void RoomPersonWalkerUsesButlerRulesBeforeNearFarFallback()
-    {
-        RoomPerspectiveProfile profile = CreateProfile(1f, 1f);
-        GameObject room = new GameObject("Drawing Room");
-        room.AddComponent<RoomContentGroup>().SetPerspectiveProfile(profile);
-        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
-        GameObject walkerObject = new GameObject("Walker", typeof(RectTransform));
-        walkerObject.transform.SetParent(room.transform, false);
-        RoomPersonWalker2D walker = walkerObject.AddComponent<RoomPersonWalker2D>();
-
-        try
-        {
-            ConfigureHalfScaleButler(butler.GetComponent<PointClickPlayerMovement>());
-            walker.SetButlerScaleSource(butler.GetComponent<PointClickPlayerMovement>(), false);
-            walker.SetButlerCharacterScaleRulesEnabled(true, false);
-            walker.ApplyButlerCharacterScaleNow();
-
-            Assert.That(walker.IsUsingButlerCharacterScaleRules, Is.True);
-            Assert.That(walker.CurrentDepthScale, Is.EqualTo(0.5f).Within(0.0001f));
-        }
-        finally
-        {
-            UnityEngine.Object.DestroyImmediate(walkerObject);
-            UnityEngine.Object.DestroyImmediate(room);
-            UnityEngine.Object.DestroyImmediate(butler);
-            UnityEngine.Object.DestroyImmediate(profile);
-        }
-    }
-
-    [Test]
-    public void GuestButlerScaleHarmonizerRunsAsFinalWriter()
-    {
-        string harmonizerText = File.ReadAllText(HarmonizerPath);
-
-        Assert.That(harmonizerText, Does.Contain("[DefaultExecutionOrder(10000)]"));
-        Assert.That(harmonizerText, Does.Contain("ApplyButlerCharacterScaleNow(source, debugGuestScaleMultiplier)"));
-        Assert.That(harmonizerText, Does.Contain("ApplyToActorRoomStates"));
-        Assert.That(harmonizerText, Does.Contain("IsButlerObjectOrChild"));
-    }
-
-    [Test]
-    public void ActorRoomStateWorldGuestsUseButlerScaleRules()
-    {
-        RoomPerspectiveProfile profile = CreateProfile(1f, 1f);
-        GameObject room = new GameObject("Room_Grand_Entrance_Hall");
-        room.AddComponent<RoomContentGroup>().SetRoomName("Grand Entrance Hall");
-        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
-        GameObject guest = new GameObject("Guest 1");
-        guest.transform.SetParent(room.transform, false);
-        guest.transform.localPosition = Vector3.zero;
-        guest.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
-        ActorRoomState actor = guest.AddComponent<ActorRoomState>();
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
 
         try
         {
             PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
             movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
-            movement.SetButlerFrontFinalLocalScaleForRoom("Grand Entrance Hall", -100f, 1f, false);
+            movement.SetButlerFrontFinalLocalScaleForRoom("Grand Entrance Hall", -100f, 2f, false);
             movement.SetButlerBackFinalLocalScaleForRoom("Grand Entrance Hall", 100f, 1f, false);
-            actor.SetActorId("Guest 1");
-            actor.SetCurrentRoom("Grand Entrance Hall");
-            actor.ResetAuthoredActorScaleForEditor();
+            movement.SetButlerFrontFinalLocalScaleForRoom("Drawing_Room", -100f, 2f, false);
+            movement.SetButlerBackFinalLocalScaleForRoom("Drawing_Room", 100f, 1f, false);
 
-            Assert.That(actor.ApplyButlerCharacterScaleNow(movement), Is.True);
-            Assert.That(actor.IsUsingButlerCharacterScaleRules, Is.True);
-            Assert.That(actor.CurrentButlerCharacterScale, Is.EqualTo(0.5f).Within(0.0001f));
-            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.1f).Within(0.0001f));
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            calibration.InitializeMissingRoomsFromButler(movement);
+
+            Assert.That(calibration.TryGetRoom("Grand Entrance Hall", out _), Is.True);
+            Assert.That(calibration.TryGetRoom("Drawing Room", out _), Is.True);
+            Assert.That(calibration.Rooms.Count, Is.EqualTo(2));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleCalibrationEvaluatesButlerCurveWithRoomMultiplier()
+    {
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            ConfigureButlerRoom(movement, "Grand Entrance Hall");
+
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            calibration.SetButlerScaleSource(movement);
+            calibration.InitializeMissingRoomsFromButler(movement);
+            calibration.SetRoomMultiplier("grand_entrance-hall", 1.25f);
+
+            Assert.That(
+                calibration.TryEvaluateGuestScale(
+                    "Grand Entrance Hall",
+                    0f,
+                    out float scale,
+                    out float depth01,
+                    out string diagnostic),
+                Is.True,
+                diagnostic);
+            Assert.That(depth01, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(scale, Is.EqualTo(0.75f * 1.25f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
+    public void GuestScaleParticipantCapturesGuestBaseScale()
+    {
+        GameObject guest = new GameObject("Guest 1");
+        guest.transform.localScale = new Vector3(0.8f, 1.2f, 1f);
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetScaleRoot(guest.transform);
+            participant.CaptureBaseScale(true);
+            guest.transform.localScale = Vector3.one * 3f;
+            participant.CaptureBaseScale(false);
+
+            Assert.That(participant.HasCapturedBaseScale, Is.True);
+            Assert.That(participant.CapturedBaseScale, Is.EqualTo(new Vector3(0.8f, 1.2f, 1f)));
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(guest);
-            UnityEngine.Object.DestroyImmediate(room);
-            UnityEngine.Object.DestroyImmediate(butler);
-            UnityEngine.Object.DestroyImmediate(profile);
         }
     }
 
     [Test]
-    public void ProofMultiplierChangesGuests()
+    public void GuestRoomScaleApplierAppliesScaleToGuestPrefabInstances()
     {
-        RoomPerspectiveProfile profile = CreateProfile(1f, 1f);
-        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
-        PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
-        GuestButlerScaleHarmonizer harmonizer = butler.AddComponent<GuestButlerScaleHarmonizer>();
-        RoomProjectedEntity entity = CreateProjectedEntity("ProjectedGuest", profile, null, Vector2.zero);
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.25f);
+        GameObject guest = new GameObject("Guest 1");
+        guest.transform.localScale = Vector3.one;
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.SetScaleRoot(guest.transform);
+            participant.CaptureBaseScale(true);
+
+            scene.Applier.RefreshAllNow();
+
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(0.75f * 1.25f).Within(0.0001f));
+        }
+        finally
+        {
+            DestroyScaleTestScene(scene);
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierUsesWalkerTargetGraphic()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.1f);
+        GameObject walkerObject = new GameObject("Walker_GEH_GreenGentleman", typeof(RectTransform));
+        walkerObject.AddComponent<Image>();
+        RoomPersonWalker2D walker = walkerObject.AddComponent<RoomPersonWalker2D>();
+        walkerObject.transform.localScale = Vector3.one * 4f;
+        Graphic targetGraphic = walkerObject.GetComponent<Graphic>();
+        targetGraphic.rectTransform.localScale = Vector3.one;
+
+        try
+        {
+            GuestScaleParticipant participant = walkerObject.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.CaptureBaseScale(true);
+
+            scene.Applier.RefreshAllNow();
+
+            Assert.That(targetGraphic.rectTransform.localScale.y, Is.EqualTo(0.75f * 1.1f).Within(0.0001f));
+            Assert.That(walkerObject.transform.localScale.y, Is.EqualTo(4f).Within(0.0001f));
+        }
+        finally
+        {
+            DestroyScaleTestScene(scene);
+            UnityEngine.Object.DestroyImmediate(walkerObject);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierUsesProjectedVisualRootForFloorCharacters()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 0.9f);
+        RoomPerspectiveProfile profile = CreateProfile(1f, 1f, "Grand Entrance Hall");
+        RoomProjectedEntity entity = CreateProjectedEntity("ProjectedGuest", profile, Vector2.zero);
         Transform visualRoot = entity.VisualRoot;
 
         try
         {
-            ConfigureHalfScaleButler(movement);
-            harmonizer.SetButlerScaleSource(movement);
-            entity.SetButlerScaleSource(movement, false);
+            GuestScaleParticipant participant = entity.gameObject.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.CaptureBaseScale(true);
 
-            harmonizer.SetDebugGuestScaleMultiplier(0.5f);
-            harmonizer.RefreshNow();
-            Vector3 proofScale = visualRoot.localScale;
+            scene.Applier.RefreshAllNow();
 
-            harmonizer.SetDebugGuestScaleMultiplier(1f);
-            harmonizer.RefreshNow();
-            Vector3 restoredScale = visualRoot.localScale;
-
-            Assert.That(proofScale.x, Is.Not.EqualTo(restoredScale.x).Within(0.0001f));
-            Assert.That(proofScale.x, Is.EqualTo(restoredScale.x * 0.5f).Within(0.0001f));
+            Assert.That(visualRoot.localScale.y, Is.EqualTo(0.75f * 0.9f).Within(0.0001f));
         }
         finally
         {
             DestroyEntity(entity);
-            UnityEngine.Object.DestroyImmediate(butler);
             UnityEngine.Object.DestroyImmediate(profile);
+            DestroyScaleTestScene(scene);
         }
     }
 
     [Test]
-    public void EditorToolContainsRequiredButtons()
+    public void GuestRoomScaleApplierIgnoresCoatVisuals()
     {
-        string toolText = File.ReadAllText(ToolPath);
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.4f);
+        GameObject guest = new GameObject("Guest 2");
+        GameObject coat = new GameObject("Coat_Guest2");
+        coat.transform.SetParent(guest.transform, false);
+        coat.transform.localScale = new Vector3(8f, 9f, 1f);
 
-        Assert.That(toolText, Does.Contain("Enable Butler Scaling On All Guests"));
-        Assert.That(toolText, Does.Contain("Refresh Guest Scaling Now"));
-        Assert.That(toolText, Does.Contain("PROOF: Make All Guest Butler Scales 50% For 2 Seconds"));
-        Assert.That(toolText, Does.Contain("Restore Real Butler Scaling"));
-        Assert.That(toolText, Does.Contain("Bypass Old Room Visual Scale Overrides For All Guests"));
-        Assert.That(File.ReadAllText(ActorRoomStatePath), Does.Contain("ApplyButlerCharacterScaleNow"));
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.CaptureBaseScale(true);
+
+            scene.Applier.RefreshAllNow();
+
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(0.75f * 1.4f).Within(0.0001f));
+            Assert.That(coat.transform.localScale, Is.EqualTo(new Vector3(8f, 9f, 1f)));
+            Assert.That(GuestScaleParticipant.NameLooksExcludedFromBodyScale(coat.name), Is.True);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+            DestroyScaleTestScene(scene);
+        }
     }
 
-    private static RoomPerspectiveProfile CreateProfile(float nearScale, float farScale)
+    [Test]
+    public void TakingAndReturningCoatDoesNotChangeGuestBodyScale()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.3f);
+        GameObject butler = new GameObject("Butler");
+        GameObject guest = new GameObject("Guest 3");
+        GameObject coat = new GameObject("Guest3_Coat");
+        coat.transform.SetParent(guest.transform, false);
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.CaptureBaseScale(true);
+
+            scene.Applier.RefreshAllNow();
+            Vector3 firstScale = guest.transform.localScale;
+
+            coat.transform.SetParent(butler.transform, false);
+            scene.Applier.RefreshAllNow();
+            Assert.That(guest.transform.localScale, Is.EqualTo(firstScale));
+
+            coat.transform.SetParent(guest.transform, false);
+            scene.Applier.RefreshAllNow();
+            Assert.That(guest.transform.localScale, Is.EqualTo(firstScale));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+            UnityEngine.Object.DestroyImmediate(butler);
+            DestroyScaleTestScene(scene);
+        }
+    }
+
+    [Test]
+    public void EntranceGuestsUseGrandEntranceHallRoomMultiplier()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 2f);
+        GameObject guest = new GameObject("Guest 4");
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetCharacterId("Guest 4");
+            participant.SetRoomIdOverride("Grand_Entrance-Hall");
+            participant.CaptureBaseScale(true);
+
+            scene.Applier.RefreshAllNow();
+
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.5f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+            DestroyScaleTestScene(scene);
+        }
+    }
+
+    [Test]
+    public void SeatedGuestsUseSeatedPoseRatio()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Drawing Room", 1f);
+        GameObject guest = new GameObject("Guest 5");
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Drawing Room");
+            participant.SetPose(CharacterPose.Seated);
+            participant.CaptureBaseScale(true);
+
+            scene.Applier.RefreshAllNow();
+
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(0.75f * 0.68f).Within(0.0001f));
+
+            participant.SetSeatedRatioOverride(0.9f);
+            scene.Applier.RefreshAllNow();
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(0.75f * 0.8f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+            DestroyScaleTestScene(scene);
+        }
+    }
+
+    [Test]
+    public void GuestSizeMasterHasSimplePrimaryWorkflow()
+    {
+        string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+
+        Assert.That(text, Does.Contain("Guest Size Master"));
+        Assert.That(text, Does.Contain("Guest Size In This Room"));
+        Assert.That(text, Does.Contain("SET UP GUEST SCALING"));
+        Assert.That(text, Does.Contain("PREVIEW ROOM GUEST SIZE"));
+        Assert.That(text, Does.Contain("SAVE ROOM GUEST SIZE"));
+        Assert.That(text, Does.Contain("APPLY TO ALL GUESTS IN ROOM"));
+        Assert.That(text, Does.Contain("SAVE SCENE"));
+    }
+
+    [Test]
+    public void DebugButtonsAreAdvancedOnly()
+    {
+        string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+
+        Assert.That(text, Does.Contain("advancedFoldout"));
+        Assert.That(text.IndexOf("Proof shrink", StringComparison.Ordinal), Is.GreaterThan(text.IndexOf("advancedFoldout", StringComparison.Ordinal)));
+        Assert.That(text.IndexOf("Emergency restore captured base scales", StringComparison.Ordinal), Is.GreaterThan(text.IndexOf("advancedFoldout", StringComparison.Ordinal)));
+    }
+
+    [Test]
+    public void OldGuestButlerScaleHarmonizerIsRemovedOrObsolete()
+    {
+        if (File.Exists(HarmonizerPath))
+        {
+            string text = File.ReadAllText(HarmonizerPath);
+            Assert.That(text, Does.Contain("[Obsolete"));
+            Assert.That(text, Does.Not.Contain("ApplyButlerCharacterScaleNow(source, debugGuestScaleMultiplier)"));
+        }
+
+        if (File.Exists(ToolPath))
+        {
+            string text = File.ReadAllText(ToolPath);
+            Assert.That(text, Does.Contain("[Obsolete"));
+            Assert.That(text, Does.Not.Contain("Refresh Guest Scaling Now"));
+        }
+    }
+
+    [Test]
+    public void OldApplyButlerCharacterScalePathsAreNotCalledByNewApplier()
+    {
+        string applierText = File.ReadAllText(GuestRoomScaleApplierPath);
+
+        Assert.That(applierText, Does.Not.Contain("ApplyButlerCharacterScaleNow"));
+        Assert.That(applierText, Does.Not.Contain("ForceApplyButlerCharacterScale"));
+        Assert.That(applierText, Does.Not.Contain("ApplyButlerScaleSample"));
+        Assert.That(applierText, Does.Not.Contain("BuildButlerActorScale"));
+    }
+
+    [Test]
+    public void NewGuestScaleFilesExist()
+    {
+        Assert.That(File.Exists(GuestRoomScaleCalibrationPath), Is.True);
+        Assert.That(File.Exists(GuestScaleParticipantPath), Is.True);
+        Assert.That(File.Exists(GuestRoomScaleApplierPath), Is.True);
+        Assert.That(File.Exists(GuestPoseScaleOverrideStorePath), Is.True);
+        Assert.That(File.Exists(GuestScaleAuditPath), Is.True);
+    }
+
+    private static ScaleTestScene CreateScaleTestScene(string roomId, float roomMultiplier)
+    {
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+        ConfigureButlerRoom(movement, roomId);
+
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+        GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+        calibration.SetButlerScaleSource(movement);
+        calibration.InitializeMissingRoomsFromButler(movement);
+        calibration.SetRoomMultiplier(roomId, roomMultiplier);
+
+        GameObject applierObject = new GameObject("GuestScaleApplier");
+        GuestRoomScaleApplier applier = applierObject.AddComponent<GuestRoomScaleApplier>();
+        applier.SetCalibration(calibration);
+
+        return new ScaleTestScene(butler, calibrationObject, applierObject, calibration, applier);
+    }
+
+    private static void ConfigureButlerRoom(PointClickPlayerMovement movement, string roomId)
+    {
+        movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
+        movement.SetButlerFrontFinalLocalScaleForRoom(roomId, -100f, 2f, false);
+        movement.SetButlerBackFinalLocalScaleForRoom(roomId, 100f, 1f, false);
+    }
+
+    private static RoomPerspectiveProfile CreateProfile(float nearScale, float farScale, string roomId)
     {
         RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
         profile.Configure(
-            "Drawing Room",
+            roomId,
             new Vector2(1366f, 768f),
             -100f,
             100f,
@@ -245,17 +436,9 @@ public sealed class GuestButlerScaleRegressionTests
         return profile;
     }
 
-    private static void ConfigureHalfScaleButler(PointClickPlayerMovement movement)
-    {
-        movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
-        movement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -100f, 1f, false);
-        movement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", 100f, 1f, false);
-    }
-
     private static RoomProjectedEntity CreateProjectedEntity(
         string name,
         RoomPerspectiveProfile roomProfile,
-        CharacterVisualProfile visualProfile,
         Vector2 footPoint)
     {
         GameObject root = new GameObject(name);
@@ -265,7 +448,6 @@ public sealed class GuestButlerScaleRegressionTests
         RoomProjectedEntity entity = root.AddComponent<RoomProjectedEntity>();
         entity.SetVisualRoot(visual.transform);
         entity.SetRoomProfile(roomProfile);
-        entity.SetVisualProfile(visualProfile);
         entity.SetRoomLocalFootPoint(footPoint);
         return entity;
     }
@@ -286,5 +468,35 @@ public sealed class GuestButlerScaleRegressionTests
         {
             UnityEngine.Object.DestroyImmediate(entity.gameObject);
         }
+    }
+
+    private static void DestroyScaleTestScene(ScaleTestScene scene)
+    {
+        UnityEngine.Object.DestroyImmediate(scene.Butler);
+        UnityEngine.Object.DestroyImmediate(scene.CalibrationObject);
+        UnityEngine.Object.DestroyImmediate(scene.ApplierObject);
+    }
+
+    private readonly struct ScaleTestScene
+    {
+        public ScaleTestScene(
+            GameObject butler,
+            GameObject calibrationObject,
+            GameObject applierObject,
+            GuestRoomScaleCalibration calibration,
+            GuestRoomScaleApplier applier)
+        {
+            Butler = butler;
+            CalibrationObject = calibrationObject;
+            ApplierObject = applierObject;
+            Calibration = calibration;
+            Applier = applier;
+        }
+
+        public GameObject Butler { get; }
+        public GameObject CalibrationObject { get; }
+        public GameObject ApplierObject { get; }
+        public GuestRoomScaleCalibration Calibration { get; }
+        public GuestRoomScaleApplier Applier { get; }
     }
 }
