@@ -235,6 +235,74 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestRoomScaleCalibrationCanLoadDepthCurveFromButlerScale()
+    {
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
+            movement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -120f, 2.4f, false);
+            movement.SetButlerBackFinalLocalScaleForRoom("Drawing Room", 80f, 1.2f, false);
+
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            calibration.SetFixedGuestScale("Drawing Room", 1.45f);
+
+            Assert.That(calibration.LoadCustomCurveFromButlerScale(movement, "Drawing Room"), Is.True);
+            Assert.That(calibration.TryGetRoom("Drawing Room", out GuestRoomScaleEntry entry), Is.True);
+            Assert.That(entry.useCustomGuestCurve, Is.True);
+            Assert.That(entry.useFixedGuestScale, Is.False);
+            Assert.That(entry.frontRoomLocalY, Is.EqualTo(-120f).Within(0.0001f));
+            Assert.That(entry.frontGuestScale, Is.EqualTo(2.4f).Within(0.0001f));
+            Assert.That(entry.backRoomLocalY, Is.EqualTo(80f).Within(0.0001f));
+            Assert.That(entry.backGuestScale, Is.EqualTo(1.2f).Within(0.0001f));
+
+            Assert.That(
+                calibration.TryEvaluateGuestScale(
+                    "Drawing Room",
+                    -20f,
+                    out float scale,
+                    out float depth,
+                    out string diagnostic),
+                Is.True,
+                diagnostic);
+            Assert.That(depth, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(scale, Is.EqualTo(1.8f).Within(0.0001f));
+            Assert.That(diagnostic, Does.Contain("Custom guest curve"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleCalibrationDoesNotLoadIncompleteButlerCurve()
+    {
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            movement.SetButlerFrontFinalLocalScaleForRoom("Drawing Room", -120f, 2.4f, false);
+
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+
+            Assert.That(calibration.LoadCustomCurveFromButlerScale(movement, "Drawing Room"), Is.False);
+            Assert.That(calibration.TryGetRoom("Drawing Room", out GuestRoomScaleEntry entry), Is.False);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
     public void SavingRoomGuestSizeStoresReferenceRoomStageScale()
     {
         GameObject calibrationObject = new GameObject("GuestScaleCalibration");
@@ -1079,13 +1147,14 @@ public sealed class GuestRoomScaleRegressionTests
     {
         string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
 
-        Assert.That(text, Does.Contain("Manual Front/Back Guest Curve"));
+        Assert.That(text, Does.Contain("Guest Depth Scale Curve"));
         Assert.That(text, Does.Contain("Selected Guest"));
         Assert.That(text, Does.Contain("Manual Guest Scale"));
         Assert.That(text, Does.Contain("PREVIEW SELECTED GUEST SIZE"));
-        Assert.That(text, Does.Contain("SAVE FRONT FROM SELECTED GUEST"));
-        Assert.That(text, Does.Contain("SAVE BACK FROM SELECTED GUEST"));
-        Assert.That(text, Does.Contain("PREVIEW MANUAL CURVE IN ROOM"));
+        Assert.That(text, Does.Contain("LOAD FROM BUTLER SCALE"));
+        Assert.That(text, Does.Contain("SAVE CLOSEST POINT FROM SELECTED GUEST"));
+        Assert.That(text, Does.Contain("SAVE FURTHEST POINT FROM SELECTED GUEST"));
+        Assert.That(text, Does.Contain("PREVIEW GUEST DEPTH CURVE IN ROOM"));
         Assert.That(text, Does.Contain("CLEAR MANUAL CURVE"));
         Assert.That(text, Does.Contain("ResolveSelectedGuest"));
     }

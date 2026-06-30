@@ -246,6 +246,32 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         entry.fixedGuestScale = 1f;
     }
 
+    public bool LoadCustomCurveFromButlerScale(PointClickPlayerMovement butler, string roomId)
+    {
+        string cleanRoomId = CleanRoomId(roomId);
+
+        if (butler == null ||
+            string.IsNullOrWhiteSpace(cleanRoomId) ||
+            !butler.TryGetButlerRoomScaleOverride(cleanRoomId, out PointClickPlayerMovement.ButlerRoomScaleOverrideData data) ||
+            !data.IsComplete)
+        {
+            return false;
+        }
+
+        GuestRoomScaleEntry entry = GetOrCreateRoom(data.RoomId);
+        entry.useFixedGuestScale = false;
+        entry.fixedGuestScale = 1f;
+        entry.useCustomGuestCurve = true;
+        entry.hasFront = true;
+        entry.frontRoomLocalY = data.FrontRoomLocalFootY;
+        entry.frontGuestScale = Mathf.Max(0.001f, data.FrontFinalLocalScaleY);
+        entry.hasBack = true;
+        entry.backRoomLocalY = data.BackRoomLocalFootY;
+        entry.backGuestScale = Mathf.Max(0.001f, data.BackFinalLocalScaleY);
+        entry.roomGuestScaleMultiplier = 1f;
+        return true;
+    }
+
     public void SetReferenceRoomStageScale(string roomId, float stageScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);

@@ -335,12 +335,12 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         GuestScaleParticipant[] roomGuests)
     {
         EditorGUILayout.Space(8f);
-        EditorGUILayout.LabelField("Manual Front/Back Guest Curve", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Guest Depth Scale Curve", EditorStyles.boldLabel);
         DrawManualGuestSelection(roomGuests);
         EditorGUILayout.LabelField("Selected Guest", allRoomsSelected ? AllGuestsInAllRoomsSelectionLabel : allGuestsSelected ? AllGuestsSelectionLabel : selectedGuest != null ? selectedGuest.CharacterId : "none");
         EditorGUILayout.LabelField("Selected Guest Y", allGuestsSelected ? "varies" : selectedGuest != null ? selectedGuest.ResolveRoomLocalY().ToString("0.###") : "n/a");
-        EditorGUILayout.LabelField("Saved Front", FormatManualCurvePoint(true));
-        EditorGUILayout.LabelField("Saved Back", FormatManualCurvePoint(false));
+        EditorGUILayout.LabelField("Saved Closest", FormatManualCurvePoint(true));
+        EditorGUILayout.LabelField("Saved Furthest", FormatManualCurvePoint(false));
 
         bool canPreviewManualScale = allRoomsSelected
             ? FindGuestParticipants().Length > 0
@@ -396,12 +396,12 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         using (new EditorGUI.DisabledScope(allGuestsSelected || selectedGuest == null))
         {
-            if (GUILayout.Button("SAVE FRONT FROM SELECTED GUEST"))
+            if (GUILayout.Button("SAVE CLOSEST POINT FROM SELECTED GUEST"))
             {
                 SaveManualCurvePoint(selectedRoom, selectedGuest, true);
             }
 
-            if (GUILayout.Button("SAVE BACK FROM SELECTED GUEST"))
+            if (GUILayout.Button("SAVE FURTHEST POINT FROM SELECTED GUEST"))
             {
                 SaveManualCurvePoint(selectedRoom, selectedGuest, false);
             }
@@ -409,7 +409,12 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(selectedRoom)))
         {
-            if (GUILayout.Button("PREVIEW MANUAL CURVE IN ROOM"))
+            if (GUILayout.Button("LOAD FROM BUTLER SCALE"))
+            {
+                LoadDepthCurveFromButlerScale(selectedRoom);
+            }
+
+            if (GUILayout.Button("PREVIEW GUEST DEPTH CURVE IN ROOM"))
             {
                 PreviewManualCurveInRoom(selectedRoom);
             }
@@ -612,14 +617,43 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         if (HasCompleteManualCurve(calibration, selectedRoom))
         {
             GuestScaleApplyResult result = RefreshRoomWithUndo(selectedRoom, "Preview Manual Guest Curve");
-            lastAction = $"Saved {(front ? "front" : "back")} guest scale for {selectedRoom}; reference stage {referenceStageScale:0.####}; applied {result.Applied}, changed {result.Changed}.";
+            lastAction = $"Saved {(front ? "closest" : "furthest")} guest scale for {selectedRoom}; reference stage {referenceStageScale:0.####}; applied {result.Applied}, changed {result.Changed}.";
         }
         else
         {
             PreviewSelectedGuestManualScale(selectedGuest);
-            lastAction = $"Saved {(front ? "front" : "back")} guest scale for {selectedRoom}; reference stage {referenceStageScale:0.####}; save the other point next.";
+            lastAction = $"Saved {(front ? "closest" : "furthest")} guest scale for {selectedRoom}; reference stage {referenceStageScale:0.####}; save the other point next.";
         }
 
+        Debug.Log($"[Guest Size Master] {lastAction}");
+    }
+
+    private void LoadDepthCurveFromButlerScale(string selectedRoom)
+    {
+        GuestRoomScaleCalibration calibration = EnsureCalibration(FindButler());
+        PointClickPlayerMovement butler = calibration != null ? calibration.ResolveButlerScaleSource() : null;
+
+        if (calibration == null || butler == null || string.IsNullOrWhiteSpace(selectedRoom))
+        {
+            lastAction = "Butler preload skipped: setup is incomplete.";
+            return;
+        }
+
+        Undo.RecordObject(calibration, "Load Guest Depth Curve From Butler");
+
+        if (!calibration.LoadCustomCurveFromButlerScale(butler, selectedRoom))
+        {
+            lastAction = $"Butler preload skipped: {selectedRoom} has no complete Butler scale curve.";
+            return;
+        }
+
+        selectedRoomMultiplier = 1f;
+        LoadCustomCurveFields(calibration, selectedRoom);
+        float referenceStageScale = SaveCurrentRoomStageReference(calibration, selectedRoom);
+        GuestScaleApplyResult result = RefreshRoomWithUndo(selectedRoom, "Preview Guest Depth Curve");
+        EditorUtility.SetDirty(calibration);
+        EditorSceneManager.MarkAllScenesDirty();
+        lastAction = $"Loaded guest depth curve from Butler for {selectedRoom}; reference stage {referenceStageScale:0.####}; applied {result.Applied}, changed {result.Changed}.";
         Debug.Log($"[Guest Size Master] {lastAction}");
     }
 
