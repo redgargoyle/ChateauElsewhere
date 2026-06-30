@@ -38,8 +38,8 @@ Active guest scale writers found: 1
 - Guest 1: Guest 1
   - Prefab/source: Assets/Prefabs/Player.prefab
   - SpriteRenderer sprite: lady_sitting_01
-  - SpriteRenderer size: (1.77, 2.90, 0.20)
-  - Transform localScale: (1.00, 1.00, 1.00)
+  - SpriteRenderer size: (4.70, 7.71, 0.20)
+  - Transform localScale: (2.66, 2.66, 1.00)
   - Active state: True
   - PointClickPlayerMovement exists: True
   - PointClickPlayerMovement disabled for guest: False
@@ -48,8 +48,8 @@ Active guest scale writers found: 1
 - Guest 2: Guest 2
   - Prefab/source: Assets/Prefabs/Player.prefab
   - SpriteRenderer sprite: butlerspritesit_0
-  - SpriteRenderer size: (1.43, 2.91, 0.20)
-  - Transform localScale: (1.00, 1.00, 1.00)
+  - SpriteRenderer size: (4.02, 8.16, 0.20)
+  - Transform localScale: (2.80, 2.80, 1.00)
   - Active state: True
   - PointClickPlayerMovement exists: True
   - PointClickPlayerMovement disabled for guest: False
@@ -58,8 +58,8 @@ Active guest scale writers found: 1
 - Guest 3: Guest 3
   - Prefab/source: Assets/Prefabs/Player.prefab
   - SpriteRenderer sprite: mister_florian_knell_walk_01_r01_c01
-  - SpriteRenderer size: (1.66, 2.97, 0.22)
-  - Transform localScale: (1.00, 1.00, 1.12)
+  - SpriteRenderer size: (3.69, 6.60, 0.22)
+  - Transform localScale: (2.22, 2.22, 1.12)
   - Active state: True
   - PointClickPlayerMovement exists: True
   - PointClickPlayerMovement disabled for guest: False
@@ -68,8 +68,8 @@ Active guest scale writers found: 1
 - Guest 4: Guest 4
   - Prefab/source: Assets/Prefabs/Player.prefab
   - SpriteRenderer sprite: guest4sit2
-  - SpriteRenderer size: (1.80, 2.97, 0.22)
-  - Transform localScale: (1.00, 1.00, 1.12)
+  - SpriteRenderer size: (4.99, 8.24, 0.22)
+  - Transform localScale: (2.77, 2.77, 1.12)
   - Active state: True
   - PointClickPlayerMovement exists: True
   - PointClickPlayerMovement disabled for guest: False
@@ -78,8 +78,8 @@ Active guest scale writers found: 1
 - Guest 5: Guest 5
   - Prefab/source: Assets/Prefabs/Player.prefab
   - SpriteRenderer sprite: baron_hector_glass_walk_01_r01_c01
-  - SpriteRenderer size: (1.66, 2.97, 0.26)
-  - Transform localScale: (1.00, 1.00, 1.30)
+  - SpriteRenderer size: (2.11, 3.77, 0.26)
+  - Transform localScale: (1.27, 1.27, 1.30)
   - Active state: True
   - PointClickPlayerMovement exists: True
   - PointClickPlayerMovement disabled for guest: False
@@ -88,8 +88,8 @@ Active guest scale writers found: 1
 - Guest 6: Guest 6
   - Prefab/source: Assets/Prefabs/Player.prefab
   - SpriteRenderer sprite: guest06sitidle1
-  - SpriteRenderer size: (1.66, 2.97, 0.26)
-  - Transform localScale: (1.00, 1.00, 1.30)
+  - SpriteRenderer size: (2.11, 3.77, 0.26)
+  - Transform localScale: (1.27, 1.27, 1.30)
   - Active state: True
   - PointClickPlayerMovement exists: True
   - PointClickPlayerMovement disabled for guest: False
@@ -98,8 +98,8 @@ Active guest scale writers found: 1
 - Guest 7: Guest 7
   - Prefab/source: Assets/Prefabs/Player.prefab
   - SpriteRenderer sprite: GuestPair02Man_standing_idle_01_0
-  - SpriteRenderer size: (1.01, 2.87, 0.26)
-  - Transform localScale: (1.00, 1.00, 1.30)
+  - SpriteRenderer size: (1.29, 3.65, 0.26)
+  - Transform localScale: (1.27, 1.27, 1.30)
   - Active state: True
   - PointClickPlayerMovement exists: True
   - PointClickPlayerMovement disabled for guest: False
@@ -108,8 +108,8 @@ Active guest scale writers found: 1
 - Guest 8: Guest 8
   - Prefab/source: Assets/Prefabs/Player.prefab
   - SpriteRenderer sprite: guest8_sitting_left_idle_03_0
-  - SpriteRenderer size: (1.93, 2.83, 0.26)
-  - Transform localScale: (1.00, 1.00, 1.30)
+  - SpriteRenderer size: (2.67, 3.92, 0.26)
+  - Transform localScale: (1.39, 1.39, 1.30)
   - Active state: True
   - PointClickPlayerMovement exists: True
   - PointClickPlayerMovement disabled for guest: False
