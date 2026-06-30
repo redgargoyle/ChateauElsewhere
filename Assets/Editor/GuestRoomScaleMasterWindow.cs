@@ -8,13 +8,19 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 {
     private const float MinMultiplier = 0.25f;
     private const float MaxMultiplier = 3f;
+    private const float MinManualGuestScale = 0.1f;
+    private const float MaxManualGuestScale = 5f;
 
     private int selectedRoomIndex;
     private string loadedRoomId = string.Empty;
+    private string loadedManualGuestKey = string.Empty;
     private float selectedRoomMultiplier = 1f;
+    private float manualGuestScale = 1f;
     private bool advancedFoldout;
+    private bool customHasFront;
     private float customFrontY;
     private float customFrontScale = 1f;
+    private bool customHasBack;
     private float customBackY;
     private float customBackScale = 1f;
     private string lastAction = "Ready";
@@ -38,7 +44,18 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         if (!GuestRoomScaleCalibration.SameRoom(loadedRoomId, selectedRoom))
         {
             selectedRoomMultiplier = GetRoomMultiplier(calibration, selectedRoom);
+            LoadCustomCurveFields(calibration, selectedRoom);
             loadedRoomId = selectedRoom;
+            loadedManualGuestKey = string.Empty;
+        }
+
+        GuestScaleParticipant selectedGuest = ResolveSelectedGuest(selectedRoom);
+        string selectedGuestKey = GetGuestSelectionKey(selectedGuest);
+
+        if (!string.Equals(loadedManualGuestKey, selectedGuestKey, StringComparison.Ordinal))
+        {
+            manualGuestScale = GetGuestCurrentScale(selectedGuest, calibration, selectedRoom);
+            loadedManualGuestKey = selectedGuestKey;
         }
 
         EditorGUILayout.LabelField("Guest Size Master", EditorStyles.boldLabel);
@@ -60,7 +77,9 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
                 selectedRoomIndex = nextRoomIndex;
                 selectedRoom = rooms[selectedRoomIndex];
                 selectedRoomMultiplier = GetRoomMultiplier(calibration, selectedRoom);
+                LoadCustomCurveFields(calibration, selectedRoom);
                 loadedRoomId = selectedRoom;
+                loadedManualGuestKey = string.Empty;
             }
 
             EditorGUI.BeginChangeCheck();
@@ -89,6 +108,8 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             selectedRoomMultiplier = 1f;
             PreviewSelectedRoom(selectedRoom);
         }
+
+        DrawManualFrontBackGuestCurve(selectedRoom, selectedGuest);
 
         if (GUILayout.Button("SAVE ROOM GUEST SIZE"))
         {
@@ -122,23 +143,6 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         {
             GuestScaleAudit.RunAndWriteReport();
             lastAction = "Audit written.";
-        }
-
-        EditorGUILayout.Space(4f);
-        EditorGUILayout.LabelField("Custom Front/Back Guest Curve", EditorStyles.boldLabel);
-        customFrontY = EditorGUILayout.FloatField("Front Room Local Y", customFrontY);
-        customFrontScale = EditorGUILayout.FloatField("Front Guest Scale", Mathf.Max(0.001f, customFrontScale));
-        customBackY = EditorGUILayout.FloatField("Back Room Local Y", customBackY);
-        customBackScale = EditorGUILayout.FloatField("Back Guest Scale", Mathf.Max(0.001f, customBackScale));
-
-        if (GUILayout.Button("Save Custom Front/Back Guest Curve"))
-        {
-            GuestRoomScaleCalibration calibration = EnsureCalibration(FindButler());
-            Undo.RecordObject(calibration, "Save Custom Guest Curve");
-            calibration.SetFront(selectedRoom, customFrontY, customFrontScale);
-            calibration.SetBack(selectedRoom, customBackY, customBackScale);
-            EditorUtility.SetDirty(calibration);
-            lastAction = $"Saved custom guest curve for {selectedRoom}.";
         }
 
         if (GUILayout.Button("Reset Selected Room Multiplier"))
@@ -178,6 +182,199 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
             lastAction = "Restored captured base scales.";
         }
+    }
+
+    private void DrawManualFrontBackGuestCurve(string selectedRoom, GuestScaleParticipant selectedGuest)
+    {
+        EditorGUILayout.Space(8f);
+        EditorGUILayout.LabelField("Manual Front/Back Guest Curve", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Selected Guest", selectedGuest != null ? selectedGuest.CharacterId : "none");
+        EditorGUILayout.LabelField("Selected Guest Y", selectedGuest != null ? selectedGuest.ResolveRoomLocalY().ToString("0.###") : "n/a");
+        EditorGUILayout.LabelField("Saved Front", FormatManualCurvePoint(true));
+        EditorGUILayout.LabelField("Saved Back", FormatManualCurvePoint(false));
+
+        using (new EditorGUI.DisabledScope(selectedGuest == null))
+        {
+            EditorGUI.BeginChangeCheck();
+            manualGuestScale = EditorGUILayout.Slider("Manual Guest Scale", manualGuestScale, MinManualGuestScale, MaxManualGuestScale);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                PreviewSelectedGuestManualScale(selectedGuest);
+            }
+
+            if (GUILayout.Button("PREVIEW SELECTED GUEST SIZE"))
+            {
+                PreviewSelectedGuestManualScale(selectedGuest);
+            }
+
+            if (GUILayout.Button("SAVE FRONT FROM SELECTED GUEST"))
+            {
+                SaveManualCurvePoint(selectedRoom, selectedGuest, true);
+            }
+
+            if (GUILayout.Button("SAVE BACK FROM SELECTED GUEST"))
+            {
+                SaveManualCurvePoint(selectedRoom, selectedGuest, false);
+            }
+        }
+
+        using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(selectedRoom)))
+        {
+            if (GUILayout.Button("PREVIEW MANUAL CURVE IN ROOM"))
+            {
+                PreviewManualCurveInRoom(selectedRoom);
+            }
+
+            if (GUILayout.Button("CLEAR MANUAL CURVE"))
+            {
+                ClearManualCurve(selectedRoom);
+            }
+        }
+    }
+
+    private string FormatManualCurvePoint(bool front)
+    {
+        bool hasPoint = front ? customHasFront : customHasBack;
+
+        if (!hasPoint)
+        {
+            return "not set";
+        }
+
+        float y = front ? customFrontY : customBackY;
+        float scale = front ? customFrontScale : customBackScale;
+        return $"Y {y:0.###}, scale {scale:0.###}";
+    }
+
+    private void PreviewSelectedGuestManualScale(GuestScaleParticipant selectedGuest)
+    {
+        if (selectedGuest == null)
+        {
+            lastAction = "Manual preview skipped: select a guest in the selected room.";
+            return;
+        }
+
+        Transform scaleRoot = selectedGuest.ResolveScaleRoot();
+
+        if (scaleRoot == null)
+        {
+            lastAction = "Manual preview skipped: selected guest has no scale root.";
+            return;
+        }
+
+        Undo.RecordObject(scaleRoot, "Preview Selected Guest Size");
+        bool changed = selectedGuest.ApplyFinalScale(manualGuestScale);
+        EditorUtility.SetDirty(scaleRoot);
+        SceneView.RepaintAll();
+        Repaint();
+        lastAction = $"Previewed {selectedGuest.CharacterId} at scale {manualGuestScale:0.###}; changed {(changed ? "yes" : "no")}.";
+        Debug.Log($"[Guest Size Master] {lastAction}");
+    }
+
+    private void SaveManualCurvePoint(string selectedRoom, GuestScaleParticipant selectedGuest, bool front)
+    {
+        if (selectedGuest == null || string.IsNullOrWhiteSpace(selectedRoom))
+        {
+            lastAction = "Manual point save skipped: select a room guest first.";
+            return;
+        }
+
+        GuestRoomScaleCalibration calibration = EnsureCalibration(FindButler());
+        Undo.RecordObject(calibration, front ? "Save Guest Front Scale" : "Save Guest Back Scale");
+        float roomLocalY = selectedGuest.ResolveRoomLocalY();
+
+        if (front)
+        {
+            calibration.SetFront(selectedRoom, roomLocalY, manualGuestScale);
+            customHasFront = true;
+            customFrontY = roomLocalY;
+            customFrontScale = manualGuestScale;
+        }
+        else
+        {
+            calibration.SetBack(selectedRoom, roomLocalY, manualGuestScale);
+            customHasBack = true;
+            customBackY = roomLocalY;
+            customBackScale = manualGuestScale;
+        }
+
+        selectedRoomMultiplier = 1f;
+        calibration.SetRoomMultiplier(selectedRoom, 1f);
+        EditorUtility.SetDirty(calibration);
+
+        if (HasCompleteManualCurve(calibration, selectedRoom))
+        {
+            GuestScaleApplyResult result = RefreshRoomWithUndo(selectedRoom, "Preview Manual Guest Curve");
+            lastAction = $"Saved {(front ? "front" : "back")} guest scale for {selectedRoom}; applied {result.Applied}, changed {result.Changed}.";
+        }
+        else
+        {
+            PreviewSelectedGuestManualScale(selectedGuest);
+            lastAction = $"Saved {(front ? "front" : "back")} guest scale for {selectedRoom}; save the other point next.";
+        }
+
+        Debug.Log($"[Guest Size Master] {lastAction}");
+    }
+
+    private void PreviewManualCurveInRoom(string selectedRoom)
+    {
+        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+
+        if (calibration == null || !HasCompleteManualCurve(calibration, selectedRoom))
+        {
+            lastAction = "Manual curve preview skipped: save front and back first.";
+            return;
+        }
+
+        GuestScaleApplyResult result = RefreshRoomWithUndo(selectedRoom, "Preview Manual Guest Curve");
+        lastAction = $"Previewed manual guest curve for {selectedRoom}; applied {result.Applied}, changed {result.Changed}.";
+        Debug.Log($"[Guest Size Master] {lastAction}");
+    }
+
+    private void ClearManualCurve(string selectedRoom)
+    {
+        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+
+        if (calibration == null || string.IsNullOrWhiteSpace(selectedRoom))
+        {
+            lastAction = "Clear skipped: setup is incomplete.";
+            return;
+        }
+
+        Undo.RecordObject(calibration, "Clear Manual Guest Curve");
+        calibration.ClearCustomCurve(selectedRoom);
+        LoadCustomCurveFields(calibration, selectedRoom);
+        EditorUtility.SetDirty(calibration);
+        PreviewSelectedRoom(selectedRoom);
+        lastAction = $"Cleared manual guest curve for {selectedRoom}.";
+        Debug.Log($"[Guest Size Master] {lastAction}");
+    }
+
+    private GuestScaleApplyResult RefreshRoomWithUndo(string selectedRoom, string undoName)
+    {
+        GuestRoomScaleApplier applier = FindAnyObjectByType<GuestRoomScaleApplier>(FindObjectsInactive.Include);
+
+        if (applier == null)
+        {
+            return new GuestScaleApplyResult(0, 0);
+        }
+
+        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+
+        if (calibration != null)
+        {
+            applier.SetCalibration(calibration);
+        }
+
+        List<Transform> scaleRoots = CollectParticipantScaleRoots(selectedRoom);
+        RecordScaleRoots(scaleRoots, undoName);
+        GuestScaleApplyResult result = applier.RefreshRoomNow(selectedRoom);
+        MarkScaleRootsDirty(scaleRoots);
+        EditorUtility.SetDirty(applier);
+        SceneView.RepaintAll();
+        Repaint();
+        return result;
     }
 
     private void SetupGuestScaling()
@@ -393,6 +590,135 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         return removed;
+    }
+
+    private void LoadCustomCurveFields(GuestRoomScaleCalibration calibration, string selectedRoom)
+    {
+        if (calibration != null && calibration.TryGetRoom(selectedRoom, out GuestRoomScaleEntry entry))
+        {
+            customHasFront = entry.hasFront;
+            customFrontY = entry.hasFront ? entry.frontRoomLocalY : 0f;
+            customFrontScale = entry.hasFront ? entry.frontGuestScale : 1f;
+            customHasBack = entry.hasBack;
+            customBackY = entry.hasBack ? entry.backRoomLocalY : 0f;
+            customBackScale = entry.hasBack ? entry.backGuestScale : 1f;
+            return;
+        }
+
+        customHasFront = false;
+        customFrontY = 0f;
+        customFrontScale = 1f;
+        customHasBack = false;
+        customBackY = 0f;
+        customBackScale = 1f;
+    }
+
+    private static bool HasCompleteManualCurve(GuestRoomScaleCalibration calibration, string selectedRoom)
+    {
+        return calibration != null &&
+            calibration.TryGetRoom(selectedRoom, out GuestRoomScaleEntry entry) &&
+            entry.useCustomGuestCurve &&
+            entry.HasCompleteCustomCurve;
+    }
+
+    private static GuestScaleParticipant ResolveSelectedGuest(string selectedRoom)
+    {
+        Transform activeTransform = Selection.activeTransform;
+
+        if (activeTransform != null)
+        {
+            GuestScaleParticipant selected = activeTransform.GetComponentInParent<GuestScaleParticipant>(true);
+
+            if (selected == null)
+            {
+                selected = activeTransform.GetComponentInChildren<GuestScaleParticipant>(true);
+            }
+
+            if (IsRoomGuest(selected, selectedRoom))
+            {
+                return selected;
+            }
+        }
+
+        GuestScaleParticipant[] guests = FindGuestParticipants();
+
+        for (int i = 0; i < guests.Length; i++)
+        {
+            if (IsRoomGuest(guests[i], selectedRoom))
+            {
+                return guests[i];
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsRoomGuest(GuestScaleParticipant guest, string selectedRoom)
+    {
+        return guest != null &&
+            !guest.ExcludeFromGuestScaling &&
+            !guest.IsButler &&
+            !GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(guest.gameObject) &&
+            GuestRoomScaleCalibration.SameRoom(guest.ResolveRoomId(), selectedRoom);
+    }
+
+    private static float GetGuestCurrentScale(
+        GuestScaleParticipant selectedGuest,
+        GuestRoomScaleCalibration calibration,
+        string selectedRoom)
+    {
+        if (selectedGuest != null)
+        {
+            Transform scaleRoot = selectedGuest.ResolveScaleRoot();
+
+            if (scaleRoot != null)
+            {
+                return Mathf.Clamp(Mathf.Abs(scaleRoot.localScale.y), MinManualGuestScale, MaxManualGuestScale);
+            }
+
+            if (calibration != null &&
+                calibration.TryEvaluateGuestScale(
+                    selectedRoom,
+                    selectedGuest.ResolveRoomLocalY(),
+                    out float evaluatedScale,
+                    out _,
+                    out _))
+            {
+                return Mathf.Clamp(evaluatedScale, MinManualGuestScale, MaxManualGuestScale);
+            }
+        }
+
+        return 1f;
+    }
+
+    private static string GetGuestSelectionKey(GuestScaleParticipant selectedGuest)
+    {
+        if (selectedGuest == null)
+        {
+            return string.Empty;
+        }
+
+        Transform scaleRoot = selectedGuest.ResolveScaleRoot();
+        return GetTransformPath(scaleRoot != null ? scaleRoot : selectedGuest.transform);
+    }
+
+    private static string GetTransformPath(Transform transform)
+    {
+        if (transform == null)
+        {
+            return string.Empty;
+        }
+
+        Stack<string> names = new Stack<string>();
+        Transform current = transform;
+
+        while (current != null)
+        {
+            names.Push(current.name);
+            current = current.parent;
+        }
+
+        return string.Join("/", names);
     }
 
     private static string[] BuildRoomOptions(GuestRoomScaleCalibration calibration, PointClickPlayerMovement butler)

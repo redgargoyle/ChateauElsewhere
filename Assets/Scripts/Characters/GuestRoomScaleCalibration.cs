@@ -183,7 +183,6 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         {
             depth01 = Mathf.Clamp01(Mathf.InverseLerp(entry.frontRoomLocalY, entry.backRoomLocalY, roomLocalY));
             scale = Mathf.Lerp(entry.frontGuestScale, entry.backGuestScale, depth01);
-            scale *= Mathf.Max(0.001f, entry.roomGuestScaleMultiplier);
             diagnostic = $"Custom guest curve {entry.roomId} depth={depth01:0.###}.";
             return true;
         }
@@ -231,6 +230,18 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         entry.hasBack = true;
         entry.backRoomLocalY = roomLocalY;
         entry.backGuestScale = Mathf.Max(0.001f, guestScale);
+    }
+
+    public void ClearCustomCurve(string roomId)
+    {
+        GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+        entry.useCustomGuestCurve = false;
+        entry.hasFront = false;
+        entry.frontRoomLocalY = 0f;
+        entry.frontGuestScale = 1f;
+        entry.hasBack = false;
+        entry.backRoomLocalY = 0f;
+        entry.backGuestScale = 1f;
     }
 
     public bool RemoveRoom(string roomId)

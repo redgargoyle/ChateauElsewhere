@@ -69,9 +69,14 @@ Workflow:
 1. Open `Tools > Characters > Guest Size Master`.
 2. Click `SET UP GUEST SCALING`.
 3. Choose a room.
-4. Keep `Guest Size In This Room` at `1` for Butler-matched scale, or adjust it as a room fine tune; dragging the slider previews immediately in edit mode.
-5. Use `MATCH BUTLER SIZE IN ROOM` to return the selected room to `1`.
-6. Click `SAVE ROOM GUEST SIZE`, then `SAVE SCENE`.
+4. Select a guest standing near the front of the room.
+5. Adjust `Manual Guest Scale` until that selected guest visually matches the Butler at that depth.
+6. Click `SAVE FRONT FROM SELECTED GUEST`.
+7. Select or move to a guest near the back of the room.
+8. Adjust `Manual Guest Scale` again, then click `SAVE BACK FROM SELECTED GUEST`.
+9. Click `PREVIEW MANUAL CURVE IN ROOM`, then `SAVE SCENE`.
+
+`MATCH BUTLER SIZE IN ROOM` resets the Butler-derived fine tune to `1`. `CLEAR MANUAL CURVE` removes the front/back guest curve and returns that room to Butler-derived matching. The manual front/back guest curve is the safer workflow when source-art proportions do not visually match the Butler.
 
 Use `Tools > Characters > Guest Scale Audit` when checking scene setup. The obsolete `GuestButlerScaleHarmonizer` and old Butler-scale tool are compatibility shells only.
 
