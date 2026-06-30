@@ -304,6 +304,45 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestRoomScaleApplierRefreshRoomNowTargetsSelectedRoomOnly()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 2f);
+        GameObject entranceGuest = new GameObject("Guest Entrance");
+        GameObject drawingGuest = new GameObject("Guest Drawing");
+
+        try
+        {
+            GuestScaleParticipant entranceParticipant = entranceGuest.AddComponent<GuestScaleParticipant>();
+            entranceParticipant.SetRoomIdOverride("Grand_Entrance-Hall");
+            entranceParticipant.SetScaleRoot(entranceGuest.transform);
+            entranceParticipant.CaptureBaseScale(true);
+
+            GuestScaleParticipant drawingParticipant = drawingGuest.AddComponent<GuestScaleParticipant>();
+            drawingParticipant.SetRoomIdOverride("Drawing Room");
+            drawingParticipant.SetScaleRoot(drawingGuest.transform);
+            drawingParticipant.CaptureBaseScale(true);
+            scene.Calibration.SetRoomMultiplier("Drawing Room", 3f);
+
+            GuestScaleApplyResult result = scene.Applier.RefreshRoomNow("Grand Entrance Hall");
+
+            Assert.That(result.Applied, Is.EqualTo(1));
+            Assert.That(result.Changed, Is.EqualTo(1));
+            Assert.That(entranceGuest.transform.localScale.y, Is.EqualTo(1.5f).Within(0.0001f));
+            Assert.That(drawingGuest.transform.localScale.y, Is.EqualTo(1f).Within(0.0001f));
+
+            GuestScaleApplyResult repeatedResult = scene.Applier.RefreshRoomNow("Grand Entrance Hall");
+            Assert.That(repeatedResult.Applied, Is.EqualTo(1));
+            Assert.That(repeatedResult.Changed, Is.EqualTo(0));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(entranceGuest);
+            UnityEngine.Object.DestroyImmediate(drawingGuest);
+            DestroyScaleTestScene(scene);
+        }
+    }
+
+    [Test]
     public void SeatedGuestsUseSeatedPoseRatio()
     {
         ScaleTestScene scene = CreateScaleTestScene("Drawing Room", 1f);
@@ -343,6 +382,16 @@ public sealed class GuestRoomScaleRegressionTests
         Assert.That(text, Does.Contain("SAVE ROOM GUEST SIZE"));
         Assert.That(text, Does.Contain("APPLY TO ALL GUESTS IN ROOM"));
         Assert.That(text, Does.Contain("SAVE SCENE"));
+    }
+
+    [Test]
+    public void GuestSizeMasterPreviewUsesSelectedRoomRefreshWithVisibleFeedback()
+    {
+        string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+
+        Assert.That(text, Does.Contain("RefreshRoomNow(selectedRoom)"));
+        Assert.That(text, Does.Contain("SceneView.RepaintAll()"));
+        Assert.That(text, Does.Contain("changed"));
     }
 
     [Test]

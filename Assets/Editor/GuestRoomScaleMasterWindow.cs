@@ -195,9 +195,21 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             return;
         }
 
+        Undo.RecordObject(calibration, "Preview Room Guest Size");
         calibration.SetRoomMultiplier(selectedRoom, selectedRoomMultiplier);
-        int applied = applier.RefreshAllNow();
-        lastAction = $"Previewed {selectedRoom}; applied {applied} guests.";
+        applier.SetCalibration(calibration);
+
+        List<Transform> scaleRoots = CollectParticipantScaleRoots(selectedRoom);
+        RecordScaleRoots(scaleRoots, "Preview Room Guest Size");
+
+        GuestScaleApplyResult result = applier.RefreshRoomNow(selectedRoom);
+        MarkScaleRootsDirty(scaleRoots);
+        EditorUtility.SetDirty(calibration);
+        EditorUtility.SetDirty(applier);
+        SceneView.RepaintAll();
+        Repaint();
+        lastAction = $"Previewed {selectedRoom}; applied {result.Applied}, changed {result.Changed}.";
+        Debug.Log($"[Guest Size Master] {lastAction}");
     }
 
     private void SaveSelectedRoom(GuestRoomScaleCalibration calibration, string selectedRoom)
@@ -218,27 +230,80 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
     {
         GuestRoomScaleApplier applier = FindAnyObjectByType<GuestRoomScaleApplier>(FindObjectsInactive.Include);
 
-        if (applier == null)
+        if (applier == null || string.IsNullOrWhiteSpace(selectedRoom))
         {
             lastAction = "Apply skipped: applier missing.";
             return;
         }
 
-        int applied = 0;
+        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+
+        if (calibration != null)
+        {
+            applier.SetCalibration(calibration);
+        }
+
+        List<Transform> scaleRoots = CollectParticipantScaleRoots(selectedRoom);
+        RecordScaleRoots(scaleRoots, "Apply Room Guest Size");
+
+        GuestScaleApplyResult result = applier.RefreshRoomNow(selectedRoom);
+        MarkScaleRootsDirty(scaleRoots);
+        EditorUtility.SetDirty(applier);
+        SceneView.RepaintAll();
+        Repaint();
+        lastAction = $"Applied {selectedRoom} guest size to {result.Applied} guests; changed {result.Changed}.";
+        Debug.Log($"[Guest Size Master] {lastAction}");
+    }
+
+    private static List<Transform> CollectParticipantScaleRoots(string selectedRoom)
+    {
+        List<Transform> scaleRoots = new List<Transform>();
+        HashSet<Transform> seen = new HashSet<Transform>();
         GuestScaleParticipant[] guests = FindObjectsByType<GuestScaleParticipant>(FindObjectsInactive.Include);
 
         for (int i = 0; i < guests.Length; i++)
         {
             GuestScaleParticipant guest = guests[i];
 
-            if (guest != null && GuestRoomScaleCalibration.SameRoom(guest.ResolveRoomId(), selectedRoom))
+            if (guest == null ||
+                guest.ExcludeFromGuestScaling ||
+                guest.IsButler ||
+                !GuestRoomScaleCalibration.SameRoom(guest.ResolveRoomId(), selectedRoom))
             {
-                guest.CaptureBaseScale(false);
-                applied += applier.RefreshParticipantNow(guest) ? 1 : 0;
+                continue;
+            }
+
+            Transform scaleRoot = guest.ResolveScaleRoot();
+
+            if (scaleRoot != null && seen.Add(scaleRoot))
+            {
+                scaleRoots.Add(scaleRoot);
             }
         }
 
-        lastAction = $"Applied {selectedRoom} guest size to {applied} guests.";
+        return scaleRoots;
+    }
+
+    private static void RecordScaleRoots(List<Transform> scaleRoots, string undoName)
+    {
+        for (int i = 0; i < scaleRoots.Count; i++)
+        {
+            if (scaleRoots[i] != null)
+            {
+                Undo.RecordObject(scaleRoots[i], undoName);
+            }
+        }
+    }
+
+    private static void MarkScaleRootsDirty(List<Transform> scaleRoots)
+    {
+        for (int i = 0; i < scaleRoots.Count; i++)
+        {
+            if (scaleRoots[i] != null)
+            {
+                EditorUtility.SetDirty(scaleRoots[i]);
+            }
+        }
     }
 
     private static GuestRoomScaleCalibration EnsureCalibration(PointClickPlayerMovement butler)

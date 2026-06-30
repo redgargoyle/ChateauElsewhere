@@ -1,6 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public readonly struct GuestScaleApplyResult
+{
+    public GuestScaleApplyResult(int applied, int changed)
+    {
+        Applied = applied;
+        Changed = changed;
+    }
+
+    public int Applied { get; }
+    public int Changed { get; }
+}
+
 [DefaultExecutionOrder(10000)]
 [DisallowMultipleComponent]
 [AddComponentMenu("Dreadforge/Characters/Guest Room Scale Applier")]
@@ -85,38 +97,88 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
     public int RefreshAllNow()
     {
+        return RefreshAllWithResultNow().Applied;
+    }
+
+    public GuestScaleApplyResult RefreshAllWithResultNow()
+    {
         ResolveCalibration();
 
         if (calibration == null)
         {
-            return 0;
+            return new GuestScaleApplyResult(0, 0);
         }
 
-        participants.Clear();
-        FindObjectsInactive inactiveMode = includeInactiveParticipants
-            ? FindObjectsInactive.Include
-            : FindObjectsInactive.Exclude;
-        participants.AddRange(FindObjectsByType<GuestScaleParticipant>(inactiveMode));
+        RefreshParticipantList();
 
         int applied = 0;
+        int changed = 0;
 
         for (int i = 0; i < participants.Count; i++)
         {
-            if (RefreshParticipantNow(participants[i]))
+            if (RefreshParticipantNow(participants[i], out bool participantChanged))
             {
                 applied++;
+
+                if (participantChanged)
+                {
+                    changed++;
+                }
             }
         }
 
-        return applied;
+        return new GuestScaleApplyResult(applied, changed);
+    }
+
+    public GuestScaleApplyResult RefreshRoomNow(string roomId)
+    {
+        ResolveCalibration();
+
+        if (calibration == null || string.IsNullOrWhiteSpace(roomId))
+        {
+            return new GuestScaleApplyResult(0, 0);
+        }
+
+        RefreshParticipantList();
+
+        int applied = 0;
+        int changed = 0;
+
+        for (int i = 0; i < participants.Count; i++)
+        {
+            GuestScaleParticipant participant = participants[i];
+
+            if (participant == null || !GuestRoomScaleCalibration.SameRoom(participant.ResolveRoomId(), roomId))
+            {
+                continue;
+            }
+
+            if (RefreshParticipantNow(participant, out bool participantChanged))
+            {
+                applied++;
+
+                if (participantChanged)
+                {
+                    changed++;
+                }
+            }
+        }
+
+        return new GuestScaleApplyResult(applied, changed);
     }
 
     public bool RefreshParticipantNow(GuestScaleParticipant participant)
+    {
+        return RefreshParticipantNow(participant, out _);
+    }
+
+    public bool RefreshParticipantNow(GuestScaleParticipant participant, out bool changed)
     {
         if (participant == null ||
             participant.ExcludeFromGuestScaling ||
             participant.IsButler)
         {
+            changed = false;
             return false;
         }
 
@@ -137,7 +199,7 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             Mathf.Max(0.001f, poseRatio) *
             participant.ManualFineTuneMultiplier;
 
-        participant.ApplyFinalScale(finalMultiplier);
+        changed = participant.ApplyFinalScale(finalMultiplier);
         return true;
     }
 
@@ -268,6 +330,15 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         {
             poseOverrideStore = FindAnyObjectByType<GuestPoseScaleOverrideStore>(FindObjectsInactive.Include);
         }
+    }
+
+    private void RefreshParticipantList()
+    {
+        participants.Clear();
+        FindObjectsInactive inactiveMode = includeInactiveParticipants
+            ? FindObjectsInactive.Include
+            : FindObjectsInactive.Exclude;
+        participants.AddRange(FindObjectsByType<GuestScaleParticipant>(inactiveMode));
     }
 
     private static float SanitizePoseRatio(CharacterPose pose, float ratio)

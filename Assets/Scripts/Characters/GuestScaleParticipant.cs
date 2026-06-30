@@ -232,11 +232,11 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         }
     }
 
-    public void ApplyFinalScale(float multiplier)
+    public bool ApplyFinalScale(float multiplier)
     {
         if (excludeFromGuestScaling || isButler)
         {
-            return;
+            return false;
         }
 
         CaptureBaseScale(false);
@@ -244,11 +244,14 @@ public sealed class GuestScaleParticipant : MonoBehaviour
 
         if (root == null)
         {
-            return;
+            return false;
         }
 
         float safeMultiplier = Mathf.Max(0.001f, multiplier);
-        root.localScale = capturedBaseScale * safeMultiplier;
+        Vector3 targetScale = capturedBaseScale * safeMultiplier;
+        bool changed = (root.localScale - targetScale).sqrMagnitude > 0.000001f;
+        root.localScale = targetScale;
+        return changed;
     }
 
     public static bool NameLooksExcludedFromBodyScale(string value)
