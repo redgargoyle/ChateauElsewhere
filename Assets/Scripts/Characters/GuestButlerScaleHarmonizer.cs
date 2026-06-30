@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DefaultExecutionOrder(10000)]
@@ -13,6 +15,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
     [SerializeField] private bool applyToActorRoomStates = true;
     [SerializeField] private bool skipButlerObject = true;
     [SerializeField] private bool logSummary;
+    [SerializeField, HideInInspector] private List<GuestRoomScaleMultiplier> roomGuestScaleMultipliers = new List<GuestRoomScaleMultiplier>();
     [SerializeField, HideInInspector] private float debugGuestScaleMultiplier = 1f;
 
     private string lastSummaryKey = string.Empty;
@@ -45,6 +48,74 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         debugGuestScaleMultiplier = Mathf.Max(0.001f, multiplier);
     }
 
+    public float GetRoomGuestScaleMultiplier(string roomId)
+    {
+        int index = GetRoomGuestScaleMultiplierIndex(roomId);
+        return index >= 0
+            ? SanitizeMultiplier(roomGuestScaleMultipliers[index].Multiplier)
+            : 1f;
+    }
+
+    public void SetRoomGuestScaleMultiplier(string roomId, float multiplier)
+    {
+        string cleanRoomId = CleanRoomId(roomId);
+
+        if (string.IsNullOrWhiteSpace(cleanRoomId))
+        {
+            return;
+        }
+
+        if (roomGuestScaleMultipliers == null)
+        {
+            roomGuestScaleMultipliers = new List<GuestRoomScaleMultiplier>();
+        }
+
+        GuestRoomScaleMultiplier roomMultiplier = new GuestRoomScaleMultiplier(
+            cleanRoomId,
+            SanitizeMultiplier(multiplier));
+        int index = GetRoomGuestScaleMultiplierIndex(cleanRoomId);
+
+        if (index >= 0)
+        {
+            roomGuestScaleMultipliers[index] = roomMultiplier;
+        }
+        else
+        {
+            roomGuestScaleMultipliers.Add(roomMultiplier);
+        }
+    }
+
+    public bool RemoveRoomGuestScaleMultiplier(string roomId)
+    {
+        int index = GetRoomGuestScaleMultiplierIndex(roomId);
+
+        if (index < 0)
+        {
+            return false;
+        }
+
+        roomGuestScaleMultipliers.RemoveAt(index);
+        return true;
+    }
+
+    public void GetGuestScaleMultiplierRoomIds(List<string> results)
+    {
+        if (results == null || roomGuestScaleMultipliers == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < roomGuestScaleMultipliers.Count; i++)
+        {
+            string roomId = roomGuestScaleMultipliers[i].RoomId;
+
+            if (!string.IsNullOrWhiteSpace(roomId) && !ContainsRoomId(results, roomId))
+            {
+                results.Add(roomId);
+            }
+        }
+    }
+
     public void RestoreRealButlerScaling()
     {
         debugGuestScaleMultiplier = 1f;
@@ -69,7 +140,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         {
             if (logSummary)
             {
-                Debug.LogError("[GuestButlerScale] No Butler scale source found. Run Tools > Characters > Apply Butler Scaling To Guests > Audit.", this);
+                Debug.LogError("[GuestButlerScale] No Butler scale source found. Open Tools > Characters > Guest Room Scale and click Find Scene Player.", this);
             }
 
             return GuestScaleApplySummary.Empty;
@@ -133,10 +204,11 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
             if (entity.TryGetButlerCharacterScaleSample(out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
             {
-                entity.ApplyButlerCharacterScaleNow(source, debugGuestScaleMultiplier);
+                float multiplier = GetCombinedGuestScaleMultiplier(sample);
+                entity.ApplyButlerCharacterScaleNow(source, multiplier);
                 summary.Scaled++;
                 summary.UsingButlerRules++;
-                summary.IncludeScale(sample.NormalizedScale * debugGuestScaleMultiplier);
+                summary.IncludeScale(sample.ButlerFinalLocalScaleY * multiplier);
             }
             else
             {
@@ -172,10 +244,11 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
             if (walker.TryGetButlerCharacterScaleSample(out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
             {
-                walker.ApplyButlerCharacterScaleNow(source, debugGuestScaleMultiplier);
+                float multiplier = GetCombinedGuestScaleMultiplier(sample);
+                walker.ApplyButlerCharacterScaleNow(source, multiplier);
                 summary.Scaled++;
                 summary.UsingButlerRules++;
-                summary.IncludeScale(sample.NormalizedScale * debugGuestScaleMultiplier);
+                summary.IncludeScale(sample.ButlerFinalLocalScaleY * multiplier);
             }
             else
             {
@@ -213,11 +286,13 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
             if (actor.TryGetButlerCharacterScaleSample(source, out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
             {
-                if (actor.ApplyButlerCharacterScaleNow(source, debugGuestScaleMultiplier))
+                float multiplier = GetCombinedGuestScaleMultiplier(sample);
+
+                if (actor.ApplyButlerCharacterScaleNow(source, multiplier))
                 {
                     summary.Scaled++;
                     summary.UsingButlerRules++;
-                    summary.IncludeScale(sample.ButlerFinalLocalScaleY * debugGuestScaleMultiplier);
+                    summary.IncludeScale(sample.ButlerFinalLocalScaleY * multiplier);
                 }
             }
             else
@@ -232,6 +307,12 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
         return Application.isPlaying || !includeInactiveInEditMode
             ? FindObjectsInactive.Exclude
             : FindObjectsInactive.Include;
+    }
+
+    private float GetCombinedGuestScaleMultiplier(PointClickPlayerMovement.ButlerCharacterScaleSample sample)
+    {
+        return SanitizeMultiplier(debugGuestScaleMultiplier) *
+            GetRoomGuestScaleMultiplier(sample.RoomId);
     }
 
     private PointClickPlayerMovement ResolveButlerScaleSource()
@@ -310,7 +391,7 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
 
         if (summary.Scaled <= 0)
         {
-            Debug.LogError("[GuestButlerScale] No guests were scaled. Run Tools > Characters > Apply Butler Scaling To Guests > Audit.", this);
+            Debug.LogError("[GuestButlerScale] No guests were scaled. Open Tools > Characters > Guest Room Scale and click Auto Setup + Apply Now.", this);
             return;
         }
 
@@ -356,6 +437,72 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             value.IndexOf("Guest", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
+    private int GetRoomGuestScaleMultiplierIndex(string roomId)
+    {
+        if (roomGuestScaleMultipliers == null || string.IsNullOrWhiteSpace(roomId))
+        {
+            return -1;
+        }
+
+        string cleanRoomId = CleanRoomId(roomId);
+
+        for (int i = 0; i < roomGuestScaleMultipliers.Count; i++)
+        {
+            if (SameRoom(roomGuestScaleMultipliers[i].RoomId, cleanRoomId))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static bool ContainsRoomId(List<string> roomIds, string roomId)
+    {
+        if (roomIds == null || string.IsNullOrWhiteSpace(roomId))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < roomIds.Count; i++)
+        {
+            if (SameRoom(roomIds[i], roomId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool SameRoom(string left, string right)
+    {
+        return string.Equals(NormalizeRoomName(left), NormalizeRoomName(right), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeRoomName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return value.Trim()
+            .Replace("_", string.Empty)
+            .Replace(" ", string.Empty)
+            .Replace("-", string.Empty);
+    }
+
+    private static string CleanRoomId(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private static float SanitizeMultiplier(float multiplier)
+    {
+        return Mathf.Max(0.001f, multiplier);
+    }
+
     public struct GuestScaleApplySummary
     {
         public static readonly GuestScaleApplySummary Empty = new GuestScaleApplySummary(string.Empty);
@@ -390,5 +537,21 @@ public sealed class GuestButlerScaleHarmonizer : MonoBehaviour
             MinScale = Mathf.Min(MinScale, scale);
             MaxScale = Mathf.Max(MaxScale, scale);
         }
+    }
+
+    [Serializable]
+    private sealed class GuestRoomScaleMultiplier
+    {
+        [SerializeField] private string roomId;
+        [SerializeField] private float multiplier = 1f;
+
+        public GuestRoomScaleMultiplier(string roomId, float multiplier)
+        {
+            this.roomId = CleanRoomId(roomId);
+            this.multiplier = SanitizeMultiplier(multiplier);
+        }
+
+        public string RoomId => roomId;
+        public float Multiplier => SanitizeMultiplier(multiplier);
     }
 }

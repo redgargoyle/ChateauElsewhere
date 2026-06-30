@@ -6,118 +6,171 @@ using UnityEngine;
 
 public sealed class GuestButlerScaleTool : EditorWindow
 {
+    private readonly List<string> roomIds = new List<string>();
     private PointClickPlayerMovement selectedButler;
-    private Vector2 scroll;
+    private string selectedRoomId = string.Empty;
+    private float selectedRoomMultiplier = 1f;
     private string lastStatus = string.Empty;
-    private double proofRestoreAt;
-    private GuestButlerScaleHarmonizer activeProofHarmonizer;
 
-    [MenuItem("Tools/Characters/Apply Butler Scaling To Guests")]
+    [MenuItem("Tools/Characters/Guest Room Scale")]
     public static void Open()
     {
-        GetWindow<GuestButlerScaleTool>("Guest Butler Scale");
+        GetWindow<GuestButlerScaleTool>("Guest Room Scale");
     }
 
     private void OnEnable()
     {
         selectedButler = FindSceneButler();
-    }
-
-    private void OnDisable()
-    {
-        EditorApplication.update -= ProofUpdate;
+        RefreshRoomSelection();
     }
 
     private void OnGUI()
     {
-        scroll = EditorGUILayout.BeginScrollView(scroll);
-        EditorGUILayout.LabelField("Guest Butler Scale", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Guest Room Scale", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "Default: guests use the Butler's saved room scaling. Adjust one room multiplier only when the guest art needs polishing.",
+            MessageType.Info);
 
-        DrawTopControls();
-        DrawActions();
-        DrawProofControls();
-        DrawAuditTable();
+        DrawButlerControls();
+        DrawRoomControls();
+        DrawTestControls();
 
         if (!string.IsNullOrWhiteSpace(lastStatus))
         {
             EditorGUILayout.HelpBox(lastStatus, MessageType.None);
         }
-
-        EditorGUILayout.EndScrollView();
     }
 
-    private void DrawTopControls()
+    private void DrawButlerControls()
     {
+        EditorGUI.BeginChangeCheck();
         selectedButler = (PointClickPlayerMovement)EditorGUILayout.ObjectField(
             "Butler / Player",
             selectedButler,
             typeof(PointClickPlayerMovement),
             true);
 
+        if (EditorGUI.EndChangeCheck())
+        {
+            RefreshRoomSelection();
+        }
+
         using (new EditorGUILayout.HorizontalScope())
         {
-            if (GUILayout.Button("Find Scene Butler"))
+            if (GUILayout.Button("Find Scene Player"))
             {
                 selectedButler = FindSceneButler();
-                lastStatus = selectedButler != null ? $"Found {selectedButler.name}." : "No Butler/player found.";
+                RefreshRoomSelection();
+                lastStatus = selectedButler != null ? $"Found {selectedButler.name}." : "No safe scene player found.";
             }
 
             using (new EditorGUI.DisabledScope(selectedButler == null))
             {
-                if (GUILayout.Button("Add/Ensure GuestButlerScaleHarmonizer"))
+                if (GUILayout.Button("Auto Setup + Apply Now"))
                 {
-                    GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
-                    lastStatus = harmonizer != null ? $"Ensured harmonizer on {selectedButler.name}." : "Could not add harmonizer.";
+                    AutoSetupAndApply();
+                }
+
+                if (GUILayout.Button("Save Scene"))
+                {
+                    EditorSceneManager.SaveOpenScenes();
+                    lastStatus = "Saved open scene(s).";
                 }
             }
         }
     }
 
-    private void DrawActions()
+    private void DrawRoomControls()
     {
         using (new EditorGUI.DisabledScope(selectedButler == null))
         {
-            if (GUILayout.Button("Enable Butler Scaling On All Guests"))
+            RefreshRoomList();
+
+            if (roomIds.Count <= 0)
             {
-                EnableButlerScalingOnAllGuests();
+                EditorGUILayout.HelpBox("No room ids found. Select the scene player first.", MessageType.Warning);
+                return;
             }
 
-            if (GUILayout.Button("Bypass Old Room Visual Scale Overrides For All Guests"))
+            int currentIndex = Mathf.Max(0, roomIds.FindIndex(room => SameRoom(room, selectedRoomId)));
+            int nextIndex = EditorGUILayout.Popup("Room", currentIndex, roomIds.ToArray());
+
+            if (nextIndex != currentIndex || !SameRoom(selectedRoomId, roomIds[nextIndex]))
             {
-                int changed = BypassOldRoomVisualScaleOverrides();
-                lastStatus = $"Bypassed old room visual scale overrides on {changed} projected guest(s).";
+                selectedRoomId = roomIds[nextIndex];
+                LoadSelectedRoomMultiplier();
             }
 
-            if (GUILayout.Button("Refresh Guest Scaling Now"))
-            {
-                GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
-                GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer != null
-                    ? harmonizer.RefreshNow()
-                    : GuestButlerScaleHarmonizer.GuestScaleApplySummary.Empty;
-                lastStatus = $"Refreshed guest scaling. Scaled {summary.Scaled}, missing calibration {summary.MissingCalibration}, skipped {summary.Skipped}.";
-            }
-        }
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("Guest Size In This Room", EditorStyles.boldLabel);
 
-        if (GUILayout.Button("Save Scene"))
-        {
-            EditorSceneManager.SaveOpenScenes();
-            lastStatus = "Saved open scene(s).";
+            EditorGUI.BeginChangeCheck();
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                selectedRoomMultiplier = EditorGUILayout.Slider(selectedRoomMultiplier, 0.25f, 2.5f);
+                selectedRoomMultiplier = Mathf.Max(0.001f, EditorGUILayout.FloatField(selectedRoomMultiplier, GUILayout.Width(70f)));
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("-0.05", GUILayout.Width(70f)))
+                {
+                    selectedRoomMultiplier = Mathf.Max(0.001f, selectedRoomMultiplier - 0.05f);
+                    GUI.changed = true;
+                }
+
+                if (GUILayout.Button("+0.05", GUILayout.Width(70f)))
+                {
+                    selectedRoomMultiplier += 0.05f;
+                    GUI.changed = true;
+                }
+
+                GUILayout.FlexibleSpace();
+                EditorGUILayout.LabelField($"Current multiplier: {GetHarmonizerMultiplier():0.###}", GUILayout.Width(170f));
+            }
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                SaveSelectedRoomMultiplier(false);
+                ApplyNow("Previewed");
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Save Guest Room Scale"))
+                {
+                    SaveSelectedRoomMultiplier(true);
+                }
+
+                if (GUILayout.Button("Reset Room To Butler Size"))
+                {
+                    selectedRoomMultiplier = 1f;
+                    SaveSelectedRoomMultiplier(true);
+                    ApplyNow("Reset");
+                }
+
+                if (GUILayout.Button("Apply To All Active Guests Now"))
+                {
+                    ApplyNow("Applied");
+                }
+            }
         }
     }
 
-    private void DrawProofControls()
+    private void DrawTestControls()
     {
         EditorGUILayout.Space(8f);
-        EditorGUILayout.LabelField("Proof Test", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Quick Test", EditorStyles.boldLabel);
 
         using (new EditorGUI.DisabledScope(selectedButler == null))
+        using (new EditorGUILayout.HorizontalScope())
         {
-            if (GUILayout.Button("PROOF: Make All Guest Butler Scales 50% For 2 Seconds"))
+            if (GUILayout.Button("Test 50%"))
             {
                 RunProof(0.5f);
             }
 
-            if (GUILayout.Button("PROOF: Make All Guest Butler Scales 150% For 2 Seconds"))
+            if (GUILayout.Button("Test 150%"))
             {
                 RunProof(1.5f);
             }
@@ -129,36 +182,16 @@ public sealed class GuestButlerScaleTool : EditorWindow
         }
     }
 
-    private void DrawAuditTable()
-    {
-        EditorGUILayout.Space(8f);
-        EditorGUILayout.LabelField("Audit", EditorStyles.boldLabel);
-
-        foreach (GuestAuditRow row in BuildAuditRows())
-        {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField(row.ObjectPath, EditorStyles.boldLabel);
-            EditorGUILayout.LabelField("Controller Type", row.ControllerType);
-            EditorGUILayout.LabelField("Room Id", row.RoomId);
-            EditorGUILayout.LabelField("Room-Local Foot Y", row.RoomLocalFootY);
-            EditorGUILayout.LabelField("Using Butler Rules?", YesNo(row.UsingButlerRules));
-            EditorGUILayout.LabelField("Butler Scale Source Found?", YesNo(row.ButlerScaleSourceFound));
-            EditorGUILayout.LabelField("Normalized Butler Scale", row.NormalizedButlerScale);
-            EditorGUILayout.LabelField("Final Current localScale", row.FinalLocalScale);
-            EditorGUILayout.LabelField("Hidden Old Room Visual Override Active?", YesNo(row.HiddenOldOverrideActive));
-
-            if (!string.IsNullOrWhiteSpace(row.Warning))
-            {
-                EditorGUILayout.HelpBox(row.Warning, MessageType.Warning);
-            }
-
-            EditorGUILayout.EndVertical();
-        }
-    }
-
-    private void EnableButlerScalingOnAllGuests()
+    private void AutoSetupAndApply()
     {
         GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
+
+        if (harmonizer == null)
+        {
+            lastStatus = "Could not create guest scale harmonizer.";
+            return;
+        }
+
         int projected = 0;
         int walkers = 0;
         int actors = 0;
@@ -175,12 +208,11 @@ public sealed class GuestButlerScaleTool : EditorWindow
                 continue;
             }
 
-            Undo.RecordObject(entity, "Enable Butler Scaling On Guest");
+            Undo.RecordObject(entity, "Auto Setup Guest Scale");
             entity.SetButlerCharacterScaleRulesEnabled(true, false);
             entity.SetButlerScaleSource(selectedButler, false);
             entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
-            entity.ApplyButlerCharacterScaleNow(selectedButler);
-            MarkDirty(entity);
+            EditorUtility.SetDirty(entity);
             projected++;
         }
 
@@ -194,12 +226,11 @@ public sealed class GuestButlerScaleTool : EditorWindow
                 continue;
             }
 
-            Undo.RecordObject(walker, "Enable Butler Scaling On Walker");
+            Undo.RecordObject(walker, "Auto Setup Guest Scale");
             walker.SetButlerCharacterScaleRulesEnabled(true, false);
             walker.SetButlerScaleSource(selectedButler, false);
             walker.SetPreserveAuthoredLocalScaleWhenUsingButlerRules(true, false);
-            walker.ApplyButlerCharacterScaleNow(selectedButler);
-            MarkDirty(walker);
+            EditorUtility.SetDirty(walker);
             walkers++;
         }
 
@@ -215,47 +246,49 @@ public sealed class GuestButlerScaleTool : EditorWindow
                 continue;
             }
 
-            Undo.RecordObject(actor, "Enable Butler Scaling On Actor");
-
-            if (!Application.isPlaying)
-            {
-                actor.ResetAuthoredActorScaleForEditor();
-            }
-
-            actor.ApplyButlerCharacterScaleNow(selectedButler);
-            MarkDirty(actor);
+            Undo.RecordObject(actor, "Auto Setup Guest Scale");
+            actor.SetScaleWithRoomStageMotion(true);
+            EditorUtility.SetDirty(actor);
             actors++;
         }
 
-        harmonizer?.RefreshNow();
-        MarkSceneDirtyFromButler();
-        lastStatus = $"Enabled Butler scaling on {projected} projected guest(s), {walkers} walker(s), and {actors} actor guest(s).";
+        SaveSelectedRoomMultiplier(false);
+        GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
+        MarkButlerSceneDirty();
+        lastStatus = $"Auto setup complete. Configured {projected} projected, {walkers} walkers, {actors} actor states. Scaled {summary.Scaled}, missing calibration {summary.MissingCalibration}.";
     }
 
-    private int BypassOldRoomVisualScaleOverrides()
+    private void SaveSelectedRoomMultiplier(bool showStatus)
     {
-        int changed = 0;
-        RoomProjectedEntity[] entities = FindObjectsByType<RoomProjectedEntity>(FindObjectsInactive.Include);
+        GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
 
-        for (int i = 0; i < entities.Length; i++)
+        if (harmonizer == null || string.IsNullOrWhiteSpace(selectedRoomId))
         {
-            RoomProjectedEntity entity = entities[i];
-
-            if (!IsLoadedSceneObject(entity) ||
-                entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter ||
-                IsButlerObjectOrChild(entity.transform))
-            {
-                continue;
-            }
-
-            Undo.RecordObject(entity, "Bypass Old Room Visual Scale Overrides");
-            entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true);
-            MarkDirty(entity);
-            changed++;
+            return;
         }
 
-        MarkSceneDirtyFromButler();
-        return changed;
+        Undo.RecordObject(harmonizer, "Save Guest Room Scale");
+        harmonizer.SetRoomGuestScaleMultiplier(selectedRoomId, selectedRoomMultiplier);
+        EditorUtility.SetDirty(harmonizer);
+        MarkButlerSceneDirty();
+
+        if (showStatus)
+        {
+            lastStatus = $"Saved {selectedRoomId} guest size multiplier: {selectedRoomMultiplier:0.###}.";
+        }
+    }
+
+    private void ApplyNow(string verb)
+    {
+        GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
+
+        if (harmonizer == null)
+        {
+            return;
+        }
+
+        GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
+        lastStatus = $"{verb} guest scaling. Scaled {summary.Scaled}, missing calibration {summary.MissingCalibration}, skipped {summary.Skipped}.";
     }
 
     private void RunProof(float multiplier)
@@ -264,136 +297,29 @@ public sealed class GuestButlerScaleTool : EditorWindow
 
         if (harmonizer == null)
         {
-            lastStatus = "No harmonizer available for proof test.";
             return;
         }
 
-        Dictionary<Component, Vector3> before = CaptureProofGuestScales();
         harmonizer.SetDebugGuestScaleMultiplier(multiplier);
         GuestButlerScaleHarmonizer.GuestScaleApplySummary summary = harmonizer.RefreshNow();
-        LogUnchangedProofGuests(before, multiplier);
-        activeProofHarmonizer = harmonizer;
-        proofRestoreAt = EditorApplication.timeSinceStartup + 2.0;
-        EditorApplication.update -= ProofUpdate;
-        EditorApplication.update += ProofUpdate;
-        lastStatus = $"Proof multiplier {multiplier:0.##} applied to {summary.Scaled} guest scale writer(s).";
+        lastStatus = $"Test {multiplier:P0}: scaled {summary.Scaled} guest scale writer(s). Click Restore Real Butler Scaling when done.";
     }
 
     private void RestoreProof()
     {
-        if (activeProofHarmonizer == null)
+        GuestButlerScaleHarmonizer harmonizer = EnsureHarmonizer();
+
+        if (harmonizer == null)
         {
-            activeProofHarmonizer = EnsureHarmonizer();
+            return;
         }
 
-        if (activeProofHarmonizer != null)
-        {
-            activeProofHarmonizer.RestoreRealButlerScaling();
-        }
-
-        EditorApplication.update -= ProofUpdate;
+        harmonizer.RestoreRealButlerScaling();
         lastStatus = "Restored real Butler scaling.";
-    }
-
-    private void ProofUpdate()
-    {
-        if (EditorApplication.timeSinceStartup < proofRestoreAt)
-        {
-            return;
-        }
-
-        RestoreProof();
-        Repaint();
-    }
-
-    private Dictionary<Component, Vector3> CaptureProofGuestScales()
-    {
-        Dictionary<Component, Vector3> result = new Dictionary<Component, Vector3>();
-
-        RoomProjectedEntity[] entities = FindObjectsByType<RoomProjectedEntity>(FindObjectsInactive.Include);
-        for (int i = 0; i < entities.Length; i++)
-        {
-            RoomProjectedEntity entity = entities[i];
-
-            if (IsLoadedSceneObject(entity) &&
-                entity.Mode == RoomProjectedEntity.ProjectionMode.FloorCharacter &&
-                !IsButlerObjectOrChild(entity.transform) &&
-                entity.TryGetButlerCharacterScaleSample(out _))
-            {
-                result[entity] = entity.VisualRoot != null ? entity.VisualRoot.localScale : entity.transform.localScale;
-            }
-        }
-
-        RoomPersonWalker2D[] walkers = FindObjectsByType<RoomPersonWalker2D>(FindObjectsInactive.Include);
-        for (int i = 0; i < walkers.Length; i++)
-        {
-            RoomPersonWalker2D walker = walkers[i];
-
-            if (IsLoadedSceneObject(walker) &&
-                !IsButlerObjectOrChild(walker.transform) &&
-                walker.TryGetButlerCharacterScaleSample(out _))
-            {
-                result[walker] = walker.transform.localScale;
-            }
-        }
-
-        ActorRoomState[] actors = FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
-        for (int i = 0; i < actors.Length; i++)
-        {
-            ActorRoomState actor = actors[i];
-
-            if (IsLoadedSceneObject(actor) &&
-                !IsButlerObjectOrChild(actor.transform) &&
-                LooksLikeGuestActor(actor) &&
-                actor.TryGetButlerCharacterScaleSample(selectedButler, out _))
-            {
-                result[actor] = actor.transform.localScale;
-            }
-        }
-
-        return result;
-    }
-
-    private void LogUnchangedProofGuests(Dictionary<Component, Vector3> before, float multiplier)
-    {
-        List<string> unchanged = new List<string>();
-
-        foreach (KeyValuePair<Component, Vector3> pair in before)
-        {
-            Component component = pair.Key;
-
-            if (component == null)
-            {
-                continue;
-            }
-
-            Vector3 currentScale = component is RoomProjectedEntity entity && entity.VisualRoot != null
-                ? entity.VisualRoot.localScale
-                : component.transform.localScale;
-
-            if (Approximately(pair.Value, currentScale))
-            {
-                unchanged.Add(GetObjectPath(component.transform));
-            }
-        }
-
-        if (unchanged.Count <= 0)
-        {
-            return;
-        }
-
-        Debug.LogError(
-            $"[GuestButlerScale] Proof multiplier {multiplier:0.##} did not change {unchanged.Count} guest scale(s): {string.Join(", ", unchanged)}",
-            selectedButler);
     }
 
     private GuestButlerScaleHarmonizer EnsureHarmonizer()
     {
-        if (selectedButler == null)
-        {
-            selectedButler = FindSceneButler();
-        }
-
         if (selectedButler == null)
         {
             return null;
@@ -403,270 +329,151 @@ public sealed class GuestButlerScaleTool : EditorWindow
 
         if (harmonizer == null)
         {
-            Undo.RecordObject(selectedButler.gameObject, "Add Guest Butler Scale Harmonizer");
+            Undo.RecordObject(selectedButler.gameObject, "Add Guest Scale Harmonizer");
             harmonizer = selectedButler.gameObject.AddComponent<GuestButlerScaleHarmonizer>();
+            EditorUtility.SetDirty(selectedButler.gameObject);
+            MarkButlerSceneDirty();
         }
 
         harmonizer.SetButlerScaleSource(selectedButler);
-        MarkDirty(harmonizer);
         return harmonizer;
     }
 
-    private List<GuestAuditRow> BuildAuditRows()
+    private void RefreshRoomSelection()
     {
-        List<GuestAuditRow> rows = new List<GuestAuditRow>();
-        RoomProjectedEntity[] entities = FindObjectsByType<RoomProjectedEntity>(FindObjectsInactive.Include);
+        RefreshRoomList();
 
-        for (int i = 0; i < entities.Length; i++)
+        if (string.IsNullOrWhiteSpace(selectedRoomId) && roomIds.Count > 0)
         {
-            RoomProjectedEntity entity = entities[i];
+            selectedRoomId = roomIds[0];
+        }
 
-            if (!IsLoadedSceneObject(entity) || IsButlerObjectOrChild(entity.transform))
+        LoadSelectedRoomMultiplier();
+    }
+
+    private void RefreshRoomList()
+    {
+        roomIds.Clear();
+
+        if (selectedButler != null)
+        {
+            AddRoomId(selectedButler.CurrentButlerScaleRoomId);
+            AddRoomId(selectedButler.CurrentRoomPerspectiveProfileRoomId);
+            selectedButler.GetButlerScaleOverrideRoomIds(roomIds);
+
+            GuestButlerScaleHarmonizer harmonizer = selectedButler.GetComponent<GuestButlerScaleHarmonizer>();
+            if (harmonizer != null)
             {
-                continue;
+                harmonizer.GetGuestScaleMultiplierRoomIds(roomIds);
             }
-
-            rows.Add(BuildProjectedAuditRow(entity));
         }
 
-        RoomPersonWalker2D[] walkers = FindObjectsByType<RoomPersonWalker2D>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < walkers.Length; i++)
+        RoomNavigationManager navigation = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        if (navigation != null)
         {
-            RoomPersonWalker2D walker = walkers[i];
+            AddRoomId(navigation.CurrentRoom);
+        }
 
-            if (!IsLoadedSceneObject(walker) || IsButlerObjectOrChild(walker.transform))
+        RoomContentGroup[] roomGroups = Resources.FindObjectsOfTypeAll<RoomContentGroup>();
+        for (int i = 0; i < roomGroups.Length; i++)
+        {
+            RoomContentGroup group = roomGroups[i];
+
+            if (group != null &&
+                group.gameObject != null &&
+                group.gameObject.scene.IsValid() &&
+                !string.IsNullOrWhiteSpace(group.RoomName))
             {
-                continue;
+                AddRoomId(group.RoomName);
             }
-
-            rows.Add(BuildWalkerAuditRow(walker));
         }
 
-        ActorRoomState[] actors = FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < actors.Length; i++)
-        {
-            ActorRoomState actor = actors[i];
-
-            if (!IsLoadedSceneObject(actor) ||
-                IsButlerObjectOrChild(actor.transform) ||
-                !LooksLikeGuestActor(actor))
-            {
-                continue;
-            }
-
-            rows.Add(BuildActorAuditRow(actor));
-        }
-
-        rows.Sort((left, right) => string.Compare(left.ObjectPath, right.ObjectPath, StringComparison.OrdinalIgnoreCase));
-        return rows;
+        roomIds.Sort(StringComparer.OrdinalIgnoreCase);
     }
 
-    private GuestAuditRow BuildProjectedAuditRow(RoomProjectedEntity entity)
+    private void AddRoomId(string roomId)
     {
-        List<string> overrideRooms = new List<string>();
-        entity.GetVisualScaleOverrideRoomIds(overrideRooms);
-        bool hasSample = entity.TryGetButlerCharacterScaleSample(out PointClickPlayerMovement.ButlerCharacterScaleSample sample);
-        string warning = string.Empty;
-
-        if (selectedButler == null)
+        if (string.IsNullOrWhiteSpace(roomId) || ContainsRoomId(roomIds, roomId))
         {
-            warning = AppendWarning(warning, "No Butler source");
+            return;
         }
 
-        if (!hasSample)
-        {
-            warning = AppendWarning(warning, "No complete Butler calibration for this room");
-        }
-
-        if (entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
-        {
-            warning = AppendWarning(warning, "RoomProjectedEntity is not FloorCharacter");
-        }
-
-        if (overrideRooms.Count > 0 && !entity.IgnoreRoomVisualScaleOverridesWhenUsingButlerRules)
-        {
-            warning = AppendWarning(warning, "RoomProjectedEntity has roomVisualScaleOverrides and bypass is off");
-        }
-
-        RoomPersonWalker2D walker = entity.GetComponent<RoomPersonWalker2D>();
-
-        if (walker != null && !entity.IsProjectionActive)
-        {
-            warning = AppendWarning(warning, "Object has both RoomProjectedEntity and RoomPersonWalker2D but projection not active");
-        }
-
-        return new GuestAuditRow(
-            GetObjectPath(entity.transform),
-            walker != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomProjectedEntity",
-            ResolveProjectedRoomId(entity),
-            entity.RoomLocalFootPoint.y.ToString("0.###"),
-            entity.IsUsingButlerCharacterScaleRules,
-            entity.ButlerScaleSource != null || selectedButler != null,
-            hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
-            entity.VisualRoot != null ? entity.VisualRoot.localScale.ToString() : entity.transform.localScale.ToString(),
-            overrideRooms.Count > 0 && entity.UsesRoomVisualScaleOverrides,
-            warning);
+        roomIds.Add(roomId.Trim());
     }
 
-    private GuestAuditRow BuildWalkerAuditRow(RoomPersonWalker2D walker)
+    private void LoadSelectedRoomMultiplier()
     {
-        bool hasSample = walker.TryGetButlerCharacterScaleSample(out PointClickPlayerMovement.ButlerCharacterScaleSample sample);
-        string roomId = ResolveWalkerRoomId(walker);
-        string warning = string.Empty;
+        GuestButlerScaleHarmonizer harmonizer = selectedButler != null
+            ? selectedButler.GetComponent<GuestButlerScaleHarmonizer>()
+            : null;
 
-        if (selectedButler == null)
-        {
-            warning = AppendWarning(warning, "No Butler source");
-        }
-
-        if (string.IsNullOrWhiteSpace(roomId))
-        {
-            warning = AppendWarning(warning, "RoomPersonWalker2D has no room id");
-        }
-
-        if (!hasSample)
-        {
-            warning = AppendWarning(warning, "No complete Butler calibration for this room");
-        }
-
-        RoomProjectedEntity projection = walker.GetComponent<RoomProjectedEntity>();
-
-        if (projection != null && !projection.IsProjectionActive)
-        {
-            warning = AppendWarning(warning, "Object has both RoomProjectedEntity and RoomPersonWalker2D but projection not active");
-        }
-
-        return new GuestAuditRow(
-            GetObjectPath(walker.transform),
-            projection != null ? "RoomProjectedEntity + RoomPersonWalker2D" : "RoomPersonWalker2D",
-            roomId,
-            walker.CurrentPosition.y.ToString("0.###"),
-            walker.IsUsingButlerCharacterScaleRules,
-            walker.ButlerScaleSource != null || selectedButler != null,
-            hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
-            walker.transform.localScale.ToString(),
-            false,
-            warning);
+        selectedRoomMultiplier = harmonizer != null && !string.IsNullOrWhiteSpace(selectedRoomId)
+            ? harmonizer.GetRoomGuestScaleMultiplier(selectedRoomId)
+            : 1f;
     }
 
-    private GuestAuditRow BuildActorAuditRow(ActorRoomState actor)
+    private float GetHarmonizerMultiplier()
     {
-        bool hasSample = actor.TryGetButlerCharacterScaleSample(selectedButler, out PointClickPlayerMovement.ButlerCharacterScaleSample sample);
-        string roomId = actor.CurrentRoomId;
-        string warning = string.Empty;
+        GuestButlerScaleHarmonizer harmonizer = selectedButler != null
+            ? selectedButler.GetComponent<GuestButlerScaleHarmonizer>()
+            : null;
 
-        if (selectedButler == null)
-        {
-            warning = AppendWarning(warning, "No Butler source");
-        }
-
-        if (string.IsNullOrWhiteSpace(roomId))
-        {
-            warning = AppendWarning(warning, "ActorRoomState has no current room id");
-        }
-
-        if (!hasSample)
-        {
-            warning = AppendWarning(warning, "No complete Butler calibration or room-local foot point for this actor");
-        }
-
-        RoomProjectedEntity projection = actor.Projection;
-
-        if (projection != null && projection.IsProjectionActive)
-        {
-            warning = AppendWarning(warning, "Actor has active RoomProjectedEntity; projection should own scale");
-        }
-
-        return new GuestAuditRow(
-            GetObjectPath(actor.transform),
-            "ActorRoomState",
-            roomId,
-            hasSample ? sample.RoomLocalFootPoint.y.ToString("0.###") : "-",
-            actor.IsUsingButlerCharacterScaleRules,
-            selectedButler != null,
-            hasSample ? sample.NormalizedScale.ToString("0.###") : "-",
-            actor.transform.localScale.ToString(),
-            false,
-            warning);
-    }
-
-    private string ResolveProjectedRoomId(RoomProjectedEntity entity)
-    {
-        ActorRoomState actorState = entity.GetComponentInParent<ActorRoomState>(true);
-
-        if (actorState != null && !string.IsNullOrWhiteSpace(actorState.CurrentRoomId))
-        {
-            return actorState.CurrentRoomId;
-        }
-
-        if (entity.RoomProfile != null && !string.IsNullOrWhiteSpace(entity.RoomProfile.RoomId))
-        {
-            return entity.RoomProfile.RoomId;
-        }
-
-        RoomContentGroup room = entity.GetComponentInParent<RoomContentGroup>(true);
-        return room != null ? room.RoomName : entity.EditorSelectedVisualScaleRoomId;
-    }
-
-    private string ResolveWalkerRoomId(RoomPersonWalker2D walker)
-    {
-        RoomContentGroup room = walker.GetComponentInParent<RoomContentGroup>(true);
-
-        if (room != null && !string.IsNullOrWhiteSpace(room.RoomName))
-        {
-            return room.RoomName;
-        }
-
-        if (walker.RoomProfile != null && !string.IsNullOrWhiteSpace(walker.RoomProfile.RoomId))
-        {
-            return walker.RoomProfile.RoomId;
-        }
-
-        ActorRoomState actorState = walker.GetComponentInParent<ActorRoomState>(true);
-        return actorState != null ? actorState.CurrentRoomId : string.Empty;
+        return harmonizer != null && !string.IsNullOrWhiteSpace(selectedRoomId)
+            ? harmonizer.GetRoomGuestScaleMultiplier(selectedRoomId)
+            : 1f;
     }
 
     private PointClickPlayerMovement FindSceneButler()
     {
         PointClickPlayerMovement tagged = null;
         PointClickPlayerMovement named = null;
-        PointClickPlayerMovement first = null;
+        PointClickPlayerMovement firstSafe = null;
         PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
 
         for (int i = 0; i < candidates.Length; i++)
         {
             PointClickPlayerMovement candidate = candidates[i];
 
-            if (!IsLoadedSceneObject(candidate))
+            if (!IsLoadedSceneObject(candidate) || LooksLikeGuest(candidate.transform))
             {
                 continue;
             }
 
-            first ??= candidate;
+            firstSafe ??= candidate;
+
+            if (string.Equals(candidate.gameObject.name, "player", StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate;
+            }
 
             if (string.Equals(candidate.gameObject.tag, "Player", StringComparison.OrdinalIgnoreCase))
             {
                 tagged ??= candidate;
             }
 
-            if (NameLooksLikePlayerOrButler(candidate.name) ||
-                NameLooksLikePlayerOrButler(candidate.gameObject.name))
+            if (NameLooksLikePlayerOrButler(candidate.name) || NameLooksLikePlayerOrButler(candidate.gameObject.name))
             {
                 named ??= candidate;
             }
         }
 
-        return tagged != null ? tagged : named != null ? named : first;
+        return tagged != null ? tagged : named != null ? named : firstSafe;
     }
 
     private bool IsButlerObjectOrChild(Transform target)
     {
-        return target != null &&
-            selectedButler != null &&
+        return selectedButler != null &&
+            target != null &&
             selectedButler.transform != null &&
             (target == selectedButler.transform || target.IsChildOf(selectedButler.transform));
+    }
+
+    private void MarkButlerSceneDirty()
+    {
+        if (selectedButler != null && selectedButler.gameObject.scene.IsValid())
+        {
+            EditorSceneManager.MarkSceneDirty(selectedButler.gameObject.scene);
+        }
     }
 
     private static bool IsLoadedSceneObject(Component component)
@@ -677,65 +484,11 @@ public sealed class GuestButlerScaleTool : EditorWindow
             component.gameObject.scene.isLoaded;
     }
 
-    private static void MarkDirty(Component component)
+    private static bool LooksLikeGuest(Transform target)
     {
-        if (component == null)
-        {
-            return;
-        }
-
-        EditorUtility.SetDirty(component);
-
-        if (!Application.isPlaying && component.gameObject.scene.IsValid())
-        {
-            EditorSceneManager.MarkSceneDirty(component.gameObject.scene);
-        }
-    }
-
-    private void MarkSceneDirtyFromButler()
-    {
-        if (selectedButler != null && selectedButler.gameObject.scene.IsValid())
-        {
-            EditorSceneManager.MarkSceneDirty(selectedButler.gameObject.scene);
-        }
-    }
-
-    private static string AppendWarning(string current, string warning)
-    {
-        return string.IsNullOrWhiteSpace(current) ? warning : $"{current}; {warning}";
-    }
-
-    private static bool Approximately(Vector3 left, Vector3 right)
-    {
-        return Mathf.Approximately(left.x, right.x) &&
-            Mathf.Approximately(left.y, right.y) &&
-            Mathf.Approximately(left.z, right.z);
-    }
-
-    private static string GetObjectPath(Transform target)
-    {
-        if (target == null)
-        {
-            return string.Empty;
-        }
-
-        string path = target.name;
-        Transform current = target.parent;
-
-        while (current != null)
-        {
-            path = current.name + "/" + path;
-            current = current.parent;
-        }
-
-        return path;
-    }
-
-    private static bool NameLooksLikePlayerOrButler(string value)
-    {
-        return !string.IsNullOrWhiteSpace(value) &&
-            (value.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0 ||
-            value.IndexOf("Butler", StringComparison.OrdinalIgnoreCase) >= 0);
+        return target != null &&
+            (ContainsGuest(target.name) ||
+            target.GetComponentInParent<RoomProjectedEntity>(true) != null);
     }
 
     private static bool LooksLikeGuestActor(ActorRoomState actor)
@@ -752,46 +505,46 @@ public sealed class GuestButlerScaleTool : EditorWindow
             value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
-    private static string YesNo(bool value)
+    private static bool NameLooksLikePlayerOrButler(string value)
     {
-        return value ? "yes" : "no";
+        return !string.IsNullOrWhiteSpace(value) &&
+            (value.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            value.IndexOf("Butler", StringComparison.OrdinalIgnoreCase) >= 0);
     }
 
-    private readonly struct GuestAuditRow
+    private static bool ContainsRoomId(List<string> values, string roomId)
     {
-        public GuestAuditRow(
-            string objectPath,
-            string controllerType,
-            string roomId,
-            string roomLocalFootY,
-            bool usingButlerRules,
-            bool butlerScaleSourceFound,
-            string normalizedButlerScale,
-            string finalLocalScale,
-            bool hiddenOldOverrideActive,
-            string warning)
+        if (values == null || string.IsNullOrWhiteSpace(roomId))
         {
-            ObjectPath = objectPath;
-            ControllerType = controllerType;
-            RoomId = roomId;
-            RoomLocalFootY = roomLocalFootY;
-            UsingButlerRules = usingButlerRules;
-            ButlerScaleSourceFound = butlerScaleSourceFound;
-            NormalizedButlerScale = normalizedButlerScale;
-            FinalLocalScale = finalLocalScale;
-            HiddenOldOverrideActive = hiddenOldOverrideActive;
-            Warning = warning;
+            return false;
         }
 
-        public string ObjectPath { get; }
-        public string ControllerType { get; }
-        public string RoomId { get; }
-        public string RoomLocalFootY { get; }
-        public bool UsingButlerRules { get; }
-        public bool ButlerScaleSourceFound { get; }
-        public string NormalizedButlerScale { get; }
-        public string FinalLocalScale { get; }
-        public bool HiddenOldOverrideActive { get; }
-        public string Warning { get; }
+        for (int i = 0; i < values.Count; i++)
+        {
+            if (SameRoom(values[i], roomId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool SameRoom(string left, string right)
+    {
+        return string.Equals(NormalizeRoomName(left), NormalizeRoomName(right), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeRoomName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return value.Trim()
+            .Replace("_", string.Empty)
+            .Replace(" ", string.Empty)
+            .Replace("-", string.Empty);
     }
 }

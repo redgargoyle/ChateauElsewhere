@@ -91,8 +91,8 @@ public sealed class GuestButlerScaleRegressionTests
             entity.SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(true, false);
             entity.ApplyButlerCharacterScaleNow();
 
-            Assert.That(visual.transform.localScale.x, Is.EqualTo(1f).Within(0.0001f));
-            Assert.That(visual.transform.localScale.y, Is.EqualTo(1.5f).Within(0.0001f));
+            Assert.That(visual.transform.localScale.x, Is.EqualTo(2f / 3f).Within(0.0001f));
+            Assert.That(visual.transform.localScale.y, Is.EqualTo(1f).Within(0.0001f));
             Assert.That(visual.transform.localScale.z, Is.EqualTo(4f).Within(0.0001f));
         }
         finally
@@ -139,7 +139,8 @@ public sealed class GuestButlerScaleRegressionTests
         string harmonizerText = File.ReadAllText(HarmonizerPath);
 
         Assert.That(harmonizerText, Does.Contain("[DefaultExecutionOrder(10000)]"));
-        Assert.That(harmonizerText, Does.Contain("ApplyButlerCharacterScaleNow(source, debugGuestScaleMultiplier)"));
+        Assert.That(harmonizerText, Does.Contain("GetRoomGuestScaleMultiplier"));
+        Assert.That(harmonizerText, Does.Contain("SetRoomGuestScaleMultiplier"));
         Assert.That(harmonizerText, Does.Contain("ApplyToActorRoomStates"));
         Assert.That(harmonizerText, Does.Contain("IsButlerObjectOrChild"));
     }
@@ -170,7 +171,7 @@ public sealed class GuestButlerScaleRegressionTests
             Assert.That(actor.ApplyButlerCharacterScaleNow(movement), Is.True);
             Assert.That(actor.IsUsingButlerCharacterScaleRules, Is.True);
             Assert.That(actor.CurrentButlerCharacterScale, Is.EqualTo(0.5f).Within(0.0001f));
-            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.1f).Within(0.0001f));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1f).Within(0.0001f));
         }
         finally
         {
@@ -221,11 +222,13 @@ public sealed class GuestButlerScaleRegressionTests
     {
         string toolText = File.ReadAllText(ToolPath);
 
-        Assert.That(toolText, Does.Contain("Enable Butler Scaling On All Guests"));
-        Assert.That(toolText, Does.Contain("Refresh Guest Scaling Now"));
-        Assert.That(toolText, Does.Contain("PROOF: Make All Guest Butler Scales 50% For 2 Seconds"));
+        Assert.That(toolText, Does.Contain("Auto Setup + Apply Now"));
+        Assert.That(toolText, Does.Contain("Guest Size In This Room"));
+        Assert.That(toolText, Does.Contain("Save Guest Room Scale"));
+        Assert.That(toolText, Does.Contain("Reset Room To Butler Size"));
+        Assert.That(toolText, Does.Contain("Test 50%"));
+        Assert.That(toolText, Does.Contain("Test 150%"));
         Assert.That(toolText, Does.Contain("Restore Real Butler Scaling"));
-        Assert.That(toolText, Does.Contain("Bypass Old Room Visual Scale Overrides For All Guests"));
         Assert.That(File.ReadAllText(ActorRoomStatePath), Does.Contain("ApplyButlerCharacterScaleNow"));
     }
 

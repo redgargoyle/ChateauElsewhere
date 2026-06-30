@@ -710,6 +710,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		CaptureAuthoredRendererSortingIfNeeded();
 		CacheAnimatorParameters();
 		InitializeVisualStateFromTransform();
+		EnsureGuestScaleHarmonizerForScenePlayer();
 	}
 
 	private void Start()
@@ -4069,6 +4070,44 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private static string CleanRoomName(string value)
 	{
 		return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+	}
+
+	private void EnsureGuestScaleHarmonizerForScenePlayer()
+	{
+		if (!Application.isPlaying ||
+			gameObject == null ||
+			!gameObject.scene.IsValid() ||
+			ContainsGuestName(gameObject.name) ||
+			GetComponentInParent<RoomProjectedEntity>(true) != null ||
+			!LooksLikeScenePlayer())
+		{
+			return;
+		}
+
+		GuestButlerScaleHarmonizer harmonizer = GetComponent<GuestButlerScaleHarmonizer>();
+
+		if (harmonizer == null)
+		{
+			harmonizer = gameObject.AddComponent<GuestButlerScaleHarmonizer>();
+		}
+
+		harmonizer.SetButlerScaleSource(this);
+	}
+
+	private bool LooksLikeScenePlayer()
+	{
+		return string.Equals(gameObject.name, "player", StringComparison.OrdinalIgnoreCase) ||
+			string.Equals(gameObject.tag, "Player", StringComparison.OrdinalIgnoreCase) ||
+			gameObject.name.IndexOf("Butler", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			name.IndexOf("Butler", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			gameObject.name.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			name.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0;
+	}
+
+	private static bool ContainsGuestName(string value)
+	{
+		return !string.IsNullOrWhiteSpace(value) &&
+			value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
 	}
 
 	private static string GetFirstWord(string value)

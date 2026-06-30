@@ -63,6 +63,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	private bool movingAlongPath;
 	private bool isUsingButlerCharacterScaleRules;
 	private float currentButlerCharacterScale = 1f;
+	private float currentButlerCharacterFinalLocalScaleY = 1f;
 	private float currentButlerCharacterDepth01;
 	private string currentButlerCharacterScaleSource = string.Empty;
 	[SerializeField, HideInInspector] private Vector3 authoredWalkerLocalScale = Vector3.one;
@@ -536,6 +537,15 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		}
 
 		Vector3 baseScale = hasAuthoredWalkerLocalScale ? authoredWalkerLocalScale : Vector3.one;
+
+		if (isUsingButlerCharacterScaleRules)
+		{
+			return BuildFinalLocalScaleFromReference(
+				baseScale,
+				currentButlerCharacterFinalLocalScaleY * Mathf.Max(0.001f, debugScaleMultiplier),
+				facingSign);
+		}
+
 		return new Vector3(
 			Mathf.Abs(baseScale.x) * safeDepthScale * facingSign,
 			Mathf.Abs(baseScale.y) * safeDepthScale,
@@ -546,6 +556,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	{
 		isUsingButlerCharacterScaleRules = true;
 		currentButlerCharacterScale = sample.NormalizedScale;
+		currentButlerCharacterFinalLocalScaleY = sample.ButlerFinalLocalScaleY;
 		currentButlerCharacterDepth01 = sample.Depth01;
 		currentButlerCharacterScaleSource = sample.Source;
 		rectTransform.localScale = BuildDepthScaleVector(sample.NormalizedScale, true, debugScaleMultiplier);
@@ -576,6 +587,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 		isUsingButlerCharacterScaleRules = true;
 		currentButlerCharacterScale = sample.NormalizedScale;
+		currentButlerCharacterFinalLocalScaleY = sample.ButlerFinalLocalScaleY;
 		currentButlerCharacterDepth01 = sample.Depth01;
 		currentButlerCharacterScaleSource = sample.Source;
 		return true;
@@ -695,6 +707,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	{
 		isUsingButlerCharacterScaleRules = false;
 		currentButlerCharacterScale = 1f;
+		currentButlerCharacterFinalLocalScaleY = 1f;
 		currentButlerCharacterDepth01 = 0f;
 		currentButlerCharacterScaleSource = string.Empty;
 	}
@@ -705,6 +718,25 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 			Mathf.Approximately(scale.x, 0f) ? 1f : scale.x,
 			Mathf.Approximately(scale.y, 0f) ? 1f : scale.y,
 			Mathf.Approximately(scale.z, 0f) ? 1f : scale.z);
+	}
+
+	private static Vector3 BuildFinalLocalScaleFromReference(Vector3 referenceScale, float finalLocalScaleY, int facingSign)
+	{
+		Vector3 safeReference = SanitizeScale(referenceScale);
+		float safeFinalY = Mathf.Max(0.001f, Mathf.Abs(finalLocalScaleY));
+		float referenceY = Mathf.Max(0.001f, Mathf.Abs(safeReference.y));
+		float xOverY = Mathf.Abs(safeReference.x) / referenceY;
+		float ySign = Mathf.Sign(safeReference.y);
+
+		if (Mathf.Approximately(ySign, 0f))
+		{
+			ySign = 1f;
+		}
+
+		return new Vector3(
+			xOverY * safeFinalY * (facingSign < 0 ? -1f : 1f),
+			ySign * safeFinalY,
+			safeReference.z);
 	}
 
 	private static bool NameLooksLikePlayerOrButler(string value)

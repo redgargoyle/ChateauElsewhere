@@ -60,21 +60,23 @@ Do not edit Transform scale manually for calibration. Do not use Advanced reset 
 
 ## Guest Scaling From Butler Rules
 
-The manually calibrated Butler room scale is now the shared depth scale source for guests. Guests do not copy the Butler's raw size. Guests use the Butler's normalized room/depth scale multiplier, then keep their own authored scale, sitting/standing art proportions, and `CharacterVisualProfile.HeightScaleMultiplier`.
+The manually calibrated Butler room scale is now the shared depth scale source for guests. Guests use the Butler's saved final local-scale Y for the current room/depth, with a small optional per-room guest multiplier for art-polish differences.
 
-`RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to prevent old scale writers or room visual overrides from hiding the result.
+`RoomProjectedEntity`, `RoomPersonWalker2D`, and world-space `ActorRoomState` guests consume the same Butler scale evaluator. `GuestButlerScaleHarmonizer` runs late to keep coat/interaction state changes from leaving guests in a different scale mode.
 
-To enable:
+Default workflow:
 
-1. Open `Tools > Characters > Apply Butler Scaling To Guests`.
-2. Click `Find Scene Butler`.
-3. Click `Add/Ensure GuestButlerScaleHarmonizer`.
-4. Click `Enable Butler Scaling On All Guests`.
-5. Click `Bypass Old Room Visual Scale Overrides For All Guests`.
-6. Click `Refresh Guest Scaling Now`.
-7. Use the Proof Test buttons to confirm guests visibly change.
-8. Save Scene.
-9. Test in Play Mode.
+1. Open `Tools > Characters > Guest Room Scale`.
+2. Click `Find Scene Player`.
+3. Click `Auto Setup + Apply Now`.
+4. Pick the room you are testing.
+5. Leave `Guest Size In This Room` at `1` first. Guests should follow the Butler calibration.
+6. If the guest art needs polish in that room, adjust `Guest Size In This Room`.
+7. Click `Save Guest Room Scale`.
+8. Click `Save Scene`.
+9. Test in Play Mode. Taking or returning a coat should not change guest size.
+
+Use `Test 50%`, `Test 150%`, and `Restore Real Butler Scaling` only as quick visibility checks. They are not calibration steps.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 

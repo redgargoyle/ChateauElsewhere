@@ -57,6 +57,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private int currentSortingOrder;
     private bool isUsingButlerCharacterScaleRules;
     private float currentButlerCharacterScale = 1f;
+    private float currentButlerCharacterFinalLocalScaleY = 1f;
     private float currentButlerCharacterDepth01;
     private string currentButlerCharacterScaleSource = string.Empty;
     private bool hasRoomStageScaleReference;
@@ -515,6 +516,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             profileScale = sample.NormalizedScale;
             isUsingButlerCharacterScaleRules = true;
             currentButlerCharacterScale = sample.NormalizedScale;
+            currentButlerCharacterFinalLocalScaleY = sample.ButlerFinalLocalScaleY;
             currentButlerCharacterDepth01 = sample.Depth01;
             currentButlerCharacterScaleSource = sample.Source;
         }
@@ -654,10 +656,19 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             return;
         }
 
-        float appliedScale = currentScale * currentRoomStageScaleMultiplier;
         Vector3 baseScale = isUsingButlerCharacterScaleRules && ignoreRoomVisualScaleOverridesWhenUsingButlerRules
             ? GetDefaultAuthoredVisualRootScale()
             : GetAuthoredVisualRootScaleForCurrentRoom();
+
+        if (isUsingButlerCharacterScaleRules)
+        {
+            targetRoot.localScale = BuildFinalLocalScaleFromReference(
+                baseScale,
+                currentButlerCharacterFinalLocalScaleY * currentRoomStageScaleMultiplier);
+            return;
+        }
+
+        float appliedScale = currentScale * currentRoomStageScaleMultiplier;
         Vector3 projectedScale = new Vector3(
             baseScale.x * appliedScale,
             baseScale.y * appliedScale,
@@ -710,25 +721,20 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
         isUsingButlerCharacterScaleRules = true;
         currentButlerCharacterScale = sample.NormalizedScale;
+        currentButlerCharacterFinalLocalScaleY = sample.ButlerFinalLocalScaleY;
         currentButlerCharacterDepth01 = sample.Depth01;
         currentButlerCharacterScaleSource = sample.Source;
 
-        float visualScale = visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
-        float appliedScale =
-            Mathf.Max(0.001f, sample.NormalizedScale) *
+        float finalLocalScaleY =
+            Mathf.Max(0.001f, sample.ButlerFinalLocalScaleY) *
             Mathf.Max(0.001f, debugScaleMultiplier) *
-            Mathf.Max(0.001f, visualScale) *
             Mathf.Max(0.001f, currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : GetRoomStageScaleMultiplier());
         Vector3 baseScale = ignoreRoomVisualScaleOverridesWhenUsingButlerRules
             ? GetDefaultAuthoredVisualRootScale()
             : GetAuthoredVisualRootScaleForCurrentRoom();
-        Vector3 projectedScale = new Vector3(
-            baseScale.x * appliedScale,
-            baseScale.y * appliedScale,
-            baseScale.z);
 
-        targetRoot.localScale = projectedScale;
-        currentScale = Mathf.Max(0.001f, sample.NormalizedScale * visualScale);
+        targetRoot.localScale = BuildFinalLocalScaleFromReference(baseScale, finalLocalScaleY);
+        currentScale = Mathf.Max(0.001f, sample.NormalizedScale);
     }
 
     private void ApplyProjectedTint()
@@ -1067,6 +1073,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     {
         isUsingButlerCharacterScaleRules = false;
         currentButlerCharacterScale = 1f;
+        currentButlerCharacterFinalLocalScaleY = 1f;
         currentButlerCharacterDepth01 = 0f;
         currentButlerCharacterScaleSource = string.Empty;
     }
@@ -1091,6 +1098,25 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             Mathf.Approximately(scale.x, 0f) ? 1f : scale.x,
             Mathf.Approximately(scale.y, 0f) ? 1f : scale.y,
             Mathf.Approximately(scale.z, 0f) ? 1f : scale.z);
+    }
+
+    private static Vector3 BuildFinalLocalScaleFromReference(Vector3 referenceScale, float finalLocalScaleY)
+    {
+        Vector3 safeReference = SanitizeScale(referenceScale);
+        float safeFinalY = Mathf.Max(0.001f, Mathf.Abs(finalLocalScaleY));
+        float referenceY = Mathf.Max(0.001f, Mathf.Abs(safeReference.y));
+        float xOverY = safeReference.x / referenceY;
+        float ySign = Mathf.Sign(safeReference.y);
+
+        if (Mathf.Approximately(ySign, 0f))
+        {
+            ySign = 1f;
+        }
+
+        return new Vector3(
+            xOverY * safeFinalY,
+            ySign * safeFinalY,
+            safeReference.z);
     }
 
     private static string NormalizeRoomName(string value)
