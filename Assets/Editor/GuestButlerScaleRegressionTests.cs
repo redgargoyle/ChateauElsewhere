@@ -289,7 +289,7 @@ public sealed class GuestRoomScaleRegressionTests
     public void GuestRoomScaleApplierUsesWalkerTargetGraphic()
     {
         ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.1f);
-        GameObject walkerObject = new GameObject("Walker_GEH_GreenGentleman", typeof(RectTransform));
+        GameObject walkerObject = new GameObject("Guest 9", typeof(RectTransform));
         walkerObject.AddComponent<Image>();
         RoomPersonWalker2D walker = walkerObject.AddComponent<RoomPersonWalker2D>();
         walkerObject.transform.localScale = Vector3.one * 4f;
@@ -315,11 +315,83 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestRoomScaleApplierDoesNotCreateParticipantsForLegacyWalkers()
+    {
+        GameObject applierObject = new GameObject("GuestScaleApplier");
+        GameObject legacyWalker = new GameObject("Walker_GEH_GreenGentleman", typeof(RectTransform));
+
+        try
+        {
+            legacyWalker.AddComponent<Image>();
+            legacyWalker.AddComponent<RoomPersonWalker2D>();
+            GuestRoomScaleApplier applier = applierObject.AddComponent<GuestRoomScaleApplier>();
+
+            int ensured = applier.EnsureParticipantsForSceneGuests();
+
+            Assert.That(ensured, Is.EqualTo(0));
+            Assert.That(legacyWalker.GetComponent<GuestScaleParticipant>(), Is.Null);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(legacyWalker);
+            UnityEngine.Object.DestroyImmediate(applierObject);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierClassifiesManagedChapterGuestsOnly()
+    {
+        GameObject chapterGuest = new GameObject("Guest 5");
+        GameObject legacyWalker = new GameObject("Walker_GEH_GreenLady");
+
+        try
+        {
+            GuestScaleParticipant chapterParticipant = chapterGuest.AddComponent<GuestScaleParticipant>();
+            GuestScaleParticipant walkerParticipant = legacyWalker.AddComponent<GuestScaleParticipant>();
+
+            Assert.That(GuestRoomScaleApplier.IsManagedGuestParticipant(chapterParticipant), Is.True);
+            Assert.That(GuestRoomScaleApplier.IsManagedGuestParticipant(walkerParticipant), Is.False);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(legacyWalker);
+            UnityEngine.Object.DestroyImmediate(chapterGuest);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierIgnoresExistingLegacyWalkerParticipants()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.1f);
+        GameObject legacyWalker = new GameObject("Walker_GEH_GreenLady", typeof(RectTransform));
+
+        try
+        {
+            legacyWalker.AddComponent<Image>();
+            legacyWalker.AddComponent<RoomPersonWalker2D>();
+            GuestScaleParticipant participant = legacyWalker.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.SetScaleRoot(legacyWalker.transform);
+            participant.CaptureBaseScale(true);
+
+            GuestScaleApplyResult result = scene.Applier.RefreshAllWithResultNow();
+
+            Assert.That(result.Applied, Is.EqualTo(0));
+            Assert.That(legacyWalker.transform.localScale.y, Is.EqualTo(1f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(legacyWalker);
+            DestroyScaleTestScene(scene);
+        }
+    }
+
+    [Test]
     public void GuestRoomScaleApplierUsesProjectedVisualRootForFloorCharacters()
     {
         ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 0.9f);
         RoomPerspectiveProfile profile = CreateProfile(1f, 1f, "Grand Entrance Hall");
-        RoomProjectedEntity entity = CreateProjectedEntity("ProjectedGuest", profile, Vector2.zero);
+        RoomProjectedEntity entity = CreateProjectedEntity("Guest 10", profile, Vector2.zero);
         Transform visualRoot = entity.VisualRoot;
 
         try

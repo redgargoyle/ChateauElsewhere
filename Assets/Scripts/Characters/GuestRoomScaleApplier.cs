@@ -257,6 +257,7 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
         if (participant == null ||
             IsGuestScaleInfrastructureObject(participant.gameObject) ||
+            !IsManagedGuestParticipant(participant) ||
             participant.ExcludeFromGuestScaling ||
             participant.IsButler)
         {
@@ -372,7 +373,8 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
         for (int i = 0; i < walkers.Length; i++)
         {
-            if (walkers[i] == null)
+            if (walkers[i] == null ||
+                !LooksLikeChapterGuest(walkers[i].gameObject.name))
             {
                 continue;
             }
@@ -395,7 +397,9 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         {
             RoomProjectedEntity entity = projectedEntities[i];
 
-            if (entity == null || entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
+            if (entity == null ||
+                entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter ||
+                !LooksLikeChapterGuest(entity.gameObject.name))
             {
                 continue;
             }
@@ -691,8 +695,7 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         }
 
         string clean = value.Replace("_", " ");
-        return StartsWithGuestNumber(clean) ||
-            clean.Contains("Walker GEH", System.StringComparison.OrdinalIgnoreCase);
+        return StartsWithGuestNumber(clean);
     }
 
     private static bool StartsWithGuestNumber(string value)
@@ -726,5 +729,20 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             candidate.name.Contains("GuestScale", System.StringComparison.OrdinalIgnoreCase) ||
             candidate.name.Contains("GuestArrival", System.StringComparison.OrdinalIgnoreCase) ||
             candidate.name.Contains("GuestDrawingRoomDoorTarget", System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static bool IsManagedGuestParticipant(GuestScaleParticipant participant)
+    {
+        if (participant == null ||
+            participant.gameObject == null ||
+            IsGuestScaleInfrastructureObject(participant.gameObject) ||
+            participant.ExcludeFromGuestScaling ||
+            participant.IsButler)
+        {
+            return false;
+        }
+
+        return LooksLikeChapterGuest(participant.gameObject.name) ||
+            LooksLikeChapterGuest(participant.CharacterId);
     }
 }

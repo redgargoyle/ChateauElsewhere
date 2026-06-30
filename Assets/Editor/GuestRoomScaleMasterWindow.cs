@@ -703,7 +703,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         {
             GuestScaleParticipant guest = allGuests[i];
 
-            if (guest != null && !GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(guest.gameObject))
+            if (GuestRoomScaleApplier.IsManagedGuestParticipant(guest))
             {
                 guests.Add(guest);
             }
@@ -721,13 +721,22 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         {
             GuestScaleParticipant guest = allGuests[i];
 
-            if (guest == null || !GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(guest.gameObject))
+            if (guest == null)
             {
                 continue;
             }
 
-            Undo.DestroyObjectImmediate(guest);
-            removed++;
+            bool shouldRemove =
+                GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(guest.gameObject) ||
+                (!guest.ExcludeFromGuestScaling &&
+                    !guest.IsButler &&
+                    !GuestRoomScaleApplier.IsManagedGuestParticipant(guest));
+
+            if (shouldRemove)
+            {
+                Undo.DestroyObjectImmediate(guest);
+                removed++;
+            }
         }
 
         return removed;
