@@ -1002,9 +1002,24 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     {
         GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
 
+        if (participant == null)
+        {
+            participant = GetComponentInParent<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null)
+        {
+            participant = GetComponentInChildren<GuestScaleParticipant>(true);
+        }
+
         if (participant == null && targetRoot != null)
         {
             participant = targetRoot.GetComponentInParent<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null && targetRoot != null)
+        {
+            participant = targetRoot.GetComponentInChildren<GuestScaleParticipant>(true);
         }
 
         if (participant == null ||
@@ -1014,8 +1029,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             return false;
         }
 
-        Transform participantRoot = participant.ResolveScaleRoot();
-        return participantRoot == targetRoot || participantRoot == transform;
+        return true;
     }
 
     private PointClickPlayerMovement ResolveButlerScaleSource()

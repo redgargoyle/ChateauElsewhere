@@ -83,6 +83,12 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             participant.SetCharacterId(characterId);
         }
 
+        if (string.IsNullOrWhiteSpace(roomId) &&
+            TryInferAuthoredSceneGuestRoomId(guestObject, out string inferredRoomId))
+        {
+            roomId = inferredRoomId;
+        }
+
         if (!string.IsNullOrWhiteSpace(roomId))
         {
             participant.SetRoomIdOverride(roomId);
@@ -280,6 +286,29 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         return ensured;
     }
 
+    public static bool TryInferAuthoredSceneGuestRoomId(GameObject guestObject, out string roomId)
+    {
+        roomId = string.Empty;
+
+        if (guestObject == null)
+        {
+            return false;
+        }
+
+        if (TryResolveParticipantOverrideRoomId(guestObject, out roomId) ||
+            TryResolveActorRoomId(guestObject, out roomId) ||
+            TryResolveWalkerRoomId(guestObject, out roomId) ||
+            TryResolveProjectedRoomId(guestObject, out roomId) ||
+            TryResolveParentRoomId(guestObject, out roomId) ||
+            TryInferChapterOneSceneGuestRoomId(guestObject.name, out roomId))
+        {
+            roomId = GuestRoomScaleCalibration.CleanRoomId(roomId);
+            return !string.IsNullOrWhiteSpace(roomId);
+        }
+
+        return false;
+    }
+
     private float ResolveExplicitPoseRatio(GuestScaleParticipant participant, string roomId)
     {
         float fineTuneMultiplier = 1f;
@@ -333,6 +362,196 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         }
 
         return Mathf.Max(0.001f, ratio);
+    }
+
+    private static bool TryResolveParticipantOverrideRoomId(GameObject guestObject, out string roomId)
+    {
+        roomId = string.Empty;
+        GuestScaleParticipant participant = guestObject.GetComponent<GuestScaleParticipant>();
+
+        if (participant == null)
+        {
+            participant = guestObject.GetComponentInParent<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null)
+        {
+            participant = guestObject.GetComponentInChildren<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null || string.IsNullOrWhiteSpace(participant.RoomIdOverride))
+        {
+            return false;
+        }
+
+        roomId = participant.RoomIdOverride;
+        return true;
+    }
+
+    private static bool TryResolveActorRoomId(GameObject guestObject, out string roomId)
+    {
+        roomId = string.Empty;
+        ActorRoomState actorState = guestObject.GetComponent<ActorRoomState>();
+
+        if (actorState == null)
+        {
+            actorState = guestObject.GetComponentInParent<ActorRoomState>(true);
+        }
+
+        if (actorState == null)
+        {
+            actorState = guestObject.GetComponentInChildren<ActorRoomState>(true);
+        }
+
+        if (actorState == null || string.IsNullOrWhiteSpace(actorState.CurrentRoomId))
+        {
+            return false;
+        }
+
+        roomId = actorState.CurrentRoomId;
+        return true;
+    }
+
+    private static bool TryResolveWalkerRoomId(GameObject guestObject, out string roomId)
+    {
+        roomId = string.Empty;
+        RoomPersonWalker2D walker = guestObject.GetComponent<RoomPersonWalker2D>();
+
+        if (walker == null)
+        {
+            walker = guestObject.GetComponentInParent<RoomPersonWalker2D>(true);
+        }
+
+        if (walker == null)
+        {
+            walker = guestObject.GetComponentInChildren<RoomPersonWalker2D>(true);
+        }
+
+        if (walker != null && walker.RoomProfile != null && !string.IsNullOrWhiteSpace(walker.RoomProfile.RoomId))
+        {
+            roomId = walker.RoomProfile.RoomId;
+            return true;
+        }
+
+        if (guestObject.name.Contains("Walker GEH", System.StringComparison.OrdinalIgnoreCase) ||
+            guestObject.name.Contains("Walker_GEH", System.StringComparison.OrdinalIgnoreCase))
+        {
+            roomId = "Grand Entrance Hall";
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryResolveProjectedRoomId(GameObject guestObject, out string roomId)
+    {
+        roomId = string.Empty;
+        RoomProjectedEntity projectedEntity = guestObject.GetComponent<RoomProjectedEntity>();
+
+        if (projectedEntity == null)
+        {
+            projectedEntity = guestObject.GetComponentInParent<RoomProjectedEntity>(true);
+        }
+
+        if (projectedEntity == null)
+        {
+            projectedEntity = guestObject.GetComponentInChildren<RoomProjectedEntity>(true);
+        }
+
+        if (projectedEntity == null)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(projectedEntity.CurrentVisualScaleRoomId))
+        {
+            roomId = projectedEntity.CurrentVisualScaleRoomId;
+            return true;
+        }
+
+        if (projectedEntity.RoomProfile != null && !string.IsNullOrWhiteSpace(projectedEntity.RoomProfile.RoomId))
+        {
+            roomId = projectedEntity.RoomProfile.RoomId;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryResolveParentRoomId(GameObject guestObject, out string roomId)
+    {
+        roomId = string.Empty;
+        RoomContentGroup roomContent = guestObject.GetComponentInParent<RoomContentGroup>(true);
+
+        if (roomContent == null || string.IsNullOrWhiteSpace(roomContent.RoomName))
+        {
+            return false;
+        }
+
+        roomId = roomContent.RoomName;
+        return true;
+    }
+
+    private static bool TryInferChapterOneSceneGuestRoomId(string guestName, out string roomId)
+    {
+        roomId = string.Empty;
+
+        if (!TryExtractGuestNumber(guestName, out int guestNumber))
+        {
+            return false;
+        }
+
+        if (guestNumber >= 1 && guestNumber <= 4)
+        {
+            roomId = "Grand Entrance Hall";
+            return true;
+        }
+
+        if (guestNumber >= 5 && guestNumber <= 8)
+        {
+            roomId = "Drawing Room";
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryExtractGuestNumber(string value, out int guestNumber)
+    {
+        guestNumber = 0;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        int guestIndex = value.IndexOf("Guest", System.StringComparison.OrdinalIgnoreCase);
+
+        if (guestIndex < 0)
+        {
+            return false;
+        }
+
+        int digitStart = guestIndex + "Guest".Length;
+
+        while (digitStart < value.Length &&
+            (char.IsWhiteSpace(value[digitStart]) ||
+                value[digitStart] == '_' ||
+                value[digitStart] == '-' ||
+                value[digitStart] == '#'))
+        {
+            digitStart++;
+        }
+
+        int digitEnd = digitStart;
+
+        while (digitEnd < value.Length && char.IsDigit(value[digitEnd]))
+        {
+            digitEnd++;
+        }
+
+        return digitEnd > digitStart &&
+            int.TryParse(value.Substring(digitStart, digitEnd - digitStart), out guestNumber);
     }
 
     private static bool LooksLikeChapterGuest(string value)

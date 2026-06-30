@@ -174,7 +174,15 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         }
 
         RoomContentGroup roomContent = GetComponentInParent<RoomContentGroup>(true);
-        return roomContent != null ? roomContent.RoomName : string.Empty;
+
+        if (roomContent != null && !string.IsNullOrWhiteSpace(roomContent.RoomName))
+        {
+            return roomContent.RoomName;
+        }
+
+        return GuestRoomScaleApplier.TryInferAuthoredSceneGuestRoomId(gameObject, out string inferredRoomId)
+            ? inferredRoomId
+            : string.Empty;
     }
 
     public float ResolveRoomLocalY()
@@ -199,6 +207,12 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         if (roomContent != null)
         {
             Vector3 localPoint = roomContent.transform.InverseTransformPoint(root.position);
+            return localPoint.y;
+        }
+
+        if (TryFindResolvedRoomContent(out RoomContentGroup resolvedRoomContent))
+        {
+            Vector3 localPoint = resolvedRoomContent.transform.InverseTransformPoint(root.position);
             return localPoint.y;
         }
 
@@ -307,6 +321,32 @@ public sealed class GuestScaleParticipant : MonoBehaviour
     private static bool IsUsableBodyTransform(Transform candidate)
     {
         return candidate != null && !NameLooksExcludedFromBodyScale(candidate.name);
+    }
+
+    private bool TryFindResolvedRoomContent(out RoomContentGroup roomContent)
+    {
+        roomContent = null;
+        string roomId = ResolveRoomId();
+
+        if (string.IsNullOrWhiteSpace(roomId))
+        {
+            return false;
+        }
+
+        RoomContentGroup[] rooms = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < rooms.Length; i++)
+        {
+            RoomContentGroup candidate = rooms[i];
+
+            if (candidate != null && GuestRoomScaleCalibration.SameRoom(candidate.RoomName, roomId))
+            {
+                roomContent = candidate;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool LooksLikeButler(GameObject candidate)

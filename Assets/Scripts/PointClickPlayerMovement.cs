@@ -1962,6 +1962,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 		}
 
+		if (HasActiveGuestScaleParticipant())
+		{
+			return;
+		}
+
 		UpdateVisualOffset(Camera.main);
 
 		if (useButlerRoomScaleOverrides &&
@@ -1980,6 +1985,25 @@ public class PointClickPlayerMovement : MonoBehaviour
 			authoredLocalScale.x * scale,
 			authoredLocalScale.y * scale,
 			authoredLocalScale.z);
+	}
+
+	private bool HasActiveGuestScaleParticipant()
+	{
+		GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
+
+		if (participant == null)
+		{
+			participant = GetComponentInParent<GuestScaleParticipant>(true);
+		}
+
+		if (participant == null)
+		{
+			participant = GetComponentInChildren<GuestScaleParticipant>(true);
+		}
+
+		return participant != null &&
+			!participant.ExcludeFromGuestScaling &&
+			!participant.IsButler;
 	}
 
 	private bool TryEvaluateButlerCalibratedFinalLocalScale(out Vector3 finalLocalScale)

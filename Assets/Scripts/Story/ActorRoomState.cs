@@ -918,6 +918,26 @@ public class ActorRoomState : MonoBehaviour
             ? targetTransform.GetComponentInParent<GuestScaleParticipant>(true)
             : GetComponentInParent<GuestScaleParticipant>(true);
 
+        if (participant == null && targetTransform != null)
+        {
+            participant = targetTransform.GetComponentInChildren<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null && actorObject != null)
+        {
+            participant = actorObject.GetComponentInParent<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null && actorObject != null)
+        {
+            participant = actorObject.GetComponentInChildren<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null)
+        {
+            participant = GetComponentInChildren<GuestScaleParticipant>(true);
+        }
+
         return participant != null &&
             !participant.ExcludeFromGuestScaling &&
             !participant.IsButler;

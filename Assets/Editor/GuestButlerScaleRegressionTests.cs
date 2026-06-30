@@ -473,6 +473,69 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void AuthoredChapterGuestsInferRoomBeforeRuntimeStateExists()
+    {
+        GameObject drawingRoomGuest = new GameObject("Guest 6");
+        GameObject entranceGuest = new GameObject("Guest 2");
+
+        try
+        {
+            Assert.That(
+                GuestRoomScaleApplier.TryInferAuthoredSceneGuestRoomId(drawingRoomGuest, out string drawingRoomId),
+                Is.True);
+            Assert.That(drawingRoomId, Is.EqualTo("Drawing Room"));
+
+            Assert.That(
+                GuestRoomScaleApplier.TryInferAuthoredSceneGuestRoomId(entranceGuest, out string entranceRoomId),
+                Is.True);
+            Assert.That(entranceRoomId, Is.EqualTo("Grand Entrance Hall"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(drawingRoomGuest);
+            UnityEngine.Object.DestroyImmediate(entranceGuest);
+        }
+    }
+
+    [Test]
+    public void GuestScaleParticipantUsesResolvedRoomContentForTopLevelWorldGuestY()
+    {
+        GameObject roomObject = new GameObject("Room_Drawing_Room");
+        GameObject guest = new GameObject("Guest 6");
+
+        try
+        {
+            roomObject.transform.position = new Vector3(10f, 100f, 0f);
+            RoomContentGroup room = roomObject.AddComponent<RoomContentGroup>();
+            room.SetRoomName("Drawing Room");
+
+            guest.transform.position = new Vector3(15f, 125f, 0f);
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Drawing Room");
+            participant.SetScaleRoot(guest.transform);
+
+            Assert.That(participant.ResolveRoomLocalY(), Is.EqualTo(25f).Within(0.0001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+            UnityEngine.Object.DestroyImmediate(roomObject);
+        }
+    }
+
+    [Test]
+    public void GuestScaleOwnershipGuardsAllScaleWriters()
+    {
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
+        string projectedText = File.ReadAllText(RoomProjectedEntityPath);
+
+        Assert.That(movementText, Does.Contain("HasActiveGuestScaleParticipant"), "PointClickPlayerMovement should not apply perspective or room-stage zoom scale to guests.");
+        Assert.That(actorRoomStateText, Does.Contain("GetComponentInChildren<GuestScaleParticipant>"), "ActorRoomState should find guest ownership even when the checked transform is not the participant root.");
+        Assert.That(projectedText, Does.Contain("GetComponentInChildren<GuestScaleParticipant>"), "RoomProjectedEntity should find guest ownership even when the visual root and participant live on different transforms.");
+    }
+
+    [Test]
     public void GuestSizeMasterHasSimplePrimaryWorkflow()
     {
         string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
