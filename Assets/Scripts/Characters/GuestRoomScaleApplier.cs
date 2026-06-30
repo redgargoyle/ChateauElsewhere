@@ -175,6 +175,7 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
     public bool RefreshParticipantNow(GuestScaleParticipant participant, out bool changed)
     {
         if (participant == null ||
+            IsGuestScaleInfrastructureObject(participant.gameObject) ||
             participant.ExcludeFromGuestScaling ||
             participant.IsButler)
         {
@@ -193,10 +194,9 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             roomScale = evaluatedScale;
         }
 
-        float poseRatio = ResolvePoseRatio(participant, roomId);
         float finalMultiplier =
             Mathf.Max(0.001f, roomScale) *
-            Mathf.Max(0.001f, poseRatio) *
+            ResolveExplicitPoseRatio(participant, roomId) *
             participant.ManualFineTuneMultiplier;
 
         changed = participant.ApplyFinalScale(finalMultiplier);
@@ -214,7 +214,9 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         {
             GameObject candidate = roots[i];
 
-            if (candidate == null || !LooksLikeChapterGuest(candidate.name))
+            if (candidate == null ||
+                IsGuestScaleInfrastructureObject(candidate) ||
+                !LooksLikeChapterGuest(candidate.name))
             {
                 continue;
             }
@@ -278,9 +280,8 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         return ensured;
     }
 
-    private float ResolvePoseRatio(GuestScaleParticipant participant, string roomId)
+    private float ResolveExplicitPoseRatio(GuestScaleParticipant participant, string roomId)
     {
-        CharacterPose resolvedPose = participant.Pose;
         float fineTuneMultiplier = 1f;
 
         if (poseOverrideStore != null &&
@@ -291,32 +292,15 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
                 out float overridePoseRatio,
                 out float overrideFineTuneMultiplier))
         {
-            resolvedPose = overridePose;
             fineTuneMultiplier = Mathf.Max(0.001f, overrideFineTuneMultiplier);
 
             if (overridePoseRatio > 0f)
             {
-                return SanitizePoseRatio(resolvedPose, overridePoseRatio) * fineTuneMultiplier;
+                return SanitizePoseRatio(overridePose, overridePoseRatio) * fineTuneMultiplier;
             }
         }
 
-        if (resolvedPose == CharacterPose.Auto)
-        {
-            ActorRoomState actorRoomState = participant.GetComponentInParent<ActorRoomState>(true);
-            resolvedPose = actorRoomState != null && actorRoomState.IsSeated
-                ? CharacterPose.Seated
-                : CharacterPose.Standing;
-        }
-
-        float ratio = resolvedPose switch
-        {
-            CharacterPose.Seated => participant.SeatedRatioOverride > 0f ? participant.SeatedRatioOverride : 0.68f,
-            CharacterPose.Crouching => 0.75f,
-            CharacterPose.Lying => 0.45f,
-            _ => 1f
-        };
-
-        return SanitizePoseRatio(resolvedPose, ratio) * fineTuneMultiplier;
+        return fineTuneMultiplier;
     }
 
     private void ResolveCalibration()
@@ -359,8 +343,40 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         }
 
         string clean = value.Replace("_", " ");
-        return clean.Contains("Guest ", System.StringComparison.OrdinalIgnoreCase) ||
-            clean.StartsWith("Guest", System.StringComparison.OrdinalIgnoreCase) ||
+        return StartsWithGuestNumber(clean) ||
             clean.Contains("Walker GEH", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool StartsWithGuestNumber(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) ||
+            !value.StartsWith("Guest", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        for (int i = "Guest".Length; i < value.Length; i++)
+        {
+            if (char.IsWhiteSpace(value[i]))
+            {
+                continue;
+            }
+
+            return char.IsDigit(value[i]);
+        }
+
+        return false;
+    }
+
+    public static bool IsGuestScaleInfrastructureObject(GameObject candidate)
+    {
+        return candidate != null &&
+            (candidate.GetComponent<GuestRoomScaleApplier>() != null ||
+            candidate.GetComponent<GuestRoomScaleCalibration>() != null ||
+            candidate.GetComponent<GuestPoseScaleOverrideStore>() != null ||
+            candidate.name.Contains("GuestRoomScale", System.StringComparison.OrdinalIgnoreCase) ||
+            candidate.name.Contains("GuestScale", System.StringComparison.OrdinalIgnoreCase) ||
+            candidate.name.Contains("GuestArrival", System.StringComparison.OrdinalIgnoreCase) ||
+            candidate.name.Contains("GuestDrawingRoomDoorTarget", System.StringComparison.OrdinalIgnoreCase));
     }
 }

@@ -60,7 +60,7 @@ Do not edit Transform scale manually for calibration. Do not use Advanced reset 
 
 ## Guest Room Scale
 
-The manually calibrated Butler room scale is the trusted room/depth source. Guests use a separate scene-level `GuestRoomScaleCalibration` room multiplier, keep their own captured authored base scale, and receive final body size only from `GuestRoomScaleApplier`.
+The manually calibrated Butler room scale is the trusted room/depth source. Guests use the Butler's saved final local Y scale as the target room/depth size, then apply a scene-level `GuestRoomScaleCalibration` room fine tune where `1` means Butler-matched. Each guest keeps its own captured authored base aspect ratio, and receives final body size only from `GuestRoomScaleApplier`.
 
 `GuestScaleParticipant` marks the visible human body root. Coats, speech bubbles, shadows, prompts, highlights, icons, cursors, and tooltips must not be selected as body roots. `RoomProjectedEntity`, `RoomPersonWalker2D`, and `ActorRoomState` still own placement, movement, sorting, tint, and story state, but they are no longer final guest body-size writers when a participant is present.
 
@@ -69,8 +69,9 @@ Workflow:
 1. Open `Tools > Characters > Guest Size Master`.
 2. Click `SET UP GUEST SCALING`.
 3. Choose a room.
-4. Adjust `Guest Size In This Room`.
-5. Click `PREVIEW ROOM GUEST SIZE`, then `SAVE ROOM GUEST SIZE`, then `SAVE SCENE`.
+4. Keep `Guest Size In This Room` at `1` for Butler-matched scale, or adjust it as a room fine tune; dragging the slider previews immediately in edit mode.
+5. Use `MATCH BUTLER SIZE IN ROOM` to return the selected room to `1`.
+6. Click `SAVE ROOM GUEST SIZE`, then `SAVE SCENE`.
 
 Use `Tools > Characters > Guest Scale Audit` when checking scene setup. The obsolete `GuestButlerScaleHarmonizer` and old Butler-scale tool are compatibility shells only.
 

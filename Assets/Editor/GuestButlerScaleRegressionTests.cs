@@ -105,7 +105,7 @@ public sealed class GuestRoomScaleRegressionTests
                 Is.True,
                 diagnostic);
             Assert.That(depth01, Is.EqualTo(0.5f).Within(0.0001f));
-            Assert.That(scale, Is.EqualTo(0.75f * 1.25f).Within(0.0001f));
+            Assert.That(scale, Is.EqualTo(1.5f * 1.25f).Within(0.0001f));
         }
         finally
         {
@@ -153,7 +153,7 @@ public sealed class GuestRoomScaleRegressionTests
 
             scene.Applier.RefreshAllNow();
 
-            Assert.That(guest.transform.localScale.y, Is.EqualTo(0.75f * 1.25f).Within(0.0001f));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.5f * 1.25f).Within(0.0001f));
         }
         finally
         {
@@ -181,7 +181,7 @@ public sealed class GuestRoomScaleRegressionTests
 
             scene.Applier.RefreshAllNow();
 
-            Assert.That(targetGraphic.rectTransform.localScale.y, Is.EqualTo(0.75f * 1.1f).Within(0.0001f));
+            Assert.That(targetGraphic.rectTransform.localScale.y, Is.EqualTo(1.5f * 1.1f).Within(0.0001f));
             Assert.That(walkerObject.transform.localScale.y, Is.EqualTo(4f).Within(0.0001f));
         }
         finally
@@ -207,7 +207,7 @@ public sealed class GuestRoomScaleRegressionTests
 
             scene.Applier.RefreshAllNow();
 
-            Assert.That(visualRoot.localScale.y, Is.EqualTo(0.75f * 0.9f).Within(0.0001f));
+            Assert.That(visualRoot.localScale.y, Is.EqualTo(1.5f * 0.9f).Within(0.0001f));
         }
         finally
         {
@@ -234,7 +234,7 @@ public sealed class GuestRoomScaleRegressionTests
 
             scene.Applier.RefreshAllNow();
 
-            Assert.That(guest.transform.localScale.y, Is.EqualTo(0.75f * 1.4f).Within(0.0001f));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.5f * 1.4f).Within(0.0001f));
             Assert.That(coat.transform.localScale, Is.EqualTo(new Vector3(8f, 9f, 1f)));
             Assert.That(GuestScaleParticipant.NameLooksExcludedFromBodyScale(coat.name), Is.True);
         }
@@ -294,7 +294,7 @@ public sealed class GuestRoomScaleRegressionTests
 
             scene.Applier.RefreshAllNow();
 
-            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.5f).Within(0.0001f));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(3f).Within(0.0001f));
         }
         finally
         {
@@ -343,7 +343,7 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
-    public void SeatedGuestsUseSeatedPoseRatio()
+    public void SeatedGuestsDoNotAutoShrinkWithoutExplicitOverride()
     {
         ScaleTestScene scene = CreateScaleTestScene("Drawing Room", 1f);
         GameObject guest = new GameObject("Guest 5");
@@ -357,16 +357,66 @@ public sealed class GuestRoomScaleRegressionTests
 
             scene.Applier.RefreshAllNow();
 
-            Assert.That(guest.transform.localScale.y, Is.EqualTo(0.75f * 0.68f).Within(0.0001f));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.5f).Within(0.0001f));
 
             participant.SetSeatedRatioOverride(0.9f);
             scene.Applier.RefreshAllNow();
-            Assert.That(guest.transform.localScale.y, Is.EqualTo(0.75f * 0.8f).Within(0.0001f));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.5f).Within(0.0001f));
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(guest);
             DestroyScaleTestScene(scene);
+        }
+    }
+
+    [Test]
+    public void GuestScaleParticipantAppliesTargetButlerScaleFromCapturedBaseAspect()
+    {
+        GameObject guest = new GameObject("Guest Aspect");
+        guest.transform.localScale = new Vector3(2f, 4f, 9f);
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetScaleRoot(guest.transform);
+            participant.CaptureBaseScale(true);
+
+            bool changed = participant.ApplyFinalScale(1f);
+
+            Assert.That(changed, Is.True);
+            Assert.That(guest.transform.localScale, Is.EqualTo(new Vector3(0.5f, 1f, 9f)));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierDoesNotCreateParticipantsForGuestScaleInfrastructure()
+    {
+        GameObject applierObject = new GameObject("GuestRoomScaleApplier");
+        GameObject calibrationObject = new GameObject("GuestRoomScaleCalibration");
+        GameObject realGuest = new GameObject("Guest 6");
+
+        try
+        {
+            GuestRoomScaleApplier applier = applierObject.AddComponent<GuestRoomScaleApplier>();
+            calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+
+            int ensured = applier.EnsureParticipantsForSceneGuests();
+
+            Assert.That(ensured, Is.EqualTo(1));
+            Assert.That(realGuest.GetComponent<GuestScaleParticipant>(), Is.Not.Null);
+            Assert.That(applierObject.GetComponent<GuestScaleParticipant>(), Is.Null);
+            Assert.That(calibrationObject.GetComponent<GuestScaleParticipant>(), Is.Null);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(realGuest);
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+            UnityEngine.Object.DestroyImmediate(applierObject);
         }
     }
 
@@ -389,9 +439,20 @@ public sealed class GuestRoomScaleRegressionTests
     {
         string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
 
+        Assert.That(text, Does.Contain("PreviewSelectedRoom(selectedRoom)"));
         Assert.That(text, Does.Contain("RefreshRoomNow(selectedRoom)"));
         Assert.That(text, Does.Contain("SceneView.RepaintAll()"));
         Assert.That(text, Does.Contain("changed"));
+    }
+
+    [Test]
+    public void GuestScaleApplierDoesNotReadCameraOrRoomStageZoom()
+    {
+        string applierText = File.ReadAllText(GuestRoomScaleApplierPath);
+
+        Assert.That(applierText, Does.Not.Contain("Camera"));
+        Assert.That(applierText, Does.Not.Contain("currentRoomStageScaleRatio"));
+        Assert.That(applierText, Does.Not.Contain("roomStageScale"));
     }
 
     [Test]

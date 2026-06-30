@@ -10,6 +10,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
     private const float MaxMultiplier = 3f;
 
     private int selectedRoomIndex;
+    private string loadedRoomId = string.Empty;
     private float selectedRoomMultiplier = 1f;
     private bool advancedFoldout;
     private float customFrontY;
@@ -29,10 +30,16 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         PointClickPlayerMovement butler = FindButler();
         GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
         GuestRoomScaleApplier applier = FindAnyObjectByType<GuestRoomScaleApplier>(FindObjectsInactive.Include);
-        GuestScaleParticipant[] guests = FindObjectsByType<GuestScaleParticipant>(FindObjectsInactive.Include);
+        GuestScaleParticipant[] guests = FindGuestParticipants();
         string[] rooms = BuildRoomOptions(calibration, butler);
         selectedRoomIndex = Mathf.Clamp(selectedRoomIndex, 0, Mathf.Max(0, rooms.Length - 1));
         string selectedRoom = rooms.Length > 0 ? rooms[selectedRoomIndex] : string.Empty;
+
+        if (!GuestRoomScaleCalibration.SameRoom(loadedRoomId, selectedRoom))
+        {
+            selectedRoomMultiplier = GetRoomMultiplier(calibration, selectedRoom);
+            loadedRoomId = selectedRoom;
+        }
 
         EditorGUILayout.LabelField("Guest Size Master", EditorStyles.boldLabel);
         EditorGUILayout.LabelField($"Butler found: {(butler != null ? "yes" : "no")}");
@@ -53,16 +60,15 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
                 selectedRoomIndex = nextRoomIndex;
                 selectedRoom = rooms[selectedRoomIndex];
                 selectedRoomMultiplier = GetRoomMultiplier(calibration, selectedRoom);
+                loadedRoomId = selectedRoom;
             }
 
             EditorGUI.BeginChangeCheck();
             selectedRoomMultiplier = EditorGUILayout.Slider("Guest Size In This Room", selectedRoomMultiplier, MinMultiplier, MaxMultiplier);
 
-            if (EditorGUI.EndChangeCheck() && calibration != null && !string.IsNullOrWhiteSpace(selectedRoom))
+            if (EditorGUI.EndChangeCheck() && !string.IsNullOrWhiteSpace(selectedRoom))
             {
-                Undo.RecordObject(calibration, "Edit Guest Room Size");
-                calibration.SetRoomMultiplier(selectedRoom, selectedRoomMultiplier);
-                EditorUtility.SetDirty(calibration);
+                PreviewSelectedRoom(selectedRoom);
             }
         }
 
@@ -75,6 +81,12 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         if (GUILayout.Button("PREVIEW ROOM GUEST SIZE"))
         {
+            PreviewSelectedRoom(selectedRoom);
+        }
+
+        if (GUILayout.Button("MATCH BUTLER SIZE IN ROOM"))
+        {
+            selectedRoomMultiplier = 1f;
             PreviewSelectedRoom(selectedRoom);
         }
 
@@ -157,7 +169,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         if (GUILayout.Button("Emergency restore captured base scales"))
         {
-            GuestScaleParticipant[] guests = FindObjectsByType<GuestScaleParticipant>(FindObjectsInactive.Include);
+            GuestScaleParticipant[] guests = FindGuestParticipants();
 
             for (int i = 0; i < guests.Length; i++)
             {
@@ -174,13 +186,14 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         GuestRoomScaleCalibration calibration = EnsureCalibration(butler);
         GuestRoomScaleApplier applier = GuestRoomScaleApplier.EnsureInScene();
         applier.SetCalibration(calibration);
+        int removed = RemoveInvalidParticipants();
         int ensured = applier.EnsureParticipantsForSceneGuests();
-        int applied = applier.RefreshAllNow();
+        GuestScaleApplyResult result = applier.RefreshAllWithResultNow();
 
         EditorUtility.SetDirty(calibration);
         EditorUtility.SetDirty(applier);
         EditorSceneManager.MarkAllScenesDirty();
-        lastAction = $"Set up guest scaling. Ensured {ensured}, applied {applied}.";
+        lastAction = $"Set up guest scaling. Removed {removed}, ensured {ensured}, applied {result.Applied}, changed {result.Changed}.";
         Debug.Log($"[Guest Size Master] {lastAction}");
     }
 
@@ -259,7 +272,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
     {
         List<Transform> scaleRoots = new List<Transform>();
         HashSet<Transform> seen = new HashSet<Transform>();
-        GuestScaleParticipant[] guests = FindObjectsByType<GuestScaleParticipant>(FindObjectsInactive.Include);
+        GuestScaleParticipant[] guests = FindGuestParticipants();
 
         for (int i = 0; i < guests.Length; i++)
         {
@@ -327,7 +340,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
     private static void ApplyProofMultiplier(float multiplier)
     {
-        GuestScaleParticipant[] guests = FindObjectsByType<GuestScaleParticipant>(FindObjectsInactive.Include);
+        GuestScaleParticipant[] guests = FindGuestParticipants();
 
         for (int i = 0; i < guests.Length; i++)
         {
@@ -341,6 +354,45 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             guest.CaptureBaseScale(false);
             guest.ApplyFinalScale(multiplier);
         }
+    }
+
+    private static GuestScaleParticipant[] FindGuestParticipants()
+    {
+        GuestScaleParticipant[] allGuests = FindObjectsByType<GuestScaleParticipant>(FindObjectsInactive.Include);
+        List<GuestScaleParticipant> guests = new List<GuestScaleParticipant>();
+
+        for (int i = 0; i < allGuests.Length; i++)
+        {
+            GuestScaleParticipant guest = allGuests[i];
+
+            if (guest != null && !GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(guest.gameObject))
+            {
+                guests.Add(guest);
+            }
+        }
+
+        return guests.ToArray();
+    }
+
+    private static int RemoveInvalidParticipants()
+    {
+        int removed = 0;
+        GuestScaleParticipant[] allGuests = FindObjectsByType<GuestScaleParticipant>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < allGuests.Length; i++)
+        {
+            GuestScaleParticipant guest = allGuests[i];
+
+            if (guest == null || !GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(guest.gameObject))
+            {
+                continue;
+            }
+
+            Undo.DestroyObjectImmediate(guest);
+            removed++;
+        }
+
+        return removed;
     }
 
     private static string[] BuildRoomOptions(GuestRoomScaleCalibration calibration, PointClickPlayerMovement butler)

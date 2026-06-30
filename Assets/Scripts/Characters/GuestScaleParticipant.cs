@@ -232,7 +232,7 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         }
     }
 
-    public bool ApplyFinalScale(float multiplier)
+    public bool ApplyFinalScale(float targetLocalScaleY)
     {
         if (excludeFromGuestScaling || isButler)
         {
@@ -247,8 +247,14 @@ public sealed class GuestScaleParticipant : MonoBehaviour
             return false;
         }
 
-        float safeMultiplier = Mathf.Max(0.001f, multiplier);
-        Vector3 targetScale = capturedBaseScale * safeMultiplier;
+        float safeTargetY = Mathf.Max(0.001f, targetLocalScaleY);
+        float baseY = Mathf.Abs(capturedBaseScale.y) > 0.001f ? capturedBaseScale.y : 1f;
+        float signedTargetY = baseY < 0f ? -safeTargetY : safeTargetY;
+        float aspectRatio = signedTargetY / baseY;
+        Vector3 targetScale = new Vector3(
+            capturedBaseScale.x * aspectRatio,
+            signedTargetY,
+            capturedBaseScale.z);
         bool changed = (root.localScale - targetScale).sqrMagnitude > 0.000001f;
         root.localScale = targetScale;
         return changed;

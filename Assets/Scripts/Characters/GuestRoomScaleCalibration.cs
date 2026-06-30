@@ -198,9 +198,9 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
                 out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
         {
             depth01 = sample.Depth01;
-            scale = Mathf.Max(0.001f, sample.NormalizedScale);
+            scale = Mathf.Max(0.001f, sample.ButlerFinalLocalScaleY);
             scale *= Mathf.Max(0.001f, entry.roomGuestScaleMultiplier);
-            diagnostic = $"Butler curve {sample.Source} depth={depth01:0.###}.";
+            diagnostic = $"Butler final local scale {sample.Source} depth={depth01:0.###}.";
             return true;
         }
 

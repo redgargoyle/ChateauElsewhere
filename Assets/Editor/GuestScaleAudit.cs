@@ -280,7 +280,10 @@ public static class GuestScaleAudit
         {
             GameObject candidate = allObjects[i];
 
-            if (candidate == null || IsPersistentAsset(candidate) || !IsGuestName(candidate.name))
+            if (candidate == null ||
+                IsPersistentAsset(candidate) ||
+                GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(candidate) ||
+                !IsGuestName(candidate.name))
             {
                 continue;
             }
@@ -372,7 +375,29 @@ public static class GuestScaleAudit
             return false;
         }
 
-        return value.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
+        string clean = value.Replace("_", " ");
+
+        if (clean.Contains("Walker GEH", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!clean.StartsWith("Guest", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        for (int i = "Guest".Length; i < clean.Length; i++)
+        {
+            if (char.IsWhiteSpace(clean[i]))
+            {
+                continue;
+            }
+
+            return char.IsDigit(clean[i]);
+        }
+
+        return false;
     }
 
     private static bool IsPersistentAsset(UnityEngine.Object value)
