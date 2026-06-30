@@ -712,6 +712,20 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestSizeMasterHasExplicitManualGuestSelectionAndAllGuestWorkflow()
+    {
+        string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+
+        Assert.That(GuestRoomScaleMasterWindow.ActiveSelectionGuestOptionLabel, Is.EqualTo("Active Hierarchy Selection"));
+        Assert.That(GuestRoomScaleMasterWindow.AllGuestsSelectionLabel, Is.EqualTo("All Guests In Room"));
+        Assert.That(GuestRoomScaleMasterWindow.ApplyManualSizeToAllGuestsButtonLabel, Is.EqualTo("APPLY MANUAL SIZE TO ALL GUESTS IN ROOM"));
+        Assert.That(text, Does.Contain("OnSelectionChange"));
+        Assert.That(text, Does.Contain("DrawManualGuestSelection"));
+        Assert.That(text, Does.Contain("PreviewAllGuestsManualScale"));
+        Assert.That(text, Does.Contain("Manual Guest"));
+    }
+
+    [Test]
     public void GuestSizeMasterPreviewUsesSelectedRoomRefreshWithVisibleFeedback()
     {
         string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
