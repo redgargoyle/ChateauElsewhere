@@ -232,6 +232,38 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         return new GuestScaleApplyResult(applied, changed);
     }
 
+    public GuestScaleApplyResult RefreshParticipantsAsRoomNow(
+        GuestScaleParticipant[] targetParticipants,
+        string roomId)
+    {
+        ResolveCalibration();
+
+        if (calibration == null || targetParticipants == null || string.IsNullOrWhiteSpace(roomId))
+        {
+            return new GuestScaleApplyResult(0, 0);
+        }
+
+        int applied = 0;
+        int changed = 0;
+
+        for (int i = 0; i < targetParticipants.Length; i++)
+        {
+            GuestScaleParticipant participant = targetParticipants[i];
+
+            if (RefreshParticipantAsRoomNow(participant, roomId, out bool participantChanged))
+            {
+                applied++;
+
+                if (participantChanged)
+                {
+                    changed++;
+                }
+            }
+        }
+
+        return new GuestScaleApplyResult(applied, changed);
+    }
+
     public bool RefreshParticipantNow(GuestScaleParticipant participant)
     {
         return RefreshParticipantNow(participant, out _);
@@ -259,7 +291,40 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         return true;
     }
 
+    public bool RefreshParticipantAsRoomNow(
+        GuestScaleParticipant participant,
+        string roomId,
+        out bool changed)
+    {
+        ResolveCalibration();
+
+        if (!TryComputeParticipantScale(participant, roomId, out GuestScaleComputation computation))
+        {
+            changed = false;
+            return false;
+        }
+
+        changed = participant.ApplyFinalScale(computation.TargetLocalScale);
+
+        if (logScaleDiagnostics)
+        {
+            Debug.Log(
+                $"[GuestScale] {participant.CharacterId} temporaryRoom={computation.RoomId} base={computation.BaseGuestScale:0.####} zoomRatio={computation.RoomStageZoomRatio:0.####} inherited={computation.InheritedRoomStageZoomRatio:0.####} applied={computation.TargetLocalScale:0.####}",
+                participant);
+        }
+
+        return true;
+    }
+
     public bool TryComputeParticipantScale(GuestScaleParticipant participant, out GuestScaleComputation computation)
+    {
+        return TryComputeParticipantScale(participant, null, out computation);
+    }
+
+    private bool TryComputeParticipantScale(
+        GuestScaleParticipant participant,
+        string roomIdOverride,
+        out GuestScaleComputation computation)
     {
         ResolveCalibration();
         computation = default;
@@ -273,7 +338,9 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             return false;
         }
 
-        string roomId = participant.ResolveRoomId();
+        string roomId = string.IsNullOrWhiteSpace(roomIdOverride)
+            ? participant.ResolveRoomId()
+            : GuestRoomScaleCalibration.CleanRoomId(roomIdOverride);
         float roomLocalY = participant.ResolveRoomLocalY();
         float roomScale = 1f;
         string roomScaleDiagnostic = "No guest room scale calibration.";

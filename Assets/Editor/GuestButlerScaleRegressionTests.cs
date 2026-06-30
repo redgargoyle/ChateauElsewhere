@@ -1436,6 +1436,82 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestSizeMasterUsesVisibleGuestsAsTemporarySelectedRoomTargets()
+    {
+        GuestScaleParticipant[] guests = new GuestScaleParticipant[8];
+        GameObject[] guestObjects = new GameObject[8];
+
+        try
+        {
+            for (int i = 0; i < guests.Length; i++)
+            {
+                guestObjects[i] = new GameObject($"Guest {i + 1}");
+                guestObjects[i].AddComponent<SpriteRenderer>();
+                guests[i] = guestObjects[i].AddComponent<GuestScaleParticipant>();
+                guests[i].SetCharacterId($"Guest {i + 1}");
+                guests[i].SetRoomIdOverride(i < 4 ? "Grand Entrance Hall" : "Drawing Room");
+            }
+
+            GuestScaleParticipant[] targetGuests = GuestRoomScaleMasterWindow.FindEditorTargetGuestsForRoom(
+                guests,
+                "Grand Entrance Hall");
+
+            Assert.That(targetGuests, Has.Length.EqualTo(8));
+
+            for (int i = 0; i < guests.Length; i++)
+            {
+                Assert.That(guests[i].CurrentRoomId, Is.Empty);
+            }
+        }
+        finally
+        {
+            for (int i = 0; i < guestObjects.Length; i++)
+            {
+                UnityEngine.Object.DestroyImmediate(guestObjects[i]);
+            }
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierCanApplySelectedRoomCalibrationToTemporaryTargets()
+    {
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+        GameObject applierObject = new GameObject("GuestScaleApplier");
+        GameObject guestObject = new GameObject("Guest 5");
+
+        try
+        {
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            calibration.SetFixedGuestScale("Grand Entrance Hall", 1.75f);
+
+            GuestRoomScaleApplier applier = applierObject.AddComponent<GuestRoomScaleApplier>();
+            applier.SetCalibration(calibration);
+
+            guestObject.AddComponent<SpriteRenderer>();
+            GuestScaleParticipant guest = guestObject.AddComponent<GuestScaleParticipant>();
+            guest.SetCharacterId("Guest 5");
+            guest.SetRoomIdOverride("Drawing Room");
+            guest.CaptureBaseScale(true);
+
+            GuestScaleApplyResult result = applier.RefreshParticipantsAsRoomNow(
+                new[] { guest },
+                "Grand Entrance Hall");
+
+            Assert.That(result.Applied, Is.EqualTo(1));
+            Assert.That(result.Changed, Is.EqualTo(1));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.75f).Within(0.0001f));
+            Assert.That(guest.CurrentRoomId, Is.Empty);
+            Assert.That(guest.ResolveRoomId(), Is.EqualTo("Drawing Room"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guestObject);
+            UnityEngine.Object.DestroyImmediate(applierObject);
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+        }
+    }
+
+    [Test]
     public void OldGuestButlerScaleHarmonizerIsRemovedOrObsolete()
     {
         if (File.Exists(HarmonizerPath))
