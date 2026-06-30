@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class GuestRoomScaleMasterWindow : EditorWindow
 {
@@ -98,10 +99,18 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         float roomStageZoomRatio = hasCurrentRoomStageScale
             ? GuestRoomStageScaleUtility.CalculateRoomStageZoomRatio(currentRoomStageScale, referenceRoomStageScale)
             : 1f;
+        int selectedRoomGuestCount = CountGuestsInRoom(guests, selectedRoom);
+        int activeVisibleGuestCount = CountActiveVisibleManagedGuests(guests);
         EditorGUILayout.LabelField($"Current room-stage scale: {FormatScaleStatus(hasCurrentRoomStageScale, currentRoomStageScale)}");
         EditorGUILayout.LabelField($"Saved reference room-stage scale: {FormatScaleStatus(hasReferenceRoomStageScale, referenceRoomStageScale)}");
         EditorGUILayout.LabelField($"Computed room-stage zoom ratio: {roomStageZoomRatio:0.####}");
-        EditorGUILayout.LabelField($"Guests in selected room: {CountGuestsInRoom(guests, selectedRoom)}");
+        EditorGUILayout.LabelField($"Guests in selected room: {selectedRoomGuestCount}");
+        if (!string.IsNullOrWhiteSpace(selectedRoom) && selectedRoomGuestCount < activeVisibleGuestCount)
+        {
+            EditorGUILayout.HelpBox(
+                $"Only {selectedRoomGuestCount} of {activeVisibleGuestCount} managed visible guests resolve to {selectedRoom}. Use Explain Room Filtering.",
+                MessageType.Warning);
+        }
         EditorGUILayout.LabelField($"Last action: {lastAction}");
         EditorGUILayout.Space(8f);
 
@@ -188,6 +197,12 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         {
             LogGuestScaleDiagnostics(selectedRoom);
             lastAction = "Guest scale diagnostics logged.";
+        }
+
+        if (GUILayout.Button("EXPLAIN ROOM FILTERING FOR SELECTED ROOM"))
+        {
+            LogRoomFilteringExplanation(selectedRoom);
+            lastAction = "Room filtering explanation logged.";
         }
 
         if (GUILayout.Button("Reset Selected Room Multiplier"))
@@ -869,6 +884,61 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
     }
 
+    private static void LogRoomFilteringExplanation(string selectedRoom)
+    {
+        GuestScaleParticipant[] guests = FindGuestParticipants();
+        Array.Sort(
+            guests,
+            (left, right) => string.Compare(
+                left != null ? left.CharacterId : string.Empty,
+                right != null ? right.CharacterId : string.Empty,
+                StringComparison.OrdinalIgnoreCase));
+
+        int included = 0;
+
+        for (int i = 0; i < guests.Length; i++)
+        {
+            GuestScaleParticipant guest = guests[i];
+
+            if (guest == null)
+            {
+                continue;
+            }
+
+            GuestRoomResolutionTrace trace = guest.BuildRoomResolutionTrace(selectedRoom);
+
+            if (trace.IncludedInSelectedRoom)
+            {
+                included++;
+            }
+
+            Debug.Log(
+                "[GuestScale Room Filter] " +
+                $"selectedRoom='{selectedRoom}' " +
+                $"guest='{trace.CharacterId}' " +
+                $"path='{trace.ObjectPath}' " +
+                $"activeInHierarchy={trace.ActiveInHierarchy} " +
+                $"currentRoomId='{trace.CurrentRoomId}' " +
+                $"actorRoomState='{trace.ActorRoomStateRoomId}' " +
+                $"projectedCurrentVisualScaleRoom='{trace.ProjectedCurrentVisualScaleRoomId}' " +
+                $"projectedRoomProfile='{trace.ProjectedRoomProfileRoomId}' " +
+                $"parentRoomContent='{trace.ParentRoomContentRoomName}' " +
+                $"walkerRoomProfile='{trace.WalkerRoomProfileRoomId}' " +
+                $"activeNavigationRoom='{trace.ActiveNavigationRoomId}' " +
+                $"roomIdOverride='{trace.RoomIdOverride}' " +
+                $"authoredNameInference='{trace.AuthoredNameInferenceRoomId}' " +
+                $"finalRoom='{trace.FinalRoomId}' " +
+                $"finalSource='{trace.FinalSource}' " +
+                $"included={trace.IncludedInSelectedRoom} " +
+                $"exclusionReason='{trace.ExclusionReason}'",
+                guest);
+        }
+
+        Debug.Log(
+            $"[GuestScale Room Filter] Summary selectedRoom='{selectedRoom}' included={included}/{guests.Length}.",
+            FindAnyObjectByType<GuestRoomScaleApplier>(FindObjectsInactive.Include));
+    }
+
     private static bool HasPointClickPlayerMovement(GuestScaleParticipant guest)
     {
         return guest != null &&
@@ -1272,6 +1342,55 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         return ready;
+    }
+
+    private static int CountActiveVisibleManagedGuests(GuestScaleParticipant[] guests)
+    {
+        int count = 0;
+
+        for (int i = 0; i < guests.Length; i++)
+        {
+            GuestScaleParticipant guest = guests[i];
+
+            if (guest != null &&
+                GuestRoomScaleApplier.IsManagedGuestParticipant(guest) &&
+                guest.gameObject.activeInHierarchy &&
+                HasVisibleRendererOrGraphic(guest))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static bool HasVisibleRendererOrGraphic(GuestScaleParticipant guest)
+    {
+        Renderer[] renderers = guest.GetComponentsInChildren<Renderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer != null && renderer.enabled && renderer.gameObject.activeInHierarchy)
+            {
+                return true;
+            }
+        }
+
+        Graphic[] graphics = guest.GetComponentsInChildren<Graphic>(true);
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            Graphic graphic = graphics[i];
+
+            if (graphic != null && graphic.enabled && graphic.gameObject.activeInHierarchy)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static int CountGuestsInRoom(GuestScaleParticipant[] guests, string roomId)

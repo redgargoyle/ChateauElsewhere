@@ -125,8 +125,26 @@ public class ActorRoomState : MonoBehaviour
         }
 
         currentRoomId = cleanRoomId;
+        SyncGuestScaleParticipantRoomId(cleanRoomId);
         ApplyState();
         GetRoomProjection()?.ApplyProjection();
+    }
+
+    private void SyncGuestScaleParticipantRoomId(string cleanRoomId)
+    {
+        GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
+
+        if (participant == null)
+        {
+            participant = GetComponentInChildren<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null)
+        {
+            participant = GetComponentInParent<GuestScaleParticipant>(true);
+        }
+
+        participant?.SetCurrentRoomId(cleanRoomId);
     }
 
     public void SetAvailableInCurrentChapter(bool value)

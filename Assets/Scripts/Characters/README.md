@@ -64,6 +64,8 @@ The manually calibrated Butler room scale is the trusted room/depth source. Gues
 
 `GuestScaleParticipant` marks the visible human body root. Coats, speech bubbles, shadows, prompts, highlights, icons, cursors, and tooltips must not be selected as body roots. `RoomProjectedEntity`, `RoomPersonWalker2D`, and `ActorRoomState` still own placement, movement, sorting, tint, and story state, but they are no longer final guest body-size writers when a participant is present.
 
+`GuestScaleParticipant.CurrentRoomId` is the live room-membership source used by the guest scale tool and applier. Gameplay code should set it whenever a guest is staged, placed, or moved into a known room. `roomIdOverride` is only an authored fallback for setup and should not be treated as current room state.
+
 Guest room sizes are saved with a `referenceRoomStageScale`. At runtime and in editor previews, `GuestRoomScaleApplier` multiplies the saved guest size by the current room-stage zoom ratio, then divides out inherited room-stage zoom only for guests already parented under the scaled room stage. This makes guests zoom with the room and Butler without double-scaling room-stage children.
 
 Workflow:

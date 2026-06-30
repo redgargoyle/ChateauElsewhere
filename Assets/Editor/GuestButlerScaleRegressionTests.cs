@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
@@ -705,6 +706,195 @@ public sealed class GuestRoomScaleRegressionTests
                 GuestRoomScaleApplier.TryInferAuthoredSceneGuestRoomId(guest, out string roomId),
                 Is.True);
             Assert.That(roomId, Is.EqualTo("Drawing Room"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void GuestScaleParticipantLiveCurrentRoomBeatsStaleOverride()
+    {
+        GameObject guest = new GameObject("Guest 1");
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.SetCurrentRoomId("Drawing Room");
+
+            Assert.That(participant.CurrentRoomId, Is.EqualTo("Drawing Room"));
+            Assert.That(participant.ResolveRoomId(), Is.EqualTo("Drawing Room"));
+            Assert.That(participant.LastRoomResolutionSource, Is.EqualTo("CurrentRoomId"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void GuestScaleParticipantLiveCurrentRoomBeatsStaleProjectedProfile()
+    {
+        RoomPerspectiveProfile entranceProfile = CreateProfile(1f, 1f, "Grand Entrance Hall");
+        RoomProjectedEntity entity = CreateProjectedEntity("Guest 1", entranceProfile, Vector2.zero);
+
+        try
+        {
+            GuestScaleParticipant participant = entity.gameObject.AddComponent<GuestScaleParticipant>();
+            participant.SetCurrentRoomId("Drawing Room");
+
+            Assert.That(participant.ResolveRoomId(), Is.EqualTo("Drawing Room"));
+            Assert.That(participant.LastRoomResolutionSource, Is.EqualTo("CurrentRoomId"));
+        }
+        finally
+        {
+            DestroyEntity(entity);
+            UnityEngine.Object.DestroyImmediate(entranceProfile);
+        }
+    }
+
+    [Test]
+    public void ActorRoomStateSetCurrentRoomUpdatesGuestScaleParticipant()
+    {
+        GameObject guest = new GameObject("Guest 1");
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            ActorRoomState actorState = guest.AddComponent<ActorRoomState>();
+
+            actorState.SetCurrentRoom("Drawing Room");
+
+            Assert.That(participant.CurrentRoomId, Is.EqualTo("Drawing Room"));
+            Assert.That(participant.ResolveRoomId(), Is.EqualTo("Drawing Room"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierEnsureParticipantCanSetCurrentRoom()
+    {
+        GameObject guest = new GameObject("Guest 1");
+
+        try
+        {
+            GuestScaleParticipant participant = GuestRoomScaleApplier.EnsureParticipantForGuestObject(
+                guest,
+                "Guest 1",
+                "Drawing Room",
+                CharacterPose.Standing,
+                true);
+
+            Assert.That(participant.CurrentRoomId, Is.EqualTo("Drawing Room"));
+            Assert.That(participant.ResolveRoomId(), Is.EqualTo("Drawing Room"));
+            Assert.That(participant.LastRoomResolutionSource, Is.EqualTo("CurrentRoomId"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleMasterIncludesLiveDrawingRoomGuestsDespiteStaleOverrides()
+    {
+        GuestScaleParticipant[] guests = new GuestScaleParticipant[8];
+        GameObject[] guestObjects = new GameObject[8];
+
+        try
+        {
+            for (int i = 0; i < guests.Length; i++)
+            {
+                guestObjects[i] = new GameObject($"Guest {i + 1}");
+                guests[i] = guestObjects[i].AddComponent<GuestScaleParticipant>();
+                guests[i].SetCharacterId($"Guest {i + 1}");
+                guests[i].SetRoomIdOverride(i < 4 ? "Grand Entrance Hall" : "Drawing Room");
+                guests[i].SetCurrentRoomId("Drawing Room");
+            }
+
+            MethodInfo method = typeof(GuestRoomScaleMasterWindow).GetMethod(
+                "FindGuestsInRoom",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+
+            GuestScaleParticipant[] roomGuests = (GuestScaleParticipant[])method.Invoke(
+                null,
+                new object[] { guests, "Drawing Room" });
+
+            Assert.That(roomGuests, Has.Length.EqualTo(8));
+        }
+        finally
+        {
+            for (int i = 0; i < guestObjects.Length; i++)
+            {
+                UnityEngine.Object.DestroyImmediate(guestObjects[i]);
+            }
+        }
+    }
+
+    [Test]
+    public void EntranceGuestsRemainEntranceBeforeMove()
+    {
+        GameObject guest = new GameObject("Guest 1");
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.SetCurrentRoomId("Grand Entrance Hall");
+
+            Assert.That(participant.ResolveRoomId(), Is.EqualTo("Grand Entrance Hall"));
+            Assert.That(participant.LastRoomResolutionSource, Is.EqualTo("CurrentRoomId"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void ActiveNavigationDoesNotMisclassifyInactiveGuests()
+    {
+        GameObject guest = new GameObject("Guest 1");
+
+        try
+        {
+            guest.SetActive(false);
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+
+            Assert.That(participant.ResolveRoomId(), Is.EqualTo("Grand Entrance Hall"));
+            Assert.That(participant.LastRoomResolutionSource, Is.EqualTo("RoomIdOverride"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void ResolveRoomTraceReportsChosenSource()
+    {
+        GameObject guest = new GameObject("Guest 1");
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.SetCurrentRoomId("Drawing Room");
+
+            GuestRoomResolutionTrace trace = participant.BuildRoomResolutionTrace("Drawing Room");
+
+            Assert.That(trace.CharacterId, Is.EqualTo("Guest 1"));
+            Assert.That(trace.FinalRoomId, Is.EqualTo("Drawing Room"));
+            Assert.That(trace.FinalSource, Is.EqualTo("CurrentRoomId"));
+            Assert.That(trace.IncludedInSelectedRoom, Is.True);
+            Assert.That(trace.ExclusionReason, Is.Empty);
         }
         finally
         {

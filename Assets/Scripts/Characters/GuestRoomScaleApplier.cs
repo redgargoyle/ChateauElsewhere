@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public readonly struct GuestScaleApplyResult
 {
@@ -114,7 +115,8 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         GameObject guestObject,
         string characterId = null,
         string roomId = null,
-        CharacterPose pose = CharacterPose.Standing)
+        CharacterPose pose = CharacterPose.Standing,
+        bool roomIdIsCurrent = false)
     {
         if (guestObject == null)
         {
@@ -141,7 +143,14 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
         if (!string.IsNullOrWhiteSpace(roomId))
         {
-            participant.SetRoomIdOverride(roomId);
+            if (roomIdIsCurrent)
+            {
+                participant.SetCurrentRoomId(roomId);
+            }
+            else
+            {
+                participant.SetRoomIdOverride(roomId);
+            }
         }
 
         participant.SetPose(pose);
@@ -429,12 +438,24 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         }
 
         if (TryResolveActorRoomId(guestObject, out roomId) ||
-            TryResolveProjectedRoomId(guestObject, out roomId) ||
             TryResolveParentRoomId(guestObject, out roomId) ||
-            TryResolveWalkerRoomId(guestObject, out roomId) ||
             TryResolveActiveNavigationRoomId(guestObject, out roomId) ||
+            TryResolveProjectedCurrentVisualScaleRoomId(guestObject, out roomId) ||
+            TryResolveWalkerRoomId(guestObject, out roomId) ||
+            TryResolveProjectedProfileRoomId(guestObject, out roomId) ||
             TryResolveParticipantOverrideRoomId(guestObject, out roomId) ||
             TryInferChapterOneSceneGuestRoomId(guestObject.name, out roomId))
+        {
+            roomId = GuestRoomScaleCalibration.CleanRoomId(roomId);
+            return !string.IsNullOrWhiteSpace(roomId);
+        }
+
+        return false;
+    }
+
+    public static bool TryInferChapterGuestNameRoomId(string guestName, out string roomId)
+    {
+        if (TryInferChapterOneSceneGuestRoomId(guestName, out roomId))
         {
             roomId = GuestRoomScaleCalibration.CleanRoomId(roomId);
             return !string.IsNullOrWhiteSpace(roomId);
@@ -577,9 +598,52 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         return false;
     }
 
-    private static bool TryResolveProjectedRoomId(GameObject guestObject, out string roomId)
+    private static bool TryResolveProjectedCurrentVisualScaleRoomId(GameObject guestObject, out string roomId)
     {
         roomId = string.Empty;
+        RoomProjectedEntity projectedEntity = ResolveProjectedEntity(guestObject);
+
+        if (projectedEntity == null)
+        {
+            return false;
+        }
+
+        if (projectedEntity.IsProjectionActive &&
+            !string.IsNullOrWhiteSpace(projectedEntity.CurrentVisualScaleRoomId))
+        {
+            roomId = projectedEntity.CurrentVisualScaleRoomId;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryResolveProjectedProfileRoomId(GameObject guestObject, out string roomId)
+    {
+        roomId = string.Empty;
+        RoomProjectedEntity projectedEntity = ResolveProjectedEntity(guestObject);
+
+        if (projectedEntity == null)
+        {
+            return false;
+        }
+
+        if (projectedEntity.RoomProfile != null && !string.IsNullOrWhiteSpace(projectedEntity.RoomProfile.RoomId))
+        {
+            roomId = projectedEntity.RoomProfile.RoomId;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static RoomProjectedEntity ResolveProjectedEntity(GameObject guestObject)
+    {
+        if (guestObject == null)
+        {
+            return null;
+        }
+
         RoomProjectedEntity projectedEntity = guestObject.GetComponent<RoomProjectedEntity>();
 
         if (projectedEntity == null)
@@ -592,24 +656,7 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             projectedEntity = guestObject.GetComponentInChildren<RoomProjectedEntity>(true);
         }
 
-        if (projectedEntity == null)
-        {
-            return false;
-        }
-
-        if (!string.IsNullOrWhiteSpace(projectedEntity.CurrentVisualScaleRoomId))
-        {
-            roomId = projectedEntity.CurrentVisualScaleRoomId;
-            return true;
-        }
-
-        if (projectedEntity.RoomProfile != null && !string.IsNullOrWhiteSpace(projectedEntity.RoomProfile.RoomId))
-        {
-            roomId = projectedEntity.RoomProfile.RoomId;
-            return true;
-        }
-
-        return false;
+        return projectedEntity;
     }
 
     private static bool TryResolveParentRoomId(GameObject guestObject, out string roomId)
@@ -630,7 +677,7 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
     {
         roomId = string.Empty;
 
-        if (guestObject == null || !Application.isPlaying || !guestObject.activeInHierarchy)
+        if (guestObject == null || !Application.isPlaying || !IsActiveVisibleManagedChapterGuest(guestObject))
         {
             return false;
         }
@@ -644,6 +691,57 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
         roomId = navigationManager.CurrentRoom;
         return true;
+    }
+
+    private static bool IsActiveVisibleManagedChapterGuest(GameObject guestObject)
+    {
+        if (guestObject == null || !guestObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        GuestScaleParticipant participant = guestObject.GetComponent<GuestScaleParticipant>();
+
+        if (participant == null)
+        {
+            participant = guestObject.GetComponentInParent<GuestScaleParticipant>(true);
+        }
+
+        if (participant == null)
+        {
+            participant = guestObject.GetComponentInChildren<GuestScaleParticipant>(true);
+        }
+
+        if (!IsManagedGuestParticipant(participant))
+        {
+            return false;
+        }
+
+        Renderer[] renderers = guestObject.GetComponentsInChildren<Renderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+
+            if (renderer != null && renderer.enabled && renderer.gameObject.activeInHierarchy)
+            {
+                return true;
+            }
+        }
+
+        Graphic[] graphics = guestObject.GetComponentsInChildren<Graphic>(true);
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            Graphic graphic = graphics[i];
+
+            if (graphic != null && graphic.enabled && graphic.gameObject.activeInHierarchy)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool TryInferChapterOneSceneGuestRoomId(string guestName, out string roomId)
