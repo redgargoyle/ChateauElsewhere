@@ -232,6 +232,27 @@ public sealed class GuestButlerScaleRegressionTests
         Assert.That(File.ReadAllText(ActorRoomStatePath), Does.Contain("ApplyButlerCharacterScaleNow"));
     }
 
+    [Test]
+    public void ButlerFinalGuestScaleIgnoresRoomStageZoomMultiplier()
+    {
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string projectedText = File.ReadAllText(RoomProjectedEntityPath);
+        string actorText = File.ReadAllText(ActorRoomStatePath);
+        string playerScaleBody = ExtractMethodBody(movementText, "private void ApplyPerspectiveScale");
+        string projectedScaleBody = ExtractMethodBody(projectedText, "private void ApplyProjectedScale");
+        string forceScaleBody = ExtractMethodBody(projectedText, "private void ForceApplyButlerCharacterScale");
+        string roomStageMotionBody = ExtractMethodBody(actorText, "private void ApplyRoomStageMotionDeltaIfNeeded");
+        string roomStageBindingBody = ExtractMethodBody(actorText, "private bool TryApplyRoomStageLocalBindingIfNeeded");
+
+        Assert.That(playerScaleBody, Does.Contain("transform.localScale = calibratedLocalScale"), "The calibrated Butler should use the saved final local scale directly.");
+        Assert.That(playerScaleBody, Does.Not.Contain("calibratedLocalScale.x * roomStageScale"), "The calibrated Butler must not grow/shrink when scroll zoom changes the room stage.");
+        Assert.That(projectedScaleBody, Does.Contain("currentButlerCharacterFinalLocalScaleY"), "Projected guests should still use the Butler final local-scale value.");
+        Assert.That(projectedScaleBody, Does.Not.Contain("currentButlerCharacterFinalLocalScaleY * currentRoomStageScaleMultiplier"), "Final Butler guest scale must not grow/shrink again when scroll zoom changes the room stage.");
+        Assert.That(forceScaleBody, Does.Not.Contain("currentRoomStageScaleMultiplier > 0f"), "Tool/runtime force-apply should be idempotent and independent from current room-stage zoom.");
+        Assert.That(roomStageMotionBody, Does.Contain("!isUsingButlerCharacterScaleRules"), "ActorRoomState room-stage motion should not scale actors after final Butler guest scaling is active.");
+        Assert.That(roomStageBindingBody, Does.Contain("!isUsingButlerCharacterScaleRules"), "Bound world actors using final Butler guest scale should keep position binding but not room-stage scale multiplication.");
+    }
+
     private static RoomPerspectiveProfile CreateProfile(float nearScale, float farScale)
     {
         RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
@@ -289,5 +310,36 @@ public sealed class GuestButlerScaleRegressionTests
         {
             UnityEngine.Object.DestroyImmediate(entity.gameObject);
         }
+    }
+
+    private static string ExtractMethodBody(string sourceText, string methodName)
+    {
+        int methodIndex = sourceText.IndexOf(methodName, StringComparison.Ordinal);
+        Assert.That(methodIndex, Is.GreaterThanOrEqualTo(0), $"Could not find method '{methodName}'.");
+
+        int bodyStart = sourceText.IndexOf('{', methodIndex);
+        Assert.That(bodyStart, Is.GreaterThanOrEqualTo(0), $"Could not find method body for '{methodName}'.");
+
+        int depth = 0;
+
+        for (int i = bodyStart; i < sourceText.Length; i++)
+        {
+            if (sourceText[i] == '{')
+            {
+                depth++;
+            }
+            else if (sourceText[i] == '}')
+            {
+                depth--;
+
+                if (depth == 0)
+                {
+                    return sourceText.Substring(bodyStart, i - bodyStart + 1);
+                }
+            }
+        }
+
+        Assert.Fail($"Could not find end of method body for '{methodName}'.");
+        return string.Empty;
     }
 }

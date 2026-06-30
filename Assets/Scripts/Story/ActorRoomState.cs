@@ -664,7 +664,9 @@ public class ActorRoomState : MonoBehaviour
                 targetTransform.position = correctedWorldPosition;
             }
 
-            if (scaleWithRoomStageMotion && !Mathf.Approximately(scaleRatio, 1f))
+            if (scaleWithRoomStageMotion &&
+                !isUsingButlerCharacterScaleRules &&
+                !Mathf.Approximately(scaleRatio, 1f))
             {
                 targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio);
             }
@@ -790,13 +792,18 @@ public class ActorRoomState : MonoBehaviour
 
         worldPoint.z = boundWorldZ;
         targetTransform.position = worldPoint;
-        float scaleRatio = scaleWithRoomStageMotion
-            ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
-            : 1f;
-        float perspectiveScale = GetBoundRoomPerspectiveScale();
-        targetTransform.localScale = scaleWithRoomStageMotion
-            ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
-            : boundLocalScale;
+
+        if (!isUsingButlerCharacterScaleRules)
+        {
+            float scaleRatio = scaleWithRoomStageMotion
+                ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
+                : 1f;
+            float perspectiveScale = GetBoundRoomPerspectiveScale();
+            targetTransform.localScale = scaleWithRoomStageMotion
+                ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
+                : boundLocalScale;
+        }
+
         return true;
     }
 

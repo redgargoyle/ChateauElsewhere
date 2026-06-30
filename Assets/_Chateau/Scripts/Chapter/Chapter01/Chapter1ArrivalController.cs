@@ -695,8 +695,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        Vector2 coatScreenPosition = TryGetGuestFeetScreenPosition(guestState, out Vector2 guestFeetScreenPosition)
-            ? guestFeetScreenPosition
+        Vector2 coatScreenPosition = TryGetCoatInteractionScreenPosition(guestState, coatPickup, out Vector2 interactionScreenPosition)
+            ? interactionScreenPosition
             : mainCamera.WorldToScreenPoint(coatPickup.transform.position);
 
         if (!playerMovement.TryEvaluateMovementAtScreenPoint(coatScreenPosition, true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
@@ -724,6 +724,49 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         playerMovement.MovementStopped += HandleCoatPickupMovementStopped;
+    }
+
+    private bool TryGetCoatInteractionScreenPosition(
+        GuestRuntimeState guestState,
+        Chapter1CoatPickup coatPickup,
+        out Vector2 screenPosition)
+    {
+        screenPosition = Vector2.zero;
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
+        {
+            return false;
+        }
+
+        if (coatPickup != null &&
+            TryGetVisibleBoundsWorldPoint(coatPickup.gameObject, false, 0.5f, out Vector3 coatWorldPoint))
+        {
+            screenPosition = ClampScreenPointToSafeViewport(mainCamera.WorldToScreenPoint(coatWorldPoint));
+            return true;
+        }
+
+        if (guestState != null &&
+            TryGetVisibleBoundsWorldPoint(guestState.GuestObject, true, 0.28f, out Vector3 guestWorldPoint))
+        {
+            screenPosition = ClampScreenPointToSafeViewport(mainCamera.WorldToScreenPoint(guestWorldPoint));
+            return true;
+        }
+
+        if (guestState != null &&
+            TryGetGuestFeetScreenPosition(guestState, out Vector2 guestFeetScreenPosition))
+        {
+            screenPosition = ClampScreenPointToSafeViewport(guestFeetScreenPosition);
+            return true;
+        }
+
+        if (coatPickup != null)
+        {
+            screenPosition = ClampScreenPointToSafeViewport(mainCamera.WorldToScreenPoint(coatPickup.transform.position));
+            return true;
+        }
+
+        return false;
     }
 
     private void HandleCoatPickupMovementStopped()
@@ -786,8 +829,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         GuestRuntimeState guestState = FindGuestByCoat(coatPickup.CoatId);
-        Vector2 coatScreenPosition = TryGetGuestFeetScreenPosition(guestState, out Vector2 guestFeetScreenPosition)
-            ? guestFeetScreenPosition
+        Vector2 coatScreenPosition = TryGetCoatInteractionScreenPosition(guestState, coatPickup, out Vector2 interactionScreenPosition)
+            ? interactionScreenPosition
             : mainCamera.WorldToScreenPoint(coatPickup.transform.position);
 
         if (!playerMovement.TryGetScreenPointFromLogicalPosition(playerMovement.LogicalPosition, out Vector2 butlerScreenPosition))
@@ -845,6 +888,44 @@ public class Chapter1ArrivalController : MonoBehaviour
     private static bool TryGetVisibleFeetWorldPoint(GameObject root, bool ignoreCoatRenderers, out Vector3 feetWorldPoint)
     {
         return TryGetGuestFeetWorldPoint(root, ignoreCoatRenderers, false, out feetWorldPoint);
+    }
+
+    private static bool TryGetVisibleBoundsWorldPoint(
+        GameObject root,
+        bool ignoreCoatRenderers,
+        float normalizedHeight,
+        out Vector3 worldPoint)
+    {
+        worldPoint = Vector3.zero;
+
+        if (root == null)
+        {
+            return false;
+        }
+
+        Bounds combinedBounds = default;
+        bool hasBounds = false;
+
+        AccumulateGuestRendererBounds(root, ignoreCoatRenderers, false, ref combinedBounds, ref hasBounds);
+
+        if (!hasBounds && ignoreCoatRenderers)
+        {
+            AccumulateGuestRendererBounds(root, false, false, ref combinedBounds, ref hasBounds);
+        }
+
+        AccumulateGuestGraphicBounds(root, false, ref combinedBounds, ref hasBounds);
+
+        if (!hasBounds)
+        {
+            return false;
+        }
+
+        float heightT = Mathf.Clamp01(normalizedHeight);
+        worldPoint = new Vector3(
+            combinedBounds.center.x,
+            Mathf.Lerp(combinedBounds.min.y, combinedBounds.max.y, heightT),
+            combinedBounds.center.z);
+        return true;
     }
 
     private static bool TryGetGuestFeetWorldPoint(
@@ -974,6 +1055,25 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         combinedBounds.Encapsulate(bounds);
+    }
+
+    private static Vector2 ClampScreenPointToSafeViewport(Vector2 screenPoint)
+    {
+        float width = Screen.width;
+        float height = Screen.height;
+
+        if (width <= 1f || height <= 1f)
+        {
+            return screenPoint;
+        }
+
+        float horizontalMargin = Mathf.Min(96f, width * 0.08f);
+        float bottomMargin = Mathf.Min(120f, height * 0.16f);
+        float topMargin = Mathf.Min(96f, height * 0.12f);
+
+        return new Vector2(
+            Mathf.Clamp(screenPoint.x, horizontalMargin, width - horizontalMargin),
+            Mathf.Clamp(screenPoint.y, bottomMargin, height - topMargin));
     }
 
     public void HandleClosetClicked()

@@ -144,11 +144,11 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
                 return true;
             }
 
-            Vector2 center = (min + max) * 0.5f;
+            Vector2 center = ClampScreenPointToSafeViewport((min + max) * 0.5f);
             return Vector2.Distance(screenPosition, center) <= MinimumScreenClickRadius;
         }
 
-        Vector2 fallbackCenter = worldCamera.WorldToScreenPoint(transform.position);
+        Vector2 fallbackCenter = ClampScreenPointToSafeViewport(worldCamera.WorldToScreenPoint(transform.position));
         return Vector2.Distance(screenPosition, fallbackCenter) <= MinimumScreenClickRadius;
     }
 
@@ -189,6 +189,25 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
     {
         min = Vector2.Min(min, point);
         max = Vector2.Max(max, point);
+    }
+
+    private static Vector2 ClampScreenPointToSafeViewport(Vector2 screenPoint)
+    {
+        float width = Screen.width;
+        float height = Screen.height;
+
+        if (width <= 1f || height <= 1f)
+        {
+            return screenPoint;
+        }
+
+        float horizontalMargin = Mathf.Min(96f, width * 0.08f);
+        float bottomMargin = Mathf.Min(120f, height * 0.16f);
+        float topMargin = Mathf.Min(96f, height * 0.12f);
+
+        return new Vector2(
+            Mathf.Clamp(screenPoint.x, horizontalMargin, width - horizontalMargin),
+            Mathf.Clamp(screenPoint.y, bottomMargin, height - topMargin));
     }
 
     private static bool TryGetPrimaryPointerPosition(out Vector2 screenPosition)

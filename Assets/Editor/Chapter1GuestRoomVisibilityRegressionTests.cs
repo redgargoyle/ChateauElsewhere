@@ -7,6 +7,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
 {
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter1SceneActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs";
+    private const string Chapter1CoatPickupPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string DrawingRoomPrefabPath = "Assets/Prefabs/Room_Drawing_Room.prefab";
     private const string DrawingRoomPerspectivePrefabPath = "Assets/Prefabs/Room_Drawing_Room_Perspective.prefab";
@@ -221,6 +222,25 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
+    public void ScaledGuestCoatPickupUsesVisibleClampedInteractionTarget()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string coatPickupText = File.ReadAllText(Chapter1CoatPickupPath);
+        string walkCoatBody = ExtractMethodBody(controllerText, "private void WalkButlerToCoat");
+        string closeCoatBody = ExtractMethodBody(controllerText, "private bool IsButlerCloseToCoat");
+        string interactionTargetBody = ExtractMethodBody(controllerText, "private bool TryGetCoatInteractionScreenPosition");
+        string coatHitTestBody = ExtractMethodBody(coatPickupText, "private bool IsPointerOverCoat");
+
+        Assert.That(controllerText, Does.Contain("TryGetCoatInteractionScreenPosition"), "Scaled entrance guests need a safe target that is not raw off-screen feet.");
+        Assert.That(walkCoatBody, Does.Contain("TryGetCoatInteractionScreenPosition"), "Walking to a guest coat should use the visible coat/body target.");
+        Assert.That(closeCoatBody, Does.Contain("TryGetCoatInteractionScreenPosition"), "Coat proximity should compare against the same safe target used for walking.");
+        Assert.That(interactionTargetBody, Does.Contain("TryGetVisibleBoundsWorldPoint(coatPickup.gameObject"), "Coat pickup should prefer the visible coat bounds.");
+        Assert.That(interactionTargetBody, Does.Contain("TryGetVisibleBoundsWorldPoint(guestState.GuestObject, true"), "When coat bounds are clipped, pickup should fall back to the visible guest body.");
+        Assert.That(interactionTargetBody, Does.Contain("ClampScreenPointToSafeViewport"), "Scaled low guests should keep pickup targets inside the playable viewport.");
+        Assert.That(coatHitTestBody, Does.Contain("ClampScreenPointToSafeViewport"), "Coat pointer hit testing should clamp fallback centers too.");
+    }
+
+    [Test]
     public void DrawingRoomGuestMovementUsesEditableScenePoints()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
@@ -260,8 +280,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string completeClosetBody = ExtractMethodBody(controllerText, "CompletePendingClosetStorage");
         string closetDestinationBody = ExtractMethodBody(controllerText, "TryGetClosetApproachDestination");
         string closetScreenBody = ExtractMethodBody(controllerText, "TryGetClosetApproachScreenPosition");
-        string walkCoatBody = ExtractMethodBody(controllerText, "WalkButlerToCoat");
-        string closeCoatBody = ExtractMethodBody(controllerText, "IsButlerCloseToCoat");
+        string walkCoatBody = ExtractMethodBody(controllerText, "private void WalkButlerToCoat");
+        string closeCoatBody = ExtractMethodBody(controllerText, "private bool IsButlerCloseToCoat");
         string actionBoundsBody = ExtractMethodBody(actionText, "IsPointerInsideActionBounds");
         string screenBoundsBody = ExtractMethodBody(actionText, "IsPointerInsideScreenBounds");
         string actionUpdateBody = ExtractMethodBody(actionText, "private void Update");
@@ -284,8 +304,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(closetDestinationBody, Does.Contain("TryGetClosetApproachScreenPosition"), "The hanger walk target should start from the visible lower hanger point, not the object center.");
         Assert.That(closetDestinationBody, Does.Contain("TryEvaluateMovementAtScreenPoint"), "The hanger target should be converted through the same screen-space movement mapping as player clicks.");
         Assert.That(closetScreenBody, Does.Contain("TryGetVisibleFeetWorldPoint"), "The hanger approach point should use the lower visible bounds.");
-        Assert.That(walkCoatBody, Does.Contain("TryGetGuestFeetScreenPosition"), "Guest coat pickup should walk to the guest's feet, not the coat sprite transform.");
-        Assert.That(closeCoatBody, Does.Contain("TryGetGuestFeetScreenPosition"), "Guest coat proximity should compare the butler's feet with the same guest-feet target used for movement.");
+        Assert.That(controllerText, Does.Contain("TryGetCoatInteractionScreenPosition"), "Guest coat pickup should use a visible, clamped interaction target instead of raw feet.");
+        Assert.That(walkCoatBody, Does.Contain("TryGetCoatInteractionScreenPosition"), "Guest coat pickup should walk to the visible coat/body interaction point, not off-screen feet.");
+        Assert.That(closeCoatBody, Does.Contain("TryGetCoatInteractionScreenPosition"), "Guest coat proximity should compare the butler's feet with the same safe interaction target used for movement.");
+        Assert.That(controllerText, Does.Contain("ClampScreenPointToSafeViewport"), "Scaled entrance guests should keep coat pickup targets inside the playable viewport.");
         Assert.That(controllerText, Does.Contain("IsCoatVisualTransform(renderer.transform)"), "Guest feet detection should ignore coat renderers before falling back to all visible renderers.");
         Assert.That(actionBoundsBody, Does.Contain("IsPointerInsideScreenBounds(screenPosition)"), "World-space scene actions should test the visible screen bounds, not raw world collider points.");
         Assert.That(screenBoundsBody, Does.Contain("TryGetActionScreenBounds"), "Coat-hanger hit testing should build screen-space bounds from the visible object.");

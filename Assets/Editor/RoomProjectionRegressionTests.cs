@@ -299,7 +299,8 @@ public class RoomProjectionRegressionTests
         string applyScaleBody = ExtractMethodBody(movementText, "private void ApplyPerspectiveScale");
 
         Assert.That(applyScaleBody, Does.Contain("TryEvaluateButlerCalibratedFinalLocalScale"), "Complete Butler room calibration should be able to replace the old depth scale.");
-        Assert.That(applyScaleBody, Does.Match(@"calibratedLocalScale\.x \* roomStageScale[\s\S]*calibratedLocalScale\.y \* roomStageScale"), "Calibrated Butler scale should still follow room-stage zoom.");
+        Assert.That(applyScaleBody, Does.Contain("transform.localScale = calibratedLocalScale"), "Calibrated Butler scale should apply saved final local scale directly.");
+        Assert.That(applyScaleBody, Does.Not.Contain("calibratedLocalScale.x * roomStageScale"), "Calibrated Butler scale must not change when scroll zoom changes the room stage.");
         Assert.That(applyScaleBody, Does.Contain("CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio"), "Rooms without Butler calibration should keep the old profile/fallback behavior.");
         Assert.That(applyScaleBody, Does.Contain("authoredLocalScale.x * scale"), "Uncalibrated rooms should still scale from the original authored local scale.");
         Assert.That(movementText, Does.Contain("usesRoomProfileScale ? depthScale : fallbackRelativeScale"), "The original profile-vs-fallback scale path should remain available for uncalibrated rooms.");
@@ -539,8 +540,9 @@ public class RoomProjectionRegressionTests
         Assert.That(shouldFollowBody, Does.Contain("!HasActiveProjection()"), "Projection should own visual scale and room-stage positioning when present.");
         Assert.That(actorRoomStateText, Does.Contain("projection.IsProjectionActive"), "ActorRoomState should only defer to projection in the matching projected room.");
         Assert.That(actorRoomStateText, Does.Contain("ApplyState()"), "ActorRoomState should continue to own visibility and interaction state.");
-        Assert.That(projectionText, Does.Contain("GetRoomStageScaleMultiplier"), "Projected world-space guests should still scale with room-stage zoom.");
-        Assert.That(projectedScaleBody, Does.Contain("currentScale * currentRoomStageScaleMultiplier"), "Projection should multiply room-depth scale by room-stage zoom without replacing the authored base scale.");
+        Assert.That(projectionText, Does.Contain("GetRoomStageScaleMultiplier"), "Legacy projected world-space objects should still know how to follow room-stage zoom.");
+        Assert.That(projectedScaleBody, Does.Contain("currentScale * currentRoomStageScaleMultiplier"), "Legacy projection should multiply room-depth scale by room-stage zoom without replacing the authored base scale.");
+        Assert.That(projectedScaleBody, Does.Not.Contain("currentButlerCharacterFinalLocalScaleY * currentRoomStageScaleMultiplier"), "Final Butler guest scaling should not double-apply room-stage zoom.");
     }
 
     [Test]
