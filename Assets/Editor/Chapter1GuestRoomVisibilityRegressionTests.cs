@@ -342,13 +342,13 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(playerMovementText, Does.Match(@"if \(!applyPerspectiveScale\)[\s\S]*return;"), "Disabled perspective scale should stop PointClickPlayerMovement from writing transform.localScale.");
         Assert.That(playerMovementText, Does.Contain("authoredPerspectiveScaleReference"), "The butler should keep the Edit Mode transform scale as the baseline at its authored depth.");
         Assert.That(playerMovementText, Does.Contain("GetPerspectiveScaleForY"), "Perspective scaling should compare the current room depth against the authored depth.");
-        Assert.That(playerPerspectiveScaleBody, Does.Contain("float scale = CalculateExistingPerspectiveScale();"), "Play Mode perspective scaling should use the current room depth scale without scroll-zoom size changes.");
+        Assert.That(playerPerspectiveScaleBody, Does.Contain("CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio"), "Play Mode perspective scaling should keep the Butler fixed relative to the zoomed room background.");
         Assert.That(playerPerspectiveScaleBody, Does.Contain("authoredLocalScale.x * scale"), "Play Mode should multiply the artist-authored butler X scale instead of replacing it.");
         Assert.That(playerPerspectiveScaleBody, Does.Contain("authoredLocalScale.y * scale"), "Play Mode should multiply the artist-authored butler Y scale instead of replacing it.");
-        Assert.That(playerPerspectiveScaleBody, Does.Not.Contain("currentRoomStageScaleRatio"), "Scroll zoom must move the room stage without changing the Butler's visible scale.");
+        Assert.That(playerPerspectiveScaleBody, Does.Contain("currentRoomStageScaleRatio"), "World-space Butler visuals must share room-stage zoom so size does not change relative to the background.");
         Assert.That(actorRoomStateText, Does.Contain("scaleWithRoomStageMotion"), "ActorRoomState should be able to scale a bound actor from its authored base scale.");
         Assert.That(prepareMethodBody, Does.Contain("authoredGuestScale"), "Scene guest preparation should capture the scale restored from player movement before other setup.");
-        Assert.That(prepareMethodBody, Does.Contain("SetScaleWithRoomStageMotion(true)"), "Chapter 1 guests may follow room-stage position changes, but ActorRoomState must not use this to resize them.");
+        Assert.That(prepareMethodBody, Does.Contain("SetScaleWithRoomStageMotion(true)"), "Chapter 1 world-space guests should follow room-stage position and zoom so they stay locked to the painted room.");
         Assert.That(disablePlayerMethodBody, Does.Contain("SetPerspectiveScaleEnabled(false)"), "Scene guests should turn off inherited player perspective scaling before disabling player-only movement.");
         Assert.That(placeMethodBody, Does.Contain("PreserveGuestAuthoredScale(guestState)"), "Drawing room placement and skip staging should preserve the scale artists set in Edit Mode before room zoom is applied.");
     }

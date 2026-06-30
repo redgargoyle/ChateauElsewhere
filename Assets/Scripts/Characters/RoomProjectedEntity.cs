@@ -326,7 +326,8 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         {
             float projectionMultiplier = Mathf.Max(
                 0.001f,
-                currentScale > 0f ? currentScale : GetProjectedScale());
+                Mathf.Max(0.001f, currentScale > 0f ? currentScale : GetProjectedScale()) *
+                Mathf.Max(0.001f, currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : GetRoomStageScaleMultiplier()));
             currentVisualRootScale = new Vector3(
                 currentVisualRootScale.x / projectionMultiplier,
                 currentVisualRootScale.y / projectionMultiplier,
@@ -663,11 +664,11 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         {
             targetRoot.localScale = BuildFinalLocalScaleFromReference(
                 baseScale,
-                currentButlerCharacterFinalLocalScaleY);
+                currentButlerCharacterFinalLocalScaleY * currentRoomStageScaleMultiplier);
             return;
         }
 
-        float appliedScale = currentScale;
+        float appliedScale = currentScale * currentRoomStageScaleMultiplier;
         Vector3 projectedScale = new Vector3(
             baseScale.x * appliedScale,
             baseScale.y * appliedScale,
@@ -726,7 +727,8 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
         float finalLocalScaleY =
             Mathf.Max(0.001f, sample.ButlerFinalLocalScaleY) *
-            Mathf.Max(0.001f, debugScaleMultiplier);
+            Mathf.Max(0.001f, debugScaleMultiplier) *
+            Mathf.Max(0.001f, currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : GetRoomStageScaleMultiplier());
         Vector3 baseScale = ignoreRoomVisualScaleOverridesWhenUsingButlerRules
             ? GetDefaultAuthoredVisualRootScale()
             : GetAuthoredVisualRootScaleForCurrentRoom();

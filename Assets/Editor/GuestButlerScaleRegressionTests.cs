@@ -233,7 +233,7 @@ public sealed class GuestButlerScaleRegressionTests
     }
 
     [Test]
-    public void ButlerFinalGuestScaleIgnoresRoomStageZoomMultiplier()
+    public void CharacterScaleTracksRoomStageZoomSoRelativeBackgroundSizeStaysStable()
     {
         string movementText = File.ReadAllText(PointClickPlayerMovementPath);
         string projectedText = File.ReadAllText(RoomProjectedEntityPath);
@@ -245,17 +245,15 @@ public sealed class GuestButlerScaleRegressionTests
         string roomStageMotionBody = ExtractMethodBody(actorText, "private void ApplyRoomStageMotionDeltaIfNeeded");
         string roomStageBindingBody = ExtractMethodBody(actorText, "private bool TryApplyRoomStageLocalBindingIfNeeded");
 
-        Assert.That(playerScaleBody, Does.Contain("transform.localScale = calibratedLocalScale"), "The calibrated Butler should use the saved final local scale directly.");
-        Assert.That(playerScaleBody, Does.Not.Contain("calibratedLocalScale.x * roomStageScale"), "The calibrated Butler must not grow/shrink when scroll zoom changes the room stage.");
-        Assert.That(playerScaleBody, Does.Not.Contain("CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio"), "The uncalibrated Butler fallback must not grow/shrink when scroll zoom changes the room stage.");
+        Assert.That(playerScaleBody, Does.Match(@"calibratedLocalScale\.x \* roomStageScale[\s\S]*calibratedLocalScale\.y \* roomStageScale"), "A calibrated world-space Butler must scale with room-stage zoom so his size stays fixed relative to the painted background.");
+        Assert.That(playerScaleBody, Does.Contain("CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio"), "The uncalibrated world-space Butler fallback must also scale with room-stage zoom so his size stays fixed relative to the painted background.");
         Assert.That(projectedScaleBody, Does.Contain("currentButlerCharacterFinalLocalScaleY"), "Projected guests should still use the Butler final local-scale value.");
-        Assert.That(projectedScaleBody, Does.Not.Contain("currentButlerCharacterFinalLocalScaleY * currentRoomStageScaleMultiplier"), "Final Butler guest scale must not grow/shrink again when scroll zoom changes the room stage.");
-        Assert.That(projectedScaleBody, Does.Not.Contain("currentScale * currentRoomStageScaleMultiplier"), "Legacy projected guest scale must not grow/shrink when scroll zoom changes the room stage.");
-        Assert.That(captureVisualScaleBody, Does.Not.Contain("currentRoomStageScaleMultiplier"), "Saving guest visual scale must not bake the current scroll zoom into the stored room scale.");
-        Assert.That(forceScaleBody, Does.Not.Contain("currentRoomStageScaleMultiplier > 0f"), "Tool/runtime force-apply should be idempotent and independent from current room-stage zoom.");
-        Assert.That(roomStageMotionBody, Does.Not.Contain("targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio)"), "ActorRoomState room-stage motion must move actors with the room without scaling human characters.");
-        Assert.That(roomStageBindingBody, Does.Not.Contain("scaleRatio * perspectiveScale"), "Bound world actors should not multiply perspective scale by room-stage zoom.");
-        Assert.That(roomStageBindingBody, Does.Contain("ScaleXY(boundLocalScale, perspectiveScale)"), "Bound world actors may still apply perspective depth scale from their authored baseline.");
+        Assert.That(projectedScaleBody, Does.Contain("currentButlerCharacterFinalLocalScaleY * currentRoomStageScaleMultiplier"), "Final Butler guest scale must share room-stage zoom so guest size stays fixed relative to the painted background.");
+        Assert.That(projectedScaleBody, Does.Contain("currentScale * currentRoomStageScaleMultiplier"), "Legacy projected guest scale must share room-stage zoom so guest size stays fixed relative to the painted background.");
+        Assert.That(captureVisualScaleBody, Does.Contain("currentRoomStageScaleMultiplier"), "Saving guest visual scale should remove the current room-stage zoom so the stored room scale is not contaminated by scroll position.");
+        Assert.That(forceScaleBody, Does.Contain("currentRoomStageScaleMultiplier > 0f"), "Tool/runtime force-apply should preview the same relative-to-background size as normal projection.");
+        Assert.That(roomStageMotionBody, Does.Contain("targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio)"), "ActorRoomState room-stage motion should scale world actors with the room background.");
+        Assert.That(roomStageBindingBody, Does.Contain("scaleRatio * perspectiveScale"), "Bound world actors should combine room-stage zoom and perspective scale to stay visually locked to the painted room.");
     }
 
     private static RoomPerspectiveProfile CreateProfile(float nearScale, float farScale)

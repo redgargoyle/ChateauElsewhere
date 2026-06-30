@@ -1968,11 +1968,15 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (useButlerRoomScaleOverrides &&
 			TryEvaluateButlerCalibratedFinalLocalScale(out Vector3 calibratedLocalScale))
 		{
-			transform.localScale = calibratedLocalScale;
+			float roomStageScale = Mathf.Max(0.001f, currentRoomStageScaleRatio);
+			transform.localScale = new Vector3(
+				calibratedLocalScale.x * roomStageScale,
+				calibratedLocalScale.y * roomStageScale,
+				calibratedLocalScale.z);
 			return;
 		}
 
-		float scale = CalculateExistingPerspectiveScale();
+		float scale = CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio;
 		transform.localScale = new Vector3(
 			authoredLocalScale.x * scale,
 			authoredLocalScale.y * scale,

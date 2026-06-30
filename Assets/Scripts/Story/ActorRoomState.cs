@@ -222,7 +222,8 @@ public class ActorRoomState : MonoBehaviour
         }
 
         Vector3 baseScale = hasRoomStageLocalBinding ? boundLocalScale : authoredActorLocalScale;
-        targetTransform.localScale = BuildButlerActorScale(baseScale, sample, debugScaleMultiplier);
+        float roomStageScale = hasRoomStageLocalBinding ? GetBoundRoomStageScaleRatio() : 1f;
+        targetTransform.localScale = BuildButlerActorScale(baseScale, sample, debugScaleMultiplier, roomStageScale);
         isUsingButlerCharacterScaleRules = true;
         currentButlerCharacterScale = sample.NormalizedScale;
         currentButlerCharacterDepth01 = sample.Depth01;
@@ -664,8 +665,12 @@ public class ActorRoomState : MonoBehaviour
                 targetTransform.position = correctedWorldPosition;
             }
 
-            // Room-stage zoom moves anchored actors with the room, but human character size
-            // is owned by perspective/final character scale and must not change on scroll zoom.
+            if (scaleWithRoomStageMotion &&
+                !isUsingButlerCharacterScaleRules &&
+                !Mathf.Approximately(scaleRatio, 1f))
+            {
+                targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio);
+            }
         }
 
         lastRoomStageScreenCenter = currentCenter;
@@ -791,8 +796,13 @@ public class ActorRoomState : MonoBehaviour
 
         if (!isUsingButlerCharacterScaleRules)
         {
+            float scaleRatio = scaleWithRoomStageMotion
+                ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
+                : 1f;
             float perspectiveScale = GetBoundRoomPerspectiveScale();
-            targetTransform.localScale = ScaleXY(boundLocalScale, perspectiveScale);
+            targetTransform.localScale = scaleWithRoomStageMotion
+                ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
+                : boundLocalScale;
         }
 
         return true;
@@ -847,18 +857,59 @@ public class ActorRoomState : MonoBehaviour
     private static Vector3 BuildButlerActorScale(
         Vector3 baseScale,
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,
-        float debugScaleMultiplier)
+        float debugScaleMultiplier,
+        float roomStageScaleMultiplier = 1f)
     {
         Vector3 safeBaseScale = SanitizeScale(baseScale);
         float baseY = Mathf.Max(0.001f, Mathf.Abs(safeBaseScale.y));
         float xOverY = safeBaseScale.x / baseY;
         float finalY = Mathf.Max(0.001f, sample.ButlerFinalLocalScaleY) *
-            Mathf.Max(0.001f, debugScaleMultiplier);
+            Mathf.Max(0.001f, debugScaleMultiplier) *
+            Mathf.Max(0.001f, roomStageScaleMultiplier);
 
         return new Vector3(
             xOverY * finalY,
             Mathf.Sign(safeBaseScale.y) * finalY,
             safeBaseScale.z);
+    }
+
+    private float GetBoundRoomStageScaleRatio()
+    {
+        if (!scaleWithRoomStageMotion || !hasRoomStageLocalBinding)
+        {
+            return 1f;
+        }
+
+        ResolveReferences();
+
+        Camera mainCamera = Camera.main;
+        if (cameraManager == null || mainCamera == null)
+        {
+            return 1f;
+        }
+
+        float depth = boundWorldZ - mainCamera.transform.position.z;
+
+        if (depth <= 0.01f)
+        {
+            Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+            depth = targetTransform != null
+                ? Mathf.Abs(targetTransform.position.z - mainCamera.transform.position.z)
+                : 10f;
+        }
+
+        if (depth <= 0.01f)
+        {
+            depth = 10f;
+        }
+
+        return cameraManager.TryGetActiveRoomStageWorldPoint(
+            roomStageLocalPoint,
+            depth,
+            out _,
+            out float currentStageScale)
+            ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
+            : 1f;
     }
 
     private float GetBoundRoomPerspectiveScale()
