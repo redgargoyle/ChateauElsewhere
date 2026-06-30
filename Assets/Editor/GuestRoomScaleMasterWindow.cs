@@ -178,7 +178,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         if (GUILayout.Button("SAVE ROOM GUEST SIZE"))
         {
-            SaveSelectedRoom(calibration, selectedRoom);
+            SaveSelectedRoom(calibration, selectedRoom, manualSelection);
         }
 
         if (GUILayout.Button("SAVE SCENE"))
@@ -270,6 +270,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             if (calibration != null)
             {
                 Undo.RecordObject(calibration, "Reset Guest Room Size");
+                calibration.ClearFixedGuestScale(selectedRoom);
                 calibration.SetRoomMultiplier(selectedRoom, 1f);
                 selectedRoomMultiplier = 1f;
                 EditorUtility.SetDirty(calibration);
@@ -279,8 +280,21 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         if (GUILayout.Button("MATCH BUTLER SIZE IN ROOM"))
         {
+            GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+
+            if (calibration != null)
+            {
+                Undo.RecordObject(calibration, "Match Butler Size In Room");
+                calibration.ClearFixedGuestScale(selectedRoom);
+                calibration.ClearCustomCurve(selectedRoom);
+                calibration.SetRoomMultiplier(selectedRoom, 1f);
+                EditorUtility.SetDirty(calibration);
+                LoadCustomCurveFields(calibration, selectedRoom);
+            }
+
             selectedRoomMultiplier = 1f;
-            PreviewSelectedRoom(selectedRoom);
+            GuestScaleApplyResult result = RefreshRoomWithUndo(selectedRoom, "Match Butler Size In Room");
+            lastAction = $"Matched Butler size for {selectedRoom}; applied {result.Applied}, changed {result.Changed}.";
         }
 
         if (GUILayout.Button("APPLY TO ALL GUESTS IN ROOM"))
@@ -478,6 +492,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             return;
         }
 
+        selectedRoomMultiplier = manualGuestScale;
         List<Transform> scaleRoots = CollectParticipantScaleRoots(selectedRoom);
         RecordScaleRoots(scaleRoots, "Preview Manual Size For All Guests");
 
@@ -634,6 +649,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         Undo.RecordObject(calibration, "Clear Manual Guest Curve");
+        calibration.ClearFixedGuestScale(selectedRoom);
         calibration.ClearCustomCurve(selectedRoom);
         LoadCustomCurveFields(calibration, selectedRoom);
         EditorUtility.SetDirty(calibration);
@@ -699,7 +715,8 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         Undo.RecordObject(calibration, "Preview Room Guest Size");
-        calibration.SetRoomMultiplier(selectedRoom, selectedRoomMultiplier);
+        calibration.SetFixedGuestScale(selectedRoom, selectedRoomMultiplier);
+        LoadCustomCurveFields(calibration, selectedRoom);
         applier.SetCalibration(calibration);
 
         int synced = SyncVisibleGuestsToSelectedRoomForManualEditing(FindGuestParticipants(), selectedRoom);
@@ -717,7 +734,10 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         Debug.Log($"[Guest Size Master] {lastAction}");
     }
 
-    private void SaveSelectedRoom(GuestRoomScaleCalibration calibration, string selectedRoom)
+    private void SaveSelectedRoom(
+        GuestRoomScaleCalibration calibration,
+        string selectedRoom,
+        ManualGuestSelection manualSelection)
     {
         if (calibration == null || string.IsNullOrWhiteSpace(selectedRoom))
         {
@@ -726,12 +746,45 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         Undo.RecordObject(calibration, "Save Room Guest Size");
-        calibration.SetRoomMultiplier(selectedRoom, selectedRoomMultiplier);
+        bool saveManualScale = manualSelection.AllGuests && !manualSelection.AllRooms;
+        SaveRoomGuestSizeForCalibration(
+            calibration,
+            selectedRoom,
+            selectedRoomMultiplier,
+            manualGuestScale,
+            saveManualScale);
         float referenceStageScale = SaveCurrentRoomStageReference(calibration, selectedRoom);
         GuestScaleApplyResult result = RefreshRoomWithUndo(selectedRoom, "Save Room Guest Size");
         EditorUtility.SetDirty(calibration);
         EditorSceneManager.MarkAllScenesDirty();
         lastAction = $"Saved guest size for {selectedRoom}; reference stage {referenceStageScale:0.####}; applied {result.Applied}, changed {result.Changed}.";
+    }
+
+    internal static void SaveRoomGuestSizeForCalibration(
+        GuestRoomScaleCalibration calibration,
+        string selectedRoom,
+        float roomScale,
+        float manualScale,
+        bool saveManualScale)
+    {
+        if (calibration == null || string.IsNullOrWhiteSpace(selectedRoom))
+        {
+            return;
+        }
+
+        if (saveManualScale)
+        {
+            calibration.SetFixedGuestScale(selectedRoom, manualScale);
+            return;
+        }
+
+        if (HasAnyManualCurvePoint(calibration, selectedRoom))
+        {
+            calibration.SetRoomMultiplier(selectedRoom, 1f);
+            return;
+        }
+
+        calibration.SetFixedGuestScale(selectedRoom, roomScale);
     }
 
     private void ApplySelectedRoom(string selectedRoom)
@@ -761,6 +814,14 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         Repaint();
         lastAction = $"Applied {selectedRoom} guest size to {result.Applied} guests; synced {synced}, changed {result.Changed}.";
         Debug.Log($"[Guest Size Master] {lastAction}");
+    }
+
+    private static bool HasAnyManualCurvePoint(GuestRoomScaleCalibration calibration, string selectedRoom)
+    {
+        return calibration != null &&
+            calibration.TryGetRoom(selectedRoom, out GuestRoomScaleEntry entry) &&
+            entry.useCustomGuestCurve &&
+            (entry.hasFront || entry.hasBack);
     }
 
     private static List<Transform> CollectParticipantScaleRoots(string selectedRoom)
@@ -1480,9 +1541,22 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
     private static float GetRoomMultiplier(GuestRoomScaleCalibration calibration, string roomId)
     {
-        return calibration != null && calibration.TryGetRoom(roomId, out GuestRoomScaleEntry entry)
-            ? entry.roomGuestScaleMultiplier
-            : 1f;
+        if (calibration == null || !calibration.TryGetRoom(roomId, out GuestRoomScaleEntry entry))
+        {
+            return 1f;
+        }
+
+        if (entry.useFixedGuestScale)
+        {
+            return Mathf.Clamp(entry.fixedGuestScale, MinMultiplier, MaxMultiplier);
+        }
+
+        if (entry.useCustomGuestCurve && entry.HasCompleteCustomCurve)
+        {
+            return Mathf.Clamp((entry.frontGuestScale + entry.backGuestScale) * 0.5f, MinMultiplier, MaxMultiplier);
+        }
+
+        return Mathf.Clamp(entry.roomGuestScaleMultiplier, MinMultiplier, MaxMultiplier);
     }
 
     private static int CountReadyGuests(GuestScaleParticipant[] guests)

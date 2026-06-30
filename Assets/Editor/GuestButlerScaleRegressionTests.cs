@@ -169,6 +169,72 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestRoomScaleCalibrationFixedManualScalePersistsExactRoomSize()
+    {
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            ConfigureButlerRoom(movement, "Drawing Room");
+
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            calibration.SetButlerScaleSource(movement);
+            calibration.InitializeMissingRoomsFromButler(movement);
+            calibration.SetRoomMultiplier("Drawing Room", 0.25f);
+            calibration.SetFixedGuestScale("Drawing Room", 1.45f);
+
+            Assert.That(
+                calibration.TryEvaluateGuestScale(
+                    "Drawing Room",
+                    0f,
+                    out float fixedScale,
+                    out _,
+                    out string diagnostic),
+                Is.True,
+                diagnostic);
+            Assert.That(fixedScale, Is.EqualTo(1.45f).Within(0.0001f));
+            Assert.That(diagnostic, Does.Contain("Fixed manual guest scale"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleCalibrationFrontBackCurveReplacesFixedManualScale()
+    {
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            calibration.SetFixedGuestScale("Drawing Room", 1.45f);
+            calibration.SetFront("Drawing Room", -100f, 2.4f);
+            calibration.SetBack("Drawing Room", 100f, 1.2f);
+
+            Assert.That(
+                calibration.TryEvaluateGuestScale(
+                    "Drawing Room",
+                    0f,
+                    out float curveScale,
+                    out _,
+                    out string diagnostic),
+                Is.True,
+                diagnostic);
+            Assert.That(curveScale, Is.EqualTo(1.8f).Within(0.0001f));
+            Assert.That(diagnostic, Does.Contain("Custom guest curve"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+        }
+    }
+
+    [Test]
     public void SavingRoomGuestSizeStoresReferenceRoomStageScale()
     {
         GameObject calibrationObject = new GameObject("GuestScaleCalibration");
@@ -1050,6 +1116,40 @@ public sealed class GuestRoomScaleRegressionTests
         Assert.That(text, Does.Contain("RefreshRoomNow(selectedRoom)"));
         Assert.That(text, Does.Contain("SceneView.RepaintAll()"));
         Assert.That(text, Does.Contain("changed"));
+    }
+
+    [Test]
+    public void GuestSizeMasterSavesManualRoomSizeAsFixedCalibration()
+    {
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+
+            GuestRoomScaleMasterWindow.SaveRoomGuestSizeForCalibration(
+                calibration,
+                "Drawing Room",
+                0.25f,
+                1.45f,
+                true);
+
+            Assert.That(
+                calibration.TryEvaluateGuestScale(
+                    "Drawing Room",
+                    0f,
+                    out float savedScale,
+                    out _,
+                    out string diagnostic),
+                Is.True,
+                diagnostic);
+            Assert.That(savedScale, Is.EqualTo(1.45f).Within(0.0001f));
+            Assert.That(diagnostic, Does.Contain("Fixed manual guest scale"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+        }
     }
 
     [Test]

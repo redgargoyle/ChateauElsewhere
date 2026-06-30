@@ -9,6 +9,8 @@ public sealed class GuestRoomScaleEntry
     public bool enabled = true;
     [Min(0.001f)] public float roomGuestScaleMultiplier = 1f;
     public bool useButlerRoomCurve = true;
+    public bool useFixedGuestScale;
+    [Min(0.001f)] public float fixedGuestScale = 1f;
     public bool useCustomGuestCurve;
     public bool hasFront;
     public float frontRoomLocalY;
@@ -43,6 +45,7 @@ public sealed class GuestRoomScaleEntry
     {
         roomId = CleanRoomId(roomId);
         roomGuestScaleMultiplier = Mathf.Max(0.001f, roomGuestScaleMultiplier);
+        fixedGuestScale = Mathf.Max(0.001f, fixedGuestScale);
         frontGuestScale = Mathf.Max(0.001f, frontGuestScale);
         backGuestScale = Mathf.Max(0.001f, backGuestScale);
         referenceRoomStageScale = hasReferenceRoomStageScale
@@ -192,6 +195,13 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
             return true;
         }
 
+        if (entry.useFixedGuestScale)
+        {
+            scale = Mathf.Max(0.001f, entry.fixedGuestScale);
+            diagnostic = $"Fixed manual guest scale for '{entry.roomId}'.";
+            return true;
+        }
+
         PointClickPlayerMovement source = ResolveButlerScaleSource();
 
         if (entry.useButlerRoomCurve &&
@@ -219,6 +229,23 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         entry.roomGuestScaleMultiplier = Mathf.Max(0.001f, multiplier);
     }
 
+    public void SetFixedGuestScale(string roomId, float guestScale)
+    {
+        GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+        entry.useFixedGuestScale = true;
+        entry.fixedGuestScale = Mathf.Max(0.001f, guestScale);
+        entry.useCustomGuestCurve = false;
+        entry.hasFront = false;
+        entry.hasBack = false;
+    }
+
+    public void ClearFixedGuestScale(string roomId)
+    {
+        GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+        entry.useFixedGuestScale = false;
+        entry.fixedGuestScale = 1f;
+    }
+
     public void SetReferenceRoomStageScale(string roomId, float stageScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
@@ -243,6 +270,7 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
     public void SetFront(string roomId, float roomLocalY, float guestScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+        entry.useFixedGuestScale = false;
         entry.useCustomGuestCurve = true;
         entry.hasFront = true;
         entry.frontRoomLocalY = roomLocalY;
@@ -252,6 +280,7 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
     public void SetBack(string roomId, float roomLocalY, float guestScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+        entry.useFixedGuestScale = false;
         entry.useCustomGuestCurve = true;
         entry.hasBack = true;
         entry.backRoomLocalY = roomLocalY;
