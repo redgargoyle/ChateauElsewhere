@@ -667,6 +667,52 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestScaleParticipantPrefersLiveActorRoomOverStaleOverride()
+    {
+        GameObject guest = new GameObject("Guest 1");
+
+        try
+        {
+            ActorRoomState actorState = guest.AddComponent<ActorRoomState>();
+            actorState.SetCurrentRoom("Drawing Room");
+
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+
+            Assert.That(participant.ResolveCurrentRoomId(), Is.EqualTo("Drawing Room"));
+            Assert.That(participant.ResolveRoomId(), Is.EqualTo("Drawing Room"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierInfersLiveActorRoomBeforeStaleParticipantOverride()
+    {
+        GameObject guest = new GameObject("Guest 1");
+
+        try
+        {
+            ActorRoomState actorState = guest.AddComponent<ActorRoomState>();
+            actorState.SetCurrentRoom("Drawing Room");
+
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+
+            Assert.That(
+                GuestRoomScaleApplier.TryInferAuthoredSceneGuestRoomId(guest, out string roomId),
+                Is.True);
+            Assert.That(roomId, Is.EqualTo("Drawing Room"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
     public void GuestScaleOwnershipGuardsAllScaleWriters()
     {
         string movementText = File.ReadAllText(PointClickPlayerMovementPath);

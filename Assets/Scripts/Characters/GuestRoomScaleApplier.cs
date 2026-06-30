@@ -428,11 +428,12 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             return false;
         }
 
-        if (TryResolveParticipantOverrideRoomId(guestObject, out roomId) ||
-            TryResolveActorRoomId(guestObject, out roomId) ||
-            TryResolveWalkerRoomId(guestObject, out roomId) ||
+        if (TryResolveActorRoomId(guestObject, out roomId) ||
             TryResolveProjectedRoomId(guestObject, out roomId) ||
             TryResolveParentRoomId(guestObject, out roomId) ||
+            TryResolveWalkerRoomId(guestObject, out roomId) ||
+            TryResolveActiveNavigationRoomId(guestObject, out roomId) ||
+            TryResolveParticipantOverrideRoomId(guestObject, out roomId) ||
             TryInferChapterOneSceneGuestRoomId(guestObject.name, out roomId))
         {
             roomId = GuestRoomScaleCalibration.CleanRoomId(roomId);
@@ -622,6 +623,26 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         }
 
         roomId = roomContent.RoomName;
+        return true;
+    }
+
+    private static bool TryResolveActiveNavigationRoomId(GameObject guestObject, out string roomId)
+    {
+        roomId = string.Empty;
+
+        if (guestObject == null || !Application.isPlaying || !guestObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        RoomNavigationManager navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Exclude);
+
+        if (navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom))
+        {
+            return false;
+        }
+
+        roomId = navigationManager.CurrentRoom;
         return true;
     }
 

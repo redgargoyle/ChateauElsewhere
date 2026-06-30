@@ -139,50 +139,151 @@ public sealed class GuestScaleParticipant : MonoBehaviour
 
     public string ResolveRoomId()
     {
-        if (!string.IsNullOrWhiteSpace(roomIdOverride))
+        return ResolveCurrentRoomId();
+    }
+
+    public string ResolveCurrentRoomId()
+    {
+        if (TryResolveActorRoomId(out string roomId) ||
+            TryResolveProjectedRoomId(out roomId) ||
+            TryResolveParentRoomId(out roomId) ||
+            TryResolveWalkerRoomId(out roomId) ||
+            TryResolveActiveNavigationRoomId(out roomId) ||
+            TryResolveOverrideRoomId(out roomId) ||
+            GuestRoomScaleApplier.TryInferAuthoredSceneGuestRoomId(gameObject, out roomId))
         {
-            return roomIdOverride.Trim();
+            return GuestRoomScaleCalibration.CleanRoomId(roomId);
         }
 
-        RoomPersonWalker2D walker = GetComponent<RoomPersonWalker2D>();
+        return string.Empty;
+    }
 
-        if (walker != null && walker.RoomProfile != null && !string.IsNullOrWhiteSpace(walker.RoomProfile.RoomId))
-        {
-            return walker.RoomProfile.RoomId;
-        }
-
+    private bool TryResolveProjectedRoomId(out string roomId)
+    {
+        roomId = string.Empty;
         RoomProjectedEntity projectedEntity = GetComponent<RoomProjectedEntity>();
+
+        if (projectedEntity == null)
+        {
+            projectedEntity = GetComponentInParent<RoomProjectedEntity>(true);
+        }
+
+        if (projectedEntity == null)
+        {
+            projectedEntity = GetComponentInChildren<RoomProjectedEntity>(true);
+        }
 
         if (projectedEntity != null)
         {
             if (!string.IsNullOrWhiteSpace(projectedEntity.CurrentVisualScaleRoomId))
             {
-                return projectedEntity.CurrentVisualScaleRoomId;
+                roomId = projectedEntity.CurrentVisualScaleRoomId;
+                return true;
             }
 
             if (projectedEntity.RoomProfile != null && !string.IsNullOrWhiteSpace(projectedEntity.RoomProfile.RoomId))
             {
-                return projectedEntity.RoomProfile.RoomId;
+                roomId = projectedEntity.RoomProfile.RoomId;
+                return true;
             }
         }
 
-        ActorRoomState actorRoomState = GetComponentInParent<ActorRoomState>(true);
+        return false;
+    }
+
+    private bool TryResolveActorRoomId(out string roomId)
+    {
+        roomId = string.Empty;
+        ActorRoomState actorRoomState = GetComponent<ActorRoomState>();
+
+        if (actorRoomState == null)
+        {
+            actorRoomState = GetComponentInParent<ActorRoomState>(true);
+        }
+
+        if (actorRoomState == null)
+        {
+            actorRoomState = GetComponentInChildren<ActorRoomState>(true);
+        }
 
         if (actorRoomState != null && !string.IsNullOrWhiteSpace(actorRoomState.CurrentRoomId))
         {
-            return actorRoomState.CurrentRoomId;
+            roomId = actorRoomState.CurrentRoomId;
+            return true;
         }
 
+        return false;
+    }
+
+    private bool TryResolveParentRoomId(out string roomId)
+    {
+        roomId = string.Empty;
         RoomContentGroup roomContent = GetComponentInParent<RoomContentGroup>(true);
 
         if (roomContent != null && !string.IsNullOrWhiteSpace(roomContent.RoomName))
         {
-            return roomContent.RoomName;
+            roomId = roomContent.RoomName;
+            return true;
         }
 
-        return GuestRoomScaleApplier.TryInferAuthoredSceneGuestRoomId(gameObject, out string inferredRoomId)
-            ? inferredRoomId
-            : string.Empty;
+        return false;
+    }
+
+    private bool TryResolveWalkerRoomId(out string roomId)
+    {
+        roomId = string.Empty;
+        RoomPersonWalker2D walker = GetComponent<RoomPersonWalker2D>();
+
+        if (walker == null)
+        {
+            walker = GetComponentInParent<RoomPersonWalker2D>(true);
+        }
+
+        if (walker == null)
+        {
+            walker = GetComponentInChildren<RoomPersonWalker2D>(true);
+        }
+
+        if (walker != null && walker.RoomProfile != null && !string.IsNullOrWhiteSpace(walker.RoomProfile.RoomId))
+        {
+            roomId = walker.RoomProfile.RoomId;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryResolveActiveNavigationRoomId(out string roomId)
+    {
+        roomId = string.Empty;
+
+        if (!Application.isPlaying || !gameObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        RoomNavigationManager navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Exclude);
+
+        if (navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom))
+        {
+            return false;
+        }
+
+        roomId = navigationManager.CurrentRoom;
+        return true;
+    }
+
+    private bool TryResolveOverrideRoomId(out string roomId)
+    {
+        roomId = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(roomIdOverride))
+        {
+            return false;
+        }
+
+        roomId = roomIdOverride;
+        return true;
     }
 
     public float ResolveRoomLocalY()
