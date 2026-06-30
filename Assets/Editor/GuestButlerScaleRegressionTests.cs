@@ -838,6 +838,83 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestRoomScaleMasterCanAdoptVisibleGuestsIntoSelectedRoomForManualEditing()
+    {
+        GuestScaleParticipant[] guests = new GuestScaleParticipant[8];
+        GameObject[] guestObjects = new GameObject[8];
+
+        try
+        {
+            for (int i = 0; i < guests.Length; i++)
+            {
+                guestObjects[i] = new GameObject($"Guest {i + 1}");
+                guestObjects[i].AddComponent<SpriteRenderer>();
+                guests[i] = guestObjects[i].AddComponent<GuestScaleParticipant>();
+                guests[i].SetCharacterId($"Guest {i + 1}");
+                guests[i].SetRoomIdOverride(i < 4 ? "Grand Entrance Hall" : "Drawing Room");
+            }
+
+            int synced = GuestRoomScaleMasterWindow.SyncVisibleGuestsToSelectedRoomForManualEditing(
+                guests,
+                "Drawing Room");
+
+            MethodInfo findMethod = typeof(GuestRoomScaleMasterWindow).GetMethod(
+                "FindGuestsInRoom",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(findMethod, Is.Not.Null);
+
+            GuestScaleParticipant[] roomGuests = (GuestScaleParticipant[])findMethod.Invoke(
+                null,
+                new object[] { guests, "Drawing Room" });
+
+            Assert.That(synced, Is.EqualTo(8));
+            Assert.That(roomGuests, Has.Length.EqualTo(8));
+
+            for (int i = 0; i < guests.Length; i++)
+            {
+                Assert.That(guests[i].CurrentRoomId, Is.EqualTo("Drawing Room"));
+            }
+        }
+        finally
+        {
+            for (int i = 0; i < guestObjects.Length; i++)
+            {
+                UnityEngine.Object.DestroyImmediate(guestObjects[i]);
+            }
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleMasterUsesButlerRoomSelectionSources()
+    {
+        GameObject butler = CreatePointClickPlayer("player", Vector3.one);
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            movement.SetEditorSelectedButlerScaleRoomId("Drawing Room");
+
+            string[] rooms = GuestRoomScaleMasterWindow.BuildRoomOptions(null, movement);
+            int selectedIndex = 0;
+            string selectedRoom = GuestRoomScaleMasterWindow.ResolveSelectedRoom(
+                movement,
+                rooms,
+                ref selectedIndex);
+
+            Assert.That(rooms, Does.Contain("Drawing Room"));
+            Assert.That(selectedRoom, Is.EqualTo("Drawing Room"));
+
+            GuestRoomScaleMasterWindow.SelectGuestScaleRoom(movement, "Grand Entrance Hall");
+
+            Assert.That(movement.EditorSelectedButlerScaleRoomId, Is.EqualTo("Grand Entrance Hall"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
     public void EntranceGuestsRemainEntranceBeforeMove()
     {
         GameObject guest = new GameObject("Guest 1");

@@ -72,8 +72,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         GuestRoomScaleApplier applier = FindAnyObjectByType<GuestRoomScaleApplier>(FindObjectsInactive.Include);
         GuestScaleParticipant[] guests = FindGuestParticipants();
         string[] rooms = BuildRoomOptions(calibration, butler);
-        selectedRoomIndex = Mathf.Clamp(selectedRoomIndex, 0, Mathf.Max(0, rooms.Length - 1));
-        string selectedRoom = rooms.Length > 0 ? rooms[selectedRoomIndex] : string.Empty;
+        string selectedRoom = ResolveSelectedRoom(butler, rooms, ref selectedRoomIndex);
 
         if (!GuestRoomScaleCalibration.SameRoom(loadedRoomId, selectedRoom))
         {
@@ -101,6 +100,20 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             : 1f;
         int selectedRoomGuestCount = CountGuestsInRoom(guests, selectedRoom);
         int activeVisibleGuestCount = CountActiveVisibleManagedGuests(guests);
+        int syncedVisibleGuests = 0;
+
+        if (!string.IsNullOrWhiteSpace(selectedRoom) && selectedRoomGuestCount < activeVisibleGuestCount)
+        {
+            syncedVisibleGuests = SyncVisibleGuestsToSelectedRoomForManualEditing(guests, selectedRoom);
+
+            if (syncedVisibleGuests > 0)
+            {
+                loadedManualGuestKey = string.Empty;
+                selectedRoomGuestCount = CountGuestsInRoom(guests, selectedRoom);
+                lastAction = $"Assigned {syncedVisibleGuests} visible guests to {selectedRoom} for manual editing.";
+            }
+        }
+
         EditorGUILayout.LabelField($"Current room-stage scale: {FormatScaleStatus(hasCurrentRoomStageScale, currentRoomStageScale)}");
         EditorGUILayout.LabelField($"Saved reference room-stage scale: {FormatScaleStatus(hasReferenceRoomStageScale, referenceRoomStageScale)}");
         EditorGUILayout.LabelField($"Computed room-stage zoom ratio: {roomStageZoomRatio:0.####}");
@@ -116,12 +129,11 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         using (new EditorGUI.DisabledScope(rooms.Length == 0))
         {
-            int nextRoomIndex = EditorGUILayout.Popup("Room", selectedRoomIndex, rooms);
+            string previousSelectedRoom = selectedRoom;
+            selectedRoom = DrawRoomSelection(butler, rooms, ref selectedRoomIndex, selectedRoom);
 
-            if (nextRoomIndex != selectedRoomIndex)
+            if (!GuestRoomScaleCalibration.SameRoom(previousSelectedRoom, selectedRoom))
             {
-                selectedRoomIndex = nextRoomIndex;
-                selectedRoom = rooms[selectedRoomIndex];
                 selectedRoomMultiplier = GetRoomMultiplier(calibration, selectedRoom);
                 LoadCustomCurveFields(calibration, selectedRoom);
                 loadedRoomId = selectedRoom;
@@ -154,7 +166,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         if (GUILayout.Button("SET UP GUEST SCALING"))
         {
-            SetupGuestScaling();
+            SetupGuestScaling(selectedRoom);
         }
 
         if (GUILayout.Button("PREVIEW ROOM GUEST SIZE"))
@@ -176,6 +188,52 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         DrawAdvanced(selectedRoom);
+    }
+
+    private static string DrawRoomSelection(
+        PointClickPlayerMovement butler,
+        string[] rooms,
+        ref int selectedIndex,
+        string selectedRoom)
+    {
+        if (rooms == null || rooms.Length == 0)
+        {
+            selectedIndex = 0;
+            return string.Empty;
+        }
+
+        EditorGUI.BeginChangeCheck();
+        selectedIndex = EditorGUILayout.Popup("Current Room", selectedIndex, rooms);
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            selectedRoom = rooms[selectedIndex];
+            SelectGuestScaleRoom(butler, selectedRoom);
+        }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Previous Room"))
+            {
+                selectedIndex = (selectedIndex - 1 + rooms.Length) % rooms.Length;
+                selectedRoom = rooms[selectedIndex];
+                SelectGuestScaleRoom(butler, selectedRoom);
+            }
+
+            if (GUILayout.Button("Next Room"))
+            {
+                selectedIndex = (selectedIndex + 1) % rooms.Length;
+                selectedRoom = rooms[selectedIndex];
+                SelectGuestScaleRoom(butler, selectedRoom);
+            }
+
+            if (GUILayout.Button("Ping RoomContentGroup"))
+            {
+                PingRoom(selectedRoom);
+            }
+        }
+
+        return selectedRoom;
     }
 
     private void DrawAdvanced(string selectedRoom)
@@ -411,6 +469,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
     private void PreviewAllGuestsManualScale(string selectedRoom)
     {
+        SyncVisibleGuestsToSelectedRoomForManualEditing(FindGuestParticipants(), selectedRoom);
         GuestScaleParticipant[] roomGuests = FindGuestsInRoom(FindGuestParticipants(), selectedRoom);
 
         if (roomGuests.Length == 0)
@@ -599,6 +658,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             applier.SetCalibration(calibration);
         }
 
+        SyncVisibleGuestsToSelectedRoomForManualEditing(FindGuestParticipants(), selectedRoom);
         List<Transform> scaleRoots = CollectParticipantScaleRoots(selectedRoom);
         RecordScaleRoots(scaleRoots, undoName);
         GuestScaleApplyResult result = applier.RefreshRoomNow(selectedRoom);
@@ -609,7 +669,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         return result;
     }
 
-    private void SetupGuestScaling()
+    private void SetupGuestScaling(string selectedRoom)
     {
         PointClickPlayerMovement butler = FindButler();
         GuestRoomScaleCalibration calibration = EnsureCalibration(butler);
@@ -617,12 +677,13 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         applier.SetCalibration(calibration);
         int removed = RemoveInvalidParticipants();
         int ensured = applier.EnsureParticipantsForSceneGuests();
+        int synced = SyncVisibleGuestsToSelectedRoomForManualEditing(FindGuestParticipants(), selectedRoom);
         GuestScaleApplyResult result = applier.RefreshAllWithResultNow();
 
         EditorUtility.SetDirty(calibration);
         EditorUtility.SetDirty(applier);
         EditorSceneManager.MarkAllScenesDirty();
-        lastAction = $"Set up guest scaling. Removed {removed}, ensured {ensured}, applied {result.Applied}, changed {result.Changed}.";
+        lastAction = $"Set up guest scaling. Removed {removed}, ensured {ensured}, synced {synced}, applied {result.Applied}, changed {result.Changed}.";
         Debug.Log($"[Guest Size Master] {lastAction}");
     }
 
@@ -641,6 +702,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         calibration.SetRoomMultiplier(selectedRoom, selectedRoomMultiplier);
         applier.SetCalibration(calibration);
 
+        int synced = SyncVisibleGuestsToSelectedRoomForManualEditing(FindGuestParticipants(), selectedRoom);
         List<Transform> scaleRoots = CollectParticipantScaleRoots(selectedRoom);
         RecordScaleRoots(scaleRoots, "Preview Room Guest Size");
 
@@ -651,7 +713,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         SceneView.RepaintAll();
         Repaint();
         float zoomRatio = GetRoomStageZoomRatio(calibration, selectedRoom);
-        lastAction = $"Previewed {selectedRoom}; zoom {zoomRatio:0.####}; applied {result.Applied}, changed {result.Changed}.";
+        lastAction = $"Previewed {selectedRoom}; zoom {zoomRatio:0.####}; synced {synced}, applied {result.Applied}, changed {result.Changed}.";
         Debug.Log($"[Guest Size Master] {lastAction}");
     }
 
@@ -689,15 +751,15 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             applier.SetCalibration(calibration);
         }
 
+        int synced = SyncVisibleGuestsToSelectedRoomForManualEditing(FindGuestParticipants(), selectedRoom);
         List<Transform> scaleRoots = CollectParticipantScaleRoots(selectedRoom);
         RecordScaleRoots(scaleRoots, "Apply Room Guest Size");
-
         GuestScaleApplyResult result = applier.RefreshRoomNow(selectedRoom);
         MarkScaleRootsDirty(scaleRoots);
         EditorUtility.SetDirty(applier);
         SceneView.RepaintAll();
         Repaint();
-        lastAction = $"Applied {selectedRoom} guest size to {result.Applied} guests; changed {result.Changed}.";
+        lastAction = $"Applied {selectedRoom} guest size to {result.Applied} guests; synced {synced}, changed {result.Changed}.";
         Debug.Log($"[Guest Size Master] {lastAction}");
     }
 
@@ -1266,9 +1328,19 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         return roomGuests.ToArray();
     }
 
-    private static string[] BuildRoomOptions(GuestRoomScaleCalibration calibration, PointClickPlayerMovement butler)
+    internal static string[] BuildRoomOptions(GuestRoomScaleCalibration calibration, PointClickPlayerMovement butler)
     {
         List<string> rooms = new List<string>();
+
+        if (butler != null)
+        {
+            AddRoom(rooms, butler.EditorSelectedButlerScaleRoomId);
+            AddRoom(rooms, butler.CurrentButlerScaleRoomId);
+            AddRoom(rooms, butler.CurrentRoomPerspectiveProfileRoomId);
+            RoomNavigationManager navigationManager = FindSceneNavigationManager();
+            AddRoom(rooms, navigationManager != null ? navigationManager.CurrentRoom : string.Empty);
+            butler.GetButlerScaleOverrideRoomIds(rooms);
+        }
 
         if (calibration != null)
         {
@@ -1278,22 +1350,18 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             }
         }
 
-        if (butler != null)
-        {
-            List<string> butlerRooms = new List<string>();
-            butler.GetButlerScaleOverrideRoomIds(butlerRooms);
-
-            for (int i = 0; i < butlerRooms.Count; i++)
-            {
-                AddRoom(rooms, butlerRooms[i]);
-            }
-        }
-
-        RoomContentGroup[] roomContentGroups = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
+        RoomContentGroup[] roomContentGroups = Resources.FindObjectsOfTypeAll<RoomContentGroup>();
 
         for (int i = 0; i < roomContentGroups.Length; i++)
         {
-            AddRoom(rooms, roomContentGroups[i] != null ? roomContentGroups[i].RoomName : null);
+            RoomContentGroup roomContentGroup = roomContentGroups[i];
+
+            if (roomContentGroup != null &&
+                roomContentGroup.gameObject != null &&
+                roomContentGroup.gameObject.scene.IsValid())
+            {
+                AddRoom(rooms, roomContentGroup.RoomName);
+            }
         }
 
         if (rooms.Count == 0)
@@ -1301,25 +1369,113 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             rooms.Add("Grand Entrance Hall");
         }
 
+        rooms.Sort(StringComparer.OrdinalIgnoreCase);
         return rooms.ToArray();
     }
 
-    private static void AddRoom(List<string> rooms, string roomId)
+    internal static string ResolveSelectedRoom(
+        PointClickPlayerMovement butler,
+        string[] rooms,
+        ref int selectedIndex)
     {
-        if (string.IsNullOrWhiteSpace(roomId))
+        if (rooms == null || rooms.Length == 0)
+        {
+            selectedIndex = 0;
+            return string.Empty;
+        }
+
+        string selectedRoom = butler != null ? butler.EditorSelectedButlerScaleRoomId : string.Empty;
+
+        if (string.IsNullOrWhiteSpace(selectedRoom) && butler != null)
+        {
+            selectedRoom = butler.CurrentButlerScaleRoomId;
+        }
+
+        for (int i = 0; i < rooms.Length; i++)
+        {
+            if (GuestRoomScaleCalibration.SameRoom(rooms[i], selectedRoom))
+            {
+                selectedIndex = i;
+                return rooms[i];
+            }
+        }
+
+        selectedIndex = Mathf.Clamp(selectedIndex, 0, rooms.Length - 1);
+        return rooms[selectedIndex];
+    }
+
+    internal static void SelectGuestScaleRoom(PointClickPlayerMovement butler, string roomId)
+    {
+        if (butler == null || string.IsNullOrWhiteSpace(roomId))
         {
             return;
         }
 
+        Undo.RecordObject(butler, "Select Guest Scale Room");
+        Undo.RecordObject(butler.transform, "Select Guest Scale Room");
+        butler.SetEditorSelectedButlerScaleRoomId(roomId);
+        butler.RefreshPerspectiveScaleNow(true);
+        EditorUtility.SetDirty(butler);
+        EditorUtility.SetDirty(butler.transform);
+    }
+
+    private static RoomNavigationManager FindSceneNavigationManager()
+    {
+        RoomNavigationManager[] navigationManagers = Resources.FindObjectsOfTypeAll<RoomNavigationManager>();
+
+        for (int i = 0; i < navigationManagers.Length; i++)
+        {
+            RoomNavigationManager navigationManager = navigationManagers[i];
+
+            if (navigationManager != null &&
+                navigationManager.gameObject != null &&
+                navigationManager.gameObject.scene.IsValid())
+            {
+                return navigationManager;
+            }
+        }
+
+        return null;
+    }
+
+    private static void AddRoom(List<string> rooms, string roomId)
+    {
+        if (rooms == null || string.IsNullOrWhiteSpace(roomId))
+        {
+            return;
+        }
+
+        string cleanRoomId = roomId.Trim();
+
         for (int i = 0; i < rooms.Count; i++)
         {
-            if (GuestRoomScaleCalibration.SameRoom(rooms[i], roomId))
+            if (GuestRoomScaleCalibration.SameRoom(rooms[i], cleanRoomId))
             {
                 return;
             }
         }
 
-        rooms.Add(roomId.Trim());
+        rooms.Add(cleanRoomId);
+    }
+
+    private static void PingRoom(string roomId)
+    {
+        RoomContentGroup[] roomContentGroups = Resources.FindObjectsOfTypeAll<RoomContentGroup>();
+
+        for (int i = 0; i < roomContentGroups.Length; i++)
+        {
+            RoomContentGroup roomContentGroup = roomContentGroups[i];
+
+            if (roomContentGroup == null ||
+                !GuestRoomScaleCalibration.SameRoom(roomContentGroup.RoomName, roomId))
+            {
+                continue;
+            }
+
+            Selection.activeGameObject = roomContentGroup.gameObject;
+            EditorGUIUtility.PingObject(roomContentGroup.gameObject);
+            return;
+        }
     }
 
     private static float GetRoomMultiplier(GuestRoomScaleCalibration calibration, string roomId)
@@ -1362,6 +1518,79 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         return count;
+    }
+
+    internal static int SyncVisibleGuestsToSelectedRoomForManualEditing(
+        GuestScaleParticipant[] guests,
+        string selectedRoom)
+    {
+        string cleanSelectedRoom = GuestRoomScaleCalibration.CleanRoomId(selectedRoom);
+
+        if (guests == null || string.IsNullOrWhiteSpace(cleanSelectedRoom))
+        {
+            return 0;
+        }
+
+        if (!CanSyncVisibleGuestsToSelectedRoom(cleanSelectedRoom))
+        {
+            return 0;
+        }
+
+        int synced = 0;
+
+        for (int i = 0; i < guests.Length; i++)
+        {
+            GuestScaleParticipant guest = guests[i];
+
+            if (!IsVisibleManagedGuestForManualEditing(guest) ||
+                GuestRoomScaleCalibration.SameRoom(guest.CurrentRoomId, cleanSelectedRoom))
+            {
+                continue;
+            }
+
+            Undo.RecordObject(guest, "Assign Visible Guest Room");
+            guest.SetCurrentRoomId(cleanSelectedRoom);
+            EditorUtility.SetDirty(guest);
+            synced++;
+        }
+
+        return synced;
+    }
+
+    private static bool CanSyncVisibleGuestsToSelectedRoom(string selectedRoom)
+    {
+        if (!Application.isPlaying)
+        {
+            return true;
+        }
+
+        return !TryGetActiveNavigationRoomId(out string activeRoomId) ||
+            GuestRoomScaleCalibration.SameRoom(activeRoomId, selectedRoom);
+    }
+
+    private static bool TryGetActiveNavigationRoomId(out string roomId)
+    {
+        roomId = string.Empty;
+        RoomNavigationManager navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Exclude);
+
+        if (navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom))
+        {
+            return false;
+        }
+
+        roomId = GuestRoomScaleCalibration.CleanRoomId(navigationManager.CurrentRoom);
+        return !string.IsNullOrWhiteSpace(roomId);
+    }
+
+    private static bool IsVisibleManagedGuestForManualEditing(GuestScaleParticipant guest)
+    {
+        return guest != null &&
+            !guest.ExcludeFromGuestScaling &&
+            !guest.IsButler &&
+            !GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(guest.gameObject) &&
+            GuestRoomScaleApplier.IsManagedGuestParticipant(guest) &&
+            guest.gameObject.activeInHierarchy &&
+            HasVisibleRendererOrGraphic(guest);
     }
 
     private static bool HasVisibleRendererOrGraphic(GuestScaleParticipant guest)
