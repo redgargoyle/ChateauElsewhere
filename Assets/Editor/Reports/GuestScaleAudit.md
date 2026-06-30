@@ -1,0 +1,409 @@
+# Summary
+
+Butler room calibrations found: 19
+Guest prefab instances found: 30
+RoomPersonWalker2D guests found: 2
+RoomProjectedEntity FloorCharacters found: 0
+RoomProjectedEntity props/furniture found: 5
+Non-empty roomVisualScaleOverrides found: 0
+Coat visuals found under guests: 8
+Active guest scale writers found: 1
+
+# Guest Scale Audit
+
+## Butler Room Calibration
+- Butler object path: Player
+- Total Butler room entries: 19
+- Drawing Room: frontY=-474.018, frontScaleY=2.109, backY=-148.436, backScaleY=1.271
+- Grand Entrance Hall: frontY=-539.536, frontScaleY=2.059, backY=-98.471, backScaleY=0.662
+- Grand Entrance Hall Rear view: frontY=-482.126, frontScaleY=2.217, backY=-184.965, backScaleY=0.85
+- Conservatory: frontY=-467.125, frontScaleY=2.26, backY=-80.015, backScaleY=0.875
+- Library: frontY=-472.176, frontScaleY=2.351, backY=-163.735, backScaleY=1.184
+- Music Room: frontY=-474.997, frontScaleY=2.5, backY=-137.453, backScaleY=1.187
+- Ballroom: frontY=-556.589, frontScaleY=2.5, backY=-68.671, backScaleY=0.552
+- Billiard Room: frontY=-533.948, frontScaleY=2.455, backY=-122.932, backScaleY=1.194
+- Dining Room: frontY=-451.83, frontScaleY=2.387, backY=-30.954, backScaleY=1.149
+- Butlers Pantry: frontY=-457.767, frontScaleY=2.5, backY=-251.906, backScaleY=2.021
+- Kitchen: frontY=-479.042, frontScaleY=2.5, backY=-192.792, backScaleY=1.654
+- Service Corridor: frontY=-487.862, frontScaleY=2.5, backY=-157.213, backScaleY=1.424
+- Chapel: frontY=-469.787, frontScaleY=1.827, backY=-230.236, backScaleY=0.992
+- Side Stair Mudroom: frontY=-471.692, frontScaleY=2.5, backY=-153.061, backScaleY=0.885
+- Upper Gallery: frontY=-469.436, frontScaleY=2.5, backY=-41.079, backScaleY=0.842
+- Master Bedroom Suite: frontY=-456.257, frontScaleY=2.5, backY=-122.099, backScaleY=0.997
+- Upper Sitting Hall: frontY=-468.752, frontScaleY=2.5, backY=-58.043, backScaleY=0.909
+- Nursery: frontY=-466.496, frontScaleY=2.5, backY=-99.452, backScaleY=1.226
+- Blue Bedroom: frontY=-487.862, frontScaleY=2.5, backY=-151.668, backScaleY=1.153
+
+## Chapter 1 Guests
+- Ch2_Hide_Guest01: Canvas_Background/Rooms/Room_Library/Ch2_Hide_Guest01
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Ch2_Hide_Guest02: Canvas_Background/Rooms/Room_Music_Room/Ch2_Hide_Guest02
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Ch2_Hide_Guest03: Canvas_Background/Rooms/Room_Billiard_Room/Ch2_Hide_Guest03
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Ch2_Hide_Guest04: Canvas_Background/Rooms/Room_Conservatory/Ch2_Hide_Guest04
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Ch2_Hide_Guest05: Canvas_Background/Rooms/Room_Kitchen/Ch2_Hide_Guest05
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Ch2_Hide_Guest06: Canvas_Background/Rooms/Room_Chapel/Ch2_Hide_Guest06
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Ch2_Hide_Guest07: Canvas_Background/Rooms/Room_Upper_Gallery/Ch2_Hide_Guest07
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Ch2_Hide_Guest08: Canvas_Background/Rooms/Room_Blue_Bedroom/Ch2_Hide_Guest08
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- DrawingRoomGuestPoint_01: Canvas_Background/Rooms/Room_Drawing_Room/Props/Couch_or_ChairGroup/Anchors/DrawingRoomGuestPoint_01
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- DrawingRoomGuestPoint_02: Canvas_Background/Rooms/Room_Drawing_Room/Props/Couch_or_ChairGroup/Anchors/DrawingRoomGuestPoint_02
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- DrawingRoomGuestPoint_03: Canvas_Background/Rooms/Room_Drawing_Room/Props/Couch_or_ChairGroup/Anchors/DrawingRoomGuestPoint_03
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- DrawingRoomGuestPoint_04: Canvas_Background/Rooms/Room_Drawing_Room/Props/Couch_or_ChairGroup/Anchors/DrawingRoomGuestPoint_04
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- DrawingRoomGuestPoint_05: Canvas_Background/Rooms/Room_Drawing_Room/Props/Couch_or_ChairGroup/Anchors/DrawingRoomGuestPoint_05
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- DrawingRoomGuestPoint_06: Canvas_Background/Rooms/Room_Drawing_Room/Props/Couch_or_ChairGroup/Anchors/DrawingRoomGuestPoint_06
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- DrawingRoomGuestPoint_07: Canvas_Background/Rooms/Room_Drawing_Room/Props/Couch_or_ChairGroup/Anchors/DrawingRoomGuestPoint_07
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- DrawingRoomGuestPoint_08: Canvas_Background/Rooms/Room_Drawing_Room/Props/Couch_or_ChairGroup/Anchors/DrawingRoomGuestPoint_08
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- drawing_room_red_chair_guest6: Canvas_Background/Rooms/Room_Drawing_Room/drawing_room_red_chair_guest6
+  - Prefab/source: 
+  - SpriteRenderer sprite: purple_armchair_front
+  - SpriteRenderer size: (1.94, 2.79, 0.19)
+  - Transform localScale: (17.92, 19.02, 73.00)
+  - Active state: False
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- EntranceHallGuestAnchor: Canvas_Background/Rooms/Room_Grand_Entrance_Hall/Anchors/EntranceHallGuestAnchor
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: True
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Guest 1: Guest 1
+  - Prefab/source: Assets/Prefabs/Player.prefab
+  - SpriteRenderer sprite: lady_sitting_01
+  - SpriteRenderer size: (1.77, 2.90, 0.20)
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: True
+  - PointClickPlayerMovement exists: True
+  - PointClickPlayerMovement disabled for guest: False
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Guest 2: Guest 2
+  - Prefab/source: Assets/Prefabs/Player.prefab
+  - SpriteRenderer sprite: butlerspritesit_0
+  - SpriteRenderer size: (1.43, 2.91, 0.20)
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: True
+  - PointClickPlayerMovement exists: True
+  - PointClickPlayerMovement disabled for guest: False
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Guest 3: Guest 3
+  - Prefab/source: Assets/Prefabs/Player.prefab
+  - SpriteRenderer sprite: mister_florian_knell_walk_01_r01_c01
+  - SpriteRenderer size: (1.86, 3.33, 0.22)
+  - Transform localScale: (1.12, 1.12, 1.12)
+  - Active state: True
+  - PointClickPlayerMovement exists: True
+  - PointClickPlayerMovement disabled for guest: False
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Guest 4: Guest 4
+  - Prefab/source: Assets/Prefabs/Player.prefab
+  - SpriteRenderer sprite: guest4sit2
+  - SpriteRenderer size: (1.80, 2.97, 0.22)
+  - Transform localScale: (1.00, 1.00, 1.12)
+  - Active state: True
+  - PointClickPlayerMovement exists: True
+  - PointClickPlayerMovement disabled for guest: False
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Guest 5: Guest 5
+  - Prefab/source: Assets/Prefabs/Player.prefab
+  - SpriteRenderer sprite: baron_hector_glass_walk_01_r01_c01
+  - SpriteRenderer size: (1.66, 2.97, 0.26)
+  - Transform localScale: (1.00, 1.00, 1.30)
+  - Active state: True
+  - PointClickPlayerMovement exists: True
+  - PointClickPlayerMovement disabled for guest: False
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Guest 6: Guest 6
+  - Prefab/source: Assets/Prefabs/Player.prefab
+  - SpriteRenderer sprite: guest06sitidle1
+  - SpriteRenderer size: (1.83, 3.27, 0.26)
+  - Transform localScale: (1.10, 1.10, 1.30)
+  - Active state: True
+  - PointClickPlayerMovement exists: True
+  - PointClickPlayerMovement disabled for guest: False
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Guest 7: Guest 7
+  - Prefab/source: Assets/Prefabs/Player.prefab
+  - SpriteRenderer sprite: GuestPair02Man_standing_idle_01_0
+  - SpriteRenderer size: (1.01, 2.87, 0.26)
+  - Transform localScale: (1.00, 1.00, 1.30)
+  - Active state: True
+  - PointClickPlayerMovement exists: True
+  - PointClickPlayerMovement disabled for guest: False
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- Guest 8: Guest 8
+  - Prefab/source: Assets/Prefabs/Player.prefab
+  - SpriteRenderer sprite: guest8_sitting_left_idle_03_0
+  - SpriteRenderer size: (1.93, 2.83, 0.26)
+  - Transform localScale: (1.00, 1.00, 1.30)
+  - Active state: True
+  - PointClickPlayerMovement exists: True
+  - PointClickPlayerMovement disabled for guest: False
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- GuestArrival_Door: Canvas_Background/Rooms/Room_Grand_Entrance_Hall/Anchors/GuestArrival_Door
+  - Prefab/source: 
+  - SpriteRenderer sprite: Square
+  - SpriteRenderer size: (0.61, 0.49, 0.04)
+  - Transform localScale: (46.70, 37.66, 14.14)
+  - Active state: True
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- GuestDrawingRoomDoorTarget: Canvas_Background/Rooms/Room_Grand_Entrance_Hall/Anchors/GuestDrawingRoomDoorTarget
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (0.18, 0.18, 0.18)
+  - Active state: True
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- GuestRoomScaleApplier: GuestRoomScaleApplier
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: True
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+- GuestRoomScaleCalibration: GuestRoomScaleCalibration
+  - Prefab/source: 
+  - SpriteRenderer sprite: none
+  - SpriteRenderer size: none
+  - Transform localScale: (1.00, 1.00, 1.00)
+  - Active state: True
+  - PointClickPlayerMovement exists: False
+  - PointClickPlayerMovement disabled for guest: True
+  - NPCWaypointMover exists: False
+  - ActorRoomState exists: False
+
+## RoomPersonWalker2D Guests
+- Canvas_Background/Rooms/Room_Grand_Entrance_Hall/People/Walker_GEH_GreenGentleman
+  - targetGraphic path: Canvas_Background/Rooms/Room_Grand_Entrance_Hall/People/Walker_GEH_GreenGentleman
+  - nearScale: 1.08
+  - farScale: 0.58
+  - transform localScale: (0.06, 0.06, 0.10)
+  - targetGraphic localScale: (0.06, 0.06, 0.10)
+  - room id: Grand Entrance Hall
+- Canvas_Background/Rooms/Room_Grand_Entrance_Hall/People/Walker_GEH_GreenLady
+  - targetGraphic path: Canvas_Background/Rooms/Room_Grand_Entrance_Hall/People/Walker_GEH_GreenLady
+  - nearScale: 0.98
+  - farScale: 0.52
+  - transform localScale: (0.06, 0.06, 0.09)
+  - targetGraphic localScale: (0.06, 0.06, 0.09)
+  - room id: Grand Entrance Hall
+
+## RoomProjectedEntity
+- Canvas_Background/Rooms/Room_Drawing_Room/purple_armchair_back
+  - projection mode: ForegroundOccluder
+  - FloorCharacter or prop/furniture: prop/furniture
+  - visualRoot: Canvas_Background/Rooms/Room_Drawing_Room/purple_armchair_back
+  - applyScale: False
+  - useRoomVisualScaleOverrides: False
+  - roomVisualScaleOverrides count: 0
+- Canvas_Background/Rooms/Room_Drawing_Room/drawingroomgreenchair[_0
+  - projection mode: ForegroundOccluder
+  - FloorCharacter or prop/furniture: prop/furniture
+  - visualRoot: Canvas_Background/Rooms/Room_Drawing_Room/drawingroomgreenchair[_0
+  - applyScale: False
+  - useRoomVisualScaleOverrides: False
+  - roomVisualScaleOverrides count: 0
+- Canvas_Background/Rooms/Room_Drawing_Room/drawingroomgreenchair_0
+  - projection mode: ForegroundOccluder
+  - FloorCharacter or prop/furniture: prop/furniture
+  - visualRoot: Canvas_Background/Rooms/Room_Drawing_Room/drawingroomgreenchair_0
+  - applyScale: False
+  - useRoomVisualScaleOverrides: False
+  - roomVisualScaleOverrides count: 0
+- Canvas_Background/Rooms/Room_Drawing_Room/tea_service_table
+  - projection mode: ForegroundOccluder
+  - FloorCharacter or prop/furniture: prop/furniture
+  - visualRoot: Canvas_Background/Rooms/Room_Drawing_Room/tea_service_table
+  - applyScale: False
+  - useRoomVisualScaleOverrides: False
+  - roomVisualScaleOverrides count: 0
+- Canvas_Background/Rooms/Room_Drawing_Room/drawing_room_red_chair_guest6
+  - projection mode: ForegroundOccluder
+  - FloorCharacter or prop/furniture: prop/furniture
+  - visualRoot: Canvas_Background/Rooms/Room_Drawing_Room/drawing_room_red_chair_guest6
+  - applyScale: False
+  - useRoomVisualScaleOverrides: False
+  - roomVisualScaleOverrides count: 0
+- total components: 5
+
+## Coat Visuals Under Guests
+- Guest 1/coatcutout_0
+- Guest 2/coatcutout_0
+- Guest 3/coatcutout_0
+- Guest 4/coatcutout_0
+- Guest 5/coatcutout_0
+- Guest 6/coatcutout_0
+- Guest 7/coatcutout_0
+- Guest 8/coatcutout_0
+
+## Scale Writers
+- GuestRoomScaleApplier.RefreshAllNow
+- RoomProjectedEntity.ApplyProjectedScale: guarded when GuestScaleParticipant owns the visual root
+- RoomPersonWalker2D.ApplyVisuals: guarded when GuestScaleParticipant owns the walker graphic/root
+- ActorRoomState room-stage scale: guarded when GuestScaleParticipant is present
+- Obsolete GuestButlerScaleHarmonizer components in scene: 0
+
