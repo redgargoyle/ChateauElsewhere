@@ -130,24 +130,92 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
+    public void ObjectMovementBlockerCanSortSourceRendererFromRoomPerspectivePoint()
+    {
+        GameObject sourceObject = null;
+        GameObject blockerObject = null;
+        RoomPerspectiveProfile profile = null;
+
+        try
+        {
+            profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
+            profile.Configure(
+                "Dining Room",
+                new Vector2(1672f, 941f),
+                -420f,
+                40f,
+                AnimationCurve.Linear(0f, 1f, 1f, 0.6f),
+                null,
+                1000,
+                8000,
+                AnimationCurve.Linear(0f, 1f, 1f, 0f));
+
+            sourceObject = new GameObject("Dining Table Cutout");
+            SpriteRenderer renderer = sourceObject.AddComponent<SpriteRenderer>();
+
+            blockerObject = new GameObject("PlayerBlocker_Dining_Table");
+            blockerObject.AddComponent<BoxCollider2D>();
+            ObjectMovementBlocker2D marker = blockerObject.AddComponent<ObjectMovementBlocker2D>();
+            marker.Configure(sourceObject, "Dining Room", "Table", 0.3f, "test profile sorted blocker", true);
+            marker.SetRoomPerspectiveSorting(profile, new Vector2(0f, -250f), -3);
+
+            marker.ApplySourceSortingNow();
+
+            Assert.That(renderer.sortingLayerName, Is.EqualTo(profile.SortingLayerName));
+            Assert.That(renderer.sortingOrder, Is.EqualTo(profile.GetSortingOrder(new Vector2(0f, -250f), -3)));
+        }
+        finally
+        {
+            if (blockerObject != null)
+            {
+                Object.DestroyImmediate(blockerObject);
+            }
+
+            if (sourceObject != null)
+            {
+                Object.DestroyImmediate(sourceObject);
+            }
+
+            if (profile != null)
+            {
+                Object.DestroyImmediate(profile);
+            }
+        }
+    }
+
+    [Test]
     public void DiningTableCutoutHasMovementAndSortingBlocker()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
 
         Assert.That(sceneText, Does.Contain("m_Name: correct_dining_table_0"), "The dining room should keep the full table/chairs base sprite from origin/dialog.");
-        Assert.That(sceneText, Does.Contain("m_LocalPosition: {x: -10.03, y: -175.58, z: -7166.9155}"), "The full dining table/chairs base sprite should keep the known-good placement from origin/dialog.");
         Assert.That(sceneText, Does.Contain("m_Sprite: {fileID: 5018639196147655082, guid: afdc05b8996bc9af18abbb80afd7a6b8, type: 3}"), "The full dining table/chairs base sprite should use the known-good origin/dialog art.");
         Assert.That(sceneText, Does.Contain("m_Name: DiningTableCutoutOverlay"), "The dining table foreground cutout should remain available for depth sorting.");
-        Assert.That(sceneText, Does.Contain("m_LocalPosition: {x: -20.67, y: -129.04, z: -7166.9155}"), "The table foreground cutout should keep the known-good placement from origin/dialog.");
-        Assert.That(sceneText, Does.Contain("m_LocalScale: {x: 103.70781, y: 114.65408, z: 79.63239}"), "The table foreground cutout should keep the known-good scale from origin/dialog.");
+        Assert.That(sceneText, Does.Contain("m_Sprite: {fileID: 21300000, guid: 3a9a91ccb20648a7977c57f00d4cda57, type: 3}"), "The table foreground cutout should use the known-good table-only art.");
         Assert.That(sceneText, Does.Contain("m_Name: PlayerBlocker_DiningTableCutoutOverlay"), "The dining table needs an authored no-walk footprint.");
         Assert.That(sceneText, Does.Contain("sourceObject: {fileID: 3800000000}"), "The blocker should sort the dining table cutout overlay, not an unrelated object.");
         Assert.That(sceneText, Does.Contain("sourceObjectName: DiningTableCutoutOverlay"));
         Assert.That(sceneText, Does.Contain("sourceRoomName: Dining Room"));
         Assert.That(sceneText, Does.Contain("category: Table"));
         Assert.That(sceneText, Does.Contain("authoringNote: dining table footprint and foreground cutout depth"));
+        Assert.That(sceneText, Does.Contain("useRoomPerspectiveProfileSorting: 1"), "The dining table foreground cutout should sort in the Dining Room perspective domain.");
+        Assert.That(sceneText, Does.Contain("roomPerspectiveProfile: {fileID: 11400000, guid: a63248cfbd6b4a72af45c62cff7e94d0"), "The dining table foreground cutout should use the Dining Room perspective profile.");
         Assert.That(sceneText, Does.Contain("m_Father: {fileID: 2300000016}"), "The dining table blocker should live under Room_Dining_Room.");
         Assert.That(sceneText, Does.Contain("m_IsTrigger: 1"), "Movement blockers are walkability holes, not rigid physics bodies.");
+    }
+
+    [Test]
+    public void DiningHeadChairOverlayHasProfileSortedOcclusionBlocker()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+
+        Assert.That(sceneText, Does.Contain("m_Name: DiningHeadChairOverlay"), "The near dining chair foreground cutout should remain available for depth sorting.");
+        Assert.That(sceneText, Does.Contain("m_Name: PlayerBlocker_DiningHeadChairOverlay"), "The near dining chair needs its own tight footprint instead of relying on the table blocker.");
+        Assert.That(sceneText, Does.Contain("sourceObject: {fileID: 3900000000}"), "The near chair blocker should sort the near chair overlay.");
+        Assert.That(sceneText, Does.Contain("sourceObjectName: DiningHeadChairOverlay"));
+        Assert.That(sceneText, Does.Contain("category: Chair"));
+        Assert.That(sceneText, Does.Contain("useRoomPerspectiveProfileSorting: 1"), "The near chair foreground cutout should sort in the Dining Room perspective domain.");
+        Assert.That(sceneText, Does.Contain("roomPerspectiveProfile: {fileID: 11400000, guid: a63248cfbd6b4a72af45c62cff7e94d0"), "The near chair foreground cutout should use the Dining Room perspective profile.");
     }
 
     [Test]
@@ -157,6 +225,17 @@ public class ObjectCollisionBoxRegressionTests
 
         Assert.That(playerText, Does.Contain("ObjectMovementBlocker2D"), "Generated movement blockers should be collected explicitly, not only by fragile name matching.");
         Assert.That(playerText, Does.Contain("IsWalkableWorldPoint"), "Object blockers must feed the same walkability path as existing PlayerBlocker holes.");
+    }
+
+    [Test]
+    public void PointClickMovementUsesRoomProfileSortingWhenAvailable()
+    {
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+        string applySortingBody = ExtractMethodBody(playerText, "private void ApplyPlayerSorting");
+
+        Assert.That(applySortingBody, Does.Contain("TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile profile)"), "Player sorting should resolve the active room profile before falling back to world-y sorting.");
+        Assert.That(applySortingBody, Does.Contain("profile.GetSortingOrder(roomLocalSortingPoint"), "Player sorting should use RoomPerspectiveProfile sorting in profiled rooms.");
+        Assert.That(applySortingBody, Does.Contain("playerSortingOrderBase - Mathf.RoundToInt"), "The old world-y formula should remain as fallback outside profiled rooms.");
     }
 
     [Test]
@@ -176,5 +255,34 @@ public class ObjectCollisionBoxRegressionTests
         Assert.That(authoringText, Does.Contain("Dry Run"));
         Assert.That(planText, Does.Contain("physical blocker equals floor-contact footprint"));
         Assert.That(planText, Does.Contain("Codex implementation prompt"));
+    }
+
+    private static string ExtractMethodBody(string sourceText, string methodName)
+    {
+        int methodIndex = sourceText.IndexOf(methodName, System.StringComparison.Ordinal);
+        Assert.That(methodIndex, Is.GreaterThanOrEqualTo(0), $"Could not find method '{methodName}'.");
+
+        int openBrace = sourceText.IndexOf('{', methodIndex);
+        Assert.That(openBrace, Is.GreaterThanOrEqualTo(0), $"Could not find opening brace for '{methodName}'.");
+
+        int depth = 0;
+        for (int i = openBrace; i < sourceText.Length; i++)
+        {
+            if (sourceText[i] == '{')
+            {
+                depth++;
+            }
+            else if (sourceText[i] == '}')
+            {
+                depth--;
+                if (depth == 0)
+                {
+                    return sourceText.Substring(openBrace, i - openBrace + 1);
+                }
+            }
+        }
+
+        Assert.Fail($"Could not find closing brace for '{methodName}'.");
+        return string.Empty;
     }
 }

@@ -2139,6 +2139,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		roomLocalPoint = Vector2.zero;
 
+		Vector2 worldPoint = LogicalToWalkableWorldPoint(logicalPoint);
+		return TryGetWorldPointRoomStageLocalPoint(worldPoint, out roomLocalPoint);
+	}
+
+	private bool TryGetWorldPointRoomStageLocalPoint(Vector2 worldPoint, out Vector2 roomLocalPoint)
+	{
+		roomLocalPoint = Vector2.zero;
+
 		if (cameraManager == null)
 		{
 			cameraManager = FindAnyObjectByType<CameraManager>();
@@ -2149,7 +2157,6 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return false;
 		}
 
-		Vector2 worldPoint = LogicalToWalkableWorldPoint(logicalPoint);
 		return cameraManager.TryGetActiveRoomStageLocalPoint(worldPoint, out roomLocalPoint);
 	}
 
@@ -4198,8 +4205,19 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 
 		string sortingLayerName = GetSortingLayerName(playerSortingLayerName);
-		float sortingY = GetPlayerSortingY();
-		int sortingOrder = playerSortingOrderBase - Mathf.RoundToInt(sortingY * playerSortingOrderPerYUnit);
+		int sortingOrder;
+		if (TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile profile) &&
+			TryGetPlayerRoomLocalSortingPoint(out Vector2 roomLocalSortingPoint))
+		{
+			sortingLayerName = GetSortingLayerName(profile.SortingLayerName);
+			sortingOrder = profile.GetSortingOrder(roomLocalSortingPoint);
+		}
+		else
+		{
+			float sortingY = GetPlayerSortingY();
+			sortingOrder = playerSortingOrderBase - Mathf.RoundToInt(sortingY * playerSortingOrderPerYUnit);
+		}
+
 		currentSortingOrder = sortingOrder;
 
 		for (int i = 0; i < spriteRenderers.Length; i++)
@@ -4213,35 +4231,69 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 	}
 
+	private bool TryGetPlayerRoomLocalSortingPoint(out Vector2 roomLocalSortingPoint)
+	{
+		roomLocalSortingPoint = Vector2.zero;
+
+		if (sortPlayerByVisibleFeet &&
+			TryGetVisibleFeetWorldPoint(out Vector2 visibleFeetWorldPoint))
+		{
+			visibleFeetWorldPoint.y += playerSortingYOffset;
+			return TryGetWorldPointRoomStageLocalPoint(visibleFeetWorldPoint, out roomLocalSortingPoint);
+		}
+
+		Vector2 logicalSortingPoint = new Vector2(
+			logicalPosition.x,
+			logicalPosition.y + playerSortingYOffset);
+		return TryGetRoomStageLocalPoint(logicalSortingPoint, out roomLocalSortingPoint);
+	}
+
 	private float GetPlayerSortingY()
 	{
 		float sortingY = logicalPosition.y;
 
-		if (sortPlayerByVisibleFeet)
+		if (sortPlayerByVisibleFeet && TryGetVisibleFeetWorldPoint(out Vector2 visibleFeetWorldPoint))
 		{
-			bool foundRendererBounds = false;
-			float lowestVisibleY = float.PositiveInfinity;
-
-			for (int i = 0; i < spriteRenderers.Length; i++)
-			{
-				SpriteRenderer targetRenderer = spriteRenderers[i];
-
-				if (targetRenderer == null || !targetRenderer.enabled || targetRenderer.sprite == null)
-				{
-					continue;
-				}
-
-				lowestVisibleY = Mathf.Min(lowestVisibleY, targetRenderer.bounds.min.y);
-				foundRendererBounds = true;
-			}
-
-			if (foundRendererBounds)
-			{
-				sortingY = lowestVisibleY;
-			}
+			sortingY = visibleFeetWorldPoint.y;
 		}
 
 		return sortingY + playerSortingYOffset;
+	}
+
+	private bool TryGetVisibleFeetWorldPoint(out Vector2 visibleFeetWorldPoint)
+	{
+		visibleFeetWorldPoint = Vector2.zero;
+
+		if (spriteRenderers == null || spriteRenderers.Length == 0)
+			return false;
+
+		bool foundRendererBounds = false;
+		Bounds lowestBounds = default;
+		float lowestVisibleY = float.PositiveInfinity;
+
+		for (int i = 0; i < spriteRenderers.Length; i++)
+		{
+			SpriteRenderer targetRenderer = spriteRenderers[i];
+
+			if (targetRenderer == null || !targetRenderer.enabled || targetRenderer.sprite == null)
+			{
+				continue;
+			}
+
+			Bounds bounds = targetRenderer.bounds;
+			if (!foundRendererBounds || bounds.min.y < lowestVisibleY)
+			{
+				lowestVisibleY = bounds.min.y;
+				lowestBounds = bounds;
+				foundRendererBounds = true;
+			}
+		}
+
+		if (!foundRendererBounds)
+			return false;
+
+		visibleFeetWorldPoint = new Vector2(lowestBounds.center.x, lowestVisibleY);
+		return true;
 	}
 
 	private static string GetSortingLayerName(string requestedLayerName)

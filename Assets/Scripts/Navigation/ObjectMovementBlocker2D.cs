@@ -18,6 +18,10 @@ public sealed class ObjectMovementBlocker2D : MonoBehaviour
     [SerializeField] private float sourceSortingOrderPerYUnit = 100f;
     [SerializeField] private int sourceSortingOrderOffset;
     [SerializeField] private bool forceSourcePivotSortPoint = true;
+    [SerializeField] private bool useRoomPerspectiveProfileSorting;
+    [SerializeField] private RoomPerspectiveProfile roomPerspectiveProfile;
+    [SerializeField] private Vector2 roomLocalSortingPoint;
+    [SerializeField] private int roomPerspectiveSortingOffset;
     [SerializeField] [TextArea(2, 5)] private string authoringNote;
 
     private Object cachedSourceObject;
@@ -30,6 +34,9 @@ public sealed class ObjectMovementBlocker2D : MonoBehaviour
     public float FootprintHeightFraction => footprintHeightFraction;
     public bool GeneratedByCollisionBoxTool => generatedByCollisionBoxTool;
     public bool SortSourceRenderers => sortSourceRenderers;
+    public bool UseRoomPerspectiveProfileSorting => useRoomPerspectiveProfileSorting;
+    public RoomPerspectiveProfile RoomPerspectiveProfile => roomPerspectiveProfile;
+    public Vector2 RoomLocalSortingPoint => roomLocalSortingPoint;
     public int CurrentSortingOrder { get; private set; }
     public string AuthoringNote => authoringNote;
     public Collider2D BlockingCollider => GetComponent<Collider2D>();
@@ -79,6 +86,15 @@ public sealed class ObjectMovementBlocker2D : MonoBehaviour
         ApplySourceSortingNow();
     }
 
+    public void SetRoomPerspectiveSorting(RoomPerspectiveProfile profile, Vector2 roomLocalPoint, int offset = 0)
+    {
+        roomPerspectiveProfile = profile;
+        roomLocalSortingPoint = roomLocalPoint;
+        roomPerspectiveSortingOffset = offset;
+        useRoomPerspectiveProfileSorting = profile != null;
+        ApplySourceSortingNow();
+    }
+
     public void ApplySourceSortingNow()
     {
         if (!sortSourceRenderers)
@@ -103,10 +119,21 @@ public sealed class ObjectMovementBlocker2D : MonoBehaviour
             return;
         }
 
-        string layerName = GetSortingLayerName(sourceSortingLayerName);
-        CurrentSortingOrder = sourceSortingOrderBase -
-            Mathf.RoundToInt(collider.bounds.min.y * sourceSortingOrderPerYUnit) +
-            sourceSortingOrderOffset;
+        string layerName;
+        if (useRoomPerspectiveProfileSorting && roomPerspectiveProfile != null)
+        {
+            layerName = GetSortingLayerName(roomPerspectiveProfile.SortingLayerName);
+            CurrentSortingOrder = roomPerspectiveProfile.GetSortingOrder(
+                roomLocalSortingPoint,
+                sourceSortingOrderOffset + roomPerspectiveSortingOffset);
+        }
+        else
+        {
+            layerName = GetSortingLayerName(sourceSortingLayerName);
+            CurrentSortingOrder = sourceSortingOrderBase -
+                Mathf.RoundToInt(collider.bounds.min.y * sourceSortingOrderPerYUnit) +
+                sourceSortingOrderOffset;
+        }
 
         for (int i = 0; i < sourceRenderers.Length; i++)
         {
