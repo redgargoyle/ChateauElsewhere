@@ -232,10 +232,13 @@ public class ObjectCollisionBoxRegressionTests
     {
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
         string applySortingBody = ExtractMethodBody(playerText, "private void ApplyPlayerSorting");
+        string roomLocalSortingBody = ExtractMethodBody(playerText, "private bool TryGetPlayerRoomLocalSortingPoint");
 
         Assert.That(applySortingBody, Does.Contain("TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile profile)"), "Player sorting should resolve the active room profile before falling back to world-y sorting.");
         Assert.That(applySortingBody, Does.Contain("profile.GetSortingOrder(roomLocalSortingPoint"), "Player sorting should use RoomPerspectiveProfile sorting in profiled rooms.");
         Assert.That(applySortingBody, Does.Contain("playerSortingOrderBase - Mathf.RoundToInt"), "The old world-y formula should remain as fallback outside profiled rooms.");
+        Assert.That(roomLocalSortingBody, Does.Contain("logicalPosition"), "Profile sorting should use the same logical foot point as movement and collision.");
+        Assert.That(roomLocalSortingBody, Does.Not.Contain("TryGetVisibleFeetWorldPoint"), "Visible sprite bounds can drift away from the movement foot point and should not drive room-profile depth.");
     }
 
     [Test]

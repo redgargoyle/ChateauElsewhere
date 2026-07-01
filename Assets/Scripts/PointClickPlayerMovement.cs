@@ -2139,14 +2139,6 @@ public class PointClickPlayerMovement : MonoBehaviour
 	{
 		roomLocalPoint = Vector2.zero;
 
-		Vector2 worldPoint = LogicalToWalkableWorldPoint(logicalPoint);
-		return TryGetWorldPointRoomStageLocalPoint(worldPoint, out roomLocalPoint);
-	}
-
-	private bool TryGetWorldPointRoomStageLocalPoint(Vector2 worldPoint, out Vector2 roomLocalPoint)
-	{
-		roomLocalPoint = Vector2.zero;
-
 		if (cameraManager == null)
 		{
 			cameraManager = FindAnyObjectByType<CameraManager>();
@@ -2157,6 +2149,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return false;
 		}
 
+		Vector2 worldPoint = LogicalToWalkableWorldPoint(logicalPoint);
 		return cameraManager.TryGetActiveRoomStageLocalPoint(worldPoint, out roomLocalPoint);
 	}
 
@@ -4234,13 +4227,6 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private bool TryGetPlayerRoomLocalSortingPoint(out Vector2 roomLocalSortingPoint)
 	{
 		roomLocalSortingPoint = Vector2.zero;
-
-		if (sortPlayerByVisibleFeet &&
-			TryGetVisibleFeetWorldPoint(out Vector2 visibleFeetWorldPoint))
-		{
-			visibleFeetWorldPoint.y += playerSortingYOffset;
-			return TryGetWorldPointRoomStageLocalPoint(visibleFeetWorldPoint, out roomLocalSortingPoint);
-		}
 
 		Vector2 logicalSortingPoint = new Vector2(
 			logicalPosition.x,
