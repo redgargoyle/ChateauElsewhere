@@ -160,6 +160,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private bool hasFrontDoorAnswerSpot;
     private Vector2 frontDoorAnswerSpot;
     private Coroutine guestRoomVisibilityRefreshRoutine;
+    private Transform guestEntranceSpawnPlacemark;
 
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
     private const float CoatPickupReadyScreenDistance = 90f;
@@ -167,9 +168,10 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
     private const float EntranceWaitDepthStepMultiplier = 0.32f;
-    private const float EntranceWaitSlotSpacingMultiplier = 1.18f;
-    private const float EntranceWaitGroupSideStepMultiplier = -0.18f;
+    private const float EntranceWaitSlotSpacingMultiplier = 1.3f;
+    private const float EntranceWaitGroupSideStepMultiplier = -0.32f;
     private const int EntranceBanisterSafeWalkingSortingOrder = 1599;
+    private const string GuestEntranceSpawnPlacemarkId = "Placemark_guests_entrance";
     private const string FrontDoorGuestSpawnAnchorId = "GuestArrival_Door";
     private const string EntranceHallGuestAnchorId = "EntranceHallGuestAnchor";
     private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
@@ -1659,16 +1661,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         EnsureGuestHiddenBeforeArrival(guest);
         bool useWorldSafePlacement = IsWorldSpaceGuestObject(guest.GuestObject);
-
-        if (useWorldSafePlacement)
-        {
-            PlaceGuestAtDoorArrival(guest, indexInDoorBatch, batchCount);
-        }
-        else
-        {
-            Transform arrivalPoint = guest.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint);
-            PlaceGuestAt(guest, arrivalPoint, "frontDoorArrivalPoint");
-        }
+        PlaceGuestAtDoorArrival(guest, indexInDoorBatch, batchCount);
 
         if (guest.ActorState != null)
         {
@@ -5540,12 +5533,13 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Vector3 GetEntranceWaitPosition(int indexInBatch, int batchCount)
     {
         Vector3 basePosition = GetEntranceWaitBasePosition();
-        float centeredIndex = indexInBatch - (batchCount - 1) * 0.5f;
-        Vector3 offset = new Vector3(
-            centeredIndex * entranceGuestSpacing,
-            GetEntranceWaitBaseYOffset(entranceGuestSpacing),
-            0f);
-        return basePosition + offset;
+        Vector2 offset = GetEntranceGroupOffset(
+            null,
+            indexInBatch,
+            batchCount,
+            entranceGuestSpacing,
+            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
+        return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
     private Vector3 GetEntranceWaitBasePosition()
@@ -5627,8 +5621,13 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Vector3 GetWorldEntranceWaitPosition(int indexInBatch, int batchCount)
     {
         Vector3 basePosition = GetWorldEntranceCenterPosition();
-        Vector2 offset = GetWorldGuestGridOffset(indexInBatch, batchCount, worldEntranceGuestSpacing);
-        return basePosition + new Vector3(offset.x, offset.y + GetWorldEntranceWaitBaseYOffset(), 0f);
+        Vector2 offset = GetWorldEntranceGroupOffset(
+            null,
+            indexInBatch,
+            batchCount,
+            worldEntranceGuestSpacing,
+            GetWorldEntranceWaitBaseYOffset());
+        return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
     private Vector3 GetWorldDoorArrivalBasePosition(GuestRuntimeState guestState)
@@ -5650,9 +5649,35 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Transform GetWorldDoorArrivalTarget(GuestRuntimeState guestState)
     {
+        Transform placemark = GetGuestEntranceSpawnPlacemark();
+
+        if (placemark != null)
+        {
+            return placemark;
+        }
+
         return guestState != null && guestState.Config != null
             ? guestState.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint)
             : frontDoorArrivalPoint;
+    }
+
+    private Transform GetGuestEntranceSpawnPlacemark()
+    {
+        if (guestEntranceSpawnPlacemark != null)
+        {
+            return guestEntranceSpawnPlacemark;
+        }
+
+        guestEntranceSpawnPlacemark = FindAnchor(GuestEntranceSpawnPlacemarkId, entryRoomId);
+
+        if (guestEntranceSpawnPlacemark != null)
+        {
+            return guestEntranceSpawnPlacemark;
+        }
+
+        GameObject placemarkObject = FindSceneObjectByExactName(GuestEntranceSpawnPlacemarkId);
+        guestEntranceSpawnPlacemark = placemarkObject != null ? placemarkObject.transform : null;
+        return guestEntranceSpawnPlacemark;
     }
 
     private bool TryGetWorldFrontDoorAnswerSpot(out Vector3 answerSpotPosition)
@@ -6717,6 +6742,11 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (frontDoorArrivalPoint == null)
         {
             frontDoorArrivalPoint = FindAnchor(FrontDoorGuestSpawnAnchorId, entryRoomId);
+        }
+
+        if (guestEntranceSpawnPlacemark == null)
+        {
+            guestEntranceSpawnPlacemark = FindAnchor(GuestEntranceSpawnPlacemarkId, entryRoomId);
         }
 
         if (entranceHallGuestAnchor == null)
