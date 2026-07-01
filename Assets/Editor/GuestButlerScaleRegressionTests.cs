@@ -1205,12 +1205,13 @@ public sealed class GuestRoomScaleRegressionTests
         Assert.That(text, Does.Contain("Guest Size Master"));
         Assert.That(text, Does.Contain("DrawPrimaryGuestCalibrationWorkflow"));
         Assert.That(text, Does.Contain("SET UP / REPAIR GUEST SCALING"));
-        Assert.That(text, Does.Contain("PREVIEW SELECTED ROOM"));
-        Assert.That(text, Does.Contain("SAVE SELECTED ROOM"));
+        Assert.That(text, Does.Contain("SAVE FRONT: Selected Guest Position + Closest Scale"));
+        Assert.That(text, Does.Contain("SAVE BACK: Selected Guest Position + Furthest Scale"));
+        Assert.That(text, Does.Contain("SAVE ROOM + APPLY TO GUESTS"));
         Assert.That(text, Does.Contain("SAVE SCENE"));
         Assert.That(text, Does.Contain("Advanced / Optional Tools"));
         Assert.That(advancedIndex, Is.GreaterThan(0));
-        Assert.That(text.IndexOf("DrawManualFrontBackGuestCurve", advancedIndex, StringComparison.Ordinal), Is.GreaterThan(advancedIndex));
+        Assert.That(text.IndexOf("Guest Scale Mode", advancedIndex, StringComparison.Ordinal), Is.GreaterThan(advancedIndex));
         Assert.That(text.IndexOf("Proof shrink", StringComparison.Ordinal), Is.GreaterThan(advancedIndex));
         Assert.That(text.IndexOf("Emergency restore captured base scales", StringComparison.Ordinal), Is.GreaterThan(advancedIndex));
         Assert.That(text.IndexOf("Run Guest Scale Audit", StringComparison.Ordinal), Is.GreaterThan(advancedIndex));
@@ -1236,16 +1237,15 @@ public sealed class GuestRoomScaleRegressionTests
         string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
 
         Assert.That(text, Does.Contain("Guest Depth Scale Curve"));
+        Assert.That(text, Does.Contain("Guest Selection"));
         Assert.That(text, Does.Contain("Selected Guest"));
-        Assert.That(text, Does.Contain("Manual Guest Scale"));
         Assert.That(text, Does.Contain("Closest Guest Scale"));
         Assert.That(text, Does.Contain("Furthest Guest Scale"));
         Assert.That(text, Does.Contain("DrawDepthPointScaleControls"));
-        Assert.That(text, Does.Contain("PREVIEW SELECTED GUEST SIZE"));
         Assert.That(text, Does.Contain("LOAD FROM BUTLER SCALE"));
-        Assert.That(text, Does.Contain("SAVE CLOSEST POINT FROM SELECTED GUEST"));
-        Assert.That(text, Does.Contain("SAVE FURTHEST POINT FROM SELECTED GUEST"));
-        Assert.That(text, Does.Contain("PREVIEW GUEST DEPTH CURVE IN ROOM"));
+        Assert.That(text, Does.Contain("SAVE FRONT: Selected Guest Position + Closest Scale"));
+        Assert.That(text, Does.Contain("SAVE BACK: Selected Guest Position + Furthest Scale"));
+        Assert.That(text, Does.Contain("SAVE ROOM + APPLY TO GUESTS"));
         Assert.That(text, Does.Contain("CLEAR MANUAL CURVE"));
         Assert.That(text, Does.Contain("ResolveSelectedGuest"));
     }
@@ -1258,13 +1258,9 @@ public sealed class GuestRoomScaleRegressionTests
         Assert.That(GuestRoomScaleMasterWindow.ActiveSelectionGuestOptionLabel, Is.EqualTo("Active Hierarchy Selection"));
         Assert.That(GuestRoomScaleMasterWindow.AllGuestsSelectionLabel, Is.EqualTo("All Guests In Selected Room"));
         Assert.That(GuestRoomScaleMasterWindow.AllGuestsInAllRoomsSelectionLabel, Is.EqualTo("All Guests In All Rooms"));
-        Assert.That(GuestRoomScaleMasterWindow.ApplyManualSizeToAllGuestsButtonLabel, Is.EqualTo("APPLY MANUAL SIZE TO SELECTED ROOM"));
-        Assert.That(GuestRoomScaleMasterWindow.ApplyManualSizeToAllRoomsButtonLabel, Is.EqualTo("APPLY MANUAL SIZE TO ALL ROOMS"));
         Assert.That(text, Does.Contain("OnSelectionChange"));
         Assert.That(text, Does.Contain("DrawManualGuestSelection"));
-        Assert.That(text, Does.Contain("PreviewAllGuestsManualScale"));
-        Assert.That(text, Does.Contain("PreviewAllRoomsManualScale"));
-        Assert.That(text, Does.Contain("Manual Guest"));
+        Assert.That(text, Does.Contain("Guest Selection"));
     }
 
     [Test]
@@ -1272,8 +1268,8 @@ public sealed class GuestRoomScaleRegressionTests
     {
         string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
 
-        Assert.That(text, Does.Contain("PreviewSelectedRoom(selectedRoom)"));
-        Assert.That(text, Does.Contain("RefreshRoomNow(selectedRoom)"));
+        Assert.That(text, Does.Contain("SavePrimaryRoomScale(calibration, selectedRoom)"));
+        Assert.That(text, Does.Contain("RefreshRoomWithUndo(selectedRoom"));
         Assert.That(text, Does.Contain("SceneView.RepaintAll()"));
         Assert.That(text, Does.Contain("changed"));
     }
@@ -1378,6 +1374,42 @@ public sealed class GuestRoomScaleRegressionTests
             Assert.That(depth, Is.EqualTo(0.5f).Within(0.0001f));
             Assert.That(savedScale, Is.EqualTo(1.525f).Within(0.0001f));
             Assert.That(diagnostic, Does.Contain("Depth guest curve"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+        }
+    }
+
+    [Test]
+    public void GuestSizeMasterPrimarySaveActivatesCompletedDepthCurve()
+    {
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            calibration.UseButlerRoomCurve("Dining Room", 1.25f);
+            GuestRoomScaleMasterWindow.SaveGuestDepthCurvePointForCalibration(
+                calibration,
+                "Dining Room",
+                -200f,
+                2.2f,
+                true);
+            GuestRoomScaleMasterWindow.SaveGuestDepthCurvePointForCalibration(
+                calibration,
+                "Dining Room",
+                -40f,
+                0.8f,
+                false);
+            calibration.UseButlerRoomCurve("Dining Room", 1.25f);
+
+            GuestRoomScaleMode mode = GuestRoomScaleMasterWindow.ResolvePrimarySaveScaleMode(
+                calibration,
+                "Dining Room",
+                GuestRoomScaleMode.ButlerCurve);
+
+            Assert.That(mode, Is.EqualTo(GuestRoomScaleMode.DepthCurve));
         }
         finally
         {
