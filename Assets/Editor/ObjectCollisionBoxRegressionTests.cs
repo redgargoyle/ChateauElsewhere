@@ -134,7 +134,12 @@ public class ObjectCollisionBoxRegressionTests
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
 
+        Assert.That(sceneText, Does.Contain("m_Name: correct_dining_table_0"), "The dining room should keep the full table/chairs base sprite from origin/dialog.");
+        Assert.That(sceneText, Does.Contain("m_LocalPosition: {x: -10.03, y: -175.58, z: -7166.9155}"), "The full dining table/chairs base sprite should keep the known-good placement from origin/dialog.");
+        Assert.That(sceneText, Does.Contain("m_Sprite: {fileID: 5018639196147655082, guid: afdc05b8996bc9af18abbb80afd7a6b8, type: 3}"), "The full dining table/chairs base sprite should use the known-good origin/dialog art.");
         Assert.That(sceneText, Does.Contain("m_Name: DiningTableCutoutOverlay"), "The dining table foreground cutout should remain available for depth sorting.");
+        Assert.That(sceneText, Does.Contain("m_LocalPosition: {x: -20.67, y: -129.04, z: -7166.9155}"), "The table foreground cutout should keep the known-good placement from origin/dialog.");
+        Assert.That(sceneText, Does.Contain("m_LocalScale: {x: 103.70781, y: 114.65408, z: 79.63239}"), "The table foreground cutout should keep the known-good scale from origin/dialog.");
         Assert.That(sceneText, Does.Contain("m_Name: PlayerBlocker_DiningTableCutoutOverlay"), "The dining table needs an authored no-walk footprint.");
         Assert.That(sceneText, Does.Contain("sourceObject: {fileID: 3800000000}"), "The blocker should sort the dining table cutout overlay, not an unrelated object.");
         Assert.That(sceneText, Does.Contain("sourceObjectName: DiningTableCutoutOverlay"));
