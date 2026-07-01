@@ -139,6 +139,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string doorArrivalTargetBody = ExtractMethodBody(controllerText, "private Transform GetWorldDoorArrivalTarget");
         string answerSpotBody = ExtractMethodBody(controllerText, "private bool TryGetWorldFrontDoorAnswerSpot");
         string waitBody = ExtractMethodBody(controllerText, "GetWorldEntranceWaitPosition");
+        string worldEntranceOffsetBody = ExtractMethodBody(controllerText, "private Vector2 GetWorldEntranceGroupOffset");
+        string uiEntranceOffsetBody = ExtractMethodBody(controllerText, "private Vector2 GetEntranceGroupOffset");
         string entranceCenterBody = ExtractMethodBody(controllerText, "GetWorldEntranceCenterPosition(GuestRuntimeState guestState)");
         string anchorLookupBody = ExtractMethodBody(controllerText, "GetEntranceHallGuestAnchor");
         string interactionTargetBody = ExtractMethodBody(controllerText, "GetFrontDoorInteractionTransform");
@@ -175,6 +177,9 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(answerSpotBody, Does.Contain("TryGetWorldPointFromLogicalPosition(frontDoorAnswerSpot"), "The cached Butler door-answer floor point should be converted back to world space for guest feet.");
         Assert.That(waitBody, Does.Contain("GetWorldEntranceCenterPosition(guestState)"), "Entrance wait spots should use the guest-depth-aware editable entrance anchor.");
         Assert.That(waitBody, Does.Contain("GetWorldEntranceGroupOffset"), "Entrance wait spots should keep group/slot offsets after guests spawn at the shared doorway.");
+        Assert.That(controllerText, Does.Contain("EntranceWaitDepthStepMultiplier = 0.45f"), "Later arrival pairs should only step slightly toward the camera so coats remain reachable near the bottom of the screen.");
+        Assert.That(worldEntranceOffsetBody, Does.Contain("EntranceWaitDepthStepMultiplier"), "World-space entrance guests should use the shallow depth step.");
+        Assert.That(uiEntranceOffsetBody, Does.Contain("EntranceWaitDepthStepMultiplier"), "UI entrance guests should use the same shallow depth step.");
         Assert.That(entranceCenterBody, Does.Match(@"TryGetEntranceHallGuestAnchorWorldPosition\(guestState[\s\S]*TryGetAverageAuthoredChapterGuestPosition"), "Entrance waiting should prefer the scene anchor before falling back to authored guest averages.");
         Assert.That(anchorLookupBody, Does.Contain("FindAnchor(EntranceHallGuestAnchorId, entryRoomId)"), "The entrance wait point should be discoverable through RoomAnchor data.");
         Assert.That(anchorLookupBody, Does.Contain("FindSceneObjectByExactName(EntranceHallGuestAnchorId)"), "The entrance wait point should still resolve if RoomAnchor data is stale.");

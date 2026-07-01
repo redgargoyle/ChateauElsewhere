@@ -166,6 +166,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float ClosetStorageReadyScreenDistance = 90f;
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
+    private const float EntranceWaitDepthStepMultiplier = 0.45f;
     private const int EntranceBanisterSafeWalkingSortingOrder = 1599;
     private const string FrontDoorGuestSpawnAnchorId = "GuestArrival_Door";
     private const string EntranceHallGuestAnchorId = "EntranceHallGuestAnchor";
@@ -5811,7 +5812,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         GetEntranceGroupSlot(guestState, fallbackIndex, fallbackCount, out int slotInGroup, out int groupIndex, out int groupSize);
         float centeredSlot = slotInGroup - (groupSize - 1) * 0.5f;
-        return new Vector2(centeredSlot * spacing, baseY - groupIndex * spacing * 0.85f);
+        return new Vector2(centeredSlot * spacing, baseY - groupIndex * spacing * EntranceWaitDepthStepMultiplier);
     }
 
     private Vector3 GetWorldEntranceCenterPosition()
@@ -5999,7 +6000,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         GetEntranceGroupSlot(guestState, fallbackIndex, fallbackCount, out int slotInGroup, out int groupIndex, out int groupSize);
         float centeredSlot = slotInGroup - (groupSize - 1) * 0.5f;
-        return new Vector2(centeredSlot * spacing, baseY - groupIndex * spacing * 0.75f);
+        return new Vector2(centeredSlot * spacing, baseY - groupIndex * spacing * EntranceWaitDepthStepMultiplier);
     }
 
     private void GetEntranceGroupSlot(
