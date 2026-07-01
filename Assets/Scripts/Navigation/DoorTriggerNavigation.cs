@@ -57,6 +57,9 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     [SerializeField] private bool makeInvisibleAtRuntime = true;
     [SerializeField] private Color runtimeColor = new Color(1f, 1f, 1f, 0f);
     [SerializeField] private bool bringToFront = true;
+    [SerializeField] private bool useBottomScreenEdgeInteraction;
+    [SerializeField, Min(1f)] private float bottomScreenEdgeActivationPixels = 28f;
+    [SerializeField] private bool disableGraphicRaycastForScreenEdgeInteraction = true;
 
     [Header("Player Proximity")]
     [SerializeField] private bool requirePlayerProximity = true;
@@ -768,8 +771,43 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     private bool ContainsScreenPoint(Vector2 screenPosition)
     {
         ResolveReferences();
+
+        if (useBottomScreenEdgeInteraction)
+        {
+            return IsCurrentRoomSourceForScreenEdgeInteraction() &&
+                IsBottomScreenEdgePoint(screenPosition);
+        }
+
         return rectTransform != null &&
             RectTransformUtility.RectangleContainsScreenPoint(rectTransform, screenPosition, GetCanvasCamera());
+    }
+
+    private bool IsBottomScreenEdgePoint(Vector2 screenPosition)
+    {
+        float edgePixels = Mathf.Max(1f, bottomScreenEdgeActivationPixels);
+        return screenPosition.x >= 0f &&
+            screenPosition.x <= Screen.width &&
+            screenPosition.y >= 0f &&
+            screenPosition.y <= edgePixels;
+    }
+
+    private bool IsCurrentRoomSourceForScreenEdgeInteraction()
+    {
+        if (!requirePlayerInSourceRoom)
+        {
+            return true;
+        }
+
+        ResolveReferences();
+
+        if (navigationManager == null || string.IsNullOrWhiteSpace(navigationManager.CurrentRoom))
+        {
+            return true;
+        }
+
+        string cleanSourceRoom = SourceRoom;
+        return string.IsNullOrWhiteSpace(cleanSourceRoom) ||
+            string.Equals(cleanSourceRoom, navigationManager.CurrentRoom, StringComparison.OrdinalIgnoreCase);
     }
 
     private static void RegisterActiveTrigger(DoorTriggerNavigation trigger)
@@ -1144,12 +1182,17 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return;
         }
 
-        image.raycastTarget = true;
+        image.raycastTarget = ShouldUseGraphicRaycast();
 
         if (makeInvisibleAtRuntime && Application.isPlaying)
         {
             image.color = runtimeColor;
         }
+    }
+
+    private bool ShouldUseGraphicRaycast()
+    {
+        return !useBottomScreenEdgeInteraction || !disableGraphicRaycastForScreenEdgeInteraction;
     }
 
     private bool TryPlayNavigationSoundNow()

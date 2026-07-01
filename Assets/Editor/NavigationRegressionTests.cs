@@ -380,6 +380,22 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void BottomEdgeRoomTransitionsDoNotUseHugeFloorHitboxes()
+    {
+        string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
+        string sceneText = File.ReadAllText(GameplayScenePath);
+
+        Assert.That(triggerText, Does.Contain("useBottomScreenEdgeInteraction"), "Special rear/edge room exits should be authored as screen-edge interactions.");
+        Assert.That(triggerText, Does.Contain("IsBottomScreenEdgePoint"), "Bottom-edge exits should test the screen edge instead of the broad door RectTransform.");
+        Assert.That(triggerText, Does.Contain("image.raycastTarget = ShouldUseGraphicRaycast()"), "Bottom-edge exits must disable graphic raycasts so their old rectangles do not steal floor clicks.");
+        Assert.That(triggerText, Does.Match(@"useBottomScreenEdgeInteraction[\s\S]*return IsCurrentRoomSourceForScreenEdgeInteraction\(\)\s*&&[\s\S]*IsBottomScreenEdgePoint"), "The fallback hover/click path should route current-room bottom-edge exits through screen-edge testing before rectangle hit testing.");
+
+        AssertBottomEdgeTransition(sceneText, "DoorTrigger_GEH_toRearView", "Grand Entrance Hall", "Grand Entrance Hall Rear View");
+        AssertBottomEdgeTransition(sceneText, "DoorTrigger_GEH_Rear_GEH_Front", "Grand Entrance Hall Rear view", "Grand Entrance Hall");
+        AssertBottomEdgeTransition(sceneText, "DoorTrigger_Conservatory_GEH_Rear_View", "Conservatory", "Grand Entrance Hall Rear View");
+    }
+
+    [Test]
     public void DoorTransitionsPlacePlayerAtDestinationDoor()
     {
         string navigationManagerText = File.ReadAllText(NavigationManagerPath);
@@ -1312,6 +1328,25 @@ public class NavigationRegressionTests
         string pattern = $@"m_Name: {escapedName}[\s\S]*?m_Sprite: \{{fileID: [-\d]+, guid: {escapedGuid}, type: 3\}}";
 
         Assert.That(sceneText, Does.Match(pattern), $"{propName} should keep its intended sprite asset.");
+    }
+
+    private static void AssertBottomEdgeTransition(string sceneText, string triggerName, string sourceRoom, string destinationRoom)
+    {
+        int blockStart = sceneText.IndexOf($"m_Name: {triggerName}", System.StringComparison.Ordinal);
+        Assert.That(blockStart, Is.GreaterThanOrEqualTo(0), $"Expected to find bottom-edge transition '{triggerName}'.");
+
+        int nextGameObjectStart = sceneText.IndexOf("\n--- !u!1 &", blockStart + triggerName.Length, System.StringComparison.Ordinal);
+        string triggerBlock = nextGameObjectStart >= 0
+            ? sceneText.Substring(blockStart, nextGameObjectStart - blockStart)
+            : sceneText.Substring(blockStart);
+
+        Assert.That(triggerBlock, Does.Contain($"sourceRoom: {sourceRoom}"), $"{triggerName} should stay connected to its source room.");
+        Assert.That(triggerBlock, Does.Contain($"destinationRoom: {destinationRoom}"), $"{triggerName} should keep its destination room.");
+        Assert.That(triggerBlock, Does.Contain("useBottomScreenEdgeInteraction: 1"), $"{triggerName} should use the bottom screen edge instead of its floor rectangle.");
+        Assert.That(triggerBlock, Does.Contain("disableGraphicRaycastForScreenEdgeInteraction: 1"), $"{triggerName} should not raycast through its old broad UI rectangle.");
+        Assert.That(triggerBlock, Does.Contain("m_RaycastTarget: 0"), $"{triggerName} should not receive pointer hits through the old floor-sized Image.");
+        Assert.That(triggerBlock, Does.Contain("requirePlayerProximity: 0"), $"{triggerName} should behave like a room-edge exit, not a walk-to-floor-zone door.");
+        Assert.That(triggerBlock, Does.Contain("walkPlayerToTriggerWhenFar: 0"), $"{triggerName} should not path the butler to the old floor-covering rectangle.");
     }
 
     private static void AssertButlerIdleClipReferences(string clipPath, string[] expectedFrameGuids, int expectedCurveCount)
