@@ -9,6 +9,7 @@ public class ObjectCollisionBoxRegressionTests
     private const string MarkerPath = "Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs";
     private const string AuthoringPath = "Assets/Editor/ObjectCollisionBoxAuthoringWindow.cs";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
+    private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
 
     [Test]
     public void ChairBlockerUsesLowerFootprintInsteadOfWholeImage()
@@ -126,6 +127,22 @@ public class ObjectCollisionBoxRegressionTests
                 Object.DestroyImmediate(sourceObject);
             }
         }
+    }
+
+    [Test]
+    public void DiningTableCutoutHasMovementAndSortingBlocker()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+
+        Assert.That(sceneText, Does.Contain("m_Name: DiningTableCutoutOverlay"), "The dining table foreground cutout should remain available for depth sorting.");
+        Assert.That(sceneText, Does.Contain("m_Name: PlayerBlocker_DiningTableCutoutOverlay"), "The dining table needs an authored no-walk footprint.");
+        Assert.That(sceneText, Does.Contain("sourceObject: {fileID: 3800000000}"), "The blocker should sort the dining table cutout overlay, not an unrelated object.");
+        Assert.That(sceneText, Does.Contain("sourceObjectName: DiningTableCutoutOverlay"));
+        Assert.That(sceneText, Does.Contain("sourceRoomName: Dining Room"));
+        Assert.That(sceneText, Does.Contain("category: Table"));
+        Assert.That(sceneText, Does.Contain("authoringNote: dining table footprint and foreground cutout depth"));
+        Assert.That(sceneText, Does.Contain("m_Father: {fileID: 2300000016}"), "The dining table blocker should live under Room_Dining_Room.");
+        Assert.That(sceneText, Does.Contain("m_IsTrigger: 1"), "Movement blockers are walkability holes, not rigid physics bodies.");
     }
 
     [Test]
