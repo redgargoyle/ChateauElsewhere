@@ -62,6 +62,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private bool hasRoomStageScaleReference;
     private float roomStageScaleReference = 1f;
     private string roomStageScaleReferenceRoom = string.Empty;
+    private bool projectedSortingSuppressed;
 
     public RoomPerspectiveProfile RoomProfile => roomProfile;
     public CharacterVisualProfile VisualProfile => visualProfile;
@@ -84,6 +85,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public bool UsesRoomVisualScaleOverrides => useRoomVisualScaleOverrides;
     public string EditorSelectedVisualScaleRoomId => editorSelectedVisualScaleRoomId;
     public string CurrentVisualScaleRoomId => GetCurrentVisualScaleRoomKey();
+    public bool IsProjectedSortingSuppressed => projectedSortingSuppressed;
 
     private void Reset()
     {
@@ -218,6 +220,21 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public void SetEditorSelectedVisualScaleRoomId(string roomId)
     {
         editorSelectedVisualScaleRoomId = CleanRoomId(roomId);
+    }
+
+    public void SetProjectedSortingSuppressed(bool value)
+    {
+        if (projectedSortingSuppressed == value)
+        {
+            return;
+        }
+
+        projectedSortingSuppressed = value;
+
+        if (!projectedSortingSuppressed)
+        {
+            ApplyProjection();
+        }
     }
 
     public Vector3 GetVisualRootScaleForRoom(string roomId)
@@ -498,7 +515,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             ApplyProjectedTint();
         }
 
-        if (applySorting)
+        if (applySorting && !projectedSortingSuppressed)
         {
             ApplyProjectedSorting();
         }

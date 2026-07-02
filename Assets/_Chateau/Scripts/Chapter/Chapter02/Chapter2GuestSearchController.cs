@@ -117,6 +117,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
     [SerializeField] private List<GuestSearchEntry> guests = new List<GuestSearchEntry>();
     [SerializeField] private string hideAnchorPrefix = "Ch2_Hide_";
     [SerializeField] private string diningSeatPrefix = "Ch2_DiningSeat_";
+    [SerializeField] private DiningRoomSeatedGuestOcclusionController diningSeatedOcclusionController;
     [SerializeField] private int foundOrderCounter;
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
 
@@ -467,6 +468,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.SetVisibleByChapterState(true);
             guest.actorState.SetInteractable(true);
             guest.actorState.SetSeated(false);
+            GetDiningSeatedOcclusionController()?.DeactivateForGuest(guest.actorState);
             EnsureGuestFindAction(guest);
             guest.actorState.ApplyState();
 
@@ -957,6 +959,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             guest.actorState.ResetAnimatorToAuthoredState();
             guest.actorState.SetSeated(true);
             guest.actorState.ApplyState();
+            GetDiningSeatedOcclusionController()?.ActivateForGuest(guest.actorState, diningSeat);
         }
     }
 
@@ -976,8 +979,19 @@ public class Chapter2GuestSearchController : MonoBehaviour
         }
 
         guest.actorState.SetInteractable(false);
+        GetDiningSeatedOcclusionController()?.DeactivateForGuest(guest.actorState);
         guest.actorState.SetVisibleByChapterState(false);
         guest.actorState.ApplyState();
+    }
+
+    private DiningRoomSeatedGuestOcclusionController GetDiningSeatedOcclusionController()
+    {
+        if (diningSeatedOcclusionController == null)
+        {
+            diningSeatedOcclusionController = DiningRoomSeatedGuestOcclusionController.FindInScene();
+        }
+
+        return diningSeatedOcclusionController;
     }
 
     private void EnsureGuestFindAction(GuestSearchEntry guest)

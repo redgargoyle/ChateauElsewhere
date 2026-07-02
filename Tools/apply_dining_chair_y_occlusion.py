@@ -22,6 +22,7 @@ RIGHT_FRONT_SCALE = (111.15611, 116.90039, 79.63239)
 
 BLOCKER_HEIGHT_FRACTION = 0.22
 BLOCKER_WIDTH_FRACTION = 0.58
+DINING_ROOM_LOCAL_Y_TO_SORT_WORLD_Y = 1.128
 
 CHAIRS = [
     "DiningHeadChairOverlay",
@@ -30,9 +31,10 @@ CHAIRS = [
     "DiningChair_Left03MidBack_Overlay",
     "DiningChair_Left04Back_Overlay",
     "DiningChair_Right01Back_Overlay",
-    "DiningChair_Right02MidFront_Overlay",
-    "DiningChair_Right03MidBack_Overlay",
+    "DiningChair_Right02MidBack_Overlay",
+    "DiningChair_Right03MidFront_Overlay",
     "DiningChair_Right04Front_Overlay",
+    "DiningChair_Rightback04_Overlay",
 ]
 
 SIDE_CHAIRS = CHAIRS[1:]
@@ -235,6 +237,7 @@ def ensure_world_y_sort(
     transform_block = require_component(blocks_by_id, blocks, components, 4, f"{game_object_file_id} Transform")
     sprite_block = require_component(blocks_by_id, blocks, components, 212, f"{game_object_file_id} SpriteRenderer")
     y_sort_block = find_mono_behaviour(blocks_by_id, blocks, components, WORLD_Y_SORT_GUID)
+    apply_initial_sprite_sorting(sprite_block, transform_block)
 
     if y_sort_block is None:
         y_sort_file_id = next_free_file_id(used_file_ids, game_object_file_id + 3)
@@ -261,6 +264,16 @@ def replace_line(block_text: str, field_name: str, replacement: str) -> str:
         raise RuntimeError(f"Could not replace {field_name} in block:\n{block_text[:240]}")
 
     return new_text
+
+
+def expected_dining_chair_sort_order(local_y: float) -> int:
+    return 1000 - round(local_y * DINING_ROOM_LOCAL_Y_TO_SORT_WORLD_Y)
+
+
+def apply_initial_sprite_sorting(sprite_block: UnityBlock, transform_block: UnityBlock) -> None:
+    _, local_y, _ = vector_field(transform_block.text, "m_LocalPosition")
+    sprite_block.text = replace_line(sprite_block.text, "m_SortingOrder", str(expected_dining_chair_sort_order(local_y)))
+    sprite_block.text = replace_line(sprite_block.text, "m_SpriteSortPoint", "1")
 
 
 def sprite_guid(sprite_block: UnityBlock) -> str | None:
@@ -361,7 +374,7 @@ def ensure_missing_right_front_chair(
     if chair_name in names_to_ids:
         return
 
-    reference_name = "DiningChair_Right03MidBack_Overlay"
+    reference_name = "DiningChair_Right03MidFront_Overlay"
 
     if reference_name not in names_to_ids:
         raise RuntimeError(f"Cannot restore {chair_name}; missing reference chair {reference_name}.")

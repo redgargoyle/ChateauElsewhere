@@ -36,9 +36,10 @@ DINING_CHAIR_NAMES = {
     "DiningChair_Left03MidBack_Overlay",
     "DiningChair_Left04Back_Overlay",
     "DiningChair_Right01Back_Overlay",
-    "DiningChair_Right02MidFront_Overlay",
-    "DiningChair_Right03MidBack_Overlay",
+    "DiningChair_Right02MidBack_Overlay",
+    "DiningChair_Right03MidFront_Overlay",
     "DiningChair_Right04Front_Overlay",
+    "DiningChair_Rightback04_Overlay",
 }
 DINING_SORTED_PROP_NAMES = {DINING_TABLE_NAME, *DINING_CHAIR_NAMES}
 
