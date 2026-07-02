@@ -22,7 +22,7 @@ RIGHT_FRONT_SCALE = (111.15611, 116.90039, 79.63239)
 
 BLOCKER_HEIGHT_FRACTION = 0.22
 BLOCKER_WIDTH_FRACTION = 0.58
-DINING_ROOM_LOCAL_Y_TO_SORT_WORLD_Y = 1.128
+DINING_ROOM_LOCAL_Y_TO_SORT_ORDER_UNITS = 1.356
 
 CHAIRS = [
     "DiningHeadChairOverlay",
@@ -267,7 +267,7 @@ def replace_line(block_text: str, field_name: str, replacement: str) -> str:
 
 
 def expected_dining_chair_sort_order(local_y: float) -> int:
-    return 1000 - round(local_y * DINING_ROOM_LOCAL_Y_TO_SORT_WORLD_Y)
+    return 1000 - round(local_y * DINING_ROOM_LOCAL_Y_TO_SORT_ORDER_UNITS)
 
 
 def apply_initial_sprite_sorting(sprite_block: UnityBlock, transform_block: UnityBlock) -> None:

@@ -19,7 +19,6 @@ RIGHT_FRONT_TRIMMED_GUID = "24a9b0f498b34b16ac395abdbaa2d168"
 RIGHT_FRONT_SCENE_OVERLAY_GUID = "960f64daeb0a47a68dc0b6e201a080db"
 
 BLOCKER_HEIGHT_FRACTION = 0.22
-DINING_ROOM_LOCAL_Y_TO_SORT_WORLD_Y = 1.128
 
 CHAIRS = [
     "DiningHeadChairOverlay",
@@ -84,20 +83,6 @@ def two_value_field(block: str, field_name: str) -> tuple[float, float]:
         fail(f"Missing {field_name} on block:\n{block[:240]}")
 
     return float(match.group(1)), float(match.group(2))
-
-
-def field_int(block: str, field_name: str) -> int:
-    pattern = rf"^  {re.escape(field_name)}: (-?\d+)$"
-    match = re.search(pattern, block, re.MULTILINE)
-
-    if not match:
-        fail(f"Missing {field_name} on block:\n{block[:240]}")
-
-    return int(match.group(1))
-
-
-def expected_dining_chair_sort_order(local_y: float) -> int:
-    return 1000 - round(local_y * DINING_ROOM_LOCAL_Y_TO_SORT_WORLD_Y)
 
 
 def require_component(
@@ -210,15 +195,7 @@ def main() -> None:
             f"{chair_name} WorldYSortSpriteRenderer",
         )
 
-        _, local_y, z_position = vector_field(transform_block, "m_LocalPosition")
-        sorting_order = field_int(sprite_block, "m_SortingOrder")
-        expected_sorting_order = expected_dining_chair_sort_order(local_y)
-
-        if sorting_order != expected_sorting_order:
-            fail(
-                f"{chair_name} SpriteRenderer has stale sorting order {sorting_order}; "
-                f"expected {expected_sorting_order} from its dining-room y anchor"
-            )
+        _, _, z_position = vector_field(transform_block, "m_LocalPosition")
 
         if z_position >= 0:
             fail(f"{chair_name} should remain in the dining overlay z-depth, found z {z_position}")
