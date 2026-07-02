@@ -1,0 +1,205 @@
+{
+  "source": "Assets/Art/Objects/correct_dining_table_chairs.png",
+  "method": "marker-controlled alpha watershed region growing from nine chair seeds",
+  "scene_overlay_note": "Scene overlay PNGs keep the original 793x585 canvas so each separate chair can share the dining table transform.",
+  "chairs": [
+    {
+      "name": "dining_chair_left_01_front",
+      "file": "Assets/Art/Objects/DiningTableChairSplits/dining_chair_left_01_front.png",
+      "scene_file": "Assets/Art/Objects/DiningTableChairSplits/SceneOverlays/dining_chair_left_01_front_scene.png",
+      "seed": [
+        38,
+        165
+      ],
+      "origin": [
+        0,
+        109
+      ],
+      "size": [
+        96,
+        349
+      ],
+      "scene_size": [
+        793,
+        585
+      ],
+      "source_alpha_pixels": 13496
+    },
+    {
+      "name": "dining_chair_left_02_mid_front",
+      "file": "Assets/Art/Objects/DiningTableChairSplits/dining_chair_left_02_mid_front.png",
+      "scene_file": "Assets/Art/Objects/DiningTableChairSplits/SceneOverlays/dining_chair_left_02_mid_front_scene.png",
+      "seed": [
+        102,
+        145
+      ],
+      "origin": [
+        64,
+        78
+      ],
+      "size": [
+        91,
+        176
+      ],
+      "scene_size": [
+        793,
+        585
+      ],
+      "source_alpha_pixels": 6588
+    },
+    {
+      "name": "dining_chair_left_03_mid_back",
+      "file": "Assets/Art/Objects/DiningTableChairSplits/dining_chair_left_03_mid_back.png",
+      "scene_file": "Assets/Art/Objects/DiningTableChairSplits/SceneOverlays/dining_chair_left_03_mid_back_scene.png",
+      "seed": [
+        150,
+        122
+      ],
+      "origin": [
+        120,
+        58
+      ],
+      "size": [
+        77,
+        145
+      ],
+      "scene_size": [
+        793,
+        585
+      ],
+      "source_alpha_pixels": 4644
+    },
+    {
+      "name": "dining_chair_left_04_back",
+      "file": "Assets/Art/Objects/DiningTableChairSplits/dining_chair_left_04_back.png",
+      "scene_file": "Assets/Art/Objects/DiningTableChairSplits/SceneOverlays/dining_chair_left_04_back_scene.png",
+      "seed": [
+        190,
+        105
+      ],
+      "origin": [
+        163,
+        46
+      ],
+      "size": [
+        64,
+        119
+      ],
+      "scene_size": [
+        793,
+        585
+      ],
+      "source_alpha_pixels": 2977
+    },
+    {
+      "name": "dining_chair_head",
+      "file": "Assets/Art/Objects/DiningTableChairSplits/dining_chair_head.png",
+      "scene_file": "Assets/Art/Objects/DiningTableChairSplits/SceneOverlays/dining_chair_head_scene.png",
+      "seed": [
+        355,
+        340
+      ],
+      "origin": [
+        243,
+        223
+      ],
+      "size": [
+        225,
+        362
+      ],
+      "scene_size": [
+        793,
+        585
+      ],
+      "source_alpha_pixels": 49034
+    },
+    {
+      "name": "dining_chair_right_01_back",
+      "file": "Assets/Art/Objects/DiningTableChairSplits/dining_chair_right_01_back.png",
+      "scene_file": "Assets/Art/Objects/DiningTableChairSplits/SceneOverlays/dining_chair_right_01_back_scene.png",
+      "seed": [
+        590,
+        112
+      ],
+      "origin": [
+        545,
+        46
+      ],
+      "size": [
+        67,
+        130
+      ],
+      "scene_size": [
+        793,
+        585
+      ],
+      "source_alpha_pixels": 2875
+    },
+    {
+      "name": "dining_chair_right_02_mid_back",
+      "file": "Assets/Art/Objects/DiningTableChairSplits/dining_chair_right_02_mid_back.png",
+      "scene_file": "Assets/Art/Objects/DiningTableChairSplits/SceneOverlays/dining_chair_right_02_mid_back_scene.png",
+      "seed": [
+        628,
+        132
+      ],
+      "origin": [
+        577,
+        59
+      ],
+      "size": [
+        105,
+        175
+      ],
+      "scene_size": [
+        793,
+        585
+      ],
+      "source_alpha_pixels": 8767
+    },
+    {
+      "name": "dining_chair_right_03_mid_front",
+      "file": "Assets/Art/Objects/DiningTableChairSplits/dining_chair_right_03_mid_front.png",
+      "scene_file": "Assets/Art/Objects/DiningTableChairSplits/SceneOverlays/dining_chair_right_03_mid_front_scene.png",
+      "seed": [
+        676,
+        170
+      ],
+      "origin": [
+        625,
+        95
+      ],
+      "size": [
+        106,
+        178
+      ],
+      "scene_size": [
+        793,
+        585
+      ],
+      "source_alpha_pixels": 7541
+    },
+    {
+      "name": "dining_chair_right_04_front",
+      "file": "Assets/Art/Objects/DiningTableChairSplits/dining_chair_right_04_front.png",
+      "scene_file": "Assets/Art/Objects/DiningTableChairSplits/SceneOverlays/dining_chair_right_04_front_scene.png",
+      "seed": [
+        735,
+        250
+      ],
+      "origin": [
+        659,
+        128
+      ],
+      "size": [
+        134,
+        339
+      ],
+      "scene_size": [
+        793,
+        585
+      ],
+      "source_alpha_pixels": 22677
+    }
+  ]
+}
