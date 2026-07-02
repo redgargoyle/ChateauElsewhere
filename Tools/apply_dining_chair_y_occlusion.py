@@ -17,6 +17,8 @@ DINING_ROOM_TRANSFORM_ID = 2300000016
 WORLD_Y_SORT_GUID = "75f090bb68ab450d9703d9581c5c543a"
 OBJECT_BLOCKER_GUID = "b95469e02af64fee8b29689edb9b583a"
 RIGHT_FRONT_TRIMMED_GUID = "24a9b0f498b34b16ac395abdbaa2d168"
+RIGHT_FRONT_POSITION = (330.74, -367.21, -7166.9155)
+RIGHT_FRONT_SCALE = (111.15611, 116.90039, 79.63239)
 
 BLOCKER_HEIGHT_FRACTION = 0.22
 BLOCKER_WIDTH_FRACTION = 0.58
@@ -34,6 +36,10 @@ CHAIRS = [
 ]
 
 SIDE_CHAIRS = CHAIRS[1:]
+
+LEGACY_STRAY_CHAIRS = [
+    "DiningChair_Right03Back_Overlay",
+]
 
 
 @dataclass
@@ -278,6 +284,146 @@ def update_sprite_renderer(sprite_block: UnityBlock, guid: str, size: tuple[floa
 
     sprite_block.text = replace_line(sprite_block.text, "m_WasSpriteAssigned", "1")
     sprite_block.text = replace_line(sprite_block.text, "m_SpriteSortPoint", "1")
+
+
+def make_chair_game_object_block(game_object_file_id: int, transform_file_id: int, sprite_file_id: int, chair_name: str) -> str:
+    return f"""--- !u!1 &{game_object_file_id}
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {{fileID: 0}}
+  m_PrefabInstance: {{fileID: 0}}
+  m_PrefabAsset: {{fileID: 0}}
+  serializedVersion: 6
+  m_Component:
+  - component: {{fileID: {transform_file_id}}}
+  - component: {{fileID: {sprite_file_id}}}
+  m_Layer: 0
+  m_Name: {chair_name}
+  m_TagString: Untagged
+  m_Icon: {{fileID: 0}}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+"""
+
+
+def make_chair_transform_block(transform_file_id: int, game_object_file_id: int, parent_transform_file_id: int) -> str:
+    return f"""--- !u!4 &{transform_file_id}
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {{fileID: 0}}
+  m_PrefabInstance: {{fileID: 0}}
+  m_PrefabAsset: {{fileID: 0}}
+  m_GameObject: {{fileID: {game_object_file_id}}}
+  serializedVersion: 2
+  m_LocalRotation: {{x: 0, y: 0, z: 0, w: 1}}
+  m_LocalPosition: {{x: {fmt(RIGHT_FRONT_POSITION[0])}, y: {fmt(RIGHT_FRONT_POSITION[1])}, z: {fmt(RIGHT_FRONT_POSITION[2])}}}
+  m_LocalScale: {{x: {fmt(RIGHT_FRONT_SCALE[0])}, y: {fmt(RIGHT_FRONT_SCALE[1])}, z: {fmt(RIGHT_FRONT_SCALE[2])}}}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {{fileID: {parent_transform_file_id}}}
+  m_LocalEulerAnglesHint: {{x: 0, y: 0, z: 0}}
+"""
+
+
+def clone_sprite_renderer_block(
+    source_sprite_block: UnityBlock,
+    sprite_file_id: int,
+    game_object_file_id: int,
+    sprite_guid_value: str,
+    sprite_size: tuple[float, float],
+) -> str:
+    text = re.sub(
+        r"^--- !u!212 &-?\d+",
+        f"--- !u!212 &{sprite_file_id}",
+        source_sprite_block.text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    text = replace_line(text, "m_GameObject", f"{{fileID: {game_object_file_id}}}")
+    text = replace_line(text, "m_SortingOrder", "1000")
+    text = replace_line(text, "m_Size", f"{{x: {fmt(sprite_size[0])}, y: {fmt(sprite_size[1])}}}")
+    text = replace_line(text, "m_Sprite", f"{{fileID: 21300000, guid: {sprite_guid_value}, type: 3}}")
+    text = replace_line(text, "m_WasSpriteAssigned", "1")
+    text = replace_line(text, "m_SpriteSortPoint", "1")
+    return text
+
+
+def ensure_missing_right_front_chair(
+    blocks: list[UnityBlock],
+    blocks_by_id: dict[int, int],
+    names_to_ids: dict[str, int],
+    used_file_ids: set[int],
+    sizes_by_guid: dict[str, tuple[float, float]],
+) -> None:
+    chair_name = "DiningChair_Right04Front_Overlay"
+
+    if chair_name in names_to_ids:
+        return
+
+    reference_name = "DiningChair_Right03MidBack_Overlay"
+
+    if reference_name not in names_to_ids:
+        raise RuntimeError(f"Cannot restore {chair_name}; missing reference chair {reference_name}.")
+
+    reference_components = component_ids(require_block(blocks_by_id, blocks, names_to_ids[reference_name]).text)
+    reference_sprite = require_component(
+        blocks_by_id,
+        blocks,
+        reference_components,
+        212,
+        f"{reference_name} SpriteRenderer",
+    )
+
+    if RIGHT_FRONT_TRIMMED_GUID not in sizes_by_guid:
+        raise RuntimeError("Right-front dining chair sprite guid is missing from manifest sizes.")
+
+    game_object_file_id = next_free_file_id(used_file_ids, 3910000070)
+    transform_file_id = next_free_file_id(used_file_ids, game_object_file_id + 1)
+    sprite_file_id = next_free_file_id(used_file_ids, game_object_file_id + 2)
+    new_blocks = [
+        UnityBlock(1, game_object_file_id, make_chair_game_object_block(
+            game_object_file_id,
+            transform_file_id,
+            sprite_file_id,
+            chair_name,
+        )),
+        UnityBlock(4, transform_file_id, make_chair_transform_block(
+            transform_file_id,
+            game_object_file_id,
+            DINING_ROOM_TRANSFORM_ID,
+        )),
+        UnityBlock(212, sprite_file_id, clone_sprite_renderer_block(
+            reference_sprite,
+            sprite_file_id,
+            game_object_file_id,
+            RIGHT_FRONT_TRIMMED_GUID,
+            sizes_by_guid[RIGHT_FRONT_TRIMMED_GUID],
+        )),
+    ]
+    insert_after_index = blocks_by_id[reference_sprite.file_id]
+    blocks[insert_after_index + 1 : insert_after_index + 1] = new_blocks
+    blocks_by_id.clear()
+    blocks_by_id.update({block.file_id: index for index, block in enumerate(blocks)})
+
+    dining_room_transform = require_block(blocks_by_id, blocks, DINING_ROOM_TRANSFORM_ID)
+    add_child_to_transform(dining_room_transform, transform_file_id)
+
+
+def disable_legacy_stray_chairs(
+    blocks: list[UnityBlock],
+    blocks_by_id: dict[int, int],
+    names_to_ids: dict[str, int],
+) -> None:
+    for legacy_name in LEGACY_STRAY_CHAIRS:
+        game_object_file_id = names_to_ids.get(legacy_name)
+
+        if game_object_file_id is None:
+            continue
+
+        game_object_block = require_block(blocks_by_id, blocks, game_object_file_id)
+        game_object_block.text = replace_line(game_object_block.text, "m_Name", f"Disabled_{legacy_name}_Legacy")
+        game_object_block.text = replace_line(game_object_block.text, "m_IsActive", "0")
 
 
 def update_chair_sprite_sizes(
@@ -601,6 +747,11 @@ def main() -> None:
     blocks_by_id, names_to_ids = build_indexes(blocks)
     used_file_ids = {block.file_id for block in blocks}
     sizes_by_guid = load_manifest_sizes_by_guid()
+
+    ensure_missing_right_front_chair(blocks, blocks_by_id, names_to_ids, used_file_ids, sizes_by_guid)
+    blocks_by_id, names_to_ids = build_indexes(blocks)
+    disable_legacy_stray_chairs(blocks, blocks_by_id, names_to_ids)
+    blocks_by_id, names_to_ids = build_indexes(blocks)
 
     for chair_name in CHAIRS:
         if chair_name not in names_to_ids:

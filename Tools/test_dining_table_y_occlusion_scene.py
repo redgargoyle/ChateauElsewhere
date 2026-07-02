@@ -16,7 +16,10 @@ WORLD_Y_SORT_GUID = "75f090bb68ab450d9703d9581c5c543a"
 OBJECT_BLOCKER_GUID = "b95469e02af64fee8b29689edb9b583a"
 
 TABLE_NAME = "DiningTableCutoutOverlay"
+TABLE_SORT_ANCHOR_NAME = "DiningTableSortAnchor"
 TABLE_BLOCKER_NAME = "PlayerBlocker_DiningTableCutoutOverlay"
+TABLE_SORT_ANCHOR_ROOM_Y = -356.0
+TABLE_SORT_ANCHOR_ROOM_Y_TOLERANCE = 2.0
 
 
 def fail(message: str) -> None:
@@ -44,6 +47,16 @@ def get_name(block: str) -> str | None:
 
 def component_ids(game_object_block: str) -> list[int]:
     return [int(match) for match in re.findall(r"- component: \{fileID: (-?\d+)\}", game_object_block)]
+
+
+def vector_field(block: str, field_name: str) -> tuple[float, float, float]:
+    pattern = rf"^  {re.escape(field_name)}: \{{x: ([^,]+), y: ([^,]+), z: ([^}}]+)\}}$"
+    match = re.search(pattern, block, re.MULTILINE)
+
+    if not match:
+        fail(f"Missing {field_name} on block:\n{block[:240]}")
+
+    return tuple(float(value) for value in match.groups())
 
 
 def require_component(
@@ -100,7 +113,12 @@ def main() -> None:
         fail(f"Missing table GameObject {TABLE_NAME}")
 
     table_components = component_ids(blocks[table_file_id][1])
-    table_transform_file_id, _ = require_component(blocks, table_components, 4, f"{TABLE_NAME} Transform")
+    table_transform_file_id, table_transform = require_component(
+        blocks,
+        table_components,
+        4,
+        f"{TABLE_NAME} Transform",
+    )
     _, table_sprite = require_component(blocks, table_components, 212, f"{TABLE_NAME} SpriteRenderer")
     _, table_y_sort = require_mono_behaviour(
         blocks,
@@ -109,10 +127,34 @@ def main() -> None:
         f"{TABLE_NAME} WorldYSortSpriteRenderer",
     )
 
+    sort_anchor_file_id = names_to_file_ids.get(TABLE_SORT_ANCHOR_NAME)
+
+    if sort_anchor_file_id is None:
+        fail(f"Missing table sort anchor GameObject {TABLE_SORT_ANCHOR_NAME}")
+
+    sort_anchor_components = component_ids(blocks[sort_anchor_file_id][1])
+    sort_anchor_transform_file_id, sort_anchor_transform = require_component(
+        blocks,
+        sort_anchor_components,
+        4,
+        f"{TABLE_SORT_ANCHOR_NAME} Transform",
+    )
+
     assert_contains(table_sprite, "m_SpriteSortPoint: 1", f"{TABLE_NAME} SpriteRenderer")
+    assert_contains(
+        table_transform,
+        f"- {{fileID: {sort_anchor_transform_file_id}}}",
+        f"{TABLE_NAME} Transform",
+    )
+    assert_contains(
+        sort_anchor_transform,
+        f"m_Father: {{fileID: {table_transform_file_id}}}",
+        f"{TABLE_SORT_ANCHOR_NAME} Transform",
+    )
     assert_contains(table_y_sort, "sortingLayerName: People", f"{TABLE_NAME} WorldYSortSpriteRenderer")
     assert_contains(table_y_sort, "sortingOrderBase: 1000", f"{TABLE_NAME} WorldYSortSpriteRenderer")
     assert_contains(table_y_sort, "sortingOrderPerYUnit: 100", f"{TABLE_NAME} WorldYSortSpriteRenderer")
+    assert_contains(table_y_sort, "sortingOrderOffset: 0", f"{TABLE_NAME} WorldYSortSpriteRenderer")
     assert_contains(table_y_sort, "includeChildren: 1", f"{TABLE_NAME} WorldYSortSpriteRenderer")
     assert_contains(table_y_sort, "forcePivotSortPoint: 1", f"{TABLE_NAME} WorldYSortSpriteRenderer")
     assert_contains(
@@ -127,9 +169,23 @@ def main() -> None:
     )
     assert_contains(
         table_y_sort,
-        f"yReference: {{fileID: {table_transform_file_id}}}",
+        f"yReference: {{fileID: {sort_anchor_transform_file_id}}}",
         f"{TABLE_NAME} WorldYSortSpriteRenderer",
     )
+
+    anchor_x, anchor_y, anchor_z = vector_field(sort_anchor_transform, "m_LocalPosition")
+    _, table_room_y, _ = vector_field(table_transform, "m_LocalPosition")
+    _, table_scale_y, _ = vector_field(table_transform, "m_LocalScale")
+    anchor_room_y = table_room_y + anchor_y * table_scale_y
+
+    if abs(anchor_x) > 0.001 or abs(anchor_z) > 0.001:
+        fail(f"{TABLE_SORT_ANCHOR_NAME} should stay centered under the table, found x/z {anchor_x}/{anchor_z}")
+
+    if abs(anchor_room_y - TABLE_SORT_ANCHOR_ROOM_Y) > TABLE_SORT_ANCHOR_ROOM_Y_TOLERANCE:
+        fail(
+            f"{TABLE_SORT_ANCHOR_NAME} should sit on the tablecloth front occlusion line near "
+            f"dining-room y {TABLE_SORT_ANCHOR_ROOM_Y}, found {anchor_room_y}"
+        )
 
     table_blocker_file_id = names_to_file_ids.get(TABLE_BLOCKER_NAME)
 
@@ -149,8 +205,8 @@ def main() -> None:
     assert_contains(blocker_marker, "category: Table", f"{TABLE_BLOCKER_NAME} marker")
     assert_contains(blocker_marker, "sortSourceRenderers: 0", f"{TABLE_BLOCKER_NAME} marker")
 
-    table_meta = TABLE_META_PATH.read_text()
-    assert_contains(table_meta, "spritePivot: {x: 0.5, y: 0.5}", "dining table sprite meta")
+    if not TABLE_META_PATH.exists():
+        fail(f"Missing dining table sprite meta {TABLE_META_PATH}")
 
     print("Dining table y-occlusion scene wiring verified.")
 

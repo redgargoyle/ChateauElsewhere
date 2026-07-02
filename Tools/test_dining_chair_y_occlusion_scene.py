@@ -175,11 +175,17 @@ def main() -> None:
         assert_contains(y_sort_block, "sortingLayerName: People", f"{chair_name} WorldYSortSpriteRenderer")
         assert_contains(y_sort_block, "sortingOrderBase: 1000", f"{chair_name} WorldYSortSpriteRenderer")
         assert_contains(y_sort_block, "sortingOrderPerYUnit: 100", f"{chair_name} WorldYSortSpriteRenderer")
+        assert_contains(y_sort_block, "sortingOrderOffset: 0", f"{chair_name} WorldYSortSpriteRenderer")
         assert_contains(y_sort_block, "includeChildren: 1", f"{chair_name} WorldYSortSpriteRenderer")
         assert_contains(y_sort_block, "forcePivotSortPoint: 1", f"{chair_name} WorldYSortSpriteRenderer")
         assert_contains(
             y_sort_block,
             "sortSolidObstacleFromPhysicalBottom: 0",
+            f"{chair_name} WorldYSortSpriteRenderer",
+        )
+        assert_contains(
+            y_sort_block,
+            "forceBehindPlayerInsidePhysicalBounds: 0",
             f"{chair_name} WorldYSortSpriteRenderer",
         )
         assert_contains(
