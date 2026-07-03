@@ -22,6 +22,9 @@ MonoBehaviour:
   - lineId: CH1_G01_COAT_HANDOFF
     clip: {fileID: 8300000, guid: cf9bcd831fe225f7592ec0d1e5b291be, type: 3}
     volume: 1
+  - lineId: CH1_G01_INTERRUPTED
+    clip: {fileID: 8300000, guid: a3b1420d860d7d207a89f8067fc35785, type: 3}
+    volume: 1
   - lineId: CH1_G01_DELAYED
     clip: {fileID: 8300000, guid: 5944a410b6e9347f849945fd714051b3, type: 3}
     volume: 1
@@ -81,6 +84,9 @@ MonoBehaviour:
     volume: 1
   - lineId: CH1_G02_COAT_HANDOFF
     clip: {fileID: 8300000, guid: 8f4a70e7ae27200211a21820258bb692, type: 3}
+    volume: 1
+  - lineId: CH1_G02_INTERRUPTED
+    clip: {fileID: 8300000, guid: 8010878aff0d0941aac32c8018b21a9f, type: 3}
     volume: 1
   - lineId: CH1_G02_DELAYED
     clip: {fileID: 8300000, guid: 28acee5cfbc8cdd5b94f11be461a7ff6, type: 3}
@@ -142,6 +148,9 @@ MonoBehaviour:
   - lineId: CH1_G03_COAT_HANDOFF
     clip: {fileID: 8300000, guid: b2bf2921e57fbc5946562ca68b6acb4e, type: 3}
     volume: 1
+  - lineId: CH1_G03_INTERRUPTED
+    clip: {fileID: 8300000, guid: cf509b19c182c330db1600a1f1cbd0ae, type: 3}
+    volume: 1
   - lineId: CH1_G03_DELAYED
     clip: {fileID: 8300000, guid: 50d8fc0847ce1a22d7c76c774a19ed5d, type: 3}
     volume: 1
@@ -201,6 +210,9 @@ MonoBehaviour:
     volume: 1
   - lineId: CH1_G04_COAT_HANDOFF
     clip: {fileID: 8300000, guid: 14a679f8174c58366d40c36e7b2c9a0b, type: 3}
+    volume: 1
+  - lineId: CH1_G04_INTERRUPTED
+    clip: {fileID: 8300000, guid: 742d2c3bbe07c5154bcfa4846ec502fc, type: 3}
     volume: 1
   - lineId: CH1_G04_DELAYED
     clip: {fileID: 8300000, guid: fe1f8a79309c4b2075a1eee0af098a45, type: 3}
@@ -262,6 +274,9 @@ MonoBehaviour:
   - lineId: CH1_G05_COAT_HANDOFF
     clip: {fileID: 8300000, guid: 75bfad306c77a016b7c440df08d2f617, type: 3}
     volume: 1
+  - lineId: CH1_G05_INTERRUPTED
+    clip: {fileID: 8300000, guid: faff5da66310cb8d989ec07c2aa560a0, type: 3}
+    volume: 1
   - lineId: CH1_G05_DELAYED
     clip: {fileID: 8300000, guid: a711b35d618bf64b87bf6a74b53b750d, type: 3}
     volume: 1
@@ -321,6 +336,9 @@ MonoBehaviour:
     volume: 1
   - lineId: CH1_G06_COAT_HANDOFF
     clip: {fileID: 8300000, guid: 1a2f86bac1f1b91a40af17fe44803ad9, type: 3}
+    volume: 1
+  - lineId: CH1_G06_INTERRUPTED
+    clip: {fileID: 8300000, guid: ac4fbefc0b9e667f4b414875c278f6f6, type: 3}
     volume: 1
   - lineId: CH1_G06_DELAYED
     clip: {fileID: 8300000, guid: ad91fbb1c7fc918d35d8cffd9ced1e09, type: 3}
@@ -382,6 +400,9 @@ MonoBehaviour:
   - lineId: CH1_G07_COAT_HANDOFF
     clip: {fileID: 8300000, guid: 2be0a786f55f3076c2422d2d1bdfac29, type: 3}
     volume: 1
+  - lineId: CH1_G07_INTERRUPTED
+    clip: {fileID: 8300000, guid: fa362bff08e395f3ba8ab0841201e4b5, type: 3}
+    volume: 1
   - lineId: CH1_G07_DELAYED
     clip: {fileID: 8300000, guid: 91a1e7c3eaf008ed9ff6bfb0dfa16308, type: 3}
     volume: 1
@@ -441,6 +462,9 @@ MonoBehaviour:
     volume: 1
   - lineId: CH1_G08_COAT_HANDOFF
     clip: {fileID: 8300000, guid: df0924f90a89639714ab30dee61cc065, type: 3}
+    volume: 1
+  - lineId: CH1_G08_INTERRUPTED
+    clip: {fileID: 8300000, guid: cffad8733ba36d1c29e9f84da335b6ff, type: 3}
     volume: 1
   - lineId: CH1_G08_DELAYED
     clip: {fileID: 8300000, guid: 9f5bd4ac08ec8eb2a23a515bf1643c6f, type: 3}
