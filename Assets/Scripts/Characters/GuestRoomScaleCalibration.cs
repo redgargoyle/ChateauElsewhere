@@ -9,15 +9,6 @@ public sealed class GuestRoomScaleEntry
     public bool enabled = true;
     [Min(0.001f)] public float roomGuestScaleMultiplier = 1f;
     public bool useButlerRoomCurve = true;
-    public bool useFixedGuestScale;
-    [Min(0.001f)] public float fixedGuestScale = 1f;
-    public bool useCustomGuestCurve;
-    public bool hasFront;
-    public float frontRoomLocalY;
-    [Min(0.001f)] public float frontGuestScale = 1f;
-    public bool hasBack;
-    public float backRoomLocalY;
-    [Min(0.001f)] public float backGuestScale = 1f;
     public bool hasReferenceRoomStageScale;
     [Min(0.0001f)] public float referenceRoomStageScale = 1f;
 
@@ -40,9 +31,6 @@ public sealed class GuestRoomScaleEntry
     {
         roomId = CleanRoomId(roomId);
         roomGuestScaleMultiplier = Mathf.Max(0.001f, roomGuestScaleMultiplier);
-        fixedGuestScale = Mathf.Max(0.001f, fixedGuestScale);
-        frontGuestScale = Mathf.Max(0.001f, frontGuestScale);
-        backGuestScale = Mathf.Max(0.001f, backGuestScale);
         referenceRoomStageScale = hasReferenceRoomStageScale
             ? Mathf.Max(0.0001f, referenceRoomStageScale)
             : 1f;
@@ -209,13 +197,6 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         entry.roomGuestScaleMultiplier = Mathf.Max(0.001f, multiplier);
     }
 
-    public void ClearFixedGuestScale(string roomId)
-    {
-        GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
-        entry.useFixedGuestScale = false;
-        entry.fixedGuestScale = 1f;
-    }
-
     public void SetReferenceRoomStageScale(string roomId, float stageScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
@@ -235,18 +216,6 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
 
         stageScale = SanitizeRoomStageScale(entry.referenceRoomStageScale);
         return true;
-    }
-
-    public void ClearCustomCurve(string roomId)
-    {
-        GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
-        entry.useCustomGuestCurve = false;
-        entry.hasFront = false;
-        entry.frontRoomLocalY = 0f;
-        entry.frontGuestScale = 1f;
-        entry.hasBack = false;
-        entry.backRoomLocalY = 0f;
-        entry.backGuestScale = 1f;
     }
 
     public bool RemoveRoom(string roomId)

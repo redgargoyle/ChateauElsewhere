@@ -118,56 +118,15 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
-    public void GuestRoomScaleCalibrationIgnoresSerializedLegacyScaleFlags()
-    {
-        GameObject butler = CreatePointClickPlayer("player", new Vector3(2f, 2f, 1f));
-        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
-
-        try
-        {
-            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
-            ConfigureButlerRoom(movement, "Grand Entrance Hall");
-
-            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
-            calibration.SetButlerScaleSource(movement);
-            calibration.InitializeMissingRoomsFromButler(movement);
-            calibration.SetRoomMultiplier("Grand Entrance Hall", 5f);
-            GuestRoomScaleEntry entry = calibration.GetOrCreateRoom("Grand Entrance Hall");
-            entry.useFixedGuestScale = true;
-            entry.fixedGuestScale = 0.25f;
-            entry.useCustomGuestCurve = true;
-            entry.hasFront = true;
-            entry.frontRoomLocalY = -100f;
-            entry.frontGuestScale = 2.4f;
-            entry.hasBack = true;
-            entry.backRoomLocalY = 100f;
-            entry.backGuestScale = 1.2f;
-
-            Assert.That(
-                calibration.TryEvaluateGuestScale(
-                    "Grand Entrance Hall",
-                    0f,
-                    out float scale,
-                    out float depth,
-                    out string diagnostic),
-                Is.True,
-                diagnostic);
-            Assert.That(depth, Is.EqualTo(0.5f).Within(0.0001f));
-            Assert.That(scale, Is.EqualTo(1.5f * 5f).Within(0.0001f));
-            Assert.That(diagnostic, Does.Contain("Butler depth scale"));
-        }
-        finally
-        {
-            UnityEngine.Object.DestroyImmediate(calibrationObject);
-            UnityEngine.Object.DestroyImmediate(butler);
-        }
-    }
-
-    [Test]
     public void GuestRoomScaleCalibrationDoesNotExposeLegacyScaleMutatorMethods()
     {
         string text = File.ReadAllText(GuestRoomScaleCalibrationPath);
 
+        Assert.That(text, Does.Not.Contain("useFixedGuestScale"));
+        Assert.That(text, Does.Not.Contain("fixedGuestScale"));
+        Assert.That(text, Does.Not.Contain("useCustomGuestCurve"));
+        Assert.That(text, Does.Not.Contain("frontGuestScale"));
+        Assert.That(text, Does.Not.Contain("backGuestScale"));
         Assert.That(text, Does.Not.Contain("SetFixedGuestScale("));
         Assert.That(text, Does.Not.Contain("SetFront("));
         Assert.That(text, Does.Not.Contain("SetBack("));
@@ -1209,31 +1168,23 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
-    public void DebugButtonsAreAdvancedOnly()
+    public void GuestSizeMasterDoesNotExposeDirectScaleProofButtons()
     {
         string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
 
         Assert.That(text, Does.Contain("advancedFoldout"));
-        Assert.That(text.IndexOf("Proof shrink", StringComparison.Ordinal), Is.GreaterThan(text.IndexOf("advancedFoldout", StringComparison.Ordinal)));
-        Assert.That(text.IndexOf("Emergency restore captured base scales", StringComparison.Ordinal), Is.GreaterThan(text.IndexOf("advancedFoldout", StringComparison.Ordinal)));
+        Assert.That(text, Does.Not.Contain("Proof shrink"));
+        Assert.That(text, Does.Not.Contain("Proof grow"));
+        Assert.That(text, Does.Not.Contain("Emergency restore captured base scales"));
+        Assert.That(text, Does.Not.Contain("ApplyProofMultiplier"));
     }
 
     [Test]
-    public void OldGuestButlerScaleHarmonizerIsRemovedOrObsolete()
+    public void OldGuestScaleCompatibilityShellsAreRemoved()
     {
-        if (File.Exists(HarmonizerPath))
-        {
-            string text = File.ReadAllText(HarmonizerPath);
-            Assert.That(text, Does.Contain("[Obsolete"));
-            Assert.That(text, Does.Not.Contain("ApplyButlerCharacterScaleNow(source, debugGuestScaleMultiplier)"));
-        }
-
-        if (File.Exists(ToolPath))
-        {
-            string text = File.ReadAllText(ToolPath);
-            Assert.That(text, Does.Contain("[Obsolete"));
-            Assert.That(text, Does.Not.Contain("Refresh Guest Scaling Now"));
-        }
+        Assert.That(File.Exists(HarmonizerPath), Is.False);
+        Assert.That(File.Exists(ToolPath), Is.False);
+        Assert.That(File.Exists(GuestPoseScaleOverrideStorePath), Is.False);
     }
 
     [Test]
@@ -1252,7 +1203,6 @@ public sealed class GuestRoomScaleRegressionTests
     {
         string applierText = File.ReadAllText(GuestRoomScaleApplierPath);
         string participantText = File.ReadAllText(GuestScaleParticipantPath);
-        string storeText = File.ReadAllText(GuestPoseScaleOverrideStorePath);
 
         Assert.That(applierText, Does.Not.Contain("GuestPoseScaleOverrideStore"));
         Assert.That(applierText, Does.Not.Contain("TryGetOverride"));
@@ -1260,7 +1210,7 @@ public sealed class GuestRoomScaleRegressionTests
         Assert.That(applierText, Does.Not.Contain("SanitizePoseRatio"));
         Assert.That(participantText, Does.Not.Contain("SeatedRatioOverride"));
         Assert.That(participantText, Does.Not.Contain("seatedRatioOverride"));
-        Assert.That(storeText, Does.Not.Contain("GuestPoseScaleOverrideEntry"));
+        Assert.That(File.Exists(GuestPoseScaleOverrideStorePath), Is.False);
     }
 
     [Test]
@@ -1281,7 +1231,6 @@ public sealed class GuestRoomScaleRegressionTests
         Assert.That(File.Exists(GuestScaleParticipantPath), Is.True);
         Assert.That(File.Exists(GuestRoomScaleApplierPath), Is.True);
         Assert.That(File.Exists(GuestRoomStageScaleUtilityPath), Is.True);
-        Assert.That(File.Exists(GuestPoseScaleOverrideStorePath), Is.True);
         Assert.That(File.Exists(GuestScaleAuditPath), Is.True);
     }
 

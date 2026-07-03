@@ -80,9 +80,9 @@ Workflow:
 6. Click `SAVE ROOM GUEST SIZE`.
 7. Click `SAVE SCENE`.
 
-`MATCH BUTLER SIZE IN ROOM` resets the room multiplier to `1`. Legacy fixed-size and front/back guest curve fields may still exist in serialized scene data for compatibility, but runtime evaluation and the Guest Size Master ignore and clear them.
+`MATCH BUTLER SIZE IN ROOM` resets the room multiplier to `1`. Fixed-size guest overrides, front/back guest curves, and pose-scale override stores are removed from the supported architecture.
 
-Use `Tools > Characters > Guest Scale Audit` when checking scene setup. The obsolete `GuestButlerScaleHarmonizer` and old Butler-scale tool are compatibility shells only.
+Use `Tools > Characters > Guest Scale Audit` when checking scene setup. Guest scale compatibility shells should not be reintroduced.
 
 The prototype walking NPCs are currently disabled in the gameplay scene. Keep `RoomPersonWalker2D` available for future authored NPC movement, but do not rely on random walkers for the Chapter 1 slice.
 

@@ -234,16 +234,12 @@ public static class GuestScaleAudit
     {
         builder.AppendLine("## Scale Writers");
         GuestRoomScaleApplier[] appliers = Resources.FindObjectsOfTypeAll<GuestRoomScaleApplier>();
-#pragma warning disable CS0618
-        GuestButlerScaleHarmonizer[] harmonizers = Resources.FindObjectsOfTypeAll<GuestButlerScaleHarmonizer>();
-#pragma warning restore CS0618
         counts.ActiveGuestScaleWriters = CountSceneObjects(appliers);
 
         builder.AppendLine("- GuestRoomScaleApplier.RefreshAllNow");
         builder.AppendLine("- RoomProjectedEntity.ApplyProjectedScale: guarded when GuestScaleParticipant owns the visual root");
         builder.AppendLine("- RoomPersonWalker2D.ApplyVisuals: guarded when GuestScaleParticipant owns the walker graphic/root");
         builder.AppendLine("- ActorRoomState room-stage scale: guarded when GuestScaleParticipant is present");
-        builder.AppendLine($"- Obsolete GuestButlerScaleHarmonizer components in scene: {CountSceneObjects(harmonizers)}");
         builder.AppendLine();
     }
 

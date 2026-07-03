@@ -309,8 +309,6 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             if (calibration != null)
             {
                 Undo.RecordObject(calibration, "Reset Guest Room Size");
-                calibration.ClearFixedGuestScale(selectedRoom);
-                calibration.ClearCustomCurve(selectedRoom);
                 calibration.SetRoomMultiplier(selectedRoom, 1f);
                 selectedRoomMultiplier = 1f;
                 EditorUtility.SetDirty(calibration);
@@ -325,8 +323,6 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             if (calibration != null)
             {
                 Undo.RecordObject(calibration, "Match Butler Size In Room");
-                calibration.ClearFixedGuestScale(selectedRoom);
-                calibration.ClearCustomCurve(selectedRoom);
                 calibration.SetRoomMultiplier(selectedRoom, 1f);
                 EditorUtility.SetDirty(calibration);
             }
@@ -339,30 +335,6 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         if (GUILayout.Button("APPLY TO ALL GUESTS IN ROOM"))
         {
             ApplySelectedRoom(selectedRoom);
-        }
-
-        if (GUILayout.Button("Proof shrink guests"))
-        {
-            ApplyProofMultiplier(0.5f);
-            lastAction = "Proof shrink applied.";
-        }
-
-        if (GUILayout.Button("Proof grow guests"))
-        {
-            ApplyProofMultiplier(1.5f);
-            lastAction = "Proof grow applied.";
-        }
-
-        if (GUILayout.Button("Emergency restore captured base scales"))
-        {
-            GuestScaleParticipant[] guests = FindGuestParticipants();
-
-            for (int i = 0; i < guests.Length; i++)
-            {
-                guests[i]?.RestoreCapturedBaseScale();
-            }
-
-            lastAction = "Restored captured base scales.";
         }
     }
 
@@ -487,8 +459,6 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         GuestRoomScaleEntry entry = calibration.GetOrCreateRoom(selectedRoom);
         entry.useButlerRoomCurve = true;
-        calibration.ClearFixedGuestScale(selectedRoom);
-        calibration.ClearCustomCurve(selectedRoom);
         calibration.SetRoomMultiplier(selectedRoom, saveManualScale ? manualScale : roomScale);
     }
 
@@ -593,24 +563,6 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         return calibration;
-    }
-
-    private static void ApplyProofMultiplier(float multiplier)
-    {
-        GuestScaleParticipant[] guests = FindGuestParticipants();
-
-        for (int i = 0; i < guests.Length; i++)
-        {
-            GuestScaleParticipant guest = guests[i];
-
-            if (guest == null || guest.ExcludeFromGuestScaling || guest.IsButler)
-            {
-                continue;
-            }
-
-            guest.CaptureBaseScale(false);
-            guest.ApplyFinalScale(multiplier);
-        }
     }
 
     private static void LogGuestScaleDiagnostics(string selectedRoom)
