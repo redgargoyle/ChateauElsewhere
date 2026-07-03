@@ -20,7 +20,6 @@ public readonly struct GuestScaleComputation
         string roomId,
         float roomLocalY,
         float roomScale,
-        float poseRatio,
         float fineTune,
         float baseGuestScale,
         float roomStageZoomRatio,
@@ -33,7 +32,6 @@ public readonly struct GuestScaleComputation
         RoomId = roomId;
         RoomLocalY = roomLocalY;
         RoomScale = roomScale;
-        PoseRatio = poseRatio;
         FineTune = fineTune;
         BaseGuestScale = baseGuestScale;
         RoomStageZoomRatio = roomStageZoomRatio;
@@ -47,7 +45,6 @@ public readonly struct GuestScaleComputation
     public string RoomId { get; }
     public float RoomLocalY { get; }
     public float RoomScale { get; }
-    public float PoseRatio { get; }
     public float FineTune { get; }
     public float BaseGuestScale { get; }
     public float RoomStageZoomRatio { get; }
@@ -64,7 +61,6 @@ public readonly struct GuestScaleComputation
 public sealed class GuestRoomScaleApplier : MonoBehaviour
 {
     [SerializeField] private GuestRoomScaleCalibration calibration;
-    [SerializeField] private GuestPoseScaleOverrideStore poseOverrideStore;
     [SerializeField] private bool includeInactiveParticipants = true;
     [SerializeField] private bool logScaleDiagnostics;
 
@@ -88,11 +84,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
     public void SetCalibration(GuestRoomScaleCalibration value)
     {
         calibration = value;
-    }
-
-    public void SetPoseOverrideStore(GuestPoseScaleOverrideStore value)
-    {
-        poseOverrideStore = value;
     }
 
     public static GuestRoomScaleApplier EnsureInScene()
@@ -300,11 +291,9 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             roomScaleDiagnostic = evaluatedDiagnostic;
         }
 
-        float poseRatio = ResolveExplicitPoseRatio(participant, roomId);
         float fineTune = participant.ManualFineTuneMultiplier;
         float baseGuestScale =
             Mathf.Max(0.001f, roomScale) *
-            Mathf.Max(0.001f, poseRatio) *
             Mathf.Max(0.001f, fineTune);
 
         float roomStageZoomRatio = 1f;
@@ -341,7 +330,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             roomId,
             roomLocalY,
             roomScale,
-            poseRatio,
             fineTune,
             baseGuestScale,
             roomStageZoomRatio,
@@ -465,12 +453,12 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             return false;
         }
 
-        if (TryResolveActorRoomId(guestObject, out roomId) ||
-            TryResolveParentRoomId(guestObject, out roomId) ||
-            TryResolveActiveNavigationRoomId(guestObject, out roomId) ||
+        if (TryResolveParentRoomId(guestObject, out roomId) ||
             TryResolveProjectedCurrentVisualScaleRoomId(guestObject, out roomId) ||
-            TryResolveWalkerRoomId(guestObject, out roomId) ||
             TryResolveProjectedProfileRoomId(guestObject, out roomId) ||
+            TryResolveWalkerRoomId(guestObject, out roomId) ||
+            TryResolveActorRoomId(guestObject, out roomId) ||
+            TryResolveActiveNavigationRoomId(guestObject, out roomId) ||
             TryResolveParticipantOverrideRoomId(guestObject, out roomId) ||
             TryInferChapterOneSceneGuestRoomId(guestObject.name, out roomId))
         {
@@ -492,39 +480,11 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         return false;
     }
 
-    private float ResolveExplicitPoseRatio(GuestScaleParticipant participant, string roomId)
-    {
-        float fineTuneMultiplier = 1f;
-
-        if (poseOverrideStore != null &&
-            poseOverrideStore.TryGetOverride(
-                roomId,
-                participant.CharacterId,
-                out CharacterPose overridePose,
-                out float overridePoseRatio,
-                out float overrideFineTuneMultiplier))
-        {
-            fineTuneMultiplier = Mathf.Max(0.001f, overrideFineTuneMultiplier);
-
-            if (overridePoseRatio > 0f)
-            {
-                return SanitizePoseRatio(overridePose, overridePoseRatio) * fineTuneMultiplier;
-            }
-        }
-
-        return fineTuneMultiplier;
-    }
-
     private void ResolveCalibration()
     {
         if (calibration == null)
         {
             calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
-        }
-
-        if (poseOverrideStore == null)
-        {
-            poseOverrideStore = FindAnyObjectByType<GuestPoseScaleOverrideStore>(FindObjectsInactive.Include);
         }
     }
 
@@ -535,16 +495,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             ? FindObjectsInactive.Include
             : FindObjectsInactive.Exclude;
         participants.AddRange(FindObjectsByType<GuestScaleParticipant>(inactiveMode));
-    }
-
-    private static float SanitizePoseRatio(CharacterPose pose, float ratio)
-    {
-        if (pose == CharacterPose.Seated)
-        {
-            return Mathf.Clamp(ratio, 0.55f, 0.8f);
-        }
-
-        return Mathf.Max(0.001f, ratio);
     }
 
     private static bool TryResolveParticipantOverrideRoomId(GameObject guestObject, out string roomId)
@@ -871,7 +821,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         return candidate != null &&
             (candidate.GetComponent<GuestRoomScaleApplier>() != null ||
             candidate.GetComponent<GuestRoomScaleCalibration>() != null ||
-            candidate.GetComponent<GuestPoseScaleOverrideStore>() != null ||
             candidate.name.Contains("GuestRoomScale", System.StringComparison.OrdinalIgnoreCase) ||
             candidate.name.Contains("GuestScale", System.StringComparison.OrdinalIgnoreCase) ||
             candidate.name.Contains("GuestArrival", System.StringComparison.OrdinalIgnoreCase) ||

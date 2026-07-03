@@ -81,7 +81,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
     [SerializeField] private bool excludeFromGuestScaling;
     [SerializeField] private bool isButler;
     [SerializeField, Min(0.001f)] private float manualFineTuneMultiplier = 1f;
-    [SerializeField] private float seatedRatioOverride;
     [SerializeField] private Vector3 capturedBaseScale = Vector3.one;
     [SerializeField] private bool hasCapturedBaseScale;
 
@@ -95,7 +94,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
     public bool ExcludeFromGuestScaling => excludeFromGuestScaling;
     public bool IsButler => isButler;
     public float ManualFineTuneMultiplier => Mathf.Max(0.001f, manualFineTuneMultiplier);
-    public float SeatedRatioOverride => seatedRatioOverride;
     public Vector3 CapturedBaseScale => capturedBaseScale;
     public bool HasCapturedBaseScale => hasCapturedBaseScale;
 
@@ -160,11 +158,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
     public void SetManualFineTuneMultiplier(float value)
     {
         manualFineTuneMultiplier = Mathf.Max(0.001f, value);
-    }
-
-    public void SetSeatedRatioOverride(float value)
-    {
-        seatedRatioOverride = value;
     }
 
     public Transform ResolveScaleRoot()
@@ -278,24 +271,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
 
     private bool TryResolveCurrentRoomId(out string roomId, out string source)
     {
-        if (TryResolveActiveNavigationRoomId(out roomId))
-        {
-            source = "ActiveNavigation";
-            return true;
-        }
-
-        if (TryResolveExplicitCurrentRoomId(out roomId))
-        {
-            source = "CurrentRoomId";
-            return true;
-        }
-
-        if (TryResolveActorRoomId(out roomId))
-        {
-            source = "ActorRoomState";
-            return true;
-        }
-
         if (TryResolveParentRoomId(out roomId))
         {
             source = "ParentRoomContent";
@@ -308,15 +283,33 @@ public sealed class GuestScaleParticipant : MonoBehaviour
             return true;
         }
 
+        if (TryResolveProjectedProfileRoomId(out roomId))
+        {
+            source = "ProjectedRoomProfile";
+            return true;
+        }
+
         if (TryResolveWalkerRoomId(out roomId))
         {
             source = "WalkerRoomProfile";
             return true;
         }
 
-        if (TryResolveProjectedProfileRoomId(out roomId))
+        if (TryResolveActorRoomId(out roomId))
         {
-            source = "ProjectedRoomProfile";
+            source = "ActorRoomState";
+            return true;
+        }
+
+        if (TryResolveActiveNavigationRoomId(out roomId))
+        {
+            source = "ActiveNavigation";
+            return true;
+        }
+
+        if (TryResolveExplicitCurrentRoomId(out roomId))
+        {
+            source = "CurrentRoomId";
             return true;
         }
 
@@ -644,7 +637,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
             return false;
         }
 
-        CaptureBaseScale(false);
         Transform root = ResolveScaleRoot();
 
         if (root == null)
@@ -653,13 +645,20 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         }
 
         float safeTargetY = Mathf.Max(0.001f, targetLocalScaleY);
-        float baseY = Mathf.Abs(capturedBaseScale.y) > 0.001f ? capturedBaseScale.y : 1f;
+        Vector3 referenceScale = SanitizeScale(root.localScale);
+
+        if (referenceScale == Vector3.one && hasCapturedBaseScale)
+        {
+            referenceScale = SanitizeScale(capturedBaseScale);
+        }
+
+        float baseY = Mathf.Abs(referenceScale.y) > 0.001f ? referenceScale.y : 1f;
         float signedTargetY = baseY < 0f ? -safeTargetY : safeTargetY;
         float aspectRatio = signedTargetY / baseY;
         Vector3 targetScale = new Vector3(
-            capturedBaseScale.x * aspectRatio,
+            referenceScale.x * aspectRatio,
             signedTargetY,
-            capturedBaseScale.z);
+            referenceScale.z);
         bool changed = (root.localScale - targetScale).sqrMagnitude > 0.000001f;
         root.localScale = targetScale;
         return changed;

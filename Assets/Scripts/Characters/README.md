@@ -60,11 +60,13 @@ Do not edit Transform scale manually for calibration. Do not use Advanced reset 
 
 ## Guest Room Scale
 
-The manually calibrated Butler room scale is the trusted room/depth source. Guests use the Butler's saved final local Y scale as the target room/depth size, then apply a scene-level `GuestRoomScaleCalibration` room fine tune where `1` means Butler-matched. Each guest keeps its own captured authored base aspect ratio, and receives final body size only from `GuestRoomScaleApplier`.
+The manually calibrated Butler room scale is the trusted room/depth source. Guests use the Butler's saved final local Y scale at the guest's current room-local foot Y, then multiply it by that room's `GuestRoomScaleCalibration.roomGuestScaleMultiplier`. `1` means Butler-matched. `GuestRoomScaleApplier` is the only final guest body-size writer.
 
 `GuestScaleParticipant` marks the visible human body root. Coats, speech bubbles, shadows, prompts, highlights, icons, cursors, and tooltips must not be selected as body roots. `RoomProjectedEntity`, `RoomPersonWalker2D`, and `ActorRoomState` still own placement, movement, sorting, tint, and story state, but they are no longer final guest body-size writers when a participant is present.
 
-`GuestScaleParticipant.CurrentRoomId` is runtime state only. In Play Mode, active visible guests use the active navigation room before stale serialized room fields, so a guest visible in the Grand Entrance Hall receives Grand Entrance Hall scale. In Edit Mode, the Guest Size Master's selected room is the manual editing context for visible managed guests; stale Drawing Room state must not block Grand Entrance Hall preview or saving. `roomIdOverride` remains an authored fallback for setup, not a second source of truth for final scale.
+There are no guest size exceptions for hiding spaces, seated pose, current chapter state, or stale serialized room ids. A guest standing in a hiding space uses the same room-position scale rule as the Butler. The only Drawing Room and Dining Room seated exceptions are sorting/occlusion rules that place seated sprites above their seats and below the table or nearby foreground, not scale rules.
+
+`GuestScaleParticipant.CurrentRoomId` is runtime state only. In Play Mode, active visible guests prefer actual placement and active navigation room over stale serialized room fields, so a guest visible in the Grand Entrance Hall receives Grand Entrance Hall scale. In Edit Mode, the Guest Size Master's selected room is the manual editing context for visible managed guests; stale Drawing Room state must not block Grand Entrance Hall preview or saving. `roomIdOverride` remains an authored fallback for setup, not a second source of truth for final scale.
 
 Guest room sizes are saved with a `referenceRoomStageScale`. At runtime and in editor previews, `GuestRoomScaleApplier` multiplies the saved guest size by the current room-stage zoom ratio, then divides out inherited room-stage zoom only for guests already parented under the scaled room stage. This makes guests zoom with the room and Butler without double-scaling room-stage children.
 
@@ -73,14 +75,12 @@ Workflow:
 1. Open `Tools > Characters > Guest Size Master`.
 2. Click `SET UP GUEST SCALING`.
 3. Choose a room.
-4. Select a guest standing near the front of the room.
-5. Adjust `Manual Guest Scale` until that selected guest visually matches the Butler at that depth.
-6. Click `SAVE FRONT FROM SELECTED GUEST`.
-7. Select or move to a guest near the back of the room.
-8. Adjust `Manual Guest Scale` again, then click `SAVE BACK FROM SELECTED GUEST`.
-9. Click `PREVIEW MANUAL CURVE IN ROOM`, then `SAVE SCENE`.
+4. Adjust `Guest Size In This Room` until the guests match the Butler across that room.
+5. Click `PREVIEW ROOM GUEST SIZE`.
+6. Click `SAVE ROOM GUEST SIZE`.
+7. Click `SAVE SCENE`.
 
-`MATCH BUTLER SIZE IN ROOM` resets the Butler-derived fine tune to `1`. `CLEAR MANUAL CURVE` removes the front/back guest curve and returns that room to Butler-derived matching. The manual front/back guest curve is the safer workflow when source-art proportions do not visually match the Butler.
+`MATCH BUTLER SIZE IN ROOM` resets the room multiplier to `1`. Legacy fixed-size and front/back guest curve fields may still exist in serialized scene data for compatibility, but runtime evaluation and the Guest Size Master ignore and clear them.
 
 Use `Tools > Characters > Guest Scale Audit` when checking scene setup. The obsolete `GuestButlerScaleHarmonizer` and old Butler-scale tool are compatibility shells only.
 
