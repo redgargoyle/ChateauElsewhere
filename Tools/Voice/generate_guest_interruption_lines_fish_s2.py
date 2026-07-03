@@ -66,6 +66,7 @@ class GuestConfig:
 class GeneratedLine:
     config: GuestConfig
     line_id: str
+    seed: int
     raw_path: Path
     final_path: Path
     asset_path: Path
@@ -147,6 +148,39 @@ GUESTS = [
     ),
 ]
 
+GUEST_BY_NUMBER = {config.number: config for config in GUESTS}
+
+
+def parse_guest_selection(value: str) -> list[GuestConfig]:
+    clean = (value or "all").strip().lower()
+    if clean == "all":
+        return list(GUESTS)
+
+    selected: list[GuestConfig] = []
+    seen: set[int] = set()
+    for item in clean.split(","):
+        item = item.strip()
+        if not item:
+            continue
+
+        try:
+            guest_number = int(item)
+        except ValueError as exc:
+            raise argparse.ArgumentTypeError(f"Invalid guest number '{item}'. Use 1-8 or all.") from exc
+
+        if guest_number not in GUEST_BY_NUMBER:
+            raise argparse.ArgumentTypeError(f"Guest {guest_number} is outside the supported 1-8 range.")
+        if guest_number in seen:
+            continue
+
+        selected.append(GUEST_BY_NUMBER[guest_number])
+        seen.add(guest_number)
+
+    if not selected:
+        raise argparse.ArgumentTypeError("No guests selected. Use 1-8 or all.")
+
+    return selected
+
 
 def run_text(command: list[str]) -> str:
     try:
@@ -155,14 +189,14 @@ def run_text(command: list[str]) -> str:
         return f"unavailable: {exc}"
 
 
-def require_preflight() -> None:
+def require_preflight(selected_guests: list[GuestConfig]) -> None:
     required = [PROJECT_ROOT / "Assets", PROJECT_ROOT / "ProjectSettings", PROJECT_ROOT / "Packages"]
     missing = [str(path) for path in required if not path.exists()]
     if missing:
         raise RuntimeError(f"Not at expected Unity project root; missing: {missing}")
     if not CHECKPOINT.exists():
         raise FileNotFoundError(f"Missing Fish S2 checkpoint: {CHECKPOINT}")
-    missing_refs = [str(config.reference_file) for config in GUESTS if not config.reference_file.exists()]
+    missing_refs = [str(config.reference_file) for config in selected_guests if not config.reference_file.exists()]
     if missing_refs:
         raise FileNotFoundError(f"Missing Fish S2 guest references: {missing_refs}")
     if not torch.cuda.is_available():
@@ -273,9 +307,10 @@ def generate_line(
     asset_path = ASSET_ROOT / config.folder / output_name
     start = time.perf_counter()
 
-    torch.manual_seed(config.seed)
-    torch.cuda.manual_seed(config.seed)
-    torch.cuda.manual_seed_all(config.seed)
+    seed = config.seed + args.seed_offset
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
     codes = []
     for response in generate_long(
         model=model,
@@ -313,6 +348,7 @@ def generate_line(
     return GeneratedLine(
         config=config,
         line_id=line_id,
+        seed=seed,
         raw_path=raw_path,
         final_path=final_path,
         asset_path=asset_path,
@@ -340,7 +376,7 @@ def write_report(
     lines = [
         "# Fish Audio S2-Pro Guest Interruption Bark Report",
         "",
-        "Generated the eight guest coat-pickup interruption barks only.",
+        "Generated selected guest coat-pickup interruption barks only.",
         "",
         f"- Started: {started}",
         f"- Elapsed seconds: {elapsed:.1f}",
@@ -353,6 +389,8 @@ def write_report(
         f"- CUDA available: `{torch.cuda.is_available()}`",
         f"- nvidia-smi: `{run_text(['nvidia-smi', '--query-gpu=name,driver_version,memory.total', '--format=csv,noheader'])}`",
         f"- Sampling: temperature={args.temperature}, top_p={args.top_p}, top_k={args.top_k}",
+        f"- Seed offset: {args.seed_offset}",
+        f"- Selected guests: `{','.join(str(item.config.number) for item in generated)}`",
         f"- Transcript: `{LINE_TEXT}`",
         f"- Output format: {FINAL_SR} Hz, mono, PCM_16 WAV, peak-normalized near -3 dBFS.",
         f"- Ending protection: {BASE_TAIL_SECONDS:.2f}s or {LONG_TAIL_SECONDS:.2f}s quiet post-roll after a short fade.",
@@ -369,7 +407,8 @@ def write_report(
         "",
     ]
 
-    for config in GUESTS:
+    for item in generated:
+        config = item.config
         ref_spec = spectrum(config.reference_file)
         lines.extend(
             [
@@ -378,7 +417,7 @@ def write_report(
                 f"  - Reference text: `{config.reference_text}`",
                 f"  - Reference 4-8k percent: {ref_spec['band_4_8k_pct']:.3f}",
                 f"  - Reference 8-12k percent: {ref_spec['band_8_12k_pct']:.3f}",
-                f"  - Seed: {config.seed}",
+                f"  - Seed: {item.seed}",
             ]
         )
 
@@ -399,12 +438,15 @@ def write_report(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--guests", type=parse_guest_selection, default=list(GUESTS), help="Comma-separated guest numbers, e.g. 1 or 1,3,8. Use all for every guest.")
+    parser.add_argument("--seed-offset", type=int, default=0, help="Deterministic offset added to each guest's base seed.")
     parser.add_argument("--temperature", type=float, default=0.72)
     parser.add_argument("--top-p", type=float, default=0.82)
     parser.add_argument("--top-k", type=int, default=30)
     args = parser.parse_args()
+    selected_guests = args.guests
 
-    require_preflight()
+    require_preflight(selected_guests)
     started = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_dir = GENERATED_ROOT / f"guest_interruptions_fish_s2_{started}"
     raw_dir = run_dir / "raw_native"
@@ -427,14 +469,14 @@ def main() -> None:
     codec = load_codec_model(CHECKPOINT / "codec.pth", "cuda", precision)
 
     generated: list[GeneratedLine] = []
-    for index, config in enumerate(GUESTS, start=1):
-        print(f"[Guest{config.number:02d} {index:02d}/{len(GUESTS):02d}] CH1_G{config.number:02d}_INTERRUPTED", flush=True)
+    for index, config in enumerate(selected_guests, start=1):
+        print(f"[Guest{config.number:02d} {index:02d}/{len(selected_guests):02d}] CH1_G{config.number:02d}_INTERRUPTED", flush=True)
         prompt_tokens = [encode_audio(config.reference_file, codec, "cuda").cpu()]
         generated.append(generate_line(config, model, decode_one_token, codec, raw_dir, final_dir, prompt_tokens, args))
         torch.cuda.empty_cache()
 
-    if len(generated) != len(GUESTS):
-        raise RuntimeError(f"Generated {len(generated)} files, expected {len(GUESTS)}")
+    if len(generated) != len(selected_guests):
+        raise RuntimeError(f"Generated {len(generated)} files, expected {len(selected_guests)}")
 
     report_path = REPORT_ROOT / "guest_interruption_generation_report_fish_s2.md"
     write_report(report_path, run_dir, raw_dir, final_dir, generated, started, time.perf_counter() - t0, args)
