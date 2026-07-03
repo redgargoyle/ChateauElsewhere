@@ -19,41 +19,8 @@ public sealed class DialogueSpeechService : MonoBehaviour
     private bool normalSpeechActive;
     private bool skipRequested;
     private int activeSpeechToken;
-    private int speechQueueToken;
-    private int pendingNormalSpeechCount;
-    private string activeLineId = string.Empty;
-    private string activeSpeakerId = string.Empty;
-    private string activeSpeakerDisplayName = string.Empty;
-    private string activeText = string.Empty;
 
     public bool IsNormalSpeechActive => normalSpeechActive;
-
-    public struct SpeechInterruption
-    {
-        public SpeechInterruption(
-            bool hadActiveSpeech,
-            bool hadQueuedSpeech,
-            string lineId,
-            string speakerId,
-            string speakerDisplayName,
-            string text)
-        {
-            HadActiveSpeech = hadActiveSpeech;
-            HadQueuedSpeech = hadQueuedSpeech;
-            LineId = lineId;
-            SpeakerId = speakerId;
-            SpeakerDisplayName = speakerDisplayName;
-            Text = text;
-        }
-
-        public bool HadActiveSpeech { get; }
-        public bool HadQueuedSpeech { get; }
-        public bool HadAnySpeech => HadActiveSpeech || HadQueuedSpeech;
-        public string LineId { get; }
-        public string SpeakerId { get; }
-        public string SpeakerDisplayName { get; }
-        public string Text { get; }
-    }
 
     public static DialogueSpeechService FindOrCreate()
     {
@@ -110,33 +77,13 @@ public sealed class DialogueSpeechService : MonoBehaviour
 
     public void StopCurrentSpeech()
     {
-        CancelQueuedSpeech();
-    }
-
-    public SpeechInterruption CancelQueuedSpeech()
-    {
         activeSpeechToken++;
-        speechQueueToken++;
-
-        bool hadActiveSpeech = normalSpeechActive || !string.IsNullOrWhiteSpace(activeLineId);
-        bool hadQueuedSpeech = pendingNormalSpeechCount > (normalSpeechActive ? 1 : 0);
-        SpeechInterruption interruption = new SpeechInterruption(
-            hadActiveSpeech,
-            hadQueuedSpeech,
-            activeLineId,
-            activeSpeakerId,
-            activeSpeakerDisplayName,
-            activeText);
-
         skipRequested = false;
         normalSpeechActive = false;
         voicePlayback?.StopCurrentLine();
         subtitleService?.HideCurrent();
         speakingIndicator?.Hide();
         SpeakingCharacterIndicator.HideAnyCurrent();
-        ClearActiveSpeechInfo();
-
-        return interruption;
     }
 
     private IEnumerator SpeakLineRoutine(
@@ -150,35 +97,16 @@ public sealed class DialogueSpeechService : MonoBehaviour
         Action<string, string> onSpeechLineStarted)
     {
         ResolveReferences();
-        int queueToken = speechQueueToken;
-        bool countedAsPendingNormalSpeech = !allowOverlap;
-
-        if (countedAsPendingNormalSpeech)
-        {
-            pendingNormalSpeechCount++;
-        }
 
         if (subtitleService == null)
         {
-            CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete);
+            onComplete?.Invoke();
             yield break;
         }
 
         while (!allowOverlap && normalSpeechActive)
         {
-            if (queueToken != speechQueueToken)
-            {
-                CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete);
-                yield break;
-            }
-
             yield return null;
-        }
-
-        if (!allowOverlap && queueToken != speechQueueToken)
-        {
-            CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete);
-            yield break;
         }
 
         if (!subtitleService.TryResolveSpeechLine(
@@ -191,7 +119,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
                 out float maxDuration))
         {
             Debug.LogWarning($"[DialogueSpeech] Missing subtitle text for '{FormatLineId(lineId)}'.", this);
-            CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete);
+            onComplete?.Invoke();
             yield break;
         }
 
@@ -201,7 +129,6 @@ public sealed class DialogueSpeechService : MonoBehaviour
         if (!allowOverlap)
         {
             normalSpeechActive = true;
-            SetActiveSpeechInfo(lineId, speakerId, speaker, text);
         }
 
         PointClickPlayerMovement blockedMovement = null;
@@ -243,7 +170,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
             : GetReadDuration(text, minDuration, maxDuration);
         float elapsed = 0f;
 
-        while (speechToken == activeSpeechToken && queueToken == speechQueueToken && elapsed < duration)
+        while (speechToken == activeSpeechToken && elapsed < duration)
         {
             if (skipRequested)
             {
@@ -259,7 +186,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
             yield return null;
         }
 
-        if (speechToken == activeSpeechToken && queueToken == speechQueueToken)
+        if (speechToken == activeSpeechToken)
         {
             if (skipRequested && !allowOverlap)
             {
@@ -279,18 +206,17 @@ public sealed class DialogueSpeechService : MonoBehaviour
             blockedMovement.SetInputEnabled(previousInputEnabled);
         }
 
-        if (!allowOverlap && speechToken == activeSpeechToken && queueToken == speechQueueToken)
+        if (!allowOverlap && speechToken == activeSpeechToken)
         {
             normalSpeechActive = false;
-            ClearActiveSpeechInfo();
         }
 
-        if (speechToken == activeSpeechToken && queueToken == speechQueueToken)
+        if (speechToken == activeSpeechToken)
         {
             skipRequested = false;
         }
 
-        CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete);
+        onComplete?.Invoke();
     }
 
     private void Update()
@@ -325,32 +251,6 @@ public sealed class DialogueSpeechService : MonoBehaviour
         {
             skipRequested = true;
         }
-    }
-
-    private void SetActiveSpeechInfo(string lineId, string speakerId, string speakerDisplayName, string text)
-    {
-        activeLineId = string.IsNullOrWhiteSpace(lineId) ? string.Empty : lineId.Trim();
-        activeSpeakerId = string.IsNullOrWhiteSpace(speakerId) ? string.Empty : speakerId.Trim();
-        activeSpeakerDisplayName = string.IsNullOrWhiteSpace(speakerDisplayName) ? string.Empty : speakerDisplayName.Trim();
-        activeText = string.IsNullOrWhiteSpace(text) ? string.Empty : text.Trim();
-    }
-
-    private void ClearActiveSpeechInfo()
-    {
-        activeLineId = string.Empty;
-        activeSpeakerId = string.Empty;
-        activeSpeakerDisplayName = string.Empty;
-        activeText = string.Empty;
-    }
-
-    private void CompleteSpeechRoutine(bool countedAsPendingNormalSpeech, Action onComplete)
-    {
-        if (countedAsPendingNormalSpeech)
-        {
-            pendingNormalSpeechCount = Mathf.Max(0, pendingNormalSpeechCount - 1);
-        }
-
-        onComplete?.Invoke();
     }
 
     private static float GetReadDuration(string text, float minDuration, float maxDuration)

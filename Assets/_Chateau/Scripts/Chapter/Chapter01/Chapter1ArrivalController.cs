@@ -181,7 +181,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const string EntranceCoatHangerName = "entrance_coat_hanger_0";
     private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
     private const string DefaultGuestFootstepCatalogResourcePath = "Audio/GuestFootstepCatalog";
-    private const string GuestInterruptedLineText = "You interrupted me.";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
@@ -588,24 +587,13 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        DialogueSpeechService.SpeechInterruption speechInterruption = CancelSpeechForCoatPickup();
-
         guestState.CoatTaken = true;
         butlerCarryingCoat = true;
         carriedCoatId = guestState.Config.CoatId;
         carriedCoatGuest = guestState;
         SetGuestState(guestState, GuestArrivalState.CoatTaken);
-
-        if (speechInterruption.HadActiveSpeech &&
-            TryFindGuestForSpeechInterruption(speechInterruption, out GuestRuntimeState interruptedGuest))
-        {
-            QueueGuestLine(interruptedGuest, "INTERRUPTED", GuestInterruptedLineText);
-        }
-        else if (!speechInterruption.HadAnySpeech)
-        {
-            QueueButlerLine("SUB_CH01_BUTLER_TAKE_COAT_001");
-            QueueGuestLine(guestState, "COAT_HANDOFF", null);
-        }
+        QueueButlerLine("SUB_CH01_BUTLER_TAKE_COAT_001");
+        QueueGuestLine(guestState, "COAT_HANDOFF", null);
 
         if (guestState.CoatPickup != null)
         {
@@ -3744,120 +3732,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         service?.BeginSpeakLine(lineId, "Butler", null, false, false);
     }
 
-    private DialogueSpeechService.SpeechInterruption CancelSpeechForCoatPickup()
-    {
-        DialogueSpeechService service = ResolveSpeechService();
-        return service != null ? service.CancelQueuedSpeech() : default;
-    }
-
-    private bool TryFindGuestForSpeechInterruption(
-        DialogueSpeechService.SpeechInterruption interruption,
-        out GuestRuntimeState guestState)
-    {
-        guestState = null;
-
-        if (TryResolveGuestNumberFromSpeechLineId(interruption.LineId, out int guestNumber) &&
-            TryFindGuestByNumber(guestNumber, out guestState))
-        {
-            return true;
-        }
-
-        if (TryFindGuestBySpeakerName(interruption.SpeakerId, out guestState) ||
-            TryFindGuestBySpeakerName(interruption.SpeakerDisplayName, out guestState))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool TryFindGuestByNumber(int guestNumber, out GuestRuntimeState guestState)
-    {
-        guestState = null;
-        int guestIndex = guestNumber - 1;
-
-        for (int i = 0; i < guestStates.Count; i++)
-        {
-            GuestRuntimeState candidate = guestStates[i];
-
-            if (candidate != null && candidate.GuestIndex == guestIndex)
-            {
-                guestState = candidate;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private bool TryFindGuestBySpeakerName(string speakerName, out GuestRuntimeState guestState)
-    {
-        guestState = null;
-
-        if (string.IsNullOrWhiteSpace(speakerName))
-        {
-            return false;
-        }
-
-        if (TryResolveGuestNumberFromText(speakerName, out int guestNumber) &&
-            TryFindGuestByNumber(guestNumber, out guestState))
-        {
-            return true;
-        }
-
-        if (TryResolveNamedGuestCoatNumber(speakerName, out guestNumber) &&
-            TryFindGuestByNumber(guestNumber, out guestState))
-        {
-            return true;
-        }
-
-        for (int i = 0; i < guestStates.Count; i++)
-        {
-            GuestRuntimeState candidate = guestStates[i];
-
-            if (candidate != null &&
-                candidate.Config != null &&
-                string.Equals(candidate.Config.GuestDisplayName, speakerName.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                guestState = candidate;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool TryResolveGuestNumberFromSpeechLineId(string lineId, out int guestNumber)
-    {
-        return TryResolveGuestNumberAfterPrefix(lineId, "CH1_G", out guestNumber) ||
-            TryResolveGuestNumberAfterPrefix(lineId, "CH2_G", out guestNumber) ||
-            TryResolveGuestNumberAfterPrefix(lineId, "SUB_CH01_G", out guestNumber) ||
-            TryResolveGuestNumberAfterPrefix(lineId, "SUB_CH02_G", out guestNumber);
-    }
-
-    private static bool TryResolveGuestNumberAfterPrefix(string value, string prefix, out int guestNumber)
-    {
-        guestNumber = 0;
-
-        if (string.IsNullOrWhiteSpace(value) ||
-            !value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        int digitStart = prefix.Length;
-        int digitEnd = digitStart;
-
-        while (digitEnd < value.Length && char.IsDigit(value[digitEnd]))
-        {
-            digitEnd++;
-        }
-
-        return digitEnd > digitStart &&
-            int.TryParse(value.Substring(digitStart, digitEnd - digitStart), out guestNumber) &&
-            guestNumber > 0;
-    }
-
     private IEnumerator SpeakButlerLine(string lineId)
     {
         if (string.IsNullOrWhiteSpace(lineId))
@@ -3896,9 +3770,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             case "COAT":
             case "COAT_HANDOFF":
                 return $"CH1_G{guestNumber:00}_COAT_HANDOFF";
-            case "INTERRUPTED":
-            case "INTERRUPTION":
-                return $"CH1_G{guestNumber:00}_INTERRUPTED";
             case "TO_DRAWING":
             case "TO_DRAWING_ROOM":
                 return $"CH1_G{guestNumber:00}_TO_DRAWING_ROOM";

@@ -384,13 +384,6 @@ MonoBehaviour:
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
-  - lineId: CH1_G01_INTERRUPTED
-    speakerId: Guest1
-    speakerDisplayName: Miss Isolde Wren
-    text: You interrupted me.
-    minDuration: 1.25
-    maxDuration: 5
-    requireAdvance: 0
   - lineId: CH1_G01_TO_DRAWING_ROOM
     speakerId: Guest1
     speakerDisplayName: Miss Isolde Wren
@@ -437,13 +430,6 @@ MonoBehaviour:
     speakerId: Guest2
     speakerDisplayName: Professor Lucien Vale
     text: Thank you. The damp seems to cling to everything tonight.
-    minDuration: 1.25
-    maxDuration: 5
-    requireAdvance: 0
-  - lineId: CH1_G02_INTERRUPTED
-    speakerId: Guest2
-    speakerDisplayName: Professor Lucien Vale
-    text: You interrupted me.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -496,13 +482,6 @@ MonoBehaviour:
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
-  - lineId: CH1_G03_INTERRUPTED
-    speakerId: Guest3
-    speakerDisplayName: Mister Florian Knell
-    text: You interrupted me.
-    minDuration: 1.25
-    maxDuration: 5
-    requireAdvance: 0
   - lineId: CH1_G03_TO_DRAWING_ROOM
     speakerId: Guest3
     speakerDisplayName: Mister Florian Knell
@@ -549,13 +528,6 @@ MonoBehaviour:
     speakerId: Guest4
     speakerDisplayName: Countess Elowen Dusk
     text: Take it before it decides to stay here without me.
-    minDuration: 1.25
-    maxDuration: 5
-    requireAdvance: 0
-  - lineId: CH1_G04_INTERRUPTED
-    speakerId: Guest4
-    speakerDisplayName: Countess Elowen Dusk
-    text: You interrupted me.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -608,13 +580,6 @@ MonoBehaviour:
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
-  - lineId: CH1_G05_INTERRUPTED
-    speakerId: Guest5
-    speakerDisplayName: Baron Hector Glass
-    text: You interrupted me.
-    minDuration: 1.25
-    maxDuration: 5
-    requireAdvance: 0
   - lineId: CH1_G05_TO_DRAWING_ROOM
     speakerId: Guest5
     speakerDisplayName: Baron Hector Glass
@@ -661,13 +626,6 @@ MonoBehaviour:
     speakerId: Guest6
     speakerDisplayName: Lady Sabine Marrow
     text: Yes, please. I have been wearing half the road since the lower gate.
-    minDuration: 1.25
-    maxDuration: 5
-    requireAdvance: 0
-  - lineId: CH1_G06_INTERRUPTED
-    speakerId: Guest6
-    speakerDisplayName: Lady Sabine Marrow
-    text: You interrupted me.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -720,13 +678,6 @@ MonoBehaviour:
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
-  - lineId: CH1_G07_INTERRUPTED
-    speakerId: Guest7
-    speakerDisplayName: Lord Ambrose Veil
-    text: You interrupted me.
-    minDuration: 1.25
-    maxDuration: 5
-    requireAdvance: 0
   - lineId: CH1_G07_TO_DRAWING_ROOM
     speakerId: Guest7
     speakerDisplayName: Lord Ambrose Veil
@@ -773,13 +724,6 @@ MonoBehaviour:
     speakerId: Guest8
     speakerDisplayName: Madame Coralie Thread
     text: Take it. The night has left fingerprints on the sleeves.
-    minDuration: 1.25
-    maxDuration: 5
-    requireAdvance: 0
-  - lineId: CH1_G08_INTERRUPTED
-    speakerId: Guest8
-    speakerDisplayName: Madame Coralie Thread
-    text: You interrupted me.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
