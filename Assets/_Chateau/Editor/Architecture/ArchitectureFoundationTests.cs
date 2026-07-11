@@ -164,6 +164,11 @@ public sealed class ArchitectureFoundationTests
         Assert.That(CountOccurrences(sceneText, "guid: a7a7a747ac7ae2fb48c9d60608ca3dc9"), Is.EqualTo(1));
         Assert.That(sceneText, Does.Contain("interactionHUD: {fileID: 3302000002}"));
         Assert.That(sceneText, Does.Contain("- component: {fileID: 3302000002}"));
+
+        string chapter1Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs");
+        Assert.That(chapter1Text, Does.Not.Contain("FindAnyObjectByType<Chapter1InteractionHUD>"));
+        Assert.That(chapter1Text, Does.Not.Contain("AddComponent<Chapter1InteractionHUD>"));
+        Assert.That(chapter1Text, Does.Not.Contain("createRuntimeHud"));
     }
 
     [Test]

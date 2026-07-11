@@ -42,7 +42,7 @@ Assets/Scripts/Story/GameplayRuntimeState.cs,GameplayRuntimeState,55,5,0,Migrate
 Assets/Scripts/Story/GrandfatherClockInteraction.cs,GrandfatherClockInteraction,298,10,0,Migrate/review,Game Flow / Story,6,"Map to an approved beat, state owner, or world interaction."
 Assets/Scripts/Story/RoomAnchor.cs,RoomAnchor,73,67,79,Migrate/review,Game Flow / Story,6,"Map to an approved beat, state owner, or world interaction."
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,Chapter1CoatPickup,245,19,0,Migrate/review,Game Flow / Story,6,"Map to an approved beat, state owner, or world interaction."
-Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,Chapter1InteractionHUD,164,4,1,Migrate/review,UIService / Chapter1View,6,Serialized once and bound to Chapter1ArrivalController; root-owner repair removal is separately gated while its canvas/text remain lazy.
+Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,Chapter1InteractionHUD,164,4,1,Migrate/review,UIService / Chapter1View,6,Serialized once and bound to Chapter1ArrivalController; lookup/factory removed while its canvas/text remain lazy.
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,Chapter1SceneActionType | Chapter1SceneAction,553,13,1,Migrate/review,Game Flow / Story,6,"Map to an approved beat, state owner, or world interaction."
 Assets/_Chateau/Scripts/Chapter/Chapter01/GuestArrivalConfig.cs,GuestArrivalConfig | GuestArrivalState,146,13,0,Migrate/review,Game Flow / Story,6,"Map to an approved beat, state owner, or world interaction."
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs,Chapter2GuestFindAction,387,36,0,Migrate/review,Game Flow / Story,6,"Map to an approved beat, state owner, or world interaction."

@@ -115,7 +115,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [SerializeField] private int entranceGuestSortingOrderSlotStep = 10;
 
     [Header("Interactions")]
-    [SerializeField] private bool createRuntimeHud = true;
     [SerializeField] private bool createRuntimeClickTargets = true;
     [SerializeField] private bool snapGuestsIntoEntranceForFirstVisualPass = true;
     [SerializeField] private bool autoStoreCoatIfClosetMissing = false;
@@ -1353,6 +1352,11 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         else if (guestRoomScaleApplier.Calibration.ButlerScaleSource == null)
         {
             Debug.LogWarning("GuestRoomScaleCalibration is missing its serialized Butler scale source.", this);
+        }
+
+        if (interactionHUD == null)
+        {
+            Debug.LogWarning("Chapter1ArrivalController missing required field: interactionHUD.", this);
         }
 
         int sceneGuestCandidateCount = useExistingSceneGuestsFirst ? FindSceneGuestCandidates().Count : 0;
@@ -6861,16 +6865,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         if (timeSettingsUI == null && createFallbacks)
         {
             timeSettingsUI = gameObject.AddComponent<ChapterTimeSettingsUI>();
-        }
-
-        if (interactionHUD == null)
-        {
-            interactionHUD = FindAnyObjectByType<Chapter1InteractionHUD>(FindObjectsInactive.Include);
-        }
-
-        if (interactionHUD == null && createFallbacks && createRuntimeHud)
-        {
-            interactionHUD = gameObject.AddComponent<Chapter1InteractionHUD>();
         }
     }
 

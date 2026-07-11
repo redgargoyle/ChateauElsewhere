@@ -92,7 +92,7 @@ Assets/_Chateau/Runtime/Gameplay/InteractionTargetBase.cs,6,30c69884ec98ab1867ff
 Assets/_Chateau/Runtime/Gameplay/RoomElementBase.cs,6,67065aa8dc7ae838ee4922d7ad707d71a8e557431cd5a8f47cdb88d1af31347a,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Gameplay/StoryBeatBase.cs,21,35aef3731071e18debe7233a75e22cb70f7a51408d98458a07afb7cfa929ba38,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Gameplay/UIScreenBase.cs,6,866b461d97830757f363d92748de6765afca6ef83e8261b77c47be9559a9cfd1,0,0,0,0,0,0,
-Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,7214,2b93c545ece3ea53ec4477e9cc10804ea5d49affe079a5d6fa2a9f4a325dbe5b,26,3,6,26,0,0,
+Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,7208,455ceb446c4329ef68531c7bf44c65f56ee88357343b2603f19f9671aecae4ff,25,3,6,25,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,245,66ea4162715ef550570984aa5a7e8ade9906eb12fb1ded6dae2900ae91695b59,2,0,0,0,0,0,Chapter1CoatPickup
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,164,fbdd821a8687aace94f17e7d73ecd6bd409d5d6040d5443a799119f0acef44f9,3,0,3,0,0,0,Chapter1InteractionHUD
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,553,66c69d06013a3a26f9f8ed483fb4a4fcfa433bfa9fe0ed7879d722c042a113a9,4,0,0,0,0,0,Chapter1SceneAction
