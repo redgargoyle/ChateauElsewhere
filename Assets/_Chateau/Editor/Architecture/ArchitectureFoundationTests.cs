@@ -111,7 +111,10 @@ public sealed class ArchitectureFoundationTests
         Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<ChapterIntroUI>"));
         Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<Chapter1ArrivalController>"));
         Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<ChapterManager>"));
-        Assert.That(managerText, Does.Contain("ResolveChapter2Controller(true)"), "Chapter 2 has a separate migration gate and must not be removed in this slice.");
+        Assert.That(managerText, Does.Contain("ResolveChapter2Controller()"));
+        Assert.That(managerText, Does.Not.Contain("ResolveChapter2Controller(true)"));
+        Assert.That(managerText, Does.Not.Contain("ResolveChapter2Controller(false)"));
+        Assert.That(managerText, Does.Not.Contain("AddComponent<Chapter2Controller>"));
     }
 
     [Test]

@@ -30,20 +30,21 @@ This report records what is implemented in the repository at this commit. It mus
 - Added a real MainMenu-to-Gameplay lifecycle test with an Entrance/Drawing Room round trip and exact-one service assertions.
 - Separated room-stage coordinate layout from Butler presentation scaling. The approved `0.7528645` presentation baseline is explicit on `Player.prefab`; raw room calibration and guest scale data remain unchanged.
 - Removed `RoomNavigationBootstrap` after proving that the serialized root supplies exactly one navigation manager and prompt controller from MainMenu startup through a room round trip.
-- Removed `ChapterManager.BootstrapChapterManagerForGameplay`; the serialized Chapter 1 stack now owns startup. The independent Chapter 2 creation adapter remains until Chapter 2 is authored and tested.
+- Removed `ChapterManager.BootstrapChapterManagerForGameplay`; the serialized Chapter 1 stack now owns startup. Chapter 2 controller ownership was migrated in a separate gate.
 - Serialized one inert `Chapter2Controller`, wired its existing dependencies, and bound it through GameRoot. Repeated Chapter 2 debug skips reuse the same controller and HUD while preserving the characterized feature behavior.
+- Removed the `ChapterManager` factory for `Chapter2Controller`; every chapter transition and debug-skip entry path now resolves the single serialized controller.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,592 | +690 |
+| Runtime C# lines | 49,902 | 50,587 | +685 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
 | `FindObject*`/`GameObject.Find` | 199 | 192 | -7 |
 | `Resources.Load` | 27 | 27 | 0 |
 | runtime `new GameObject` | 98 | 96 | -2 |
-| runtime `AddComponent<T>` | 100 | 92 | -8 |
+| runtime `AddComponent<T>` | 100 | 91 | -9 |
 | runtime initialization hooks | 9 | 5 | -4 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.

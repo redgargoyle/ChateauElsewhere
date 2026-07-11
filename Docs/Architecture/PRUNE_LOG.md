@@ -16,7 +16,8 @@ Their `.meta` files were also removed because no serialized asset referenced the
 
 | Path | Former behavior | Replacement | Proof / test |
 |---|---|---|---|
-| `ChapterManager.BootstrapChapterManagerForGameplay` | A post-scene-load hook created an entire chapter manager stack with six `AddComponent` calls | `Gameplay.unity` serializes `ChapterManager`, `ChapterClock`, `ChapterEventScheduler`, `ChapterIntroUI`, and `Chapter1ArrivalController`; GameRoot validates and initializes the services | `GameplayLifecycleCharacterizationTests`, `ArchitectureFoundationTests.ChapterStackIsSerializedInsteadOfRepairedAtRuntime`, exact serialized GUID scan, and full Unity gate. The separate Chapter 2 creation branch remains pending its own migration. |
+| `ChapterManager.BootstrapChapterManagerForGameplay` | A post-scene-load hook created an entire chapter manager stack with six `AddComponent` calls | `Gameplay.unity` serializes `ChapterManager`, `ChapterClock`, `ChapterEventScheduler`, `ChapterIntroUI`, and `Chapter1ArrivalController`; GameRoot validates and initializes the services | `GameplayLifecycleCharacterizationTests`, `ArchitectureFoundationTests.ChapterStackIsSerializedInsteadOfRepairedAtRuntime`, exact serialized GUID scan, and full Unity gate. Chapter 2 was migrated in the subsequent independently gated slice. |
+| `ChapterManager.ResolveChapter2Controller(createIfMissing)` creation branch | Chapter transitions and debug skips could add `Chapter2Controller` at runtime | `Gameplay.unity` serializes one controller, binds `ChapterManager.chapter2Controller`, and registers it with GameRoot | The lifecycle test captures the inert serialized instance before Chapter 2 and proves both skips reuse it; the static guard bans `AddComponent<Chapter2Controller>`; serialized-reference scan and full Unity gate. |
 
 ## Quarantined for review, not deleted
 

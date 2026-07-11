@@ -252,7 +252,7 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             chapter1ArrivalController.PrepareGuestsForChapter2Skip();
         }
 
-        chapter2Controller = ResolveChapter2Controller(true);
+        chapter2Controller = ResolveChapter2Controller();
 
         if (chapter2Controller != null)
         {
@@ -301,7 +301,7 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             chapter1ArrivalController.HideGuestCoatsForChapter2Skip();
         }
 
-        chapter2Controller = ResolveChapter2Controller(true);
+        chapter2Controller = ResolveChapter2Controller();
 
         if (chapter2Controller != null)
         {
@@ -349,7 +349,7 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             chapter1ArrivalController.HideGuestCoatsForChapter2Skip();
         }
 
-        chapter2Controller = ResolveChapter2Controller(true);
+        chapter2Controller = ResolveChapter2Controller();
 
         if (chapter2Controller != null)
         {
@@ -509,7 +509,7 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             currentChapterId = Chapter2Id;
             displayedTitle = GetChapterTitle(cleanNextChapterId);
             chapterCompleteRoutine = null;
-            chapter2Controller = ResolveChapter2Controller(true);
+            chapter2Controller = ResolveChapter2Controller();
 
             if (chapter2Controller != null)
             {
@@ -570,13 +570,13 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             return false;
         }
 
-        ResolveChapter2Controller(false);
+        ResolveChapter2Controller();
 
         return string.Equals(currentChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
             (chapter2Controller != null && chapter2Controller.CurrentPhase != Chapter2Phase.NotStarted);
     }
 
-    private Chapter2Controller ResolveChapter2Controller(bool createIfMissing)
+    private Chapter2Controller ResolveChapter2Controller()
     {
         if (chapter2Controller == null)
         {
@@ -586,11 +586,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
         if (chapter2Controller == null)
         {
             chapter2Controller = FindAnyObjectByType<Chapter2Controller>(FindObjectsInactive.Include);
-        }
-
-        if (chapter2Controller == null && createIfMissing)
-        {
-            chapter2Controller = gameObject.AddComponent<Chapter2Controller>();
         }
 
         return chapter2Controller;
@@ -703,7 +698,7 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             chapter1ArrivalController = FindAnyObjectByType<Chapter1ArrivalController>(FindObjectsInactive.Include);
         }
 
-        ResolveChapter2Controller(false);
+        ResolveChapter2Controller();
 
         ResolvePlayerReference();
 
