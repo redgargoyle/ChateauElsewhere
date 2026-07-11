@@ -120,6 +120,7 @@ public class NavigationRegressionTests
         string controllerText = File.ReadAllText(ClockTickingAmbienceControllerPath);
         string catalogScriptText = File.ReadAllText(ClockTickingAmbienceCatalogScriptPath);
         string catalogText = File.ReadAllText(ClockTickingAmbienceCatalogPath);
+        string sceneText = File.ReadAllText(GameplayScenePath);
         string[] roomNames =
         {
             "Grand Entrance",
@@ -143,7 +144,8 @@ public class NavigationRegressionTests
         Assert.That(navigationText, Does.Contain("[SerializeField] private FireplaceAmbienceController fireplaceAmbienceController"), "Room navigation should own its serialized fireplace ambience controller.");
         Assert.That(navigationText, Does.Contain("[SerializeField] private ClockTickingAmbienceController clockTickingAmbienceController"), "Room navigation should own its serialized clock ambience controller.");
         Assert.That(navigationText, Does.Match(@"EnsureFireplaceAmbienceController\(\);[\s\S]*EnsureClockTickingAmbienceController\(\);"), "Room changes should refresh fireplace and clock ambience together.");
-        Assert.That(controllerText, Does.Contain("DefaultCatalogResourcePath = \"Audio/ClockTickingAmbienceCatalog\""));
+        Assert.That(sceneText, Does.Contain("catalog: {fileID: 11400000, guid: d1c5479f74b94514cdf7a37d49f95fbe, type: 2}"), "Gameplay should bind the clock catalog explicitly.");
+        Assert.That(controllerText, Does.Not.Contain("Resources.Load"), "Clock ambience should not repair a missing serialized catalog at runtime.");
         Assert.That(controllerText, Does.Contain("audioSource.loop = true"), "Clock ticking should loop while the player remains in a clock room.");
         Assert.That(controllerText, Does.Contain("OnCurrentRoomChanged"), "Clock ticking should react to normal travel and debug teleports.");
         Assert.That(controllerText, Does.Contain("GameAudioChannel.Atmosphere"), "Clock ticking should respect the Atmosphere slider.");

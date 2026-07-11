@@ -4,13 +4,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class FireplaceAmbienceController : MonoBehaviour
 {
-    private const string ControllerObjectName = "Audio_FireplaceAmbience";
-    private const string DefaultCatalogResourcePath = "Audio/FireplaceAmbienceCatalog";
     private const float DefaultHighPassCutoffFrequency = 200f;
 
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private FireplaceAmbienceCatalog catalog;
-    [SerializeField] private string catalogResourcePath = DefaultCatalogResourcePath;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioHighPassFilter highPassFilter;
     [SerializeField, Min(10f)] private float highPassCutoffFrequency = DefaultHighPassCutoffFrequency;
@@ -20,29 +17,14 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
     private float activeBaseVolume;
     private Coroutine fadeRoutine;
 
-    public static FireplaceAmbienceController FindOrCreate(RoomNavigationManager navigationManager)
-    {
-        FireplaceAmbienceController existing = FindAnyObjectByType<FireplaceAmbienceController>(FindObjectsInactive.Include);
-
-        if (existing != null)
-        {
-            existing.Initialize(navigationManager);
-            return existing;
-        }
-
-        GameObject controllerObject = new GameObject(ControllerObjectName, typeof(AudioSource), typeof(FireplaceAmbienceController));
-        FireplaceAmbienceController controller = controllerObject.GetComponent<FireplaceAmbienceController>();
-        controller.Initialize(navigationManager);
-        return controller;
-    }
-
     public void Initialize(RoomNavigationManager owner)
     {
-        navigationManager = owner != null
-            ? owner
-            : FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        if (owner != null)
+        {
+            navigationManager = owner;
+        }
 
-        ResolveReferences();
+        ConfigureAudioComponents();
         SubscribeToRoomChanges();
 
         if (navigationManager != null)
@@ -53,7 +35,7 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
 
     private void Awake()
     {
-        ResolveReferences();
+        ConfigureAudioComponents();
     }
 
     private void OnEnable()
@@ -73,49 +55,21 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
         UnsubscribeFromRoomChanges();
     }
 
-    private void ResolveReferences()
+    private void ConfigureAudioComponents()
     {
-        if (audioSource == null)
+        if (audioSource != null)
         {
-            audioSource = GetComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.loop = true;
+            audioSource.spatialBlend = 0f;
+            audioSource.ignoreListenerVolume = true;
         }
 
-        if (audioSource == null)
+        if (highPassFilter != null)
         {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
-
-        audioSource.playOnAwake = false;
-        audioSource.loop = true;
-        audioSource.spatialBlend = 0f;
-        audioSource.ignoreListenerVolume = true;
-
-        if (highPassFilter == null)
-        {
-            highPassFilter = GetComponent<AudioHighPassFilter>();
-        }
-
-        if (highPassFilter == null)
-        {
-            highPassFilter = gameObject.AddComponent<AudioHighPassFilter>();
-        }
-
-        highPassFilter.enabled = true;
-        highPassFilter.cutoffFrequency = ResolveHighPassCutoffFrequency();
-        highPassFilter.highpassResonanceQ = Mathf.Clamp(highPassResonanceQ, 0.1f, 10f);
-
-        if (catalog == null)
-        {
-            string resourcePath = string.IsNullOrWhiteSpace(catalogResourcePath)
-                ? DefaultCatalogResourcePath
-                : catalogResourcePath.Trim();
-
-            catalog = Resources.Load<FireplaceAmbienceCatalog>(resourcePath);
-        }
-
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+            highPassFilter.enabled = true;
+            highPassFilter.cutoffFrequency = ResolveHighPassCutoffFrequency();
+            highPassFilter.highpassResonanceQ = Mathf.Clamp(highPassResonanceQ, 0.1f, 10f);
         }
     }
 
@@ -140,7 +94,7 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
 
     private void HandleRoomChanged(string roomName)
     {
-        ResolveReferences();
+        ConfigureAudioComponents();
 
         if (catalog == null || audioSource == null || !catalog.HasRoom(roomName))
         {

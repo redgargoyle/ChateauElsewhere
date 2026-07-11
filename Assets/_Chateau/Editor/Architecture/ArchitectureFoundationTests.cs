@@ -276,6 +276,28 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("audioSource: {fileID: 2201000033}"));
         Assert.That(sceneText, Does.Match(@"--- !u!4 &2201000022[\s\S]*?m_GameObject: \{fileID: 2201000021\}[\s\S]*?m_Father: \{fileID: 1878886999\}"));
         Assert.That(sceneText, Does.Match(@"--- !u!4 &2201000032[\s\S]*?m_GameObject: \{fileID: 2201000031\}[\s\S]*?m_Father: \{fileID: 1878886999\}"));
+
+        string fireplaceText = File.ReadAllText("Assets/Scripts/Audio/FireplaceAmbienceController.cs");
+        string clockText = File.ReadAllText("Assets/Scripts/Audio/ClockTickingAmbienceController.cs");
+        string navigationText = File.ReadAllText("Assets/Scripts/Navigation/RoomNavigationManager.cs");
+        string[] ownerTexts = { fireplaceText, clockText };
+
+        for (int i = 0; i < ownerTexts.Length; i++)
+        {
+            Assert.That(ownerTexts[i], Does.Not.Contain("FindOrCreate"));
+            Assert.That(ownerTexts[i], Does.Not.Contain("FindAnyObjectByType"));
+            Assert.That(ownerTexts[i], Does.Not.Contain("Resources.Load"));
+            Assert.That(ownerTexts[i], Does.Not.Contain("new GameObject"));
+            Assert.That(ownerTexts[i], Does.Not.Contain("AddComponent<"));
+            Assert.That(ownerTexts[i], Does.Not.Contain("GetComponent<"));
+        }
+
+        Assert.That(sceneText, Does.Not.Contain("catalogResourcePath: Audio/FireplaceAmbienceCatalog"));
+        Assert.That(sceneText, Does.Not.Contain("catalogResourcePath: Audio/ClockTickingAmbienceCatalog"));
+        Assert.That(navigationText, Does.Not.Contain("FireplaceAmbienceController.FindOrCreate"));
+        Assert.That(navigationText, Does.Not.Contain("ClockTickingAmbienceController.FindOrCreate"));
+        Assert.That(navigationText, Does.Contain("fireplaceAmbienceController?.Initialize(this)"));
+        Assert.That(navigationText, Does.Contain("clockTickingAmbienceController?.Initialize(this)"));
     }
 
     private static int CountOccurrences(string text, string value)

@@ -691,7 +691,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
             return;
         }
 
-        fireplaceAmbienceController = FireplaceAmbienceController.FindOrCreate(this);
+        fireplaceAmbienceController?.Initialize(this);
     }
 
     private void EnsureClockTickingAmbienceController()
@@ -701,7 +701,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
             return;
         }
 
-        clockTickingAmbienceController = ClockTickingAmbienceController.FindOrCreate(this);
+        clockTickingAmbienceController?.Initialize(this);
     }
 
     private void ApplyRoomVisual(string roomName)

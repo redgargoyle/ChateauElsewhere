@@ -51,18 +51,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed RuntimeSettingsMenu's global/root/canvas factory and made navigation initialize the serialized owner directly; nested controls remain lazy inside that owner.
 - Characterized fireplace and clock ambience before changing ownership: each has a distinct 2D looping source and assigned entrance clip, only fireplace has an enabled high-pass filter, and both owner/source identities survive room travel.
 - Serialized dedicated fireplace and clock ambience owners under GameRoot, explicitly binding navigation, catalogs, separate AudioSources, and the fireplace high-pass filter while retaining the old factories for a separate removal gate.
+- Removed both ambience root factories plus their global navigation lookup, Resources catalog repair, and AudioSource/filter component repair; room navigation now initializes only its serialized owners.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,373 | +471 |
+| Runtime C# lines | 49,902 | 50,271 | +369 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
-| `FindObject*`/`GameObject.Find` | 199 | 177 | -22 |
-| `Resources.Load` | 27 | 27 | 0 |
-| runtime `new GameObject` | 98 | 88 | -10 |
-| runtime `AddComponent<T>` | 100 | 81 | -19 |
+| `FindObject*`/`GameObject.Find` | 199 | 171 | -28 |
+| `Resources.Load` | 27 | 25 | -2 |
+| runtime `new GameObject` | 98 | 86 | -12 |
+| runtime `AddComponent<T>` | 100 | 78 | -22 |
 | runtime initialization hooks | 9 | 5 | -4 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -88,6 +89,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - the RuntimeSettings owner graft audit passed 7/7 checks: eight documents added under GameRoot, only navigation/root-transform changed, and SceneRoots/old document order stayed exact;
 - the focused ambience characterization passed and the full-suite gate retained the exact baseline failure-name set;
 - the ambience-owner graft audit passed 6/6 checks: nine documents added, only navigation/root-transform changed, every old document retained its exact order, and SceneRoots stayed byte-identical;
+- the ambience-factory cleanup audit passed 5/5 checks: no document churn, only the two ambience owner documents changed, document order stayed exact, and SceneRoots stayed byte-identical;
 - the full EditMode discovery count is 232: 181 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
@@ -117,8 +119,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Remove the fireplace/clock root and component-repair factories now that their serialized-owner lifecycle and scene-structure gates pass.
-2. Characterize the Drawing Room tea-table cutout's exact sorting/collision behavior.
-3. Migrate only that cutout as the first `World / Rooms / Props / Set Pieces` vertical slice.
+1. Characterize the Drawing Room tea-table cutout's exact sorting, activation, and accepted collision footprint.
+2. Introduce one static `SetPieceView`/depth resolver and migrate only that cutout without changing its visual or navigation contract.
+3. Prove the old projection helper and blocker no longer compete for that renderer before migrating any second prop.
 
 Do not begin bulk deletion until those gates pass.

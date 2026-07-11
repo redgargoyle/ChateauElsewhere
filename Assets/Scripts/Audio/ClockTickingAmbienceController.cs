@@ -4,40 +4,21 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class ClockTickingAmbienceController : MonoBehaviour
 {
-    private const string ControllerObjectName = "Audio_ClockTickingAmbience";
-    private const string DefaultCatalogResourcePath = "Audio/ClockTickingAmbienceCatalog";
-
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private ClockTickingAmbienceCatalog catalog;
-    [SerializeField] private string catalogResourcePath = DefaultCatalogResourcePath;
     [SerializeField] private AudioSource audioSource;
 
     private Coroutine fadeRoutine;
     private string currentRoomKey = string.Empty;
 
-    public static ClockTickingAmbienceController FindOrCreate(RoomNavigationManager navigationManager)
-    {
-        ClockTickingAmbienceController existing = FindAnyObjectByType<ClockTickingAmbienceController>(FindObjectsInactive.Include);
-
-        if (existing != null)
-        {
-            existing.Initialize(navigationManager);
-            return existing;
-        }
-
-        GameObject controllerObject = new GameObject(ControllerObjectName, typeof(AudioSource), typeof(ClockTickingAmbienceController));
-        ClockTickingAmbienceController controller = controllerObject.GetComponent<ClockTickingAmbienceController>();
-        controller.Initialize(navigationManager);
-        return controller;
-    }
-
     public void Initialize(RoomNavigationManager owner)
     {
-        navigationManager = owner != null
-            ? owner
-            : FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        if (owner != null)
+        {
+            navigationManager = owner;
+        }
 
-        ResolveReferences();
+        ConfigureAudioSource();
         SubscribeToRoomChanges();
 
         if (navigationManager != null)
@@ -48,7 +29,7 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
 
     private void Awake()
     {
-        ResolveReferences();
+        ConfigureAudioSource();
     }
 
     private void OnEnable()
@@ -68,51 +49,14 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
         UnsubscribeFromRoomChanges();
     }
 
-    private void ResolveReferences()
+    private void ConfigureAudioSource()
     {
-        if (audioSource == null)
+        if (audioSource != null)
         {
-            audioSource = GetComponent<AudioSource>();
-        }
-
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
-
-        audioSource.playOnAwake = false;
-        audioSource.loop = true;
-        audioSource.spatialBlend = 0f;
-        audioSource.ignoreListenerVolume = true;
-        DisableAttachedFilters();
-
-        if (catalog == null)
-        {
-            string resourcePath = string.IsNullOrWhiteSpace(catalogResourcePath)
-                ? DefaultCatalogResourcePath
-                : catalogResourcePath.Trim();
-
-            catalog = Resources.Load<ClockTickingAmbienceCatalog>(resourcePath);
-        }
-
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
-        }
-    }
-
-    private void DisableAttachedFilters()
-    {
-        AudioHighPassFilter highPassFilter = GetComponent<AudioHighPassFilter>();
-        if (highPassFilter != null)
-        {
-            highPassFilter.enabled = false;
-        }
-
-        AudioLowPassFilter lowPassFilter = GetComponent<AudioLowPassFilter>();
-        if (lowPassFilter != null)
-        {
-            lowPassFilter.enabled = false;
+            audioSource.playOnAwake = false;
+            audioSource.loop = true;
+            audioSource.spatialBlend = 0f;
+            audioSource.ignoreListenerVolume = true;
         }
     }
 
@@ -137,7 +81,7 @@ public sealed class ClockTickingAmbienceController : MonoBehaviour
 
     private void HandleRoomChanged(string roomName)
     {
-        ResolveReferences();
+        ConfigureAudioSource();
 
         string roomKey = NormalizeRoomKey(roomName);
 
