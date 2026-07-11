@@ -156,6 +156,17 @@ public sealed class ArchitectureFoundationTests
         Assert.That(applierText, Does.Contain("AddComponent<GuestScaleParticipant>"));
     }
 
+    [Test]
+    public void DialogueCoreServicesAreSerializedAndBound()
+    {
+        string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+
+        Assert.That(sceneText, Does.Contain("subtitleService: {fileID: 1878886995}"));
+        Assert.That(sceneText, Does.Contain("speechService: {fileID: 1878886994}"));
+        Assert.That(sceneText, Does.Contain("lineBank: {fileID: 11400000, guid: 47d20ba9660546050951e9ea07a0b3da, type: 2}"));
+        Assert.That(sceneText, Does.Contain("navigationManager: {fileID: 1878886997}"));
+    }
+
     private static int CountOccurrences(string text, string value)
     {
         return text.Split(new[] { value }, StringSplitOptions.None).Length - 1;
