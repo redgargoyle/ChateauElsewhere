@@ -35,13 +35,14 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed the `ChapterManager` factory for `Chapter2Controller`; every chapter transition and debug-skip entry path now resolves the single serialized controller.
 - Removed the Chapter 2 HUD factory; Chapter 2 now reuses the single serialized HUD on every entry path.
 - Serialized the three inert Chapter 2 feature owners (monster stinger, guest panic, and guest search), bound their stable scene references, registered them with GameRoot, and removed their independently gated creation fallbacks.
+- Bound Chapter 1 to the existing serialized guest-scale applier, preserving the single ownership chain from applier to calibration to approved Butler source; every identity is lifecycle-tested before factory retirement.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,567 | +665 |
+| Runtime C# lines | 49,902 | 50,579 | +677 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
 | `FindObject*`/`GameObject.Find` | 199 | 192 | -7 |
 | `Resources.Load` | 27 | 27 | 0 |
@@ -63,7 +64,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - Unity `6000.4.10f1` compiled the project and produced result XML for every automated run;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
-- the full EditMode discovery count is 226: 175 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
+- the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
+- the full EditMode discovery count is 227: 176 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
 - Gameplay scene hashing confirmed that batch validation did not rewrite the reviewed scene;

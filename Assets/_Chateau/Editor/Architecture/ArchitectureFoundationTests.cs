@@ -136,6 +136,16 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("guestSearch: {fileID: 3301000009}"));
     }
 
+    [Test]
+    public void Chapter1BindsSerializedGuestScaleOwners()
+    {
+        string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+
+        Assert.That(sceneText, Does.Contain("guestRoomScaleApplier: {fileID: 86244178}"));
+        Assert.That(sceneText, Does.Contain("calibration: {fileID: 1844861547}"));
+        Assert.That(sceneText, Does.Contain("butlerScaleSource: {fileID: 81962842}"));
+    }
+
     private static int CountOccurrences(string text, string value)
     {
         return text.Split(new[] { value }, StringSplitOptions.None).Length - 1;

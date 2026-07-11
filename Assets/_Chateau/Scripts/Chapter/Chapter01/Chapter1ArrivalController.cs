@@ -68,6 +68,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [SerializeField] private GrandfatherClockInteraction grandfatherClock;
     [SerializeField] private ChapterTimeSettingsUI timeSettingsUI;
     [SerializeField] private Chapter1InteractionHUD interactionHUD;
+    [SerializeField] private GuestRoomScaleApplier guestRoomScaleApplier;
 
     [Header("Rooms")]
     [SerializeField] private string entryRoomId = "Grand Entrance Hall";
@@ -5569,14 +5570,25 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private GuestRoomScaleApplier EnsureGuestScaleApplier()
     {
-        GuestRoomScaleApplier applier = GuestRoomScaleApplier.EnsureInScene();
-        applier.SetCalibration(EnsureGuestScaleCalibration());
-        return applier;
+        if (guestRoomScaleApplier == null)
+        {
+            guestRoomScaleApplier = GuestRoomScaleApplier.EnsureInScene();
+        }
+
+        guestRoomScaleApplier.SetCalibration(EnsureGuestScaleCalibration());
+        return guestRoomScaleApplier;
     }
 
     private GuestRoomScaleCalibration EnsureGuestScaleCalibration()
     {
-        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+        GuestRoomScaleCalibration calibration = guestRoomScaleApplier != null
+            ? guestRoomScaleApplier.Calibration
+            : null;
+
+        if (calibration == null)
+        {
+            calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+        }
 
         if (calibration == null)
         {
