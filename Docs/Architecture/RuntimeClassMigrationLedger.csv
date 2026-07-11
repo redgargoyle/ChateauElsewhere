@@ -3,7 +3,7 @@ Assets/Scripts/PickupObject.cs,PickupObject,43,1,0,Pruned,InteractionTargetBase,
 Assets/Scripts/NewBehaviourScript.cs,NewBehaviourScript,18,0,0,Pruned,None,1,Empty starter class; zero code and serialized references.
 Assets/Scripts/Story/ChapterClock.cs,ChapterClock,110,39,1,Compatibility service,ClockService,2,Now derives GameServiceBase; retain behavior while scheduler/time are consolidated.
 Assets/Scripts/Story/ChapterEventScheduler.cs,ChapterEventScheduler,166,7,1,Compatibility service,ClockService scheduler,2,Now derives GameServiceBase; global clock fallback removed.
-Assets/Scripts/Navigation/RoomNavigationBootstrap.cs,RoomNavigationBootstrap,69,1,0,Retire after installer,GameRoot startup validation,3,Do not delete until Gameplay serializes navigation and prompt components and tests pass.
+Assets/Scripts/Navigation/RoomNavigationBootstrap.cs,RoomNavigationBootstrap,69,1,0,Pruned,GameRoot startup validation,3,Deleted after the serialized root passed exact-one lifecycle and navigation round-trip gates; GUID had zero serialized references.
 Assets/Scripts/Navigation/RoomNavigationManager.cs,RoomNavigationManager | RoomChangedEvent,1268,73,0,Split behind facade,NavigationService + RoomViewService,4,Now derives GameServiceBase; preserve public API while navigation and room activation separate.
 Assets/Scripts/Navigation/DoorTriggerNavigation.cs,DoorTriggerNavigation,1401,75,58,Split behind facade,Passage + PassageInteraction,4,Separate stable route data from pointer/approach/presentation behavior.
 Assets/Scripts/Navigation/DoorDataParser.cs,RoomDefinition | DoorRoute | DoorDataParseResult | DoorDataParser,173,43,0,Move to Editor or delete,Passage migration importer,4,Runtime text route graph must be retired.

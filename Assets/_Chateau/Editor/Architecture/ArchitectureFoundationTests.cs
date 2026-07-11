@@ -93,6 +93,13 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
+    public void RuntimeNavigationBootstrapStaysPruned()
+    {
+        Assert.That(File.Exists("Assets/Scripts/Navigation/RoomNavigationBootstrap.cs"), Is.False);
+        Assert.That(File.Exists("Assets/Scripts/Navigation/RoomNavigationBootstrap.cs.meta"), Is.False);
+    }
+
+    [Test]
     public void InvalidTransitionCanThrowWithUsefulMessage()
     {
         StateMachine<TestState> machine = new StateMachine<TestState>(TestState.Idle);

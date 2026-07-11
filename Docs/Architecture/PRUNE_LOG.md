@@ -8,6 +8,7 @@ No file may be deleted merely because a text search looks empty. Each deletion n
 |---|---|---:|---:|---|---|
 | `Assets/Scripts/NewBehaviourScript.cs` | Empty Unity starter class; no behavior | 0 outside declaration | 0 | None | `ArchitectureFoundationTests.ProvenDeadStarterAndPickupScriptsStayPruned` and static GUID scan |
 | `Assets/Scripts/PickupObject.cs` | Uninstantiated generic cursor-hover component; only consumer was a source-text regression assertion | 0 runtime | 0 | Existing interaction-specific hover behavior; future pickups must use `InteractionTargetBase` | Same test plus architecture guard |
+| `Assets/Scripts/Navigation/RoomNavigationBootstrap.cs` | Runtime repair duplicated the serialized composition root | 0 runtime outside the obsolete source-text test | 0; deleted GUID `ee39d7886e1b437f59e4e82b50f560c8` never appeared in serialized content | `Gameplay.unity` serializes one `GameRoot`, `RoomNavigationManager`, and `DoorPromptSequenceController` | `GameplayLifecycleCharacterizationTests`, `NavigationRegressionTests.GameplaySerializedRootOwnsNavigationStartup`, `ArchitectureFoundationTests.RuntimeNavigationBootstrapStaysPruned`, serialized-reference scan, and full Unity gate |
 
 Their `.meta` files were also removed because no serialized asset referenced their script GUIDs.
 
@@ -16,7 +17,6 @@ Their `.meta` files were also removed because no serialized asset referenced the
 | Candidate | Why it looks redundant | Why deletion is not yet safe |
 |---|---|---|
 | `OdditySpriteAnimator` | No current serialized instance; current requirements do not mention an oddity UI animator | Future chapter intent is unresolved and a regression test explicitly tracks the file |
-| `RoomNavigationBootstrap` | Creates required managers at runtime | `RoomNavigationManager` and prompt controller are not serialized in the uploaded Gameplay scene until the installer runs |
 | `UrpPostProcessingBootstrap` | Searches cameras and adds URP data at runtime | Render-rig parity has not yet been tested after authoring components in-scene |
 | `PlayerMovement` / `CharacterController2D` | Legacy movement path beside point-click movement | Player and guest prefab bindings must be migrated and tested first |
 | `DoorButton`, `DoorPromptSequenceController`, `DoorDataParser`, `DoorCameraSequence`, `RoomVisualCatalog` | Parallel navigation representations | Route content must first be converted into one canonical passage graph |

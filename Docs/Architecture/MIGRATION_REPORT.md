@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 2 composition root serialized and validated; Phase 3 bootstrap retirement is next.**
+**Phase 3 bootstrap retirement in progress; serialized GameRoot now owns navigation startup.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -29,19 +29,20 @@ This report records what is implemented in the repository at this commit. It mus
 - Preserved all 5,937 unrelated pre-existing Gameplay YAML documents byte-for-byte during the root graft.
 - Added a real MainMenu-to-Gameplay lifecycle test with an Entrance/Drawing Room round trip and exact-one service assertions.
 - Separated room-stage coordinate layout from Butler presentation scaling. The approved `0.7528645` presentation baseline is explicit on `Player.prefab`; raw room calibration and guest scale data remain unchanged.
+- Removed `RoomNavigationBootstrap` after proving that the serialized root supplies exactly one navigation manager and prompt controller from MainMenu startup through a room round trip.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
-| Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 50,686 | +784 |
+| Runtime C# files | 90 | 105 | +15 |
+| Runtime C# lines | 49,902 | 50,617 | +715 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
-| `FindObject*`/`GameObject.Find` | 199 | 198 | -1 |
+| `FindObject*`/`GameObject.Find` | 199 | 193 | -6 |
 | `Resources.Load` | 27 | 27 | 0 |
-| runtime `new GameObject` | 98 | 98 | 0 |
-| runtime `AddComponent<T>` | 100 | 100 | 0 |
-| runtime initialization hooks | 9 | 9 | 0 |
+| runtime `new GameObject` | 98 | 97 | -1 |
+| runtime `AddComponent<T>` | 100 | 98 | -2 |
+| runtime initialization hooks | 9 | 6 | -3 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
 
@@ -56,7 +57,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - new architecture files passed lightweight delimiter/preprocessor checks.
 - Unity `6000.4.10f1` compiled the project and produced result XML for every automated run;
 - the strict GameRoot graft audit passed 53/53 checks;
-- the full EditMode discovery count is 223: 172 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
+- the full EditMode discovery count is 224: 173 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
 - Gameplay scene hashing confirmed that batch validation did not rewrite the reviewed scene;
@@ -84,9 +85,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Delete only the now-redundant, zero-serialized-reference `RoomNavigationBootstrap`, with prune proof and the existing lifecycle/navigation gates.
-2. Remove only `ChapterManager.BootstrapChapterManagerForGameplay`; do not yet remove the independent Chapter 2 creation path.
-3. Serialize Chapter 2 and its required service references before removing any corresponding repair path.
-4. Migrate one door pair as the first complete navigation vertical slice.
+1. Remove only `ChapterManager.BootstrapChapterManagerForGameplay`; do not yet remove the independent Chapter 2 creation path.
+2. Serialize Chapter 2 and its required service references before removing any corresponding repair path.
+3. Migrate one door pair as the first complete navigation vertical slice.
 
 Do not begin bulk deletion until those gates pass.

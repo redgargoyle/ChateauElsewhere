@@ -81,7 +81,6 @@ Assets/Scripts/Navigation/DoorPromptSequenceController.cs,3f9bb60e65b04160aa752c
 Assets/Scripts/Navigation/DoorTriggerNavigation.cs,7e419b0f8f26d4f2d8d03e567fef4c52,58,Assets/Scenes/MainMenu.unity:9 | Assets/Scenes/Gameplay.unity:45 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:2 | Assets/Prefabs/Room_Drawing_Room.prefab:2
 Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,b95469e02af64fee8b29689edb9b583a,49,Assets/Scenes/Gameplay.unity:49
 Assets/Scripts/Navigation/RoomContentGroup.cs,d0ea47fd950844bcacb0fd5556a9d880,22,Assets/Scenes/Gameplay.unity:19 | Assets/Prefabs/Room.prefab:1 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:1 | Assets/Prefabs/Room_Drawing_Room.prefab:1
-Assets/Scripts/Navigation/RoomNavigationBootstrap.cs,ee39d7886e1b437f59e4e82b50f560c8,0,
 Assets/Scripts/Navigation/RoomNavigationManager.cs,88f4088eff8696ab181615a79b7e114c,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Navigation/RoomVisualCatalog.cs,cbc070e2317b8dfd088947e285e93156,1,Assets/Resources/Navigation/RoomVisualCatalog.asset:1
 Assets/Scripts/Oddities/OdditySpriteAnimator.cs,4c95f89f0ed64c71a67dc361f0eaa7ad,0,

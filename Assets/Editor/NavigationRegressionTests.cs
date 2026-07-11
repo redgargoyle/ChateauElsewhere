@@ -994,12 +994,14 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void NavigationBootstrapRunsAfterMainMenuLoadsGameplay()
+    public void GameplaySerializedRootOwnsNavigationStartup()
     {
-        string bootstrapText = File.ReadAllText(NavigationBootstrapPath);
+        string sceneText = File.ReadAllText(GameplayScenePath);
 
-        Assert.That(bootstrapText, Does.Contain("SceneManager.sceneLoaded"), "Navigation bootstrap must run again when MainMenu loads Gameplay.");
-        Assert.That(bootstrapText, Does.Contain("HandleSceneLoaded"), "Navigation bootstrap needs a scene-loaded callback for non-initial gameplay loads.");
+        Assert.That(File.Exists(NavigationBootstrapPath), Is.False, "The runtime navigation repair bootstrap must stay deleted.");
+        Assert.That(Regex.Matches(sceneText, "guid: 88f4088eff8696ab181615a79b7e114c").Count, Is.EqualTo(1), "Gameplay must serialize exactly one navigation service.");
+        Assert.That(Regex.Matches(sceneText, "guid: 3f9bb60e65b04160aa752c2b3fcfdb4d").Count, Is.EqualTo(1), "Gameplay must serialize exactly one door-prompt service.");
+        Assert.That(Regex.Matches(sceneText, "guid: bc887e2e5e4f5cc594cd3d8920eb9f90").Count, Is.EqualTo(1), "Gameplay must serialize exactly one GameRoot.");
     }
 
     [Test]

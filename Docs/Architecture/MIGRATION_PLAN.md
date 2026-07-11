@@ -23,7 +23,7 @@ Exit condition: the uploaded project can always be reconstructed from the origin
 
 Exit condition: project compiles in Unity and existing EditMode tests pass.
 
-## Phase 2 — Serialize the composition root — next required phase
+## Phase 2 — Serialize the composition root — completed
 
 Run the Editor installer in Unity:
 
@@ -48,11 +48,11 @@ Exit condition:
 - Chapter 1 and Chapter 2 smoke tests pass;
 - scene changes are committed separately.
 
-## Phase 3 — Remove runtime repair bootstraps
+## Phase 3 — Remove runtime repair bootstraps — in progress
 
 Only after Phase 2 passes:
 
-- replace `RoomNavigationBootstrap` with startup validation, then remove it;
+- `RoomNavigationBootstrap` replaced by serialized GameRoot validation and removed;
 - remove `ChapterManager` self-creation fallback;
 - remove `DialogueSpeechService.FindOrCreate` and `SubtitleService.FindOrCreate` call sites after callers receive serialized/service references;
 - replace `UrpPostProcessingBootstrap` with a serialized render rig;
