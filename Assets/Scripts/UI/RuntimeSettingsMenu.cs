@@ -8,8 +8,6 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class RuntimeSettingsMenu : MonoBehaviour
 {
-    private const string MenuObjectName = "RuntimeSettingsMenu";
-    private const string MenuCanvasName = "Canvas_RuntimeSettingsMenu";
     private const string SettingsOverlayName = "Panel_SettingsOverlay";
     private const string SettingsPanelName = "Panel_SettingsModal";
     private const string SettingsTitleName = "Text_SettingsTitle";
@@ -121,30 +119,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
         }
     }
 
-    public static RuntimeSettingsMenu FindOrCreate(RoomNavigationManager navigationManager)
-    {
-        RuntimeSettingsMenu existing = FindAnyObjectByType<RuntimeSettingsMenu>(FindObjectsInactive.Include);
-
-        if (existing != null)
-        {
-            existing.Initialize(navigationManager);
-            return existing;
-        }
-
-        Canvas canvas = GetOrCreateMenuCanvas();
-
-        if (canvas == null)
-        {
-            return null;
-        }
-
-        GameObject menuObject = new GameObject(MenuObjectName, typeof(RectTransform), typeof(RuntimeSettingsMenu));
-        menuObject.transform.SetParent(canvas.transform, false);
-        RuntimeSettingsMenu menu = menuObject.GetComponent<RuntimeSettingsMenu>();
-        menu.Initialize(navigationManager);
-        return menu;
-    }
-
     public void Initialize(RoomNavigationManager navigationManager)
     {
         this.navigationManager = navigationManager;
@@ -161,75 +135,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private void OnDestroy()
     {
         ClearModalGameState();
-    }
-
-    private static Canvas GetOrCreateMenuCanvas()
-    {
-        GameObject canvasObject = GameObject.Find(MenuCanvasName);
-
-        if (canvasObject == null)
-        {
-            canvasObject = new GameObject(
-                MenuCanvasName,
-                typeof(RectTransform),
-                typeof(Canvas),
-                typeof(CanvasScaler),
-                typeof(GraphicRaycaster));
-        }
-
-        int uiLayer = LayerMask.NameToLayer("UI");
-
-        if (uiLayer >= 0)
-        {
-            canvasObject.layer = uiLayer;
-        }
-
-        Canvas canvas = canvasObject.GetComponent<Canvas>();
-
-        if (canvas == null)
-        {
-            canvas = canvasObject.AddComponent<Canvas>();
-        }
-
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.overrideSorting = true;
-        canvas.sortingOrder = MenuCanvasSortingOrder;
-
-        CanvasScaler canvasScaler = canvasObject.GetComponent<CanvasScaler>();
-
-        if (canvasScaler == null)
-        {
-            canvasScaler = canvasObject.AddComponent<CanvasScaler>();
-        }
-
-        ApplyCanvasScalerDefaults(canvasScaler);
-
-        Canvas sourceCanvas = PostProcessSafeCanvasUtility.GetOrCreateCanvas();
-        CanvasScaler sourceScaler = sourceCanvas != null ? sourceCanvas.GetComponent<CanvasScaler>() : null;
-
-        if (sourceScaler != null && sourceScaler != canvasScaler)
-        {
-            CopyCanvasScalerSettings(canvasScaler, sourceScaler);
-        }
-
-        if (canvasObject.GetComponent<GraphicRaycaster>() == null)
-        {
-            canvasObject.AddComponent<GraphicRaycaster>();
-        }
-
-        RectTransform rectTransform = canvasObject.transform as RectTransform;
-
-        if (rectTransform != null)
-        {
-            rectTransform.anchorMin = Vector2.zero;
-            rectTransform.anchorMax = Vector2.one;
-            rectTransform.offsetMin = Vector2.zero;
-            rectTransform.offsetMax = Vector2.zero;
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.localScale = Vector3.one;
-        }
-
-        return canvas;
     }
 
     private void EnsureUI()
@@ -1554,37 +1459,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
         }
 
         return new string(result).Trim('_');
-    }
-
-    private static void ApplyCanvasScalerDefaults(CanvasScaler target)
-    {
-        if (target == null)
-        {
-            return;
-        }
-
-        target.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        target.referenceResolution = new Vector2(1366f, 768f);
-        target.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-        target.matchWidthOrHeight = 0.5f;
-    }
-
-    private static void CopyCanvasScalerSettings(CanvasScaler target, CanvasScaler source)
-    {
-        if (target == null || source == null)
-        {
-            return;
-        }
-
-        target.uiScaleMode = source.uiScaleMode;
-        target.referenceResolution = source.referenceResolution;
-        target.screenMatchMode = source.screenMatchMode;
-        target.matchWidthOrHeight = source.matchWidthOrHeight;
-        target.physicalUnit = source.physicalUnit;
-        target.fallbackScreenDPI = source.fallbackScreenDPI;
-        target.defaultSpriteDPI = source.defaultSpriteDPI;
-        target.dynamicPixelsPerUnit = source.dynamicPixelsPerUnit;
-        target.referencePixelsPerUnit = source.referencePixelsPerUnit;
     }
 
     private static void EnsureEventSystem()

@@ -48,18 +48,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized the inert Chapter 1 HUD owner on the Chapter 1 controller while preserving the characterized first-use canvas/text construction and sorting order.
 - Removed Chapter 1 HUD global lookup/runtime attachment and the obsolete `createRuntimeHud` flag; HUD child presentation remains lazy and owner-scoped.
 - Serialized the RuntimeSettingsMenu owner and correctly scaled overlay canvas under GameRoot, explicitly wiring navigation, chapter, clock, and exploration-music dependencies while keeping controls lazy.
+- Removed RuntimeSettingsMenu's global/root/canvas factory and made navigation initialize the serialized owner directly; nested controls remain lazy inside that owner.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,497 | +595 |
+| Runtime C# lines | 49,902 | 50,363 | +461 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
-| `FindObject*`/`GameObject.Find` | 199 | 179 | -20 |
+| `FindObject*`/`GameObject.Find` | 199 | 177 | -22 |
 | `Resources.Load` | 27 | 27 | 0 |
-| runtime `new GameObject` | 98 | 90 | -8 |
-| runtime `AddComponent<T>` | 100 | 84 | -16 |
+| runtime `new GameObject` | 98 | 88 | -10 |
+| runtime `AddComponent<T>` | 100 | 81 | -19 |
 | runtime initialization hooks | 9 | 5 | -4 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.

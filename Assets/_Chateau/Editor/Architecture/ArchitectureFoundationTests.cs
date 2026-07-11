@@ -249,6 +249,15 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("chapterManager: {fileID: 3301000004}"));
         Assert.That(sceneText, Does.Contain("chapterClock: {fileID: 3301000001}"));
         Assert.That(sceneText, Does.Contain("explorationMusicSource: {fileID: 2201000003}"));
+
+        string settingsText = File.ReadAllText("Assets/Scripts/UI/RuntimeSettingsMenu.cs");
+        string navigationText = File.ReadAllText("Assets/Scripts/Navigation/RoomNavigationManager.cs");
+        Assert.That(settingsText, Does.Not.Contain("RuntimeSettingsMenu FindOrCreate"));
+        Assert.That(settingsText, Does.Not.Contain("GetOrCreateMenuCanvas"));
+        Assert.That(settingsText, Does.Not.Contain("new GameObject(MenuObjectName"));
+        Assert.That(navigationText, Does.Not.Contain("RuntimeSettingsMenu.FindOrCreate"));
+        Assert.That(navigationText, Does.Contain("runtimeSettingsMenu?.Initialize(this)"));
+        Assert.That(settingsText, Does.Contain("FindOrCreateSettingsOverlay"), "Nested settings controls remain deliberate owner-scoped view construction.");
     }
 
     private static int CountOccurrences(string text, string value)

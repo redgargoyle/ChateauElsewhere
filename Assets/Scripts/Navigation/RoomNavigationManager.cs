@@ -1094,15 +1094,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
             return;
         }
 
-        if (runtimeSettingsMenu == null)
-        {
-            runtimeSettingsMenu = RuntimeSettingsMenu.FindOrCreate(this);
-        }
-
-        if (runtimeSettingsMenu != null)
-        {
-            runtimeSettingsMenu.Initialize(this);
-        }
+        runtimeSettingsMenu?.Initialize(this);
     }
 
     private string GetInitialRoomName()

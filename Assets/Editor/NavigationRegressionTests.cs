@@ -285,7 +285,8 @@ public class NavigationRegressionTests
         Assert.That(runtimeSettingsText, Does.Contain("Control_DebugFxVolume"), "The FX volume control should live next to the debug time slider.");
         Assert.That(runtimeSettingsText, Does.Contain("Slider_DebugFxVolume"), "The debug menu should include a custom FX volume slider.");
         Assert.That(runtimeSettingsText, Does.Contain("Input_DebugFxVolume"), "The debug FX control should include a compact numeric value.");
-        Assert.That(runtimeSettingsText, Does.Contain("existing.Initialize(navigationManager)"), "Existing generated settings menus should rebuild so stale slider UI cannot survive.");
+        Assert.That(runtimeSettingsText, Does.Contain("[SerializeField] private RoomNavigationManager navigationManager"), "The serialized settings owner should receive navigation explicitly.");
+        Assert.That(runtimeSettingsText, Does.Not.Contain("RuntimeSettingsMenu FindOrCreate"), "Settings should not create or globally select a replacement root owner.");
         Assert.That(runtimeSettingsText, Does.Not.Contain("typeof(Slider)"), "The debug game-time control should not use Unity's image-backed Slider template.");
         Assert.That(runtimeSettingsText, Does.Contain("DebugSliderDragTarget"), "The debug sliders should use solid custom drag targets.");
         Assert.That(runtimeSettingsText, Does.Contain("ConfigureSolidImage"), "The debug game-time control should force solid UI images instead of inherited sprites.");
