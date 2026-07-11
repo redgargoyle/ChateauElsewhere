@@ -72,7 +72,7 @@ Assets/Scripts/UI/RuntimeSettingsMenu.cs,1628,9d4849c42e49dd1db863df8b4ba9de9ed2
 Assets/Scripts/UI/SpeakingCharacterIndicator.cs,632,4b94d7845a9ebc6e29e5382b640d23a123e8fad4242b706f038a153e8ba76620,6,1,1,1,0,0,SpeakingCharacterIndicator
 Assets/Scripts/UI/SubtitleLine.cs,14,7ce3521c20ebebac91387915ec46b223bcfd8cf6c2dbabc7421aee8fd748c17a,0,0,0,0,0,0,
 Assets/Scripts/UI/SubtitleLineBank.cs,68,942b3e99275114dbe5affdcdae9e0cf9cbe160c11687d0c90f22d1a757a06916,0,0,0,0,0,0,
-Assets/Scripts/UI/SubtitleService.cs,798,08f3e93e9ca77b83fde6f326c97becd7c231616f3df8887750d9e3fb73825d03,3,1,6,2,0,0,
+Assets/Scripts/UI/SubtitleService.cs,804,53f2450de18cdc03edb1082c86244e5ed52a05ebb5455f98e7588f69ba453e3c,3,1,6,2,0,0,
 Assets/Scripts/UrpPostProcessingBootstrap.cs,66,c0c27f893588c90de77680ba418dd6ee13acd7985a7ba099e343202f2b7b15af,1,0,0,1,1,0,
 Assets/_Chateau/Runtime/Core/ChateauBehaviour.cs,78,565840e1e0f4786e36c4aac39ef86655e3c2de7f1462873f90c4dc96d157f7c5,0,0,0,0,0,0,ChateauBehaviour
 Assets/_Chateau/Runtime/Core/GameContext.cs,26,446f0fb520ba281aa0f9f33d64b5fb3728b81e5d5b994d2226ff77aadea4ddc5,0,0,0,0,0,0,

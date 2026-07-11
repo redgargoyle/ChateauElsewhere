@@ -58,6 +58,7 @@ Only after Phase 2 passes:
 - Chapter 1 binds the existing serialized guest-scale applier, which owns the serialized calibration and Butler source; both latent runtime owner factories are removed while per-guest participant creation remains deliberate;
 - serialized dialogue/subtitle services, line bank, navigation edge, and Chapter 1 consumers are wired; both core-service `FindOrCreate` factories are removed while auxiliary views remain lazy until their own gate;
 - one voice-playback owner, dedicated dialogue AudioSource, and speaking-indicator owner are serialized with explicit assets/navigation; both root factories are removed while lazy subtitle/bubble child-view creation remains deliberate;
+- bind SubtitleService directly to the shared speaking-indicator owner before removing redundant static cleanup searches from dialogue, subtitle, and Chapter 2 paths;
 - remove `DialogueSpeechService.FindOrCreate` and `SubtitleService.FindOrCreate` call sites after callers receive serialized/service references;
 - replace `UrpPostProcessingBootstrap` with a serialized render rig;
 - replace runtime clock-hand attachment with an authored `ClockView` reference.

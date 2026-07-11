@@ -41,13 +41,14 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed the core dialogue/subtitle `FindOrCreate` factories and every caller; GameRoot is now the only owner of these services, while voice/indicator child ownership remains separately gated.
 - Serialized one voice-playback owner with a dedicated AudioSource and one speaking-indicator owner, explicitly wiring their catalog, navigation, sprite, and service consumers while preserving lazy subtitle/bubble child views.
 - Removed the voice-playback and speaking-indicator root factories; GameRoot validation now rejects missing dialogue ownership, while the actual subtitle canvas and bubble renderer remain first-use presentation children.
+- Bound SubtitleService to the same serialized speaking-indicator owner used by DialogueSpeechService, preparing direct cleanup without global lookup.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,500 | +598 |
+| Runtime C# lines | 49,902 | 50,506 | +604 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
 | `FindObject*`/`GameObject.Find` | 199 | 185 | -14 |
 | `Resources.Load` | 27 | 27 | 0 |
@@ -72,6 +73,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
 - the dialogue-core binding audit passed 6/6 checks: no documents added/deleted, exactly three intended components changed, and SceneRoots/document order stayed exact;
 - the dialogue-auxiliary graft audit passed 11/11 checks: one AudioSource and two owner documents added, only their three intended consumers changed, and all old scene documents/order/roots stayed exact;
+- the SubtitleService indicator-binding audit passed 5/5 checks: no document churn, one intended service document changed, and document order stayed exact;
 - the full EditMode discovery count is 229: 178 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;

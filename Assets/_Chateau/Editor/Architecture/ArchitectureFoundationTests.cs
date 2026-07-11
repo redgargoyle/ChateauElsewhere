@@ -190,6 +190,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(CountOccurrences(sceneText, "guid: 9963bb0aa9d84cc7a8cb801c668a92ee"), Is.EqualTo(1));
         Assert.That(sceneText, Does.Contain("voicePlayback: {fileID: 1878887001}"));
         Assert.That(sceneText, Does.Contain("speakingIndicator: {fileID: 1878887002}"));
+        Assert.That(CountOccurrences(sceneText, "speakingIndicator: {fileID: 1878887002}"), Is.EqualTo(2));
         Assert.That(sceneText, Does.Contain("audioSource: {fileID: 1878887000}"));
         Assert.That(sceneText, Does.Contain("catalog: {fileID: 11400000, guid: 147a8473c4c849c9908200b092d13691, type: 2}"));
         Assert.That(sceneText, Does.Contain("bubbleSprite: {fileID: 21300000, guid: b40c2d5917304c3e822fad1b6f3e5960, type: 3}"));

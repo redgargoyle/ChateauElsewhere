@@ -37,6 +37,7 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
     [SerializeField] private string lineBankResourcePath = DefaultLineBankResourcePath;
     [SerializeField] private bool subtitleDebugMode;
     [SerializeField] private GuestVoiceLinePlayback voicePlayback;
+    [SerializeField] private SpeakingCharacterIndicator speakingIndicator;
     [SerializeField] private RoomNavigationManager navigationManager;
 
     private readonly Queue<QueuedSubtitle> queuedSubtitles = new Queue<QueuedSubtitle>();
@@ -192,6 +193,11 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
         if (voicePlayback == null)
         {
             report.AddError("SubtitleService requires its serialized GuestVoiceLinePlayback.", this);
+        }
+
+        if (speakingIndicator == null)
+        {
+            report.AddError("SubtitleService requires its serialized SpeakingCharacterIndicator.", this);
         }
 
         if (navigationManager == null)
