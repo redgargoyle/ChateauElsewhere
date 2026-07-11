@@ -91,12 +91,6 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         playbackRoom = string.Empty;
     }
 
-    public static void StopAnyCurrentLine()
-    {
-        GuestVoiceLinePlayback existing = FindAnyObjectByType<GuestVoiceLinePlayback>(FindObjectsInactive.Include);
-        existing?.StopCurrentLine();
-    }
-
     private void ResolveReferences()
     {
         if (catalog == null)

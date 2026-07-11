@@ -244,7 +244,7 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     public void SkipToChapter2ForTesting()
     {
         ResolveReferences();
-        StopActiveDialogueForChapterSkip();
+        StopActiveDialogueForDebugTransition();
 
         StopChapterCoroutines();
 
@@ -287,7 +287,7 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     public void SkipToChapter3ForTesting()
     {
         ResolveReferences();
-        StopActiveDialogueForChapterSkip();
+        StopActiveDialogueForDebugTransition();
         StopChapterCoroutines();
 
         if (eventScheduler != null)
@@ -335,7 +335,7 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     public void SkipToSevenPMForTesting()
     {
         ResolveReferences();
-        StopActiveDialogueForChapterSkip();
+        StopActiveDialogueForDebugTransition();
         StopChapterCoroutines();
 
         if (eventScheduler != null)
@@ -379,11 +379,9 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
         }
     }
 
-    private static void StopActiveDialogueForChapterSkip()
+    public void StopActiveDialogueForDebugTransition()
     {
-        GuestVoiceLinePlayback.StopAnyCurrentLine();
-
-        SubtitleService subtitleService = FindAnyObjectByType<SubtitleService>(FindObjectsInactive.Include);
+        speechService?.CancelQueuedSpeech();
         subtitleService?.ClearAll();
     }
 

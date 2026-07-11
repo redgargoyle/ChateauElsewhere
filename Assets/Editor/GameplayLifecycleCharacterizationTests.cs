@@ -206,6 +206,14 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
 
+        speech.BeginSpeakLine(
+            "ARCH_LIFECYCLE_SKIP_DIALOGUE",
+            "Butler",
+            "This line must be cancelled by the chapter transition.",
+            showSubtitleOverlay: false);
+        yield return null;
+        Assert.That(speech.IsNormalSpeechActive, Is.True);
+
         chapter.SkipToChapter2ForTesting();
         yield return WaitForSettledLayout();
 
@@ -218,6 +226,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
         Assert.That(chapter2, Is.SameAs(serializedChapter2));
         Assert.That(chapter2Hud, Is.SameAs(serializedChapter2Hud));
+        Assert.That(speech.IsNormalSpeechActive, Is.False);
+        Assert.That(serializedVoicePlayback.IsPlaying, Is.False);
+        Transform chatBubble = FindInActiveScene<Transform>().Single(item => item.name == "Sprite_ChatBubble");
+        Assert.That(chatBubble.gameObject.activeSelf, Is.False);
         Assert.That(monsterStinger, Is.SameAs(serializedMonsterStinger));
         Assert.That(guestPanic, Is.SameAs(serializedGuestPanic));
         Assert.That(guestSearch, Is.SameAs(serializedGuestSearch));

@@ -44,15 +44,16 @@ This report records what is implemented in the repository at this commit. It mus
 - Bound SubtitleService to the same serialized speaking-indicator owner used by DialogueSpeechService, preparing direct cleanup without global lookup.
 - Replaced redundant global dialogue cleanup with direct serialized-owner calls and removed `SpeakingCharacterIndicator.HideAnyCurrent` plus `DialogueSpeechService.StopAnyCurrentSpeech`.
 - Bound ChapterManager directly to the serialized dialogue/subtitle services and added strict composition validation before removing its remaining skip-time global cleanup.
+- Routed chapter skips and settings teleports through ChapterManager's direct dialogue cleanup command, then removed `GuestVoiceLinePlayback.StopAnyCurrentLine` and all associated global subtitle searches.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,506 | +604 |
+| Runtime C# lines | 49,902 | 50,493 | +591 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
-| `FindObject*`/`GameObject.Find` | 199 | 183 | -16 |
+| `FindObject*`/`GameObject.Find` | 199 | 180 | -19 |
 | `Resources.Load` | 27 | 27 | 0 |
 | runtime `new GameObject` | 98 | 90 | -8 |
 | runtime `AddComponent<T>` | 100 | 85 | -15 |

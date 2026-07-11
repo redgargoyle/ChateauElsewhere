@@ -947,10 +947,15 @@ public class NavigationRegressionTests
         string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
         string skipChapter2Body = ExtractMethodBody(runtimeSettingsText, "private void SkipToChapter2");
         string skipChapter3Body = ExtractMethodBody(runtimeSettingsText, "private void SkipToChapter3");
+        string skipSevenBody = ExtractMethodBody(runtimeSettingsText, "private void SkipToSevenPM");
+        string teleportBody = ExtractMethodBody(runtimeSettingsText, "private void TeleportToRoom");
         string closeBody = ExtractMethodBody(runtimeSettingsText, "CloseSettingsForGameplayCommand");
 
         Assert.That(skipChapter2Body, Does.Match(@"CloseSettingsForGameplayCommand\(\)[\s\S]*manager\.SkipToChapter2ForTesting\(\)"), "Chapter 2 debug skip should unpause/close settings before starting scaled-time title fades.");
         Assert.That(skipChapter3Body, Does.Match(@"CloseSettingsForGameplayCommand\(\)[\s\S]*manager\.SkipToChapter3ForTesting\(\)"), "Chapter 3 debug skip should also leave settings modal state before running gameplay commands.");
+        Assert.That(skipSevenBody, Does.Match(@"CloseSettingsForGameplayCommand\(\)[\s\S]*manager\.SkipToSevenPMForTesting\(\)"), "Seven-PM debug skip should also leave settings modal state before running gameplay commands.");
+        Assert.That(runtimeSettingsText, Does.Not.Contain("GuestVoiceLinePlayback.StopAnyCurrentLine"));
+        Assert.That(teleportBody, Does.Match(@"StopActiveDialogueForDebugTransition\(\)[\s\S]*DebugTeleportToRoom\(roomName\)"), "Room teleport should clear dialogue through ChapterManager before changing rooms.");
         Assert.That(closeBody, Does.Contain("settingsOpen = false"), "Closing for a gameplay command should clear the modal-open state.");
         Assert.That(closeBody, Does.Contain("debugOpen = false"), "Closing for a gameplay command should clear nested debug UI state.");
         Assert.That(closeBody, Does.Contain("roomListOpen = false"), "Closing for a gameplay command should clear nested room-list UI state.");

@@ -202,6 +202,8 @@ public sealed class ArchitectureFoundationTests
         string dialogueText = File.ReadAllText("Assets/Scripts/Audio/DialogueSpeechService.cs");
         string subtitleText = File.ReadAllText("Assets/Scripts/UI/SubtitleService.cs");
         string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
+        string chapterManagerText = File.ReadAllText("Assets/Scripts/Story/ChapterManager.cs");
+        string settingsText = File.ReadAllText("Assets/Scripts/UI/RuntimeSettingsMenu.cs");
         Assert.That(playbackText, Does.Not.Contain("GuestVoiceLinePlayback FindOrCreate"));
         Assert.That(indicatorText, Does.Not.Contain("SpeakingCharacterIndicator FindOrCreate"));
         Assert.That(indicatorText, Does.Not.Contain("HideAnyCurrent"));
@@ -209,6 +211,12 @@ public sealed class ArchitectureFoundationTests
         Assert.That(subtitleText, Does.Not.Contain("HideAnyCurrent"));
         Assert.That(subtitleText, Does.Not.Contain("GuestVoiceLinePlayback.StopAnyCurrentLine"));
         Assert.That(chapter2Text, Does.Not.Contain("StopAnyCurrentSpeech"));
+        Assert.That(playbackText, Does.Not.Contain("StopAnyCurrentLine"));
+        Assert.That(chapterManagerText, Does.Not.Contain("FindAnyObjectByType<SubtitleService>"));
+        Assert.That(chapterManagerText, Does.Not.Contain("GuestVoiceLinePlayback.StopAnyCurrentLine"));
+        Assert.That(settingsText, Does.Not.Contain("GuestVoiceLinePlayback.StopAnyCurrentLine"));
+        Assert.That(settingsText, Does.Not.Contain("FindAnyObjectByType<SubtitleService>"));
+        Assert.That(chapterManagerText, Does.Match(@"StopActiveDialogueForDebugTransition\s*\(\s*\)[\s\S]*CancelQueuedSpeech\s*\(\s*\)[\s\S]*ClearAll\s*\(\s*\)"));
         Assert.That(sceneText, Does.Contain("speakingIndicator: {fileID: 1878887002}"));
         Assert.That(indicatorText, Does.Contain("new GameObject(SpriteObjectName)"), "Only the indicator's nested presentation child should remain lazy.");
     }

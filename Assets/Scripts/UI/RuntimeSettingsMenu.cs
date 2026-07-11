@@ -380,7 +380,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         roomListOpen = false;
         CloseSettingsForGameplayCommand();
-        GuestVoiceLinePlayback.StopAnyCurrentLine();
         manager.SkipToChapter2ForTesting();
     }
 
@@ -395,7 +394,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         roomListOpen = false;
         CloseSettingsForGameplayCommand();
-        GuestVoiceLinePlayback.StopAnyCurrentLine();
         manager.SkipToChapter3ForTesting();
     }
 
@@ -410,7 +408,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         roomListOpen = false;
         CloseSettingsForGameplayCommand();
-        GuestVoiceLinePlayback.StopAnyCurrentLine();
         manager.SkipToSevenPMForTesting();
     }
 
@@ -610,9 +607,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
             return;
         }
 
-        GuestVoiceLinePlayback.StopAnyCurrentLine();
-        SubtitleService subtitleService = FindAnyObjectByType<SubtitleService>(FindObjectsInactive.Include);
-        subtitleService?.ClearAll();
+        ResolveChapterManager()?.StopActiveDialogueForDebugTransition();
         navigationManager.DebugTeleportToRoom(roomName);
         roomListOpen = false;
         RefreshOpenState();
