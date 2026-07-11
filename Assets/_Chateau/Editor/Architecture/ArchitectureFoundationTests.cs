@@ -118,6 +118,9 @@ public sealed class ArchitectureFoundationTests
 
         string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
         Assert.That(chapter2Text, Does.Not.Contain("AddComponent<Chapter2InteractionHUD>"));
+        Assert.That(chapter2Text, Does.Not.Contain("AddComponent<Chapter2MonsterStingerController>"));
+        Assert.That(chapter2Text, Does.Not.Contain("AddComponent<Chapter2GuestPanicController>"));
+        Assert.That(chapter2Text, Does.Not.Contain("AddComponent<Chapter2GuestSearchController>"));
     }
 
     [Test]

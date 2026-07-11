@@ -580,29 +580,14 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
             monsterStinger = GetComponent<Chapter2MonsterStingerController>();
         }
 
-        if (monsterStinger == null)
-        {
-            monsterStinger = gameObject.AddComponent<Chapter2MonsterStingerController>();
-        }
-
         if (guestPanic == null)
         {
             guestPanic = GetComponent<Chapter2GuestPanicController>();
         }
 
-        if (guestPanic == null)
-        {
-            guestPanic = gameObject.AddComponent<Chapter2GuestPanicController>();
-        }
-
         if (guestSearch == null)
         {
             guestSearch = GetComponent<Chapter2GuestSearchController>();
-        }
-
-        if (guestSearch == null)
-        {
-            guestSearch = gameObject.AddComponent<Chapter2GuestSearchController>();
         }
     }
 
