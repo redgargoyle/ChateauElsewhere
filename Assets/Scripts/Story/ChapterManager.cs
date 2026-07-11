@@ -52,6 +52,8 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     [SerializeField] private ChapterIntroUI introUI;
     [SerializeField] private Chapter1ArrivalController chapter1ArrivalController;
     [SerializeField] private Chapter2Controller chapter2Controller;
+    [SerializeField] private DialogueSpeechService speechService;
+    [SerializeField] private SubtitleService subtitleService;
 
     private Coroutine chapterRoutine;
     private Coroutine chapterCompleteRoutine;
@@ -66,6 +68,21 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     public ChapterClock Clock => chapterClock;
     public ChapterEventScheduler EventScheduler => eventScheduler;
     public GameObject PlayerButlerReference => playerButlerReference;
+
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        base.ValidateConfiguration(report);
+
+        if (speechService == null)
+        {
+            report.AddError("ChapterManager requires its serialized DialogueSpeechService.", this);
+        }
+
+        if (subtitleService == null)
+        {
+            report.AddError("ChapterManager requires its serialized SubtitleService.", this);
+        }
+    }
 
     private void Awake()
     {

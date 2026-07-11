@@ -179,6 +179,8 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter2Text, Does.Not.Contain("SubtitleService.FindOrCreate"));
         Assert.That(speechText, Does.Not.Contain("GuestVoiceLinePlayback.FindOrCreate"));
         Assert.That(speechText, Does.Not.Contain("SpeakingCharacterIndicator.FindOrCreate"));
+        Assert.That(CountOccurrences(sceneText, "speechService: {fileID: 1878886994}"), Is.EqualTo(3));
+        Assert.That(CountOccurrences(sceneText, "subtitleService: {fileID: 1878886995}"), Is.EqualTo(4));
     }
 
     [Test]
