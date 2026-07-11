@@ -49,6 +49,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed Chapter 1 HUD global lookup/runtime attachment and the obsolete `createRuntimeHud` flag; HUD child presentation remains lazy and owner-scoped.
 - Serialized the RuntimeSettingsMenu owner and correctly scaled overlay canvas under GameRoot, explicitly wiring navigation, chapter, clock, and exploration-music dependencies while keeping controls lazy.
 - Removed RuntimeSettingsMenu's global/root/canvas factory and made navigation initialize the serialized owner directly; nested controls remain lazy inside that owner.
+- Characterized fireplace and clock ambience before changing ownership: each has a distinct 2D looping source and assigned entrance clip, only fireplace has an enabled high-pass filter, and both owner/source identities survive room travel.
 
 ## Current static result
 
@@ -84,6 +85,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - the ChapterManager dialogue-binding audit passed 6/6 checks: no document churn, one intended manager document changed, and exact service-reference counts were preserved;
 - the Chapter 1 HUD graft audit passed 5/5 checks: one owner document added, only its GameObject/controller changed, and all old document order stayed exact;
 - the RuntimeSettings owner graft audit passed 7/7 checks: eight documents added under GameRoot, only navigation/root-transform changed, and SceneRoots/old document order stayed exact;
+- the focused ambience characterization passed and the full-suite gate retained the exact baseline failure-name set;
 - the full EditMode discovery count is 231: 180 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
@@ -113,8 +115,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Serialize Chapter 2 and its required service references before removing its independent creation path.
-2. Serialize dialogue/subtitle/navigation edges before removing service factories.
-3. Migrate one door pair as the first complete navigation vertical slice.
+1. Serialize the characterized fireplace and clock ambience owners under GameRoot with dedicated AudioSources and explicit catalog/navigation references.
+2. Remove their root/self-repair factories only after the serialized-owner lifecycle and scene-structure gates pass.
+3. Characterize and migrate one Drawing Room set-piece cutout as the first `World / Rooms / Props / Set Pieces` vertical slice.
 
 Do not begin bulk deletion until those gates pass.

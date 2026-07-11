@@ -72,6 +72,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         GuestVoiceLinePlayback serializedVoicePlayback = RequireExactlyOneInActiveScene<GuestVoiceLinePlayback>();
         SpeakingCharacterIndicator serializedSpeakingIndicator = RequireExactlyOneInActiveScene<SpeakingCharacterIndicator>();
         RuntimeSettingsMenu runtimeSettings = RequireExactlyOneInActiveScene<RuntimeSettingsMenu>();
+        FireplaceAmbienceController fireplaceAmbience = RequireExactlyOneInActiveScene<FireplaceAmbienceController>();
+        ClockTickingAmbienceController clockAmbience = RequireExactlyOneInActiveScene<ClockTickingAmbienceController>();
         RoomLightingController lighting = RequireExactlyOneInActiveScene<RoomLightingController>();
 
         Assert.That(cameraManager, Is.Not.Null);
@@ -103,6 +105,35 @@ public sealed class GameplayLifecycleCharacterizationTests
         yield return null;
         Assert.That(RuntimeSettingsMenu.BlocksGameInput, Is.False);
         Assert.That(Time.timeScale, Is.EqualTo(1f));
+        AudioSource fireplaceSource = fireplaceAmbience.GetComponent<AudioSource>();
+        AudioSource clockSource = clockAmbience.GetComponent<AudioSource>();
+        Assert.That(fireplaceSource, Is.Not.Null);
+        Assert.That(clockSource, Is.Not.Null);
+        Assert.That(clockSource, Is.Not.SameAs(fireplaceSource));
+        Assert.That(clockAmbience.gameObject, Is.Not.SameAs(fireplaceAmbience.gameObject));
+        Assert.That(fireplaceSource.playOnAwake, Is.False);
+        Assert.That(clockSource.playOnAwake, Is.False);
+        Assert.That(fireplaceSource.loop, Is.True);
+        Assert.That(clockSource.loop, Is.True);
+        Assert.That(fireplaceSource.spatialBlend, Is.Zero);
+        Assert.That(clockSource.spatialBlend, Is.Zero);
+        Assert.That(fireplaceSource.ignoreListenerVolume, Is.True);
+        Assert.That(clockSource.ignoreListenerVolume, Is.True);
+        Assert.That(fireplaceSource.clip, Is.Not.Null, "The entrance should resolve its authored fireplace ambience clip.");
+        Assert.That(clockSource.clip, Is.Not.Null, "The entrance should resolve its authored clock ambience clip.");
+        AudioHighPassFilter fireplaceFilter = fireplaceAmbience.GetComponent<AudioHighPassFilter>();
+        Assert.That(fireplaceFilter, Is.Not.Null);
+        Assert.That(fireplaceFilter.enabled, Is.True);
+        Assert.That(fireplaceFilter.cutoffFrequency, Is.GreaterThanOrEqualTo(200f));
+        Assert.That(fireplaceFilter.highpassResonanceQ, Is.InRange(0.1f, 10f));
+        Assert.That(
+            clockAmbience.GetComponents<AudioHighPassFilter>().Any(filter => filter.enabled),
+            Is.False,
+            "Clock ambience must not inherit an enabled high-pass filter.");
+        Assert.That(
+            clockAmbience.GetComponents<AudioLowPassFilter>().Any(filter => filter.enabled),
+            Is.False,
+            "Clock ambience must not inherit an enabled low-pass filter.");
         Assert.That(gameRoot.IsInitialized, Is.True);
         Assert.That(gameRoot.Database, Is.Not.Null);
         Assert.That(gameRoot.Context, Is.Not.Null);
@@ -192,6 +223,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         yield return WaitForSettledLayout();
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
         RequireOnlyActiveRoom(DrawingRoom);
+        Assert.That(RequireExactlyOneInActiveScene<FireplaceAmbienceController>(), Is.SameAs(fireplaceAmbience));
+        Assert.That(RequireExactlyOneInActiveScene<ClockTickingAmbienceController>(), Is.SameAs(clockAmbience));
+        Assert.That(fireplaceAmbience.GetComponent<AudioSource>(), Is.SameAs(fireplaceSource));
+        Assert.That(clockAmbience.GetComponent<AudioSource>(), Is.SameAs(clockSource));
+        Assert.That(fireplaceSource.clip, Is.Not.Null);
+        Assert.That(clockSource.clip, Is.Not.Null);
 
         DoorTriggerNavigation reverse = RequireSceneObject<DoorTriggerNavigation>(
             "DoorTrigger_DrawingRoom_GEH");
@@ -228,6 +265,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
         Assert.That(RequireExactlyOneInActiveScene<RuntimeSettingsMenu>(), Is.SameAs(runtimeSettings));
+        Assert.That(RequireExactlyOneInActiveScene<FireplaceAmbienceController>(), Is.SameAs(fireplaceAmbience));
+        Assert.That(RequireExactlyOneInActiveScene<ClockTickingAmbienceController>(), Is.SameAs(clockAmbience));
+        Assert.That(fireplaceAmbience.GetComponent<AudioSource>(), Is.SameAs(fireplaceSource));
+        Assert.That(clockAmbience.GetComponent<AudioSource>(), Is.SameAs(clockSource));
+        Assert.That(fireplaceSource.clip, Is.Not.Null);
+        Assert.That(clockSource.clip, Is.Not.Null);
 
         speech.BeginSpeakLine(
             "ARCH_LIFECYCLE_SKIP_DIALOGUE",
@@ -268,6 +311,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<Chapter1InteractionHUD>(), Is.SameAs(chapter1Hud));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
+        Assert.That(RequireExactlyOneInActiveScene<FireplaceAmbienceController>(), Is.SameAs(fireplaceAmbience));
+        Assert.That(RequireExactlyOneInActiveScene<ClockTickingAmbienceController>(), Is.SameAs(clockAmbience));
     }
 
     private static IEnumerator WaitForSettledLayout()
