@@ -60,6 +60,7 @@ Only after Phase 2 passes:
 - one voice-playback owner, dedicated dialogue AudioSource, and speaking-indicator owner are serialized with explicit assets/navigation; both root factories are removed while lazy subtitle/bubble child-view creation remains deliberate;
 - SubtitleService is bound to the shared speaking-indicator owner; redundant static cleanup searches are removed from dialogue, subtitle, and Chapter 2 paths;
 - ChapterManager owns serialized dialogue/subtitle services and one direct debug-transition cleanup command; settings and teleports delegate to it, and the final static voice-stop/global subtitle searches are removed;
+- serialize the inert Chapter 1 HUD owner on the Chapter 1 controller while retaining its lazy canvas/text presentation; retire its owner repair only after the follow-up identity gate;
 - remove `DialogueSpeechService.FindOrCreate` and `SubtitleService.FindOrCreate` call sites after callers receive serialized/service references;
 - replace `UrpPostProcessingBootstrap` with a serialized render rig;
 - replace runtime clock-hand attachment with an authored `ClockView` reference.

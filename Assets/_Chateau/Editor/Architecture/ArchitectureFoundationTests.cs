@@ -157,6 +157,16 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
+    public void Chapter1HudOwnerIsSerializedOnce()
+    {
+        string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+
+        Assert.That(CountOccurrences(sceneText, "guid: a7a7a747ac7ae2fb48c9d60608ca3dc9"), Is.EqualTo(1));
+        Assert.That(sceneText, Does.Contain("interactionHUD: {fileID: 3302000002}"));
+        Assert.That(sceneText, Does.Contain("- component: {fileID: 3302000002}"));
+    }
+
+    [Test]
     public void DialogueCoreServicesAreSerializedAndBound()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
