@@ -41,7 +41,7 @@ Assets/Map/CameraManager.cs,e3c8ce10745e87c74bfcf89d573dfebf,1,Assets/Scenes/Gam
 Assets/Scripts/Audio/Chapter2PanicScreamCatalog.cs,728ee02e55374da3a1518010ecb7de91,1,Assets/Resources/Audio/Chapter2PanicScreamCatalog.asset:1
 Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs,4d153adbd70fda53513c371badfa093b,1,Assets/Resources/Audio/ClockTickingAmbienceCatalog.asset:1
 Assets/Scripts/Audio/ClockTickingAmbienceController.cs,65e29c4687b6bad242fac7bcb6849828,0,
-Assets/Scripts/Audio/DialogueSpeechService.cs,6790d7832e9a441c9535d395e3c75084,0,
+Assets/Scripts/Audio/DialogueSpeechService.cs,6790d7832e9a441c9535d395e3c75084,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Audio/DoorOpenSoundCatalog.cs,9688b4be97d24912b44c9495cae7e9c2,2,Assets/Resources/Audio/StairwaySoundCatalog.asset:1 | Assets/Resources/Audio/DoorOpenSoundCatalog.asset:1
 Assets/Scripts/Audio/FireplaceAmbienceCatalog.cs,926ef3a5f44c4152b79ea814a82314a9,1,Assets/Resources/Audio/FireplaceAmbienceCatalog.asset:1
 Assets/Scripts/Audio/FireplaceAmbienceController.cs,c5d8eebb18904780a5d77a1c9da6ce6f,0,
@@ -77,12 +77,12 @@ Assets/Scripts/MainMenuController.cs,edb659fd3a16f84f796f1355971d6893,1,Assets/S
 Assets/Scripts/Navigation/DoorButton.cs,526d59741832df7afadeab75a481cf82,0,
 Assets/Scripts/Navigation/DoorCameraSequence.cs,1a9d9d0c51c54b0f92dd15e3a7a6c4e1,1,Assets/Resources/Navigation/DoorCameraSequence.asset:1
 Assets/Scripts/Navigation/DoorDataParser.cs,e87c131c2051e9f8b8649cf00313f37c,0,
-Assets/Scripts/Navigation/DoorPromptSequenceController.cs,3f9bb60e65b04160aa752c2b3fcfdb4d,0,
+Assets/Scripts/Navigation/DoorPromptSequenceController.cs,3f9bb60e65b04160aa752c2b3fcfdb4d,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Navigation/DoorTriggerNavigation.cs,7e419b0f8f26d4f2d8d03e567fef4c52,58,Assets/Scenes/MainMenu.unity:9 | Assets/Scenes/Gameplay.unity:45 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:2 | Assets/Prefabs/Room_Drawing_Room.prefab:2
 Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,b95469e02af64fee8b29689edb9b583a,49,Assets/Scenes/Gameplay.unity:49
 Assets/Scripts/Navigation/RoomContentGroup.cs,d0ea47fd950844bcacb0fd5556a9d880,22,Assets/Scenes/Gameplay.unity:19 | Assets/Prefabs/Room.prefab:1 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:1 | Assets/Prefabs/Room_Drawing_Room.prefab:1
 Assets/Scripts/Navigation/RoomNavigationBootstrap.cs,ee39d7886e1b437f59e4e82b50f560c8,0,
-Assets/Scripts/Navigation/RoomNavigationManager.cs,88f4088eff8696ab181615a79b7e114c,0,
+Assets/Scripts/Navigation/RoomNavigationManager.cs,88f4088eff8696ab181615a79b7e114c,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Navigation/RoomVisualCatalog.cs,cbc070e2317b8dfd088947e285e93156,1,Assets/Resources/Navigation/RoomVisualCatalog.asset:1
 Assets/Scripts/Oddities/OdditySpriteAnimator.cs,4c95f89f0ed64c71a67dc361f0eaa7ad,0,
 Assets/Scripts/PlayerMovement.cs,0a3a55dd8487815229cb003de0eeaf13,1,Assets/Prefabs/Player.prefab:1
@@ -111,19 +111,19 @@ Assets/Scripts/UI/RuntimeSettingsMenu.cs,06d3a7eb4f7d428f9bc3e64b6c47f0b6,0,
 Assets/Scripts/UI/SpeakingCharacterIndicator.cs,9963bb0aa9d84cc7a8cb801c668a92ee,0,
 Assets/Scripts/UI/SubtitleLine.cs,4472b689444388ba58d2ecf5cf9beacf,0,
 Assets/Scripts/UI/SubtitleLineBank.cs,695dfb43a57e4ce745980f19b1666ddc,1,Assets/Resources/UI/SubtitleLineBank.asset:1
-Assets/Scripts/UI/SubtitleService.cs,6a672186a99c3d17e3288fac89b25221,0,
+Assets/Scripts/UI/SubtitleService.cs,6a672186a99c3d17e3288fac89b25221,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/UrpPostProcessingBootstrap.cs,ecd7d6b61c5aa98479304e3530e778db,0,
 Assets/_Chateau/Editor/Architecture/ArchitectureFoundationTests.cs,28d3d987cc6f52f2ae594cdb76e33f5a,0,
 Assets/_Chateau/Editor/Architecture/GameRootInstaller.cs,c31a9d8335cc5647aa945c59ce46704d,0,
 Assets/_Chateau/Runtime/Core/ChateauBehaviour.cs,0ce883a9e4a95b0e9afa5f1fe28764bd,0,
 Assets/_Chateau/Runtime/Core/GameContext.cs,aaccb252ed5f5c11bebc3525da184608,0,
-Assets/_Chateau/Runtime/Core/GameRoot.cs,bc887e2e5e4f5cc594cd3d8920eb9f90,0,
+Assets/_Chateau/Runtime/Core/GameRoot.cs,bc887e2e5e4f5cc594cd3d8920eb9f90,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Runtime/Core/GameServiceBase.cs,363f82324eb55bb6a1b87d5f87fca362,0,
 Assets/_Chateau/Runtime/Core/IGameService.cs,fa1ac6df43215438873f125036d79c40,0,
 Assets/_Chateau/Runtime/Core/StateMachine.cs,2686f4861643517b90c963f34db07329,0,
 Assets/_Chateau/Runtime/Core/ValidationReport.cs,6ae44be1d416516db9af9035650ba237,0,
 Assets/_Chateau/Runtime/Data/DefinitionAssetBase.cs,a316b1ce937e5bd1812efd2f6346aa15,0,
-Assets/_Chateau/Runtime/Data/GameDatabase.cs,c88bc49b6a595fd4b2909d7957ee6f97,0,
+Assets/_Chateau/Runtime/Data/GameDatabase.cs,c88bc49b6a595fd4b2909d7957ee6f97,1,Assets/_Chateau/Data/GameDatabase.asset:1
 Assets/_Chateau/Runtime/Gameplay/ActorControllerBase.cs,f6760162bbfc5231a95d55c6b9d37501,0,
 Assets/_Chateau/Runtime/Gameplay/ActorMotorBase.cs,5ad0e88db0935af2b72f5e197dd229de,0,
 Assets/_Chateau/Runtime/Gameplay/ActorPresenterBase.cs,c01e0d1550df59b48216ef743fdcf494,0,

@@ -21,6 +21,7 @@ public sealed class GuestRoomScaleRegressionTests
     private const string GuestRoomScaleMasterWindowPath = "Assets/Editor/GuestRoomScaleMasterWindow.cs";
     private const string GuestScaleAuditPath = "Assets/Editor/GuestScaleAudit.cs";
     private const string Chapter2GuestPanicControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs";
+    private const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
 
     [Test]
     public void PointClickPlayerMovementExposesSharedButlerScaleEvaluator()
@@ -1018,6 +1019,44 @@ public sealed class GuestRoomScaleRegressionTests
         {
             UnityEngine.Object.DestroyImmediate(butler);
         }
+    }
+
+    [Test]
+    public void ButlerRoomPresentationScaleIsExplicitAndDoesNotRewriteCalibration()
+    {
+        string prefabText = File.ReadAllText(PlayerPrefabPath);
+        GameObject butler = CreatePointClickPlayer("player", Vector3.one);
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+
+            Assert.That(prefabText, Does.Contain("roomPresentationScale: 0.7528645"));
+            Assert.That(movement.RoomPresentationScale, Is.EqualTo(0.7528645f).Within(0.000001f));
+            Assert.That(movement.CurrentWorldActorScaleMultiplier, Is.EqualTo(0.7528645f).Within(0.000001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
+    public void ButlerRoomPresentationScaleTracksOnlyRelativeUserZoom()
+    {
+        const float presentationScale = 0.7528645f;
+
+        Assert.That(
+            presentationScale * CameraManager.CalculateActorZoomRatio(1.06f, 1.06f),
+            Is.EqualTo(0.7528645f).Within(0.000001f));
+        Assert.That(
+            presentationScale * CameraManager.CalculateActorZoomRatio(1f, 1.06f),
+            Is.EqualTo(0.7102495f).Within(0.000001f));
+        Assert.That(
+            presentationScale * CameraManager.CalculateActorZoomRatio(1.22f, 1.06f),
+            Is.EqualTo(0.8665044f).Within(0.000001f));
+        Assert.That(CameraManager.CalculateActorZoomRatio(float.NaN, 1.06f), Is.EqualTo(1f));
+        Assert.That(CameraManager.CalculateActorZoomRatio(1.06f, 0f), Is.EqualTo(1.06f));
     }
 
     [Test]

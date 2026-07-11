@@ -197,6 +197,38 @@ public class CameraManager : Chateau.Architecture.GameServiceBase
         return true;
     }
 
+    public bool TryGetActiveRoomStageActorZoomRatio(out float zoomRatio)
+    {
+        zoomRatio = 1f;
+
+        if (!UsesRoomStageLayout() || activeRoomStage == null)
+        {
+            return false;
+        }
+
+        // Authored actor calibration already represents the approved size at
+        // the default room zoom. Only the player's relative wheel zoom belongs
+        // here; viewport fitting and Canvas scaling must not rewrite that size.
+        float referenceZoom = Mathf.Max(0.0001f, ClampRoomZoom(defaultRoomZoom));
+        zoomRatio = CalculateActorZoomRatio(ClampRoomZoom(currentRoomZoom), referenceZoom);
+        return true;
+    }
+
+    public static float CalculateActorZoomRatio(float currentZoom, float referenceZoom)
+    {
+        float safeReference = float.IsNaN(referenceZoom) ||
+            float.IsInfinity(referenceZoom) ||
+            referenceZoom <= 0f
+                ? 1f
+                : referenceZoom;
+        float safeCurrent = float.IsNaN(currentZoom) ||
+            float.IsInfinity(currentZoom) ||
+            currentZoom <= 0f
+                ? safeReference
+                : currentZoom;
+        return Mathf.Max(0.0001f, safeCurrent / safeReference);
+    }
+
     public bool TryGetActiveRoomStageWorldPoint(Vector2 roomStageLocalPoint, float worldDepth, out Vector3 worldPoint)
     {
         return TryGetActiveRoomStageWorldPoint(roomStageLocalPoint, worldDepth, out worldPoint, out _);

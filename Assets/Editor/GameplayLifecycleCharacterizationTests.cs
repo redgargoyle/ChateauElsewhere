@@ -96,6 +96,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(
             settledScale.PlayerLocalScaleY,
             Is.EqualTo(firstScale.PlayerLocalScaleY).Within(0.001f));
+        Assert.That(
+            settledScale.AppliedMultiplier,
+            Is.EqualTo(player.RoomPresentationScale).Within(0.001f),
+            "The default entrance presentation must preserve the approved Butler-to-door proportion.");
 
         DoorTriggerNavigation outbound = RequireSceneObject<DoorTriggerNavigation>(
             "DoorTrigger_GEH_DrawingRoom");
@@ -210,11 +214,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(float.IsInfinity(appliedMultiplier), Is.False);
         Assert.That(appliedMultiplier, Is.GreaterThan(0f));
         CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
-        Assert.That(cameraManager.TryGetActiveRoomStageLayoutScale(out float layoutScale), Is.True);
+        Assert.That(cameraManager.TryGetActiveRoomStageActorZoomRatio(out float actorZoomRatio), Is.True);
+        float expectedPresentationScale = player.RoomPresentationScale * actorZoomRatio;
+        Assert.That(
+            player.CurrentWorldActorScaleMultiplier,
+            Is.EqualTo(expectedPresentationScale).Within(0.001f));
         Assert.That(
             appliedMultiplier,
-            Is.EqualTo(layoutScale).Within(0.01f),
-            "The Butler must follow CameraManager's explicit room-stage layout scale, not a lazily captured reference.");
+            Is.EqualTo(expectedPresentationScale).Within(0.01f),
+            "The Butler must follow CameraManager's relative actor zoom, not viewport layout or a lazily captured reference.");
         return new ScaleSnapshot(playerScaleY, roomStageScale, appliedMultiplier);
     }
 

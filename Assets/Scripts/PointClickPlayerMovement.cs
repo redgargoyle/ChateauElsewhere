@@ -30,6 +30,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private const int ClickProjectionBoundaryCandidateLimit = 12;
 	private const float ClickProjectionMinWorldDistance = 16f;
 	private const float ClickProjectionMaxWorldDistance = 48f;
+	private const float DefaultRoomPresentationScale = 0.7528645f;
 	public const float ButlerRoomScaleEndpointEpsilon = 0.01f;
 
 	[SerializeField] private string walkableFloorName = "PlayerBoundary_Entrance";
@@ -49,6 +50,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private float farY = -2.25f;
 	[SerializeField] private float nearScale = 1f;
 	[SerializeField] private float farScale = 0.58f;
+	[SerializeField, Min(0.0001f)] private float roomPresentationScale = DefaultRoomPresentationScale;
 	[SerializeField] private bool useRoomPerspectiveProfileScale = true;
 	[SerializeField] private bool useButlerRoomScaleOverrides = true;
 	[SerializeField] private bool hasButlerCalibrationBaseLocalScale;
@@ -76,6 +78,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private Vector3 currentRoomStageWorldCenter;
 	private Vector3 roomStageReferenceWorldCenter;
 	private float currentRoomStageScaleRatio = 1f;
+	private float currentWorldActorScaleMultiplier = DefaultRoomPresentationScale;
 	private float authoredPerspectiveScaleReference = 1f;
 	private RoomPerspectiveProfile currentRoomPerspectiveProfile;
 	private string currentRoomPerspectiveProfileRoom;
@@ -128,6 +131,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public bool UsesButlerRoomScaleOverrides => useButlerRoomScaleOverrides;
 	public bool HasButlerCalibrationBaseLocalScale => hasButlerCalibrationBaseLocalScale;
 	public Vector3 ButlerCalibrationBaseLocalScale => butlerCalibrationBaseLocalScale;
+	public float RoomPresentationScale => GetSanitizedRoomPresentationScale();
+	public float CurrentWorldActorScaleMultiplier => currentWorldActorScaleMultiplier;
 	public string EditorSelectedButlerScaleRoomId => editorSelectedButlerScaleRoomId;
 	public string CurrentButlerScaleRoomId => GetCurrentButlerScaleRoomId();
 	public string CurrentRoomPerspectiveProfileRoomId
@@ -2034,15 +2039,15 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (useButlerRoomScaleOverrides &&
 			TryEvaluateButlerCalibratedFinalLocalScale(out Vector3 calibratedLocalScale))
 		{
-			float roomStageScale = Mathf.Max(0.001f, currentRoomStageScaleRatio);
+			float presentationScale = Mathf.Max(0.001f, currentWorldActorScaleMultiplier);
 			transform.localScale = new Vector3(
-				calibratedLocalScale.x * roomStageScale,
-				calibratedLocalScale.y * roomStageScale,
+				calibratedLocalScale.x * presentationScale,
+				calibratedLocalScale.y * presentationScale,
 				calibratedLocalScale.z);
 			return;
 		}
 
-		float scale = CalculateExistingPerspectiveScale() * currentRoomStageScaleRatio;
+		float scale = CalculateExistingPerspectiveScale() * currentWorldActorScaleMultiplier;
 		transform.localScale = new Vector3(
 			authoredLocalScale.x * scale,
 			authoredLocalScale.y * scale,
@@ -2314,6 +2319,13 @@ public class PointClickPlayerMovement : MonoBehaviour
 		currentVisualOffset = Vector3.zero;
 		currentRoomStageScaleRatio = 1f;
 
+		if (float.IsNaN(currentWorldActorScaleMultiplier) ||
+			float.IsInfinity(currentWorldActorScaleMultiplier) ||
+			currentWorldActorScaleMultiplier <= 0f)
+		{
+			currentWorldActorScaleMultiplier = RoomPresentationScale;
+		}
+
 		if (cameraManager == null)
 			cameraManager = FindAnyObjectByType<CameraManager>();
 
@@ -2334,6 +2346,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 			out Vector3 stageWorldCenter) &&
 			cameraManager.TryGetActiveRoomStageLayoutScale(out float stageLayoutScale))
 		{
+			if (cameraManager.TryGetActiveRoomStageActorZoomRatio(out float actorZoomRatio))
+				currentWorldActorScaleMultiplier = RoomPresentationScale * actorZoomRatio;
+
 			string currentRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
 
 			if (!hasRoomStageVisualReference ||
@@ -2365,6 +2380,15 @@ public class PointClickPlayerMovement : MonoBehaviour
 		currentRoomStageWorldCenter = Vector3.zero;
 		currentRoomStageScaleRatio = 1f;
 		currentVisualOffset = Vector3.zero;
+	}
+
+	private float GetSanitizedRoomPresentationScale()
+	{
+		return float.IsNaN(roomPresentationScale) ||
+			float.IsInfinity(roomPresentationScale) ||
+			roomPresentationScale < 0.0001f
+				? DefaultRoomPresentationScale
+				: roomPresentationScale;
 	}
 
 	private float GetVisualWorldDepth(Camera mainCamera)

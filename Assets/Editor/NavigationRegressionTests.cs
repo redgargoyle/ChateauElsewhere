@@ -596,11 +596,15 @@ public class NavigationRegressionTests
     {
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
         string obstacleText = File.ReadAllText(YSortSolidObstaclePath);
+        string applyPerspectiveScaleBody = ExtractMethodBody(playerText, "private void ApplyPerspectiveScale");
+        string logicalToWorldBody = ExtractMethodBody(playerText, "private Vector2 LogicalToWalkableWorldPoint");
+        string worldToLogicalBody = ExtractMethodBody(playerText, "private Vector2 WalkableWorldToLogicalPoint");
 
         Assert.That(playerText, Does.Contain("TryEvaluateMovementAtScreenPoint(screenPosition, false"), "Regular floor clicks should test the exact hovered floor point.");
         Assert.That(playerText, Does.Contain("LogicalToWalkableWorldPoint"), "Walkability should follow the visible room stage while edge panning moves it.");
         Assert.That(playerText, Does.Contain("TryGetActiveRoomStageWorldPoint"), "Player visuals should follow the active room stage's pan and zoom, not only its center offset.");
-        Assert.That(playerText, Does.Contain("currentRoomStageScaleRatio"), "Player position and visible scale should apply the room-stage zoom ratio.");
+        Assert.That(playerText, Does.Contain("currentRoomStageScaleRatio"), "Player position should apply the room-stage layout ratio.");
+        Assert.That(playerText, Does.Contain("currentWorldActorScaleMultiplier"), "Player presentation should have a separate deterministic scale multiplier.");
         Assert.That(playerText, Does.Contain("roomStageReferenceWorldCenter"), "Player logical movement should be mapped from a stable room-stage reference center.");
         Assert.That(playerText, Does.Contain("ResetRoomStageVisualReference"), "Changing rooms should reset the player's room-stage pan/zoom baseline.");
         Assert.That(playerText, Does.Contain("TryBuildReachableWorldPath"), "NPC panic routes should reuse the same floor-boundary route query as point-click movement.");
@@ -621,7 +625,10 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("CanShowWalkCursor"), "The cursor should show blocked state for out-of-bounds pointer positions.");
         Assert.That(playerText, Does.Contain("TryBuildMovementPathFromNearbyStart"), "Routes should recover when the Butler is standing on a thin authored boundary edge.");
         Assert.That(playerText, Does.Match(@"LogicalToWalkableWorldPoint\s*\([^)]*\)[\s\S]*referenceOffset \* currentRoomStageScaleRatio"), "Player logical-to-world mapping must include room-stage scale, not translation only.");
-        Assert.That(playerText, Does.Match(@"ApplyPerspectiveScale\s*\([^)]*\)[\s\S]*currentRoomStageScaleRatio"), "Player sprite scale should grow and shrink with the room stage just like room objects.");
+        Assert.That(applyPerspectiveScaleBody, Does.Contain("currentWorldActorScaleMultiplier"), "Player sprite scale should use the dedicated presentation policy.");
+        Assert.That(applyPerspectiveScaleBody, Does.Not.Contain("currentRoomStageScaleRatio"), "Viewport layout must not rewrite the approved Butler size.");
+        Assert.That(logicalToWorldBody, Does.Not.Contain("currentWorldActorScaleMultiplier"), "Presentation scale must not change logical-to-world navigation.");
+        Assert.That(worldToLogicalBody, Does.Not.Contain("currentWorldActorScaleMultiplier"), "Presentation scale must not change world-to-logical navigation.");
         Assert.That(playerText, Does.Contain("GetCurrentVisibleMovementWorldPoint"), "Player logical movement should anchor to the visible feet rather than the transform origin.");
         Assert.That(playerText, Does.Contain("GetVisibleFeetOffsetY"), "Applying the player visual position should offset the transform so the feet land on the clicked point.");
         Assert.That(playerText, Does.Contain("visualPoint.y - feetOffsetY"), "The butler's visible feet, not his chest pivot, should end at the movement destination.");

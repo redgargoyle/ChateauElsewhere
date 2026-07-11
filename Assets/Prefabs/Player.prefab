@@ -215,6 +215,7 @@ MonoBehaviour:
   farY: -2.25
   nearScale: 1
   farScale: 0.58
+  roomPresentationScale: 0.7528645
   runningAnimationSpeed: 40
   disablePlatformMovement: 1
   sortPlayerByVisibleFeet: 1

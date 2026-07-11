@@ -1,5 +1,5 @@
 file,loc,sha256,FindObject,ResourcesLoad,NewGameObject,AddComponent,RuntimeInitialize,PlayerPrefs,direct_monobehaviours
-Assets/Map/CameraManager.cs,2936,13a72bffc88b343d7a2c215bd5989138d0d513ef15d0a28d443d6d5cfe8a41cd,5,0,0,0,1,0,
+Assets/Map/CameraManager.cs,2985,613d7bf3eed6e595be18796799f63ee2b545d7c5d89e739ce38f1835c16906b0,5,0,0,0,1,0,
 Assets/Scripts/Audio/Chapter2PanicScreamCatalog.cs,46,3d5a3c1ac00f6c230d540338987f3ad1a02dd2b1ff43cb0a2fe0a688c6863637,0,0,0,0,0,0,
 Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs,256,53391df6b69d067828a0d28686389a98d2594a524cb6937969ac0640573b2b1a,0,0,0,0,0,0,
 Assets/Scripts/Audio/ClockTickingAmbienceController.cs,279,6ea68182fe1436690c313e16b33216c77683f315f668f003b759975f0e791d6a,3,1,1,1,0,0,ClockTickingAmbienceController
@@ -48,7 +48,7 @@ Assets/Scripts/Navigation/RoomNavigationManager.cs,1268,6c8f3891876ab71ccd46d3f4
 Assets/Scripts/Navigation/RoomVisualCatalog.cs,45,b4f13f7b9b7408417349da34bfb2bdba0f94f1153a5a95723ecebfd2d9ecb82c,0,0,0,0,0,0,
 Assets/Scripts/Oddities/OdditySpriteAnimator.cs,246,3202fd562a345dfcac11fc92f5ff6b2a21c1a92421b5e5116d41dca28e014e95,0,0,0,0,0,0,OdditySpriteAnimator
 Assets/Scripts/PlayerMovement.cs,300,31c9b36c0da4d8d2400eecf69af5cef09a40479fbdb46db59a5a83631937875b,0,0,0,0,0,0,PlayerMovement
-Assets/Scripts/PointClickPlayerMovement.cs,4348,43e56ee201f78b929562c848d3169843ee4da7b8de5ce75ae0f7f05c441da7f7,14,0,0,1,0,0,PointClickPlayerMovement
+Assets/Scripts/PointClickPlayerMovement.cs,4369,7da09ede68090818cde2087df9db14c3e9f84985e12d83f854ed52e27a5781e9,14,0,0,1,0,0,PointClickPlayerMovement
 Assets/Scripts/StaticFrameGroup.cs,68,a6e9bfe9198618604874867332b8057010a882673c4a5e33f99b527c2024080a,0,0,0,0,0,0,
 Assets/Scripts/StaticNoisePlayer.cs,305,72ec16941ba8525c25778164fa389c07a937790fdd6c1dc12e045c9ce00e8bc4,0,0,0,0,0,0,StaticNoisePlayer
 Assets/Scripts/StaticSet.cs,35,102d81689aba1e00eb5597e6f8c639fc6c11d111743c6dc53509bc58fdbb7489,0,0,0,0,0,0,
