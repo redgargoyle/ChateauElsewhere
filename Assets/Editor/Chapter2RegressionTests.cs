@@ -577,7 +577,6 @@ public class Chapter2RegressionTests
         string ambientBody = ExtractMethodBody(chapter1Text, "private void StartAmbientConversation");
         string openingSpeechBody = ExtractMethodBody(chapter2Text, "private IEnumerator RunOpeningSpeechRoutine");
         string holdChoicesBody = ExtractMethodBody(chapter2Text, "private void HoldDialogueChoicesForSpeech");
-        string chapter2ResolveBody = ExtractMethodBody(chapter2Text, "private void ResolveReferences");
         string startConversationBody = ExtractMethodBody(searchText, "public bool TryStartGuestConversation");
         string butlerFoundBody = ExtractMethodBody(searchText, "private void ShowButlerFoundLine");
         string mealQuestionBody = ExtractMethodBody(searchText, "private void ShowButlerMealAsk");
@@ -619,7 +618,7 @@ public class Chapter2RegressionTests
         Assert.That(openingSpeechBody, Does.Contain("const string openingSpeechLineId = \"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should keep the interrupted Butler line ID explicit.");
         Assert.That(openingSpeechBody, Does.Contain("yield return SpeakLineInDialoguePanel(openingSpeechLineId, \"Butler\", line, false, true)"), "Address Guests should use the shared speech API through the dialogue panel and block input.");
         Assert.That(openingSpeechBody, Does.Match(@"SpeakLineInDialoguePanel\(openingSpeechLineId[\s\S]*ClearDialogue\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "The dialogue panel should clear before the monster stinger.");
-        Assert.That(chapter2ResolveBody, Does.Not.Contain("ResolveSubtitleService();"), "Subtitle UI should be created lazily, not during chapter intro/reference resolution.");
+        Assert.That(chapter2Text, Does.Not.Contain("ResolveSubtitleService();"), "Subtitle UI should remain owned by the serialized service instead of chapter-time repair.");
         Assert.That(chapter2Text, Does.Contain("SetDialoguePanelSpeechLine"), "Chapter 2 interactive speech should render resolved subtitles in the dialogue panel.");
         Assert.That(chapter2Text, Does.Contain("onSpeechLineStarted: SetDialoguePanelSpeechLine"), "Dialogue-panel speech should show the exact line resolved by the speech service.");
         Assert.That(startConversationBody, Does.Contain("ShowButlerFoundLine(guest)"), "Hidden guest conversations should begin with the Butler found line, not an extra prompt gate.");

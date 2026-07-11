@@ -35,6 +35,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed the `ChapterManager` factory for `Chapter2Controller`; every chapter transition and debug-skip entry path now resolves the single serialized controller.
 - Removed the Chapter 2 HUD factory; Chapter 2 now reuses the single serialized HUD on every entry path.
 - Serialized the three inert Chapter 2 feature owners (monster stinger, guest panic, and guest search), bound their stable scene references, registered them with GameRoot, and removed their independently gated creation fallbacks.
+- Removed `Chapter2Controller.ResolveReferences` and its dormant scene-wide repair searches. Chapter 2 now validates and uses its eleven serialized manager, navigation, clock, player, UI, feature, subtitle, and speech dependencies directly; only the separately gated clock-strike audio fallback remains dynamic.
 - Bound Chapter 1 to the existing serialized guest-scale applier, preserving the single ownership chain from applier to calibration to approved Butler source; every identity is lifecycle-tested before factory retirement.
 - Removed runtime creation of guest-scale applier/calibration owners; the Guest Size Master retains an Editor-only, Undo-aware authoring action, and runtime creation is limited to per-guest participants.
 - Explicitly wired the serialized dialogue and subtitle services, subtitle line bank, navigation edge, and Chapter 1 consumers while preserving lazy voice/indicator/subtitle-view creation.
@@ -61,9 +62,9 @@ This report records what is implemented in the repository at this commit. It mus
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 107 | +17 |
-| Runtime C# lines | 49,902 | 50,378 | +476 |
+| Runtime C# lines | 49,902 | 50,309 | +407 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
-| `FindObject*`/`GameObject.Find` | 199 | 171 | -28 |
+| `FindObject*`/`GameObject.Find` | 199 | 164 | -35 |
 | `Resources.Load` | 27 | 25 | -2 |
 | runtime `new GameObject` | 98 | 86 | -12 |
 | runtime `AddComponent<T>` | 100 | 78 | -22 |
@@ -97,7 +98,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - both SetPiece foundation unit/static tests passed, and the full-suite failure-name set remained unchanged;
 - the tea-table asset audit passed 16/16 structural checks across Gameplay and both prefabs: six documents added total, none deleted, only the exact hierarchy/owner documents changed, all prior document order stayed exact, and SceneRoots stayed byte-identical;
 - the migrated lifecycle keeps one bound set-piece identity through activation/travel, resolves order `6627`, preserves all four collider points, and proves blocker sorting is a no-op;
-- the full EditMode discovery count is 236: 185 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
+- the Chapter 2 dependency-cleanup static, regression, and lifecycle gates pass; all eleven serialized references resolve exactly once, `ResolveReferences` and its seven scene-wide searches are absent, and repeated entry/debug paths retain the same owners;
+- the full EditMode discovery count is 237: 186 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
 - the ChapterManager dialogue-binding gate produced two consecutive clean full-suite reruns after one transient full-run GameView zoom assertion; no files changed between those three runs, and both reruns restored the exact `0.752865` entrance multiplier;
@@ -127,8 +129,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Retire dormant dependency-repair searches in the already fully serialized Chapter 2 controller.
-2. Retire dormant external dependency repair in the serialized RuntimeSettingsMenu while preserving its lazy owned controls.
-3. Characterize the next set piece before migrating it; do not bulk-convert room props from source-text assumptions.
+1. Retire dormant external dependency repair in the serialized RuntimeSettingsMenu while preserving its lazy owned controls.
+2. Characterize the next set piece before migrating it; do not bulk-convert room props from source-text assumptions.
+3. Serialize and validate the remaining stable dialogue dependencies before removing their repair paths.
 
 Do not begin bulk deletion until those gates pass.

@@ -82,6 +82,70 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     public string DiningRoomId => diningRoomId;
     public bool IsGuestSearchActive => currentPhase == Chapter2Phase.GuestSearch;
 
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        base.ValidateConfiguration(report);
+
+        if (chapterManager == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized ChapterManager.", this);
+        }
+
+        if (navigationManager == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized RoomNavigationManager.", this);
+        }
+
+        if (introUI == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized ChapterIntroUI.", this);
+        }
+
+        if (chapterClock == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized ChapterClock.", this);
+        }
+        else if (chapterManager != null && chapterManager.Clock != chapterClock)
+        {
+            report.AddError("Chapter2Controller and ChapterManager must reference the same ChapterClock.", this);
+        }
+
+        if (playerMovement == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized Butler movement owner.", this);
+        }
+
+        if (interactionHUD == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized interaction HUD.", this);
+        }
+
+        if (monsterStinger == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized monster stinger owner.", this);
+        }
+
+        if (guestPanic == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized guest panic owner.", this);
+        }
+
+        if (guestSearch == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized guest search owner.", this);
+        }
+
+        if (subtitleService == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized SubtitleService.", this);
+        }
+
+        if (speechService == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized DialogueSpeechService.", this);
+        }
+    }
+
     public void BeginChapter2(ChapterManager manager)
     {
         if (currentPhase != Chapter2Phase.NotStarted)
@@ -90,12 +154,12 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
             return;
         }
 
-        chapterManager = manager;
+        chapterManager = manager != null ? manager : chapterManager;
         allGuestsFoundHandled = false;
         dinnerSeatingHandled = false;
         diningObjectiveTransitionRoutine = null;
         diningRoomCompletionRoutine = null;
-        ResolveReferences();
+        RegisterRoomChangeHandler();
         SetPhase(Chapter2Phase.FadeInDrawingRoom);
         SetPlayerInputEnabled(false);
         MoveToDrawingRoom();
@@ -166,7 +230,7 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     public void DebugSkipToChapter3ForTesting(ChapterManager manager)
     {
         chapterManager = manager != null ? manager : chapterManager;
-        ResolveReferences();
+        RegisterRoomChangeHandler();
         StopChapter2Coroutines();
         SetPlayerInputEnabled(false);
         SetDinnerClockAndStop();
@@ -206,7 +270,7 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     public void DebugSkipToSevenPMForTesting(ChapterManager manager)
     {
         chapterManager = manager != null ? manager : chapterManager;
-        ResolveReferences();
+        RegisterRoomChangeHandler();
         StopChapter2Coroutines();
         SetPlayerInputEnabled(false);
         SetDinnerClockAndStop();
@@ -258,7 +322,7 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     public void DebugResetForChapter2Skip(ChapterManager manager)
     {
         chapterManager = manager != null ? manager : chapterManager;
-        ResolveReferences();
+        RegisterRoomChangeHandler();
         StopChapter2Coroutines();
 
         if (monsterStinger != null)
@@ -311,12 +375,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
         string thirdChoice = null,
         System.Action thirdCallback = null)
     {
-        if (interactionHUD == null)
-        {
-            ResolveReferences();
-            InitializeInteractionHUD();
-        }
-
         if (interactionHUD == null)
         {
             return;
@@ -501,96 +559,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
         SetPhase(Chapter2Phase.AwaitingAddressPrompt);
     }
 
-    private void ResolveReferences()
-    {
-        if (chapterManager == null)
-        {
-            chapterManager = GetComponent<ChapterManager>();
-        }
-
-        if (chapterManager == null)
-        {
-            chapterManager = FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include);
-        }
-
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
-        }
-
-        RegisterRoomChangeHandler();
-
-        if (introUI == null)
-        {
-            introUI = GetComponent<ChapterIntroUI>();
-        }
-
-        if (introUI == null)
-        {
-            introUI = FindAnyObjectByType<ChapterIntroUI>(FindObjectsInactive.Include);
-        }
-
-        if (chapterClock == null && chapterManager != null)
-        {
-            chapterClock = chapterManager.Clock;
-        }
-
-        if (chapterClock == null)
-        {
-            chapterClock = GetComponent<ChapterClock>();
-        }
-
-        if (chapterClock == null)
-        {
-            chapterClock = FindAnyObjectByType<ChapterClock>(FindObjectsInactive.Include);
-        }
-
-        if (playerMovement == null && chapterManager != null && chapterManager.PlayerButlerReference != null)
-        {
-            playerMovement = chapterManager.PlayerButlerReference.GetComponent<PointClickPlayerMovement>();
-        }
-
-        if (playerMovement == null)
-        {
-            GameObject playerObject = GameObject.Find("Player");
-
-            if (playerObject != null)
-            {
-                playerMovement = playerObject.GetComponent<PointClickPlayerMovement>();
-            }
-        }
-
-        if (playerMovement == null)
-        {
-            playerMovement = FindAnyObjectByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
-        }
-
-        if (interactionHUD == null)
-        {
-            interactionHUD = GetComponent<Chapter2InteractionHUD>();
-        }
-
-        if (interactionHUD == null)
-        {
-            interactionHUD = FindAnyObjectByType<Chapter2InteractionHUD>(FindObjectsInactive.Include);
-        }
-
-        if (monsterStinger == null)
-        {
-            monsterStinger = GetComponent<Chapter2MonsterStingerController>();
-        }
-
-        if (guestPanic == null)
-        {
-            guestPanic = GetComponent<Chapter2GuestPanicController>();
-        }
-
-        if (guestSearch == null)
-        {
-            guestSearch = GetComponent<Chapter2GuestSearchController>();
-        }
-    }
-
     private void InitializeInteractionHUD()
     {
         if (interactionHUD != null)
@@ -644,16 +612,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
         if (monsterStingerRoutine != null)
         {
             return;
-        }
-
-        if (monsterStinger == null)
-        {
-            ResolveReferences();
-        }
-
-        if (guestPanic == null)
-        {
-            ResolveReferences();
         }
 
         SetPlayerInputEnabled(false);
@@ -721,11 +679,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     {
         if (guestSearch == null)
         {
-            ResolveReferences();
-        }
-
-        if (guestSearch == null)
-        {
             Debug.LogWarning("Chapter 2 guest search requested, but Chapter2GuestSearchController is missing.", this);
             return;
         }
@@ -742,11 +695,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
             return;
         }
 
-        if (guestSearch == null)
-        {
-            ResolveReferences();
-        }
-
         if (guestSearch != null)
         {
             guestSearch.SeatGuestsInDiningRoom();
@@ -757,11 +705,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
 
     private void PrepareGuestsForDiningTransfer()
     {
-        if (guestSearch == null)
-        {
-            ResolveReferences();
-        }
-
         if (guestSearch != null)
         {
             guestSearch.PrepareGuestsForDiningTransfer();
@@ -1065,12 +1008,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     {
         if (interactionHUD == null)
         {
-            ResolveReferences();
-            InitializeInteractionHUD();
-        }
-
-        if (interactionHUD == null)
-        {
             return;
         }
 
@@ -1141,12 +1078,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
 
     private IEnumerator SpeakLineInDialoguePanel(string lineId, string speaker, string text, bool allowOverlap = false, bool blockInput = false)
     {
-        if (interactionHUD == null)
-        {
-            ResolveReferences();
-            InitializeInteractionHUD();
-        }
-
         DialogueSpeechService service = ResolveSpeechService();
 
         if (service != null)

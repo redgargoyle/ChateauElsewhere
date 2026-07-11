@@ -137,6 +137,32 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
+    public void Chapter2DependenciesAreSerializedWithoutRepairSearches()
+    {
+        string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+        string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
+
+        Assert.That(sceneText, Does.Contain("chapterManager: {fileID: 3301000004}"));
+        Assert.That(sceneText, Does.Contain("navigationManager: {fileID: 1878886997}"));
+        Assert.That(sceneText, Does.Contain("introUI: {fileID: 3301000003}"));
+        Assert.That(sceneText, Does.Contain("chapterClock: {fileID: 3301000001}"));
+        Assert.That(sceneText, Does.Contain("playerMovement: {fileID: 81962842}"));
+        Assert.That(sceneText, Does.Contain("interactionHUD: {fileID: 3301000005}"));
+        Assert.That(sceneText, Does.Contain("monsterStinger: {fileID: 3301000007}"));
+        Assert.That(sceneText, Does.Contain("guestPanic: {fileID: 3301000008}"));
+        Assert.That(sceneText, Does.Contain("guestSearch: {fileID: 3301000009}"));
+        Assert.That(sceneText, Does.Contain("subtitleService: {fileID: 1878886995}"));
+        Assert.That(sceneText, Does.Contain("speechService: {fileID: 1878886994}"));
+        Assert.That(chapter2Text, Does.Not.Contain("ResolveReferences"));
+        Assert.That(chapter2Text, Does.Not.Contain("FindAnyObjectByType"));
+        Assert.That(chapter2Text, Does.Not.Contain("GameObject.Find(\"Player\")"));
+        Assert.That(chapter2Text, Does.Not.Contain("GetComponent<Chapter"));
+        Assert.That(chapter2Text, Does.Not.Contain("GetComponent<PointClickPlayerMovement>"));
+        Assert.That(chapter2Text, Does.Contain("public override void ValidateConfiguration"));
+        Assert.That(chapter2Text, Does.Contain("RegisterRoomChangeHandler();"));
+    }
+
+    [Test]
     public void Chapter1BindsSerializedGuestScaleOwners()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
