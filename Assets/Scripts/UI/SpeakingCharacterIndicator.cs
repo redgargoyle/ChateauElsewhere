@@ -36,12 +36,6 @@ public sealed class SpeakingCharacterIndicator : MonoBehaviour
     private bool isShowing;
     private bool loggedMissingSprite;
 
-    public static void HideAnyCurrent()
-    {
-        SpeakingCharacterIndicator existing = FindAnyObjectByType<SpeakingCharacterIndicator>(FindObjectsInactive.Include);
-        existing?.Hide();
-    }
-
     public void ShowForSpeechLine(int speechToken, string lineId, string speaker, string text)
     {
         ResolveReferences();

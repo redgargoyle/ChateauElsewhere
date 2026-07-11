@@ -3,7 +3,7 @@ Assets/Map/CameraManager.cs,2985,613d7bf3eed6e595be18796799f63ee2b545d7c5d89e739
 Assets/Scripts/Audio/Chapter2PanicScreamCatalog.cs,46,3d5a3c1ac00f6c230d540338987f3ad1a02dd2b1ff43cb0a2fe0a688c6863637,0,0,0,0,0,0,
 Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs,256,53391df6b69d067828a0d28686389a98d2594a524cb6937969ac0640573b2b1a,0,0,0,0,0,0,
 Assets/Scripts/Audio/ClockTickingAmbienceController.cs,279,6ea68182fe1436690c313e16b33216c77683f315f668f003b759975f0e791d6a,3,1,1,1,0,0,ClockTickingAmbienceController
-Assets/Scripts/Audio/DialogueSpeechService.cs,351,8c0f35bf9abc850fa30a3848665ff3d5293f4c6b021e74b66961bba65565fab9,2,0,0,0,0,0,
+Assets/Scripts/Audio/DialogueSpeechService.cs,344,3a2ac47249d01842b1d4b742dad75f0836d7184b6dcdf0d7d3d92b12e1cb5f15,1,0,0,0,0,0,
 Assets/Scripts/Audio/DoorOpenSoundCatalog.cs,49,718fca57d99144bd832a09fa83a7428d2056eb0b4baa79c2bb00b1b280e5f9e7,0,0,0,0,0,0,
 Assets/Scripts/Audio/FireplaceAmbienceCatalog.cs,161,5d845c3f37d8a508ffd3dc71927e654f9495de69ccc95ac107c25242b006b73b,0,0,0,0,0,0,
 Assets/Scripts/Audio/FireplaceAmbienceController.cs,267,8f2847d6829a061ebdf5c604d3eafeaf8273f16d62e9035397ba7d1ee7324f52,3,1,1,2,0,0,FireplaceAmbienceController
@@ -69,10 +69,10 @@ Assets/Scripts/UI/CursorStyleCatalog.cs,151,e01bb46c0695870676f9e1f6ef69265ca67c
 Assets/Scripts/UI/NavigationCursorHoverTarget.cs,100,e82ebf78e5b957d6319e5e8471528aa46014b47a75bf3e94d897dd6c6bc7af71,0,0,0,0,0,0,NavigationCursorHoverTarget
 Assets/Scripts/UI/PostProcessSafeCanvasUtility.cs,125,af5f76cac6062a8f1acdfb6c5d916912f83f1fedfc28fbe2ed1db92607f8f196,3,0,1,3,0,0,
 Assets/Scripts/UI/RuntimeSettingsMenu.cs,1628,9d4849c42e49dd1db863df8b4ba9de9ed28c50939f395c9240e98c3b1a466de0,11,0,15,12,0,0,RuntimeSettingsMenu | DebugSliderDragTarget
-Assets/Scripts/UI/SpeakingCharacterIndicator.cs,632,4b94d7845a9ebc6e29e5382b640d23a123e8fad4242b706f038a153e8ba76620,6,1,1,1,0,0,SpeakingCharacterIndicator
+Assets/Scripts/UI/SpeakingCharacterIndicator.cs,626,eb225e9a9ea10a63108c82202a03aff4c5d5500535c16d683882eed42d67293b,5,1,1,1,0,0,SpeakingCharacterIndicator
 Assets/Scripts/UI/SubtitleLine.cs,14,7ce3521c20ebebac91387915ec46b223bcfd8cf6c2dbabc7421aee8fd748c17a,0,0,0,0,0,0,
 Assets/Scripts/UI/SubtitleLineBank.cs,68,942b3e99275114dbe5affdcdae9e0cf9cbe160c11687d0c90f22d1a757a06916,0,0,0,0,0,0,
-Assets/Scripts/UI/SubtitleService.cs,804,53f2450de18cdc03edb1082c86244e5ed52a05ebb5455f98e7588f69ba453e3c,3,1,6,2,0,0,
+Assets/Scripts/UI/SubtitleService.cs,802,e4a46e7419e38a4173ab3a2be825fb27ddaaf6492f07a6a46b0f35d1d9d7fba2,3,1,6,2,0,0,
 Assets/Scripts/UrpPostProcessingBootstrap.cs,66,c0c27f893588c90de77680ba418dd6ee13acd7985a7ba099e343202f2b7b15af,1,0,0,1,1,0,
 Assets/_Chateau/Runtime/Core/ChateauBehaviour.cs,78,565840e1e0f4786e36c4aac39ef86655e3c2de7f1462873f90c4dc96d157f7c5,0,0,0,0,0,0,ChateauBehaviour
 Assets/_Chateau/Runtime/Core/GameContext.cs,26,446f0fb520ba281aa0f9f33d64b5fb3728b81e5d5b994d2226ff77aadea4ddc5,0,0,0,0,0,0,
@@ -97,7 +97,7 @@ Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,245,66ea4162715e
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,164,fbdd821a8687aace94f17e7d73ecd6bd409d5d6040d5443a799119f0acef44f9,3,0,3,0,0,0,Chapter1InteractionHUD
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,553,66c69d06013a3a26f9f8ed483fb4a4fcfa433bfa9fe0ed7879d722c042a113a9,4,0,0,0,0,0,Chapter1SceneAction
 Assets/_Chateau/Scripts/Chapter/Chapter01/GuestArrivalConfig.cs,146,af55b1038cac87f84b12310ab266473c26ddac2b7a3154fbe4ec308d01d8702d,0,0,0,1,0,0,
-Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs,1300,b811a64c9aecd3be36697271b13bae187075b3fa942b36cd10b915db6df0fdbe,7,1,0,1,0,0,
+Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs,1298,63d3eea8744d597334da94b292ed426b2eee2af37cb18c0221fdedd0c7d6ac90,7,1,0,1,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs,387,e230b6d027899f32f8382ed6f0417e39f62c02319639335ab840187c8a71b54c,2,0,0,0,0,0,Chapter2GuestFindAction
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs,2814,339937383a830fbe27785a43d6171ab8a6760e7f1258bfaca9b9e3df8cc3c674,6,3,1,2,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs,2745,663d7fdcc6b5cc17c96fdab797fba3881d94901103f711dfe58a23375606666a,6,0,2,3,0,0,

@@ -197,8 +197,17 @@ public sealed class ArchitectureFoundationTests
 
         string playbackText = File.ReadAllText("Assets/Scripts/Audio/GuestVoiceLinePlayback.cs");
         string indicatorText = File.ReadAllText("Assets/Scripts/UI/SpeakingCharacterIndicator.cs");
+        string dialogueText = File.ReadAllText("Assets/Scripts/Audio/DialogueSpeechService.cs");
+        string subtitleText = File.ReadAllText("Assets/Scripts/UI/SubtitleService.cs");
+        string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
         Assert.That(playbackText, Does.Not.Contain("GuestVoiceLinePlayback FindOrCreate"));
         Assert.That(indicatorText, Does.Not.Contain("SpeakingCharacterIndicator FindOrCreate"));
+        Assert.That(indicatorText, Does.Not.Contain("HideAnyCurrent"));
+        Assert.That(dialogueText, Does.Not.Contain("StopAnyCurrentSpeech"));
+        Assert.That(subtitleText, Does.Not.Contain("HideAnyCurrent"));
+        Assert.That(subtitleText, Does.Not.Contain("GuestVoiceLinePlayback.StopAnyCurrentLine"));
+        Assert.That(chapter2Text, Does.Not.Contain("StopAnyCurrentSpeech"));
+        Assert.That(sceneText, Does.Contain("speakingIndicator: {fileID: 1878887002}"));
         Assert.That(indicatorText, Does.Contain("new GameObject(SpriteObjectName)"), "Only the indicator's nested presentation child should remain lazy.");
     }
 

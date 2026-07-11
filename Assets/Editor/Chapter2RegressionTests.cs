@@ -720,8 +720,8 @@ public class Chapter2RegressionTests
         Assert.That(speechServiceText, Does.Contain("Input.GetKeyDown(KeyCode.Escape)"), "Escape should skip the active speech line without advancing the next line.");
         Assert.That(subtitleServiceText, Does.Contain("Button_SubtitleSkip"), "Subtitle UI should expose a small skip button during active speech.");
         Assert.That(subtitleServiceText, Does.Not.Contain("PlayForDialogue("), "Subtitle-only paths must not bypass DialogueSpeechService voice serialization.");
-        Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*GuestVoiceLinePlayback\.StopAnyCurrentLine\(\)"), "Room, teleport, and chapter clears should stop active dialog audio.");
-        Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*SpeakingCharacterIndicator\.HideAnyCurrent\(\)"), "Room, teleport, and chapter clears should also remove the speaker marker.");
+        Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*voicePlayback\?\.StopCurrentLine\(\)"), "Room, teleport, and chapter clears should stop active dialog audio through the serialized owner.");
+        Assert.That(subtitleServiceText, Does.Match(@"(?s)\bClearAll\s*\([^)]*\)\s*\{.*speakingIndicator\?\.Hide\(\)"), "Room, teleport, and chapter clears should remove the speaker marker through the serialized owner.");
         Assert.That(speakingIndicatorText, Does.Contain("DefaultSpriteResourcePath = \"UI/chat_bubble\""), "The marker should load the approved cutout chat bubble sprite from Resources.");
         Assert.That(speakingIndicatorText, Does.Contain("FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include)"), "Guest speech should resolve to the visible ActorRoomState instead of a fixed screen coordinate.");
         Assert.That(speakingIndicatorText, Does.Contain("GuestDisplayNames"), "Display-name dialogue should map back to the correct guest actor.");

@@ -1102,7 +1102,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     public void ClearSubtitles()
     {
         speechService?.StopCurrentSpeech();
-        DialogueSpeechService.StopAnyCurrentSpeech();
         subtitleService?.ClearAll();
     }
 
@@ -1245,7 +1244,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
         if (dialogueVoiceChoiceRoutine != null || speechService != null)
         {
             speechService?.StopCurrentSpeech();
-            DialogueSpeechService.StopAnyCurrentSpeech();
             dialogueVoiceChoiceRoutine = null;
         }
 

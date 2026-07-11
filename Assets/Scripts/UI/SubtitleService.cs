@@ -176,9 +176,8 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
         queuedSubtitles.Clear();
         skipCurrentLineRequested = false;
         HideCurrent();
-        SpeakingCharacterIndicator.HideAnyCurrent();
+        speakingIndicator?.Hide();
         voicePlayback?.StopCurrentLine();
-        GuestVoiceLinePlayback.StopAnyCurrentLine();
     }
 
     public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
@@ -642,9 +641,8 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
         }
 
         SetVisible(false);
-        SpeakingCharacterIndicator.HideAnyCurrent();
+        speakingIndicator?.Hide();
         voicePlayback?.StopCurrentLine();
-        GuestVoiceLinePlayback.StopAnyCurrentLine();
     }
 
     private bool TryResolveLine(

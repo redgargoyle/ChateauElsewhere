@@ -54,12 +54,6 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
         public string Text { get; }
     }
 
-    public static void StopAnyCurrentSpeech()
-    {
-        DialogueSpeechService existing = FindAnyObjectByType<DialogueSpeechService>(FindObjectsInactive.Include);
-        existing?.StopCurrentSpeech();
-    }
-
     public Coroutine BeginSpeakLine(
         string lineId,
         string speakerId,
@@ -115,7 +109,6 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
         voicePlayback?.StopCurrentLine();
         subtitleService?.HideCurrent();
         speakingIndicator?.Hide();
-        SpeakingCharacterIndicator.HideAnyCurrent();
         ClearActiveSpeechInfo();
 
         return interruption;
