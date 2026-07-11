@@ -236,6 +236,21 @@ public sealed class ArchitectureFoundationTests
         Assert.That(indicatorText, Does.Contain("new GameObject(SpriteObjectName)"), "Only the indicator's nested presentation child should remain lazy.");
     }
 
+    [Test]
+    public void RuntimeSettingsOwnerIsSerializedOnce()
+    {
+        string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+
+        Assert.That(CountOccurrences(sceneText, "guid: 06d3a7eb4f7d428f9bc3e64b6c47f0b6"), Is.EqualTo(1));
+        Assert.That(sceneText, Does.Contain("runtimeSettingsMenu: {fileID: 1878887112}"));
+        Assert.That(sceneText, Does.Contain("m_Name: Canvas_RuntimeSettingsMenu"));
+        Assert.That(sceneText, Does.Contain("m_SortingOrder: 10050"));
+        Assert.That(sceneText, Does.Contain("m_ReferenceResolution: {x: 1366, y: 768}"));
+        Assert.That(sceneText, Does.Contain("chapterManager: {fileID: 3301000004}"));
+        Assert.That(sceneText, Does.Contain("chapterClock: {fileID: 3301000001}"));
+        Assert.That(sceneText, Does.Contain("explorationMusicSource: {fileID: 2201000003}"));
+    }
+
     private static int CountOccurrences(string text, string value)
     {
         return text.Split(new[] { value }, StringSplitOptions.None).Length - 1;

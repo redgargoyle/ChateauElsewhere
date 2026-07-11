@@ -55,7 +55,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
         Music
     }
 
-    private RoomNavigationManager navigationManager;
+    [SerializeField] private RoomNavigationManager navigationManager;
     private RectTransform rootRect;
     private RectTransform settingsOverlay;
     private RectTransform settingsPanel;
@@ -93,9 +93,9 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private RectTransform musicAudioSliderHandle;
     private TMP_InputField musicAudioInput;
     private TMP_Text musicAudioLabel;
-    private ChapterManager chapterManager;
-    private ChapterClock chapterClock;
-    private AudioSource explorationMusicSource;
+    [SerializeField] private ChapterManager chapterManager;
+    [SerializeField] private ChapterClock chapterClock;
+    [SerializeField] private AudioSource explorationMusicSource;
     private float explorationMusicBaseVolume = -1f;
     private bool loggedExplorationMusicStartFailure;
     private float timeScaleBeforeSettings = 1f;

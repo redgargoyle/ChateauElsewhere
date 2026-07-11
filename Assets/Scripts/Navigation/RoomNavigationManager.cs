@@ -54,7 +54,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
     private string currentRoom;
     private bool applyVisualForNextRoomChange;
     private TMP_Text currentRoomHudText;
-    private RuntimeSettingsMenu runtimeSettingsMenu;
+    [SerializeField] private RuntimeSettingsMenu runtimeSettingsMenu;
     private FireplaceAmbienceController fireplaceAmbienceController;
     private ClockTickingAmbienceController clockTickingAmbienceController;
 
@@ -63,6 +63,16 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
     public RoomVisualCatalog VisualCatalog => roomVisualCatalog;
     public DoorCameraSequence CameraSequence => doorCameraSequence;
     public IReadOnlyDictionary<string, RoomDefinition> RoomsByName => roomsByName;
+
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        base.ValidateConfiguration(report);
+
+        if (runtimeSettingsMenu == null)
+        {
+            report.AddError("RoomNavigationManager requires its serialized RuntimeSettingsMenu owner.", this);
+        }
+    }
     public IReadOnlyDictionary<string, DoorRoute> RoutesByDoorId => routesByDoorId;
     public RoomChangedEvent OnCurrentRoomChanged => onCurrentRoomChanged;
 

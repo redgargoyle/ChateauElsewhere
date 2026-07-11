@@ -80,7 +80,7 @@ Assets/Scripts/MainMenuController.cs,MainMenuController,1516,4,1,Migrate/review,
 Assets/Scripts/UI/CursorStyleCatalog.cs,CursorStyleCatalog,151,31,0,Migrate/review,UI / Input,7,"Map to UIService, InputRouter, or a narrow view."
 Assets/Scripts/UI/NavigationCursorHoverTarget.cs,NavigationCursorHoverTarget,100,7,0,Migrate/review,UI / Input,7,"Map to UIService, InputRouter, or a narrow view."
 Assets/Scripts/UI/PostProcessSafeCanvasUtility.cs,PostProcessSafeCanvasUtility,125,6,0,Migrate/review,UI / Input,7,"Map to UIService, InputRouter, or a narrow view."
-Assets/Scripts/UI/RuntimeSettingsMenu.cs,RuntimeSettingsMenu,1628,29,0,Migrate/review,UI / Input,7,"Map to UIService, InputRouter, or a narrow view."
+Assets/Scripts/UI/RuntimeSettingsMenu.cs,RuntimeSettingsMenu,1628,29,1,Migrate/review,UIService / SettingsView,7,Serialized once under a correctly scaled canvas and explicitly bound to navigation/chapter/clock/music; root/canvas factory removal is separately gated while controls remain lazy.
 Assets/Scripts/UI/SpeakingCharacterIndicator.cs,SpeakingCharacterIndicator,649,17,1,Migrate/review,DialogueView,7,Serialized once with explicit bubble sprite and bound to DialogueSpeechService; root factory removed while the bubble child stays lazy.
 Assets/Scripts/UI/SubtitleLine.cs,SubtitleLine,14,7,0,Migrate/review,UI / Input,7,"Map to UIService, InputRouter, or a narrow view."
 Assets/Scripts/UI/SubtitleLineBank.cs,SubtitleSpeakerPortraitBinding | SubtitleLineBank,68,11,2,Migrate/review,UI / Input,7,"Map to UIService, InputRouter, or a narrow view."

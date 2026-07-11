@@ -43,7 +43,7 @@ Assets/Scripts/Navigation/DoorPromptSequenceController.cs,274,1df3a04ad7b861d357
 Assets/Scripts/Navigation/DoorTriggerNavigation.cs,1401,5138892973a2cd609991f2dd9d8777b657b0501225dcd69a338ea73c403182c3,4,2,0,0,1,0,DoorTriggerNavigation
 Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,179,700da61bfec106c114c48f9be426c4581299bfdf5bd1d1486bb0920867790c5b,0,0,0,0,0,0,ObjectMovementBlocker2D
 Assets/Scripts/Navigation/RoomContentGroup.cs,256,2e326000243b12f6bf243bb6d88342100cde82a0b9a1d96d312e6ca1f80a96f8,0,0,0,0,0,0,RoomContentGroup
-Assets/Scripts/Navigation/RoomNavigationManager.cs,1268,6c8f3891876ab71ccd46d3f44cfef3068686c83298e1b9ffec513447148221c8,16,3,1,0,0,0,
+Assets/Scripts/Navigation/RoomNavigationManager.cs,1278,e4adf3eb9ef084c6cda07249e2f7a7d644658b433cb57bc4e4192d4bcacab278,16,3,1,0,0,0,
 Assets/Scripts/Navigation/RoomVisualCatalog.cs,45,b4f13f7b9b7408417349da34bfb2bdba0f94f1153a5a95723ecebfd2d9ecb82c,0,0,0,0,0,0,
 Assets/Scripts/Oddities/OdditySpriteAnimator.cs,246,3202fd562a345dfcac11fc92f5ff6b2a21c1a92421b5e5116d41dca28e014e95,0,0,0,0,0,0,OdditySpriteAnimator
 Assets/Scripts/PlayerMovement.cs,300,31c9b36c0da4d8d2400eecf69af5cef09a40479fbdb46db59a5a83631937875b,0,0,0,0,0,0,PlayerMovement
@@ -68,7 +68,7 @@ Assets/Scripts/Story/RoomAnchor.cs,73,24692d69b8889c20f10a7db220685942dc1fee1107
 Assets/Scripts/UI/CursorStyleCatalog.cs,151,e01bb46c0695870676f9e1f6ef69265ca67cb377d7680523528b06163501ff33,0,1,0,0,0,3,
 Assets/Scripts/UI/NavigationCursorHoverTarget.cs,100,e82ebf78e5b957d6319e5e8471528aa46014b47a75bf3e94d897dd6c6bc7af71,0,0,0,0,0,0,NavigationCursorHoverTarget
 Assets/Scripts/UI/PostProcessSafeCanvasUtility.cs,125,af5f76cac6062a8f1acdfb6c5d916912f83f1fedfc28fbe2ed1db92607f8f196,3,0,1,3,0,0,
-Assets/Scripts/UI/RuntimeSettingsMenu.cs,1623,b1d62f5e04ba58e21888b22cd880a9b0a19a784bb539a5ca044b8ba9ffb026b5,10,0,15,12,0,0,RuntimeSettingsMenu | DebugSliderDragTarget
+Assets/Scripts/UI/RuntimeSettingsMenu.cs,1623,4b5bef6c5d07c1904c35a04930978cc53de21c261130b6b2dafdef9bd9aa0803,10,0,15,12,0,0,RuntimeSettingsMenu | DebugSliderDragTarget
 Assets/Scripts/UI/SpeakingCharacterIndicator.cs,626,eb225e9a9ea10a63108c82202a03aff4c5d5500535c16d683882eed42d67293b,5,1,1,1,0,0,SpeakingCharacterIndicator
 Assets/Scripts/UI/SubtitleLine.cs,14,7ce3521c20ebebac91387915ec46b223bcfd8cf6c2dbabc7421aee8fd748c17a,0,0,0,0,0,0,
 Assets/Scripts/UI/SubtitleLineBank.cs,68,942b3e99275114dbe5affdcdae9e0cf9cbe160c11687d0c90f22d1a757a06916,0,0,0,0,0,0,
