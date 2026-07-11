@@ -71,6 +71,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         GuestRoomScaleCalibration serializedGuestScaleCalibration = RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>();
         GuestVoiceLinePlayback serializedVoicePlayback = RequireExactlyOneInActiveScene<GuestVoiceLinePlayback>();
         SpeakingCharacterIndicator serializedSpeakingIndicator = RequireExactlyOneInActiveScene<SpeakingCharacterIndicator>();
+        RuntimeSettingsMenu runtimeSettings = RequireExactlyOneInActiveScene<RuntimeSettingsMenu>();
         RoomLightingController lighting = RequireExactlyOneInActiveScene<RoomLightingController>();
 
         Assert.That(cameraManager, Is.Not.Null);
@@ -88,6 +89,20 @@ public sealed class GameplayLifecycleCharacterizationTests
         Canvas chapter1Canvas = FindInActiveScene<Canvas>().Single(item => item.name == "Canvas_Chapter1HUD");
         Assert.That(chapter1Canvas.sortingOrder, Is.EqualTo(9100));
         Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Text_Chapter1Status"), Is.EqualTo(1));
+        Canvas settingsCanvas = FindInActiveScene<Canvas>().Single(item => item.name == "Canvas_RuntimeSettingsMenu");
+        Assert.That(settingsCanvas.sortingOrder, Is.EqualTo(10050));
+        Assert.That(settingsCanvas.transform.localScale, Is.Not.EqualTo(Vector3.zero));
+        Button settingsButton = FindInActiveScene<Button>().Single(item => item.name == "Button_Settings");
+        Assert.That(RuntimeSettingsMenu.BlocksGameInput, Is.False);
+        Assert.That(Time.timeScale, Is.EqualTo(1f));
+        settingsButton.onClick.Invoke();
+        yield return null;
+        Assert.That(RuntimeSettingsMenu.BlocksGameInput, Is.True);
+        Assert.That(Time.timeScale, Is.Zero);
+        settingsButton.onClick.Invoke();
+        yield return null;
+        Assert.That(RuntimeSettingsMenu.BlocksGameInput, Is.False);
+        Assert.That(Time.timeScale, Is.EqualTo(1f));
         Assert.That(gameRoot.IsInitialized, Is.True);
         Assert.That(gameRoot.Database, Is.Not.Null);
         Assert.That(gameRoot.Context, Is.Not.Null);
@@ -209,8 +224,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<Chapter1InteractionHUD>(), Is.SameAs(chapter1Hud));
         Assert.That(RequireExactlyOneInActiveScene<RoomLightingController>(), Is.SameAs(lighting));
         Assert.That(RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>(), Is.SameAs(gameRoot));
+        Assert.That(RequireExactlyOneInActiveScene<RuntimeSettingsMenu>(), Is.SameAs(runtimeSettings));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
+        Assert.That(RequireExactlyOneInActiveScene<RuntimeSettingsMenu>(), Is.SameAs(runtimeSettings));
 
         speech.BeginSpeakLine(
             "ARCH_LIFECYCLE_SKIP_DIALOGUE",
