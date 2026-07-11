@@ -6,7 +6,7 @@ Assets/Scripts/Audio/ClockTickingAmbienceController.cs,279,6ea68182fe1436690c313
 Assets/Scripts/Audio/DialogueSpeechService.cs,344,3a2ac47249d01842b1d4b742dad75f0836d7184b6dcdf0d7d3d92b12e1cb5f15,1,0,0,0,0,0,
 Assets/Scripts/Audio/DoorOpenSoundCatalog.cs,49,718fca57d99144bd832a09fa83a7428d2056eb0b4baa79c2bb00b1b280e5f9e7,0,0,0,0,0,0,
 Assets/Scripts/Audio/FireplaceAmbienceCatalog.cs,161,5d845c3f37d8a508ffd3dc71927e654f9495de69ccc95ac107c25242b006b73b,0,0,0,0,0,0,
-Assets/Scripts/Audio/FireplaceAmbienceController.cs,267,8f2847d6829a061ebdf5c604d3eafeaf8273f16d62e9035397ba7d1ee7324f52,3,1,1,2,0,0,FireplaceAmbienceController
+Assets/Scripts/Audio/FireplaceAmbienceController.cs,267,f9369f7f1716d88537aa4024453c1b7853904b61321500279e2825a2021a03ab,3,1,1,2,0,0,FireplaceAmbienceController
 Assets/Scripts/Audio/GameAudioChannel.cs,7,92f2a842477462d9437a49e84a470440208900e7443b9ea242fad31dee7d7236,0,0,0,0,0,0,
 Assets/Scripts/Audio/GameAudioSettings.cs,203,e499bbcaa83a98bba5916b747d8833458f69e0c85a239df22918f02ff88aa500,0,0,0,1,0,3,
 Assets/Scripts/Audio/GameAudioSourceVolume.cs,65,f31ae5aadff8a268ef0f277dd725dcd1269a6f043c92acd35a124e96b9ee3b73,0,0,0,0,0,0,GameAudioSourceVolume
@@ -43,7 +43,7 @@ Assets/Scripts/Navigation/DoorPromptSequenceController.cs,274,1df3a04ad7b861d357
 Assets/Scripts/Navigation/DoorTriggerNavigation.cs,1401,5138892973a2cd609991f2dd9d8777b657b0501225dcd69a338ea73c403182c3,4,2,0,0,1,0,DoorTriggerNavigation
 Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,179,700da61bfec106c114c48f9be426c4581299bfdf5bd1d1486bb0920867790c5b,0,0,0,0,0,0,ObjectMovementBlocker2D
 Assets/Scripts/Navigation/RoomContentGroup.cs,256,2e326000243b12f6bf243bb6d88342100cde82a0b9a1d96d312e6ca1f80a96f8,0,0,0,0,0,0,RoomContentGroup
-Assets/Scripts/Navigation/RoomNavigationManager.cs,1270,f35e4186a6d5697d122319f0aa54a3c948e7251238a5c849924060924432d300,16,3,1,0,0,0,
+Assets/Scripts/Navigation/RoomNavigationManager.cs,1280,aa37d41f688d8c77b62e6edcac9938f83a5f49a40ed96053f5d39161c7327005,16,3,1,0,0,0,
 Assets/Scripts/Navigation/RoomVisualCatalog.cs,45,b4f13f7b9b7408417349da34bfb2bdba0f94f1153a5a95723ecebfd2d9ecb82c,0,0,0,0,0,0,
 Assets/Scripts/Oddities/OdditySpriteAnimator.cs,246,3202fd562a345dfcac11fc92f5ff6b2a21c1a92421b5e5116d41dca28e014e95,0,0,0,0,0,0,OdditySpriteAnimator
 Assets/Scripts/PlayerMovement.cs,300,31c9b36c0da4d8d2400eecf69af5cef09a40479fbdb46db59a5a83631937875b,0,0,0,0,0,0,PlayerMovement

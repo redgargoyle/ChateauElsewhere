@@ -54,10 +54,10 @@ Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs,Ch
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs,Chapter2GuestPanicController,2814,9,1,Extract beat,PanicAndScatterBeat,6,Serialized once and explicitly bound through Chapter2Controller/GameRoot; top-level factory removed. Actor behavior moves to actor components.
 Assets/Scripts/Audio/Chapter2PanicScreamCatalog.cs,Chapter2PanicScreamCatalog,46,5,1,Migrate/review,Audio / Narrative,7,"Map to AudioService, DialogueService, emitter, or data catalog."
 Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs,ClockTickingAmbienceCatalog,256,7,1,Migrate/review,Audio / Narrative,7,"Map to AudioService, DialogueService, emitter, or data catalog."
-Assets/Scripts/Audio/ClockTickingAmbienceController.cs,ClockTickingAmbienceController,279,10,0,Migrate/review,Audio / Narrative,7,"Map to AudioService, DialogueService, emitter, or data catalog."
+Assets/Scripts/Audio/ClockTickingAmbienceController.cs,ClockTickingAmbienceController,279,10,0,Migrate/review,AudioService / RoomAmbience,7,Serialized once under GameRoot with explicit navigation/catalog/source; root and source factories remain until the separate removal gate.
 Assets/Scripts/Audio/DoorOpenSoundCatalog.cs,DoorOpenSoundCatalog,49,8,2,Migrate/review,Audio / Narrative,7,"Map to AudioService, DialogueService, emitter, or data catalog."
 Assets/Scripts/Audio/FireplaceAmbienceCatalog.cs,FireplaceAmbienceCatalog,161,4,1,Migrate/review,Audio / Narrative,7,"Map to AudioService, DialogueService, emitter, or data catalog."
-Assets/Scripts/Audio/FireplaceAmbienceController.cs,FireplaceAmbienceController,267,9,0,Migrate/review,Audio / Narrative,7,"Map to AudioService, DialogueService, emitter, or data catalog."
+Assets/Scripts/Audio/FireplaceAmbienceController.cs,FireplaceAmbienceController,267,9,0,Migrate/review,AudioService / RoomAmbience,7,Serialized once under GameRoot with explicit navigation/catalog/source/filter; root and component factories remain until the separate removal gate.
 Assets/Scripts/Audio/GameAudioChannel.cs,GameAudioChannel,7,0,0,Migrate/review,Audio / Narrative,7,"Map to AudioService, DialogueService, emitter, or data catalog."
 Assets/Scripts/Audio/GameAudioSettings.cs,GameAudioSettings,203,60,0,Migrate/review,Audio / Narrative,7,"Map to AudioService, DialogueService, emitter, or data catalog."
 Assets/Scripts/Audio/GameAudioSourceVolume.cs,GameAudioSourceVolume,65,6,0,Migrate/review,Audio / Narrative,7,"Map to AudioService, DialogueService, emitter, or data catalog."

@@ -40,11 +40,11 @@ Assets/Editor/UnityEditorAudioGuard.cs,a6f182e29ad94eacb1cd713a19faf922,0,
 Assets/Map/CameraManager.cs,e3c8ce10745e87c74bfcf89d573dfebf,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Audio/Chapter2PanicScreamCatalog.cs,728ee02e55374da3a1518010ecb7de91,1,Assets/Resources/Audio/Chapter2PanicScreamCatalog.asset:1
 Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs,4d153adbd70fda53513c371badfa093b,1,Assets/Resources/Audio/ClockTickingAmbienceCatalog.asset:1
-Assets/Scripts/Audio/ClockTickingAmbienceController.cs,65e29c4687b6bad242fac7bcb6849828,0,
+Assets/Scripts/Audio/ClockTickingAmbienceController.cs,65e29c4687b6bad242fac7bcb6849828,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Audio/DialogueSpeechService.cs,6790d7832e9a441c9535d395e3c75084,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Audio/DoorOpenSoundCatalog.cs,9688b4be97d24912b44c9495cae7e9c2,2,Assets/Resources/Audio/StairwaySoundCatalog.asset:1 | Assets/Resources/Audio/DoorOpenSoundCatalog.asset:1
 Assets/Scripts/Audio/FireplaceAmbienceCatalog.cs,926ef3a5f44c4152b79ea814a82314a9,1,Assets/Resources/Audio/FireplaceAmbienceCatalog.asset:1
-Assets/Scripts/Audio/FireplaceAmbienceController.cs,c5d8eebb18904780a5d77a1c9da6ce6f,0,
+Assets/Scripts/Audio/FireplaceAmbienceController.cs,c5d8eebb18904780a5d77a1c9da6ce6f,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Audio/GameAudioChannel.cs,8fe4e69ce16b4d3e95089bb59143a5c4,0,
 Assets/Scripts/Audio/GameAudioSettings.cs,1b9a0f792f8f43148bda82fe619819c6,0,
 Assets/Scripts/Audio/GameAudioSourceVolume.cs,5161da2d2e1b408d859e3792f47407f4,0,

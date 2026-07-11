@@ -260,6 +260,24 @@ public sealed class ArchitectureFoundationTests
         Assert.That(settingsText, Does.Contain("FindOrCreateSettingsOverlay"), "Nested settings controls remain deliberate owner-scoped view construction.");
     }
 
+    [Test]
+    public void RoomAmbienceOwnersAreSerializedOnce()
+    {
+        string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+
+        Assert.That(CountOccurrences(sceneText, "guid: c5d8eebb18904780a5d77a1c9da6ce6f"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(sceneText, "guid: 65e29c4687b6bad242fac7bcb6849828"), Is.EqualTo(1));
+        Assert.That(sceneText, Does.Contain("fireplaceAmbienceController: {fileID: 2201000025}"));
+        Assert.That(sceneText, Does.Contain("clockTickingAmbienceController: {fileID: 2201000034}"));
+        Assert.That(sceneText, Does.Contain("catalog: {fileID: 11400000, guid: 950e4008c31a44739c468b6ccd0efd68, type: 2}"));
+        Assert.That(sceneText, Does.Contain("catalog: {fileID: 11400000, guid: d1c5479f74b94514cdf7a37d49f95fbe, type: 2}"));
+        Assert.That(sceneText, Does.Contain("audioSource: {fileID: 2201000023}"));
+        Assert.That(sceneText, Does.Contain("highPassFilter: {fileID: 2201000024}"));
+        Assert.That(sceneText, Does.Contain("audioSource: {fileID: 2201000033}"));
+        Assert.That(sceneText, Does.Match(@"--- !u!4 &2201000022[\s\S]*?m_GameObject: \{fileID: 2201000021\}[\s\S]*?m_Father: \{fileID: 1878886999\}"));
+        Assert.That(sceneText, Does.Match(@"--- !u!4 &2201000032[\s\S]*?m_GameObject: \{fileID: 2201000031\}[\s\S]*?m_Father: \{fileID: 1878886999\}"));
+    }
+
     private static int CountOccurrences(string text, string value)
     {
         return text.Split(new[] { value }, StringSplitOptions.None).Length - 1;

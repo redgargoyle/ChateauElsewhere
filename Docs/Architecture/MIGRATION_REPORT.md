@@ -50,13 +50,14 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized the RuntimeSettingsMenu owner and correctly scaled overlay canvas under GameRoot, explicitly wiring navigation, chapter, clock, and exploration-music dependencies while keeping controls lazy.
 - Removed RuntimeSettingsMenu's global/root/canvas factory and made navigation initialize the serialized owner directly; nested controls remain lazy inside that owner.
 - Characterized fireplace and clock ambience before changing ownership: each has a distinct 2D looping source and assigned entrance clip, only fireplace has an enabled high-pass filter, and both owner/source identities survive room travel.
+- Serialized dedicated fireplace and clock ambience owners under GameRoot, explicitly binding navigation, catalogs, separate AudioSources, and the fireplace high-pass filter while retaining the old factories for a separate removal gate.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,363 | +461 |
+| Runtime C# lines | 49,902 | 50,373 | +471 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
 | `FindObject*`/`GameObject.Find` | 199 | 177 | -22 |
 | `Resources.Load` | 27 | 27 | 0 |
@@ -86,7 +87,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - the Chapter 1 HUD graft audit passed 5/5 checks: one owner document added, only its GameObject/controller changed, and all old document order stayed exact;
 - the RuntimeSettings owner graft audit passed 7/7 checks: eight documents added under GameRoot, only navigation/root-transform changed, and SceneRoots/old document order stayed exact;
 - the focused ambience characterization passed and the full-suite gate retained the exact baseline failure-name set;
-- the full EditMode discovery count is 231: 180 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
+- the ambience-owner graft audit passed 6/6 checks: nine documents added, only navigation/root-transform changed, every old document retained its exact order, and SceneRoots stayed byte-identical;
+- the full EditMode discovery count is 232: 181 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
 - the ChapterManager dialogue-binding gate produced two consecutive clean full-suite reruns after one transient full-run GameView zoom assertion; no files changed between those three runs, and both reruns restored the exact `0.752865` entrance multiplier;
@@ -115,8 +117,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Serialize the characterized fireplace and clock ambience owners under GameRoot with dedicated AudioSources and explicit catalog/navigation references.
-2. Remove their root/self-repair factories only after the serialized-owner lifecycle and scene-structure gates pass.
-3. Characterize and migrate one Drawing Room set-piece cutout as the first `World / Rooms / Props / Set Pieces` vertical slice.
+1. Remove the fireplace/clock root and component-repair factories now that their serialized-owner lifecycle and scene-structure gates pass.
+2. Characterize the Drawing Room tea-table cutout's exact sorting/collision behavior.
+3. Migrate only that cutout as the first `World / Rooms / Props / Set Pieces` vertical slice.
 
 Do not begin bulk deletion until those gates pass.

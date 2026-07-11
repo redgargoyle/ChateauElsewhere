@@ -140,7 +140,8 @@ public class NavigationRegressionTests
             "Assets/Audio/clock-ticking/04_wristwatch_tiny_ticks_audioldm2_seed1320123_48khz.wav"
         };
 
-        Assert.That(navigationText, Does.Contain("ClockTickingAmbienceController"), "Room navigation should create the ticking controller with the other room ambience systems.");
+        Assert.That(navigationText, Does.Contain("[SerializeField] private FireplaceAmbienceController fireplaceAmbienceController"), "Room navigation should own its serialized fireplace ambience controller.");
+        Assert.That(navigationText, Does.Contain("[SerializeField] private ClockTickingAmbienceController clockTickingAmbienceController"), "Room navigation should own its serialized clock ambience controller.");
         Assert.That(navigationText, Does.Match(@"EnsureFireplaceAmbienceController\(\);[\s\S]*EnsureClockTickingAmbienceController\(\);"), "Room changes should refresh fireplace and clock ambience together.");
         Assert.That(controllerText, Does.Contain("DefaultCatalogResourcePath = \"Audio/ClockTickingAmbienceCatalog\""));
         Assert.That(controllerText, Does.Contain("audioSource.loop = true"), "Clock ticking should loop while the player remains in a clock room.");

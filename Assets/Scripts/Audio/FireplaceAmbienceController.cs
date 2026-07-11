@@ -12,13 +12,13 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
     [SerializeField] private FireplaceAmbienceCatalog catalog;
     [SerializeField] private string catalogResourcePath = DefaultCatalogResourcePath;
     [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioHighPassFilter highPassFilter;
     [SerializeField, Min(10f)] private float highPassCutoffFrequency = DefaultHighPassCutoffFrequency;
     [SerializeField, Range(0.1f, 10f)] private float highPassResonanceQ = 1f;
 
     private int lastClipIndex = -1;
     private float activeBaseVolume;
     private Coroutine fadeRoutine;
-    private AudioHighPassFilter highPassFilter;
 
     public static FireplaceAmbienceController FindOrCreate(RoomNavigationManager navigationManager)
     {
