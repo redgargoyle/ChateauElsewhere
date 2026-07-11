@@ -921,6 +921,12 @@ public sealed class GuestRoomScaleRegressionTests
         try
         {
             PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            butler.transform.localPosition = new Vector3(17f, -23f, 4f);
+            butler.transform.localRotation = Quaternion.Euler(0f, 0f, 13f);
+            butler.transform.localScale = new Vector3(1.25f, 0.75f, 1f);
+            Vector3 expectedPosition = butler.transform.localPosition;
+            Quaternion expectedRotation = butler.transform.localRotation;
+            Vector3 expectedScale = butler.transform.localScale;
             movement.SetEditorSelectedButlerScaleRoomId("Drawing Room");
 
             string[] rooms = GuestRoomScaleMasterWindow.BuildRoomOptions(null, movement);
@@ -936,6 +942,77 @@ public sealed class GuestRoomScaleRegressionTests
             GuestRoomScaleMasterWindow.SelectGuestScaleRoom(movement, "Grand Entrance Hall");
 
             Assert.That(movement.EditorSelectedButlerScaleRoomId, Is.EqualTo("Grand Entrance Hall"));
+            Assert.That(butler.transform.localPosition, Is.EqualTo(expectedPosition));
+            Assert.That(butler.transform.localRotation, Is.EqualTo(expectedRotation));
+            Assert.That(butler.transform.localScale, Is.EqualTo(expectedScale));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(butler);
+        }
+    }
+
+    [Test]
+    public void GuestSizeMasterRepaintAndRoomSelectionPathsDoNotMutateButlerScale()
+    {
+        string text = File.ReadAllText(GuestRoomScaleMasterWindowPath);
+        int drawStart = text.IndexOf(
+            "private GuestRoomScaleMode DrawScaleModeSelection",
+            StringComparison.Ordinal);
+        int drawEnd = text.IndexOf("private void DrawAdvanced", drawStart, StringComparison.Ordinal);
+        int selectStart = text.IndexOf(
+            "internal static void SelectGuestScaleRoom",
+            StringComparison.Ordinal);
+        int selectEnd = text.IndexOf(
+            "private static RoomNavigationManager FindSceneNavigationManager",
+            selectStart,
+            StringComparison.Ordinal);
+
+        Assert.That(drawStart, Is.GreaterThanOrEqualTo(0));
+        Assert.That(drawEnd, Is.GreaterThan(drawStart));
+        Assert.That(selectStart, Is.GreaterThanOrEqualTo(0));
+        Assert.That(selectEnd, Is.GreaterThan(selectStart));
+
+        string drawMethod = text.Substring(drawStart, drawEnd - drawStart);
+        string selectMethod = text.Substring(selectStart, selectEnd - selectStart);
+
+        Assert.That(drawMethod, Does.Not.Contain("SelectGuestScaleRoom"));
+        Assert.That(drawMethod, Does.Not.Contain("RefreshPerspectiveScaleNow"));
+        Assert.That(selectMethod, Does.Not.Contain("RefreshPerspectiveScaleNow"));
+        Assert.That(selectMethod, Does.Not.Contain("butler.transform"));
+    }
+
+    [Test]
+    public void EntranceButlerScaleContractKeepsGuestArrivalDoorAtApprovedBackScale()
+    {
+        GameObject butler = CreatePointClickPlayer("player", Vector3.one);
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            movement.CaptureCurrentTransformAsButlerCalibrationBaseScale();
+            movement.SetButlerFrontFinalLocalScaleForRoom(
+                "Grand Entrance Hall",
+                -381.67844f,
+                2.1461537f,
+                false);
+            movement.SetButlerBackFinalLocalScaleForRoom(
+                "Grand Entrance Hall",
+                -98.47123f,
+                0.661823f,
+                false);
+
+            Assert.That(
+                movement.TryEvaluateButlerFinalLocalScaleForRoomAtY(
+                    "Grand Entrance Hall",
+                    -94f,
+                    out Vector3 finalScale,
+                    out float depth01,
+                    out float finalLocalScaleY),
+                Is.True);
+            Assert.That(depth01, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(finalLocalScaleY, Is.EqualTo(0.661823f).Within(0.0001f));
+            Assert.That(finalScale.y, Is.EqualTo(0.661823f).Within(0.0001f));
         }
         finally
         {

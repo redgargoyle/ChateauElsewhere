@@ -246,7 +246,6 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         GuestRoomScaleMode currentMode)
     {
         EditorGUILayout.LabelField("Scale Rule", ScaleModeOptions[0]);
-        SelectGuestScaleRoom(butler, selectedRoom);
         return ScaleModeValues[0];
     }
 
@@ -1093,11 +1092,8 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         Undo.RecordObject(butler, "Select Guest Scale Room");
-        Undo.RecordObject(butler.transform, "Select Guest Scale Room");
         butler.SetEditorSelectedButlerScaleRoomId(roomId);
-        butler.RefreshPerspectiveScaleNow(true);
         EditorUtility.SetDirty(butler);
-        EditorUtility.SetDirty(butler.transform);
     }
 
     private static RoomNavigationManager FindSceneNavigationManager()
