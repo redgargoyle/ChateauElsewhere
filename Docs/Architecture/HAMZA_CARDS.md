@@ -73,6 +73,19 @@ There is one current-room owner and one room-visibility owner.
 
 ---
 
+## Card 6A — L2: prop/set-piece path
+
+```text
+RoomView
+  +-- SetPieceView             cutout sprite + room-local occlusion anchor
+  +-- RoomNavigationGeometry   boundary + no-walk footprints
+  +-- RoomDepthResolver        pure room-local Y -> sorting order
+```
+
+Couches, desks, beds, toys, chairs, tables and similar cutouts are Props. Collision blocks walking; it never owns visual sorting. Static props do not need a per-frame manager.
+
+---
+
 ## Card 7 — L2: actor path
 
 ```text
@@ -96,6 +109,8 @@ For each important state, ask: **who alone may write it?**
 - time: Clock;
 - room: Navigation;
 - room visibility: Room View;
+- prop visual/sort: Set Piece View;
+- walk boundary/prop footprints: Room Navigation Geometry;
 - actor state: Actor Controller;
 - actor transform presentation: Actor Presenter;
 - movement: Actor Motor;

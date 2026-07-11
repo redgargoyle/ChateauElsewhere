@@ -60,7 +60,7 @@ Only after Phase 2 passes:
 
 Exit condition: required managers are never created via `new GameObject` or `AddComponent` at runtime.
 
-## Phase 4 — Canonical rooms and navigation vertical slice
+## Phase 4 — Canonical rooms, navigation, and set-piece props
 
 Build one complete route through the target architecture before touching every door:
 
@@ -71,6 +71,24 @@ InteractionRouter -> PassageInteraction -> NavigationService
 
 Create stable `RoomDefinition`, `PassageDefinition`, `RoomView`, `Passage`, and arrival-anchor data. Migrate one round trip, test it, then migrate the remaining routes.
 
+Room-local object cutouts are first-class props:
+
+```text
+RoomDefinition -> RoomView -> SetPieceView -> RoomDepthResolver
+                         \-> RoomNavigationGeometry -> ActorMotor
+```
+
+- `SetPieceView` owns the visual cutout, a room-local occlusion anchor, and a sorting offset.
+- `RoomNavigationGeometry` owns the room boundary and authored no-walk footprints.
+- couches, desks, beds, toys, chairs, tables, and similar scenery use shared definitions/views rather than object-specific managers;
+- static set pieces do not recompute sorting every frame;
+- sorting never depends on world-space `Renderer.bounds` or `Collider.bounds`;
+- accepted collider shapes are preserved and registered, not regenerated;
+- the Drawing Room's duplicate prop-sort writers migrate one prop at a time;
+- Dining Room seat occlusion migrates only after `ActorPresenter` exists and uses serialized `SeatOcclusionSlot` data.
+
+Migrate navigation geometry and set-piece views one room at a time. The Grand Entrance Hall/Drawing Room route remains the first passage slice; Dining Room is the final set-piece slice because it depends on actor presentation.
+
 Remove only after migration:
 
 - `doors.txt` runtime path;
@@ -79,6 +97,8 @@ Remove only after migration:
 - prompt/door paths that duplicate the canonical passage system.
 
 Exit condition: one route graph, explicit reverse links, explicit parallel-stairway pairing, and PlayMode tests for every passage round trip.
+
+Set-piece exit condition: one visual/sort writer per prop, one navigation-geometry owner per room, unchanged accepted collision footprints, stable occlusion across zoom/aspect ratios, and no room activation code that repairs descendant renderers.
 
 ## Phase 5 — Actors, movement, and presentation
 

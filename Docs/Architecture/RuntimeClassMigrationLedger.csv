@@ -10,22 +10,22 @@ Assets/Scripts/Navigation/DoorDataParser.cs,RoomDefinition | DoorRoute | DoorDat
 Assets/Scripts/Navigation/DoorCameraSequence.cs,DoorCameraSequence,92,10,1,Convert then retire,PassageDefinition,4,Parallel route data.
 Assets/Scripts/Navigation/DoorPromptSequenceController.cs,DoorPromptSequenceController,274,4,0,Retire after interaction migration,PassageInteraction + UI prompt,4,Parallel navigation/prompt path.
 Assets/Scripts/Navigation/RoomVisualCatalog.cs,RoomVisualCatalog | RoomVisualEntry,45,22,2,Convert then retire,RoomDefinition,4,Room visual data joins canonical definitions.
-Assets/Scripts/Navigation/RoomContentGroup.cs,RoomContentGroup,256,223,22,Replace behavior,RoomView,4,Must stop force-enabling descendants and flattening transforms.
+Assets/Scripts/Navigation/RoomContentGroup.cs,RoomContentGroup,256,223,22,Replace behavior,RoomView + serialized SetPieceView bindings,4,Must stop force-enabling descendants flattening transforms and repairing renderer state.
 Assets/Scripts/Navigation/DoorButton.cs,DoorButton,190,16,0,Migrate/review,World / Navigation,4,Map to canonical room/passage architecture.
-Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,ObjectMovementBlocker2D,179,19,49,Migrate/review,World / Navigation,4,Map to canonical room/passage architecture.
+Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,ObjectMovementBlocker2D,179,19,49,Split behind facade,RoomNavigationGeometry + SetPieceView adapter,4,Preserve authored collider footprints; navigation geometry must not write prop sorting.
 Assets/Scripts/Characters/GuestScaleParticipant.cs,CharacterPose | GuestRoomResolutionTrace | GuestScaleParticipant,748,195,8,Consolidate,ActorController + ActorPresenter,5,Fold duplicate scale/pose state.
 Assets/Scripts/Story/ActorRoomState.cs,ActorRoomState,1012,145,0,Consolidate,ActorControllerBase + ActorRegistry,5,One authoritative actor state owner.
 Assets/Scripts/Characters/GuestRoomScaleApplier.cs,GuestScaleApplyResult | GuestScaleComputation | GuestRoomScaleApplier,844,75,1,Consolidate,ActorPresenter,5,Remove global scale scanner after parity.
-Assets/Scripts/Characters/RoomProjectedEntity.cs,RoomProjectedEntity,1229,122,13,Consolidate,ActorPresenter,5,One transform/scale/sort writer.
+Assets/Scripts/Characters/RoomProjectedEntity.cs,RoomProjectedEntity,1229,122,13,Consolidate,ActorPresenter + SetPieceView for foreground props,5,One transform/scale/sort writer per actor or prop.
 Assets/Scripts/Characters/CharacterAnimatorDriver.cs,CharacterWalkDirection | CharacterAnimatorDriver,178,18,0,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
 Assets/Scripts/Characters/CharacterVisualProfile.cs,CharacterVisualProfile,145,11,0,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
-Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionController.cs,DiningRoomSeatedGuestOcclusionController,153,5,1,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
-Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionException.cs,DiningRoomSeatedGuestOcclusionException,277,5,0,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
+Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionController.cs,DiningRoomSeatedGuestOcclusionController,153,5,1,Replace then retire,ActorPresenter + serialized SeatOcclusionSlot,5,Remove global lookup and runtime component creation after all eight seats pass.
+Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionException.cs,DiningRoomSeatedGuestOcclusionException,277,5,0,Replace then retire,ActorPresenter + serialized SeatOcclusionSlot,5,ActorPresenter owns seated sorting and restores normal presentation on exit.
 Assets/Scripts/Characters/GuestRoomScaleCalibration.cs,GuestRoomScaleEntry | GuestRoomScaleCalibration,371,113,2,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
 Assets/Scripts/Characters/GuestRoomStageScaleUtility.cs,GuestRoomStageScaleUtility,188,15,0,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
 Assets/Scripts/Characters/RoomPerspectiveProfile.cs,RoomPerspectiveProfile,262,71,2,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
-Assets/Scripts/Characters/WorldYSortSpriteRenderer.cs,WorldYSortSpriteRenderer,176,2,11,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
-Assets/Scripts/Characters/YSortSolidObstacle2D.cs,YSortSolidObstacle2D,91,3,0,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
+Assets/Scripts/Characters/WorldYSortSpriteRenderer.cs,WorldYSortSpriteRenderer,176,2,11,Replace then retire,SetPieceView + RoomDepthResolver,5,Migrate Dining overlays to one room-local sort writer; never use world bounds.
+Assets/Scripts/Characters/YSortSolidObstacle2D.cs,YSortSolidObstacle2D,91,3,0,Prune after WorldYSort migration,RoomNavigationGeometry or none,5,Zero serialized instances; delete after the optional WorldYSort reference disappears.
 Assets/Scripts/PlayerMovement.cs,PlayerMovement,300,7,1,Retire after prefab migration,Player command source,5,Legacy input/movement path.
 Assets/Scripts/PointClickPlayerMovement.cs,PointClickPlayerMovement,4348,278,2,Split behind facade,Player command source + RoomStageMotor + ActorPresenter,5,Large mixed input/pathing/presentation component.
 Assets/Scripts/CharacterController2D.cs,CharacterController2D,221,8,1,Retire after prefab migration,RoomStageMotor,5,Legacy movement component.

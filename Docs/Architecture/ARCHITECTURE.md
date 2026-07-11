@@ -76,8 +76,14 @@ GameRoot
   -> WorldService / NavigationService
        -> House
             -> RoomView
-            -> Passage
-            -> RoomAnchor
+                 -> Actors
+                 -> Props
+                      -> SetPieceView
+                      -> InteractiveProp
+                      -> Passage
+                      -> LightView
+                 -> RoomNavigationGeometry
+                 -> RoomAnchor
   -> ActorRegistry
        -> PlayerActor
        -> GuestActors
@@ -98,6 +104,8 @@ GameRoot
 - **Guests do not own dialogue infrastructure.** Guest definitions contain line IDs and personality data; `NarrativeService` owns queueing, interruption, subtitles, and voice coordination.
 - **Rooms own no global state.** A `RoomView` presents a room; services own active-room state and transitions.
 - **Doors become passages.** A passage has stable source/destination IDs and explicit arrival anchors.
+- **Furniture and object cutouts are room props.** Couches, desks, beds, toys, chairs, tables, and similar cutout scenery use shared `SetPieceView` data instead of bespoke controllers.
+- **Set-piece presentation and navigation geometry are separate owners.** `SetPieceView` owns the visual cutout and room-local occlusion anchor. `RoomNavigationGeometry` owns walkable boundaries and no-walk footprints. A collision marker must never rewrite renderer sorting.
 - **Definitions and runtime state are separate.** Assets describe rooms, actors, passages, chapters, dialogue, and presentation; runtime objects hold mutable state.
 
 ## Base-class hierarchy
@@ -138,6 +146,9 @@ A base class may provide only a shared lifecycle, invariant, or contract. It mus
 | Scheduled callbacks | scheduler owned by `ClockService` |
 | Current room and passage transition | `NavigationService` |
 | Active room root | `RoomViewService` |
+| Set-piece sprite, room-local occlusion anchor and sorting offset | one `SetPieceView` per prop |
+| Walkable boundary and set-piece no-walk footprints | `RoomNavigationGeometry` per room |
+| Room-local Y to sorting-order calculation | pure `RoomDepthResolver` |
 | Room projection/pan/zoom | `CameraService` |
 | Actor identity and logical state | `ActorControllerBase` per actor |
 | Actor registry and room membership | `ActorRegistry` |
@@ -216,6 +227,9 @@ Forbidden dependency directions:
 - actors finding chapter controllers;
 - chapter code constructing cameras, canvases, audio services, or navigation managers;
 - room activation forcing descendant renderers or actor state;
+- collision or navigation components changing renderer sorting;
+- set-piece depth derived from world-space renderer/collider bounds;
+- multiple `LateUpdate` writers changing the same prop or actor sorting order;
 - runtime code creating required managers as a repair;
 - display names acting as gameplay identity;
 - essential data loaded by an arbitrary string path.

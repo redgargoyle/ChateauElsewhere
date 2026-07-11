@@ -33,11 +33,17 @@ digraph ChantillyTarget {
     world [label="WorldService\nHouse + current world state"];
     nav [label="NavigationService\ncurrent room + passage transition"];
     roomview [label="RoomViewService\nactivates one RoomView root"];
-    room [label="RoomElementBase\nRoomView • RoomAnchor • Obstacles"];
+    room [label="RoomView\nserialized room instance"];
     passage [label="Passage\nsource • target • approach • arrival"];
+    setpiece [label="SetPieceView\ncutout • local occlusion anchor • sort offset"];
+    geometry [label="RoomNavigationGeometry\nboundary + authored no-walk footprints"];
+    depth [label="RoomDepthResolver\npure room-local Y -> sorting order"];
     world -> nav;
     nav -> roomview;
     roomview -> room;
+    room -> setpiece [label="owns props"];
+    room -> geometry [label="owns navigation shape"];
+    setpiece -> depth [label="queries"];
     nav -> passage;
   }
 
@@ -88,6 +94,8 @@ digraph ChantillyTarget {
   target -> nav [label="passage command", color="#167C80"];
   target -> flow [label="story command", color="#167C80"];
   roomview -> camera [label="present room"];
+  geometry -> motor [label="walkability query"];
+  presenter -> depth [label="queries"];
   narrative -> ui [label="subtitle state"];
   narrative -> audio [label="voice"];
   flow -> save [label="checkpoint"];
