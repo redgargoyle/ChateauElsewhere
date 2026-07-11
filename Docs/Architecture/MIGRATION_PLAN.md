@@ -54,6 +54,7 @@ Only after Phase 2 passes:
 
 - `RoomNavigationBootstrap` replaced by serialized GameRoot validation and removed;
 - `ChapterManager` top-level manager-stack self-creation fallback removed; Chapter 2 creation remains separately gated;
+- exactly one inert `Chapter2Controller` serialized and explicitly wired; remove its creation fallback only after the follow-up gate;
 - remove `DialogueSpeechService.FindOrCreate` and `SubtitleService.FindOrCreate` call sites after callers receive serialized/service references;
 - replace `UrpPostProcessingBootstrap` with a serialized render rig;
 - replace runtime clock-hand attachment with an authored `ClockView` reference.

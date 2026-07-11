@@ -61,6 +61,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         ChapterEventScheduler scheduler = RequireExactlyOneInActiveScene<ChapterEventScheduler>();
         ChapterIntroUI intro = RequireExactlyOneInActiveScene<ChapterIntroUI>();
         Chapter1ArrivalController arrival = RequireExactlyOneInActiveScene<Chapter1ArrivalController>();
+        Chapter2Controller serializedChapter2 = RequireExactlyOneInActiveScene<Chapter2Controller>();
+        Chapter2InteractionHUD serializedChapter2Hud = RequireExactlyOneInActiveScene<Chapter2InteractionHUD>();
         RoomLightingController lighting = RequireExactlyOneInActiveScene<RoomLightingController>();
 
         Assert.That(cameraManager, Is.Not.Null);
@@ -76,6 +78,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(gameRoot.Services, Has.Count.EqualTo(8));
         Assert.That(gameRoot.Services.Select(service => service.GetType()).Distinct().Count(), Is.EqualTo(8));
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "ChapterManager_Runtime"), Is.False);
+        Assert.That(serializedChapter2.CurrentPhase, Is.EqualTo(Chapter2Phase.NotStarted));
+        Assert.That(serializedChapter2.HasGameContext, Is.True);
         Chateau.Architecture.ValidationReport rootValidation = new Chateau.Architecture.ValidationReport();
         gameRoot.ValidateConfiguration(rootValidation);
         Assert.That(rootValidation.HasErrors, Is.False);
@@ -161,6 +165,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Chapter2GuestSearchController guestSearch = RequireExactlyOneInActiveScene<Chapter2GuestSearchController>();
         Assert.That(chapter2.CurrentPhase, Is.Not.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+        Assert.That(chapter2, Is.SameAs(serializedChapter2));
+        Assert.That(chapter2Hud, Is.SameAs(serializedChapter2Hud));
 
         chapter.SkipToChapter2ForTesting();
         yield return WaitForSettledLayout();
