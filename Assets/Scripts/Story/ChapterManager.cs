@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public enum ChapterPhase
@@ -67,30 +66,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     public ChapterClock Clock => chapterClock;
     public ChapterEventScheduler EventScheduler => eventScheduler;
     public GameObject PlayerButlerReference => playerButlerReference;
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void BootstrapChapterManagerForGameplay()
-    {
-        Scene activeScene = SceneManager.GetActiveScene();
-
-        if (!string.Equals(activeScene.name, "Gameplay", System.StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        if (FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include) != null)
-        {
-            return;
-        }
-
-        GameObject managerObject = new GameObject("ChapterManager_Runtime");
-        managerObject.AddComponent<ChapterClock>();
-        managerObject.AddComponent<ChapterEventScheduler>();
-        managerObject.AddComponent<ChapterIntroUI>();
-        managerObject.AddComponent<Chapter1ArrivalController>();
-        managerObject.AddComponent<Chapter2Controller>();
-        managerObject.AddComponent<ChapterManager>();
-    }
 
     private void Awake()
     {

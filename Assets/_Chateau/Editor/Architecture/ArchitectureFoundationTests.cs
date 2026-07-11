@@ -100,6 +100,21 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
+    public void ChapterStackIsSerializedInsteadOfRepairedAtRuntime()
+    {
+        string managerText = File.ReadAllText("Assets/Scripts/Story/ChapterManager.cs");
+
+        Assert.That(managerText, Does.Not.Contain("BootstrapChapterManagerForGameplay"));
+        Assert.That(managerText, Does.Not.Contain("ChapterManager_Runtime"));
+        Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<ChapterClock>"));
+        Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<ChapterEventScheduler>"));
+        Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<ChapterIntroUI>"));
+        Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<Chapter1ArrivalController>"));
+        Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<ChapterManager>"));
+        Assert.That(managerText, Does.Contain("ResolveChapter2Controller(true)"), "Chapter 2 has a separate migration gate and must not be removed in this slice.");
+    }
+
+    [Test]
     public void InvalidTransitionCanThrowWithUsefulMessage()
     {
         StateMachine<TestState> machine = new StateMachine<TestState>(TestState.Idle);

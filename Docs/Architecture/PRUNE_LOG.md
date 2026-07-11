@@ -12,6 +12,12 @@ No file may be deleted merely because a text search looks empty. Each deletion n
 
 Their `.meta` files were also removed because no serialized asset referenced their script GUIDs.
 
+## Retired runtime repair paths
+
+| Path | Former behavior | Replacement | Proof / test |
+|---|---|---|---|
+| `ChapterManager.BootstrapChapterManagerForGameplay` | A post-scene-load hook created an entire chapter manager stack with six `AddComponent` calls | `Gameplay.unity` serializes `ChapterManager`, `ChapterClock`, `ChapterEventScheduler`, `ChapterIntroUI`, and `Chapter1ArrivalController`; GameRoot validates and initializes the services | `GameplayLifecycleCharacterizationTests`, `ArchitectureFoundationTests.ChapterStackIsSerializedInsteadOfRepairedAtRuntime`, exact serialized GUID scan, and full Unity gate. The separate Chapter 2 creation branch remains pending its own migration. |
+
 ## Quarantined for review, not deleted
 
 | Candidate | Why it looks redundant | Why deletion is not yet safe |

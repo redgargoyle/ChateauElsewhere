@@ -53,7 +53,7 @@ Exit condition:
 Only after Phase 2 passes:
 
 - `RoomNavigationBootstrap` replaced by serialized GameRoot validation and removed;
-- remove `ChapterManager` self-creation fallback;
+- `ChapterManager` top-level manager-stack self-creation fallback removed; Chapter 2 creation remains separately gated;
 - remove `DialogueSpeechService.FindOrCreate` and `SubtitleService.FindOrCreate` call sites after callers receive serialized/service references;
 - replace `UrpPostProcessingBootstrap` with a serialized render rig;
 - replace runtime clock-hand attachment with an authored `ClockView` reference.
