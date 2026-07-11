@@ -1,4 +1,6 @@
 current_file,current_types,baseline_loc,code_reference_count,serialized_reference_count,action,target_owner_or_family,migration_phase,notes
+Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/RoomDepthResolver.cs,RoomDepthResolver,21,1,0,New target architecture,World / Rooms / Props / Set Pieces,4,Pure room-local Y-to-sorting resolver; no Unity object ownership or bounds dependency.
+Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,SetPieceView,86,1,0,New target architecture,World / Rooms / Props / Set Pieces,4,Static cutout presentation owner; unit-gated before the first serialized tea-table binding.
 Assets/Scripts/PickupObject.cs,PickupObject,43,1,0,Pruned,InteractionTargetBase,1,Unused generic pickup cursor component; zero runtime and serialized references.
 Assets/Scripts/NewBehaviourScript.cs,NewBehaviourScript,18,0,0,Pruned,None,1,Empty starter class; zero code and serialized references.
 Assets/Scripts/Story/ChapterClock.cs,ChapterClock,110,39,1,Compatibility service,ClockService,2,Now derives GameServiceBase; retain behavior while scheduler/time are consolidated.

@@ -87,6 +87,7 @@ RoomDefinition -> RoomView -> SetPieceView -> RoomDepthResolver
                          \-> RoomNavigationGeometry -> ActorMotor
 ```
 
+- `RoomDepthResolver` and the static `SetPieceView` foundation are unit-gated before any scene binding;
 - `SetPieceView` owns the visual cutout, a room-local occlusion anchor, and a sorting offset.
 - `RoomNavigationGeometry` owns the room boundary and authored no-walk footprints.
 - couches, desks, beds, toys, chairs, tables, and similar scenery use shared definitions/views rather than object-specific managers;
