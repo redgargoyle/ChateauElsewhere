@@ -180,6 +180,23 @@ public class CameraManager : Chateau.Architecture.GameServiceBase
         return true;
     }
 
+    public bool TryGetActiveRoomStageLayoutScale(out float layoutScale)
+    {
+        layoutScale = 1f;
+
+        if (!UsesRoomStageLayout() || activeRoomStage == null)
+        {
+            return false;
+        }
+
+        // CameraManager writes this normalized room-stage scale directly from
+        // viewport fit * user zoom. Unlike lossyScale it does not include the
+        // parent Canvas transform, so actors can follow the room deterministically
+        // without capturing an Awake-order-dependent reference value.
+        layoutScale = Mathf.Max(0.0001f, Mathf.Abs(activeRoomStage.localScale.x));
+        return true;
+    }
+
     public bool TryGetActiveRoomStageWorldPoint(Vector2 roomStageLocalPoint, float worldDepth, out Vector3 worldPoint)
     {
         return TryGetActiveRoomStageWorldPoint(roomStageLocalPoint, worldDepth, out worldPoint, out _);

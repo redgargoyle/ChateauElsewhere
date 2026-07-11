@@ -199,6 +199,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(float.IsNaN(appliedMultiplier), Is.False);
         Assert.That(float.IsInfinity(appliedMultiplier), Is.False);
         Assert.That(appliedMultiplier, Is.GreaterThan(0f));
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        Assert.That(cameraManager.TryGetActiveRoomStageLayoutScale(out float layoutScale), Is.True);
+        Assert.That(
+            appliedMultiplier,
+            Is.EqualTo(layoutScale).Within(0.01f),
+            "The Butler must follow CameraManager's explicit room-stage layout scale, not a lazily captured reference.");
         return new ScaleSnapshot(playerScaleY, roomStageScale, appliedMultiplier);
     }
 

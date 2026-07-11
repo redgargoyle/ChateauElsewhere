@@ -75,7 +75,6 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private Vector3 currentVisualOffset;
 	private Vector3 currentRoomStageWorldCenter;
 	private Vector3 roomStageReferenceWorldCenter;
-	private float roomStageReferenceScale = 1f;
 	private float currentRoomStageScaleRatio = 1f;
 	private float authoredPerspectiveScaleReference = 1f;
 	private RoomPerspectiveProfile currentRoomPerspectiveProfile;
@@ -2332,8 +2331,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (cameraManager.TryGetActiveRoomStageWorldPoint(
 			Vector2.zero,
 			depth,
-			out Vector3 stageWorldCenter,
-			out float stageScale))
+			out Vector3 stageWorldCenter) &&
+			cameraManager.TryGetActiveRoomStageLayoutScale(out float stageLayoutScale))
 		{
 			string currentRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
 
@@ -2341,13 +2340,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 				!SameRoomName(roomStageVisualReferenceRoom, currentRoom))
 			{
 				roomStageReferenceWorldCenter = stageWorldCenter;
-				roomStageReferenceScale = Mathf.Max(0.0001f, stageScale);
 				roomStageVisualReferenceRoom = currentRoom;
 				hasRoomStageVisualReference = true;
 			}
 
 			currentRoomStageWorldCenter = stageWorldCenter;
-			currentRoomStageScaleRatio = stageScale / Mathf.Max(0.0001f, roomStageReferenceScale);
+			currentRoomStageScaleRatio = Mathf.Max(0.0001f, stageLayoutScale);
 			currentVisualOffset = currentRoomStageWorldCenter - roomStageReferenceWorldCenter;
 			currentVisualOffset.z = 0f;
 			return;
@@ -2365,7 +2363,6 @@ public class PointClickPlayerMovement : MonoBehaviour
 		roomStageVisualReferenceRoom = string.Empty;
 		roomStageReferenceWorldCenter = Vector3.zero;
 		currentRoomStageWorldCenter = Vector3.zero;
-		roomStageReferenceScale = 1f;
 		currentRoomStageScaleRatio = 1f;
 		currentVisualOffset = Vector3.zero;
 	}
