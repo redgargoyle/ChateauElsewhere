@@ -713,7 +713,8 @@ public class Chapter2RegressionTests
         Assert.That(speechServiceText, Does.Contain("while (!allowOverlap && normalSpeechActive)"), "Normal dialog should serialize through one active speech line.");
         Assert.That(speechServiceText, Does.Contain("subtitleService.ShowSpeechLine"), "Speech playback should display the matching subtitle at voice start.");
         Assert.That(speechServiceText, Does.Contain("voicePlayback.PlayForDialogue(lineId, speaker, text, allowOverlap)"), "Speech playback should use the resolved voice clip for the same line.");
-        Assert.That(speechServiceText, Does.Contain("SpeakingCharacterIndicator.FindOrCreate()"), "Speech playback should lazily create the speaker marker with the other dialogue services.");
+        Assert.That(speechServiceText, Does.Not.Contain("SpeakingCharacterIndicator.FindOrCreate()"), "Speech playback should use the serialized speaker-marker owner.");
+        Assert.That(speechServiceText, Does.Contain("[SerializeField] private SpeakingCharacterIndicator speakingIndicator"), "Speech playback should receive its speaker-marker owner explicitly.");
         Assert.That(speechServiceText, Does.Contain("speakingIndicator.ShowForSpeechLine(speechToken, lineId, speaker, text)"), "The speaker marker should appear when the resolved speech line starts.");
         Assert.That(speechServiceText, Does.Contain("speakingIndicator.HideForSpeechToken(speechToken)"), "The speaker marker should clear only for the speech line that owns it.");
         Assert.That(speechServiceText, Does.Contain("Input.GetKeyDown(KeyCode.Escape)"), "Escape should skip the active speech line without advancing the next line.");

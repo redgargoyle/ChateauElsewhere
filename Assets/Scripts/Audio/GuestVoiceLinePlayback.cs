@@ -19,22 +19,6 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
 
     public bool IsPlaying => audioSource != null && audioSource.isPlaying;
 
-    public static GuestVoiceLinePlayback FindOrCreate()
-    {
-        GuestVoiceLinePlayback existing = FindAnyObjectByType<GuestVoiceLinePlayback>(FindObjectsInactive.Include);
-
-        if (existing != null)
-        {
-            existing.ResolveReferences();
-            return existing;
-        }
-
-        GameObject playerObject = new GameObject(PlayerObjectName, typeof(AudioSource), typeof(GuestVoiceLinePlayback));
-        GuestVoiceLinePlayback player = playerObject.GetComponent<GuestVoiceLinePlayback>();
-        player.ResolveReferences();
-        return player;
-    }
-
     public float PlayForDialogue(string lineId, string speaker, string text)
     {
         return PlayForDialogue(lineId, speaker, text, false);

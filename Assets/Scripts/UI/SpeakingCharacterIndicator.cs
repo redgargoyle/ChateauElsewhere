@@ -6,7 +6,6 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class SpeakingCharacterIndicator : MonoBehaviour
 {
-    private const string ServiceObjectName = "SpeakingCharacterIndicator";
     private const string SpriteObjectName = "Sprite_ChatBubble";
     private const string DefaultSpriteResourcePath = "UI/chat_bubble";
 
@@ -36,22 +35,6 @@ public sealed class SpeakingCharacterIndicator : MonoBehaviour
     private int currentSpeechToken;
     private bool isShowing;
     private bool loggedMissingSprite;
-
-    public static SpeakingCharacterIndicator FindOrCreate()
-    {
-        SpeakingCharacterIndicator existing = FindAnyObjectByType<SpeakingCharacterIndicator>(FindObjectsInactive.Include);
-
-        if (existing != null)
-        {
-            existing.ResolveReferences();
-            return existing;
-        }
-
-        GameObject serviceObject = new GameObject(ServiceObjectName, typeof(SpeakingCharacterIndicator));
-        SpeakingCharacterIndicator service = serviceObject.GetComponent<SpeakingCharacterIndicator>();
-        service.ResolveReferences();
-        return service;
-    }
 
     public static void HideAnyCurrent()
     {

@@ -70,7 +70,6 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
         bool showSubtitleOverlay = true,
         Action<string, string> onSpeechLineStarted = null)
     {
-        ResolveReferences();
         return StartCoroutine(SpeakLineRoutine(lineId, speakerId, fallbackText, allowOverlap, blockInput, onComplete, showSubtitleOverlay, onSpeechLineStarted));
     }
 
@@ -132,7 +131,6 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
         bool showSubtitleOverlay,
         Action<string, string> onSpeechLineStarted)
     {
-        ResolveReferences();
         int queueToken = speechQueueToken;
         bool countedAsPendingNormalSpeech = !allowOverlap;
 
@@ -284,16 +282,23 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
         }
     }
 
-    private void ResolveReferences()
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
     {
+        base.ValidateConfiguration(report);
+
+        if (subtitleService == null)
+        {
+            report.AddError("DialogueSpeechService requires its serialized SubtitleService.", this);
+        }
+
         if (voicePlayback == null)
         {
-            voicePlayback = GuestVoiceLinePlayback.FindOrCreate();
+            report.AddError("DialogueSpeechService requires its serialized GuestVoiceLinePlayback.", this);
         }
 
         if (speakingIndicator == null)
         {
-            speakingIndicator = SpeakingCharacterIndicator.FindOrCreate();
+            report.AddError("DialogueSpeechService requires its serialized SpeakingCharacterIndicator.", this);
         }
     }
 

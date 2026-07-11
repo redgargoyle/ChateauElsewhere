@@ -177,8 +177,8 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Not.Contain("SubtitleService.FindOrCreate"));
         Assert.That(chapter2Text, Does.Not.Contain("DialogueSpeechService.FindOrCreate"));
         Assert.That(chapter2Text, Does.Not.Contain("SubtitleService.FindOrCreate"));
-        Assert.That(speechText, Does.Contain("GuestVoiceLinePlayback.FindOrCreate"));
-        Assert.That(speechText, Does.Contain("SpeakingCharacterIndicator.FindOrCreate"));
+        Assert.That(speechText, Does.Not.Contain("GuestVoiceLinePlayback.FindOrCreate"));
+        Assert.That(speechText, Does.Not.Contain("SpeakingCharacterIndicator.FindOrCreate"));
     }
 
     [Test]
@@ -193,6 +193,12 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("audioSource: {fileID: 1878887000}"));
         Assert.That(sceneText, Does.Contain("catalog: {fileID: 11400000, guid: 147a8473c4c849c9908200b092d13691, type: 2}"));
         Assert.That(sceneText, Does.Contain("bubbleSprite: {fileID: 21300000, guid: b40c2d5917304c3e822fad1b6f3e5960, type: 3}"));
+
+        string playbackText = File.ReadAllText("Assets/Scripts/Audio/GuestVoiceLinePlayback.cs");
+        string indicatorText = File.ReadAllText("Assets/Scripts/UI/SpeakingCharacterIndicator.cs");
+        Assert.That(playbackText, Does.Not.Contain("GuestVoiceLinePlayback FindOrCreate"));
+        Assert.That(indicatorText, Does.Not.Contain("SpeakingCharacterIndicator FindOrCreate"));
+        Assert.That(indicatorText, Does.Contain("new GameObject(SpriteObjectName)"), "Only the indicator's nested presentation child should remain lazy.");
     }
 
     private static int CountOccurrences(string text, string value)

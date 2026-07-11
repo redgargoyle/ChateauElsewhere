@@ -40,17 +40,18 @@ This report records what is implemented in the repository at this commit. It mus
 - Explicitly wired the serialized dialogue and subtitle services, subtitle line bank, navigation edge, and Chapter 1 consumers while preserving lazy voice/indicator/subtitle-view creation.
 - Removed the core dialogue/subtitle `FindOrCreate` factories and every caller; GameRoot is now the only owner of these services, while voice/indicator child ownership remains separately gated.
 - Serialized one voice-playback owner with a dedicated AudioSource and one speaking-indicator owner, explicitly wiring their catalog, navigation, sprite, and service consumers while preserving lazy subtitle/bubble child views.
+- Removed the voice-playback and speaking-indicator root factories; GameRoot validation now rejects missing dialogue ownership, while the actual subtitle canvas and bubble renderer remain first-use presentation children.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,508 | +606 |
+| Runtime C# lines | 49,902 | 50,500 | +598 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
-| `FindObject*`/`GameObject.Find` | 199 | 187 | -12 |
+| `FindObject*`/`GameObject.Find` | 199 | 185 | -14 |
 | `Resources.Load` | 27 | 27 | 0 |
-| runtime `new GameObject` | 98 | 92 | -6 |
+| runtime `new GameObject` | 98 | 90 | -8 |
 | runtime `AddComponent<T>` | 100 | 85 | -15 |
 | runtime initialization hooks | 9 | 5 | -4 |
 

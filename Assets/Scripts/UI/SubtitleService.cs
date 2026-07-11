@@ -180,6 +180,26 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
         GuestVoiceLinePlayback.StopAnyCurrentLine();
     }
 
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        base.ValidateConfiguration(report);
+
+        if (lineBank == null)
+        {
+            report.AddError("SubtitleService requires its serialized SubtitleLineBank.", this);
+        }
+
+        if (voicePlayback == null)
+        {
+            report.AddError("SubtitleService requires its serialized GuestVoiceLinePlayback.", this);
+        }
+
+        if (navigationManager == null)
+        {
+            report.AddError("SubtitleService requires its serialized RoomNavigationManager.", this);
+        }
+    }
+
     private void Update()
     {
         if (autoHideRoutine != null && !showingPersistentLine && Input.GetKeyDown(KeyCode.Escape))
