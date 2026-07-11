@@ -34,6 +34,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized one inert `Chapter2Controller`, wired its existing dependencies, and bound it through GameRoot. Repeated Chapter 2 debug skips reuse the same controller and HUD while preserving the characterized feature behavior.
 - Removed the `ChapterManager` factory for `Chapter2Controller`; every chapter transition and debug-skip entry path now resolves the single serialized controller.
 - Removed the Chapter 2 HUD factory; Chapter 2 now reuses the single serialized HUD on every entry path.
+- Serialized the three inert Chapter 2 feature owners (monster stinger, guest panic, and guest search), bound their stable scene references, and registered them with GameRoot. Their creation fallbacks remain until the next independently tested slice.
 
 ## Current static result
 
@@ -61,7 +62,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - new architecture files passed lightweight delimiter/preprocessor checks.
 - Unity `6000.4.10f1` compiled the project and produced result XML for every automated run;
 - the strict GameRoot graft audit passed 53/53 checks;
-- the full EditMode discovery count is 225: 174 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
+- the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
+- the full EditMode discovery count is 226: 175 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
 - Gameplay scene hashing confirmed that batch validation did not rewrite the reviewed scene;

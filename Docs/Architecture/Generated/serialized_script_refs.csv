@@ -139,8 +139,8 @@ Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,7a33ae09185ce66
 Assets/_Chateau/Scripts/Chapter/Chapter01/GuestArrivalConfig.cs,870849ad4e4741fb8aa0365c5fe80b83,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs,d033cee2bc03c0ce4a5ca7f25996fb46,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs,b8faabacef795789f93845fa56d3cd77,0,
-Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs,aa4143ddf6de4b6b9b8c1edc0f9e2a31,0,
-Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs,5daaf625b50c2b1048154975a147950a,0,
+Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs,aa4143ddf6de4b6b9b8c1edc0f9e2a31,1,Assets/Scenes/Gameplay.unity:1
+Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs,5daaf625b50c2b1048154975a147950a,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs,b289ee33ba1c90aaab63dd6ba9f56d9d,1,Assets/Scenes/Gameplay.unity:1
-Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs,684198ee76c12a66cb4335c3ab64b1bc,0,
+Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs,684198ee76c12a66cb4335c3ab64b1bc,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2PanicAnimationLibrary.cs,d4c6f909e43b4c3680a0b52c6d0f8e01,1,Assets/Resources/Chapter2/PanicAnimationLibrary.asset:1

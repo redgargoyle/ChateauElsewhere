@@ -54,7 +54,7 @@ Only after Phase 2 passes:
 
 - `RoomNavigationBootstrap` replaced by serialized GameRoot validation and removed;
 - `ChapterManager` top-level manager-stack self-creation fallback removed; the separately gated Chapter 2 controller factory is also removed;
-- exactly one inert `Chapter2Controller` and one Chapter 2 HUD serialized and explicitly wired; both creation fallbacks are removed, while Chapter 2 feature-component repair remains separately gated;
+- exactly one inert `Chapter2Controller`, HUD, monster-stinger owner, panic owner, and guest-search owner serialized and explicitly wired; controller/HUD factories are removed, while the three feature factories await their follow-up removal gate;
 - remove `DialogueSpeechService.FindOrCreate` and `SubtitleService.FindOrCreate` call sites after callers receive serialized/service references;
 - replace `UrpPostProcessingBootstrap` with a serialized render rig;
 - replace runtime clock-hand attachment with an authored `ClockView` reference.

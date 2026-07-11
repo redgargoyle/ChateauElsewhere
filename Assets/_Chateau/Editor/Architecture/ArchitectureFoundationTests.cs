@@ -121,6 +121,24 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
+    public void Chapter2FeatureControllersAreSerializedOnce()
+    {
+        string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+
+        Assert.That(CountOccurrences(sceneText, "guid: 684198ee76c12a66cb4335c3ab64b1bc"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(sceneText, "guid: aa4143ddf6de4b6b9b8c1edc0f9e2a31"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(sceneText, "guid: 5daaf625b50c2b1048154975a147950a"), Is.EqualTo(1));
+        Assert.That(sceneText, Does.Contain("monsterStinger: {fileID: 3301000007}"));
+        Assert.That(sceneText, Does.Contain("guestPanic: {fileID: 3301000008}"));
+        Assert.That(sceneText, Does.Contain("guestSearch: {fileID: 3301000009}"));
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        return text.Split(new[] { value }, StringSplitOptions.None).Length - 1;
+    }
+
+    [Test]
     public void InvalidTransitionCanThrowWithUsefulMessage()
     {
         StateMachine<TestState> machine = new StateMachine<TestState>(TestState.Idle);

@@ -63,6 +63,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         Chapter1ArrivalController arrival = RequireExactlyOneInActiveScene<Chapter1ArrivalController>();
         Chapter2Controller serializedChapter2 = RequireExactlyOneInActiveScene<Chapter2Controller>();
         Chapter2InteractionHUD serializedChapter2Hud = RequireExactlyOneInActiveScene<Chapter2InteractionHUD>();
+        Chapter2MonsterStingerController serializedMonsterStinger = RequireExactlyOneInActiveScene<Chapter2MonsterStingerController>();
+        Chapter2GuestPanicController serializedGuestPanic = RequireExactlyOneInActiveScene<Chapter2GuestPanicController>();
+        Chapter2GuestSearchController serializedGuestSearch = RequireExactlyOneInActiveScene<Chapter2GuestSearchController>();
         RoomLightingController lighting = RequireExactlyOneInActiveScene<RoomLightingController>();
 
         Assert.That(cameraManager, Is.Not.Null);
@@ -80,9 +83,13 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "ChapterManager_Runtime"), Is.False);
         Assert.That(serializedChapter2.CurrentPhase, Is.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(serializedChapter2.HasGameContext, Is.True);
-        Assert.That(FindInActiveScene<Chapter2MonsterStingerController>(), Is.Empty);
-        Assert.That(FindInActiveScene<Chapter2GuestPanicController>(), Is.Empty);
-        Assert.That(FindInActiveScene<Chapter2GuestSearchController>(), Is.Empty);
+        Assert.That(serializedMonsterStinger.HasGameContext, Is.True);
+        Assert.That(serializedGuestPanic.HasGameContext, Is.True);
+        Assert.That(serializedGuestSearch.HasGameContext, Is.True);
+        Assert.That(serializedMonsterStinger.IsRunning, Is.False);
+        Assert.That(serializedGuestPanic.IsRunning, Is.False);
+        Assert.That(serializedGuestSearch.GuestCount, Is.Zero);
+        Assert.That(serializedGuestSearch.FoundGuestCount, Is.Zero);
         Chateau.Architecture.ValidationReport rootValidation = new Chateau.Architecture.ValidationReport();
         gameRoot.ValidateConfiguration(rootValidation);
         Assert.That(rootValidation.HasErrors, Is.False);
@@ -170,6 +177,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
         Assert.That(chapter2, Is.SameAs(serializedChapter2));
         Assert.That(chapter2Hud, Is.SameAs(serializedChapter2Hud));
+        Assert.That(monsterStinger, Is.SameAs(serializedMonsterStinger));
+        Assert.That(guestPanic, Is.SameAs(serializedGuestPanic));
+        Assert.That(guestSearch, Is.SameAs(serializedGuestSearch));
 
         chapter.SkipToChapter2ForTesting();
         yield return WaitForSettledLayout();
