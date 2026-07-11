@@ -66,6 +66,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Chapter2MonsterStingerController serializedMonsterStinger = RequireExactlyOneInActiveScene<Chapter2MonsterStingerController>();
         Chapter2GuestPanicController serializedGuestPanic = RequireExactlyOneInActiveScene<Chapter2GuestPanicController>();
         Chapter2GuestSearchController serializedGuestSearch = RequireExactlyOneInActiveScene<Chapter2GuestSearchController>();
+        GuestRoomScaleApplier serializedGuestScaleApplier = RequireExactlyOneInActiveScene<GuestRoomScaleApplier>();
+        GuestRoomScaleCalibration serializedGuestScaleCalibration = RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>();
         RoomLightingController lighting = RequireExactlyOneInActiveScene<RoomLightingController>();
 
         Assert.That(cameraManager, Is.Not.Null);
@@ -98,6 +100,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(playerObject, Is.Not.Null);
         PointClickPlayerMovement player = playerObject.GetComponent<PointClickPlayerMovement>();
         Assert.That(player, Is.Not.Null);
+        Assert.That(serializedGuestScaleApplier.Calibration, Is.SameAs(serializedGuestScaleCalibration));
+        Assert.That(serializedGuestScaleCalibration.ButlerScaleSource, Is.SameAs(player));
 
         Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
         RequireOnlyActiveRoom(navigation.CurrentRoom);
@@ -164,6 +168,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<Chapter1ArrivalController>(), Is.SameAs(arrival));
         Assert.That(RequireExactlyOneInActiveScene<RoomLightingController>(), Is.SameAs(lighting));
         Assert.That(RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>(), Is.SameAs(gameRoot));
+        Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
+        Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
 
         chapter.SkipToChapter2ForTesting();
         yield return WaitForSettledLayout();
@@ -189,6 +195,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<Chapter2MonsterStingerController>(), Is.SameAs(monsterStinger));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2GuestPanicController>(), Is.SameAs(guestPanic));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2GuestSearchController>(), Is.SameAs(guestSearch));
+        Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
+        Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
     }
 
     private static IEnumerator WaitForSettledLayout()
