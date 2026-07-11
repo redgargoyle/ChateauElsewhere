@@ -59,6 +59,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         ChapterManager chapter = RequireExactlyOneInActiveScene<ChapterManager>();
         ChapterClock clock = RequireExactlyOneInActiveScene<ChapterClock>();
         ChapterEventScheduler scheduler = RequireExactlyOneInActiveScene<ChapterEventScheduler>();
+        ChapterIntroUI intro = RequireExactlyOneInActiveScene<ChapterIntroUI>();
+        Chapter1ArrivalController arrival = RequireExactlyOneInActiveScene<Chapter1ArrivalController>();
         RoomLightingController lighting = RequireExactlyOneInActiveScene<RoomLightingController>();
 
         Assert.That(cameraManager, Is.Not.Null);
@@ -73,6 +75,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(gameRoot.Context, Is.Not.Null);
         Assert.That(gameRoot.Services, Has.Count.EqualTo(8));
         Assert.That(gameRoot.Services.Select(service => service.GetType()).Distinct().Count(), Is.EqualTo(8));
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "ChapterManager_Runtime"), Is.False);
         Chateau.Architecture.ValidationReport rootValidation = new Chateau.Architecture.ValidationReport();
         gameRoot.ValidateConfiguration(rootValidation);
         Assert.That(rootValidation.HasErrors, Is.False);
@@ -143,6 +146,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<ChapterManager>(), Is.SameAs(chapter));
         Assert.That(RequireExactlyOneInActiveScene<ChapterClock>(), Is.SameAs(clock));
         Assert.That(RequireExactlyOneInActiveScene<ChapterEventScheduler>(), Is.SameAs(scheduler));
+        Assert.That(RequireExactlyOneInActiveScene<ChapterIntroUI>(), Is.SameAs(intro));
+        Assert.That(RequireExactlyOneInActiveScene<Chapter1ArrivalController>(), Is.SameAs(arrival));
         Assert.That(RequireExactlyOneInActiveScene<RoomLightingController>(), Is.SameAs(lighting));
         Assert.That(RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>(), Is.SameAs(gameRoot));
     }
