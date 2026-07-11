@@ -149,6 +149,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private Chapter1SceneAction frontDoorSceneAction;
     private GuestRuntimeState carriedCoatGuest;
     private GuestRuntimeState pendingCoatPickupGuest;
+    private bool guestScaleConfigurationErrorLogged;
     private Chapter1CoatPickup pendingCoatPickup;
     private bool hasPendingClosetApproachDestination;
     private Vector2 pendingClosetApproachDestination;
@@ -1339,6 +1340,19 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         if (drawingRoomSeat03 == null)
         {
             Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomSeat03.", this);
+        }
+
+        if (guestRoomScaleApplier == null)
+        {
+            Debug.LogWarning("Chapter1ArrivalController missing required field: guestRoomScaleApplier.", this);
+        }
+        else if (guestRoomScaleApplier.Calibration == null)
+        {
+            Debug.LogWarning("Chapter1ArrivalController guestRoomScaleApplier is missing its serialized calibration.", this);
+        }
+        else if (guestRoomScaleApplier.Calibration.ButlerScaleSource == null)
+        {
+            Debug.LogWarning("GuestRoomScaleCalibration is missing its serialized Butler scale source.", this);
         }
 
         int sceneGuestCandidateCount = useExistingSceneGuestsFirst ? FindSceneGuestCandidates().Count : 0;
@@ -5529,7 +5543,13 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             return null;
         }
 
-        GuestRoomScaleApplier applier = EnsureGuestScaleApplier();
+        GuestRoomScaleApplier applier = ResolveConfiguredGuestScaleApplier();
+
+        if (applier == null)
+        {
+            return null;
+        }
+
         GuestScaleParticipant participant = GuestRoomScaleApplier.EnsureParticipantForGuestObject(
             guestState.GuestObject,
             guestState.Config != null ? guestState.Config.GuestId : guestState.GuestObject.name,
@@ -5568,32 +5588,20 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         participant?.SetCurrentRoomId(roomId);
     }
 
-    private GuestRoomScaleApplier EnsureGuestScaleApplier()
+    private GuestRoomScaleApplier ResolveConfiguredGuestScaleApplier()
     {
         if (guestRoomScaleApplier == null)
         {
-            guestRoomScaleApplier = GuestRoomScaleApplier.EnsureInScene();
+            LogGuestScaleConfigurationError("Chapter1ArrivalController requires its serialized GuestRoomScaleApplier reference.");
+            return null;
         }
 
-        guestRoomScaleApplier.SetCalibration(EnsureGuestScaleCalibration());
-        return guestRoomScaleApplier;
-    }
-
-    private GuestRoomScaleCalibration EnsureGuestScaleCalibration()
-    {
-        GuestRoomScaleCalibration calibration = guestRoomScaleApplier != null
-            ? guestRoomScaleApplier.Calibration
-            : null;
+        GuestRoomScaleCalibration calibration = guestRoomScaleApplier.Calibration;
 
         if (calibration == null)
         {
-            calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
-        }
-
-        if (calibration == null)
-        {
-            GameObject calibrationObject = new GameObject("GuestRoomScaleCalibration");
-            calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            LogGuestScaleConfigurationError("The serialized GuestRoomScaleApplier requires its GuestRoomScaleCalibration reference.");
+            return null;
         }
 
         ResolveReferences(false);
@@ -5605,13 +5613,24 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             calibration.SetButlerScaleSource(butler);
         }
 
-        return calibration;
+        return guestRoomScaleApplier;
+    }
+
+    private void LogGuestScaleConfigurationError(string message)
+    {
+        if (guestScaleConfigurationErrorLogged)
+        {
+            return;
+        }
+
+        guestScaleConfigurationErrorLogged = true;
+        Debug.LogError(message, this);
     }
 
     private void RefreshGuestScalingNow()
     {
-        GuestRoomScaleApplier applier = EnsureGuestScaleApplier();
-        applier.RefreshAllNow();
+        GuestRoomScaleApplier applier = ResolveConfiguredGuestScaleApplier();
+        applier?.RefreshAllNow();
     }
 
     private string ResolveGuestScaleRoomId(GuestRuntimeState guestState)

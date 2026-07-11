@@ -20,7 +20,7 @@ Assets/Scripts/Characters/CharacterAnimatorDriver.cs,178,d49bae2e75203b965d64cc4
 Assets/Scripts/Characters/CharacterVisualProfile.cs,145,02d988ff5cfec8bede2d6606d6db48507b2eb564f5fa0123861883bea1d5634b,0,0,0,0,0,0,
 Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionController.cs,153,f8cf94706f213061e36071563a154123e03099da6a19c3529ac349ca55024e12,1,0,0,1,0,0,DiningRoomSeatedGuestOcclusionController
 Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionException.cs,277,7a93572692c5080600e4ad99e1444569a1ebaaddbfa4fde19a8b0d07a91f5773,0,0,0,1,0,0,DiningRoomSeatedGuestOcclusionException
-Assets/Scripts/Characters/GuestRoomScaleApplier.cs,844,78fa1a9b694f2fd55c8ebee78378cd05609b2e7f413a21581d03e85316b6f83e,7,0,1,2,0,0,GuestRoomScaleApplier
+Assets/Scripts/Characters/GuestRoomScaleApplier.cs,813,cb3eada7a832e3aa28f756ecf456bb8122eae0ac7127bf5399bd86c1fa02ce6e,5,0,0,1,0,0,GuestRoomScaleApplier
 Assets/Scripts/Characters/GuestRoomScaleCalibration.cs,371,5b1badede4bf851830821636e2eab3c5941f30abfdd4d867e8fd1fa088df1da1,1,0,0,0,0,0,GuestRoomScaleCalibration
 Assets/Scripts/Characters/GuestRoomStageScaleUtility.cs,188,8e9869d4fe47da4f2b70c13fc2cfdf72d6f916823f8d082db4d6392944b925d4,2,0,0,0,0,0,
 Assets/Scripts/Characters/GuestScaleParticipant.cs,748,5fec7ade513cdbba7333f07970e5483b8cb9a131968e7b0343ec6af43b33cf39,2,0,0,0,0,0,GuestScaleParticipant
@@ -92,7 +92,7 @@ Assets/_Chateau/Runtime/Gameplay/InteractionTargetBase.cs,6,30c69884ec98ab1867ff
 Assets/_Chateau/Runtime/Gameplay/RoomElementBase.cs,6,67065aa8dc7ae838ee4922d7ad707d71a8e557431cd5a8f47cdb88d1af31347a,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Gameplay/StoryBeatBase.cs,21,35aef3731071e18debe7233a75e22cb70f7a51408d98458a07afb7cfa929ba38,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Gameplay/UIScreenBase.cs,6,866b461d97830757f363d92748de6765afca6ef83e8261b77c47be9559a9cfd1,0,0,0,0,0,0,
-Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,7205,df0012a0df217cb393f320cc6eca4649850f72f36cb4b62ccaff54534f55b26e,27,3,7,27,0,0,
+Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,7224,b966d5a4ea8d3bbe3989277a94b5fce81ef63242194ef36e251e6965c4fc45c3,26,3,6,26,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,245,66ea4162715ef550570984aa5a7e8ade9906eb12fb1ded6dae2900ae91695b59,2,0,0,0,0,0,Chapter1CoatPickup
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,164,fbdd821a8687aace94f17e7d73ecd6bd409d5d6040d5443a799119f0acef44f9,3,0,3,0,0,0,Chapter1InteractionHUD
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,553,66c69d06013a3a26f9f8ed483fb4a4fcfa433bfa9fe0ed7879d722c042a113a9,4,0,0,0,0,0,Chapter1SceneAction

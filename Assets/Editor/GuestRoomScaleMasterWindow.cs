@@ -367,7 +367,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
     {
         PointClickPlayerMovement butler = FindButler();
         GuestRoomScaleCalibration calibration = EnsureCalibration(butler);
-        GuestRoomScaleApplier applier = GuestRoomScaleApplier.EnsureInScene();
+        GuestRoomScaleApplier applier = EnsureApplier();
         applier.SetCalibration(calibration);
         int removed = RemoveInvalidParticipants();
         int ensured = applier.EnsureParticipantsForSceneGuests();
@@ -562,6 +562,20 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         return calibration;
+    }
+
+    private static GuestRoomScaleApplier EnsureApplier()
+    {
+        GuestRoomScaleApplier applier = FindAnyObjectByType<GuestRoomScaleApplier>(FindObjectsInactive.Include);
+
+        if (applier != null)
+        {
+            return applier;
+        }
+
+        GameObject applierObject = new GameObject("GuestRoomScaleApplier");
+        Undo.RegisterCreatedObjectUndo(applierObject, "Create Guest Room Scale Applier");
+        return Undo.AddComponent<GuestRoomScaleApplier>(applierObject);
     }
 
     private static void LogGuestScaleDiagnostics(string selectedRoom)

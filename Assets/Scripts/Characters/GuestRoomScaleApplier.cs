@@ -86,22 +86,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         calibration = value;
     }
 
-    public static GuestRoomScaleApplier EnsureInScene()
-    {
-        GuestRoomScaleApplier existing = FindAnyObjectByType<GuestRoomScaleApplier>(FindObjectsInactive.Include);
-
-        if (existing != null)
-        {
-            existing.ResolveCalibration();
-            return existing;
-        }
-
-        GameObject applierObject = new GameObject("GuestRoomScaleApplier");
-        GuestRoomScaleApplier created = applierObject.AddComponent<GuestRoomScaleApplier>();
-        created.ResolveCalibration();
-        return created;
-    }
-
     public static GuestScaleParticipant EnsureParticipantForGuestObject(
         GameObject guestObject,
         string characterId = null,
@@ -158,8 +142,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
     public GuestScaleApplyResult RefreshAllWithResultNow()
     {
-        ResolveCalibration();
-
         if (calibration == null)
         {
             return new GuestScaleApplyResult(0, 0);
@@ -188,8 +170,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
     public GuestScaleApplyResult RefreshRoomNow(string roomId)
     {
-        ResolveCalibration();
-
         if (calibration == null || string.IsNullOrWhiteSpace(roomId))
         {
             return new GuestScaleApplyResult(0, 0);
@@ -235,8 +215,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
 
     private bool RefreshParticipantNow(GuestScaleParticipant participant, out bool changed, string roomContext)
     {
-        ResolveCalibration();
-
         if (!TryComputeParticipantScale(participant, roomContext, out GuestScaleComputation computation))
         {
             changed = false;
@@ -265,7 +243,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         string roomContext,
         out GuestScaleComputation computation)
     {
-        ResolveCalibration();
         computation = default;
 
         if (participant == null ||
@@ -478,14 +455,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         }
 
         return false;
-    }
-
-    private void ResolveCalibration()
-    {
-        if (calibration == null)
-        {
-            calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
-        }
     }
 
     private void RefreshParticipantList()

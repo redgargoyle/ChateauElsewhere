@@ -144,6 +144,16 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("guestRoomScaleApplier: {fileID: 86244178}"));
         Assert.That(sceneText, Does.Contain("calibration: {fileID: 1844861547}"));
         Assert.That(sceneText, Does.Contain("butlerScaleSource: {fileID: 81962842}"));
+
+        string chapter1Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs");
+        string applierText = File.ReadAllText("Assets/Scripts/Characters/GuestRoomScaleApplier.cs");
+        Assert.That(chapter1Text, Does.Not.Contain("GuestRoomScaleApplier.EnsureInScene"));
+        Assert.That(chapter1Text, Does.Not.Contain("new GameObject(\"GuestRoomScaleCalibration\")"));
+        Assert.That(chapter1Text, Does.Not.Contain("AddComponent<GuestRoomScaleCalibration>"));
+        Assert.That(applierText, Does.Not.Contain("EnsureInScene"));
+        Assert.That(applierText, Does.Not.Contain("AddComponent<GuestRoomScaleApplier>"));
+        Assert.That(applierText, Does.Not.Contain("FindAnyObjectByType<GuestRoomScaleCalibration>"));
+        Assert.That(applierText, Does.Contain("AddComponent<GuestScaleParticipant>"));
     }
 
     private static int CountOccurrences(string text, string value)

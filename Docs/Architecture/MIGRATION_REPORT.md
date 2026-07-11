@@ -36,18 +36,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed the Chapter 2 HUD factory; Chapter 2 now reuses the single serialized HUD on every entry path.
 - Serialized the three inert Chapter 2 feature owners (monster stinger, guest panic, and guest search), bound their stable scene references, registered them with GameRoot, and removed their independently gated creation fallbacks.
 - Bound Chapter 1 to the existing serialized guest-scale applier, preserving the single ownership chain from applier to calibration to approved Butler source; every identity is lifecycle-tested before factory retirement.
+- Removed runtime creation of guest-scale applier/calibration owners; the Guest Size Master retains an Editor-only, Undo-aware authoring action, and runtime creation is limited to per-guest participants.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,579 | +677 |
+| Runtime C# lines | 49,902 | 50,567 | +665 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
-| `FindObject*`/`GameObject.Find` | 199 | 192 | -7 |
+| `FindObject*`/`GameObject.Find` | 199 | 189 | -10 |
 | `Resources.Load` | 27 | 27 | 0 |
-| runtime `new GameObject` | 98 | 96 | -2 |
-| runtime `AddComponent<T>` | 100 | 87 | -13 |
+| runtime `new GameObject` | 98 | 94 | -4 |
+| runtime `AddComponent<T>` | 100 | 85 | -15 |
 | runtime initialization hooks | 9 | 5 | -4 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
