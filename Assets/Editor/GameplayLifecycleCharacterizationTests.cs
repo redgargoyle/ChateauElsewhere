@@ -75,8 +75,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(lighting, Is.Not.Null);
         Assert.That(chapter.Clock, Is.SameAs(clock));
         Assert.That(chapter.EventScheduler, Is.SameAs(scheduler));
-        Assert.That(RequireExactlyOneInActiveScene<SubtitleService>(), Is.Not.Null);
-        Assert.That(RequireExactlyOneInActiveScene<DialogueSpeechService>(), Is.Not.Null);
+        SubtitleService subtitle = RequireExactlyOneInActiveScene<SubtitleService>();
+        DialogueSpeechService speech = RequireExactlyOneInActiveScene<DialogueSpeechService>();
+        Assert.That(subtitle.IsInitialized, Is.True);
+        Assert.That(subtitle.HasGameContext, Is.True);
+        Assert.That(speech.IsInitialized, Is.True);
+        Assert.That(speech.HasGameContext, Is.True);
         Assert.That(gameRoot.IsInitialized, Is.True);
         Assert.That(gameRoot.Database, Is.Not.Null);
         Assert.That(gameRoot.Context, Is.Not.Null);
@@ -102,6 +106,34 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(player, Is.Not.Null);
         Assert.That(serializedGuestScaleApplier.Calibration, Is.SameAs(serializedGuestScaleCalibration));
         Assert.That(serializedGuestScaleCalibration.ButlerScaleSource, Is.SameAs(player));
+        Assert.That(FindInActiveScene<GuestVoiceLinePlayback>(), Is.Empty);
+        Assert.That(FindInActiveScene<SpeakingCharacterIndicator>(), Is.Empty);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_Subtitles"), Is.False);
+
+        speech.BeginSpeakLine(
+            "ARCH_LIFECYCLE_DIALOGUE",
+            "Butler",
+            "Architecture lifecycle dialogue.",
+            showSubtitleOverlay: false);
+        yield return null;
+
+        GuestVoiceLinePlayback serializedVoicePlayback = RequireExactlyOneInActiveScene<GuestVoiceLinePlayback>();
+        SpeakingCharacterIndicator serializedSpeakingIndicator = RequireExactlyOneInActiveScene<SpeakingCharacterIndicator>();
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_Subtitles"), Is.True);
+        speech.StopCurrentSpeech();
+        yield return null;
+
+        speech.BeginSpeakLine(
+            "ARCH_LIFECYCLE_DIALOGUE_REPEAT",
+            "Butler",
+            "Architecture lifecycle dialogue repeat.",
+            showSubtitleOverlay: false);
+        yield return null;
+
+        Assert.That(RequireExactlyOneInActiveScene<GuestVoiceLinePlayback>(), Is.SameAs(serializedVoicePlayback));
+        Assert.That(RequireExactlyOneInActiveScene<SpeakingCharacterIndicator>(), Is.SameAs(serializedSpeakingIndicator));
+        speech.StopCurrentSpeech();
+        yield return null;
 
         Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
         RequireOnlyActiveRoom(navigation.CurrentRoom);
