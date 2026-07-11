@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.IO;
 using Chateau.Architecture;
 using Chateau.World.Rooms.Props;
@@ -48,8 +49,8 @@ public sealed class SetPieceViewTests
         }
         finally
         {
-            Object.DestroyImmediate(setPieceObject);
-            Object.DestroyImmediate(profile);
+            UnityEngine.Object.DestroyImmediate(setPieceObject);
+            UnityEngine.Object.DestroyImmediate(profile);
         }
     }
 
@@ -69,6 +70,47 @@ public sealed class SetPieceViewTests
         Assert.That(viewText, Does.Not.Contain("AddComponent<"));
     }
 
+    [Test]
+    public void TeaTableIsSerializedOnceUnderSetPiecesInEveryDrawingRoomAsset()
+    {
+        AssertSerializedTeaTable(
+            "Assets/Scenes/Gameplay.unity",
+            "2088426361",
+            "2088426359",
+            "2088426360",
+            "3930000001",
+            "3502000003",
+            "roomLocalOcclusionAnchor: {x: -80.26, y: -211.67}",
+            "m_SortingOrder: 6627");
+        AssertSerializedTeaTable(
+            "Assets/Prefabs/Room_Drawing_Room.prefab",
+            "4648226041189446053",
+            "4469554848413931009",
+            "3639458741953199328",
+            "3931000001",
+            "8198696041881719533",
+            "roomLocalOcclusionAnchor: {x: -77.23, y: -208.14}",
+            "m_SortingOrder: 6570");
+        AssertSerializedTeaTable(
+            "Assets/Prefabs/Room_Drawing_Room_Perspective.prefab",
+            "2369478294726031537",
+            "7736515036983942028",
+            "5718819531062794842",
+            "3932000001",
+            "7119017594806998140",
+            "roomLocalOcclusionAnchor: {x: -77.23, y: -208.14}",
+            "m_SortingOrder: 6570");
+
+        string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+        Assert.That(sceneText, Does.Contain("sourceObject: {fileID: 2088426358}"));
+        Assert.That(sceneText, Does.Contain("sortSourceRenderers: 0"));
+        Assert.That(sceneText, Does.Contain("- - {x: -214.44357, y: -357.79114}"));
+        Assert.That(sceneText, Does.Contain("- {x: 53.923557, y: -357.79114}"));
+        Assert.That(sceneText, Does.Contain("- {x: 53.923557, y: -270.11847}"));
+        Assert.That(sceneText, Does.Contain("- {x: -214.44357, y: -270.11847}"));
+        Assert.That(sceneText, Does.Contain("- {fileID: 2088426361}"), "GameRoot must bind the inactive scene SetPieceView.");
+    }
+
     private static RoomPerspectiveProfile CreateProfile()
     {
         RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
@@ -83,6 +125,46 @@ public sealed class SetPieceViewTests
             8000,
             AnimationCurve.Linear(0f, 1f, 1f, 0f));
         return profile;
+    }
+
+    private static void AssertSerializedTeaTable(
+        string assetPath,
+        string viewFileId,
+        string rendererFileId,
+        string teaTransformFileId,
+        string setPiecesTransformFileId,
+        string propsTransformFileId,
+        string expectedAnchor,
+        string expectedOrder)
+    {
+        string assetText = File.ReadAllText(assetPath);
+        string viewDocument = ExtractDocument(assetText, $"--- !u!114 &{viewFileId}");
+        string setPiecesDocument = ExtractDocument(assetText, $"--- !u!4 &{setPiecesTransformFileId}");
+
+        Assert.That(CountOccurrences(assetText, "guid: 5e7a11c7d4b24c68a1f9e2d3c4b5a607"), Is.EqualTo(1), assetPath);
+        Assert.That(CountOccurrences(assetText, "m_Name: Set Pieces"), Is.EqualTo(1), assetPath);
+        Assert.That(viewDocument, Does.Not.Contain("guid: 361e3658088b41ab98d330ae6457640b"), assetPath);
+        Assert.That(viewDocument, Does.Contain($"cutoutRenderer: {{fileID: {rendererFileId}}}"), assetPath);
+        Assert.That(viewDocument, Does.Contain(expectedAnchor), assetPath);
+        Assert.That(assetText, Does.Contain(expectedOrder), assetPath);
+        Assert.That(CountOccurrences(assetText, $"- {{fileID: {setPiecesTransformFileId}}}"), Is.EqualTo(1), assetPath);
+        Assert.That(CountOccurrences(assetText, $"m_Father: {{fileID: {setPiecesTransformFileId}}}"), Is.EqualTo(1), assetPath);
+        Assert.That(CountOccurrences(assetText, $"- {{fileID: {teaTransformFileId}}}"), Is.EqualTo(1), assetPath);
+        Assert.That(setPiecesDocument, Does.Contain($"m_Father: {{fileID: {propsTransformFileId}}}"), assetPath);
+        Assert.That(setPiecesDocument, Does.Contain($"- {{fileID: {teaTransformFileId}}}"), assetPath);
+    }
+
+    private static string ExtractDocument(string assetText, string header)
+    {
+        int start = assetText.IndexOf(header, StringComparison.Ordinal);
+        Assert.That(start, Is.GreaterThanOrEqualTo(0), $"Missing document '{header}'.");
+        int end = assetText.IndexOf("\n--- !u!", start + header.Length, StringComparison.Ordinal);
+        return end >= 0 ? assetText.Substring(start, end - start) : assetText.Substring(start);
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        return text.Split(new[] { value }, StringSplitOptions.None).Length - 1;
     }
 }
 #endif

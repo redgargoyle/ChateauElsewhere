@@ -756,6 +756,7 @@ Transform:
   m_Children:
   - {fileID: 4403269801872815738}
   - {fileID: 710193103820297896}
+  - {fileID: 3931000001}
   m_Father: {fileID: 4435884376220043763}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2496077080608631436
@@ -1346,7 +1347,7 @@ Transform:
   m_LocalScale: {x: 94.75241, y: 101.43074, z: 73.00117}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 4435884376220043763}
+  m_Father: {fileID: 3931000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4469554848413931009
 SpriteRenderer:
@@ -1416,34 +1417,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 4648226041189446052}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 361e3658088b41ab98d330ae6457640b, type: 3}
+  m_Script: {fileID: 11500000, guid: 5e7a11c7d4b24c68a1f9e2d3c4b5a607, type: 3}
   m_Name:
-  m_EditorClassIdentifier:
-  roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
-  visualProfile: {fileID: 0}
-  projectionMode: 4
-  roomLocalFootPoint: {x: -77.23, y: -208.14}
-  visualRoot: {fileID: 0}
-  applyPosition: 0
-  applyScale: 0
-  applyTint: 0
-  applySorting: 1
-  includeInactiveRenderers: 1
-  requireActorRoomMatch: 0
-  normalizeLogicalRootScale: 0
-  logicalRootScale: {x: 1, y: 1, z: 1}
+  m_EditorClassIdentifier: Assembly-CSharp::Chateau.World.Rooms.Props.SetPieceView
+  cutoutRenderer: {fileID: 4469554848413931009}
+  depthProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
+  roomLocalOcclusionAnchor: {x: -77.23, y: -208.14}
   sortingOffset: 0
-  cameraManager: {fileID: 0}
-  contactShadowRoot: {fileID: 0}
-  contactShadowRenderer: {fileID: 0}
-  contactShadowGraphic: {fileID: 0}
-  useRoomVisualScaleOverrides: 0
-  editorSelectedVisualScaleRoomId:
-  roomVisualScaleOverrides: []
-  authoredVisualRootScale: {x: 1, y: 1, z: 1}
-  hasAuthoredVisualRootScale: 0
-  lastAppliedVisualRootScale: {x: 1, y: 1, z: 1}
-  hasLastAppliedVisualRootScale: 0
 --- !u!1 &1296646626005577092
 GameObject:
   m_ObjectHideFlags: 0
@@ -1772,7 +1752,6 @@ RectTransform:
   - {fileID: 4901619702408686053}
   - {fileID: 1360741886811614754}
   - {fileID: 8224862819271380268}
-  - {fileID: 3639458741953199328}
   - {fileID: 6483441564707510065}
   - {fileID: 254615378711260024}
   - {fileID: 8527723970156229055}
@@ -3790,3 +3769,35 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 93531621516719495, guid: ad6f12b226bf3c44ea14b95c9aa4ecfd, type: 3}
   m_PrefabInstance: {fileID: 8693077596647245777}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3931000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3931000001}
+  m_Layer: 0
+  m_Name: Set Pieces
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3931000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3931000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3639458741953199328}
+  m_Father: {fileID: 8198696041881719533}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

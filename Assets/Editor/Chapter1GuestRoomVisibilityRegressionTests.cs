@@ -436,56 +436,62 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(depthSortMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - referenceOrder"), "Depth sorting should preserve local renderer offsets such as coats or layered bodies.");
         Assert.That(depthSortMethodBody, Does.Not.Contain("9000"), "Drawing Room depth sorting should not reuse the entrance fallback sorting band.");
 
-        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "tea_service_table", "roomLocalFootPoint: {x: -80.26, y: -211.67}", "m_SortingOrder: 6627");
+        AssertDrawingRoomSetPieceDepth(gameplaySceneText, "tea_service_table", "roomLocalOcclusionAnchor: {x: -80.26, y: -211.67}", "m_SortingOrder: 6627", "cutoutRenderer: {fileID: 2088426359}", "m_Father: {fileID: 3930000001}");
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawing_room_red_chair_guest6", "roomLocalFootPoint: {x: 59, y: -208.5}", "m_SortingOrder: 800", "sortingOffset: -5776");
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -479.54, y: -281.56}", "m_SortingOrder: 7745");
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair[_0", "roomLocalFootPoint: {x: -408.72, y: -261.91}", "m_SortingOrder: 7431");
 
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "tea_service_table", "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
+        AssertDrawingRoomSetPieceDepth(drawingRoomPrefabText, "tea_service_table", "roomLocalOcclusionAnchor: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570", "cutoutRenderer: {fileID: 4469554848413931009}", "m_Father: {fileID: 3931000001}");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "drawing_room_red_chair_guest6", "roomLocalFootPoint: {x: 59, y: -208.5}", "m_SortingOrder: 800", "sortingOffset: -5776");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -490.46, y: -282.58}", "m_SortingOrder: 7761");
 
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "tea_service_table", "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
+        AssertDrawingRoomSetPieceDepth(drawingRoomPerspectivePrefabText, "tea_service_table", "roomLocalOcclusionAnchor: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570", "cutoutRenderer: {fileID: 7736515036983942028}", "m_Father: {fileID: 3932000001}");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "drawing_room_red_chair_guest6", "roomLocalFootPoint: {x: 59, y: -208.5}", "m_SortingOrder: 800", "sortingOffset: -5776");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
         AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -490.46, y: -282.58}", "m_SortingOrder: 7761");
     }
 
     [Test]
-    public void DrawingRoomTeaTableCharacterizesCompetingDepthAndCollisionOwners()
+    public void DrawingRoomTeaTableUsesOneSetPieceDepthOwnerAndKeepsCollisionFootprint()
     {
         string gameplaySceneText = File.ReadAllText(GameplayScenePath);
         string tableBlock = ExtractGameObjectBundle(gameplaySceneText, "tea_service_table");
         string blockerBlock = ExtractGameObjectBundle(gameplaySceneText, "PlayerBlocker_tea_service_table");
-        string projectionText = File.ReadAllText("Assets/Scripts/Characters/RoomProjectedEntity.cs");
+        string setPieceText = File.ReadAllText("Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs");
         string blockerText = File.ReadAllText("Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs");
 
         Assert.That(tableBlock, Does.Contain("m_Sprite: {fileID: -7836622596164935206, guid: c9c9711a41d82097fbae9cb69d6b7e6d, type: 3}"));
         Assert.That(tableBlock, Does.Contain("m_Materials:\n  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}"));
         Assert.That(tableBlock, Does.Contain("m_LocalPosition: {x: -80.26, y: -211.67, z: -6570.105}"));
         Assert.That(tableBlock, Does.Contain("m_LocalScale: {x: 99.52793, y: 99.40213, z: 73.00117}"));
-        Assert.That(tableBlock, Does.Contain("guid: 361e3658088b41ab98d330ae6457640b"));
-        Assert.That(tableBlock, Does.Contain("roomLocalFootPoint: {x: -80.26, y: -211.67}"));
+        Assert.That(tableBlock, Does.Contain("guid: 5e7a11c7d4b24c68a1f9e2d3c4b5a607"));
+        Assert.That(tableBlock, Does.Not.Contain("guid: 361e3658088b41ab98d330ae6457640b"));
+        Assert.That(tableBlock, Does.Contain("cutoutRenderer: {fileID: 2088426359}"));
+        Assert.That(tableBlock, Does.Contain("roomLocalOcclusionAnchor: {x: -80.26, y: -211.67}"));
         Assert.That(tableBlock, Does.Contain("m_SortingOrder: 6627"));
+        Assert.That(tableBlock, Does.Contain("m_Father: {fileID: 3930000001}"));
+        Assert.That(gameplaySceneText, Does.Contain("m_Name: Set Pieces"));
+        Assert.That(gameplaySceneText, Does.Contain("m_Father: {fileID: 3502000003}"));
+        Assert.That(gameplaySceneText, Does.Contain("- {fileID: 2088426361}"), "GameRoot should bind the inactive set-piece view.");
 
         Assert.That(blockerBlock, Does.Contain("guid: b95469e02af64fee8b29689edb9b583a"));
         Assert.That(blockerBlock, Does.Contain("sourceObject: {fileID: 2088426358}"));
         Assert.That(blockerBlock, Does.Contain("sourceObjectName: tea_service_table"));
         Assert.That(blockerBlock, Does.Contain("sourceRoomName: Drawing Room"));
         Assert.That(blockerBlock, Does.Contain("category: Table"));
-        Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 1"));
+        Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 0"));
         Assert.That(blockerBlock, Does.Contain("m_IsTrigger: 1"));
         Assert.That(blockerBlock, Does.Contain("- - {x: -214.44357, y: -357.79114}"));
         Assert.That(blockerBlock, Does.Contain("- {x: 53.923557, y: -357.79114}"));
         Assert.That(blockerBlock, Does.Contain("- {x: 53.923557, y: -270.11847}"));
         Assert.That(blockerBlock, Does.Contain("- {x: -214.44357, y: -270.11847}"));
 
-        Assert.That(projectionText, Does.Match(@"private void LateUpdate\(\)[\s\S]*ApplyProjection\(\)"));
-        Assert.That(projectionText, Does.Contain("spriteRenderer.sortingOrder = GetSortingOrder(localOffset)"));
-        Assert.That(blockerText, Does.Match(@"private void LateUpdate\(\)[\s\S]*ApplySourceSortingNow\(\)"));
-        Assert.That(blockerText, Does.Contain("spriteRenderer.sortingOrder = CurrentSortingOrder"));
+        Assert.That(setPieceText, Does.Not.Contain("LateUpdate()"));
+        Assert.That(setPieceText, Does.Not.Contain(".bounds"));
+        Assert.That(setPieceText, Does.Contain("cutoutRenderer.sortingOrder = CurrentSortingOrder"));
+        Assert.That(blockerText, Does.Match(@"public void ApplySourceSortingNow\(\)[\s\S]*if \(!sortSourceRenderers\)[\s\S]*return"));
     }
 
     [Test]
@@ -523,6 +529,27 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         {
             Assert.That(objectBlock, Does.Contain(expectedSortingOffset), $"The Drawing Room object '{objectName}' should keep its authored projection sorting offset.");
         }
+    }
+
+    private static void AssertDrawingRoomSetPieceDepth(
+        string assetText,
+        string objectName,
+        string expectedAnchor,
+        string expectedSortingOrder,
+        string expectedRendererReference,
+        string expectedParentReference)
+    {
+        string objectBlock = ExtractGameObjectBundle(assetText, objectName);
+
+        Assert.That(objectBlock, Does.Contain("guid: 5e7a11c7d4b24c68a1f9e2d3c4b5a607"), $"The Drawing Room object '{objectName}' should use the target SetPieceView.");
+        Assert.That(objectBlock, Does.Not.Contain("guid: 361e3658088b41ab98d330ae6457640b"), $"The Drawing Room object '{objectName}' should no longer use the actor projection helper.");
+        Assert.That(objectBlock, Does.Contain("depthProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267"));
+        Assert.That(objectBlock, Does.Contain(expectedRendererReference));
+        Assert.That(objectBlock, Does.Contain(expectedAnchor));
+        Assert.That(objectBlock, Does.Contain("sortingOffset: 0"));
+        Assert.That(objectBlock, Does.Contain(expectedSortingOrder));
+        Assert.That(objectBlock, Does.Contain(expectedParentReference));
+        Assert.That(assetText, Does.Contain("m_Name: Set Pieces"));
     }
 
     private static string ExtractObjectBlock(string assetText, string objectName)

@@ -1,6 +1,6 @@
 current_file,current_types,baseline_loc,code_reference_count,serialized_reference_count,action,target_owner_or_family,migration_phase,notes
 Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/RoomDepthResolver.cs,RoomDepthResolver,21,1,0,New target architecture,World / Rooms / Props / Set Pieces,4,Pure room-local Y-to-sorting resolver; no Unity object ownership or bounds dependency.
-Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,SetPieceView,86,1,0,New target architecture,World / Rooms / Props / Set Pieces,4,Static cutout presentation owner; unit-gated before the first serialized tea-table binding.
+Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,SetPieceView,86,1,3,New target architecture,World / Rooms / Props / Set Pieces,4,Owns the Drawing Room tea table in Gameplay and both prefab variants; static room-local sort only.
 Assets/Scripts/PickupObject.cs,PickupObject,43,1,0,Pruned,InteractionTargetBase,1,Unused generic pickup cursor component; zero runtime and serialized references.
 Assets/Scripts/NewBehaviourScript.cs,NewBehaviourScript,18,0,0,Pruned,None,1,Empty starter class; zero code and serialized references.
 Assets/Scripts/Story/ChapterClock.cs,ChapterClock,110,39,1,Compatibility service,ClockService,2,Now derives GameServiceBase; retain behavior while scheduler/time are consolidated.
@@ -14,11 +14,11 @@ Assets/Scripts/Navigation/DoorPromptSequenceController.cs,DoorPromptSequenceCont
 Assets/Scripts/Navigation/RoomVisualCatalog.cs,RoomVisualCatalog | RoomVisualEntry,45,22,2,Convert then retire,RoomDefinition,4,Room visual data joins canonical definitions.
 Assets/Scripts/Navigation/RoomContentGroup.cs,RoomContentGroup,256,223,22,Replace behavior,RoomView + serialized SetPieceView bindings,4,Must stop force-enabling descendants flattening transforms and repairing renderer state.
 Assets/Scripts/Navigation/DoorButton.cs,DoorButton,190,16,0,Migrate/review,World / Navigation,4,Map to canonical room/passage architecture.
-Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,ObjectMovementBlocker2D,179,19,49,Split behind facade,RoomNavigationGeometry + SetPieceView adapter,4,Preserve authored collider footprints; navigation geometry must not write prop sorting.
+Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,ObjectMovementBlocker2D,179,19,49,Split behind facade,RoomNavigationGeometry + SetPieceView adapter,4,Tea-table footprint preserved with sorting disabled; remaining legacy blockers still require one-prop-at-a-time migration.
 Assets/Scripts/Characters/GuestScaleParticipant.cs,CharacterPose | GuestRoomResolutionTrace | GuestScaleParticipant,748,195,8,Consolidate,ActorController + ActorPresenter,5,Fold duplicate scale/pose state.
 Assets/Scripts/Story/ActorRoomState.cs,ActorRoomState,1012,145,0,Consolidate,ActorControllerBase + ActorRegistry,5,One authoritative actor state owner.
 Assets/Scripts/Characters/GuestRoomScaleApplier.cs,GuestScaleApplyResult | GuestScaleComputation | GuestRoomScaleApplier,844,75,1,Consolidate,ActorPresenter,5,Existing scene owner is explicitly bound to Chapter 1/calibration; runtime owner factory removed. Preserve deliberate per-guest participant creation until ActorPresenter migration.
-Assets/Scripts/Characters/RoomProjectedEntity.cs,RoomProjectedEntity,1229,122,13,Consolidate,ActorPresenter + SetPieceView for foreground props,5,One transform/scale/sort writer per actor or prop.
+Assets/Scripts/Characters/RoomProjectedEntity.cs,RoomProjectedEntity,1229,122,10,Consolidate,ActorPresenter + SetPieceView for foreground props,5,Tea table removed from all three serialized copies; remaining actor/prop uses migrate only after characterization.
 Assets/Scripts/Characters/CharacterAnimatorDriver.cs,CharacterWalkDirection | CharacterAnimatorDriver,178,18,0,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
 Assets/Scripts/Characters/CharacterVisualProfile.cs,CharacterVisualProfile,145,11,0,Migrate/review,Actors,5,"Map to actor controller, motor, presenter, or definition."
 Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionController.cs,DiningRoomSeatedGuestOcclusionController,153,5,1,Replace then retire,ActorPresenter + serialized SeatOcclusionSlot,5,Remove global lookup and runtime component creation after all eight seats pass.

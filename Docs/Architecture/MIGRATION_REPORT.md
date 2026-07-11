@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 3 bootstrap retirement in progress; serialized GameRoot now owns navigation startup.**
+**Phase 4 vertical migration in progress; the first set piece is complete while Phase 3 compatibility retirement continues.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -54,6 +54,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed both ambience root factories plus their global navigation lookup, Resources catalog repair, and AudioSource/filter component repair; room navigation now initializes only its serialized owners.
 - Characterized the first Drawing Room set piece without changing it: the tea table's exact sprite/material/transform/profile and four-point collision footprint are frozen, and tests prove `RoomProjectedEntity` plus `ObjectMovementBlocker2D` both overwrite its renderer. The intended order remains `6627`; the collider-bounds writer varied between `1358` and `1452` across valid runs.
 - Added the target `World / Rooms / Props / Set Pieces` foundation: a pure `RoomDepthResolver` plus a static `SetPieceView` that owns only sorting layer/order/pivot and has no frame loop, bounds lookup, search, factory, transform, tint, or collision mutation.
+- Migrated `tea_service_table` in Gameplay and both Drawing Room prefabs beneath literal `Props / Set Pieces` owners. The original GameObject/Transform/SpriteRenderer/component IDs, art, material, authored transform, depth anchor/order, blocker identity, and polygon are preserved; the blocker now owns collision only and cannot rewrite presentation.
 
 ## Current static result
 
@@ -94,7 +95,9 @@ The temporary source increase is the migration spine and verification tooling. I
 - the ambience-factory cleanup audit passed 5/5 checks: no document churn, only the two ambience owner documents changed, document order stayed exact, and SceneRoots stayed byte-identical;
 - the tea-table static characterization and full MainMenu/room-loop lifecycle passed, including direct proof that both legacy owners can write the same renderer while the polygon remains unchanged;
 - both SetPiece foundation unit/static tests passed, and the full-suite failure-name set remained unchanged;
-- the full EditMode discovery count is 235: 184 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
+- the tea-table asset audit passed 16/16 structural checks across Gameplay and both prefabs: six documents added total, none deleted, only the exact hierarchy/owner documents changed, all prior document order stayed exact, and SceneRoots stayed byte-identical;
+- the migrated lifecycle keeps one bound set-piece identity through activation/travel, resolves order `6627`, preserves all four collider points, and proves blocker sorting is a no-op;
+- the full EditMode discovery count is 236: 185 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
 - the ChapterManager dialogue-binding gate produced two consecutive clean full-suite reruns after one transient full-run GameView zoom assertion; no files changed between those three runs, and both reruns restored the exact `0.752865` entrance multiplier;
@@ -106,6 +109,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - visual confirmation of the Butler-to-painted-entrance-door proportion in the interactive Game view;
 - complete manual Chapter 1 and Chapter 2 golden-path smoke tests;
 - dialogue/subtitle/voice, modal input, ambience, camera-shake and lighting visual/audio checks;
+- visual confirmation that the Drawing Room tea table occludes the Butler/guests correctly and retains the accepted no-walk footprint;
 - a player build and save/load trace after `SaveService` exists.
 
 ## Compatibility adapters still present
@@ -123,8 +127,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Characterize the Drawing Room tea-table cutout's exact sorting, activation, and accepted collision footprint.
-2. Introduce one static `SetPieceView`/depth resolver and migrate only that cutout without changing its visual or navigation contract.
-3. Prove the old projection helper and blocker no longer compete for that renderer before migrating any second prop.
+1. Retire dormant dependency-repair searches in the already fully serialized Chapter 2 controller.
+2. Retire dormant external dependency repair in the serialized RuntimeSettingsMenu while preserving its lazy owned controls.
+3. Characterize the next set piece before migrating it; do not bulk-convert room props from source-text assumptions.
 
 Do not begin bulk deletion until those gates pass.

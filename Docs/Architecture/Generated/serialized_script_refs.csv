@@ -64,7 +64,7 @@ Assets/Scripts/Characters/GuestRoomStageScaleUtility.cs,c209e3f5ef8c464db5163927
 Assets/Scripts/Characters/GuestScaleParticipant.cs,b099f2b1c3494d8fa900d71915c16f31,8,Assets/Scenes/Gameplay.unity:8
 Assets/Scripts/Characters/RoomPersonWalker2D.cs,1b45edb93a9b42e58fa4cad7d4de84ce,2,Assets/Scenes/Gameplay.unity:2
 Assets/Scripts/Characters/RoomPerspectiveProfile.cs,e43aae3b108144478b67cf2bce6ce997,2,Assets/ScriptableObjects/Rooms/DiningRoomPerspectiveProfile.asset:1 | Assets/ScriptableObjects/Rooms/DrawingRoomPerspectiveProfile.asset:1
-Assets/Scripts/Characters/RoomProjectedEntity.cs,361e3658088b41ab98d330ae6457640b,13,Assets/Scenes/Gameplay.unity:5 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:4 | Assets/Prefabs/Room_Drawing_Room.prefab:4
+Assets/Scripts/Characters/RoomProjectedEntity.cs,361e3658088b41ab98d330ae6457640b,10,Assets/Scenes/Gameplay.unity:4 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:3 | Assets/Prefabs/Room_Drawing_Room.prefab:3
 Assets/Scripts/Characters/WorldYSortSpriteRenderer.cs,75f090bb68ab450d9703d9581c5c543a,11,Assets/Scenes/Gameplay.unity:11
 Assets/Scripts/Characters/YSortSolidObstacle2D.cs,e89a7a6e329b4106a50461f13559b2e0,0,
 Assets/Scripts/Environment/RoomEnvironmentMarker.cs,37be03b1dd3c4b0fb9b8c5c1f6d4a03c,21,Assets/Scenes/Gameplay.unity:19 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:1 | Assets/Prefabs/Room_Drawing_Room.prefab:1
@@ -134,7 +134,7 @@ Assets/_Chateau/Runtime/Gameplay/RoomElementBase.cs,78ac54b7f625559f80da0a1400f5
 Assets/_Chateau/Runtime/Gameplay/StoryBeatBase.cs,5c9ff8dd0f9559499a5298ed5c5a3f65,0,
 Assets/_Chateau/Runtime/Gameplay/UIScreenBase.cs,0513f14c5965539f9121b3f3a60f4db7,0,
 Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/RoomDepthResolver.cs,9d3e22f8c5a34b79b0e1f2a3c4d5e608,0,
-Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,5e7a11c7d4b24c68a1f9e2d3c4b5a607,0,
+Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,5e7a11c7d4b24c68a1f9e2d3c4b5a607,3,Assets/Scenes/Gameplay.unity:1 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:1 | Assets/Prefabs/Room_Drawing_Room.prefab:1
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,b5ee7e3d0f5a428cb5e5a6617725817f,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,a59ddc6dded9613c01de27aeab93714a,0,
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,a7a7a747ac7ae2fb48c9d60608ca3dc9,1,Assets/Scenes/Gameplay.unity:1
