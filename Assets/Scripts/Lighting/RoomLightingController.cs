@@ -13,7 +13,7 @@ using UnityEditor.SceneManagement;
 
 [ExecuteAlways]
 [DefaultExecutionOrder(-40)]
-public sealed class RoomLightingController : MonoBehaviour
+public sealed class RoomLightingController : Chateau.Architecture.GameServiceBase
 {
     private const string DefaultPresetResourcePath = "Lighting/RoomLightingPreset";
     private const string LightingRootName = "Lighting";

@@ -1,0 +1,21 @@
+digraph Roadmap {
+  graph [rankdir=LR, bgcolor="#F8F5EE", pad="0.25", nodesep="0.32", ranksep="0.4", splines=ortho,
+         fontname="DejaVu Sans", labelloc="t", label="CHATEAU CHANTILLY — SAFE CLEANUP ROADMAP", fontsize=22];
+  node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=10, margin="0.14,0.10", color="#566270", fillcolor="white"];
+  edge [color="#566270", penwidth=1.4, arrowsize=0.75];
+
+  p0 [label="0. BASELINE\ninventory • GUID refs • tests\nrecovery commit", fillcolor="#E9EDF2"];
+  p1 [label="1. FOUNDATION\nGameRoot • base families\nvalidation • guard\nDONE IN PATCH", fillcolor="#DDEBF7", color="#356A9A", penwidth=1.8];
+  p2 [label="2. UNITY INSTALL\nserialize root + services\ncompile + EditMode tests", fillcolor="#E6F3EA", color="#3C7C5B"];
+  p3 [label="3. REMOVE REPAIR\nretire bootstraps only\nafter scene parity", fillcolor="#FFF0E4", color="#B66722"];
+  p4 [label="4. NAVIGATION SLICE\none passage round trip\nthen canonical route graph", fillcolor="#E8F7F7", color="#167C80"];
+  p5 [label="5. ACTORS\none motor • one presenter\ndedicated guest prefab", fillcolor="#FFF7D8", color="#A98216"];
+  p6 [label="6. STORY BEATS\none flow owner\nthin chapter controllers", fillcolor="#F3EFF8", color="#6B4E9B"];
+  p7 [label="7. PRESENTATION\nUI • dialogue • audio\ncamera • lighting", fillcolor="#FAEDF5", color="#A44578"];
+  p8 [label="8. PRUNE + BOUNDARIES\nproof per deletion\nasmdefs • CI • certification", fillcolor="#F8E7E7", color="#A33A3A"];
+
+  p0 -> p1 -> p2 -> p3 -> p4 -> p5 -> p6 -> p7 -> p8;
+  gate [label="GATE AFTER EVERY PHASE\nstatic guard • compile • EditMode • PlayMode\nmissing-script scan • manual trace • separate commit", shape=note, fillcolor="#FFF3C4", color="#B1831B"];
+  p4 -> gate [style=dashed, constraint=false];
+  p8 -> gate [style=dashed, constraint=false];
+}

@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class ChapterClock : MonoBehaviour
+public class ChapterClock : Chateau.Architecture.GameServiceBase
 {
     [Header("Game Time")]
     [SerializeField, Range(1f, 300f)] private float secondsPerGameMinute = 5f;

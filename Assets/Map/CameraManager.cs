@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
-public class CameraManager : MonoBehaviour
+public class CameraManager : Chateau.Architecture.GameServiceBase
 {
     public RawImage cameraBackground;
     public bool resizeBackgroundToScreen = true;

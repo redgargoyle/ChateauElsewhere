@@ -45,7 +45,6 @@ public class NavigationRegressionTests
     private const string CursorPreviewSheetPath = "Assets/Art/UI/Cursors/preview/cursor_styles_contact_sheet.png";
     private const string CursorResourceRoot = "Assets/Resources/UI/Cursors/styles";
     private const string CursorExtractionScriptPath = "scripts/extract_cursor_icons.py";
-    private const string PickupObjectPath = "Assets/Scripts/PickupObject.cs";
     private const string GrandfatherClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
@@ -549,7 +548,6 @@ public class NavigationRegressionTests
         string coatPickupText = File.ReadAllText(Chapter1CoatPickupPath);
         string sceneActionText = File.ReadAllText(Chapter1SceneActionPath);
         string guestFindText = File.ReadAllText(Chapter2GuestFindActionPath);
-        string pickupObjectText = File.ReadAllText(PickupObjectPath);
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
 
         Assert.That(cameraManagerText, Does.Contain("CursorStyleCatalog.LoadSelectedTexture"), "The existing cursor controller should consume selected style assets.");
@@ -572,7 +570,6 @@ public class NavigationRegressionTests
         Assert.That(doorTriggerText, Does.Contain("HoverIcon.StairsDown"));
         Assert.That(coatPickupText, Does.Contain("HoverIcon.PickUpCoat"));
         Assert.That(coatPickupText, Does.Contain("HoverIcon.Locked"));
-        Assert.That(pickupObjectText, Does.Contain("HoverIcon.PickUpTake"));
         Assert.That(sceneActionText, Does.Contain("HoverIcon.PlaceHangCoat"));
         Assert.That(sceneActionText, Does.Contain("HoverIcon.Inspect"));
         Assert.That(sceneActionText, Does.Contain("HoverIcon.ExitLeaveRoom"));

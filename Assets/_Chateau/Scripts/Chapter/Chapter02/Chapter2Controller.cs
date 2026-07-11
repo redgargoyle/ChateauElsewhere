@@ -15,7 +15,7 @@ public enum Chapter2Phase
 }
 
 [DisallowMultipleComponent]
-public class Chapter2Controller : MonoBehaviour
+public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
 {
     private const string DefaultClockStrikeClipResourcePath = "Audio/SFX/06_heavy_wooden_case_clock_gong_seed1442486_tangoflux_raw_44k1";
     private const float DefaultClockStrikeVolume = 0.4f;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class ChapterEventScheduler : MonoBehaviour
+public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase
 {
     private sealed class ScheduledChapterEvent
     {
@@ -27,8 +27,6 @@ public class ChapterEventScheduler : MonoBehaviour
 
     private void Update()
     {
-        ResolveReferences();
-
         if (chapterClock == null || !chapterClock.IsRunning)
         {
             return;
@@ -60,7 +58,10 @@ public class ChapterEventScheduler : MonoBehaviour
 
     public bool ScheduleOneShot(string eventId, float delaySeconds, Action callback)
     {
-        ResolveReferences();
+        if (!EnsureClockReference())
+        {
+            return false;
+        }
 
         string cleanEventId = string.IsNullOrWhiteSpace(eventId) ? "chapter_event" : eventId.Trim();
 
@@ -88,7 +89,10 @@ public class ChapterEventScheduler : MonoBehaviour
 
     public bool ScheduleOneShotAtClockTime(string eventId, int hour, int minute, Action callback)
     {
-        ResolveReferences();
+        if (!EnsureClockReference())
+        {
+            return false;
+        }
 
         string cleanEventId = string.IsNullOrWhiteSpace(eventId) ? "chapter_clock_event" : eventId.Trim();
 
@@ -151,16 +155,34 @@ public class ChapterEventScheduler : MonoBehaviour
         return false;
     }
 
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        base.ValidateConfiguration(report);
+
+        if (chapterClock == null)
+        {
+            report.AddError("ChapterEventScheduler requires an explicit ChapterClock reference on the same configured gameplay root.", this);
+        }
+    }
+
+    private bool EnsureClockReference()
+    {
+        ResolveReferences();
+
+        if (chapterClock != null)
+        {
+            return true;
+        }
+
+        Debug.LogError("ChapterEventScheduler cannot schedule an event because no ChapterClock is assigned.", this);
+        return false;
+    }
+
     private void ResolveReferences()
     {
         if (chapterClock == null)
         {
             chapterClock = GetComponent<ChapterClock>();
-        }
-
-        if (chapterClock == null)
-        {
-            chapterClock = FindAnyObjectByType<ChapterClock>(FindObjectsInactive.Include);
         }
     }
 }

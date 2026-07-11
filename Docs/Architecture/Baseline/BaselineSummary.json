@@ -1,0 +1,26 @@
+{
+  "unity_version": "m_EditorVersion: 6000.4.10f1\nm_EditorVersionWithRevision: 6000.4.10f1 (feeafc12a938)",
+  "csharp_files": 127,
+  "runtime_files": 90,
+  "runtime_loc": 49902,
+  "runtime_top_level_classes": 100,
+  "base_counts": {
+    "MonoBehaviour": 63,
+    "(none)": 21,
+    "ScriptableObject": 15,
+    "UnityEvent<string>": 1
+  },
+  "smell_counts": {
+    "FindObject": 199,
+    "ResourcesLoad": 27,
+    "NewGameObject": 98,
+    "AddComponent": 100,
+    "RuntimeInitialize": 9,
+    "PlayerPrefs": 6,
+    "ExecuteAlways": 10,
+    "StopAllCoroutines": 1
+  },
+  "zero_code_and_serialized_runtime_classes": [
+    "NewBehaviourScript"
+  ]
+}

@@ -1,0 +1,89 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hamza Architecture Cards</title><style>
+:root{--ink:#18212f;--navy:#26364d;--paper:#f7f3eb;--gold:#c9902f;--muted:#657080}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,Segoe UI,Arial,sans-serif}
+header{padding:36px 5vw 30px;background:var(--navy);color:white}header h1{margin:0 0 8px;font-size:34px}header p{margin:0;color:#d9e1ed}
+main{padding:30px 5vw 60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:20px}
+.card{background:white;border:1px solid #d9dfe7;border-top:6px solid var(--gold);border-radius:12px;padding:20px;box-shadow:0 4px 14px #19253712;break-inside:avoid}
+.card h2{font-size:20px;margin:0 0 15px;color:var(--navy)}p{line-height:1.48;margin:9px 0}ul{padding-left:22px;line-height:1.5}pre{white-space:pre-wrap;background:#eef2f6;border-radius:8px;padding:13px;line-height:1.42;font-size:13px;overflow:auto}blockquote{border-left:4px solid var(--gold);margin:10px 0;padding:6px 12px;background:#fff7e6}footer{padding:20px 5vw;color:var(--muted)}
+@media print{main{display:block}.card{margin:0 0 16px;box-shadow:none;page-break-inside:avoid}}
+</style></head><body><header><h1>Hamza Architecture Cards</h1><p>Requirements-first mental models, ownership rules, migration gates, and teach-back prompts.</p></header><main><article class="card"><h2>Card 1 — The mission</h2><p><strong>We are not memorizing the old repository.</strong></p>
+<p>We are deriving one clean implementation from the approved game script, migrating valid behavior into it, proving parity, and deleting the obsolete path.</p>
+<pre>Requirements -&gt; owners -&gt; architecture -&gt; tests -&gt; migrate -&gt; prove unused -&gt; delete</pre></article><article class="card"><h2>Card 2 — L0: the whole game</h2><pre>Boot/Menu -&gt; Session -&gt; Chapter -&gt; Beat -&gt; Player action/world event
+-&gt; state change -&gt; presentation -&gt; completion -&gt; next beat/chapter -&gt; save</pre>
+<p>Draw this before naming any class.</p></article><article class="card"><h2>Card 3 — L1: capability map</h2><pre>Flow | Clock | World/Rooms | Navigation | Actors | Interaction
+Narrative | UI | Camera | Audio | Lighting | Save | Data | Validation</pre>
+<p>Every runtime behavior must belong to one capability.</p></article><article class="card"><h2>Card 4 — L2: composition root</h2><pre>GameRoot
+<p>  -&gt; GameContext</p>
+<p>  -&gt; GameDatabase</p>
+<p>  -&gt; service instances</p>
+  -&gt; scene components</pre>
+<p>`GameRoot` serializes dependencies and initializes them once. It does not search for or invent required systems during play.</p></article><article class="card"><h2>Card 5 — L2: story path</h2><pre>GameFlowService -&gt; ChapterController -&gt; StoryBeat -&gt; typed command -&gt; service</pre>
+<p>The controller reads like the chapter script. A beat coordinates; it does not build UI, pathfind, or create managers.</p></article><article class="card"><h2>Card 6 — L2: world path</h2><pre>Interaction -&gt; Passage -&gt; NavigationService
+-&gt; RoomViewService -&gt; CameraService -&gt; actor arrival</pre>
+<p>There is one current-room owner and one room-visibility owner.</p></article><article class="card"><h2>Card 7 — L2: actor path</h2><pre>ActorController
+<p>  +-- ActorMotor       movement execution</p>
+<p>  +-- ActorPresenter   position/scale/tint/sort</p>
+<p>  +-- ActorAnimator</p>
+<p>  +-- ActorAudio</p>
+  +-- CommandSource    player clicks or NPC decisions</pre>
+<p>Player and guest share behavior components but use separate prefab variants.</p></article><article class="card"><h2>Card 8 — One-owner rule</h2><p>For each important state, ask: <strong>who alone may write it?</strong></p>
+<ul>
+<li>chapter/beat: Game Flow;</li>
+<li>time: Clock;</li>
+<li>room: Navigation;</li>
+<li>room visibility: Room View;</li>
+<li>actor state: Actor Controller;</li>
+<li>actor transform presentation: Actor Presenter;</li>
+<li>movement: Actor Motor;</li>
+<li>input/modal/cursor: Input Router;</li>
+<li>UI root: UI Service;</li>
+<li>dialogue queue: Narrative/Dialogue Service.</li>
+</ul>
+<p>Two writers means a bug waiting to happen.</p></article><article class="card"><h2>Card 9 — What inheritance is for</h2><pre>MonoBehaviour -&gt; ChateauBehaviour -&gt; role base -&gt; concrete class</pre>
+<p>A base provides lifecycle or invariants. Feature behavior is composed. Do not create a giant base helper library.</p></article><article class="card"><h2>Card 10 — What the first patch changes</h2><ul>
+<li>adds the root, context, service lifecycle, base families, validation, data base, and state machine;</li>
+<li>makes major managers and chapter controllers enter those families without changing their Unity GUIDs;</li>
+<li>adds an Editor installer and tests;</li>
+<li>adds static architecture guards;</li>
+<li>removes two proven-unused scripts;</li>
+<li>leaves risky behavior migrations for gated Unity work.</li>
+</ul></article><article class="card"><h2>Card 11 — What the first patch deliberately does not claim</h2><p>It does <strong>not</strong> claim that navigation, actors, chapters, UI, audio, or lighting are fully cleaned yet.</p>
+<p>The patch creates a safe migration spine. Unity must compile, install the root, run tests, and verify gameplay before old bootstraps or parallel systems are removed.</p></article><article class="card"><h2>Card 12 — The vertical-slice rule</h2><p>Do not rewrite an entire subsystem at once.</p>
+<pre>one requirement -&gt; one target path -&gt; tests -&gt; migrate references
+-&gt; smoke test -&gt; remove old callers -&gt; prove zero refs -&gt; delete</pre>
+<p>Navigation is the recommended first slice.</p></article><article class="card"><h2>Card 13 — Deletion proof</h2><p>Before deleting a Unity script, prove:</p>
+<p>1. no code consumer;</p>
+<p>2. no scene/prefab/asset GUID reference;</p>
+<p>3. no UnityEvent or animation-event binding;</p>
+<p>4. no reflection/resource naming dependency;</p>
+<p>5. replacement behavior has tests;</p>
+<p>6. target scene works in Play Mode;</p>
+<p>7. rollback commit exists.</p>
+<p>No proof, no deletion.</p></article><article class="card"><h2>Card 14 — How to review any file</h2><p>Answer eight questions:</p>
+<p>1. Which requirement justifies it?</p>
+<p>2. Who owns it?</p>
+<p>3. What state does it own?</p>
+<p>4. What enters?</p>
+<p>5. What leaves or changes?</p>
+<p>6. What may it depend on?</p>
+<p>7. Which test protects it?</p>
+<p>8. What disappears if it is deleted?</p>
+<p>Unclear answers reveal architecture debt.</p></article><article class="card"><h2>Card 15 — Chapter 1 from architecture</h2><pre>GameFlow -&gt; Chapter1Controller
+<p>-&gt; title/setup -&gt; arrival schedule -&gt; guest arrival</p>
+<p>-&gt; coat loop -&gt; ambient dialogue -&gt; empty bell</p>
+-&gt; completion gate -&gt; Chapter 2 request</pre>
+<p>The beats call Clock, Navigation, Actor, Interaction, Narrative, UI and Save owners. They do not implement those capabilities.</p></article><article class="card"><h2>Card 16 — Chapter 2 from architecture</h2><pre>GameFlow -&gt; Chapter2Controller
+<p>-&gt; setup -&gt; address -&gt; monster -&gt; panic/scatter</p>
+-&gt; guest search -&gt; 7 PM -&gt; dining room -&gt; Chapter 3 pending</pre>
+<p>Guest responses are mostly data consumed by `GuestSearchBeat`, not separate global controllers.</p></article><article class="card"><h2>Card 17 — Test gate</h2><p>Every phase ends with:</p>
+<pre>static guard -&gt; Unity compile -&gt; EditMode tests -&gt; PlayMode tests
+-&gt; scene/prefab missing-script scan -&gt; manual gameplay trace -&gt; commit</pre>
+<p>A failing gate means stop and fix the target path—not add another parallel system.</p></article><article class="card"><h2>Card 18 — Hamza certification</h2><p>Hamza is ready to continue development when he can:</p>
+<ul>
+<li>draw L0, L1 and L2 from memory;</li>
+<li>trace five game actions through owners;</li>
+<li>place every major class in one capability;</li>
+<li>explain an unfamiliar file with the eight questions;</li>
+<li>identify the test and deletion proof for a class;</li>
+<li>design a new chapter beat without copying an old god controller.</li>
+</ul></article></main><footer>Chateau Chantilly requirements-first architecture recovery</footer></body></html>

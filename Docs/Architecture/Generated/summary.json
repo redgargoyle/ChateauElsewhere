@@ -1,0 +1,219 @@
+{
+  "runtime_files": 106,
+  "runtime_loc": 50616,
+  "smell_totals": {
+    "FindObject": 198,
+    "ResourcesLoad": 27,
+    "NewGameObject": 98,
+    "AddComponent": 100,
+    "RuntimeInitialize": 9,
+    "PlayerPrefs": 6
+  },
+  "direct_monobehaviour_count": 51,
+  "direct_monobehaviours": [
+    {
+      "file": "Assets/Scripts/Audio/ClockTickingAmbienceController.cs",
+      "class": "ClockTickingAmbienceController"
+    },
+    {
+      "file": "Assets/Scripts/Audio/FireplaceAmbienceController.cs",
+      "class": "FireplaceAmbienceController"
+    },
+    {
+      "file": "Assets/Scripts/Audio/GameAudioSourceVolume.cs",
+      "class": "GameAudioSourceVolume"
+    },
+    {
+      "file": "Assets/Scripts/Audio/GuestFootstepAudio.cs",
+      "class": "GuestFootstepAudio"
+    },
+    {
+      "file": "Assets/Scripts/Audio/GuestVoiceLinePlayback.cs",
+      "class": "GuestVoiceLinePlayback"
+    },
+    {
+      "file": "Assets/Scripts/Audio/PlayerFootstepAudio.cs",
+      "class": "PlayerFootstepAudio"
+    },
+    {
+      "file": "Assets/Scripts/CharacterController2D.cs",
+      "class": "CharacterController2D"
+    },
+    {
+      "file": "Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionController.cs",
+      "class": "DiningRoomSeatedGuestOcclusionController"
+    },
+    {
+      "file": "Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionException.cs",
+      "class": "DiningRoomSeatedGuestOcclusionException"
+    },
+    {
+      "file": "Assets/Scripts/Characters/GuestRoomScaleApplier.cs",
+      "class": "GuestRoomScaleApplier"
+    },
+    {
+      "file": "Assets/Scripts/Characters/GuestRoomScaleCalibration.cs",
+      "class": "GuestRoomScaleCalibration"
+    },
+    {
+      "file": "Assets/Scripts/Characters/GuestScaleParticipant.cs",
+      "class": "GuestScaleParticipant"
+    },
+    {
+      "file": "Assets/Scripts/Characters/RoomPersonWalker2D.cs",
+      "class": "RoomPersonWalker2D"
+    },
+    {
+      "file": "Assets/Scripts/Characters/RoomProjectedEntity.cs",
+      "class": "RoomProjectedEntity"
+    },
+    {
+      "file": "Assets/Scripts/Characters/WorldYSortSpriteRenderer.cs",
+      "class": "WorldYSortSpriteRenderer"
+    },
+    {
+      "file": "Assets/Scripts/Characters/YSortSolidObstacle2D.cs",
+      "class": "YSortSolidObstacle2D"
+    },
+    {
+      "file": "Assets/Scripts/Environment/RoomEnvironmentMarker.cs",
+      "class": "RoomEnvironmentMarker"
+    },
+    {
+      "file": "Assets/Scripts/Lighting/NoPostProcessRenderLayer.cs",
+      "class": "NoPostProcessRenderLayer"
+    },
+    {
+      "file": "Assets/Scripts/Lighting/PostProcessBypassCamera.cs",
+      "class": "PostProcessBypassCamera"
+    },
+    {
+      "file": "Assets/Scripts/Lighting/RoomLightOverlay.cs",
+      "class": "RoomLightOverlay"
+    },
+    {
+      "file": "Assets/Scripts/MainMenuController.cs",
+      "class": "MainMenuController"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/DoorButton.cs",
+      "class": "DoorButton"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/DoorPromptSequenceController.cs",
+      "class": "DoorPromptSequenceController"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/DoorTriggerNavigation.cs",
+      "class": "DoorTriggerNavigation"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs",
+      "class": "ObjectMovementBlocker2D"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/RoomContentGroup.cs",
+      "class": "RoomContentGroup"
+    },
+    {
+      "file": "Assets/Scripts/Oddities/OdditySpriteAnimator.cs",
+      "class": "OdditySpriteAnimator"
+    },
+    {
+      "file": "Assets/Scripts/PlayerMovement.cs",
+      "class": "PlayerMovement"
+    },
+    {
+      "file": "Assets/Scripts/PointClickPlayerMovement.cs",
+      "class": "PointClickPlayerMovement"
+    },
+    {
+      "file": "Assets/Scripts/StaticNoisePlayer.cs",
+      "class": "StaticNoisePlayer"
+    },
+    {
+      "file": "Assets/Scripts/StaticSetImagePlayer.cs",
+      "class": "StaticSetImagePlayer"
+    },
+    {
+      "file": "Assets/Scripts/Story/ActorRoomState.cs",
+      "class": "ActorRoomState"
+    },
+    {
+      "file": "Assets/Scripts/Story/ChapterIntroUI.cs",
+      "class": "ChapterIntroUI"
+    },
+    {
+      "file": "Assets/Scripts/Story/ChapterTimeSettingsUI.cs",
+      "class": "ChapterTimeSettingsUI"
+    },
+    {
+      "file": "Assets/Scripts/Story/CoatCloset.cs",
+      "class": "CoatCloset"
+    },
+    {
+      "file": "Assets/Scripts/Story/DoorbellSystem.cs",
+      "class": "DoorbellSystem"
+    },
+    {
+      "file": "Assets/Scripts/Story/GameClockHandsDisplay.cs",
+      "class": "GameClockHandsDisplay"
+    },
+    {
+      "file": "Assets/Scripts/Story/GrandfatherClockInteraction.cs",
+      "class": "GrandfatherClockInteraction"
+    },
+    {
+      "file": "Assets/Scripts/Story/NPCWaypointMover.cs",
+      "class": "NPCWaypointMover"
+    },
+    {
+      "file": "Assets/Scripts/Story/RoomAnchor.cs",
+      "class": "RoomAnchor"
+    },
+    {
+      "file": "Assets/Scripts/UI/NavigationCursorHoverTarget.cs",
+      "class": "NavigationCursorHoverTarget"
+    },
+    {
+      "file": "Assets/Scripts/UI/RuntimeSettingsMenu.cs",
+      "class": "RuntimeSettingsMenu"
+    },
+    {
+      "file": "Assets/Scripts/UI/RuntimeSettingsMenu.cs",
+      "class": "DebugSliderDragTarget"
+    },
+    {
+      "file": "Assets/Scripts/UI/SpeakingCharacterIndicator.cs",
+      "class": "SpeakingCharacterIndicator"
+    },
+    {
+      "file": "Assets/_Chateau/Runtime/Core/ChateauBehaviour.cs",
+      "class": "ChateauBehaviour"
+    },
+    {
+      "file": "Assets/_Chateau/Runtime/Core/GameRoot.cs",
+      "class": "GameRoot"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs",
+      "class": "Chapter1CoatPickup"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs",
+      "class": "Chapter1InteractionHUD"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs",
+      "class": "Chapter1SceneAction"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs",
+      "class": "Chapter2GuestFindAction"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs",
+      "class": "Chapter2InteractionHUD"
+    }
+  ]
+}

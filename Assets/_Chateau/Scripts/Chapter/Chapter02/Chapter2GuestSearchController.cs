@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
-public class Chapter2GuestSearchController : MonoBehaviour
+public class Chapter2GuestSearchController : Chateau.Architecture.ChapterFeatureBase
 {
     private const string PersistentActorRootName = "ChapterActors_Runtime";
     private const string DiagnosticPrefix = "[Ch2ClickDiag]";

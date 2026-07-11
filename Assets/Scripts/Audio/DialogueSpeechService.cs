@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class DialogueSpeechService : MonoBehaviour
+public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
 {
     private const string ServiceObjectName = "DialogueSpeechService";
     private const float CharactersPerSecond = 24f;

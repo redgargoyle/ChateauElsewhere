@@ -1,0 +1,97 @@
+digraph ChantillyTarget {
+  graph [rankdir=TB, bgcolor="#F8F5EE", pad="0.30", nodesep="0.36", ranksep="0.55", splines=ortho,
+         fontname="DejaVu Sans", labelloc="t", label="CHATEAU CHANTILLY — REQUIREMENTS-FIRST TARGET ARCHITECTURE", fontsize=22];
+  node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=11, margin="0.15,0.10", color="#566270", fillcolor="white"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#566270", arrowsize=0.7];
+
+  root [label="GameRoot\ncomposition + deterministic initialization", fillcolor="#26364D", fontcolor="white", color="#26364D", penwidth=1.8];
+  context [label="GameContext\ntyped runtime context", fillcolor="#E8EDF4"];
+  db [label="GameDatabase\nstable definitions", fillcolor="#E8EDF4"];
+  root -> context [label="creates"];
+  root -> db [label="owns"];
+
+  subgraph cluster_flow {
+    label="GAME LOOP / STORY"; color="#8367A8"; style="rounded,filled"; fillcolor="#F3EFF8";
+    flow [label="GameFlowService\ncurrent chapter + beat", fillcolor="#E6DCF2", color="#6B4E9B", penwidth=1.6];
+    chapter [label="ChapterControllerBase\nChapter 1 • Chapter 2 • future chapters"];
+    beats [label="StoryBeatBase\nordered beat list"];
+    state [label="StateMachine<TState>\none transition mechanism"];
+    flow -> chapter [label="selects"];
+    chapter -> beats [label="composes"];
+    flow -> state [label="owns"];
+  }
+
+  subgraph cluster_clock {
+    label="TIME"; color="#A98216"; style="rounded,filled"; fillcolor="#FFF7D8";
+    clock [label="ClockService\ncurrent game time"];
+    scheduler [label="Scheduler\ntimed / conditional events"];
+    clock -> scheduler [label="drives"];
+  }
+
+  subgraph cluster_world {
+    label="HOUSE / ROOMS / NAVIGATION"; color="#3C7C5B"; style="rounded,filled"; fillcolor="#EBF5EE";
+    world [label="WorldService\nHouse + current world state"];
+    nav [label="NavigationService\ncurrent room + passage transition"];
+    roomview [label="RoomViewService\nactivates one RoomView root"];
+    room [label="RoomElementBase\nRoomView • RoomAnchor • Obstacles"];
+    passage [label="Passage\nsource • target • approach • arrival"];
+    world -> nav;
+    nav -> roomview;
+    roomview -> room;
+    nav -> passage;
+  }
+
+  subgraph cluster_actors {
+    label="PLAYER / GUESTS"; color="#B66722"; style="rounded,filled"; fillcolor="#FFF0E4";
+    registry [label="ActorRegistry\nidentity + room membership"];
+    actor [label="ActorControllerBase\nPlayerActor • GuestActor"];
+    motor [label="ActorMotorBase\none movement executor"];
+    presenter [label="ActorPresenter\none transform/scale/sort writer"];
+    registry -> actor;
+    actor -> motor [label="commands"];
+    actor -> presenter [label="composes"];
+  }
+
+  subgraph cluster_interaction {
+    label="PLAYER COMMANDS"; color="#167C80"; style="rounded,filled"; fillcolor="#E8F7F7";
+    input [label="InputRouter\ncursor + modal + click routing"];
+    target [label="InteractionTargetBase\npassage • actor • story • clock"];
+    input -> target;
+  }
+
+  subgraph cluster_present {
+    label="PRESENTATION SERVICES"; color="#A44578"; style="rounded,filled"; fillcolor="#FAEDF5";
+    narrative [label="NarrativeService\ndialogue queue + subtitles + voice"];
+    ui [label="UIService\none UI root + modal stack"];
+    camera [label="CameraService\nroom framing + projection"];
+    audio [label="AudioService\nsettings + ambience + SFX"];
+    lighting [label="LightingService\nruntime baked-light state"];
+  }
+
+  save [label="SaveService\ndurable session state", fillcolor="#EEF1F4"];
+
+  root -> flow [label="initializes"];
+  root -> clock;
+  root -> world;
+  root -> registry;
+  root -> input;
+  root -> narrative;
+  root -> ui;
+  root -> camera;
+  root -> audio;
+  root -> lighting;
+  root -> save;
+
+  beats -> nav [label="typed commands", color="#6B4E9B"];
+  beats -> registry [label="typed commands", color="#6B4E9B"];
+  beats -> narrative [label="typed commands", color="#6B4E9B"];
+  target -> nav [label="passage command", color="#167C80"];
+  target -> flow [label="story command", color="#167C80"];
+  roomview -> camera [label="present room"];
+  narrative -> ui [label="subtitle state"];
+  narrative -> audio [label="voice"];
+  flow -> save [label="checkpoint"];
+  db -> flow [style=dotted, label="chapter definitions"];
+  db -> world [style=dotted, label="room/passage definitions"];
+  db -> registry [style=dotted, label="actor definitions"];
+}

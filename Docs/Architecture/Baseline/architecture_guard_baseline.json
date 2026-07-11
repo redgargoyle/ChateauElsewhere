@@ -1,0 +1,997 @@
+{
+  "description": "Legacy debt ceiling captured before the requirements-first architecture migration. Counts may decrease but must not increase without an ADR.",
+  "allowed_smell_counts_by_file": {
+    "Assets/Map/CameraManager.cs": {
+      "FindObject": 5,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 1,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/Chapter2PanicScreamCatalog.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/ClockTickingAmbienceController.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 1,
+      "NewGameObject": 1,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/DialogueSpeechService.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 0,
+      "NewGameObject": 1,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/DoorOpenSoundCatalog.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/FireplaceAmbienceCatalog.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/FireplaceAmbienceController.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 1,
+      "NewGameObject": 1,
+      "AddComponent": 2,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/GameAudioChannel.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/GameAudioSettings.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 3
+    },
+    "Assets/Scripts/Audio/GameAudioSourceVolume.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/GuestFootstepAudio.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 1,
+      "AddComponent": 3,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/GuestFootstepCatalog.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/GuestVoiceLineCatalog.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/GuestVoiceLinePlayback.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 1,
+      "NewGameObject": 2,
+      "AddComponent": 2,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Audio/PlayerFootstepAudio.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 1,
+      "NewGameObject": 1,
+      "AddComponent": 3,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/CharacterController2D.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 2,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/CharacterAnimatorDriver.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/CharacterVisualProfile.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionController.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionException.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/GuestRoomScaleApplier.cs": {
+      "FindObject": 7,
+      "ResourcesLoad": 0,
+      "NewGameObject": 1,
+      "AddComponent": 2,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/GuestRoomScaleCalibration.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/GuestRoomStageScaleUtility.cs": {
+      "FindObject": 2,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/GuestScaleParticipant.cs": {
+      "FindObject": 2,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/RoomPersonWalker2D.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/RoomPerspectiveProfile.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/RoomProjectedEntity.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/WorldYSortSpriteRenderer.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Characters/YSortSolidObstacle2D.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Environment/RoomEnvironmentMarker.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Lighting/NoPostProcessRenderLayer.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Lighting/PostProcessBypassCamera.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 0,
+      "NewGameObject": 1,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Lighting/RoomLightOverlay.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Lighting/RoomLightingController.cs": {
+      "FindObject": 4,
+      "ResourcesLoad": 1,
+      "NewGameObject": 4,
+      "AddComponent": 5,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Lighting/RoomLightingPreset.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/MainMenuController.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 0,
+      "NewGameObject": 15,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/DoorButton.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/DoorCameraSequence.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/DoorDataParser.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/DoorPromptSequenceController.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 1,
+      "NewGameObject": 1,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/DoorTriggerNavigation.cs": {
+      "FindObject": 4,
+      "ResourcesLoad": 2,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 1,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/RoomContentGroup.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/RoomNavigationBootstrap.cs": {
+      "FindObject": 5,
+      "ResourcesLoad": 0,
+      "NewGameObject": 1,
+      "AddComponent": 2,
+      "RuntimeInitialize": 3,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/RoomNavigationManager.cs": {
+      "FindObject": 16,
+      "ResourcesLoad": 3,
+      "NewGameObject": 1,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Navigation/RoomVisualCatalog.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/NewBehaviourScript.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Oddities/OdditySpriteAnimator.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/PickupObject.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/PlayerMovement.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/PointClickPlayerMovement.cs": {
+      "FindObject": 14,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/StaticFrameGroup.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/StaticNoisePlayer.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/StaticSet.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/StaticSetImagePlayer.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/ActorRoomState.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/ChapterClock.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/ChapterEventScheduler.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/ChapterIntroUI.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 0,
+      "NewGameObject": 4,
+      "AddComponent": 2,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/ChapterManager.cs": {
+      "FindObject": 7,
+      "ResourcesLoad": 0,
+      "NewGameObject": 1,
+      "AddComponent": 7,
+      "RuntimeInitialize": 1,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/ChapterTimeSettingsUI.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 0,
+      "NewGameObject": 3,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/CoatCloset.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/DoorbellSystem.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 1,
+      "NewGameObject": 0,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/GameClockHandsDisplay.cs": {
+      "FindObject": 5,
+      "ResourcesLoad": 0,
+      "NewGameObject": 3,
+      "AddComponent": 1,
+      "RuntimeInitialize": 1,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/GameplayRuntimeState.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 1,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/GrandfatherClockInteraction.cs": {
+      "FindObject": 4,
+      "ResourcesLoad": 0,
+      "NewGameObject": 6,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/NPCWaypointMover.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/Story/RoomAnchor.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/UI/CursorStyleCatalog.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 1,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 3
+    },
+    "Assets/Scripts/UI/NavigationCursorHoverTarget.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/UI/PostProcessSafeCanvasUtility.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 0,
+      "NewGameObject": 1,
+      "AddComponent": 3,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/UI/RuntimeSettingsMenu.cs": {
+      "FindObject": 11,
+      "ResourcesLoad": 0,
+      "NewGameObject": 15,
+      "AddComponent": 12,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/UI/SpeakingCharacterIndicator.cs": {
+      "FindObject": 7,
+      "ResourcesLoad": 1,
+      "NewGameObject": 2,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/UI/SubtitleLine.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/UI/SubtitleLineBank.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/UI/SubtitleService.cs": {
+      "FindObject": 4,
+      "ResourcesLoad": 1,
+      "NewGameObject": 7,
+      "AddComponent": 2,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/Scripts/UrpPostProcessingBootstrap.cs": {
+      "FindObject": 1,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 1,
+      "RuntimeInitialize": 1,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs": {
+      "FindObject": 27,
+      "ResourcesLoad": 3,
+      "NewGameObject": 7,
+      "AddComponent": 27,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs": {
+      "FindObject": 2,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 0,
+      "NewGameObject": 3,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs": {
+      "FindObject": 4,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter01/GuestArrivalConfig.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 1,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs": {
+      "FindObject": 7,
+      "ResourcesLoad": 1,
+      "NewGameObject": 0,
+      "AddComponent": 5,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs": {
+      "FindObject": 2,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs": {
+      "FindObject": 6,
+      "ResourcesLoad": 3,
+      "NewGameObject": 1,
+      "AddComponent": 2,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs": {
+      "FindObject": 6,
+      "ResourcesLoad": 0,
+      "NewGameObject": 2,
+      "AddComponent": 3,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs": {
+      "FindObject": 2,
+      "ResourcesLoad": 2,
+      "NewGameObject": 12,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs": {
+      "FindObject": 3,
+      "ResourcesLoad": 3,
+      "NewGameObject": 0,
+      "AddComponent": 2,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    },
+    "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2PanicAnimationLibrary.cs": {
+      "FindObject": 0,
+      "ResourcesLoad": 0,
+      "NewGameObject": 0,
+      "AddComponent": 0,
+      "RuntimeInitialize": 0,
+      "PlayerPrefs": 0
+    }
+  },
+  "allowed_direct_monobehaviours": [
+    {
+      "file": "Assets/Map/CameraManager.cs",
+      "class": "CameraManager"
+    },
+    {
+      "file": "Assets/Scripts/Audio/ClockTickingAmbienceController.cs",
+      "class": "ClockTickingAmbienceController"
+    },
+    {
+      "file": "Assets/Scripts/Audio/DialogueSpeechService.cs",
+      "class": "DialogueSpeechService"
+    },
+    {
+      "file": "Assets/Scripts/Audio/FireplaceAmbienceController.cs",
+      "class": "FireplaceAmbienceController"
+    },
+    {
+      "file": "Assets/Scripts/Audio/GameAudioSourceVolume.cs",
+      "class": "GameAudioSourceVolume"
+    },
+    {
+      "file": "Assets/Scripts/Audio/GuestFootstepAudio.cs",
+      "class": "GuestFootstepAudio"
+    },
+    {
+      "file": "Assets/Scripts/Audio/GuestVoiceLinePlayback.cs",
+      "class": "GuestVoiceLinePlayback"
+    },
+    {
+      "file": "Assets/Scripts/Audio/PlayerFootstepAudio.cs",
+      "class": "PlayerFootstepAudio"
+    },
+    {
+      "file": "Assets/Scripts/CharacterController2D.cs",
+      "class": "CharacterController2D"
+    },
+    {
+      "file": "Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionController.cs",
+      "class": "DiningRoomSeatedGuestOcclusionController"
+    },
+    {
+      "file": "Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionException.cs",
+      "class": "DiningRoomSeatedGuestOcclusionException"
+    },
+    {
+      "file": "Assets/Scripts/Characters/GuestRoomScaleApplier.cs",
+      "class": "GuestRoomScaleApplier"
+    },
+    {
+      "file": "Assets/Scripts/Characters/GuestRoomScaleCalibration.cs",
+      "class": "GuestRoomScaleCalibration"
+    },
+    {
+      "file": "Assets/Scripts/Characters/GuestScaleParticipant.cs",
+      "class": "GuestScaleParticipant"
+    },
+    {
+      "file": "Assets/Scripts/Characters/RoomPersonWalker2D.cs",
+      "class": "RoomPersonWalker2D"
+    },
+    {
+      "file": "Assets/Scripts/Characters/RoomProjectedEntity.cs",
+      "class": "RoomProjectedEntity"
+    },
+    {
+      "file": "Assets/Scripts/Characters/WorldYSortSpriteRenderer.cs",
+      "class": "WorldYSortSpriteRenderer"
+    },
+    {
+      "file": "Assets/Scripts/Characters/YSortSolidObstacle2D.cs",
+      "class": "YSortSolidObstacle2D"
+    },
+    {
+      "file": "Assets/Scripts/Environment/RoomEnvironmentMarker.cs",
+      "class": "RoomEnvironmentMarker"
+    },
+    {
+      "file": "Assets/Scripts/Lighting/NoPostProcessRenderLayer.cs",
+      "class": "NoPostProcessRenderLayer"
+    },
+    {
+      "file": "Assets/Scripts/Lighting/PostProcessBypassCamera.cs",
+      "class": "PostProcessBypassCamera"
+    },
+    {
+      "file": "Assets/Scripts/Lighting/RoomLightOverlay.cs",
+      "class": "RoomLightOverlay"
+    },
+    {
+      "file": "Assets/Scripts/Lighting/RoomLightingController.cs",
+      "class": "RoomLightingController"
+    },
+    {
+      "file": "Assets/Scripts/MainMenuController.cs",
+      "class": "MainMenuController"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/DoorButton.cs",
+      "class": "DoorButton"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/DoorPromptSequenceController.cs",
+      "class": "DoorPromptSequenceController"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/DoorTriggerNavigation.cs",
+      "class": "DoorTriggerNavigation"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs",
+      "class": "ObjectMovementBlocker2D"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/RoomContentGroup.cs",
+      "class": "RoomContentGroup"
+    },
+    {
+      "file": "Assets/Scripts/Navigation/RoomNavigationManager.cs",
+      "class": "RoomNavigationManager"
+    },
+    {
+      "file": "Assets/Scripts/NewBehaviourScript.cs",
+      "class": "NewBehaviourScript"
+    },
+    {
+      "file": "Assets/Scripts/Oddities/OdditySpriteAnimator.cs",
+      "class": "OdditySpriteAnimator"
+    },
+    {
+      "file": "Assets/Scripts/PickupObject.cs",
+      "class": "PickupObject"
+    },
+    {
+      "file": "Assets/Scripts/PlayerMovement.cs",
+      "class": "PlayerMovement"
+    },
+    {
+      "file": "Assets/Scripts/PointClickPlayerMovement.cs",
+      "class": "PointClickPlayerMovement"
+    },
+    {
+      "file": "Assets/Scripts/StaticNoisePlayer.cs",
+      "class": "StaticNoisePlayer"
+    },
+    {
+      "file": "Assets/Scripts/StaticSetImagePlayer.cs",
+      "class": "StaticSetImagePlayer"
+    },
+    {
+      "file": "Assets/Scripts/Story/ActorRoomState.cs",
+      "class": "ActorRoomState"
+    },
+    {
+      "file": "Assets/Scripts/Story/ChapterClock.cs",
+      "class": "ChapterClock"
+    },
+    {
+      "file": "Assets/Scripts/Story/ChapterEventScheduler.cs",
+      "class": "ChapterEventScheduler"
+    },
+    {
+      "file": "Assets/Scripts/Story/ChapterIntroUI.cs",
+      "class": "ChapterIntroUI"
+    },
+    {
+      "file": "Assets/Scripts/Story/ChapterManager.cs",
+      "class": "ChapterManager"
+    },
+    {
+      "file": "Assets/Scripts/Story/ChapterTimeSettingsUI.cs",
+      "class": "ChapterTimeSettingsUI"
+    },
+    {
+      "file": "Assets/Scripts/Story/CoatCloset.cs",
+      "class": "CoatCloset"
+    },
+    {
+      "file": "Assets/Scripts/Story/DoorbellSystem.cs",
+      "class": "DoorbellSystem"
+    },
+    {
+      "file": "Assets/Scripts/Story/GameClockHandsDisplay.cs",
+      "class": "GameClockHandsDisplay"
+    },
+    {
+      "file": "Assets/Scripts/Story/GrandfatherClockInteraction.cs",
+      "class": "GrandfatherClockInteraction"
+    },
+    {
+      "file": "Assets/Scripts/Story/NPCWaypointMover.cs",
+      "class": "NPCWaypointMover"
+    },
+    {
+      "file": "Assets/Scripts/Story/RoomAnchor.cs",
+      "class": "RoomAnchor"
+    },
+    {
+      "file": "Assets/Scripts/UI/NavigationCursorHoverTarget.cs",
+      "class": "NavigationCursorHoverTarget"
+    },
+    {
+      "file": "Assets/Scripts/UI/RuntimeSettingsMenu.cs",
+      "class": "RuntimeSettingsMenu"
+    },
+    {
+      "file": "Assets/Scripts/UI/RuntimeSettingsMenu.cs",
+      "class": "DebugSliderDragTarget"
+    },
+    {
+      "file": "Assets/Scripts/UI/SpeakingCharacterIndicator.cs",
+      "class": "SpeakingCharacterIndicator"
+    },
+    {
+      "file": "Assets/Scripts/UI/SubtitleService.cs",
+      "class": "SubtitleService"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs",
+      "class": "Chapter1ArrivalController"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs",
+      "class": "Chapter1CoatPickup"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs",
+      "class": "Chapter1InteractionHUD"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs",
+      "class": "Chapter1SceneAction"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs",
+      "class": "Chapter2Controller"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs",
+      "class": "Chapter2GuestFindAction"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs",
+      "class": "Chapter2GuestPanicController"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs",
+      "class": "Chapter2GuestSearchController"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs",
+      "class": "Chapter2InteractionHUD"
+    },
+    {
+      "file": "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs",
+      "class": "Chapter2MonsterStingerController"
+    }
+  ],
+  "approved_architecture_roots": [
+    {
+      "file": "Assets/_Chateau/Runtime/Core/ChateauBehaviour.cs",
+      "class": "ChateauBehaviour"
+    },
+    {
+      "file": "Assets/_Chateau/Runtime/Core/GameRoot.cs",
+      "class": "GameRoot"
+    }
+  ],
+  "must_remain_pruned": [
+    "Assets/Scripts/NewBehaviourScript.cs",
+    "Assets/Scripts/PickupObject.cs"
+  ]
+}

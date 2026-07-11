@@ -6,7 +6,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class RoomNavigationManager : MonoBehaviour
+public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
 {
     private const string RoomRootName = "Rooms";
     private const string LegacyRoomObjectsRootName = "RoomObjects";

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 [DefaultExecutionOrder(10000)]
 [DisallowMultipleComponent]
-public sealed class Chapter2GuestPanicController : MonoBehaviour
+public sealed class Chapter2GuestPanicController : Chateau.Architecture.ChapterFeatureBase
 {
     private const string ClickTargetName = "Ch2_ClickTarget";
     private const string DefaultPanicScreamCatalogResourcePath = "Audio/Chapter2PanicScreamCatalog";

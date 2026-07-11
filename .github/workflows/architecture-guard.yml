@@ -1,0 +1,32 @@
+name: Architecture Guard
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  architecture-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Prevent new architecture debt
+        run: python Tools/architecture/guard.py --project-root .
+
+      - name: Generate static architecture report
+        run: |
+          python Tools/architecture/audit.py --project-root . --output Docs/Architecture/Generated
+          python Tools/architecture/serialized_refs.py --project-root . --output Docs/Architecture/Generated/serialized_script_refs.csv

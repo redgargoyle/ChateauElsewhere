@@ -18,7 +18,7 @@ public enum ChapterPhase
 [RequireComponent(typeof(ChapterClock))]
 [RequireComponent(typeof(ChapterEventScheduler))]
 [RequireComponent(typeof(ChapterIntroUI))]
-public class ChapterManager : MonoBehaviour
+public class ChapterManager : Chateau.Architecture.GameServiceBase
 {
     public const string Chapter1Id = "chapter_01_arrivals";
     public const string Chapter2Id = "chapter_02_guest_search";

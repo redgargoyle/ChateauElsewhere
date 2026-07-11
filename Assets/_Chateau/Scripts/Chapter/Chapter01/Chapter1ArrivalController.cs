@@ -7,7 +7,7 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
-public class Chapter1ArrivalController : MonoBehaviour
+public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerBase
 {
     private sealed class GuestRuntimeState
     {

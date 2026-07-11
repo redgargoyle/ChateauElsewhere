@@ -6,7 +6,7 @@ using UnityEditor;
 #endif
 
 [DisallowMultipleComponent]
-public class Chapter2MonsterStingerController : MonoBehaviour
+public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeatureBase
 {
     private const int RunFreezeCycleCount = 3;
     private static readonly int[] MonsterRunStutterFrameOrder = { 0, 3, 1, 5, 2, 6, 4, 7 };

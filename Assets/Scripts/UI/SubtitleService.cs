@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
-public sealed class SubtitleService : MonoBehaviour
+public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
 {
     private const string ServiceObjectName = "SubtitleService";
     private const string CanvasName = "Canvas_Subtitles";
