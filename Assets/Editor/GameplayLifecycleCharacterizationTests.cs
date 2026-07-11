@@ -61,6 +61,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         ChapterEventScheduler scheduler = RequireExactlyOneInActiveScene<ChapterEventScheduler>();
         ChapterIntroUI intro = RequireExactlyOneInActiveScene<ChapterIntroUI>();
         Chapter1ArrivalController arrival = RequireExactlyOneInActiveScene<Chapter1ArrivalController>();
+        Chapter1InteractionHUD chapter1Hud = RequireExactlyOneInActiveScene<Chapter1InteractionHUD>();
         Chapter2Controller serializedChapter2 = RequireExactlyOneInActiveScene<Chapter2Controller>();
         Chapter2InteractionHUD serializedChapter2Hud = RequireExactlyOneInActiveScene<Chapter2InteractionHUD>();
         Chapter2MonsterStingerController serializedMonsterStinger = RequireExactlyOneInActiveScene<Chapter2MonsterStingerController>();
@@ -83,6 +84,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(subtitle.HasGameContext, Is.True);
         Assert.That(speech.IsInitialized, Is.True);
         Assert.That(speech.HasGameContext, Is.True);
+        Assert.That(chapter1Hud.gameObject, Is.SameAs(arrival.gameObject));
+        Canvas chapter1Canvas = FindInActiveScene<Canvas>().Single(item => item.name == "Canvas_Chapter1HUD");
+        Assert.That(chapter1Canvas.sortingOrder, Is.EqualTo(9100));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Text_Chapter1Status"), Is.EqualTo(1));
         Assert.That(gameRoot.IsInitialized, Is.True);
         Assert.That(gameRoot.Database, Is.Not.Null);
         Assert.That(gameRoot.Context, Is.Not.Null);
@@ -201,6 +206,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<ChapterEventScheduler>(), Is.SameAs(scheduler));
         Assert.That(RequireExactlyOneInActiveScene<ChapterIntroUI>(), Is.SameAs(intro));
         Assert.That(RequireExactlyOneInActiveScene<Chapter1ArrivalController>(), Is.SameAs(arrival));
+        Assert.That(RequireExactlyOneInActiveScene<Chapter1InteractionHUD>(), Is.SameAs(chapter1Hud));
         Assert.That(RequireExactlyOneInActiveScene<RoomLightingController>(), Is.SameAs(lighting));
         Assert.That(RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>(), Is.SameAs(gameRoot));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
@@ -242,6 +248,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<Chapter2MonsterStingerController>(), Is.SameAs(monsterStinger));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2GuestPanicController>(), Is.SameAs(guestPanic));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2GuestSearchController>(), Is.SameAs(guestSearch));
+        Assert.That(RequireExactlyOneInActiveScene<Chapter1InteractionHUD>(), Is.SameAs(chapter1Hud));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
     }
