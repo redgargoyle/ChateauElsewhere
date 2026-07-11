@@ -52,6 +52,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized fireplace and clock ambience before changing ownership: each has a distinct 2D looping source and assigned entrance clip, only fireplace has an enabled high-pass filter, and both owner/source identities survive room travel.
 - Serialized dedicated fireplace and clock ambience owners under GameRoot, explicitly binding navigation, catalogs, separate AudioSources, and the fireplace high-pass filter while retaining the old factories for a separate removal gate.
 - Removed both ambience root factories plus their global navigation lookup, Resources catalog repair, and AudioSource/filter component repair; room navigation now initializes only its serialized owners.
+- Characterized the first Drawing Room set piece without changing it: the tea table's exact sprite/material/transform/profile and four-point collision footprint are frozen, and tests prove `RoomProjectedEntity` plus `ObjectMovementBlocker2D` both overwrite its renderer. The intended order remains `6627`; the collider-bounds writer varied between `1358` and `1452` across valid runs.
 
 ## Current static result
 
@@ -90,7 +91,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - the focused ambience characterization passed and the full-suite gate retained the exact baseline failure-name set;
 - the ambience-owner graft audit passed 6/6 checks: nine documents added, only navigation/root-transform changed, every old document retained its exact order, and SceneRoots stayed byte-identical;
 - the ambience-factory cleanup audit passed 5/5 checks: no document churn, only the two ambience owner documents changed, document order stayed exact, and SceneRoots stayed byte-identical;
-- the full EditMode discovery count is 232: 181 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
+- the tea-table static characterization and full MainMenu/room-loop lifecycle passed, including direct proof that both legacy owners can write the same renderer while the polygon remains unchanged;
+- the full EditMode discovery count is 233: 182 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
 - the ChapterManager dialogue-binding gate produced two consecutive clean full-suite reruns after one transient full-run GameView zoom assertion; no files changed between those three runs, and both reruns restored the exact `0.752865` entrance multiplier;

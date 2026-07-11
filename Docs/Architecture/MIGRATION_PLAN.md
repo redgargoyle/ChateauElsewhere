@@ -94,6 +94,7 @@ RoomDefinition -> RoomView -> SetPieceView -> RoomDepthResolver
 - sorting never depends on world-space `Renderer.bounds` or `Collider.bounds`;
 - accepted collider shapes are preserved and registered, not regenerated;
 - the Drawing Room's duplicate prop-sort writers migrate one prop at a time;
+- the first tea-table baseline proves the duplicate-writer defect: its room-local projection resolves stable order `6627`, while its blocker resolves a layout-dependent order from collider world bounds;
 - Dining Room seat occlusion migrates only after `ActorPresenter` exists and uses serialized `SeatOcclusionSlot` data.
 
 Migrate navigation geometry and set-piece views one room at a time. The Grand Entrance Hall/Drawing Room route remains the first passage slice; Dining Room is the final set-piece slice because it depends on actor presentation.

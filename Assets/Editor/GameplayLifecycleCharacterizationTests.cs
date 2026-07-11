@@ -75,6 +75,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         FireplaceAmbienceController fireplaceAmbience = RequireExactlyOneInActiveScene<FireplaceAmbienceController>();
         ClockTickingAmbienceController clockAmbience = RequireExactlyOneInActiveScene<ClockTickingAmbienceController>();
         RoomLightingController lighting = RequireExactlyOneInActiveScene<RoomLightingController>();
+        RoomProjectedEntity teaTableProjection = FindInActiveScene<RoomProjectedEntity>()
+            .Single(item => item.gameObject.name == "tea_service_table");
+        SpriteRenderer teaTableRenderer = teaTableProjection.GetComponent<SpriteRenderer>();
+        ObjectMovementBlocker2D teaTableBlocker = FindInActiveScene<ObjectMovementBlocker2D>()
+            .Single(item => item.SourceObjectName == "tea_service_table");
+        PolygonCollider2D teaTableCollider = teaTableBlocker.BlockingCollider as PolygonCollider2D;
 
         Assert.That(cameraManager, Is.Not.Null);
         Assert.That(prompts, Is.Not.Null);
@@ -134,6 +140,33 @@ public sealed class GameplayLifecycleCharacterizationTests
             clockAmbience.GetComponents<AudioLowPassFilter>().Any(filter => filter.enabled),
             Is.False,
             "Clock ambience must not inherit an enabled low-pass filter.");
+        Assert.That(teaTableProjection.gameObject.activeInHierarchy, Is.False, "The Drawing Room set piece starts inactive with its room.");
+        Assert.That(teaTableRenderer, Is.Not.Null);
+        Assert.That(teaTableBlocker.SourceObject, Is.SameAs(teaTableProjection.gameObject));
+        Assert.That(teaTableBlocker.SortSourceRenderers, Is.True, "Baseline intentionally records the blocker's competing sort writer.");
+        Assert.That(teaTableCollider, Is.Not.Null);
+        Assert.That(teaTableCollider.isTrigger, Is.True);
+        Assert.That(teaTableProjection.Mode, Is.EqualTo(RoomProjectedEntity.ProjectionMode.ForegroundOccluder));
+        Assert.That(teaTableProjection.RoomLocalFootPoint, Is.EqualTo(new Vector2(-80.26f, -211.67f)));
+        Assert.That(teaTableProjection.RoomProfile, Is.Not.Null);
+        Assert.That(teaTableProjection.RoomProfile.GetSortingOrder(teaTableProjection.RoomLocalFootPoint), Is.EqualTo(6627));
+        Assert.That(teaTableRenderer.sortingOrder, Is.EqualTo(6627));
+        Assert.That(teaTableRenderer.sortingLayerName, Is.EqualTo("People"));
+        Assert.That(teaTableRenderer.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Pivot));
+        Assert.That(teaTableProjection.transform.localPosition.x, Is.EqualTo(-80.26f).Within(0.001f));
+        Assert.That(teaTableProjection.transform.localPosition.y, Is.EqualTo(-211.67f).Within(0.001f));
+        Assert.That(teaTableProjection.transform.localPosition.z, Is.Zero, "RoomContentGroup currently flattens room art at runtime; the authored Z remains covered statically.");
+        Assert.That(teaTableProjection.transform.localScale.x, Is.EqualTo(99.52793f).Within(0.0001f));
+        Assert.That(teaTableProjection.transform.localScale.y, Is.EqualTo(99.40213f).Within(0.0001f));
+        Assert.That(teaTableProjection.transform.localScale.z, Is.EqualTo(73.00117f).Within(0.0001f));
+        Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(teaTableRenderer.sprite)), Is.EqualTo("c9c9711a41d82097fbae9cb69d6b7e6d"));
+        Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(teaTableRenderer.sharedMaterial)), Is.EqualTo("a97c105638bdf8b4a8650670310a4cd3"));
+        Vector2[] teaTableFootprint = teaTableCollider.points;
+        Assert.That(teaTableFootprint, Has.Length.EqualTo(4));
+        Assert.That(teaTableFootprint[0], Is.EqualTo(new Vector2(-214.44357f, -357.79114f)));
+        Assert.That(teaTableFootprint[1], Is.EqualTo(new Vector2(53.923557f, -357.79114f)));
+        Assert.That(teaTableFootprint[2], Is.EqualTo(new Vector2(53.923557f, -270.11847f)));
+        Assert.That(teaTableFootprint[3], Is.EqualTo(new Vector2(-214.44357f, -270.11847f)));
         Assert.That(gameRoot.IsInitialized, Is.True);
         Assert.That(gameRoot.Database, Is.Not.Null);
         Assert.That(gameRoot.Context, Is.Not.Null);
@@ -229,6 +262,31 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(clockAmbience.GetComponent<AudioSource>(), Is.SameAs(clockSource));
         Assert.That(fireplaceSource.clip, Is.Not.Null);
         Assert.That(clockSource.clip, Is.Not.Null);
+        Assert.That(teaTableProjection.gameObject.activeInHierarchy, Is.True);
+        Assert.That(teaTableBlocker.gameObject.activeInHierarchy, Is.True);
+        teaTableRenderer.sortingOrder = -12345;
+        teaTableProjection.ApplyProjection();
+        int projectionSortingOrder = teaTableRenderer.sortingOrder;
+        Assert.That(projectionSortingOrder, Is.EqualTo(6627));
+        Assert.That(projectionSortingOrder, Is.EqualTo(teaTableProjection.CurrentSortingOrder));
+        Assert.That(projectionSortingOrder, Is.EqualTo(teaTableProjection.GetSortingOrder()));
+
+        teaTableRenderer.sortingOrder = -12346;
+        Physics2D.SyncTransforms();
+        teaTableBlocker.ApplySourceSortingNow();
+        int blockerSortingOrder = teaTableRenderer.sortingOrder;
+        Assert.That(blockerSortingOrder, Is.EqualTo(teaTableBlocker.CurrentSortingOrder));
+        Assert.That(
+            blockerSortingOrder,
+            Is.EqualTo(1000 - Mathf.RoundToInt(teaTableCollider.bounds.min.y * 100f)));
+
+        teaTableRenderer.sortingOrder = -12347;
+        teaTableProjection.ApplyProjection();
+        Assert.That(teaTableRenderer.sortingOrder, Is.EqualTo(projectionSortingOrder));
+        Debug.Log(
+            $"[SetPieceBaseline] tea_service_table projection={projectionSortingOrder} " +
+            $"blocker={blockerSortingOrder} " +
+            $"colliderMinY={teaTableCollider.bounds.min.y:0.####}");
 
         DoorTriggerNavigation reverse = RequireSceneObject<DoorTriggerNavigation>(
             "DoorTrigger_DrawingRoom_GEH");
@@ -271,6 +329,13 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(clockAmbience.GetComponent<AudioSource>(), Is.SameAs(clockSource));
         Assert.That(fireplaceSource.clip, Is.Not.Null);
         Assert.That(clockSource.clip, Is.Not.Null);
+        Assert.That(teaTableProjection.gameObject.activeInHierarchy, Is.False);
+        Assert.That(
+            FindInActiveScene<RoomProjectedEntity>().Single(item => item.gameObject.name == "tea_service_table"),
+            Is.SameAs(teaTableProjection));
+        Assert.That(
+            FindInActiveScene<ObjectMovementBlocker2D>().Single(item => item.SourceObjectName == "tea_service_table"),
+            Is.SameAs(teaTableBlocker));
 
         speech.BeginSpeakLine(
             "ARCH_LIFECYCLE_SKIP_DIALOGUE",

@@ -454,6 +454,41 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
+    public void DrawingRoomTeaTableCharacterizesCompetingDepthAndCollisionOwners()
+    {
+        string gameplaySceneText = File.ReadAllText(GameplayScenePath);
+        string tableBlock = ExtractGameObjectBundle(gameplaySceneText, "tea_service_table");
+        string blockerBlock = ExtractGameObjectBundle(gameplaySceneText, "PlayerBlocker_tea_service_table");
+        string projectionText = File.ReadAllText("Assets/Scripts/Characters/RoomProjectedEntity.cs");
+        string blockerText = File.ReadAllText("Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs");
+
+        Assert.That(tableBlock, Does.Contain("m_Sprite: {fileID: -7836622596164935206, guid: c9c9711a41d82097fbae9cb69d6b7e6d, type: 3}"));
+        Assert.That(tableBlock, Does.Contain("m_Materials:\n  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}"));
+        Assert.That(tableBlock, Does.Contain("m_LocalPosition: {x: -80.26, y: -211.67, z: -6570.105}"));
+        Assert.That(tableBlock, Does.Contain("m_LocalScale: {x: 99.52793, y: 99.40213, z: 73.00117}"));
+        Assert.That(tableBlock, Does.Contain("guid: 361e3658088b41ab98d330ae6457640b"));
+        Assert.That(tableBlock, Does.Contain("roomLocalFootPoint: {x: -80.26, y: -211.67}"));
+        Assert.That(tableBlock, Does.Contain("m_SortingOrder: 6627"));
+
+        Assert.That(blockerBlock, Does.Contain("guid: b95469e02af64fee8b29689edb9b583a"));
+        Assert.That(blockerBlock, Does.Contain("sourceObject: {fileID: 2088426358}"));
+        Assert.That(blockerBlock, Does.Contain("sourceObjectName: tea_service_table"));
+        Assert.That(blockerBlock, Does.Contain("sourceRoomName: Drawing Room"));
+        Assert.That(blockerBlock, Does.Contain("category: Table"));
+        Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 1"));
+        Assert.That(blockerBlock, Does.Contain("m_IsTrigger: 1"));
+        Assert.That(blockerBlock, Does.Contain("- - {x: -214.44357, y: -357.79114}"));
+        Assert.That(blockerBlock, Does.Contain("- {x: 53.923557, y: -357.79114}"));
+        Assert.That(blockerBlock, Does.Contain("- {x: 53.923557, y: -270.11847}"));
+        Assert.That(blockerBlock, Does.Contain("- {x: -214.44357, y: -270.11847}"));
+
+        Assert.That(projectionText, Does.Match(@"private void LateUpdate\(\)[\s\S]*ApplyProjection\(\)"));
+        Assert.That(projectionText, Does.Contain("spriteRenderer.sortingOrder = GetSortingOrder(localOffset)"));
+        Assert.That(blockerText, Does.Match(@"private void LateUpdate\(\)[\s\S]*ApplySourceSortingNow\(\)"));
+        Assert.That(blockerText, Does.Contain("spriteRenderer.sortingOrder = CurrentSortingOrder"));
+    }
+
+    [Test]
     public void DrawingRoomWaitingPoseKeepsGuestsThreeFiveSevenStanding()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
@@ -502,6 +537,25 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         return blockEnd >= 0
             ? assetText.Substring(blockStart, blockEnd - blockStart)
             : assetText.Substring(blockStart);
+    }
+
+    private static string ExtractGameObjectBundle(string assetText, string objectName)
+    {
+        MatchCollection bundles = Regex.Matches(
+            assetText,
+            @"(?ms)^--- !u!1 &[^\r\n]+\r?\nGameObject:.*?(?=^--- !u!1 &[^\r\n]+\r?\nGameObject:|\z)");
+        string nameLine = $"\n  m_Name: {objectName}\n";
+
+        foreach (Match bundle in bundles)
+        {
+            if (bundle.Value.Contains(nameLine))
+            {
+                return bundle.Value;
+            }
+        }
+
+        Assert.Fail($"Could not find serialized GameObject bundle '{objectName}'.");
+        return string.Empty;
     }
 
     private static string ExtractMethodBody(string sourceText, string methodName)
