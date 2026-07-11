@@ -52,6 +52,7 @@ public sealed class GameplayLifecycleCharacterizationTests
 
         Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(GameplaySceneName));
 
+        Chateau.Architecture.GameRoot gameRoot = RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
         CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
         RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
         DoorPromptSequenceController prompts = RequireExactlyOneInActiveScene<DoorPromptSequenceController>();
@@ -65,8 +66,16 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(lighting, Is.Not.Null);
         Assert.That(chapter.Clock, Is.SameAs(clock));
         Assert.That(chapter.EventScheduler, Is.SameAs(scheduler));
-        Assert.That(FindInActiveScene<SubtitleService>().Length, Is.LessThanOrEqualTo(1));
-        Assert.That(FindInActiveScene<DialogueSpeechService>().Length, Is.LessThanOrEqualTo(1));
+        Assert.That(RequireExactlyOneInActiveScene<SubtitleService>(), Is.Not.Null);
+        Assert.That(RequireExactlyOneInActiveScene<DialogueSpeechService>(), Is.Not.Null);
+        Assert.That(gameRoot.IsInitialized, Is.True);
+        Assert.That(gameRoot.Database, Is.Not.Null);
+        Assert.That(gameRoot.Context, Is.Not.Null);
+        Assert.That(gameRoot.Services, Has.Count.EqualTo(8));
+        Assert.That(gameRoot.Services.Select(service => service.GetType()).Distinct().Count(), Is.EqualTo(8));
+        Chateau.Architecture.ValidationReport rootValidation = new Chateau.Architecture.ValidationReport();
+        gameRoot.ValidateConfiguration(rootValidation);
+        Assert.That(rootValidation.HasErrors, Is.False);
 
         GameObject playerObject = GameObject.Find("Player");
         Assert.That(playerObject, Is.Not.Null);
@@ -131,6 +140,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<ChapterClock>(), Is.SameAs(clock));
         Assert.That(RequireExactlyOneInActiveScene<ChapterEventScheduler>(), Is.SameAs(scheduler));
         Assert.That(RequireExactlyOneInActiveScene<RoomLightingController>(), Is.SameAs(lighting));
+        Assert.That(RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>(), Is.SameAs(gameRoot));
     }
 
     private static IEnumerator WaitForSettledLayout()
