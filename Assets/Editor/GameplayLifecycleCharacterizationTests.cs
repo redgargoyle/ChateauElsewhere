@@ -80,6 +80,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "ChapterManager_Runtime"), Is.False);
         Assert.That(serializedChapter2.CurrentPhase, Is.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(serializedChapter2.HasGameContext, Is.True);
+        Assert.That(FindInActiveScene<Chapter2MonsterStingerController>(), Is.Empty);
+        Assert.That(FindInActiveScene<Chapter2GuestPanicController>(), Is.Empty);
+        Assert.That(FindInActiveScene<Chapter2GuestSearchController>(), Is.Empty);
         Chateau.Architecture.ValidationReport rootValidation = new Chateau.Architecture.ValidationReport();
         gameRoot.ValidateConfiguration(rootValidation);
         Assert.That(rootValidation.HasErrors, Is.False);
