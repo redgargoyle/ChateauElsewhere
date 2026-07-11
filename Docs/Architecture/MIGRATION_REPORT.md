@@ -38,17 +38,18 @@ This report records what is implemented in the repository at this commit. It mus
 - Bound Chapter 1 to the existing serialized guest-scale applier, preserving the single ownership chain from applier to calibration to approved Butler source; every identity is lifecycle-tested before factory retirement.
 - Removed runtime creation of guest-scale applier/calibration owners; the Guest Size Master retains an Editor-only, Undo-aware authoring action, and runtime creation is limited to per-guest participants.
 - Explicitly wired the serialized dialogue and subtitle services, subtitle line bank, navigation edge, and Chapter 1 consumers while preserving lazy voice/indicator/subtitle-view creation.
+- Removed the core dialogue/subtitle `FindOrCreate` factories and every caller; GameRoot is now the only owner of these services, while voice/indicator child ownership remains separately gated.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,567 | +665 |
+| Runtime C# lines | 49,902 | 50,508 | +606 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
-| `FindObject*`/`GameObject.Find` | 199 | 189 | -10 |
+| `FindObject*`/`GameObject.Find` | 199 | 187 | -12 |
 | `Resources.Load` | 27 | 27 | 0 |
-| runtime `new GameObject` | 98 | 94 | -4 |
+| runtime `new GameObject` | 98 | 92 | -6 |
 | runtime `AddComponent<T>` | 100 | 85 | -15 |
 | runtime initialization hooks | 9 | 5 | -4 |
 

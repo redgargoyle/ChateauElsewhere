@@ -5,7 +5,6 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
 {
-    private const string ServiceObjectName = "DialogueSpeechService";
     private const float CharactersPerSecond = 24f;
     private const float MinimumReadSeconds = 1.25f;
     private const float MaximumReadSeconds = 6f;
@@ -53,22 +52,6 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
         public string SpeakerId { get; }
         public string SpeakerDisplayName { get; }
         public string Text { get; }
-    }
-
-    public static DialogueSpeechService FindOrCreate()
-    {
-        DialogueSpeechService existing = FindAnyObjectByType<DialogueSpeechService>(FindObjectsInactive.Include);
-
-        if (existing != null)
-        {
-            existing.ResolveReferences();
-            return existing;
-        }
-
-        GameObject serviceObject = new GameObject(ServiceObjectName, typeof(DialogueSpeechService));
-        DialogueSpeechService service = serviceObject.GetComponent<DialogueSpeechService>();
-        service.ResolveReferences();
-        return service;
     }
 
     public static void StopAnyCurrentSpeech()
@@ -303,11 +286,6 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
 
     private void ResolveReferences()
     {
-        if (subtitleService == null)
-        {
-            subtitleService = SubtitleService.FindOrCreate();
-        }
-
         if (voicePlayback == null)
         {
             voicePlayback = GuestVoiceLinePlayback.FindOrCreate();

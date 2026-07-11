@@ -56,7 +56,7 @@ Only after Phase 2 passes:
 - `ChapterManager` top-level manager-stack self-creation fallback removed; the separately gated Chapter 2 controller factory is also removed;
 - exactly one inert `Chapter2Controller`, HUD, monster-stinger owner, panic owner, and guest-search owner serialized and explicitly wired; all five top-level Chapter 2 creation fallbacks are removed;
 - Chapter 1 binds the existing serialized guest-scale applier, which owns the serialized calibration and Butler source; both latent runtime owner factories are removed while per-guest participant creation remains deliberate;
-- wire the serialized dialogue/subtitle services, line bank, navigation edge, and Chapter 1 consumers before retiring core-service `FindOrCreate` fallbacks; keep auxiliary views lazy until their own gate;
+- serialized dialogue/subtitle services, line bank, navigation edge, and Chapter 1 consumers are wired; both core-service `FindOrCreate` factories are removed while auxiliary views remain lazy until their own gate;
 - remove `DialogueSpeechService.FindOrCreate` and `SubtitleService.FindOrCreate` call sites after callers receive serialized/service references;
 - replace `UrpPostProcessingBootstrap` with a serialized render rig;
 - replace runtime clock-hand attachment with an authored `ClockView` reference.

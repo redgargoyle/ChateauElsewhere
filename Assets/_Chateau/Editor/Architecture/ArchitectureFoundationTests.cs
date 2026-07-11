@@ -165,6 +165,20 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("speechService: {fileID: 1878886994}"));
         Assert.That(sceneText, Does.Contain("lineBank: {fileID: 11400000, guid: 47d20ba9660546050951e9ea07a0b3da, type: 2}"));
         Assert.That(sceneText, Does.Contain("navigationManager: {fileID: 1878886997}"));
+
+        string speechText = File.ReadAllText("Assets/Scripts/Audio/DialogueSpeechService.cs");
+        string subtitleText = File.ReadAllText("Assets/Scripts/UI/SubtitleService.cs");
+        string chapter1Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs");
+        string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
+        Assert.That(speechText, Does.Not.Contain("DialogueSpeechService FindOrCreate"));
+        Assert.That(subtitleText, Does.Not.Contain("SubtitleService FindOrCreate"));
+        Assert.That(speechText, Does.Not.Contain("SubtitleService.FindOrCreate"));
+        Assert.That(chapter1Text, Does.Not.Contain("DialogueSpeechService.FindOrCreate"));
+        Assert.That(chapter1Text, Does.Not.Contain("SubtitleService.FindOrCreate"));
+        Assert.That(chapter2Text, Does.Not.Contain("DialogueSpeechService.FindOrCreate"));
+        Assert.That(chapter2Text, Does.Not.Contain("SubtitleService.FindOrCreate"));
+        Assert.That(speechText, Does.Contain("GuestVoiceLinePlayback.FindOrCreate"));
+        Assert.That(speechText, Does.Contain("SpeakingCharacterIndicator.FindOrCreate"));
     }
 
     private static int CountOccurrences(string text, string value)

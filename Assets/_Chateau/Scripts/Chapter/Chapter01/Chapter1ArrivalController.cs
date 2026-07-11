@@ -3943,11 +3943,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             return null;
         }
 
-        if (speechService == null)
-        {
-            speechService = DialogueSpeechService.FindOrCreate();
-        }
-
         return speechService;
     }
 
@@ -3956,11 +3951,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         if (!enableSubtitles || !Application.isPlaying)
         {
             return null;
-        }
-
-        if (subtitleService == null)
-        {
-            subtitleService = SubtitleService.FindOrCreate();
         }
 
         subtitleService?.SetDebugMode(subtitleDebugMode);

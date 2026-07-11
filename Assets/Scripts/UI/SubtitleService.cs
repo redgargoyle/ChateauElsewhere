@@ -9,7 +9,6 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
 {
-    private const string ServiceObjectName = "SubtitleService";
     private const string CanvasName = "Canvas_Subtitles";
     private const string PanelName = "Panel_Subtitle";
     private const string PanelInteriorName = "Image_SubtitleInterior";
@@ -53,22 +52,6 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
     private bool showingPersistentLine;
     private bool skipCurrentLineRequested;
     private bool subscribedToRoomChanges;
-
-    public static SubtitleService FindOrCreate()
-    {
-        SubtitleService existing = FindAnyObjectByType<SubtitleService>(FindObjectsInactive.Include);
-
-        if (existing != null)
-        {
-            existing.ResolveReferences();
-            return existing;
-        }
-
-        GameObject serviceObject = new GameObject(ServiceObjectName, typeof(SubtitleService));
-        SubtitleService service = serviceObject.GetComponent<SubtitleService>();
-        service.ResolveReferences();
-        return service;
-    }
 
     public void SetDebugMode(bool enabled)
     {

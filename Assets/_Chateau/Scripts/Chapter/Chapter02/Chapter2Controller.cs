@@ -1113,11 +1113,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
             return null;
         }
 
-        if (subtitleService == null)
-        {
-            subtitleService = SubtitleService.FindOrCreate();
-        }
-
         subtitleService?.SetDebugMode(subtitleDebugMode);
         return subtitleService;
     }
@@ -1127,11 +1122,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
         if (!enableSubtitles || !Application.isPlaying)
         {
             return null;
-        }
-
-        if (speechService == null)
-        {
-            speechService = DialogueSpeechService.FindOrCreate();
         }
 
         return speechService;
