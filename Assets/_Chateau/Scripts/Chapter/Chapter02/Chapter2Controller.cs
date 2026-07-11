@@ -575,11 +575,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
             interactionHUD = FindAnyObjectByType<Chapter2InteractionHUD>(FindObjectsInactive.Include);
         }
 
-        if (interactionHUD == null)
-        {
-            interactionHUD = gameObject.AddComponent<Chapter2InteractionHUD>();
-        }
-
         if (monsterStinger == null)
         {
             monsterStinger = GetComponent<Chapter2MonsterStingerController>();

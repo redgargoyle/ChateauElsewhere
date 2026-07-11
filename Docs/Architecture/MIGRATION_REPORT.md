@@ -33,18 +33,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed `ChapterManager.BootstrapChapterManagerForGameplay`; the serialized Chapter 1 stack now owns startup. Chapter 2 controller ownership was migrated in a separate gate.
 - Serialized one inert `Chapter2Controller`, wired its existing dependencies, and bound it through GameRoot. Repeated Chapter 2 debug skips reuse the same controller and HUD while preserving the characterized feature behavior.
 - Removed the `ChapterManager` factory for `Chapter2Controller`; every chapter transition and debug-skip entry path now resolves the single serialized controller.
+- Removed the Chapter 2 HUD factory; Chapter 2 now reuses the single serialized HUD on every entry path.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 50,587 | +685 |
+| Runtime C# lines | 49,902 | 50,582 | +680 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
 | `FindObject*`/`GameObject.Find` | 199 | 192 | -7 |
 | `Resources.Load` | 27 | 27 | 0 |
 | runtime `new GameObject` | 98 | 96 | -2 |
-| runtime `AddComponent<T>` | 100 | 91 | -9 |
+| runtime `AddComponent<T>` | 100 | 90 | -10 |
 | runtime initialization hooks | 9 | 5 | -4 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.

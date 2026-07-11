@@ -115,6 +115,9 @@ public sealed class ArchitectureFoundationTests
         Assert.That(managerText, Does.Not.Contain("ResolveChapter2Controller(true)"));
         Assert.That(managerText, Does.Not.Contain("ResolveChapter2Controller(false)"));
         Assert.That(managerText, Does.Not.Contain("AddComponent<Chapter2Controller>"));
+
+        string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
+        Assert.That(chapter2Text, Does.Not.Contain("AddComponent<Chapter2InteractionHUD>"));
     }
 
     [Test]

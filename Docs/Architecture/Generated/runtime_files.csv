@@ -97,7 +97,7 @@ Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,245,66ea4162715e
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,164,fbdd821a8687aace94f17e7d73ecd6bd409d5d6040d5443a799119f0acef44f9,3,0,3,0,0,0,Chapter1InteractionHUD
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,553,66c69d06013a3a26f9f8ed483fb4a4fcfa433bfa9fe0ed7879d722c042a113a9,4,0,0,0,0,0,Chapter1SceneAction
 Assets/_Chateau/Scripts/Chapter/Chapter01/GuestArrivalConfig.cs,146,af55b1038cac87f84b12310ab266473c26ddac2b7a3154fbe4ec308d01d8702d,0,0,0,1,0,0,
-Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs,1330,0db7cc4cdaba6aee6c16399745e06f2e859dee366f33a749d703864ab1360855,7,1,0,5,0,0,
+Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs,1325,253ad48cf22adf5847e6eb9eabcc557f4556646ef79225b32784914760dc19d7,7,1,0,4,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs,387,e230b6d027899f32f8382ed6f0417e39f62c02319639335ab840187c8a71b54c,2,0,0,0,0,0,Chapter2GuestFindAction
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs,2814,339937383a830fbe27785a43d6171ab8a6760e7f1258bfaca9b9e3df8cc3c674,6,3,1,2,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs,2745,663d7fdcc6b5cc17c96fdab797fba3881d94901103f711dfe58a23375606666a,6,0,2,3,0,0,
