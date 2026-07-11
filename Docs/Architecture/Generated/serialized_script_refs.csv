@@ -51,7 +51,7 @@ Assets/Scripts/Audio/GameAudioSourceVolume.cs,5161da2d2e1b408d859e3792f47407f4,0
 Assets/Scripts/Audio/GuestFootstepAudio.cs,97301c28479e2e1dc90448e43a36d7fe,0,
 Assets/Scripts/Audio/GuestFootstepCatalog.cs,c1e4c474e559b01dfdafba00f05810a6,1,Assets/Resources/Audio/GuestFootstepCatalog.asset:1
 Assets/Scripts/Audio/GuestVoiceLineCatalog.cs,0d2c7f4e9a0b4e4c8d5e6f708192a3b4,1,Assets/Resources/Audio/GuestVoiceLineCatalog.asset:1
-Assets/Scripts/Audio/GuestVoiceLinePlayback.cs,9e13b0cd7a5f44a69fe0b75a2cb76123,0,
+Assets/Scripts/Audio/GuestVoiceLinePlayback.cs,9e13b0cd7a5f44a69fe0b75a2cb76123,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Audio/PlayerFootstepAudio.cs,e0d247f58cf84d209a956e2016ddbb2f,0,
 Assets/Scripts/CharacterController2D.cs,fbc4bfb46da335ef392e49b8ba30aa78,1,Assets/Prefabs/Player.prefab:1
 Assets/Scripts/Characters/CharacterAnimatorDriver.cs,881e49904c0847098ffb7b19b9788e22,0,
@@ -107,7 +107,7 @@ Assets/Scripts/UI/CursorStyleCatalog.cs,2ca2170510ad7b877a91033254911f53,0,
 Assets/Scripts/UI/NavigationCursorHoverTarget.cs,4d6cb092c0fc4a47bc3fb39240ef1404,0,
 Assets/Scripts/UI/PostProcessSafeCanvasUtility.cs,bd4ee862c7230194ca0977fb3807c08a,0,
 Assets/Scripts/UI/RuntimeSettingsMenu.cs,06d3a7eb4f7d428f9bc3e64b6c47f0b6,0,
-Assets/Scripts/UI/SpeakingCharacterIndicator.cs,9963bb0aa9d84cc7a8cb801c668a92ee,0,
+Assets/Scripts/UI/SpeakingCharacterIndicator.cs,9963bb0aa9d84cc7a8cb801c668a92ee,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/UI/SubtitleLine.cs,4472b689444388ba58d2ecf5cf9beacf,0,
 Assets/Scripts/UI/SubtitleLineBank.cs,695dfb43a57e4ce745980f19b1666ddc,1,Assets/Resources/UI/SubtitleLineBank.asset:1
 Assets/Scripts/UI/SubtitleService.cs,6a672186a99c3d17e3288fac89b25221,1,Assets/Scenes/Gameplay.unity:1

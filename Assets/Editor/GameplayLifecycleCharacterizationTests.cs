@@ -68,6 +68,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Chapter2GuestSearchController serializedGuestSearch = RequireExactlyOneInActiveScene<Chapter2GuestSearchController>();
         GuestRoomScaleApplier serializedGuestScaleApplier = RequireExactlyOneInActiveScene<GuestRoomScaleApplier>();
         GuestRoomScaleCalibration serializedGuestScaleCalibration = RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>();
+        GuestVoiceLinePlayback serializedVoicePlayback = RequireExactlyOneInActiveScene<GuestVoiceLinePlayback>();
+        SpeakingCharacterIndicator serializedSpeakingIndicator = RequireExactlyOneInActiveScene<SpeakingCharacterIndicator>();
         RoomLightingController lighting = RequireExactlyOneInActiveScene<RoomLightingController>();
 
         Assert.That(cameraManager, Is.Not.Null);
@@ -106,9 +108,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(player, Is.Not.Null);
         Assert.That(serializedGuestScaleApplier.Calibration, Is.SameAs(serializedGuestScaleCalibration));
         Assert.That(serializedGuestScaleCalibration.ButlerScaleSource, Is.SameAs(player));
-        Assert.That(FindInActiveScene<GuestVoiceLinePlayback>(), Is.Empty);
-        Assert.That(FindInActiveScene<SpeakingCharacterIndicator>(), Is.Empty);
+        Assert.That(serializedVoicePlayback.IsPlaying, Is.False);
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_Subtitles"), Is.False);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Sprite_ChatBubble"), Is.False);
 
         speech.BeginSpeakLine(
             "ARCH_LIFECYCLE_DIALOGUE",
@@ -117,9 +119,10 @@ public sealed class GameplayLifecycleCharacterizationTests
             showSubtitleOverlay: false);
         yield return null;
 
-        GuestVoiceLinePlayback serializedVoicePlayback = RequireExactlyOneInActiveScene<GuestVoiceLinePlayback>();
-        SpeakingCharacterIndicator serializedSpeakingIndicator = RequireExactlyOneInActiveScene<SpeakingCharacterIndicator>();
+        Assert.That(RequireExactlyOneInActiveScene<GuestVoiceLinePlayback>(), Is.SameAs(serializedVoicePlayback));
+        Assert.That(RequireExactlyOneInActiveScene<SpeakingCharacterIndicator>(), Is.SameAs(serializedSpeakingIndicator));
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_Subtitles"), Is.True);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Sprite_ChatBubble"), Is.True);
         speech.StopCurrentSpeech();
         yield return null;
 

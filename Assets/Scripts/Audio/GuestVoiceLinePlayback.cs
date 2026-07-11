@@ -12,8 +12,8 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float baseVolume = 1f;
     [SerializeField] private bool logMissingVoiceLines;
 
-    private AudioSource audioSource;
-    private RoomNavigationManager navigationManager;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private RoomNavigationManager navigationManager;
     private bool subscribedToRoomChanges;
     private string playbackRoom = string.Empty;
 
