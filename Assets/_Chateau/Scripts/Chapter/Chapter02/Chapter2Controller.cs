@@ -47,6 +47,7 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     [SerializeField] private float clockStrikeCloseUpSeconds = 5f;
     [SerializeField, Min(0.1f)] private float monsterStingerTimeoutSeconds = 14f;
     [SerializeField] private AudioSource clockStrikeAudioSource;
+    [SerializeField] private GameAudioSourceVolume clockStrikeVolumeBinding;
     [SerializeField] private AudioClip clockStrikeClip;
     [SerializeField] private string clockStrikeClipResourcePath = DefaultClockStrikeClipResourcePath;
     [SerializeField, Range(0f, 1f)] private float clockStrikeVolume = DefaultClockStrikeVolume;
@@ -143,6 +144,42 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
         if (speechService == null)
         {
             report.AddError("Chapter2Controller requires its serialized DialogueSpeechService.", this);
+        }
+
+        if (clockStrikeAudioSource == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized clock-strike AudioSource.", this);
+        }
+
+        if (clockStrikeClip == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized clock-strike AudioClip.", this);
+        }
+        else if (clockStrikeAudioSource != null && clockStrikeAudioSource.clip != clockStrikeClip)
+        {
+            report.AddError("Chapter2Controller clock-strike source and clip reference must match.", this);
+        }
+
+        if (clockStrikeVolumeBinding == null)
+        {
+            report.AddError("Chapter2Controller requires its serialized clock-strike volume binding.", this);
+        }
+        else
+        {
+            if (clockStrikeAudioSource != null && clockStrikeVolumeBinding.gameObject != clockStrikeAudioSource.gameObject)
+            {
+                report.AddError("Chapter2Controller clock-strike source and volume binding must share one owned GameObject.", this);
+            }
+
+            if (clockStrikeVolumeBinding.Channel != GameAudioChannel.GameSounds)
+            {
+                report.AddError("Chapter2Controller clock-strike volume binding must use Game Sounds.", this);
+            }
+
+            if (!Mathf.Approximately(clockStrikeVolumeBinding.BaseVolume, ResolveClockStrikeVolume()))
+            {
+                report.AddError("Chapter2Controller clock-strike source and volume binding must use the same base volume.", this);
+            }
         }
     }
 

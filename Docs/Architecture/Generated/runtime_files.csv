@@ -1,5 +1,5 @@
 file,loc,sha256,FindObject,ResourcesLoad,NewGameObject,AddComponent,RuntimeInitialize,PlayerPrefs,direct_monobehaviours
-Assets/Map/CameraManager.cs,2985,613d7bf3eed6e595be18796799f63ee2b545d7c5d89e739ce38f1835c16906b0,5,0,0,0,1,0,
+Assets/Map/CameraManager.cs,2994,4eced80c166be48cf5bc9ab6d7b44cf1f2e29e8e2ceafd5b80fc3a393d897cd4,5,0,0,0,1,0,
 Assets/Scripts/Audio/Chapter2PanicScreamCatalog.cs,46,3d5a3c1ac00f6c230d540338987f3ad1a02dd2b1ff43cb0a2fe0a688c6863637,0,0,0,0,0,0,
 Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs,256,53391df6b69d067828a0d28686389a98d2594a524cb6937969ac0640573b2b1a,0,0,0,0,0,0,
 Assets/Scripts/Audio/ClockTickingAmbienceController.cs,223,662b5d1f4a04057ef87db030b815755a33e9bc381190300967a5fc8e15357822,0,0,0,0,0,0,ClockTickingAmbienceController
@@ -40,14 +40,14 @@ Assets/Scripts/Navigation/DoorButton.cs,190,3869168650c8132e207fc2bc1eb1329c690b
 Assets/Scripts/Navigation/DoorCameraSequence.cs,92,28d4de65604ca4cc675145e66b019bf07af5c0ee060389ed1e51b8022a02664e,0,0,0,0,0,0,
 Assets/Scripts/Navigation/DoorDataParser.cs,173,fc0de0dbfafea306f2432a283c6e6d5af46c308395c7687ef3981b292cb33a63,0,0,0,0,0,0,
 Assets/Scripts/Navigation/DoorPromptSequenceController.cs,274,1df3a04ad7b861d35720eec5da8c375cc92e39b8eba45ff911ee0e9487acc64f,3,1,1,0,0,0,DoorPromptSequenceController
-Assets/Scripts/Navigation/DoorTriggerNavigation.cs,1401,5138892973a2cd609991f2dd9d8777b657b0501225dcd69a338ea73c403182c3,4,2,0,0,1,0,DoorTriggerNavigation
+Assets/Scripts/Navigation/DoorTriggerNavigation.cs,1411,86ff517a0242de06076657f1bdb88e873ce4d419eea5b0181b883764c858cece,4,2,0,0,1,0,DoorTriggerNavigation
 Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,179,700da61bfec106c114c48f9be426c4581299bfdf5bd1d1486bb0920867790c5b,0,0,0,0,0,0,ObjectMovementBlocker2D
 Assets/Scripts/Navigation/RoomContentGroup.cs,256,2e326000243b12f6bf243bb6d88342100cde82a0b9a1d96d312e6ca1f80a96f8,0,0,0,0,0,0,RoomContentGroup
 Assets/Scripts/Navigation/RoomNavigationManager.cs,1284,151d49d2314c2ab0aa533f4e8fd7c6675a7371ea3ef4043681cec792fb340cb8,16,3,1,0,0,0,
 Assets/Scripts/Navigation/RoomVisualCatalog.cs,45,b4f13f7b9b7408417349da34bfb2bdba0f94f1153a5a95723ecebfd2d9ecb82c,0,0,0,0,0,0,
 Assets/Scripts/Oddities/OdditySpriteAnimator.cs,246,3202fd562a345dfcac11fc92f5ff6b2a21c1a92421b5e5116d41dca28e014e95,0,0,0,0,0,0,OdditySpriteAnimator
 Assets/Scripts/PlayerMovement.cs,300,31c9b36c0da4d8d2400eecf69af5cef09a40479fbdb46db59a5a83631937875b,0,0,0,0,0,0,PlayerMovement
-Assets/Scripts/PointClickPlayerMovement.cs,4369,7da09ede68090818cde2087df9db14c3e9f84985e12d83f854ed52e27a5781e9,14,0,0,1,0,0,PointClickPlayerMovement
+Assets/Scripts/PointClickPlayerMovement.cs,4388,432883ea2fe97a6e9d9a7a7700492eb793db128dfdb8fbf7e99d6a371fbbee85,14,0,0,1,0,0,PointClickPlayerMovement
 Assets/Scripts/StaticFrameGroup.cs,68,a6e9bfe9198618604874867332b8057010a882673c4a5e33f99b527c2024080a,0,0,0,0,0,0,
 Assets/Scripts/StaticNoisePlayer.cs,305,72ec16941ba8525c25778164fa389c07a937790fdd6c1dc12e045c9ce00e8bc4,0,0,0,0,0,0,StaticNoisePlayer
 Assets/Scripts/StaticSet.cs,35,102d81689aba1e00eb5597e6f8c639fc6c11d111743c6dc53509bc58fdbb7489,0,0,0,0,0,0,
@@ -98,8 +98,8 @@ Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,245,66ea4162715e
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,164,fbdd821a8687aace94f17e7d73ecd6bd409d5d6040d5443a799119f0acef44f9,3,0,3,0,0,0,Chapter1InteractionHUD
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,553,66c69d06013a3a26f9f8ed483fb4a4fcfa433bfa9fe0ed7879d722c042a113a9,4,0,0,0,0,0,Chapter1SceneAction
 Assets/_Chateau/Scripts/Chapter/Chapter01/GuestArrivalConfig.cs,146,af55b1038cac87f84b12310ab266473c26ddac2b7a3154fbe4ec308d01d8702d,0,0,0,1,0,0,
-Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs,1262,14bf6c2001d176326a4475aaf158587fcdbf9d5b0393ce2a35351a7783c23494,0,1,0,1,0,0,
-Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs,387,e230b6d027899f32f8382ed6f0417e39f62c02319639335ab840187c8a71b54c,2,0,0,0,0,0,Chapter2GuestFindAction
+Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs,1299,2a0b1ebb3e75a4a4ba99801dfe54230896055492171fe8f5976981a0b5e58323,0,1,0,1,0,0,
+Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs,397,c2c82c1dd29762c5818a1d6ae7f7c4d0cd2a0377f8ab019a5e25b294ab834894,2,0,0,0,0,0,Chapter2GuestFindAction
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs,2814,339937383a830fbe27785a43d6171ab8a6760e7f1258bfaca9b9e3df8cc3c674,6,3,1,2,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs,2745,663d7fdcc6b5cc17c96fdab797fba3881d94901103f711dfe58a23375606666a,6,0,2,3,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs,1104,b306a2c974e59660776ab815135ab52d0bcf9ac4ab307ec7f8ea3a7bb845bbe5,2,2,12,0,0,0,Chapter2InteractionHUD

@@ -160,6 +160,13 @@ public sealed class ArchitectureFoundationTests
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
+        string chapter2Document = ExtractDocument(sceneText, "--- !u!114 &3301000006");
+        string hostGameObjectDocument = ExtractDocument(sceneText, "--- !u!1 &2099709257");
+        string hostTransformDocument = ExtractDocument(sceneText, "--- !u!4 &2099709258");
+        string clockGameObjectDocument = ExtractDocument(sceneText, "--- !u!1 &3301000010");
+        string clockTransformDocument = ExtractDocument(sceneText, "--- !u!4 &3301000011");
+        string clockSourceDocument = ExtractDocument(sceneText, "--- !u!82 &3301000012");
+        string clockBindingDocument = ExtractDocument(sceneText, "--- !u!114 &3301000013");
 
         Assert.That(sceneText, Does.Contain("chapterManager: {fileID: 3301000004}"));
         Assert.That(sceneText, Does.Contain("navigationManager: {fileID: 1878886997}"));
@@ -172,6 +179,24 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("guestSearch: {fileID: 3301000009}"));
         Assert.That(sceneText, Does.Contain("subtitleService: {fileID: 1878886995}"));
         Assert.That(sceneText, Does.Contain("speechService: {fileID: 1878886994}"));
+        Assert.That(chapter2Document, Does.Contain("clockStrikeAudioSource: {fileID: 3301000012}"));
+        Assert.That(chapter2Document, Does.Contain("clockStrikeVolumeBinding: {fileID: 3301000013}"));
+        Assert.That(chapter2Document, Does.Contain("clockStrikeClip: {fileID: 8300000, guid: d7084eafa9124afcbcbf12529e08bc70, type: 3}"));
+        Assert.That(hostGameObjectDocument, Does.Not.Contain("3301000012"), "The shared ChapterManager host must not own the clock source that the violin fallback can discover.");
+        Assert.That(hostGameObjectDocument, Does.Not.Contain("3301000013"));
+        Assert.That(CountOccurrences(hostTransformDocument, "- {fileID: 3301000011}"), Is.EqualTo(1));
+        Assert.That(clockGameObjectDocument, Does.Contain("m_Name: Audio_Chapter2ClockStrike"));
+        Assert.That(clockGameObjectDocument, Does.Contain("- component: {fileID: 3301000011}"));
+        Assert.That(clockGameObjectDocument, Does.Contain("- component: {fileID: 3301000012}"));
+        Assert.That(clockGameObjectDocument, Does.Contain("- component: {fileID: 3301000013}"));
+        Assert.That(clockTransformDocument, Does.Contain("m_Father: {fileID: 2099709258}"));
+        Assert.That(clockSourceDocument, Does.Contain("m_Resource: {fileID: 8300000, guid: d7084eafa9124afcbcbf12529e08bc70, type: 3}"));
+        Assert.That(clockSourceDocument, Does.Contain("m_PlayOnAwake: 0"));
+        Assert.That(clockSourceDocument, Does.Contain("m_Volume: 0.4"));
+        Assert.That(clockSourceDocument, Does.Contain("Loop: 0"));
+        Assert.That(clockBindingDocument, Does.Contain("audioSource: {fileID: 3301000012}"));
+        Assert.That(clockBindingDocument, Does.Contain("channel: 1"));
+        Assert.That(clockBindingDocument, Does.Contain("baseVolume: 0.4"));
         Assert.That(chapter2Text, Does.Not.Contain("ResolveReferences"));
         Assert.That(chapter2Text, Does.Not.Contain("FindAnyObjectByType"));
         Assert.That(chapter2Text, Does.Not.Contain("GameObject.Find(\"Player\")"));
@@ -265,7 +290,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(CountOccurrences(sceneText, "speakingIndicator: {fileID: 1878887002}"), Is.EqualTo(2));
         Assert.That(sceneText, Does.Contain("audioSource: {fileID: 1878887000}"));
         Assert.That(sceneText, Does.Contain("audioVolumeBinding: {fileID: 1878887003}"));
-        Assert.That(CountOccurrences(sceneText, "guid: 5161da2d2e1b408d859e3792f47407f4"), Is.EqualTo(2));
+        Assert.That(CountOccurrences(sceneText, "guid: 5161da2d2e1b408d859e3792f47407f4"), Is.EqualTo(3));
         Assert.That(sceneText, Does.Match(@"--- !u!114 &1878887003[\s\S]*?m_GameObject: \{fileID: 1878886993\}[\s\S]*?audioSource: \{fileID: 1878887000\}[\s\S]*?channel: 0[\s\S]*?baseVolume: 1"));
         Assert.That(sceneText, Does.Contain("catalog: {fileID: 11400000, guid: 147a8473c4c849c9908200b092d13691, type: 2}"));
         Assert.That(sceneText, Does.Contain("bubbleSprite: {fileID: 21300000, guid: b40c2d5917304c3e822fad1b6f3e5960, type: 3}"));
