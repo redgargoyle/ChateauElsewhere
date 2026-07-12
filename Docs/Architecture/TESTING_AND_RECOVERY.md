@@ -98,6 +98,23 @@ Do not continue until compilation is clean and all non-pre-existing tests pass.
 
 ## 7. Run PlayMode smoke tests manually
 
+### Per-passage compatibility-template gate
+
+Before binding any queued route, update and run the manifest-backed gate in `PassageMigrationCertificationTests` and follow [PASSAGE_COMPATIBILITY_TEMPLATE.md](PASSAGE_COMPATIBILITY_TEMPLATE.md). The scene—not `doors.txt`—is authoritative.
+
+For one ordinary reciprocal pair, require:
+
+- both actual trigger directions characterized from far and near starts before production changes;
+- stable trigger/component IDs, route strings, interaction profile, room roots, and direct-edge baseline;
+- exactly two reciprocal definition assets and two co-located Passage components;
+- one shared logical point per room side, proven finite, collision-safe, path-reachable, source-independent, and inside the existing rendered activation envelope;
+- canonical and temporarily nulled compatibility paths completing both directions with exact callback/audio/event order and cleanup;
+- exact Unity YAML document/order review, existing `.meta`/GUID preservation, serialized-reference comparison, and idempotent import;
+- architecture/foundation/manifest/focused rendered/full-suite gates; and
+- a manual foot-placement/camera/room-visibility pass recorded below.
+
+One-way and many-to-one route shapes stay explicitly blocked in the manifest until a separately characterized model can represent them. Do not invent reverse links to satisfy the current strict reciprocal contract.
+
 ### Boot and menu
 
 - MainMenu opens without console errors.

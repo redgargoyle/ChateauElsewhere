@@ -1,0 +1,46 @@
+order,status,group,profile,component_file_id,owner,source_room,legacy_door_id,destination_room,partner_component_ids,passage_file_id,passage_definition_guid,passage_stable_id,source_room_view_file_id,approach_x,approach_y,arrival_x,arrival_y,notes
+00,complete,GEH-Drawing,standard-door,109889178,DoorTrigger_GEH_DrawingRoom,Grand Entrance Hall,GEH_Drawing_Room,Drawing Room,2300000104,4100000011,0344228bb90d4997818e13c84f0bcf63,passage.grand-entrance-hall.drawing-room,4100000001,-7.75,-2.22,5.267176,-2.104616,template-certified
+00,complete,GEH-Drawing,standard-door,2300000104,DoorTrigger_DrawingRoom_GEH,Drawing Room,DrawingRoom_GEH,Grand Entrance Hall,109889178,4100000012,50ae5112eed74cfda8588ff835b92516,passage.drawing-room.grand-entrance-hall,4100000002,5.267176,-2.104616,-7.75,-2.22,template-certified
+01,queued,Drawing-Music,standard-door,2300000089,DoorTrigger_MusicRoom_DrawingRoom,Music Room,MusicRoom_DrawingRoom,Drawing Room,2300000099,,,,,,,,,create-music-room
+01,queued,Drawing-Music,standard-door,2300000099,DoorTrigger_DrawingRoom_MusicRoom,Drawing Room,DrawingRoom_MusicRoom,Music Room,2300000089,,,,,,,,,create-music-room
+02,queued,Music-Library,standard-door,2300000079,DoorTrigger_Library_MusicRoom,Library,Library_MusicRoom,Music Room,552135204,,,,,,,,,create-library
+02,queued,Music-Library,standard-door,552135204,DoorTrigger_MusicRoom_Library,Music Room,MusicRoom_Library,Library,2300000079,,,,,,,,,create-library
+03,queued,Library-Ballroom,standard-door,2101000025,DoorTrigger_Ballroom_Library,Ballroom,Ballroom_Library,Library,2300000084,,,,,,,,,create-ballroom
+03,queued,Library-Ballroom,standard-door,2300000084,DoorTrigger_Library_Ballroom,Library,Library_Ballroom,Ballroom,2101000025,,,,,,,,,create-ballroom
+04,queued,GEH-Dining,standard-door,2300000109,DoorTrigger_DiningRoom_GEH,Dining Room,DiningRoom_GEH,Grand Entrance Hall,340611600,,,,,,,,,create-dining-room
+04,queued,GEH-Dining,standard-door,340611600,DoorTrigger_GEH_DiningRoom,Grand Entrance Hall,GEH_DiningRoom,Dining Room,2300000109,,,,,,,,,create-dining-room
+05,queued,Dining-Butlers,standard-door,2300000119,DoorTrigger_DiningRoom_ButlersPantry,Dining Room,DiningRoom_ButlersPantry,Butlers Pantry,2300000139,,,,,,,,,create-butlers-pantry-and-alias
+05,queued,Dining-Butlers,standard-door,2300000139,DoorTrigger_ButlersPantry_DiningRoom,Butlers Pantry,ButlersPantry_DiningRoom,Dining Room,2300000119,,,,,,,,,create-butlers-pantry-and-alias
+06,queued,Butlers-Billiard,standard-door,1505671646,DoorTrigger_Butlers_Pantry_BilliardRoom,Butlers Pantry,Butlers_Pantry_BilliardRoom,Billiard Room,2300000134,,,,,,,,,create-billiard-room
+06,queued,Butlers-Billiard,standard-door,2300000134,DoorTrigger_BilliardRoom_ButlersPantry,Billiard Room,BilliardRoom_ButlersPantry,Butlers Pantry,1505671646,,,,,,,,,create-billiard-room
+07,queued,Butlers-Service,standard-door,2300000149,DoorTrigger_ButlersPantry_ServiceCorridor,Butlers Pantry,ButlersPantry_ServiceCorridor,Service Corridor,2300000154,,,,,,,,,create-service-corridor
+07,queued,Butlers-Service,standard-door,2300000154,DoorTrigger_ServiceCorridor_ButlersPantry,Service Corridor,ServiceCorridor_ButlersPantry,Butlers Pantry,2300000149,,,,,,,,,create-service-corridor
+08,queued,Service-Kitchen,standard-door,2300000164,DoorTrigger_ServiceCorridor_Kitchen,Service Corridor,ServiceCorridor_Kitchen,Kitchen,802263367,,,,,,,,,create-kitchen
+08,queued,Service-Kitchen,standard-door,802263367,DoorTrigger_Kitchen_ServiceCorridor,Kitchen,Kitchen_ServiceCorridor,Service Corridor,2300000164,,,,,,,,,create-kitchen
+09,queued,Service-Chapel,standard-door,2300000169,DoorTrigger_ServiceCorridor_Chapel,Service Corridor,ServiceCorridor_Chapel,Chapel,2300000179,,,,,,,,,create-chapel
+09,queued,Service-Chapel,standard-door,2300000179,DoorTrigger_Chapel_ServiceCorridor,Chapel,Chapel_ServiceCorridor,Service Corridor,2300000169,,,,,,,,,create-chapel
+10,queued,GEH-GEHRear,bottom-edge-door,1858342503,DoorTrigger_GEH_toRearView,Grand Entrance Hall,GEH_GEH_Rear,Grand Entrance Hall Rear View,70736571,,,,,,,,,create-rear-view-and-case-alias
+10,queued,GEH-GEHRear,bottom-edge-door,70736571,DoorTrigger_GEH_Rear_GEH_Front,Grand Entrance Hall Rear view,GEH_Rear_GEH_Front,Grand Entrance Hall,1858342503,,,,,,,,,create-rear-view-and-case-alias
+11,queued,GEHRear-Billiard,standard-door,2300000124,DoorTrigger_BilliardRoom_GEH,Billiard Room,BilliardRoom_GEH,Grand Entrance Hall Rear View,357269799,,,,,,,,,doors-txt-endpoints-conflict
+11,queued,GEHRear-Billiard,standard-door,357269799,DoorTrigger_GEH_Rear_BilliardRoom,Grand Entrance Hall Rear view,GEH_BilliardRoom,Billiard Room,2300000124,,,,,,,,,doors-txt-endpoints-conflict
+12,queued,GEHRear-Conservatory,standard-door,1119941194,DoorTrigger_GEH_Rear_Conservatory,Grand Entrance Hall Rear view,GEH_Conservatory,Conservatory,2300000074,,,,,,,,,create-conservatory-mixed-interaction
+12,queued,GEHRear-Conservatory,bottom-edge-door,2300000074,DoorTrigger_Conservatory_GEH_Rear_View,Conservatory,Conservatory_GEH_Rear_View,Grand Entrance Hall Rear View,1119941194,,,,,,,,,create-conservatory-mixed-interaction
+13,queued,Service-SideStair,standard-door,2300000174,DoorTrigger_ServiceCorridor_SideStairMudroom,Service Corridor,ServiceCorridor_SideStairMudroom,Side Stair & Mudroom,2300000184,,,,,,,,,create-side-stair-and-ampersand-alias
+13,queued,Service-SideStair,standard-door,2300000184,DoorTrigger_SideStairMudroom_ServiceCorridor,Side Stair Mudroom,SideStairMudroom_ServiceCorridor,Service Corridor,2300000174,,,,,,,,,create-side-stair-and-ampersand-alias
+14,queued,SideStair-UpperSitting,standard-door,1915714844,DoorTrigger_UpperSittingHall_SideStairMudroom,Upper Sitting Hall,UpperSittingHall_SideStairMudroom,Side Stair Mudroom,2300000189,,,,,,,,,create-upper-sitting-mixed-kind
+14,queued,SideStair-UpperSitting,inferred-stairway,2300000189,StairwayTrigger_SideStairMudroom_UpperSittingHall,Side Stair Mudroom,SideStairMudroom_Stairway_UpperSittingHall,Upper Sitting Hall,1915714844,,,,,,,,,create-upper-sitting-mixed-kind
+15,queued,UpperSitting-UpperGallery,standard-door,2300000209,DoorTrigger_UpperGallery_UpperSittingHall,Upper Gallery,UpperGallery_UpperSittingHall,Upper Sitting Hall,2300000219,,,,,,,,,create-upper-gallery
+15,queued,UpperSitting-UpperGallery,standard-door,2300000219,DoorTrigger_UpperSittingHall_UpperGallery,Upper Sitting Hall,UpperSittingHall_UpperGallery,Upper Gallery,2300000209,,,,,,,,,create-upper-gallery
+16,queued,UpperGallery-Master,standard-door,2300000204,DoorTrigger_UpperGallery_MasterBedroomSuite,Upper Gallery,UpperGallery_MasterBedroomSuite,Master Bedroom Suite,2300000214,,,,,,,,,create-master-bedroom
+16,queued,UpperGallery-Master,standard-door,2300000214,DoorTrigger_MasterBedroomSuite_UpperGallery,Master Bedroom Suite,MasterBedroomSuite_UpperGallery,Upper Gallery,2300000204,,,,,,,,,create-master-bedroom
+17,queued,UpperSitting-Nursery,standard-door,2300000224,DoorTrigger_UpperSittingHall_Nursery,Upper Sitting Hall,UpperSittingHall_Nursery,Nursery,2300000234,,,,,,,,,create-nursery
+17,queued,UpperSitting-Nursery,standard-door,2300000234,DoorTrigger_Nursery_UpperSittingHall,Nursery,Nursery_UpperSittingHall,Upper Sitting Hall,2300000224,,,,,,,,,create-nursery
+18,queued,UpperSitting-Blue,standard-door,2300000229,DoorTrigger_UpperSittingHall_BlueBedroom,Upper Sitting Hall,UpperSittingHall_BlueBedroom,Blue Bedroom,2300000239,,,,,,,,,create-blue-bedroom
+18,queued,UpperSitting-Blue,standard-door,2300000239,DoorTrigger_BlueBedroom_UpperSittingHall,Blue Bedroom,BlueBedroom_UpperSittingHall,Upper Sitting Hall,2300000229,,,,,,,,,create-blue-bedroom
+19,queued,Nursery-Blue,standard-door,1084796962,DoorTrigger_Nursery_BlueBedroom,Nursery,Nursery_BlueBedroom,Blue Bedroom,1498249206,,,,,,,,,cycle-closure
+19,queued,Nursery-Blue,standard-door,1498249206,DoorTrigger_BlueBedroom_Nursery,Blue Bedroom,BlueBedroom_Nursery,Nursery,1084796962,,,,,,,,,cycle-closure
+20,blocked-one-way,GEHRear-Library,standard-door,1615236111,DoorTrigger_GEH_Rear_Library,Grand Entrance Hall Rear view,GEH_Rear_Library,Library,,,,,,,,,,missing-library-to-rear-trigger
+21,blocked-one-way,Service-Billiard,standard-door,2300000159,DoorTrigger_ServiceCorridor_BilliardRoom,Service Corridor,ServiceCorridor_BilliardRoom,Billiard Room,,,,,,,,,,missing-billiard-to-service-trigger
+22,blocked-parallel,GEH-UpperGallery,inferred-stairway,106972347,StairwayTrigger_GEH_UpperGalleryRight,Grand Entrance Hall,GEH_Stairway_UpperGalleryRight,Upper Gallery,2300000194,,,,,,,,,two-outbound-one-return-model-blocker
+22,blocked-parallel,GEH-UpperGallery,inferred-stairway,2300000069,StairwayTrigger_GEH_UpperGalleryLeft,Grand Entrance Hall,GEH_Stairway_UpperGalleryLeft,Upper Gallery,2300000194,,,,,,,,,two-outbound-one-return-model-blocker
+22,blocked-parallel,GEH-UpperGallery,inferred-stairway,2300000194,StairwayTrigger_UpperGallery_GEH,Upper Gallery,UpperGallery_Stairway_GEH,Grand Entrance Hall,106972347|2300000069,,,,,,,,,two-outbound-one-return-model-blocker
