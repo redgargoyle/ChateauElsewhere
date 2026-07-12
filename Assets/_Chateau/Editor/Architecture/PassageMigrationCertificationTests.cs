@@ -57,11 +57,11 @@ public sealed class PassageMigrationCertificationTests
         string gameRoot = RequireDocument(documents, GameRootFileId);
         string database = File.ReadAllText(GameDatabasePath);
 
-        Assert.That(certified, Has.Count.EqualTo(6),
-            "Exactly the Entrance/Drawing, Drawing/Music, and Music/Library reciprocal pairs are complete.");
+        Assert.That(certified, Has.Count.EqualTo(8),
+            "Exactly the Entrance/Drawing, Drawing/Music, Music/Library, and Library/Ballroom reciprocal pairs are complete.");
         Assert.That(certified.Select(row => row.Order).Distinct().OrderBy(order => order),
-            Is.EqualTo(new[] { 0, 1, 2 }),
-            "Completed-route certification must cover groups 00, 01, and 02 exactly once per reciprocal pair.");
+            Is.EqualTo(new[] { 0, 1, 2, 3 }),
+            "Completed-route certification must cover groups 00 through 03 exactly once per reciprocal pair.");
 
         foreach (IGrouping<int, RouteInventoryRow> certifiedGroup in certified.GroupBy(row => row.Order))
         {
@@ -238,9 +238,9 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(rows.Count(row => row.Profile == "standard-door"), Is.EqualTo(38));
         Assert.That(rows.Count(row => row.Profile == "bottom-edge-door"), Is.EqualTo(3));
         Assert.That(rows.Count(row => row.Profile == "inferred-stairway"), Is.EqualTo(4));
-        Assert.That(rows.Count(row => row.Status == "complete"), Is.EqualTo(6));
+        Assert.That(rows.Count(row => row.Status == "complete"), Is.EqualTo(8));
         Assert.That(rows.Count(row => row.Status == "dependencies-bound"), Is.Zero);
-        Assert.That(rows.Count(row => row.Status == "caller-bound"), Is.EqualTo(2));
+        Assert.That(rows.Count(row => row.Status == "caller-bound"), Is.Zero);
         Assert.That(rows.Count(row => row.Status == "queued"), Is.EqualTo(32));
         Assert.That(rows.Count(row => row.Status == "blocked-one-way"), Is.EqualTo(2));
         Assert.That(rows.Count(row => row.Status == "blocked-parallel"), Is.EqualTo(3));
@@ -309,7 +309,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void LibraryBallroomCallersAreBoundWithoutAnchorOrDependencyChanges()
+    public void LibraryBallroomCompleteCertificationPreservesAuthoredAnchorsCallersDependenciesAndTopology()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 3)
@@ -339,10 +339,10 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(group, Has.Count.EqualTo(2));
         RouteInventoryRow ballroomRow = group.Single(row => row.ComponentFileId == "2101000025");
         RouteInventoryRow libraryRow = group.Single(row => row.ComponentFileId == "2300000084");
-        Assert.That(group.All(row => row.Status == "caller-bound"), Is.True);
+        Assert.That(group.All(row => row.Status == "complete"), Is.True);
         Assert.That(group.All(row => row.Group == "Library-Ballroom"), Is.True);
         Assert.That(group.All(row => row.Profile == "standard-door"), Is.True);
-        Assert.That(group.All(row => row.Notes == "canonical-caller-bound-arrival-next"), Is.True);
+        Assert.That(group.All(row => row.Notes == "template-certified"), Is.True);
         AssertReciprocal(ballroomRow, libraryRow);
         AssertReciprocal(libraryRow, ballroomRow);
         Assert.That(ballroomRow.PassageFileId, Is.EqualTo("4100000018"));
@@ -353,14 +353,14 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(libraryRow.PassageStableId, Is.EqualTo("passage.library.ballroom"));
         Assert.That(ballroomRow.SourceRoomViewFileId, Is.EqualTo("4100000005"));
         Assert.That(libraryRow.SourceRoomViewFileId, Is.EqualTo("4100000004"));
-        Assert.That(ballroomRow.ApproachX, Is.EqualTo("-8.107888"));
-        Assert.That(ballroomRow.ApproachY, Is.EqualTo("-2.079877"));
-        Assert.That(ballroomRow.ArrivalX, Is.EqualTo("7.465074"));
-        Assert.That(ballroomRow.ArrivalY, Is.EqualTo("-2.665671"));
-        Assert.That(libraryRow.ApproachX, Is.EqualTo("7.465074"));
-        Assert.That(libraryRow.ApproachY, Is.EqualTo("-2.665671"));
-        Assert.That(libraryRow.ArrivalX, Is.EqualTo("-8.107888"));
-        Assert.That(libraryRow.ArrivalY, Is.EqualTo("-2.079877"));
+        Assert.That(ballroomRow.ApproachX, Is.EqualTo("-8.607888"));
+        Assert.That(ballroomRow.ApproachY, Is.EqualTo("-2.439877"));
+        Assert.That(ballroomRow.ArrivalX, Is.EqualTo("7.95"));
+        Assert.That(ballroomRow.ArrivalY, Is.EqualTo("-3"));
+        Assert.That(libraryRow.ApproachX, Is.EqualTo("7.95"));
+        Assert.That(libraryRow.ApproachY, Is.EqualTo("-3"));
+        Assert.That(libraryRow.ArrivalX, Is.EqualTo("-8.607888"));
+        Assert.That(libraryRow.ArrivalY, Is.EqualTo("-2.439877"));
         Assert.That(ballroomRow.ApproachX, Is.EqualTo(libraryRow.ArrivalX));
         Assert.That(ballroomRow.ApproachY, Is.EqualTo(libraryRow.ArrivalY));
         Assert.That(ballroomRow.ArrivalX, Is.EqualTo(libraryRow.ApproachX));
@@ -375,9 +375,9 @@ public sealed class PassageMigrationCertificationTests
 
         string lifecycleCharacterization = File.ReadAllText(LifecycleCharacterizationPath);
         Assert.That(lifecycleCharacterization, Does.Contain(
-            "LibraryBallroomLegacyPassagesAreCharacterizedBeforeCanonicalMigration"));
-        Assert.That(lifecycleCharacterization, Does.Contain("new Vector2(7.465074f, -2.665671f)"));
-        Assert.That(lifecycleCharacterization, Does.Contain("new Vector2(-8.107888f, -2.079877f)"));
+            "LibraryBallroomAuthoredAnchorPassagesUseInvariantApproachesAndArrivals"));
+        Assert.That(lifecycleCharacterization, Does.Contain("new Vector2(7.95f, -3f)"));
+        Assert.That(lifecycleCharacterization, Does.Contain("new Vector2(-8.607888f, -2.439877f)"));
 
         AssertExactComponentIds(
             ballroomOwner, "2101000022", "2101000023", "2101000024", "2101000025", "4100000018");
@@ -388,7 +388,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(ballroomTransform, "m_LocalScale"), Is.EqualTo("{x: 1, y: 1, z: 1}"));
         Assert.That(ReadField(ballroomTransform, "m_AnchoredPosition"), Is.EqualTo("{x: -724.69, y: 34.2}"));
         Assert.That(ReadField(ballroomTransform, "m_SizeDelta"), Is.EqualTo("{x: 195.35, y: 359.59}"));
-        AssertGroup03CallerBoundLegacyTriggerSnapshot(
+        AssertGroup03CertifiedLegacyTriggerSnapshot(
             ballroomTrigger,
             "2101000021",
             "2101000024",
@@ -409,7 +409,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(libraryTransform, "m_LocalScale"), Is.EqualTo("{x: 3.299394, y: 2.6126, z: 1}"));
         Assert.That(ReadField(libraryTransform, "m_AnchoredPosition"), Is.EqualTo("{x: 669, y: 21.3902}"));
         Assert.That(ReadField(libraryTransform, "m_SizeDelta"), Is.EqualTo("{x: 51.8593, y: 142.1376}"));
-        AssertGroup03CallerBoundLegacyTriggerSnapshot(
+        AssertGroup03CertifiedLegacyTriggerSnapshot(
             libraryTrigger,
             "2300000080",
             "2300000083",
@@ -444,18 +444,18 @@ public sealed class PassageMigrationCertificationTests
             LibraryBallroomPassageDefinitionGuid,
             "4100000004",
             "4100000018",
-            "{x: 7.465074, y: -2.665671}",
-            "{x: -8.107888, y: -2.079877}",
-            PassageAnchorMigrationStage.LegacySampling);
+            "{x: 7.95, y: -3}",
+            "{x: -8.607888, y: -2.439877}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
         AssertPassivePassageSnapshot(
             ballroomPassage,
             "2101000021",
             BallroomLibraryPassageDefinitionGuid,
             "4100000005",
             "4100000017",
-            "{x: -8.107888, y: -2.079877}",
-            "{x: 7.465074, y: -2.665671}",
-            PassageAnchorMigrationStage.LegacySampling);
+            "{x: -8.607888, y: -2.439877}",
+            "{x: 7.95, y: -3}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
 
         Assert.That(documents.Values.Count(document => document.Contains($"guid: {RoomViewGuid}")),
             Is.EqualTo(5));
@@ -1136,7 +1136,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(componentIds, Is.EqualTo(expectedIds));
     }
 
-    private static void AssertGroup03CallerBoundLegacyTriggerSnapshot(
+    private static void AssertGroup03CertifiedLegacyTriggerSnapshot(
         string trigger,
         string gameObjectFileId,
         string imageFileId,

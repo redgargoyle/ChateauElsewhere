@@ -667,19 +667,19 @@ public class NavigationRegressionTests
         Assert.That(libraryBallroomPassage, Does.Contain("sourceRoomView: {fileID: 4100000004}"));
         Assert.That(libraryBallroomPassage, Does.Contain("reversePassage: {fileID: 4100000018}"));
         Assert.That(libraryBallroomPassage, Does.Contain(
-            "approachAnchor:\n    logicalPosition: {x: 7.465074, y: -2.665671}"));
+            "approachAnchor:\n    logicalPosition: {x: 7.95, y: -3}"));
         Assert.That(libraryBallroomPassage, Does.Contain(
-            "arrivalAnchor:\n    logicalPosition: {x: -8.107888, y: -2.079877}"));
-        Assert.That(libraryBallroomPassage, Does.Contain("anchorMigrationStage: 0"));
+            "arrivalAnchor:\n    logicalPosition: {x: -8.607888, y: -2.439877}"));
+        Assert.That(libraryBallroomPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(ballroomLibraryPassage, Does.Contain(
             "definition: {fileID: 11400000, guid: 0c60f4c2fe6f4e45947fc2a200cc6053, type: 2}"));
         Assert.That(ballroomLibraryPassage, Does.Contain("sourceRoomView: {fileID: 4100000005}"));
         Assert.That(ballroomLibraryPassage, Does.Contain("reversePassage: {fileID: 4100000017}"));
         Assert.That(ballroomLibraryPassage, Does.Contain(
-            "approachAnchor:\n    logicalPosition: {x: -8.107888, y: -2.079877}"));
+            "approachAnchor:\n    logicalPosition: {x: -8.607888, y: -2.439877}"));
         Assert.That(ballroomLibraryPassage, Does.Contain(
-            "arrivalAnchor:\n    logicalPosition: {x: 7.465074, y: -2.665671}"));
-        Assert.That(ballroomLibraryPassage, Does.Contain("anchorMigrationStage: 0"));
+            "arrivalAnchor:\n    logicalPosition: {x: 7.95, y: -3}"));
+        Assert.That(ballroomLibraryPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));
