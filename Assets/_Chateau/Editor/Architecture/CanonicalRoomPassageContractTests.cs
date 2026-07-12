@@ -28,7 +28,7 @@ public sealed class CanonicalRoomPassageContractTests
     private const string GameDatabasePath = "Assets/_Chateau/Data/GameDatabase.asset";
 
     [Test]
-    public void CanonicalRouteDataViewsPassagesAndGroup01CallersAreExact()
+    public void CanonicalRouteDataViewsPassagesAndGroup01ArrivalOwnershipAreExact()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
@@ -187,10 +187,10 @@ public sealed class CanonicalRoomPassageContractTests
             "Only the two staged reciprocal route pairs may carry passive Passages at this gate.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage:"), Is.EqualTo(4),
             "Every staged Passage must serialize exactly one explicit anchor-ownership mode.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 0"), Is.EqualTo(2),
-            "The caller-bound Drawing/Music pair must keep legacy arrival and approach sampling.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 1"), Is.Zero,
-            "No route is at the arrival-only cutover gate yet.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 0"), Is.Zero,
+            "No staged reciprocal pair may retain legacy-only anchor ownership at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 1"), Is.EqualTo(2),
+            "Only the Drawing/Music pair may own authored arrival while retaining legacy approach sampling.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(2),
             "Only the completed Entrance/Drawing pair may own both authored anchors.");
 
@@ -313,18 +313,18 @@ public sealed class CanonicalRoomPassageContractTests
             "3167361ca4c671298c0e84f43320619b",
             "4100000002",
             "4100000014",
-            "{x: -7.10601, y: -1.508934}",
-            "{x: -7.737432, y: -3.180156}",
-            PassageAnchorMigrationStage.LegacySampling);
+            "{x: -7.16, y: -1.78}",
+            "{x: -7.94, y: -3.27}",
+            PassageAnchorMigrationStage.AuthoredArrival);
         AssertPassivePassageDocument(
             musicDrawingPassage,
             "2300000085",
             "01544de8f55723585d60e5c0915345fd",
             "4100000003",
             "4100000013",
-            "{x: -7.737432, y: -3.180156}",
-            "{x: -7.10601, y: -1.508934}",
-            PassageAnchorMigrationStage.LegacySampling);
+            "{x: -7.94, y: -3.27}",
+            "{x: -7.16, y: -1.78}",
+            PassageAnchorMigrationStage.AuthoredArrival);
 
         Assert.That(drawingMusicTrigger, Does.Contain("canonicalPassage: {fileID: 4100000013}"));
         Assert.That(musicDrawingTrigger, Does.Contain("canonicalPassage: {fileID: 4100000014}"));
@@ -579,6 +579,13 @@ public sealed class CanonicalRoomPassageContractTests
             Assert.That(forward.HasValidAnchorMigrationStage, Is.True);
             Assert.That(forward.UsesAuthoredArrival, Is.False);
             Assert.That(forward.UsesAuthoredApproach, Is.False);
+
+            SetPrivateField(forward, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredArrival);
+            SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredArrival);
+            Assert.That(forward.AnchorMigrationStage, Is.EqualTo(reverse.AnchorMigrationStage));
+            Assert.That(forward.UsesAuthoredArrival, Is.True);
+            Assert.That(forward.UsesAuthoredApproach, Is.False,
+                "The arrival-owned gate must retain legacy approach sampling.");
 
             SetPrivateField(forward, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredAnchors);
             SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredAnchors);
