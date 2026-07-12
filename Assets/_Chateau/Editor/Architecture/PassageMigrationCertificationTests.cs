@@ -276,7 +276,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void DrawingMusicPassagesArePassiveWithoutDependencyOrCallerChanges()
+    public void DrawingMusicDependenciesAreBoundWithoutCallerOrPassageChanges()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 1)
@@ -309,7 +309,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(group, Has.Count.EqualTo(2));
         RouteInventoryRow musicRow = group.Single(row => row.ComponentFileId == "2300000089");
         RouteInventoryRow drawingRow = group.Single(row => row.ComponentFileId == "2300000099");
-        Assert.That(group.All(row => row.Status == "passage-bound"), Is.True);
+        Assert.That(group.All(row => row.Status == "dependencies-bound"), Is.True);
         Assert.That(group.Select(row => row.PassageDefinitionGuid).OrderBy(value => value),
             Is.EqualTo(new[]
             {
@@ -356,7 +356,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadReferenceFileId(drawingDoorsTransform, "m_Father"), Is.EqualTo("2300000006"));
         Assert.That(ReadReferenceFileId(drawingRoomTransform, "m_GameObject"), Is.EqualTo("2300000005"));
         Assert.That(ReadReferenceFileId(drawingRoomTransform, "m_Father"), Is.EqualTo("668915133"));
-        AssertLegacyTriggerSnapshot(
+        AssertDependencyBoundLegacyTriggerSnapshot(
             drawingTrigger,
             "2300000095",
             "2300000098",
@@ -378,7 +378,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadReferenceFileId(musicDoorsTransform, "m_Father"), Is.EqualTo("354156756"));
         Assert.That(ReadReferenceFileId(musicRoomTransform, "m_GameObject"), Is.EqualTo("354156755"));
         Assert.That(ReadReferenceFileId(musicRoomTransform, "m_Father"), Is.EqualTo("668915133"));
-        AssertLegacyTriggerSnapshot(
+        AssertDependencyBoundLegacyTriggerSnapshot(
             musicTrigger,
             "2300000085",
             "2300000088",
@@ -533,7 +533,7 @@ public sealed class PassageMigrationCertificationTests
         return match.Groups["guid"].Value;
     }
 
-    private static void AssertLegacyTriggerSnapshot(
+    private static void AssertDependencyBoundLegacyTriggerSnapshot(
         string trigger,
         string gameObjectFileId,
         string imageFileId,
@@ -550,18 +550,19 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(trigger, "useCameraSequence"), Is.EqualTo("0"));
         Assert.That(ReadField(trigger, "triggerKind"), Is.EqualTo("0"));
         Assert.That(ReadField(trigger, "stairwayDirection"), Is.EqualTo("0"));
-        Assert.That(ReadReferenceFileId(trigger, "navigationManager"), Is.EqualTo("0"));
+        Assert.That(ReadReferenceFileId(trigger, "navigationManager"), Is.EqualTo(NavigationManagerFileId));
         Assert.That(trigger, Does.Not.Contain("canonicalPassage:"));
         Assert.That(ReadReferenceFileId(trigger, "image"), Is.EqualTo(imageFileId));
-        Assert.That(ReadReferenceFileId(trigger, "doorOpenAudioSource"), Is.EqualTo("0"));
-        Assert.That(ReadReferenceFileId(trigger, "player"), Is.EqualTo("0"));
+        Assert.That(ReadReferenceFileId(trigger, "doorOpenAudioSource"), Is.EqualTo(DoorAudioSourceFileId));
+        Assert.That(ReadReferenceFileId(trigger, "player"), Is.EqualTo(PlayerTransformFileId));
         Assert.That(ReadField(trigger, "useBottomScreenEdgeInteraction"), Is.EqualTo("0"));
         Assert.That(ReadField(trigger, "requirePlayerProximity"), Is.EqualTo("1"));
         Assert.That(ReadField(trigger, "walkPlayerToTriggerWhenFar"), Is.EqualTo("1"));
         Assert.That(ReadField(trigger, "autoActivateAfterApproach"), Is.EqualTo("1"));
         Assert.That(ReadField(trigger, "maxPlayerScreenDistance"), Is.EqualTo("145"));
         Assert.That(ReadField(trigger, "playDoorOpenSound"), Is.EqualTo("1"));
-        Assert.That(ReadReferenceFileId(trigger, "doorOpenSoundCatalog"), Is.EqualTo("0"));
+        Assert.That(trigger, Does.Contain(
+            $"doorOpenSoundCatalog: {{fileID: 11400000, guid: {DoorCatalogGuid}, type: 2}}"));
         Assert.That(ReadReferenceFileId(trigger, "stairwaySoundCatalog"), Is.EqualTo("0"));
     }
 

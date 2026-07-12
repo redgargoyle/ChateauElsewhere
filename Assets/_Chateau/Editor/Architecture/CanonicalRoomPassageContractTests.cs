@@ -28,7 +28,7 @@ public sealed class CanonicalRoomPassageContractTests
     private const string GameDatabasePath = "Assets/_Chateau/Data/GameDatabase.asset";
 
     [Test]
-    public void CanonicalRouteDataViewsAndPassiveGroup01PassagesAreExact()
+    public void CanonicalRouteDataViewsPassagesAndGroup01DependenciesAreExact()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
@@ -240,10 +240,10 @@ public sealed class CanonicalRoomPassageContractTests
             "The Music-to-Drawing Passage should occur only on its owner, header, GameRoot registration, and reciprocal link.");
         Assert.That(CountOccurrences(gameplayText, "canonicalPassage: {fileID:"), Is.EqualTo(2),
             "Only the first reciprocal route may cut over to canonical traversal at this gate.");
-        Assert.That(CountOccurrences(gameplayText, "player: {fileID: 81962843}"), Is.EqualTo(2),
-            "Only the characterized reciprocal trigger pair may bind the exact Player transform at this gate.");
-        Assert.That(CountOccurrences(gameplayText, "81962843"), Is.EqualTo(3),
-            "The Player Transform proxy should occur only in its header and the two trigger bindings.");
+        Assert.That(CountOccurrences(gameplayText, "player: {fileID: 81962843}"), Is.EqualTo(4),
+            "Only the two dependency-bound reciprocal pairs may bind the exact Player transform at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "81962843"), Is.EqualTo(5),
+            "The Player Transform proxy should occur only in its header and the four trigger bindings.");
         string[] legacyTriggerDocuments = gameplayText
             .Split(new[] { "\n--- !u!" }, StringSplitOptions.None)
             .Where(document => document.Contains("guid: 7e419b0f8f26d4f2d8d03e567fef4c52"))
@@ -255,15 +255,15 @@ public sealed class CanonicalRoomPassageContractTests
                 document.Contains("doorOpenAudioSource: {fileID: 2201000013}") &&
                 document.Contains("player: {fileID: 81962843}") &&
                 document.Contains("doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
-            Is.EqualTo(2),
-            "Only the characterized reciprocal route may receive direct compatibility bindings in this slice.");
+            Is.EqualTo(4),
+            "Only the first two reciprocal routes may receive direct compatibility bindings at this gate.");
         Assert.That(
             legacyTriggerDocuments.Count(document =>
                 document.Contains("navigationManager: {fileID: 0}") &&
                 document.Contains("doorOpenAudioSource: {fileID: 0}") &&
                 document.Contains("player: {fileID: 0}") &&
                 document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
-            Is.EqualTo(43),
+            Is.EqualTo(41),
             "Every unmigrated legacy trigger must remain byte-semantically unbound until its own route slice.");
         Assert.That(
             legacyTriggerDocuments.All(document => document.Contains("stairwaySoundCatalog: {fileID: 0}")),
@@ -316,13 +316,14 @@ public sealed class CanonicalRoomPassageContractTests
 
         Assert.That(drawingMusicTrigger, Does.Not.Contain("canonicalPassage:"));
         Assert.That(musicDrawingTrigger, Does.Not.Contain("canonicalPassage:"));
-        foreach (string unboundTrigger in new[] { drawingMusicTrigger, musicDrawingTrigger })
+        foreach (string dependencyBoundTrigger in new[] { drawingMusicTrigger, musicDrawingTrigger })
         {
-            Assert.That(unboundTrigger, Does.Contain("navigationManager: {fileID: 0}"));
-            Assert.That(unboundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
-            Assert.That(unboundTrigger, Does.Contain("player: {fileID: 0}"));
-            Assert.That(unboundTrigger, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
-            Assert.That(unboundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+            Assert.That(dependencyBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(dependencyBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(dependencyBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(dependencyBoundTrigger, Does.Contain(
+                "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
+            Assert.That(dependencyBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
         }
 
         AssertLegacyDoorTriggerCompatibilityBound(
