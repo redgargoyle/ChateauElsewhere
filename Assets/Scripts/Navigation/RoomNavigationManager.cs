@@ -150,11 +150,14 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             passage.transform != passage.SourceRoomView.transform &&
             passage.transform.IsChildOf(passage.SourceRoomView.transform) &&
             passage.SourceRoomView.Definition == currentDefinition &&
+            passage.HasValidAnchorMigrationStage &&
             approachAnchor != null &&
-            IsFinite(approachAnchor.LogicalPosition) &&
+            (!passage.UsesAuthoredApproach || IsFinite(approachAnchor.LogicalPosition)) &&
             arrivalAnchor != null &&
-            IsFinite(arrivalAnchor.LogicalPosition) &&
+            (!passage.UsesAuthoredArrival || IsFinite(arrivalAnchor.LogicalPosition)) &&
             reverse != passage &&
+            reverse.HasValidAnchorMigrationStage &&
+            reverse.AnchorMigrationStage == passage.AnchorMigrationStage &&
             reverse.ReversePassage == passage &&
             definition.Reverse != null &&
             definition.Reverse.Reverse == definition &&
@@ -526,7 +529,18 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             return false;
         }
 
-        PlacePlayerAtCanonicalArrival(passage);
+        if (passage.UsesAuthoredArrival)
+        {
+            PlacePlayerAtCanonicalArrival(passage);
+        }
+        else
+        {
+            PlacePlayerAtDestinationDoor(
+                definition.SourceRoom.PrimaryLegacyName,
+                definition.LegacyDoorId,
+                definition.DestinationRoom.PrimaryLegacyName);
+        }
+
         return true;
     }
 

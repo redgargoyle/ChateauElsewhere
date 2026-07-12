@@ -515,6 +515,7 @@ public class NavigationRegressionTests
         string outboundObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &109889176");
         string outboundTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &109889177");
         string outboundTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &109889178");
+        string outboundPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000011");
         string outboundImage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &109889179");
         string outboundCanvasRenderer = ExtractUnityObjectBlock(sceneText, "--- !u!222 &109889180");
 
@@ -572,6 +573,9 @@ public class NavigationRegressionTests
         string reverseCanvasRenderer = ExtractUnityObjectBlock(sceneText, "--- !u!222 &2300000102");
         string reverseImage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000103");
         string reverseTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000104");
+        string reversePassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000012");
+        string drawingMusicPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000013");
+        string musicDrawingPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000014");
         string playerTransform = ExtractUnityObjectBlock(sceneText, "--- !u!4 &81962843 stripped");
 
         Assert.That(drawingRoomObject, Does.Contain("m_Name: Room_Drawing_Room"));
@@ -617,6 +621,10 @@ public class NavigationRegressionTests
         Assert.That(reverseImage, Does.Contain("m_GameObject: {fileID: 2300000100}"));
         Assert.That(reverseImage, Does.Contain("m_RaycastTarget: 1"));
         Assert.That(reverseCanvasRenderer, Does.Contain("m_GameObject: {fileID: 2300000100}"));
+        Assert.That(outboundPassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(reversePassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(drawingMusicPassage, Does.Contain("anchorMigrationStage: 0"));
+        Assert.That(musicDrawingPassage, Does.Contain("anchorMigrationStage: 0"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));
@@ -646,15 +654,24 @@ public class NavigationRegressionTests
         Assert.That(tryTraverseBody, Does.Not.Contain("currentRoom ="));
         Assert.That(tryTraverseBody, Does.Not.Contain("TryWarpTo"));
         Assert.That(tryTraverseBody, Does.Not.Contain("Play"));
-        Assert.That(canTraverseBody, Does.Contain("IsFinite(approachAnchor.LogicalPosition)"));
-        Assert.That(canTraverseBody, Does.Contain("IsFinite(arrivalAnchor.LogicalPosition)"));
+        Assert.That(canTraverseBody, Does.Contain("passage.HasValidAnchorMigrationStage"));
+        Assert.That(canTraverseBody, Does.Contain("reverse.HasValidAnchorMigrationStage"));
+        Assert.That(canTraverseBody, Does.Contain(
+            "reverse.AnchorMigrationStage == passage.AnchorMigrationStage"));
+        Assert.That(canTraverseBody, Does.Contain(
+            "(!passage.UsesAuthoredApproach || IsFinite(approachAnchor.LogicalPosition))"));
+        Assert.That(canTraverseBody, Does.Contain(
+            "(!passage.UsesAuthoredArrival || IsFinite(arrivalAnchor.LogicalPosition))"));
         Assert.That(Regex.Matches(canonicalMoveBody, @"\bSetCurrentRoom\s*\(").Count, Is.EqualTo(1));
         Assert.That(Regex.Matches(canonicalMoveBody, @"\bPlacePlayerAtCanonicalArrival\s*\(").Count, Is.EqualTo(1));
         Assert.That(
             canonicalMoveBody.IndexOf("SetCurrentRoom", System.StringComparison.Ordinal),
             Is.LessThan(canonicalMoveBody.IndexOf("PlacePlayerAtCanonicalArrival", System.StringComparison.Ordinal)));
         Assert.That(canonicalMoveBody, Does.Contain("definition.DestinationRoom.PrimaryLegacyName"));
-        Assert.That(canonicalMoveBody, Does.Not.Contain("PlacePlayerAtDestinationDoor"));
+        Assert.That(canonicalMoveBody, Does.Contain("if (passage.UsesAuthoredArrival)"));
+        Assert.That(Regex.Matches(canonicalMoveBody, @"\bPlacePlayerAtDestinationDoor\s*\(").Count, Is.EqualTo(1));
+        Assert.That(canonicalMoveBody, Does.Match(
+            @"if\s*\(passage\.UsesAuthoredArrival\)\s*\{\s*PlacePlayerAtCanonicalArrival\(passage\);\s*\}\s*else\s*\{\s*PlacePlayerAtDestinationDoor\(\s*definition\.SourceRoom\.PrimaryLegacyName,\s*definition\.LegacyDoorId,\s*definition\.DestinationRoom\.PrimaryLegacyName\);"));
         Assert.That(canonicalMoveBody, Does.Not.Contain("FindArrivalDoorTrigger"));
         Assert.That(canonicalMoveBody, Does.Not.Contain("TryFindArrivalDestination"));
         Assert.That(canonicalMoveBody, Does.Not.Contain("ApproachAnchor"));
@@ -697,7 +714,8 @@ public class NavigationRegressionTests
         Assert.That(tryStartApproachBody, Does.Not.Contain("ApproachAnchor"));
         Assert.That(tryStartApproachBody, Does.Not.Contain("TryFindBestApproachDestination"));
         Assert.That(tryStartApproachBody, Does.Not.Contain("CanTraverse"));
-        Assert.That(traversalApproachBody, Does.Contain("if (canonicalPassage == null)"));
+        Assert.That(traversalApproachBody, Does.Contain(
+            "if (canonicalPassage == null || !canonicalPassage.UsesAuthoredApproach)"));
         Assert.That(Regex.Matches(traversalApproachBody, @"\bTryFindBestApproachDestination\s*\(").Count, Is.EqualTo(1));
         Assert.That(traversalApproachBody, Does.Match(
             @"TryFindBestApproachDestination\(\s*playerMovement,\s*true,\s*out destination,\s*preferredScreenPosition\s*\)"));

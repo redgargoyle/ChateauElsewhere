@@ -185,6 +185,14 @@ public sealed class CanonicalRoomPassageContractTests
             "Only Entrance, Drawing, and the view-bound Music root may carry passive RoomViews at this gate.");
         Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(4),
             "Only the two staged reciprocal route pairs may carry passive Passages at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage:"), Is.EqualTo(4),
+            "Every staged Passage must serialize exactly one explicit anchor-ownership mode.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 0"), Is.EqualTo(2),
+            "The pre-caller Drawing/Music pair must keep legacy arrival and approach sampling.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 1"), Is.Zero,
+            "No route is at the arrival-only cutover gate yet.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(2),
+            "Only the completed Entrance/Drawing pair may own both authored anchors.");
 
         Assert.That(entranceRoomObject, Does.Contain("- component: {fileID: 4100000001}"));
         Assert.That(drawingRoomObject, Does.Contain("- component: {fileID: 4100000002}"));
@@ -288,7 +296,8 @@ public sealed class CanonicalRoomPassageContractTests
             "4100000001",
             "4100000012",
             "{x: -7.75, y: -2.22}",
-            "{x: 5.267176, y: -2.104616}");
+            "{x: 5.267176, y: -2.104616}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
         AssertPassivePassageDocument(
             reversePassage,
             "2300000100",
@@ -296,7 +305,8 @@ public sealed class CanonicalRoomPassageContractTests
             "4100000002",
             "4100000011",
             "{x: 5.267176, y: -2.104616}",
-            "{x: -7.75, y: -2.22}");
+            "{x: -7.75, y: -2.22}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
         AssertPassivePassageDocument(
             drawingMusicPassage,
             "2300000095",
@@ -304,7 +314,8 @@ public sealed class CanonicalRoomPassageContractTests
             "4100000002",
             "4100000014",
             "{x: -7.10601, y: -1.508934}",
-            "{x: -7.737432, y: -3.180156}");
+            "{x: -7.737432, y: -3.180156}",
+            PassageAnchorMigrationStage.LegacySampling);
         AssertPassivePassageDocument(
             musicDrawingPassage,
             "2300000085",
@@ -312,7 +323,8 @@ public sealed class CanonicalRoomPassageContractTests
             "4100000003",
             "4100000013",
             "{x: -7.737432, y: -3.180156}",
-            "{x: -7.10601, y: -1.508934}");
+            "{x: -7.10601, y: -1.508934}",
+            PassageAnchorMigrationStage.LegacySampling);
 
         Assert.That(drawingMusicTrigger, Does.Not.Contain("canonicalPassage:"));
         Assert.That(musicDrawingTrigger, Does.Not.Contain("canonicalPassage:"));
@@ -562,6 +574,35 @@ public sealed class CanonicalRoomPassageContractTests
             Assert.That(forward.ArrivalAnchor.LogicalPosition, Is.EqualTo(new Vector2(5.267176f, -2.104616f)));
             Assert.That(reverse.ArrivalAnchor.LogicalPosition, Is.EqualTo(Vector2.zero),
                 "Logical zero is valid authored anchor data when the anchor object is present.");
+            Assert.That(forward.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+            Assert.That(reverse.AnchorMigrationStage, Is.EqualTo(forward.AnchorMigrationStage));
+            Assert.That(forward.HasValidAnchorMigrationStage, Is.True);
+            Assert.That(forward.UsesAuthoredArrival, Is.False);
+            Assert.That(forward.UsesAuthoredApproach, Is.False);
+
+            SetPrivateField(forward, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredAnchors);
+            SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredAnchors);
+            Assert.That(forward.AnchorMigrationStage, Is.EqualTo(reverse.AnchorMigrationStage));
+            Assert.That(forward.UsesAuthoredArrival, Is.True);
+            Assert.That(forward.UsesAuthoredApproach, Is.True);
+
+            SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredArrival);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forwardReport.Messages.Any(message =>
+                message.Message.Contains("reciprocal pair must share one anchor migration stage")), Is.True);
+            SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredAnchors);
+
+            SetPrivateField(forward, "anchorMigrationStage", (PassageAnchorMigrationStage)99);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forward.HasValidAnchorMigrationStage, Is.False);
+            Assert.That(forward.UsesAuthoredArrival, Is.False);
+            Assert.That(forward.UsesAuthoredApproach, Is.False);
+            Assert.That(forwardReport.Messages.Any(message =>
+                message.Message.Contains("unknown anchor migration stage")), Is.True);
+            SetPrivateField(forward, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
+            SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
 
             house.SetActive(false);
             Assert.That(entranceObject.activeSelf, Is.True);
@@ -630,6 +671,26 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(passageText, Does.Not.Match(@"\b(?:Awake|Start|OnEnable|OnDisable|Update|LateUpdate|FixedUpdate)\s*\("));
         Assert.That(typeof(RoomView).IsSubclassOf(typeof(RoomElementBase)), Is.True);
         Assert.That(typeof(Passage).IsSubclassOf(typeof(RoomElementBase)), Is.True);
+        Assert.That(Enum.GetValues(typeof(PassageAnchorMigrationStage))
+                .Cast<PassageAnchorMigrationStage>()
+                .Select(value => (int)value),
+            Is.EqualTo(new[] { 0, 1, 2 }));
+        Assert.That(Enum.GetNames(typeof(PassageAnchorMigrationStage)), Is.EqualTo(new[]
+        {
+            nameof(PassageAnchorMigrationStage.LegacySampling),
+            nameof(PassageAnchorMigrationStage.AuthoredArrival),
+            nameof(PassageAnchorMigrationStage.AuthoredAnchors)
+        }));
+        Assert.That(
+            typeof(Passage).GetFields(PrivateInstance)
+                .Single(field => field.Name == "anchorMigrationStage").FieldType,
+            Is.EqualTo(typeof(PassageAnchorMigrationStage)));
+        Assert.That(typeof(Passage).GetProperty("AnchorMigrationStage")?.PropertyType,
+            Is.EqualTo(typeof(PassageAnchorMigrationStage)));
+        Assert.That(typeof(Passage).GetProperty("HasValidAnchorMigrationStage")?.PropertyType,
+            Is.EqualTo(typeof(bool)));
+        Assert.That(typeof(Passage).GetProperty("UsesAuthoredArrival")?.PropertyType, Is.EqualTo(typeof(bool)));
+        Assert.That(typeof(Passage).GetProperty("UsesAuthoredApproach")?.PropertyType, Is.EqualTo(typeof(bool)));
         Assert.That(typeof(INavigationService).IsInterface, Is.True);
         Assert.That(typeof(INavigationService).GetProperty("CurrentRoomDefinition")?.PropertyType, Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(typeof(INavigationService).GetMethod("CanTraverse")?.ReturnType, Is.EqualTo(typeof(bool)));
@@ -657,10 +718,19 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(navigationManagerText, Does.Contain("public bool CanTraverse(Passage passage)"));
         Assert.That(navigationManagerText, Does.Contain("public bool TryTraverse(Passage passage)"));
         Assert.That(navigationManagerText, Does.Contain("return MoveThroughCanonicalPassage(passage);"));
+        Assert.That(navigationManagerText, Does.Contain("passage.HasValidAnchorMigrationStage"));
+        Assert.That(navigationManagerText, Does.Contain("reverse.HasValidAnchorMigrationStage"));
+        Assert.That(navigationManagerText, Does.Contain(
+            "reverse.AnchorMigrationStage == passage.AnchorMigrationStage"));
         Assert.That(navigationManagerText, Does.Contain("Vector2 arrivalPosition = passage.ArrivalAnchor.LogicalPosition;"));
         Assert.That(navigationManagerText, Does.Contain("playerMovement.TryWarpToExact(arrivalPosition)"));
-        Assert.That(navigationManagerText, Does.Contain("IsFinite(arrivalAnchor.LogicalPosition)"));
-        Assert.That(navigationManagerText, Does.Contain("IsFinite(approachAnchor.LogicalPosition)"));
+        Assert.That(navigationManagerText, Does.Contain(
+            "(!passage.UsesAuthoredArrival || IsFinite(arrivalAnchor.LogicalPosition))"));
+        Assert.That(navigationManagerText, Does.Contain(
+            "(!passage.UsesAuthoredApproach || IsFinite(approachAnchor.LogicalPosition))"));
+        Assert.That(navigationManagerText, Does.Contain("if (passage.UsesAuthoredArrival)"));
+        Assert.That(navigationManagerText, Does.Contain("PlacePlayerAtCanonicalArrival(passage);"));
+        Assert.That(navigationManagerText, Does.Contain("PlacePlayerAtDestinationDoor("));
         Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private CanonicalRoomDefinition"));
         Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private Passage"));
         Assert.That(doorTriggerText, Does.Contain("using Chateau.World.Navigation;"));
@@ -669,6 +739,10 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(doorTriggerText, Does.Contain("navigationService.TryTraverse(canonicalPassage)"));
         Assert.That(doorTriggerText, Does.Contain("TryFindTraversalApproachDestination"));
         Assert.That(doorTriggerText, Does.Contain("TryFindCanonicalApproachDestination"));
+        Assert.That(doorTriggerText, Does.Contain(
+            "if (canonicalPassage == null || !canonicalPassage.UsesAuthoredApproach)"));
+        Assert.That(passageText, Does.Contain(
+            "Passage reciprocal pair must share one anchor migration stage."));
         Assert.That(doorTriggerText, Does.Contain("canonicalPassage.ApproachAnchor.LogicalPosition"));
         Assert.That(doorTriggerText, Does.Contain(
             "navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom)"));
@@ -705,7 +779,8 @@ public sealed class CanonicalRoomPassageContractTests
         string sourceRoomViewFileId,
         string reversePassageFileId,
         string approachPosition,
-        string arrivalPosition)
+        string arrivalPosition,
+        PassageAnchorMigrationStage expectedAnchorMigrationStage)
     {
         Assert.That(document, Does.Contain($"m_GameObject: {{fileID: {gameObjectFileId}}}"));
         Assert.That(document, Does.Contain(
@@ -716,6 +791,9 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(document, Does.Contain($"reversePassage: {{fileID: {reversePassageFileId}}}"));
         Assert.That(document, Does.Contain($"approachAnchor:\n    logicalPosition: {approachPosition}"));
         Assert.That(document, Does.Contain($"arrivalAnchor:\n    logicalPosition: {arrivalPosition}"));
+        Assert.That(CountOccurrences(document, "anchorMigrationStage:"), Is.EqualTo(1));
+        Assert.That(document, Does.Contain(
+            $"anchorMigrationStage: {(int)expectedAnchorMigrationStage}"));
     }
 
     private static void AssertLegacyDoorTriggerCompatibilityBound(

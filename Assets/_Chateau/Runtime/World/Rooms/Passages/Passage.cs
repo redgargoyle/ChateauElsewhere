@@ -4,6 +4,13 @@ using UnityEngine;
 
 namespace Chateau.World.Rooms.Passages
 {
+    public enum PassageAnchorMigrationStage
+    {
+        LegacySampling = 0,
+        AuthoredArrival = 1,
+        AuthoredAnchors = 2
+    }
+
     [DisallowMultipleComponent]
     [AddComponentMenu("Chateau/World/Rooms/Passages/Passage")]
     public sealed class Passage : RoomElementBase
@@ -13,10 +20,21 @@ namespace Chateau.World.Rooms.Passages
         [SerializeField] private Passage reversePassage;
         [SerializeField] private PassageAnchorData approachAnchor;
         [SerializeField] private PassageAnchorData arrivalAnchor;
+        [SerializeField] private PassageAnchorMigrationStage anchorMigrationStage = PassageAnchorMigrationStage.LegacySampling;
 
         public PassageDefinition Definition => definition;
         public RoomView SourceRoomView => sourceRoomView;
         public Passage ReversePassage => reversePassage;
+        public PassageAnchorMigrationStage AnchorMigrationStage => anchorMigrationStage;
+        public bool HasValidAnchorMigrationStage =>
+            anchorMigrationStage == PassageAnchorMigrationStage.LegacySampling ||
+            anchorMigrationStage == PassageAnchorMigrationStage.AuthoredArrival ||
+            anchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors;
+        public bool UsesAuthoredArrival =>
+            anchorMigrationStage == PassageAnchorMigrationStage.AuthoredArrival ||
+            anchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors;
+        public bool UsesAuthoredApproach =>
+            anchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors;
         public PassageAnchorData ApproachAnchor => approachAnchor;
         public PassageAnchorData ArrivalAnchor => arrivalAnchor;
 
@@ -59,6 +77,15 @@ namespace Chateau.World.Rooms.Passages
                     report.AddError("Passage reverse scene link must be reciprocal.", this);
                 }
 
+                if (!reversePassage.HasValidAnchorMigrationStage)
+                {
+                    report.AddError("Passage reverse has an unknown anchor migration stage.", this);
+                }
+                else if (reversePassage.anchorMigrationStage != anchorMigrationStage)
+                {
+                    report.AddError("Passage reciprocal pair must share one anchor migration stage.", this);
+                }
+
                 if (definition != null && reversePassage.definition != definition.Reverse)
                 {
                     report.AddError("Passage reverse scene definition does not match its definition reverse.", this);
@@ -69,6 +96,11 @@ namespace Chateau.World.Rooms.Passages
                 {
                     report.AddError("Passage reverse scene owner does not match its destination room.", this);
                 }
+            }
+
+            if (!HasValidAnchorMigrationStage)
+            {
+                report.AddError("Passage has an unknown anchor migration stage.", this);
             }
 
             if (approachAnchor == null)

@@ -85,6 +85,19 @@ public sealed class PassageMigrationCertificationTests
     [Test]
     public void CanonicalRouteInventoryMatchesManifestAndLeavesFallbacksIsolated()
     {
+        Assert.That(GetExpectedAnchorMigrationStage("passage-bound"),
+            Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+        Assert.That(GetExpectedAnchorMigrationStage("dependencies-bound"),
+            Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+        Assert.That(GetExpectedAnchorMigrationStage("caller-bound"),
+            Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+        Assert.That(GetExpectedAnchorMigrationStage("arrival-owned"),
+            Is.EqualTo(PassageAnchorMigrationStage.AuthoredArrival));
+        Assert.That(GetExpectedAnchorMigrationStage("approach-owned"),
+            Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+        Assert.That(GetExpectedAnchorMigrationStage("complete"),
+            Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+
         List<RouteInventoryRow> rows = ReadInventory();
         string sceneText = File.ReadAllText(GameplayScenePath);
         Dictionary<string, string> documents = ReadUnityDocuments(sceneText);
@@ -106,6 +119,9 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(triggerDocuments, Has.Count.EqualTo(rows.Count));
         Assert.That(passageDocuments.Keys.OrderBy(value => value),
             Is.EqualTo(manifestedPassageIds.OrderBy(value => value)));
+        Assert.That(passageDocuments.Values.All(document =>
+            CountOccurrences(document, "anchorMigrationStage:") == 1), Is.True,
+            "Every staged Passage must serialize exactly one explicit anchor migration stage.");
         Assert.That(rows.Select(row => row.ComponentFileId).Distinct().ToList(), Has.Count.EqualTo(rows.Count));
         Assert.That(rows.Select(row => row.Owner).Distinct().ToList(), Has.Count.EqualTo(rows.Count));
         Assert.That(rows.Select(row => row.LegacyDoorId).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
@@ -418,6 +434,8 @@ public sealed class PassageMigrationCertificationTests
             "approachAnchor:\n    logicalPosition: {x: -7.10601, y: -1.508934}"));
         Assert.That(drawingPassage, Does.Contain(
             "arrivalAnchor:\n    logicalPosition: {x: -7.737432, y: -3.180156}"));
+        Assert.That(ReadAnchorMigrationStage(drawingPassage, drawingRow.PassageFileId),
+            Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
         Assert.That(musicPassage, Does.Contain($"guid: {PassageGuid}"));
         Assert.That(ReadReferenceFileId(musicPassage, "m_GameObject"), Is.EqualTo("2300000085"));
         Assert.That(ReadReferenceGuid(musicPassage, "definition"),
@@ -428,6 +446,11 @@ public sealed class PassageMigrationCertificationTests
             "approachAnchor:\n    logicalPosition: {x: -7.737432, y: -3.180156}"));
         Assert.That(musicPassage, Does.Contain(
             "arrivalAnchor:\n    logicalPosition: {x: -7.10601, y: -1.508934}"));
+        Assert.That(ReadAnchorMigrationStage(musicPassage, musicRow.PassageFileId),
+            Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+        Assert.That(ReadAnchorMigrationStage(musicPassage, musicRow.PassageFileId),
+            Is.EqualTo(ReadAnchorMigrationStage(drawingPassage, drawingRow.PassageFileId)),
+            "A reciprocal route pair must cut anchor ownership over together.");
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000003}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000013}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000014}"), Is.EqualTo(1));
@@ -636,6 +659,14 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(partner.PassageFileId, Is.Not.Empty);
         string passage = RequireDocument(documents, row.PassageFileId);
         string partnerPassage = RequireDocument(documents, partner.PassageFileId);
+        PassageAnchorMigrationStage anchorMigrationStage =
+            ReadAnchorMigrationStage(passage, row.PassageFileId);
+        PassageAnchorMigrationStage partnerAnchorMigrationStage =
+            ReadAnchorMigrationStage(partnerPassage, partner.PassageFileId);
+        Assert.That(anchorMigrationStage, Is.EqualTo(GetExpectedAnchorMigrationStage(row.Status)),
+            $"{row.LegacyDoorId} anchor ownership must match inventory status '{row.Status}'.");
+        Assert.That(partnerAnchorMigrationStage, Is.EqualTo(anchorMigrationStage),
+            $"{row.LegacyDoorId} and its reciprocal passage must share one anchor migration stage.");
         Assert.That(passage, Does.Contain($"guid: {PassageGuid}"));
         Assert.That(ReadReferenceFileId(passage, "m_GameObject"),
             Is.EqualTo(ReadReferenceFileId(trigger, "m_GameObject")));
@@ -656,6 +687,39 @@ public sealed class PassageMigrationCertificationTests
             ReadReferenceFileId(trigger, "m_GameObject"),
             ReadReferenceFileId(sourceRoomView, "m_GameObject")), Is.True);
         Assert.That(CountOccurrences(gameRoot, $"- {{fileID: {row.PassageFileId}}}"), Is.EqualTo(1));
+    }
+
+    private static PassageAnchorMigrationStage ReadAnchorMigrationStage(string passage, string passageFileId)
+    {
+        string serializedValue = ReadField(passage, "anchorMigrationStage");
+        Assert.That(int.TryParse(
+            serializedValue,
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out int scalar), Is.True,
+            $"Passage {passageFileId} anchor migration stage must be an enum scalar.");
+        Assert.That(Enum.IsDefined(typeof(PassageAnchorMigrationStage), scalar), Is.True,
+            $"Passage {passageFileId} has unknown anchor migration stage {serializedValue}.");
+        return (PassageAnchorMigrationStage)scalar;
+    }
+
+    private static PassageAnchorMigrationStage GetExpectedAnchorMigrationStage(string status)
+    {
+        switch (status)
+        {
+            case "passage-bound":
+            case "dependencies-bound":
+            case "caller-bound":
+                return PassageAnchorMigrationStage.LegacySampling;
+            case "arrival-owned":
+                return PassageAnchorMigrationStage.AuthoredArrival;
+            case "approach-owned":
+            case "complete":
+                return PassageAnchorMigrationStage.AuthoredAnchors;
+            default:
+                Assert.Fail($"Status '{status}' does not own a staged Passage anchor mode.");
+                return PassageAnchorMigrationStage.LegacySampling;
+        }
     }
 
     private static void AssertCertifiedAudioCatalogs(string trigger, RouteInventoryRow row)

@@ -361,7 +361,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         out Vector2 destination,
         Vector2? preferredScreenPosition)
     {
-        if (canonicalPassage == null)
+        if (canonicalPassage == null || !canonicalPassage.UsesAuthoredApproach)
         {
             return TryFindBestApproachDestination(
                 playerMovement,
