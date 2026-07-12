@@ -17,6 +17,7 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private string drawingRoomId = "Drawing Room";
     [SerializeField] private AudioSource violinAudioSource;
+    [SerializeField] private GameAudioSourceVolume violinAudioVolumeBinding;
     [SerializeField] private AudioClip violinAudioClip;
     [SerializeField] private string fallbackViolinClipName = "violinscreech";
     [SerializeField] private bool loopViolinAudio = true;
@@ -103,6 +104,52 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
             !monsterSpriteRenderer.transform.IsChildOf(monsterObject.transform))
         {
             report.AddError("Chapter2MonsterStingerController monster SpriteRenderer must belong to its serialized monster object.", this);
+        }
+
+        if (violinAudioSource == null)
+        {
+            report.AddError("Chapter2MonsterStingerController requires its serialized violin AudioSource.", this);
+        }
+        else
+        {
+            if (violinAudioSource.gameObject != monsterObject)
+            {
+                report.AddError("Chapter2MonsterStingerController violin AudioSource must be owned by its monster object.", this);
+            }
+
+            if (violinAudioClip != null && violinAudioSource.clip != violinAudioClip)
+            {
+                report.AddError("Chapter2MonsterStingerController violin source and clip reference must match.", this);
+            }
+
+            if (violinAudioSource.playOnAwake || violinAudioSource.loop != loopViolinAudio || !Mathf.Approximately(violinAudioSource.spatialBlend, 0f))
+            {
+                report.AddError("Chapter2MonsterStingerController violin source must be authored as looping, play-on-awake disabled, 2D audio.", this);
+            }
+        }
+
+        if (violinAudioClip == null)
+        {
+            report.AddError("Chapter2MonsterStingerController requires its serialized violin AudioClip.", this);
+        }
+
+        if (violinAudioVolumeBinding == null)
+        {
+            report.AddError("Chapter2MonsterStingerController requires its serialized violin volume binding.", this);
+        }
+        else
+        {
+            if (violinAudioVolumeBinding.gameObject != monsterObject ||
+                (violinAudioSource != null && violinAudioVolumeBinding.gameObject != violinAudioSource.gameObject))
+            {
+                report.AddError("Chapter2MonsterStingerController violin source and volume binding must share the monster object.", this);
+            }
+
+            if (violinAudioVolumeBinding.Channel != GameAudioChannel.GameSounds ||
+                !Mathf.Approximately(violinAudioVolumeBinding.BaseVolume, 1f))
+            {
+                report.AddError("Chapter2MonsterStingerController violin volume binding must use Game Sounds at base volume 1.", this);
+            }
         }
     }
 
@@ -374,10 +421,15 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
 
         if (violinAudioBaseVolume < 0f)
         {
-            violinAudioBaseVolume = violinAudioSource.volume;
+            violinAudioBaseVolume = GameAudioSettings.GetCurrentOrBoundBaseVolume(
+                violinAudioSource,
+                GameAudioChannel.GameSounds);
         }
 
-        GameAudioSettings.EnsureBinding(violinAudioSource, GameAudioChannel.GameSounds, violinAudioBaseVolume);
+        violinAudioVolumeBinding = GameAudioSettings.EnsureBinding(
+            violinAudioSource,
+            GameAudioChannel.GameSounds,
+            violinAudioBaseVolume);
     }
 
     private AudioClip FindViolinClip()
