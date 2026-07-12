@@ -576,6 +576,8 @@ public class NavigationRegressionTests
         string reversePassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000012");
         string drawingMusicPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000013");
         string musicDrawingPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000014");
+        string musicLibraryPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000015");
+        string libraryMusicPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000016");
         string playerTransform = ExtractUnityObjectBlock(sceneText, "--- !u!4 &81962843 stripped");
 
         Assert.That(drawingRoomObject, Does.Contain("m_Name: Room_Drawing_Room"));
@@ -625,6 +627,16 @@ public class NavigationRegressionTests
         Assert.That(reversePassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(drawingMusicPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(musicDrawingPassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(musicLibraryPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: 7.714471, y: -3.121709}"));
+        Assert.That(musicLibraryPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: -7.744175, y: -3.059095}"));
+        Assert.That(musicLibraryPassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(libraryMusicPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: -7.744175, y: -3.059095}"));
+        Assert.That(libraryMusicPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: 7.714471, y: -3.121709}"));
+        Assert.That(libraryMusicPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));

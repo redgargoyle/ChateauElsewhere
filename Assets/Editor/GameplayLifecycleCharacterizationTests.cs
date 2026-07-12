@@ -3850,7 +3850,7 @@ public sealed class GameplayLifecycleCharacterizationTests
     }
 
     [UnityTest]
-    public IEnumerator MusicLibraryLegacyPassagesAreCharacterizedBeforeCanonicalMigration()
+    public IEnumerator MusicLibraryAuthoredAnchorPassagesUseInvariantApproachesAndArrivals()
     {
         const string LibraryRoom = "Library";
 
@@ -3916,8 +3916,14 @@ public sealed class GameplayLifecycleCharacterizationTests
             reverse = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_Library_MusicRoom");
             CanonicalPassage musicLibraryPassage = forward.GetComponent<CanonicalPassage>();
             CanonicalPassage libraryMusicPassage = reverse.GetComponent<CanonicalPassage>();
+            Vector2 musicRoomAnchorCandidate = new Vector2(7.714471f, -3.121709f);
+            Vector2 libraryAnchorCandidate = new Vector2(-7.744175f, -3.059095f);
+            Vector2 legacyFirstEntryFarLibraryReference = new Vector2(-7.287828f, -2.936489f);
             Assert.That(musicLibraryPassage, Is.Not.Null);
             Assert.That(libraryMusicPassage, Is.Not.Null);
+            Assert.That(Vector2.Distance(legacyFirstEntryFarLibraryReference, libraryAnchorCandidate),
+                Is.GreaterThan(0.1f),
+                "The source-sensitive first-entry legacy Library result must remain distinct fallback evidence.");
             Assert.That(
                 GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"),
                 Is.SameAs(musicLibraryPassage));
@@ -4055,8 +4061,9 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Assert.That(GetPrivateValue<bool>(trigger, "walkPlayerToTriggerWhenFar"), Is.True);
                 Assert.That(GetPrivateValue<bool>(trigger, "autoActivateAfterApproach"), Is.True);
                 Assert.That(GetPrivateValue<string>(trigger, "playerObjectName"), Is.EqualTo("Player"));
+                float expectedActivationDistance = trigger == forward ? 145f : 149f;
                 Assert.That(GetPrivateValue<float>(trigger, "maxPlayerScreenDistance"),
-                    Is.EqualTo(145f).Within(0.0001f));
+                    Is.EqualTo(expectedActivationDistance).Within(0.0001f));
                 Assert.That(GetPrivateValue<bool>(trigger, "playDoorOpenSound"), Is.True);
                 Assert.That(GetPrivateValue<string>(trigger, "doorOpenAudioObjectName"),
                     Is.EqualTo("Audio_DoorOpen"));
@@ -4094,10 +4101,10 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(serializedMusicLibraryPassage, Does.Contain("sourceRoomView: {fileID: 4100000003}"));
             Assert.That(serializedMusicLibraryPassage, Does.Contain("reversePassage: {fileID: 4100000016}"));
             Assert.That(serializedMusicLibraryPassage, Does.Contain(
-                "  approachAnchor:\n    logicalPosition: {x: 7.439471, y: -2.846709}"));
+                "  approachAnchor:\n    logicalPosition: {x: 7.714471, y: -3.121709}"));
             Assert.That(serializedMusicLibraryPassage, Does.Contain(
-                "  arrivalAnchor:\n    logicalPosition: {x: -7.244175, y: -2.799095}"));
-            Assert.That(serializedMusicLibraryPassage, Does.Contain("anchorMigrationStage: 0"));
+                "  arrivalAnchor:\n    logicalPosition: {x: -7.744175, y: -3.059095}"));
+            Assert.That(serializedMusicLibraryPassage, Does.Contain("anchorMigrationStage: 2"));
             Assert.That(serializedLibraryMusicPassage, Does.Contain("m_GameObject: {fileID: 2300000075}"));
             Assert.That(serializedLibraryMusicPassage, Does.Contain(
                 "m_Script: {fileID: 11500000, guid: 518dad8adf634786a103bf4e76aa0881, type: 3}"));
@@ -4106,10 +4113,10 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(serializedLibraryMusicPassage, Does.Contain("sourceRoomView: {fileID: 4100000004}"));
             Assert.That(serializedLibraryMusicPassage, Does.Contain("reversePassage: {fileID: 4100000015}"));
             Assert.That(serializedLibraryMusicPassage, Does.Contain(
-                "  approachAnchor:\n    logicalPosition: {x: -7.244175, y: -2.799095}"));
+                "  approachAnchor:\n    logicalPosition: {x: -7.744175, y: -3.059095}"));
             Assert.That(serializedLibraryMusicPassage, Does.Contain(
-                "  arrivalAnchor:\n    logicalPosition: {x: 7.439471, y: -2.846709}"));
-            Assert.That(serializedLibraryMusicPassage, Does.Contain("anchorMigrationStage: 0"));
+                "  arrivalAnchor:\n    logicalPosition: {x: 7.714471, y: -3.121709}"));
+            Assert.That(serializedLibraryMusicPassage, Does.Contain("anchorMigrationStage: 2"));
             Assert.That(
                 serializedGameRoot.Split('\n')
                     .Count(line => line.Trim() == "- {fileID: 4100000015}"),
@@ -4132,6 +4139,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(serializedReverse, Does.Contain("image: {fileID: 2300000078}"));
             Assert.That(serializedForward, Does.Contain("canonicalPassage: {fileID: 4100000015}"));
             Assert.That(serializedReverse, Does.Contain("canonicalPassage: {fileID: 4100000016}"));
+            Assert.That(serializedForward, Does.Contain("maxPlayerScreenDistance: 145"));
+            Assert.That(serializedReverse, Does.Contain("maxPlayerScreenDistance: 149"));
             string[] serializedCallerBoundTriggers = { serializedForward, serializedReverse };
             for (int documentIndex = 0; documentIndex < serializedCallerBoundTriggers.Length; documentIndex++)
             {
@@ -4311,6 +4320,22 @@ public sealed class GameplayLifecycleCharacterizationTests
             lifecycleListenersAttached = true;
             SetPrivateField(player, "moveSpeed", 1000f);
 
+            Assert.That(musicLibraryPassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+            Assert.That(libraryMusicPassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+            Assert.That(musicLibraryPassage.UsesAuthoredApproach, Is.True);
+            Assert.That(musicLibraryPassage.UsesAuthoredArrival, Is.True);
+            Assert.That(libraryMusicPassage.UsesAuthoredApproach, Is.True);
+            Assert.That(libraryMusicPassage.UsesAuthoredArrival, Is.True);
+            AssertAuthoredApproachReachableFromFarStarts(
+                player,
+                forward,
+                musicLibraryPassage,
+                musicRoomAnchorCandidate,
+                new[] { new Vector2(0f, -2f), new Vector2(-7.94f, -3.27f) },
+                "1366x768 Music-to-Library authored approach");
+
             Vector2 primaryForwardStart = player.LogicalPosition;
             float primaryForwardStartDistance = InvokePrivateResult<float>(forward, "GetPlayerScreenDistanceToTrigger");
             Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.False);
@@ -4341,6 +4366,22 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "primary Music-to-Library center approach");
             AssertApproachWithinActivationDistance(forward, player, primaryForwardRight,
                 "primary Music-to-Library right approach");
+            Assert.That(TryInvokeTraversalApproachDestination(
+                forward, player, out Vector2 primaryForwardAuthoredNull, null), Is.True);
+            Assert.That(TryInvokeTraversalApproachDestination(
+                forward, player, out Vector2 primaryForwardAuthoredLeft, primaryForwardLeftClick), Is.True);
+            Assert.That(TryInvokeTraversalApproachDestination(
+                forward, player, out Vector2 primaryForwardAuthoredCenter, primaryForwardCenterClick), Is.True);
+            Assert.That(TryInvokeTraversalApproachDestination(
+                forward, player, out Vector2 primaryForwardAuthoredRight, primaryForwardRightClick), Is.True);
+            AssertVector2Within(primaryForwardAuthoredNull, musicRoomAnchorCandidate, 0.0001f,
+                "primary Music-to-Library authored null approach");
+            AssertVector2Within(primaryForwardAuthoredLeft, primaryForwardAuthoredNull, 0.0001f,
+                "primary Music-to-Library authored left approach");
+            AssertVector2Within(primaryForwardAuthoredCenter, primaryForwardAuthoredNull, 0.0001f,
+                "primary Music-to-Library authored center approach");
+            AssertVector2Within(primaryForwardAuthoredRight, primaryForwardAuthoredNull, 0.0001f,
+                "primary Music-to-Library authored right approach");
 
             forward.OnPointerEnter(null);
             Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(forward));
@@ -4353,7 +4394,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
             Assert.That(player.HasDestination, Is.True);
             Vector2 primaryForwardApproach = GetPrivateValue<Vector2>(player, "finalDestination");
-            AssertVector2Within(primaryForwardApproach, primaryForwardNull, 0.0001f,
+            AssertVector2Within(primaryForwardApproach, musicRoomAnchorCandidate, 0.0001f,
                 "primary Music-to-Library production approach");
             for (int frame = 0; frame < 160 && navigation.CurrentRoom == MusicRoom && player.HasDestination; frame++)
             {
@@ -4404,12 +4445,10 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "primary Music-to-Library pre-warp event");
             Vector2 primaryForwardArrival = player.LogicalPosition;
             AssertFinite(primaryForwardArrival, "primary Music-to-Library arrival");
-            Assert.That(
-                Vector2.Distance(primaryForwardArrival, musicLibraryPassage.ArrivalAnchor.LogicalPosition),
-                Is.GreaterThan(0.1f),
-                "The source-sensitive far Library arrival must remain distinct from the passive reciprocal reference point.");
+            AssertVector2Within(primaryForwardArrival, libraryAnchorCandidate, 0.0001f,
+                "primary Music-to-Library authored arrival");
             Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True,
-                "The legacy Library arrival must support the reciprocal near route.");
+                "The authored Library arrival must support the reciprocal near route.");
             GameAudioSourceVolume characterizedBinding = passageAudioSource.GetComponent<GameAudioSourceVolume>();
             Assert.That(characterizedBinding, Is.Not.Null);
             Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
@@ -4423,6 +4462,13 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.False);
             Assert.That(primaryReverseStartDistance,
                 Is.GreaterThan(GetPrivateValue<float>(reverse, "maxPlayerScreenDistance")));
+            AssertAuthoredApproachReachableFromFarStarts(
+                player,
+                reverse,
+                libraryMusicPassage,
+                libraryAnchorCandidate,
+                new[] { new Vector2(0f, -2f), new Vector2(2f, -2f) },
+                "1366x768 Library-to-Music authored approach");
             Assert.That(TryGetTriggerScreenBounds(reverse, out Vector2 primaryReverseMin, out Vector2 primaryReverseMax),
                 Is.True);
             Vector2 primaryReverseLeftClick = BuildPreferredTriggerClick(primaryReverseMin, primaryReverseMax, 0.15f);
@@ -4448,6 +4494,22 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "primary Library-to-Music center approach");
             AssertApproachWithinActivationDistance(reverse, player, primaryReverseRight,
                 "primary Library-to-Music right approach");
+            Assert.That(TryInvokeTraversalApproachDestination(
+                reverse, player, out Vector2 primaryReverseAuthoredNull, null), Is.True);
+            Assert.That(TryInvokeTraversalApproachDestination(
+                reverse, player, out Vector2 primaryReverseAuthoredLeft, primaryReverseLeftClick), Is.True);
+            Assert.That(TryInvokeTraversalApproachDestination(
+                reverse, player, out Vector2 primaryReverseAuthoredCenter, primaryReverseCenterClick), Is.True);
+            Assert.That(TryInvokeTraversalApproachDestination(
+                reverse, player, out Vector2 primaryReverseAuthoredRight, primaryReverseRightClick), Is.True);
+            AssertVector2Within(primaryReverseAuthoredNull, libraryAnchorCandidate, 0.0001f,
+                "primary Library-to-Music authored null approach");
+            AssertVector2Within(primaryReverseAuthoredLeft, primaryReverseAuthoredNull, 0.0001f,
+                "primary Library-to-Music authored left approach");
+            AssertVector2Within(primaryReverseAuthoredCenter, primaryReverseAuthoredNull, 0.0001f,
+                "primary Library-to-Music authored center approach");
+            AssertVector2Within(primaryReverseAuthoredRight, primaryReverseAuthoredNull, 0.0001f,
+                "primary Library-to-Music authored right approach");
 
             reverse.OnPointerEnter(null);
             Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(reverse));
@@ -4460,7 +4522,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
             Assert.That(player.HasDestination, Is.True);
             Vector2 primaryReverseApproach = GetPrivateValue<Vector2>(player, "finalDestination");
-            AssertVector2Within(primaryReverseApproach, primaryReverseNull, 0.0001f,
+            AssertVector2Within(primaryReverseApproach, libraryAnchorCandidate, 0.0001f,
                 "primary Library-to-Music production approach");
             for (int frame = 0; frame < 160 && navigation.CurrentRoom == LibraryRoom && player.HasDestination; frame++)
             {
@@ -4511,8 +4573,10 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "primary Library-to-Music pre-warp event");
             Vector2 primaryReverseArrival = player.LogicalPosition;
             AssertFinite(primaryReverseArrival, "primary Library-to-Music arrival");
+            AssertVector2Within(primaryReverseArrival, musicRoomAnchorCandidate, 0.0001f,
+                "primary Library-to-Music authored arrival");
             Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True,
-                "The legacy Music Room arrival must support the reciprocal near route.");
+                "The authored Music Room arrival must support the reciprocal near route.");
             Assert.That(passageAudioSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedBinding));
 
             int arrivedCountBeforeNear = arrivedPositions.Count;
@@ -4581,35 +4645,39 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(primaryForwardStartDistance, Is.EqualTo(1038.675f).Within(0.5f),
                 "1366x768 primary Music-to-Library screen distance changed.");
             AssertVector2Within(primaryForwardNull, new Vector2(7.439471f, -2.846709f), 0.01f,
-                "1366x768 primary Music-to-Library legacy approach");
+                "1366x768 primary Music-to-Library legacy fallback approach");
             AssertVector2Within(primaryForwardLeft, primaryForwardNull, 0.0001f,
                 "1366x768 primary Music-to-Library left candidate");
             AssertVector2Within(primaryForwardCenter, primaryForwardNull, 0.0001f,
                 "1366x768 primary Music-to-Library center candidate");
             AssertVector2Within(primaryForwardRight, primaryForwardNull, 0.0001f,
                 "1366x768 primary Music-to-Library right candidate");
-            AssertVector2Within(primaryForwardArrival, new Vector2(-7.287828f, -2.936489f), 0.01f,
-                "1366x768 primary far Music-to-Library legacy arrival");
+            AssertVector2Within(primaryForwardApproach, musicRoomAnchorCandidate, 0.0001f,
+                "1366x768 primary Music-to-Library authored approach");
+            AssertVector2Within(primaryForwardArrival, libraryAnchorCandidate, 0.0001f,
+                "1366x768 primary far Music-to-Library authored arrival");
             AssertVector2Within(primaryReverseStart, new Vector2(0f, -2f), 0.001f,
                 "1366x768 primary Library-to-Music resolved start");
             Assert.That(primaryReverseStartDistance, Is.EqualTo(496.414f).Within(0.5f),
                 "1366x768 primary Library-to-Music screen distance changed.");
             AssertVector2Within(primaryReverseNull, new Vector2(-7.244175f, -2.799095f), 0.01f,
-                "1366x768 primary Library-to-Music legacy approach");
+                "1366x768 primary Library-to-Music legacy fallback approach");
             AssertVector2Within(primaryReverseLeft, primaryReverseNull, 0.0001f,
                 "1366x768 primary Library-to-Music left candidate");
             AssertVector2Within(primaryReverseCenter, primaryReverseNull, 0.0001f,
                 "1366x768 primary Library-to-Music center candidate");
             AssertVector2Within(primaryReverseRight, primaryReverseNull, 0.0001f,
                 "1366x768 primary Library-to-Music right candidate");
-            AssertVector2Within(primaryReverseArrival, new Vector2(7.439471f, -2.846709f), 0.01f,
-                "1366x768 primary far Library-to-Music legacy arrival");
-            AssertVector2Within(primaryNearForwardArrival, new Vector2(-7.244175f, -2.799095f), 0.01f,
-                "1366x768 primary near Music-to-Library legacy arrival");
-            AssertVector2Within(primaryNearReverseArrival, new Vector2(7.439471f, -2.846709f), 0.01f,
-                "1366x768 primary near Library-to-Music legacy arrival");
-            Assert.That(Vector2.Distance(primaryForwardArrival, primaryNearForwardArrival), Is.GreaterThan(0.1f),
-                "The primary far and near Music-to-Library arrivals must retain their observed source-sensitive difference.");
+            AssertVector2Within(primaryReverseApproach, libraryAnchorCandidate, 0.0001f,
+                "1366x768 primary Library-to-Music authored approach");
+            AssertVector2Within(primaryReverseArrival, musicRoomAnchorCandidate, 0.0001f,
+                "1366x768 primary far Library-to-Music authored arrival");
+            AssertVector2Within(primaryNearForwardArrival, libraryAnchorCandidate, 0.0001f,
+                "1366x768 primary near Music-to-Library authored arrival");
+            AssertVector2Within(primaryNearReverseArrival, musicRoomAnchorCandidate, 0.0001f,
+                "1366x768 primary near Library-to-Music authored arrival");
+            AssertVector2Within(primaryForwardArrival, primaryNearForwardArrival, 0.0001f,
+                "The primary far and near Music-to-Library arrivals must be source-invariant.");
             AssertVector2Within(primaryNearForwardArrival, primaryReverseApproach, 0.001f,
                 "1366x768 near Library arrival and reciprocal approach");
             AssertVector2Within(primaryReverseArrival, primaryForwardApproach, 0.001f,
@@ -4653,6 +4721,86 @@ public sealed class GameplayLifecycleCharacterizationTests
             lifecycleListenersAttached = false;
             InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
 
+            PassageAnchorMigrationStage originalForwardStage = musicLibraryPassage.AnchorMigrationStage;
+            PassageAnchorMigrationStage originalReverseStage = libraryMusicPassage.AnchorMigrationStage;
+            Vector2 stageOneOriginalPlayerPosition = player.LogicalPosition;
+            Assert.That(originalForwardStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+            Assert.That(originalReverseStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+            try
+            {
+                SetPrivateField(
+                    musicLibraryPassage,
+                    "anchorMigrationStage",
+                    PassageAnchorMigrationStage.AuthoredArrival);
+                SetPrivateField(
+                    libraryMusicPassage,
+                    "anchorMigrationStage",
+                    PassageAnchorMigrationStage.AuthoredArrival);
+                Assert.That(musicLibraryPassage.UsesAuthoredArrival, Is.True);
+                Assert.That(libraryMusicPassage.UsesAuthoredArrival, Is.True);
+                Assert.That(musicLibraryPassage.UsesAuthoredApproach, Is.False);
+                Assert.That(libraryMusicPassage.UsesAuthoredApproach, Is.False);
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+
+                Assert.That(player.TryWarpToExact(new Vector2(0f, -2f)), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    forward, player, true, out Vector2 stageOneForwardLegacy), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    forward, player, out Vector2 stageOneForwardDispatch, null), Is.True);
+                AssertVector2Within(stageOneForwardDispatch, stageOneForwardLegacy, 0.0001f,
+                    "stage-1 Music-to-Library dispatch remains legacy sampled");
+                Assert.That(navigationFacade.TryTraverse(musicLibraryPassage), Is.True);
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+                AssertVector2Within(player.LogicalPosition, libraryAnchorCandidate, 0.0001f,
+                    "stage-1 Music-to-Library authored arrival");
+                Assert.That(player.TryWarpToExact(libraryAnchorCandidate), Is.True,
+                    "The stage-1 Library arrival candidate must be exactly walkable.");
+                AssertApproachWithinActivationDistance(
+                    reverse, player, libraryAnchorCandidate, "stage-1 reciprocal Library arrival");
+
+                Assert.That(player.TryWarpToExact(new Vector2(0f, -2f)), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    reverse, player, true, out Vector2 stageOneReverseLegacy), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    reverse, player, out Vector2 stageOneReverseDispatch, null), Is.True);
+                AssertVector2Within(stageOneReverseDispatch, stageOneReverseLegacy, 0.0001f,
+                    "stage-1 Library-to-Music dispatch remains legacy sampled");
+                Assert.That(navigationFacade.TryTraverse(libraryMusicPassage), Is.True);
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+                AssertVector2Within(player.LogicalPosition, musicRoomAnchorCandidate, 0.0001f,
+                    "stage-1 Library-to-Music authored arrival");
+                Assert.That(player.TryWarpToExact(musicRoomAnchorCandidate), Is.True,
+                    "The stage-1 Music Room arrival candidate must be exactly walkable.");
+                AssertApproachWithinActivationDistance(
+                    forward, player, musicRoomAnchorCandidate, "stage-1 reciprocal Music Room arrival");
+            }
+            finally
+            {
+                if (navigation.CurrentRoom == LibraryRoom)
+                {
+                    navigationFacade.TryTraverse(libraryMusicPassage);
+                }
+                SetPrivateField(musicLibraryPassage, "anchorMigrationStage", originalForwardStage);
+                SetPrivateField(libraryMusicPassage, "anchorMigrationStage", originalReverseStage);
+                if (navigation.CurrentRoom == MusicRoom)
+                {
+                    player.TryWarpToExact(stageOneOriginalPlayerPosition);
+                }
+            }
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+            Assert.That(musicLibraryPassage.AnchorMigrationStage, Is.EqualTo(originalForwardStage));
+            Assert.That(libraryMusicPassage.AnchorMigrationStage, Is.EqualTo(originalReverseStage));
+            AssertVector2Within(player.LogicalPosition, stageOneOriginalPlayerPosition, 0.0001f,
+                "stage-1 candidate proof player restoration");
+
             yield return AssertMusicLibraryCallerBoundStageZeroPoisonProof(
                 new Vector2(-7.244175f, -2.799095f),
                 navigation,
@@ -4687,26 +4835,12 @@ public sealed class GameplayLifecycleCharacterizationTests
                 new Vector2(7.43764f, -2.846008f),
                 new Vector2(8.625211f, -3.301598f)
             };
-            Vector2[] expectedForwardArrivals =
-            {
-                new Vector2(-7.244175f, -2.799095f),
-                new Vector2(-6.289658f, -2.336391f),
-                new Vector2(-7.286079f, -2.935843f),
-                new Vector2(-8.344338f, -3.103644f)
-            };
             Vector2[] expectedReverseApproaches =
             {
                 new Vector2(-7.244175f, -2.799095f),
                 new Vector2(-6.272121f, -2.423502f),
                 new Vector2(-7.242414f, -2.798415f),
                 new Vector2(-8.3582f, -3.229418f)
-            };
-            Vector2[] expectedReverseArrivals =
-            {
-                new Vector2(7.439471f, -2.846709f),
-                new Vector2(6.44117f, -2.464709f),
-                new Vector2(7.43764f, -2.846008f),
-                new Vector2(8.625211f, -3.301598f)
             };
             for (int sizeIndex = 0; sizeIndex < renderedSizes.Length; sizeIndex++)
             {
@@ -4735,6 +4869,13 @@ public sealed class GameplayLifecycleCharacterizationTests
                         out float aspectForwardScreenDistance),
                     Is.True);
                 Vector2 aspectForwardStart = player.LogicalPosition;
+                AssertAuthoredApproachReachableFromFarStarts(
+                    player,
+                    forward,
+                    musicLibraryPassage,
+                    musicRoomAnchorCandidate,
+                    new[] { new Vector2(0f, -2f), new Vector2(-7.94f, -3.27f) },
+                    $"{renderedSize.x}x{renderedSize.y} Music-to-Library authored approach");
                 Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.False);
                 Assert.That(aspectForwardScreenDistance,
                     Is.GreaterThan(GetPrivateValue<float>(forward, "maxPlayerScreenDistance")));
@@ -4763,12 +4904,28 @@ public sealed class GameplayLifecycleCharacterizationTests
                     "aspect Music-to-Library center approach");
                 AssertApproachWithinActivationDistance(forward, player, aspectForwardRight,
                     "aspect Music-to-Library right approach");
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    forward, player, out Vector2 aspectForwardAuthoredNull, null), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    forward, player, out Vector2 aspectForwardAuthoredLeft, aspectForwardLeftClick), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    forward, player, out Vector2 aspectForwardAuthoredCenter, aspectForwardCenterClick), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    forward, player, out Vector2 aspectForwardAuthoredRight, aspectForwardRightClick), Is.True);
+                AssertVector2Within(aspectForwardAuthoredNull, musicRoomAnchorCandidate, 0.0001f,
+                    "aspect Music-to-Library authored null approach");
+                AssertVector2Within(aspectForwardAuthoredLeft, aspectForwardAuthoredNull, 0.0001f,
+                    "aspect Music-to-Library authored left approach");
+                AssertVector2Within(aspectForwardAuthoredCenter, aspectForwardAuthoredNull, 0.0001f,
+                    "aspect Music-to-Library authored center approach");
+                AssertVector2Within(aspectForwardAuthoredRight, aspectForwardAuthoredNull, 0.0001f,
+                    "aspect Music-to-Library authored right approach");
                 SetPrivateField(forward, "lastPointerActivationFrame", -1);
                 forward.ActivateDoor();
                 Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
                 Assert.That(player.HasDestination, Is.True);
                 Vector2 aspectForwardApproach = GetPrivateValue<Vector2>(player, "finalDestination");
-                AssertVector2Within(aspectForwardApproach, aspectForwardNull, 0.0001f,
+                AssertVector2Within(aspectForwardApproach, musicRoomAnchorCandidate, 0.0001f,
                     "aspect Music-to-Library production approach");
                 for (int frame = 0; frame < 160 && navigation.CurrentRoom == MusicRoom && player.HasDestination; frame++)
                 {
@@ -4793,6 +4950,8 @@ public sealed class GameplayLifecycleCharacterizationTests
                     libraryVisible: true);
                 Vector2 aspectForwardArrival = player.LogicalPosition;
                 AssertFinite(aspectForwardArrival, "aspect Music-to-Library arrival");
+                AssertVector2Within(aspectForwardArrival, libraryAnchorCandidate, 0.0001f,
+                    "aspect Music-to-Library authored arrival");
                 Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True);
 
                 Assert.That(
@@ -4800,6 +4959,13 @@ public sealed class GameplayLifecycleCharacterizationTests
                         out float aspectReverseScreenDistance),
                     Is.True);
                 Vector2 aspectReverseStart = player.LogicalPosition;
+                AssertAuthoredApproachReachableFromFarStarts(
+                    player,
+                    reverse,
+                    libraryMusicPassage,
+                    libraryAnchorCandidate,
+                    new[] { new Vector2(0f, -2f), new Vector2(2f, -2f) },
+                    $"{renderedSize.x}x{renderedSize.y} Library-to-Music authored approach");
                 Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.False);
                 Assert.That(aspectReverseScreenDistance,
                     Is.GreaterThan(GetPrivateValue<float>(reverse, "maxPlayerScreenDistance")));
@@ -4828,12 +4994,28 @@ public sealed class GameplayLifecycleCharacterizationTests
                     "aspect Library-to-Music center approach");
                 AssertApproachWithinActivationDistance(reverse, player, aspectReverseRight,
                     "aspect Library-to-Music right approach");
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    reverse, player, out Vector2 aspectReverseAuthoredNull, null), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    reverse, player, out Vector2 aspectReverseAuthoredLeft, aspectReverseLeftClick), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    reverse, player, out Vector2 aspectReverseAuthoredCenter, aspectReverseCenterClick), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    reverse, player, out Vector2 aspectReverseAuthoredRight, aspectReverseRightClick), Is.True);
+                AssertVector2Within(aspectReverseAuthoredNull, libraryAnchorCandidate, 0.0001f,
+                    "aspect Library-to-Music authored null approach");
+                AssertVector2Within(aspectReverseAuthoredLeft, aspectReverseAuthoredNull, 0.0001f,
+                    "aspect Library-to-Music authored left approach");
+                AssertVector2Within(aspectReverseAuthoredCenter, aspectReverseAuthoredNull, 0.0001f,
+                    "aspect Library-to-Music authored center approach");
+                AssertVector2Within(aspectReverseAuthoredRight, aspectReverseAuthoredNull, 0.0001f,
+                    "aspect Library-to-Music authored right approach");
                 SetPrivateField(reverse, "lastPointerActivationFrame", -1);
                 reverse.ActivateDoor();
                 Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
                 Assert.That(player.HasDestination, Is.True);
                 Vector2 aspectReverseApproach = GetPrivateValue<Vector2>(player, "finalDestination");
-                AssertVector2Within(aspectReverseApproach, aspectReverseNull, 0.0001f,
+                AssertVector2Within(aspectReverseApproach, libraryAnchorCandidate, 0.0001f,
                     "aspect Library-to-Music production approach");
                 for (int frame = 0; frame < 160 && navigation.CurrentRoom == LibraryRoom && player.HasDestination; frame++)
                 {
@@ -4858,6 +5040,8 @@ public sealed class GameplayLifecycleCharacterizationTests
                     libraryVisible: false);
                 Vector2 aspectReverseArrival = player.LogicalPosition;
                 AssertFinite(aspectReverseArrival, "aspect Library-to-Music arrival");
+                AssertVector2Within(aspectReverseArrival, musicRoomAnchorCandidate, 0.0001f,
+                    "aspect Library-to-Music authored arrival");
                 Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True);
 
                 float viewportEnvelopeTolerance = sizeIndex == 0
@@ -4869,37 +5053,37 @@ public sealed class GameplayLifecycleCharacterizationTests
                     Is.EqualTo(expectedForwardScreenDistances[sizeIndex]).Within(0.75f),
                     "aspect Music-to-Library screen distance changed.");
                 AssertVector2Within(aspectForwardNull, expectedForwardApproaches[sizeIndex],
-                    viewportEnvelopeTolerance, "aspect Music-to-Library null candidate");
+                    viewportEnvelopeTolerance, "aspect Music-to-Library legacy fallback candidate");
                 AssertVector2Within(aspectForwardLeft, aspectForwardNull, 0.0001f,
                     "aspect Music-to-Library left candidate");
                 AssertVector2Within(aspectForwardCenter, aspectForwardNull, 0.0001f,
                     "aspect Music-to-Library center candidate");
                 AssertVector2Within(aspectForwardRight, aspectForwardNull, 0.0001f,
                     "aspect Music-to-Library right candidate");
-                AssertVector2Within(aspectForwardApproach, expectedForwardApproaches[sizeIndex],
-                    viewportEnvelopeTolerance, "aspect Music-to-Library production approach");
-                AssertVector2Within(aspectForwardArrival, expectedForwardArrivals[sizeIndex],
-                    viewportEnvelopeTolerance, "aspect Music-to-Library legacy arrival");
+                AssertVector2Within(aspectForwardApproach, musicRoomAnchorCandidate,
+                    0.0001f, "aspect Music-to-Library invariant authored approach");
+                AssertVector2Within(aspectForwardArrival, libraryAnchorCandidate,
+                    0.0001f, "aspect Music-to-Library invariant authored arrival");
                 AssertVector2Within(aspectReverseStart, new Vector2(0f, -2f), 0.001f,
                     "aspect Library-to-Music resolved start");
                 Assert.That(aspectReverseScreenDistance,
                     Is.EqualTo(expectedReverseScreenDistances[sizeIndex]).Within(0.75f),
                     "aspect Library-to-Music screen distance changed.");
                 AssertVector2Within(aspectReverseNull, expectedReverseApproaches[sizeIndex],
-                    viewportEnvelopeTolerance, "aspect Library-to-Music null candidate");
+                    viewportEnvelopeTolerance, "aspect Library-to-Music legacy fallback candidate");
                 AssertVector2Within(aspectReverseLeft, aspectReverseNull, 0.0001f,
                     "aspect Library-to-Music left candidate");
                 AssertVector2Within(aspectReverseCenter, aspectReverseNull, 0.0001f,
                     "aspect Library-to-Music center candidate");
                 AssertVector2Within(aspectReverseRight, aspectReverseNull, 0.0001f,
                     "aspect Library-to-Music right candidate");
-                AssertVector2Within(aspectReverseApproach, expectedReverseApproaches[sizeIndex],
-                    viewportEnvelopeTolerance, "aspect Library-to-Music production approach");
-                AssertVector2Within(aspectReverseArrival, expectedReverseArrivals[sizeIndex],
-                    viewportEnvelopeTolerance, "aspect Library-to-Music legacy arrival");
+                AssertVector2Within(aspectReverseApproach, libraryAnchorCandidate,
+                    0.0001f, "aspect Library-to-Music invariant authored approach");
+                AssertVector2Within(aspectReverseArrival, musicRoomAnchorCandidate,
+                    0.0001f, "aspect Library-to-Music invariant authored arrival");
 
                 Debug.Log(
-                    $"[MusicLibraryLegacyAspect] viewport={renderedSize.x}x{renderedSize.y} " +
+                    $"[MusicLibraryAuthoredAspect] viewport={renderedSize.x}x{renderedSize.y} " +
                     $"forwardStart={FormatVector(aspectForwardStart)} forwardScreenDistance={aspectForwardScreenDistance:0.###} " +
                     $"forwardNull={FormatVector(aspectForwardNull)} forwardLeft={FormatVector(aspectForwardLeft)} " +
                     $"forwardCenter={FormatVector(aspectForwardCenter)} forwardRight={FormatVector(aspectForwardRight)} " +
@@ -4933,16 +5117,27 @@ public sealed class GameplayLifecycleCharacterizationTests
                     out float maximumForwardScreenDistance),
                 Is.True);
             Vector2 maximumForwardStart = player.LogicalPosition;
+            AssertAuthoredApproachReachableFromFarStarts(
+                player,
+                forward,
+                musicLibraryPassage,
+                musicRoomAnchorCandidate,
+                new[] { new Vector2(0f, -2f), new Vector2(-7.94f, -3.27f) },
+                "2560x1080 maximum-zoom Music-to-Library authored approach");
             Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.False);
             Assert.That(TryInvokeApproachDestination(
                 forward, player, true, out Vector2 maximumForwardApproach), Is.True,
                 "The maximum-zoom Music Room route must retain a reachable legacy approach.");
             AssertApproachWithinActivationDistance(forward, player, maximumForwardApproach,
                 "maximum-zoom Music-to-Library approach");
+            Assert.That(TryInvokeTraversalApproachDestination(
+                forward, player, out Vector2 maximumForwardAuthoredApproach, null), Is.True);
+            AssertVector2Within(maximumForwardAuthoredApproach, musicRoomAnchorCandidate, 0.0001f,
+                "maximum-zoom Music-to-Library authored approach");
             SetPrivateField(forward, "lastPointerActivationFrame", -1);
             forward.ActivateDoor();
             Assert.That(player.HasDestination, Is.True);
-            AssertVector2Within(GetPrivateValue<Vector2>(player, "finalDestination"), maximumForwardApproach, 0.0001f,
+            AssertVector2Within(GetPrivateValue<Vector2>(player, "finalDestination"), musicRoomAnchorCandidate, 0.0001f,
                 "maximum-zoom Music-to-Library production approach");
             for (int frame = 0; frame < 160 && navigation.CurrentRoom == MusicRoom && player.HasDestination; frame++)
             {
@@ -4970,9 +5165,9 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(maximumForwardScreenDistance, Is.EqualTo(1103.862f).Within(0.75f),
                 "maximum-zoom Music-to-Library screen distance changed.");
             AssertVector2Within(maximumForwardApproach, new Vector2(8.625211f, -3.301599f), 0.2f,
-                "maximum-zoom Music-to-Library legacy approach");
-            AssertVector2Within(maximumForwardArrival, new Vector2(-8.3582f, -3.229418f), 0.2f,
-                "maximum-zoom Music-to-Library legacy arrival");
+                "maximum-zoom Music-to-Library legacy fallback approach");
+            AssertVector2Within(maximumForwardArrival, libraryAnchorCandidate, 0.0001f,
+                "maximum-zoom Music-to-Library authored arrival");
             Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True,
                 "The maximum-zoom Library arrival must support the reciprocal route.");
 
@@ -4996,16 +5191,27 @@ public sealed class GameplayLifecycleCharacterizationTests
                     out float maximumReverseScreenDistance),
                 Is.True);
             Vector2 maximumReverseStart = player.LogicalPosition;
+            AssertAuthoredApproachReachableFromFarStarts(
+                player,
+                reverse,
+                libraryMusicPassage,
+                libraryAnchorCandidate,
+                new[] { new Vector2(0f, -2f), new Vector2(2f, -2f) },
+                "2560x1080 maximum-zoom Library-to-Music authored approach");
             Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.False);
             Assert.That(TryInvokeApproachDestination(
                 reverse, player, true, out Vector2 maximumReverseApproach), Is.True,
                 "The maximum-zoom Library route must retain a reachable legacy approach around its blocker.");
             AssertApproachWithinActivationDistance(reverse, player, maximumReverseApproach,
                 "maximum-zoom Library-to-Music approach");
+            Assert.That(TryInvokeTraversalApproachDestination(
+                reverse, player, out Vector2 maximumReverseAuthoredApproach, null), Is.True);
+            AssertVector2Within(maximumReverseAuthoredApproach, libraryAnchorCandidate, 0.0001f,
+                "maximum-zoom Library-to-Music authored approach");
             SetPrivateField(reverse, "lastPointerActivationFrame", -1);
             reverse.ActivateDoor();
             Assert.That(player.HasDestination, Is.True);
-            AssertVector2Within(GetPrivateValue<Vector2>(player, "finalDestination"), maximumReverseApproach, 0.0001f,
+            AssertVector2Within(GetPrivateValue<Vector2>(player, "finalDestination"), libraryAnchorCandidate, 0.0001f,
                 "maximum-zoom Library-to-Music production approach");
             for (int frame = 0; frame < 160 && navigation.CurrentRoom == LibraryRoom && player.HasDestination; frame++)
             {
@@ -5033,13 +5239,13 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(maximumReverseScreenDistance, Is.EqualTo(1071.144f).Within(0.75f),
                 "maximum-zoom Library-to-Music screen distance changed.");
             AssertVector2Within(maximumReverseApproach, new Vector2(-8.356381f, -3.228665f), 0.2f,
-                "maximum-zoom Library-to-Music legacy approach");
-            AssertVector2Within(maximumReverseArrival, new Vector2(8.676323f, -3.178201f), 0.2f,
-                "maximum-zoom Library-to-Music legacy arrival");
+                "maximum-zoom Library-to-Music legacy fallback approach");
+            AssertVector2Within(maximumReverseArrival, musicRoomAnchorCandidate, 0.0001f,
+                "maximum-zoom Library-to-Music authored arrival");
             Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True,
                 "The maximum-zoom Music Room arrival must support the reciprocal route.");
             Debug.Log(
-                $"[MusicLibraryLegacyMaximumZoom] viewport={Screen.width}x{Screen.height} zoom={cameraManager.maxRoomZoom:0.###} " +
+                $"[MusicLibraryAuthoredMaximumZoom] viewport={Screen.width}x{Screen.height} zoom={cameraManager.maxRoomZoom:0.###} " +
                 $"forwardStart={FormatVector(maximumForwardStart)} forwardScreenDistance={maximumForwardScreenDistance:0.###} " +
                 $"forwardApproach={FormatVector(maximumForwardApproach)} forwardArrival={FormatVector(maximumForwardArrival)} " +
                 $"reverseStart={FormatVector(maximumReverseStart)} reverseScreenDistance={maximumReverseScreenDistance:0.###} " +
@@ -5851,6 +6057,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Vector2 originalForwardArrival = forwardPassage.ArrivalAnchor.LogicalPosition;
         Vector2 originalReverseApproach = reversePassage.ApproachAnchor.LogicalPosition;
         Vector2 originalReverseArrival = reversePassage.ArrivalAnchor.LogicalPosition;
+        PassageAnchorMigrationStage originalForwardStage = forwardPassage.AnchorMigrationStage;
+        PassageAnchorMigrationStage originalReverseStage = reversePassage.AnchorMigrationStage;
         Vector2 poisonedForwardApproach = new Vector2(101f, -101f);
         Vector2 poisonedForwardArrival = new Vector2(102f, -102f);
         Vector2 poisonedReverseApproach = new Vector2(-103f, 103f);
@@ -5860,17 +6068,17 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.SameAs(forwardPassage));
         Assert.That(GetPrivateField<CanonicalPassage>(reverseTrigger, "canonicalPassage"),
             Is.SameAs(reversePassage));
-        Assert.That(forwardPassage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
-        Assert.That(reversePassage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
-        Assert.That((int)forwardPassage.AnchorMigrationStage, Is.Zero);
-        Assert.That((int)reversePassage.AnchorMigrationStage, Is.Zero);
-        Assert.That(forwardPassage.UsesAuthoredApproach, Is.False);
-        Assert.That(forwardPassage.UsesAuthoredArrival, Is.False);
-        Assert.That(reversePassage.UsesAuthoredApproach, Is.False);
-        Assert.That(reversePassage.UsesAuthoredArrival, Is.False);
+        Assert.That(originalForwardStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+        Assert.That(originalReverseStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
 
         try
         {
+            SetPrivateField(forwardPassage, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
+            SetPrivateField(reversePassage, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
+            Assert.That(forwardPassage.UsesAuthoredApproach, Is.False);
+            Assert.That(forwardPassage.UsesAuthoredArrival, Is.False);
+            Assert.That(reversePassage.UsesAuthoredApproach, Is.False);
+            Assert.That(reversePassage.UsesAuthoredArrival, Is.False);
             SetPrivateField(
                 forwardPassage.ApproachAnchor,
                 "logicalPosition",
@@ -5893,28 +6101,33 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(reversePassage.ApproachAnchor.LogicalPosition, Is.EqualTo(poisonedReverseApproach));
             Assert.That(reversePassage.ArrivalAnchor.LogicalPosition, Is.EqualTo(poisonedReverseArrival));
             Assert.That(
-                Vector2.Distance(poisonedForwardApproach, new Vector2(7.439471f, -2.846709f)),
+                Vector2.Distance(poisonedForwardApproach, new Vector2(7.714471f, -3.121709f)),
                 Is.GreaterThan(100f));
             Assert.That(
                 Vector2.Distance(poisonedForwardArrival, expectedFarForwardArrival),
                 Is.GreaterThan(100f));
             Assert.That(
-                Vector2.Distance(poisonedReverseApproach, new Vector2(-7.244175f, -2.799095f)),
+                Vector2.Distance(poisonedReverseApproach, new Vector2(-7.744175f, -3.059095f)),
                 Is.GreaterThan(100f));
             Assert.That(
-                Vector2.Distance(poisonedReverseArrival, new Vector2(7.439471f, -2.846709f)),
+                Vector2.Distance(poisonedReverseArrival, new Vector2(7.714471f, -3.121709f)),
                 Is.GreaterThan(100f));
             Assert.That(navigationFacade.CanTraverse(forwardPassage), Is.True,
                 "Stage 0 must not validate or consume authored coordinates before their migration slice.");
 
-            yield return AssertMusicLibraryLockedLegacyRoundTrips(
+            IEnumerator poisonedRoundTrips = AssertMusicLibraryLockedLegacyRoundTrips(
                 "caller-bound stage-0 poisoned-anchor",
+                PassageAnchorMigrationStage.LegacySampling,
                 expectedFarForwardArrival,
                 navigation,
                 player,
                 forwardTrigger,
                 reverseTrigger,
                 passageAudioSource);
+            while (poisonedRoundTrips.MoveNext())
+            {
+                yield return poisonedRoundTrips.Current;
+            }
 
             Assert.That(forwardPassage.ApproachAnchor.LogicalPosition, Is.EqualTo(poisonedForwardApproach));
             Assert.That(forwardPassage.ArrivalAnchor.LogicalPosition, Is.EqualTo(poisonedForwardArrival));
@@ -5927,6 +6140,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             SetPrivateField(forwardPassage.ArrivalAnchor, "logicalPosition", originalForwardArrival);
             SetPrivateField(reversePassage.ApproachAnchor, "logicalPosition", originalReverseApproach);
             SetPrivateField(reversePassage.ArrivalAnchor, "logicalPosition", originalReverseArrival);
+            SetPrivateField(forwardPassage, "anchorMigrationStage", originalForwardStage);
+            SetPrivateField(reversePassage, "anchorMigrationStage", originalReverseStage);
             InvokePrivateMethod(forwardTrigger, "CancelPendingPlayerApproach");
             InvokePrivateMethod(reverseTrigger, "CancelPendingPlayerApproach");
             if (player.HasDestination)
@@ -5962,6 +6177,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.SameAs(forwardPassage));
         Assert.That(GetPrivateField<CanonicalPassage>(reverseTrigger, "canonicalPassage"),
             Is.SameAs(reversePassage));
+        Assert.That(forwardPassage.AnchorMigrationStage, Is.EqualTo(originalForwardStage));
+        Assert.That(reversePassage.AnchorMigrationStage, Is.EqualTo(originalReverseStage));
     }
 
     private static IEnumerator AssertMusicLibraryPairLocalNullCallerFallbackRoundTrip(
@@ -6011,14 +6228,19 @@ public sealed class GameplayLifecycleCharacterizationTests
                     $"The pair-local fallback proof must not alter caller '{trigger.name}'.");
             }
 
-            yield return AssertMusicLibraryLockedLegacyRoundTrips(
+            IEnumerator fallbackRoundTrips = AssertMusicLibraryLockedLegacyRoundTrips(
                 "pair-local null-caller history-sensitive fallback",
+                PassageAnchorMigrationStage.AuthoredAnchors,
                 new Vector2(-7.244175f, -2.799095f),
                 navigation,
                 player,
                 forwardTrigger,
                 reverseTrigger,
                 passageAudioSource);
+            while (fallbackRoundTrips.MoveNext())
+            {
+                yield return fallbackRoundTrips.Current;
+            }
         }
         finally
         {
@@ -6067,6 +6289,7 @@ public sealed class GameplayLifecycleCharacterizationTests
 
     private static IEnumerator AssertMusicLibraryLockedLegacyRoundTrips(
         string evidenceLabel,
+        PassageAnchorMigrationStage expectedPassageStage,
         Vector2 expectedFarForwardArrival,
         RoomNavigationManager navigation,
         PointClickPlayerMovement player,
@@ -6123,9 +6346,9 @@ public sealed class GameplayLifecycleCharacterizationTests
 
             Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
             Assert.That(forwardTrigger.GetComponent<CanonicalPassage>().AnchorMigrationStage,
-                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+                Is.EqualTo(expectedPassageStage));
             Assert.That(reverseTrigger.GetComponent<CanonicalPassage>().AnchorMigrationStage,
-                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+                Is.EqualTo(expectedPassageStage));
             InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
             Assert.That(player.TryWarpToExact(new Vector2(-7.94f, -3.27f)), Is.True);
             Canvas.ForceUpdateCanvases();
@@ -6385,45 +6608,50 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage.ArrivalAnchor, Is.Not.Null);
         AssertVector2Within(
             forwardPassage.ApproachAnchor.LogicalPosition,
-            new Vector2(7.439471f, -2.846709f),
+            new Vector2(7.714471f, -3.121709f),
             0.0001f,
-            "passive Music-to-Library approach reference");
+            "authored Music-to-Library approach anchor");
         AssertVector2Within(
             forwardPassage.ArrivalAnchor.LogicalPosition,
-            new Vector2(-7.244175f, -2.799095f),
+            new Vector2(-7.744175f, -3.059095f),
             0.0001f,
-            "passive Music-to-Library arrival reference");
+            "authored Music-to-Library arrival anchor");
         AssertVector2Within(
             reversePassage.ApproachAnchor.LogicalPosition,
-            new Vector2(-7.244175f, -2.799095f),
+            new Vector2(-7.744175f, -3.059095f),
             0.0001f,
-            "passive Library-to-Music approach reference");
+            "authored Library-to-Music approach anchor");
         AssertVector2Within(
             reversePassage.ArrivalAnchor.LogicalPosition,
-            new Vector2(7.439471f, -2.846709f),
+            new Vector2(7.714471f, -3.121709f),
             0.0001f,
-            "passive Library-to-Music arrival reference");
+            "authored Library-to-Music arrival anchor");
         AssertVector2Within(
             forwardPassage.ApproachAnchor.LogicalPosition,
             reversePassage.ArrivalAnchor.LogicalPosition,
             0.0001f,
-            "Music Room passive reciprocal reference");
+            "Music Room authored-anchor reciprocity");
         AssertVector2Within(
             reversePassage.ApproachAnchor.LogicalPosition,
             forwardPassage.ArrivalAnchor.LogicalPosition,
             0.0001f,
-            "Library passive reciprocal reference");
+            "Library authored-anchor reciprocity");
 
-        Assert.That(forwardPassage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
-        Assert.That(reversePassage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
-        Assert.That((int)forwardPassage.AnchorMigrationStage, Is.Zero);
-        Assert.That((int)reversePassage.AnchorMigrationStage, Is.Zero);
+        Assert.That(forwardPassage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+        Assert.That(reversePassage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+        Assert.That((int)forwardPassage.AnchorMigrationStage, Is.EqualTo(2));
+        Assert.That((int)reversePassage.AnchorMigrationStage, Is.EqualTo(2));
         Assert.That(forwardPassage.HasValidAnchorMigrationStage, Is.True);
         Assert.That(reversePassage.HasValidAnchorMigrationStage, Is.True);
-        Assert.That(forwardPassage.UsesAuthoredApproach, Is.False);
-        Assert.That(forwardPassage.UsesAuthoredArrival, Is.False);
-        Assert.That(reversePassage.UsesAuthoredApproach, Is.False);
-        Assert.That(reversePassage.UsesAuthoredArrival, Is.False);
+        Assert.That(forwardPassage.UsesAuthoredApproach, Is.True);
+        Assert.That(forwardPassage.UsesAuthoredArrival, Is.True);
+        Assert.That(reversePassage.UsesAuthoredApproach, Is.True);
+        Assert.That(reversePassage.UsesAuthoredArrival, Is.True);
+        Assert.That(
+            FindInActiveScene<CanonicalPassage>()
+                .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors),
+            Is.EqualTo(6),
+            "All six registered scene passages must be complete stage-2 routes.");
         Assert.That(forwardPassage.HasGameContext, Is.True);
         Assert.That(reversePassage.HasGameContext, Is.True);
         Assert.That(forwardPassage.enabled, Is.True);
@@ -6458,7 +6686,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
             Is.EqualTo(6),
-            "The caller-bound Music/Library pair must be the third canonical caller pair.");
+            "All six complete passages must retain their canonical trigger callers.");
         Assert.That(
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),

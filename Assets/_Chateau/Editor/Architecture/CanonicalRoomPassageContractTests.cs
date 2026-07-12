@@ -36,7 +36,7 @@ public sealed class CanonicalRoomPassageContractTests
     private const string LibraryMusicPassageGuid = "3a641d5febbfd7aec481ada678ba9fe4";
 
     [Test]
-    public void CanonicalRouteDataViewsPassagesAndGroup02CallerBoundCertificationAreExact()
+    public void CanonicalRouteDataViewsPassagesAndGroup02CompleteCertificationAreExact()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
@@ -276,15 +276,19 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(4),
             "Entrance, Drawing, Music, and Library must be the only passive RoomView scene owners at this gate.");
         Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(6),
-            "The two completed pairs and one passive Group 02 pair must be the only Passages at this gate.");
+            "The three completed reciprocal pairs must be the only Passages at this gate.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage:"), Is.EqualTo(6),
             "Every staged Passage must serialize exactly one explicit anchor-ownership mode.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 0"), Is.EqualTo(2),
-            "The passive Group 02 reciprocal pair must retain legacy sampling until its later ownership gates.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 0"), Is.Zero,
+            "No completed reciprocal pair may retain legacy-only anchor sampling.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 1"), Is.Zero,
-            "No staged reciprocal pair may retain legacy approach sampling at this gate.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(4),
-            "Both completed reciprocal pairs must own their authored approach and arrival anchors.");
+            "No completed reciprocal pair may retain legacy approach sampling.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(6),
+            "All three completed reciprocal pairs must own their authored approach and arrival anchors.");
+        Assert.That(CountOccurrences(gameplayText, "maxPlayerScreenDistance: 145"), Is.EqualTo(44),
+            "Every trigger except the calibrated Library-to-Music endpoint must retain the legacy threshold.");
+        Assert.That(CountOccurrences(gameplayText, "maxPlayerScreenDistance: 149"), Is.EqualTo(1),
+            "Only the calibrated Library-to-Music endpoint may use the 149-pixel threshold.");
 
         Assert.That(entranceRoomObject, Does.Contain("- component: {fileID: 4100000001}"));
         Assert.That(drawingRoomObject, Does.Contain("- component: {fileID: 4100000002}"));
@@ -331,7 +335,7 @@ public sealed class CanonicalRoomPassageContractTests
             "  - {fileID: 4100000014}\n" +
             "  - {fileID: 4100000015}\n" +
             "  - {fileID: 4100000016}"),
-            "The Group 02 passive pair must append after all certified Passages without reordering them.");
+            "The completed Group 02 pair must remain appended after the prior certified Passages.");
         Assert.That(gameRoot, Does.Contain(
             "  - {fileID: 4100000003}\n  - {fileID: 4100000004}\n  - {fileID: 4100000011}"),
             "The Library RoomView must follow the existing views without reordering certified Passages.");
@@ -450,18 +454,18 @@ public sealed class CanonicalRoomPassageContractTests
             MusicLibraryPassageGuid,
             "4100000003",
             "4100000016",
-            "{x: 7.439471, y: -2.846709}",
-            "{x: -7.244175, y: -2.799095}",
-            PassageAnchorMigrationStage.LegacySampling);
+            "{x: 7.714471, y: -3.121709}",
+            "{x: -7.744175, y: -3.059095}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
         AssertPassivePassageDocument(
             libraryMusicPassage,
             "2300000075",
             LibraryMusicPassageGuid,
             "4100000004",
             "4100000015",
-            "{x: -7.244175, y: -2.799095}",
-            "{x: 7.439471, y: -2.846709}",
-            PassageAnchorMigrationStage.LegacySampling);
+            "{x: -7.744175, y: -3.059095}",
+            "{x: 7.714471, y: -3.121709}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
 
         Assert.That(drawingMusicTrigger, Does.Contain("canonicalPassage: {fileID: 4100000013}"));
         Assert.That(musicDrawingTrigger, Does.Contain("canonicalPassage: {fileID: 4100000014}"));
@@ -485,6 +489,8 @@ public sealed class CanonicalRoomPassageContractTests
                 "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
             Assert.That(callerBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
         }
+        Assert.That(musicLibraryTrigger, Does.Contain("maxPlayerScreenDistance: 145"));
+        Assert.That(libraryMusicTrigger, Does.Contain("maxPlayerScreenDistance: 149"));
 
         AssertLegacyDoorTriggerCompatibilityBound(
             outboundTrigger,

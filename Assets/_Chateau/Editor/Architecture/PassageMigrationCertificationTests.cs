@@ -54,11 +54,11 @@ public sealed class PassageMigrationCertificationTests
         string gameRoot = RequireDocument(documents, GameRootFileId);
         string database = File.ReadAllText(GameDatabasePath);
 
-        Assert.That(certified, Has.Count.EqualTo(4),
-            "Exactly the Entrance/Drawing and Drawing/Music reciprocal pairs are complete at this gate.");
+        Assert.That(certified, Has.Count.EqualTo(6),
+            "Exactly the Entrance/Drawing, Drawing/Music, and Music/Library reciprocal pairs are complete.");
         Assert.That(certified.Select(row => row.Order).Distinct().OrderBy(order => order),
-            Is.EqualTo(new[] { 0, 1 }),
-            "Completed-route certification must cover groups 00 and 01 exactly once per reciprocal pair.");
+            Is.EqualTo(new[] { 0, 1, 2 }),
+            "Completed-route certification must cover groups 00, 01, and 02 exactly once per reciprocal pair.");
 
         foreach (IGrouping<int, RouteInventoryRow> certifiedGroup in certified.GroupBy(row => row.Order))
         {
@@ -235,6 +235,10 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(rows.Count(row => row.Profile == "standard-door"), Is.EqualTo(38));
         Assert.That(rows.Count(row => row.Profile == "bottom-edge-door"), Is.EqualTo(3));
         Assert.That(rows.Count(row => row.Profile == "inferred-stairway"), Is.EqualTo(4));
+        Assert.That(rows.Count(row => row.Status == "complete"), Is.EqualTo(6));
+        Assert.That(rows.Count(row => row.Status == "queued"), Is.EqualTo(34));
+        Assert.That(rows.Count(row => row.Status == "blocked-one-way"), Is.EqualTo(2));
+        Assert.That(rows.Count(row => row.Status == "blocked-parallel"), Is.EqualTo(3));
         Assert.That(rows.SelectMany(row => new[] { row.SourceRoom, row.DestinationRoom })
             .Select(NormalizeRoomName).Distinct().ToList(), Has.Count.EqualTo(19));
 
@@ -300,7 +304,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void MusicLibraryCallersAreBoundWithoutAnchorOrDependencyChanges()
+    public void MusicLibraryCompleteCertificationPreservesAuthoredAnchorsCallersDependenciesAndTopology()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 2)
@@ -334,10 +338,10 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(group, Has.Count.EqualTo(2));
         RouteInventoryRow libraryRow = group.Single(row => row.ComponentFileId == "2300000079");
         RouteInventoryRow musicRow = group.Single(row => row.ComponentFileId == "552135204");
-        Assert.That(group.All(row => row.Status == "caller-bound"), Is.True);
+        Assert.That(group.All(row => row.Status == "complete"), Is.True);
         Assert.That(group.All(row => row.Group == "Music-Library"), Is.True);
         Assert.That(group.All(row => row.Profile == "standard-door"), Is.True);
-        Assert.That(group.All(row => row.Notes == "canonical-caller-bound-arrival-next"), Is.True);
+        Assert.That(group.All(row => row.Notes == "template-certified"), Is.True);
         AssertReciprocal(libraryRow, musicRow);
         AssertReciprocal(musicRow, libraryRow);
         Assert.That(libraryRow.PassageFileId, Is.EqualTo("4100000016"));
@@ -348,14 +352,14 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(musicRow.PassageStableId, Is.EqualTo("passage.music-room.library"));
         Assert.That(libraryRow.SourceRoomViewFileId, Is.EqualTo("4100000004"));
         Assert.That(musicRow.SourceRoomViewFileId, Is.EqualTo("4100000003"));
-        Assert.That(libraryRow.ApproachX, Is.EqualTo("-7.244175"));
-        Assert.That(libraryRow.ApproachY, Is.EqualTo("-2.799095"));
-        Assert.That(libraryRow.ArrivalX, Is.EqualTo("7.439471"));
-        Assert.That(libraryRow.ArrivalY, Is.EqualTo("-2.846709"));
-        Assert.That(musicRow.ApproachX, Is.EqualTo("7.439471"));
-        Assert.That(musicRow.ApproachY, Is.EqualTo("-2.846709"));
-        Assert.That(musicRow.ArrivalX, Is.EqualTo("-7.244175"));
-        Assert.That(musicRow.ArrivalY, Is.EqualTo("-2.799095"));
+        Assert.That(libraryRow.ApproachX, Is.EqualTo("-7.744175"));
+        Assert.That(libraryRow.ApproachY, Is.EqualTo("-3.059095"));
+        Assert.That(libraryRow.ArrivalX, Is.EqualTo("7.714471"));
+        Assert.That(libraryRow.ArrivalY, Is.EqualTo("-3.121709"));
+        Assert.That(musicRow.ApproachX, Is.EqualTo("7.714471"));
+        Assert.That(musicRow.ApproachY, Is.EqualTo("-3.121709"));
+        Assert.That(musicRow.ArrivalX, Is.EqualTo("-7.744175"));
+        Assert.That(musicRow.ArrivalY, Is.EqualTo("-3.059095"));
         Assert.That(musicRow.ApproachX, Is.EqualTo(libraryRow.ArrivalX));
         Assert.That(musicRow.ApproachY, Is.EqualTo(libraryRow.ArrivalY));
         Assert.That(musicRow.ArrivalX, Is.EqualTo(libraryRow.ApproachX));
@@ -367,20 +371,22 @@ public sealed class PassageMigrationCertificationTests
             AssertFinite(row.ArrivalX, $"{row.LegacyDoorId} arrival x");
             AssertFinite(row.ArrivalY, $"{row.LegacyDoorId} arrival y");
         }
-        Assert.That(musicRow.ArrivalX, Is.Not.EqualTo("-7.287828"),
-            "The passive reciprocal reference point must not erase the characterized source-sensitive far arrival.");
-        Assert.That(musicRow.ArrivalY, Is.Not.EqualTo("-2.936489"));
         string lifecycleCharacterization = File.ReadAllText(LifecycleCharacterizationPath);
-        Assert.That(lifecycleCharacterization, Does.Match(
-            @"AssertVector2Within\(primaryForwardArrival,\s*new Vector2\(-7\.287828f, -2\.936489f\), 0\.01f,"));
-        Assert.That(lifecycleCharacterization, Does.Match(
-            @"AssertVector2Within\(primaryNearForwardArrival,\s*new Vector2\(-7\.244175f, -2\.799095f\), 0\.01f,"));
-        Assert.That(lifecycleCharacterization, Does.Match(
-            @"Vector2\.Distance\(primaryForwardArrival,\s*musicLibraryPassage\.ArrivalAnchor\.LogicalPosition\),\s*Is\.GreaterThan\(0\.1f\)"),
-            "The live far arrival must remain explicitly distinct from the new passive Passage reference point.");
-        Assert.That(lifecycleCharacterization, Does.Match(
-            @"Vector2\.Distance\(primaryForwardArrival, primaryNearForwardArrival\),\s*Is\.GreaterThan\(0\.1f\)"),
-            "The locked lifecycle proof must retain the source-sensitive far/near Library arrival distinction.");
+        Assert.That(lifecycleCharacterization, Does.Contain(
+            "new Vector2(7.714471f, -3.121709f)"),
+            "The lifecycle gate must consume the calibrated Music Room anchor.");
+        Assert.That(lifecycleCharacterization, Does.Contain(
+            "new Vector2(-7.744175f, -3.059095f)"),
+            "The lifecycle gate must consume the calibrated Library anchor.");
+        Assert.That(lifecycleCharacterization, Does.Contain(
+            "new Vector2(-7.287828f, -2.936489f)"),
+            "The source-sensitive legacy far Library result must remain fallback evidence.");
+        Assert.That(lifecycleCharacterization, Does.Contain(
+            "new Vector2(-7.244175f, -2.799095f)"),
+            "The legacy near Library result must remain fallback evidence.");
+        Assert.That(lifecycleCharacterization, Does.Contain(
+            "PassageAnchorMigrationStage.AuthoredAnchors"),
+            "The lifecycle gate must exercise final stage-2 ownership.");
 
         AssertExactComponentIds(
             musicOwner, "552135203", "552135206", "552135205", "552135204", "4100000015");
@@ -396,14 +402,15 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(musicTransform, "m_AnchorMin"), Is.EqualTo("{x: 0.5, y: 0.5}"));
         Assert.That(ReadField(musicTransform, "m_AnchorMax"), Is.EqualTo("{x: 0.5, y: 0.5}"));
         Assert.That(ReadField(musicTransform, "m_Pivot"), Is.EqualTo("{x: 0.5, y: 0.5}"));
-        AssertMusicLibraryCallerBoundLegacyTriggerSnapshot(
+        AssertMusicLibraryCertifiedLegacyTriggerSnapshot(
             musicTrigger,
             "552135202",
             "552135205",
             "Music Room",
             "MusicRoom_Library",
             "Library",
-            "4100000015");
+            "4100000015",
+            "145");
 
         AssertExactComponentIds(
             libraryOwner, "2300000076", "2300000077", "2300000078", "2300000079", "4100000016");
@@ -420,14 +427,15 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(libraryTransform, "m_AnchorMin"), Is.EqualTo("{x: 0.5, y: 0.5}"));
         Assert.That(ReadField(libraryTransform, "m_AnchorMax"), Is.EqualTo("{x: 0.5, y: 0.5}"));
         Assert.That(ReadField(libraryTransform, "m_Pivot"), Is.EqualTo("{x: 0.5, y: 0.5}"));
-        AssertMusicLibraryCallerBoundLegacyTriggerSnapshot(
+        AssertMusicLibraryCertifiedLegacyTriggerSnapshot(
             libraryTrigger,
             "2300000075",
             "2300000078",
             "Library",
             "Library_MusicRoom",
             "Music Room",
-            "4100000016");
+            "4100000016",
+            "149");
         string musicDependencyBoundTrigger = AssertRevertsToDependenciesBoundTriggerHash(
             musicTrigger,
             "4100000015",
@@ -435,13 +443,13 @@ public sealed class PassageMigrationCertificationTests
         string libraryDependencyBoundTrigger = AssertRevertsToDependenciesBoundTriggerHash(
             libraryTrigger,
             "4100000016",
-            "35d9f37795a58c235ee7c62a084d7c0313ce5bba8b8a29d787f52c9582834e70");
+            "eb76e665c11392dc7e506cc869680822cf4a70c014b338fb00d47fdb02d7ad92");
         AssertRevertsToPassageBoundTriggerHash(
             musicDependencyBoundTrigger,
             "e1706c94957de2d852784a32de5f8a4a20c0d6fecc5b8dbb4232149de3a6d86b");
         AssertRevertsToPassageBoundTriggerHash(
             libraryDependencyBoundTrigger,
-            "6c47baaf887547bd673a73fefc07de810b7ecd2e2b572a60fb0f8beb2c53399a");
+            "62855ffb92390f74e49fc64f2ec6367451ecaf91ccc4b3a7a98cd5cc88465ede");
 
         Assert.That(musicDoors, Does.Contain("m_Name: Doors"));
         AssertExactComponentIds(musicDoors, "2103000011");
@@ -525,11 +533,11 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadReferenceFileId(musicPassage, "sourceRoomView"), Is.EqualTo("4100000003"));
         Assert.That(ReadReferenceFileId(musicPassage, "reversePassage"), Is.EqualTo("4100000016"));
         Assert.That(musicPassage, Does.Contain(
-            "approachAnchor:\n    logicalPosition: {x: 7.439471, y: -2.846709}"));
+            "approachAnchor:\n    logicalPosition: {x: 7.714471, y: -3.121709}"));
         Assert.That(musicPassage, Does.Contain(
-            "arrivalAnchor:\n    logicalPosition: {x: -7.244175, y: -2.799095}"));
+            "arrivalAnchor:\n    logicalPosition: {x: -7.744175, y: -3.059095}"));
         Assert.That(ReadAnchorMigrationStage(musicPassage, musicRow.PassageFileId),
-            Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+            Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
 
         Assert.That(libraryPassage.TrimEnd('\r', '\n').Split('\n'), Has.Length.EqualTo(20));
         Assert.That(libraryPassage, Does.Contain($"guid: {PassageGuid}"));
@@ -539,11 +547,11 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadReferenceFileId(libraryPassage, "sourceRoomView"), Is.EqualTo("4100000004"));
         Assert.That(ReadReferenceFileId(libraryPassage, "reversePassage"), Is.EqualTo("4100000015"));
         Assert.That(libraryPassage, Does.Contain(
-            "approachAnchor:\n    logicalPosition: {x: -7.244175, y: -2.799095}"));
+            "approachAnchor:\n    logicalPosition: {x: -7.744175, y: -3.059095}"));
         Assert.That(libraryPassage, Does.Contain(
-            "arrivalAnchor:\n    logicalPosition: {x: 7.439471, y: -2.846709}"));
+            "arrivalAnchor:\n    logicalPosition: {x: 7.714471, y: -3.121709}"));
         Assert.That(ReadAnchorMigrationStage(libraryPassage, libraryRow.PassageFileId),
-            Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+            Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
         Assert.That(ReadAnchorMigrationStage(musicPassage, musicRow.PassageFileId),
             Is.EqualTo(ReadAnchorMigrationStage(libraryPassage, libraryRow.PassageFileId)));
 
@@ -951,14 +959,15 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(componentIds, Is.EqualTo(expectedIds));
     }
 
-    private static void AssertMusicLibraryCallerBoundLegacyTriggerSnapshot(
+    private static void AssertMusicLibraryCertifiedLegacyTriggerSnapshot(
         string trigger,
         string gameObjectFileId,
         string imageFileId,
         string sourceRoom,
         string legacyDoorId,
         string destinationRoom,
-        string canonicalPassageFileId)
+        string canonicalPassageFileId,
+        string expectedMaxPlayerScreenDistance)
     {
         Assert.That(trigger, Does.Contain($"guid: {DoorTriggerGuid}"));
         Assert.That(ReadReferenceFileId(trigger, "m_GameObject"), Is.EqualTo(gameObjectFileId));
@@ -984,7 +993,8 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(trigger, "walkPlayerToTriggerWhenFar"), Is.EqualTo("1"));
         Assert.That(ReadField(trigger, "autoActivateAfterApproach"), Is.EqualTo("1"));
         Assert.That(ReadField(trigger, "playerObjectName"), Is.EqualTo("Player"));
-        Assert.That(ReadField(trigger, "maxPlayerScreenDistance"), Is.EqualTo("145"));
+        Assert.That(ReadField(trigger, "maxPlayerScreenDistance"),
+            Is.EqualTo(expectedMaxPlayerScreenDistance));
         Assert.That(ReadField(trigger, "playDoorOpenSound"), Is.EqualTo("1"));
         Assert.That(ReadField(trigger, "doorOpenAudioObjectName"), Is.EqualTo("Audio_DoorOpen"));
         Assert.That(trigger, Does.Contain(
