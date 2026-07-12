@@ -67,13 +67,13 @@ The manifest supports the reversible intermediate statuses `queued`, `characteri
 
 Gameplay contains 45 trigger owners across 23 connectivity groups:
 
-- 2 triggers in the automatically certified GEH/Drawing template;
-- 2 Drawing/Music triggers in 1 arrival-owned reciprocal pair;
+- 2 complete triggers in the automatically certified GEH/Drawing template;
+- 2 Drawing/Music triggers in 1 approach-owned reciprocal pair;
 - 36 triggers in 18 uniquely reciprocal queued pairs;
 - 2 one-way triggers blocked by missing reverse owners;
 - 3 GEH/Upper Gallery stair triggers blocked by a two-outbound/one-return shape that the strict one-to-one reverse contract cannot represent.
 
-There are 19 room roots. GEH and Drawing Room are canonical; the migration order introduces the other 17 exactly once before closing the Nursery/Blue Bedroom cycle. All 45 trigger owners already descend from the matching source room root.
+There are 19 room roots. GEH, Drawing Room, and Music Room are canonical; the migration order introduces the other 16 exactly once before closing the Nursery/Blue Bedroom cycle. All 45 trigger owners already descend from the matching source room root.
 
 Special profiles are part of behavior, not cleanup noise:
 
@@ -122,6 +122,10 @@ The byte-preserved legacy sampler remains authoritative for approach and still r
 
 Before any stage-2 scene change, the separate stage-1 approach preflight certifies both still-non-authoritative approach references without changing production dispatch. At each of the four rendered aspects, Drawing `(-7.16, -1.78)` and Music `(-7.94, -3.27)` each pass the exact production reachable-path evaluator from two distinct resolved far starts; the widest aspect repeats both rooms and starts at maximum zoom `1.22`, for 20 total probes. Every query is exactly walkable, reachable, moving, and non-projected, returns the authored coordinate unchanged, and remains inside the real `145`-pixel trigger envelope. Direct canonical-candidate validation returns the future point, while live stage-1 traversal dispatch still returns a different legacy sample. Player position and idle state restore in `finally`, both Passage stages remain `AuthoredArrival`, and scene/runtime/prefab/asset/meta/inventory state is unchanged. Rendered lifecycle remains `5/5`; the full suite remains `254/208/46` with the same failure-name hash.
 
-Next, the `approach-owned` slice may replace only `anchorMigrationStage: 1` with `anchorMigrationStage: 2` in Passage documents `4100000013` and `4100000014`, plus matching inventory/test/documentation updates. Keep both calibrated reciprocal coordinates exact and prove the production movement command reaches them from multiple far starts across every rendered aspect and maximum zoom. End at `approach-owned`, then use a separate no-scene-change certification/status slice to advance the pair to `complete`.
+Group `01` is now staged at `approach-owned`: Passage documents `4100000013` and `4100000014` both serialize `AuthoredAnchors = 2`, so calibrated Drawing `(-7.16, -1.78)` and Music `(-7.94, -3.27)` are authoritative reciprocal approach/arrival points. The production scene delta from arrival-owned is exactly two stage-scalar replacements. Canonical callers, direct dependencies, definitions, coordinates, owner/component/document topology, GameRoot, SceneRoots, runtime code, prefabs, assets, `.meta` files, GUIDs, and serialized-reference totals remain unchanged.
+
+The completed gate evaluates exact production reachability and stage-2 dispatch from two distinct far starts per room at all four rendered aspects and again at `2560x1080` maximum zoom `1.22`. One real `ActivateDoor` movement per direction and aspect, both directions at maximum zoom, and a symmetric forward replay after Music was left at maximum zoom reach the exact authored approach and reciprocal arrival. Near synchronous canonical traversal, pair-local null-Passage far/near compatibility, event/audio/callback ordering, camera/background/visibility, prompt/cursor and story-target behavior, cleanup, and the wider lifecycle baseline remain exact. A prerequisite `Physics2D.SyncTransforms()` before destination-floor refresh fixes the stale collider cache revealed when the reverse destination room had last been rendered at maximum zoom; it changes no serialization or ownership. Focused gates pass `9/9`, safety passes `27/27`, rendered lifecycle passes `5/5`, and the full suite remains `254/208/46` with failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`. Architecture is 112 runtime files / 48,789 lines / 48 direct `MonoBehaviour` declarations, serialized references remain 155, and Y-axis remains zero hard errors / 38 tracked findings.
+
+Next safe step after those gates are green: run a separate no-scene-change complete certification. Leave both Passages at stage `2`, rerun the complete reciprocal-pair contract and every repository gate, and advance only the inventory, matching test expectation, and documentation from `approach-owned` to `complete`; do not change scene, runtime, prefab, asset, `.meta`, GUID, caller, dependency, coordinate, or topology data.
 
 Human review still required: visually confirm that walking to and landing on both shared points places the Butler's feet at the intended painted doorway sides. Final target-route certification additionally requires the later interaction, room-view, and camera ownership transfers.

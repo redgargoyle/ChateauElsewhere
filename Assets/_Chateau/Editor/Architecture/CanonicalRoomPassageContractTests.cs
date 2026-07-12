@@ -28,7 +28,7 @@ public sealed class CanonicalRoomPassageContractTests
     private const string GameDatabasePath = "Assets/_Chateau/Data/GameDatabase.asset";
 
     [Test]
-    public void CanonicalRouteDataViewsPassagesAndGroup01ArrivalOwnershipAreExact()
+    public void CanonicalRouteDataViewsPassagesAndGroup01ApproachOwnershipAreExact()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
@@ -189,10 +189,10 @@ public sealed class CanonicalRoomPassageContractTests
             "Every staged Passage must serialize exactly one explicit anchor-ownership mode.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 0"), Is.Zero,
             "No staged reciprocal pair may retain legacy-only anchor ownership at this gate.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 1"), Is.EqualTo(2),
-            "Only the Drawing/Music pair may own authored arrival while retaining legacy approach sampling.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(2),
-            "Only the completed Entrance/Drawing pair may own both authored anchors.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 1"), Is.Zero,
+            "No staged reciprocal pair may retain legacy approach sampling at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(4),
+            "The approach-owned Drawing/Music pair and completed Entrance/Drawing pair must own both authored anchors.");
 
         Assert.That(entranceRoomObject, Does.Contain("- component: {fileID: 4100000001}"));
         Assert.That(drawingRoomObject, Does.Contain("- component: {fileID: 4100000002}"));
@@ -315,7 +315,7 @@ public sealed class CanonicalRoomPassageContractTests
             "4100000014",
             "{x: -7.16, y: -1.78}",
             "{x: -7.94, y: -3.27}",
-            PassageAnchorMigrationStage.AuthoredArrival);
+            PassageAnchorMigrationStage.AuthoredAnchors);
         AssertPassivePassageDocument(
             musicDrawingPassage,
             "2300000085",
@@ -324,7 +324,7 @@ public sealed class CanonicalRoomPassageContractTests
             "4100000013",
             "{x: -7.94, y: -3.27}",
             "{x: -7.16, y: -1.78}",
-            PassageAnchorMigrationStage.AuthoredArrival);
+            PassageAnchorMigrationStage.AuthoredAnchors);
 
         Assert.That(drawingMusicTrigger, Does.Contain("canonicalPassage: {fileID: 4100000013}"));
         Assert.That(musicDrawingTrigger, Does.Contain("canonicalPassage: {fileID: 4100000014}"));

@@ -292,7 +292,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void DrawingMusicOwnsAuthoredArrivalWithoutApproachCallerDependencyOrTopologyChanges()
+    public void DrawingMusicOwnsAuthoredApproachAndArrivalWithoutCallerDependencyOrTopologyChanges()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 1)
@@ -325,7 +325,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(group, Has.Count.EqualTo(2));
         RouteInventoryRow musicRow = group.Single(row => row.ComponentFileId == "2300000089");
         RouteInventoryRow drawingRow = group.Single(row => row.ComponentFileId == "2300000099");
-        Assert.That(group.All(row => row.Status == "arrival-owned"), Is.True);
+        Assert.That(group.All(row => row.Status == "approach-owned"), Is.True);
         Assert.That(group.Select(row => row.PassageDefinitionGuid).OrderBy(value => value),
             Is.EqualTo(new[]
             {
@@ -437,8 +437,8 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(drawingPassage, Does.Contain(
             "arrivalAnchor:\n    logicalPosition: {x: -7.94, y: -3.27}"));
         Assert.That(ReadAnchorMigrationStage(drawingPassage, drawingRow.PassageFileId),
-            Is.EqualTo(PassageAnchorMigrationStage.AuthoredArrival),
-            "Drawing-to-Music must own its exact authored Music-room arrival while approach remains legacy-sampled.");
+            Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors),
+            "Drawing-to-Music must own its exact authored Drawing-room approach and Music-room arrival.");
         Assert.That(musicPassage, Does.Contain($"guid: {PassageGuid}"));
         Assert.That(ReadReferenceFileId(musicPassage, "m_GameObject"), Is.EqualTo("2300000085"));
         Assert.That(ReadReferenceGuid(musicPassage, "definition"),
@@ -450,8 +450,8 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(musicPassage, Does.Contain(
             "arrivalAnchor:\n    logicalPosition: {x: -7.16, y: -1.78}"));
         Assert.That(ReadAnchorMigrationStage(musicPassage, musicRow.PassageFileId),
-            Is.EqualTo(PassageAnchorMigrationStage.AuthoredArrival),
-            "Music-to-Drawing must own its exact authored Drawing-room arrival while approach remains legacy-sampled.");
+            Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors),
+            "Music-to-Drawing must own its exact authored Music-room approach and Drawing-room arrival.");
         Assert.That(ReadAnchorMigrationStage(musicPassage, musicRow.PassageFileId),
             Is.EqualTo(ReadAnchorMigrationStage(drawingPassage, drawingRow.PassageFileId)),
             "A reciprocal route pair must cut anchor ownership over together.");

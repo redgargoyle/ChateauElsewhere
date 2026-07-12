@@ -623,8 +623,8 @@ public class NavigationRegressionTests
         Assert.That(reverseCanvasRenderer, Does.Contain("m_GameObject: {fileID: 2300000100}"));
         Assert.That(outboundPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(reversePassage, Does.Contain("anchorMigrationStage: 2"));
-        Assert.That(drawingMusicPassage, Does.Contain("anchorMigrationStage: 1"));
-        Assert.That(musicDrawingPassage, Does.Contain("anchorMigrationStage: 1"));
+        Assert.That(drawingMusicPassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(musicDrawingPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));
