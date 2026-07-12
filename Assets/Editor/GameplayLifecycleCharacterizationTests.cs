@@ -76,7 +76,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Sprite serializedMonsterOriginalSprite = serializedMonsterImage != null ? serializedMonsterImage.sprite : null;
         Chapter2GuestPanicController serializedGuestPanic = RequireExactlyOneInActiveScene<Chapter2GuestPanicController>();
         Chapter2GuestSearchController serializedGuestSearch = RequireExactlyOneInActiveScene<Chapter2GuestSearchController>();
-        RoomNavigationManager guestSearchNavigationBeforeChapter2 = GetPrivateField<RoomNavigationManager>(serializedGuestSearch, "navigationManager");
+        RoomNavigationManager serializedGuestSearchNavigation = GetPrivateField<RoomNavigationManager>(serializedGuestSearch, "navigationManager");
         GuestRoomScaleApplier serializedGuestScaleApplier = RequireExactlyOneInActiveScene<GuestRoomScaleApplier>();
         GuestRoomScaleCalibration serializedGuestScaleCalibration = RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>();
         GuestVoiceLinePlayback serializedVoicePlayback = RequireExactlyOneInActiveScene<GuestVoiceLinePlayback>();
@@ -320,7 +320,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter2_MonsterPlaceholder_Runtime"), Is.False);
         Assert.That(serializedGuestPanic.HasGameContext, Is.True);
         Assert.That(serializedGuestSearch.HasGameContext, Is.True);
-        Assert.That(guestSearchNavigationBeforeChapter2, Is.Null);
+        Assert.That(serializedGuestSearchNavigation, Is.SameAs(navigation));
         Assert.That(serializedMonsterStinger.IsRunning, Is.False);
         Assert.That(serializedGuestPanic.IsRunning, Is.False);
         Assert.That(serializedGuestSearch.GuestCount, Is.Zero);
@@ -727,7 +727,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(monsterStinger, Is.SameAs(serializedMonsterStinger));
         Assert.That(guestPanic, Is.SameAs(serializedGuestPanic));
         Assert.That(guestSearch, Is.SameAs(serializedGuestSearch));
-        Assert.That(GetPrivateField<RoomNavigationManager>(guestSearch, "navigationManager"), Is.Null);
+        Assert.That(GetPrivateField<RoomNavigationManager>(guestSearch, "navigationManager"), Is.SameAs(serializedGuestSearchNavigation));
 
         chapter.SkipToChapter2ForTesting();
         yield return WaitForSettledLayout();
@@ -738,7 +738,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<Chapter2MonsterStingerController>(), Is.SameAs(monsterStinger));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2GuestPanicController>(), Is.SameAs(guestPanic));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2GuestSearchController>(), Is.SameAs(guestSearch));
-        Assert.That(GetPrivateField<RoomNavigationManager>(guestSearch, "navigationManager"), Is.Null);
+        Assert.That(GetPrivateField<RoomNavigationManager>(guestSearch, "navigationManager"), Is.SameAs(serializedGuestSearchNavigation));
         Assert.That(RequireExactlyOneInActiveScene<Chapter1InteractionHUD>(), Is.SameAs(chapter1Hud));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));

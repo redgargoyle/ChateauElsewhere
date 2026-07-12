@@ -73,16 +73,16 @@ This report records what is implemented in the repository at this commit. It mus
 - Made Chapter2Controller's four external entry commands enforce their serialized ChapterManager instead of rebinding it from a caller. Valid and null convenience calls keep existing behavior; a missing or different manager is rejected before phase, navigation, clock, guest, or UI mutation.
 - Grafted a dedicated `Audio_Chapter2ClockStrike` child beneath Chapter 2 with its own serialized non-looping 2D `AudioSource`, Game-Sounds `GameAudioSourceVolume` at base volume `0.4`, and imported clip GUID `d7084eafa9124afcbcbf12529e08bc70`. Seven-PM playback reuses those exact identities, and the obsolete resource/component/runtime-tone fallback is removed.
 - Characterized and retired the monster stinger's structural repair: Begin/Stop reuses the exact serialized monster, Drawing Room start/target anchors, navigation service, and Image, restores the authored sprite, and creates no placeholder; validation now rejects a missing/mismatched graph instead of searching or repairing it.
-- Characterized Guest Search's lazy navigation repair before migration: the field is null at boot and through repeated Chapter 2 entry, then the seven-PM staging path resolves the exact GameRoot navigation service and reuses it on repetition.
+- Characterized and serialized Guest Search's navigation owner: the pre-migration field was null until seven-PM staging, while the migrated owner is the exact GameRoot service from boot through repeated Chapter 2 and seven-PM paths; all five lazy repair calls and the resolver are removed.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,521 | -381 |
+| Runtime C# lines | 49,902 | 49,518 | -384 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
-| `FindObject*`/`GameObject.Find` | 199 | 140 | -59 |
+| `FindObject*`/`GameObject.Find` | 199 | 139 | -60 |
 | `Resources.Load` | 27 | 22 | -5 |
 | runtime `new GameObject` | 98 | 82 | -16 |
 | runtime `AddComponent<T>` | 100 | 74 | -26 |
@@ -141,6 +141,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - the monster structural cleanup keeps all 5,979 document headers and `SceneRoots` exact; only controller document `3301000007` loses its two obsolete repair fields, while every monster/anchor/navigation document and every deferred audio, sprite, timing, shake, sorting, visibility, and overlay field stays byte-identical;
 - source guards prove the stinger has zero structural object/anchor searches, primitive placeholder creation, or Image/SpriteRenderer child repair; configuration validation, the unchanged Begin/Stop lifecycle, and the full 240-test failure-name baseline all pass;
 - the Guest Search navigation characterization pins the pre-migration null-to-service transition, all five resolver call sites, and exact owner identity through repeated seven-PM staging; focused/static and full-suite failure-name gates pass before serialization;
+- the Guest Search migration keeps all 5,979 document headers and `SceneRoots` exact; only component `3301000009` gains `navigationManager: {fileID: 1878886997}`, and the navigation/GameRoot documents remain byte-identical;
+- Guest Search validation and source guards require the serialized manager and ban its resolver/global lookup; boot, repeated Chapter 2, repeated seven-PM, architecture, and full-suite gates retain the exact owner and 50-failure baseline;
 - the rendered full EditMode suite discovers 240 tests: 190 pass and the exact same 50 pre-existing failure names remain, with no clock-strike graft or cleanup regression;
 - the separate `-nographics` invalid-viewport issue was independently hardened in commit `4d8a6d9a` and is not attributed to the clock-strike graft;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
@@ -174,8 +176,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Serialize Guest Search's exact navigation owner and remove its global navigation resolver.
-2. Characterize the monster stinger's audio/source/binding and overlay Canvas ownership before authoring those presentation dependencies.
+1. Characterize the monster stinger's audio/source/binding and overlay Canvas ownership before authoring those presentation dependencies.
+2. Characterize and author the Entrance coat-hanger interaction components without changing its art, transform, hitbox, or coat behavior.
 3. Audit the remaining non-identical Drawing Room cutouts before selecting any fourth prop; do not infer parity from similar names.
 
 Do not begin bulk deletion until those gates pass.

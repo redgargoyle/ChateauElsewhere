@@ -210,10 +210,11 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized RoomNavigationManager."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized monster object."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires a serialized monster Image or SpriteRenderer."));
-        Assert.That(guestSearchDocument, Does.Not.Contain("navigationManager:"));
-        Assert.That(guestSearchText, Does.Contain("ResolveRoomNavigation"));
-        Assert.That(guestSearchText, Does.Contain("FindAnyObjectByType<RoomNavigationManager>"));
-        Assert.That(CountOccurrences(guestSearchText, "ResolveRoomNavigation();"), Is.EqualTo(5));
+        Assert.That(CountOccurrences(guestSearchDocument, "navigationManager: {fileID: 1878886997}"), Is.EqualTo(1));
+        Assert.That(guestSearchText, Does.Not.Contain("ResolveRoomNavigation"));
+        Assert.That(guestSearchText, Does.Not.Contain("FindAnyObjectByType<RoomNavigationManager>"));
+        Assert.That(guestSearchText, Does.Contain("public override void ValidateConfiguration"));
+        Assert.That(guestSearchText, Does.Contain("Chapter2GuestSearchController requires its serialized RoomNavigationManager."));
     }
 
     [Test]

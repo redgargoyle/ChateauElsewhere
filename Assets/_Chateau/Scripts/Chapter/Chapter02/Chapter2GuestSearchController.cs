@@ -118,6 +118,7 @@ public class Chapter2GuestSearchController : Chateau.Architecture.ChapterFeature
     [SerializeField] private string hideAnchorPrefix = "Ch2_Hide_";
     [SerializeField] private string diningSeatPrefix = "Ch2_DiningSeat_";
     [SerializeField] private DiningRoomSeatedGuestOcclusionController diningSeatedOcclusionController;
+    [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private int foundOrderCounter;
     [SerializeField] private List<string> foundGuestIdsInOrder = new List<string>();
 
@@ -311,7 +312,6 @@ public class Chapter2GuestSearchController : Chateau.Architecture.ChapterFeature
     };
 
     private Chapter2Controller chapter2Controller;
-    private RoomNavigationManager navigationManager;
     private GuestSearchEntry activeConversationGuest;
     private GuestConversationResumeStep activeConversationResumeStep;
     private Coroutine roomResumeRoutine;
@@ -346,10 +346,19 @@ public class Chapter2GuestSearchController : Chateau.Architecture.ChapterFeature
         }
     }
 
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        base.ValidateConfiguration(report);
+
+        if (navigationManager == null)
+        {
+            report.AddError("Chapter2GuestSearchController requires its serialized RoomNavigationManager.", this);
+        }
+    }
+
     public void Initialize(Chapter2Controller controller)
     {
         chapter2Controller = controller;
-        ResolveRoomNavigation();
         RegisterRoomChangeHandler();
     }
 
@@ -362,14 +371,6 @@ public class Chapter2GuestSearchController : Chateau.Architecture.ChapterFeature
         }
 
         UnregisterRoomChangeHandler();
-    }
-
-    private void ResolveRoomNavigation()
-    {
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
-        }
     }
 
     private void RegisterRoomChangeHandler()
@@ -415,7 +416,6 @@ public class Chapter2GuestSearchController : Chateau.Architecture.ChapterFeature
 
     public void BeginSearch()
     {
-        ResolveRoomNavigation();
         RegisterRoomChangeHandler();
         AutoDiscoverGuestsIfNeeded();
         AutoAssignHideAnchorsIfNeeded();
@@ -481,7 +481,6 @@ public class Chapter2GuestSearchController : Chateau.Architecture.ChapterFeature
 
     public void DebugStageAllGuestsFoundForChapter3Skip()
     {
-        ResolveRoomNavigation();
         RegisterRoomChangeHandler();
         AutoDiscoverGuestsIfNeeded();
         AutoAssignHideAnchorsIfNeeded();
@@ -537,7 +536,6 @@ public class Chapter2GuestSearchController : Chateau.Architecture.ChapterFeature
 
     public void DebugStageAllGuestsFoundForSevenPMSkip()
     {
-        ResolveRoomNavigation();
         RegisterRoomChangeHandler();
         AutoDiscoverGuestsIfNeeded();
         AutoAssignHideAnchorsIfNeeded();
@@ -1670,7 +1668,6 @@ public class Chapter2GuestSearchController : Chateau.Architecture.ChapterFeature
             return guest.hideAnchor.RoomId.Trim();
         }
 
-        ResolveRoomNavigation();
         return navigationManager != null && !string.IsNullOrWhiteSpace(navigationManager.CurrentRoom)
             ? navigationManager.CurrentRoom.Trim()
             : string.Empty;
