@@ -330,6 +330,62 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(secondBlockingSpeechCompleted, Is.True);
         Assert.That(serializedVoiceSource.clip, Is.Null);
         Assert.That(player.InputEnabled, Is.False, "Cancelling dialogue must not enable input that was already disabled.");
+
+        player.SetInputEnabled(true);
+        bool transitionSpeechStarted = false;
+        bool inputEnabledWhenTransitionSpeechStarted = true;
+        speech.BeginSpeakLine(
+            catalogedVoiceLineId,
+            "Butler",
+            "Welcome to Chateau Chantilly.",
+            blockInput: true,
+            showSubtitleOverlay: false,
+            onSpeechLineStarted: (_, _) =>
+            {
+                transitionSpeechStarted = true;
+                inputEnabledWhenTransitionSpeechStarted = player.InputEnabled;
+            });
+        yield return null;
+        Assert.That(transitionSpeechStarted, Is.True);
+        Assert.That(inputEnabledWhenTransitionSpeechStarted, Is.False);
+        speech.CancelQueuedSpeech();
+        Assert.That(player.InputEnabled, Is.True, "Cancellation must release blocking input synchronously before a transition applies its own state.");
+        player.SetInputEnabled(false);
+        yield return null;
+        yield return null;
+        Assert.That(player.InputEnabled, Is.False, "A cancelled speech coroutine must not re-enable input after the transition disabled it.");
+
+        player.SetInputEnabled(true);
+        bool replacementSpeechStarted = false;
+        bool inputEnabledWhenReplacementSpeechStarted = true;
+        speech.BeginSpeakLine(
+            catalogedVoiceLineId,
+            "Butler",
+            "Welcome to Chateau Chantilly.",
+            blockInput: true,
+            showSubtitleOverlay: false,
+            onSpeechLineStarted: (_, _) =>
+            {
+                replacementSpeechStarted = true;
+                inputEnabledWhenReplacementSpeechStarted = player.InputEnabled;
+            });
+        yield return null;
+        Assert.That(replacementSpeechStarted, Is.True);
+        Assert.That(inputEnabledWhenReplacementSpeechStarted, Is.False);
+        speech.CancelQueuedSpeech();
+        speech.BeginSpeakLine(
+            catalogedVoiceLineId,
+            "Butler",
+            "Welcome to Chateau Chantilly.",
+            blockInput: true,
+            showSubtitleOverlay: false);
+        yield return null;
+        Assert.That(player.InputEnabled, Is.False, "An older cancelled routine must not release a newer blocking-input lease.");
+        yield return null;
+        Assert.That(player.InputEnabled, Is.False);
+        speech.CancelQueuedSpeech();
+        Assert.That(player.InputEnabled, Is.True);
+        yield return null;
         player.SetInputEnabled(inputEnabledBeforeSpeechTest);
 
         speech.BeginSpeakLine(

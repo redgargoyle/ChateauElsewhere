@@ -25,6 +25,10 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
     private string activeSpeakerId = string.Empty;
     private string activeSpeakerDisplayName = string.Empty;
     private string activeText = string.Empty;
+    private PointClickPlayerMovement blockedInputOwner;
+    private bool blockedInputPreviousState;
+    private int blockedInputSpeechToken;
+    private bool ownsBlockedInput;
 
     public bool IsNormalSpeechActive => normalSpeechActive;
 
@@ -94,6 +98,7 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
     {
         activeSpeechToken++;
         speechQueueToken++;
+        ReleaseBlockedPlayerInput();
 
         bool hadActiveSpeech = normalSpeechActive || !string.IsNullOrWhiteSpace(activeLineId);
         bool hadQueuedSpeech = pendingNormalSpeechCount > (normalSpeechActive ? 1 : 0);
@@ -179,18 +184,9 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
             SetActiveSpeechInfo(lineId, speakerId, speaker, text);
         }
 
-        PointClickPlayerMovement blockedMovement = null;
-        bool previousInputEnabled = true;
-
         if (blockInput)
         {
-            blockedMovement = playerMovement;
-
-            if (blockedMovement != null)
-            {
-                previousInputEnabled = blockedMovement.InputEnabled;
-                blockedMovement.SetInputEnabled(false);
-            }
+            AcquireBlockedPlayerInput(speechToken);
         }
 
         onSpeechLineStarted?.Invoke(speaker, text);
@@ -249,10 +245,7 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
             speakingIndicator?.HideForSpeechToken(speechToken);
         }
 
-        if (blockedMovement != null)
-        {
-            blockedMovement.SetInputEnabled(previousInputEnabled);
-        }
+        ReleaseBlockedPlayerInput(speechToken);
 
         if (!allowOverlap && speechToken == activeSpeechToken && queueToken == speechQueueToken)
         {
@@ -274,6 +267,17 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
         {
             RequestSkip(activeSpeechToken);
         }
+    }
+
+    private void OnDisable()
+    {
+        ReleaseBlockedPlayerInput();
+    }
+
+    protected override void OnShutdown(Chateau.Architecture.GameContext context)
+    {
+        ReleaseBlockedPlayerInput();
+        base.OnShutdown(context);
     }
 
     public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
@@ -310,6 +314,54 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
         if (speechToken == activeSpeechToken)
         {
             skipRequested = true;
+        }
+    }
+
+    private void AcquireBlockedPlayerInput(int speechToken)
+    {
+        if (playerMovement == null)
+        {
+            return;
+        }
+
+        if (!ownsBlockedInput)
+        {
+            blockedInputOwner = playerMovement;
+            blockedInputPreviousState = playerMovement.InputEnabled;
+            ownsBlockedInput = true;
+        }
+
+        blockedInputSpeechToken = speechToken;
+        blockedInputOwner.SetInputEnabled(false);
+    }
+
+    private void ReleaseBlockedPlayerInput(int speechToken)
+    {
+        if (!ownsBlockedInput || blockedInputSpeechToken != speechToken)
+        {
+            return;
+        }
+
+        ReleaseBlockedPlayerInput();
+    }
+
+    private void ReleaseBlockedPlayerInput()
+    {
+        if (!ownsBlockedInput)
+        {
+            return;
+        }
+
+        PointClickPlayerMovement owner = blockedInputOwner;
+        bool restoreInputEnabled = blockedInputPreviousState;
+        blockedInputOwner = null;
+        blockedInputPreviousState = true;
+        blockedInputSpeechToken = 0;
+        ownsBlockedInput = false;
+
+        if (owner != null)
+        {
+            owner.SetInputEnabled(restoreInputEnabled);
         }
     }
 

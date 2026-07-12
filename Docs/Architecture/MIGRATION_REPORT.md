@@ -48,6 +48,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Routed chapter skips and settings teleports through ChapterManager's direct dialogue cleanup command, then removed `GuestVoiceLinePlayback.StopAnyCurrentLine` and all associated global subtitle searches.
 - Added a real cataloged-voice lifecycle using `SUB_CH01_BUTLER_WELCOME_001`: it verifies authored subtitle/clip GUID resolution, Dialogue-channel volume math, primary source/binding reuse, and restoration of both previously enabled and previously disabled player input.
 - Serialized DialogueSpeechService's exact Butler movement owner and the primary voice source's `GameAudioSourceVolume`. Stable speech now configures that authored Dialogue binding directly and validates the playback graph; the intentional temporary overlap source/binding remains dynamic.
+- Replaced coroutine-local blocking-input restoration with a token-safe lease owned by DialogueSpeechService. Cancellation releases synchronously before chapter transitions apply their state, older routines cannot release newer speech, and service disable/shutdown cannot strand the Butler input-disabled.
 - Serialized the inert Chapter 1 HUD owner on the Chapter 1 controller while preserving the characterized first-use canvas/text construction and sorting order.
 - Removed Chapter 1 HUD global lookup/runtime attachment and the obsolete `createRuntimeHud` flag; HUD child presentation remains lazy and owner-scoped.
 - Serialized the RuntimeSettingsMenu owner and correctly scaled overlay canvas under GameRoot, explicitly wiring navigation, chapter, clock, and exploration-music dependencies while keeping controls lazy.
@@ -66,7 +67,7 @@ This report records what is implemented in the repository at this commit. It mus
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 107 | +17 |
-| Runtime C# lines | 49,902 | 50,317 | +415 |
+| Runtime C# lines | 49,902 | 50,369 | +467 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
 | `FindObject*`/`GameObject.Find` | 199 | 155 | -44 |
 | `Resources.Load` | 27 | 25 | -2 |
@@ -99,6 +100,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - the RuntimeSettings dependency-cleanup static, scene-reset, and full lifecycle gates pass; the only scene edit authors the already-enforced `playOnAwake = false` value on the existing music AudioSource, with document order, component identity, roots, clip, pitch, loop, and base volume unchanged;
 - the dialogue stable-owner graft added one volume-owner document and changed only the GameRoot component list plus the speech/playback binding documents; old document order is exact, the voice AudioSource hash remains `eb0ec0c...6486`, the Player stripped component remains `d2182512...db56`, SubtitleService remains `9938c314...79a08`, and GameRoot lists/Transform/SceneRoots are unchanged;
 - the real voice/input lifecycle initially exposed nondeterministic global player selection, then passed with the serialized `81962842` owner and pre-existing `1878887003` voice binding through repeated cancellation/reuse;
+- the blocking-input lease lifecycle proves enabled and disabled restoration, synchronous cancel-before-transition ordering, cancelled-coroutine non-interference, and same-frame replacement ownership; focused/static and full-suite gates pass;
 - the focused ambience characterization passed and the full-suite gate retained the exact baseline failure-name set;
 - the ambience-owner graft audit passed 6/6 checks: nine documents added, only navigation/root-transform changed, every old document retained its exact order, and SceneRoots stayed byte-identical;
 - the ambience-factory cleanup audit passed 5/5 checks: no document churn, only the two ambience owner documents changed, document order stayed exact, and SceneRoots stayed byte-identical;
@@ -137,8 +139,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Make blocking-dialogue input restoration service-owned so cancel/replacement/disable ordering cannot re-enable the player after a chapter transition.
-2. Remove the now-redundant SubtitleService and GuestVoiceLinePlayback asset/navigation repair paths while retaining lazy subtitle presentation and overlap audio.
-3. Characterize the next set piece before migrating it; do not bulk-convert room props from source-text assumptions.
+1. Remove the now-redundant SubtitleService and GuestVoiceLinePlayback asset/navigation repair paths while retaining lazy subtitle presentation and overlap audio.
+2. Characterize the next set piece before migrating it; do not bulk-convert room props from source-text assumptions.
+3. Prove whether the unreferenced clock-hands display is dead before any deletion.
 
 Do not begin bulk deletion until those gates pass.

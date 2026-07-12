@@ -3,7 +3,7 @@ Assets/Map/CameraManager.cs,2985,613d7bf3eed6e595be18796799f63ee2b545d7c5d89e739
 Assets/Scripts/Audio/Chapter2PanicScreamCatalog.cs,46,3d5a3c1ac00f6c230d540338987f3ad1a02dd2b1ff43cb0a2fe0a688c6863637,0,0,0,0,0,0,
 Assets/Scripts/Audio/ClockTickingAmbienceCatalog.cs,256,53391df6b69d067828a0d28686389a98d2594a524cb6937969ac0640573b2b1a,0,0,0,0,0,0,
 Assets/Scripts/Audio/ClockTickingAmbienceController.cs,223,662b5d1f4a04057ef87db030b815755a33e9bc381190300967a5fc8e15357822,0,0,0,0,0,0,ClockTickingAmbienceController
-Assets/Scripts/Audio/DialogueSpeechService.cs,354,1df0e6beea5064af8e24099ed6102f5625effd093f73e7a1ec58ff678c34aaef,0,0,0,0,0,0,
+Assets/Scripts/Audio/DialogueSpeechService.cs,406,fefcaf2529f809216309c95a3ebceaaee378edd9b78db005096bc708e94d326e,0,0,0,0,0,0,
 Assets/Scripts/Audio/DoorOpenSoundCatalog.cs,49,718fca57d99144bd832a09fa83a7428d2056eb0b4baa79c2bb00b1b280e5f9e7,0,0,0,0,0,0,
 Assets/Scripts/Audio/FireplaceAmbienceCatalog.cs,161,5d845c3f37d8a508ffd3dc71927e654f9495de69ccc95ac107c25242b006b73b,0,0,0,0,0,0,
 Assets/Scripts/Audio/FireplaceAmbienceController.cs,221,505c97cf7950cab3253613211e43df9e9b72661094341ce7033461666ec88f5b,0,0,0,0,0,0,FireplaceAmbienceController
