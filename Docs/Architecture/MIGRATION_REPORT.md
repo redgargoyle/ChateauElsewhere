@@ -96,6 +96,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized Chapter 1's runtime doorbell graph before migration: first startup creates exactly one `DoorbellSystem`, `AudioSource`, and Game-Sounds binding on the Chapter 1 host; it binds the Chapter clock, loads approved clip GUID `67dc6970d473422a86e0c071ef23abd1` / fileID `8300000` on first ring, and reuses every identity thereafter.
 - Serialized that exact doorbell graph on the existing Chapter 1 host as components `3302000003`–`3302000005`, with direct clock/source/binding/imported-clip edges and configuration validation. The AudioSource resource remains empty because `DoorbellSystem` owns the one-shot clip, matching characterized behavior; repair paths remain staged for the cleanup gate.
 - Removed Chapter 1's doorbell discovery/component factory and `DoorbellSystem` clock/source/binding/resource/generated-tone fallbacks. Initialization rejects a different clock, configures only its direct source/binding, and rings only the validated imported clip.
+- Characterized the runtime-only Drawing Room exit click target before pruning. ChapterManager preparation creates one transparent `160x160` trigger under inactive Drawing Room anchors; another initialization duplicates it because `GameObject.Find` cannot see the inactive owner, and those identities persist into Chapter 2. Its action performs no navigation or state mutation beyond calling the same completion gate already owned by empty-door answer, coat storage, guest seating, and Drawing Room entry.
 
 ## Current static result
 
@@ -145,6 +146,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - Chapter 1 doorbell characterization passes its pre-graft source/scene guard and rendered first-ring/repeated-resolution lifecycle, pinning one same-host owner/source/binding plus the exact imported clip while the existing factories remain intentionally staged; the full suite remains 194/46 with an unchanged failure-name set;
 - Chapter 1 doorbell serialization adds only documents `3302000003`–`3302000005`, changes only host `1696549391` and controller `3302000001`, preserves every prior document's order plus SceneRoots, and passes exact YAML, imported-clip, configuration, first-ring, repeated-resolution, and full-suite gates at 194/46 with an unchanged failure-name set;
 - Chapter 1 doorbell cleanup removes only the obsolete resource-path property from document `3302000003`, preserves all 5,980 document IDs/order/roots, bans every retired discovery/factory/resource/tone symbol, and retains the exact owner/source/binding/clip through first ring and room travel; the full suite remains 194/46 with an unchanged failure-name set;
+- Drawing Room exit-target characterization passes exact source/scene guards and a rendered lifecycle that freezes its inactive-parent component contract, proves repeat initialization grows the target count from one to two, and retains both identities through room travel and Chapter 2 while independent completion-gate callers remain pinned; the full suite remains 194/46 with an unchanged failure-name set;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -228,6 +230,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Characterize the redundant runtime Drawing Room exit click target and prove the existing room-change/completion gates make it safe to prune without serializing a replacement.
+1. Prune the redundant runtime Drawing Room exit target, factory/remover, wrapper, enum role, and private sprite cache without serializing a replacement; retain and render-test the canonical room-change completion handoff.
 
 Do not begin bulk deletion until those gates pass.

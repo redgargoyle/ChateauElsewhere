@@ -20,6 +20,7 @@ public class Chapter2RegressionTests
     private const string DoorbellSystemPath = "Assets/Scripts/Story/DoorbellSystem.cs";
     private const string DoorbellClipAssetPath = "Assets/Resources/Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz.wav";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string Chapter1SceneActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs";
     private const string Chapter2DirectoryPath = "Assets/_Chateau/Scripts/Chapter/Chapter02";
     private const string Chapter2ControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs";
     private const string Chapter2InteractionHUDPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs";
@@ -1698,12 +1699,21 @@ public class Chapter2RegressionTests
     public void Chapter1CannotRetriggerChapter2AfterHandoff()
     {
         string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string chapter1ActionText = File.ReadAllText(Chapter1SceneActionPath);
         string managerText = File.ReadAllText(ChapterManagerPath);
+        string gameplaySceneText = File.ReadAllText(GameplayScenePath);
 
         Assert.That(chapter1Text, Does.Contain("chapterCompletionRequested"), "Chapter 1 should remember that its Chapter 2 handoff already fired.");
         Assert.That(chapter1Text, Does.Match(@"(?s)\bCheckChapterCompletionGate\s*\([^)]*\)\s*\{.*!sequenceActive \|\| chapterCompletionRequested"), "Chapter 1 completion gate should not run after Chapter 1 has ended.");
         Assert.That(chapter1Text, Does.Match(@"(?s)chapterCompletionRequested = true;.*sequenceActive = false;.*UnsubscribeFromRoomChanges\(\);.*CompleteChapterAndTriggerNextChapter\(""chapter_02_pending""\)"), "Chapter 1 should unsubscribe before requesting Chapter 2.");
         Assert.That(chapter1Text, Does.Match(@"(?s)\bHandleRoomChanged\s*\([^)]*\)\s*\{.*!sequenceActive \|\| chapterCompletionRequested"), "Re-entering Drawing Room after Chapter 1 should not call the completion gate.");
+        Assert.That(chapter1Text, Does.Match(@"(?s)\bHandleRoomChanged\s*\([^)]*\)\s*\{.*SameRoom\(roomName, drawingRoomId\).*CheckChapterCompletionGate\(\)"), "Entering the Drawing Room should independently invoke the completion gate.");
+        Assert.That(chapter1Text, Does.Match(@"(?s)\bCompleteGuestDrawingRoomArrival\s*\([^)]*\)\s*\{.*guest\.Seated = true;.*CheckChapterCompletionGate\(\)"), "The final guest seating path should independently invoke the completion gate.");
+        Assert.That(chapter1Text, Does.Match(@"(?s)\bStoreCarriedCoatInCloset\s*\([^)]*\)\s*\{.*butlerCarryingCoat = false;.*CheckChapterCompletionGate\(\)"), "The final coat-storage path should independently invoke the completion gate.");
+        Assert.That(chapter1Text, Does.Match(@"(?s)\bTryCompleteChapterFromDrawingRoomExit\s*\([^)]*\)\s*\{\s*CheckChapterCompletionGate\(\);\s*\}"), "The runtime Drawing Room exit action currently adds no behavior beyond the shared gate.");
+        Assert.That(chapter1Text, Does.Contain("CreateClickTarget(\"Chapter1_ClickTarget_DrawingRoomExit\", drawingRoomEntryPoint, Chapter1SceneActionType.DrawingRoomExit)"));
+        Assert.That(chapter1ActionText, Does.Contain("case Chapter1SceneActionType.DrawingRoomExit:"));
+        Assert.That(gameplaySceneText, Does.Not.Contain("actionType: 3"), "No serialized scene action owns the runtime-only Drawing Room exit role.");
 
         Assert.That(managerText, Does.Contain("IsDuplicateChapter2Request"), "ChapterManager should reject duplicate Chapter 2 handoff requests before fading.");
         Assert.That(managerText, Does.Contain("Chapter 2 request ignored because Chapter 2 is already active."));
