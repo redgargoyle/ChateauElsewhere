@@ -70,6 +70,11 @@ public sealed class GameplayLifecycleCharacterizationTests
         RoomNavigationManager serializedArrivalNavigation = GetPrivateField<RoomNavigationManager>(arrival, "navigationManager");
         PointClickPlayerMovement serializedArrivalPlayerMovement = GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement");
         GameObject serializedArrivalButlerRoot = GetPrivateField<GameObject>(arrival, "playerButlerReference");
+        DoorbellSystem characterizedDoorbell = GetPrivateField<DoorbellSystem>(arrival, "doorbellSystem");
+        Assert.That(characterizedDoorbell, Is.Not.Null);
+        AudioSource characterizedDoorbellSource = GetPrivateField<AudioSource>(characterizedDoorbell, "audioSource");
+        GameAudioSourceVolume characterizedDoorbellBinding = characterizedDoorbell.GetComponent<GameAudioSourceVolume>();
+        AudioClip characterizedDoorbellClipBeforeFirstUse = GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip");
         Chapter1InteractionHUD chapter1Hud = RequireExactlyOneInActiveScene<Chapter1InteractionHUD>();
         Transform[] frontDoorTriggers = FindInActiveScene<Transform>()
             .Where(item => item.name == "Door_answer_trigger")
@@ -182,6 +187,49 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(serializedArrivalNavigation, Is.SameAs(navigation));
         Assert.That(serializedArrivalPlayerMovement, Is.Not.Null);
         Assert.That(serializedArrivalButlerRoot, Is.SameAs(serializedArrivalPlayerMovement.gameObject));
+        Assert.That(characterizedDoorbell.gameObject, Is.SameAs(arrival.gameObject));
+        Assert.That(GetPrivateField<ChapterClock>(characterizedDoorbell, "chapterClock"), Is.SameAs(clock));
+        Assert.That(characterizedDoorbellSource, Is.Not.Null);
+        Assert.That(characterizedDoorbellSource.gameObject, Is.SameAs(arrival.gameObject));
+        Assert.That(characterizedDoorbell.GetComponents<AudioSource>(), Has.Length.EqualTo(1));
+        Assert.That(characterizedDoorbellBinding, Is.Not.Null);
+        Assert.That(characterizedDoorbellBinding.gameObject, Is.SameAs(arrival.gameObject));
+        Assert.That(characterizedDoorbell.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+        Assert.That(GetPrivateField<AudioSource>(characterizedDoorbellBinding, "audioSource"), Is.SameAs(characterizedDoorbellSource));
+        Assert.That(characterizedDoorbellBinding.Channel, Is.EqualTo(GameAudioChannel.GameSounds));
+        Assert.That(characterizedDoorbellBinding.BaseVolume, Is.EqualTo(1f).Within(0.0001f));
+        Assert.That(characterizedDoorbellSource.playOnAwake, Is.False);
+        Assert.That(characterizedDoorbellSource.loop, Is.False);
+        Assert.That(characterizedDoorbellSource.mute, Is.False);
+        Assert.That(characterizedDoorbellSource.enabled, Is.True);
+        Assert.That(characterizedDoorbellSource.spatialBlend, Is.Zero.Within(0.0001f));
+        Assert.That(characterizedDoorbellSource.ignoreListenerPause, Is.False);
+        Assert.That(characterizedDoorbellClipBeforeFirstUse, Is.Null);
+        Assert.That(
+            GetPrivateField<string>(characterizedDoorbell, "doorbellClipResourcePath"),
+            Is.EqualTo("Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz"));
+
+        characterizedDoorbell.StartRinging(clock.ElapsedGameMinutes, true, false);
+        AudioClip characterizedDoorbellClip = GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip");
+        Assert.That(characterizedDoorbellClip, Is.Not.Null);
+        Assert.That(
+            AssetDatabase.GetAssetPath(characterizedDoorbellClip),
+            Is.EqualTo("Assets/Resources/Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz.wav"));
+        Assert.That(
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                characterizedDoorbellClip,
+                out string characterizedDoorbellClipGuid,
+                out long characterizedDoorbellClipFileId),
+            Is.True);
+        Assert.That(characterizedDoorbellClipGuid, Is.EqualTo("67dc6970d473422a86e0c071ef23abd1"));
+        Assert.That(characterizedDoorbellClipFileId, Is.EqualTo(8300000L));
+        characterizedDoorbell.StopRinging();
+        characterizedDoorbellSource.Stop();
+        characterizedDoorbell.Initialize(clock);
+        Assert.That(GetPrivateField<AudioSource>(characterizedDoorbell, "audioSource"), Is.SameAs(characterizedDoorbellSource));
+        Assert.That(characterizedDoorbell.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedDoorbellBinding));
+        Assert.That(GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip"), Is.SameAs(characterizedDoorbellClip));
+        Assert.That(FindInActiveScene<DoorbellSystem>(), Has.Length.EqualTo(1));
         Assert.That(authoredFrontDoorRenderer, Is.Not.Null);
         Assert.That(authoredFrontDoorCollider, Is.Not.Null);
         Assert.That(authoredFrontDoorAction, Is.Not.Null);
@@ -948,6 +996,11 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<RoomContentGroup>(arrival, "entryRoomContent"), Is.SameAs(characterizedEntranceRoomContent));
         Assert.That(GetPrivateField<RoomContentGroup>(arrival, "drawingRoomContent"), Is.SameAs(characterizedDrawingRoomContent));
         CollectionAssert.AreEqual(characterizedDrawingRoomGuestPoints, GetPrivateField<Transform[]>(arrival, "drawingRoomGuestPoints"));
+        Assert.That(GetPrivateField<DoorbellSystem>(arrival, "doorbellSystem"), Is.SameAs(characterizedDoorbell));
+        Assert.That(GetPrivateField<AudioSource>(characterizedDoorbell, "audioSource"), Is.SameAs(characterizedDoorbellSource));
+        Assert.That(characterizedDoorbell.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedDoorbellBinding));
+        Assert.That(GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip"), Is.SameAs(characterizedDoorbellClip));
+        Assert.That(FindInActiveScene<DoorbellSystem>(), Has.Length.EqualTo(1));
         Assert.That(InvokePrivateStringMethod<RoomContentGroup>(arrival, "FindRoomContentGroup", EntranceRoom), Is.SameAs(characterizedEntranceRoomContent));
         Assert.That(InvokePrivateStringMethod<RoomContentGroup>(arrival, "FindRoomContentGroup", DrawingRoom), Is.SameAs(characterizedDrawingRoomContent));
 
