@@ -74,16 +74,21 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [Header("Rooms")]
     [SerializeField] private string entryRoomId = "Grand Entrance Hall";
     [SerializeField] private string drawingRoomId = "Drawing Room";
+    [SerializeField] private RoomContentGroup entryRoomContent;
+    [SerializeField] private RoomContentGroup drawingRoomContent;
 
     [Header("Required Anchors")]
     [SerializeField] private Transform frontDoorArrivalPoint;
+    [SerializeField] private Transform guestEntranceSpawnPlacemark;
     [SerializeField] private Transform entranceHallGuestAnchor;
     [SerializeField, FormerlySerializedAs("butlerDoorSpot")] private Transform drawingRoomSideButlerSpot;
     [SerializeField] private Transform closetPoint;
     [SerializeField] private Transform drawingRoomEntryPoint;
+    [SerializeField] private Transform drawingRoomDoorTarget;
     [SerializeField] private Transform drawingRoomSeat01;
     [SerializeField] private Transform drawingRoomSeat02;
     [SerializeField] private Transform drawingRoomSeat03;
+    [SerializeField] private Transform[] drawingRoomGuestPoints = Array.Empty<Transform>();
 
     [Header("Clock Timeline")]
     [SerializeField, Range(0, 23)] private int firstArrivalHour = 18;
@@ -161,8 +166,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private bool hasFrontDoorAnswerSpot;
     private Vector2 frontDoorAnswerSpot;
     private Coroutine guestRoomVisibilityRefreshRoutine;
-    private Transform guestEntranceSpawnPlacemark;
-
     private const float CoatPickupReadyScreenDistance = 90f;
     private const float ClosetStorageReadyScreenDistance = 90f;
     private const float FrontDoorReadyScreenDistance = 90f;
@@ -285,6 +288,62 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         else if (coatCloset != null && closetPoint != coatCloset.transform)
         {
             report.AddError("Chapter1ArrivalController coat closet and approach point must share the authored Entrance hanger.", this);
+        }
+
+        if (guestFootstepCatalog == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized guest footstep catalog.", this);
+        }
+
+        if (entryRoomContent == null || !SameRoom(entryRoomContent.RoomName, entryRoomId))
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized Entrance room-content owner.", this);
+        }
+
+        if (drawingRoomContent == null || !SameRoom(drawingRoomContent.RoomName, drawingRoomId))
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized Drawing Room content owner.", this);
+        }
+
+        if (frontDoorArrivalPoint == null ||
+            guestEntranceSpawnPlacemark == null ||
+            entranceHallGuestAnchor == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized Entrance guest anchors.", this);
+        }
+
+        if (drawingRoomEntryPoint == null || drawingRoomDoorTarget == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized Drawing Room transition anchors.", this);
+        }
+
+        if (entryRoomContent != null &&
+            ((guestEntranceSpawnPlacemark != null && !guestEntranceSpawnPlacemark.IsChildOf(entryRoomContent.transform)) ||
+             (drawingRoomDoorTarget != null && !drawingRoomDoorTarget.IsChildOf(entryRoomContent.transform))))
+        {
+            report.AddError("Chapter1ArrivalController Entrance placemark and Drawing Room door target must belong to the Entrance room owner.", this);
+        }
+
+        if (drawingRoomGuestPoints == null || drawingRoomGuestPoints.Length != 8)
+        {
+            report.AddError("Chapter1ArrivalController requires exactly eight serialized Drawing Room guest points.", this);
+        }
+        else
+        {
+            HashSet<Transform> uniqueGuestPoints = new HashSet<Transform>();
+
+            for (int i = 0; i < drawingRoomGuestPoints.Length; i++)
+            {
+                Transform guestPoint = drawingRoomGuestPoints[i];
+
+                if (guestPoint == null ||
+                    !uniqueGuestPoints.Add(guestPoint) ||
+                    (drawingRoomContent != null && !guestPoint.IsChildOf(drawingRoomContent.transform)))
+                {
+                    report.AddError("Chapter1ArrivalController Drawing Room guest points must be unique authored children of the Drawing Room owner.", this);
+                    break;
+                }
+            }
         }
     }
 

@@ -91,13 +91,14 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed the front-door alias lookup, runtime trigger/action/renderer/collider/UI factories, collider-size derivation, and generic front-door click-target branch. Chapter 1 now only activates and configures its validated serialized action; the approach fallback addresses that same action directly.
 - Pruned the unowned pantry `CoatCloset / Anchors / ApproachFront` placeholder subtree (documents `3503000002`–`3503000008`) and removed its dead `FindPropAnchor`/`IsUnderNamedTransform` lookup path. The Entrance hanger remains the sole serialized closet owner.
 - Characterized Chapter 1's remaining immutable data lookups: Resources resolves footstep catalog GUID `0e780686c6653db1a1c74916a591d484`; dynamic searches resolve the exact Entrance placemark, Drawing Room door target, Entrance/Drawing room-content owners, and ordered eight authored guest points without generating fallback seats.
+- Serialized the characterized catalog, Entrance placemark, Drawing Room door target, Entrance/Drawing `RoomContentGroup` owners, and ordered eight guest points directly on Chapter 1. Configuration validation now requires that exact complete graph while the lookup code remains staged for its cleanup gate.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,176 | -726 |
+| Runtime C# lines | 49,902 | 49,235 | -667 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
 | `FindObject*`/`GameObject.Find` | 199 | 125 | -74 |
 | `Resources.Load` | 27 | 19 | -8 |
@@ -135,6 +136,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - front-door fallback cleanup changes no serialized asset; source guards ban every alias/search/factory/repair method, the rendered lifecycle keeps the exact action/collider and one trigger through repeated configuration/travel/skips, and the full suite remains 191/49 with an unchanged failure-name set;
 - pantry placeholder pruning removes exactly seven Gameplay documents, preserves all other document order and all 13 roots, leaves no reference to the removed IDs, and passes the Entrance ownership guard plus stored-coat/room-round-trip lifecycle; the full suite remains 191/49 with an unchanged failure-name set;
 - Chapter 1 immutable-data characterization passes exact null-edge/source-path guards and a rendered lifecycle that freezes catalog GUID/fileID, room/anchor identities, all eight guest-point transforms, repeated resolution, room travel, skips, and zero runtime-seat growth; the full suite remains 191/49 with an unchanged failure-name set;
+- Chapter 1 immutable-data serialization changes only controller document `3302000001`, preserves all 5,977 document IDs/order and 13 roots, leaves every referenced object/asset document byte-identical, and passes strict configuration plus the same rendered identity lifecycle; the full suite remains 191/49 with an unchanged failure-name set;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -218,6 +220,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Serialize Chapter 1's characterized footstep catalog, placemark, door target, two room-content owners, and ordered eight guest points while retaining the lookup paths for a separate cleanup gate.
+1. Remove Chapter 1's catalog/anchor/door-trigger/room-content discovery and obsolete three-seat/runtime-seat fallbacks, using only the validated serialized graph.
 
 Do not begin bulk deletion until those gates pass.
