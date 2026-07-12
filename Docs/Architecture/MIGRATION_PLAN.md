@@ -95,7 +95,7 @@ RoomDefinition -> RoomView -> SetPieceView -> RoomDepthResolver
 ```
 
 - `RoomDepthResolver` and the static `SetPieceView` foundation are unit-gated before any scene binding;
-- `purple_armchair_back` is the characterized second vertical slice: exact chair art/profile/anchor/order and Gameplay blocker polygon are frozen before its competing writers are replaced;
+- `purple_armchair_back` is the completed second vertical slice: `SetPieceView` owns stable order `8289`, the original art/transform/component identities remain, and the accepted Gameplay blocker polygon is collision-only;
 - `SetPieceView` owns the visual cutout, a room-local occlusion anchor, and a sorting offset.
 - `RoomNavigationGeometry` owns the room boundary and authored no-walk footprints.
 - couches, desks, beds, toys, chairs, tables, and similar scenery use shared definitions/views rather than object-specific managers;
@@ -104,6 +104,7 @@ RoomDefinition -> RoomView -> SetPieceView -> RoomDepthResolver
 - accepted collider shapes are preserved and registered, not regenerated;
 - the Drawing Room's duplicate prop-sort writers migrate one prop at a time;
 - the first tea-table baseline exposed the duplicate-writer defect, then the table migrated to `Props / Set Pieces`: `SetPieceView` owns stable order `6627`, the accepted blocker polygon remains, and collision sorting is disabled for that prop;
+- the second purple-armchair baseline exposed the same defect, then the armchair migrated in place: `SetPieceView` owns stable order `8289`, the accepted lower-seat polygon remains, and collision sorting is disabled for that prop;
 - Dining Room seat occlusion migrates only after `ActorPresenter` exists and uses serialized `SeatOcclusionSlot` data.
 
 Migrate navigation geometry and set-piece views one room at a time. The Grand Entrance Hall/Drawing Room route remains the first passage slice; Dining Room is the final set-piece slice because it depends on actor presentation.

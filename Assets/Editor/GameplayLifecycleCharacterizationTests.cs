@@ -83,9 +83,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         ObjectMovementBlocker2D teaTableBlocker = FindInActiveScene<ObjectMovementBlocker2D>()
             .Single(item => item.SourceObjectName == "tea_service_table");
         PolygonCollider2D teaTableCollider = teaTableBlocker.BlockingCollider as PolygonCollider2D;
-        RoomProjectedEntity purpleArmchairProjection = FindInActiveScene<RoomProjectedEntity>()
+        SetPieceView purpleArmchairView = FindInActiveScene<SetPieceView>()
             .Single(item => item.gameObject.name == "purple_armchair_back");
-        SpriteRenderer purpleArmchairRenderer = purpleArmchairProjection.GetComponent<SpriteRenderer>();
+        SpriteRenderer purpleArmchairRenderer = purpleArmchairView.CutoutRenderer;
         ObjectMovementBlocker2D purpleArmchairBlocker = FindInActiveScene<ObjectMovementBlocker2D>()
             .Single(item => item.SourceObjectName == "purple_armchair_back");
         PolygonCollider2D purpleArmchairCollider = purpleArmchairBlocker.BlockingCollider as PolygonCollider2D;
@@ -180,13 +180,31 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.False,
             "Clock ambience must not inherit an enabled low-pass filter.");
         Assert.That(teaTableView.gameObject.activeInHierarchy, Is.False, "The Drawing Room set piece starts inactive with its room.");
-        Assert.That(purpleArmchairProjection.gameObject.activeInHierarchy, Is.False);
-        Assert.That(purpleArmchairProjection.GetComponent<SetPieceView>(), Is.Null);
+        Assert.That(purpleArmchairView.gameObject.activeInHierarchy, Is.False);
+        Assert.That(purpleArmchairView.GetComponent<RoomProjectedEntity>(), Is.Null);
         Assert.That(purpleArmchairRenderer, Is.Not.Null);
-        Assert.That(purpleArmchairBlocker.SourceObject, Is.SameAs(purpleArmchairProjection.gameObject));
-        Assert.That(purpleArmchairBlocker.SortSourceRenderers, Is.True);
+        Assert.That(purpleArmchairBlocker.SourceObject, Is.SameAs(purpleArmchairView.gameObject));
+        Assert.That(purpleArmchairBlocker.SortSourceRenderers, Is.False);
         Assert.That(purpleArmchairCollider, Is.Not.Null);
         Assert.That(purpleArmchairCollider.isTrigger, Is.True);
+        Assert.That(purpleArmchairView.HasGameContext, Is.True, "GameRoot should bind the inactive armchair set-piece owner.");
+        Assert.That(purpleArmchairView.RoomLocalOcclusionAnchor, Is.EqualTo(new Vector2(243.62f, -315.58f)));
+        Assert.That(purpleArmchairView.DepthProfile, Is.Not.Null);
+        Assert.That(RoomDepthResolver.Resolve(purpleArmchairView.DepthProfile, purpleArmchairView.RoomLocalOcclusionAnchor), Is.EqualTo(8289));
+        Assert.That(purpleArmchairView.CurrentSortingOrder, Is.EqualTo(8289));
+        Assert.That(purpleArmchairRenderer.sortingOrder, Is.EqualTo(8289));
+        Assert.That(purpleArmchairRenderer.sortingLayerName, Is.EqualTo("People"));
+        Assert.That(purpleArmchairRenderer.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Pivot));
+        Assert.That(purpleArmchairView.transform.parent.name, Is.EqualTo("Set Pieces"));
+        Assert.That(purpleArmchairView.transform.parent.parent.name, Is.EqualTo("Props"));
+        Assert.That(purpleArmchairView.transform.localPosition.x, Is.EqualTo(246.18f).Within(0.001f));
+        Assert.That(purpleArmchairView.transform.localPosition.y, Is.EqualTo(-323.26f).Within(0.001f));
+        Assert.That(purpleArmchairView.transform.localPosition.z, Is.Zero, "RoomContentGroup currently flattens room art at runtime; the authored Z remains covered statically.");
+        Assert.That(purpleArmchairView.transform.localScale.x, Is.EqualTo(98.85839f).Within(0.0001f));
+        Assert.That(purpleArmchairView.transform.localScale.y, Is.EqualTo(100.35108f).Within(0.0001f));
+        Assert.That(purpleArmchairView.transform.localScale.z, Is.EqualTo(73.00117f).Within(0.0001f));
+        Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(purpleArmchairRenderer.sprite)), Is.EqualTo("84e185b06bd4d9a19842586e593673e5"));
+        Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(purpleArmchairRenderer.sharedMaterial)), Is.EqualTo("a97c105638bdf8b4a8650670310a4cd3"));
         Assert.That(teaTableView.HasGameContext, Is.True, "GameRoot should bind the serialized set-piece owner even while its room is inactive.");
         Assert.That(teaTableRenderer, Is.Not.Null);
         Assert.That(teaTableView.GetComponent<RoomProjectedEntity>(), Is.Null);
@@ -473,7 +491,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(fireplaceSource.clip, Is.Not.Null);
         Assert.That(clockSource.clip, Is.Not.Null);
         Assert.That(teaTableView.gameObject.activeInHierarchy, Is.True);
-        Assert.That(purpleArmchairProjection.gameObject.activeInHierarchy, Is.True);
+        Assert.That(purpleArmchairView.gameObject.activeInHierarchy, Is.True);
         Assert.That(purpleArmchairBlocker.gameObject.activeInHierarchy, Is.True);
         Vector2[] purpleArmchairFootprint = purpleArmchairCollider.points;
         Assert.That(purpleArmchairFootprint, Has.Length.EqualTo(4));
@@ -482,17 +500,18 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(purpleArmchairFootprint[2], Is.EqualTo(new Vector2(329.0629f, -381.66437f)));
         Assert.That(purpleArmchairFootprint[3], Is.EqualTo(new Vector2(163.29713f, -381.66437f)));
         purpleArmchairRenderer.sortingOrder = -22345;
-        purpleArmchairProjection.ApplyProjection();
-        int purpleProjectionOrder = purpleArmchairRenderer.sortingOrder;
-        Assert.That(purpleProjectionOrder, Is.EqualTo(8289));
-        Assert.That(purpleArmchairProjection.CurrentSortingOrder, Is.EqualTo(8289));
+        Assert.That(purpleArmchairView.ApplyPresentation(), Is.True);
+        int purpleSetPieceOrder = purpleArmchairRenderer.sortingOrder;
+        Assert.That(purpleSetPieceOrder, Is.EqualTo(8289));
+        Assert.That(purpleArmchairView.CurrentSortingOrder, Is.EqualTo(8289));
         purpleArmchairRenderer.sortingOrder = -22346;
         Physics2D.SyncTransforms();
         purpleArmchairBlocker.ApplySourceSortingNow();
-        int purpleBlockerOrder = purpleArmchairRenderer.sortingOrder;
-        Assert.That(purpleBlockerOrder, Is.Not.EqualTo(purpleProjectionOrder), "The legacy blocker currently competes with armchair projection sorting.");
+        Assert.That(purpleArmchairRenderer.sortingOrder, Is.EqualTo(-22346), "Collision must not overwrite armchair presentation.");
+        Assert.That(purpleArmchairView.ApplyPresentation(), Is.True);
+        Assert.That(purpleArmchairRenderer.sortingOrder, Is.EqualTo(purpleSetPieceOrder));
         CollectionAssert.AreEqual(purpleArmchairFootprint, purpleArmchairCollider.points);
-        Debug.Log($"[SetPieceCharacterization] purple_armchair_back projection={purpleProjectionOrder} blocker={purpleBlockerOrder}");
+        Debug.Log($"[SetPieceMigration] purple_armchair_back order={purpleSetPieceOrder} blockerSorting={purpleArmchairBlocker.SortSourceRenderers} footprintPoints={purpleArmchairCollider.points.Length}");
         Assert.That(FindInActiveScene<MonoBehaviour>().Any(item => item.GetType().Name == "GameClockHandsDisplay"), Is.False);
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("Canvas_AnalogClockHands")), Is.False);
         Assert.That(teaTableBlocker.gameObject.activeInHierarchy, Is.True);
@@ -560,8 +579,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(fireplaceSource.clip, Is.Not.Null);
         Assert.That(clockSource.clip, Is.Not.Null);
         Assert.That(teaTableView.gameObject.activeInHierarchy, Is.False);
-        Assert.That(purpleArmchairProjection.gameObject.activeInHierarchy, Is.False);
-        Assert.That(FindInActiveScene<RoomProjectedEntity>().Single(item => item.gameObject.name == "purple_armchair_back"), Is.SameAs(purpleArmchairProjection));
+        Assert.That(purpleArmchairView.gameObject.activeInHierarchy, Is.False);
+        Assert.That(FindInActiveScene<SetPieceView>().Single(item => item.gameObject.name == "purple_armchair_back"), Is.SameAs(purpleArmchairView));
+        Assert.That(FindInActiveScene<RoomProjectedEntity>().Any(item => item.gameObject.name == "purple_armchair_back"), Is.False);
         Assert.That(FindInActiveScene<ObjectMovementBlocker2D>().Single(item => item.SourceObjectName == "purple_armchair_back"), Is.SameAs(purpleArmchairBlocker));
         CollectionAssert.AreEqual(purpleArmchairFootprint, purpleArmchairCollider.points);
         Assert.That(FindInActiveScene<MonoBehaviour>().Any(item => item.GetType().Name == "GameClockHandsDisplay"), Is.False);
