@@ -67,6 +67,13 @@ public sealed class GameplayLifecycleCharacterizationTests
         Chapter2Controller serializedChapter2 = RequireExactlyOneInActiveScene<Chapter2Controller>();
         Chapter2InteractionHUD serializedChapter2Hud = RequireExactlyOneInActiveScene<Chapter2InteractionHUD>();
         Chapter2MonsterStingerController serializedMonsterStinger = RequireExactlyOneInActiveScene<Chapter2MonsterStingerController>();
+        GameObject serializedMonsterObject = GetPrivateField<GameObject>(serializedMonsterStinger, "monsterObject");
+        Transform serializedMonsterRunStart = GetPrivateField<Transform>(serializedMonsterStinger, "runStart");
+        Transform serializedMonsterRunTarget = GetPrivateField<Transform>(serializedMonsterStinger, "runTarget");
+        RoomNavigationManager serializedMonsterNavigation = GetPrivateField<RoomNavigationManager>(serializedMonsterStinger, "navigationManager");
+        Image serializedMonsterImage = GetPrivateField<Image>(serializedMonsterStinger, "monsterImage");
+        SpriteRenderer serializedMonsterSpriteRenderer = GetPrivateField<SpriteRenderer>(serializedMonsterStinger, "monsterSpriteRenderer");
+        Sprite serializedMonsterOriginalSprite = serializedMonsterImage != null ? serializedMonsterImage.sprite : null;
         Chapter2GuestPanicController serializedGuestPanic = RequireExactlyOneInActiveScene<Chapter2GuestPanicController>();
         Chapter2GuestSearchController serializedGuestSearch = RequireExactlyOneInActiveScene<Chapter2GuestSearchController>();
         GuestRoomScaleApplier serializedGuestScaleApplier = RequireExactlyOneInActiveScene<GuestRoomScaleApplier>();
@@ -298,6 +305,18 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(serializedClockStrikeSource.GetComponents<AudioSource>(), Has.Length.EqualTo(1));
         Assert.That(serializedClockStrikeSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
         Assert.That(serializedMonsterStinger.HasGameContext, Is.True);
+        Assert.That(serializedMonsterObject, Is.Not.Null);
+        Assert.That(serializedMonsterObject.name, Is.EqualTo("Ch2_Monster"));
+        Assert.That(serializedMonsterRunStart, Is.Not.Null);
+        Assert.That(serializedMonsterRunStart.name, Is.EqualTo("Ch2_MonsterRunStart"));
+        Assert.That(serializedMonsterRunTarget, Is.Not.Null);
+        Assert.That(serializedMonsterRunTarget.name, Is.EqualTo("Ch2_MonsterFreezeTarget"));
+        Assert.That(serializedMonsterNavigation, Is.SameAs(navigation));
+        Assert.That(serializedMonsterImage, Is.Not.Null);
+        Assert.That(serializedMonsterImage.gameObject, Is.SameAs(serializedMonsterObject));
+        Assert.That(serializedMonsterSpriteRenderer, Is.Null);
+        Assert.That(serializedMonsterOriginalSprite, Is.Not.Null);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter2_MonsterPlaceholder_Runtime"), Is.False);
         Assert.That(serializedGuestPanic.HasGameContext, Is.True);
         Assert.That(serializedGuestSearch.HasGameContext, Is.True);
         Assert.That(serializedMonsterStinger.IsRunning, Is.False);
@@ -758,6 +777,30 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(clockStrikeSource.GetComponents<AudioSource>(), Has.Length.EqualTo(1));
         Assert.That(clockStrikeSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
         Assert.That(clockStrikeSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(clockStrikeBindings[0]));
+
+        serializedMonsterStinger.BeginStinger();
+        yield return null;
+
+        Assert.That(serializedMonsterStinger.IsRunning, Is.True);
+        Assert.That(GetPrivateField<GameObject>(serializedMonsterStinger, "monsterObject"), Is.SameAs(serializedMonsterObject));
+        Assert.That(GetPrivateField<Transform>(serializedMonsterStinger, "runStart"), Is.SameAs(serializedMonsterRunStart));
+        Assert.That(GetPrivateField<Transform>(serializedMonsterStinger, "runTarget"), Is.SameAs(serializedMonsterRunTarget));
+        Assert.That(GetPrivateField<RoomNavigationManager>(serializedMonsterStinger, "navigationManager"), Is.SameAs(serializedMonsterNavigation));
+        Assert.That(GetPrivateField<Image>(serializedMonsterStinger, "monsterImage"), Is.SameAs(serializedMonsterImage));
+        Assert.That(GetPrivateField<SpriteRenderer>(serializedMonsterStinger, "monsterSpriteRenderer"), Is.Null);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter2_MonsterPlaceholder_Runtime"), Is.False);
+
+        serializedMonsterStinger.StopStinger();
+        yield return null;
+
+        Assert.That(serializedMonsterStinger.IsRunning, Is.False);
+        Assert.That(serializedMonsterObject.activeSelf, Is.False);
+        Assert.That(serializedMonsterImage.sprite, Is.SameAs(serializedMonsterOriginalSprite));
+        Assert.That(GetPrivateField<GameObject>(serializedMonsterStinger, "monsterObject"), Is.SameAs(serializedMonsterObject));
+        Assert.That(GetPrivateField<Transform>(serializedMonsterStinger, "runStart"), Is.SameAs(serializedMonsterRunStart));
+        Assert.That(GetPrivateField<Transform>(serializedMonsterStinger, "runTarget"), Is.SameAs(serializedMonsterRunTarget));
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter2_MonsterPlaceholder_Runtime"), Is.False);
+        Debug.Log($"[Chapter2MonsterStructuralCharacterization] monster={serializedMonsterObject.GetInstanceID()} start={serializedMonsterRunStart.GetInstanceID()} target={serializedMonsterRunTarget.GetInstanceID()} image={serializedMonsterImage.GetInstanceID()} navigation={serializedMonsterNavigation.GetInstanceID()}");
     }
 
     private static IEnumerator WaitForSettledLayout()

@@ -72,6 +72,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized Chapter2Controller's manager identity before tightening its entry boundary: the controller starts with ChapterManager `3301000004` and retains that exact serialized owner through first and repeated Chapter 2 debug entry.
 - Made Chapter2Controller's four external entry commands enforce their serialized ChapterManager instead of rebinding it from a caller. Valid and null convenience calls keep existing behavior; a missing or different manager is rejected before phase, navigation, clock, guest, or UI mutation.
 - Grafted a dedicated `Audio_Chapter2ClockStrike` child beneath Chapter 2 with its own serialized non-looping 2D `AudioSource`, Game-Sounds `GameAudioSourceVolume` at base volume `0.4`, and imported clip GUID `d7084eafa9124afcbcbf12529e08bc70`. Seven-PM playback reuses those exact identities, and the obsolete resource/component/runtime-tone fallback is removed.
+- Characterized the monster stinger's structural graph before cleanup: Begin/Stop reuses the exact serialized monster, Drawing Room start/target anchors, navigation service, and Image, restores the authored sprite, and creates no placeholder.
 
 ## Current static result
 
@@ -135,6 +136,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - the focused clock-strike lifecycle and static architecture gates pass, proving exact serialized source/binding/clip reuse, no AudioSource or volume-binding collision on the Chapter 2 host, and no component growth across repeated seven-PM playback;
 - the clock-strike cleanup changes only the existing Chapter 2 controller document, removes its obsolete resource-path property, and leaves all 5,979 document headers, `SceneRoots`, dedicated audio documents, imported WAV, and `.meta` exact;
 - the cleanup-specific source guards ban `Resources.Load`, `AudioClip.Create`, source/binding factories, and the obsolete resolver/fields; two consecutive seven-PM lifecycles reuse the exact serialized graph without component growth;
+- the monster structural characterization pins controller `3301000007`, monster `3700000000`, Image `3700000003`, anchors `98514617`/`382498960`, their RoomAnchor owners/room IDs, exact authored positions, and navigation `1878886997`; focused lifecycle/static gates and the full suite pass before any repair removal;
 - the rendered full EditMode suite discovers 240 tests: 190 pass and the exact same 50 pre-existing failure names remain, with no clock-strike graft or cleanup regression;
 - the separate `-nographics` invalid-viewport issue was independently hardened in commit `4d8a6d9a` and is not attributed to the clock-strike graft;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;

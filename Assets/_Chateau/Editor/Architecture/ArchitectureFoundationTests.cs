@@ -146,6 +146,17 @@ public sealed class ArchitectureFoundationTests
     public void Chapter2FeatureControllersAreSerializedOnce()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+        string stingerDocument = ExtractDocument(sceneText, "--- !u!114 &3301000007");
+        string monsterGameObjectDocument = ExtractDocument(sceneText, "--- !u!1 &3700000000");
+        string monsterTransformDocument = ExtractDocument(sceneText, "--- !u!224 &3700000001");
+        string monsterImageDocument = ExtractDocument(sceneText, "--- !u!114 &3700000003");
+        string runStartGameObjectDocument = ExtractDocument(sceneText, "--- !u!1 &98514616");
+        string runStartTransformDocument = ExtractDocument(sceneText, "--- !u!224 &98514617");
+        string runStartAnchorDocument = ExtractDocument(sceneText, "--- !u!114 &3600000001");
+        string runTargetGameObjectDocument = ExtractDocument(sceneText, "--- !u!1 &382498959");
+        string runTargetTransformDocument = ExtractDocument(sceneText, "--- !u!224 &382498960");
+        string runTargetAnchorDocument = ExtractDocument(sceneText, "--- !u!114 &3600000002");
+        string stingerText = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs");
 
         Assert.That(CountOccurrences(sceneText, "guid: 684198ee76c12a66cb4335c3ab64b1bc"), Is.EqualTo(1));
         Assert.That(CountOccurrences(sceneText, "guid: aa4143ddf6de4b6b9b8c1edc0f9e2a31"), Is.EqualTo(1));
@@ -153,6 +164,41 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("monsterStinger: {fileID: 3301000007}"));
         Assert.That(sceneText, Does.Contain("guestPanic: {fileID: 3301000008}"));
         Assert.That(sceneText, Does.Contain("guestSearch: {fileID: 3301000009}"));
+        Assert.That(stingerDocument, Does.Contain("monsterObject: {fileID: 3700000000}"));
+        Assert.That(stingerDocument, Does.Contain("monsterObjectName: Ch2_Monster"));
+        Assert.That(stingerDocument, Does.Contain("runStart: {fileID: 98514617}"));
+        Assert.That(stingerDocument, Does.Contain("runTarget: {fileID: 382498960}"));
+        Assert.That(stingerDocument, Does.Contain("navigationManager: {fileID: 1878886997}"));
+        Assert.That(stingerDocument, Does.Contain("monsterImage: {fileID: 3700000003}"));
+        Assert.That(stingerDocument, Does.Contain("monsterSpriteRenderer: {fileID: 0}"));
+        Assert.That(stingerDocument, Does.Contain("createPlaceholderMonsterIfMissing: 1"));
+        Assert.That(monsterGameObjectDocument, Does.Contain("m_Name: Ch2_Monster"));
+        Assert.That(monsterGameObjectDocument, Does.Contain("- component: {fileID: 3700000003}"));
+        Assert.That(monsterTransformDocument, Does.Contain("m_Father: {fileID: 2300000006}"));
+        Assert.That(monsterTransformDocument, Does.Contain("m_AnchoredPosition: {x: -600, y: -79}"));
+        Assert.That(monsterTransformDocument, Does.Contain("m_SizeDelta: {x: 520, y: 435}"));
+        Assert.That(monsterImageDocument, Does.Contain("m_GameObject: {fileID: 3700000000}"));
+        Assert.That(monsterImageDocument, Does.Contain("m_Sprite: {fileID: 21300000, guid: ec4a2578f6304d97b9d29f7e77436e2c, type: 3}"));
+        Assert.That(runStartGameObjectDocument, Does.Contain("m_Name: Ch2_MonsterRunStart"));
+        Assert.That(runStartGameObjectDocument, Does.Contain("- component: {fileID: 98514617}"));
+        Assert.That(runStartGameObjectDocument, Does.Contain("- component: {fileID: 3600000001}"));
+        Assert.That(runStartTransformDocument, Does.Contain("m_Father: {fileID: 2300000006}"));
+        Assert.That(runStartTransformDocument, Does.Contain("m_AnchoredPosition: {x: -600, y: -79}"));
+        Assert.That(runStartAnchorDocument, Does.Contain("m_GameObject: {fileID: 98514616}"));
+        Assert.That(runStartAnchorDocument, Does.Contain("anchorId: Ch2_MonsterRunStart"));
+        Assert.That(runStartAnchorDocument, Does.Contain("roomId: Drawing Room"));
+        Assert.That(runTargetGameObjectDocument, Does.Contain("m_Name: Ch2_MonsterFreezeTarget"));
+        Assert.That(runTargetGameObjectDocument, Does.Contain("- component: {fileID: 382498960}"));
+        Assert.That(runTargetGameObjectDocument, Does.Contain("- component: {fileID: 3600000002}"));
+        Assert.That(runTargetTransformDocument, Does.Contain("m_Father: {fileID: 2300000006}"));
+        Assert.That(runTargetTransformDocument, Does.Contain("m_AnchoredPosition: {x: -171, y: -81}"));
+        Assert.That(runTargetAnchorDocument, Does.Contain("m_GameObject: {fileID: 382498959}"));
+        Assert.That(runTargetAnchorDocument, Does.Contain("anchorId: Ch2_MonsterFreezeTarget"));
+        Assert.That(runTargetAnchorDocument, Does.Contain("roomId: Drawing Room"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Chapter2_MonsterPlaceholder_Runtime"));
+        Assert.That(stingerText, Does.Contain("FindRoomAnchor"));
+        Assert.That(stingerText, Does.Contain("FindSceneMonsterObject"));
+        Assert.That(stingerText, Does.Contain("CreatePlaceholderMonster"));
     }
 
     [Test]
