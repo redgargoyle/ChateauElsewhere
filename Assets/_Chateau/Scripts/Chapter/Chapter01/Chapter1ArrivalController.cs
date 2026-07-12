@@ -85,9 +85,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [SerializeField] private Transform closetPoint;
     [SerializeField] private Transform drawingRoomEntryPoint;
     [SerializeField] private Transform drawingRoomDoorTarget;
-    [SerializeField] private Transform drawingRoomSeat01;
-    [SerializeField] private Transform drawingRoomSeat02;
-    [SerializeField] private Transform drawingRoomSeat03;
     [SerializeField] private Transform[] drawingRoomGuestPoints = Array.Empty<Transform>();
 
     [Header("Clock Timeline")]
@@ -103,7 +100,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [SerializeField] private List<GuestArrivalConfig> guests = new List<GuestArrivalConfig>();
     [SerializeField] private bool useExistingSceneGuestsFirst = true;
     [SerializeField] private float entranceGuestSpacing = 95f;
-    [SerializeField] private float drawingRoomSeatSpacing = 86f;
     [SerializeField] private float guestMoveSpeed = 180f;
     [SerializeField] private float worldEntranceGuestSpacing = 0.65f;
     [SerializeField] private float worldDrawingRoomSeatSpacing = 0.75f;
@@ -111,7 +107,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     [Header("Guest Footsteps")]
     [SerializeField] private GuestFootstepCatalog guestFootstepCatalog;
-    [SerializeField] private string guestFootstepCatalogResourcePath = DefaultGuestFootstepCatalogResourcePath;
     [SerializeField] private bool playGuestFootsteps = true;
 
     [Header("Entrance Sorting")]
@@ -140,7 +135,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private readonly List<GuestGroupRuntimeState> guestGroups = new List<GuestGroupRuntimeState>();
     private readonly List<GuestGroupRuntimeState> pendingGuestGroups = new List<GuestGroupRuntimeState>();
     private readonly List<GuestGroupRuntimeState> activeEntranceGroups = new List<GuestGroupRuntimeState>();
-    private readonly List<Transform> runtimeSeatAnchors = new List<Transform>();
     private readonly HashSet<GameObject> runtimeGeneratedGuestObjects = new HashSet<GameObject>();
     private readonly Dictionary<Renderer, RendererSortingState> authoredGuestRendererSorting = new Dictionary<Renderer, RendererSortingState>();
     private readonly Dictionary<string, Sprite> guestCoatSpriteCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
@@ -174,15 +168,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private const float EntranceWaitSlotSpacingMultiplier = 1.3f;
     private const float EntranceWaitGroupSideStepMultiplier = -0.32f;
     private const int EntranceBanisterSafeWalkingSortingOrder = 1599;
-    private const string GuestEntranceSpawnPlacemarkId = "Placemark_guests_entrance";
-    private const string FrontDoorGuestSpawnAnchorId = "GuestArrival_Door";
-    private const string EntranceHallGuestAnchorId = "EntranceHallGuestAnchor";
-    private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
-    private const string DrawingRoomSideButlerSpotAnchorId = "DrawingRoomSideButlerSpot";
-    private const string LegacyButlerGreetingSpotAnchorId = "ButlerGreetingSpot";
-    private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
     private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
-    private const string DefaultGuestFootstepCatalogResourcePath = "Audio/GuestFootstepCatalog";
     private const string GuestInterruptedLineText = "You inturrupted me.";
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
@@ -341,6 +327,19 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
                     (drawingRoomContent != null && !guestPoint.IsChildOf(drawingRoomContent.transform)))
                 {
                     report.AddError("Chapter1ArrivalController Drawing Room guest points must be unique authored children of the Drawing Room owner.", this);
+                    break;
+                }
+
+                RoomAnchor guestPointAnchor = guestPoint.GetComponent<RoomAnchor>();
+                string expectedAnchorId = $"DrawingRoomGuestPoint_{i + 1:00}";
+
+                if (guestPointAnchor == null ||
+                    !string.Equals(guestPointAnchor.AnchorId, expectedAnchorId, StringComparison.Ordinal) ||
+                    !SameRoom(guestPointAnchor.RoomId, drawingRoomId))
+                {
+                    report.AddError(
+                        $"Chapter1ArrivalController Drawing Room guest point slot {i + 1} must reference ordered RoomAnchor '{expectedAnchorId}' in room '{drawingRoomId}'.",
+                        this);
                     break;
                 }
             }
@@ -1456,6 +1455,21 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     {
         ResolveReferences(false);
 
+        Chateau.Architecture.ValidationReport configurationReport = new Chateau.Architecture.ValidationReport();
+        ValidateConfiguration(configurationReport);
+
+        for (int i = 0; i < configurationReport.Messages.Count; i++)
+        {
+            Chateau.Architecture.ValidationMessage message = configurationReport.Messages[i];
+
+            if (message.Severity == Chateau.Architecture.ValidationSeverity.Error)
+            {
+                Debug.LogWarning(
+                    $"Chapter1 startup configuration: {message.Message}",
+                    message.Context != null ? message.Context : this);
+            }
+        }
+
         if (playerMovement == null && playerButlerReference == null)
         {
             Debug.LogWarning("Chapter1ArrivalController missing required field: player/butler reference.", this);
@@ -1474,21 +1488,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         if (drawingRoomEntryPoint == null)
         {
             Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomEntryPoint.", this);
-        }
-
-        if (drawingRoomSeat01 == null)
-        {
-            Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomSeat01.", this);
-        }
-
-        if (drawingRoomSeat02 == null)
-        {
-            Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomSeat02.", this);
-        }
-
-        if (drawingRoomSeat03 == null)
-        {
-            Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomSeat03.", this);
         }
 
         if (guestRoomScaleApplier == null)
@@ -2556,8 +2555,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             return null;
         }
 
-        ResolveGuestFootstepCatalog();
-
         GuestFootstepAudio footsteps = guestObject.GetComponent<GuestFootstepAudio>();
 
         if (footsteps == null)
@@ -2988,19 +2985,11 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             return drawingRoomEntryPoint;
         }
 
-        Transform editableGuestPoint = FindDrawingRoomGuestPoint(guest.GuestIndex);
+        Transform editableGuestPoint = GetDrawingRoomGuestPoint(guest.GuestIndex);
 
         if (editableGuestPoint != null)
         {
             return editableGuestPoint;
-        }
-
-        if (IsWorldSpaceGuestObject(guest.GuestObject))
-        {
-            return CreateRuntimeAnchor(
-                $"DrawingRoomSeat_{guest.Config.GuestId}",
-                GetWorldDrawingRoomSeatPosition(guest.GuestIndex),
-                null);
         }
 
         return guest.Seat != null ? guest.Seat : ResolveSeatForGuest(guest.GuestIndex);
@@ -5321,58 +5310,19 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private Transform ResolveSeatForGuest(int index)
     {
-        Transform editableGuestPoint = FindDrawingRoomGuestPoint(index);
-
-        if (editableGuestPoint != null)
-        {
-            return editableGuestPoint;
-        }
-
-        switch (index)
-        {
-            case 0:
-                if (drawingRoomSeat01 != null) return drawingRoomSeat01;
-                break;
-            case 1:
-                if (drawingRoomSeat02 != null) return drawingRoomSeat02;
-                break;
-            case 2:
-                if (drawingRoomSeat03 != null) return drawingRoomSeat03;
-                break;
-        }
-
-        while (runtimeSeatAnchors.Count <= index)
-        {
-            int seatIndex = runtimeSeatAnchors.Count;
-            Vector3 basePosition = drawingRoomSeat03 != null
-                ? drawingRoomSeat03.position
-                : drawingRoomEntryPoint != null ? drawingRoomEntryPoint.position : transform.position;
-            int column = seatIndex % 4;
-            int row = seatIndex / 4;
-            Vector3 position = basePosition + new Vector3((column - 1.5f) * drawingRoomSeatSpacing, -row * drawingRoomSeatSpacing, 0f);
-            runtimeSeatAnchors.Add(CreateRuntimeAnchor($"DrawingRoomSeat_Runtime_{seatIndex + 1:00}", position, drawingRoomEntryPoint));
-        }
-
-        return runtimeSeatAnchors[index];
+        return GetDrawingRoomGuestPoint(index);
     }
 
-    private Transform FindDrawingRoomGuestPoint(int guestIndex)
+    private Transform GetDrawingRoomGuestPoint(int guestIndex)
     {
-        if (guestIndex < 0)
+        if (drawingRoomGuestPoints == null ||
+            guestIndex < 0 ||
+            guestIndex >= drawingRoomGuestPoints.Length)
         {
             return null;
         }
 
-        string pointName = $"{DrawingRoomGuestPointPrefix}{guestIndex + 1:00}";
-        Transform roomAnchor = FindAnchor(pointName, drawingRoomId);
-
-        if (roomAnchor != null)
-        {
-            return roomAnchor;
-        }
-
-        GameObject pointObject = FindSceneObjectByExactName(pointName);
-        return pointObject != null ? pointObject.transform : null;
+        return drawingRoomGuestPoints[guestIndex];
     }
 
     private Transform CreateRuntimeAnchor(string objectName, Vector3 position, Transform siblingAnchor)
@@ -5622,7 +5572,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private Vector3 GetEntranceWaitBasePosition()
     {
-        Transform anchor = GetEntranceHallGuestAnchor();
+        Transform anchor = entranceHallGuestAnchor;
 
         if (anchor != null)
         {
@@ -5727,35 +5677,14 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private Transform GetWorldDoorArrivalTarget(GuestRuntimeState guestState)
     {
-        Transform placemark = GetGuestEntranceSpawnPlacemark();
-
-        if (placemark != null)
+        if (guestEntranceSpawnPlacemark != null)
         {
-            return placemark;
+            return guestEntranceSpawnPlacemark;
         }
 
         return guestState != null && guestState.Config != null
             ? guestState.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint)
             : frontDoorArrivalPoint;
-    }
-
-    private Transform GetGuestEntranceSpawnPlacemark()
-    {
-        if (guestEntranceSpawnPlacemark != null)
-        {
-            return guestEntranceSpawnPlacemark;
-        }
-
-        guestEntranceSpawnPlacemark = FindAnchor(GuestEntranceSpawnPlacemarkId, entryRoomId);
-
-        if (guestEntranceSpawnPlacemark != null)
-        {
-            return guestEntranceSpawnPlacemark;
-        }
-
-        GameObject placemarkObject = FindSceneObjectByExactName(GuestEntranceSpawnPlacemarkId);
-        guestEntranceSpawnPlacemark = placemarkObject != null ? placemarkObject.transform : null;
-        return guestEntranceSpawnPlacemark;
     }
 
     private bool TryGetWorldFrontDoorAnswerSpot(out Vector3 answerSpotPosition)
@@ -5802,11 +5731,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             return editableTargetPosition;
         }
 
-        if (TryGetGrandEntranceDrawingRoomDoorPosition(depthReference, out Vector3 doorPosition))
-        {
-            return doorPosition;
-        }
-
         Transform entryAnchor = guestState != null && guestState.Config != null
             ? guestState.Config.GetDrawingRoomEntryPoint(drawingRoomEntryPoint)
             : drawingRoomEntryPoint;
@@ -5841,62 +5765,8 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private bool TryGetGrandEntranceDrawingRoomGuestTargetPosition(Transform depthReference, out Vector3 worldPosition)
     {
         worldPosition = Vector3.zero;
-        Transform targetAnchor = FindAnchor(DrawingRoomDoorTargetAnchorId, entryRoomId);
-
-        if (targetAnchor == null)
-        {
-            GameObject targetObject = FindSceneObjectByExactName(DrawingRoomDoorTargetAnchorId);
-            targetAnchor = targetObject != null ? targetObject.transform : null;
-        }
-
-        return targetAnchor != null &&
-            TryGetWorldPositionForGuestTarget(depthReference, targetAnchor, out worldPosition);
-    }
-
-    private bool TryGetGrandEntranceDrawingRoomDoorPosition(Transform depthReference, out Vector3 worldPosition)
-    {
-        worldPosition = Vector3.zero;
-        DoorTriggerNavigation[] doorTriggers = FindObjectsByType<DoorTriggerNavigation>(FindObjectsInactive.Include);
-        DoorTriggerNavigation fallbackTrigger = null;
-
-        for (int i = 0; i < doorTriggers.Length; i++)
-        {
-            DoorTriggerNavigation doorTrigger = doorTriggers[i];
-
-            if (doorTrigger == null ||
-                !SameRoom(doorTrigger.SourceRoom, entryRoomId) ||
-                !SameRoom(doorTrigger.DestinationRoom, drawingRoomId))
-            {
-                continue;
-            }
-
-            if (doorTrigger.gameObject.activeInHierarchy &&
-                TryGetWorldPositionForGuestTarget(depthReference, doorTrigger.transform, out worldPosition))
-            {
-                return true;
-            }
-
-            if (fallbackTrigger == null)
-            {
-                fallbackTrigger = doorTrigger;
-            }
-        }
-
-        return fallbackTrigger != null &&
-            TryGetWorldPositionForGuestTarget(depthReference, fallbackTrigger.transform, out worldPosition);
-    }
-
-    private Vector3 GetWorldDrawingRoomSeatPosition(int guestIndex)
-    {
-        Vector3 basePosition = GetWorldDrawingRoomCenterPosition();
-        int columns = Mathf.Max(1, Mathf.Min(4, guestsPerArrivalGroup * 2));
-        int column = guestIndex % columns;
-        int row = guestIndex / columns;
-        float centeredColumn = column - (columns - 1) * 0.5f;
-        return basePosition + new Vector3(
-            centeredColumn * worldDrawingRoomSeatSpacing,
-            -row * worldDrawingRoomSeatSpacing * 0.8f,
-            0f);
+        return drawingRoomDoorTarget != null &&
+            TryGetWorldPositionForGuestTarget(depthReference, drawingRoomDoorTarget, out worldPosition);
     }
 
     private Vector2 GetWorldGuestGridOffset(int index, int count, float spacing)
@@ -5962,7 +5832,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private bool TryGetEntranceHallGuestAnchorWorldPosition(GuestRuntimeState guestState, out Vector3 worldPosition)
     {
         worldPosition = Vector3.zero;
-        Transform anchor = GetEntranceHallGuestAnchor();
+        Transform anchor = entranceHallGuestAnchor;
 
         if (anchor == null)
         {
@@ -5981,30 +5851,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         }
 
         return false;
-    }
-
-    private Transform GetEntranceHallGuestAnchor()
-    {
-        if (entranceHallGuestAnchor != null)
-        {
-            return entranceHallGuestAnchor;
-        }
-
-        entranceHallGuestAnchor = FindAnchor(EntranceHallGuestAnchorId, entryRoomId);
-
-        if (entranceHallGuestAnchor != null)
-        {
-            return entranceHallGuestAnchor;
-        }
-
-        GameObject anchorObject = FindSceneObjectByExactName(EntranceHallGuestAnchorId);
-        entranceHallGuestAnchor = anchorObject != null ? anchorObject.transform : null;
-        return entranceHallGuestAnchor;
-    }
-
-    private Vector3 GetWorldDrawingRoomCenterPosition()
-    {
-        return GetWorldEntranceCenterPosition() + new Vector3(0f, 0.35f, 0f);
     }
 
     private bool TryGetAverageAuthoredChapterGuestPosition(out Vector3 averagePosition)
@@ -6058,7 +5904,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private Vector2 GetEntranceWaitBaseAnchoredPosition()
     {
-        Transform anchor = GetEntranceHallGuestAnchor();
+        Transform anchor = entranceHallGuestAnchor;
 
         if (anchor != null)
         {
@@ -6072,7 +5918,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private float GetEntranceWaitBaseYOffset(float spacing)
     {
-        if (GetEntranceHallGuestAnchor() != null)
+        if (entranceHallGuestAnchor != null)
         {
             return 0f;
         }
@@ -6082,7 +5928,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private float GetWorldEntranceWaitBaseYOffset()
     {
-        return GetEntranceHallGuestAnchor() != null ? 0f : -worldEntranceGuestSpacing * 1.5f;
+        return entranceHallGuestAnchor != null ? 0f : -worldEntranceGuestSpacing * 1.5f;
     }
 
     private Vector2 GetEntranceGroupOffset(
@@ -6615,22 +6461,10 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         ResolveReferences(true);
     }
 
-    private void ResolveGuestFootstepCatalog()
-    {
-        if (guestFootstepCatalog != null || string.IsNullOrWhiteSpace(guestFootstepCatalogResourcePath))
-        {
-            return;
-        }
-
-        guestFootstepCatalog = Resources.Load<GuestFootstepCatalog>(guestFootstepCatalogResourcePath.Trim());
-    }
-
     private void ResolveReferences(bool createFallbacks)
     {
-        ResolveGuestFootstepCatalog();
         playerButlerReference = playerMovement != null ? playerMovement.gameObject : null;
 
-        ResolveAnchors();
         ResolveStoryHelpers(createFallbacks);
     }
 
@@ -6668,75 +6502,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         {
             timeSettingsUI = gameObject.AddComponent<ChapterTimeSettingsUI>();
         }
-    }
-
-    private void ResolveAnchors()
-    {
-        if (frontDoorArrivalPoint == null)
-        {
-            frontDoorArrivalPoint = FindAnchor(FrontDoorGuestSpawnAnchorId, entryRoomId);
-        }
-
-        if (guestEntranceSpawnPlacemark == null)
-        {
-            guestEntranceSpawnPlacemark = FindAnchor(GuestEntranceSpawnPlacemarkId, entryRoomId);
-        }
-
-        if (entranceHallGuestAnchor == null)
-        {
-            entranceHallGuestAnchor = FindAnchor(EntranceHallGuestAnchorId, entryRoomId);
-        }
-
-        if (drawingRoomSideButlerSpot == null)
-        {
-            drawingRoomSideButlerSpot =
-                FindAnchor(DrawingRoomSideButlerSpotAnchorId, entryRoomId) ??
-                FindAnchor(LegacyButlerGreetingSpotAnchorId, entryRoomId);
-        }
-
-        if (drawingRoomEntryPoint == null)
-        {
-            drawingRoomEntryPoint = FindAnchor("DrawingRoomEntry", drawingRoomId);
-        }
-
-        if (drawingRoomSeat01 == null)
-        {
-            drawingRoomSeat01 = FindAnchor("Seat_01", drawingRoomId);
-        }
-
-        if (drawingRoomSeat02 == null)
-        {
-            drawingRoomSeat02 = FindAnchor("Seat_02", drawingRoomId);
-        }
-
-        if (drawingRoomSeat03 == null)
-        {
-            drawingRoomSeat03 = FindAnchor("Seat_03", drawingRoomId);
-        }
-
-    }
-
-    private Transform FindAnchor(string anchorId, string roomId)
-    {
-        RoomAnchor[] anchors = FindObjectsByType<RoomAnchor>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < anchors.Length; i++)
-        {
-            RoomAnchor anchor = anchors[i];
-
-            if (anchor == null)
-            {
-                continue;
-            }
-
-            if (string.Equals(anchor.AnchorId, anchorId, StringComparison.OrdinalIgnoreCase) &&
-                SameRoom(anchor.RoomId, roomId))
-            {
-                return anchor.transform;
-            }
-        }
-
-        return null;
     }
 
     private static GameObject FindGameObjectByNormalizedName(string normalizedName)
@@ -6801,21 +6566,14 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private RoomContentGroup FindRoomContentGroup(string roomId)
     {
-        if (string.IsNullOrWhiteSpace(roomId))
+        if (SameRoom(roomId, entryRoomId))
         {
-            return null;
+            return entryRoomContent;
         }
 
-        RoomContentGroup[] roomContentGroups = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < roomContentGroups.Length; i++)
+        if (SameRoom(roomId, drawingRoomId))
         {
-            RoomContentGroup roomContent = roomContentGroups[i];
-
-            if (roomContent != null && SameRoom(roomContent.RoomName, roomId))
-            {
-                return roomContent;
-            }
+            return drawingRoomContent;
         }
 
         return null;

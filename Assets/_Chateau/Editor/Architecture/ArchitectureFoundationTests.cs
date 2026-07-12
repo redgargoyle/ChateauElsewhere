@@ -338,7 +338,7 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1DataOwnersAreSerializedWithFallbacksStaged()
+    public void Chapter1DataOwnersAreSerializedWithoutFallbacks()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter1Document = ExtractDocument(sceneText, "--- !u!114 &3302000001");
@@ -369,7 +369,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Document, Does.Contain("playerButlerReference: {fileID: 0}"));
         Assert.That(chapter1Document, Does.Contain("frontDoorSceneAction: {fileID: 1180734300}"));
         Assert.That(chapter1Document, Does.Contain("guestFootstepCatalog: {fileID: 11400000, guid: 0e780686c6653db1a1c74916a591d484, type: 2}"));
-        Assert.That(chapter1Document, Does.Contain("guestFootstepCatalogResourcePath: Audio/GuestFootstepCatalog"));
+        Assert.That(chapter1Document, Does.Not.Contain("guestFootstepCatalogResourcePath"));
         Assert.That(chapter1Document, Does.Contain("guestEntranceSpawnPlacemark: {fileID: 3501000027}"));
         Assert.That(chapter1Document, Does.Contain("drawingRoomDoorTarget: {fileID: 3501000021}"));
         Assert.That(chapter1Document, Does.Contain("entryRoomContent: {fileID: 2102000002}"));
@@ -384,6 +384,10 @@ public sealed class ArchitectureFoundationTests
             "  - {fileID: 3502000116}\n" +
             "  - {fileID: 3502000119}\n" +
             "  - {fileID: 3502000122}\n"));
+        Assert.That(chapter1Document, Does.Not.Contain("drawingRoomSeat01:"));
+        Assert.That(chapter1Document, Does.Not.Contain("drawingRoomSeat02:"));
+        Assert.That(chapter1Document, Does.Not.Contain("drawingRoomSeat03:"));
+        Assert.That(chapter1Document, Does.Not.Contain("drawingRoomSeatSpacing:"));
         Assert.That(hangerDocument, Does.Contain("m_Name: entrance_coat_hanger_0"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234993}"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234994}"));
@@ -489,16 +493,29 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Not.Contain("EnsureDoorAnswerTriggerCanReceiveClicks"));
         Assert.That(chapter1Text, Does.Not.Contain("GetDoorAnswerTriggerColliderSize"));
         Assert.That(chapter1Text, Does.Not.Contain("if (actionType == Chapter1SceneActionType.FrontDoor)"));
-        Assert.That(chapter1Text, Does.Contain("Resources.Load<GuestFootstepCatalog>"));
-        Assert.That(chapter1Text, Does.Contain("FindAnchor(pointName, drawingRoomId)"));
-        Assert.That(chapter1Text, Does.Contain("FindSceneObjectByExactName(pointName)"));
-        Assert.That(chapter1Text, Does.Contain("FindObjectsByType<RoomContentGroup>"));
-        Assert.That(chapter1Text, Does.Contain("FindAnchor(GuestEntranceSpawnPlacemarkId, entryRoomId)"));
-        Assert.That(chapter1Text, Does.Contain("FindAnchor(DrawingRoomDoorTargetAnchorId, entryRoomId)"));
-        Assert.That(chapter1Text, Does.Contain("FindObjectsByType<DoorTriggerNavigation>"));
+        Assert.That(chapter1Text, Does.Not.Contain("Resources.Load<GuestFootstepCatalog>"));
+        Assert.That(chapter1Text, Does.Not.Contain("guestFootstepCatalogResourcePath"));
+        Assert.That(chapter1Text, Does.Not.Contain("ResolveGuestFootstepCatalog"));
+        Assert.That(chapter1Text, Does.Not.Contain("ResolveAnchors"));
+        Assert.That(chapter1Text, Does.Not.Contain("FindAnchor("));
+        Assert.That(chapter1Text, Does.Not.Contain("FindDrawingRoomGuestPoint"));
+        Assert.That(chapter1Text, Does.Not.Contain("FindObjectsByType<RoomContentGroup>"));
+        Assert.That(chapter1Text, Does.Not.Contain("FindObjectsByType<DoorTriggerNavigation>"));
+        Assert.That(chapter1Text, Does.Not.Contain("TryGetGrandEntranceDrawingRoomDoorPosition"));
+        Assert.That(chapter1Text, Does.Not.Contain("DrawingRoomSeat_Runtime_"));
+        Assert.That(chapter1Text, Does.Not.Contain("drawingRoomSeat01"));
+        Assert.That(chapter1Text, Does.Not.Contain("drawingRoomSeat02"));
+        Assert.That(chapter1Text, Does.Not.Contain("drawingRoomSeat03"));
+        Assert.That(chapter1Text, Does.Contain("return drawingRoomGuestPoints[guestIndex];"));
+        Assert.That(chapter1Text, Does.Contain("return drawingRoomDoorTarget != null"));
+        Assert.That(chapter1Text, Does.Contain("return entryRoomContent;"));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized guest footstep catalog."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized Entrance room-content owner."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires exactly eight serialized Drawing Room guest points."));
+        Assert.That(chapter1Text, Does.Contain("Drawing Room guest point slot {i + 1} must reference ordered RoomAnchor"));
+        Assert.That(chapter1Text, Does.Contain("string.Equals(guestPointAnchor.AnchorId, expectedAnchorId, StringComparison.Ordinal)"));
+        Assert.That(chapter1Text, Does.Contain("ValidateConfiguration(configurationReport);"));
+        Assert.That(chapter1Text, Does.Contain("Chapter1 startup configuration: {message.Message}"));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterManager."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterClock."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterEventScheduler."));

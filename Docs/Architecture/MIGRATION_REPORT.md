@@ -92,16 +92,17 @@ This report records what is implemented in the repository at this commit. It mus
 - Pruned the unowned pantry `CoatCloset / Anchors / ApproachFront` placeholder subtree (documents `3503000002`–`3503000008`) and removed its dead `FindPropAnchor`/`IsUnderNamedTransform` lookup path. The Entrance hanger remains the sole serialized closet owner.
 - Characterized Chapter 1's remaining immutable data lookups: Resources resolves footstep catalog GUID `0e780686c6653db1a1c74916a591d484`; dynamic searches resolve the exact Entrance placemark, Drawing Room door target, Entrance/Drawing room-content owners, and ordered eight authored guest points without generating fallback seats.
 - Serialized the characterized catalog, Entrance placemark, Drawing Room door target, Entrance/Drawing `RoomContentGroup` owners, and ordered eight guest points directly on Chapter 1. Configuration validation now requires that exact complete graph while the lookup code remains staged for its cleanup gate.
+- Removed Chapter 1's footstep Resources fallback, RoomAnchor/object-name discovery, duplicate door-trigger scan, room-content scan, legacy three-seat fields, and generated-seat fallback. Guest placement now reads only the validated ordered eight-point graph; configuration rejects point reordering by exact `RoomAnchor` identity, and startup diagnostics consume the same authoritative report while unrelated dynamic guest creation remains intact.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,235 | -667 |
+| Runtime C# lines | 49,902 | 48,993 | -909 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
-| `FindObject*`/`GameObject.Find` | 199 | 125 | -74 |
-| `Resources.Load` | 27 | 19 | -8 |
+| `FindObject*`/`GameObject.Find` | 199 | 122 | -77 |
+| `Resources.Load` | 27 | 18 | -9 |
 | runtime `new GameObject` | 98 | 81 | -17 |
 | runtime `AddComponent<T>` | 100 | 63 | -37 |
 | runtime initialization hooks | 9 | 4 | -5 |
@@ -137,6 +138,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - pantry placeholder pruning removes exactly seven Gameplay documents, preserves all other document order and all 13 roots, leaves no reference to the removed IDs, and passes the Entrance ownership guard plus stored-coat/room-round-trip lifecycle; the full suite remains 191/49 with an unchanged failure-name set;
 - Chapter 1 immutable-data characterization passes exact null-edge/source-path guards and a rendered lifecycle that freezes catalog GUID/fileID, room/anchor identities, all eight guest-point transforms, repeated resolution, room travel, skips, and zero runtime-seat growth; the full suite remains 191/49 with an unchanged failure-name set;
 - Chapter 1 immutable-data serialization changes only controller document `3302000001`, preserves all 5,977 document IDs/order and 13 roots, leaves every referenced object/asset document byte-identical, and passes strict configuration plus the same rendered identity lifecycle; the full suite remains 191/49 with an unchanged failure-name set;
+- Chapter 1 immutable-data cleanup removes only five obsolete properties from controller `3302000001`; document IDs/order/roots and every catalog/anchor/room document remain exact, source guards ban every retired resolver/factory path, and the rendered lifecycle retains all identities/transforms, rejects and recovers from an intentional point-order swap, and creates zero seats. The full suite is 194/46 with no new failures; corrected method/document extractors resolve the former false-red `WorldSpaceGuestsUseWorldSpaceDrawingRoomTargets`, `DrawingRoomGuestMovementUsesEditableScenePoints`, and `LiveDoorAnswerUsesStableEntranceWorldPositions` gates;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -220,6 +222,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Remove Chapter 1's catalog/anchor/door-trigger/room-content discovery and obsolete three-seat/runtime-seat fallbacks, using only the validated serialized graph.
+1. Characterize the remaining Chapter 1 story-helper ownership, beginning with the doorbell owner/source/binding/clip graph before any factory removal.
 
 Do not begin bulk deletion until those gates pass.

@@ -231,7 +231,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         {
             Transform guestPoint = characterizedDrawingRoomGuestPoints[i];
             RoomAnchor guestPointAnchor = guestPoint.GetComponent<RoomAnchor>();
-            Assert.That(InvokePrivateIntMethod<Transform>(arrival, "FindDrawingRoomGuestPoint", i), Is.SameAs(guestPoint));
+            Assert.That(InvokePrivateIntMethod<Transform>(arrival, "GetDrawingRoomGuestPoint", i), Is.SameAs(guestPoint));
             Assert.That(guestPoint.IsChildOf(characterizedDrawingRoomContent.transform), Is.True);
             Assert.That(guestPoint.localPosition.x, Is.EqualTo(expectedDrawingRoomGuestPointPositions[i].x).Within(0.0001f));
             Assert.That(guestPoint.localPosition.y, Is.EqualTo(expectedDrawingRoomGuestPointPositions[i].y).Within(0.0001f));
@@ -241,6 +241,32 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(guestPointAnchor.AnchorId, Is.EqualTo($"DrawingRoomGuestPoint_{i + 1:00}"));
             Assert.That(guestPointAnchor.RoomId, Is.EqualTo(DrawingRoom));
         }
+
+        Transform[] serializedGuestPoints = GetPrivateField<Transform[]>(arrival, "drawingRoomGuestPoints");
+        Transform firstSerializedGuestPoint = serializedGuestPoints[0];
+        Transform secondSerializedGuestPoint = serializedGuestPoints[1];
+
+        try
+        {
+            serializedGuestPoints[0] = secondSerializedGuestPoint;
+            serializedGuestPoints[1] = firstSerializedGuestPoint;
+            Chateau.Architecture.ValidationReport reorderedGuestPointValidation = new Chateau.Architecture.ValidationReport();
+            arrival.ValidateConfiguration(reorderedGuestPointValidation);
+            Assert.That(
+                reorderedGuestPointValidation.Messages.Any(message =>
+                    message.Message.Contains("Drawing Room guest point slot 1 must reference ordered RoomAnchor 'DrawingRoomGuestPoint_01'")),
+                Is.True,
+                "Configuration validation must reject Inspector reordering that would silently swap guest placement.");
+        }
+        finally
+        {
+            serializedGuestPoints[0] = firstSerializedGuestPoint;
+            serializedGuestPoints[1] = secondSerializedGuestPoint;
+        }
+
+        Chateau.Architecture.ValidationReport restoredGuestPointValidation = new Chateau.Architecture.ValidationReport();
+        arrival.ValidateConfiguration(restoredGuestPointValidation);
+        Assert.That(restoredGuestPointValidation.HasErrors, Is.False);
 
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("DrawingRoomSeat_Runtime_")), Is.False);
 
@@ -927,7 +953,7 @@ public sealed class GameplayLifecycleCharacterizationTests
 
         for (int i = 0; i < characterizedDrawingRoomGuestPoints.Length; i++)
         {
-            Assert.That(InvokePrivateIntMethod<Transform>(arrival, "FindDrawingRoomGuestPoint", i), Is.SameAs(characterizedDrawingRoomGuestPoints[i]));
+            Assert.That(InvokePrivateIntMethod<Transform>(arrival, "GetDrawingRoomGuestPoint", i), Is.SameAs(characterizedDrawingRoomGuestPoints[i]));
         }
 
         Assert.That(FindInActiveScene<RoomAnchor>(), Has.Length.EqualTo(characterizedRoomAnchorCount));

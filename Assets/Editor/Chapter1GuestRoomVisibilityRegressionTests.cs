@@ -103,21 +103,20 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string sceneText = File.ReadAllText(GameplayScenePath);
-        string entryMethodBody = ExtractMethodBody(controllerText, "GetWorldDrawingRoomEntryPosition");
-        string entryBaseMethodBody = ExtractMethodBody(controllerText, "GetWorldDrawingRoomEntryBasePosition");
-        string editableTargetMethodBody = ExtractMethodBody(controllerText, "TryGetGrandEntranceDrawingRoomGuestTargetPosition");
-        string doorLookupMethodBody = ExtractMethodBody(controllerText, "TryGetGrandEntranceDrawingRoomDoorPosition");
-        string spotMethodBody = ExtractMethodBody(controllerText, "ResolveDrawingRoomSpotForGuest");
+        string entryMethodBody = ExtractMethodBody(controllerText, "private Vector3 GetWorldDrawingRoomEntryPosition");
+        string entryBaseMethodBody = ExtractMethodBody(controllerText, "private Vector3 GetWorldDrawingRoomEntryBasePosition");
+        string editableTargetMethodBody = ExtractMethodBody(controllerText, "private bool TryGetGrandEntranceDrawingRoomGuestTargetPosition");
+        string spotMethodBody = ExtractMethodBody(controllerText, "private Transform ResolveDrawingRoomSpotForGuest");
 
         Assert.That(entryMethodBody, Does.Contain("GetWorldDrawingRoomEntryBasePosition(guestState)"), "World-space guest exit movement should use a converted visible entrance-hall doorway target.");
-        Assert.That(entryBaseMethodBody, Does.Match(@"TryGetGrandEntranceDrawingRoomGuestTargetPosition[\s\S]*TryGetGrandEntranceDrawingRoomDoorPosition"), "Guest movement should prefer the hand-authored straight-line target before falling back to the door hitbox.");
-        Assert.That(editableTargetMethodBody, Does.Contain("FindAnchor(DrawingRoomDoorTargetAnchorId, entryRoomId)"), "The Drawing Room door walking target should be editable as a RoomAnchor in the Entrance Hall.");
-        Assert.That(editableTargetMethodBody, Does.Contain("FindSceneObjectByExactName(DrawingRoomDoorTargetAnchorId)"), "The editable target should still be found if RoomAnchor data is stale.");
-        Assert.That(entryBaseMethodBody, Does.Contain("TryGetGrandEntranceDrawingRoomDoorPosition"), "World-space guests should walk to the visible Grand Entrance Hall Drawing Room door trigger.");
+        Assert.That(entryBaseMethodBody, Does.Contain("TryGetGrandEntranceDrawingRoomGuestTargetPosition"), "Guest movement should prefer the hand-authored straight-line target.");
+        Assert.That(editableTargetMethodBody, Does.Contain("drawingRoomDoorTarget"), "The Drawing Room door walking target should use its serialized Entrance Hall anchor.");
+        Assert.That(editableTargetMethodBody, Does.Not.Contain("FindAnchor"), "The serialized Drawing Room door target must not be rediscovered.");
+        Assert.That(entryBaseMethodBody, Does.Not.Contain("TryGetGrandEntranceDrawingRoomDoorPosition"), "Guest movement must not globally scan duplicate door triggers.");
         Assert.That(entryBaseMethodBody, Does.Contain("GetWorldVisibleAnchorPosition"), "World-space guest movement should convert room-stage anchors into guest world coordinates.");
-        Assert.That(doorLookupMethodBody, Does.Contain("activeInHierarchy"), "Drawing Room movement should prefer the active Grand Entrance Hall door trigger over inactive duplicate room views.");
         Assert.That(entryMethodBody, Does.Not.Contain("GetEntranceDrawingRoomExitPosition"), "World-space guest movement must not chase a UI/RectTransform Drawing Room door coordinate.");
-        Assert.That(spotMethodBody, Does.Contain("GetWorldDrawingRoomSeatPosition"), "World-space guests should receive world-space Drawing Room waiting spots.");
+        Assert.That(spotMethodBody, Does.Contain("GetDrawingRoomGuestPoint"), "World-space guests should use their ordered authored Drawing Room point.");
+        Assert.That(spotMethodBody, Does.Not.Contain("GetWorldDrawingRoomSeatPosition"), "World-space guests must not synthesize replacement seats.");
         Assert.That(sceneText, Does.Contain("m_Name: GuestDrawingRoomDoorTarget"), "Gameplay should expose an editable Entrance Hall target for the Drawing Room guest walk path.");
         Assert.That(sceneText, Does.Contain("anchorId: GuestDrawingRoomDoorTarget"), "The editable Drawing Room guest walk target should have a RoomAnchor id.");
         Assert.That(sceneText, Does.Contain("roomId: Grand Entrance Hall"), "The editable Drawing Room guest walk target should belong to the Entrance Hall.");
@@ -138,24 +137,30 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string doorArrivalBaseBody = ExtractMethodBody(controllerText, "private Vector3 GetWorldDoorArrivalBasePosition");
         string doorArrivalTargetBody = ExtractMethodBody(controllerText, "private Transform GetWorldDoorArrivalTarget");
         string answerSpotBody = ExtractMethodBody(controllerText, "private bool TryGetWorldFrontDoorAnswerSpot");
-        string waitBody = ExtractMethodBody(controllerText, "GetWorldEntranceWaitPosition");
+        string waitBody = ExtractMethodBody(controllerText, "private Vector3 GetWorldEntranceWaitPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)");
         string waitIndexBody = ExtractMethodBody(controllerText, "private Vector3 GetEntranceWaitPosition(int indexInBatch, int batchCount)");
         string worldWaitIndexBody = ExtractMethodBody(controllerText, "private Vector3 GetWorldEntranceWaitPosition(int indexInBatch, int batchCount)");
         string worldEntranceOffsetBody = ExtractMethodBody(controllerText, "private Vector2 GetWorldEntranceGroupOffset");
-        string uiEntranceOffsetBody = ExtractMethodBody(controllerText, "private Vector2 GetEntranceGroupOffset");
-        string entranceCenterBody = ExtractMethodBody(controllerText, "GetWorldEntranceCenterPosition(GuestRuntimeState guestState)");
-        string anchorLookupBody = ExtractMethodBody(controllerText, "GetEntranceHallGuestAnchor");
-        string interactionTargetBody = ExtractMethodBody(controllerText, "GetFrontDoorInteractionTransform");
-        string conversionBody = ExtractMethodBody(controllerText, "TryGetWorldPositionForGuestTarget");
+        string uiEntranceOffsetBody = ExtractMethodBody(
+            controllerText,
+            "private Vector2 GetEntranceGroupOffset(\n" +
+            "        GuestRuntimeState guestState,\n" +
+            "        int fallbackIndex,\n" +
+            "        int fallbackCount,\n" +
+            "        float spacing,\n" +
+            "        float baseY)");
+        string entranceCenterBody = ExtractMethodBody(controllerText, "private Vector3 GetWorldEntranceCenterPosition(GuestRuntimeState guestState)");
+        string interactionTargetBody = ExtractMethodBody(controllerText, "private Transform GetFrontDoorInteractionTransform");
+        string conversionBody = ExtractMethodBody(controllerText, "private bool TryGetWorldPositionForGuestTarget");
         string guestArrivalDoorBlock = ExtractObjectBlock(sceneText, "GuestArrival_Door");
         string guestEntrancePlacemarkBlock = ExtractObjectBlock(sceneText, "Placemark_guests_entrance");
         string doorAnswerTriggerBlock = ExtractObjectBlock(sceneText, "Door_answer_trigger");
         string drawingRoomSideSpotBlock = ExtractObjectBlock(sceneText, "DrawingRoomSideButlerSpot");
         string drawingRoomDoorTriggerBlock = ExtractObjectBlock(sceneText, "DoorTrigger_GEH_DrawingRoom");
 
-        Assert.That(controllerText, Does.Contain("EntranceHallGuestAnchorId"), "Chapter 1 should name the editable Entrance Hall guest anchor consistently.");
-        Assert.That(controllerText, Does.Contain("GuestEntranceSpawnPlacemarkId = \"Placemark_guests_entrance\""), "Guest entrance spawning should use the draggable scene placemark.");
-        Assert.That(controllerText, Does.Contain("FrontDoorGuestSpawnAnchorId"), "Front-door guest spawning should have a named anchor separate from drawing-room door targets.");
+        Assert.That(controllerText, Does.Contain("[SerializeField] private Transform entranceHallGuestAnchor;"), "Chapter 1 should own the editable Entrance Hall guest anchor directly.");
+        Assert.That(controllerText, Does.Contain("[SerializeField] private Transform guestEntranceSpawnPlacemark;"), "Guest entrance spawning should own the draggable scene placemark directly.");
+        Assert.That(controllerText, Does.Contain("[SerializeField] private Transform frontDoorArrivalPoint;"), "Front-door guest spawning should own a separate front entrance anchor.");
         Assert.That(admitBody, Does.Contain("PlaceGuestAtDoorArrival"), "The initial door spawn should use a feet-aware door-arrival placement path.");
         Assert.That(admitBody, Does.Not.Contain("PlaceGuestAt(guest, arrivalPoint"), "UI guests should not bypass feet-aware door spawning by placing their transform directly on the front-door anchor.");
         Assert.That(placeDoorBody, Does.Contain("PlaceGuestFeetAtPosition"), "Door arrival should place the guest by feet, not by transform center.");
@@ -177,7 +182,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(doorPairOffsetBody, Does.Contain("return new Vector2(centeredSlot * spacing, 0f)"), "Door pair offsets should only split guests horizontally at the same door base.");
         Assert.That(doorPairOffsetBody, Does.Not.Contain("groupIndex"), "Door pair offsets must not move later arrival groups progressively away from the front door.");
         Assert.That(doorArrivalBaseBody, Does.Match(@"GetWorldDoorArrivalTarget[\s\S]*TryGetWorldPositionForGuestTarget[\s\S]*TryGetWorldFrontDoorAnswerSpot[\s\S]*GetWorldEntranceCenterPosition\(guestState\)"), "Front-door spawning should prefer the draggable door placemark, then the Butler's cached answer spot, then the stable entrance fallback.");
-        Assert.That(doorArrivalTargetBody, Does.Contain("GetGuestEntranceSpawnPlacemark()"), "Front-door spawning should first use the movable Placemark_guests_entrance anchor.");
+        Assert.That(doorArrivalTargetBody, Does.Contain("guestEntranceSpawnPlacemark"), "Front-door spawning should first use the serialized movable Placemark_guests_entrance anchor.");
         Assert.That(doorArrivalTargetBody, Does.Contain("GetFrontDoorArrivalPoint(frontDoorArrivalPoint)"), "Front-door spawning should only fall back to the configured GuestArrival_Door front entrance anchor.");
         Assert.That(doorArrivalTargetBody, Does.Not.Contain("drawingRoomSideButlerSpot"), "Front-door spawning must not use the left Drawing Room side-door marker.");
         Assert.That(answerSpotBody, Does.Contain("TryGetWorldPointFromLogicalPosition(frontDoorAnswerSpot"), "The cached Butler door-answer floor point should be converted back to world space for guest feet.");
@@ -196,8 +201,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(worldWaitIndexBody, Does.Contain("GetWorldEntranceGroupOffset"), "World-space index fallback should use the same group formation as live guests.");
         Assert.That(worldWaitIndexBody, Does.Not.Contain("GetWorldGuestGridOffset"), "World-space index fallback should not reintroduce the old tight grid formation.");
         Assert.That(entranceCenterBody, Does.Match(@"TryGetEntranceHallGuestAnchorWorldPosition\(guestState[\s\S]*TryGetAverageAuthoredChapterGuestPosition"), "Entrance waiting should prefer the scene anchor before falling back to authored guest averages.");
-        Assert.That(anchorLookupBody, Does.Contain("FindAnchor(EntranceHallGuestAnchorId, entryRoomId)"), "The entrance wait point should be discoverable through RoomAnchor data.");
-        Assert.That(anchorLookupBody, Does.Contain("FindSceneObjectByExactName(EntranceHallGuestAnchorId)"), "The entrance wait point should still resolve if RoomAnchor data is stale.");
+        Assert.That(controllerText, Does.Not.Contain("private Transform GetEntranceHallGuestAnchor("), "The serialized entrance wait point must not have a discovery wrapper.");
+        Assert.That(controllerText, Does.Not.Contain("FindAnchor("), "Chapter 1 must not scan RoomAnchor instances for immutable scene data.");
         Assert.That(doorArrivalBody, Does.Not.Contain("GetWorldVisibleAnchorPosition"), "Door-answer spawning should not project the high-Z GuestArrival_Door stage anchor off camera.");
         Assert.That(waitBody, Does.Not.Contain("GetWorldVisibleAnchorPosition"), "Entrance waiting should not project high-Z stage anchors off camera.");
         Assert.That(interactionTargetBody, Does.Match(@"frontDoorArrivalPoint[\s\S]*return frontDoorArrivalPoint[\s\S]*frontDoorSceneAction != null[\s\S]*frontDoorSceneAction.transform"), "The butler should walk to the centered front-door arrival point before answering the door.");
@@ -251,14 +256,15 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string sceneText = File.ReadAllText(GameplayScenePath);
-        string spotMethodBody = ExtractMethodBody(controllerText, "ResolveDrawingRoomSpotForGuest");
-        string seatMethodBody = ExtractMethodBody(controllerText, "ResolveSeatForGuest");
-        string placeMethodBody = ExtractMethodBody(controllerText, "PlaceGuestAt");
+        string spotMethodBody = ExtractMethodBody(controllerText, "private Transform ResolveDrawingRoomSpotForGuest");
+        string seatMethodBody = ExtractMethodBody(controllerText, "private Transform ResolveSeatForGuest");
+        string placeMethodBody = ExtractMethodBody(controllerText, "private void PlaceGuestAt");
 
-        Assert.That(controllerText, Does.Contain("DrawingRoomGuestPointPrefix"), "Chapter 1 should name editable Drawing Room guest points consistently.");
-        Assert.That(spotMethodBody, Does.Match(@"FindDrawingRoomGuestPoint\(guest\.GuestIndex\)[\s\S]*IsWorldSpaceGuestObject"), "Guests should prefer editable Drawing Room points before generated world-space seats.");
-        Assert.That(seatMethodBody, Does.Match(@"FindDrawingRoomGuestPoint\(index\)[\s\S]*drawingRoomSeat01"), "Assigned seats should prefer editable Drawing Room points before old fallback seats.");
-        Assert.That(controllerText, Does.Match(@"FindDrawingRoomGuestPoint\s*\([^)]*\)\s*\{[\s\S]*FindAnchor\(pointName, drawingRoomId\)[\s\S]*FindSceneObjectByExactName\(pointName\)"), "Editable guest points should fall back to the physical scene object name if RoomAnchor data is stale.");
+        Assert.That(controllerText, Does.Contain("[SerializeField] private Transform[] drawingRoomGuestPoints"), "Chapter 1 should own its ordered editable Drawing Room guest points.");
+        Assert.That(spotMethodBody, Does.Contain("GetDrawingRoomGuestPoint(guest.GuestIndex)"), "Guests should use their direct authored Drawing Room point.");
+        Assert.That(seatMethodBody, Does.Contain("return GetDrawingRoomGuestPoint(index);"), "Assigned seats should use the same ordered authored point graph.");
+        Assert.That(controllerText, Does.Not.Contain("FindDrawingRoomGuestPoint"), "Editable guest points must not be rediscovered by RoomAnchor or object name.");
+        Assert.That(controllerText, Does.Not.Contain("DrawingRoomSeat_Runtime_"), "Chapter 1 must not synthesize replacement seat anchors.");
         Assert.That(placeMethodBody, Does.Match(@"TryGetWorldPositionForGuestTarget[\s\S]*ActorState\.PlaceAt"), "World-space guests should convert UI room-stage points before falling back to raw Transform placement.");
         Assert.That(controllerText, Does.Contain("RectTransformUtility.ScreenPointToLocalPointInRectangle"), "UI guests should convert Drawing Room points into their parent RectTransform space.");
         Assert.That(controllerText, Does.Contain("RectTransformUtility.WorldToScreenPoint"), "Drawing Room points should be interpreted by their visible screen position.");
@@ -290,7 +296,6 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string actionUpdateBody = ExtractMethodBody(actionText, "private void Update");
         string performActionBody = ExtractMethodBody(actionText, "private void PerformAction");
         string resolveReferencesBody = ExtractMethodBody(controllerText, "ResolveReferences(bool createFallbacks)");
-        string resolveAnchorsBody = ExtractMethodBody(controllerText, "private void ResolveAnchors");
 
         Assert.That(sceneText, Does.Contain("m_Name: entrance_coat_hanger_0"), "Gameplay should contain the authored entrance coat hanger object.");
         Assert.That(sceneText, Does.Contain("- component: {fileID: 1592234996}"), "The authored hanger should own its serialized trigger collider.");
@@ -322,7 +327,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(actionUpdateBody, Does.Contain("RuntimeSettingsMenu.BlocksGameInput"), "Manual scene-action polling must stop while the settings modal blocks game input.");
         Assert.That(performActionBody, Does.Contain("RuntimeSettingsMenu.BlocksGameInput"), "Scene actions must not execute while the settings modal blocks game input.");
         Assert.That(resolveReferencesBody, Does.Not.Contain("EnsureEntranceCoatHanger"), "Runtime reference resolution should retain the serialized hanger owner.");
-        Assert.That(resolveAnchorsBody, Does.Not.Contain("FindObjectsByType<CoatCloset>"), "Anchor resolution should not globally select a closet.");
+        Assert.That(controllerText, Does.Not.Contain("ResolveAnchors"), "Serialized Entrance anchors must not be repaired at runtime.");
         Assert.That(controllerText, Does.Not.Contain("FindPropAnchor"), "The dead pantry-prop anchor lookup must stay removed.");
         Assert.That(controllerText, Does.Not.Contain("IsUnderNamedTransform"), "The dead pantry hierarchy-name scan must stay removed.");
         Assert.That(controllerText, Does.Contain("Chapter1ArrivalController requires its serialized Entrance coat closet."));
@@ -561,10 +566,11 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         int nameIndex = assetText.IndexOf($"m_Name: {objectName}", StringComparison.Ordinal);
         Assert.That(nameIndex, Is.GreaterThanOrEqualTo(0), $"Could not find object '{objectName}'.");
 
-        int blockStart = assetText.LastIndexOf("--- !u!1", nameIndex, StringComparison.Ordinal);
+        const string gameObjectDocumentPrefix = "--- !u!1 &";
+        int blockStart = assetText.LastIndexOf(gameObjectDocumentPrefix, nameIndex, StringComparison.Ordinal);
         Assert.That(blockStart, Is.GreaterThanOrEqualTo(0), $"Could not find object block start for '{objectName}'.");
 
-        int blockEnd = assetText.IndexOf("--- !u!1", nameIndex + objectName.Length, StringComparison.Ordinal);
+        int blockEnd = assetText.IndexOf(gameObjectDocumentPrefix, nameIndex + objectName.Length, StringComparison.Ordinal);
         return blockEnd >= 0
             ? assetText.Substring(blockStart, blockEnd - blockStart)
             : assetText.Substring(blockStart);
