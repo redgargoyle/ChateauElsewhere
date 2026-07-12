@@ -34,7 +34,7 @@ public class NavigationRegressionTests
     private const string BackgroundMaterialPath = "Assets/Shader/BackgroundMaterial.mat";
     private const string RoomPrefabPath = "Assets/Prefabs/Room.prefab";
     private const string YSortSolidObstaclePath = "Assets/Scripts/Characters/YSortSolidObstacle2D.cs";
-    private const string ChapterTimeSettingsUIPath = "Assets/Scripts/Story/ChapterTimeSettingsUI.cs";
+    private const string GameTimeHUDPath = "Assets/_Chateau/Runtime/UI/GameTimeHUD.cs";
     private const string RuntimeSettingsMenuPath = "Assets/Scripts/UI/RuntimeSettingsMenu.cs";
     private const string GameAudioSettingsPath = "Assets/Scripts/Audio/GameAudioSettings.cs";
     private const string NavigationCursorHoverTargetPath = "Assets/Scripts/UI/NavigationCursorHoverTarget.cs";
@@ -259,20 +259,20 @@ public class NavigationRegressionTests
     [Test]
     public void ChapterClockUsesSingleBottomLeftHudReadout()
     {
-        string timeSettingsText = File.ReadAllText(ChapterTimeSettingsUIPath);
+        string gameTimeHudText = File.ReadAllText(GameTimeHUDPath);
         string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
         string gameAudioSettingsText = File.ReadAllText(GameAudioSettingsPath);
         string chapter1HudText = File.ReadAllText(Chapter1InteractionHUDPath);
         string chapter2HudText = File.ReadAllText(Chapter2InteractionHUDPath);
 
-        Assert.That(timeSettingsText, Does.Contain("Text_CurrentGameTime"));
-        Assert.That(timeSettingsText, Does.Contain("clockRect.anchorMin = new Vector2(0f, 0f)"));
-        Assert.That(timeSettingsText, Does.Contain("clockRect.anchorMax = new Vector2(0f, 0f)"));
-        Assert.That(timeSettingsText, Does.Contain("clockRect.pivot = new Vector2(0f, 0f)"));
-        Assert.That(timeSettingsText, Does.Contain("clockRect.anchoredPosition = new Vector2(18f, 18f)"));
-        Assert.That(timeSettingsText, Does.Contain("TextAlignmentOptions.BottomLeft"));
-        Assert.That(timeSettingsText, Does.Not.Contain("Slider_SecondsPerGameMinute"), "The editable game-time speed slider should not be created in the always-visible clock HUD.");
-        Assert.That(timeSettingsText, Does.Not.Contain("Input_SecondsPerGameMinute"), "The editable game-time speed input should not be created in the always-visible clock HUD.");
+        Assert.That(gameTimeHudText, Does.Contain("Text_CurrentGameTime"));
+        Assert.That(gameTimeHudText, Does.Contain("clockRect.anchorMin = new Vector2(0f, 0f)"));
+        Assert.That(gameTimeHudText, Does.Contain("clockRect.anchorMax = new Vector2(0f, 0f)"));
+        Assert.That(gameTimeHudText, Does.Contain("clockRect.pivot = new Vector2(0f, 0f)"));
+        Assert.That(gameTimeHudText, Does.Contain("clockRect.anchoredPosition = new Vector2(18f, 18f)"));
+        Assert.That(gameTimeHudText, Does.Contain("TextAlignmentOptions.BottomLeft"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("Slider_SecondsPerGameMinute"), "The editable game-time speed slider should not be created in the always-visible clock HUD.");
+        Assert.That(gameTimeHudText, Does.Not.Contain("Input_SecondsPerGameMinute"), "The editable game-time speed input should not be created in the always-visible clock HUD.");
         Assert.That(runtimeSettingsText, Does.Contain("Control_DebugGameTimeSpeed"), "The game-time speed control should live in the runtime debug menu.");
         Assert.That(runtimeSettingsText, Does.Contain("Slider_DebugSecondsPerGameMinute"), "The debug game-time control should include the speed slider.");
         Assert.That(runtimeSettingsText, Does.Contain("Input_DebugSecondsPerGameMinute"), "The debug game-time control should include the numeric speed input.");

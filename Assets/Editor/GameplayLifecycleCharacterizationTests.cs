@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using Chateau.UI;
 using Chateau.World.Rooms.Props;
 using NUnit.Framework;
 using TMPro;
@@ -56,6 +58,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(GameplaySceneName));
 
         Chateau.Architecture.GameRoot gameRoot = RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+        List<Chateau.Architecture.ChateauBehaviour> serializedSceneBehaviours =
+            GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
         CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
         RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
         DoorPromptSequenceController prompts = RequireExactlyOneInActiveScene<DoorPromptSequenceController>();
@@ -78,10 +82,10 @@ public sealed class GameplayLifecycleCharacterizationTests
             .Single(item => item.name == "GrandfatherClock_Optional");
         RoomContentGroup entranceClockRoom = entranceClockPlaceholder.GetComponentInParent<RoomContentGroup>(true);
         RoomContentGroup drawingRoomClockRoom = drawingRoomClockPlaceholder.GetComponentInParent<RoomContentGroup>(true);
-        ChapterTimeSettingsUI characterizedTimeSettings = RequireExactlyOneInActiveScene<ChapterTimeSettingsUI>();
-        ChapterClock characterizedTimeSettingsClock = GetPrivateField<ChapterClock>(characterizedTimeSettings, "chapterClock");
-        Canvas characterizedTimeCanvas = GetPrivateField<Canvas>(characterizedTimeSettings, "canvas");
-        TMP_Text characterizedTimeText = GetPrivateField<TMP_Text>(characterizedTimeSettings, "clockText");
+        GameTimeHUD characterizedGameTimeHud = RequireExactlyOneInActiveScene<GameTimeHUD>();
+        ChapterClock characterizedGameTimeHudClock = GetPrivateField<ChapterClock>(characterizedGameTimeHud, "chapterClock");
+        Canvas characterizedTimeCanvas = GetPrivateField<Canvas>(characterizedGameTimeHud, "canvas");
+        TMP_Text characterizedTimeText = GetPrivateField<TMP_Text>(characterizedGameTimeHud, "clockText");
         RectTransform characterizedTimeCanvasRect = characterizedTimeCanvas != null
             ? characterizedTimeCanvas.GetComponent<RectTransform>()
             : null;
@@ -244,19 +248,23 @@ public sealed class GameplayLifecycleCharacterizationTests
         Debug.Log(
             $"[GrandfatherClockRetirement] entrance={entranceClockPlaceholder.GetInstanceID()} " +
             $"drawing={drawingRoomClockPlaceholder.GetInstanceID()} injectedComponents=0");
-        Assert.That(characterizedTimeSettings.gameObject, Is.SameAs(arrival.gameObject));
-        Assert.That(GetPrivateField<ChapterTimeSettingsUI>(arrival, "timeSettingsUI"), Is.SameAs(characterizedTimeSettings));
-        Assert.That(characterizedTimeSettingsClock, Is.SameAs(clock));
-        Assert.That(characterizedTimeSettings.GetComponents<ChapterTimeSettingsUI>(), Has.Length.EqualTo(1));
         Assert.That(characterizedTimeCanvas, Is.Not.Null);
-        Assert.That(characterizedTimeCanvas.gameObject.name, Is.EqualTo("Canvas_ChapterTimeSettings"));
-        Assert.That(characterizedTimeCanvas.transform.parent, Is.Null);
+        Assert.That(characterizedGameTimeHud.gameObject, Is.SameAs(characterizedTimeCanvas.gameObject));
+        Assert.That(GetPrivateField<GameTimeHUD>(arrival, "gameTimeHUD"), Is.SameAs(characterizedGameTimeHud));
+        Assert.That(characterizedGameTimeHudClock, Is.SameAs(clock));
+        Assert.That(characterizedGameTimeHud.IsConfiguredFor(clock), Is.True);
+        Assert.That(characterizedGameTimeHud.GetComponents<GameTimeHUD>(), Has.Length.EqualTo(1));
+        Assert.That(arrival.GetComponent<GameTimeHUD>(), Is.Null);
+        Assert.That(characterizedGameTimeHud.HasGameContext, Is.True);
+        Assert.That(serializedSceneBehaviours.Count(item => item == characterizedGameTimeHud), Is.EqualTo(1));
+        Assert.That(characterizedTimeCanvas.gameObject.name, Is.EqualTo("Canvas_GameTimeHUD"));
+        Assert.That(characterizedTimeCanvas.transform.parent, Is.SameAs(gameRoot.transform));
         Assert.That(characterizedTimeCanvas.renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
         Assert.That(characterizedTimeCanvas.sortingOrder, Is.EqualTo(9000));
         Assert.That(characterizedTimeCanvas.gameObject.activeSelf, Is.True);
         Assert.That(characterizedTimeCanvas.enabled, Is.True);
         Assert.That(characterizedTimeCanvas.transform.childCount, Is.EqualTo(1));
-        Assert.That(characterizedTimeCanvas.GetComponents<Component>(), Has.Length.EqualTo(4));
+        Assert.That(characterizedTimeCanvas.GetComponents<Component>(), Has.Length.EqualTo(5));
         Assert.That(characterizedTimeCanvasRect, Is.Not.Null);
         Assert.That(characterizedTimeScaler, Is.Not.Null);
         Assert.That(characterizedTimeRaycaster, Is.Not.Null);
@@ -283,6 +291,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedTimeTextRect.anchoredPosition, Is.EqualTo(new Vector2(18f, 18f)));
         Assert.That(characterizedTimeTextRect.sizeDelta, Is.EqualTo(new Vector2(220f, 36f)));
         Assert.That(characterizedTimeShadow, Is.Not.Null);
+        Assert.That(GetPrivateField<Shadow>(characterizedGameTimeHud, "clockShadow"), Is.SameAs(characterizedTimeShadow));
         Assert.That(characterizedTimeShadow.effectColor, Is.EqualTo(new Color(0f, 0f, 0f, 0.85f)));
         Assert.That(characterizedTimeShadow.effectDistance, Is.EqualTo(new Vector2(2f, -2f)));
         Assert.That(characterizedTimeShadow.useGraphicAlpha, Is.True);
@@ -304,12 +313,13 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.True);
         Assert.That(timeFontMaterialGuid, Is.EqualTo("8f586378b4e144a9851e7b34d9b748ee"));
         Assert.That(timeFontMaterialFileId, Is.EqualTo(2180264L));
-        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Canvas_ChapterTimeSettings"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Canvas_GameTimeHUD"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_ChapterTimeSettings"), Is.False);
         Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Text_CurrentGameTime"), Is.EqualTo(1));
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Panel_TimeSettings"), Is.False);
         Debug.Log(
-            $"[ChapterTimeSettingsCharacterization] owner={characterizedTimeSettings.GetInstanceID()} " +
-            $"clock={characterizedTimeSettingsClock.GetInstanceID()} canvas={characterizedTimeCanvas.GetInstanceID()} " +
+            $"[GameTimeHUDSerialization] owner={characterizedGameTimeHud.GetInstanceID()} " +
+            $"clock={characterizedGameTimeHudClock.GetInstanceID()} canvas={characterizedTimeCanvas.GetInstanceID()} " +
             $"text={characterizedTimeText.GetInstanceID()} shadow={characterizedTimeShadow.GetInstanceID()}");
         Assert.That(characterizedDoorbell.gameObject, Is.SameAs(arrival.gameObject));
         Assert.That(GetPrivateField<ChapterClock>(characterizedDoorbell, "chapterClock"), Is.SameAs(clock));
@@ -361,10 +371,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         InvokePrivateMethod(arrival, "EnsureRuntimeInteractionSystems");
         InvokePrivateMethod(arrival, "EnsureRuntimeInteractionSystems");
         AssertGrandfatherClockPlaceholdersRemainUnmodified(entranceClockPlaceholder, drawingRoomClockPlaceholder);
-        AssertChapterTimeSettingsGraphRemainsStable(
+        AssertGameTimeHudGraphRemainsStable(
             arrival,
-            characterizedTimeSettings,
-            characterizedTimeSettingsClock,
+            characterizedGameTimeHud,
+            characterizedGameTimeHudClock,
             characterizedTimeCanvas,
             characterizedTimeText,
             characterizedTimeShadow,
@@ -1157,10 +1167,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         CollectionAssert.AreEqual(characterizedDrawingRoomGuestPoints, GetPrivateField<Transform[]>(arrival, "drawingRoomGuestPoints"));
         Assert.That(GetPrivateField<DoorbellSystem>(arrival, "doorbellSystem"), Is.SameAs(characterizedDoorbell));
         AssertGrandfatherClockPlaceholdersRemainUnmodified(entranceClockPlaceholder, drawingRoomClockPlaceholder);
-        AssertChapterTimeSettingsGraphRemainsStable(
+        AssertGameTimeHudGraphRemainsStable(
             arrival,
-            characterizedTimeSettings,
-            characterizedTimeSettingsClock,
+            characterizedGameTimeHud,
+            characterizedGameTimeHudClock,
             characterizedTimeCanvas,
             characterizedTimeText,
             characterizedTimeShadow,
@@ -1335,10 +1345,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<RoomNavigationManager>(arrival, "navigationManager"), Is.SameAs(serializedArrivalNavigation));
         Assert.That(GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement"), Is.SameAs(serializedArrivalPlayerMovement));
         AssertGrandfatherClockPlaceholdersRemainUnmodified(entranceClockPlaceholder, drawingRoomClockPlaceholder);
-        AssertChapterTimeSettingsGraphRemainsStable(
+        AssertGameTimeHudGraphRemainsStable(
             arrival,
-            characterizedTimeSettings,
-            characterizedTimeSettingsClock,
+            characterizedGameTimeHud,
+            characterizedGameTimeHudClock,
             characterizedTimeCanvas,
             characterizedTimeText,
             characterizedTimeShadow,
@@ -1372,10 +1382,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<ChapterManager>(arrival, "chapterManager"), Is.SameAs(serializedArrivalChapterManager));
         Assert.That(GetPrivateField<ChapterEventScheduler>(arrival, "eventScheduler"), Is.SameAs(serializedArrivalScheduler));
         Assert.That(GetPrivateField<GameObject>(arrival, "playerButlerReference"), Is.SameAs(serializedArrivalButlerRoot));
-        AssertChapterTimeSettingsGraphRemainsStable(
+        AssertGameTimeHudGraphRemainsStable(
             arrival,
-            characterizedTimeSettings,
-            characterizedTimeSettingsClock,
+            characterizedGameTimeHud,
+            characterizedGameTimeHudClock,
             characterizedTimeCanvas,
             characterizedTimeText,
             characterizedTimeShadow,
@@ -1386,10 +1396,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         chapter.SkipToSevenPMForTesting();
         yield return WaitForSettledLayout();
 
-        AssertChapterTimeSettingsGraphRemainsStable(
+        AssertGameTimeHudGraphRemainsStable(
             arrival,
-            characterizedTimeSettings,
-            characterizedTimeSettingsClock,
+            characterizedGameTimeHud,
+            characterizedGameTimeHudClock,
             characterizedTimeCanvas,
             characterizedTimeText,
             characterizedTimeShadow,
@@ -1425,10 +1435,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         chapter.SkipToSevenPMForTesting();
         yield return WaitForSettledLayout();
 
-        AssertChapterTimeSettingsGraphRemainsStable(
+        AssertGameTimeHudGraphRemainsStable(
             arrival,
-            characterizedTimeSettings,
-            characterizedTimeSettingsClock,
+            characterizedGameTimeHud,
+            characterizedGameTimeHudClock,
             characterizedTimeCanvas,
             characterizedTimeText,
             characterizedTimeShadow,
@@ -1539,9 +1549,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         }
     }
 
-    private static void AssertChapterTimeSettingsGraphRemainsStable(
+    private static void AssertGameTimeHudGraphRemainsStable(
         Chapter1ArrivalController arrival,
-        ChapterTimeSettingsUI timeSettings,
+        GameTimeHUD gameTimeHud,
         ChapterClock chapterClock,
         Canvas timeCanvas,
         TMP_Text timeText,
@@ -1550,13 +1560,24 @@ public sealed class GameplayLifecycleCharacterizationTests
         Material timeFontMaterial,
         EventSystem eventSystem)
     {
-        Assert.That(RequireExactlyOneInActiveScene<ChapterTimeSettingsUI>(), Is.SameAs(timeSettings));
-        Assert.That(GetPrivateField<ChapterTimeSettingsUI>(arrival, "timeSettingsUI"), Is.SameAs(timeSettings));
-        Assert.That(GetPrivateField<ChapterClock>(timeSettings, "chapterClock"), Is.SameAs(chapterClock));
-        Assert.That(GetPrivateField<Canvas>(timeSettings, "canvas"), Is.SameAs(timeCanvas));
-        Assert.That(GetPrivateField<TMP_Text>(timeSettings, "clockText"), Is.SameAs(timeText));
-        Assert.That(timeSettings.GetComponents<ChapterTimeSettingsUI>(), Has.Length.EqualTo(1));
-        Assert.That(timeCanvas.GetComponents<Component>(), Has.Length.EqualTo(4));
+        Chateau.Architecture.GameRoot gameRoot = RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+        List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
+            GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
+        Assert.That(RequireExactlyOneInActiveScene<GameTimeHUD>(), Is.SameAs(gameTimeHud));
+        Assert.That(GetPrivateField<GameTimeHUD>(arrival, "gameTimeHUD"), Is.SameAs(gameTimeHud));
+        Assert.That(arrival.GetComponent<GameTimeHUD>(), Is.Null);
+        Assert.That(gameTimeHud.HasGameContext, Is.True);
+        Assert.That(sceneBehaviours.Count(item => item == gameTimeHud), Is.EqualTo(1));
+        Assert.That(GetPrivateField<ChapterClock>(gameTimeHud, "chapterClock"), Is.SameAs(chapterClock));
+        Assert.That(GetPrivateField<Canvas>(gameTimeHud, "canvas"), Is.SameAs(timeCanvas));
+        Assert.That(GetPrivateField<TMP_Text>(gameTimeHud, "clockText"), Is.SameAs(timeText));
+        Assert.That(GetPrivateField<Shadow>(gameTimeHud, "clockShadow"), Is.SameAs(timeShadow));
+        Assert.That(gameTimeHud.IsConfiguredFor(chapterClock), Is.True);
+        Assert.That(gameTimeHud.GetComponents<GameTimeHUD>(), Has.Length.EqualTo(1));
+        Assert.That(gameTimeHud.gameObject, Is.SameAs(timeCanvas.gameObject));
+        Assert.That(timeCanvas.gameObject.name, Is.EqualTo("Canvas_GameTimeHUD"));
+        Assert.That(timeCanvas.transform.parent, Is.SameAs(gameRoot.transform));
+        Assert.That(timeCanvas.GetComponents<Component>(), Has.Length.EqualTo(5));
         Assert.That(timeCanvas.gameObject.activeSelf, Is.True);
         Assert.That(timeCanvas.enabled, Is.True);
         Assert.That(timeCanvas.transform.childCount, Is.EqualTo(1));
@@ -1569,7 +1590,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(timeText.font, Is.SameAs(timeFont));
         Assert.That(timeText.fontSharedMaterial, Is.SameAs(timeFontMaterial));
         Assert.That(RequireExactlyOneInActiveScene<EventSystem>(), Is.SameAs(eventSystem));
-        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Canvas_ChapterTimeSettings"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Canvas_GameTimeHUD"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_ChapterTimeSettings"), Is.False);
         Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Text_CurrentGameTime"), Is.EqualTo(1));
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Panel_TimeSettings"), Is.False);
     }

@@ -101,14 +101,15 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized the legacy `GrandfatherClockInteraction` before retirement. The rendered lifecycle selects the empty `Grand Entrance Hall / Props / GrandfatherClock` placeholder in this environment, injects exactly one interaction, `AudioSource`, Atmosphere binding at base `0.28`, and in-memory `RuntimeGrandfatherClockTicking` clip (mono, 44.1 kHz, 88,200 samples), and retains every identity through repeated initialization, the Entrance/Drawing Room round trip, and Chapter 2. Its close-up stays disabled and creates no canvas. The separate serialized room-aware ambience owner/source/catalog and Chapter 2 strike/HUD graph remain exact, proving the injected loop is duplicate compatibility behavior rather than a missing requirement.
 - Retired `GrandfatherClockInteraction`, its script GUID, unordered global host selection, duplicate synthetic ticking/source/binding, unreachable modal, trailing `Chapter1SceneAction` role, and unused HUD/time pass-through. Both authored clock placeholders retain only their Transform/anchor data; the room-aware ambience and Chapter 2 clock presentation/strike graphs remain their sole intended owners.
 - Characterized the runtime-created `ChapterTimeSettingsUI` graph before changing ownership. It is the sole persistent current-time readout, not redundant settings code: startup injects one owner on Chapter 1, binds clock `3301000001`, creates one root overlay Canvas at order `9000`, and creates the exact bottom-left Liberation Sans SDF TMP label plus shadow. Every owner/view/font/material/EventSystem identity survives repeated initialization, room travel, repeated Chapter 2 entry, and repeated seven-o'clock staging; the label reaches `7:00 PM`. The obsolete editable panel is absent, and `RuntimeSettingsMenu` remains the sole owner of debug time-speed controls.
+- Moved that script and byte-identical `.meta` to `Assets/_Chateau/Runtime/UI/GameTimeHUD.cs`, renamed it `Chateau.UI.GameTimeHUD`, and made it a `UIScreenBase`. Gameplay now serializes exactly one global Canvas/HUD beneath GameRoot with direct clock, Canvas, TMP text, and Shadow edges; GameRoot registers and validates that owner exactly once. Chapter 1 temporarily retains a serialized compatibility edge and the old repair branches only for the separately gated cleanup slice.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 48,526 | -1,376 |
-| Direct `MonoBehaviour` declarations | 63 | 49 | -14 |
+| Runtime C# lines | 49,902 | 48,593 | -1,309 |
+| Direct `MonoBehaviour` declarations | 63 | 48 | -15 |
 | `FindObject*`/`GameObject.Find` | 199 | 111 | -88 |
 | `Resources.Load` | 27 | 17 | -10 |
 | runtime `new GameObject` | 98 | 74 | -24 |
@@ -155,6 +156,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - legacy grandfather-clock characterization passes its static zero-serialized-instance/action guard and rendered full lifecycle, recording the selected Entrance placeholder plus the exact injected source/binding/generated-clip graph while proving no modal UI appears and the canonical ambience/Chapter 2 owners stay separate; the full suite remains 194/46 with an unchanged failure-name set;
 - grandfather-clock retirement deletes the zero-reference source and `.meta`, removes exactly three null YAML properties without adding/removing/reordering any of Gameplay's 5,980 documents, preserves `SceneRoots`, both ten-document authored clock subtrees, both Drawing Room prefabs, every clock art/audio asset, ambience documents `2201000031`–`2201000034`, and the Chapter 2 clock graph byte-for-byte; static/architecture/rendered lifecycle gates prove no injected component/source/binding/clip/modal returns, and the full suite remains exactly 194/46 with no failure-name delta or missing-script warning;
 - Chapter time-readout characterization passes its zero-serialized-owner/static factory guard and rendered full lifecycle, pinning the complete owner/clock/canvas/text/font/material/shadow/EventSystem graph through room and chapter transitions before any production or scene change; the full suite remains exactly 194/46 with no failure-name delta;
+- GameTimeHUD serialization adds exactly documents `1878887120`–`1878887125` and `1878887130`–`1878887134`, changes only GameRoot `1878886998`, its Transform `1878886999`, and Chapter 1 `3302000001`, preserves every prior document's relative order and identical `SceneRoots`, and keeps script GUID `12bd9a3afa94b05b1e9ce52146c9c7f4`. Focused static and rendered lifecycle gates pass; the full suite remains exactly 194/46 with an identical failure-name set;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -238,6 +240,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Author the characterized readout as a global serialized `GameTimeHUD` owned by the GameRoot UI composition, preserving script GUID and exact visual behavior while leaving the old repair path staged for a separate cleanup gate.
+1. Remove Chapter 1's temporary `GameTimeHUD` edge plus every HUD clock search, Canvas/text/Shadow/EventSystem factory, and legacy-panel repair branch; retain only the validated global serialized owner and exact visual behavior.
 
 Do not begin bulk deletion until those gates pass.

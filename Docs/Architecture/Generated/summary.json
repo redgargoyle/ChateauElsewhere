@@ -1,6 +1,6 @@
 {
   "runtime_files": 105,
-  "runtime_loc": 48526,
+  "runtime_loc": 48593,
   "smell_totals": {
     "FindObject": 111,
     "ResourcesLoad": 17,
@@ -9,7 +9,7 @@
     "RuntimeInitialize": 4,
     "PlayerPrefs": 6
   },
-  "direct_monobehaviour_count": 49,
+  "direct_monobehaviour_count": 48,
   "direct_monobehaviours": [
     {
       "file": "Assets/Scripts/Audio/ClockTickingAmbienceController.cs",
@@ -142,10 +142,6 @@
     {
       "file": "Assets/Scripts/Story/ChapterIntroUI.cs",
       "class": "ChapterIntroUI"
-    },
-    {
-      "file": "Assets/Scripts/Story/ChapterTimeSettingsUI.cs",
-      "class": "ChapterTimeSettingsUI"
     },
     {
       "file": "Assets/Scripts/Story/CoatCloset.cs",

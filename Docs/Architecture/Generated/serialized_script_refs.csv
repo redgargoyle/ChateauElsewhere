@@ -95,7 +95,6 @@ Assets/Scripts/Story/ChapterClock.cs,1a405cdcb44e4f15bfd177ca70cc9ca4,1,Assets/S
 Assets/Scripts/Story/ChapterEventScheduler.cs,bbe343a17f37436d806da3e58b6472c4,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Story/ChapterIntroUI.cs,97af4a761ae641b1b180d4ae9898b061,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Story/ChapterManager.cs,72afcfa1ce4e4ea6856af0ac40450211,1,Assets/Scenes/Gameplay.unity:1
-Assets/Scripts/Story/ChapterTimeSettingsUI.cs,12bd9a3afa94b05b1e9ce52146c9c7f4,0,
 Assets/Scripts/Story/CoatCloset.cs,f46d1a47beb04599bf3126bbde4a7f25,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Story/DoorbellSystem.cs,4b5410ab5e584743be969413e655ecb4,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Story/GameplayRuntimeState.cs,8f114fba8070459d9e0d5f2362cf8b2c,0,
@@ -131,6 +130,7 @@ Assets/_Chateau/Runtime/Gameplay/InteractionTargetBase.cs,36ea06f2199b505aa3cb67
 Assets/_Chateau/Runtime/Gameplay/RoomElementBase.cs,78ac54b7f625559f80da0a1400f5a839,0,
 Assets/_Chateau/Runtime/Gameplay/StoryBeatBase.cs,5c9ff8dd0f9559499a5298ed5c5a3f65,0,
 Assets/_Chateau/Runtime/Gameplay/UIScreenBase.cs,0513f14c5965539f9121b3f3a60f4db7,0,
+Assets/_Chateau/Runtime/UI/GameTimeHUD.cs,12bd9a3afa94b05b1e9ce52146c9c7f4,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/RoomDepthResolver.cs,9d3e22f8c5a34b79b0e1f2a3c4d5e608,0,
 Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,5e7a11c7d4b24c68a1f9e2d3c4b5a607,9,Assets/Scenes/Gameplay.unity:3 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:3 | Assets/Prefabs/Room_Drawing_Room.prefab:3
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,b5ee7e3d0f5a428cb5e5a6617725817f,1,Assets/Scenes/Gameplay.unity:1

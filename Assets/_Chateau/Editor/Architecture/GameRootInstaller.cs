@@ -160,6 +160,7 @@ namespace Chateau.Editor.Architecture
             RequireExactlyOne<DoorPromptSequenceController>(scene, report, "door prompt presenter");
             RequireExactlyOne<SubtitleService>(scene, report, "subtitle service");
             RequireExactlyOne<DialogueSpeechService>(scene, report, "dialogue/voice service");
+            RequireExactlyOne<Chateau.UI.GameTimeHUD>(scene, report, "global game-time HUD");
             ValidateMissingScripts(scene, report);
 
             GameRoot[] roots = FindAllInScene<GameRoot>(scene);

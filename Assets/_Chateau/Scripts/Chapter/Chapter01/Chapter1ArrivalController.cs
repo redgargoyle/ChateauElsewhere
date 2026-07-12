@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using Chateau.UI;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -65,7 +66,8 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [SerializeField] private GameObject playerButlerReference;
     [SerializeField] private CoatCloset coatCloset;
     [SerializeField] private DoorbellSystem doorbellSystem;
-    [SerializeField] private ChapterTimeSettingsUI timeSettingsUI;
+    [FormerlySerializedAs("timeSettingsUI")]
+    [SerializeField] private GameTimeHUD gameTimeHUD;
     [SerializeField] private Chapter1InteractionHUD interactionHUD;
     [SerializeField] private Chapter1SceneAction frontDoorSceneAction;
     [SerializeField] private GuestRoomScaleApplier guestRoomScaleApplier;
@@ -271,6 +273,15 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             }
 
             doorbellSystem.ValidateConfiguration(report);
+        }
+
+        if (gameTimeHUD == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its staged serialized GameTimeHUD edge.", this);
+        }
+        else if (!gameTimeHUD.IsConfiguredFor(chapterClock))
+        {
+            report.AddError("Chapter1ArrivalController requires GameTimeHUD to use the serialized ChapterClock and owned view graph.", this);
         }
 
         if (coatCloset == null)
@@ -4195,7 +4206,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         ResolveReferences();
 
         doorbellSystem?.Initialize(chapterClock);
-        timeSettingsUI?.Initialize(chapterClock);
+        gameTimeHUD?.Initialize(chapterClock);
 
         if (interactionHUD != null)
         {
@@ -6397,14 +6408,14 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private void ResolveStoryHelpers(bool createFallbacks)
     {
-        if (timeSettingsUI == null)
+        if (gameTimeHUD == null)
         {
-            timeSettingsUI = FindAnyObjectByType<ChapterTimeSettingsUI>(FindObjectsInactive.Include);
+            gameTimeHUD = FindAnyObjectByType<GameTimeHUD>(FindObjectsInactive.Include);
         }
 
-        if (timeSettingsUI == null && createFallbacks)
+        if (gameTimeHUD == null && createFallbacks)
         {
-            timeSettingsUI = gameObject.AddComponent<ChapterTimeSettingsUI>();
+            gameTimeHUD = gameObject.AddComponent<GameTimeHUD>();
         }
     }
 

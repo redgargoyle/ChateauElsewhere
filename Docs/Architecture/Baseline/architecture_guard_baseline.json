@@ -489,7 +489,7 @@
       "RuntimeInitialize": 1,
       "PlayerPrefs": 0
     },
-    "Assets/Scripts/Story/ChapterTimeSettingsUI.cs": {
+    "Assets/_Chateau/Runtime/UI/GameTimeHUD.cs": {
       "FindObject": 3,
       "ResourcesLoad": 0,
       "NewGameObject": 3,
@@ -892,10 +892,6 @@
       "class": "ChapterManager"
     },
     {
-      "file": "Assets/Scripts/Story/ChapterTimeSettingsUI.cs",
-      "class": "ChapterTimeSettingsUI"
-    },
-    {
       "file": "Assets/Scripts/Story/CoatCloset.cs",
       "class": "CoatCloset"
     },
@@ -994,6 +990,7 @@
     "Assets/Scripts/NewBehaviourScript.cs",
     "Assets/Scripts/PickupObject.cs",
     "Assets/Scripts/Story/GameClockHandsDisplay.cs",
-    "Assets/Scripts/Story/GrandfatherClockInteraction.cs"
+    "Assets/Scripts/Story/GrandfatherClockInteraction.cs",
+    "Assets/Scripts/Story/ChapterTimeSettingsUI.cs"
   ]
 }

@@ -1,8 +1,8 @@
 # Generated architecture audit
 
 - Runtime C# files: **105**
-- Runtime C# lines: **48526**
-- Direct `MonoBehaviour` declarations: **49**
+- Runtime C# lines: **48593**
+- Direct `MonoBehaviour` declarations: **48**
 
 ## Runtime dependency-repair and global-access occurrences
 
