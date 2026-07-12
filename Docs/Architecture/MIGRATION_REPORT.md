@@ -71,6 +71,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized ChapterManager's exact Player input (`81962842`) and removed all player, Chapter 2, and obsolete debug-canvas repair searches. Its full eight-owner graph is architecture-validated, the public Player root derives from the serialized input, and only the actual Player prefab instance authors legacy movement disabled.
 - Characterized Chapter2Controller's manager identity before tightening its entry boundary: the controller starts with ChapterManager `3301000004` and retains that exact serialized owner through first and repeated Chapter 2 debug entry.
 - Made Chapter2Controller's four external entry commands enforce their serialized ChapterManager instead of rebinding it from a caller. Valid and null convenience calls keep existing behavior; a missing or different manager is rejected before phase, navigation, clock, guest, or UI mutation.
+- Characterized Chapter 2 clock-strike audio before changing ownership: the seven-PM path currently creates one host AudioSource plus one Game-Sounds volume binding, loads clip GUID `d7084eafa9124afcbcbf12529e08bc70`, and configures a non-looping 2D source at base volume `0.4`.
 
 ## Current static result
 

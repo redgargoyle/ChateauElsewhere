@@ -280,6 +280,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(serializedChapter2.CurrentPhase, Is.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(serializedChapter2.HasGameContext, Is.True);
         Assert.That(GetPrivateField<ChapterManager>(serializedChapter2, "chapterManager"), Is.SameAs(chapter));
+        Assert.That(GetPrivateField<AudioSource>(serializedChapter2, "clockStrikeAudioSource"), Is.Null);
+        Assert.That(GetPrivateField<AudioClip>(serializedChapter2, "clockStrikeClip"), Is.Null);
+        Assert.That(serializedChapter2.GetComponents<AudioSource>(), Is.Empty);
+        Assert.That(serializedChapter2.GetComponents<GameAudioSourceVolume>(), Is.Empty);
         Assert.That(serializedMonsterStinger.HasGameContext, Is.True);
         Assert.That(serializedGuestPanic.HasGameContext, Is.True);
         Assert.That(serializedGuestSearch.HasGameContext, Is.True);
@@ -706,6 +710,29 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<ClockTickingAmbienceController>(), Is.SameAs(clockAmbience));
         Assert.That(RequireExactlyOneInActiveScene<EventSystem>(), Is.SameAs(serializedEventSystem));
         Assert.That(explorationMusicSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(explorationMusicBinding));
+
+        chapter.SkipToSevenPMForTesting();
+        yield return null;
+
+        AudioSource clockStrikeSource = GetPrivateField<AudioSource>(chapter2, "clockStrikeAudioSource");
+        AudioClip clockStrikeClip = GetPrivateField<AudioClip>(chapter2, "clockStrikeClip");
+        Assert.That(clockStrikeSource, Is.Not.Null);
+        Assert.That(clockStrikeSource.gameObject, Is.SameAs(chapter2.gameObject));
+        Assert.That(clockStrikeClip, Is.Not.Null);
+        Assert.That(clockStrikeSource.clip, Is.SameAs(clockStrikeClip));
+        Assert.That(clockStrikeClip.name, Is.EqualTo("06_heavy_wooden_case_clock_gong_seed1442486_tangoflux_raw_44k1"));
+        Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(clockStrikeClip)), Is.EqualTo("d7084eafa9124afcbcbf12529e08bc70"));
+        Assert.That(clockStrikeSource.playOnAwake, Is.False);
+        Assert.That(clockStrikeSource.loop, Is.False);
+        Assert.That(clockStrikeSource.spatialBlend, Is.Zero);
+        Assert.That(clockStrikeSource.ignoreListenerVolume, Is.True);
+        Assert.That(chapter2.GetComponents<AudioSource>(), Has.Length.EqualTo(1));
+        GameAudioSourceVolume[] clockStrikeBindings = chapter2.GetComponents<GameAudioSourceVolume>();
+        Assert.That(clockStrikeBindings, Has.Length.EqualTo(1));
+        Assert.That(clockStrikeBindings[0].Channel, Is.EqualTo(GameAudioChannel.GameSounds));
+        Assert.That(clockStrikeBindings[0].BaseVolume, Is.EqualTo(0.4f).Within(0.0001f));
+        Assert.That(clockStrikeSource.volume, Is.EqualTo(0.4f * GameAudioSettings.GetVolume(GameAudioChannel.GameSounds)).Within(0.0001f));
+        Debug.Log($"[Chapter2ClockStrikeCharacterization] source={clockStrikeSource.GetInstanceID()} clipGuid=d7084eafa9124afcbcbf12529e08bc70 binding={clockStrikeBindings[0].GetInstanceID()}");
     }
 
     private static IEnumerator WaitForSettledLayout()
