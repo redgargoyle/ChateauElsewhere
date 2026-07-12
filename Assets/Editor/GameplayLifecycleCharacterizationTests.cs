@@ -249,8 +249,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(chapter.EventScheduler, Is.SameAs(scheduler));
         Assert.That(GetPrivateField<ChapterIntroUI>(chapter, "introUI"), Is.SameAs(intro));
         Assert.That(GetPrivateField<ChapterIntroUI>(serializedChapter2, "introUI"), Is.SameAs(intro));
-        InvokePrivateMethod(intro, "EnsureUI");
-        InvokePrivateMethod(intro, "EnsureUI");
+        intro.ValidateRequiredReferences();
+        intro.ValidateRequiredReferences();
         Assert.That(intro.gameObject, Is.SameAs(characterizedIntroHost));
         Assert.That(intro.gameObject, Is.SameAs(chapter.gameObject));
         Assert.That(intro.GetComponents<ChapterIntroUI>(), Has.Length.EqualTo(1));
@@ -261,7 +261,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<TMP_Text>(intro, "titleText"), Is.SameAs(characterizedIntroTitle));
         Assert.That(characterizedIntroCanvas, Is.Not.Null);
         Assert.That(characterizedIntroCanvas.gameObject.name, Is.EqualTo("Canvas_ChapterIntroOverlay"));
-        Assert.That(characterizedIntroCanvas.transform.parent, Is.SameAs(gameRoot.transform));
+        Assert.That(characterizedIntroCanvas.transform.parent, Is.Null);
         Assert.That(characterizedIntroCanvas.GetComponents<Component>(), Has.Length.EqualTo(4));
         Assert.That(characterizedIntroCanvas.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("UI")));
         Assert.That(characterizedIntroCanvas.gameObject.activeSelf, Is.True);
@@ -271,12 +271,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedIntroCanvas.sortingOrder, Is.EqualTo(12000));
         Assert.That(characterizedIntroCanvas.transform.childCount, Is.EqualTo(1));
         Assert.That(characterizedIntroCanvasRect, Is.Not.Null);
-        Assert.That(characterizedIntroCanvasRect.anchorMin, Is.EqualTo(Vector2.zero));
-        Assert.That(characterizedIntroCanvasRect.anchorMax, Is.EqualTo(Vector2.one));
-        Assert.That(characterizedIntroCanvasRect.offsetMin, Is.EqualTo(Vector2.zero));
-        Assert.That(characterizedIntroCanvasRect.offsetMax, Is.EqualTo(Vector2.zero));
-        Assert.That(characterizedIntroCanvasRect.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
-        Assert.That(characterizedIntroCanvasRect.localScale, Is.EqualTo(Vector3.one));
+        Assert.That(characterizedIntroCanvasRect.rect.width, Is.GreaterThan(0f));
+        Assert.That(characterizedIntroCanvasRect.rect.height, Is.GreaterThan(0f));
         Assert.That(characterizedIntroScaler, Is.Not.Null);
         Assert.That(characterizedIntroScaler.uiScaleMode, Is.EqualTo(CanvasScaler.ScaleMode.ScaleWithScreenSize));
         Assert.That(characterizedIntroScaler.referenceResolution, Is.EqualTo(new Vector2(1366f, 768f)));
@@ -294,6 +290,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedIntroOverlay.offsetMax, Is.EqualTo(Vector2.zero));
         Assert.That(characterizedIntroOverlay.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
         Assert.That(characterizedIntroOverlay.localScale, Is.EqualTo(Vector3.one));
+        Assert.That(
+            characterizedIntroOverlay.rect.width,
+            Is.EqualTo(characterizedIntroCanvasRect.rect.width).Within(0.01f));
+        Assert.That(
+            characterizedIntroOverlay.rect.height,
+            Is.EqualTo(characterizedIntroCanvasRect.rect.height).Within(0.01f));
         Assert.That(characterizedIntroOverlay.childCount, Is.EqualTo(2));
         Assert.That(characterizedIntroFade, Is.Not.Null);
         Assert.That(characterizedIntroFade.gameObject.name, Is.EqualTo("Image_ChapterIntroFade"));
@@ -1706,8 +1708,6 @@ public sealed class GameplayLifecycleCharacterizationTests
     {
         ChapterManager chapterManager = RequireExactlyOneInActiveScene<ChapterManager>();
         Chapter2Controller chapter2 = RequireExactlyOneInActiveScene<Chapter2Controller>();
-        Chateau.Architecture.GameRoot gameRoot =
-            RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
         Assert.That(RequireExactlyOneInActiveScene<ChapterIntroUI>(), Is.SameAs(intro));
         Assert.That(intro.gameObject, Is.SameAs(introHost));
         Assert.That(GetPrivateField<ChapterIntroUI>(chapterManager, "introUI"), Is.SameAs(intro));
@@ -1718,7 +1718,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<TMP_Text>(intro, "titleText"), Is.SameAs(introTitle));
         Assert.That(intro.GetComponents<ChapterIntroUI>(), Has.Length.EqualTo(1));
         Assert.That(intro.GetComponent<Canvas>(), Is.Null);
-        Assert.That(introCanvas.transform.parent, Is.SameAs(gameRoot.transform));
+        Assert.That(introCanvas.transform.parent, Is.Null);
         Assert.That(introCanvas.GetComponents<Component>(), Has.Length.EqualTo(4));
         Assert.That(introCanvas.transform.childCount, Is.EqualTo(1));
         Assert.That(introOverlay.parent, Is.SameAs(introCanvas.transform));

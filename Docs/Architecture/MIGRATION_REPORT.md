@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 4 vertical migration in progress; the first three set pieces are complete while Phase 3 compatibility retirement continues.**
+**Phase 3 serialized foundation complete; Phase 4 vertical migration is in progress with the first three set pieces complete and the first canonical passage route next.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -105,18 +105,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed Chapter 1's temporary HUD field, serialized edge, validation, lookup, attachment, and initialization coupling. `GameTimeHUD` now contains only its four serialized references, exact graph validation, initial refresh, and current-time rendering; it cannot search, create, attach, or repair any owner, view, Shadow, EventSystem, or legacy panel.
 - Characterized `ChapterIntroUI` without production or scene changes. Cold boot keeps owner `3301000003` on ChapterManager, emits exactly two missing-view warnings, creates one UI-layer root `Canvas_ChapterIntroOverlay` at order `12000`, one stretched `ChapterIntroUI_Runtime` root, one black `10000x10000` raycast Image, and one centered `900x180` Liberation Sans SDF title at size `72`; repeated repair calls and the full Chapter 1/2 lifecycle reuse every identity and the authored EventSystem.
 - Serialized that exact four-object Chapter Intro view graph beneath GameRoot and bound its Canvas, overlay RectTransform, fade Image, and title TMP directly to the existing ChapterManager-hosted owner. The compatibility repair path is intentionally staged for one commit, but cold boot and repeated `EnsureUI` now reuse the authored graph without warnings or hierarchy/component growth. The component host, ChapterManager/Chapter 2 callers, timings, `Act 1` scene override, UI layer, sorting, font/material, and script GUID remain unchanged.
+- Removed every Chapter Intro discovery, factory, component-addition, reparenting, recursive layer/layout mutation, fallback warning/name, and `PostProcessSafeCanvasUtility` dependency. The final Canvas is an authored scene-root Screen-Space Overlay Canvas—the Unity-supported form and the original runtime hierarchy—with its stretched overlay as the serialized full-screen boundary. `ChapterIntroUI` now has only four direct view references, three transition values, presentation methods, and graph validation; it retains the same owner, callers, IDs, timings, title, fade/title visuals, sorting, EventSystem, and GUID.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 48,455 | -1,447 |
+| Runtime C# lines | 49,902 | 48,130 | -1,772 |
 | Direct `MonoBehaviour` declarations | 63 | 48 | -15 |
-| `FindObject*`/`GameObject.Find` | 199 | 107 | -92 |
+| `FindObject*`/`GameObject.Find` | 199 | 106 | -93 |
 | `Resources.Load` | 27 | 17 | -10 |
-| runtime `new GameObject` | 98 | 71 | -27 |
-| runtime `AddComponent<T>` | 100 | 53 | -47 |
+| runtime `new GameObject` | 98 | 67 | -31 |
+| runtime `AddComponent<T>` | 100 | 51 | -49 |
 | runtime initialization hooks | 9 | 4 | -5 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -163,6 +164,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - GameTimeHUD cleanup removes only Chapter 1 property `gameTimeHUD` from document `3302000001`; all 5,991 document headers/order, `SceneRoots`, the eleven HUD documents, GameRoot ownership, and the byte-identical script `.meta` remain exact. Static guards ban every retired search/factory/API, the rendered lifecycle retains the exact view/time/EventSystem identities through Chapter 2 and seven PM, and the full suite remains 194/46 with an identical failure-name set;
 - Chapter-intro characterization passes its null-edge/factory source guard and rendered full lifecycle, including exact runtime hierarchy/components/layers/layout/font/material, two expected creation warnings, repeated `EnsureUI`, and Chapter 2 identity reuse; the full suite remains exactly 194/46 with no failure-name delta;
 - Chapter-intro serialization adds exactly documents `1878887140`–`1878887144`, `1878887150`–`1878887151`, `1878887160`–`1878887163`, and `1878887170`–`1878887173`; only GameRoot Transform `1878886999` and intro owner `3301000003` change among prior scene documents, all other prior documents/order and `SceneRoots` remain byte-identical, and the script `.meta` hash is unchanged. Focused static and rendered lifecycle gates pass without fallback warnings; the full suite remains exactly 194/46 with an identical failure-name set;
+- Chapter-intro cleanup retains all 6,006 document IDs/order and all fifteen view documents, changes only GameRoot Transform `1878886999`, root Canvas RectTransform `1878887141`, intro owner `3301000003`, and `SceneRoots`, and preserves the script `.meta` hash. The Canvas returns to the original top-level hierarchy with canonical engine-driven root values while the stretched overlay retains exact screen coverage; source guards report zero Find/new-GameObject/AddComponent repair in the class. Focused static/rendered gates pass and the full suite remains exactly 194/46 with an identical failure-name set;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -246,6 +248,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Remove `ChapterIntroUI`'s now-unreachable Canvas/view search, creation, component-addition, reparenting, layout repair, fallback warnings/names, and `PostProcessSafeCanvasUtility` dependency while preserving the four direct view references and all transition behavior.
+1. Begin Phase 4 with a characterization-only Grand Entrance Hall ↔ Drawing Room passage slice: freeze the current forward/reverse room, arrival, camera, player, prompt, and room-view behavior before introducing the first canonical `RoomDefinition` / `PassageDefinition` route.
 
 Do not begin bulk deletion until those gates pass.

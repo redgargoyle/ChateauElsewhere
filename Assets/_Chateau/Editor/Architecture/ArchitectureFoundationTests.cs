@@ -168,15 +168,15 @@ public sealed class ArchitectureFoundationTests
         Assert.That(introDocument, Does.Contain("defaultTitle: Act 1"));
         Assert.That(introDocument, Does.Contain("titleHoldSeconds: 2"));
         Assert.That(introDocument, Does.Contain("fadeFromBlackSeconds: 1.5"));
-        Assert.That(introDocument, Does.Contain("titleFontSize: 72"));
-        Assert.That(introDocument, Does.Contain("titleColor: {r: 1, g: 1, b: 1, a: 1}"));
-        Assert.That(introDocument, Does.Contain("useDedicatedOverlayCanvas: 1"));
-        Assert.That(introDocument, Does.Contain("overlayCanvasObjectName: Canvas_ChapterIntroOverlay"));
-        Assert.That(introDocument, Does.Contain("overlaySortingOrder: 12000"));
-        Assert.That(introDocument, Does.Contain("createRuntimeFallbackIfMissing: 1"));
-        Assert.That(introDocument, Does.Contain("overlayObjectName: ChapterIntroUI_Runtime"));
-        Assert.That(introDocument, Does.Contain("fadeObjectName: Image_ChapterIntroFade"));
-        Assert.That(introDocument, Does.Contain("titleObjectName: Text_ChapterIntroTitle"));
+        Assert.That(introDocument, Does.Not.Contain("titleFontSize:"));
+        Assert.That(introDocument, Does.Not.Contain("titleColor:"));
+        Assert.That(introDocument, Does.Not.Contain("useDedicatedOverlayCanvas:"));
+        Assert.That(introDocument, Does.Not.Contain("overlayCanvasObjectName:"));
+        Assert.That(introDocument, Does.Not.Contain("overlaySortingOrder:"));
+        Assert.That(introDocument, Does.Not.Contain("createRuntimeFallbackIfMissing:"));
+        Assert.That(introDocument, Does.Not.Contain("overlayObjectName:"));
+        Assert.That(introDocument, Does.Not.Contain("fadeObjectName:"));
+        Assert.That(introDocument, Does.Not.Contain("titleObjectName:"));
         Assert.That(chapterManagerDocument, Does.Contain("introUI: {fileID: 3301000003}"));
         Assert.That(chapter2Document, Does.Contain("introUI: {fileID: 3301000003}"));
         Assert.That(gameRootDocument, Does.Not.Contain("- {fileID: 3301000003}"));
@@ -206,12 +206,9 @@ public sealed class ArchitectureFoundationTests
         }
 
         Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6006));
-        Assert.That(CountOccurrences(gameRootTransformDocument, "- {fileID: 1878887141}"), Is.EqualTo(1));
-        Assert.That(gameRootTransformDocument, Does.Contain(
-            "  - {fileID: 1878887121}\n" +
-            "  - {fileID: 1878887141}"));
+        Assert.That(CountOccurrences(gameRootTransformDocument, "- {fileID: 1878887141}"), Is.Zero);
         Assert.That(sceneRootsDocument, Does.Not.Contain("1878887140"));
-        Assert.That(sceneRootsDocument, Does.Not.Contain("1878887141"));
+        Assert.That(CountOccurrences(sceneRootsDocument, "- {fileID: 1878887141}"), Is.EqualTo(1));
 
         Assert.That(introCanvasObjectDocument, Does.Contain(
             "  m_Component:\n" +
@@ -222,11 +219,13 @@ public sealed class ArchitectureFoundationTests
         Assert.That(introCanvasObjectDocument, Does.Contain("m_Layer: 5"));
         Assert.That(introCanvasObjectDocument, Does.Contain("m_Name: Canvas_ChapterIntroOverlay"));
         Assert.That(introCanvasObjectDocument, Does.Contain("m_IsActive: 1"));
-        Assert.That(introCanvasRectDocument, Does.Contain("m_Father: {fileID: 1878886999}"));
+        Assert.That(introCanvasRectDocument, Does.Contain("m_Father: {fileID: 0}"));
         Assert.That(introCanvasRectDocument, Does.Contain("  m_Children:\n  - {fileID: 1878887151}"));
+        Assert.That(introCanvasRectDocument, Does.Contain("m_LocalScale: {x: 0, y: 0, z: 0}"));
         Assert.That(introCanvasRectDocument, Does.Contain("m_AnchorMin: {x: 0, y: 0}"));
-        Assert.That(introCanvasRectDocument, Does.Contain("m_AnchorMax: {x: 1, y: 1}"));
+        Assert.That(introCanvasRectDocument, Does.Contain("m_AnchorMax: {x: 0, y: 0}"));
         Assert.That(introCanvasRectDocument, Does.Contain("m_SizeDelta: {x: 0, y: 0}"));
+        Assert.That(introCanvasRectDocument, Does.Contain("m_Pivot: {x: 0, y: 0}"));
         Assert.That(introCanvasDocument, Does.Contain("m_GameObject: {fileID: 1878887140}"));
         Assert.That(introCanvasDocument, Does.Contain("m_RenderMode: 0"));
         Assert.That(introCanvasDocument, Does.Contain("m_OverrideSorting: 0"));
@@ -292,13 +291,36 @@ public sealed class ArchitectureFoundationTests
         Assert.That(introTitleTextDocument, Does.Contain("m_HorizontalAlignment: 2"));
         Assert.That(introTitleTextDocument, Does.Contain("m_VerticalAlignment: 512"));
         Assert.That(introTitleTextDocument, Does.Contain("m_TextWrappingMode: 1"));
-        Assert.That(introText, Does.Contain("GameObject.Find(canvasName)"));
-        Assert.That(introText, Does.Contain("new GameObject(\n                canvasName"));
-        Assert.That(introText, Does.Contain("new GameObject(overlayObjectName, typeof(RectTransform))"));
-        Assert.That(introText, Does.Contain("new GameObject(fadeObjectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image))"));
-        Assert.That(introText, Does.Contain("new GameObject(titleObjectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI))"));
-        Assert.That(introText, Does.Contain("canvasObject.AddComponent<CanvasScaler>()"));
-        Assert.That(introText, Does.Contain("canvasObject.AddComponent<GraphicRaycaster>()"));
+        Assert.That(introText, Does.Not.Contain("EnsureUI"));
+        Assert.That(introText, Does.Not.Contain("EnsureCanvasLayer"));
+        Assert.That(introText, Does.Not.Contain("GetOrCreateIntroCanvas"));
+        Assert.That(introText, Does.Not.Contain("GameObject.Find"));
+        Assert.That(introText, Does.Not.Contain("FindAnyObjectByType"));
+        Assert.That(introText, Does.Not.Contain("FindObjectsByType"));
+        Assert.That(introText, Does.Not.Contain("Resources.Load"));
+        Assert.That(introText, Does.Not.Contain("new GameObject"));
+        Assert.That(introText, Does.Not.Contain("AddComponent<"));
+        Assert.That(introText, Does.Not.Contain("GetComponent<"));
+        Assert.That(introText, Does.Not.Contain("GetComponentsInChildren"));
+        Assert.That(introText, Does.Not.Contain("SetParent"));
+        Assert.That(introText, Does.Not.Contain("PostProcessSafeCanvasUtility"));
+        Assert.That(introText, Does.Not.Contain("createRuntimeFallbackIfMissing"));
+        Assert.That(introText, Does.Not.Contain("overlayCanvasObjectName"));
+        Assert.That(introText, Does.Not.Contain("overlayObjectName"));
+        Assert.That(introText, Does.Not.Contain("fadeObjectName"));
+        Assert.That(introText, Does.Not.Contain("titleObjectName"));
+        Assert.That(introText, Does.Not.Contain("ConfigureIntroCanvas"));
+        Assert.That(introText, Does.Not.Contain("ConfigureOverlayRoot"));
+        Assert.That(introText, Does.Not.Contain("ConfigureFadeImage"));
+        Assert.That(introText, Does.Not.Contain("ConfigureTitleText"));
+        Assert.That(introText, Does.Not.Contain("StretchToParent"));
+        Assert.That(introText, Does.Not.Contain("CoverViewport"));
+        Assert.That(introText, Does.Not.Contain("SetLayerRecursively"));
+        Assert.That(introText, Does.Contain("ChapterIntroUI missing required field: canvas."));
+        Assert.That(introText, Does.Contain("ChapterIntroUI missing required field: overlayRoot."));
+        Assert.That(introText, Does.Contain("overlayRoot.parent != canvas.transform"));
+        Assert.That(introText, Does.Contain("fadeImage.transform.parent != overlayRoot"));
+        Assert.That(introText, Does.Contain("titleText.transform.parent != overlayRoot"));
 
         string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
         Assert.That(chapter2Text, Does.Not.Contain("AddComponent<Chapter2InteractionHUD>"));
