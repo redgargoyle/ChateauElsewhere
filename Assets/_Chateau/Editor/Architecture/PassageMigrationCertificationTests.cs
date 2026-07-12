@@ -50,7 +50,11 @@ public sealed class PassageMigrationCertificationTests
         string gameRoot = RequireDocument(documents, GameRootFileId);
         string database = File.ReadAllText(GameDatabasePath);
 
-        Assert.That(certified, Is.Not.Empty);
+        Assert.That(certified, Has.Count.EqualTo(4),
+            "Exactly the Entrance/Drawing and Drawing/Music reciprocal pairs are complete at this gate.");
+        Assert.That(certified.Select(row => row.Order).Distinct().OrderBy(order => order),
+            Is.EqualTo(new[] { 0, 1 }),
+            "Completed-route certification must cover groups 00 and 01 exactly once per reciprocal pair.");
 
         foreach (IGrouping<int, RouteInventoryRow> certifiedGroup in certified.GroupBy(row => row.Order))
         {
@@ -292,7 +296,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void DrawingMusicOwnsAuthoredApproachAndArrivalWithoutCallerDependencyOrTopologyChanges()
+    public void DrawingMusicCompleteCertificationPreservesAuthoredAnchorsCallersDependenciesAndTopology()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 1)
@@ -325,7 +329,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(group, Has.Count.EqualTo(2));
         RouteInventoryRow musicRow = group.Single(row => row.ComponentFileId == "2300000089");
         RouteInventoryRow drawingRow = group.Single(row => row.ComponentFileId == "2300000099");
-        Assert.That(group.All(row => row.Status == "approach-owned"), Is.True);
+        Assert.That(group.All(row => row.Status == "complete"), Is.True);
         Assert.That(group.Select(row => row.PassageDefinitionGuid).OrderBy(value => value),
             Is.EqualTo(new[]
             {

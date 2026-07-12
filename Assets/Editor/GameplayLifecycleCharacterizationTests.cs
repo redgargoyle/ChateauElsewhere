@@ -4435,7 +4435,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
             Is.EqualTo(4),
-            "Exactly the complete GEH/Drawing pair and approach-owned Drawing/Music pair may have canonical callers.");
+            "Exactly the complete, certified GEH/Drawing and Drawing/Music reciprocal pairs may have canonical callers.");
         AssertVector2Within(
             forwardPassage.ApproachAnchor.LogicalPosition,
             new Vector2(-7.75f, -2.22f),
