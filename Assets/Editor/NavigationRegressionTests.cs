@@ -633,6 +633,12 @@ public class NavigationRegressionTests
         string legacyInspectorMoveBody = ExtractMethodBody(navigationManagerText, "public bool MoveThroughInspectorDoor");
         string legacyPlacementBody = ExtractMethodBody(navigationManagerText, "private void PlacePlayerAtDestinationDoor");
         string currentDefinitionBody = ExtractMethodBody(navigationManagerText, "private CanonicalRoomDefinition FindRegisteredRoomDefinition");
+        string tryStartApproachBody = ExtractMethodBody(triggerText, "private bool TryStartPlayerApproach");
+        string traversalApproachBody = ExtractMethodBody(triggerText, "private bool TryFindTraversalApproachDestination");
+        string canonicalApproachBody = ExtractMethodBody(triggerText, "private bool TryFindCanonicalApproachDestination");
+        string legacyApproachBody = ExtractMethodBody(triggerText, "private bool TryFindBestApproachDestination");
+        string legacyArrivalBody = ExtractMethodBody(triggerText, "public bool TryFindArrivalDestination");
+        string approachStoppedBody = ExtractMethodBody(triggerText, "private void HandlePlayerApproachStopped");
         Assert.That(Regex.Matches(tryTraverseBody, @"\bMoveThroughCanonicalPassage\s*\(").Count, Is.EqualTo(1));
         Assert.That(tryTraverseBody, Does.Not.Contain("MoveThroughInspectorDoor"));
         Assert.That(tryTraverseBody, Does.Not.Contain("SetCurrentRoom"));
@@ -640,6 +646,7 @@ public class NavigationRegressionTests
         Assert.That(tryTraverseBody, Does.Not.Contain("currentRoom ="));
         Assert.That(tryTraverseBody, Does.Not.Contain("TryWarpTo"));
         Assert.That(tryTraverseBody, Does.Not.Contain("Play"));
+        Assert.That(canTraverseBody, Does.Contain("IsFinite(approachAnchor.LogicalPosition)"));
         Assert.That(canTraverseBody, Does.Contain("IsFinite(arrivalAnchor.LogicalPosition)"));
         Assert.That(Regex.Matches(canonicalMoveBody, @"\bSetCurrentRoom\s*\(").Count, Is.EqualTo(1));
         Assert.That(Regex.Matches(canonicalMoveBody, @"\bPlacePlayerAtCanonicalArrival\s*\(").Count, Is.EqualTo(1));
@@ -679,6 +686,43 @@ public class NavigationRegressionTests
         Assert.That(legacyPlacementBody, Does.Not.Contain("ArrivalAnchor"));
         Assert.That(Regex.Matches(navigationManagerText, @"\bcurrentRoom\s*=").Count, Is.EqualTo(1));
         Assert.That(Regex.Matches(navigationManagerText, @"\bonCurrentRoomChanged\.Invoke\s*\(").Count, Is.EqualTo(1));
+        Assert.That(Regex.Matches(tryStartApproachBody, @"\bTryFindTraversalApproachDestination\s*\(").Count, Is.EqualTo(1));
+        Assert.That(Regex.Matches(tryStartApproachBody, @"\bTrySetDestination\s*\(").Count, Is.EqualTo(1));
+        Assert.That(
+            tryStartApproachBody.IndexOf("TryFindTraversalApproachDestination", System.StringComparison.Ordinal),
+            Is.LessThan(tryStartApproachBody.IndexOf("TrySetDestination", System.StringComparison.Ordinal)));
+        Assert.That(
+            tryStartApproachBody.IndexOf("TrySetDestination", System.StringComparison.Ordinal),
+            Is.LessThan(tryStartApproachBody.IndexOf("MovementStopped += HandlePlayerApproachStopped", System.StringComparison.Ordinal)));
+        Assert.That(tryStartApproachBody, Does.Not.Contain("ApproachAnchor"));
+        Assert.That(tryStartApproachBody, Does.Not.Contain("TryFindBestApproachDestination"));
+        Assert.That(tryStartApproachBody, Does.Not.Contain("CanTraverse"));
+        Assert.That(traversalApproachBody, Does.Contain("if (canonicalPassage == null)"));
+        Assert.That(Regex.Matches(traversalApproachBody, @"\bTryFindBestApproachDestination\s*\(").Count, Is.EqualTo(1));
+        Assert.That(traversalApproachBody, Does.Match(
+            @"TryFindBestApproachDestination\(\s*playerMovement,\s*true,\s*out destination,\s*preferredScreenPosition\s*\)"));
+        Assert.That(Regex.Matches(traversalApproachBody, @"\bTryFindCanonicalApproachDestination\s*\(").Count, Is.EqualTo(1));
+        Assert.That(traversalApproachBody, Does.Not.Contain("ApproachAnchor"));
+        Assert.That(canonicalApproachBody, Does.Contain("navigationService.CanTraverse(canonicalPassage)"));
+        Assert.That(canonicalApproachBody, Does.Contain("canonicalPassage.ApproachAnchor.LogicalPosition"));
+        Assert.That(canonicalApproachBody, Does.Contain("TryGetScreenPointFromLogicalPosition"));
+        Assert.That(canonicalApproachBody, Does.Contain("TryGetTriggerScreenBounds"));
+        Assert.That(canonicalApproachBody, Does.Contain("Mathf.Max(1f, maxPlayerScreenDistance)"));
+        Assert.That(canonicalApproachBody, Does.Not.Contain("TryFindBestApproachDestination"));
+        Assert.That(canonicalApproachBody, Does.Not.Contain("preferredScreenPosition"));
+        Assert.That(canonicalApproachBody, Does.Not.Contain("TrySetDestination"));
+        Assert.That(canonicalApproachBody, Does.Not.Contain("ArrivalAnchor"));
+        Assert.That(canonicalApproachBody, Does.Not.Match(@"\bPlay(?:OneShot)?\s*\("));
+        Assert.That(canonicalApproachBody, Does.Not.Contain("SetCurrentRoom"));
+        Assert.That(canonicalApproachBody, Does.Not.Contain("FindAnyObjectByType"));
+        Assert.That(legacyApproachBody, Does.Not.Contain("canonicalPassage"));
+        Assert.That(legacyApproachBody, Does.Not.Contain("ApproachAnchor"));
+        Assert.That(legacyArrivalBody, Does.Contain("TryFindBestApproachDestination(playerMovement, false, out destination)"));
+        Assert.That(legacyArrivalBody, Does.Contain("TryFindClosestReachableArrivalDestination"));
+        Assert.That(legacyArrivalBody, Does.Not.Contain("canonicalPassage"));
+        Assert.That(approachStoppedBody, Does.Contain("CancelPendingPlayerApproach();"));
+        Assert.That(approachStoppedBody, Does.Contain("IsPlayerCloseEnough()"));
+        Assert.That(approachStoppedBody, Does.Contain("ActivateDoor(false, null);"));
         string[] forbiddenFacadeDiscovery =
         {
             "FindAnyObjectByType",

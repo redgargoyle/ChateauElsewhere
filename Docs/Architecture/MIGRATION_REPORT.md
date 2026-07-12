@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage's data, scene bindings, dependencies, façade, two-direction caller cutover, and authored arrival placement complete.**
+**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage's data, scene bindings, dependencies, façade, two-direction caller cutover, and authored arrival/approach placement complete.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -269,6 +269,11 @@ The temporary source increase is the migration spine and verification tooling. I
 - repeated-source and four-aspect gates prove both canonical directions stop exactly at their authored anchors. Deliberately nulling both trigger Passage fields still executes the byte-preserved source-sensitive Inspector sampler, including the old neutral Entrance sample, so canonical arrival ownership does not alter any unmigrated route;
 - the arrival slice changes one Gameplay scalar only: Passage `4100000012`'s arrival coordinate. No YAML document is added, removed, or reordered; `DoorTriggerNavigation`, Passage/interface contracts, every `.meta` file, every GUID, and the legacy `MoveThroughInspectorDoor`, `PlacePlayerAtDestinationDoor`, `SetCurrentRoom`, and `FindArrivalDoorTrigger` bodies remain byte-identical;
 - arrival gates pass: canonical contracts `5/5`, architecture foundation `17/17`, exact static ownership `1/1`, and rendered lifecycle `4/4`. The full suite remains `249` discovered / `203` passed / the exact same `46` baseline failures, with failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`. The architecture guard and serialized-reference scan remain clean; inventory is 112 runtime files / 48,691 lines with unchanged smell totals and 48 direct `MonoBehaviour` declarations; Y-axis occlusion reports zero hard errors and the same 38 tracked design-required findings;
+- the old sampler-derived approach vectors failed the exact authored-point gate, so the two Passage documents now use one collision-safe logical point per room side: forward approach equals reverse arrival at Entrance `(-7.75, -2.22)`, and reverse approach equals forward arrival in Drawing Room `(5.267176, -2.104616)`. Only those two serialized scalar values change; no document, component, reference, `.meta`, GUID, or data asset changes;
+- `RoomNavigationManager.CanTraverse` rejects missing or non-finite approach data. `DoorTriggerNavigation` dispatches null Passage fields through the byte-preserved sampler and bound Passage fields through a fail-closed canonical selector that reads only `ApproachAnchor.LogicalPosition`, ignores preferred-click projection, and enforces the existing screen-distance limit before the unchanged `TrySetDestination` call;
+- rendered production-path gates prove both shared anchors are finite, exact, path-reachable, source-independent, and inside the `145`-pixel envelope at `1366x768`, `1440x1080`, `1920x1080`, and `2560x1080`. A malformed bound anchor starts no movement/audio/state, and left/center/right preferred clicks converge to the same authored point in both directions;
+- canonical far order remains `ArrivedAtDestination` -> `MovementStopped` -> audio -> room event -> exact reciprocal arrival. Null-Passage compatibility fields complete the same far event/audio sequence in both directions while retaining the legacy sampled destinations and arrivals, including forward `(5.231221, -2.002137)` and reverse `(-7.703568, -2.000136)`; their near round trip remains synchronous. Pending subscriptions clear, near canonical activations add no movement callbacks, and every path reuses the same single `GameAudioSourceVolume` binding;
+- approach gates pass: the combined static/contract/foundation set is `23/23`, rendered lifecycle is `4/4`, and the full suite remains `249` discovered / `203` passed / the exact same `46` baseline failures with failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`. The architecture guard adds no debt; inventory is 112 runtime files / 48,741 lines with unchanged smell totals and 48 direct `MonoBehaviour` declarations; serialized references are unchanged; and Y-axis occlusion remains at zero hard errors plus the same 38 tracked set-piece findings;
 
 ## Validation still requiring human/golden review
 
@@ -278,7 +283,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - visual confirmation that the Drawing Room tea table occludes the Butler/guests correctly and retains the accepted no-walk footprint;
 - visual confirmation that the Drawing Room purple armchair occludes the Butler/guests correctly and retains the accepted no-walk footprint;
 - visual confirmation that the Drawing Room purple sofa occludes the Butler/guests correctly and retains the accepted no-walk footprint;
-- human visual confirmation that canonical arrivals `(5.267176, -2.104616)` and `(-7.75, -2.22)` place the Butler's feet on the intended side of each painted doorway;
+- human visual confirmation that walking to and landing on the shared doorway points `(5.267176, -2.104616)` and `(-7.75, -2.22)` place the Butler's feet on the intended side of each painted doorway;
 - a player build and save/load trace after `SaveService` exists.
 
 ## Compatibility adapters still present
@@ -296,6 +301,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Consume only `Passage.ApproachAnchor.LogicalPosition` for the canonical far-approach path. Keep the exact authored arrival placement and the exact legacy approach/arrival behavior for every null-Passage fallback and unmigrated route.
+1. Certify the completed Grand Entrance Hall <-> Drawing Room route as the reusable migration template: freeze its definition/view/passage graph, shared doorway anchors, direct dependencies, caller behavior, legacy fallback, and complete gate checklist without changing production behavior.
 
-That next approach-only slice must preserve the `145`-pixel proximity boundary, far movement subscriptions, `ArrivedAtDestination` -> `MovementStopped` -> audio -> room-event ordering, synchronous near activation, exact authored arrivals, and every null-Passage fallback. It must not migrate another route, change room-state/event ownership, or delete compatibility code. Remaining-route migration and pruning stay separate later gates.
+That certification slice must inventory the remaining routes and define their one-route-at-a-time authoring order, but must not bind a second Passage, delete compatibility code, or alter production behavior. Remaining-route migration begins only after the first route's reusable gate is committed.

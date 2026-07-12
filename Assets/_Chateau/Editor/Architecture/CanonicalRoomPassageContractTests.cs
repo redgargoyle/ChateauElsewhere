@@ -202,7 +202,7 @@ public sealed class CanonicalRoomPassageContractTests
             "0344228bb90d4997818e13c84f0bcf63",
             "4100000001",
             "4100000012",
-            "{x: -7.576081, y: -1.986423}",
+            "{x: -7.75, y: -2.22}",
             "{x: 5.267176, y: -2.104616}");
         AssertPassivePassageDocument(
             reversePassage,
@@ -210,7 +210,7 @@ public sealed class CanonicalRoomPassageContractTests
             "50ae5112eed74cfda8588ff835b92516",
             "4100000002",
             "4100000011",
-            "{x: 5.280546, y: -2.015396}",
+            "{x: 5.267176, y: -2.104616}",
             "{x: -7.75, y: -2.22}");
 
         AssertLegacyDoorTriggerCompatibilityBound(
@@ -547,12 +547,16 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(navigationManagerText, Does.Contain("Vector2 arrivalPosition = passage.ArrivalAnchor.LogicalPosition;"));
         Assert.That(navigationManagerText, Does.Contain("playerMovement.TryWarpToExact(arrivalPosition)"));
         Assert.That(navigationManagerText, Does.Contain("IsFinite(arrivalAnchor.LogicalPosition)"));
+        Assert.That(navigationManagerText, Does.Contain("IsFinite(approachAnchor.LogicalPosition)"));
         Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private CanonicalRoomDefinition"));
         Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private Passage"));
         Assert.That(doorTriggerText, Does.Contain("using Chateau.World.Navigation;"));
         Assert.That(doorTriggerText, Does.Contain("[SerializeField] private CanonicalPassage canonicalPassage;"));
         Assert.That(doorTriggerText, Does.Contain("INavigationService navigationService = navigationManager;"));
         Assert.That(doorTriggerText, Does.Contain("navigationService.TryTraverse(canonicalPassage)"));
+        Assert.That(doorTriggerText, Does.Contain("TryFindTraversalApproachDestination"));
+        Assert.That(doorTriggerText, Does.Contain("TryFindCanonicalApproachDestination"));
+        Assert.That(doorTriggerText, Does.Contain("canonicalPassage.ApproachAnchor.LogicalPosition"));
         Assert.That(doorTriggerText, Does.Contain(
             "navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom)"));
         Assert.That(

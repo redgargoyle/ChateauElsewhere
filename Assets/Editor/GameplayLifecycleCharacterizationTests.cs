@@ -2101,6 +2101,24 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
         Assert.That(facade.CurrentRoomDefinition, Is.SameAs(forward.Definition.SourceRoom));
         Vector2 initialPosition = player.LogicalPosition;
+        Vector2 authoredForwardApproach = forward.ApproachAnchor.LogicalPosition;
+        SetPrivateField(forward.ApproachAnchor, "logicalPosition", new Vector2(float.PositiveInfinity, 0f));
+        try
+        {
+            Assert.That(facade.CanTraverse(forward), Is.False,
+                "A non-finite authored approach must be rejected before movement or room state changes.");
+            Assert.That(facade.TryTraverse(forward), Is.False);
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+            Assert.That(player.HasDestination, Is.False);
+            AssertVector2Within(player.LogicalPosition, initialPosition, 0.0001f, "rejected non-finite approach");
+            Assert.That(roomEvents, Is.Empty);
+            Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Is.Empty);
+        }
+        finally
+        {
+            SetPrivateField(forward.ApproachAnchor, "logicalPosition", authoredForwardApproach);
+        }
+
         Vector2 authoredForwardArrival = forward.ArrivalAnchor.LogicalPosition;
         SetPrivateField(forward.ArrivalAnchor, "logicalPosition", new Vector2(float.NaN, 0f));
         try
@@ -2127,7 +2145,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         AssertVector2Within(player.LogicalPosition, initialPosition, 0.0001f, "rejected facade traversal");
         Assert.That(roomEvents, Is.Empty);
 
-        Assert.That(player.TryWarpTo(forward.ApproachAnchor.LogicalPosition, true), Is.True);
+        Assert.That(player.TryWarpToExact(forward.ApproachAnchor.LogicalPosition), Is.True);
         Vector2 forwardEventPosition = player.LogicalPosition;
         Assert.That(facade.TryTraverse(forward), Is.True);
         Assert.That(roomEvents, Is.EqualTo(new[] { DrawingRoom }));
@@ -2321,17 +2339,39 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(InvokePrivateResult<bool>(outbound, "IsPlayerCloseEnough"), Is.False,
             "The sampled Butler position must exercise the far-click approach path.");
         Assert.That(forwardStartScreenDistance, Is.GreaterThan(forwardProximityLimit));
+        Vector2 authoredForwardApproach = outboundPassage.ApproachAnchor.LogicalPosition;
+        SetPrivateField(outboundPassage.ApproachAnchor, "logicalPosition", new Vector2(float.NaN, 0f));
+        try
+        {
+            SetPrivateField(outbound, "lastPointerActivationFrame", -1);
+            outbound.ActivateDoor();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+            Assert.That(player.HasDestination, Is.False);
+            AssertVector2Within(player.LogicalPosition, forwardStart, 0.0001f, "rejected non-finite trigger approach");
+            Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation), "pendingApproachTrigger"), Is.Null);
+            Assert.That(GetPrivateField<PointClickPlayerMovement>(outbound, "pendingApproachPlayer"), Is.Null);
+            Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource"), Is.Null);
+            Assert.That(orderedEvents, Is.Empty);
+        }
+        finally
+        {
+            SetPrivateField(outboundPassage.ApproachAnchor, "logicalPosition", authoredForwardApproach);
+        }
+
         Assert.That(
-            TryInvokeApproachDestination(outbound, player, requireMovement: true, out Vector2 forwardApproach),
+            TryInvokeApproachDestination(outbound, player, requireMovement: true, out Vector2 forwardLegacyApproach),
             Is.True);
         AssertVector2Within(
-            forwardApproach,
+            forwardLegacyApproach,
             new Vector2(-7.576081f, -1.986423f),
             0.15f,
-            "1366x768 neutral forward approach");
+            "1366x768 legacy forward approach sample");
+        Vector2 forwardApproach = outboundPassage.ApproachAnchor.LogicalPosition;
+        Assert.That(Vector2.Distance(forwardLegacyApproach, forwardApproach), Is.GreaterThan(0.1f));
 
         string outboundLegacySource = GetPrivateField<string>(outbound, "sourceRoom");
         SetPrivateField(outbound, "sourceRoom", "__LEGACY_SOURCE_MUST_NOT_BE_USED__");
+        SetPrivateField(outbound, "lastPointerActivationFrame", -1);
         outbound.ActivateDoor();
 
         Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom),
@@ -2387,16 +2427,19 @@ public sealed class GameplayLifecycleCharacterizationTests
             "The sampled Drawing Room position must exercise the reverse far-click approach path.");
         Assert.That(reverseStartScreenDistance, Is.GreaterThan(reverseProximityLimit));
         Assert.That(
-            TryInvokeApproachDestination(reverse, player, requireMovement: true, out Vector2 reverseApproach),
+            TryInvokeApproachDestination(reverse, player, requireMovement: true, out Vector2 reverseLegacyApproach),
             Is.True);
         AssertVector2Within(
-            reverseApproach,
+            reverseLegacyApproach,
             new Vector2(5.280546f, -2.015396f),
             0.0001f,
-            "1366x768 neutral reverse approach");
+            "1366x768 legacy reverse approach sample");
+        Vector2 reverseApproach = reversePassage.ApproachAnchor.LogicalPosition;
+        Assert.That(reverseApproach, Is.Not.EqualTo(reverseLegacyApproach));
 
         string reverseLegacySource = GetPrivateField<string>(reverse, "sourceRoom");
         SetPrivateField(reverse, "sourceRoom", "__LEGACY_SOURCE_MUST_NOT_BE_USED__");
+        SetPrivateField(reverse, "lastPointerActivationFrame", -1);
         reverse.ActivateDoor();
 
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom),
@@ -2439,13 +2482,117 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
         Assert.That(passageAudioSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedPassageBinding));
 
+        SetPrivateField<CanonicalPassage>(outbound, "canonicalPassage", null);
+
+        InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+        Assert.That(
+            TryWarpToCharacterizedFarStart(
+                player,
+                outbound,
+                new Vector2(10f, -6f),
+                out float legacyFallbackStartScreenDistance),
+            Is.True);
+        Assert.That(InvokePrivateResult<bool>(outbound, "IsPlayerCloseEnough"), Is.False);
+        Assert.That(legacyFallbackStartScreenDistance, Is.GreaterThan(forwardProximityLimit));
+        Assert.That(
+            TryInvokeApproachDestination(outbound, player, requireMovement: true, out Vector2 legacyFallbackApproach),
+            Is.True);
+        Assert.That(Vector2.Distance(legacyFallbackApproach, outboundPassage.ApproachAnchor.LogicalPosition), Is.GreaterThan(0.1f),
+            "The null-Passage branch must retain the source-sensitive legacy sampler instead of the shared canonical anchor.");
+        SetPrivateField(outbound, "lastPointerActivationFrame", -1);
+        outbound.ActivateDoor();
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+        Assert.That(player.HasDestination, Is.True);
+        AssertVector2Within(
+            GetPrivateValue<Vector2>(player, "finalDestination"),
+            legacyFallbackApproach,
+            0.0001f,
+            "null-Passage legacy far approach");
+        Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation), "pendingApproachTrigger"), Is.SameAs(outbound));
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(outbound, "pendingApproachPlayer"), Is.SameAs(player));
+        Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource"), Is.Null);
+        Assert.That(arrivedPositions, Has.Count.EqualTo(2));
+        Assert.That(movementStoppedPositions, Has.Count.EqualTo(2));
+        Assert.That(roomChangedPositions, Has.Count.EqualTo(2));
+
+        for (int frame = 0; frame < 120 && navigation.CurrentRoom == EntranceRoom && player.HasDestination; frame++)
+        {
+            InvokePrivateMethod(player, "MoveTowardDestination");
+            yield return null;
+        }
+        yield return WaitForSettledLayout();
+
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+        Assert.That(player.HasDestination, Is.False);
+        Assert.That(arrivedPositions, Has.Count.EqualTo(3));
+        Assert.That(movementStoppedPositions, Has.Count.EqualTo(3));
+        Assert.That(roomChangedPositions, Has.Count.EqualTo(3));
+        AssertVector2Within(arrivedPositions[2], legacyFallbackApproach, 0.0001f, "legacy far forward movement arrival");
+        AssertVector2Within(movementStoppedPositions[2], legacyFallbackApproach, 0.0001f, "legacy far forward movement stop");
+        AssertVector2Within(roomChangedPositions[2], legacyFallbackApproach, 0.0001f, "legacy far forward room event pre-warp position");
+        Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation), "pendingApproachTrigger"), Is.Null);
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(outbound, "pendingApproachPlayer"), Is.Null);
+        Vector2 legacyFarForwardArrival = player.LogicalPosition;
+        AssertVector2Within(legacyFarForwardArrival, new Vector2(5.231221f, -2.002137f), 0.001f, "legacy far forward arrival");
+        Assert.That(Vector2.Distance(legacyFarForwardArrival, forwardArrival), Is.GreaterThan(0.1f),
+            "The null-Passage branch must retain its legacy sampled arrival instead of using the canonical authored anchor.");
+        Assert.That(passageAudioSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedPassageBinding));
+
+        InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+        Assert.That(
+            TryWarpToCharacterizedFarStart(
+                player,
+                reverse,
+                new Vector2(-10f, -6f),
+                out float legacyReverseFallbackStartScreenDistance),
+            Is.True);
+        Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.False);
+        Assert.That(legacyReverseFallbackStartScreenDistance, Is.GreaterThan(reverseProximityLimit));
+        Assert.That(
+            TryInvokeApproachDestination(reverse, player, requireMovement: true, out Vector2 legacyReverseFallbackApproach),
+            Is.True);
+        Assert.That(Vector2.Distance(legacyReverseFallbackApproach, reversePassage.ApproachAnchor.LogicalPosition), Is.GreaterThan(0.05f));
+        SetPrivateField<CanonicalPassage>(reverse, "canonicalPassage", null);
+        SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+        reverse.ActivateDoor();
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+        Assert.That(player.HasDestination, Is.True);
+        AssertVector2Within(
+            GetPrivateValue<Vector2>(player, "finalDestination"),
+            legacyReverseFallbackApproach,
+            0.0001f,
+            "null-Passage legacy reverse far approach");
+        Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation), "pendingApproachTrigger"), Is.SameAs(reverse));
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(reverse, "pendingApproachPlayer"), Is.SameAs(player));
+        Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource"), Is.Null);
+
+        for (int frame = 0; frame < 120 && navigation.CurrentRoom == DrawingRoom && player.HasDestination; frame++)
+        {
+            InvokePrivateMethod(player, "MoveTowardDestination");
+            yield return null;
+        }
+        yield return WaitForSettledLayout();
+
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+        Assert.That(player.HasDestination, Is.False);
+        Assert.That(arrivedPositions, Has.Count.EqualTo(4));
+        Assert.That(movementStoppedPositions, Has.Count.EqualTo(4));
+        Assert.That(roomChangedPositions, Has.Count.EqualTo(4));
+        AssertVector2Within(arrivedPositions[3], legacyReverseFallbackApproach, 0.0001f, "legacy far reverse movement arrival");
+        AssertVector2Within(movementStoppedPositions[3], legacyReverseFallbackApproach, 0.0001f, "legacy far reverse movement stop");
+        AssertVector2Within(roomChangedPositions[3], legacyReverseFallbackApproach, 0.0001f, "legacy far reverse room event pre-warp position");
+        Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation), "pendingApproachTrigger"), Is.Null);
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(reverse, "pendingApproachPlayer"), Is.Null);
+        Vector2 legacyFarReverseArrival = player.LogicalPosition;
+        AssertVector2Within(legacyFarReverseArrival, new Vector2(-7.703568f, -2.000136f), 0.001f, "legacy far reverse arrival");
+        Assert.That(passageAudioSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedPassageBinding));
+
         int arrivalEventCountBeforeNearRoutes = arrivedPositions.Count;
         int movementStopCountBeforeNearRoutes = movementStoppedPositions.Count;
-        SetPrivateField<CanonicalPassage>(outbound, "canonicalPassage", null);
-        SetPrivateField<CanonicalPassage>(reverse, "canonicalPassage", null);
         InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
         Assert.That(InvokePrivateResult<bool>(outbound, "IsPlayerCloseEnough"), Is.True,
             "The reverse arrival must be near the reciprocal Entrance passage.");
+        SetPrivateField(outbound, "lastPointerActivationFrame", -1);
         Vector2 legacyNearForwardSource = player.LogicalPosition;
         outbound.ActivateDoor();
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom),
@@ -2453,8 +2600,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(player.HasDestination, Is.False);
         Assert.That(arrivedPositions, Has.Count.EqualTo(arrivalEventCountBeforeNearRoutes));
         Assert.That(movementStoppedPositions, Has.Count.EqualTo(movementStopCountBeforeNearRoutes));
-        Assert.That(roomChangedPositions, Has.Count.EqualTo(3));
-        AssertVector2Within(roomChangedPositions[2], legacyNearForwardSource, 0.0001f, "legacy near forward room event pre-warp position");
+        Assert.That(roomChangedPositions, Has.Count.EqualTo(5));
+        AssertVector2Within(roomChangedPositions[4], legacyNearForwardSource, 0.0001f, "legacy near forward room event pre-warp position");
         Vector2 nearForwardArrival = player.LogicalPosition;
         AssertVector2Within(
             nearForwardArrival,
@@ -2474,8 +2621,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(player.HasDestination, Is.False);
         Assert.That(arrivedPositions, Has.Count.EqualTo(arrivalEventCountBeforeNearRoutes));
         Assert.That(movementStoppedPositions, Has.Count.EqualTo(movementStopCountBeforeNearRoutes));
-        Assert.That(roomChangedPositions, Has.Count.EqualTo(4));
-        AssertVector2Within(roomChangedPositions[3], legacyNearReverseSource, 0.0001f, "legacy near reverse room event pre-warp position");
+        Assert.That(roomChangedPositions, Has.Count.EqualTo(6));
+        AssertVector2Within(roomChangedPositions[5], legacyNearReverseSource, 0.0001f, "legacy near reverse room event pre-warp position");
         Vector2 nearReverseArrival = player.LogicalPosition;
         AssertVector2Within(nearReverseArrival, new Vector2(-7.703568f, -2.000136f), 0.001f, "1366x768 legacy near reverse arrival");
         Assert.That(Vector2.Distance(nearReverseArrival, reverseArrival), Is.GreaterThan(0.2f),
@@ -2507,8 +2654,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(player.HasDestination, Is.False);
         Assert.That(arrivedPositions, Has.Count.EqualTo(arrivalEventCountBeforeNearRoutes));
         Assert.That(movementStoppedPositions, Has.Count.EqualTo(movementStopCountBeforeNearRoutes));
-        Assert.That(roomChangedPositions, Has.Count.EqualTo(5));
-        AssertVector2Within(roomChangedPositions[4], canonicalNearForwardSource, 0.0001f, "canonical near forward room event pre-warp position");
+        Assert.That(roomChangedPositions, Has.Count.EqualTo(7));
+        AssertVector2Within(roomChangedPositions[6], canonicalNearForwardSource, 0.0001f, "canonical near forward room event pre-warp position");
         Vector2 canonicalNearForwardArrival = player.LogicalPosition;
         AssertVector2Within(canonicalNearForwardArrival, outboundPassage.ArrivalAnchor.LogicalPosition, 0.0001f, "canonical near forward authored arrival");
         AssertVector2Within(canonicalNearForwardArrival, forwardArrival, 0.0001f, "canonical forward source-invariant arrival");
@@ -2522,14 +2669,20 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(player.HasDestination, Is.False);
         Assert.That(arrivedPositions, Has.Count.EqualTo(arrivalEventCountBeforeNearRoutes));
         Assert.That(movementStoppedPositions, Has.Count.EqualTo(movementStopCountBeforeNearRoutes));
-        Assert.That(roomChangedPositions, Has.Count.EqualTo(6));
-        AssertVector2Within(roomChangedPositions[5], canonicalNearReverseSource, 0.0001f, "canonical near reverse room event pre-warp position");
+        Assert.That(roomChangedPositions, Has.Count.EqualTo(8));
+        AssertVector2Within(roomChangedPositions[7], canonicalNearReverseSource, 0.0001f, "canonical near reverse room event pre-warp position");
         Vector2 canonicalNearReverseArrival = player.LogicalPosition;
         AssertVector2Within(canonicalNearReverseArrival, reversePassage.ArrivalAnchor.LogicalPosition, 0.0001f, "canonical near reverse authored arrival");
         AssertVector2Within(canonicalNearReverseArrival, reverseArrival, 0.0001f, "canonical reverse source-invariant arrival");
 
         Assert.That(orderedEvents, Is.EqualTo(new[]
         {
+            $"arrived:{EntranceRoom}:audio-idle",
+            $"movement-stopped:{EntranceRoom}:audio-idle",
+            $"room-changed:{DrawingRoom}:audio-started",
+            $"arrived:{DrawingRoom}:audio-idle",
+            $"movement-stopped:{DrawingRoom}:audio-idle",
+            $"room-changed:{EntranceRoom}:audio-started",
             $"arrived:{EntranceRoom}:audio-idle",
             $"movement-stopped:{EntranceRoom}:audio-idle",
             $"room-changed:{DrawingRoom}:audio-started",
@@ -2565,9 +2718,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             $"reverseArrival={reverseArrival.x:0.######},{reverseArrival.y:0.######} " +
             $"nearReverseArrival={nearReverseArrival.x:0.######},{nearReverseArrival.y:0.######} " +
             $"canonicalNearReverseArrival={canonicalNearReverseArrival.x:0.######},{canonicalNearReverseArrival.y:0.######} " +
+            $"legacyFarForwardArrival={legacyFarForwardArrival.x:0.######},{legacyFarForwardArrival.y:0.######} " +
+            $"legacyFarReverseArrival={legacyFarReverseArrival.x:0.######},{legacyFarReverseArrival.y:0.######} " +
             $"events={string.Join("->", orderedEvents)}");
 
         InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+        Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation), "pendingApproachTrigger"), Is.Null);
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(outbound, "pendingApproachPlayer"), Is.Null);
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(reverse, "pendingApproachPlayer"), Is.Null);
+        Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource"), Is.Null);
         player.ArrivedAtDestination -= recordArrival;
         player.MovementStopped -= recordMovementStopped;
         navigation.OnCurrentRoomChanged.RemoveListener(recordRoomChanged);
@@ -2700,6 +2859,49 @@ public sealed class GameplayLifecycleCharacterizationTests
             AssertApproachWithinActivationDistance(outbound, player, forwardCenter, "rendered forward center-click approach");
             AssertApproachWithinActivationDistance(outbound, player, forwardRight, "rendered forward right-click approach");
 
+            Assert.That(
+                player.TryWarpToExact(forwardPassage.ApproachAnchor.LogicalPosition),
+                Is.True,
+                $"The authored forward approach must be exactly walkable at {renderedSize.x}x{renderedSize.y}.");
+            AssertApproachWithinActivationDistance(
+                outbound,
+                player,
+                forwardPassage.ApproachAnchor.LogicalPosition,
+                "rendered authored forward approach");
+            Assert.That(InvokePrivateResult<bool>(outbound, "IsPlayerCloseEnough"), Is.True);
+            Assert.That(player.TryWarpTo(invariantStart, false), Is.True);
+
+            Assert.That(
+                TryInvokeTraversalApproachDestination(outbound, player, out Vector2 canonicalForwardNull, null),
+                Is.True);
+            Assert.That(
+                TryInvokeTraversalApproachDestination(outbound, player, out Vector2 canonicalForwardLeft, forwardLeftClick),
+                Is.True);
+            Assert.That(
+                TryInvokeTraversalApproachDestination(outbound, player, out Vector2 canonicalForwardCenter, forwardCenterClick),
+                Is.True);
+            Assert.That(
+                TryInvokeTraversalApproachDestination(outbound, player, out Vector2 canonicalForwardRight, forwardRightClick),
+                Is.True);
+            AssertVector2Within(canonicalForwardNull, forwardPassage.ApproachAnchor.LogicalPosition, 0.0001f, "canonical forward null-click approach");
+            AssertVector2Within(canonicalForwardLeft, canonicalForwardNull, 0.0001f, "canonical forward left-click approach");
+            AssertVector2Within(canonicalForwardCenter, canonicalForwardNull, 0.0001f, "canonical forward center-click approach");
+            AssertVector2Within(canonicalForwardRight, canonicalForwardNull, 0.0001f, "canonical forward right-click approach");
+            SetPrivateField(outbound, "lastPointerActivationFrame", -1);
+            outbound.ActivateDoor();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+            Assert.That(player.HasDestination, Is.True);
+            AssertVector2Within(
+                GetPrivateValue<Vector2>(player, "finalDestination"),
+                forwardPassage.ApproachAnchor.LogicalPosition,
+                0.0001f,
+                "rendered canonical forward movement command");
+            Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation), "pendingApproachTrigger"), Is.SameAs(outbound));
+            Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource"), Is.Null);
+            InvokePrivateMethod(outbound, "CancelPendingPlayerApproach");
+            Assert.That(player.TryWarpToExact(invariantStart), Is.True);
+            Assert.That(player.HasDestination, Is.False);
+
             Assert.That(player.TryWarpTo(forwardApproach, false), Is.True);
             Assert.That(
                 navigation.MoveThroughInspectorDoor(
@@ -2741,6 +2943,49 @@ public sealed class GameplayLifecycleCharacterizationTests
             AssertApproachWithinActivationDistance(reverse, player, reverseLeft, "rendered reverse left-click approach");
             AssertApproachWithinActivationDistance(reverse, player, reverseCenter, "rendered reverse center-click approach");
             AssertApproachWithinActivationDistance(reverse, player, reverseRight, "rendered reverse right-click approach");
+
+            Assert.That(
+                player.TryWarpToExact(reversePassage.ApproachAnchor.LogicalPosition),
+                Is.True,
+                $"The authored reverse approach must be exactly walkable at {renderedSize.x}x{renderedSize.y}.");
+            AssertApproachWithinActivationDistance(
+                reverse,
+                player,
+                reversePassage.ApproachAnchor.LogicalPosition,
+                "rendered authored reverse approach");
+            Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True);
+            Assert.That(player.TryWarpTo(reverseInvariantStart, false), Is.True);
+
+            Assert.That(
+                TryInvokeTraversalApproachDestination(reverse, player, out Vector2 canonicalReverseNull, null),
+                Is.True);
+            Assert.That(
+                TryInvokeTraversalApproachDestination(reverse, player, out Vector2 canonicalReverseLeft, reverseLeftClick),
+                Is.True);
+            Assert.That(
+                TryInvokeTraversalApproachDestination(reverse, player, out Vector2 canonicalReverseCenter, reverseCenterClick),
+                Is.True);
+            Assert.That(
+                TryInvokeTraversalApproachDestination(reverse, player, out Vector2 canonicalReverseRight, reverseRightClick),
+                Is.True);
+            AssertVector2Within(canonicalReverseNull, reversePassage.ApproachAnchor.LogicalPosition, 0.0001f, "canonical reverse null-click approach");
+            AssertVector2Within(canonicalReverseLeft, canonicalReverseNull, 0.0001f, "canonical reverse left-click approach");
+            AssertVector2Within(canonicalReverseCenter, canonicalReverseNull, 0.0001f, "canonical reverse center-click approach");
+            AssertVector2Within(canonicalReverseRight, canonicalReverseNull, 0.0001f, "canonical reverse right-click approach");
+            SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+            reverse.ActivateDoor();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+            Assert.That(player.HasDestination, Is.True);
+            AssertVector2Within(
+                GetPrivateValue<Vector2>(player, "finalDestination"),
+                reversePassage.ApproachAnchor.LogicalPosition,
+                0.0001f,
+                "rendered canonical reverse movement command");
+            Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation), "pendingApproachTrigger"), Is.SameAs(reverse));
+            Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource"), Is.Null);
+            InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+            Assert.That(player.TryWarpToExact(reverseInvariantStart), Is.True);
+            Assert.That(player.HasDestination, Is.False);
 
             Assert.That(player.TryWarpTo(reverseApproach, false), Is.True);
             Assert.That(
@@ -3042,7 +3287,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.EqualTo(2));
         AssertVector2Within(
             forwardPassage.ApproachAnchor.LogicalPosition,
-            new Vector2(-7.576081f, -1.986423f),
+            new Vector2(-7.75f, -2.22f),
             0.0001f,
             "passive forward approach anchor");
         AssertVector2Within(
@@ -3052,7 +3297,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             "passive forward arrival anchor");
         AssertVector2Within(
             reversePassage.ApproachAnchor.LogicalPosition,
-            new Vector2(5.280546f, -2.015396f),
+            new Vector2(5.267176f, -2.104616f),
             0.0001f,
             "passive reverse approach anchor");
         AssertVector2Within(
@@ -3060,6 +3305,16 @@ public sealed class GameplayLifecycleCharacterizationTests
             new Vector2(-7.75f, -2.22f),
             0.0001f,
             "passive reverse arrival anchor");
+        AssertVector2Within(
+            forwardPassage.ApproachAnchor.LogicalPosition,
+            reversePassage.ArrivalAnchor.LogicalPosition,
+            0.0001f,
+            "Entrance shared doorway anchor");
+        AssertVector2Within(
+            reversePassage.ApproachAnchor.LogicalPosition,
+            forwardPassage.ArrivalAnchor.LogicalPosition,
+            0.0001f,
+            "Drawing Room shared doorway anchor");
         Assert.That(forwardPassage.HasGameContext, Is.True);
         Assert.That(reversePassage.HasGameContext, Is.True);
         Assert.That(forwardPassage.enabled, Is.True);
@@ -3265,6 +3520,32 @@ public sealed class GameplayLifecycleCharacterizationTests
         object[] arguments = { player, requireMovement, Vector2.zero, preferredScreenPosition };
         bool found = (bool)method.Invoke(trigger, arguments);
         destination = (Vector2)arguments[2];
+        return found;
+    }
+
+    private static bool TryInvokeTraversalApproachDestination(
+        DoorTriggerNavigation trigger,
+        PointClickPlayerMovement player,
+        out Vector2 destination,
+        Vector2? preferredScreenPosition)
+    {
+        System.Reflection.MethodInfo method = typeof(DoorTriggerNavigation).GetMethod(
+            "TryFindTraversalApproachDestination",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null,
+            new[]
+            {
+                typeof(PointClickPlayerMovement),
+                typeof(Vector2).MakeByRefType(),
+                typeof(Vector2?)
+            },
+            null);
+        Assert.That(method, Is.Not.Null,
+            "Missing private DoorTriggerNavigation.TryFindTraversalApproachDestination seam.");
+
+        object[] arguments = { player, Vector2.zero, preferredScreenPosition };
+        bool found = (bool)method.Invoke(trigger, arguments);
+        destination = (Vector2)arguments[1];
         return found;
     }
 

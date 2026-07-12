@@ -326,7 +326,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         CancelAnyPendingApproach();
 
-        if (!TryFindBestApproachDestination(playerMovement, true, out Vector2 approachDestination, preferredScreenPosition))
+        if (!TryFindTraversalApproachDestination(playerMovement, out Vector2 approachDestination, preferredScreenPosition))
         {
             LogApproachFailure("no reachable walkable point could be found near the trigger");
             return false;
@@ -353,6 +353,54 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         pendingApproachTrigger = this;
         pendingApproachPlayer = playerMovement;
         pendingApproachPlayer.MovementStopped += HandlePlayerApproachStopped;
+        return true;
+    }
+
+    private bool TryFindTraversalApproachDestination(
+        PointClickPlayerMovement playerMovement,
+        out Vector2 destination,
+        Vector2? preferredScreenPosition)
+    {
+        if (canonicalPassage == null)
+        {
+            return TryFindBestApproachDestination(
+                playerMovement,
+                true,
+                out destination,
+                preferredScreenPosition);
+        }
+
+        return TryFindCanonicalApproachDestination(playerMovement, out destination);
+    }
+
+    private bool TryFindCanonicalApproachDestination(
+        PointClickPlayerMovement playerMovement,
+        out Vector2 destination)
+    {
+        destination = Vector2.zero;
+        INavigationService navigationService = navigationManager;
+
+        if (navigationService == null || !navigationService.CanTraverse(canonicalPassage))
+        {
+            return false;
+        }
+
+        Vector2 authoredDestination = canonicalPassage.ApproachAnchor.LogicalPosition;
+
+        if (!playerMovement.TryGetScreenPointFromLogicalPosition(authoredDestination, out Vector2 destinationScreenPoint) ||
+            !TryGetTriggerScreenBounds(out Vector2 min, out Vector2 max))
+        {
+            return false;
+        }
+
+        Vector2 closestTriggerPoint = GetClosestApproachPointInTriggerBounds(destinationScreenPoint, min, max);
+
+        if (Vector2.Distance(destinationScreenPoint, closestTriggerPoint) > Mathf.Max(1f, maxPlayerScreenDistance))
+        {
+            return false;
+        }
+
+        destination = authoredDestination;
         return true;
     }
 

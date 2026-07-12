@@ -134,6 +134,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
         PassageDefinition definition = passage.Definition;
         Passage reverse = passage.ReversePassage;
         CanonicalRoomDefinition currentDefinition = CurrentRoomDefinition;
+        PassageAnchorData approachAnchor = passage.ApproachAnchor;
         PassageAnchorData arrivalAnchor = passage.ArrivalAnchor;
 
         return definition != null &&
@@ -149,7 +150,8 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             passage.transform != passage.SourceRoomView.transform &&
             passage.transform.IsChildOf(passage.SourceRoomView.transform) &&
             passage.SourceRoomView.Definition == currentDefinition &&
-            passage.ApproachAnchor != null &&
+            approachAnchor != null &&
+            IsFinite(approachAnchor.LogicalPosition) &&
             arrivalAnchor != null &&
             IsFinite(arrivalAnchor.LogicalPosition) &&
             reverse != passage &&
