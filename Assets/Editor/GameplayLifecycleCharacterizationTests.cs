@@ -64,6 +64,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         ChapterIntroUI intro = RequireExactlyOneInActiveScene<ChapterIntroUI>();
         Chapter1ArrivalController arrival = RequireExactlyOneInActiveScene<Chapter1ArrivalController>();
         Chapter1InteractionHUD chapter1Hud = RequireExactlyOneInActiveScene<Chapter1InteractionHUD>();
+        Transform entranceCoatHanger = FindInActiveScene<Transform>()
+            .Single(item => item.name == "entrance_coat_hanger_0");
+        SpriteRenderer entranceCoatHangerRenderer = entranceCoatHanger.GetComponent<SpriteRenderer>();
+        CoatCloset pantryCoatCloset = RequireExactlyOneInActiveScene<CoatCloset>();
         Chapter2Controller serializedChapter2 = RequireExactlyOneInActiveScene<Chapter2Controller>();
         Chapter2InteractionHUD serializedChapter2Hud = RequireExactlyOneInActiveScene<Chapter2InteractionHUD>();
         Chapter2MonsterStingerController serializedMonsterStinger = RequireExactlyOneInActiveScene<Chapter2MonsterStingerController>();
@@ -132,6 +136,72 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(speech.IsInitialized, Is.True);
         Assert.That(speech.HasGameContext, Is.True);
         Assert.That(chapter1Hud.gameObject, Is.SameAs(arrival.gameObject));
+        Assert.That(entranceCoatHangerRenderer, Is.Not.Null);
+        Assert.That(FindInActiveScene<CoatCloset>(), Has.Length.EqualTo(1));
+        Assert.That(entranceCoatHanger.GetComponents<CoatCloset>(), Is.Empty);
+        Assert.That(entranceCoatHanger.GetComponents<Chapter1SceneAction>(), Is.Empty);
+        Assert.That(entranceCoatHanger.GetComponents<BoxCollider2D>(), Is.Empty);
+        Assert.That(pantryCoatCloset.gameObject.name, Is.EqualTo("CoatCloset"));
+        Assert.That(GetPrivateField<CoatCloset>(arrival, "coatCloset"), Is.SameAs(pantryCoatCloset));
+
+        InvokePrivateBooleanMethod(arrival, "ResolveReferences", true);
+        CoatCloset entranceCoatCloset = entranceCoatHanger.GetComponent<CoatCloset>();
+        Chapter1SceneAction entranceCoatAction = entranceCoatHanger.GetComponent<Chapter1SceneAction>();
+        BoxCollider2D entranceCoatCollider = entranceCoatHanger.GetComponent<BoxCollider2D>();
+
+        Assert.That(FindInActiveScene<CoatCloset>(), Has.Length.EqualTo(2));
+        Assert.That(entranceCoatCloset, Is.Not.Null);
+        Assert.That(entranceCoatAction, Is.Not.Null);
+        Assert.That(entranceCoatCollider, Is.Not.Null);
+        Assert.That(entranceCoatHanger.GetComponents<CoatCloset>(), Has.Length.EqualTo(1));
+        Assert.That(entranceCoatHanger.GetComponents<Chapter1SceneAction>(), Has.Length.EqualTo(1));
+        Assert.That(entranceCoatHanger.GetComponents<BoxCollider2D>(), Has.Length.EqualTo(1));
+        Assert.That(GetPrivateField<CoatCloset>(arrival, "coatCloset"), Is.SameAs(entranceCoatCloset));
+        Assert.That(GetPrivateField<Transform>(arrival, "closetPoint"), Is.SameAs(entranceCoatHanger));
+        Assert.That(pantryCoatCloset, Is.Not.SameAs(entranceCoatCloset));
+        Assert.That(pantryCoatCloset.StoredCoatCount, Is.Zero);
+        Assert.That(GetPrivateValue<Chapter1SceneActionType>(entranceCoatAction, "actionType"), Is.EqualTo(Chapter1SceneActionType.CoatCloset));
+        Assert.That(GetPrivateField<Chapter1ArrivalController>(entranceCoatAction, "arrivalController"), Is.SameAs(arrival));
+        Assert.That(GetPrivateValue<bool>(entranceCoatAction, "isActionAvailable"), Is.True);
+        Assert.That(entranceCoatCollider.enabled, Is.True);
+        Assert.That(entranceCoatCollider.isTrigger, Is.True);
+        Assert.That(entranceCoatCollider.offset.x, Is.Zero.Within(0.0001f));
+        Assert.That(entranceCoatCollider.offset.y, Is.Zero.Within(0.0001f));
+        Assert.That(entranceCoatCollider.size.x, Is.EqualTo(4.41f).Within(0.0001f));
+        Assert.That(entranceCoatCollider.size.y, Is.EqualTo(9.79f).Within(0.0001f));
+        Assert.That(entranceCoatCollider.edgeRadius, Is.Zero.Within(0.0001f));
+        Assert.That(entranceCoatHanger.localPosition.x, Is.EqualTo(-255.00697f).Within(0.0001f));
+        Assert.That(entranceCoatHanger.localPosition.y, Is.EqualTo(-12.514666f).Within(0.0001f));
+        Assert.That(entranceCoatHanger.localPosition.z, Is.Zero.Within(0.001f));
+        Assert.That(entranceCoatHanger.localScale.x, Is.EqualTo(30.161037f).Within(0.0001f));
+        Assert.That(entranceCoatHanger.localScale.y, Is.EqualTo(23.970196f).Within(0.0001f));
+        Assert.That(entranceCoatHanger.localScale.z, Is.EqualTo(63.526222f).Within(0.0001f));
+        Assert.That(entranceCoatHangerRenderer.sortingLayerName, Is.EqualTo("People"));
+        Assert.That(entranceCoatHangerRenderer.sortingOrder, Is.Zero);
+        Assert.That(
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                entranceCoatHangerRenderer.sprite,
+                out string entranceCoatSpriteGuid,
+                out long entranceCoatSpriteFileId),
+            Is.True);
+        Assert.That(entranceCoatSpriteGuid, Is.EqualTo("60c34e6293838a6c7988f33040dad54d"));
+        Assert.That(entranceCoatSpriteFileId, Is.EqualTo(1166796266648169557L));
+        Assert.That(
+            AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(entranceCoatHangerRenderer.sharedMaterial)),
+            Is.EqualTo("a97c105638bdf8b4a8650670310a4cd3"));
+
+        entranceCoatCloset.StoreCoat("architecture_characterization_coat");
+        InvokePrivateBooleanMethod(arrival, "ResolveReferences", true);
+        InvokePrivateBooleanMethod(arrival, "ResolveReferences", true);
+        Assert.That(GetPrivateField<CoatCloset>(arrival, "coatCloset"), Is.SameAs(entranceCoatCloset));
+        Assert.That(GetPrivateField<Transform>(arrival, "closetPoint"), Is.SameAs(entranceCoatHanger));
+        Assert.That(entranceCoatHanger.GetComponent<CoatCloset>(), Is.SameAs(entranceCoatCloset));
+        Assert.That(entranceCoatHanger.GetComponent<Chapter1SceneAction>(), Is.SameAs(entranceCoatAction));
+        Assert.That(entranceCoatHanger.GetComponent<BoxCollider2D>(), Is.SameAs(entranceCoatCollider));
+        Assert.That(FindInActiveScene<CoatCloset>(), Has.Length.EqualTo(2));
+        Assert.That(entranceCoatCloset.ContainsCoat("architecture_characterization_coat"), Is.True);
+        Assert.That(pantryCoatCloset.StoredCoatCount, Is.Zero);
+        entranceCoatCloset.ClearStoredCoats();
         Canvas chapter1Canvas = FindInActiveScene<Canvas>().Single(item => item.name == "Canvas_Chapter1HUD");
         Assert.That(chapter1Canvas.sortingOrder, Is.EqualTo(9100));
         Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Text_Chapter1Status"), Is.EqualTo(1));
@@ -693,6 +763,16 @@ public sealed class GameplayLifecycleCharacterizationTests
             returnedScale.AppliedMultiplier,
             Is.EqualTo(settledScale.AppliedMultiplier).Within(0.01f),
             "Returning to the entrance must reproduce the same room-stage scale policy.");
+        Assert.That(GetPrivateField<CoatCloset>(arrival, "coatCloset"), Is.SameAs(entranceCoatCloset));
+        Assert.That(GetPrivateField<Transform>(arrival, "closetPoint"), Is.SameAs(entranceCoatHanger));
+        Assert.That(entranceCoatHanger.GetComponent<CoatCloset>(), Is.SameAs(entranceCoatCloset));
+        Assert.That(entranceCoatHanger.GetComponent<Chapter1SceneAction>(), Is.SameAs(entranceCoatAction));
+        Assert.That(entranceCoatHanger.GetComponent<BoxCollider2D>(), Is.SameAs(entranceCoatCollider));
+        Assert.That(FindInActiveScene<CoatCloset>(), Has.Length.EqualTo(2));
+        Debug.Log(
+            $"[EntranceCoatHangerCharacterization] hanger={entranceCoatHanger.GetInstanceID()} " +
+            $"closet={entranceCoatCloset.GetInstanceID()} action={entranceCoatAction.GetInstanceID()} " +
+            $"collider={entranceCoatCollider.GetInstanceID()} pantryCloset={pantryCoatCloset.GetInstanceID()}");
 
         Assert.That(RequireExactlyOneInActiveScene<CameraManager>(), Is.SameAs(cameraManager));
         Assert.That(RequireExactlyOneInActiveScene<RoomNavigationManager>(), Is.SameAs(navigation));
@@ -967,6 +1047,27 @@ public sealed class GameplayLifecycleCharacterizationTests
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         Assert.That(field, Is.Not.Null, $"Missing private field '{fieldName}' on {owner.GetType().Name}.");
         return field.GetValue(owner) as T;
+    }
+
+    private static T GetPrivateValue<T>(object owner, string fieldName)
+    {
+        System.Reflection.FieldInfo field = owner.GetType().GetField(
+            fieldName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"Missing private field '{fieldName}' on {owner.GetType().Name}.");
+        return (T)field.GetValue(owner);
+    }
+
+    private static void InvokePrivateBooleanMethod(object owner, string methodName, bool value)
+    {
+        System.Reflection.MethodInfo method = owner.GetType().GetMethod(
+            methodName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null,
+            new[] { typeof(bool) },
+            null);
+        Assert.That(method, Is.Not.Null, $"Missing private method '{methodName}(bool)' on {owner.GetType().Name}.");
+        method.Invoke(owner, new object[] { value });
     }
 
     private static ScaleSnapshot CaptureScale(

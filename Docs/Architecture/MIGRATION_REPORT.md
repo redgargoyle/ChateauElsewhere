@@ -78,6 +78,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Grafted the violin source and Game-Sounds binding directly onto the existing inactive monster object, serialized the imported clip, and removed every host/resource/Editor/component fallback. Playback configures only that owned graph without a hierarchy expansion or ChapterManager-host collision.
 - Grafted the characterized overlay Canvas directly onto the same monster object with screen-space overlay and People order `10000`, then removed its dormant Get/Add component fallback. The stinger validates and configures that exact Canvas without adding a hierarchy object or component.
 - Serialized the eight approved monster run sprites in exact raw frame `01` through `08` order, then removed the resource-path loader and name-sort fallback. Configuration validation rejects an incomplete array, and lifecycle proof shows the same array exists at boot and survives repeated stingers.
+- Characterized the Entrance coat-hanger ownership failure before changing it. Fresh boot attempts repair before the authored hanger is discoverable and leaves only the pantry closet; a later explicit repair creates one stable Entrance closet, action, and trigger collider, preserves stored coats across repeated resolution, and retains identities through a room round trip.
 
 ## Current static result
 
@@ -109,6 +110,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - monster sprite authoring passed its exact ordered-reference guard and rendered lifecycle gate; the full suite remained exactly 240 total / 190 passing / 50 known failures with an unchanged failure-name set;
 - the sprite graft kept all 5,982 scene documents in identical order, changed only controller document `3301000007`, and preserved `SceneRoots`, every sprite/importer/`.meta`, and every component ID;
 - monster sprite fallback cleanup passed source guards, the rendered repeated-use lifecycle, and the exact full-suite comparison; only the resource-path property was removed from controller document `3301000007`;
+- Entrance coat-hanger characterization passed exact serialized art/transform ownership checks and rendered before/after-repair lifecycle checks; the full suite remained 240 total / 190 passing / 50 known failures with an unchanged failure-name set;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -192,6 +194,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Characterize and author the Entrance coat-hanger interaction components without changing its art, transform, hitbox, or coat behavior.
+1. Author the Entrance coat-hanger interaction components without changing its art, transform, hitbox, or coat behavior.
 
 Do not begin bulk deletion until those gates pass.
