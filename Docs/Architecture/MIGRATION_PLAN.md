@@ -131,7 +131,9 @@ The first route characterization is complete. Before canonical code or scene bin
 
 The route then migrates through separately reversible commits: pure contracts; definition assets and GameDatabase registration; passive room/passage scene bindings; direct serialized dependencies; façade-backed canonical traversal; authored arrival anchors; authored approach anchors; and final route certification. `RoomNavigationManager` remains the sole current-room owner until a later explicit owner cutover.
 
-Pure-contract status: complete. The canonical definition/view/passage/interface types are validation-only and have zero serialized instances. No service implementation, room activation command, scene binding, data asset, or legacy caller changed in that gate. The next slice is data-only: four definition assets plus direct `GameDatabase` registration.
+Pure-contract status: complete. The canonical definition/view/passage/interface types are validation-only and have zero serialized instances. No service implementation, room activation command, scene binding, or legacy caller changed in that gate.
+
+Canonical-data status: complete. The two room definitions and two reciprocal directed passage definitions are exact, directly registered in `GameDatabase`, Unity-imported, and behaviorally inert. The next slice adds passive `RoomView` edges only; approach behavior must be characterized before scene `Passage` anchors are authored.
 
 Room-local object cutouts are first-class props:
 

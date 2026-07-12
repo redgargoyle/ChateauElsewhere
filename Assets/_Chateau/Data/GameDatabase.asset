@@ -12,4 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c88bc49b6a595fd4b2909d7957ee6f97, type: 3}
   m_Name: GameDatabase
   m_EditorClassIdentifier: Assembly-CSharp::Chateau.Architecture.GameDatabase
-  definitions: []
+  definitions:
+  - {fileID: 11400000, guid: 5e4e6adcd42c4058867aaa6c47b84de1, type: 2}
+  - {fileID: 11400000, guid: 057575e9763145759aa12184580d27d8, type: 2}
+  - {fileID: 11400000, guid: 0344228bb90d4997818e13c84f0bcf63, type: 2}
+  - {fileID: 11400000, guid: 50ae5112eed74cfda8588ff835b92516, type: 2}

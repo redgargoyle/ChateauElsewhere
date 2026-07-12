@@ -16,6 +16,101 @@ using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
 public sealed class CanonicalRoomPassageContractTests
 {
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
+    private const string EntranceRoomPath = "Assets/_Chateau/Data/World/Rooms/Room_GrandEntranceHall.asset";
+    private const string DrawingRoomPath = "Assets/_Chateau/Data/World/Rooms/Room_DrawingRoom.asset";
+    private const string ForwardPassagePath = "Assets/_Chateau/Data/World/Passages/Passage_GEH_DrawingRoom.asset";
+    private const string ReversePassagePath = "Assets/_Chateau/Data/World/Passages/Passage_DrawingRoom_GEH.asset";
+    private const string GameDatabasePath = "Assets/_Chateau/Data/GameDatabase.asset";
+
+    [Test]
+    public void CanonicalGehDrawingDataAssetsAreExactValidatedAndNotYetSceneBound()
+    {
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ForwardPassagePath), Is.EqualTo(typeof(PassageDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ReversePassagePath), Is.EqualTo(typeof(PassageDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(GameDatabasePath), Is.EqualTo(typeof(GameDatabase)));
+
+        CanonicalRoomDefinition entrance = AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(EntranceRoomPath);
+        CanonicalRoomDefinition drawing = AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(DrawingRoomPath);
+        PassageDefinition forward = AssetDatabase.LoadAssetAtPath<PassageDefinition>(ForwardPassagePath);
+        PassageDefinition reverse = AssetDatabase.LoadAssetAtPath<PassageDefinition>(ReversePassagePath);
+        GameDatabase database = AssetDatabase.LoadAssetAtPath<GameDatabase>(GameDatabasePath);
+
+        Assert.That(entrance, Is.Not.Null);
+        Assert.That(drawing, Is.Not.Null);
+        Assert.That(forward, Is.Not.Null);
+        Assert.That(reverse, Is.Not.Null);
+        Assert.That(database, Is.Not.Null);
+
+        Assert.That(AssetDatabase.AssetPathToGUID(EntranceRoomPath), Is.EqualTo("5e4e6adcd42c4058867aaa6c47b84de1"));
+        Assert.That(AssetDatabase.AssetPathToGUID(DrawingRoomPath), Is.EqualTo("057575e9763145759aa12184580d27d8"));
+        Assert.That(AssetDatabase.AssetPathToGUID(ForwardPassagePath), Is.EqualTo("0344228bb90d4997818e13c84f0bcf63"));
+        Assert.That(AssetDatabase.AssetPathToGUID(ReversePassagePath), Is.EqualTo("50ae5112eed74cfda8588ff835b92516"));
+        Assert.That(AssetDatabase.AssetPathToGUID(GameDatabasePath), Is.EqualTo("6b7925c3057e11ad688e890ddb547110"));
+
+        Assert.That(entrance.StableId, Is.EqualTo("room.grand-entrance-hall"));
+        Assert.That(entrance.SchemaVersion, Is.EqualTo(1));
+        Assert.That(entrance.DisplayName, Is.EqualTo("Grand Entrance Hall"));
+        Assert.That(entrance.LegacyNames, Is.EqualTo(new[] { "Grand Entrance Hall" }));
+        Assert.That(
+            AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(entrance.BackgroundTexture)),
+            Is.EqualTo("3e163816317a638f5adedc338ec34d98"));
+        Assert.That(entrance.PerspectiveProfile, Is.Null);
+
+        Assert.That(drawing.StableId, Is.EqualTo("room.drawing-room"));
+        Assert.That(drawing.SchemaVersion, Is.EqualTo(1));
+        Assert.That(drawing.DisplayName, Is.EqualTo("Drawing Room"));
+        Assert.That(drawing.LegacyNames, Is.EqualTo(new[] { "Drawing Room" }));
+        Assert.That(
+            AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(drawing.BackgroundTexture)),
+            Is.EqualTo("28c74b6dea1ed8e2c9c7d612355f9734"));
+        Assert.That(drawing.PerspectiveProfile, Is.Null);
+
+        Assert.That(forward.StableId, Is.EqualTo("passage.grand-entrance-hall.drawing-room"));
+        Assert.That(forward.SchemaVersion, Is.EqualTo(1));
+        Assert.That(forward.SourceRoom, Is.SameAs(entrance));
+        Assert.That(forward.DestinationRoom, Is.SameAs(drawing));
+        Assert.That(forward.Reverse, Is.SameAs(reverse));
+        Assert.That(forward.Kind, Is.EqualTo(PassageKind.Door));
+        Assert.That(forward.PromptText, Is.EqualTo("Open Door"));
+        Assert.That(forward.LegacyDoorId, Is.EqualTo("GEH_Drawing_Room"));
+
+        Assert.That(reverse.StableId, Is.EqualTo("passage.drawing-room.grand-entrance-hall"));
+        Assert.That(reverse.SchemaVersion, Is.EqualTo(1));
+        Assert.That(reverse.SourceRoom, Is.SameAs(drawing));
+        Assert.That(reverse.DestinationRoom, Is.SameAs(entrance));
+        Assert.That(reverse.Reverse, Is.SameAs(forward));
+        Assert.That(reverse.Kind, Is.EqualTo(PassageKind.Door));
+        Assert.That(reverse.PromptText, Is.EqualTo("Open Door"));
+        Assert.That(reverse.LegacyDoorId, Is.EqualTo("DrawingRoom_GEH"));
+
+        Assert.That(database.Definitions, Has.Count.EqualTo(4));
+        Assert.That(database.Definitions[0], Is.SameAs(entrance));
+        Assert.That(database.Definitions[1], Is.SameAs(drawing));
+        Assert.That(database.Definitions[2], Is.SameAs(forward));
+        Assert.That(database.Definitions[3], Is.SameAs(reverse));
+
+        string[] stableIds = database.Definitions.Select(definition => definition.StableId).ToArray();
+        Assert.That(stableIds, Is.EqualTo(new[]
+        {
+            "room.grand-entrance-hall",
+            "room.drawing-room",
+            "passage.grand-entrance-hall.drawing-room",
+            "passage.drawing-room.grand-entrance-hall"
+        }));
+        Assert.That(stableIds.Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(4));
+
+        ValidationReport report = new ValidationReport();
+        database.ValidateConfiguration(report);
+        Assert.That(report.HasErrors, Is.False, string.Join("\n", report.Messages.Select(message => message.ToString())));
+
+        string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+        Assert.That(gameplayText, Does.Not.Contain("guid: ccd2f3bd803e45aa8a1174cc881d6dc0"),
+            "Gameplay must still have zero serialized RoomView components at the data-only gate.");
+        Assert.That(gameplayText, Does.Not.Contain("guid: 518dad8adf634786a103bf4e76aa0881"),
+            "Gameplay must still have zero serialized Passage components at the data-only gate.");
+    }
 
     [Test]
     public void RoomDefinitionSeparatesStableIdentityFromPresentationAndLegacyNames()
@@ -309,10 +404,8 @@ public sealed class CanonicalRoomPassageContractTests
             "The pure-contract gate must not change the current navigation runtime path.");
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
-        string databaseText = File.ReadAllText("Assets/_Chateau/Data/GameDatabase.asset");
         Assert.That(gameplayText, Does.Not.Contain("guid: ccd2f3bd803e45aa8a1174cc881d6dc0"));
         Assert.That(gameplayText, Does.Not.Contain("guid: 518dad8adf634786a103bf4e76aa0881"));
-        Assert.That(databaseText, Does.Contain("definitions: []"));
     }
 
     private static CanonicalRoomDefinition CreateRoomDefinition(

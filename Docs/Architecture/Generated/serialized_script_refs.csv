@@ -135,11 +135,11 @@ Assets/_Chateau/Runtime/UI/GameTimeHUD.cs,12bd9a3afa94b05b1e9ce52146c9c7f4,1,Ass
 Assets/_Chateau/Runtime/World/Navigation/INavigationService.cs,61164ddf7e6e41c5a6de202f20c922c8,0,
 Assets/_Chateau/Runtime/World/Rooms/Passages/Passage.cs,518dad8adf634786a103bf4e76aa0881,0,
 Assets/_Chateau/Runtime/World/Rooms/Passages/PassageAnchorData.cs,778264efc321425b978db070c751c200,0,
-Assets/_Chateau/Runtime/World/Rooms/Passages/PassageDefinition.cs,ca421b4be57a4e08aad75608f76ce6e4,0,
+Assets/_Chateau/Runtime/World/Rooms/Passages/PassageDefinition.cs,ca421b4be57a4e08aad75608f76ce6e4,2,Assets/_Chateau/Data/World/Passages/Passage_DrawingRoom_GEH.asset:1 | Assets/_Chateau/Data/World/Passages/Passage_GEH_DrawingRoom.asset:1
 Assets/_Chateau/Runtime/World/Rooms/Passages/PassageKind.cs,e28408796af44c5ab67e3ffc2cc2f016,0,
 Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/RoomDepthResolver.cs,9d3e22f8c5a34b79b0e1f2a3c4d5e608,0,
 Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,5e7a11c7d4b24c68a1f9e2d3c4b5a607,9,Assets/Scenes/Gameplay.unity:3 | Assets/Prefabs/Room_Drawing_Room_Perspective.prefab:3 | Assets/Prefabs/Room_Drawing_Room.prefab:3
-Assets/_Chateau/Runtime/World/Rooms/RoomDefinition.cs,fbe9ca0ca8d34522a37de58376ddbf8c,0,
+Assets/_Chateau/Runtime/World/Rooms/RoomDefinition.cs,fbe9ca0ca8d34522a37de58376ddbf8c,2,Assets/_Chateau/Data/World/Rooms/Room_GrandEntranceHall.asset:1 | Assets/_Chateau/Data/World/Rooms/Room_DrawingRoom.asset:1
 Assets/_Chateau/Runtime/World/Rooms/RoomView.cs,ccd2f3bd803e45aa8a1174cc881d6dc0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,b5ee7e3d0f5a428cb5e5a6617725817f,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,a59ddc6dded9613c01de27aeab93714a,0,

@@ -240,7 +240,7 @@ The first safe patch introduces the composition root and base families without r
 
 `GameRootInstaller` adds the composition root and currently runtime-created navigation/dialogue components to `Gameplay.unity` **inside Unity**, then serializes all migrated services. Until that installer has run and tests pass, the old bootstraps remain compatibility debt and must not be deleted.
 
-The first Phase 4 navigation seam now also contains pure canonical room/passage contracts. `RoomDefinition` and directed reciprocal `PassageDefinition` carry stable data identity; `RoomView` and `Passage` are passive validated bindings; `INavigationService` is an unimplemented command/query boundary. The current `RoomNavigationManager` remains the only room-state owner until a separately tested façade cutover, and no `RoomViewService` activation writer exists yet.
+The first Phase 4 navigation seam now also contains canonical room/passage contracts and the first four registered definitions. `RoomDefinition` and directed reciprocal `PassageDefinition` carry stable data identity; `RoomView` and `Passage` are passive validated bindings; `INavigationService` is an unimplemented command/query boundary. The current `RoomNavigationManager` remains the only room-state owner until a separately tested façade cutover, and no `RoomViewService` activation writer exists yet.
 
 ## Definition of a justified runtime class
 
