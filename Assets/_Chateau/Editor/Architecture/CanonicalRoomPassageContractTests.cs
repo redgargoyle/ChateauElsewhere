@@ -36,7 +36,7 @@ public sealed class CanonicalRoomPassageContractTests
     private const string LibraryMusicPassageGuid = "3a641d5febbfd7aec481ada678ba9fe4";
 
     [Test]
-    public void CanonicalRouteDataViewsPassagesAndGroup02DependenciesBoundCertificationAreExact()
+    public void CanonicalRouteDataViewsPassagesAndGroup02CallerBoundCertificationAreExact()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
@@ -361,12 +361,12 @@ public sealed class CanonicalRoomPassageContractTests
             "The Drawing-to-Music Passage should occur only on its owner, header, GameRoot registration, reciprocal link, and trigger caller binding.");
         Assert.That(CountOccurrences(gameplayText, "4100000014"), Is.EqualTo(5),
             "The Music-to-Drawing Passage should occur only on its owner, header, GameRoot registration, reciprocal link, and trigger caller binding.");
-        Assert.That(CountOccurrences(gameplayText, "4100000015"), Is.EqualTo(4),
-            "The Music-to-Library Passage should occur only on its owner, header, GameRoot registration, and reciprocal link.");
-        Assert.That(CountOccurrences(gameplayText, "4100000016"), Is.EqualTo(4),
-            "The Library-to-Music Passage should occur only on its owner, header, GameRoot registration, and reciprocal link.");
-        Assert.That(CountOccurrences(gameplayText, "canonicalPassage: {fileID:"), Is.EqualTo(4),
-            "Only the first two reciprocal routes may cut over to canonical traversal at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "4100000015"), Is.EqualTo(5),
+            "The Music-to-Library Passage should occur only on its owner, header, GameRoot, reverse link, and trigger caller.");
+        Assert.That(CountOccurrences(gameplayText, "4100000016"), Is.EqualTo(5),
+            "The Library-to-Music Passage should occur only on its owner, header, GameRoot, reverse link, and trigger caller.");
+        Assert.That(CountOccurrences(gameplayText, "canonicalPassage: {fileID:"), Is.EqualTo(6),
+            "Exactly the first three reciprocal routes may cut over to canonical identity at this gate.");
         Assert.That(CountOccurrences(gameplayText, "player: {fileID: 81962843}"), Is.EqualTo(6),
             "Exactly the three dependency-bound reciprocal pairs may bind the Player transform at this gate.");
         Assert.That(CountOccurrences(gameplayText, "81962843"), Is.EqualTo(7),
@@ -398,11 +398,11 @@ public sealed class CanonicalRoomPassageContractTests
             "The door-only binding slice must not mutate stairway audio ownership.");
         Assert.That(
             legacyTriggerDocuments.Count(document => document.Contains("canonicalPassage: {fileID:")),
-            Is.EqualTo(4));
+            Is.EqualTo(6));
         Assert.That(
             legacyTriggerDocuments.Count(document => !document.Contains("canonicalPassage:")),
-            Is.EqualTo(41),
-            "Every unmigrated trigger must deserialize a null canonical edge and retain the legacy fallback.");
+            Is.EqualTo(39),
+            "Every trigger before its caller slice must deserialize a null canonical edge and retain the fallback.");
         Assert.That(playerTransform, Does.Contain(
             "m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
@@ -474,15 +474,16 @@ public sealed class CanonicalRoomPassageContractTests
                 "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
             Assert.That(callerBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
         }
-        foreach (string dependencyBoundTrigger in new[] { musicLibraryTrigger, libraryMusicTrigger })
+        Assert.That(musicLibraryTrigger, Does.Contain("canonicalPassage: {fileID: 4100000015}"));
+        Assert.That(libraryMusicTrigger, Does.Contain("canonicalPassage: {fileID: 4100000016}"));
+        foreach (string callerBoundTrigger in new[] { musicLibraryTrigger, libraryMusicTrigger })
         {
-            Assert.That(dependencyBoundTrigger, Does.Not.Contain("canonicalPassage:"));
-            Assert.That(dependencyBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
-            Assert.That(dependencyBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
-            Assert.That(dependencyBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
-            Assert.That(dependencyBoundTrigger, Does.Contain(
+            Assert.That(callerBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(callerBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(callerBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(callerBoundTrigger, Does.Contain(
                 "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
-            Assert.That(dependencyBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+            Assert.That(callerBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
         }
 
         AssertLegacyDoorTriggerCompatibilityBound(
