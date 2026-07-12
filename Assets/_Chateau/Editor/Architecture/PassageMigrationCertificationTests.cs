@@ -24,6 +24,8 @@ public sealed class PassageMigrationCertificationTests
     private const string PlayerTransformFileId = "81962843";
     private const string DoorAudioSourceFileId = "2201000013";
     private const string GameRootFileId = "1878886998";
+    private const string MusicLibraryPassageDefinitionGuid = "aefe77f20874eb81b83fccb6ff5b8046";
+    private const string LibraryMusicPassageDefinitionGuid = "3a641d5febbfd7aec481ada678ba9fe4";
     private static readonly IReadOnlyDictionary<string, int> MigrationStages =
         new Dictionary<string, int>(StringComparer.Ordinal)
         {
@@ -296,7 +298,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void MusicLibraryLegacyRouteSnapshotIsExactBeforeCanonicalData()
+    public void MusicLibraryDataAuthoredRouteSnapshotPreservesExactLegacySceneBeforeViewBinding()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 2)
@@ -326,15 +328,17 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(group, Has.Count.EqualTo(2));
         RouteInventoryRow libraryRow = group.Single(row => row.ComponentFileId == "2300000079");
         RouteInventoryRow musicRow = group.Single(row => row.ComponentFileId == "552135204");
-        Assert.That(group.All(row => row.Status == "characterized"), Is.True);
+        Assert.That(group.All(row => row.Status == "data-authored"), Is.True);
         Assert.That(group.All(row => row.Group == "Music-Library"), Is.True);
         Assert.That(group.All(row => row.Profile == "standard-door"), Is.True);
-        Assert.That(group.All(row => row.Notes == "legacy-characterization-complete-data-next"), Is.True);
+        Assert.That(group.All(row => row.Notes == "data-assets-authored-view-next"), Is.True);
         AssertReciprocal(libraryRow, musicRow);
         AssertReciprocal(musicRow, libraryRow);
         Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageFileId)), Is.True);
-        Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageDefinitionGuid)), Is.True);
-        Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageStableId)), Is.True);
+        Assert.That(libraryRow.PassageDefinitionGuid, Is.EqualTo(LibraryMusicPassageDefinitionGuid));
+        Assert.That(musicRow.PassageDefinitionGuid, Is.EqualTo(MusicLibraryPassageDefinitionGuid));
+        Assert.That(libraryRow.PassageStableId, Is.EqualTo("passage.library.music-room"));
+        Assert.That(musicRow.PassageStableId, Is.EqualTo("passage.music-room.library"));
         Assert.That(group.All(row => string.IsNullOrEmpty(row.SourceRoomViewFileId)), Is.True);
         Assert.That(group.All(row =>
             string.IsNullOrEmpty(row.ApproachX) &&
@@ -562,13 +566,15 @@ public sealed class PassageMigrationCertificationTests
                 $"Group 02 legacy object {groupFileId} must not be registered with GameRoot yet.");
         }
 
-        Assert.That(CountOccurrences(database, "  - {fileID: 11400000, guid:"), Is.EqualTo(7));
+        Assert.That(CountOccurrences(database, "  - {fileID: 11400000, guid:"), Is.EqualTo(10));
+        Assert.That(CountOccurrences(database, $"guid: {LibraryMusicPassageDefinitionGuid}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(database, $"guid: {MusicLibraryPassageDefinitionGuid}"), Is.EqualTo(1));
         string canonicalData = string.Join("\n", Directory
             .GetFiles("Assets/_Chateau/Data", "*.asset", SearchOption.AllDirectories)
             .Select(File.ReadAllText));
-        Assert.That(canonicalData, Does.Not.Contain("stableId: room.library"));
-        Assert.That(canonicalData, Does.Not.Contain("stableId: passage.music-room.library"));
-        Assert.That(canonicalData, Does.Not.Contain("stableId: passage.library.music-room"));
+        Assert.That(CountOccurrences(canonicalData, "stableId: room.library"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(canonicalData, "stableId: passage.music-room.library"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(canonicalData, "stableId: passage.library.music-room"), Is.EqualTo(1));
     }
 
     [Test]

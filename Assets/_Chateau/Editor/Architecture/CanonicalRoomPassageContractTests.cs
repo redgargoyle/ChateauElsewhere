@@ -19,42 +19,61 @@ public sealed class CanonicalRoomPassageContractTests
     private const string EntranceRoomPath = "Assets/_Chateau/Data/World/Rooms/Room_GrandEntranceHall.asset";
     private const string DrawingRoomPath = "Assets/_Chateau/Data/World/Rooms/Room_DrawingRoom.asset";
     private const string MusicRoomPath = "Assets/_Chateau/Data/World/Rooms/Room_MusicRoom.asset";
+    private const string LibraryRoomPath = "Assets/_Chateau/Data/World/Rooms/Room_Library.asset";
     private const string ForwardPassagePath = "Assets/_Chateau/Data/World/Passages/Passage_GEH_DrawingRoom.asset";
     private const string ReversePassagePath = "Assets/_Chateau/Data/World/Passages/Passage_DrawingRoom_GEH.asset";
     private const string DrawingMusicPassagePath =
         "Assets/_Chateau/Data/World/Passages/Passage_DrawingRoom_MusicRoom.asset";
     private const string MusicDrawingPassagePath =
         "Assets/_Chateau/Data/World/Passages/Passage_MusicRoom_DrawingRoom.asset";
+    private const string MusicLibraryPassagePath =
+        "Assets/_Chateau/Data/World/Passages/Passage_MusicRoom_Library.asset";
+    private const string LibraryMusicPassagePath =
+        "Assets/_Chateau/Data/World/Passages/Passage_Library_MusicRoom.asset";
     private const string GameDatabasePath = "Assets/_Chateau/Data/GameDatabase.asset";
+    private const string LibraryRoomGuid = "8da3a3e936712e7b9f534786110323e4";
+    private const string MusicLibraryPassageGuid = "aefe77f20874eb81b83fccb6ff5b8046";
+    private const string LibraryMusicPassageGuid = "3a641d5febbfd7aec481ada678ba9fe4";
 
     [Test]
-    public void CanonicalRouteDataViewsPassagesAndGroup01CompleteCertificationAreExact()
+    public void CanonicalRouteDataViewsPassagesAndGroup02DataAuthoredCertificationAreExact()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(MusicRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(LibraryRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ForwardPassagePath), Is.EqualTo(typeof(PassageDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ReversePassagePath), Is.EqualTo(typeof(PassageDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingMusicPassagePath), Is.EqualTo(typeof(PassageDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(MusicDrawingPassagePath), Is.EqualTo(typeof(PassageDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(MusicLibraryPassagePath),
+            Is.EqualTo(typeof(PassageDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(LibraryMusicPassagePath),
+            Is.EqualTo(typeof(PassageDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(GameDatabasePath), Is.EqualTo(typeof(GameDatabase)));
 
         CanonicalRoomDefinition entrance = AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(EntranceRoomPath);
         CanonicalRoomDefinition drawing = AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(DrawingRoomPath);
         CanonicalRoomDefinition music = AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(MusicRoomPath);
+        CanonicalRoomDefinition library = AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(LibraryRoomPath);
         PassageDefinition forward = AssetDatabase.LoadAssetAtPath<PassageDefinition>(ForwardPassagePath);
         PassageDefinition reverse = AssetDatabase.LoadAssetAtPath<PassageDefinition>(ReversePassagePath);
         PassageDefinition drawingMusic = AssetDatabase.LoadAssetAtPath<PassageDefinition>(DrawingMusicPassagePath);
         PassageDefinition musicDrawing = AssetDatabase.LoadAssetAtPath<PassageDefinition>(MusicDrawingPassagePath);
+        PassageDefinition musicLibrary = AssetDatabase.LoadAssetAtPath<PassageDefinition>(MusicLibraryPassagePath);
+        PassageDefinition libraryMusic = AssetDatabase.LoadAssetAtPath<PassageDefinition>(LibraryMusicPassagePath);
         GameDatabase database = AssetDatabase.LoadAssetAtPath<GameDatabase>(GameDatabasePath);
 
         Assert.That(entrance, Is.Not.Null);
         Assert.That(drawing, Is.Not.Null);
         Assert.That(music, Is.Not.Null);
+        Assert.That(library, Is.Not.Null);
         Assert.That(forward, Is.Not.Null);
         Assert.That(reverse, Is.Not.Null);
         Assert.That(drawingMusic, Is.Not.Null);
         Assert.That(musicDrawing, Is.Not.Null);
+        Assert.That(musicLibrary, Is.Not.Null);
+        Assert.That(libraryMusic, Is.Not.Null);
         Assert.That(database, Is.Not.Null);
 
         Assert.That(AssetDatabase.AssetPathToGUID(EntranceRoomPath), Is.EqualTo("5e4e6adcd42c4058867aaa6c47b84de1"));
@@ -66,7 +85,28 @@ public sealed class CanonicalRoomPassageContractTests
             Is.EqualTo("3167361ca4c671298c0e84f43320619b"));
         Assert.That(AssetDatabase.AssetPathToGUID(MusicDrawingPassagePath),
             Is.EqualTo("01544de8f55723585d60e5c0915345fd"));
+        Assert.That(AssetDatabase.AssetPathToGUID(LibraryRoomPath), Is.EqualTo(LibraryRoomGuid));
+        Assert.That(AssetDatabase.AssetPathToGUID(MusicLibraryPassagePath),
+            Is.EqualTo(MusicLibraryPassageGuid));
+        Assert.That(AssetDatabase.AssetPathToGUID(LibraryMusicPassagePath),
+            Is.EqualTo(LibraryMusicPassageGuid));
         Assert.That(AssetDatabase.AssetPathToGUID(GameDatabasePath), Is.EqualTo("6b7925c3057e11ad688e890ddb547110"));
+
+        string[] definitionGuids = new[]
+        {
+            AssetDatabase.AssetPathToGUID(EntranceRoomPath),
+            AssetDatabase.AssetPathToGUID(DrawingRoomPath),
+            AssetDatabase.AssetPathToGUID(ForwardPassagePath),
+            AssetDatabase.AssetPathToGUID(ReversePassagePath),
+            AssetDatabase.AssetPathToGUID(MusicRoomPath),
+            AssetDatabase.AssetPathToGUID(DrawingMusicPassagePath),
+            AssetDatabase.AssetPathToGUID(MusicDrawingPassagePath),
+            AssetDatabase.AssetPathToGUID(LibraryRoomPath),
+            AssetDatabase.AssetPathToGUID(MusicLibraryPassagePath),
+            AssetDatabase.AssetPathToGUID(LibraryMusicPassagePath)
+        };
+        Assert.That(definitionGuids.All(guid => !string.IsNullOrEmpty(guid)), Is.True);
+        Assert.That(definitionGuids.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(10));
 
         Assert.That(entrance.StableId, Is.EqualTo("room.grand-entrance-hall"));
         Assert.That(entrance.SchemaVersion, Is.EqualTo(1));
@@ -94,6 +134,15 @@ public sealed class CanonicalRoomPassageContractTests
             AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(music.BackgroundTexture)),
             Is.EqualTo("028084782cdcf3d4ab3b596624c8b7c5"));
         Assert.That(music.PerspectiveProfile, Is.Null);
+
+        Assert.That(library.StableId, Is.EqualTo("room.library"));
+        Assert.That(library.SchemaVersion, Is.EqualTo(1));
+        Assert.That(library.DisplayName, Is.EqualTo("Library"));
+        Assert.That(library.LegacyNames, Is.EqualTo(new[] { "Library" }));
+        Assert.That(
+            AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(library.BackgroundTexture)),
+            Is.EqualTo("0a85e4fdd73e4714fabde63002a457e7"));
+        Assert.That(library.PerspectiveProfile, Is.Null);
 
         Assert.That(forward.StableId, Is.EqualTo("passage.grand-entrance-hall.drawing-room"));
         Assert.That(forward.SchemaVersion, Is.EqualTo(1));
@@ -131,7 +180,25 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(musicDrawing.PromptText, Is.EqualTo("Open Door"));
         Assert.That(musicDrawing.LegacyDoorId, Is.EqualTo("MusicRoom_DrawingRoom"));
 
-        Assert.That(database.Definitions, Has.Count.EqualTo(7));
+        Assert.That(musicLibrary.StableId, Is.EqualTo("passage.music-room.library"));
+        Assert.That(musicLibrary.SchemaVersion, Is.EqualTo(1));
+        Assert.That(musicLibrary.SourceRoom, Is.SameAs(music));
+        Assert.That(musicLibrary.DestinationRoom, Is.SameAs(library));
+        Assert.That(musicLibrary.Reverse, Is.SameAs(libraryMusic));
+        Assert.That(musicLibrary.Kind, Is.EqualTo(PassageKind.Door));
+        Assert.That(musicLibrary.PromptText, Is.EqualTo("Open Door"));
+        Assert.That(musicLibrary.LegacyDoorId, Is.EqualTo("MusicRoom_Library"));
+
+        Assert.That(libraryMusic.StableId, Is.EqualTo("passage.library.music-room"));
+        Assert.That(libraryMusic.SchemaVersion, Is.EqualTo(1));
+        Assert.That(libraryMusic.SourceRoom, Is.SameAs(library));
+        Assert.That(libraryMusic.DestinationRoom, Is.SameAs(music));
+        Assert.That(libraryMusic.Reverse, Is.SameAs(musicLibrary));
+        Assert.That(libraryMusic.Kind, Is.EqualTo(PassageKind.Door));
+        Assert.That(libraryMusic.PromptText, Is.EqualTo("Open Door"));
+        Assert.That(libraryMusic.LegacyDoorId, Is.EqualTo("Library_MusicRoom"));
+
+        Assert.That(database.Definitions, Has.Count.EqualTo(10));
         Assert.That(database.Definitions[0], Is.SameAs(entrance));
         Assert.That(database.Definitions[1], Is.SameAs(drawing));
         Assert.That(database.Definitions[2], Is.SameAs(forward));
@@ -139,6 +206,9 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(database.Definitions[4], Is.SameAs(music));
         Assert.That(database.Definitions[5], Is.SameAs(drawingMusic));
         Assert.That(database.Definitions[6], Is.SameAs(musicDrawing));
+        Assert.That(database.Definitions[7], Is.SameAs(library));
+        Assert.That(database.Definitions[8], Is.SameAs(musicLibrary));
+        Assert.That(database.Definitions[9], Is.SameAs(libraryMusic));
 
         string[] stableIds = database.Definitions.Select(definition => definition.StableId).ToArray();
         Assert.That(stableIds, Is.EqualTo(new[]
@@ -149,15 +219,28 @@ public sealed class CanonicalRoomPassageContractTests
             "passage.drawing-room.grand-entrance-hall",
             "room.music-room",
             "passage.drawing-room.music-room",
-            "passage.music-room.drawing-room"
+            "passage.music-room.drawing-room",
+            "room.library",
+            "passage.music-room.library",
+            "passage.library.music-room"
         }));
-        Assert.That(stableIds.Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(7));
+        Assert.That(stableIds.Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(10));
+
+        string databaseText = File.ReadAllText(GameDatabasePath);
+        foreach (string definitionGuid in definitionGuids)
+        {
+            Assert.That(CountOccurrences(databaseText, $"guid: {definitionGuid}"), Is.EqualTo(1),
+                $"GameDatabase must register definition {definitionGuid} exactly once.");
+        }
 
         ValidationReport report = new ValidationReport();
         database.ValidateConfiguration(report);
         Assert.That(report.HasErrors, Is.False, string.Join("\n", report.Messages.Select(message => message.ToString())));
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+        Assert.That(gameplayText, Does.Not.Contain($"guid: {LibraryRoomGuid}"));
+        Assert.That(gameplayText, Does.Not.Contain($"guid: {MusicLibraryPassageGuid}"));
+        Assert.That(gameplayText, Does.Not.Contain($"guid: {LibraryMusicPassageGuid}"));
         Assert.That(CountOccurrences(gameplayText, "guid: 3167361ca4c671298c0e84f43320619b"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameplayText, "guid: 01544de8f55723585d60e5c0915345fd"), Is.EqualTo(1));
         string entranceRoomObject = ExtractDocument(gameplayText, "--- !u!1 &567115833");
