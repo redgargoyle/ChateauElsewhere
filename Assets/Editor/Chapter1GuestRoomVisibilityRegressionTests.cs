@@ -200,7 +200,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(anchorLookupBody, Does.Contain("FindSceneObjectByExactName(EntranceHallGuestAnchorId)"), "The entrance wait point should still resolve if RoomAnchor data is stale.");
         Assert.That(doorArrivalBody, Does.Not.Contain("GetWorldVisibleAnchorPosition"), "Door-answer spawning should not project the high-Z GuestArrival_Door stage anchor off camera.");
         Assert.That(waitBody, Does.Not.Contain("GetWorldVisibleAnchorPosition"), "Entrance waiting should not project high-Z stage anchors off camera.");
-        Assert.That(interactionTargetBody, Does.Match(@"frontDoorArrivalPoint[\s\S]*return frontDoorArrivalPoint[\s\S]*FindDoorAnswerTriggerObject"), "The butler should walk to the centered front-door arrival point before answering the door.");
+        Assert.That(interactionTargetBody, Does.Match(@"frontDoorArrivalPoint[\s\S]*return frontDoorArrivalPoint[\s\S]*frontDoorSceneAction != null[\s\S]*frontDoorSceneAction.transform"), "The butler should walk to the centered front-door arrival point before answering the door.");
         Assert.That(interactionTargetBody, Does.Not.Contain("drawingRoomSideButlerSpot"), "Front-door click/approach logic must not fall back to the left Drawing Room side-door marker.");
         Assert.That(conversionBody, Does.Not.Contain("target.GetComponentInParent<Canvas>(true) == null"), "Visible anchor conversion must work for non-Canvas room-stage anchors as well as UI anchors.");
         Assert.That(conversionBody, Does.Contain("TryGetTargetScreenPosition"), "Visible anchor conversion should preserve what the player sees on screen.");

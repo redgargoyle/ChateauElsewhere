@@ -163,7 +163,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private Coroutine guestRoomVisibilityRefreshRoutine;
     private Transform guestEntranceSpawnPlacemark;
 
-    private const string DoorAnswerTriggerName = "Door_answer_trigger";
     private const float CoatPickupReadyScreenDistance = 90f;
     private const float ClosetStorageReadyScreenDistance = 90f;
     private const float FrontDoorReadyScreenDistance = 90f;
@@ -208,8 +207,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         "Lord Ambrose Veil",
         "Madame Coralie Thread"
     };
-    private static readonly string[] DoorAnswerTriggerNameAliases = { DoorAnswerTriggerName, "Door_Answer_Trigger", "DoorAnswerTrigger", "Door Answer Trigger" };
-
     public int CurrentGuestIndex => currentGuestIndex;
     public bool ButlerCarryingCoat => butlerCarryingCoat;
     public string CarriedCoatId => carriedCoatId;
@@ -597,8 +594,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             return frontDoorArrivalPoint;
         }
 
-        GameObject triggerObject = FindDoorAnswerTriggerObject();
-        return triggerObject != null ? triggerObject.transform : null;
+        return frontDoorSceneAction != null ? frontDoorSceneAction.transform : null;
     }
 
     private static void TryConsiderFrontDoorApproachSample(
@@ -4153,7 +4149,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             interactionHUD.Initialize(this, chapterClock, grandfatherClock);
         }
 
-        EnsureDoorAnswerTriggerAction(createRuntimeClickTargets);
+        ConfigureFrontDoorAction();
 
         if (createRuntimeClickTargets)
         {
@@ -4187,124 +4183,16 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         }
     }
 
-    private void EnsureDoorAnswerTriggerAction(bool createFallback)
+    private void ConfigureFrontDoorAction()
     {
-        GameObject targetObject = frontDoorSceneAction != null
-            ? frontDoorSceneAction.gameObject
-            : FindDoorAnswerTriggerObject();
-
-        if (targetObject == null && createFallback)
+        if (frontDoorSceneAction == null)
         {
-            targetObject = CreateDoorAnswerTriggerFallback();
-        }
-
-        if (targetObject == null)
-        {
-            Debug.LogWarning($"Chapter1ArrivalController could not find '{DoorAnswerTriggerName}' for answering the front door.", this);
             return;
         }
 
-        targetObject.SetActive(true);
-        EnsureDoorAnswerTriggerCanReceiveClicks(targetObject);
-
-        Chapter1SceneAction action = targetObject.GetComponent<Chapter1SceneAction>();
-
-        if (action == null)
-        {
-            action = targetObject.AddComponent<Chapter1SceneAction>();
-        }
-
-        action.Initialize(Chapter1SceneActionType.FrontDoor, this, grandfatherClock);
-        frontDoorSceneAction = action;
+        frontDoorSceneAction.gameObject.SetActive(true);
+        frontDoorSceneAction.Initialize(Chapter1SceneActionType.FrontDoor, this, grandfatherClock);
         frontDoorSceneAction.SetAvailable(true);
-    }
-
-    private GameObject FindDoorAnswerTriggerObject()
-    {
-        for (int i = 0; i < DoorAnswerTriggerNameAliases.Length; i++)
-        {
-            GameObject triggerObject = FindSceneObjectByExactName(DoorAnswerTriggerNameAliases[i]);
-
-            if (triggerObject != null)
-            {
-                return triggerObject;
-            }
-        }
-
-        return null;
-    }
-
-    private GameObject CreateDoorAnswerTriggerFallback()
-    {
-        if (frontDoorArrivalPoint == null)
-        {
-            return null;
-        }
-
-        GameObject triggerObject = new GameObject(DoorAnswerTriggerName);
-        triggerObject.transform.SetParent(frontDoorArrivalPoint.parent, true);
-        triggerObject.transform.position = frontDoorArrivalPoint.position;
-
-        SpriteRenderer renderer = triggerObject.AddComponent<SpriteRenderer>();
-        renderer.sprite = GetRuntimeCoatSprite();
-        renderer.color = new Color(0.16f, 0.42f, 1f, 0.35f);
-        renderer.sortingLayerName = "People";
-        renderer.sortingOrder = 6500;
-
-        BoxCollider2D collider = triggerObject.AddComponent<BoxCollider2D>();
-        collider.size = GetDoorAnswerTriggerColliderSize(triggerObject);
-        collider.isTrigger = true;
-        return triggerObject;
-    }
-
-    private void EnsureDoorAnswerTriggerCanReceiveClicks(GameObject targetObject)
-    {
-        if (targetObject == null)
-        {
-            return;
-        }
-
-        Graphic graphic = targetObject.GetComponent<Graphic>();
-
-        if (targetObject.transform is RectTransform && graphic == null)
-        {
-            Image image = targetObject.AddComponent<Image>();
-            image.color = new Color(0.16f, 0.42f, 1f, 0.35f);
-            image.raycastTarget = true;
-        }
-        else if (graphic != null)
-        {
-            graphic.raycastTarget = true;
-        }
-
-        if (targetObject.transform is RectTransform)
-        {
-            return;
-        }
-
-        if (targetObject.GetComponent<Collider2D>() == null && targetObject.GetComponent<Collider>() == null)
-        {
-            BoxCollider2D collider = targetObject.AddComponent<BoxCollider2D>();
-            collider.size = GetDoorAnswerTriggerColliderSize(targetObject);
-            collider.isTrigger = true;
-        }
-    }
-
-    private Vector2 GetDoorAnswerTriggerColliderSize(GameObject targetObject)
-    {
-        SpriteRenderer spriteRenderer = targetObject != null ? targetObject.GetComponent<SpriteRenderer>() : null;
-
-        if (spriteRenderer != null && spriteRenderer.sprite != null)
-        {
-            Vector2 spriteSize = spriteRenderer.sprite.bounds.size;
-
-            if (spriteSize.x > 0f && spriteSize.y > 0f)
-            {
-                return spriteSize;
-            }
-        }
-
-        return Vector2.one;
     }
 
     private void CreateClickTarget(string objectName, Transform target, Chapter1SceneActionType actionType)
@@ -4342,12 +4230,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         }
 
         action.Initialize(actionType, this, grandfatherClock);
-
-        if (actionType == Chapter1SceneActionType.FrontDoor)
-        {
-            frontDoorSceneAction = action;
-            frontDoorSceneAction.SetAvailable(true);
-        }
     }
 
     private void EnsureGuestConfigs(bool createFallbacks)

@@ -183,8 +183,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(frontDoorSpriteFileId, Is.EqualTo(7482667652216324306L));
         int frontDoorActionCount = FindInActiveScene<Chapter1SceneAction>().Length;
         int frontDoorColliderCount = FindInActiveScene<BoxCollider2D>().Length;
-        InvokePrivateBooleanMethod(arrival, "EnsureDoorAnswerTriggerAction", true);
-        InvokePrivateBooleanMethod(arrival, "EnsureDoorAnswerTriggerAction", true);
+        InvokePrivateMethod(arrival, "ConfigureFrontDoorAction");
+        InvokePrivateMethod(arrival, "ConfigureFrontDoorAction");
         Assert.That(GetPrivateField<Chapter1SceneAction>(arrival, "frontDoorSceneAction"), Is.SameAs(authoredFrontDoorAction));
         Assert.That(authoredFrontDoorTrigger.GetComponent<SpriteRenderer>(), Is.SameAs(authoredFrontDoorRenderer));
         Assert.That(authoredFrontDoorTrigger.GetComponent<BoxCollider2D>(), Is.SameAs(authoredFrontDoorCollider));
@@ -1145,6 +1145,18 @@ public sealed class GameplayLifecycleCharacterizationTests
             null);
         Assert.That(method, Is.Not.Null, $"Missing private method '{methodName}(bool)' on {owner.GetType().Name}.");
         method.Invoke(owner, new object[] { value });
+    }
+
+    private static void InvokePrivateMethod(object owner, string methodName)
+    {
+        System.Reflection.MethodInfo method = owner.GetType().GetMethod(
+            methodName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null,
+            System.Type.EmptyTypes,
+            null);
+        Assert.That(method, Is.Not.Null, $"Missing private method '{methodName}()' on {owner.GetType().Name}.");
+        method.Invoke(owner, null);
     }
 
     private static ScaleSnapshot CaptureScale(

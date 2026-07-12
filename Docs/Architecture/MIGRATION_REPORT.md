@@ -88,18 +88,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Hardened the Chapter 1 entry boundary: valid and null convenience calls retain serialized manager `3301000004`; a mismatched manager logs one explicit error and returns before reset, scheduling, or world/UI mutation.
 - Characterized the front-door ownership failure: authored trigger `1180734296` with action `1180734300` and collider `1180734299` remains unchanged, but startup creates a second `Door_answer_trigger` and binds Chapter 1 to that duplicate. Repeated repair, room travel, and chapter skips retain the duplicate without further component growth.
 - Serialized Chapter 1's direct edge to authored action `1180734300` and validated its existing trigger collider. The authored action is now preferred from boot, eliminating the runtime duplicate while the old search/factory path remains isolated for the next cleanup gate.
+- Removed the front-door alias lookup, runtime trigger/action/renderer/collider/UI factories, collider-size derivation, and generic front-door click-target branch. Chapter 1 now only activates and configures its validated serialized action; the approach fallback addresses that same action directly.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,338 | -564 |
+| Runtime C# lines | 49,902 | 49,220 | -682 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
 | `FindObject*`/`GameObject.Find` | 199 | 126 | -73 |
 | `Resources.Load` | 27 | 19 | -8 |
-| runtime `new GameObject` | 98 | 82 | -16 |
-| runtime `AddComponent<T>` | 100 | 68 | -32 |
+| runtime `new GameObject` | 98 | 81 | -17 |
+| runtime `AddComponent<T>` | 100 | 63 | -37 |
 | runtime initialization hooks | 9 | 4 | -5 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -129,6 +130,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - Chapter 1 manager-boundary guards passed static, explicit mismatch, valid lifecycle, and full-suite tests; the suite remained 191/49 with an unchanged failure-name set;
 - front-door characterization passed exact authored-document/source guards and a rendered two-owner lifecycle; the full suite remained 191/49 with an unchanged failure-name set;
 - front-door serialization passed its exact one-document scene audit: all 5,984 document IDs/order, uniqueness, and 13 roots remain unchanged; the rendered lifecycle retains one authored trigger/action/collider through repeated initialization and a room round trip; the full suite remains 191/49 with an unchanged failure-name set;
+- front-door fallback cleanup changes no serialized asset; source guards ban every alias/search/factory/repair method, the rendered lifecycle keeps the exact action/collider and one trigger through repeated configuration/travel/skips, and the full suite remains 191/49 with an unchanged failure-name set;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -212,6 +214,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Remove the front-door alias/name lookup, runtime trigger/component factory, and collider-repair path now that action `1180734300` is serialized and lifecycle-proven.
+1. Remove the now-unowned pantry coat-closet placeholder subtree and its two dead lookup helpers under a dedicated seven-document prune proof.
 
 Do not begin bulk deletion until those gates pass.

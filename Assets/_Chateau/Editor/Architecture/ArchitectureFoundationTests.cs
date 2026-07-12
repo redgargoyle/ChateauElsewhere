@@ -338,7 +338,7 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1OwnsSerializedFrontDoorActionWithFallbackStaged()
+    public void Chapter1OwnsSerializedFrontDoorActionWithoutFallback()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter1Document = ExtractDocument(sceneText, "--- !u!114 &3302000001");
@@ -449,11 +449,15 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized front-door action."));
         Assert.That(chapter1Text, Does.Contain("frontDoorSceneAction.IsConfiguredFor(Chapter1SceneActionType.FrontDoor, this)"));
         Assert.That(chapter1Text, Does.Contain("!frontDoorCollider.enabled || !frontDoorCollider.isTrigger"));
-        Assert.That(chapter1Text, Does.Contain("EnsureDoorAnswerTriggerAction(createRuntimeClickTargets)"));
-        Assert.That(chapter1Text, Does.Contain("FindDoorAnswerTriggerObject"));
-        Assert.That(chapter1Text, Does.Contain("CreateDoorAnswerTriggerFallback"));
-        Assert.That(chapter1Text, Does.Contain("EnsureDoorAnswerTriggerCanReceiveClicks"));
-        Assert.That(chapter1Text, Does.Contain("targetObject.AddComponent<Chapter1SceneAction>()"));
+        Assert.That(chapter1Text, Does.Contain("ConfigureFrontDoorAction();"));
+        Assert.That(chapter1Text, Does.Contain("frontDoorSceneAction.Initialize(Chapter1SceneActionType.FrontDoor, this, grandfatherClock);"));
+        Assert.That(chapter1Text, Does.Not.Contain("DoorAnswerTriggerName"));
+        Assert.That(chapter1Text, Does.Not.Contain("FindDoorAnswerTriggerObject"));
+        Assert.That(chapter1Text, Does.Not.Contain("CreateDoorAnswerTriggerFallback"));
+        Assert.That(chapter1Text, Does.Not.Contain("EnsureDoorAnswerTriggerAction"));
+        Assert.That(chapter1Text, Does.Not.Contain("EnsureDoorAnswerTriggerCanReceiveClicks"));
+        Assert.That(chapter1Text, Does.Not.Contain("GetDoorAnswerTriggerColliderSize"));
+        Assert.That(chapter1Text, Does.Not.Contain("if (actionType == Chapter1SceneActionType.FrontDoor)"));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterManager."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterClock."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterEventScheduler."));
