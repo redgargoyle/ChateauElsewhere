@@ -71,6 +71,14 @@ public sealed class GameplayLifecycleCharacterizationTests
         PointClickPlayerMovement serializedArrivalPlayerMovement = GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement");
         GameObject serializedArrivalButlerRoot = GetPrivateField<GameObject>(arrival, "playerButlerReference");
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit"), Is.False);
+        GrandfatherClockInteraction characterizedGrandfatherClock = GetPrivateField<GrandfatherClockInteraction>(arrival, "grandfatherClock");
+        Assert.That(characterizedGrandfatherClock, Is.Not.Null);
+        AudioSource characterizedGrandfatherClockSource = GetPrivateField<AudioSource>(characterizedGrandfatherClock, "tickingAudioSource");
+        GameAudioSourceVolume characterizedGrandfatherClockBinding = characterizedGrandfatherClock.GetComponent<GameAudioSourceVolume>();
+        AudioClip characterizedGrandfatherClockClip = characterizedGrandfatherClockSource != null
+            ? characterizedGrandfatherClockSource.clip
+            : null;
+        RoomContentGroup characterizedGrandfatherClockRoom = characterizedGrandfatherClock.GetComponentInParent<RoomContentGroup>(true);
         DoorbellSystem characterizedDoorbell = GetPrivateField<DoorbellSystem>(arrival, "doorbellSystem");
         Assert.That(characterizedDoorbell, Is.Not.Null);
         AudioSource characterizedDoorbellSource = GetPrivateField<AudioSource>(characterizedDoorbell, "audioSource");
@@ -188,6 +196,51 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(serializedArrivalNavigation, Is.SameAs(navigation));
         Assert.That(serializedArrivalPlayerMovement, Is.Not.Null);
         Assert.That(serializedArrivalButlerRoot, Is.SameAs(serializedArrivalPlayerMovement.gameObject));
+        Assert.That(FindInActiveScene<GrandfatherClockInteraction>(), Has.Length.EqualTo(1));
+        Assert.That(characterizedGrandfatherClockRoom, Is.Not.Null);
+        Assert.That(
+            characterizedGrandfatherClock.gameObject.name,
+            Is.EqualTo("GrandfatherClock").Or.EqualTo("GrandfatherClock_Optional"),
+            "The unordered legacy name scan can select either authored empty clock placeholder; this test logs the actual host before retirement.");
+        Assert.That(
+            characterizedGrandfatherClockRoom.RoomName,
+            Is.EqualTo(EntranceRoom).Or.EqualTo(DrawingRoom));
+        Assert.That(GetPrivateField<ChapterClock>(characterizedGrandfatherClock, "chapterClock"), Is.SameAs(clock));
+        Assert.That(characterizedGrandfatherClockSource, Is.Not.Null);
+        Assert.That(characterizedGrandfatherClockSource.gameObject, Is.SameAs(characterizedGrandfatherClock.gameObject));
+        Assert.That(characterizedGrandfatherClock.GetComponents<AudioSource>(), Has.Length.EqualTo(1));
+        Assert.That(characterizedGrandfatherClockBinding, Is.Not.Null);
+        Assert.That(characterizedGrandfatherClockBinding.gameObject, Is.SameAs(characterizedGrandfatherClock.gameObject));
+        Assert.That(characterizedGrandfatherClock.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+        Assert.That(GetPrivateField<AudioSource>(characterizedGrandfatherClockBinding, "audioSource"), Is.SameAs(characterizedGrandfatherClockSource));
+        Assert.That(characterizedGrandfatherClockBinding.Channel, Is.EqualTo(GameAudioChannel.Atmosphere));
+        Assert.That(characterizedGrandfatherClockBinding.BaseVolume, Is.EqualTo(0.28f).Within(0.0001f));
+        Assert.That(characterizedGrandfatherClockClip, Is.Not.Null);
+        Assert.That(characterizedGrandfatherClockClip.name, Is.EqualTo("RuntimeGrandfatherClockTicking"));
+        Assert.That(AssetDatabase.GetAssetPath(characterizedGrandfatherClockClip), Is.Empty);
+        Assert.That(characterizedGrandfatherClockClip.channels, Is.EqualTo(1));
+        Assert.That(characterizedGrandfatherClockClip.frequency, Is.EqualTo(44100));
+        Assert.That(characterizedGrandfatherClockClip.samples, Is.EqualTo(88200));
+        Assert.That(characterizedGrandfatherClockClip.length, Is.EqualTo(2f).Within(0.001f));
+        Assert.That(characterizedGrandfatherClockSource.clip, Is.SameAs(characterizedGrandfatherClockClip));
+        Assert.That(characterizedGrandfatherClockSource.playOnAwake, Is.False);
+        Assert.That(characterizedGrandfatherClockSource.loop, Is.True);
+        Assert.That(characterizedGrandfatherClockSource.enabled, Is.True);
+        Assert.That(characterizedGrandfatherClockSource.mute, Is.False);
+        Assert.That(characterizedGrandfatherClockSource.spatialBlend, Is.Zero.Within(0.0001f));
+        Assert.That(characterizedGrandfatherClockSource.ignoreListenerPause, Is.False);
+        Assert.That(characterizedGrandfatherClockSource.ignoreListenerVolume, Is.True);
+        Assert.That(GetPrivateValue<float>(characterizedGrandfatherClock, "tickingVolume"), Is.EqualTo(0.28f).Within(0.0001f));
+        Assert.That(GetPrivateValue<bool>(characterizedGrandfatherClock, "allowClockCloseUp"), Is.False);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_GrandfatherClockCloseUp"), Is.False);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Panel_GrandfatherClockCloseUp"), Is.False);
+        characterizedGrandfatherClock.OpenCloseUp();
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_GrandfatherClockCloseUp"), Is.False);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Panel_GrandfatherClockCloseUp"), Is.False);
+        Debug.Log(
+            $"[LegacyGrandfatherClockCharacterization] host={characterizedGrandfatherClockRoom.RoomName}/Props/{characterizedGrandfatherClock.gameObject.name} " +
+            $"component={characterizedGrandfatherClock.GetInstanceID()} source={characterizedGrandfatherClockSource.GetInstanceID()} " +
+            $"binding={characterizedGrandfatherClockBinding.GetInstanceID()} clip={characterizedGrandfatherClockClip.GetInstanceID()}");
         Assert.That(characterizedDoorbell.gameObject, Is.SameAs(arrival.gameObject));
         Assert.That(GetPrivateField<ChapterClock>(characterizedDoorbell, "chapterClock"), Is.SameAs(clock));
         Assert.That(characterizedDoorbellSource, Is.Not.Null);
@@ -237,6 +290,12 @@ public sealed class GameplayLifecycleCharacterizationTests
             authoredChapter1Actions);
         InvokePrivateMethod(arrival, "EnsureRuntimeInteractionSystems");
         InvokePrivateMethod(arrival, "EnsureRuntimeInteractionSystems");
+        Assert.That(GetPrivateField<GrandfatherClockInteraction>(arrival, "grandfatherClock"), Is.SameAs(characterizedGrandfatherClock));
+        Assert.That(characterizedGrandfatherClock.GetComponent<AudioSource>(), Is.SameAs(characterizedGrandfatherClockSource));
+        Assert.That(characterizedGrandfatherClock.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedGrandfatherClockBinding));
+        Assert.That(characterizedGrandfatherClockSource.clip, Is.SameAs(characterizedGrandfatherClockClip));
+        Assert.That(FindInActiveScene<GrandfatherClockInteraction>(), Has.Length.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_GrandfatherClockCloseUp"), Is.False);
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit"), Is.False);
         CollectionAssert.AreEquivalent(
             new[] { authoredFrontDoorAction, entranceCoatAction },
@@ -480,6 +539,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(fireplaceSource, Is.Not.Null);
         Assert.That(clockSource, Is.Not.Null);
         Assert.That(clockSource, Is.Not.SameAs(fireplaceSource));
+        Assert.That(clockSource, Is.Not.SameAs(characterizedGrandfatherClockSource));
+        Assert.That(clockAmbience.gameObject, Is.Not.SameAs(characterizedGrandfatherClock.gameObject));
         Assert.That(clockAmbience.gameObject, Is.Not.SameAs(fireplaceAmbience.gameObject));
         Assert.That(fireplaceSource.playOnAwake, Is.False);
         Assert.That(clockSource.playOnAwake, Is.False);
@@ -1008,6 +1069,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<RoomContentGroup>(arrival, "drawingRoomContent"), Is.SameAs(characterizedDrawingRoomContent));
         CollectionAssert.AreEqual(characterizedDrawingRoomGuestPoints, GetPrivateField<Transform[]>(arrival, "drawingRoomGuestPoints"));
         Assert.That(GetPrivateField<DoorbellSystem>(arrival, "doorbellSystem"), Is.SameAs(characterizedDoorbell));
+        Assert.That(GetPrivateField<GrandfatherClockInteraction>(arrival, "grandfatherClock"), Is.SameAs(characterizedGrandfatherClock));
+        Assert.That(characterizedGrandfatherClock.GetComponent<AudioSource>(), Is.SameAs(characterizedGrandfatherClockSource));
+        Assert.That(characterizedGrandfatherClock.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedGrandfatherClockBinding));
+        Assert.That(characterizedGrandfatherClockSource.clip, Is.SameAs(characterizedGrandfatherClockClip));
+        Assert.That(FindInActiveScene<GrandfatherClockInteraction>(), Has.Length.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_GrandfatherClockCloseUp"), Is.False);
         Assert.That(GetPrivateField<AudioSource>(characterizedDoorbell, "audioSource"), Is.SameAs(characterizedDoorbellSource));
         Assert.That(characterizedDoorbell.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedDoorbellBinding));
         Assert.That(GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip"), Is.SameAs(characterizedDoorbellClip));
@@ -1169,6 +1236,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<CameraManager>(arrival, "cameraManager"), Is.SameAs(serializedArrivalCamera));
         Assert.That(GetPrivateField<RoomNavigationManager>(arrival, "navigationManager"), Is.SameAs(serializedArrivalNavigation));
         Assert.That(GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement"), Is.SameAs(serializedArrivalPlayerMovement));
+        Assert.That(GetPrivateField<GrandfatherClockInteraction>(arrival, "grandfatherClock"), Is.SameAs(characterizedGrandfatherClock));
+        Assert.That(characterizedGrandfatherClock.GetComponent<AudioSource>(), Is.SameAs(characterizedGrandfatherClockSource));
+        Assert.That(characterizedGrandfatherClock.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedGrandfatherClockBinding));
+        Assert.That(characterizedGrandfatherClockSource.clip, Is.SameAs(characterizedGrandfatherClockClip));
+        Assert.That(FindInActiveScene<GrandfatherClockInteraction>(), Has.Length.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_GrandfatherClockCloseUp"), Is.False);
 
         chapter.SkipToChapter2ForTesting();
         yield return WaitForSettledLayout();
