@@ -43,12 +43,6 @@ public sealed class GameplayLifecycleCharacterizationTests
     [UnityTest]
     public IEnumerator MainMenuNewGameBootsGameplayAndNavigatesEntranceRoundTrip()
     {
-        LogAssert.Expect(
-            LogType.Warning,
-            "ChapterIntroUI missing required field: fadeImage. Created runtime fallback Image_ChapterIntroFade.");
-        LogAssert.Expect(
-            LogType.Warning,
-            "ChapterIntroUI missing required field: titleText. Created runtime fallback Text_ChapterIntroTitle.");
         MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
         menu.NewGame();
         yield return null;
@@ -267,7 +261,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<TMP_Text>(intro, "titleText"), Is.SameAs(characterizedIntroTitle));
         Assert.That(characterizedIntroCanvas, Is.Not.Null);
         Assert.That(characterizedIntroCanvas.gameObject.name, Is.EqualTo("Canvas_ChapterIntroOverlay"));
-        Assert.That(characterizedIntroCanvas.transform.parent, Is.Null);
+        Assert.That(characterizedIntroCanvas.transform.parent, Is.SameAs(gameRoot.transform));
         Assert.That(characterizedIntroCanvas.GetComponents<Component>(), Has.Length.EqualTo(4));
         Assert.That(characterizedIntroCanvas.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("UI")));
         Assert.That(characterizedIntroCanvas.gameObject.activeSelf, Is.True);
@@ -1712,6 +1706,8 @@ public sealed class GameplayLifecycleCharacterizationTests
     {
         ChapterManager chapterManager = RequireExactlyOneInActiveScene<ChapterManager>();
         Chapter2Controller chapter2 = RequireExactlyOneInActiveScene<Chapter2Controller>();
+        Chateau.Architecture.GameRoot gameRoot =
+            RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
         Assert.That(RequireExactlyOneInActiveScene<ChapterIntroUI>(), Is.SameAs(intro));
         Assert.That(intro.gameObject, Is.SameAs(introHost));
         Assert.That(GetPrivateField<ChapterIntroUI>(chapterManager, "introUI"), Is.SameAs(intro));
@@ -1722,7 +1718,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<TMP_Text>(intro, "titleText"), Is.SameAs(introTitle));
         Assert.That(intro.GetComponents<ChapterIntroUI>(), Has.Length.EqualTo(1));
         Assert.That(intro.GetComponent<Canvas>(), Is.Null);
-        Assert.That(introCanvas.transform.parent, Is.Null);
+        Assert.That(introCanvas.transform.parent, Is.SameAs(gameRoot.transform));
         Assert.That(introCanvas.GetComponents<Component>(), Has.Length.EqualTo(4));
         Assert.That(introCanvas.transform.childCount, Is.EqualTo(1));
         Assert.That(introOverlay.parent, Is.SameAs(introCanvas.transform));

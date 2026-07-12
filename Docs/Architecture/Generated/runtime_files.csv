@@ -55,7 +55,7 @@ Assets/Scripts/StaticSetImagePlayer.cs,288,5917df17424f54974dd13fddda9f9de158dd1
 Assets/Scripts/Story/ActorRoomState.cs,1012,a38f215b57e4ab61f116346c6b7cfaf288d5b92dba60db422dec6f3e5842e684,3,0,0,0,0,0,ActorRoomState
 Assets/Scripts/Story/ChapterClock.cs,110,7ab87a658374eb9642f25cc90c98fb167915fefcb386b372e4b849cb1ff237e7,0,0,0,0,0,0,
 Assets/Scripts/Story/ChapterEventScheduler.cs,188,f0056bb16d3fc8b9557d33126fede3322c4d9cd691ce2621966c62cf4a73fb11,0,0,0,0,0,0,
-Assets/Scripts/Story/ChapterIntroUI.cs,536,e341155b4ef32434b3e54451c6028a98b7f598480f64a3d0ac34720dd2cb83f8,1,0,4,2,0,0,ChapterIntroUI
+Assets/Scripts/Story/ChapterIntroUI.cs,536,6260512438f4f4a30c4b2720429156c45a15502e0bf10293dde4ab91ad55c3d6,1,0,4,2,0,0,ChapterIntroUI
 Assets/Scripts/Story/ChapterManager.cs,619,861c09839ddf7b50f6cc2482ad27a5dbf7e5890abff16e4e83382e5e3a5a8edc,0,0,0,0,0,0,
 Assets/Scripts/Story/CoatCloset.cs,43,652a66bdc0bb4453f7a350862423482f26c46687e055503efc2c194e301293a8,0,0,0,0,0,0,CoatCloset
 Assets/Scripts/Story/DoorbellSystem.cs,223,8e5ae769b3616e186be9497ef5218f6d189e76215a18b48c84fc25b47995c84f,0,0,0,0,0,0,DoorbellSystem

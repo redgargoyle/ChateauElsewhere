@@ -8,6 +8,7 @@ public class ChapterIntroUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Canvas canvas;
+    [SerializeField] private RectTransform overlayRoot;
     [SerializeField] private Image fadeImage;
     [SerializeField] private TMP_Text titleText;
 
@@ -29,7 +30,6 @@ public class ChapterIntroUI : MonoBehaviour
     [SerializeField] private string fadeObjectName = "Image_ChapterIntroFade";
     [SerializeField] private string titleObjectName = "Text_ChapterIntroTitle";
 
-    private RectTransform overlayRoot;
     private bool warnedMissingFadeImage;
     private bool warnedMissingTitleText;
 

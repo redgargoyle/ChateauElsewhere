@@ -110,7 +110,27 @@ public sealed class ArchitectureFoundationTests
         string introText = File.ReadAllText("Assets/Scripts/Story/ChapterIntroUI.cs");
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string playerInstanceDocument = ExtractDocument(sceneText, "--- !u!1001 &81962841");
+        string gameRootDocument = ExtractDocument(sceneText, "--- !u!114 &1878886998");
+        string gameRootTransformDocument = ExtractDocument(sceneText, "--- !u!4 &1878886999");
         string introDocument = ExtractDocument(sceneText, "--- !u!114 &3301000003");
+        string chapterManagerDocument = ExtractDocument(sceneText, "--- !u!114 &3301000004");
+        string chapter2Document = ExtractDocument(sceneText, "--- !u!114 &3301000006");
+        string introCanvasObjectDocument = ExtractDocument(sceneText, "--- !u!1 &1878887140");
+        string introCanvasRectDocument = ExtractDocument(sceneText, "--- !u!224 &1878887141");
+        string introCanvasDocument = ExtractDocument(sceneText, "--- !u!223 &1878887142");
+        string introScalerDocument = ExtractDocument(sceneText, "--- !u!114 &1878887143");
+        string introRaycasterDocument = ExtractDocument(sceneText, "--- !u!114 &1878887144");
+        string introOverlayObjectDocument = ExtractDocument(sceneText, "--- !u!1 &1878887150");
+        string introOverlayRectDocument = ExtractDocument(sceneText, "--- !u!224 &1878887151");
+        string introFadeObjectDocument = ExtractDocument(sceneText, "--- !u!1 &1878887160");
+        string introFadeRectDocument = ExtractDocument(sceneText, "--- !u!224 &1878887161");
+        string introFadeRendererDocument = ExtractDocument(sceneText, "--- !u!222 &1878887162");
+        string introFadeImageDocument = ExtractDocument(sceneText, "--- !u!114 &1878887163");
+        string introTitleObjectDocument = ExtractDocument(sceneText, "--- !u!1 &1878887170");
+        string introTitleRectDocument = ExtractDocument(sceneText, "--- !u!224 &1878887171");
+        string introTitleRendererDocument = ExtractDocument(sceneText, "--- !u!222 &1878887172");
+        string introTitleTextDocument = ExtractDocument(sceneText, "--- !u!114 &1878887173");
+        string sceneRootsDocument = ExtractDocument(sceneText, "--- !u!1660057539 &9223372036854775807");
 
         Assert.That(managerText, Does.Not.Contain("BootstrapChapterManagerForGameplay"));
         Assert.That(managerText, Does.Not.Contain("ChapterManager_Runtime"));
@@ -139,11 +159,139 @@ public sealed class ArchitectureFoundationTests
         Assert.That(managerText, Does.Contain("ChapterManager requires its serialized PointClickPlayerMovement."));
         Assert.That(managerText, Does.Contain("ChapterManager requires its serialized Chapter2Controller."));
         Assert.That(CountOccurrences(sceneText, "guid: 97af4a761ae641b1b180d4ae9898b061"), Is.EqualTo(1));
-        Assert.That(introDocument, Does.Contain("canvas: {fileID: 0}"));
-        Assert.That(introDocument, Does.Contain("fadeImage: {fileID: 0}"));
-        Assert.That(introDocument, Does.Contain("titleText: {fileID: 0}"));
+        Assert.That(introText, Does.Contain("[SerializeField] private RectTransform overlayRoot;"));
+        Assert.That(introDocument, Does.Contain("m_GameObject: {fileID: 2099709257}"));
+        Assert.That(introDocument, Does.Contain("canvas: {fileID: 1878887142}"));
+        Assert.That(introDocument, Does.Contain("overlayRoot: {fileID: 1878887151}"));
+        Assert.That(introDocument, Does.Contain("fadeImage: {fileID: 1878887163}"));
+        Assert.That(introDocument, Does.Contain("titleText: {fileID: 1878887173}"));
+        Assert.That(introDocument, Does.Contain("defaultTitle: Act 1"));
+        Assert.That(introDocument, Does.Contain("titleHoldSeconds: 2"));
+        Assert.That(introDocument, Does.Contain("fadeFromBlackSeconds: 1.5"));
+        Assert.That(introDocument, Does.Contain("titleFontSize: 72"));
+        Assert.That(introDocument, Does.Contain("titleColor: {r: 1, g: 1, b: 1, a: 1}"));
         Assert.That(introDocument, Does.Contain("useDedicatedOverlayCanvas: 1"));
+        Assert.That(introDocument, Does.Contain("overlayCanvasObjectName: Canvas_ChapterIntroOverlay"));
+        Assert.That(introDocument, Does.Contain("overlaySortingOrder: 12000"));
         Assert.That(introDocument, Does.Contain("createRuntimeFallbackIfMissing: 1"));
+        Assert.That(introDocument, Does.Contain("overlayObjectName: ChapterIntroUI_Runtime"));
+        Assert.That(introDocument, Does.Contain("fadeObjectName: Image_ChapterIntroFade"));
+        Assert.That(introDocument, Does.Contain("titleObjectName: Text_ChapterIntroTitle"));
+        Assert.That(chapterManagerDocument, Does.Contain("introUI: {fileID: 3301000003}"));
+        Assert.That(chapter2Document, Does.Contain("introUI: {fileID: 3301000003}"));
+        Assert.That(gameRootDocument, Does.Not.Contain("- {fileID: 3301000003}"));
+
+        string[] introHeaders =
+        {
+            "--- !u!1 &1878887140",
+            "--- !u!224 &1878887141",
+            "--- !u!223 &1878887142",
+            "--- !u!114 &1878887143",
+            "--- !u!114 &1878887144",
+            "--- !u!1 &1878887150",
+            "--- !u!224 &1878887151",
+            "--- !u!1 &1878887160",
+            "--- !u!224 &1878887161",
+            "--- !u!222 &1878887162",
+            "--- !u!114 &1878887163",
+            "--- !u!1 &1878887170",
+            "--- !u!224 &1878887171",
+            "--- !u!222 &1878887172",
+            "--- !u!114 &1878887173"
+        };
+
+        for (int i = 0; i < introHeaders.Length; i++)
+        {
+            Assert.That(CountOccurrences(sceneText, introHeaders[i]), Is.EqualTo(1), introHeaders[i]);
+        }
+
+        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6006));
+        Assert.That(CountOccurrences(gameRootTransformDocument, "- {fileID: 1878887141}"), Is.EqualTo(1));
+        Assert.That(gameRootTransformDocument, Does.Contain(
+            "  - {fileID: 1878887121}\n" +
+            "  - {fileID: 1878887141}"));
+        Assert.That(sceneRootsDocument, Does.Not.Contain("1878887140"));
+        Assert.That(sceneRootsDocument, Does.Not.Contain("1878887141"));
+
+        Assert.That(introCanvasObjectDocument, Does.Contain(
+            "  m_Component:\n" +
+            "  - component: {fileID: 1878887141}\n" +
+            "  - component: {fileID: 1878887142}\n" +
+            "  - component: {fileID: 1878887143}\n" +
+            "  - component: {fileID: 1878887144}"));
+        Assert.That(introCanvasObjectDocument, Does.Contain("m_Layer: 5"));
+        Assert.That(introCanvasObjectDocument, Does.Contain("m_Name: Canvas_ChapterIntroOverlay"));
+        Assert.That(introCanvasObjectDocument, Does.Contain("m_IsActive: 1"));
+        Assert.That(introCanvasRectDocument, Does.Contain("m_Father: {fileID: 1878886999}"));
+        Assert.That(introCanvasRectDocument, Does.Contain("  m_Children:\n  - {fileID: 1878887151}"));
+        Assert.That(introCanvasRectDocument, Does.Contain("m_AnchorMin: {x: 0, y: 0}"));
+        Assert.That(introCanvasRectDocument, Does.Contain("m_AnchorMax: {x: 1, y: 1}"));
+        Assert.That(introCanvasRectDocument, Does.Contain("m_SizeDelta: {x: 0, y: 0}"));
+        Assert.That(introCanvasDocument, Does.Contain("m_GameObject: {fileID: 1878887140}"));
+        Assert.That(introCanvasDocument, Does.Contain("m_RenderMode: 0"));
+        Assert.That(introCanvasDocument, Does.Contain("m_OverrideSorting: 0"));
+        Assert.That(introCanvasDocument, Does.Contain("m_AdditionalShaderChannelsFlag: 25"));
+        Assert.That(introCanvasDocument, Does.Contain("m_SortingOrder: 12000"));
+        Assert.That(introScalerDocument, Does.Contain("guid: 0cd44c1031e13a943bb63640046fad76"));
+        Assert.That(introScalerDocument, Does.Contain("m_UiScaleMode: 1"));
+        Assert.That(introScalerDocument, Does.Contain("m_ReferenceResolution: {x: 1366, y: 768}"));
+        Assert.That(introScalerDocument, Does.Contain("m_MatchWidthOrHeight: 0.5"));
+        Assert.That(introRaycasterDocument, Does.Contain("guid: dc42784cf147c0c48a680349fa168899"));
+
+        Assert.That(introOverlayObjectDocument, Does.Contain("  m_Component:\n  - component: {fileID: 1878887151}"));
+        Assert.That(introOverlayObjectDocument, Does.Contain("m_Layer: 5"));
+        Assert.That(introOverlayObjectDocument, Does.Contain("m_Name: ChapterIntroUI_Runtime"));
+        Assert.That(introOverlayRectDocument, Does.Contain("m_Father: {fileID: 1878887141}"));
+        Assert.That(introOverlayRectDocument, Does.Contain(
+            "  m_Children:\n" +
+            "  - {fileID: 1878887161}\n" +
+            "  - {fileID: 1878887171}"));
+        Assert.That(introOverlayRectDocument, Does.Contain("m_AnchorMin: {x: 0, y: 0}"));
+        Assert.That(introOverlayRectDocument, Does.Contain("m_AnchorMax: {x: 1, y: 1}"));
+
+        Assert.That(introFadeObjectDocument, Does.Contain(
+            "  m_Component:\n" +
+            "  - component: {fileID: 1878887161}\n" +
+            "  - component: {fileID: 1878887162}\n" +
+            "  - component: {fileID: 1878887163}"));
+        Assert.That(introFadeObjectDocument, Does.Contain("m_Layer: 5"));
+        Assert.That(introFadeObjectDocument, Does.Contain("m_Name: Image_ChapterIntroFade"));
+        Assert.That(introFadeRectDocument, Does.Contain("m_Father: {fileID: 1878887151}"));
+        Assert.That(introFadeRectDocument, Does.Contain("m_AnchorMin: {x: 0.5, y: 0.5}"));
+        Assert.That(introFadeRectDocument, Does.Contain("m_AnchorMax: {x: 0.5, y: 0.5}"));
+        Assert.That(introFadeRectDocument, Does.Contain("m_SizeDelta: {x: 10000, y: 10000}"));
+        Assert.That(introFadeRendererDocument, Does.Contain("m_GameObject: {fileID: 1878887160}"));
+        Assert.That(introFadeImageDocument, Does.Contain("guid: fe87c0e1cc204ed48ad3b37840f39efc"));
+        Assert.That(introFadeImageDocument, Does.Contain("m_Color: {r: 0, g: 0, b: 0, a: 1}"));
+        Assert.That(introFadeImageDocument, Does.Contain("m_RaycastTarget: 1"));
+        Assert.That(introFadeImageDocument, Does.Contain("m_Sprite: {fileID: 0}"));
+
+        Assert.That(introTitleObjectDocument, Does.Contain(
+            "  m_Component:\n" +
+            "  - component: {fileID: 1878887171}\n" +
+            "  - component: {fileID: 1878887172}\n" +
+            "  - component: {fileID: 1878887173}"));
+        Assert.That(introTitleObjectDocument, Does.Contain("m_Layer: 5"));
+        Assert.That(introTitleObjectDocument, Does.Contain("m_Name: Text_ChapterIntroTitle"));
+        Assert.That(introTitleRectDocument, Does.Contain("m_Father: {fileID: 1878887151}"));
+        Assert.That(introTitleRectDocument, Does.Contain("m_AnchorMin: {x: 0.5, y: 0.5}"));
+        Assert.That(introTitleRectDocument, Does.Contain("m_AnchorMax: {x: 0.5, y: 0.5}"));
+        Assert.That(introTitleRectDocument, Does.Contain("m_SizeDelta: {x: 900, y: 180}"));
+        Assert.That(introTitleRendererDocument, Does.Contain("m_GameObject: {fileID: 1878887170}"));
+        Assert.That(introTitleTextDocument, Does.Contain("guid: f4688fdb7df04437aeb418b961361dc5"));
+        Assert.That(introTitleTextDocument, Does.Contain("m_Color: {r: 1, g: 1, b: 1, a: 1}"));
+        Assert.That(introTitleTextDocument, Does.Contain("m_fontColor: {r: 1, g: 1, b: 1, a: 1}"));
+        Assert.That(introTitleTextDocument, Does.Contain("m_RaycastTarget: 0"));
+        Assert.That(introTitleTextDocument, Does.Contain("m_text: Act 1"));
+        Assert.That(introTitleTextDocument, Does.Contain(
+            "m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}"));
+        Assert.That(introTitleTextDocument, Does.Contain(
+            "m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}"));
+        Assert.That(introTitleTextDocument, Does.Contain("m_fontSize: 72"));
+        Assert.That(introTitleTextDocument, Does.Contain("m_fontSizeBase: 72"));
+        Assert.That(introTitleTextDocument, Does.Contain("m_HorizontalAlignment: 2"));
+        Assert.That(introTitleTextDocument, Does.Contain("m_VerticalAlignment: 512"));
+        Assert.That(introTitleTextDocument, Does.Contain("m_TextWrappingMode: 1"));
         Assert.That(introText, Does.Contain("GameObject.Find(canvasName)"));
         Assert.That(introText, Does.Contain("new GameObject(\n                canvasName"));
         Assert.That(introText, Does.Contain("new GameObject(overlayObjectName, typeof(RectTransform))"));
