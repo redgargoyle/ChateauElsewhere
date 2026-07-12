@@ -25,7 +25,6 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     [SerializeField] private Image monsterImage;
     [SerializeField] private SpriteRenderer monsterSpriteRenderer;
     [SerializeField] private Sprite[] monsterRunSprites = new Sprite[0];
-    [SerializeField] private string monsterRunSpritesResourcePath = "Chapter2/Monster/ArmSwing";
     [SerializeField, Min(1f)] private float monsterRunAnimationFramesPerSecond = 6f;
     [SerializeField] private bool animateMonsterRunSprites = true;
     [SerializeField] private bool useMonsterRunStutterFrameOrder = true;
@@ -399,7 +398,6 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     private void ResolveReferences()
     {
         CaptureOriginalMonsterSprite();
-        LoadMonsterRunSpritesIfNeeded();
         ConfigureViolinAudioSource();
 
         if (runStart == null)
@@ -475,36 +473,6 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
         }
 
         return null;
-    }
-
-    private void LoadMonsterRunSpritesIfNeeded()
-    {
-        if (monsterRunSprites != null && monsterRunSprites.Length > 0)
-        {
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(monsterRunSpritesResourcePath))
-        {
-            return;
-        }
-
-        Sprite[] loadedSprites = Resources.LoadAll<Sprite>(monsterRunSpritesResourcePath);
-
-        if (loadedSprites == null || loadedSprites.Length == 0)
-        {
-            return;
-        }
-
-        System.Array.Sort(loadedSprites, CompareSpritesByName);
-        monsterRunSprites = loadedSprites;
-    }
-
-    private static int CompareSpritesByName(Sprite left, Sprite right)
-    {
-        string leftName = left != null ? left.name : string.Empty;
-        string rightName = right != null ? right.name : string.Empty;
-        return string.Compare(leftName, rightName, System.StringComparison.OrdinalIgnoreCase);
     }
 
     private void ResetMonsterRunAnimation()

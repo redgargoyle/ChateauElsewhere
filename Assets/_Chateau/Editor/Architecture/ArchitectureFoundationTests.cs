@@ -193,7 +193,7 @@ public sealed class ArchitectureFoundationTests
             "  - {fileID: 21300000, guid: 32ccf6ba47fe4ce19bcb7e3354484363, type: 3}\n" +
             "  - {fileID: 21300000, guid: ebfd9b9fdded4ed6a159c078f21829d3, type: 3}\n"));
         Assert.That(CountOccurrences(stingerDocument, "- {fileID: 21300000, guid:"), Is.EqualTo(8));
-        Assert.That(stingerDocument, Does.Contain("monsterRunSpritesResourcePath: Chapter2/Monster/ArmSwing"));
+        Assert.That(stingerDocument, Does.Not.Contain("monsterRunSpritesResourcePath"));
         Assert.That(stingerDocument, Does.Not.Contain("createPlaceholderMonsterIfMissing"));
         Assert.That(monsterGameObjectDocument, Does.Contain("m_Name: Ch2_Monster"));
         Assert.That(monsterGameObjectDocument, Does.Contain("- component: {fileID: 3700000003}"));
@@ -261,7 +261,11 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerText, Does.Not.Contain("Resources.Load<AudioClip>"));
         Assert.That(stingerText, Does.Not.Contain("AssetDatabase.FindAssets"));
         Assert.That(stingerText, Does.Contain("violinAudioVolumeBinding.Configure("));
-        Assert.That(stingerText, Does.Contain("Resources.LoadAll<Sprite>(monsterRunSpritesResourcePath)"));
+        Assert.That(stingerText, Does.Not.Contain("monsterRunSpritesResourcePath"));
+        Assert.That(stingerText, Does.Not.Contain("LoadMonsterRunSpritesIfNeeded"));
+        Assert.That(stingerText, Does.Not.Contain("Resources.LoadAll<Sprite>"));
+        Assert.That(stingerText, Does.Not.Contain("CompareSpritesByName"));
+        Assert.That(stingerText, Does.Not.Contain("System.Array.Sort(loadedSprites"));
         Assert.That(stingerText, Does.Not.Contain("GetComponent<Canvas>()"));
         Assert.That(stingerText, Does.Not.Contain("AddComponent<Canvas>()"));
         Assert.That(stingerText, Does.Not.Contain("EnsureMonsterOverlayCanvas"));

@@ -48,7 +48,7 @@ public class Chapter2RegressionTests
     private const string GuestVoiceLineCatalogPath = "Assets/Resources/Audio/GuestVoiceLineCatalog.asset";
     private const string ButlerVoiceFolderPath = "Assets/Audio/Voice/Butler";
     private const string Chapter2PanicLibraryBuilderPath = "Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs";
-    private const string Chapter2MonsterArmSwingResourcePath = "Assets/Resources/Chapter2/Monster/ArmSwing";
+    private const string Chapter2MonsterArmSwingFramePath = "Assets/Resources/Chapter2/Monster/ArmSwing";
     private const string Chapter2MonsterArmSwingClipPath = "Assets/Animation/Monster/Ch2_Monster_ArmSwing.anim";
     private const string AnimationLibraryPath = "Assets/Art/Library/AnimationLibrary";
     private const string GuestArtRoot = "Assets/Art/Characters";
@@ -233,7 +233,7 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("monsterOverlaySortingOrder = 10000"));
         Assert.That(stingerText, Does.Contain("overrideSorting = true"));
         Assert.That(stingerText, Does.Contain("using UnityEngine.UI;"));
-        Assert.That(stingerText, Does.Contain("monsterRunSpritesResourcePath = \"Chapter2/Monster/ArmSwing\""));
+        Assert.That(stingerText, Does.Not.Contain("monsterRunSpritesResourcePath"));
         Assert.That(stingerText, Does.Contain("MonsterRunStutterFrameOrder = { 0, 3, 1, 5, 2, 6, 4, 7 }"));
         Assert.That(stingerText, Does.Contain("monsterRunAnimationFramesPerSecond = 6f"));
         Assert.That(stingerText, Does.Contain("useMonsterRunStutterFrameOrder = true"));
@@ -243,8 +243,8 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("monsterFreezePoseStep = 3"));
         Assert.That(stingerText, Does.Contain("twitchMonsterPoseWhileFrozen = true"));
         Assert.That(stingerText, Does.Contain("monsterFreezeTwitchFramesPerSecond = 2f"));
-        Assert.That(stingerText, Does.Contain("Resources.LoadAll<Sprite>(monsterRunSpritesResourcePath)"));
-        Assert.That(stingerText, Does.Contain("System.Array.Sort(loadedSprites, CompareSpritesByName)"));
+        Assert.That(stingerText, Does.Not.Contain("Resources.LoadAll<Sprite>"));
+        Assert.That(stingerText, Does.Not.Contain("CompareSpritesByName"));
         Assert.That(stingerText, Does.Contain("monsterImage.sprite = sprite"));
         Assert.That(stingerText, Does.Contain("UpdateMonsterRunAnimation(monsterRunAnimationElapsedSeconds)"));
         Assert.That(stingerText, Does.Contain("GetMonsterRunFrameIndex(cycleFrameIndex)"));
@@ -255,8 +255,8 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("monsterObject.transform.position = basePosition + GetMonsterRunShakeOffset(monsterRunAnimationElapsedSeconds)"));
         Assert.That(stingerText, Does.Contain("monsterObject.transform.position = targetPosition"));
         Assert.That(stingerText, Does.Match(@"(?s)yield return MoveMonsterToNextFreezeTarget\(cycleTimings\[i\]\.RunSeconds\);\s*ApplyMonsterRoomVisibility\(\);\s*if"), "The violin should not stop between monster run and freeze beats.");
-        Assert.That(Directory.Exists(Chapter2MonsterArmSwingResourcePath), Is.True, "Monster run sprites should be available from Resources for the serialized stinger owner.");
-        Assert.That(Directory.GetFiles(Chapter2MonsterArmSwingResourcePath, "*.png").Length, Is.GreaterThanOrEqualTo(8), "Monster arm swing animation should have at least the approved 8-frame sprite cycle.");
+        Assert.That(Directory.Exists(Chapter2MonsterArmSwingFramePath), Is.True, "The directly serialized monster run frames must remain available as authored assets.");
+        Assert.That(Directory.GetFiles(Chapter2MonsterArmSwingFramePath, "*.png").Length, Is.GreaterThanOrEqualTo(8), "Monster arm swing animation should keep its approved 8-frame sprite cycle.");
         Assert.That(File.Exists(Chapter2MonsterArmSwingClipPath), Is.True, "Monster arm swing animation clip should be kept with the generated frame library.");
     }
 
