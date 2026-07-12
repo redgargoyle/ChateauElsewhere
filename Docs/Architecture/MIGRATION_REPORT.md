@@ -69,6 +69,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Migrated `purple_sofa` beneath the existing `Props / Set Pieces` owners with one explicit `SetPieceView` per asset. Its original GameObject/Transform/SpriteRenderer IDs, art/material, authored transform, blocker identity, and four-point seating polygon are preserved; the blocker now owns collision only and cannot rewrite presentation.
 - Characterized ChapterManager's remaining player/Chapter 2 repair before removal: runtime resolves the exact Player `PointClickPlayerMovement` and already-serialized Chapter 2 controller, keeps point-click enabled, derives the public Player root correctly, and leaves both legacy Player controllers disabled.
 - Serialized ChapterManager's exact Player input (`81962842`) and removed all player, Chapter 2, and obsolete debug-canvas repair searches. Its full eight-owner graph is architecture-validated, the public Player root derives from the serialized input, and only the actual Player prefab instance authors legacy movement disabled.
+- Characterized Chapter2Controller's manager identity before tightening its entry boundary: the controller starts with ChapterManager `3301000004` and retains that exact serialized owner through first and repeated Chapter 2 debug entry.
 
 ## Current static result
 

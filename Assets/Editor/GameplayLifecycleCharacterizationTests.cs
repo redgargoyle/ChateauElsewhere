@@ -279,6 +279,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("Canvas_AnalogClockHands")), Is.False);
         Assert.That(serializedChapter2.CurrentPhase, Is.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(serializedChapter2.HasGameContext, Is.True);
+        Assert.That(GetPrivateField<ChapterManager>(serializedChapter2, "chapterManager"), Is.SameAs(chapter));
         Assert.That(serializedMonsterStinger.HasGameContext, Is.True);
         Assert.That(serializedGuestPanic.HasGameContext, Is.True);
         Assert.That(serializedGuestSearch.HasGameContext, Is.True);
@@ -679,6 +680,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(chapter2.CurrentPhase, Is.Not.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
         Assert.That(chapter2, Is.SameAs(serializedChapter2));
+        Assert.That(GetPrivateField<ChapterManager>(chapter2, "chapterManager"), Is.SameAs(chapter));
         Assert.That(chapter2Hud, Is.SameAs(serializedChapter2Hud));
         Assert.That(speech.IsNormalSpeechActive, Is.False);
         Assert.That(serializedVoicePlayback.IsPlaying, Is.False);
@@ -692,6 +694,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         yield return WaitForSettledLayout();
 
         Assert.That(RequireExactlyOneInActiveScene<Chapter2Controller>(), Is.SameAs(chapter2));
+        Assert.That(GetPrivateField<ChapterManager>(chapter2, "chapterManager"), Is.SameAs(chapter));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2InteractionHUD>(), Is.SameAs(chapter2Hud));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2MonsterStingerController>(), Is.SameAs(monsterStinger));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2GuestPanicController>(), Is.SameAs(guestPanic));
