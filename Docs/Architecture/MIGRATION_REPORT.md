@@ -65,6 +65,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Migrated `tea_service_table` in Gameplay and both Drawing Room prefabs beneath literal `Props / Set Pieces` owners. The original GameObject/Transform/SpriteRenderer/component IDs, art, material, authored transform, depth anchor/order, blocker identity, and polygon are preserved; the blocker now owns collision only and cannot rewrite presentation.
 - Characterized `purple_armchair_back` as the second set-piece candidate across Gameplay and both Drawing Room prefabs: shared chair art/material/profile/anchor resolves to order `8289`, exact transforms and component IDs are frozen, and the Gameplay four-point lower-seat collision footprint is preserved before migration.
 - Migrated `purple_armchair_back` in place beneath the existing `Props / Set Pieces` owners. Its original GameObject/Transform/SpriteRenderer/component IDs, chair art/material, authored transforms, depth anchor/order, blocker identity, and four-point lower-seat polygon are preserved; its blocker now owns collision only and cannot rewrite presentation.
+- Characterized `purple_sofa` as the third set-piece candidate across Gameplay and both Drawing Room prefabs: its sofa art/material/transform/component identities are exact across all three assets, the room-local anchor resolves to order `5385`, and the Gameplay four-point seating footprint is frozen before migration.
 
 ## Current static result
 
@@ -117,8 +118,9 @@ The temporary source increase is the migration spine and verification tooling. I
 - the purple-armchair static/lifecycle characterization passes across all three assets; at runtime legacy projection writes `8289` and the blocker then overwrites it with `1498`, proving the same competing-writer defect without freezing the bounds-derived blocker value;
 - the purple-armchair migration changes no YAML document IDs or order: the three existing projection documents become `SetPieceView` in place, only the intended hierarchy/renderer/blocker/GameRoot documents change, and all three `SceneRoots` sections remain byte-identical;
 - the migrated purple-armchair lifecycle keeps the same bound view/blocker identities through activation and travel, resolves order `8289`, preserves its art, authored transform and all four collider points, and proves blocker sorting is a no-op;
+- the purple-sofa static/lifecycle characterization passes across all three assets; at runtime its only legacy sort writer changes the renderer to bounds-derived order `1225` while the intended room-local order is `5385`, and the trigger polygon remains unchanged;
 - the Chapter 2 dependency-cleanup static, regression, and lifecycle gates pass; all eleven serialized references resolve exactly once, `ResolveReferences` and its seven scene-wide searches are absent, and repeated entry/debug paths retain the same owners;
-- the full EditMode discovery count is 238: 187 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
+- the full EditMode discovery count is 239: 188 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
 - the ChapterManager dialogue-binding gate produced two consecutive clean full-suite reruns after one transient full-run GameView zoom assertion; no files changed between those three runs, and both reruns restored the exact `0.752865` entrance multiplier;
@@ -149,7 +151,7 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Characterize `purple_sofa` as the next candidate before migrating it; preserve its exact art/transform and Gameplay no-walk polygon.
+1. Migrate only `purple_sofa` to `SetPieceView`, preserve its exact art/transform/polygon, and make its blocker collision-only.
 2. Retire the already-serialized ChapterManager-to-Chapter2Controller lookup after a dedicated transition gate.
 3. Continue one prop/owner at a time with exact art, transform, occlusion, and collision preservation.
 
