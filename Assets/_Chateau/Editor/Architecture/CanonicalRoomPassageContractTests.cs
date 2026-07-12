@@ -211,7 +211,7 @@ public sealed class CanonicalRoomPassageContractTests
             "4100000002",
             "4100000011",
             "{x: 5.280546, y: -2.015396}",
-            "{x: -7.703568, y: -2.000136}");
+            "{x: -7.75, y: -2.22}");
 
         AssertLegacyDoorTriggerCompatibilityBound(
             outboundTrigger,
@@ -543,12 +543,10 @@ public sealed class CanonicalRoomPassageContractTests
             "public CanonicalRoomDefinition CurrentRoomDefinition => FindRegisteredRoomDefinition(currentRoom);"));
         Assert.That(navigationManagerText, Does.Contain("public bool CanTraverse(Passage passage)"));
         Assert.That(navigationManagerText, Does.Contain("public bool TryTraverse(Passage passage)"));
-        Assert.That(navigationManagerText, Does.Contain(
-            "return MoveThroughInspectorDoor(\n" +
-            "            definition.SourceRoom.PrimaryLegacyName,\n" +
-            "            definition.LegacyDoorId,\n" +
-            "            definition.DestinationRoom.PrimaryLegacyName,\n" +
-            "            true);"));
+        Assert.That(navigationManagerText, Does.Contain("return MoveThroughCanonicalPassage(passage);"));
+        Assert.That(navigationManagerText, Does.Contain("Vector2 arrivalPosition = passage.ArrivalAnchor.LogicalPosition;"));
+        Assert.That(navigationManagerText, Does.Contain("playerMovement.TryWarpToExact(arrivalPosition)"));
+        Assert.That(navigationManagerText, Does.Contain("IsFinite(arrivalAnchor.LogicalPosition)"));
         Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private CanonicalRoomDefinition"));
         Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private Passage"));
         Assert.That(doorTriggerText, Does.Contain("using Chateau.World.Navigation;"));

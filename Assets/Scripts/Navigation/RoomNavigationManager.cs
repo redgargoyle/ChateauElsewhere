@@ -134,6 +134,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
         PassageDefinition definition = passage.Definition;
         Passage reverse = passage.ReversePassage;
         CanonicalRoomDefinition currentDefinition = CurrentRoomDefinition;
+        PassageAnchorData arrivalAnchor = passage.ArrivalAnchor;
 
         return definition != null &&
             reverse != null &&
@@ -149,7 +150,8 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             passage.transform.IsChildOf(passage.SourceRoomView.transform) &&
             passage.SourceRoomView.Definition == currentDefinition &&
             passage.ApproachAnchor != null &&
-            passage.ArrivalAnchor != null &&
+            arrivalAnchor != null &&
+            IsFinite(arrivalAnchor.LogicalPosition) &&
             reverse != passage &&
             reverse.ReversePassage == passage &&
             definition.Reverse != null &&
@@ -172,12 +174,15 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             return false;
         }
 
-        PassageDefinition definition = passage.Definition;
-        return MoveThroughInspectorDoor(
-            definition.SourceRoom.PrimaryLegacyName,
-            definition.LegacyDoorId,
-            definition.DestinationRoom.PrimaryLegacyName,
-            true);
+        return MoveThroughCanonicalPassage(passage);
+    }
+
+    private static bool IsFinite(Vector2 value)
+    {
+        return !float.IsNaN(value.x) &&
+            !float.IsInfinity(value.x) &&
+            !float.IsNaN(value.y) &&
+            !float.IsInfinity(value.y);
     }
 
     public bool ReloadDoorData()
@@ -508,6 +513,38 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
         }
 
         return true;
+    }
+
+    private bool MoveThroughCanonicalPassage(Passage passage)
+    {
+        PassageDefinition definition = passage.Definition;
+
+        if (!SetCurrentRoom(definition.DestinationRoom.PrimaryLegacyName, false, true))
+        {
+            return false;
+        }
+
+        PlacePlayerAtCanonicalArrival(passage);
+        return true;
+    }
+
+    private void PlacePlayerAtCanonicalArrival(Passage passage)
+    {
+        PointClickPlayerMovement playerMovement = FindPlayerMovement();
+
+        if (playerMovement == null)
+        {
+            Warn($"Canonical passage '{passage.Definition.StableId}' could not find the Player for destination placement.");
+            return;
+        }
+
+        playerMovement.RefreshWalkableFloorForCurrentRoom();
+        Vector2 arrivalPosition = passage.ArrivalAnchor.LogicalPosition;
+
+        if (!playerMovement.TryWarpToExact(arrivalPosition))
+        {
+            Warn($"Player rejected authored arrival {arrivalPosition} for canonical passage '{passage.Definition.StableId}'.");
+        }
     }
 
     private CanonicalRoomDefinition FindRegisteredRoomDefinition(string legacyRoomName)

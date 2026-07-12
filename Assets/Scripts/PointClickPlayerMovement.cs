@@ -1114,6 +1114,32 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return true;
 	}
 
+	public bool TryWarpToExact(Vector2 targetPosition)
+	{
+		if (!isReady ||
+			float.IsNaN(targetPosition.x) ||
+			float.IsInfinity(targetPosition.x) ||
+			float.IsNaN(targetPosition.y) ||
+			float.IsInfinity(targetPosition.y))
+			return false;
+
+		RefreshWalkableFloorForCurrentRoom();
+
+		if (!TryEvaluateMovementTarget(
+			targetPosition,
+			false,
+			Vector2.zero,
+			false,
+			out MovementTargetQuery movementQuery) ||
+			!movementQuery.HasReachableDestination)
+		{
+			return false;
+		}
+
+		StopImmediatelyAt(movementQuery.Destination);
+		return true;
+	}
+
 	public bool TryFindClosestReachableDestinationToWorldPoint(Vector2 worldPoint, out Vector2 destination)
 	{
 		RefreshWalkableFloorForCurrentRoom();
