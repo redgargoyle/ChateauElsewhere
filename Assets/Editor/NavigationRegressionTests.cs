@@ -693,15 +693,17 @@ public class NavigationRegressionTests
         Assert.That(diningView, Does.Contain("legacyContentGroup: {fileID: 2300000017}"));
         Assert.That(entranceDiningObject, Does.Contain("- component: {fileID: 4100000019}"));
         Assert.That(diningEntranceObject, Does.Contain("- component: {fileID: 4100000020}"));
-        foreach (string dependenciesBoundTrigger in new[] { entranceDiningTrigger, diningEntranceTrigger })
+        foreach (string callerBoundTrigger in new[] { entranceDiningTrigger, diningEntranceTrigger })
         {
-            Assert.That(dependenciesBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain(
+            Assert.That(callerBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(callerBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(callerBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(callerBoundTrigger, Does.Contain(
                 "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
-            Assert.That(dependenciesBoundTrigger, Does.Not.Contain("canonicalPassage:"));
+            Assert.That(callerBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
         }
+        Assert.That(entranceDiningTrigger, Does.Contain("canonicalPassage: {fileID: 4100000019}"));
+        Assert.That(diningEntranceTrigger, Does.Contain("canonicalPassage: {fileID: 4100000020}"));
         Assert.That(entranceDiningPassage, Does.Contain(
             "definition: {fileID: 11400000, guid: 30b5c4cfef2b45e2970b4cdac4b7a3ef, type: 2}"));
         Assert.That(entranceDiningPassage, Does.Contain("sourceRoomView: {fileID: 4100000001}"));

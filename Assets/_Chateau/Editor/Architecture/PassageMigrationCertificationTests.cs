@@ -242,8 +242,8 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(rows.Count(row => row.Profile == "bottom-edge-door"), Is.EqualTo(3));
         Assert.That(rows.Count(row => row.Profile == "inferred-stairway"), Is.EqualTo(4));
         Assert.That(rows.Count(row => row.Status == "complete"), Is.EqualTo(8));
-        Assert.That(rows.Count(row => row.Status == "dependencies-bound"), Is.EqualTo(2));
-        Assert.That(rows.Count(row => row.Status == "caller-bound"), Is.Zero);
+        Assert.That(rows.Count(row => row.Status == "dependencies-bound"), Is.Zero);
+        Assert.That(rows.Count(row => row.Status == "caller-bound"), Is.EqualTo(2));
         Assert.That(rows.Count(row => row.Status == "queued"), Is.EqualTo(30));
         Assert.That(rows.Count(row => row.Status == "blocked-one-way"), Is.EqualTo(2));
         Assert.That(rows.Count(row => row.Status == "blocked-parallel"), Is.EqualTo(3));
@@ -485,7 +485,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void GrandEntranceDiningDependenciesBoundFoundationPreservesLegacySamplingAndNullCallers()
+    public void GrandEntranceDiningCallersAreBoundWithoutAnchorOrDependencyChanges()
     {
         List<RouteInventoryRow> rows = ReadInventory();
         List<RouteInventoryRow> group = rows.Where(row => row.Order == 4).OrderBy(row => row.ComponentFileId).ToList();
@@ -496,10 +496,10 @@ public sealed class PassageMigrationCertificationTests
 
         Assert.That(documents, Has.Count.EqualTo(6023));
         Assert.That(group, Has.Count.EqualTo(2));
-        Assert.That(group.All(row => row.Status == "dependencies-bound"), Is.True);
+        Assert.That(group.All(row => row.Status == "caller-bound"), Is.True);
         Assert.That(group.All(row => row.Group == "GEH-Dining"), Is.True);
         Assert.That(group.All(row => row.Profile == "standard-door"), Is.True);
-        Assert.That(group.All(row => row.Notes == "direct-dependencies-bound"), Is.True);
+        Assert.That(group.All(row => row.Notes == "canonical-caller-bound-arrival-next"), Is.True);
 
         RouteInventoryRow diningRow = group.Single(row => row.ComponentFileId == "2300000109");
         RouteInventoryRow entranceRow = group.Single(row => row.ComponentFileId == "340611600");
@@ -516,9 +516,40 @@ public sealed class PassageMigrationCertificationTests
         {
             string trigger = RequireDocument(documents, row.ComponentFileId);
             AssertStagedRouteSerialization(rows, row, documents, database, gameRoot, trigger,
-                GetMigrationStage("dependencies-bound"));
-            Assert.That(trigger, Does.Not.Contain("canonicalPassage:"));
+                GetMigrationStage("caller-bound"));
+            Assert.That(ReadReferenceFileId(trigger, "canonicalPassage"), Is.EqualTo(row.PassageFileId));
         }
+
+        string entranceTrigger = RequireDocument(documents, entranceRow.ComponentFileId);
+        string diningTrigger = RequireDocument(documents, diningRow.ComponentFileId);
+        AssertCallerBoundLegacyTriggerSnapshot(
+            entranceTrigger,
+            "340611598",
+            "340611601",
+            "Grand Entrance Hall",
+            "GEH_DiningRoom",
+            "Dining Room",
+            "4100000019");
+        AssertCallerBoundLegacyTriggerSnapshot(
+            diningTrigger,
+            "2300000105",
+            "2300000108",
+            "Dining Room",
+            "DiningRoom_GEH",
+            "Grand Entrance Hall",
+            "4100000020");
+        AssertRevertsToDependenciesBoundTriggerHash(
+            entranceTrigger,
+            "4100000019",
+            "413c5747ac82caae76aca194f6050c38d5649f88eb3696ec2efa6ee58f303c2b");
+        AssertRevertsToDependenciesBoundTriggerHash(
+            diningTrigger,
+            "4100000020",
+            "d175220b4a626d8f62da1738509bd3659f189f1a9fda45d56d11d6044b0a2903");
+        Assert.That(ComputeSha256(entranceTrigger),
+            Is.EqualTo("a7bf770a0a094efe465804ed093275018e41c75c47de069b41b68538488ec278"));
+        Assert.That(ComputeSha256(diningTrigger),
+            Is.EqualTo("7f956609f887f6c68bbf9cfb7a09909a8449e62ba7b3ef6ef7a38b57dba04ea8"));
 
         Assert.That(ReadAnchorMigrationStage(RequireDocument(documents, "4100000019"), "4100000019"),
             Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
