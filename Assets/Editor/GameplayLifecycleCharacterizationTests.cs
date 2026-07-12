@@ -3152,6 +3152,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             yield return SetAndWaitForRenderedGameViewResolution((uint)renderedSize.x, (uint)renderedSize.y);
             cameraManager.ResetRoomLookForPreview();
             yield return WaitForSettledLayout();
+            Physics2D.SyncTransforms();
 
             Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
             Assert.That(player.TryWarpTo(new Vector2(0f, -2f), true), Is.True);
@@ -3234,7 +3235,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 $"reverseArrival={FormatVector(aspectReverseArrival)}");
             Debug.Log($"[DrawingMusicPassageAspect] {aspectEvidence[aspectEvidence.Count - 1]}");
 
-            float viewportEnvelopeTolerance = sizeIndex == 0 ? 0.15f : sizeIndex == 3 ? 0.4f : 0.05f;
+            float viewportEnvelopeTolerance = sizeIndex == 0 ? 0.15f : sizeIndex == 3 ? 0.2f : 0.05f;
             AssertVector2Within(aspectForwardStart, new Vector2(0f, -2f), 0.001f,
                 "aspect Drawing-to-Music invariant start");
             AssertVector2Within(aspectForwardApproach, expectedForwardApproaches[sizeIndex],
