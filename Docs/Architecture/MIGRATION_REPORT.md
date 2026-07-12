@@ -35,7 +35,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed the `ChapterManager` factory for `Chapter2Controller`; every chapter transition and debug-skip entry path now resolves the single serialized controller.
 - Removed the Chapter 2 HUD factory; Chapter 2 now reuses the single serialized HUD on every entry path.
 - Serialized the three inert Chapter 2 feature owners (monster stinger, guest panic, and guest search), bound their stable scene references, registered them with GameRoot, and removed their independently gated creation fallbacks.
-- Removed `Chapter2Controller.ResolveReferences` and its dormant scene-wide repair searches. Chapter 2 now validates and uses fourteen serialized manager, navigation, clock, player, UI, feature, subtitle, speech, and clock-strike audio dependencies directly; only the now-dormant legacy clock-strike resource/component fallback remains for the next cleanup gate.
+- Removed `Chapter2Controller.ResolveReferences` and its dormant scene-wide repair searches. Chapter 2 now validates and uses fourteen serialized manager, navigation, clock, player, UI, feature, subtitle, speech, and clock-strike audio dependencies directly.
 - Bound Chapter 1 to the existing serialized guest-scale applier, preserving the single ownership chain from applier to calibration to approved Butler source; every identity is lifecycle-tested before factory retirement.
 - Removed runtime creation of guest-scale applier/calibration owners; the Guest Size Master retains an Editor-only, Undo-aware authoring action, and runtime creation is limited to per-guest participants.
 - Explicitly wired the serialized dialogue and subtitle services, subtitle line bank, navigation edge, and Chapter 1 consumers while preserving lazy voice/indicator/subtitle-view creation.
@@ -71,19 +71,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized ChapterManager's exact Player input (`81962842`) and removed all player, Chapter 2, and obsolete debug-canvas repair searches. Its full eight-owner graph is architecture-validated, the public Player root derives from the serialized input, and only the actual Player prefab instance authors legacy movement disabled.
 - Characterized Chapter2Controller's manager identity before tightening its entry boundary: the controller starts with ChapterManager `3301000004` and retains that exact serialized owner through first and repeated Chapter 2 debug entry.
 - Made Chapter2Controller's four external entry commands enforce their serialized ChapterManager instead of rebinding it from a caller. Valid and null convenience calls keep existing behavior; a missing or different manager is rejected before phase, navigation, clock, guest, or UI mutation.
-- Grafted a dedicated `Audio_Chapter2ClockStrike` child beneath Chapter 2 with its own serialized non-looping 2D `AudioSource`, Game-Sounds `GameAudioSourceVolume` at base volume `0.4`, and imported clip GUID `d7084eafa9124afcbcbf12529e08bc70`. Seven-PM playback reuses those exact identities; the legacy resource/component fallback remains temporarily for the next cleanup gate.
+- Grafted a dedicated `Audio_Chapter2ClockStrike` child beneath Chapter 2 with its own serialized non-looping 2D `AudioSource`, Game-Sounds `GameAudioSourceVolume` at base volume `0.4`, and imported clip GUID `d7084eafa9124afcbcbf12529e08bc70`. Seven-PM playback reuses those exact identities, and the obsolete resource/component/runtime-tone fallback is removed.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,569 | -333 |
+| Runtime C# lines | 49,902 | 49,601 | -301 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
 | `FindObject*`/`GameObject.Find` | 199 | 143 | -56 |
-| `Resources.Load` | 27 | 23 | -4 |
+| `Resources.Load` | 27 | 22 | -5 |
 | runtime `new GameObject` | 98 | 82 | -16 |
-| runtime `AddComponent<T>` | 100 | 75 | -25 |
+| runtime `AddComponent<T>` | 100 | 74 | -26 |
 | runtime initialization hooks | 9 | 4 | -5 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -133,7 +133,9 @@ The temporary source increase is the migration spine and verification tooling. I
 - the Chapter 2 dependency-cleanup static, regression, and lifecycle gates pass; all fourteen serialized references resolve exactly once, `ResolveReferences` and its seven scene-wide searches are absent, and repeated entry/debug paths retain the same owners;
 - the Chapter 2 clock-strike graft audit passes: Gameplay documents increase exactly from 5,975 to 5,979; the only added documents are IDs `3301000010` through `3301000013`; the only changed existing documents are parent Transform `2099709258` and `Chapter2Controller` `3301000006`; no document is removed; `SceneRoots`, host GameObject `2099709257`, the imported WAV, and its `.meta` remain byte-identical;
 - the focused clock-strike lifecycle and static architecture gates pass, proving exact serialized source/binding/clip reuse, no AudioSource or volume-binding collision on the Chapter 2 host, and no component growth across repeated seven-PM playback;
-- the rendered full EditMode suite discovers 240 tests: 190 pass and the exact same 50 pre-existing failure names remain, with no graft regression;
+- the clock-strike cleanup changes only the existing Chapter 2 controller document, removes its obsolete resource-path property, and leaves all 5,979 document headers, `SceneRoots`, dedicated audio documents, imported WAV, and `.meta` exact;
+- the cleanup-specific source guards ban `Resources.Load`, `AudioClip.Create`, source/binding factories, and the obsolete resolver/fields; two consecutive seven-PM lifecycles reuse the exact serialized graph without component growth;
+- the rendered full EditMode suite discovers 240 tests: 190 pass and the exact same 50 pre-existing failure names remain, with no clock-strike graft or cleanup regression;
 - the separate `-nographics` invalid-viewport issue was independently hardened in commit `4d8a6d9a` and is not attributed to the clock-strike graft;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
@@ -166,8 +168,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Remove Chapter 2's now-dormant clock-strike resource/component fallback only after the dedicated serialized child graph passes its cleanup-specific gate.
-2. Audit the remaining non-identical Drawing Room cutouts before selecting any fourth prop; do not infer parity from similar names.
-3. Continue one prop/owner at a time with exact art, transform, occlusion, and collision preservation.
+1. Characterize and remove only Chapter 2 monster-stinger structural repair/placeholder paths while retaining its separately gated audio and overlay presentation.
+2. Serialize Guest Search's exact navigation owner and remove its global navigation resolver.
+3. Audit the remaining non-identical Drawing Room cutouts before selecting any fourth prop; do not infer parity from similar names.
 
 Do not begin bulk deletion until those gates pass.

@@ -197,11 +197,19 @@ public sealed class ArchitectureFoundationTests
         Assert.That(clockBindingDocument, Does.Contain("audioSource: {fileID: 3301000012}"));
         Assert.That(clockBindingDocument, Does.Contain("channel: 1"));
         Assert.That(clockBindingDocument, Does.Contain("baseVolume: 0.4"));
+        Assert.That(chapter2Document, Does.Not.Contain("clockStrikeClipResourcePath"));
         Assert.That(chapter2Text, Does.Not.Contain("ResolveReferences"));
         Assert.That(chapter2Text, Does.Not.Contain("FindAnyObjectByType"));
         Assert.That(chapter2Text, Does.Not.Contain("GameObject.Find(\"Player\")"));
         Assert.That(chapter2Text, Does.Not.Contain("GetComponent<Chapter"));
         Assert.That(chapter2Text, Does.Not.Contain("GetComponent<PointClickPlayerMovement>"));
+        Assert.That(chapter2Text, Does.Not.Contain("ResolveClockStrikeClip"));
+        Assert.That(chapter2Text, Does.Not.Contain("CreateRuntimeClockStrikeClip"));
+        Assert.That(chapter2Text, Does.Not.Contain("clockStrikeClipResourcePath"));
+        Assert.That(chapter2Text, Does.Not.Contain("Resources.Load<AudioClip>"));
+        Assert.That(chapter2Text, Does.Not.Contain("AddComponent<AudioSource>"));
+        Assert.That(chapter2Text, Does.Not.Contain("GameAudioSettings.EnsureBinding(clockStrikeAudioSource"));
+        Assert.That(chapter2Text, Does.Contain("clockStrikeVolumeBinding.Configure(clockStrikeAudioSource, GameAudioChannel.GameSounds, baseVolume)"));
         Assert.That(chapter2Text, Does.Contain("public override void ValidateConfiguration"));
         Assert.That(chapter2Text, Does.Contain("RegisterRoomChangeHandler();"));
     }

@@ -1334,7 +1334,14 @@ public class Chapter2RegressionTests
         Assert.That(controllerText, Does.Contain("PrepareGuestsForDiningTransfer()"));
         Assert.That(controllerText, Does.Contain("ShowClockStrike"));
         Assert.That(controllerText, Does.Contain("PlayClockStrikeDing"));
-        Assert.That(controllerText, Does.Contain("RuntimeChapter2ClockStrikeDing"));
+        Assert.That(controllerText, Does.Contain("clockStrikeVolumeBinding.Configure(clockStrikeAudioSource, GameAudioChannel.GameSounds, baseVolume)"));
+        Assert.That(controllerText, Does.Not.Contain("RuntimeChapter2ClockStrikeDing"));
+        Assert.That(controllerText, Does.Not.Contain("ResolveClockStrikeClip"));
+        Assert.That(controllerText, Does.Not.Contain("CreateRuntimeClockStrikeClip"));
+        Assert.That(controllerText, Does.Not.Contain("clockStrikeClipResourcePath"));
+        Assert.That(controllerText, Does.Not.Contain("Resources.Load<AudioClip>"));
+        Assert.That(controllerText, Does.Not.Contain("AddComponent<AudioSource>"));
+        Assert.That(controllerText, Does.Not.Contain("GameAudioSettings.EnsureBinding(clockStrikeAudioSource"));
         Assert.That(controllerText, Does.Contain("ClearClockStrike"));
         Assert.That(controllerText, Does.Contain("clockStrikeCloseUpSeconds = 5f"), "The 7:00 clock strike needs a readable five-second close-up hold.");
         Assert.That(controllerText, Does.Contain("SeatGuestsInDiningRoom()"));

@@ -17,7 +17,6 @@ public enum Chapter2Phase
 [DisallowMultipleComponent]
 public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
 {
-    private const string DefaultClockStrikeClipResourcePath = "Audio/SFX/06_heavy_wooden_case_clock_gong_seed1442486_tangoflux_raw_44k1";
     private const float DefaultClockStrikeVolume = 0.4f;
 
     [Header("References")]
@@ -49,7 +48,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     [SerializeField] private AudioSource clockStrikeAudioSource;
     [SerializeField] private GameAudioSourceVolume clockStrikeVolumeBinding;
     [SerializeField] private AudioClip clockStrikeClip;
-    [SerializeField] private string clockStrikeClipResourcePath = DefaultClockStrikeClipResourcePath;
     [SerializeField, Range(0f, 1f)] private float clockStrikeVolume = DefaultClockStrikeVolume;
 
     [Header("Speech")]
@@ -72,7 +70,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     private Coroutine diningObjectiveTransitionRoutine;
     private Coroutine diningRoomCompletionRoutine;
     private Coroutine dialogueVoiceChoiceRoutine;
-    private AudioClip runtimeClockStrikeClip;
     private bool allGuestsFoundHandled;
     private bool dinnerSeatingHandled;
     private bool debugTeleportToDrawingRoomOnStart;
@@ -983,49 +980,19 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
 
     private void PlayClockStrikeDing()
     {
-        if (clockStrikeAudioSource == null)
-        {
-            clockStrikeAudioSource = gameObject.AddComponent<AudioSource>();
-        }
-
-        if (clockStrikeAudioSource == null)
+        if (clockStrikeAudioSource == null || clockStrikeVolumeBinding == null || clockStrikeClip == null)
         {
             return;
         }
 
-        clockStrikeAudioSource.clip = ResolveClockStrikeClip();
-
+        clockStrikeAudioSource.clip = clockStrikeClip;
         clockStrikeAudioSource.playOnAwake = false;
         clockStrikeAudioSource.loop = false;
         clockStrikeAudioSource.spatialBlend = 0f;
         float baseVolume = ResolveClockStrikeVolume();
-        clockStrikeAudioSource.volume = baseVolume;
-        GameAudioSettings.EnsureBinding(clockStrikeAudioSource, GameAudioChannel.GameSounds, baseVolume);
+        clockStrikeVolumeBinding.Configure(clockStrikeAudioSource, GameAudioChannel.GameSounds, baseVolume);
         clockStrikeAudioSource.Stop();
         GameAudioSettings.TryPlay(clockStrikeAudioSource);
-    }
-
-    private AudioClip ResolveClockStrikeClip()
-    {
-        if (clockStrikeClip != null)
-        {
-            return clockStrikeClip;
-        }
-
-        string resourcePath = string.IsNullOrWhiteSpace(clockStrikeClipResourcePath)
-            ? DefaultClockStrikeClipResourcePath
-            : clockStrikeClipResourcePath.Trim();
-
-        clockStrikeClip = Resources.Load<AudioClip>(resourcePath);
-
-        if (clockStrikeClip != null)
-        {
-            return clockStrikeClip;
-        }
-
-        return runtimeClockStrikeClip != null
-            ? runtimeClockStrikeClip
-            : CreateRuntimeClockStrikeClip();
     }
 
     private float ResolveClockStrikeVolume()
@@ -1033,26 +1000,6 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
         return clockStrikeVolume > 0f ? Mathf.Clamp01(clockStrikeVolume) : DefaultClockStrikeVolume;
     }
 
-    private AudioClip CreateRuntimeClockStrikeClip()
-    {
-        const int sampleRate = 44100;
-        const float durationSeconds = 1.25f;
-        int samples = Mathf.CeilToInt(sampleRate * durationSeconds);
-        float[] data = new float[samples];
-
-        for (int i = 0; i < samples; i++)
-        {
-            float time = i / (float)sampleRate;
-            float envelope = Mathf.Exp(-3.6f * time);
-            float bell = Mathf.Sin(2f * Mathf.PI * 784f * time) * 0.55f;
-            float lowBell = Mathf.Sin(2f * Mathf.PI * 392f * time) * 0.35f;
-            data[i] = (bell + lowBell) * envelope;
-        }
-
-        runtimeClockStrikeClip = AudioClip.Create("RuntimeChapter2ClockStrikeDing", samples, 1, sampleRate, false);
-        runtimeClockStrikeClip.SetData(data, 0);
-        return runtimeClockStrikeClip;
-    }
 
     private void SetPhase(Chapter2Phase nextPhase)
     {
