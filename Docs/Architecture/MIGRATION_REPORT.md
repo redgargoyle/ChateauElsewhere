@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage's data, passive room roots, and rendered near/far/viewport behavior fully characterized before passive Passage binding.**
+**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage's data, passive room roots, rendered behavior, and reciprocal passive scene bindings complete.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -249,6 +249,9 @@ The temporary source increase is the migration spine and verification tooling. I
 - the rendered aspect matrix passes for `1366x768`, `1440x1080`, `1920x1080`, and `2560x1080`. Left/center/right clicks converge to the same selected point for this passage pair, but approach and arrival coordinates vary materially by viewport; the `145`-pixel proximity limit also makes the batch runner's old `50x29` viewport incapable of exercising a far approach;
 - all three `GameplayLifecycleCharacterizationTests` pass together with resolution restoration and test-order independence. This characterization slice changes only tests and architecture documentation; runtime scripts, scenes, prefabs, data assets, `.meta` files, and GUIDs remain byte-identical;
 - the focused canonical contract gate passes `5/5`, the exact static route guard passes `1/1`, and the full rendered EditMode suite discovers 248 tests: 202 pass and the exact same 46 pre-existing failure names remain, with no added or removed failure;
+- passive Passages `4100000011` and `4100000012` are now co-located with the unchanged forward/reverse legacy trigger owners, directly bound to the existing definitions and source RoomViews, reciprocally linked, registered once with GameRoot, and serialized with the four neutral reference vectors. Neither exposes nor receives an interaction/traversal command;
+- the exact scene audit passes: Gameplay grows only from 6,008 to 6,010 documents; the two Passage documents are the only additions; only trigger GameObjects `109889176`/`2300000100` and GameRoot `1878886998` change among prior documents; all other 6,005 prior documents, prior relative order, legacy trigger documents, RectTransforms, RoomViews, and `SceneRoots` remain byte-identical;
+- the passive-binding gates pass: canonical contracts `5/5`, architecture foundation `17/17`, exact navigation static guard `1/1`, and rendered lifecycle `3/3`. The full rendered EditMode suite remains `248` discovered / `202` passed / `46` known failures, with the failure-name set exactly equal to the pre-slice baseline;
 
 ## Validation still requiring human/golden review
 
@@ -276,6 +279,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Graft exactly two reciprocal passive `Passage` components onto the existing GEH/Drawing trigger owners. Bind their existing definitions and source `RoomView`s, register them once with GameRoot, and serialize the neutral reference data: forward approach `(-7.576081, -1.986423)` / arrival `(5.267176, -2.104616)`; reverse approach `(5.280546, -2.015396)` / arrival `(-7.703568, -2.000136)`.
+1. Serialize the stable compatibility dependencies on only the two GEH/Drawing legacy triggers: the existing `RoomNavigationManager`, exact Player transform, shared `Audio_DoorOpen` source, and approved `DoorOpenSoundCatalog`. Characterize any still-null edge first, preserve every existing object/component/GUID, and remove no resolver in that binding-only slice.
 
-That next slice must leave both legacy `DoorTriggerNavigation` components as the only interaction and traversal path, make no caller/facade cutover, and prove an exact two-document scene graft plus the full rendered lifecycle. Do not begin route cutover, remaining-route migration, or bulk deletion.
+That next slice must leave both legacy `DoorTriggerNavigation` components as the only interaction and traversal path, make no caller/facade cutover, and prove an exact two-document-only scene edit plus the full rendered lifecycle. Do not begin route cutover, resolver removal, remaining-route migration, or bulk deletion.

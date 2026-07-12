@@ -111,13 +111,17 @@ public sealed class CanonicalRoomPassageContractTests
         string entranceView = ExtractDocument(gameplayText, "--- !u!114 &4100000001");
         string drawingView = ExtractDocument(gameplayText, "--- !u!114 &4100000002");
         string gameRoot = ExtractDocument(gameplayText, "--- !u!114 &1878886998");
+        string outboundObject = ExtractDocument(gameplayText, "--- !u!1 &109889176");
         string outboundTrigger = ExtractDocument(gameplayText, "--- !u!114 &109889178");
+        string forwardPassage = ExtractDocument(gameplayText, "--- !u!114 &4100000011");
+        string reverseObject = ExtractDocument(gameplayText, "--- !u!1 &2300000100");
         string reverseTrigger = ExtractDocument(gameplayText, "--- !u!114 &2300000104");
+        string reversePassage = ExtractDocument(gameplayText, "--- !u!114 &4100000012");
 
         Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(2),
             "Only the two characterized room roots may carry passive RoomViews at this gate.");
-        Assert.That(gameplayText, Does.Not.Contain("guid: 518dad8adf634786a103bf4e76aa0881"),
-            "Passage behavior remains outside the scene until the passive RoomView graft is proven safe.");
+        Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(2),
+            "Only the reciprocal characterized trigger owners may carry passive Passages at this gate.");
 
         Assert.That(entranceRoomObject, Does.Contain("- component: {fileID: 4100000001}"));
         Assert.That(drawingRoomObject, Does.Contain("- component: {fileID: 4100000002}"));
@@ -136,10 +140,35 @@ public sealed class CanonicalRoomPassageContractTests
 
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000001}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000002}"), Is.EqualTo(1));
-        Assert.That(CountOccurrences(gameplayText, "4100000001"), Is.EqualTo(3),
-            "The entrance RoomView should occur only on its owner, its document header, and GameRoot registration.");
-        Assert.That(CountOccurrences(gameplayText, "4100000002"), Is.EqualTo(3),
-            "The drawing-room RoomView should occur only on its owner, its document header, and GameRoot registration.");
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000011}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000012}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameplayText, "4100000001"), Is.EqualTo(4),
+            "The entrance RoomView should occur only on its owner, document header, GameRoot registration, and source Passage.");
+        Assert.That(CountOccurrences(gameplayText, "4100000002"), Is.EqualTo(4),
+            "The drawing-room RoomView should occur only on its owner, document header, GameRoot registration, and source Passage.");
+        Assert.That(outboundObject, Does.Contain("- component: {fileID: 4100000011}"));
+        Assert.That(reverseObject, Does.Contain("- component: {fileID: 4100000012}"));
+        Assert.That(CountOccurrences(gameplayText, "4100000011"), Is.EqualTo(4),
+            "The forward Passage should occur only on its owner, header, GameRoot registration, and reciprocal link.");
+        Assert.That(CountOccurrences(gameplayText, "4100000012"), Is.EqualTo(4),
+            "The reverse Passage should occur only on its owner, header, GameRoot registration, and reciprocal link.");
+
+        AssertPassivePassageDocument(
+            forwardPassage,
+            "109889176",
+            "0344228bb90d4997818e13c84f0bcf63",
+            "4100000001",
+            "4100000012",
+            "{x: -7.576081, y: -1.986423}",
+            "{x: 5.267176, y: -2.104616}");
+        AssertPassivePassageDocument(
+            reversePassage,
+            "2300000100",
+            "50ae5112eed74cfda8588ff835b92516",
+            "4100000002",
+            "4100000011",
+            "{x: 5.280546, y: -2.015396}",
+            "{x: -7.703568, y: -2.000136}");
 
         AssertLegacyDoorTriggerUnchanged(
             outboundTrigger,
@@ -450,7 +479,27 @@ public sealed class CanonicalRoomPassageContractTests
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(2));
-        Assert.That(gameplayText, Does.Not.Contain("guid: 518dad8adf634786a103bf4e76aa0881"));
+        Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(2));
+    }
+
+    private static void AssertPassivePassageDocument(
+        string document,
+        string gameObjectFileId,
+        string definitionGuid,
+        string sourceRoomViewFileId,
+        string reversePassageFileId,
+        string approachPosition,
+        string arrivalPosition)
+    {
+        Assert.That(document, Does.Contain($"m_GameObject: {{fileID: {gameObjectFileId}}}"));
+        Assert.That(document, Does.Contain(
+            "m_Script: {fileID: 11500000, guid: 518dad8adf634786a103bf4e76aa0881, type: 3}"));
+        Assert.That(document, Does.Contain(
+            $"definition: {{fileID: 11400000, guid: {definitionGuid}, type: 2}}"));
+        Assert.That(document, Does.Contain($"sourceRoomView: {{fileID: {sourceRoomViewFileId}}}"));
+        Assert.That(document, Does.Contain($"reversePassage: {{fileID: {reversePassageFileId}}}"));
+        Assert.That(document, Does.Contain($"approachAnchor:\n    logicalPosition: {approachPosition}"));
+        Assert.That(document, Does.Contain($"arrivalAnchor:\n    logicalPosition: {arrivalPosition}"));
     }
 
     private static void AssertLegacyDoorTriggerUnchanged(

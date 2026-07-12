@@ -2613,8 +2613,9 @@ public sealed class GameplayLifecycleCharacterizationTests
     {
         CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
         Assert.That(roomViews, Has.Length.EqualTo(2), "The first room-view graft must remain exactly two passive scene owners.");
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Is.Empty,
-            "Canonical passages are deliberately deferred until the room-view compatibility edge is proven stable.");
+        CanonicalPassage[] passages = FindInActiveScene<CanonicalPassage>();
+        Assert.That(passages, Has.Length.EqualTo(2),
+            "The first passage graft must remain exactly two reciprocal passive scene bindings.");
 
         Assert.That(
             roomViews.Single(item => item.Definition != null && item.Definition.StableId == "room.grand-entrance-hall"),
@@ -2635,6 +2636,60 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(entranceView.HasGameContext, Is.True);
         Assert.That(drawingView.HasGameContext, Is.True);
 
+        CanonicalPassage forwardPassage = passages.Single(item =>
+            item.Definition != null &&
+            item.Definition.StableId == "passage.grand-entrance-hall.drawing-room");
+        CanonicalPassage reversePassage = passages.Single(item =>
+            item.Definition != null &&
+            item.Definition.StableId == "passage.drawing-room.grand-entrance-hall");
+        Assert.That(forwardPassage.gameObject.name, Is.EqualTo("DoorTrigger_GEH_DrawingRoom"));
+        Assert.That(reversePassage.gameObject.name, Is.EqualTo("DoorTrigger_DrawingRoom_GEH"));
+        Assert.That(forwardPassage.GetComponents<CanonicalPassage>(), Has.Length.EqualTo(1));
+        Assert.That(reversePassage.GetComponents<CanonicalPassage>(), Has.Length.EqualTo(1));
+        Assert.That(forwardPassage.GetComponents<Component>(), Has.Length.EqualTo(5));
+        Assert.That(reversePassage.GetComponents<Component>(), Has.Length.EqualTo(5));
+        DoorTriggerNavigation forwardTrigger = forwardPassage.GetComponent<DoorTriggerNavigation>();
+        DoorTriggerNavigation reverseTrigger = reversePassage.GetComponent<DoorTriggerNavigation>();
+        Assert.That(forwardTrigger, Is.Not.Null,
+            "The passive binding must remain co-located with the unchanged legacy interaction owner until cutover.");
+        Assert.That(reverseTrigger, Is.Not.Null);
+        Assert.That(forwardPassage.SourceRoomView, Is.SameAs(entranceView));
+        Assert.That(reversePassage.SourceRoomView, Is.SameAs(drawingView));
+        Assert.That(forwardPassage.ReversePassage, Is.SameAs(reversePassage));
+        Assert.That(reversePassage.ReversePassage, Is.SameAs(forwardPassage));
+        Assert.That(forwardPassage.Definition.SourceRoom, Is.SameAs(entranceDefinition));
+        Assert.That(forwardPassage.Definition.DestinationRoom, Is.SameAs(drawingDefinition));
+        Assert.That(reversePassage.Definition.SourceRoom, Is.SameAs(drawingDefinition));
+        Assert.That(reversePassage.Definition.DestinationRoom, Is.SameAs(entranceDefinition));
+        Assert.That(forwardPassage.Definition.LegacyDoorId, Is.EqualTo(forwardTrigger.DoorName));
+        Assert.That(reversePassage.Definition.LegacyDoorId, Is.EqualTo(reverseTrigger.DoorName));
+        AssertVector2Within(
+            forwardPassage.ApproachAnchor.LogicalPosition,
+            new Vector2(-7.576081f, -1.986423f),
+            0.0001f,
+            "passive forward approach anchor");
+        AssertVector2Within(
+            forwardPassage.ArrivalAnchor.LogicalPosition,
+            new Vector2(5.267176f, -2.104616f),
+            0.0001f,
+            "passive forward arrival anchor");
+        AssertVector2Within(
+            reversePassage.ApproachAnchor.LogicalPosition,
+            new Vector2(5.280546f, -2.015396f),
+            0.0001f,
+            "passive reverse approach anchor");
+        AssertVector2Within(
+            reversePassage.ArrivalAnchor.LogicalPosition,
+            new Vector2(-7.703568f, -2.000136f),
+            0.0001f,
+            "passive reverse arrival anchor");
+        Assert.That(forwardPassage.HasGameContext, Is.True);
+        Assert.That(reversePassage.HasGameContext, Is.True);
+        Assert.That(forwardPassage.enabled, Is.True);
+        Assert.That(reversePassage.enabled, Is.True);
+        Assert.That(forwardPassage.isActiveAndEnabled, Is.EqualTo(entranceVisible));
+        Assert.That(reversePassage.isActiveAndEnabled, Is.EqualTo(drawingVisible));
+
         Assert.That(entranceView.IsVisible, Is.EqualTo(entranceContent.gameObject.activeSelf));
         Assert.That(drawingView.IsVisible, Is.EqualTo(drawingContent.gameObject.activeSelf));
         Assert.That(entranceView.IsVisible, Is.EqualTo(entranceVisible));
@@ -2646,12 +2701,20 @@ public sealed class GameplayLifecycleCharacterizationTests
         drawingView.ValidateConfiguration(drawingReport);
         Assert.That(entranceReport.Messages, Is.Empty);
         Assert.That(drawingReport.Messages, Is.Empty);
+        Chateau.Architecture.ValidationReport forwardReport = new Chateau.Architecture.ValidationReport();
+        Chateau.Architecture.ValidationReport reverseReport = new Chateau.Architecture.ValidationReport();
+        forwardPassage.ValidateConfiguration(forwardReport);
+        reversePassage.ValidateConfiguration(reverseReport);
+        Assert.That(forwardReport.Messages, Is.Empty);
+        Assert.That(reverseReport.Messages, Is.Empty);
 
         Chateau.Architecture.GameRoot gameRoot = RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
         List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
             GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
         Assert.That(sceneBehaviours.Count(item => item == entranceView), Is.EqualTo(1));
         Assert.That(sceneBehaviours.Count(item => item == drawingView), Is.EqualTo(1));
+        Assert.That(sceneBehaviours.Count(item => item == forwardPassage), Is.EqualTo(1));
+        Assert.That(sceneBehaviours.Count(item => item == reversePassage), Is.EqualTo(1));
     }
 
     private static void AssertGrandfatherClockPlaceholdersRemainUnmodified(

@@ -536,6 +536,7 @@ public class NavigationRegressionTests
         Assert.That(outboundObject, Does.Contain("- component: {fileID: 109889180}"));
         Assert.That(outboundObject, Does.Contain("- component: {fileID: 109889179}"));
         Assert.That(outboundObject, Does.Contain("- component: {fileID: 109889178}"));
+        Assert.That(outboundObject, Does.Contain("- component: {fileID: 4100000011}"));
         Assert.That(outboundObject, Does.Contain("m_Name: DoorTrigger_GEH_DrawingRoom"));
         Assert.That(outboundObject, Does.Contain("m_Layer: 5"));
         Assert.That(outboundTransform, Does.Contain("m_GameObject: {fileID: 109889176}"));
@@ -589,6 +590,7 @@ public class NavigationRegressionTests
         Assert.That(reverseObject, Does.Contain("- component: {fileID: 2300000102}"));
         Assert.That(reverseObject, Does.Contain("- component: {fileID: 2300000103}"));
         Assert.That(reverseObject, Does.Contain("- component: {fileID: 2300000104}"));
+        Assert.That(reverseObject, Does.Contain("- component: {fileID: 4100000012}"));
         Assert.That(reverseObject, Does.Contain("m_Name: DoorTrigger_DrawingRoom_GEH"));
         Assert.That(reverseObject, Does.Contain("m_Layer: 5"));
         Assert.That(reverseTransform, Does.Contain("m_GameObject: {fileID: 2300000100}"));

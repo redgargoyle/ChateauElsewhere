@@ -141,6 +141,8 @@ Passive-room-view status: complete. The Entrance and Drawing roots each carry on
 
 Approach/viewport characterization status: complete. Rendered tests own and restore a real Game-view size, neutralize synthetic batch edge-pan, exercise both far walks and both near activations, and quantify the current viewport/source-position dependence. The old `50x29` batch result is no longer treated as an authored anchor. Next, serialize exactly two reciprocal passive Passage bindings with the neutral `1366x768` values while leaving legacy interaction/traversal untouched.
 
+Passive-passage status: complete. The two existing trigger owners now each carry one definition-backed, reciprocal, GameRoot-registered Passage with the neutral reference approach/arrival data. Passage has no lifecycle or command and is not called by any legacy or canonical service. Next, bind the two legacy trigger owners' stable navigation, Player, shared door-audio, and catalog dependencies directly in one separately gated compatibility slice; do not implement `INavigationService` or change traversal yet.
+
 Room-local object cutouts are first-class props:
 
 ```text
