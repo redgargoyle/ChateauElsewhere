@@ -276,7 +276,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void DrawingMusicDataIsAuthoredWithoutSceneBindingsOrCallerChanges()
+    public void DrawingMusicRoomViewsArePassiveWithoutPassageOrCallerChanges()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 1)
@@ -299,10 +299,12 @@ public sealed class PassageMigrationCertificationTests
         string musicContent = RequireDocument(documents, "2102000001");
         string musicDoors = RequireDocument(documents, "2103000010");
         string musicDoorsTransform = RequireDocument(documents, "2103000011");
+        string musicView = RequireDocument(documents, "4100000003");
+        string gameRoot = RequireDocument(documents, GameRootFileId);
         string guestPanic = RequireDocument(documents, "3301000008");
 
         Assert.That(group, Has.Count.EqualTo(2));
-        Assert.That(group.All(row => row.Status == "data-authored"), Is.True);
+        Assert.That(group.All(row => row.Status == "view-bound"), Is.True);
         Assert.That(group.Select(row => row.PassageDefinitionGuid).OrderBy(value => value),
             Is.EqualTo(new[]
             {
@@ -315,7 +317,10 @@ public sealed class PassageMigrationCertificationTests
                 "passage.drawing-room.music-room",
                 "passage.music-room.drawing-room"
             }));
-        Assert.That(group.All(row => string.IsNullOrEmpty(row.SourceRoomViewFileId)), Is.True);
+        Assert.That(group.Single(row => row.ComponentFileId == "2300000089").SourceRoomViewFileId,
+            Is.EqualTo("4100000003"));
+        Assert.That(group.Single(row => row.ComponentFileId == "2300000099").SourceRoomViewFileId,
+            Is.EqualTo("4100000002"));
         Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageFileId)), Is.True);
         Assert.That(group.All(row =>
             string.IsNullOrEmpty(row.ApproachX) &&
@@ -377,9 +382,15 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(musicContent, Does.Contain(
             "roomBackgroundTexture: {fileID: 2800000, guid: 028084782cdcf3d4ab3b596624c8b7c5, type: 3}"));
         Assert.That(ReadReferenceFileId(musicContent, "perspectiveProfile"), Is.EqualTo("0"));
-        Assert.That(documents.Values.Count(document =>
-            document.Contains($"guid: {RoomViewGuid}") &&
-            document.Contains("m_GameObject: {fileID: 354156755}")), Is.Zero);
+        Assert.That(musicRoom, Does.Contain("- component: {fileID: 4100000003}"));
+        Assert.That(musicView, Does.Contain($"guid: {RoomViewGuid}"));
+        Assert.That(ReadReferenceFileId(musicView, "m_GameObject"), Is.EqualTo("354156755"));
+        Assert.That(ReadReferenceGuid(musicView, "definition"),
+            Is.EqualTo("c0f34d74a30db58bb2b87b6ec316120b"));
+        Assert.That(ReadReferenceFileId(musicView, "legacyContentGroup"), Is.EqualTo("2102000001"));
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000003}"), Is.EqualTo(1));
+        Assert.That(documents.Values.Count(document => document.Contains($"guid: {RoomViewGuid}")), Is.EqualTo(3));
+        Assert.That(documents.Values.Count(document => document.Contains($"guid: {PassageGuid}")), Is.EqualTo(2));
         Assert.That(ReadReferenceFileId(guestPanic, "leftExitTarget"), Is.EqualTo("2300000096"));
         Assert.That(ReadField(guestPanic, "leftExitTargetName"),
             Is.EqualTo("DoorTrigger_DrawingRoom_MusicRoom"));

@@ -2781,6 +2781,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         RoomContentGroup drawingRoomContent = RequireOnlyActiveRoom(DrawingRoom);
         RoomContentGroup musicRoomContent = FindInActiveScene<RoomContentGroup>()
             .Single(item => item.RoomName == MusicRoom);
+        CanonicalRoomView musicRoomView = musicRoomContent.GetComponent<CanonicalRoomView>();
+        Assert.That(musicRoomView, Is.Not.Null);
+        Assert.That(musicRoomView.Definition, Is.Not.Null);
+        Assert.That(musicRoomView.Definition.StableId, Is.EqualTo("room.music-room"));
+        Assert.That(musicRoomView.LegacyContentGroup, Is.SameAs(musicRoomContent));
+        Assert.That(musicRoomView.Root, Is.SameAs(musicRoomContent.transform));
+        Assert.That(musicRoomView.HasGameContext, Is.True);
+        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(3));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(2));
         Assert.That(drawingRoomContent.TryGetRoomBackgroundTexture(out Texture drawingBackground), Is.True);
         Assert.That(musicRoomContent.TryGetRoomBackgroundTexture(out Texture musicBackground), Is.True);
         Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(drawingBackground));
@@ -2821,6 +2830,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reverse.GetComponent<CanonicalPassage>(), Is.Null);
         Assert.That(drawingRoomContent.gameObject.activeSelf, Is.True);
         Assert.That(musicRoomContent.gameObject.activeSelf, Is.False);
+        Assert.That(musicRoomView.IsVisible, Is.False);
         Assert.That(forward.gameObject.activeInHierarchy, Is.True);
         Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
 
@@ -2925,6 +2935,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.SameAs(musicRoomContent.transform));
         Assert.That(drawingRoomContent.gameObject.activeSelf, Is.False);
         Assert.That(musicRoomContent.gameObject.activeSelf, Is.True);
+        Assert.That(musicRoomView.IsVisible, Is.True);
         Assert.That(forward.gameObject.activeInHierarchy, Is.False);
         Assert.That(reverse.gameObject.activeInHierarchy, Is.True);
         Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Not.SameAs(forward));
@@ -2997,6 +3008,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.SameAs(drawingRoomContent.transform));
         Assert.That(drawingRoomContent.gameObject.activeSelf, Is.True);
         Assert.That(musicRoomContent.gameObject.activeSelf, Is.False);
+        Assert.That(musicRoomView.IsVisible, Is.False);
         Assert.That(forward.gameObject.activeInHierarchy, Is.True);
         Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
         Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Not.SameAs(reverse));
@@ -3037,6 +3049,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.SameAs(musicRoomContent.transform));
         Assert.That(drawingRoomContent.gameObject.activeSelf, Is.False);
         Assert.That(musicRoomContent.gameObject.activeSelf, Is.True);
+        Assert.That(musicRoomView.IsVisible, Is.True);
         Assert.That(forward.gameObject.activeInHierarchy, Is.False);
         Assert.That(reverse.gameObject.activeInHierarchy, Is.True);
         Assert.That(player.HasDestination, Is.False);
@@ -3062,6 +3075,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.SameAs(drawingRoomContent.transform));
         Assert.That(drawingRoomContent.gameObject.activeSelf, Is.True);
         Assert.That(musicRoomContent.gameObject.activeSelf, Is.False);
+        Assert.That(musicRoomView.IsVisible, Is.False);
         Assert.That(forward.gameObject.activeInHierarchy, Is.True);
         Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
         Assert.That(player.HasDestination, Is.False);
@@ -3786,7 +3800,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         bool drawingVisible)
     {
         CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-        Assert.That(roomViews, Has.Length.EqualTo(2), "The first room-view graft must remain exactly two passive scene owners.");
+        Assert.That(roomViews, Has.Length.EqualTo(3),
+            "Entrance, Drawing, and Music must remain the only passive RoomView scene owners at this gate.");
         CanonicalPassage[] passages = FindInActiveScene<CanonicalPassage>();
         Assert.That(passages, Has.Length.EqualTo(2),
             "The first passage graft must remain exactly two reciprocal passive scene bindings.");
@@ -3797,6 +3812,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(
             roomViews.Single(item => item.Definition != null && item.Definition.StableId == "room.drawing-room"),
             Is.SameAs(drawingView));
+        CanonicalRoomView musicView = roomViews.Single(item =>
+            item.Definition != null && item.Definition.StableId == "room.music-room");
+        RoomContentGroup musicContent = FindInActiveScene<RoomContentGroup>()
+            .Single(item => item.RoomName == MusicRoom);
         Assert.That(entranceView.Definition, Is.SameAs(entranceDefinition));
         Assert.That(drawingView.Definition, Is.SameAs(drawingDefinition));
         Assert.That(entranceDefinition.StableId, Is.EqualTo("room.grand-entrance-hall"));
@@ -3809,6 +3828,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(drawingView.Root, Is.SameAs(drawingContent.transform));
         Assert.That(entranceView.HasGameContext, Is.True);
         Assert.That(drawingView.HasGameContext, Is.True);
+        Assert.That(musicView.Definition.StableId, Is.EqualTo("room.music-room"));
+        Assert.That(musicView.LegacyContentGroup, Is.SameAs(musicContent));
+        Assert.That(musicView.gameObject, Is.SameAs(musicContent.gameObject));
+        Assert.That(musicView.Root, Is.SameAs(musicContent.transform));
+        Assert.That(musicView.HasGameContext, Is.True);
+        Assert.That(musicView.IsVisible, Is.EqualTo(musicContent.gameObject.activeSelf));
 
         CanonicalPassage forwardPassage = passages.Single(item =>
             item.Definition != null &&
@@ -3887,10 +3912,13 @@ public sealed class GameplayLifecycleCharacterizationTests
 
         Chateau.Architecture.ValidationReport entranceReport = new Chateau.Architecture.ValidationReport();
         Chateau.Architecture.ValidationReport drawingReport = new Chateau.Architecture.ValidationReport();
+        Chateau.Architecture.ValidationReport musicReport = new Chateau.Architecture.ValidationReport();
         entranceView.ValidateConfiguration(entranceReport);
         drawingView.ValidateConfiguration(drawingReport);
+        musicView.ValidateConfiguration(musicReport);
         Assert.That(entranceReport.Messages, Is.Empty);
         Assert.That(drawingReport.Messages, Is.Empty);
+        Assert.That(musicReport.Messages, Is.Empty);
         Chateau.Architecture.ValidationReport forwardReport = new Chateau.Architecture.ValidationReport();
         Chateau.Architecture.ValidationReport reverseReport = new Chateau.Architecture.ValidationReport();
         forwardPassage.ValidateConfiguration(forwardReport);
@@ -3903,6 +3931,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
         Assert.That(sceneBehaviours.Count(item => item == entranceView), Is.EqualTo(1));
         Assert.That(sceneBehaviours.Count(item => item == drawingView), Is.EqualTo(1));
+        Assert.That(sceneBehaviours.Count(item => item == musicView), Is.EqualTo(1));
         Assert.That(sceneBehaviours.Count(item => item == forwardPassage), Is.EqualTo(1));
         Assert.That(sceneBehaviours.Count(item => item == reversePassage), Is.EqualTo(1));
     }
