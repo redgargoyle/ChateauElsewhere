@@ -5848,7 +5848,7 @@ public sealed class GameplayLifecycleCharacterizationTests
     }
 
     [UnityTest]
-    public IEnumerator GrandEntranceDiningLegacyPassagesAreCharacterizedBeforeCanonicalMigration()
+    public IEnumerator GrandEntranceDiningAuthoredAnchorPassagesUseInvariantApproachesAndArrivals()
     {
         const string EntranceRoom = "Grand Entrance Hall";
         const string DiningRoom = "Dining Room";
@@ -5892,33 +5892,39 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(5));
             CanonicalPassage forwardPassage = forward.GetComponent<CanonicalPassage>();
             CanonicalPassage reversePassage = reverse.GetComponent<CanonicalPassage>();
+            Vector2 entranceAnchorCandidate = new Vector2(8.705841f, -2.346406f);
+            Vector2 diningAnchorCandidate = new Vector2(-7.192237f, -1.740209f);
+            Vector2 legacyEntranceReference = new Vector2(8.205841f, -1.986406f);
+            Vector2 legacyDiningReference = new Vector2(-6.692237f, -1.380209f);
             Assert.That(forwardPassage, Is.Not.Null);
             Assert.That(reversePassage, Is.Not.Null);
+            Assert.That(Vector2.Distance(legacyEntranceReference, entranceAnchorCandidate), Is.GreaterThan(0.1f));
+            Assert.That(Vector2.Distance(legacyDiningReference, diningAnchorCandidate), Is.GreaterThan(0.1f));
             Assert.That(forwardPassage.SourceRoomView.Definition.StableId,
                 Is.EqualTo("room.grand-entrance-hall"));
             Assert.That(reversePassage.SourceRoomView.Definition.StableId, Is.EqualTo("room.dining-room"));
             Assert.That(forwardPassage.ReversePassage, Is.SameAs(reversePassage));
             Assert.That(reversePassage.ReversePassage, Is.SameAs(forwardPassage));
             AssertVector2Within(forwardPassage.ApproachAnchor.LogicalPosition,
-                new Vector2(8.205841f, -1.986406f), 0.0001f,
-                "passive Entrance-to-Dining approach anchor");
+                entranceAnchorCandidate, 0.0001f,
+                "authored Entrance-to-Dining approach anchor");
             AssertVector2Within(forwardPassage.ArrivalAnchor.LogicalPosition,
-                new Vector2(-6.692237f, -1.380209f), 0.0001f,
-                "passive Entrance-to-Dining arrival anchor");
+                diningAnchorCandidate, 0.0001f,
+                "authored Entrance-to-Dining arrival anchor");
             AssertVector2Within(reversePassage.ApproachAnchor.LogicalPosition,
-                new Vector2(-6.692237f, -1.380209f), 0.0001f,
-                "passive Dining-to-Entrance approach anchor");
+                diningAnchorCandidate, 0.0001f,
+                "authored Dining-to-Entrance approach anchor");
             AssertVector2Within(reversePassage.ArrivalAnchor.LogicalPosition,
-                new Vector2(8.205841f, -1.986406f), 0.0001f,
-                "passive Dining-to-Entrance arrival anchor");
+                entranceAnchorCandidate, 0.0001f,
+                "authored Dining-to-Entrance arrival anchor");
             Assert.That(forwardPassage.AnchorMigrationStage,
-                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+                Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
             Assert.That(reversePassage.AnchorMigrationStage,
-                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
-            Assert.That(forwardPassage.UsesAuthoredApproach, Is.False);
-            Assert.That(forwardPassage.UsesAuthoredArrival, Is.False);
-            Assert.That(reversePassage.UsesAuthoredApproach, Is.False);
-            Assert.That(reversePassage.UsesAuthoredArrival, Is.False);
+                Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+            Assert.That(forwardPassage.UsesAuthoredApproach, Is.True);
+            Assert.That(forwardPassage.UsesAuthoredArrival, Is.True);
+            Assert.That(reversePassage.UsesAuthoredApproach, Is.True);
+            Assert.That(reversePassage.UsesAuthoredArrival, Is.True);
             Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.SameAs(forwardPassage));
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.SameAs(reversePassage));
             Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(10));
@@ -5972,19 +5978,19 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(serializedForwardPassage, Does.Contain("sourceRoomView: {fileID: 4100000001}"));
             Assert.That(serializedForwardPassage, Does.Contain("reversePassage: {fileID: 4100000020}"));
             Assert.That(serializedForwardPassage, Does.Contain(
-                "  approachAnchor:\n    logicalPosition: {x: 8.205841, y: -1.986406}"));
+                "  approachAnchor:\n    logicalPosition: {x: 8.705841, y: -2.346406}"));
             Assert.That(serializedForwardPassage, Does.Contain(
-                "  arrivalAnchor:\n    logicalPosition: {x: -6.692237, y: -1.380209}"));
-            Assert.That(serializedForwardPassage, Does.Contain("anchorMigrationStage: 0"));
+                "  arrivalAnchor:\n    logicalPosition: {x: -7.192237, y: -1.740209}"));
+            Assert.That(serializedForwardPassage, Does.Contain("anchorMigrationStage: 2"));
             Assert.That(serializedReversePassage, Does.Contain(
                 "definition: {fileID: 11400000, guid: 94e16c6eca714188bced397612d48fff, type: 2}"));
             Assert.That(serializedReversePassage, Does.Contain("sourceRoomView: {fileID: 4100000006}"));
             Assert.That(serializedReversePassage, Does.Contain("reversePassage: {fileID: 4100000019}"));
             Assert.That(serializedReversePassage, Does.Contain(
-                "  approachAnchor:\n    logicalPosition: {x: -6.692237, y: -1.380209}"));
+                "  approachAnchor:\n    logicalPosition: {x: -7.192237, y: -1.740209}"));
             Assert.That(serializedReversePassage, Does.Contain(
-                "  arrivalAnchor:\n    logicalPosition: {x: 8.205841, y: -1.986406}"));
-            Assert.That(serializedReversePassage, Does.Contain("anchorMigrationStage: 0"));
+                "  arrivalAnchor:\n    logicalPosition: {x: 8.705841, y: -2.346406}"));
+            Assert.That(serializedReversePassage, Does.Contain("anchorMigrationStage: 2"));
 
             AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
                 .Single(item => item.gameObject.name == "Audio_DoorOpen");
@@ -6109,12 +6115,12 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "primary Entrance-to-Dining right approach");
             Assert.That(Vector2.Distance(primary.ForwardLeft, primary.ForwardRight), Is.GreaterThan(2f),
                 "The Entrance trigger must retain its characterized click-sensitive legacy sampler.");
-            AssertVector2Within(primary.ForwardDispatch, primary.ForwardNull, 0.0001f,
-                "primary Entrance-to-Dining legacy dispatch");
-            AssertVector2Within(primary.ForwardProductionApproach, primary.ForwardNull, 0.0001f,
-                "primary Entrance-to-Dining production approach");
-            AssertVector2Within(primary.ForwardArrival, new Vector2(-6.692237f, -1.380209f), 0.01f,
-                "primary Dining arrival");
+            AssertVector2Within(primary.ForwardDispatch, entranceAnchorCandidate, 0.0001f,
+                "primary Entrance-to-Dining authored dispatch");
+            AssertVector2Within(primary.ForwardProductionApproach, entranceAnchorCandidate, 0.0001f,
+                "primary Entrance-to-Dining authored production approach");
+            AssertVector2Within(primary.ForwardArrival, diningAnchorCandidate, 0.0001f,
+                "primary invariant Dining arrival");
             AssertVector2Within(primary.ReverseStart, new Vector2(-0.00639f, -1.524172f), 0.01f,
                 "primary projected Dining far start");
             Assert.That(primary.ReverseScreenDistance, Is.EqualTo(444.773f).Within(0.75f));
@@ -6126,17 +6132,17 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "primary Dining-to-Entrance center approach");
             AssertVector2Within(primary.ReverseRight, primary.ReverseNull, 0.0001f,
                 "primary Dining-to-Entrance right approach");
-            AssertVector2Within(primary.ReverseDispatch, primary.ReverseNull, 0.0001f,
-                "primary Dining-to-Entrance legacy dispatch");
-            AssertVector2Within(primary.ReverseProductionApproach, primary.ReverseNull, 0.0001f,
-                "primary Dining-to-Entrance production approach");
-            AssertVector2Within(primary.ReverseArrival, new Vector2(8.205841f, -1.986406f), 0.01f,
-                "primary Entrance arrival");
-            AssertVector2Within(primary.NearForwardArrival, primary.ForwardArrival, 0.0001f,
-                "primary near Dining arrival");
-            AssertVector2Within(primary.NearReverseArrival, primary.ReverseArrival, 0.0001f,
-                "primary near Entrance arrival");
-            Debug.Log($"[EntranceDiningLegacyPrimary] events={string.Join("|", primaryEvents)} " +
+            AssertVector2Within(primary.ReverseDispatch, diningAnchorCandidate, 0.0001f,
+                "primary Dining-to-Entrance authored dispatch");
+            AssertVector2Within(primary.ReverseProductionApproach, diningAnchorCandidate, 0.0001f,
+                "primary Dining-to-Entrance authored production approach");
+            AssertVector2Within(primary.ReverseArrival, entranceAnchorCandidate, 0.0001f,
+                "primary invariant Entrance arrival");
+            AssertVector2Within(primary.NearForwardArrival, diningAnchorCandidate, 0.0001f,
+                "primary near invariant Dining arrival");
+            AssertVector2Within(primary.NearReverseArrival, entranceAnchorCandidate, 0.0001f,
+                "primary near invariant Entrance arrival");
+            Debug.Log($"[EntranceDiningAuthoredPrimary] events={string.Join("|", primaryEvents)} " +
                 FormatDoorRoundTripObservation(primary, includeNear: true));
 
             yield return AssertEntranceDiningCallerBoundStageZeroPoisonProof(
@@ -6203,10 +6209,10 @@ public sealed class GameplayLifecycleCharacterizationTests
             {
                 new Vector2(-0.00639f, -1.524172f),
                 new Vector2(-0.009136f, -1.319698f),
-                new Vector2(-0.023716f, -1.523427f),
+                new Vector2(-0.041045f, -1.5238f),
                 new Vector2(-0.00323f, -1.759477f)
             };
-            float[] expectedReverseScreenDistances = { 444.773f, 624.436f, 623.536f, 833.99f };
+            float[] expectedReverseScreenDistances = { 444.773f, 624.436f, 621.917f, 833.99f };
             Vector2[] expectedReverseNulls =
             {
                 new Vector2(-6.692237f, -1.380209f),
@@ -6263,12 +6269,12 @@ public sealed class GameplayLifecycleCharacterizationTests
                     coordinateTolerance, "aspect Entrance-to-Dining center approach");
                 AssertVector2Within(aspect.ForwardRight, expectedForwardRight[sizeIndex],
                     coordinateTolerance, "aspect Entrance-to-Dining right approach");
-                AssertVector2Within(aspect.ForwardDispatch, aspect.ForwardNull, 0.0001f,
-                    "aspect Entrance-to-Dining legacy dispatch");
-                AssertVector2Within(aspect.ForwardProductionApproach, aspect.ForwardNull, 0.0001f,
-                    "aspect Entrance-to-Dining production approach");
-                AssertVector2Within(aspect.ForwardArrival, expectedForwardArrivals[sizeIndex],
-                    coordinateTolerance, "aspect Dining arrival");
+                AssertVector2Within(aspect.ForwardDispatch, entranceAnchorCandidate, 0.0001f,
+                    "aspect Entrance-to-Dining invariant authored dispatch");
+                AssertVector2Within(aspect.ForwardProductionApproach, entranceAnchorCandidate, 0.0001f,
+                    "aspect Entrance-to-Dining invariant production approach");
+                AssertVector2Within(aspect.ForwardArrival, diningAnchorCandidate,
+                    0.0001f, "aspect invariant Dining arrival");
                 AssertVector2Within(aspect.ReverseStart, expectedReverseStarts[sizeIndex],
                     coordinateTolerance, "aspect projected Dining far start");
                 Assert.That(aspect.ReverseScreenDistance,
@@ -6281,19 +6287,19 @@ public sealed class GameplayLifecycleCharacterizationTests
                     "aspect Dining-to-Entrance center approach");
                 AssertVector2Within(aspect.ReverseRight, aspect.ReverseNull, 0.0001f,
                     "aspect Dining-to-Entrance right approach");
-                AssertVector2Within(aspect.ReverseDispatch, aspect.ReverseNull, 0.0001f,
-                    "aspect Dining-to-Entrance legacy dispatch");
-                AssertVector2Within(aspect.ReverseProductionApproach, aspect.ReverseNull, 0.0001f,
-                    "aspect Dining-to-Entrance production approach");
-                AssertVector2Within(aspect.ReverseArrival, expectedReverseArrivals[sizeIndex],
-                    coordinateTolerance, "aspect Entrance arrival");
-                if (sizeIndex == 1 || sizeIndex == renderedSizes.Length - 1)
-                {
-                    Assert.That(Vector2.Distance(aspect.ForwardArrival, aspect.ReverseNull),
-                        Is.GreaterThan(0.05f),
-                        "The aspect-specific source-sensitive Dining arrival must remain characterized.");
-                }
-                Debug.Log($"[EntranceDiningLegacyAspect] viewport={renderedSize.x}x{renderedSize.y} " +
+                AssertVector2Within(aspect.ReverseDispatch, diningAnchorCandidate, 0.0001f,
+                    "aspect Dining-to-Entrance invariant authored dispatch");
+                AssertVector2Within(aspect.ReverseProductionApproach, diningAnchorCandidate, 0.0001f,
+                    "aspect Dining-to-Entrance invariant production approach");
+                AssertVector2Within(aspect.ReverseArrival, entranceAnchorCandidate,
+                    0.0001f, "aspect invariant Entrance arrival");
+                Assert.That(Vector2.Distance(aspect.ForwardArrival, expectedForwardArrivals[sizeIndex]),
+                    Is.GreaterThan(0.05f),
+                    "The aspect-specific source-sensitive Dining result must remain distinct fallback evidence.");
+                Assert.That(Vector2.Distance(aspect.ReverseArrival, expectedReverseArrivals[sizeIndex]),
+                    Is.GreaterThan(0.05f),
+                    "The aspect-specific Entrance result must remain distinct fallback evidence.");
+                Debug.Log($"[EntranceDiningAuthoredAspect] viewport={renderedSize.x}x{renderedSize.y} " +
                     FormatDoorRoundTripObservation(aspect, includeNear: false));
             }
 
@@ -6327,12 +6333,12 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "maximum-zoom Entrance-to-Dining center approach");
             AssertVector2Within(maximum.ForwardRight, new Vector2(11.62069f, -2.293144f), 0.2f,
                 "maximum-zoom Entrance-to-Dining right approach");
-            AssertVector2Within(maximum.ForwardDispatch, maximum.ForwardNull, 0.0001f,
-                "maximum-zoom Entrance-to-Dining legacy dispatch");
-            AssertVector2Within(maximum.ForwardProductionApproach, maximum.ForwardNull, 0.0001f,
-                "maximum-zoom Entrance-to-Dining production approach");
-            AssertVector2Within(maximum.ForwardArrival, new Vector2(-7.725643f, -1.593339f), 0.2f,
-                "maximum-zoom Dining arrival");
+            AssertVector2Within(maximum.ForwardDispatch, entranceAnchorCandidate, 0.0001f,
+                "maximum-zoom Entrance-to-Dining invariant authored dispatch");
+            AssertVector2Within(maximum.ForwardProductionApproach, entranceAnchorCandidate, 0.0001f,
+                "maximum-zoom Entrance-to-Dining invariant production approach");
+            AssertVector2Within(maximum.ForwardArrival, diningAnchorCandidate, 0.0001f,
+                "maximum-zoom invariant Dining arrival");
             AssertVector2Within(maximum.ReverseStart, new Vector2(-0.022188f, -1.75907f), 0.2f,
                 "maximum-zoom projected Dining far start");
             Assert.That(maximum.ReverseScreenDistance, Is.EqualTo(957.519f).Within(0.75f));
@@ -6344,17 +6350,27 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "maximum-zoom Dining-to-Entrance center approach");
             AssertVector2Within(maximum.ReverseRight, maximum.ReverseNull, 0.0001f,
                 "maximum-zoom Dining-to-Entrance right approach");
-            AssertVector2Within(maximum.ReverseDispatch, maximum.ReverseNull, 0.0001f,
-                "maximum-zoom Dining-to-Entrance legacy dispatch");
-            AssertVector2Within(maximum.ReverseProductionApproach, maximum.ReverseNull, 0.0001f,
-                "maximum-zoom Dining-to-Entrance production approach");
-            AssertVector2Within(maximum.ReverseArrival, new Vector2(10.36786f, -2.293144f), 0.2f,
-                "maximum-zoom source-sensitive Entrance arrival");
-            Assert.That(Vector2.Distance(maximum.ReverseArrival, maximum.ForwardNull), Is.GreaterThan(0.8f),
-                "The maximum-zoom source-sensitive Entrance arrival must remain distinct.");
-            Debug.Log($"[EntranceDiningLegacyMaximumZoom] viewport={Screen.width}x{Screen.height} " +
+            AssertVector2Within(maximum.ReverseDispatch, diningAnchorCandidate, 0.0001f,
+                "maximum-zoom Dining-to-Entrance invariant authored dispatch");
+            AssertVector2Within(maximum.ReverseProductionApproach, diningAnchorCandidate, 0.0001f,
+                "maximum-zoom Dining-to-Entrance invariant production approach");
+            AssertVector2Within(maximum.ReverseArrival, entranceAnchorCandidate, 0.0001f,
+                "maximum-zoom invariant Entrance arrival");
+            Assert.That(Vector2.Distance(maximum.ReverseArrival, new Vector2(10.36786f, -2.293144f)),
+                Is.GreaterThan(0.8f),
+                "The maximum-zoom source-sensitive Entrance result must remain distinct fallback evidence.");
+            Debug.Log($"[EntranceDiningAuthoredMaximumZoom] viewport={Screen.width}x{Screen.height} " +
                 $"zoom={cameraManager.maxRoomZoom:0.###} " +
                 FormatDoorRoundTripObservation(maximum, includeNear: false));
+
+            yield return AssertEntranceDiningStageOneArrivalFallbackProof(
+                navigation,
+                player,
+                cameraManager,
+                forward,
+                reverse,
+                forwardPassage,
+                reversePassage);
 
             cameraManager.ResetRoomLookForPreview();
             InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
@@ -6371,9 +6387,9 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(passageAudioSource.isPlaying, Is.False);
             Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
             Debug.Log(
-                $"[EntranceDiningLegacyProfile] forwardGeometry={FormatVector(forwardRect.anchoredPosition)}/" +
+                $"[EntranceDiningAuthoredProfile] forwardGeometry={FormatVector(forwardRect.anchoredPosition)}/" +
                 $"{FormatVector(forwardRect.sizeDelta)} reverseGeometry={FormatVector(reverseRect.anchoredPosition)}/" +
-                $"{FormatVector(reverseRect.sizeDelta)} callers=bound serializedDependencies=bound " +
+                $"{FormatVector(reverseRect.sizeDelta)} profiles=invariant callers=bound serializedDependencies=bound " +
                 $"runtimeDependencies=resolved");
         }
         finally
@@ -6413,6 +6429,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Vector2 originalForwardArrival = forwardPassage.ArrivalAnchor.LogicalPosition;
         Vector2 originalReverseApproach = reversePassage.ApproachAnchor.LogicalPosition;
         Vector2 originalReverseArrival = reversePassage.ArrivalAnchor.LogicalPosition;
+        PassageAnchorMigrationStage originalForwardStage = forwardPassage.AnchorMigrationStage;
+        PassageAnchorMigrationStage originalReverseStage = reversePassage.AnchorMigrationStage;
         Vector2 originalPlayerPosition = player.LogicalPosition;
         Vector2 poisonedForwardApproach = new Vector2(101f, -101f);
         Vector2 poisonedForwardArrival = new Vector2(102f, -102f);
@@ -6423,17 +6441,17 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.SameAs(forwardPassage));
         Assert.That(GetPrivateField<CanonicalPassage>(reverseTrigger, "canonicalPassage"),
             Is.SameAs(reversePassage));
-        Assert.That(forwardPassage.AnchorMigrationStage,
-            Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
-        Assert.That(reversePassage.AnchorMigrationStage,
-            Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
-        Assert.That(forwardPassage.UsesAuthoredApproach, Is.False);
-        Assert.That(forwardPassage.UsesAuthoredArrival, Is.False);
-        Assert.That(reversePassage.UsesAuthoredApproach, Is.False);
-        Assert.That(reversePassage.UsesAuthoredArrival, Is.False);
+        Assert.That(originalForwardStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+        Assert.That(originalReverseStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
 
         try
         {
+            SetPrivateField(forwardPassage, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
+            SetPrivateField(reversePassage, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
+            Assert.That(forwardPassage.UsesAuthoredApproach, Is.False);
+            Assert.That(forwardPassage.UsesAuthoredArrival, Is.False);
+            Assert.That(reversePassage.UsesAuthoredApproach, Is.False);
+            Assert.That(reversePassage.UsesAuthoredArrival, Is.False);
             SetPrivateField(forwardPassage.ApproachAnchor, "logicalPosition", poisonedForwardApproach);
             SetPrivateField(forwardPassage.ArrivalAnchor, "logicalPosition", poisonedForwardArrival);
             SetPrivateField(reversePassage.ApproachAnchor, "logicalPosition", poisonedReverseApproach);
@@ -6464,6 +6482,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             SetPrivateField(forwardPassage.ArrivalAnchor, "logicalPosition", originalForwardArrival);
             SetPrivateField(reversePassage.ApproachAnchor, "logicalPosition", originalReverseApproach);
             SetPrivateField(reversePassage.ArrivalAnchor, "logicalPosition", originalReverseArrival);
+            SetPrivateField(forwardPassage, "anchorMigrationStage", originalForwardStage);
+            SetPrivateField(reversePassage, "anchorMigrationStage", originalReverseStage);
             InvokePrivateMethod(forwardTrigger, "CancelPendingPlayerApproach");
             InvokePrivateMethod(reverseTrigger, "CancelPendingPlayerApproach");
             if (player.HasDestination)
@@ -6495,6 +6515,213 @@ public sealed class GameplayLifecycleCharacterizationTests
             "restored Dining-to-Entrance arrival data");
         AssertVector2Within(player.LogicalPosition, originalPlayerPosition, 0.0001f,
             "restored caller-bound poison-proof player position");
+        Assert.That(forwardPassage.AnchorMigrationStage, Is.EqualTo(originalForwardStage));
+        Assert.That(reversePassage.AnchorMigrationStage, Is.EqualTo(originalReverseStage));
+    }
+
+    private static IEnumerator AssertEntranceDiningStageOneArrivalFallbackProof(
+        RoomNavigationManager navigation,
+        PointClickPlayerMovement player,
+        CameraManager cameraManager,
+        DoorTriggerNavigation forwardTrigger,
+        DoorTriggerNavigation reverseTrigger,
+        CanonicalPassage forwardPassage,
+        CanonicalPassage reversePassage)
+    {
+        const string EntranceRoom = "Grand Entrance Hall";
+        const string DiningRoom = "Dining Room";
+        Vector2 entranceCandidate = new Vector2(8.705841f, -2.346406f);
+        Vector2 diningCandidate = new Vector2(-7.192237f, -1.740209f);
+        Vector2Int[] sizes =
+        {
+            new Vector2Int(1366, 768),
+            new Vector2Int(1440, 1080),
+            new Vector2Int(1920, 1080),
+            new Vector2Int(2560, 1080),
+            new Vector2Int(2560, 1080)
+        };
+        float[] expectedEntranceDistances = { 23.943f, 67.613f, 33.707f, 5.751f, 6.619f };
+        float[] expectedDiningDistances = { 23.943f, 58.835f, 33.694f, 59.736f, 68.753f };
+
+        INavigationService navigationFacade = navigation;
+        Vector2 originalForwardApproach = forwardPassage.ApproachAnchor.LogicalPosition;
+        Vector2 originalForwardArrival = forwardPassage.ArrivalAnchor.LogicalPosition;
+        Vector2 originalReverseApproach = reversePassage.ApproachAnchor.LogicalPosition;
+        Vector2 originalReverseArrival = reversePassage.ArrivalAnchor.LogicalPosition;
+        PassageAnchorMigrationStage originalForwardStage = forwardPassage.AnchorMigrationStage;
+        PassageAnchorMigrationStage originalReverseStage = reversePassage.AnchorMigrationStage;
+        Vector2 originalPlayerPosition = player.LogicalPosition;
+        bool cleanupRoomRestored = true;
+        bool cleanupPlayerRestored = true;
+
+        Assert.That(originalForwardStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+        Assert.That(originalReverseStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+        AssertVector2Within(originalForwardApproach, entranceCandidate, 0.0001f,
+            "serialized Entrance-to-Dining authored approach");
+        AssertVector2Within(originalForwardArrival, diningCandidate, 0.0001f,
+            "serialized Entrance-to-Dining authored arrival");
+        AssertVector2Within(originalReverseApproach, diningCandidate, 0.0001f,
+            "serialized Dining-to-Entrance authored approach");
+        AssertVector2Within(originalReverseArrival, entranceCandidate, 0.0001f,
+            "serialized Dining-to-Entrance authored arrival");
+        try
+        {
+            SetPrivateField(forwardPassage, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredArrival);
+            SetPrivateField(reversePassage, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredArrival);
+            Assert.That(forwardPassage.UsesAuthoredArrival, Is.True);
+            Assert.That(reversePassage.UsesAuthoredArrival, Is.True);
+            Assert.That(forwardPassage.UsesAuthoredApproach, Is.False);
+            Assert.That(reversePassage.UsesAuthoredApproach, Is.False);
+
+            for (int profileIndex = 0; profileIndex < sizes.Length; profileIndex++)
+            {
+                Vector2Int size = sizes[profileIndex];
+                bool maximumZoom = profileIndex == sizes.Length - 1;
+                string profile = $"{size.x}x{size.y}{(maximumZoom ? "-max" : string.Empty)}";
+                yield return SetAndWaitForRenderedGameViewResolution((uint)size.x, (uint)size.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                if (maximumZoom)
+                {
+                    ApplyMaximumRoomZoom(cameraManager);
+                    yield return WaitForSettledLayout();
+                }
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+                AssertEntranceDiningAnchorCandidateFromStarts(
+                    player,
+                    entranceCandidate,
+                    new[] { new Vector2(0f, -4f), new Vector2(-7.75f, -2.22f) },
+                    $"{profile} Entrance candidate");
+                AssertApproachWithinActivationDistance(
+                    forwardTrigger, player, entranceCandidate, $"{profile} Entrance candidate");
+                float entranceDistance = GetAuthoredAnchorScreenDistance(
+                    player, forwardTrigger, entranceCandidate);
+                Assert.That(entranceDistance,
+                    Is.EqualTo(expectedEntranceDistances[profileIndex]).Within(0.75f));
+                Assert.That(entranceDistance, Is.LessThanOrEqualTo(125f),
+                    $"{profile} Entrance candidate must retain at least 20 pixels of threshold margin.");
+                Assert.That(player.TryWarpToExact(new Vector2(0f, -4f)), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    forwardTrigger, player, true, out Vector2 forwardLegacy), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    forwardTrigger, player, out Vector2 forwardDispatch, null), Is.True);
+                AssertVector2Within(forwardDispatch, forwardLegacy, 0.0001f,
+                    $"{profile} stage-1 forward dispatch remains legacy sampled");
+                Assert.That(Vector2.Distance(forwardDispatch, entranceCandidate), Is.GreaterThan(0.05f));
+
+                Assert.That(navigationFacade.TryTraverse(forwardPassage), Is.True);
+                yield return WaitForSettledLayout();
+                if (maximumZoom)
+                {
+                    ApplyMaximumRoomZoom(cameraManager);
+                    yield return WaitForSettledLayout();
+                }
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(DiningRoom));
+                AssertVector2Within(player.LogicalPosition, diningCandidate, 0.0001f,
+                    $"{profile} stage-1 forward authored arrival");
+                AssertEntranceDiningAnchorCandidateFromStarts(
+                    player,
+                    diningCandidate,
+                    new[] { new Vector2(0f, -1f), new Vector2(2f, -1f) },
+                    $"{profile} Dining candidate");
+                AssertApproachWithinActivationDistance(
+                    reverseTrigger, player, diningCandidate, $"{profile} Dining candidate");
+                float diningDistance = GetAuthoredAnchorScreenDistance(
+                    player, reverseTrigger, diningCandidate);
+                Assert.That(diningDistance,
+                    Is.EqualTo(expectedDiningDistances[profileIndex]).Within(0.75f));
+                Assert.That(diningDistance, Is.LessThanOrEqualTo(125f),
+                    $"{profile} Dining candidate must retain at least 20 pixels of threshold margin.");
+                Assert.That(player.TryWarpToExact(new Vector2(0f, -1f)), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    reverseTrigger, player, true, out Vector2 reverseLegacy), Is.True);
+                Assert.That(TryInvokeTraversalApproachDestination(
+                    reverseTrigger, player, out Vector2 reverseDispatch, null), Is.True);
+                AssertVector2Within(reverseDispatch, reverseLegacy, 0.0001f,
+                    $"{profile} stage-1 reverse dispatch remains legacy sampled");
+                Assert.That(Vector2.Distance(reverseDispatch, diningCandidate), Is.GreaterThan(0.05f));
+
+                Assert.That(navigationFacade.TryTraverse(reversePassage), Is.True);
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+                AssertVector2Within(player.LogicalPosition, entranceCandidate, 0.0001f,
+                    $"{profile} stage-1 reverse authored arrival");
+                AssertApproachWithinActivationDistance(
+                    forwardTrigger, player, entranceCandidate, $"{profile} reciprocal Entrance arrival");
+
+                Assert.That(navigationFacade.TryTraverse(forwardPassage), Is.True);
+                yield return WaitForSettledLayout();
+                AssertVector2Within(player.LogicalPosition, diningCandidate, 0.0001f,
+                    $"{profile} near forward authored arrival");
+                Assert.That(navigationFacade.TryTraverse(reversePassage), Is.True);
+                yield return WaitForSettledLayout();
+                AssertVector2Within(player.LogicalPosition, entranceCandidate, 0.0001f,
+                    $"{profile} near reverse authored arrival");
+                Debug.Log(
+                    $"[EntranceDiningStageOneArrivalProof] profile={profile} " +
+                    $"entrance={FormatVector(entranceCandidate)} entranceDistance=" +
+                    $"{expectedEntranceDistances[profileIndex]:0.###} dining={FormatVector(diningCandidate)} " +
+                    $"diningDistance={expectedDiningDistances[profileIndex]:0.###}");
+            }
+        }
+        finally
+        {
+            if (navigation.CurrentRoom == DiningRoom)
+            {
+                cleanupRoomRestored = navigationFacade.TryTraverse(reversePassage);
+            }
+            SetPrivateField(forwardPassage.ApproachAnchor, "logicalPosition", originalForwardApproach);
+            SetPrivateField(forwardPassage.ArrivalAnchor, "logicalPosition", originalForwardArrival);
+            SetPrivateField(reversePassage.ApproachAnchor, "logicalPosition", originalReverseApproach);
+            SetPrivateField(reversePassage.ArrivalAnchor, "logicalPosition", originalReverseArrival);
+            SetPrivateField(forwardPassage, "anchorMigrationStage", originalForwardStage);
+            SetPrivateField(reversePassage, "anchorMigrationStage", originalReverseStage);
+            cameraManager.ResetRoomLookForPreview();
+            if (navigation.CurrentRoom == EntranceRoom)
+            {
+                cleanupPlayerRestored = player.TryWarpToExact(originalPlayerPosition);
+            }
+        }
+
+        yield return WaitForSettledLayout();
+        Assert.That(cleanupRoomRestored, Is.True,
+            "Stage-one proof cleanup must restore Entrance through the reciprocal Passage.");
+        Assert.That(cleanupPlayerRestored, Is.True,
+            "Stage-one proof cleanup must restore the exact player position.");
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+        Assert.That(forwardPassage.AnchorMigrationStage, Is.EqualTo(originalForwardStage));
+        Assert.That(reversePassage.AnchorMigrationStage, Is.EqualTo(originalReverseStage));
+        AssertVector2Within(player.LogicalPosition, originalPlayerPosition, 0.0001f,
+            "stage-one proof player restoration");
+    }
+
+    private static void AssertEntranceDiningAnchorCandidateFromStarts(
+        PointClickPlayerMovement player,
+        Vector2 candidate,
+        Vector2[] starts,
+        string label)
+    {
+        for (int startIndex = 0; startIndex < starts.Length; startIndex++)
+        {
+            Assert.That(player.TryWarpToExact(starts[startIndex]), Is.True,
+                $"{label} start {startIndex} must be exact.");
+            Assert.That(TryEvaluateExactReachableMovementTarget(
+                player,
+                candidate,
+                out PointClickPlayerMovement.MovementTargetQuery query), Is.True);
+            Assert.That(query.ExactPointWalkable, Is.True, $"{label} must be exactly walkable.");
+            Assert.That(query.HasReachableDestination, Is.True, $"{label} must be path reachable.");
+            Assert.That(query.UsesProjectedDestination, Is.False, $"{label} must not use projection.");
+            Assert.That(query.WouldMove, Is.True, $"{label} must exercise a real path.");
+            AssertVector2Within(query.Destination, candidate, 0.0001f, $"{label} exact destination");
+        }
     }
 
     private static IEnumerator AssertEntranceDiningPairLocalNullCallerFallbackRoundTrip(
@@ -8164,7 +8391,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
             Is.EqualTo(10),
-            "Eight complete and two stage-0 Passages must retain their canonical callers.");
+            "All ten complete stage-2 Passages must retain their canonical callers.");
         Assert.That(
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
@@ -8864,8 +9091,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(
             FindInActiveScene<CanonicalPassage>()
                 .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors),
-            Is.EqualTo(8),
-            "All eight registered scene passages must be complete stage-2 routes.");
+            Is.EqualTo(10),
+            "All ten registered scene passages must be complete stage-2 routes.");
         Assert.That(forwardPassage.HasGameContext, Is.True);
         Assert.That(reversePassage.HasGameContext, Is.True);
         Assert.That(forwardPassage.enabled, Is.True);
@@ -8900,7 +9127,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
             Is.EqualTo(10),
-            "Eight complete and two stage-0 Passages must retain their canonical callers.");
+            "All ten complete stage-2 Passages must retain their canonical callers.");
         Assert.That(
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
