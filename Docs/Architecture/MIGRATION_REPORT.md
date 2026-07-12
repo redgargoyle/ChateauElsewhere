@@ -73,6 +73,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Made Chapter2Controller's four external entry commands enforce their serialized ChapterManager instead of rebinding it from a caller. Valid and null convenience calls keep existing behavior; a missing or different manager is rejected before phase, navigation, clock, guest, or UI mutation.
 - Grafted a dedicated `Audio_Chapter2ClockStrike` child beneath Chapter 2 with its own serialized non-looping 2D `AudioSource`, Game-Sounds `GameAudioSourceVolume` at base volume `0.4`, and imported clip GUID `d7084eafa9124afcbcbf12529e08bc70`. Seven-PM playback reuses those exact identities, and the obsolete resource/component/runtime-tone fallback is removed.
 - Characterized and retired the monster stinger's structural repair: Begin/Stop reuses the exact serialized monster, Drawing Room start/target anchors, navigation service, and Image, restores the authored sprite, and creates no placeholder; validation now rejects a missing/mismatched graph instead of searching or repairing it.
+- Characterized Guest Search's lazy navigation repair before migration: the field is null at boot and through repeated Chapter 2 entry, then the seven-PM staging path resolves the exact GameRoot navigation service and reuses it on repetition.
 
 ## Current static result
 
@@ -139,6 +140,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - the monster structural characterization pins controller `3301000007`, monster `3700000000`, Image `3700000003`, anchors `98514617`/`382498960`, their RoomAnchor owners/room IDs, exact authored positions, and navigation `1878886997`; focused lifecycle/static gates and the full suite pass before any repair removal;
 - the monster structural cleanup keeps all 5,979 document headers and `SceneRoots` exact; only controller document `3301000007` loses its two obsolete repair fields, while every monster/anchor/navigation document and every deferred audio, sprite, timing, shake, sorting, visibility, and overlay field stays byte-identical;
 - source guards prove the stinger has zero structural object/anchor searches, primitive placeholder creation, or Image/SpriteRenderer child repair; configuration validation, the unchanged Begin/Stop lifecycle, and the full 240-test failure-name baseline all pass;
+- the Guest Search navigation characterization pins the pre-migration null-to-service transition, all five resolver call sites, and exact owner identity through repeated seven-PM staging; focused/static and full-suite failure-name gates pass before serialization;
 - the rendered full EditMode suite discovers 240 tests: 190 pass and the exact same 50 pre-existing failure names remain, with no clock-strike graft or cleanup regression;
 - the separate `-nographics` invalid-viewport issue was independently hardened in commit `4d8a6d9a` and is not attributed to the clock-strike graft;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;

@@ -156,7 +156,9 @@ public sealed class ArchitectureFoundationTests
         string runTargetGameObjectDocument = ExtractDocument(sceneText, "--- !u!1 &382498959");
         string runTargetTransformDocument = ExtractDocument(sceneText, "--- !u!224 &382498960");
         string runTargetAnchorDocument = ExtractDocument(sceneText, "--- !u!114 &3600000002");
+        string guestSearchDocument = ExtractDocument(sceneText, "--- !u!114 &3301000009");
         string stingerText = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs");
+        string guestSearchText = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs");
 
         Assert.That(CountOccurrences(sceneText, "guid: 684198ee76c12a66cb4335c3ab64b1bc"), Is.EqualTo(1));
         Assert.That(CountOccurrences(sceneText, "guid: aa4143ddf6de4b6b9b8c1edc0f9e2a31"), Is.EqualTo(1));
@@ -208,6 +210,10 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized RoomNavigationManager."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized monster object."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires a serialized monster Image or SpriteRenderer."));
+        Assert.That(guestSearchDocument, Does.Not.Contain("navigationManager:"));
+        Assert.That(guestSearchText, Does.Contain("ResolveRoomNavigation"));
+        Assert.That(guestSearchText, Does.Contain("FindAnyObjectByType<RoomNavigationManager>"));
+        Assert.That(CountOccurrences(guestSearchText, "ResolveRoomNavigation();"), Is.EqualTo(5));
     }
 
     [Test]
