@@ -82,13 +82,14 @@ This report records what is implemented in the repository at this commit. It mus
 - Moved existing closet component `3303000001` onto authored Entrance hanger `1592234992`, added serialized action `1592234995` and trigger `1592234996`, and bound the controller approach directly to transform `1592234993`. The pantry placeholder remains for separate review but no longer owns a duplicate closet.
 - Removed the Entrance hanger name search, closet/action/collider factories, computed-collider fallback, pantry-anchor fallback, and global closet scan. Chapter 1 now validates its two serialized hanger edges; repeated resolution retains them without mutation.
 - Characterized Chapter 1's remaining core-reference repair: the resolved ChapterManager, clock, scheduler, camera, navigation, Player movement, and Butler root retain exact identities through repeated resolution, room travel, repeated Chapter 2 entry, and seven-PM staging.
+- Serialized Chapter 1's exact clock `3301000001`, camera `2050006783`, navigation `1878886997`, and Player movement `81962842` edges in its existing component document, with validation for the complete core graph and a derived Butler root.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,383 | -519 |
+| Runtime C# lines | 49,902 | 49,420 | -482 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
 | `FindObject*`/`GameObject.Find` | 199 | 138 | -61 |
 | `Resources.Load` | 27 | 19 | -8 |
@@ -117,6 +118,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - Entrance coat-hanger graft passed exact serialized-owner checks and rendered boot/repeated-resolution/room-round-trip lifecycle checks; the scene stayed at the same roots, preserved every prior document in order, added only action/collider documents, changed only four intended owner/reference documents, and kept the authored Transform and SpriteRenderer byte-identical;
 - Entrance coat-hanger cleanup passed ownership/source guards and the rendered lifecycle; the full suite improved to 191 passing / 49 known failures because its stale source-extraction regression was corrected, with no new failure names;
 - Chapter 1 core-reference characterization passed its static null-edge/source-path guard and rendered multi-transition lifecycle; the full suite remained 191 passing / 49 known failures with an unchanged failure-name set;
+- Chapter 1 core-reference graft passed exact serialized-edge/configuration guards and the rendered multi-transition lifecycle; all 5,984 scene documents/roots remained ordered and only component `3302000001` changed; the full suite remained 191/49;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -200,6 +202,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Serialize Chapter 1's clock, camera, navigation, and Player movement edges without removing their fallbacks.
+1. Remove Chapter 1's staged core manager/clock/scheduler/camera/navigation/Player discovery branches.
 
 Do not begin bulk deletion until those gates pass.

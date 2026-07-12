@@ -338,7 +338,7 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1OwnsCoatHangerAndCharacterizesCoreReferenceRepair()
+    public void Chapter1OwnsSerializedCoreReferencesWithFallbacksStaged()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter1Document = ExtractDocument(sceneText, "--- !u!114 &3302000001");
@@ -357,10 +357,10 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Document, Does.Contain("closetPoint: {fileID: 1592234993}"));
         Assert.That(chapter1Document, Does.Contain("chapterManager: {fileID: 3301000004}"));
         Assert.That(chapter1Document, Does.Contain("eventScheduler: {fileID: 3301000002}"));
-        Assert.That(chapter1Document, Does.Contain("chapterClock: {fileID: 0}"));
-        Assert.That(chapter1Document, Does.Contain("cameraManager: {fileID: 0}"));
-        Assert.That(chapter1Document, Does.Contain("navigationManager: {fileID: 0}"));
-        Assert.That(chapter1Document, Does.Contain("playerMovement: {fileID: 0}"));
+        Assert.That(chapter1Document, Does.Contain("chapterClock: {fileID: 3301000001}"));
+        Assert.That(chapter1Document, Does.Contain("cameraManager: {fileID: 2050006783}"));
+        Assert.That(chapter1Document, Does.Contain("navigationManager: {fileID: 1878886997}"));
+        Assert.That(chapter1Document, Does.Contain("playerMovement: {fileID: 81962842}"));
         Assert.That(chapter1Document, Does.Contain("playerButlerReference: {fileID: 0}"));
         Assert.That(hangerDocument, Does.Contain("m_Name: entrance_coat_hanger_0"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234993}"));
@@ -417,6 +417,12 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Contain("FindAnyObjectByType<CameraManager>"));
         Assert.That(chapter1Text, Does.Contain("GameObject.Find(\"Player\")"));
         Assert.That(chapter1Text, Does.Contain("FindPlayerMovement()"));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterManager."));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterClock."));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterEventScheduler."));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized CameraManager."));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized RoomNavigationManager."));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized Player movement owner."));
     }
 
     [Test]

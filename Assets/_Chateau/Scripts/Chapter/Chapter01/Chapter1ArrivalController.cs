@@ -219,6 +219,43 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     {
         base.ValidateConfiguration(report);
 
+        if (chapterManager == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized ChapterManager.", this);
+        }
+
+        if (chapterClock == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized ChapterClock.", this);
+        }
+
+        if (eventScheduler == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized ChapterEventScheduler.", this);
+        }
+
+        if (cameraManager == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized CameraManager.", this);
+        }
+
+        if (navigationManager == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized RoomNavigationManager.", this);
+        }
+
+        if (playerMovement == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized Player movement owner.", this);
+        }
+
+        if (playerMovement != null &&
+            playerButlerReference != null &&
+            playerButlerReference != playerMovement.gameObject)
+        {
+            report.AddError("Chapter1ArrivalController Player movement and Butler root must identify the same actor.", this);
+        }
+
         if (coatCloset == null)
         {
             report.AddError("Chapter1ArrivalController requires its serialized Entrance coat closet.", this);
