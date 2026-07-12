@@ -338,7 +338,7 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1UsesSerializedCoreReferencesAndRejectsManagerRebinding()
+    public void Chapter1CharacterizesAuthoredFrontDoorActionRepair()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter1Document = ExtractDocument(sceneText, "--- !u!114 &3302000001");
@@ -347,6 +347,11 @@ public sealed class ArchitectureFoundationTests
         string hangerRendererDocument = ExtractDocument(sceneText, "--- !u!212 &1592234994");
         string hangerColliderDocument = ExtractDocument(sceneText, "--- !u!61 &1592234996");
         string hangerActionDocument = ExtractDocument(sceneText, "--- !u!114 &1592234995");
+        string frontDoorObjectDocument = ExtractDocument(sceneText, "--- !u!1 &1180734296");
+        string frontDoorTransformDocument = ExtractDocument(sceneText, "--- !u!4 &1180734297");
+        string frontDoorRendererDocument = ExtractDocument(sceneText, "--- !u!212 &1180734298");
+        string frontDoorColliderDocument = ExtractDocument(sceneText, "--- !u!61 &1180734299");
+        string frontDoorActionDocument = ExtractDocument(sceneText, "--- !u!114 &1180734300");
         string pantryClosetObjectDocument = ExtractDocument(sceneText, "--- !u!1 &3503000002");
         string serializedClosetDocument = ExtractDocument(sceneText, "--- !u!114 &3303000001");
 
@@ -362,6 +367,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Document, Does.Contain("navigationManager: {fileID: 1878886997}"));
         Assert.That(chapter1Document, Does.Contain("playerMovement: {fileID: 81962842}"));
         Assert.That(chapter1Document, Does.Contain("playerButlerReference: {fileID: 0}"));
+        Assert.That(chapter1Document, Does.Not.Contain("frontDoorSceneAction:"));
         Assert.That(hangerDocument, Does.Contain("m_Name: entrance_coat_hanger_0"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234993}"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234994}"));
@@ -387,6 +393,23 @@ public sealed class ArchitectureFoundationTests
         Assert.That(hangerActionDocument, Does.Contain("isActionAvailable: 1"));
         Assert.That(pantryClosetObjectDocument, Does.Not.Contain("3303000001"));
         Assert.That(serializedClosetDocument, Does.Contain("m_GameObject: {fileID: 1592234992}"));
+        Assert.That(frontDoorObjectDocument, Does.Contain("m_Name: Door_answer_trigger"));
+        Assert.That(frontDoorObjectDocument, Does.Contain(
+            "  - component: {fileID: 1180734297}\n" +
+            "  - component: {fileID: 1180734298}\n" +
+            "  - component: {fileID: 1180734299}\n" +
+            "  - component: {fileID: 1180734300}"));
+        Assert.That(frontDoorTransformDocument, Does.Contain("m_LocalPosition: {x: -7.216162, y: -13.4132805, z: -7456.425}"));
+        Assert.That(frontDoorTransformDocument, Does.Contain("m_LocalScale: {x: 107.62186, y: 163.37209, z: 82.84917}"));
+        Assert.That(frontDoorTransformDocument, Does.Contain("m_Father: {fileID: 567115834}"));
+        Assert.That(frontDoorRendererDocument, Does.Contain("m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}"));
+        Assert.That(frontDoorRendererDocument, Does.Contain("m_SortingLayerID: 1040854321"));
+        Assert.That(frontDoorRendererDocument, Does.Contain("m_SortingOrder: 20"));
+        Assert.That(frontDoorColliderDocument, Does.Contain("m_IsTrigger: 1"));
+        Assert.That(frontDoorColliderDocument, Does.Contain("m_Offset: {x: 0, y: 0}"));
+        Assert.That(frontDoorColliderDocument, Does.Contain("m_Size: {x: 1, y: 1}"));
+        Assert.That(frontDoorActionDocument, Does.Contain("actionType: 0"));
+        Assert.That(frontDoorActionDocument, Does.Contain("arrivalController: {fileID: 3302000001}"));
 
         string chapter1Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs");
         string applierText = File.ReadAllText("Assets/Scripts/Characters/GuestRoomScaleApplier.cs");
@@ -421,6 +444,12 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Not.Contain("chapterManager = manager"));
         Assert.That(chapter1Text, Does.Contain("AcceptsManagerCommandFrom(manager)"));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController rejected a command from a different ChapterManager."));
+        Assert.That(chapter1Text, Does.Contain("private Chapter1SceneAction frontDoorSceneAction;"));
+        Assert.That(chapter1Text, Does.Contain("EnsureDoorAnswerTriggerAction(createRuntimeClickTargets)"));
+        Assert.That(chapter1Text, Does.Contain("FindDoorAnswerTriggerObject"));
+        Assert.That(chapter1Text, Does.Contain("CreateDoorAnswerTriggerFallback"));
+        Assert.That(chapter1Text, Does.Contain("EnsureDoorAnswerTriggerCanReceiveClicks"));
+        Assert.That(chapter1Text, Does.Contain("targetObject.AddComponent<Chapter1SceneAction>()"));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterManager."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterClock."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterEventScheduler."));

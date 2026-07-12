@@ -71,6 +71,20 @@ public sealed class GameplayLifecycleCharacterizationTests
         PointClickPlayerMovement serializedArrivalPlayerMovement = GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement");
         GameObject serializedArrivalButlerRoot = GetPrivateField<GameObject>(arrival, "playerButlerReference");
         Chapter1InteractionHUD chapter1Hud = RequireExactlyOneInActiveScene<Chapter1InteractionHUD>();
+        Transform[] frontDoorTriggers = FindInActiveScene<Transform>()
+            .Where(item => item.name == "Door_answer_trigger")
+            .ToArray();
+        Transform authoredFrontDoorTrigger = frontDoorTriggers
+            .Single(item => item.GetComponent<SpriteRenderer>()?.sortingOrder == 20);
+        Transform runtimeFrontDoorTrigger = frontDoorTriggers
+            .Single(item => item != authoredFrontDoorTrigger);
+        SpriteRenderer authoredFrontDoorRenderer = authoredFrontDoorTrigger.GetComponent<SpriteRenderer>();
+        BoxCollider2D authoredFrontDoorCollider = authoredFrontDoorTrigger.GetComponent<BoxCollider2D>();
+        Chapter1SceneAction authoredFrontDoorAction = authoredFrontDoorTrigger.GetComponent<Chapter1SceneAction>();
+        SpriteRenderer runtimeFrontDoorRenderer = runtimeFrontDoorTrigger.GetComponent<SpriteRenderer>();
+        BoxCollider2D runtimeFrontDoorCollider = runtimeFrontDoorTrigger.GetComponent<BoxCollider2D>();
+        Chapter1SceneAction runtimeFrontDoorAction = runtimeFrontDoorTrigger.GetComponent<Chapter1SceneAction>();
+        Chapter1SceneAction resolvedFrontDoorAction = GetPrivateField<Chapter1SceneAction>(arrival, "frontDoorSceneAction");
         Transform entranceCoatHanger = FindInActiveScene<Transform>()
             .Single(item => item.name == "entrance_coat_hanger_0");
         SpriteRenderer entranceCoatHangerRenderer = entranceCoatHanger.GetComponent<SpriteRenderer>();
@@ -145,6 +159,61 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(serializedArrivalNavigation, Is.SameAs(navigation));
         Assert.That(serializedArrivalPlayerMovement, Is.Not.Null);
         Assert.That(serializedArrivalButlerRoot, Is.SameAs(serializedArrivalPlayerMovement.gameObject));
+        Assert.That(frontDoorTriggers, Has.Length.EqualTo(2));
+        Assert.That(authoredFrontDoorRenderer, Is.Not.Null);
+        Assert.That(authoredFrontDoorCollider, Is.Not.Null);
+        Assert.That(authoredFrontDoorAction, Is.Not.Null);
+        Assert.That(runtimeFrontDoorRenderer, Is.Not.Null);
+        Assert.That(runtimeFrontDoorCollider, Is.Not.Null);
+        Assert.That(runtimeFrontDoorAction, Is.Not.Null);
+        Assert.That(resolvedFrontDoorAction, Is.SameAs(runtimeFrontDoorAction));
+        Assert.That(resolvedFrontDoorAction, Is.Not.SameAs(authoredFrontDoorAction));
+        Assert.That(authoredFrontDoorTrigger.GetComponents<SpriteRenderer>(), Has.Length.EqualTo(1));
+        Assert.That(authoredFrontDoorTrigger.GetComponents<BoxCollider2D>(), Has.Length.EqualTo(1));
+        Assert.That(authoredFrontDoorTrigger.GetComponents<Chapter1SceneAction>(), Has.Length.EqualTo(1));
+        Assert.That(authoredFrontDoorCollider.enabled, Is.True);
+        Assert.That(authoredFrontDoorCollider.isTrigger, Is.True);
+        Assert.That(authoredFrontDoorCollider.offset, Is.EqualTo(Vector2.zero));
+        Assert.That(authoredFrontDoorCollider.size, Is.EqualTo(Vector2.one));
+        Assert.That(authoredFrontDoorCollider.edgeRadius, Is.Zero.Within(0.0001f));
+        Assert.That(GetPrivateValue<Chapter1SceneActionType>(authoredFrontDoorAction, "actionType"), Is.EqualTo(Chapter1SceneActionType.FrontDoor));
+        Assert.That(GetPrivateField<Chapter1ArrivalController>(authoredFrontDoorAction, "arrivalController"), Is.SameAs(arrival));
+        Assert.That(runtimeFrontDoorTrigger.GetComponents<SpriteRenderer>(), Has.Length.EqualTo(1));
+        Assert.That(runtimeFrontDoorTrigger.GetComponents<BoxCollider2D>(), Has.Length.EqualTo(1));
+        Assert.That(runtimeFrontDoorTrigger.GetComponents<Chapter1SceneAction>(), Has.Length.EqualTo(1));
+        Assert.That(runtimeFrontDoorRenderer.sortingLayerName, Is.EqualTo("People"));
+        Assert.That(runtimeFrontDoorRenderer.sortingOrder, Is.EqualTo(6500));
+        Assert.That(runtimeFrontDoorCollider.enabled, Is.True);
+        Assert.That(runtimeFrontDoorCollider.isTrigger, Is.True);
+        Assert.That(GetPrivateValue<Chapter1SceneActionType>(runtimeFrontDoorAction, "actionType"), Is.EqualTo(Chapter1SceneActionType.FrontDoor));
+        Assert.That(GetPrivateField<Chapter1ArrivalController>(runtimeFrontDoorAction, "arrivalController"), Is.SameAs(arrival));
+        Assert.That(authoredFrontDoorTrigger.localPosition.x, Is.EqualTo(-7.216162f).Within(0.0001f));
+        Assert.That(authoredFrontDoorTrigger.localPosition.y, Is.EqualTo(-13.4132805f).Within(0.0001f));
+        Assert.That(authoredFrontDoorTrigger.localPosition.z, Is.Zero.Within(0.001f));
+        Assert.That(authoredFrontDoorRenderer.sortingLayerID, Is.EqualTo(1040854321));
+        Assert.That(authoredFrontDoorRenderer.sortingOrder, Is.EqualTo(20));
+        Assert.That(
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                authoredFrontDoorRenderer.sprite,
+                out string frontDoorSpriteGuid,
+                out long frontDoorSpriteFileId),
+            Is.True);
+        Assert.That(frontDoorSpriteGuid, Is.EqualTo("311925a002f4447b3a28927169b83ea6"));
+        Assert.That(frontDoorSpriteFileId, Is.EqualTo(7482667652216324306L));
+        int frontDoorActionCount = FindInActiveScene<Chapter1SceneAction>().Length;
+        int frontDoorColliderCount = FindInActiveScene<BoxCollider2D>().Length;
+        InvokePrivateBooleanMethod(arrival, "EnsureDoorAnswerTriggerAction", true);
+        InvokePrivateBooleanMethod(arrival, "EnsureDoorAnswerTriggerAction", true);
+        Assert.That(GetPrivateField<Chapter1SceneAction>(arrival, "frontDoorSceneAction"), Is.SameAs(runtimeFrontDoorAction));
+        Assert.That(authoredFrontDoorTrigger.GetComponent<SpriteRenderer>(), Is.SameAs(authoredFrontDoorRenderer));
+        Assert.That(authoredFrontDoorTrigger.GetComponent<BoxCollider2D>(), Is.SameAs(authoredFrontDoorCollider));
+        Assert.That(authoredFrontDoorTrigger.GetComponent<Chapter1SceneAction>(), Is.SameAs(authoredFrontDoorAction));
+        Assert.That(runtimeFrontDoorTrigger.GetComponent<SpriteRenderer>(), Is.SameAs(runtimeFrontDoorRenderer));
+        Assert.That(runtimeFrontDoorTrigger.GetComponent<BoxCollider2D>(), Is.SameAs(runtimeFrontDoorCollider));
+        Assert.That(runtimeFrontDoorTrigger.GetComponent<Chapter1SceneAction>(), Is.SameAs(runtimeFrontDoorAction));
+        Assert.That(GetPrivateValue<bool>(runtimeFrontDoorAction, "isActionAvailable"), Is.True);
+        Assert.That(FindInActiveScene<Chapter1SceneAction>(), Has.Length.EqualTo(frontDoorActionCount));
+        Assert.That(FindInActiveScene<BoxCollider2D>(), Has.Length.EqualTo(frontDoorColliderCount));
         SubtitleService subtitle = RequireExactlyOneInActiveScene<SubtitleService>();
         DialogueSpeechService speech = RequireExactlyOneInActiveScene<DialogueSpeechService>();
         Assert.That(subtitle.IsInitialized, Is.True);
@@ -201,6 +270,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<CameraManager>(arrival, "cameraManager"), Is.SameAs(serializedArrivalCamera));
         Assert.That(GetPrivateField<RoomNavigationManager>(arrival, "navigationManager"), Is.SameAs(serializedArrivalNavigation));
         Assert.That(GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement"), Is.SameAs(serializedArrivalPlayerMovement));
+        Assert.That(GetPrivateField<Chapter1SceneAction>(arrival, "frontDoorSceneAction"), Is.SameAs(runtimeFrontDoorAction));
+        Assert.That(authoredFrontDoorTrigger.GetComponent<BoxCollider2D>(), Is.SameAs(authoredFrontDoorCollider));
         Assert.That(GetPrivateField<GameObject>(arrival, "playerButlerReference"), Is.SameAs(serializedArrivalButlerRoot));
         Assert.That(GetPrivateField<CoatCloset>(arrival, "coatCloset"), Is.SameAs(entranceCoatCloset));
         Assert.That(GetPrivateField<Transform>(arrival, "closetPoint"), Is.SameAs(entranceCoatHanger));
@@ -783,6 +854,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<CameraManager>(arrival, "cameraManager"), Is.SameAs(serializedArrivalCamera));
         Assert.That(GetPrivateField<RoomNavigationManager>(arrival, "navigationManager"), Is.SameAs(serializedArrivalNavigation));
         Assert.That(GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement"), Is.SameAs(serializedArrivalPlayerMovement));
+        Assert.That(GetPrivateField<Chapter1SceneAction>(arrival, "frontDoorSceneAction"), Is.SameAs(runtimeFrontDoorAction));
         Debug.Log(
             $"[EntranceCoatHangerCharacterization] hanger={entranceCoatHanger.GetInstanceID()} " +
             $"closet={entranceCoatCloset.GetInstanceID()} action={entranceCoatAction.GetInstanceID()} " +
