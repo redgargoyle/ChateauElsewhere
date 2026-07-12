@@ -3389,11 +3389,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             return false;
         }
 
-        if (cameraManager == null)
-        {
-            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
-        }
-
         if (cameraManager == null ||
             !cameraManager.TryGetActiveRoomStageLocalPoint(feetPosition, out Vector2 roomLocalFootPoint))
         {
@@ -4099,11 +4094,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private bool IsPlayerInEntryRoom()
     {
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
-        }
-
         return navigationManager == null ||
             string.IsNullOrWhiteSpace(navigationManager.CurrentRoom) ||
             SameRoom(navigationManager.CurrentRoom, entryRoomId);
@@ -5549,7 +5539,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         }
 
         ResolveReferences(false);
-        PointClickPlayerMovement butler = playerMovement != null ? playerMovement : FindPlayerMovement();
+        PointClickPlayerMovement butler = playerMovement;
 
         if (butler != null)
         {
@@ -6238,16 +6228,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             return false;
         }
 
-        if (cameraManager == null)
-        {
-            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
-        }
-
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
-        }
-
         RoomContentGroup roomContentGroup = target.GetComponentInParent<RoomContentGroup>(true);
         RectTransform roomStage = roomContentGroup != null ? roomContentGroup.transform as RectTransform : null;
 
@@ -6664,117 +6644,10 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private void ResolveReferences(bool createFallbacks)
     {
         ResolveGuestFootstepCatalog();
-
-        if (chapterManager == null)
-        {
-            chapterManager = GetComponent<ChapterManager>();
-        }
-
-        if (chapterManager == null)
-        {
-            chapterManager = FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include);
-        }
-
-        if (chapterClock == null && chapterManager != null)
-        {
-            chapterClock = chapterManager.Clock;
-        }
-
-        if (chapterClock == null)
-        {
-            chapterClock = FindAnyObjectByType<ChapterClock>(FindObjectsInactive.Include);
-        }
-
-        if (eventScheduler == null && chapterManager != null)
-        {
-            eventScheduler = chapterManager.EventScheduler;
-        }
-
-        if (eventScheduler == null)
-        {
-            eventScheduler = FindAnyObjectByType<ChapterEventScheduler>(FindObjectsInactive.Include);
-        }
-
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
-        }
-
-        if (cameraManager == null)
-        {
-            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
-        }
-
-        if (playerButlerReference == null && chapterManager != null)
-        {
-            playerButlerReference = chapterManager.PlayerButlerReference;
-        }
-
-        if (playerButlerReference == null)
-        {
-            GameObject namedPlayer = GameObject.Find("Player");
-
-            if (namedPlayer != null)
-            {
-                playerButlerReference = namedPlayer;
-            }
-        }
-
-        if (playerMovement == null && playerButlerReference != null)
-        {
-            playerMovement = playerButlerReference.GetComponent<PointClickPlayerMovement>();
-        }
-
-        if (playerMovement == null)
-        {
-            playerMovement = FindPlayerMovement();
-        }
-
-        if (playerButlerReference == null && playerMovement != null)
-        {
-            playerButlerReference = playerMovement.gameObject;
-        }
+        playerButlerReference = playerMovement != null ? playerMovement.gameObject : null;
 
         ResolveAnchors();
         ResolveStoryHelpers(createFallbacks);
-    }
-
-    private static PointClickPlayerMovement FindPlayerMovement()
-    {
-        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            PointClickPlayerMovement candidate = candidates[i];
-
-            if (candidate != null &&
-                candidate.gameObject.scene.IsValid() &&
-                !IsGuestObject(candidate.gameObject) &&
-                string.Equals(candidate.gameObject.name, "Player", StringComparison.OrdinalIgnoreCase))
-            {
-                return candidate;
-            }
-        }
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            PointClickPlayerMovement candidate = candidates[i];
-
-            if (candidate != null &&
-                candidate.gameObject.scene.IsValid() &&
-                !IsGuestObject(candidate.gameObject))
-            {
-                return candidate;
-            }
-        }
-
-        return null;
-    }
-
-    private static bool IsGuestObject(GameObject target)
-    {
-        return target != null &&
-            target.name.IndexOf("Guest", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private void ResolveStoryHelpers(bool createFallbacks)
@@ -7013,11 +6886,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         if (subscribedToRoomChanges)
         {
             return;
-        }
-
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         }
 
         if (navigationManager == null)
