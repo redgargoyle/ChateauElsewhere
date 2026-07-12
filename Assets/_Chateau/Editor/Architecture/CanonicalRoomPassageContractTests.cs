@@ -472,6 +472,8 @@ public sealed class CanonicalRoomPassageContractTests
         string anchorText = File.ReadAllText("Assets/_Chateau/Runtime/World/Rooms/Passages/PassageAnchorData.cs");
         string passageText = File.ReadAllText("Assets/_Chateau/Runtime/World/Rooms/Passages/Passage.cs");
         string interfaceText = File.ReadAllText("Assets/_Chateau/Runtime/World/Navigation/INavigationService.cs");
+        string navigationManagerText = File.ReadAllText("Assets/Scripts/Navigation/RoomNavigationManager.cs");
+        string doorTriggerText = File.ReadAllText("Assets/Scripts/Navigation/DoorTriggerNavigation.cs");
         string combinedText = string.Join(
             "\n",
             roomDefinitionText,
@@ -508,8 +510,52 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(typeof(INavigationService).GetProperty("CurrentRoomDefinition")?.PropertyType, Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(typeof(INavigationService).GetMethod("CanTraverse")?.ReturnType, Is.EqualTo(typeof(bool)));
         Assert.That(typeof(INavigationService).GetMethod("TryTraverse")?.ReturnType, Is.EqualTo(typeof(bool)));
-        Assert.That(typeof(INavigationService).IsAssignableFrom(typeof(RoomNavigationManager)), Is.False,
-            "The pure-contract gate must not change the current navigation runtime path.");
+        Assert.That(typeof(INavigationService).IsAssignableFrom(typeof(RoomNavigationManager)), Is.True,
+            "The existing sole navigation owner should expose the canonical boundary without creating another service.");
+        Assert.That(
+            typeof(RoomNavigationManager).GetFields(PrivateInstance)
+                .Count(field =>
+                    field.FieldType == typeof(CanonicalRoomDefinition) ||
+                    field.FieldType == typeof(Passage) ||
+                    field.FieldType == typeof(INavigationService)),
+            Is.Zero,
+            "The compatibility facade must derive canonical state instead of introducing a second serialized or cached owner.");
+        Assert.That(
+            typeof(RoomNavigationManager).GetFields(PrivateInstance).Count(field => field.Name == "currentRoom"),
+            Is.EqualTo(1));
+        Assert.That(
+            typeof(RoomNavigationManager).GetFields(PrivateInstance).Count(field => field.Name == "onCurrentRoomChanged"),
+            Is.EqualTo(1));
+        Assert.That(navigationManagerText, Does.Contain(
+            "public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavigationService"));
+        Assert.That(navigationManagerText, Does.Contain(
+            "public CanonicalRoomDefinition CurrentRoomDefinition => FindRegisteredRoomDefinition(currentRoom);"));
+        Assert.That(navigationManagerText, Does.Contain("public bool CanTraverse(Passage passage)"));
+        Assert.That(navigationManagerText, Does.Contain("public bool TryTraverse(Passage passage)"));
+        Assert.That(navigationManagerText, Does.Contain(
+            "return MoveThroughInspectorDoor(\n" +
+            "            definition.SourceRoom.PrimaryLegacyName,\n" +
+            "            definition.LegacyDoorId,\n" +
+            "            definition.DestinationRoom.PrimaryLegacyName,\n" +
+            "            true);"));
+        Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private CanonicalRoomDefinition"));
+        Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private Passage"));
+        Assert.That(doorTriggerText, Does.Not.Contain("INavigationService"));
+        Assert.That(doorTriggerText, Does.Not.Contain("TryTraverse"));
+
+        GameObject unboundOwner = new GameObject("UnboundNavigationFacadeContract");
+
+        try
+        {
+            RoomNavigationManager unboundFacade = unboundOwner.AddComponent<RoomNavigationManager>();
+            Assert.That(unboundFacade.CurrentRoomDefinition, Is.Null);
+            Assert.That(unboundFacade.CanTraverse(null), Is.False);
+            Assert.That(unboundFacade.TryTraverse(null), Is.False);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(unboundOwner);
+        }
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(2));

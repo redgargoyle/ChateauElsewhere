@@ -145,6 +145,8 @@ Passive-passage status: complete. The two existing trigger owners now each carry
 
 Direct-dependency status: complete. Only the GEH/Drawing reciprocal trigger pair now directly references the existing `RoomNavigationManager`, exact live Player Transform, shared `Audio_DoorOpen` source, and approved `DoorOpenSoundCatalog`; the other 43 scene trigger documents retain all four null compatibility edges. The Player prefab instance required one type-correct stripped Transform proxy, so the proven minimum scene delta is two changed trigger documents plus one added proxy document. Every legacy resolver remains for unmigrated routes. Next, make the existing `RoomNavigationManager` implement `INavigationService` as a no-new-state compatibility façade, prove it delegates to the same inspector-owned route path, and do not cut over either trigger caller in that implementation-only slice.
 
+Navigation-façade implementation status: complete. The existing `RoomNavigationManager` is the sole `INavigationService`; it derives `CurrentRoomDefinition` on demand from the one existing `currentRoom` string and registered `GameDatabase` definitions, validates a scene Passage without mutation, and delegates `TryTraverse` exactly once to `MoveThroughInspectorDoor`. It adds no field, cache, event, object, serialized edge, discovery path, audio behavior, activation writer, or Player-placement algorithm. Both `DoorTriggerNavigation` callers remain byte-identical and still call the legacy method directly. Next, bind only the two first-route triggers to their co-located Passages and cut only those two callers through the façade, retaining the exact legacy fallback for every unmigrated trigger.
+
 Room-local object cutouts are first-class props:
 
 ```text

@@ -622,6 +622,31 @@ public class NavigationRegressionTests
         Assert.That(legacyLoadBody, Does.Contain("if (cachedDoorButtons.Length == 0)"));
         Assert.That(legacyLoadBody, Does.Contain("routesByDoorId = new Dictionary<string, DoorRoute>"));
         Assert.That(legacyLoadBody, Does.Contain("return;"));
+        string canTraverseBody = ExtractMethodBody(navigationManagerText, "public bool CanTraverse");
+        string tryTraverseBody = ExtractMethodBody(navigationManagerText, "public bool TryTraverse");
+        string currentDefinitionBody = ExtractMethodBody(navigationManagerText, "private CanonicalRoomDefinition FindRegisteredRoomDefinition");
+        Assert.That(Regex.Matches(tryTraverseBody, @"\bMoveThroughInspectorDoor\s*\(").Count, Is.EqualTo(1));
+        Assert.That(tryTraverseBody, Does.Not.Contain("SetCurrentRoom"));
+        Assert.That(tryTraverseBody, Does.Not.Contain("onCurrentRoomChanged"));
+        Assert.That(tryTraverseBody, Does.Not.Contain("currentRoom ="));
+        Assert.That(tryTraverseBody, Does.Not.Contain("TryWarpTo"));
+        Assert.That(tryTraverseBody, Does.Not.Contain("Play"));
+        string[] forbiddenFacadeDiscovery =
+        {
+            "FindAnyObjectByType",
+            "FindFirstObjectByType",
+            "FindObjectsByType",
+            "GameObject.Find",
+            "Resources.Load",
+            "new GameObject",
+            "AddComponent<"
+        };
+        for (int i = 0; i < forbiddenFacadeDiscovery.Length; i++)
+        {
+            Assert.That(canTraverseBody, Does.Not.Contain(forbiddenFacadeDiscovery[i]));
+            Assert.That(tryTraverseBody, Does.Not.Contain(forbiddenFacadeDiscovery[i]));
+            Assert.That(currentDefinitionBody, Does.Not.Contain(forbiddenFacadeDiscovery[i]));
+        }
         Assert.That(triggerText, Does.Contain("MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom)"));
         Assert.That(triggerText, Does.Not.Contain("TryMoveThroughDoor"));
         Assert.That(triggerText, Does.Not.Contain("INavigationService"));

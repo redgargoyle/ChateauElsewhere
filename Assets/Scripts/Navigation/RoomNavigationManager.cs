@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using Chateau.Architecture;
+using Chateau.World.Navigation;
+using Chateau.World.Rooms.Passages;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
 
-public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
+public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavigationService
 {
     private const string RoomRootName = "Rooms";
     private const string LegacyRoomObjectsRootName = "RoomObjects";
@@ -59,6 +63,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
     [SerializeField] private ClockTickingAmbienceController clockTickingAmbienceController;
 
     public string CurrentRoom => currentRoom;
+    public CanonicalRoomDefinition CurrentRoomDefinition => FindRegisteredRoomDefinition(currentRoom);
     public string StartingRoom => startingRoom;
     public RoomVisualCatalog VisualCatalog => roomVisualCatalog;
     public DoorCameraSequence CameraSequence => doorCameraSequence;
@@ -117,6 +122,62 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
     private void OnDestroy()
     {
         onCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+    }
+
+    public bool CanTraverse(Passage passage)
+    {
+        if (passage == null || !passage.HasGameContext)
+        {
+            return false;
+        }
+
+        PassageDefinition definition = passage.Definition;
+        Passage reverse = passage.ReversePassage;
+        CanonicalRoomDefinition currentDefinition = CurrentRoomDefinition;
+
+        return definition != null &&
+            reverse != null &&
+            reverse.HasGameContext &&
+            currentDefinition != null &&
+            definition.SourceRoom == currentDefinition &&
+            definition.DestinationRoom != null &&
+            !string.IsNullOrEmpty(definition.SourceRoom.PrimaryLegacyName) &&
+            !string.IsNullOrEmpty(definition.DestinationRoom.PrimaryLegacyName) &&
+            !string.IsNullOrEmpty(definition.LegacyDoorId) &&
+            passage.SourceRoomView != null &&
+            passage.transform != passage.SourceRoomView.transform &&
+            passage.transform.IsChildOf(passage.SourceRoomView.transform) &&
+            passage.SourceRoomView.Definition == currentDefinition &&
+            passage.ApproachAnchor != null &&
+            passage.ArrivalAnchor != null &&
+            reverse != passage &&
+            reverse.ReversePassage == passage &&
+            definition.Reverse != null &&
+            definition.Reverse.Reverse == definition &&
+            definition.Reverse.SourceRoom == definition.DestinationRoom &&
+            definition.Reverse.DestinationRoom == definition.SourceRoom &&
+            reverse.Definition == definition.Reverse &&
+            reverse.SourceRoomView != null &&
+            reverse.SourceRoomView.Definition == definition.DestinationRoom &&
+            IsRegisteredDefinition(definition) &&
+            IsRegisteredDefinition(definition.Reverse) &&
+            IsRegisteredDefinition(definition.SourceRoom) &&
+            IsRegisteredDefinition(definition.DestinationRoom);
+    }
+
+    public bool TryTraverse(Passage passage)
+    {
+        if (!CanTraverse(passage))
+        {
+            return false;
+        }
+
+        PassageDefinition definition = passage.Definition;
+        return MoveThroughInspectorDoor(
+            definition.SourceRoom.PrimaryLegacyName,
+            definition.LegacyDoorId,
+            definition.DestinationRoom.PrimaryLegacyName,
+            true);
     }
 
     public bool ReloadDoorData()
@@ -447,6 +508,61 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
         }
 
         return true;
+    }
+
+    private CanonicalRoomDefinition FindRegisteredRoomDefinition(string legacyRoomName)
+    {
+        if (!HasGameContext || string.IsNullOrWhiteSpace(legacyRoomName))
+        {
+            return null;
+        }
+
+        GameDatabase database = GameContext.Database;
+
+        if (database == null)
+        {
+            return null;
+        }
+
+        IReadOnlyList<DefinitionAssetBase> definitions = database.Definitions;
+
+        CanonicalRoomDefinition match = null;
+
+        for (int i = 0; i < definitions.Count; i++)
+        {
+            if (definitions[i] is CanonicalRoomDefinition roomDefinition &&
+                roomDefinition.MatchesLegacyName(legacyRoomName))
+            {
+                if (match != null && match != roomDefinition)
+                {
+                    return null;
+                }
+
+                match = roomDefinition;
+            }
+        }
+
+        return match;
+    }
+
+    private bool IsRegisteredDefinition(DefinitionAssetBase definition)
+    {
+        if (definition == null || !HasGameContext || GameContext.Database == null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<DefinitionAssetBase> definitions = GameContext.Database.Definitions;
+
+        for (int i = 0; i < definitions.Count; i++)
+        {
+            if (definitions[i] == definition)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void PlacePlayerAtDestinationDoor(string sourceRoom, string doorName, string destinationRoom)

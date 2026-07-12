@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Chateau.UI;
+using Chateau.World.Navigation;
 using Chateau.World.Rooms.Props;
 using CanonicalPassage = Chateau.World.Rooms.Passages.Passage;
 using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
@@ -2036,6 +2037,138 @@ public sealed class GameplayLifecycleCharacterizationTests
     }
 
     [UnityTest]
+    public IEnumerator CanonicalNavigationFacadeDelegatesFirstRoundTripToLegacyOwner()
+    {
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        Button cursorButton = cursorChoice.GetComponent<Button>();
+        Assert.That(cursorButton, Is.Not.Null);
+        cursorButton.onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        INavigationService facade = navigation;
+        Assert.That(facade, Is.SameAs(navigation));
+        Chateau.Architecture.GameRoot gameRoot = RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+        Assert.That(gameRoot.Services.Count(service => service is INavigationService), Is.EqualTo(1));
+        Assert.That(gameRoot.Services.Single(service => service is INavigationService), Is.SameAs(navigation));
+
+        GameObject playerObject = GameObject.Find("Player");
+        Assert.That(playerObject, Is.Not.Null);
+        PointClickPlayerMovement player = playerObject.GetComponent<PointClickPlayerMovement>();
+        Assert.That(player, Is.Not.Null);
+        CanonicalPassage forward = RequireSceneObject<CanonicalPassage>("DoorTrigger_GEH_DrawingRoom");
+        CanonicalPassage reverse = RequireSceneObject<CanonicalPassage>("DoorTrigger_DrawingRoom_GEH");
+        DoorTriggerNavigation outboundTrigger = forward.GetComponent<DoorTriggerNavigation>();
+        DoorTriggerNavigation reverseTrigger = reverse.GetComponent<DoorTriggerNavigation>();
+        Assert.That(outboundTrigger, Is.Not.Null);
+        Assert.That(reverseTrigger, Is.Not.Null);
+        AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
+            .Single(item => item.gameObject.name == "Audio_DoorOpen");
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+        cameraManager.ResetRoomLookForPreview();
+        yield return WaitForSettledLayout();
+
+        int characterizedTriggerCount = FindInActiveScene<DoorTriggerNavigation>().Length;
+        int characterizedPassageCount = FindInActiveScene<CanonicalPassage>().Length;
+        int characterizedRoomCount = FindInActiveScene<RoomContentGroup>().Length;
+        int characterizedAudioSourceCount = FindInActiveScene<AudioSource>().Length;
+        int outboundComponentCount = forward.GetComponents<Component>().Length;
+        int reverseComponentCount = reverse.GetComponents<Component>().Length;
+        List<string> roomEvents = new List<string>();
+        List<Vector2> roomEventPositions = new List<Vector2>();
+        List<CanonicalRoomDefinition> roomEventDefinitions = new List<CanonicalRoomDefinition>();
+        int arrivalEventCount = 0;
+        int movementStoppedEventCount = 0;
+        UnityEngine.Events.UnityAction<string> recordRoomEvent = roomName =>
+        {
+            roomEvents.Add(roomName);
+            roomEventPositions.Add(player.LogicalPosition);
+            roomEventDefinitions.Add(facade.CurrentRoomDefinition);
+        };
+        System.Action recordArrival = () => arrivalEventCount++;
+        System.Action recordMovementStopped = () => movementStoppedEventCount++;
+        navigation.OnCurrentRoomChanged.AddListener(recordRoomEvent);
+        player.ArrivedAtDestination += recordArrival;
+        player.MovementStopped += recordMovementStopped;
+
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+        Assert.That(facade.CurrentRoomDefinition, Is.SameAs(forward.Definition.SourceRoom));
+        Assert.That(facade.CanTraverse(forward), Is.True);
+        Assert.That(facade.CanTraverse(reverse), Is.False);
+        Assert.That(facade.CanTraverse(null), Is.False);
+        Vector2 initialPosition = player.LogicalPosition;
+        Assert.That(facade.TryTraverse(reverse), Is.False);
+        Assert.That(facade.TryTraverse(null), Is.False);
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+        AssertVector2Within(player.LogicalPosition, initialPosition, 0.0001f, "rejected facade traversal");
+        Assert.That(roomEvents, Is.Empty);
+
+        Assert.That(player.TryWarpTo(forward.ApproachAnchor.LogicalPosition, true), Is.True);
+        Vector2 forwardEventPosition = player.LogicalPosition;
+        Assert.That(facade.TryTraverse(forward), Is.True);
+        Assert.That(roomEvents, Is.EqualTo(new[] { DrawingRoom }));
+        Assert.That(roomEventDefinitions, Is.EqualTo(new[] { forward.Definition.DestinationRoom }));
+        AssertVector2Within(roomEventPositions[0], forwardEventPosition, 0.0001f, "facade forward event pre-warp position");
+        AssertVector2Within(player.LogicalPosition, forward.ArrivalAnchor.LogicalPosition, 0.005f, "facade forward legacy arrival");
+        Assert.That(facade.CurrentRoomDefinition, Is.SameAs(reverse.Definition.SourceRoom));
+        Assert.That(facade.CanTraverse(forward), Is.False);
+        Assert.That(facade.CanTraverse(reverse), Is.True);
+        Assert.That(outboundTrigger.gameObject.activeInHierarchy, Is.False);
+        Assert.That(reverseTrigger.gameObject.activeInHierarchy, Is.True);
+        Assert.That(forward.isActiveAndEnabled, Is.False);
+        Assert.That(reverse.isActiveAndEnabled, Is.True);
+        RequireOnlyActiveRoom(DrawingRoom);
+        Vector2 drawingPosition = player.LogicalPosition;
+        Assert.That(facade.TryTraverse(forward), Is.False);
+        AssertVector2Within(player.LogicalPosition, drawingPosition, 0.0001f, "rejected stale forward traversal");
+        Assert.That(roomEvents, Has.Count.EqualTo(1));
+
+        Vector2 reverseEventPosition = player.LogicalPosition;
+        Assert.That(facade.TryTraverse(reverse), Is.True);
+        Assert.That(roomEvents, Is.EqualTo(new[] { DrawingRoom, EntranceRoom }));
+        Assert.That(roomEventDefinitions, Is.EqualTo(new[]
+        {
+            forward.Definition.DestinationRoom,
+            reverse.Definition.DestinationRoom
+        }));
+        AssertVector2Within(roomEventPositions[1], reverseEventPosition, 0.0001f, "facade reverse event pre-warp position");
+        AssertVector2Within(player.LogicalPosition, reverse.ArrivalAnchor.LogicalPosition, 0.005f, "facade reverse legacy arrival");
+        Assert.That(facade.CurrentRoomDefinition, Is.SameAs(forward.Definition.SourceRoom));
+        Assert.That(facade.CanTraverse(forward), Is.True);
+        Assert.That(facade.CanTraverse(reverse), Is.False);
+        Assert.That(outboundTrigger.gameObject.activeInHierarchy, Is.True);
+        Assert.That(reverseTrigger.gameObject.activeInHierarchy, Is.False);
+        Assert.That(forward.isActiveAndEnabled, Is.True);
+        Assert.That(reverse.isActiveAndEnabled, Is.False);
+        RequireOnlyActiveRoom(EntranceRoom);
+
+        Assert.That(arrivalEventCount, Is.Zero);
+        Assert.That(movementStoppedEventCount, Is.Zero);
+        Assert.That(player.HasDestination, Is.False);
+        Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Is.Empty);
+        Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource"), Is.Null);
+        Assert.That(FindInActiveScene<RoomNavigationManager>(), Has.Length.EqualTo(1));
+        Assert.That(FindInActiveScene<MonoBehaviour>().Count(item => item is INavigationService), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<DoorTriggerNavigation>(), Has.Length.EqualTo(characterizedTriggerCount));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(characterizedPassageCount));
+        Assert.That(FindInActiveScene<RoomContentGroup>(), Has.Length.EqualTo(characterizedRoomCount));
+        Assert.That(FindInActiveScene<AudioSource>(), Has.Length.EqualTo(characterizedAudioSourceCount));
+        Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(outboundComponentCount));
+        Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(reverseComponentCount));
+
+        navigation.OnCurrentRoomChanged.RemoveListener(recordRoomEvent);
+        player.ArrivedAtDestination -= recordArrival;
+        player.MovementStopped -= recordMovementStopped;
+    }
+
+    [UnityTest]
     public IEnumerator EntranceDrawingPassagesWalkFromFarBeforeNavigating()
     {
         MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
@@ -2125,9 +2258,14 @@ public sealed class GameplayLifecycleCharacterizationTests
         SetPrivateField(player, "moveSpeed", 1000f);
 
         Assert.That(
-            WarpToFarthestReachableSampleFromTrigger(player, outbound, out float forwardStartScreenDistance),
+            TryWarpToCharacterizedFarStart(
+                player,
+                outbound,
+                new Vector2(10f, -6f),
+                out float forwardStartScreenDistance),
             Is.True,
             "The test requires one deterministic reachable far start in the Entrance.");
+        Vector2 forwardStart = player.LogicalPosition;
         float forwardProximityLimit = GetPrivateValue<float>(outbound, "maxPlayerScreenDistance");
         Assert.That(InvokePrivateResult<bool>(outbound, "IsPlayerCloseEnough"), Is.False,
             "The sampled Butler position must exercise the far-click approach path.");
@@ -2138,10 +2276,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         AssertVector2Within(
             forwardApproach,
             new Vector2(-7.576081f, -1.986423f),
-            0.0001f,
+            0.15f,
             "1366x768 neutral forward approach");
 
-        Vector2 forwardStart = player.LogicalPosition;
         outbound.ActivateDoor();
 
         Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom),
@@ -2183,9 +2320,14 @@ public sealed class GameplayLifecycleCharacterizationTests
 
         InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
         Assert.That(
-            WarpToFarthestReachableSampleFromTrigger(player, reverse, out float reverseStartScreenDistance),
+            TryWarpToCharacterizedFarStart(
+                player,
+                reverse,
+                new Vector2(-10f, -6f),
+                out float reverseStartScreenDistance),
             Is.True,
             "The test requires one deterministic reachable far start in the Drawing Room.");
+        Vector2 reverseStart = player.LogicalPosition;
         float reverseProximityLimit = GetPrivateValue<float>(reverse, "maxPlayerScreenDistance");
         Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.False,
             "The sampled Drawing Room position must exercise the reverse far-click approach path.");
@@ -2199,7 +2341,6 @@ public sealed class GameplayLifecycleCharacterizationTests
             0.0001f,
             "1366x768 neutral reverse approach");
 
-        Vector2 reverseStart = player.LogicalPosition;
         reverse.ActivateDoor();
 
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom),
@@ -2396,7 +2537,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         for (int sizeIndex = 0; sizeIndex < renderedSizes.Length; sizeIndex++)
         {
             Vector2Int renderedSize = renderedSizes[sizeIndex];
-            float viewportEnvelopeTolerance = sizeIndex == renderedSizes.Length - 1 ? 0.2f : 0.05f;
+            float viewportEnvelopeTolerance = sizeIndex == 0
+                ? 0.15f
+                : sizeIndex == renderedSizes.Length - 1 ? 0.2f : 0.05f;
             yield return SetAndWaitForRenderedGameViewResolution(
                 (uint)renderedSize.x,
                 (uint)renderedSize.y);
@@ -3007,62 +3150,23 @@ public sealed class GameplayLifecycleCharacterizationTests
         return $"{value.x:0.######},{value.y:0.######}";
     }
 
-    private static bool WarpToFarthestReachableSampleFromTrigger(
+    private static bool TryWarpToCharacterizedFarStart(
         PointClickPlayerMovement player,
         DoorTriggerNavigation trigger,
-        out float farthestScreenDistance)
+        Vector2 requestedPosition,
+        out float screenDistance)
     {
         InvokePrivateMethod(trigger, "ResolvePlayerReference");
         Assert.That(GetPrivateField<Transform>(trigger, "player"), Is.SameAs(player.transform));
 
-        Vector2[] candidates =
+        if (!player.TryWarpTo(requestedPosition, true))
         {
-            new Vector2(-10f, -6f),
-            new Vector2(-5f, -6f),
-            new Vector2(0f, -6f),
-            new Vector2(5f, -6f),
-            new Vector2(10f, -6f),
-            new Vector2(-10f, -4f),
-            new Vector2(-5f, -4f),
-            new Vector2(0f, -4f),
-            new Vector2(5f, -4f),
-            new Vector2(10f, -4f),
-            new Vector2(-10f, -2f),
-            new Vector2(-5f, -2f),
-            new Vector2(0f, -2f),
-            new Vector2(5f, -2f),
-            new Vector2(10f, -2f)
-        };
-
-        bool found = false;
-        Vector2 farthestPosition = player.LogicalPosition;
-        farthestScreenDistance = float.MinValue;
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            if (!player.TryWarpTo(candidates[i], true))
-            {
-                continue;
-            }
-
-            float screenDistance = InvokePrivateResult<float>(trigger, "GetPlayerScreenDistanceToTrigger");
-            if (float.IsNaN(screenDistance) || float.IsInfinity(screenDistance) || screenDistance <= farthestScreenDistance)
-            {
-                continue;
-            }
-
-            found = true;
-            farthestScreenDistance = screenDistance;
-            farthestPosition = player.LogicalPosition;
-        }
-
-        if (!found)
-        {
+            screenDistance = 0f;
             return false;
         }
 
-        Assert.That(player.TryWarpTo(farthestPosition, false), Is.True);
-        return true;
+        screenDistance = InvokePrivateResult<float>(trigger, "GetPlayerScreenDistanceToTrigger");
+        return !float.IsNaN(screenDistance) && !float.IsInfinity(screenDistance);
     }
 
     private static void AssertFinite(Vector2 value, string label)

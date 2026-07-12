@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage's data, passive scene bindings, rendered behavior, and direct legacy compatibility dependencies complete.**
+**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage's data, passive scene bindings, direct dependencies, and implementation-only navigation façade complete.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -256,6 +256,10 @@ The temporary source increase is the migration spine and verification tooling. I
 - the type-correct Player edge adds one stripped Transform proxy for source Transform `7967904164350347880` on Player prefab instance `81962841`. The scene audit passes at 6,011 documents: only that proxy is added, only the two target trigger documents change, no document is removed, all prior relative order and `SceneRoots` are byte-identical, and Unity preserves candidate SHA-256 `49257b27e097b4db4406a4342a6acf5da4074223d7660716c6107bb7d9e3461e` after import and testing;
 - the direct-binding gates pass: canonical contracts `5/5`, architecture foundation `17/17`, exact navigation static guard `1/1`, and rendered lifecycle `3/3`. Far/near event order, audio timing and single binding reuse, all four viewport envelopes, inactive reverse-trigger identity, room activation, and component counts remain exact. The full rendered suite remains `248` discovered / `202` passed / the identical `46` known failure names;
 - the architecture guard reports no new debt; inventory remains 112 runtime files / 48,500 lines with unchanged smell totals and 48 direct `MonoBehaviour` classes. Serialized script-reference inventory remains byte-identical, and the Y-axis occlusion audit reports zero hard errors plus the same 38 explicitly tracked design-required set-piece findings for later one-prop-at-a-time migration;
+- `RoomNavigationManager` now implements `INavigationService` without a second owner: `CurrentRoomDefinition` maps the existing `currentRoom` through registered canonical room definitions, `CanTraverse` fails closed on an invalid/unregistered/mismatched Passage graph, and `TryTraverse` delegates exactly once through `MoveThroughInspectorDoor` using the definition's compatibility names and legacy door ID. There remains exactly one `currentRoom` assignment and one room event;
+- the implementation-only audit proves Gameplay remains at SHA-256 `49257b27e097b4db4406a4342a6acf5da4074223d7660716c6107bb7d9e3461e`, `DoorTriggerNavigation.cs` remains at `86ff517a0242de06076657f1bdb88e873ce4d419eea5b0181b883764c858cece`, their `.meta` files are byte-identical, and no scene, prefab, asset, GUID, serialized edge, trigger caller, or resolver changes. The direct façade test proves rejected calls mutate nothing; each valid direction emits one event before the legacy warp, produces no movement callback or door audio, and creates nothing;
+- façade gates pass: canonical contracts `5/5`, architecture foundation `17/17`, exact legacy route/static ownership `1/1`, and rendered lifecycle `4/4`. The full suite discovers `249` tests: `203` pass and the exact same `46` baseline failure names remain. The architecture guard reports no new smell occurrence or direct `MonoBehaviour`; runtime inventory is 112 files / 48,616 lines;
+- the rendered route characterization now requests the already documented far samples directly instead of selecting the farthest of 15 near-tied candidates. It continues to enforce the `145`-pixel boundary, bounded 1366 branch envelope, exact event/audio order, reciprocal arrivals, and all four viewport envelopes while no longer treating viewport-dependent floor clamping as authored identity;
 
 ## Validation still requiring human/golden review
 
@@ -283,6 +287,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Make the existing `RoomNavigationManager` implement `INavigationService` as a compatibility façade with no new current-room field, event, scene component, or activation writer. Map `CurrentRoomDefinition`, `CanTraverse(Passage)`, and `TryTraverse(Passage)` through the already-authored first-route definitions and the existing Inspector-owned traversal method.
+1. Add one explicit canonical Passage compatibility edge to `DoorTriggerNavigation`, author it only on trigger documents `109889178` and `2300000104`, and route only those two trigger traversal calls through the existing manager's `INavigationService`. Preserve the exact legacy call as the fallback for every trigger without a canonical Passage.
 
-That next implementation-only slice must leave both `DoorTriggerNavigation` callers unchanged, create no second navigation owner, serialize nothing new, remove no resolver, and prove direct façade calls emit the same single room event and exact legacy arrival behavior. Caller cutover, authored-anchor normalization, remaining-route migration, and deletion stay separate later gates.
+That next caller-cutover slice must leave proximity, approach subscriptions, hover/prompt ownership, audio timing, room activation, arrival sampling, every resolver, and every non-target trigger unchanged. It may modify only the shared trigger script, the two target trigger documents, tests, generated inventory, and architecture docs. Authored-arrival normalization, authored-approach normalization, remaining-route migration, and deletion stay separate later gates.

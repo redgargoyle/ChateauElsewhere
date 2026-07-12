@@ -43,7 +43,7 @@ Assets/Scripts/Navigation/DoorPromptSequenceController.cs,274,1df3a04ad7b861d357
 Assets/Scripts/Navigation/DoorTriggerNavigation.cs,1411,86ff517a0242de06076657f1bdb88e873ce4d419eea5b0181b883764c858cece,4,2,0,0,1,0,DoorTriggerNavigation
 Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,179,700da61bfec106c114c48f9be426c4581299bfdf5bd1d1486bb0920867790c5b,0,0,0,0,0,0,ObjectMovementBlocker2D
 Assets/Scripts/Navigation/RoomContentGroup.cs,256,2e326000243b12f6bf243bb6d88342100cde82a0b9a1d96d312e6ca1f80a96f8,0,0,0,0,0,0,RoomContentGroup
-Assets/Scripts/Navigation/RoomNavigationManager.cs,1284,151d49d2314c2ab0aa533f4e8fd7c6675a7371ea3ef4043681cec792fb340cb8,16,3,1,0,0,0,
+Assets/Scripts/Navigation/RoomNavigationManager.cs,1400,978d7e7ef83a1d42efa5e2adf2bb4bd1b2fa199df16955803f579b8b0bc2baca,16,3,1,0,0,0,
 Assets/Scripts/Navigation/RoomVisualCatalog.cs,45,b4f13f7b9b7408417349da34bfb2bdba0f94f1153a5a95723ecebfd2d9ecb82c,0,0,0,0,0,0,
 Assets/Scripts/Oddities/OdditySpriteAnimator.cs,246,3202fd562a345dfcac11fc92f5ff6b2a21c1a92421b5e5116d41dca28e014e95,0,0,0,0,0,0,OdditySpriteAnimator
 Assets/Scripts/PlayerMovement.cs,300,31c9b36c0da4d8d2400eecf69af5cef09a40479fbdb46db59a5a83631937875b,0,0,0,0,0,0,PlayerMovement
