@@ -137,7 +137,7 @@ Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,5e7a11c7d4b2
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,b5ee7e3d0f5a428cb5e5a6617725817f,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,a59ddc6dded9613c01de27aeab93714a,0,
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,a7a7a747ac7ae2fb48c9d60608ca3dc9,1,Assets/Scenes/Gameplay.unity:1
-Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,7a33ae09185ce66224eb1fc576eef96d,1,Assets/Scenes/Gameplay.unity:1
+Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,7a33ae09185ce66224eb1fc576eef96d,2,Assets/Scenes/Gameplay.unity:2
 Assets/_Chateau/Scripts/Chapter/Chapter01/GuestArrivalConfig.cs,870849ad4e4741fb8aa0365c5fe80b83,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs,d033cee2bc03c0ce4a5ca7f25996fb46,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs,b8faabacef795789f93845fa56d3cd77,0,

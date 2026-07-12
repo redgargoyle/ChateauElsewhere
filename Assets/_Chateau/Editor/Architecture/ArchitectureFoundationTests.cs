@@ -338,13 +338,15 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1BindsSerializedGuestScaleOwnersAndCharacterizesCoatHangerFallback()
+    public void Chapter1BindsSerializedGuestScaleAndCoatHangerOwners()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter1Document = ExtractDocument(sceneText, "--- !u!114 &3302000001");
         string hangerDocument = ExtractDocument(sceneText, "--- !u!1 &1592234992");
         string hangerTransformDocument = ExtractDocument(sceneText, "--- !u!4 &1592234993");
         string hangerRendererDocument = ExtractDocument(sceneText, "--- !u!212 &1592234994");
+        string hangerColliderDocument = ExtractDocument(sceneText, "--- !u!61 &1592234996");
+        string hangerActionDocument = ExtractDocument(sceneText, "--- !u!114 &1592234995");
         string pantryClosetObjectDocument = ExtractDocument(sceneText, "--- !u!1 &3503000002");
         string serializedClosetDocument = ExtractDocument(sceneText, "--- !u!114 &3303000001");
 
@@ -352,11 +354,14 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("calibration: {fileID: 1844861547}"));
         Assert.That(sceneText, Does.Contain("butlerScaleSource: {fileID: 81962842}"));
         Assert.That(chapter1Document, Does.Contain("coatCloset: {fileID: 3303000001}"));
-        Assert.That(chapter1Document, Does.Contain("closetPoint: {fileID: 3503000007}"));
+        Assert.That(chapter1Document, Does.Contain("closetPoint: {fileID: 1592234993}"));
         Assert.That(hangerDocument, Does.Contain("m_Name: entrance_coat_hanger_0"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234993}"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234994}"));
-        Assert.That(hangerDocument, Does.Not.Contain("3303000001"));
+        Assert.That(hangerDocument, Does.Contain(
+            "  - component: {fileID: 1592234996}\n" +
+            "  - component: {fileID: 1592234995}\n" +
+            "  - component: {fileID: 3303000001}"));
         Assert.That(hangerTransformDocument, Does.Contain("m_LocalPosition: {x: -255.00697, y: -12.514666, z: -5717.36}"));
         Assert.That(hangerTransformDocument, Does.Contain("m_LocalScale: {x: 30.161037, y: 23.970196, z: 63.526222}"));
         Assert.That(hangerTransformDocument, Does.Contain("m_Father: {fileID: 567115834}"));
@@ -364,8 +369,17 @@ public sealed class ArchitectureFoundationTests
         Assert.That(hangerRendererDocument, Does.Contain("m_SortingLayerID: -114244515"));
         Assert.That(hangerRendererDocument, Does.Contain("m_SortingOrder: 0"));
         Assert.That(hangerRendererDocument, Does.Contain("m_Sprite: {fileID: 1166796266648169557, guid: 60c34e6293838a6c7988f33040dad54d, type: 3}"));
-        Assert.That(pantryClosetObjectDocument, Does.Contain("- component: {fileID: 3303000001}"));
-        Assert.That(serializedClosetDocument, Does.Contain("m_GameObject: {fileID: 3503000002}"));
+        Assert.That(hangerColliderDocument, Does.Contain("m_GameObject: {fileID: 1592234992}"));
+        Assert.That(hangerColliderDocument, Does.Contain("m_IsTrigger: 1"));
+        Assert.That(hangerColliderDocument, Does.Contain("m_Offset: {x: 0, y: 0}"));
+        Assert.That(hangerColliderDocument, Does.Contain("m_Size: {x: 4.41, y: 9.79}"));
+        Assert.That(hangerColliderDocument, Does.Contain("m_EdgeRadius: 0"));
+        Assert.That(hangerActionDocument, Does.Contain("m_GameObject: {fileID: 1592234992}"));
+        Assert.That(hangerActionDocument, Does.Contain("actionType: 1"));
+        Assert.That(hangerActionDocument, Does.Contain("arrivalController: {fileID: 3302000001}"));
+        Assert.That(hangerActionDocument, Does.Contain("isActionAvailable: 1"));
+        Assert.That(pantryClosetObjectDocument, Does.Not.Contain("3303000001"));
+        Assert.That(serializedClosetDocument, Does.Contain("m_GameObject: {fileID: 1592234992}"));
 
         string chapter1Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs");
         string applierText = File.ReadAllText("Assets/Scripts/Characters/GuestRoomScaleApplier.cs");
