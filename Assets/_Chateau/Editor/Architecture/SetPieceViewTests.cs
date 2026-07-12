@@ -164,29 +164,32 @@ public sealed class SetPieceViewTests
     }
 
     [Test]
-    public void PurpleSofaLegacyArtAndCollisionAreFrozenBeforeMigration()
+    public void PurpleSofaUsesOneSetPieceDepthOwnerAndKeepsCollisionFootprint()
     {
-        AssertLegacyPurpleSofa(
+        AssertSerializedPurpleSofa(
             "Assets/Scenes/Gameplay.unity",
             "496480226",
             "496480227",
             "496480228",
-            "2300000006",
-            "m_SortingOrder: 1000");
-        AssertLegacyPurpleSofa(
+            "496480229",
+            "3930000001",
+            "3502000003");
+        AssertSerializedPurpleSofa(
             "Assets/Prefabs/Room_Drawing_Room.prefab",
             "1029369892038134563",
             "254615378711260024",
             "4941363574488913695",
-            "4435884376220043763",
-            "m_SortingOrder: 1342");
-        AssertLegacyPurpleSofa(
+            "4941363574488913696",
+            "3931000001",
+            "8198696041881719533");
+        AssertSerializedPurpleSofa(
             "Assets/Prefabs/Room_Drawing_Room_Perspective.prefab",
             "1710633473991421491",
             "5298474513307463160",
             "3262785415260392097",
-            "6786387123008681009",
-            "m_SortingOrder: 1342");
+            "3262785415260392098",
+            "3932000001",
+            "7119017594806998140");
 
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string blockerDocument = ExtractDocument(sceneText, "--- !u!114 &262353138");
@@ -196,12 +199,13 @@ public sealed class SetPieceViewTests
         Assert.That(blockerDocument, Does.Contain("sourceRoomName: Drawing Room"));
         Assert.That(blockerDocument, Does.Contain("category: Seating"));
         Assert.That(blockerDocument, Does.Contain("footprintHeightFraction: 0.32"));
-        Assert.That(blockerDocument, Does.Contain("sortSourceRenderers: 1"));
+        Assert.That(blockerDocument, Does.Contain("sortSourceRenderers: 0"));
         Assert.That(colliderDocument, Does.Contain("m_IsTrigger: 1"));
         Assert.That(colliderDocument, Does.Contain("- - {x: -509.97592, y: -252.54533}"));
         Assert.That(colliderDocument, Does.Contain("- {x: -244.28398, y: -252.54533}"));
         Assert.That(colliderDocument, Does.Contain("- {x: -244.28398, y: -176.70192}"));
         Assert.That(colliderDocument, Does.Contain("- {x: -509.97592, y: -176.70192}"));
+        Assert.That(CountOccurrences(sceneText, "- {fileID: 496480229}"), Is.EqualTo(1), "GameRoot must bind the inactive purple sofa SetPieceView.");
     }
 
     private static RoomPerspectiveProfile CreateProfile()
@@ -292,32 +296,45 @@ public sealed class SetPieceViewTests
         Assert.That(CountOccurrences(assetText, $"- {{fileID: {transformFileId}}}"), Is.EqualTo(1), assetPath);
     }
 
-    private static void AssertLegacyPurpleSofa(
+    private static void AssertSerializedPurpleSofa(
         string assetPath,
         string gameObjectFileId,
         string transformFileId,
         string rendererFileId,
-        string expectedParentFileId,
-        string expectedOrder)
+        string viewFileId,
+        string setPiecesTransformFileId,
+        string propsTransformFileId)
     {
         string assetText = File.ReadAllText(assetPath);
         string gameObjectDocument = ExtractDocument(assetText, $"--- !u!1 &{gameObjectFileId}");
         string transformDocument = ExtractDocument(assetText, $"--- !u!4 &{transformFileId}");
         string rendererDocument = ExtractDocument(assetText, $"--- !u!212 &{rendererFileId}");
+        string viewDocument = ExtractDocument(assetText, $"--- !u!114 &{viewFileId}");
+        string setPiecesDocument = ExtractDocument(assetText, $"--- !u!4 &{setPiecesTransformFileId}");
 
         Assert.That(gameObjectDocument, Does.Contain("m_Name: purple_sofa"), assetPath);
-        Assert.That(CountOccurrences(gameObjectDocument, "- component:"), Is.EqualTo(2), assetPath);
+        Assert.That(CountOccurrences(gameObjectDocument, "- component:"), Is.EqualTo(3), assetPath);
         Assert.That(gameObjectDocument, Does.Contain($"- component: {{fileID: {transformFileId}}}"), assetPath);
         Assert.That(gameObjectDocument, Does.Contain($"- component: {{fileID: {rendererFileId}}}"), assetPath);
+        Assert.That(gameObjectDocument, Does.Contain($"- component: {{fileID: {viewFileId}}}"), assetPath);
         Assert.That(transformDocument, Does.Contain("m_LocalPosition: {x: -377.13, y: -134.04, z: -6570.105}"), assetPath);
         Assert.That(transformDocument, Does.Contain("m_LocalScale: {x: 96.26519, y: 107.24464, z: 73.00117}"), assetPath);
-        Assert.That(transformDocument, Does.Contain($"m_Father: {{fileID: {expectedParentFileId}}}"), assetPath);
+        Assert.That(transformDocument, Does.Contain($"m_Father: {{fileID: {setPiecesTransformFileId}}}"), assetPath);
         Assert.That(rendererDocument, Does.Contain("guid: a97c105638bdf8b4a8650670310a4cd3"), assetPath);
         Assert.That(rendererDocument, Does.Contain("m_SortingLayer: 2"), assetPath);
-        Assert.That(rendererDocument, Does.Contain(expectedOrder), assetPath);
+        Assert.That(rendererDocument, Does.Contain("m_SortingOrder: 5385"), assetPath);
         Assert.That(rendererDocument, Does.Contain("m_Sprite: {fileID: 6939058887295035288, guid: c19ed6f7fe405144f9b93978ebeab1c7, type: 3}"), assetPath);
         Assert.That(rendererDocument, Does.Contain("m_Color: {r: 1, g: 1, b: 1, a: 1}"), assetPath);
         Assert.That(rendererDocument, Does.Contain("m_SpriteSortPoint: 1"), assetPath);
+        Assert.That(viewDocument, Does.Contain("guid: 5e7a11c7d4b24c68a1f9e2d3c4b5a607"), assetPath);
+        Assert.That(viewDocument, Does.Contain("m_EditorClassIdentifier: Assembly-CSharp::Chateau.World.Rooms.Props.SetPieceView"), assetPath);
+        Assert.That(viewDocument, Does.Contain($"cutoutRenderer: {{fileID: {rendererFileId}}}"), assetPath);
+        Assert.That(viewDocument, Does.Contain("depthProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}"), assetPath);
+        Assert.That(viewDocument, Does.Contain("roomLocalOcclusionAnchor: {x: -377.13, y: -134.04}"), assetPath);
+        Assert.That(viewDocument, Does.Contain("sortingOffset: 0"), assetPath);
+        Assert.That(setPiecesDocument, Does.Contain($"m_Father: {{fileID: {propsTransformFileId}}}"), assetPath);
+        Assert.That(setPiecesDocument, Does.Contain($"- {{fileID: {transformFileId}}}"), assetPath);
+        Assert.That(CountOccurrences(assetText, $"- {{fileID: {transformFileId}}}"), Is.EqualTo(1), assetPath);
     }
 
     private static string ExtractDocument(string assetText, string header)

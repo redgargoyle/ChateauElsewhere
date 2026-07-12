@@ -335,6 +335,7 @@ GameObject:
   m_Component:
   - component: {fileID: 254615378711260024}
   - component: {fileID: 4941363574488913695}
+  - component: {fileID: 4941363574488913696}
   m_Layer: 0
   m_Name: purple_sofa
   m_TagString: Untagged
@@ -355,7 +356,7 @@ Transform:
   m_LocalScale: {x: 96.26519, y: 107.24464, z: 73.00117}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 4435884376220043763}
+  m_Father: {fileID: 3931000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4941363574488913695
 SpriteRenderer:
@@ -404,7 +405,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -114244515
   m_SortingLayer: 2
-  m_SortingOrder: 1342
+  m_SortingOrder: 5385
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6939058887295035288, guid: c19ed6f7fe405144f9b93978ebeab1c7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -416,6 +417,22 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
+--- !u!114 &4941363574488913696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1029369892038134563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e7a11c7d4b24c68a1f9e2d3c4b5a607, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Chateau.World.Rooms.Props.SetPieceView
+  cutoutRenderer: {fileID: 4941363574488913695}
+  depthProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
+  roomLocalOcclusionAnchor: {x: -377.13, y: -134.04}
+  sortingOffset: 0
 --- !u!1 &1186746340491895969
 GameObject:
   m_ObjectHideFlags: 0
@@ -1753,7 +1770,6 @@ RectTransform:
   - {fileID: 1360741886811614754}
   - {fileID: 8224862819271380268}
   - {fileID: 6483441564707510065}
-  - {fileID: 254615378711260024}
   - {fileID: 8527723970156229055}
   - {fileID: 8198696041881719533}
   - {fileID: 7174543256498381773}
@@ -3778,5 +3794,6 @@ Transform:
   m_Children:
   - {fileID: 3639458741953199328}
   - {fileID: 941830645189917262}
+  - {fileID: 254615378711260024}
   m_Father: {fileID: 8198696041881719533}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

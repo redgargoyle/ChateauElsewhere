@@ -89,8 +89,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         ObjectMovementBlocker2D purpleArmchairBlocker = FindInActiveScene<ObjectMovementBlocker2D>()
             .Single(item => item.SourceObjectName == "purple_armchair_back");
         PolygonCollider2D purpleArmchairCollider = purpleArmchairBlocker.BlockingCollider as PolygonCollider2D;
-        SpriteRenderer purpleSofaRenderer = FindInActiveScene<SpriteRenderer>()
+        SetPieceView purpleSofaView = FindInActiveScene<SetPieceView>()
             .Single(item => item.gameObject.name == "purple_sofa");
+        SpriteRenderer purpleSofaRenderer = purpleSofaView.CutoutRenderer;
         ObjectMovementBlocker2D purpleSofaBlocker = FindInActiveScene<ObjectMovementBlocker2D>()
             .Single(item => item.SourceObjectName == "purple_sofa");
         PolygonCollider2D purpleSofaCollider = purpleSofaBlocker.BlockingCollider as PolygonCollider2D;
@@ -210,14 +211,23 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(purpleArmchairView.transform.localScale.z, Is.EqualTo(73.00117f).Within(0.0001f));
         Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(purpleArmchairRenderer.sprite)), Is.EqualTo("84e185b06bd4d9a19842586e593673e5"));
         Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(purpleArmchairRenderer.sharedMaterial)), Is.EqualTo("a97c105638bdf8b4a8650670310a4cd3"));
-        Assert.That(purpleSofaRenderer.gameObject.activeInHierarchy, Is.False);
-        Assert.That(purpleSofaRenderer.GetComponent<SetPieceView>(), Is.Null);
-        Assert.That(purpleSofaRenderer.GetComponent<RoomProjectedEntity>(), Is.Null);
-        Assert.That(purpleSofaBlocker.SourceObject, Is.SameAs(purpleSofaRenderer.gameObject));
-        Assert.That(purpleSofaBlocker.SortSourceRenderers, Is.True);
+        Assert.That(purpleSofaView.gameObject.activeInHierarchy, Is.False);
+        Assert.That(purpleSofaView.GetComponent<RoomProjectedEntity>(), Is.Null);
+        Assert.That(purpleSofaRenderer, Is.Not.Null);
+        Assert.That(purpleSofaBlocker.SourceObject, Is.SameAs(purpleSofaView.gameObject));
+        Assert.That(purpleSofaBlocker.SortSourceRenderers, Is.False);
         Assert.That(purpleSofaCollider, Is.Not.Null);
         Assert.That(purpleSofaCollider.isTrigger, Is.True);
-        Assert.That(RoomDepthResolver.Resolve(teaTableView.DepthProfile, new Vector2(-377.13f, -134.04f)), Is.EqualTo(5385));
+        Assert.That(purpleSofaView.HasGameContext, Is.True, "GameRoot should bind the inactive sofa set-piece owner.");
+        Assert.That(purpleSofaView.RoomLocalOcclusionAnchor, Is.EqualTo(new Vector2(-377.13f, -134.04f)));
+        Assert.That(purpleSofaView.DepthProfile, Is.Not.Null);
+        Assert.That(RoomDepthResolver.Resolve(purpleSofaView.DepthProfile, purpleSofaView.RoomLocalOcclusionAnchor), Is.EqualTo(5385));
+        Assert.That(purpleSofaView.CurrentSortingOrder, Is.EqualTo(5385));
+        Assert.That(purpleSofaRenderer.sortingOrder, Is.EqualTo(5385));
+        Assert.That(purpleSofaRenderer.sortingLayerName, Is.EqualTo("People"));
+        Assert.That(purpleSofaRenderer.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Pivot));
+        Assert.That(purpleSofaView.transform.parent.name, Is.EqualTo("Set Pieces"));
+        Assert.That(purpleSofaView.transform.parent.parent.name, Is.EqualTo("Props"));
         Assert.That(purpleSofaRenderer.transform.localPosition.x, Is.EqualTo(-377.13f).Within(0.001f));
         Assert.That(purpleSofaRenderer.transform.localPosition.y, Is.EqualTo(-134.04f).Within(0.001f));
         Assert.That(purpleSofaRenderer.transform.localPosition.z, Is.Zero, "RoomContentGroup currently flattens room art at runtime; the authored Z remains covered statically.");
@@ -533,7 +543,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(purpleArmchairRenderer.sortingOrder, Is.EqualTo(purpleSetPieceOrder));
         CollectionAssert.AreEqual(purpleArmchairFootprint, purpleArmchairCollider.points);
         Debug.Log($"[SetPieceMigration] purple_armchair_back order={purpleSetPieceOrder} blockerSorting={purpleArmchairBlocker.SortSourceRenderers} footprintPoints={purpleArmchairCollider.points.Length}");
-        Assert.That(purpleSofaRenderer.gameObject.activeInHierarchy, Is.True);
+        Assert.That(purpleSofaView.gameObject.activeInHierarchy, Is.True);
         Assert.That(purpleSofaBlocker.gameObject.activeInHierarchy, Is.True);
         Vector2[] purpleSofaFootprint = purpleSofaCollider.points;
         Assert.That(purpleSofaFootprint, Has.Length.EqualTo(4));
@@ -542,12 +552,18 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(purpleSofaFootprint[2], Is.EqualTo(new Vector2(-244.28398f, -176.70192f)));
         Assert.That(purpleSofaFootprint[3], Is.EqualTo(new Vector2(-509.97592f, -176.70192f)));
         purpleSofaRenderer.sortingOrder = -32345;
+        Assert.That(purpleSofaView.ApplyPresentation(), Is.True);
+        int purpleSofaOrder = purpleSofaRenderer.sortingOrder;
+        Assert.That(purpleSofaOrder, Is.EqualTo(5385));
+        Assert.That(purpleSofaView.CurrentSortingOrder, Is.EqualTo(5385));
+        purpleSofaRenderer.sortingOrder = -32346;
         Physics2D.SyncTransforms();
         purpleSofaBlocker.ApplySourceSortingNow();
-        int purpleSofaBlockerOrder = purpleSofaRenderer.sortingOrder;
-        Assert.That(purpleSofaBlockerOrder, Is.Not.EqualTo(-32345), "The legacy blocker must be proven to own the sofa renderer before migration.");
+        Assert.That(purpleSofaRenderer.sortingOrder, Is.EqualTo(-32346), "Collision must not overwrite sofa presentation.");
+        Assert.That(purpleSofaView.ApplyPresentation(), Is.True);
+        Assert.That(purpleSofaRenderer.sortingOrder, Is.EqualTo(purpleSofaOrder));
         CollectionAssert.AreEqual(purpleSofaFootprint, purpleSofaCollider.points);
-        Debug.Log($"[SetPieceCharacterization] purple_sofa target=5385 blocker={purpleSofaBlockerOrder}");
+        Debug.Log($"[SetPieceMigration] purple_sofa order={purpleSofaOrder} blockerSorting={purpleSofaBlocker.SortSourceRenderers} footprintPoints={purpleSofaCollider.points.Length}");
         Assert.That(FindInActiveScene<MonoBehaviour>().Any(item => item.GetType().Name == "GameClockHandsDisplay"), Is.False);
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("Canvas_AnalogClockHands")), Is.False);
         Assert.That(teaTableBlocker.gameObject.activeInHierarchy, Is.True);
@@ -620,8 +636,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(FindInActiveScene<RoomProjectedEntity>().Any(item => item.gameObject.name == "purple_armchair_back"), Is.False);
         Assert.That(FindInActiveScene<ObjectMovementBlocker2D>().Single(item => item.SourceObjectName == "purple_armchair_back"), Is.SameAs(purpleArmchairBlocker));
         CollectionAssert.AreEqual(purpleArmchairFootprint, purpleArmchairCollider.points);
-        Assert.That(purpleSofaRenderer.gameObject.activeInHierarchy, Is.False);
-        Assert.That(FindInActiveScene<SpriteRenderer>().Single(item => item.gameObject.name == "purple_sofa"), Is.SameAs(purpleSofaRenderer));
+        Assert.That(purpleSofaView.gameObject.activeInHierarchy, Is.False);
+        Assert.That(FindInActiveScene<SetPieceView>().Single(item => item.gameObject.name == "purple_sofa"), Is.SameAs(purpleSofaView));
+        Assert.That(FindInActiveScene<RoomProjectedEntity>().Any(item => item.gameObject.name == "purple_sofa"), Is.False);
         Assert.That(FindInActiveScene<ObjectMovementBlocker2D>().Single(item => item.SourceObjectName == "purple_sofa"), Is.SameAs(purpleSofaBlocker));
         CollectionAssert.AreEqual(purpleSofaFootprint, purpleSofaCollider.points);
         Assert.That(FindInActiveScene<MonoBehaviour>().Any(item => item.GetType().Name == "GameClockHandsDisplay"), Is.False);

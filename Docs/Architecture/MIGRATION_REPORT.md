@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 4 vertical migration in progress; the first two set pieces are complete while Phase 3 compatibility retirement continues.**
+**Phase 4 vertical migration in progress; the first three set pieces are complete while Phase 3 compatibility retirement continues.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -66,6 +66,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized `purple_armchair_back` as the second set-piece candidate across Gameplay and both Drawing Room prefabs: shared chair art/material/profile/anchor resolves to order `8289`, exact transforms and component IDs are frozen, and the Gameplay four-point lower-seat collision footprint is preserved before migration.
 - Migrated `purple_armchair_back` in place beneath the existing `Props / Set Pieces` owners. Its original GameObject/Transform/SpriteRenderer/component IDs, chair art/material, authored transforms, depth anchor/order, blocker identity, and four-point lower-seat polygon are preserved; its blocker now owns collision only and cannot rewrite presentation.
 - Characterized `purple_sofa` as the third set-piece candidate across Gameplay and both Drawing Room prefabs: its sofa art/material/transform/component identities are exact across all three assets, the room-local anchor resolves to order `5385`, and the Gameplay four-point seating footprint is frozen before migration.
+- Migrated `purple_sofa` beneath the existing `Props / Set Pieces` owners with one explicit `SetPieceView` per asset. Its original GameObject/Transform/SpriteRenderer IDs, art/material, authored transform, blocker identity, and four-point seating polygon are preserved; the blocker now owns collision only and cannot rewrite presentation.
 
 ## Current static result
 
@@ -119,6 +120,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - the purple-armchair migration changes no YAML document IDs or order: the three existing projection documents become `SetPieceView` in place, only the intended hierarchy/renderer/blocker/GameRoot documents change, and all three `SceneRoots` sections remain byte-identical;
 - the migrated purple-armchair lifecycle keeps the same bound view/blocker identities through activation and travel, resolves order `8289`, preserves its art, authored transform and all four collider points, and proves blocker sorting is a no-op;
 - the purple-sofa static/lifecycle characterization passes across all three assets; at runtime its only legacy sort writer changes the renderer to bounds-derived order `1225` while the intended room-local order is `5385`, and the trigger polygon remains unchanged;
+- the purple-sofa asset audit passes across all three assets: exactly one `SetPieceView` document was added per asset, every prior document keeps its relative order, only the intended seven Gameplay/five-per-prefab documents change, the collider hash is exact, and `SceneRoots` stays byte-identical;
+- the migrated purple-sofa lifecycle keeps the same view/blocker identities through activation and travel, resolves order `5385`, preserves its art, authored transform and all four collider points, and proves blocker sorting is a no-op;
 - the Chapter 2 dependency-cleanup static, regression, and lifecycle gates pass; all eleven serialized references resolve exactly once, `ResolveReferences` and its seven scene-wide searches are absent, and repeated entry/debug paths retain the same owners;
 - the full EditMode discovery count is 239: 188 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
@@ -134,6 +137,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - dialogue/subtitle/voice, modal input, ambience, camera-shake and lighting visual/audio checks;
 - visual confirmation that the Drawing Room tea table occludes the Butler/guests correctly and retains the accepted no-walk footprint;
 - visual confirmation that the Drawing Room purple armchair occludes the Butler/guests correctly and retains the accepted no-walk footprint;
+- visual confirmation that the Drawing Room purple sofa occludes the Butler/guests correctly and retains the accepted no-walk footprint;
 - a player build and save/load trace after `SaveService` exists.
 
 ## Compatibility adapters still present
@@ -151,8 +155,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Migrate only `purple_sofa` to `SetPieceView`, preserve its exact art/transform/polygon, and make its blocker collision-only.
-2. Retire the already-serialized ChapterManager-to-Chapter2Controller lookup after a dedicated transition gate.
+1. Serialize ChapterManager's exact Player input owner and retire its Chapter 2/player/debug-canvas repair searches behind a dedicated transition gate.
+2. Audit the remaining non-identical Drawing Room cutouts before selecting any fourth prop; do not infer parity from similar names.
 3. Continue one prop/owner at a time with exact art, transform, occlusion, and collision preservation.
 
 Do not begin bulk deletion until those gates pass.
