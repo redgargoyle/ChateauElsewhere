@@ -3374,13 +3374,14 @@ public sealed class GameplayLifecycleCharacterizationTests
         {
             Vector2Int renderedSize = renderedSizes[sizeIndex];
             float viewportEnvelopeTolerance = sizeIndex == 0
-                ? 0.5f
+                ? 0.15f
                 : sizeIndex == renderedSizes.Length - 1 ? 0.2f : 0.05f;
             yield return SetAndWaitForRenderedGameViewResolution(
                 (uint)renderedSize.x,
                 (uint)renderedSize.y);
             cameraManager.ResetRoomLookForPreview();
             yield return WaitForSettledLayout();
+            Physics2D.SyncTransforms();
 
             Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
             Vector2 invariantStart = new Vector2(0f, -4f);
