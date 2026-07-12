@@ -6680,50 +6680,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         return null;
     }
 
-    private Transform FindPropAnchor(string propName, string anchorId, string roomId)
-    {
-        RoomAnchor[] anchors = FindObjectsByType<RoomAnchor>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < anchors.Length; i++)
-        {
-            RoomAnchor anchor = anchors[i];
-
-            if (anchor == null)
-            {
-                continue;
-            }
-
-            if (!string.Equals(anchor.AnchorId, anchorId, StringComparison.OrdinalIgnoreCase) ||
-                !SameRoom(anchor.RoomId, roomId) ||
-                !IsUnderNamedTransform(anchor.transform, propName))
-            {
-                continue;
-            }
-
-            return anchor.transform;
-        }
-
-        return null;
-    }
-
-    private static bool IsUnderNamedTransform(Transform target, string normalizedName)
-    {
-        string cleanNeedle = NormalizeRoomName(normalizedName);
-        Transform current = target;
-
-        while (current != null)
-        {
-            if (NormalizeRoomName(current.name).Contains(cleanNeedle))
-            {
-                return true;
-            }
-
-            current = current.parent;
-        }
-
-        return false;
-    }
-
     private static GameObject FindGameObjectByNormalizedName(string normalizedName)
     {
         string cleanNeedle = NormalizeRoomName(normalizedName);

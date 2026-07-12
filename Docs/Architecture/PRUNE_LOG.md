@@ -13,6 +13,12 @@ No file may be deleted merely because a text search looks empty. Each deletion n
 
 Their `.meta` files were also removed because no serialized asset referenced their script GUIDs.
 
+## Pruned serialized placeholder hierarchies
+
+| Asset / subtree | Reason | Code references | Serialized references | Replacement | Proof / test |
+|---|---|---:|---:|---|---|
+| `Gameplay.unity` pantry `CoatCloset / Anchors / ApproachFront` (documents `3503000002`–`3503000008`) | Empty placeholder stopped owning the closet after Entrance ownership was serialized; its anchor was reachable only through an uncalled private fallback | 0; `FindPropAnchor` and its sole helper were dead | 0 outside the subtree and its parent child link | Authored Entrance hanger `1592234992` owns closet `3303000001`, action `1592234995`, collider `1592234996`, and approach `1592234993` | Exhaustive ID/code/resource/reflection/animation scan; exact seven-document/order/root audit; static Entrance ownership guard; stored-coat/repeated-resolution/room-round-trip lifecycle; full suite remains 191/49. |
+
 ## Retired runtime repair paths
 
 | Path | Former behavior | Replacement | Proof / test |

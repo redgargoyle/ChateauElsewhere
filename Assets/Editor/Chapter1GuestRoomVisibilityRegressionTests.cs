@@ -323,7 +323,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(performActionBody, Does.Contain("RuntimeSettingsMenu.BlocksGameInput"), "Scene actions must not execute while the settings modal blocks game input.");
         Assert.That(resolveReferencesBody, Does.Not.Contain("EnsureEntranceCoatHanger"), "Runtime reference resolution should retain the serialized hanger owner.");
         Assert.That(resolveAnchorsBody, Does.Not.Contain("FindObjectsByType<CoatCloset>"), "Anchor resolution should not globally select a closet.");
-        Assert.That(resolveAnchorsBody, Does.Not.Contain("FindPropAnchor(\"CoatCloset\""), "Anchor resolution should not fall back to the pantry placeholder.");
+        Assert.That(controllerText, Does.Not.Contain("FindPropAnchor"), "The dead pantry-prop anchor lookup must stay removed.");
+        Assert.That(controllerText, Does.Not.Contain("IsUnderNamedTransform"), "The dead pantry hierarchy-name scan must stay removed.");
         Assert.That(controllerText, Does.Contain("Chapter1ArrivalController requires its serialized Entrance coat closet."));
         Assert.That(controllerText, Does.Contain("Chapter1ArrivalController requires its serialized Entrance closet approach point."));
         Assert.That(controllerText, Does.Not.Contain("Ensure" + "RuntimeCloset"), "The old hard-coded runtime closet setup must stay removed.");

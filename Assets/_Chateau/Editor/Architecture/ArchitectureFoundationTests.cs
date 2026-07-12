@@ -338,7 +338,7 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1OwnsSerializedFrontDoorActionWithoutFallback()
+    public void Chapter1EntranceInteractionsAreSerializedWithoutFallbacks()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter1Document = ExtractDocument(sceneText, "--- !u!114 &3302000001");
@@ -352,7 +352,7 @@ public sealed class ArchitectureFoundationTests
         string frontDoorRendererDocument = ExtractDocument(sceneText, "--- !u!212 &1180734298");
         string frontDoorColliderDocument = ExtractDocument(sceneText, "--- !u!61 &1180734299");
         string frontDoorActionDocument = ExtractDocument(sceneText, "--- !u!114 &1180734300");
-        string pantryClosetObjectDocument = ExtractDocument(sceneText, "--- !u!1 &3503000002");
+        string pantryPropsTransformDocument = ExtractDocument(sceneText, "--- !u!4 &3503000001");
         string serializedClosetDocument = ExtractDocument(sceneText, "--- !u!114 &3303000001");
 
         Assert.That(sceneText, Does.Contain("guestRoomScaleApplier: {fileID: 86244178}"));
@@ -391,7 +391,21 @@ public sealed class ArchitectureFoundationTests
         Assert.That(hangerActionDocument, Does.Contain("actionType: 1"));
         Assert.That(hangerActionDocument, Does.Contain("arrivalController: {fileID: 3302000001}"));
         Assert.That(hangerActionDocument, Does.Contain("isActionAvailable: 1"));
-        Assert.That(pantryClosetObjectDocument, Does.Not.Contain("3303000001"));
+        Assert.That(pantryPropsTransformDocument, Does.Contain("m_Children: []"));
+        Assert.That(sceneText, Does.Not.Contain("&3503000002"));
+        Assert.That(sceneText, Does.Not.Contain("&3503000003"));
+        Assert.That(sceneText, Does.Not.Contain("&3503000004"));
+        Assert.That(sceneText, Does.Not.Contain("&3503000005"));
+        Assert.That(sceneText, Does.Not.Contain("&3503000006"));
+        Assert.That(sceneText, Does.Not.Contain("&3503000007"));
+        Assert.That(sceneText, Does.Not.Contain("&3503000008"));
+        Assert.That(sceneText, Does.Not.Contain("fileID: 3503000002"));
+        Assert.That(sceneText, Does.Not.Contain("fileID: 3503000003"));
+        Assert.That(sceneText, Does.Not.Contain("fileID: 3503000004"));
+        Assert.That(sceneText, Does.Not.Contain("fileID: 3503000005"));
+        Assert.That(sceneText, Does.Not.Contain("fileID: 3503000006"));
+        Assert.That(sceneText, Does.Not.Contain("fileID: 3503000007"));
+        Assert.That(sceneText, Does.Not.Contain("fileID: 3503000008"));
         Assert.That(serializedClosetDocument, Does.Contain("m_GameObject: {fileID: 1592234992}"));
         Assert.That(frontDoorObjectDocument, Does.Contain("m_Name: Door_answer_trigger"));
         Assert.That(frontDoorObjectDocument, Does.Contain(
@@ -430,7 +444,8 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Not.Contain("coatHangerObject.AddComponent<Chapter1SceneAction>"));
         Assert.That(chapter1Text, Does.Not.Contain("coatHangerObject.AddComponent<BoxCollider2D>"));
         Assert.That(chapter1Text, Does.Not.Contain("FindObjectsByType<CoatCloset>"));
-        Assert.That(chapter1Text, Does.Not.Contain("FindPropAnchor(\"CoatCloset\""));
+        Assert.That(chapter1Text, Does.Not.Contain("FindPropAnchor"));
+        Assert.That(chapter1Text, Does.Not.Contain("IsUnderNamedTransform"));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized Entrance coat closet."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized Entrance closet approach point."));
         Assert.That(chapter1Text, Does.Not.Contain("FindAnyObjectByType<ChapterManager>"));
