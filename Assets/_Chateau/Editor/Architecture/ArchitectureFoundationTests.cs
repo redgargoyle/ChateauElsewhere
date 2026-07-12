@@ -178,7 +178,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerDocument, Does.Contain("violinAudioSource: {fileID: 3700000004}"));
         Assert.That(stingerDocument, Does.Contain("violinAudioVolumeBinding: {fileID: 3700000005}"));
         Assert.That(stingerDocument, Does.Contain("violinAudioClip: {fileID: 8300000, guid: 69f06d321e4549cdcad1133332661f6d, type: 3}"));
-        Assert.That(stingerDocument, Does.Contain("fallbackViolinClipName: violinscreech"));
+        Assert.That(stingerDocument, Does.Not.Contain("fallbackViolinClipName"));
         Assert.That(stingerDocument, Does.Contain("monsterRunSprites: []"));
         Assert.That(stingerDocument, Does.Contain("monsterRunSpritesResourcePath: Chapter2/Monster/ArmSwing"));
         Assert.That(stingerDocument, Does.Not.Contain("createPlaceholderMonsterIfMissing"));
@@ -233,9 +233,13 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized violin AudioSource."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized violin AudioClip."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized violin volume binding."));
-        Assert.That(stingerText, Does.Contain("GetComponent<AudioSource>()"));
-        Assert.That(stingerText, Does.Contain("gameObject.AddComponent<AudioSource>()"));
-        Assert.That(stingerText, Does.Contain("violinAudioVolumeBinding = GameAudioSettings.EnsureBinding("));
+        Assert.That(stingerText, Does.Not.Contain("GetComponent<AudioSource>()"));
+        Assert.That(stingerText, Does.Not.Contain("AddComponent<AudioSource>()"));
+        Assert.That(stingerText, Does.Not.Contain("GameAudioSettings.EnsureBinding("));
+        Assert.That(stingerText, Does.Not.Contain("FindViolinClip"));
+        Assert.That(stingerText, Does.Not.Contain("Resources.Load<AudioClip>"));
+        Assert.That(stingerText, Does.Not.Contain("AssetDatabase.FindAssets"));
+        Assert.That(stingerText, Does.Contain("violinAudioVolumeBinding.Configure("));
         Assert.That(stingerText, Does.Contain("Resources.LoadAll<Sprite>(monsterRunSpritesResourcePath)"));
         Assert.That(stingerText, Does.Contain("monsterObject.AddComponent<Canvas>()"));
         Assert.That(CountOccurrences(guestSearchDocument, "navigationManager: {fileID: 1878886997}"), Is.EqualTo(1));

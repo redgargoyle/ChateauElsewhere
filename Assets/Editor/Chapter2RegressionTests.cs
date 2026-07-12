@@ -220,7 +220,8 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Not.Contain("maximumCyclesBeforeComplete"));
         Assert.That(stingerText, Does.Not.Contain("GetRandomCycleCount"));
         Assert.That(stingerText, Does.Not.Contain("TrimCycleTimingsToVisibleBudget"));
-        Assert.That(stingerText, Does.Contain("violinscreech"));
+        Assert.That(stingerText, Does.Not.Contain("fallbackViolinClipName"));
+        Assert.That(stingerText, Does.Contain("violinAudioVolumeBinding.Configure("));
         Assert.That(stingerText, Does.Contain("loopViolinAudio = true"));
         Assert.That(stingerText, Does.Contain(".loop = loopViolinAudio"));
         Assert.That(stingerText, Does.Contain("drawingRoomId = \"Drawing Room\""));

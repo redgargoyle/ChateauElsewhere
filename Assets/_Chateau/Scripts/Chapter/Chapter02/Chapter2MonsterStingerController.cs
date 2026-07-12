@@ -1,9 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 [DisallowMultipleComponent]
 public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeatureBase
@@ -19,7 +16,6 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     [SerializeField] private AudioSource violinAudioSource;
     [SerializeField] private GameAudioSourceVolume violinAudioVolumeBinding;
     [SerializeField] private AudioClip violinAudioClip;
-    [SerializeField] private string fallbackViolinClipName = "violinscreech";
     [SerializeField] private bool loopViolinAudio = true;
     [SerializeField] private bool forceMonsterToFront = true;
     [SerializeField] private string monsterSortingLayerName = "People";
@@ -58,7 +54,6 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     private int nextMonsterFreezeFrameIndex;
     private Sprite originalMonsterSprite;
     private bool hasOriginalMonsterSprite;
-    private float violinAudioBaseVolume = -1f;
 
     public bool IsRunning => isRunning || stingerRoutine != null;
 
@@ -366,7 +361,7 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     {
         CaptureOriginalMonsterSprite();
         LoadMonsterRunSpritesIfNeeded();
-        ResolveViolinAudioSource();
+        ConfigureViolinAudioSource();
 
         if (runStart == null)
         {
@@ -389,87 +384,25 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
         }
         else if (violinAudioSource.clip == null)
         {
-            Debug.LogWarning($"Chapter 2 monster stinger could not find violin audio clip '{fallbackViolinClipName}'.", this);
+            Debug.LogWarning("Chapter 2 monster stinger has no violin audio clip assigned.", this);
         }
     }
 
-    private void ResolveViolinAudioSource()
+    private void ConfigureViolinAudioSource()
     {
-        if (violinAudioSource == null)
+        if (violinAudioSource == null || violinAudioVolumeBinding == null || violinAudioClip == null)
         {
-            violinAudioSource = GetComponent<AudioSource>();
+            return;
         }
 
-        if (violinAudioSource == null)
-        {
-            violinAudioSource = gameObject.AddComponent<AudioSource>();
-        }
-
-        if (violinAudioClip == null)
-        {
-            violinAudioClip = FindViolinClip();
-        }
-
-        if (violinAudioSource.clip == null && violinAudioClip != null)
-        {
-            violinAudioSource.clip = violinAudioClip;
-        }
-
+        violinAudioSource.clip = violinAudioClip;
         violinAudioSource.playOnAwake = false;
         violinAudioSource.loop = loopViolinAudio;
         violinAudioSource.spatialBlend = 0f;
-
-        if (violinAudioBaseVolume < 0f)
-        {
-            violinAudioBaseVolume = GameAudioSettings.GetCurrentOrBoundBaseVolume(
-                violinAudioSource,
-                GameAudioChannel.GameSounds);
-        }
-
-        violinAudioVolumeBinding = GameAudioSettings.EnsureBinding(
+        violinAudioVolumeBinding.Configure(
             violinAudioSource,
             GameAudioChannel.GameSounds,
-            violinAudioBaseVolume);
-    }
-
-    private AudioClip FindViolinClip()
-    {
-        if (string.IsNullOrWhiteSpace(fallbackViolinClipName))
-        {
-            return null;
-        }
-
-        AudioClip clip = Resources.Load<AudioClip>(fallbackViolinClipName);
-
-        if (clip != null)
-        {
-            return clip;
-        }
-
-        clip = Resources.Load<AudioClip>($"Audio/{fallbackViolinClipName}");
-
-        if (clip != null)
-        {
-            return clip;
-        }
-
-#if UNITY_EDITOR
-        string[] matches = AssetDatabase.FindAssets($"{fallbackViolinClipName} t:AudioClip", new[] { "Assets/Audio" });
-
-        for (int i = 0; i < matches.Length; i++)
-        {
-            string assetPath = AssetDatabase.GUIDToAssetPath(matches[i]);
-            AudioClip editorClip = AssetDatabase.LoadAssetAtPath<AudioClip>(assetPath);
-
-            if (editorClip != null &&
-                string.Equals(editorClip.name, fallbackViolinClipName, System.StringComparison.OrdinalIgnoreCase))
-            {
-                return editorClip;
-            }
-        }
-#endif
-
-        return null;
+            violinAudioVolumeBinding.BaseVolume);
     }
 
     private void CaptureOriginalMonsterSprite()

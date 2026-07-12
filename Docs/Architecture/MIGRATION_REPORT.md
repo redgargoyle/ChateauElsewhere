@@ -75,19 +75,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized and retired the monster stinger's structural repair: Begin/Stop reuses the exact serialized monster, Drawing Room start/target anchors, navigation service, and Image, restores the authored sprite, and creates no placeholder; validation now rejects a missing/mismatched graph instead of searching or repairing it.
 - Characterized and serialized Guest Search's navigation owner: the pre-migration field was null until seven-PM staging, while the migrated owner is the exact GameRoot service from boot through repeated Chapter 2 and seven-PM paths; all five lazy repair calls and the resolver are removed.
 - Characterized the monster presentation fallback before authoring it: first visible use creates one host violin source and Game-Sounds binding, loads clip GUID `69f06d321e4549cdcad1133332661f6d`, adds one sorted Canvas to the monster, loads eight ordered run sprites, and reuses every identity on repetition.
-- Grafted the violin source and Game-Sounds binding directly onto the existing inactive monster object and serialized the imported clip. Playback now begins from the correct owned graph without a hierarchy expansion or ChapterManager-host collision; the fallback code remains temporarily for its cleanup-specific gate.
+- Grafted the violin source and Game-Sounds binding directly onto the existing inactive monster object, serialized the imported clip, and removed every host/resource/Editor/component fallback. Playback configures only that owned graph without a hierarchy expansion or ChapterManager-host collision.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,570 | -332 |
+| Runtime C# lines | 49,902 | 49,503 | -399 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
 | `FindObject*`/`GameObject.Find` | 199 | 139 | -60 |
-| `Resources.Load` | 27 | 22 | -5 |
+| `Resources.Load` | 27 | 20 | -7 |
 | runtime `new GameObject` | 98 | 82 | -16 |
-| runtime `AddComponent<T>` | 100 | 74 | -26 |
+| runtime `AddComponent<T>` | 100 | 73 | -27 |
 | runtime initialization hooks | 9 | 4 | -5 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -148,6 +148,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - the monster presentation characterization freezes source/clip/binding properties, Canvas layer/order, all eight sprite GUIDs in approved order, original-sprite restoration, visible Drawing Room behavior, and repeated-use no-growth; focused/static and full-suite gates pass before scene authoring;
 - the monster violin graft adds exactly AudioSource `3700000004` and binding `3700000005`, changing only monster GO `3700000000` and controller `3301000007`; all prior 5,979 document order, `SceneRoots`, monster transform/Image, ChapterManager host, clock audio, MP3, and `.meta` remain exact;
 - boot/visible/repeated-use lifecycle gates prove the monster owns one exact source/binding/clip, the shared controller host remains component-free, activation precedes playback, stop restores inactivity, and the full suite retains the same 50 failure names;
+- the violin cleanup keeps all 5,981 document headers and `SceneRoots` exact; only controller `3301000007` loses its obsolete fallback-name property, while source/binding/monster/clip/MP3/meta remain byte-identical;
+- source guards ban host source discovery/attachment, Resources and Editor clip searches, binding creation, and runtime base-volume discovery; direct serialized configuration plus focused/lifecycle/full gates retain exact behavior and failure names;
 - the rendered full EditMode suite discovers 240 tests: 190 pass and the exact same 50 pre-existing failure names remain, with no clock-strike graft or cleanup regression;
 - the separate `-nographics` invalid-viewport issue was independently hardened in commit `4d8a6d9a` and is not attributed to the clock-strike graft;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
@@ -181,8 +183,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Remove the monster violin's now-dormant host/resource/component fallbacks while retaining the serialized owned graph.
-2. Serialize the characterized monster overlay Canvas, then serialize the eight approved run sprites and remove each independent fallback.
+1. Serialize the characterized monster overlay Canvas and remove its component factory.
+2. Serialize the eight approved monster run sprites and remove their Resources fallback.
 3. Characterize and author the Entrance coat-hanger interaction components without changing its art, transform, hitbox, or coat behavior.
 
 Do not begin bulk deletion until those gates pass.
