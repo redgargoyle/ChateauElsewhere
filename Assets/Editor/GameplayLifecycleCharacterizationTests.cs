@@ -2819,7 +2819,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(musicRoomView.Root, Is.SameAs(musicRoomContent.transform));
         Assert.That(musicRoomView.HasGameContext, Is.True);
         Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(4));
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(4));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(6));
         AssertDrawingMusicAuthoredAnchorPassages(
             forward,
             reverse,
@@ -3914,15 +3914,17 @@ public sealed class GameplayLifecycleCharacterizationTests
 
             forward = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_MusicRoom_Library");
             reverse = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_Library_MusicRoom");
+            CanonicalPassage musicLibraryPassage = forward.GetComponent<CanonicalPassage>();
+            CanonicalPassage libraryMusicPassage = reverse.GetComponent<CanonicalPassage>();
             Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
-            Assert.That(forward.GetComponent<CanonicalPassage>(), Is.Null);
-            Assert.That(reverse.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(musicLibraryPassage, Is.Not.Null);
+            Assert.That(libraryMusicPassage, Is.Not.Null);
             Assert.That(
                 FindInActiveScene<DoorTriggerNavigation>()
                     .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
                 Is.EqualTo(4),
-                "Only the two already-certified reciprocal route pairs may have canonical callers before Group02.");
+                "Only the two certified reciprocal route pairs may have canonical callers while Group02 is passive.");
 
             RoomContentGroup musicRoomContent = FindInActiveScene<RoomContentGroup>()
                 .Single(item => item.RoomName == MusicRoom);
@@ -3930,6 +3932,8 @@ public sealed class GameplayLifecycleCharacterizationTests
                 .Single(item => item.RoomName == LibraryRoom);
             CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
             Assert.That(roomViews, Has.Length.EqualTo(4));
+            CanonicalRoomView musicRoomView = roomViews.Single(item =>
+                item.Definition != null && item.Definition.StableId == "room.music-room");
             CanonicalRoomView libraryRoomView = roomViews.Single(item =>
                 item.Definition != null && item.Definition.StableId == "room.library");
             Assert.That(libraryRoomView, Is.SameAs(libraryRoomContent.GetComponent<CanonicalRoomView>()));
@@ -3961,6 +3965,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(musicRoomContent.gameObject.name, Is.EqualTo("Room_Music_Room"));
             Assert.That(libraryRoomContent.gameObject.name, Is.EqualTo("Room_Library"));
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: true,
+                libraryVisible: false);
             Assert.That(musicRoomContent.PerspectiveProfile, Is.Null);
             Assert.That(libraryRoomContent.PerspectiveProfile, Is.Null);
             Assert.That(musicRoomContent.TryGetRoomBackgroundTexture(out Texture musicBackground), Is.True);
@@ -3993,8 +4006,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(reverseRect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
             Assert.That(forwardRect.localScale, Is.EqualTo(new Vector3(0.95f, 1f, 1f)));
             Assert.That(reverseRect.localScale, Is.EqualTo(Vector3.one));
-            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(4));
-            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(5));
+            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(5));
             Assert.That(forward.GetComponent<CanvasRenderer>(), Is.Not.Null);
             Assert.That(reverse.GetComponent<CanvasRenderer>(), Is.Not.Null);
             Image forwardImage = forward.GetComponent<Image>();
@@ -4050,6 +4063,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             string serializedForward = RequireSerializedUnityDocument(sceneText, "552135204");
             string serializedReverse = RequireSerializedUnityDocument(sceneText, "2300000079");
             string serializedLibraryView = RequireSerializedUnityDocument(sceneText, "4100000004");
+            string serializedMusicLibraryPassage = RequireSerializedUnityDocument(sceneText, "4100000015");
+            string serializedLibraryMusicPassage = RequireSerializedUnityDocument(sceneText, "4100000016");
             string serializedGameRoot = RequireSerializedUnityDocument(sceneText, "1878886998");
             Assert.That(serializedLibraryView, Does.Contain("m_GameObject: {fileID: 1367921344}"));
             Assert.That(serializedLibraryView, Does.Contain(
@@ -4062,6 +4077,42 @@ public sealed class GameplayLifecycleCharacterizationTests
                     .Count(line => line.Trim() == "- {fileID: 4100000004}"),
                 Is.EqualTo(1),
                 "GameRoot must register the passive Library RoomView exactly once.");
+            Assert.That(serializedMusicLibraryPassage, Does.Contain("m_GameObject: {fileID: 552135202}"));
+            Assert.That(serializedMusicLibraryPassage, Does.Contain(
+                "m_Script: {fileID: 11500000, guid: 518dad8adf634786a103bf4e76aa0881, type: 3}"));
+            Assert.That(serializedMusicLibraryPassage, Does.Contain(
+                "definition: {fileID: 11400000, guid: aefe77f20874eb81b83fccb6ff5b8046, type: 2}"));
+            Assert.That(serializedMusicLibraryPassage, Does.Contain("sourceRoomView: {fileID: 4100000003}"));
+            Assert.That(serializedMusicLibraryPassage, Does.Contain("reversePassage: {fileID: 4100000016}"));
+            Assert.That(serializedMusicLibraryPassage, Does.Contain(
+                "  approachAnchor:\n    logicalPosition: {x: 7.439471, y: -2.846709}"));
+            Assert.That(serializedMusicLibraryPassage, Does.Contain(
+                "  arrivalAnchor:\n    logicalPosition: {x: -7.244175, y: -2.799095}"));
+            Assert.That(serializedMusicLibraryPassage, Does.Contain("anchorMigrationStage: 0"));
+            Assert.That(serializedLibraryMusicPassage, Does.Contain("m_GameObject: {fileID: 2300000075}"));
+            Assert.That(serializedLibraryMusicPassage, Does.Contain(
+                "m_Script: {fileID: 11500000, guid: 518dad8adf634786a103bf4e76aa0881, type: 3}"));
+            Assert.That(serializedLibraryMusicPassage, Does.Contain(
+                "definition: {fileID: 11400000, guid: 3a641d5febbfd7aec481ada678ba9fe4, type: 2}"));
+            Assert.That(serializedLibraryMusicPassage, Does.Contain("sourceRoomView: {fileID: 4100000004}"));
+            Assert.That(serializedLibraryMusicPassage, Does.Contain("reversePassage: {fileID: 4100000015}"));
+            Assert.That(serializedLibraryMusicPassage, Does.Contain(
+                "  approachAnchor:\n    logicalPosition: {x: -7.244175, y: -2.799095}"));
+            Assert.That(serializedLibraryMusicPassage, Does.Contain(
+                "  arrivalAnchor:\n    logicalPosition: {x: 7.439471, y: -2.846709}"));
+            Assert.That(serializedLibraryMusicPassage, Does.Contain("anchorMigrationStage: 0"));
+            Assert.That(
+                serializedGameRoot.Split('\n')
+                    .Count(line => line.Trim() == "- {fileID: 4100000015}"),
+                Is.EqualTo(1));
+            Assert.That(
+                serializedGameRoot.Split('\n')
+                    .Count(line => line.Trim() == "- {fileID: 4100000016}"),
+                Is.EqualTo(1));
+            Assert.That(serializedGameRoot, Does.Contain(
+                "  - {fileID: 4100000014}\n" +
+                "  - {fileID: 4100000015}\n" +
+                "  - {fileID: 4100000016}"));
             Assert.That(serializedForward, Does.Contain("sourceRoom: Music Room"));
             Assert.That(serializedForward, Does.Contain("doorName: MusicRoom_Library"));
             Assert.That(serializedForward, Does.Contain("destinationRoom: Library"));
@@ -4241,6 +4292,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"),
                 Is.SameAs(libraryRoomContent.transform));
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: false,
+                libraryVisible: true);
             Assert.That(forward.gameObject.activeInHierarchy, Is.False);
             Assert.That(reverse.gameObject.activeInHierarchy, Is.True);
             Assert.That(libraryHideAnchor.gameObject.activeInHierarchy, Is.True);
@@ -4265,6 +4325,10 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "primary Music-to-Library pre-warp event");
             Vector2 primaryForwardArrival = player.LogicalPosition;
             AssertFinite(primaryForwardArrival, "primary Music-to-Library arrival");
+            Assert.That(
+                Vector2.Distance(primaryForwardArrival, musicLibraryPassage.ArrivalAnchor.LogicalPosition),
+                Is.GreaterThan(0.1f),
+                "The source-sensitive far Library arrival must remain distinct from the passive reciprocal reference point.");
             Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True,
                 "The legacy Library arrival must support the reciprocal near route.");
             GameAudioSourceVolume characterizedBinding = passageAudioSource.GetComponent<GameAudioSourceVolume>();
@@ -4335,6 +4399,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"),
                 Is.SameAs(musicRoomContent.transform));
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: true,
+                libraryVisible: false);
             Assert.That(forward.gameObject.activeInHierarchy, Is.True);
             Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
             Assert.That(libraryHideAnchor.gameObject.activeInHierarchy, Is.False);
@@ -4372,6 +4445,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             yield return WaitForSettledLayout();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: false,
+                libraryVisible: true);
             Assert.That(player.HasDestination, Is.False);
             Assert.That(arrivedPositions, Has.Count.EqualTo(arrivedCountBeforeNear));
             Assert.That(movementStoppedPositions, Has.Count.EqualTo(stoppedCountBeforeNear));
@@ -4393,6 +4475,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             yield return WaitForSettledLayout();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: true,
+                libraryVisible: false);
             Assert.That(player.HasDestination, Is.False);
             Assert.That(arrivedPositions, Has.Count.EqualTo(arrivedCountBeforeNear));
             Assert.That(movementStoppedPositions, Has.Count.EqualTo(stoppedCountBeforeNear));
@@ -4533,6 +4624,15 @@ public sealed class GameplayLifecycleCharacterizationTests
 
                 Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
                 AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
+                AssertMusicLibraryPassivePassages(
+                    forward,
+                    reverse,
+                    musicLibraryPassage,
+                    libraryMusicPassage,
+                    musicRoomView,
+                    libraryRoomView,
+                    musicVisible: true,
+                    libraryVisible: false);
                 Assert.That(
                     TryWarpToCharacterizedFarStart(player, forward, new Vector2(0f, -2f),
                         out float aspectForwardScreenDistance),
@@ -4585,6 +4685,15 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Assert.That(RequireOnlyActiveRoom(LibraryRoom), Is.SameAs(libraryRoomContent));
                 Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(libraryBackground));
                 AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
+                AssertMusicLibraryPassivePassages(
+                    forward,
+                    reverse,
+                    musicLibraryPassage,
+                    libraryMusicPassage,
+                    musicRoomView,
+                    libraryRoomView,
+                    musicVisible: false,
+                    libraryVisible: true);
                 Vector2 aspectForwardArrival = player.LogicalPosition;
                 AssertFinite(aspectForwardArrival, "aspect Music-to-Library arrival");
                 Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True);
@@ -4641,6 +4750,15 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Assert.That(RequireOnlyActiveRoom(MusicRoom), Is.SameAs(musicRoomContent));
                 Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(musicBackground));
                 AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
+                AssertMusicLibraryPassivePassages(
+                    forward,
+                    reverse,
+                    musicLibraryPassage,
+                    libraryMusicPassage,
+                    musicRoomView,
+                    libraryRoomView,
+                    musicVisible: true,
+                    libraryVisible: false);
                 Vector2 aspectReverseArrival = player.LogicalPosition;
                 AssertFinite(aspectReverseArrival, "aspect Library-to-Music arrival");
                 Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True);
@@ -4704,6 +4822,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             Canvas.ForceUpdateCanvases();
             Physics2D.SyncTransforms();
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: true,
+                libraryVisible: false);
             Assert.That(
                 TryWarpToCharacterizedFarStart(player, forward, new Vector2(0f, -2f),
                     out float maximumForwardScreenDistance),
@@ -4730,6 +4857,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             Physics2D.SyncTransforms();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: false,
+                libraryVisible: true);
             Vector2 maximumForwardArrival = player.LogicalPosition;
             AssertFinite(maximumForwardArrival, "maximum-zoom Music-to-Library arrival");
             AssertVector2Within(maximumForwardStart, new Vector2(0f, -2f), 0.001f,
@@ -4749,6 +4885,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             Canvas.ForceUpdateCanvases();
             Physics2D.SyncTransforms();
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: false,
+                libraryVisible: true);
             Assert.That(
                 TryWarpToCharacterizedFarStart(player, reverse, new Vector2(0f, -2f),
                     out float maximumReverseScreenDistance),
@@ -4775,6 +4920,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             Physics2D.SyncTransforms();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: true,
+                libraryVisible: false);
             Vector2 maximumReverseArrival = player.LogicalPosition;
             AssertFinite(maximumReverseArrival, "maximum-zoom Library-to-Music arrival");
             AssertVector2Within(maximumReverseStart, new Vector2(0f, -2f), 0.001f,
@@ -4804,6 +4958,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             }
             Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
             AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
+            AssertMusicLibraryPassivePassages(
+                forward,
+                reverse,
+                musicLibraryPassage,
+                libraryMusicPassage,
+                musicRoomView,
+                libraryRoomView,
+                musicVisible: true,
+                libraryVisible: false);
             Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
             Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation),
@@ -5366,8 +5529,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(roomViews, Has.Length.EqualTo(4),
             "Entrance, Drawing, Music, and Library must remain the only passive RoomView scene owners at this gate.");
         CanonicalPassage[] passages = FindInActiveScene<CanonicalPassage>();
-        Assert.That(passages, Has.Length.EqualTo(4),
-            "The first two route grafts must remain exactly four reciprocal canonical scene bindings.");
+        Assert.That(passages, Has.Length.EqualTo(6),
+            "The three route grafts must remain exactly six reciprocal canonical scene bindings.");
 
         Assert.That(
             roomViews.Single(item => item.Definition != null && item.Definition.StableId == "room.grand-entrance-hall"),
@@ -5424,6 +5587,20 @@ public sealed class GameplayLifecycleCharacterizationTests
             musicView,
             drawingVisible,
             musicContent.gameObject.activeSelf);
+
+        DoorTriggerNavigation musicLibraryForwardTrigger =
+            RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_MusicRoom_Library");
+        DoorTriggerNavigation musicLibraryReverseTrigger =
+            RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_Library_MusicRoom");
+        AssertMusicLibraryPassivePassages(
+            musicLibraryForwardTrigger,
+            musicLibraryReverseTrigger,
+            musicLibraryForwardTrigger.GetComponent<CanonicalPassage>(),
+            musicLibraryReverseTrigger.GetComponent<CanonicalPassage>(),
+            musicView,
+            libraryView,
+            musicContent.gameObject.activeSelf,
+            libraryContent.gameObject.activeSelf);
 
         CanonicalPassage forwardPassage = passages.Single(item =>
             item.Definition != null &&
@@ -5552,6 +5729,137 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(libraryView.IsVisible, Is.EqualTo(expectedVisible));
     }
 
+    private static void AssertMusicLibraryPassivePassages(
+        DoorTriggerNavigation forwardTrigger,
+        DoorTriggerNavigation reverseTrigger,
+        CanonicalPassage forwardPassage,
+        CanonicalPassage reversePassage,
+        CanonicalRoomView musicView,
+        CanonicalRoomView libraryView,
+        bool musicVisible,
+        bool libraryVisible)
+    {
+        Assert.That(forwardTrigger, Is.Not.Null);
+        Assert.That(reverseTrigger, Is.Not.Null);
+        Assert.That(forwardPassage, Is.Not.Null);
+        Assert.That(reversePassage, Is.Not.Null);
+        Assert.That(musicView, Is.Not.Null);
+        Assert.That(libraryView, Is.Not.Null);
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(6));
+
+        Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
+        Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));
+        Assert.That(forwardTrigger.GetComponents<CanonicalPassage>(), Has.Length.EqualTo(1));
+        Assert.That(reverseTrigger.GetComponents<CanonicalPassage>(), Has.Length.EqualTo(1));
+        Assert.That(forwardTrigger.GetComponents<Component>(), Has.Length.EqualTo(5));
+        Assert.That(reverseTrigger.GetComponents<Component>(), Has.Length.EqualTo(5));
+
+        Assert.That(forwardPassage.Definition, Is.Not.Null);
+        Assert.That(reversePassage.Definition, Is.Not.Null);
+        Assert.That(forwardPassage.Definition.StableId, Is.EqualTo("passage.music-room.library"));
+        Assert.That(reversePassage.Definition.StableId, Is.EqualTo("passage.library.music-room"));
+        Assert.That(forwardPassage.Definition.LegacyDoorId, Is.EqualTo(forwardTrigger.DoorName));
+        Assert.That(reversePassage.Definition.LegacyDoorId, Is.EqualTo(reverseTrigger.DoorName));
+        Assert.That(forwardPassage.Definition.SourceRoom, Is.SameAs(musicView.Definition));
+        Assert.That(forwardPassage.Definition.DestinationRoom, Is.SameAs(libraryView.Definition));
+        Assert.That(reversePassage.Definition.SourceRoom, Is.SameAs(libraryView.Definition));
+        Assert.That(reversePassage.Definition.DestinationRoom, Is.SameAs(musicView.Definition));
+        Assert.That(forwardPassage.Definition.Reverse, Is.SameAs(reversePassage.Definition));
+        Assert.That(reversePassage.Definition.Reverse, Is.SameAs(forwardPassage.Definition));
+        Assert.That(
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                forwardPassage.Definition,
+                out string forwardDefinitionGuid,
+                out long forwardDefinitionFileId),
+            Is.True);
+        Assert.That(
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                reversePassage.Definition,
+                out string reverseDefinitionGuid,
+                out long reverseDefinitionFileId),
+            Is.True);
+        Assert.That(forwardDefinitionGuid, Is.EqualTo("aefe77f20874eb81b83fccb6ff5b8046"));
+        Assert.That(reverseDefinitionGuid, Is.EqualTo("3a641d5febbfd7aec481ada678ba9fe4"));
+        Assert.That(forwardDefinitionFileId, Is.EqualTo(11400000L));
+        Assert.That(reverseDefinitionFileId, Is.EqualTo(11400000L));
+
+        Assert.That(forwardPassage.SourceRoomView, Is.SameAs(musicView));
+        Assert.That(reversePassage.SourceRoomView, Is.SameAs(libraryView));
+        Assert.That(forwardPassage.ReversePassage, Is.SameAs(reversePassage));
+        Assert.That(reversePassage.ReversePassage, Is.SameAs(forwardPassage));
+        Assert.That(forwardPassage.ApproachAnchor, Is.Not.Null);
+        Assert.That(forwardPassage.ArrivalAnchor, Is.Not.Null);
+        Assert.That(reversePassage.ApproachAnchor, Is.Not.Null);
+        Assert.That(reversePassage.ArrivalAnchor, Is.Not.Null);
+        AssertVector2Within(
+            forwardPassage.ApproachAnchor.LogicalPosition,
+            new Vector2(7.439471f, -2.846709f),
+            0.0001f,
+            "passive Music-to-Library approach reference");
+        AssertVector2Within(
+            forwardPassage.ArrivalAnchor.LogicalPosition,
+            new Vector2(-7.244175f, -2.799095f),
+            0.0001f,
+            "passive Music-to-Library arrival reference");
+        AssertVector2Within(
+            reversePassage.ApproachAnchor.LogicalPosition,
+            new Vector2(-7.244175f, -2.799095f),
+            0.0001f,
+            "passive Library-to-Music approach reference");
+        AssertVector2Within(
+            reversePassage.ArrivalAnchor.LogicalPosition,
+            new Vector2(7.439471f, -2.846709f),
+            0.0001f,
+            "passive Library-to-Music arrival reference");
+        AssertVector2Within(
+            forwardPassage.ApproachAnchor.LogicalPosition,
+            reversePassage.ArrivalAnchor.LogicalPosition,
+            0.0001f,
+            "Music Room passive reciprocal reference");
+        AssertVector2Within(
+            reversePassage.ApproachAnchor.LogicalPosition,
+            forwardPassage.ArrivalAnchor.LogicalPosition,
+            0.0001f,
+            "Library passive reciprocal reference");
+
+        Assert.That(forwardPassage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+        Assert.That(reversePassage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+        Assert.That((int)forwardPassage.AnchorMigrationStage, Is.Zero);
+        Assert.That((int)reversePassage.AnchorMigrationStage, Is.Zero);
+        Assert.That(forwardPassage.HasValidAnchorMigrationStage, Is.True);
+        Assert.That(reversePassage.HasValidAnchorMigrationStage, Is.True);
+        Assert.That(forwardPassage.UsesAuthoredApproach, Is.False);
+        Assert.That(forwardPassage.UsesAuthoredArrival, Is.False);
+        Assert.That(reversePassage.UsesAuthoredApproach, Is.False);
+        Assert.That(reversePassage.UsesAuthoredArrival, Is.False);
+        Assert.That(forwardPassage.HasGameContext, Is.True);
+        Assert.That(reversePassage.HasGameContext, Is.True);
+        Assert.That(forwardPassage.enabled, Is.True);
+        Assert.That(reversePassage.enabled, Is.True);
+        Assert.That(forwardPassage.isActiveAndEnabled, Is.EqualTo(musicVisible));
+        Assert.That(reversePassage.isActiveAndEnabled, Is.EqualTo(libraryVisible));
+        Assert.That(GetPrivateField<CanonicalPassage>(forwardTrigger, "canonicalPassage"), Is.Null);
+        Assert.That(GetPrivateField<CanonicalPassage>(reverseTrigger, "canonicalPassage"), Is.Null);
+        Assert.That(
+            FindInActiveScene<DoorTriggerNavigation>()
+                .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
+            Is.EqualTo(4),
+            "The passive Music/Library pair must not add canonical callers.");
+
+        Chateau.Architecture.ValidationReport forwardReport = new Chateau.Architecture.ValidationReport();
+        Chateau.Architecture.ValidationReport reverseReport = new Chateau.Architecture.ValidationReport();
+        forwardPassage.ValidateConfiguration(forwardReport);
+        reversePassage.ValidateConfiguration(reverseReport);
+        Assert.That(forwardReport.Messages, Is.Empty);
+        Assert.That(reverseReport.Messages, Is.Empty);
+
+        Chateau.Architecture.GameRoot gameRoot = RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+        List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
+            GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
+        Assert.That(sceneBehaviours.Count(item => item == forwardPassage), Is.EqualTo(1));
+        Assert.That(sceneBehaviours.Count(item => item == reversePassage), Is.EqualTo(1));
+    }
+
     private static void AssertDrawingMusicAuthoredAnchorPassages(
         DoorTriggerNavigation forwardTrigger,
         DoorTriggerNavigation reverseTrigger,
@@ -5568,7 +5876,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage, Is.Not.Null);
         Assert.That(drawingView, Is.Not.Null);
         Assert.That(musicView, Is.Not.Null);
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(4));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(6));
 
         Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
         Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));
