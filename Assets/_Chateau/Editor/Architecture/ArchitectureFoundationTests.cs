@@ -583,6 +583,8 @@ public sealed class ArchitectureFoundationTests
         string chapter1Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs");
         string doorbellText = File.ReadAllText("Assets/Scripts/Story/DoorbellSystem.cs");
         string chapter1ActionText = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs");
+        string timeSettingsText = File.ReadAllText("Assets/Scripts/Story/ChapterTimeSettingsUI.cs");
+        string timeSettingsMetaText = File.ReadAllText("Assets/Scripts/Story/ChapterTimeSettingsUI.cs.meta");
         Assert.That(chapter1Text, Does.Not.Contain("FindAnyObjectByType<Chapter1InteractionHUD>"));
         Assert.That(chapter1Text, Does.Not.Contain("AddComponent<Chapter1InteractionHUD>"));
         Assert.That(chapter1Text, Does.Not.Contain("createRuntimeHud"));
@@ -610,6 +612,19 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Not.Contain("GetRuntimeCoatSprite"));
         Assert.That(chapter1Text, Does.Not.Contain("TryCompleteChapterFromDrawingRoomExit"));
         Assert.That(chapter1ActionText, Does.Not.Contain("DrawingRoomExit"));
+        Assert.That(timeSettingsMetaText, Does.Contain("guid: 12bd9a3afa94b05b1e9ce52146c9c7f4"));
+        Assert.That(controllerDocument, Does.Contain("timeSettingsUI: {fileID: 0}"));
+        Assert.That(sceneText, Does.Not.Contain("guid: 12bd9a3afa94b05b1e9ce52146c9c7f4"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Canvas_ChapterTimeSettings"));
+        Assert.That(sceneText, Does.Not.Contain("m_Name: Text_CurrentGameTime"));
+        Assert.That(chapter1Text, Does.Contain("FindAnyObjectByType<ChapterTimeSettingsUI>"));
+        Assert.That(chapter1Text, Does.Contain("gameObject.AddComponent<ChapterTimeSettingsUI>()"));
+        Assert.That(timeSettingsText, Does.Contain("[SerializeField] private ChapterClock chapterClock"));
+        Assert.That(timeSettingsText, Does.Contain("FindAnyObjectByType<ChapterClock>"));
+        Assert.That(timeSettingsText, Does.Contain("GameObject.Find(\"Canvas_ChapterTimeSettings\")"));
+        Assert.That(timeSettingsText, Does.Contain("new GameObject(\"Canvas_ChapterTimeSettings\""));
+        Assert.That(timeSettingsText, Does.Contain("new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI))"));
+        Assert.That(timeSettingsText, Does.Contain("clockText.gameObject.AddComponent<Shadow>()"));
     }
 
     [Test]
