@@ -215,6 +215,11 @@ public sealed class ArchitectureFoundationTests
         Assert.That(speechText, Does.Not.Contain("DialogueSpeechService FindOrCreate"));
         Assert.That(subtitleText, Does.Not.Contain("SubtitleService FindOrCreate"));
         Assert.That(speechText, Does.Not.Contain("SubtitleService.FindOrCreate"));
+        Assert.That(subtitleText, Does.Not.Contain("Resources.Load<SubtitleLineBank>"));
+        Assert.That(subtitleText, Does.Not.Contain("lineBankResourcePath"));
+        Assert.That(subtitleText, Does.Not.Contain("FindAnyObjectByType<RoomNavigationManager>"));
+        Assert.That(subtitleText, Does.Not.Contain("ResolveReferences"));
+        Assert.That(subtitleText, Does.Contain("PreparePresentation"));
         Assert.That(chapter1Text, Does.Not.Contain("DialogueSpeechService.FindOrCreate"));
         Assert.That(chapter1Text, Does.Not.Contain("SubtitleService.FindOrCreate"));
         Assert.That(chapter2Text, Does.Not.Contain("DialogueSpeechService.FindOrCreate"));
@@ -257,6 +262,10 @@ public sealed class ArchitectureFoundationTests
         Assert.That(playbackText, Does.Not.Contain("EnsureAudioSource"));
         Assert.That(playbackText, Does.Not.Contain("GameAudioSettings.EnsureBinding(audioSource"));
         Assert.That(playbackText, Does.Contain("audioVolumeBinding.Configure(audioSource, GameAudioChannel.Dialogue, sourceBaseVolume)"));
+        Assert.That(playbackText, Does.Not.Contain("Resources.Load<GuestVoiceLineCatalog>"));
+        Assert.That(playbackText, Does.Not.Contain("catalogResourcePath"));
+        Assert.That(playbackText, Does.Not.Contain("FindAnyObjectByType<RoomNavigationManager>"));
+        Assert.That(playbackText, Does.Not.Contain("ResolveReferences"));
         Assert.That(indicatorText, Does.Not.Contain("SpeakingCharacterIndicator FindOrCreate"));
         Assert.That(indicatorText, Does.Not.Contain("HideAnyCurrent"));
         Assert.That(dialogueText, Does.Not.Contain("StopAnyCurrentSpeech"));

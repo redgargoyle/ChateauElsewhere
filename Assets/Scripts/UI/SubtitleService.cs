@@ -20,7 +20,6 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
     private const string LineTextName = "Text_SubtitleLine";
     private const string SkipButtonName = "Button_SubtitleSkip";
     private const string SkipButtonLabelName = "Text_SubtitleSkip";
-    private const string DefaultLineBankResourcePath = "UI/SubtitleLineBank";
     private const float CharactersPerSecond = 24f;
 
     private struct QueuedSubtitle
@@ -34,7 +33,6 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
     }
 
     [SerializeField] private SubtitleLineBank lineBank;
-    [SerializeField] private string lineBankResourcePath = DefaultLineBankResourcePath;
     [SerializeField] private bool subtitleDebugMode;
     [SerializeField] private GuestVoiceLinePlayback voicePlayback;
     [SerializeField] private SpeakingCharacterIndicator speakingIndicator;
@@ -66,7 +64,7 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
 
     public void ShowLine(string lineId, string speakerOverride, string textOverride, bool? requireAdvanceOverride = null)
     {
-        ResolveReferences();
+        PreparePresentation();
 
         if (!TryResolveLine(
                 lineId,
@@ -100,7 +98,7 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
 
     public void ShowLine(string lineId, string speaker, string text)
     {
-        ResolveReferences();
+        PreparePresentation();
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -112,7 +110,7 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
 
     public void ShowPersistentLine(string lineId, string speaker, string text)
     {
-        ResolveReferences();
+        PreparePresentation();
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -131,13 +129,13 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
         out float minDuration,
         out float maxDuration)
     {
-        ResolveReferences();
+        PreparePresentation();
         return TryResolveLine(lineId, speakerOverride, textOverride, out _, out speaker, out text, out minDuration, out maxDuration, out _);
     }
 
     public void ShowSpeechLine(string lineId, string speaker, string text, bool showSkipButton, Action onSkip)
     {
-        ResolveReferences();
+        PreparePresentation();
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -213,17 +211,8 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
         }
     }
 
-    private void ResolveReferences()
+    private void PreparePresentation()
     {
-        if (lineBank == null)
-        {
-            string resourcePath = string.IsNullOrWhiteSpace(lineBankResourcePath)
-                ? DefaultLineBankResourcePath
-                : lineBankResourcePath.Trim();
-            lineBank = Resources.Load<SubtitleLineBank>(resourcePath);
-        }
-
-        ResolveRoomNavigation();
         RegisterRoomChangeHandler();
         EnsureUI();
     }
@@ -594,14 +583,6 @@ public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
         if (!visible)
         {
             ConfigureSkipButton(false, null);
-        }
-    }
-
-    private void ResolveRoomNavigation()
-    {
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         }
     }
 

@@ -5,10 +5,8 @@ using UnityEngine;
 public sealed class GuestVoiceLinePlayback : MonoBehaviour, Chateau.Architecture.IArchitectureValidatable
 {
     private const string PlayerObjectName = "GuestVoiceLinePlayback";
-    private const string DefaultCatalogResourcePath = "Audio/GuestVoiceLineCatalog";
 
     [SerializeField] private GuestVoiceLineCatalog catalog;
-    [SerializeField] private string catalogResourcePath = DefaultCatalogResourcePath;
     [SerializeField, Range(0f, 1f)] private float baseVolume = 1f;
     [SerializeField] private bool logMissingVoiceLines;
 
@@ -92,26 +90,12 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour, Chateau.Architecture
         playbackRoom = string.Empty;
     }
 
-    private void ResolveReferences()
-    {
-        if (catalog == null)
-        {
-            string resourcePath = string.IsNullOrWhiteSpace(catalogResourcePath)
-                ? DefaultCatalogResourcePath
-                : catalogResourcePath.Trim();
-            catalog = Resources.Load<GuestVoiceLineCatalog>(resourcePath);
-        }
-
-        ResolveRoomNavigation();
-        RegisterRoomChangeHandler();
-    }
-
     private bool TryResolveClipForDialogue(string lineId, string speaker, string text, out AudioClip clip, out float lineVolume)
     {
         clip = null;
         lineVolume = 1f;
 
-        ResolveReferences();
+        RegisterRoomChangeHandler();
 
         if (catalog == null ||
             !TryResolveAudioLineId(lineId, speaker, text, out string audioLineId))
@@ -205,14 +189,6 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour, Chateau.Architecture
         if (navigationManager == null)
         {
             report.AddError("GuestVoiceLinePlayback requires its serialized RoomNavigationManager.", this);
-        }
-    }
-
-    private void ResolveRoomNavigation()
-    {
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
         }
     }
 

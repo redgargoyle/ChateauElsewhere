@@ -61,6 +61,7 @@ Only after Phase 2 passes:
 - one voice-playback owner, dedicated dialogue AudioSource, and speaking-indicator owner are serialized with explicit assets/navigation; both root factories are removed while lazy subtitle/bubble child-view creation remains deliberate;
 - DialogueSpeechService owns the exact serialized Butler input edge, and the primary voice AudioSource owns one serialized Dialogue-channel volume component; real cataloged playback/input behavior is lifecycle-gated while transient overlap playback remains dynamic;
 - blocking dialogue uses one token-safe service-owned input lease; cancellation releases before transition state is applied, stale routines cannot release a replacement lease, and shutdown/disable force a safe release;
+- SubtitleService and GuestVoiceLinePlayback use validated serialized line-bank/catalog/navigation/source dependencies without resource or scene-search repair; lazy subtitle presentation and transient overlap playback remain separately gated;
 - SubtitleService is bound to the shared speaking-indicator owner; redundant static cleanup searches are removed from dialogue, subtitle, and Chapter 2 paths;
 - ChapterManager owns serialized dialogue/subtitle services and one direct debug-transition cleanup command; settings and teleports delegate to it, and the final static voice-stop/global subtitle searches are removed;
 - the inert Chapter 1 HUD owner is serialized on the Chapter 1 controller; its lookup/factory/flag are removed while lazy canvas/text presentation remains deliberate;
