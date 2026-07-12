@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Chateau.World.Navigation;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
+using CanonicalPassage = Chateau.World.Rooms.Passages.Passage;
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasRenderer))]
@@ -49,6 +51,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     [Header("References")]
     [SerializeField] private RoomNavigationManager navigationManager;
+    [SerializeField] private CanonicalPassage canonicalPassage;
     [SerializeField] private Image image;
     [SerializeField] private AudioSource doorOpenAudioSource;
     [SerializeField] private Transform player;
@@ -266,6 +269,15 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         CancelPendingPlayerApproach();
+
+        if (canonicalPassage != null)
+        {
+            bool soundStarted = TryPlayNavigationSoundNow();
+            INavigationService navigationService = navigationManager;
+            bool didNavigate = navigationService.TryTraverse(canonicalPassage);
+            StopNavigationSoundIfNavigationFailed(soundStarted, didNavigate);
+            return;
+        }
 
         if (useCameraSequence)
         {

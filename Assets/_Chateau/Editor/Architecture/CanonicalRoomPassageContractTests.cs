@@ -149,10 +149,12 @@ public sealed class CanonicalRoomPassageContractTests
             "The drawing-room RoomView should occur only on its owner, document header, GameRoot registration, and source Passage.");
         Assert.That(outboundObject, Does.Contain("- component: {fileID: 4100000011}"));
         Assert.That(reverseObject, Does.Contain("- component: {fileID: 4100000012}"));
-        Assert.That(CountOccurrences(gameplayText, "4100000011"), Is.EqualTo(4),
-            "The forward Passage should occur only on its owner, header, GameRoot registration, and reciprocal link.");
-        Assert.That(CountOccurrences(gameplayText, "4100000012"), Is.EqualTo(4),
-            "The reverse Passage should occur only on its owner, header, GameRoot registration, and reciprocal link.");
+        Assert.That(CountOccurrences(gameplayText, "4100000011"), Is.EqualTo(5),
+            "The forward Passage should occur only on its owner, header, GameRoot registration, reciprocal link, and trigger caller binding.");
+        Assert.That(CountOccurrences(gameplayText, "4100000012"), Is.EqualTo(5),
+            "The reverse Passage should occur only on its owner, header, GameRoot registration, reciprocal link, and trigger caller binding.");
+        Assert.That(CountOccurrences(gameplayText, "canonicalPassage: {fileID:"), Is.EqualTo(2),
+            "Only the first reciprocal route may cut over to canonical traversal at this gate.");
         Assert.That(CountOccurrences(gameplayText, "player: {fileID: 81962843}"), Is.EqualTo(2),
             "Only the characterized reciprocal trigger pair may bind the exact Player transform at this gate.");
         Assert.That(CountOccurrences(gameplayText, "81962843"), Is.EqualTo(3),
@@ -182,6 +184,13 @@ public sealed class CanonicalRoomPassageContractTests
             legacyTriggerDocuments.All(document => document.Contains("stairwaySoundCatalog: {fileID: 0}")),
             Is.True,
             "The door-only binding slice must not mutate stairway audio ownership.");
+        Assert.That(
+            legacyTriggerDocuments.Count(document => document.Contains("canonicalPassage: {fileID:")),
+            Is.EqualTo(2));
+        Assert.That(
+            legacyTriggerDocuments.Count(document => !document.Contains("canonicalPassage:")),
+            Is.EqualTo(43),
+            "Every unmigrated trigger must deserialize a null canonical edge and retain the legacy fallback.");
         Assert.That(playerTransform, Does.Contain(
             "m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
@@ -210,14 +219,16 @@ public sealed class CanonicalRoomPassageContractTests
             "Grand Entrance Hall",
             "GEH_Drawing_Room",
             "Drawing Room",
-            "109889179");
+            "109889179",
+            "4100000011");
         AssertLegacyDoorTriggerCompatibilityBound(
             reverseTrigger,
             "2300000100",
             "Drawing Room",
             "DrawingRoom_GEH",
             "Grand Entrance Hall",
-            "2300000103");
+            "2300000103",
+            "4100000012");
     }
 
     [Test]
@@ -540,8 +551,18 @@ public sealed class CanonicalRoomPassageContractTests
             "            true);"));
         Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private CanonicalRoomDefinition"));
         Assert.That(navigationManagerText, Does.Not.Contain("[SerializeField] private Passage"));
-        Assert.That(doorTriggerText, Does.Not.Contain("INavigationService"));
-        Assert.That(doorTriggerText, Does.Not.Contain("TryTraverse"));
+        Assert.That(doorTriggerText, Does.Contain("using Chateau.World.Navigation;"));
+        Assert.That(doorTriggerText, Does.Contain("[SerializeField] private CanonicalPassage canonicalPassage;"));
+        Assert.That(doorTriggerText, Does.Contain("INavigationService navigationService = navigationManager;"));
+        Assert.That(doorTriggerText, Does.Contain("navigationService.TryTraverse(canonicalPassage)"));
+        Assert.That(doorTriggerText, Does.Contain(
+            "navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom)"));
+        Assert.That(
+            typeof(DoorTriggerNavigation).GetFields(PrivateInstance).Count(field => field.FieldType == typeof(Passage)),
+            Is.EqualTo(1));
+        Assert.That(
+            typeof(DoorTriggerNavigation).GetFields(PrivateInstance).Count(field => field.FieldType == typeof(INavigationService)),
+            Is.Zero);
 
         GameObject unboundOwner = new GameObject("UnboundNavigationFacadeContract");
 
@@ -588,7 +609,8 @@ public sealed class CanonicalRoomPassageContractTests
         string sourceRoom,
         string doorName,
         string destinationRoom,
-        string imageFileId)
+        string imageFileId,
+        string canonicalPassageFileId)
     {
         Assert.That(document, Does.Contain($"m_GameObject: {{fileID: {gameObjectFileId}}}"));
         Assert.That(document, Does.Contain(
@@ -601,6 +623,7 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(document, Does.Contain("triggerKind: 0"));
         Assert.That(document, Does.Contain("stairwayDirection: 0"));
         Assert.That(document, Does.Contain("navigationManager: {fileID: 1878886997}"));
+        Assert.That(document, Does.Contain($"canonicalPassage: {{fileID: {canonicalPassageFileId}}}"));
         Assert.That(document, Does.Contain($"image: {{fileID: {imageFileId}}}"));
         Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
         Assert.That(document, Does.Contain("player: {fileID: 81962843}"));

@@ -40,7 +40,7 @@ Assets/Scripts/Navigation/DoorButton.cs,190,3869168650c8132e207fc2bc1eb1329c690b
 Assets/Scripts/Navigation/DoorCameraSequence.cs,92,28d4de65604ca4cc675145e66b019bf07af5c0ee060389ed1e51b8022a02664e,0,0,0,0,0,0,
 Assets/Scripts/Navigation/DoorDataParser.cs,173,fc0de0dbfafea306f2432a283c6e6d5af46c308395c7687ef3981b292cb33a63,0,0,0,0,0,0,
 Assets/Scripts/Navigation/DoorPromptSequenceController.cs,274,1df3a04ad7b861d35720eec5da8c375cc92e39b8eba45ff911ee0e9487acc64f,3,1,1,0,0,0,DoorPromptSequenceController
-Assets/Scripts/Navigation/DoorTriggerNavigation.cs,1411,86ff517a0242de06076657f1bdb88e873ce4d419eea5b0181b883764c858cece,4,2,0,0,1,0,DoorTriggerNavigation
+Assets/Scripts/Navigation/DoorTriggerNavigation.cs,1423,37a5cc3a84937d8946557dc6b2e12b3a730ae92c24e6ebea61f18ca45c3246c6,4,2,0,0,1,0,DoorTriggerNavigation
 Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs,179,700da61bfec106c114c48f9be426c4581299bfdf5bd1d1486bb0920867790c5b,0,0,0,0,0,0,ObjectMovementBlocker2D
 Assets/Scripts/Navigation/RoomContentGroup.cs,256,2e326000243b12f6bf243bb6d88342100cde82a0b9a1d96d312e6ca1f80a96f8,0,0,0,0,0,0,RoomContentGroup
 Assets/Scripts/Navigation/RoomNavigationManager.cs,1400,978d7e7ef83a1d42efa5e2adf2bb4bd1b2fa199df16955803f579b8b0bc2baca,16,3,1,0,0,0,

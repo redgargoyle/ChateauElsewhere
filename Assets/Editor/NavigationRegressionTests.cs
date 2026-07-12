@@ -551,6 +551,7 @@ public class NavigationRegressionTests
         Assert.That(outboundTrigger, Does.Contain("requirePlayerInSourceRoom: 1"));
         Assert.That(outboundTrigger, Does.Contain("useCameraSequence: 0"));
         Assert.That(outboundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+        Assert.That(outboundTrigger, Does.Contain("canonicalPassage: {fileID: 4100000011}"));
         Assert.That(outboundTrigger, Does.Contain("image: {fileID: 109889179}"));
         Assert.That(outboundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
         Assert.That(outboundTrigger, Does.Contain("player: {fileID: 81962843}"));
@@ -606,6 +607,7 @@ public class NavigationRegressionTests
         Assert.That(reverseTrigger, Does.Contain("requirePlayerInSourceRoom: 1"));
         Assert.That(reverseTrigger, Does.Contain("useCameraSequence: 0"));
         Assert.That(reverseTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+        Assert.That(reverseTrigger, Does.Contain("canonicalPassage: {fileID: 4100000012}"));
         Assert.That(reverseTrigger, Does.Contain("image: {fileID: 2300000103}"));
         Assert.That(reverseTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
         Assert.That(reverseTrigger, Does.Contain("player: {fileID: 81962843}"));
@@ -647,11 +649,22 @@ public class NavigationRegressionTests
             Assert.That(tryTraverseBody, Does.Not.Contain(forbiddenFacadeDiscovery[i]));
             Assert.That(currentDefinitionBody, Does.Not.Contain(forbiddenFacadeDiscovery[i]));
         }
+        string triggerActivateBody = ExtractMethodBody(triggerText, "private void ActivateDoor(bool allowPlayerApproach");
+        Assert.That(Regex.Matches(triggerActivateBody, @"\bTryTraverse\s*\(").Count, Is.EqualTo(1));
+        Assert.That(Regex.Matches(triggerActivateBody, @"\bMoveThroughInspectorDoor\s*\(").Count, Is.EqualTo(1));
+        Assert.That(Regex.Matches(triggerActivateBody, @"\bOpenDoorFromCurrentRoom\s*\(").Count, Is.EqualTo(1));
+        Assert.That(triggerActivateBody.IndexOf("if (canonicalPassage != null)", System.StringComparison.Ordinal),
+            Is.LessThan(triggerActivateBody.IndexOf("if (useCameraSequence)", System.StringComparison.Ordinal)));
+        Assert.That(triggerActivateBody, Does.Contain("INavigationService navigationService = navigationManager;"));
+        Assert.That(triggerActivateBody, Does.Contain("bool didNavigate = navigationService.TryTraverse(canonicalPassage);"));
+        Assert.That(triggerActivateBody, Does.Contain("StopNavigationSoundIfNavigationFailed(soundStarted, didNavigate);"));
+        Assert.That(triggerActivateBody, Does.Not.Contain("SetCurrentRoom"));
         Assert.That(triggerText, Does.Contain("MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom)"));
         Assert.That(triggerText, Does.Not.Contain("TryMoveThroughDoor"));
-        Assert.That(triggerText, Does.Not.Contain("INavigationService"));
-        Assert.That(triggerText, Does.Not.Contain("TryTraverse"));
-        Assert.That(triggerText, Does.Not.Contain("Chateau.World.Rooms.Passages"));
+        Assert.That(triggerText, Does.Contain("[SerializeField] private CanonicalPassage canonicalPassage;"));
+        Assert.That(triggerText, Does.Not.Contain("[SerializeField] private INavigationService"));
+        Assert.That(triggerText, Does.Not.Contain("GetComponent<CanonicalPassage>"));
+        Assert.That(triggerText, Does.Not.Contain("FindObjectsByType<CanonicalPassage>"));
         Assert.That(legacyDoorDataText, Does.Not.Contain("GEH_Drawing_Room:"),
             "The forward passage must remain provably independent of the incomplete legacy doors.txt graph.");
         Assert.That(legacyDoorDataText, Does.Contain("DrawingRoom_GEH: Grand Entrance Hall"),
