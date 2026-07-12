@@ -254,7 +254,7 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("monsterObject.transform.position = basePosition + GetMonsterRunShakeOffset(monsterRunAnimationElapsedSeconds)"));
         Assert.That(stingerText, Does.Contain("monsterObject.transform.position = targetPosition"));
         Assert.That(stingerText, Does.Match(@"(?s)yield return MoveMonsterToNextFreezeTarget\(cycleTimings\[i\]\.RunSeconds\);\s*ApplyMonsterRoomVisibility\(\);\s*if"), "The violin should not stop between monster run and freeze beats.");
-        Assert.That(Directory.Exists(Chapter2MonsterArmSwingResourcePath), Is.True, "Monster run sprites should be available from Resources for the runtime-created stinger component.");
+        Assert.That(Directory.Exists(Chapter2MonsterArmSwingResourcePath), Is.True, "Monster run sprites should be available from Resources for the serialized stinger owner.");
         Assert.That(Directory.GetFiles(Chapter2MonsterArmSwingResourcePath, "*.png").Length, Is.GreaterThanOrEqualTo(8), "Monster arm swing animation should have at least the approved 8-frame sprite cycle.");
         Assert.That(File.Exists(Chapter2MonsterArmSwingClipPath), Is.True, "Monster arm swing animation clip should be kept with the generated frame library.");
     }

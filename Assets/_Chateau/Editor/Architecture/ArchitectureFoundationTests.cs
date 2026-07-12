@@ -165,13 +165,13 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("guestPanic: {fileID: 3301000008}"));
         Assert.That(sceneText, Does.Contain("guestSearch: {fileID: 3301000009}"));
         Assert.That(stingerDocument, Does.Contain("monsterObject: {fileID: 3700000000}"));
-        Assert.That(stingerDocument, Does.Contain("monsterObjectName: Ch2_Monster"));
+        Assert.That(stingerDocument, Does.Not.Contain("monsterObjectName"));
         Assert.That(stingerDocument, Does.Contain("runStart: {fileID: 98514617}"));
         Assert.That(stingerDocument, Does.Contain("runTarget: {fileID: 382498960}"));
         Assert.That(stingerDocument, Does.Contain("navigationManager: {fileID: 1878886997}"));
         Assert.That(stingerDocument, Does.Contain("monsterImage: {fileID: 3700000003}"));
         Assert.That(stingerDocument, Does.Contain("monsterSpriteRenderer: {fileID: 0}"));
-        Assert.That(stingerDocument, Does.Contain("createPlaceholderMonsterIfMissing: 1"));
+        Assert.That(stingerDocument, Does.Not.Contain("createPlaceholderMonsterIfMissing"));
         Assert.That(monsterGameObjectDocument, Does.Contain("m_Name: Ch2_Monster"));
         Assert.That(monsterGameObjectDocument, Does.Contain("- component: {fileID: 3700000003}"));
         Assert.That(monsterTransformDocument, Does.Contain("m_Father: {fileID: 2300000006}"));
@@ -196,9 +196,18 @@ public sealed class ArchitectureFoundationTests
         Assert.That(runTargetAnchorDocument, Does.Contain("anchorId: Ch2_MonsterFreezeTarget"));
         Assert.That(runTargetAnchorDocument, Does.Contain("roomId: Drawing Room"));
         Assert.That(sceneText, Does.Not.Contain("m_Name: Chapter2_MonsterPlaceholder_Runtime"));
-        Assert.That(stingerText, Does.Contain("FindRoomAnchor"));
-        Assert.That(stingerText, Does.Contain("FindSceneMonsterObject"));
-        Assert.That(stingerText, Does.Contain("CreatePlaceholderMonster"));
+        Assert.That(stingerText, Does.Not.Contain("FindRoomAnchor"));
+        Assert.That(stingerText, Does.Not.Contain("FindSceneMonsterObject"));
+        Assert.That(stingerText, Does.Not.Contain("CreatePlaceholderMonster"));
+        Assert.That(stingerText, Does.Not.Contain("FindAnyObjectByType"));
+        Assert.That(stingerText, Does.Not.Contain("FindObjectsByType"));
+        Assert.That(stingerText, Does.Not.Contain("GetComponentInChildren<Image>"));
+        Assert.That(stingerText, Does.Not.Contain("GetComponentInChildren<SpriteRenderer>"));
+        Assert.That(stingerText, Does.Not.Contain("GameObject.CreatePrimitive"));
+        Assert.That(stingerText, Does.Contain("public override void ValidateConfiguration"));
+        Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized RoomNavigationManager."));
+        Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized monster object."));
+        Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires a serialized monster Image or SpriteRenderer."));
     }
 
     [Test]

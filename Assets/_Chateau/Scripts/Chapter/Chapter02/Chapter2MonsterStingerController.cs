@@ -12,7 +12,6 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     private static readonly int[] MonsterRunStutterFrameOrder = { 0, 3, 1, 5, 2, 6, 4, 7 };
 
     [SerializeField] private GameObject monsterObject;
-    [SerializeField] private string monsterObjectName = "Ch2_Monster";
     [SerializeField] private Transform runStart;
     [SerializeField] private Transform runTarget;
     [SerializeField] private RoomNavigationManager navigationManager;
@@ -48,7 +47,6 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     [SerializeField, Range(0.1f, 1f)] private float runSegmentDistanceScale = 0.65f;
     [SerializeField, Min(0.1f)] private float fallbackRunRightDistance = 4f;
     [SerializeField] private float maxVisibleSeconds = 12f;
-    [SerializeField] private bool createPlaceholderMonsterIfMissing = true;
 
     private Coroutine stingerRoutine;
     private bool isRunning;
@@ -62,6 +60,51 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     private float violinAudioBaseVolume = -1f;
 
     public bool IsRunning => isRunning || stingerRoutine != null;
+
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        base.ValidateConfiguration(report);
+
+        if (navigationManager == null)
+        {
+            report.AddError("Chapter2MonsterStingerController requires its serialized RoomNavigationManager.", this);
+        }
+
+        if (runStart == null)
+        {
+            report.AddError("Chapter2MonsterStingerController requires its serialized run-start anchor.", this);
+        }
+
+        if (runTarget == null)
+        {
+            report.AddError("Chapter2MonsterStingerController requires its serialized run-target anchor.", this);
+        }
+
+        if (monsterObject == null)
+        {
+            report.AddError("Chapter2MonsterStingerController requires its serialized monster object.", this);
+            return;
+        }
+
+        if (monsterImage == null && monsterSpriteRenderer == null)
+        {
+            report.AddError("Chapter2MonsterStingerController requires a serialized monster Image or SpriteRenderer.", this);
+        }
+
+        if (monsterImage != null &&
+            monsterImage.gameObject != monsterObject &&
+            !monsterImage.transform.IsChildOf(monsterObject.transform))
+        {
+            report.AddError("Chapter2MonsterStingerController monster Image must belong to its serialized monster object.", this);
+        }
+
+        if (monsterSpriteRenderer != null &&
+            monsterSpriteRenderer.gameObject != monsterObject &&
+            !monsterSpriteRenderer.transform.IsChildOf(monsterObject.transform))
+        {
+            report.AddError("Chapter2MonsterStingerController monster SpriteRenderer must belong to its serialized monster object.", this);
+        }
+    }
 
     private struct StingerCycleTiming
     {
@@ -274,32 +317,7 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
 
     private void ResolveReferences()
     {
-        if (navigationManager == null)
-        {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
-        }
-
-        if (runStart == null)
-        {
-            runStart = FindRoomAnchor("Ch2_MonsterRunStart");
-        }
-
-        if (runTarget == null)
-        {
-            runTarget = FindRoomAnchor("Ch2_MonsterFreezeTarget");
-        }
-
-        if (monsterObject == null)
-        {
-            monsterObject = FindSceneMonsterObject(monsterObjectName);
-        }
-
-        if (monsterObject == null && createPlaceholderMonsterIfMissing)
-        {
-            monsterObject = CreatePlaceholderMonster();
-        }
-
-        ResolveMonsterVisuals();
+        CaptureOriginalMonsterSprite();
         LoadMonsterRunSpritesIfNeeded();
         ResolveViolinAudioSource();
 
@@ -400,74 +418,6 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
 #endif
 
         return null;
-    }
-
-    private static Transform FindRoomAnchor(string anchorName)
-    {
-        RoomAnchor[] anchors = FindObjectsByType<RoomAnchor>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < anchors.Length; i++)
-        {
-            RoomAnchor anchor = anchors[i];
-
-            if (anchor == null)
-            {
-                continue;
-            }
-
-            if (string.Equals(anchor.AnchorId, anchorName, System.StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(anchor.name, anchorName, System.StringComparison.OrdinalIgnoreCase))
-            {
-                return anchor.transform;
-            }
-        }
-
-        return null;
-    }
-
-    private static GameObject FindSceneMonsterObject(string objectName)
-    {
-        if (string.IsNullOrWhiteSpace(objectName))
-        {
-            return null;
-        }
-
-        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < transforms.Length; i++)
-        {
-            Transform candidate = transforms[i];
-
-            if (candidate != null &&
-                string.Equals(candidate.name, objectName, System.StringComparison.OrdinalIgnoreCase))
-            {
-                return candidate.gameObject;
-            }
-        }
-
-        return null;
-    }
-
-    private void ResolveMonsterVisuals()
-    {
-        if (monsterObject == null)
-        {
-            return;
-        }
-
-        Transform monsterTransform = monsterObject.transform;
-
-        if (monsterImage == null || !monsterImage.transform.IsChildOf(monsterTransform))
-        {
-            monsterImage = monsterObject.GetComponentInChildren<Image>(true);
-        }
-
-        if (monsterSpriteRenderer == null || !monsterSpriteRenderer.transform.IsChildOf(monsterTransform))
-        {
-            monsterSpriteRenderer = monsterObject.GetComponentInChildren<SpriteRenderer>(true);
-        }
-
-        CaptureOriginalMonsterSprite();
     }
 
     private void CaptureOriginalMonsterSprite()
@@ -669,36 +619,6 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
         {
             monsterSpriteRenderer.sprite = originalMonsterSprite;
         }
-    }
-
-    private GameObject CreatePlaceholderMonster()
-    {
-        GameObject placeholder = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        placeholder.name = "Chapter2_MonsterPlaceholder_Runtime";
-        placeholder.transform.SetParent(transform, true);
-        placeholder.transform.localScale = new Vector3(0.65f, 1.45f, 0.65f);
-
-        Renderer placeholderRenderer = placeholder.GetComponent<Renderer>();
-
-        if (placeholderRenderer != null)
-        {
-            placeholderRenderer.material.color = new Color(0.06f, 0.04f, 0.05f, 1f);
-        }
-
-        Collider placeholderCollider = placeholder.GetComponent<Collider>();
-
-        if (placeholderCollider != null)
-        {
-            Destroy(placeholderCollider);
-        }
-
-        if (runStart != null)
-        {
-            placeholder.transform.position = runStart.position;
-        }
-
-        placeholder.SetActive(false);
-        return placeholder;
     }
 
     private void SubscribeToRoomChanges()

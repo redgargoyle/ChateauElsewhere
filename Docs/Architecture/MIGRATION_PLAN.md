@@ -55,6 +55,7 @@ Only after Phase 2 passes:
 - `RoomNavigationBootstrap` replaced by serialized GameRoot validation and removed;
 - `ChapterManager` top-level manager-stack self-creation fallback removed; the separately gated Chapter 2 controller factory is also removed;
 - exactly one inert `Chapter2Controller`, HUD, monster-stinger owner, panic owner, and guest-search owner serialized and explicitly wired; all five top-level Chapter 2 creation fallbacks are removed;
+- the monster stinger validates and directly uses its serialized monster, Drawing Room anchors, navigation, and Image; its structural searches, child-visual repair, and primitive placeholder are removed while audio/sprite/overlay presentation remains separately gated;
 - `Chapter2Controller` validates and directly uses its fourteen serialized stable dependencies; its monolithic `ResolveReferences` repair search is removed;
 - Chapter 2 clock-strike playback owns a dedicated serialized child `AudioSource`, Game-Sounds `GameAudioSourceVolume`, and imported clip; its resource load, runtime tone generator, source factory, and binding factory are removed;
 - every Chapter2Controller entry command accepts only its serialized ChapterManager (or a null convenience argument that keeps that owner); mismatched callers are rejected before any phase or world state changes;

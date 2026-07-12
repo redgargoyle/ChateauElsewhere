@@ -103,5 +103,5 @@ Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestFindAction.cs,397,c2c82c1
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs,2814,339937383a830fbe27785a43d6171ab8a6760e7f1258bfaca9b9e3df8cc3c674,6,3,1,2,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs,2745,663d7fdcc6b5cc17c96fdab797fba3881d94901103f711dfe58a23375606666a,6,0,2,3,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2InteractionHUD.cs,1104,b306a2c974e59660776ab815135ab52d0bcf9ac4ab307ec7f8ea3a7bb845bbe5,2,2,12,0,0,0,Chapter2InteractionHUD
-Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs,884,29fc29348e412f3eb6eacc1b37051069f51b2798aaf66b1fb0b7acd4085e6e42,3,3,0,2,0,0,
+Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs,804,04a746fe9af12589f0e5a47c388da17f6c4d0559dd684726806e27de89813677,0,3,0,2,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2PanicAnimationLibrary.cs,196,44f7512c3077178486a8d44ee20e05de7e9879a9c73f5fa6c936c9d1c9ce80ca,0,0,0,0,0,0,
