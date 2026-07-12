@@ -338,7 +338,7 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1UsesSerializedCoreReferencesWithoutDiscovery()
+    public void Chapter1UsesSerializedCoreReferencesAndCharacterizesManagerRebinding()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter1Document = ExtractDocument(sceneText, "--- !u!114 &3302000001");
@@ -418,6 +418,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Not.Contain("GameObject.Find(\"Player\")"));
         Assert.That(chapter1Text, Does.Not.Contain("FindPlayerMovement"));
         Assert.That(chapter1Text, Does.Contain("playerButlerReference = playerMovement != null ? playerMovement.gameObject : null"));
+        Assert.That(chapter1Text, Does.Contain("chapterManager = manager != null ? manager : chapterManager;"));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterManager."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterClock."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterEventScheduler."));

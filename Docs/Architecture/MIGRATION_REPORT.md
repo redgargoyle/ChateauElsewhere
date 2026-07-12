@@ -84,6 +84,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized Chapter 1's remaining core-reference repair: the resolved ChapterManager, clock, scheduler, camera, navigation, Player movement, and Butler root retain exact identities through repeated resolution, room travel, repeated Chapter 2 entry, and seven-PM staging.
 - Serialized Chapter 1's exact clock `3301000001`, camera `2050006783`, navigation `1878886997`, and Player movement `81962842` edges in its existing component document, with validation for the complete core graph and a derived Butler root.
 - Removed all Chapter 1 discovery for its manager, clock, scheduler, camera, navigation, and Player across reference resolution, projection, room checks, subscriptions, and guest-scale setup. The Butler root now derives only from serialized Player movement.
+- Characterized the final Chapter 1 core-graph ownership hole: `BeginChapter1` still replaces its serialized manager from a non-null caller, while valid startup and repeated transition lifecycles retain manager `3301000004`.
 
 ## Current static result
 
@@ -121,6 +122,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - Chapter 1 core-reference characterization passed its static null-edge/source-path guard and rendered multi-transition lifecycle; the full suite remained 191 passing / 49 known failures with an unchanged failure-name set;
 - Chapter 1 core-reference graft passed exact serialized-edge/configuration guards and the rendered multi-transition lifecycle; all 5,984 scene documents/roots remained ordered and only component `3302000001` changed; the full suite remained 191/49;
 - Chapter 1 core-reference cleanup passed zero-discovery source guards and the rendered multi-transition lifecycle; the full suite remained 191/49 with an unchanged failure-name set;
+- Chapter 1 manager-boundary characterization passed its source guard and rendered valid-manager lifecycle; the full suite remained 191/49;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
