@@ -368,6 +368,12 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Document, Does.Contain("playerMovement: {fileID: 81962842}"));
         Assert.That(chapter1Document, Does.Contain("playerButlerReference: {fileID: 0}"));
         Assert.That(chapter1Document, Does.Contain("frontDoorSceneAction: {fileID: 1180734300}"));
+        Assert.That(chapter1Document, Does.Contain("guestFootstepCatalog: {fileID: 0}"));
+        Assert.That(chapter1Document, Does.Contain("guestFootstepCatalogResourcePath: Audio/GuestFootstepCatalog"));
+        Assert.That(chapter1Document, Does.Not.Contain("guestEntranceSpawnPlacemark:"));
+        Assert.That(chapter1Document, Does.Not.Contain("entryRoomContent:"));
+        Assert.That(chapter1Document, Does.Not.Contain("drawingRoomContent:"));
+        Assert.That(chapter1Document, Does.Not.Contain("drawingRoomGuestPoints:"));
         Assert.That(hangerDocument, Does.Contain("m_Name: entrance_coat_hanger_0"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234993}"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234994}"));
@@ -473,6 +479,13 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Not.Contain("EnsureDoorAnswerTriggerCanReceiveClicks"));
         Assert.That(chapter1Text, Does.Not.Contain("GetDoorAnswerTriggerColliderSize"));
         Assert.That(chapter1Text, Does.Not.Contain("if (actionType == Chapter1SceneActionType.FrontDoor)"));
+        Assert.That(chapter1Text, Does.Contain("Resources.Load<GuestFootstepCatalog>"));
+        Assert.That(chapter1Text, Does.Contain("FindAnchor(pointName, drawingRoomId)"));
+        Assert.That(chapter1Text, Does.Contain("FindSceneObjectByExactName(pointName)"));
+        Assert.That(chapter1Text, Does.Contain("FindObjectsByType<RoomContentGroup>"));
+        Assert.That(chapter1Text, Does.Contain("FindAnchor(GuestEntranceSpawnPlacemarkId, entryRoomId)"));
+        Assert.That(chapter1Text, Does.Contain("FindAnchor(DrawingRoomDoorTargetAnchorId, entryRoomId)"));
+        Assert.That(chapter1Text, Does.Contain("FindObjectsByType<DoorTriggerNavigation>"));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterManager."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterClock."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized ChapterEventScheduler."));

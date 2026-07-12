@@ -80,6 +80,34 @@ public sealed class GameplayLifecycleCharacterizationTests
         BoxCollider2D authoredFrontDoorCollider = authoredFrontDoorTrigger.GetComponent<BoxCollider2D>();
         Chapter1SceneAction authoredFrontDoorAction = authoredFrontDoorTrigger.GetComponent<Chapter1SceneAction>();
         Chapter1SceneAction resolvedFrontDoorAction = GetPrivateField<Chapter1SceneAction>(arrival, "frontDoorSceneAction");
+        GuestFootstepCatalog resolvedGuestFootstepCatalog = GetPrivateField<GuestFootstepCatalog>(arrival, "guestFootstepCatalog");
+        Transform resolvedGuestEntranceSpawnPlacemark = GetPrivateField<Transform>(arrival, "guestEntranceSpawnPlacemark");
+        Transform authoredGuestEntranceSpawnPlacemark = FindInActiveScene<Transform>()
+            .Single(item => item.name == "Placemark_guests_entrance");
+        Transform characterizedDrawingRoomDoorTarget = FindInActiveScene<Transform>()
+            .Single(item => item.name == "GuestDrawingRoomDoorTarget");
+        RoomContentGroup characterizedEntranceRoomContent = FindInActiveScene<RoomContentGroup>()
+            .Single(item => item.RoomName == EntranceRoom);
+        RoomContentGroup characterizedDrawingRoomContent = FindInActiveScene<RoomContentGroup>()
+            .Single(item => item.RoomName == DrawingRoom);
+        Transform[] characterizedDrawingRoomGuestPoints = Enumerable.Range(1, 8)
+            .Select(index => FindInActiveScene<Transform>()
+                .Single(item => item.name == $"DrawingRoomGuestPoint_{index:00}"))
+            .ToArray();
+        Vector3[] expectedDrawingRoomGuestPointPositions =
+        {
+            new Vector3(-290.4f, -126.1f, -7691.114f),
+            new Vector3(-335.8f, -144.1f, -7691.114f),
+            new Vector3(-173.3f, -85.8f, -7691.114f),
+            new Vector3(-393f, -154.8f, -7691.114f),
+            new Vector3(-83f, -69f, -7691.114f),
+            new Vector3(53.3f, -97.8f, -7691.114f),
+            new Vector3(-257f, -72f, -7691.114f),
+            new Vector3(217.9f, -132f, -7691.114f)
+        };
+        int characterizedRoomAnchorCount = FindInActiveScene<RoomAnchor>().Length;
+        int characterizedRoomContentCount = FindInActiveScene<RoomContentGroup>().Length;
+        int characterizedFootstepCatalogCount = Resources.FindObjectsOfTypeAll<GuestFootstepCatalog>().Length;
         Transform entranceCoatHanger = FindInActiveScene<Transform>()
             .Single(item => item.name == "entrance_coat_hanger_0");
         SpriteRenderer entranceCoatHangerRenderer = entranceCoatHanger.GetComponent<SpriteRenderer>();
@@ -168,6 +196,50 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(authoredFrontDoorCollider.edgeRadius, Is.Zero.Within(0.0001f));
         Assert.That(GetPrivateValue<Chapter1SceneActionType>(authoredFrontDoorAction, "actionType"), Is.EqualTo(Chapter1SceneActionType.FrontDoor));
         Assert.That(GetPrivateField<Chapter1ArrivalController>(authoredFrontDoorAction, "arrivalController"), Is.SameAs(arrival));
+        Assert.That(resolvedGuestFootstepCatalog, Is.Not.Null);
+        Assert.That(AssetDatabase.GetAssetPath(resolvedGuestFootstepCatalog), Is.EqualTo("Assets/Resources/Audio/GuestFootstepCatalog.asset"));
+        Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(resolvedGuestFootstepCatalog)), Is.EqualTo("0e780686c6653db1a1c74916a591d484"));
+        Assert.That(
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                resolvedGuestFootstepCatalog,
+                out string guestFootstepCatalogGuid,
+                out long guestFootstepCatalogFileId),
+            Is.True);
+        Assert.That(guestFootstepCatalogGuid, Is.EqualTo("0e780686c6653db1a1c74916a591d484"));
+        Assert.That(guestFootstepCatalogFileId, Is.EqualTo(11400000L));
+        Assert.That(resolvedGuestEntranceSpawnPlacemark, Is.SameAs(authoredGuestEntranceSpawnPlacemark));
+        Assert.That(authoredGuestEntranceSpawnPlacemark.localPosition.x, Is.EqualTo(-7.216162f).Within(0.0001f));
+        Assert.That(authoredGuestEntranceSpawnPlacemark.localPosition.y, Is.EqualTo(-178f).Within(0.0001f));
+        Assert.That(authoredGuestEntranceSpawnPlacemark.localPosition.z, Is.EqualTo(-7691.114f).Within(0.001f));
+        Assert.That(authoredGuestEntranceSpawnPlacemark.localScale, Is.EqualTo(Vector3.one));
+        Assert.That(authoredGuestEntranceSpawnPlacemark.GetComponent<RoomAnchor>().AnchorId, Is.EqualTo("Placemark_guests_entrance"));
+        Assert.That(authoredGuestEntranceSpawnPlacemark.GetComponent<RoomAnchor>().RoomId, Is.EqualTo(EntranceRoom));
+        Assert.That(characterizedDrawingRoomDoorTarget.localPosition.x, Is.EqualTo(-704f).Within(0.0001f));
+        Assert.That(characterizedDrawingRoomDoorTarget.localPosition.y, Is.EqualTo(-116f).Within(0.0001f));
+        Assert.That(characterizedDrawingRoomDoorTarget.localPosition.z, Is.EqualTo(-7691.114f).Within(0.001f));
+        Assert.That(characterizedDrawingRoomDoorTarget.localScale, Is.EqualTo(new Vector3(1.5f, 1.5f, 1.5f)));
+        Assert.That(characterizedDrawingRoomDoorTarget.GetComponent<RoomAnchor>().AnchorId, Is.EqualTo("GuestDrawingRoomDoorTarget"));
+        Assert.That(characterizedDrawingRoomDoorTarget.GetComponent<RoomAnchor>().RoomId, Is.EqualTo(EntranceRoom));
+        Assert.That(InvokePrivateStringMethod<RoomContentGroup>(arrival, "FindRoomContentGroup", EntranceRoom), Is.SameAs(characterizedEntranceRoomContent));
+        Assert.That(InvokePrivateStringMethod<RoomContentGroup>(arrival, "FindRoomContentGroup", DrawingRoom), Is.SameAs(characterizedDrawingRoomContent));
+
+        for (int i = 0; i < characterizedDrawingRoomGuestPoints.Length; i++)
+        {
+            Transform guestPoint = characterizedDrawingRoomGuestPoints[i];
+            RoomAnchor guestPointAnchor = guestPoint.GetComponent<RoomAnchor>();
+            Assert.That(InvokePrivateIntMethod<Transform>(arrival, "FindDrawingRoomGuestPoint", i), Is.SameAs(guestPoint));
+            Assert.That(guestPoint.IsChildOf(characterizedDrawingRoomContent.transform), Is.True);
+            Assert.That(guestPoint.localPosition.x, Is.EqualTo(expectedDrawingRoomGuestPointPositions[i].x).Within(0.0001f));
+            Assert.That(guestPoint.localPosition.y, Is.EqualTo(expectedDrawingRoomGuestPointPositions[i].y).Within(0.0001f));
+            Assert.That(guestPoint.localPosition.z, Is.EqualTo(expectedDrawingRoomGuestPointPositions[i].z).Within(0.001f));
+            Assert.That(guestPoint.localScale, Is.EqualTo(Vector3.one));
+            Assert.That(guestPointAnchor, Is.Not.Null);
+            Assert.That(guestPointAnchor.AnchorId, Is.EqualTo($"DrawingRoomGuestPoint_{i + 1:00}"));
+            Assert.That(guestPointAnchor.RoomId, Is.EqualTo(DrawingRoom));
+        }
+
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("DrawingRoomSeat_Runtime_")), Is.False);
+
         Assert.That(authoredFrontDoorTrigger.localPosition.x, Is.EqualTo(-7.216162f).Within(0.0001f));
         Assert.That(authoredFrontDoorTrigger.localPosition.y, Is.EqualTo(-13.4132805f).Within(0.0001f));
         Assert.That(authoredFrontDoorTrigger.localPosition.z, Is.Zero.Within(0.001f));
@@ -250,6 +322,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<RoomNavigationManager>(arrival, "navigationManager"), Is.SameAs(serializedArrivalNavigation));
         Assert.That(GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement"), Is.SameAs(serializedArrivalPlayerMovement));
         Assert.That(GetPrivateField<Chapter1SceneAction>(arrival, "frontDoorSceneAction"), Is.SameAs(authoredFrontDoorAction));
+        Assert.That(GetPrivateField<GuestFootstepCatalog>(arrival, "guestFootstepCatalog"), Is.SameAs(resolvedGuestFootstepCatalog));
+        Assert.That(GetPrivateField<Transform>(arrival, "guestEntranceSpawnPlacemark"), Is.SameAs(authoredGuestEntranceSpawnPlacemark));
         Assert.That(authoredFrontDoorTrigger.GetComponent<BoxCollider2D>(), Is.SameAs(authoredFrontDoorCollider));
         Assert.That(GetPrivateField<GameObject>(arrival, "playerButlerReference"), Is.SameAs(serializedArrivalButlerRoot));
         Assert.That(GetPrivateField<CoatCloset>(arrival, "coatCloset"), Is.SameAs(entranceCoatCloset));
@@ -834,6 +908,21 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<RoomNavigationManager>(arrival, "navigationManager"), Is.SameAs(serializedArrivalNavigation));
         Assert.That(GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement"), Is.SameAs(serializedArrivalPlayerMovement));
         Assert.That(GetPrivateField<Chapter1SceneAction>(arrival, "frontDoorSceneAction"), Is.SameAs(authoredFrontDoorAction));
+        Assert.That(GetPrivateField<GuestFootstepCatalog>(arrival, "guestFootstepCatalog"), Is.SameAs(resolvedGuestFootstepCatalog));
+        Assert.That(GetPrivateField<Transform>(arrival, "guestEntranceSpawnPlacemark"), Is.SameAs(authoredGuestEntranceSpawnPlacemark));
+        Assert.That(InvokePrivateStringMethod<RoomContentGroup>(arrival, "FindRoomContentGroup", EntranceRoom), Is.SameAs(characterizedEntranceRoomContent));
+        Assert.That(InvokePrivateStringMethod<RoomContentGroup>(arrival, "FindRoomContentGroup", DrawingRoom), Is.SameAs(characterizedDrawingRoomContent));
+
+        for (int i = 0; i < characterizedDrawingRoomGuestPoints.Length; i++)
+        {
+            Assert.That(InvokePrivateIntMethod<Transform>(arrival, "FindDrawingRoomGuestPoint", i), Is.SameAs(characterizedDrawingRoomGuestPoints[i]));
+        }
+
+        Assert.That(FindInActiveScene<RoomAnchor>(), Has.Length.EqualTo(characterizedRoomAnchorCount));
+        Assert.That(FindInActiveScene<RoomContentGroup>(), Has.Length.EqualTo(characterizedRoomContentCount));
+        Assert.That(Resources.FindObjectsOfTypeAll<GuestFootstepCatalog>(), Has.Length.EqualTo(characterizedFootstepCatalogCount));
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("DrawingRoomSeat_Runtime_")), Is.False);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("DrawingRoomSeat_") && item.name != "DrawingRoomSeat_01" && item.name != "DrawingRoomSeat_02" && item.name != "DrawingRoomSeat_03"), Is.False);
         Assert.That(authoredFrontDoorTrigger.GetComponent<Chapter1SceneAction>(), Is.SameAs(authoredFrontDoorAction));
         Assert.That(authoredFrontDoorTrigger.GetComponent<BoxCollider2D>(), Is.SameAs(authoredFrontDoorCollider));
         Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Door_answer_trigger"), Is.EqualTo(1));
@@ -1157,6 +1246,30 @@ public sealed class GameplayLifecycleCharacterizationTests
             null);
         Assert.That(method, Is.Not.Null, $"Missing private method '{methodName}()' on {owner.GetType().Name}.");
         method.Invoke(owner, null);
+    }
+
+    private static T InvokePrivateIntMethod<T>(object owner, string methodName, int value) where T : class
+    {
+        System.Reflection.MethodInfo method = owner.GetType().GetMethod(
+            methodName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null,
+            new[] { typeof(int) },
+            null);
+        Assert.That(method, Is.Not.Null, $"Missing private method '{methodName}(int)' on {owner.GetType().Name}.");
+        return method.Invoke(owner, new object[] { value }) as T;
+    }
+
+    private static T InvokePrivateStringMethod<T>(object owner, string methodName, string value) where T : class
+    {
+        System.Reflection.MethodInfo method = owner.GetType().GetMethod(
+            methodName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null,
+            new[] { typeof(string) },
+            null);
+        Assert.That(method, Is.Not.Null, $"Missing private method '{methodName}(string)' on {owner.GetType().Name}.");
+        return method.Invoke(owner, new object[] { value }) as T;
     }
 
     private static ScaleSnapshot CaptureScale(
