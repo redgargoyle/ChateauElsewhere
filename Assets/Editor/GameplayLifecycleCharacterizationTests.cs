@@ -731,8 +731,18 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(clockStrikeBindings, Has.Length.EqualTo(1));
         Assert.That(clockStrikeBindings[0].Channel, Is.EqualTo(GameAudioChannel.GameSounds));
         Assert.That(clockStrikeBindings[0].BaseVolume, Is.EqualTo(0.4f).Within(0.0001f));
+        Assert.That(GetPrivateField<AudioSource>(clockStrikeBindings[0], "audioSource"), Is.SameAs(clockStrikeSource));
         Assert.That(clockStrikeSource.volume, Is.EqualTo(0.4f * GameAudioSettings.GetVolume(GameAudioChannel.GameSounds)).Within(0.0001f));
         Debug.Log($"[Chapter2ClockStrikeCharacterization] source={clockStrikeSource.GetInstanceID()} clipGuid=d7084eafa9124afcbcbf12529e08bc70 binding={clockStrikeBindings[0].GetInstanceID()}");
+
+        chapter.SkipToSevenPMForTesting();
+        yield return null;
+
+        Assert.That(GetPrivateField<AudioSource>(chapter2, "clockStrikeAudioSource"), Is.SameAs(clockStrikeSource));
+        Assert.That(GetPrivateField<AudioClip>(chapter2, "clockStrikeClip"), Is.SameAs(clockStrikeClip));
+        Assert.That(chapter2.GetComponents<AudioSource>(), Has.Length.EqualTo(1));
+        Assert.That(chapter2.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+        Assert.That(chapter2.GetComponent<GameAudioSourceVolume>(), Is.SameAs(clockStrikeBindings[0]));
     }
 
     private static IEnumerator WaitForSettledLayout()
