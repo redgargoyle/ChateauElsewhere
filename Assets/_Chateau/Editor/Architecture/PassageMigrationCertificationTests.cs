@@ -276,7 +276,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void DrawingMusicRoomViewsArePassiveWithoutPassageOrCallerChanges()
+    public void DrawingMusicPassagesArePassiveWithoutDependencyOrCallerChanges()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 1)
@@ -299,12 +299,17 @@ public sealed class PassageMigrationCertificationTests
         string musicContent = RequireDocument(documents, "2102000001");
         string musicDoors = RequireDocument(documents, "2103000010");
         string musicDoorsTransform = RequireDocument(documents, "2103000011");
+        string drawingView = RequireDocument(documents, "4100000002");
         string musicView = RequireDocument(documents, "4100000003");
+        string drawingPassage = RequireDocument(documents, "4100000013");
+        string musicPassage = RequireDocument(documents, "4100000014");
         string gameRoot = RequireDocument(documents, GameRootFileId);
         string guestPanic = RequireDocument(documents, "3301000008");
 
         Assert.That(group, Has.Count.EqualTo(2));
-        Assert.That(group.All(row => row.Status == "view-bound"), Is.True);
+        RouteInventoryRow musicRow = group.Single(row => row.ComponentFileId == "2300000089");
+        RouteInventoryRow drawingRow = group.Single(row => row.ComponentFileId == "2300000099");
+        Assert.That(group.All(row => row.Status == "passage-bound"), Is.True);
         Assert.That(group.Select(row => row.PassageDefinitionGuid).OrderBy(value => value),
             Is.EqualTo(new[]
             {
@@ -317,21 +322,31 @@ public sealed class PassageMigrationCertificationTests
                 "passage.drawing-room.music-room",
                 "passage.music-room.drawing-room"
             }));
-        Assert.That(group.Single(row => row.ComponentFileId == "2300000089").SourceRoomViewFileId,
-            Is.EqualTo("4100000003"));
-        Assert.That(group.Single(row => row.ComponentFileId == "2300000099").SourceRoomViewFileId,
-            Is.EqualTo("4100000002"));
-        Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageFileId)), Is.True);
-        Assert.That(group.All(row =>
-            string.IsNullOrEmpty(row.ApproachX) &&
-            string.IsNullOrEmpty(row.ApproachY) &&
-            string.IsNullOrEmpty(row.ArrivalX) &&
-            string.IsNullOrEmpty(row.ArrivalY)), Is.True);
+        Assert.That(musicRow.SourceRoomViewFileId, Is.EqualTo("4100000003"));
+        Assert.That(drawingRow.SourceRoomViewFileId, Is.EqualTo("4100000002"));
+        Assert.That(musicRow.PassageFileId, Is.EqualTo("4100000014"));
+        Assert.That(drawingRow.PassageFileId, Is.EqualTo("4100000013"));
+        Assert.That(musicRow.ApproachX, Is.EqualTo("-7.737432"));
+        Assert.That(musicRow.ApproachY, Is.EqualTo("-3.180156"));
+        Assert.That(musicRow.ArrivalX, Is.EqualTo("-7.10601"));
+        Assert.That(musicRow.ArrivalY, Is.EqualTo("-1.508934"));
+        Assert.That(drawingRow.ApproachX, Is.EqualTo("-7.10601"));
+        Assert.That(drawingRow.ApproachY, Is.EqualTo("-1.508934"));
+        Assert.That(drawingRow.ArrivalX, Is.EqualTo("-7.737432"));
+        Assert.That(drawingRow.ArrivalY, Is.EqualTo("-3.180156"));
+        foreach (RouteInventoryRow row in group)
+        {
+            AssertFinite(row.ApproachX, $"{row.LegacyDoorId} approach x");
+            AssertFinite(row.ApproachY, $"{row.LegacyDoorId} approach y");
+            AssertFinite(row.ArrivalX, $"{row.LegacyDoorId} arrival x");
+            AssertFinite(row.ArrivalY, $"{row.LegacyDoorId} arrival y");
+        }
 
         Assert.That(drawingOwner, Does.Contain("m_Name: DoorTrigger_DrawingRoom_MusicRoom"));
         Assert.That(drawingOwner, Does.Contain("- component: {fileID: 2300000096}"));
         Assert.That(drawingOwner, Does.Contain("- component: {fileID: 2300000099}"));
-        Assert.That(Regex.Matches(drawingOwner, @"(?m)^  - component:").Count, Is.EqualTo(4));
+        Assert.That(drawingOwner, Does.Contain("- component: {fileID: 4100000013}"));
+        Assert.That(Regex.Matches(drawingOwner, @"(?m)^  - component:").Count, Is.EqualTo(5));
         Assert.That(ReadReferenceFileId(drawingTransform, "m_Father"), Is.EqualTo("2300000009"));
         Assert.That(ReadField(drawingTransform, "m_LocalScale"), Is.EqualTo("{x: 1, y: 1, z: 1}"));
         Assert.That(ReadField(drawingTransform, "m_AnchoredPosition"), Is.EqualTo("{x: -628, y: 55}"));
@@ -352,7 +367,8 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(musicOwner, Does.Contain("m_Name: DoorTrigger_MusicRoom_DrawingRoom"));
         Assert.That(musicOwner, Does.Contain("- component: {fileID: 2300000086}"));
         Assert.That(musicOwner, Does.Contain("- component: {fileID: 2300000089}"));
-        Assert.That(Regex.Matches(musicOwner, @"(?m)^  - component:").Count, Is.EqualTo(4));
+        Assert.That(musicOwner, Does.Contain("- component: {fileID: 4100000014}"));
+        Assert.That(Regex.Matches(musicOwner, @"(?m)^  - component:").Count, Is.EqualTo(5));
         Assert.That(ReadReferenceFileId(musicTransform, "m_Father"), Is.EqualTo("2103000011"));
         Assert.That(ReadField(musicTransform, "m_LocalScale"), Is.EqualTo("{x: 0.8625, y: 1, z: 1}"));
         Assert.That(ReadField(musicTransform, "m_AnchoredPosition"), Is.EqualTo("{x: -685, y: -36}"));
@@ -383,14 +399,40 @@ public sealed class PassageMigrationCertificationTests
             "roomBackgroundTexture: {fileID: 2800000, guid: 028084782cdcf3d4ab3b596624c8b7c5, type: 3}"));
         Assert.That(ReadReferenceFileId(musicContent, "perspectiveProfile"), Is.EqualTo("0"));
         Assert.That(musicRoom, Does.Contain("- component: {fileID: 4100000003}"));
+        Assert.That(drawingView, Does.Contain($"guid: {RoomViewGuid}"));
+        Assert.That(ReadReferenceFileId(drawingView, "m_GameObject"), Is.EqualTo("2300000005"));
+        Assert.That(ReadReferenceGuid(drawingView, "definition"),
+            Is.EqualTo("057575e9763145759aa12184580d27d8"));
         Assert.That(musicView, Does.Contain($"guid: {RoomViewGuid}"));
         Assert.That(ReadReferenceFileId(musicView, "m_GameObject"), Is.EqualTo("354156755"));
         Assert.That(ReadReferenceGuid(musicView, "definition"),
             Is.EqualTo("c0f34d74a30db58bb2b87b6ec316120b"));
         Assert.That(ReadReferenceFileId(musicView, "legacyContentGroup"), Is.EqualTo("2102000001"));
+        Assert.That(drawingPassage, Does.Contain($"guid: {PassageGuid}"));
+        Assert.That(ReadReferenceFileId(drawingPassage, "m_GameObject"), Is.EqualTo("2300000095"));
+        Assert.That(ReadReferenceGuid(drawingPassage, "definition"),
+            Is.EqualTo("3167361ca4c671298c0e84f43320619b"));
+        Assert.That(ReadReferenceFileId(drawingPassage, "sourceRoomView"), Is.EqualTo("4100000002"));
+        Assert.That(ReadReferenceFileId(drawingPassage, "reversePassage"), Is.EqualTo("4100000014"));
+        Assert.That(drawingPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: -7.10601, y: -1.508934}"));
+        Assert.That(drawingPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: -7.737432, y: -3.180156}"));
+        Assert.That(musicPassage, Does.Contain($"guid: {PassageGuid}"));
+        Assert.That(ReadReferenceFileId(musicPassage, "m_GameObject"), Is.EqualTo("2300000085"));
+        Assert.That(ReadReferenceGuid(musicPassage, "definition"),
+            Is.EqualTo("01544de8f55723585d60e5c0915345fd"));
+        Assert.That(ReadReferenceFileId(musicPassage, "sourceRoomView"), Is.EqualTo("4100000003"));
+        Assert.That(ReadReferenceFileId(musicPassage, "reversePassage"), Is.EqualTo("4100000013"));
+        Assert.That(musicPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: -7.737432, y: -3.180156}"));
+        Assert.That(musicPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: -7.10601, y: -1.508934}"));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000003}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000013}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000014}"), Is.EqualTo(1));
         Assert.That(documents.Values.Count(document => document.Contains($"guid: {RoomViewGuid}")), Is.EqualTo(3));
-        Assert.That(documents.Values.Count(document => document.Contains($"guid: {PassageGuid}")), Is.EqualTo(2));
+        Assert.That(documents.Values.Count(document => document.Contains($"guid: {PassageGuid}")), Is.EqualTo(4));
         Assert.That(ReadReferenceFileId(guestPanic, "leftExitTarget"), Is.EqualTo("2300000096"));
         Assert.That(ReadField(guestPanic, "leftExitTargetName"),
             Is.EqualTo("DoorTrigger_DrawingRoom_MusicRoom"));

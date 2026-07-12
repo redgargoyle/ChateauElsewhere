@@ -134,7 +134,7 @@ Assets/_Chateau/Runtime/Gameplay/StoryBeatBase.cs,5c9ff8dd0f9559499a5298ed5c5a3f
 Assets/_Chateau/Runtime/Gameplay/UIScreenBase.cs,0513f14c5965539f9121b3f3a60f4db7,0,
 Assets/_Chateau/Runtime/UI/GameTimeHUD.cs,12bd9a3afa94b05b1e9ce52146c9c7f4,1,Assets/Scenes/Gameplay.unity:1
 Assets/_Chateau/Runtime/World/Navigation/INavigationService.cs,61164ddf7e6e41c5a6de202f20c922c8,0,
-Assets/_Chateau/Runtime/World/Rooms/Passages/Passage.cs,518dad8adf634786a103bf4e76aa0881,2,Assets/Scenes/Gameplay.unity:2
+Assets/_Chateau/Runtime/World/Rooms/Passages/Passage.cs,518dad8adf634786a103bf4e76aa0881,4,Assets/Scenes/Gameplay.unity:4
 Assets/_Chateau/Runtime/World/Rooms/Passages/PassageAnchorData.cs,778264efc321425b978db070c751c200,0,
 Assets/_Chateau/Runtime/World/Rooms/Passages/PassageDefinition.cs,ca421b4be57a4e08aad75608f76ce6e4,4,Assets/_Chateau/Data/World/Passages/Passage_DrawingRoom_GEH.asset:1 | Assets/_Chateau/Data/World/Passages/Passage_MusicRoom_DrawingRoom.asset:1 | Assets/_Chateau/Data/World/Passages/Passage_GEH_DrawingRoom.asset:1 | Assets/_Chateau/Data/World/Passages/Passage_DrawingRoom_MusicRoom.asset:1
 Assets/_Chateau/Runtime/World/Rooms/Passages/PassageKind.cs,e28408796af44c5ab67e3ffc2cc2f016,0,
