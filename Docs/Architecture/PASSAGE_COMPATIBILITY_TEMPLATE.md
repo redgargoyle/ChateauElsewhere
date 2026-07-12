@@ -68,7 +68,7 @@ The manifest supports the reversible intermediate statuses `queued`, `characteri
 Gameplay contains 45 trigger owners across 23 connectivity groups:
 
 - 2 triggers in the automatically certified GEH/Drawing template;
-- 2 Drawing/Music triggers in 1 dependencies-bound reciprocal pair;
+- 2 Drawing/Music triggers in 1 caller-bound reciprocal pair;
 - 36 triggers in 18 uniquely reciprocal queued pairs;
 - 2 one-way triggers blocked by missing reverse owners;
 - 3 GEH/Upper Gallery stair triggers blocked by a two-outbound/one-return shape that the strict one-to-one reverse contract cannot represent.
@@ -114,6 +114,8 @@ Before caller binding, the reusable template now requires one temporary per-Pass
 
 After every inventory row with a Passage reaches `complete` and every scene Passage is stage `2`, certify that invariant, make authored arrival/approach unconditional, rerun all gates, then delete `PassageAnchorMigrationStage`, its serialized field/properties, the two conditionals, and all YAML scalars. The rollout seam is evidence-bearing temporary code, not target architecture.
 
-Next, the `caller-bound` slice may add only `canonicalPassage: {fileID: 4100000013}` to trigger `2300000099` and `canonicalPassage: {fileID: 4100000014}` to trigger `2300000089`, plus the matching inventory/test/documentation updates. It must add no other reference, data, anchor, topology, component, or GameRoot change.
+Group `01` has now advanced only to `caller-bound`. Trigger `2300000099` references co-located Passage `4100000013`; trigger `2300000089` references `4100000014`. This is exactly two added lines in two existing trigger documents, with Gameplay unchanged at `6,014` documents / 3 RoomViews / 4 Passages. All Passage stages remain `0`, all coordinates and direct dependencies remain exact, and no topology, GameRoot, runtime, asset, prefab, or meta changes. Four of 45 triggers now have canonical callers; 41 remain null. The real serialized callers pass the rendered poison-anchor far/near round trip in both directions, proving stage 0 preserves every frozen legacy outcome. Focused gates pass `9/9`, safety passes `27/27`, lifecycle passes `5/5`, and the full suite remains `254` discovered / `208` passed / the same `46` known failures with failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`. Architecture remains 112 runtime files / 48,787 lines / 48 direct `MonoBehaviour` declarations, serialized references remain 155 rows, and Y-axis remains zero hard errors / 38 tracked findings.
+
+Next, the `arrival-owned` slice may replace only `anchorMigrationStage: 0` with `anchorMigrationStage: 1` in Passage documents `4100000013` and `4100000014`, plus matching inventory/test/documentation updates. Callers, dependencies, coordinate values, topology, components, and GameRoot remain unchanged. Stage 1 must prove legacy approach sampling plus exact authored arrival in both directions.
 
 Human review still required: visually confirm that walking to and landing on both shared points places the Butler's feet at the intended painted doorway sides. Final target-route certification additionally requires the later interaction, room-view, and camera ownership transfers.
