@@ -74,6 +74,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Grafted a dedicated `Audio_Chapter2ClockStrike` child beneath Chapter 2 with its own serialized non-looping 2D `AudioSource`, Game-Sounds `GameAudioSourceVolume` at base volume `0.4`, and imported clip GUID `d7084eafa9124afcbcbf12529e08bc70`. Seven-PM playback reuses those exact identities, and the obsolete resource/component/runtime-tone fallback is removed.
 - Characterized and retired the monster stinger's structural repair: Begin/Stop reuses the exact serialized monster, Drawing Room start/target anchors, navigation service, and Image, restores the authored sprite, and creates no placeholder; validation now rejects a missing/mismatched graph instead of searching or repairing it.
 - Characterized and serialized Guest Search's navigation owner: the pre-migration field was null until seven-PM staging, while the migrated owner is the exact GameRoot service from boot through repeated Chapter 2 and seven-PM paths; all five lazy repair calls and the resolver are removed.
+- Characterized the monster presentation fallback before authoring it: first visible use creates one host violin source and Game-Sounds binding, loads clip GUID `69f06d321e4549cdcad1133332661f6d`, adds one sorted Canvas to the monster, loads eight ordered run sprites, and reuses every identity on repetition.
 
 ## Current static result
 
@@ -143,6 +144,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - the Guest Search navigation characterization pins the pre-migration null-to-service transition, all five resolver call sites, and exact owner identity through repeated seven-PM staging; focused/static and full-suite failure-name gates pass before serialization;
 - the Guest Search migration keeps all 5,979 document headers and `SceneRoots` exact; only component `3301000009` gains `navigationManager: {fileID: 1878886997}`, and the navigation/GameRoot documents remain byte-identical;
 - Guest Search validation and source guards require the serialized manager and ban its resolver/global lookup; boot, repeated Chapter 2, repeated seven-PM, architecture, and full-suite gates retain the exact owner and 50-failure baseline;
+- the monster presentation characterization freezes source/clip/binding properties, Canvas layer/order, all eight sprite GUIDs in approved order, original-sprite restoration, visible Drawing Room behavior, and repeated-use no-growth; focused/static and full-suite gates pass before scene authoring;
 - the rendered full EditMode suite discovers 240 tests: 190 pass and the exact same 50 pre-existing failure names remain, with no clock-strike graft or cleanup regression;
 - the separate `-nographics` invalid-viewport issue was independently hardened in commit `4d8a6d9a` and is not attributed to the clock-strike graft;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;

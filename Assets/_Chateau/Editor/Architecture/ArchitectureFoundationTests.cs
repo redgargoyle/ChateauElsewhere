@@ -173,6 +173,11 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerDocument, Does.Contain("navigationManager: {fileID: 1878886997}"));
         Assert.That(stingerDocument, Does.Contain("monsterImage: {fileID: 3700000003}"));
         Assert.That(stingerDocument, Does.Contain("monsterSpriteRenderer: {fileID: 0}"));
+        Assert.That(stingerDocument, Does.Contain("violinAudioSource: {fileID: 0}"));
+        Assert.That(stingerDocument, Does.Contain("violinAudioClip: {fileID: 0}"));
+        Assert.That(stingerDocument, Does.Contain("fallbackViolinClipName: violinscreech"));
+        Assert.That(stingerDocument, Does.Contain("monsterRunSprites: []"));
+        Assert.That(stingerDocument, Does.Contain("monsterRunSpritesResourcePath: Chapter2/Monster/ArmSwing"));
         Assert.That(stingerDocument, Does.Not.Contain("createPlaceholderMonsterIfMissing"));
         Assert.That(monsterGameObjectDocument, Does.Contain("m_Name: Ch2_Monster"));
         Assert.That(monsterGameObjectDocument, Does.Contain("- component: {fileID: 3700000003}"));
@@ -210,6 +215,11 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized RoomNavigationManager."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized monster object."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires a serialized monster Image or SpriteRenderer."));
+        Assert.That(stingerText, Does.Contain("GetComponent<AudioSource>()"));
+        Assert.That(stingerText, Does.Contain("gameObject.AddComponent<AudioSource>()"));
+        Assert.That(stingerText, Does.Contain("GameAudioSettings.EnsureBinding(violinAudioSource"));
+        Assert.That(stingerText, Does.Contain("Resources.LoadAll<Sprite>(monsterRunSpritesResourcePath)"));
+        Assert.That(stingerText, Does.Contain("monsterObject.AddComponent<Canvas>()"));
         Assert.That(CountOccurrences(guestSearchDocument, "navigationManager: {fileID: 1878886997}"), Is.EqualTo(1));
         Assert.That(guestSearchText, Does.Not.Contain("ResolveRoomNavigation"));
         Assert.That(guestSearchText, Does.Not.Contain("FindAnyObjectByType<RoomNavigationManager>"));
