@@ -315,7 +315,11 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     public void BeginChapter1(ChapterManager manager)
     {
-        chapterManager = manager != null ? manager : chapterManager;
+        if (!AcceptsManagerCommandFrom(manager))
+        {
+            return;
+        }
+
         ResolveReferences();
         ValidateRequiredReferences();
         ResetChapterRuntime();
@@ -327,6 +331,23 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         ScheduleArrivalTimeline();
         RefreshInteractionState();
         Debug.Log("Chapter 1 entrance hall sequence armed at 5:59 PM.", this);
+    }
+
+    private bool AcceptsManagerCommandFrom(ChapterManager manager)
+    {
+        if (chapterManager == null)
+        {
+            Debug.LogError("Chapter1ArrivalController rejected a command because its serialized ChapterManager is missing.", this);
+            return false;
+        }
+
+        if (manager != null && manager != chapterManager)
+        {
+            Debug.LogError("Chapter1ArrivalController rejected a command from a different ChapterManager.", this);
+            return false;
+        }
+
+        return true;
     }
 
     public void PrepareGuestsForChapterStart()

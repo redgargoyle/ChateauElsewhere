@@ -1588,7 +1588,7 @@ public class Chapter2RegressionTests
     }
 
     [Test]
-    public void Chapter2CommandsRejectMismatchedManagerWithoutRebinding()
+    public void ChapterControllersRejectMismatchedManagerWithoutRebinding()
     {
         string controllerText = File.ReadAllText(Chapter2ControllerPath);
         string[] guardedMethods =
@@ -1638,6 +1638,40 @@ public class Chapter2RegressionTests
             Object.DestroyImmediate(controllerObject);
             Object.DestroyImmediate(unexpectedManagerObject);
             Object.DestroyImmediate(expectedManagerObject);
+        }
+
+        GameObject chapter1ExpectedManagerObject = new GameObject("Chapter1ExpectedManager");
+        GameObject chapter1UnexpectedManagerObject = new GameObject("Chapter1UnexpectedManager");
+        GameObject chapter1ControllerObject = new GameObject("Chapter1ArrivalController");
+
+        try
+        {
+            ChapterManager expectedManager = chapter1ExpectedManagerObject.AddComponent<ChapterManager>();
+            ChapterManager unexpectedManager = chapter1UnexpectedManagerObject.AddComponent<ChapterManager>();
+            Chapter1ArrivalController controller = chapter1ControllerObject.AddComponent<Chapter1ArrivalController>();
+            System.Reflection.FieldInfo managerField = typeof(Chapter1ArrivalController).GetField(
+                "chapterManager",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            System.Reflection.FieldInfo sequenceActiveField = typeof(Chapter1ArrivalController).GetField(
+                "sequenceActive",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            Assert.That(managerField, Is.Not.Null);
+            Assert.That(sequenceActiveField, Is.Not.Null);
+            managerField.SetValue(controller, expectedManager);
+            sequenceActiveField.SetValue(controller, false);
+
+            LogAssert.Expect(LogType.Error, "Chapter1ArrivalController rejected a command from a different ChapterManager.");
+            controller.BeginChapter1(unexpectedManager);
+
+            Assert.That(managerField.GetValue(controller), Is.SameAs(expectedManager));
+            Assert.That(sequenceActiveField.GetValue(controller), Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(chapter1ControllerObject);
+            Object.DestroyImmediate(chapter1UnexpectedManagerObject);
+            Object.DestroyImmediate(chapter1ExpectedManagerObject);
         }
     }
 
