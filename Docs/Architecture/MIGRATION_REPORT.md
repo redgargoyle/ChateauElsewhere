@@ -63,6 +63,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized the first Drawing Room set piece without changing it: the tea table's exact sprite/material/transform/profile and four-point collision footprint are frozen, and tests prove `RoomProjectedEntity` plus `ObjectMovementBlocker2D` both overwrite its renderer. The intended order remains `6627`; the collider-bounds writer varied between `1358` and `1452` across valid runs.
 - Added the target `World / Rooms / Props / Set Pieces` foundation: a pure `RoomDepthResolver` plus a static `SetPieceView` that owns only sorting layer/order/pivot and has no frame loop, bounds lookup, search, factory, transform, tint, or collision mutation.
 - Migrated `tea_service_table` in Gameplay and both Drawing Room prefabs beneath literal `Props / Set Pieces` owners. The original GameObject/Transform/SpriteRenderer/component IDs, art, material, authored transform, depth anchor/order, blocker identity, and polygon are preserved; the blocker now owns collision only and cannot rewrite presentation.
+- Characterized `purple_armchair_back` as the second set-piece candidate across Gameplay and both Drawing Room prefabs: shared chair art/material/profile/anchor resolves to order `8289`, exact transforms and component IDs are frozen, and the Gameplay four-point lower-seat collision footprint is preserved before migration.
 
 ## Current static result
 
@@ -112,6 +113,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - both SetPiece foundation unit/static tests passed, and the full-suite failure-name set remained unchanged;
 - the tea-table asset audit passed 16/16 structural checks across Gameplay and both prefabs: six documents added total, none deleted, only the exact hierarchy/owner documents changed, all prior document order stayed exact, and SceneRoots stayed byte-identical;
 - the migrated lifecycle keeps one bound set-piece identity through activation/travel, resolves order `6627`, preserves all four collider points, and proves blocker sorting is a no-op;
+- the purple-armchair static/lifecycle characterization passes across all three assets; at runtime legacy projection writes `8289` and the blocker then overwrites it with `1498`, proving the same competing-writer defect without freezing the bounds-derived blocker value;
 - the Chapter 2 dependency-cleanup static, regression, and lifecycle gates pass; all eleven serialized references resolve exactly once, `ResolveReferences` and its seven scene-wide searches are absent, and repeated entry/debug paths retain the same owners;
 - the full EditMode discovery count is 237: 186 pass and the same 51 pre-existing baseline failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
@@ -143,7 +145,7 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Characterize `purple_armchair_back` as the second Drawing Room set piece before migrating it; do not bulk-convert room props.
+1. Migrate only `purple_armchair_back` to `SetPieceView`, preserve its art/transform/polygon, and make its blocker collision-only.
 2. Retire the already-serialized ChapterManager-to-Chapter2Controller lookup after a dedicated transition gate.
 3. Continue one prop/owner at a time with exact art, transform, occlusion, and collision preservation.
 

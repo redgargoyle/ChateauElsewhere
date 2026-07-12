@@ -95,6 +95,7 @@ RoomDefinition -> RoomView -> SetPieceView -> RoomDepthResolver
 ```
 
 - `RoomDepthResolver` and the static `SetPieceView` foundation are unit-gated before any scene binding;
+- `purple_armchair_back` is the characterized second vertical slice: exact chair art/profile/anchor/order and Gameplay blocker polygon are frozen before its competing writers are replaced;
 - `SetPieceView` owns the visual cutout, a room-local occlusion anchor, and a sorting offset.
 - `RoomNavigationGeometry` owns the room boundary and authored no-walk footprints.
 - couches, desks, beds, toys, chairs, tables, and similar scenery use shared definitions/views rather than object-specific managers;

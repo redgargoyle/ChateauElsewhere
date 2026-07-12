@@ -83,6 +83,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         ObjectMovementBlocker2D teaTableBlocker = FindInActiveScene<ObjectMovementBlocker2D>()
             .Single(item => item.SourceObjectName == "tea_service_table");
         PolygonCollider2D teaTableCollider = teaTableBlocker.BlockingCollider as PolygonCollider2D;
+        RoomProjectedEntity purpleArmchairProjection = FindInActiveScene<RoomProjectedEntity>()
+            .Single(item => item.gameObject.name == "purple_armchair_back");
+        SpriteRenderer purpleArmchairRenderer = purpleArmchairProjection.GetComponent<SpriteRenderer>();
+        ObjectMovementBlocker2D purpleArmchairBlocker = FindInActiveScene<ObjectMovementBlocker2D>()
+            .Single(item => item.SourceObjectName == "purple_armchair_back");
+        PolygonCollider2D purpleArmchairCollider = purpleArmchairBlocker.BlockingCollider as PolygonCollider2D;
 
         Assert.That(cameraManager, Is.Not.Null);
         Assert.That(prompts, Is.Not.Null);
@@ -174,6 +180,13 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.False,
             "Clock ambience must not inherit an enabled low-pass filter.");
         Assert.That(teaTableView.gameObject.activeInHierarchy, Is.False, "The Drawing Room set piece starts inactive with its room.");
+        Assert.That(purpleArmchairProjection.gameObject.activeInHierarchy, Is.False);
+        Assert.That(purpleArmchairProjection.GetComponent<SetPieceView>(), Is.Null);
+        Assert.That(purpleArmchairRenderer, Is.Not.Null);
+        Assert.That(purpleArmchairBlocker.SourceObject, Is.SameAs(purpleArmchairProjection.gameObject));
+        Assert.That(purpleArmchairBlocker.SortSourceRenderers, Is.True);
+        Assert.That(purpleArmchairCollider, Is.Not.Null);
+        Assert.That(purpleArmchairCollider.isTrigger, Is.True);
         Assert.That(teaTableView.HasGameContext, Is.True, "GameRoot should bind the serialized set-piece owner even while its room is inactive.");
         Assert.That(teaTableRenderer, Is.Not.Null);
         Assert.That(teaTableView.GetComponent<RoomProjectedEntity>(), Is.Null);
@@ -460,6 +473,26 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(fireplaceSource.clip, Is.Not.Null);
         Assert.That(clockSource.clip, Is.Not.Null);
         Assert.That(teaTableView.gameObject.activeInHierarchy, Is.True);
+        Assert.That(purpleArmchairProjection.gameObject.activeInHierarchy, Is.True);
+        Assert.That(purpleArmchairBlocker.gameObject.activeInHierarchy, Is.True);
+        Vector2[] purpleArmchairFootprint = purpleArmchairCollider.points;
+        Assert.That(purpleArmchairFootprint, Has.Length.EqualTo(4));
+        Assert.That(purpleArmchairFootprint[0], Is.EqualTo(new Vector2(163.29713f, -469.27084f)));
+        Assert.That(purpleArmchairFootprint[1], Is.EqualTo(new Vector2(329.0629f, -469.27084f)));
+        Assert.That(purpleArmchairFootprint[2], Is.EqualTo(new Vector2(329.0629f, -381.66437f)));
+        Assert.That(purpleArmchairFootprint[3], Is.EqualTo(new Vector2(163.29713f, -381.66437f)));
+        purpleArmchairRenderer.sortingOrder = -22345;
+        purpleArmchairProjection.ApplyProjection();
+        int purpleProjectionOrder = purpleArmchairRenderer.sortingOrder;
+        Assert.That(purpleProjectionOrder, Is.EqualTo(8289));
+        Assert.That(purpleArmchairProjection.CurrentSortingOrder, Is.EqualTo(8289));
+        purpleArmchairRenderer.sortingOrder = -22346;
+        Physics2D.SyncTransforms();
+        purpleArmchairBlocker.ApplySourceSortingNow();
+        int purpleBlockerOrder = purpleArmchairRenderer.sortingOrder;
+        Assert.That(purpleBlockerOrder, Is.Not.EqualTo(purpleProjectionOrder), "The legacy blocker currently competes with armchair projection sorting.");
+        CollectionAssert.AreEqual(purpleArmchairFootprint, purpleArmchairCollider.points);
+        Debug.Log($"[SetPieceCharacterization] purple_armchair_back projection={purpleProjectionOrder} blocker={purpleBlockerOrder}");
         Assert.That(FindInActiveScene<MonoBehaviour>().Any(item => item.GetType().Name == "GameClockHandsDisplay"), Is.False);
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("Canvas_AnalogClockHands")), Is.False);
         Assert.That(teaTableBlocker.gameObject.activeInHierarchy, Is.True);
@@ -527,6 +560,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(fireplaceSource.clip, Is.Not.Null);
         Assert.That(clockSource.clip, Is.Not.Null);
         Assert.That(teaTableView.gameObject.activeInHierarchy, Is.False);
+        Assert.That(purpleArmchairProjection.gameObject.activeInHierarchy, Is.False);
+        Assert.That(FindInActiveScene<RoomProjectedEntity>().Single(item => item.gameObject.name == "purple_armchair_back"), Is.SameAs(purpleArmchairProjection));
+        Assert.That(FindInActiveScene<ObjectMovementBlocker2D>().Single(item => item.SourceObjectName == "purple_armchair_back"), Is.SameAs(purpleArmchairBlocker));
+        CollectionAssert.AreEqual(purpleArmchairFootprint, purpleArmchairCollider.points);
         Assert.That(FindInActiveScene<MonoBehaviour>().Any(item => item.GetType().Name == "GameClockHandsDisplay"), Is.False);
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("Canvas_AnalogClockHands")), Is.False);
         Assert.That(
