@@ -179,7 +179,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private const string DrawingRoomSideButlerSpotAnchorId = "DrawingRoomSideButlerSpot";
     private const string LegacyButlerGreetingSpotAnchorId = "ButlerGreetingSpot";
     private const string DrawingRoomGuestPointPrefix = "DrawingRoomGuestPoint_";
-    private const string EntranceCoatHangerName = "entrance_coat_hanger_0";
     private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
     private const string DefaultGuestFootstepCatalogResourcePath = "Audio/GuestFootstepCatalog";
     private const string GuestInterruptedLineText = "You inturrupted me.";
@@ -187,7 +186,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
-    private static readonly Vector2 CoatHangerFallbackColliderSize = new Vector2(0.9f, 1.6f);
     private static readonly string[][] ChapterGuestNameAliases =
     {
         new[] { "Guest1", "Guest 1", "Guest01", "Miss Isolde Wren", "Lady" },
@@ -216,6 +214,25 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     public bool ButlerCarryingCoat => butlerCarryingCoat;
     public string CarriedCoatId => carriedCoatId;
     public bool IsFrontDoorActionAvailable => IsFrontDoorActionAvailableNow();
+
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        base.ValidateConfiguration(report);
+
+        if (coatCloset == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized Entrance coat closet.", this);
+        }
+
+        if (closetPoint == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized Entrance closet approach point.", this);
+        }
+        else if (coatCloset != null && closetPoint != coatCloset.transform)
+        {
+            report.AddError("Chapter1ArrivalController coat closet and approach point must share the authored Entrance hanger.", this);
+        }
+    }
 
     public bool CanTakeCoat(string coatId)
     {
@@ -1313,7 +1330,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
         if (coatCloset == null)
         {
-            Debug.LogWarning($"Chapter1ArrivalController missing required field: closet reference. Add authored object '{EntranceCoatHangerName}' to the entrance room or assign an entrance CoatCloset.", this);
+            Debug.LogWarning("Chapter1ArrivalController missing required field: serialized Entrance coat closet.", this);
         }
 
         if (frontDoorArrivalPoint == null)
@@ -5291,110 +5308,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             .Replace(")", string.Empty);
     }
 
-    private void EnsureEntranceCoatHanger()
-    {
-        GameObject coatHangerObject = FindSceneObjectByExactName(EntranceCoatHangerName);
-
-        if (coatHangerObject == null)
-        {
-            if (coatCloset != null && SameRoom(GetRoomForTransform(coatCloset.transform), entryRoomId))
-            {
-                ConfigureAuthoredCoatHangerObject(coatCloset.gameObject);
-                closetPoint = coatCloset.transform;
-                return;
-            }
-
-            Debug.LogWarning($"Chapter1ArrivalController could not find authored coat hanger '{EntranceCoatHangerName}' in the entrance room. Coat storage will require an assigned entrance CoatCloset.", this);
-            return;
-        }
-
-        ConfigureAuthoredCoatHangerObject(coatHangerObject);
-        coatCloset = coatHangerObject.GetComponent<CoatCloset>();
-
-        if (coatCloset == null)
-        {
-            coatCloset = coatHangerObject.AddComponent<CoatCloset>();
-        }
-
-        closetPoint = coatHangerObject.transform;
-    }
-
-    private void ConfigureAuthoredCoatHangerObject(GameObject coatHangerObject)
-    {
-        if (coatHangerObject == null)
-        {
-            return;
-        }
-
-        EnsureCoatHangerCollider(coatHangerObject);
-
-        Chapter1SceneAction action = coatHangerObject.GetComponent<Chapter1SceneAction>();
-
-        if (action == null)
-        {
-            action = coatHangerObject.AddComponent<Chapter1SceneAction>();
-        }
-
-        action.Initialize(Chapter1SceneActionType.CoatCloset, this, grandfatherClock);
-        action.SetAvailable(true);
-
-        if (coatHangerObject.GetComponent<CoatCloset>() == null)
-        {
-            coatHangerObject.AddComponent<CoatCloset>();
-        }
-    }
-
-    private void EnsureCoatHangerCollider(GameObject coatHangerObject)
-    {
-        BoxCollider2D collider = coatHangerObject.GetComponent<BoxCollider2D>();
-        bool addedCollider = collider == null;
-
-        if (addedCollider)
-        {
-            collider = coatHangerObject.AddComponent<BoxCollider2D>();
-        }
-
-        if (addedCollider)
-        {
-            collider.size = GetCoatHangerColliderSize(coatHangerObject, out Vector2 colliderOffset);
-            collider.offset = colliderOffset;
-        }
-
-        collider.isTrigger = true;
-        collider.enabled = true;
-    }
-
-    private Vector2 GetCoatHangerColliderSize(GameObject coatHangerObject, out Vector2 colliderOffset)
-    {
-        colliderOffset = Vector2.zero;
-        SpriteRenderer spriteRenderer = coatHangerObject != null
-            ? coatHangerObject.GetComponent<SpriteRenderer>()
-            : null;
-
-        if (spriteRenderer == null && coatHangerObject != null)
-        {
-            spriteRenderer = coatHangerObject.GetComponentInChildren<SpriteRenderer>(true);
-        }
-
-        if (spriteRenderer != null && spriteRenderer.sprite != null)
-        {
-            Bounds spriteBounds = spriteRenderer.sprite.bounds;
-            colliderOffset = spriteRenderer.transform == coatHangerObject.transform
-                ? (Vector2)spriteBounds.center
-                : coatHangerObject.transform.InverseTransformPoint(spriteRenderer.bounds.center);
-            Vector2 colliderSize = spriteRenderer.transform == coatHangerObject.transform
-                ? (Vector2)spriteBounds.size
-                : (Vector2)coatHangerObject.transform.InverseTransformVector(spriteRenderer.bounds.size);
-
-            colliderSize = new Vector2(Mathf.Abs(colliderSize.x), Mathf.Abs(colliderSize.y));
-            return colliderSize.x > 0.0001f && colliderSize.y > 0.0001f
-                ? colliderSize
-                : CoatHangerFallbackColliderSize;
-        }
-
-        return CoatHangerFallbackColliderSize;
-    }
-
     private Transform ResolveSeatForGuest(int index)
     {
         Transform editableGuestPoint = FindDrawingRoomGuestPoint(index);
@@ -6787,11 +6700,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
         ResolveAnchors();
         ResolveStoryHelpers(createFallbacks);
-
-        if (createFallbacks)
-        {
-            EnsureEntranceCoatHanger();
-        }
     }
 
     private static PointClickPlayerMovement FindPlayerMovement()
@@ -6870,19 +6778,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private void ResolveAnchors()
     {
-        GameObject entranceCoatHanger = FindSceneObjectByExactName(EntranceCoatHangerName);
-
-        if (entranceCoatHanger != null)
-        {
-            closetPoint = entranceCoatHanger.transform;
-            CoatCloset entranceCloset = entranceCoatHanger.GetComponent<CoatCloset>();
-
-            if (entranceCloset != null)
-            {
-                coatCloset = entranceCloset;
-            }
-        }
-
         if (frontDoorArrivalPoint == null)
         {
             frontDoorArrivalPoint = FindAnchor(FrontDoorGuestSpawnAnchorId, entryRoomId);
@@ -6925,26 +6820,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             drawingRoomSeat03 = FindAnchor("Seat_03", drawingRoomId);
         }
 
-        if (closetPoint == null)
-        {
-            closetPoint = FindPropAnchor("CoatCloset", "ApproachFront", entryRoomId)
-                ?? FindPropAnchor("Closet", "ApproachFront", entryRoomId)
-                ?? FindAnchor("ApproachFront", entryRoomId);
-        }
-
-        if (coatCloset == null)
-        {
-            CoatCloset[] closets = FindObjectsByType<CoatCloset>(FindObjectsInactive.Include);
-
-            for (int i = 0; i < closets.Length; i++)
-            {
-                if (closets[i] != null && SameRoom(GetRoomForTransform(closets[i].transform), entryRoomId))
-                {
-                    coatCloset = closets[i];
-                    break;
-                }
-            }
-        }
     }
 
     private Transform FindAnchor(string anchorId, string roomId)

@@ -390,10 +390,19 @@ public sealed class ArchitectureFoundationTests
         Assert.That(applierText, Does.Not.Contain("AddComponent<GuestRoomScaleApplier>"));
         Assert.That(applierText, Does.Not.Contain("FindAnyObjectByType<GuestRoomScaleCalibration>"));
         Assert.That(applierText, Does.Contain("AddComponent<GuestScaleParticipant>"));
-        Assert.That(chapter1Text, Does.Contain("EnsureEntranceCoatHanger();"));
-        Assert.That(chapter1Text, Does.Contain("coatHangerObject.AddComponent<CoatCloset>()"));
-        Assert.That(chapter1Text, Does.Contain("coatHangerObject.AddComponent<Chapter1SceneAction>()"));
-        Assert.That(chapter1Text, Does.Contain("coatHangerObject.AddComponent<BoxCollider2D>()"));
+        Assert.That(chapter1Text, Does.Not.Contain("EntranceCoatHangerName"));
+        Assert.That(chapter1Text, Does.Not.Contain("EnsureEntranceCoatHanger"));
+        Assert.That(chapter1Text, Does.Not.Contain("ConfigureAuthoredCoatHangerObject"));
+        Assert.That(chapter1Text, Does.Not.Contain("EnsureCoatHangerCollider"));
+        Assert.That(chapter1Text, Does.Not.Contain("GetCoatHangerColliderSize"));
+        Assert.That(chapter1Text, Does.Not.Contain("CoatHangerFallbackColliderSize"));
+        Assert.That(chapter1Text, Does.Not.Contain("AddComponent<CoatCloset>"));
+        Assert.That(chapter1Text, Does.Not.Contain("coatHangerObject.AddComponent<Chapter1SceneAction>"));
+        Assert.That(chapter1Text, Does.Not.Contain("coatHangerObject.AddComponent<BoxCollider2D>"));
+        Assert.That(chapter1Text, Does.Not.Contain("FindObjectsByType<CoatCloset>"));
+        Assert.That(chapter1Text, Does.Not.Contain("FindPropAnchor(\"CoatCloset\""));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized Entrance coat closet."));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized Entrance closet approach point."));
     }
 
     [Test]

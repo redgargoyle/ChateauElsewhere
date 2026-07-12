@@ -80,18 +80,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized the eight approved monster run sprites in exact raw frame `01` through `08` order, then removed the resource-path loader and name-sort fallback. Configuration validation rejects an incomplete array, and lifecycle proof shows the same array exists at boot and survives repeated stingers.
 - Characterized the Entrance coat-hanger ownership failure before changing it. Fresh boot attempts repair before the authored hanger is discoverable and leaves only the pantry closet; a later explicit repair creates one stable Entrance closet, action, and trigger collider, preserves stored coats across repeated resolution, and retains identities through a room round trip.
 - Moved existing closet component `3303000001` onto authored Entrance hanger `1592234992`, added serialized action `1592234995` and trigger `1592234996`, and bound the controller approach directly to transform `1592234993`. The pantry placeholder remains for separate review but no longer owns a duplicate closet.
+- Removed the Entrance hanger name search, closet/action/collider factories, computed-collider fallback, pantry-anchor fallback, and global closet scan. Chapter 1 now validates its two serialized hanger edges; repeated resolution retains them without mutation.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,508 | -394 |
+| Runtime C# lines | 49,902 | 49,383 | -519 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
-| `FindObject*`/`GameObject.Find` | 199 | 139 | -60 |
+| `FindObject*`/`GameObject.Find` | 199 | 138 | -61 |
 | `Resources.Load` | 27 | 19 | -8 |
 | runtime `new GameObject` | 98 | 82 | -16 |
-| runtime `AddComponent<T>` | 100 | 72 | -28 |
+| runtime `AddComponent<T>` | 100 | 68 | -32 |
 | runtime initialization hooks | 9 | 4 | -5 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -113,6 +114,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - monster sprite fallback cleanup passed source guards, the rendered repeated-use lifecycle, and the exact full-suite comparison; only the resource-path property was removed from controller document `3301000007`;
 - Entrance coat-hanger characterization passed exact serialized art/transform ownership checks and rendered before/after-repair lifecycle checks; the full suite remained 240 total / 190 passing / 50 known failures with an unchanged failure-name set;
 - Entrance coat-hanger graft passed exact serialized-owner checks and rendered boot/repeated-resolution/room-round-trip lifecycle checks; the scene stayed at the same roots, preserved every prior document in order, added only action/collider documents, changed only four intended owner/reference documents, and kept the authored Transform and SpriteRenderer byte-identical;
+- Entrance coat-hanger cleanup passed ownership/source guards and the rendered lifecycle; the full suite improved to 191 passing / 49 known failures because its stale source-extraction regression was corrected, with no new failure names;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -196,6 +198,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Remove the dormant Entrance coat-hanger discovery and component-repair fallback.
+1. Inventory and characterize the next Phase 3 runtime-repair owner before changing it.
 
 Do not begin bulk deletion until those gates pass.
