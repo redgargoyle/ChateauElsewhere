@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress. Entrance/Drawing, Drawing Room/Music Room, Music Room/Library, and Library/Ballroom are complete and automated-template-certified at `AuthoredAnchors` stage 2. Eight direct dependencies and canonical callers are bound, while the other 37 triggers retain their fallback-only null edges. Human doorway/camera/visibility review remains pending. The exact next slice is Group `04` Grand Entrance Hall/Dining Room characterization.**
+**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress. Four reciprocal pairs are complete at `AuthoredAnchors` stage 2, and Group `04` Grand Entrance Hall/Dining Room is accepted at `dependencies-bound` with two passive stage-0 Passages. Ten direct-dependency sets are bound and 35 remain null; eight canonical callers are bound and 37 remain null. Gameplay has 6,023 documents, six RoomViews, and ten Passages; `GameDatabase` has 16 definitions. Human doorway/camera/visibility review remains pending. The exact next slice binds only the two Group `04` canonical callers while retaining stage 0.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -355,8 +355,12 @@ The following remain intentionally because their replacements have not yet passe
 - static/global audio and session state;
 - runtime/editor lighting mutation paths.
 
-## Next approved phase
+## Completed Group 04 pre-edit gate
 
-1. Characterize Group `04` Grand Entrance Hall <-> Dining Room before making any production change.
+Before the foundation batch, Group `04` Grand Entrance Hall <-> Dining Room was characterized without a production change.
 
-Freeze both existing trigger owners, hierarchy, profiles, rectangles, dependencies/callers, far and near reciprocal traversal, audio/event order, camera/background/visibility, prompt/cursor cleanup, collision geometry, and any source-sensitive arrival behavior across every rendered aspect and widest-aspect maximum zoom. Do not author Dining Room data, a RoomView, Passages, dependencies, callers, or anchors until the tests-only characterization is accepted.
+That gate froze both existing trigger owners, hierarchy, profiles, rectangles, dependencies/callers, far and near reciprocal traversal, audio/event order, camera/background/visibility, prompt/cursor cleanup, collision geometry, and source-sensitive arrival behavior across every rendered aspect and widest-aspect maximum zoom before Dining data or scene bindings were authored.
+
+## Group 04 bounded foundation result
+
+The characterization and foundation gates are now accepted through `dependencies-bound`. Dining definition `0eb3282aded74fc4889f4321df8c5258` retains background `004ab4cca930d0387892725fe69b4f72` and non-null profile `a63248cfbd6b4a72af45c62cff7e94d0`; reciprocal Passage definitions use GUIDs `30b5c4cfef2b45e2970b4cdac4b7a3ef` and `94e16c6eca714188bced397612d48fff`. RoomView `4100000006` and Passages `4100000019` / `4100000020` preserve Entrance `(8.205841, -1.986406)` and Dining `(-6.692237, -1.380209)` as passive stage-0 values. Both direct dependency sets are bound, both canonical callers remain null, and behavior remains legacy. Current totals: 6,023 scene documents, 16 database definitions, six RoomViews, ten Passages, stages `2 / 0 / 8`, dependencies `10 / 35`, callers `8 / 37`, inventory `8 complete / 2 dependencies-bound / 30 queued / 2 blocked-one-way / 3 blocked-parallel`. Pre-edit hash `5479746e65e27c0d22985f3e02f9a9c6d77562d2497f5c743168f162c99200b3`; dependency-bound hash `b30fa6610435667265b8b3c32965713f1af317ccddb9a5cce11618112dfcc578`. Targeted/focused/safety/lifecycle gates pass `1/1`, `12/12`, `30/30`, and `8/8`; the full suite remains `260/214/46` with unchanged failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`. Architecture/serialization/Y-axis audits remain `112 / 48,789 / 48 / 155 / zero hard errors / 38 findings`. The exact next safe step is caller-only binding for Group 04 at stage `0`.
