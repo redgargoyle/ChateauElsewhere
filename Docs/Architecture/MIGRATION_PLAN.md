@@ -59,6 +59,7 @@ Only after Phase 2 passes:
 - Chapter 1 binds the existing serialized guest-scale applier, which owns the serialized calibration and Butler source; both latent runtime owner factories are removed while per-guest participant creation remains deliberate;
 - serialized dialogue/subtitle services, line bank, navigation edge, and Chapter 1 consumers are wired; both core-service `FindOrCreate` factories are removed while auxiliary views remain lazy until their own gate;
 - one voice-playback owner, dedicated dialogue AudioSource, and speaking-indicator owner are serialized with explicit assets/navigation; both root factories are removed while lazy subtitle/bubble child-view creation remains deliberate;
+- DialogueSpeechService owns the exact serialized Butler input edge, and the primary voice AudioSource owns one serialized Dialogue-channel volume component; real cataloged playback/input behavior is lifecycle-gated while transient overlap playback remains dynamic;
 - SubtitleService is bound to the shared speaking-indicator owner; redundant static cleanup searches are removed from dialogue, subtitle, and Chapter 2 paths;
 - ChapterManager owns serialized dialogue/subtitle services and one direct debug-transition cleanup command; settings and teleports delegate to it, and the final static voice-stop/global subtitle searches are removed;
 - the inert Chapter 1 HUD owner is serialized on the Chapter 1 controller; its lookup/factory/flag are removed while lazy canvas/text presentation remains deliberate;

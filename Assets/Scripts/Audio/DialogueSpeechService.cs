@@ -13,6 +13,7 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
     [SerializeField] private SubtitleService subtitleService;
     [SerializeField] private GuestVoiceLinePlayback voicePlayback;
     [SerializeField] private SpeakingCharacterIndicator speakingIndicator;
+    [SerializeField] private PointClickPlayerMovement playerMovement;
     [SerializeField] private bool logMissingVoiceLines;
 
     private bool normalSpeechActive;
@@ -183,7 +184,7 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
 
         if (blockInput)
         {
-            blockedMovement = FindAnyObjectByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+            blockedMovement = playerMovement;
 
             if (blockedMovement != null)
             {
@@ -288,10 +289,19 @@ public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
         {
             report.AddError("DialogueSpeechService requires its serialized GuestVoiceLinePlayback.", this);
         }
+        else
+        {
+            voicePlayback.ValidateConfiguration(report);
+        }
 
         if (speakingIndicator == null)
         {
             report.AddError("DialogueSpeechService requires its serialized SpeakingCharacterIndicator.", this);
+        }
+
+        if (playerMovement == null)
+        {
+            report.AddError("DialogueSpeechService requires its serialized Butler movement owner.", this);
         }
     }
 

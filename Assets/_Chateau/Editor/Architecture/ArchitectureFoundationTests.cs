@@ -206,6 +206,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("speechService: {fileID: 1878886994}"));
         Assert.That(sceneText, Does.Contain("lineBank: {fileID: 11400000, guid: 47d20ba9660546050951e9ea07a0b3da, type: 2}"));
         Assert.That(sceneText, Does.Contain("navigationManager: {fileID: 1878886997}"));
+        Assert.That(sceneText, Does.Contain("playerMovement: {fileID: 81962842}"));
 
         string speechText = File.ReadAllText("Assets/Scripts/Audio/DialogueSpeechService.cs");
         string subtitleText = File.ReadAllText("Assets/Scripts/UI/SubtitleService.cs");
@@ -220,6 +221,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter2Text, Does.Not.Contain("SubtitleService.FindOrCreate"));
         Assert.That(speechText, Does.Not.Contain("GuestVoiceLinePlayback.FindOrCreate"));
         Assert.That(speechText, Does.Not.Contain("SpeakingCharacterIndicator.FindOrCreate"));
+        Assert.That(speechText, Does.Not.Contain("FindAnyObjectByType<PointClickPlayerMovement>"));
         Assert.That(CountOccurrences(sceneText, "speechService: {fileID: 1878886994}"), Is.EqualTo(3));
         Assert.That(CountOccurrences(sceneText, "subtitleService: {fileID: 1878886995}"), Is.EqualTo(4));
     }
@@ -235,6 +237,9 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("speakingIndicator: {fileID: 1878887002}"));
         Assert.That(CountOccurrences(sceneText, "speakingIndicator: {fileID: 1878887002}"), Is.EqualTo(2));
         Assert.That(sceneText, Does.Contain("audioSource: {fileID: 1878887000}"));
+        Assert.That(sceneText, Does.Contain("audioVolumeBinding: {fileID: 1878887003}"));
+        Assert.That(CountOccurrences(sceneText, "guid: 5161da2d2e1b408d859e3792f47407f4"), Is.EqualTo(2));
+        Assert.That(sceneText, Does.Match(@"--- !u!114 &1878887003[\s\S]*?m_GameObject: \{fileID: 1878886993\}[\s\S]*?audioSource: \{fileID: 1878887000\}[\s\S]*?channel: 0[\s\S]*?baseVolume: 1"));
         Assert.That(sceneText, Does.Contain("catalog: {fileID: 11400000, guid: 147a8473c4c849c9908200b092d13691, type: 2}"));
         Assert.That(sceneText, Does.Contain("bubbleSprite: {fileID: 21300000, guid: b40c2d5917304c3e822fad1b6f3e5960, type: 3}"));
 
@@ -246,6 +251,9 @@ public sealed class ArchitectureFoundationTests
         string chapterManagerText = File.ReadAllText("Assets/Scripts/Story/ChapterManager.cs");
         string settingsText = File.ReadAllText("Assets/Scripts/UI/RuntimeSettingsMenu.cs");
         Assert.That(playbackText, Does.Not.Contain("GuestVoiceLinePlayback FindOrCreate"));
+        Assert.That(playbackText, Does.Not.Contain("EnsureAudioSource"));
+        Assert.That(playbackText, Does.Not.Contain("GameAudioSettings.EnsureBinding(audioSource"));
+        Assert.That(playbackText, Does.Contain("audioVolumeBinding.Configure(audioSource, GameAudioChannel.Dialogue, sourceBaseVolume)"));
         Assert.That(indicatorText, Does.Not.Contain("SpeakingCharacterIndicator FindOrCreate"));
         Assert.That(indicatorText, Does.Not.Contain("HideAnyCurrent"));
         Assert.That(dialogueText, Does.Not.Contain("StopAnyCurrentSpeech"));
@@ -276,7 +284,6 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("chapterClock: {fileID: 3301000001}"));
         Assert.That(sceneText, Does.Contain("explorationMusicSource: {fileID: 2201000003}"));
         Assert.That(sceneText, Does.Contain("explorationMusicVolumeBinding: {fileID: 2201000004}"));
-        Assert.That(CountOccurrences(sceneText, "guid: 5161da2d2e1b408d859e3792f47407f4"), Is.EqualTo(1));
         Assert.That(sceneText, Does.Match(@"--- !u!114 &2201000004[\s\S]*?m_GameObject: \{fileID: 2201000001\}[\s\S]*?audioSource: \{fileID: 2201000003\}[\s\S]*?channel: 3[\s\S]*?baseVolume: 0\.125"));
 
         string settingsText = File.ReadAllText("Assets/Scripts/UI/RuntimeSettingsMenu.cs");

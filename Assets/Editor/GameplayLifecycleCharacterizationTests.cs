@@ -233,6 +233,105 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Canvas_Subtitles"), Is.False);
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Sprite_ChatBubble"), Is.False);
 
+        const string catalogedVoiceLineId = "SUB_CH01_BUTLER_WELCOME_001";
+        Assert.That(
+            subtitle.TryResolveSpeechLine(
+                catalogedVoiceLineId,
+                "Butler",
+                "Welcome to Chateau Chantilly.",
+                out string catalogedSpeaker,
+                out string catalogedSubtitle,
+                out _,
+                out _),
+            Is.True);
+        Assert.That(catalogedSpeaker, Is.EqualTo("Butler"));
+        Assert.That(catalogedSubtitle, Is.EqualTo("Good evening. Welcome to Chateau Chantilly."));
+        Assert.That(
+            serializedVoicePlayback.TryGetDialogueClip(
+                catalogedVoiceLineId,
+                "Butler",
+                "Welcome to Chateau Chantilly.",
+                out AudioClip catalogedVoiceClip,
+                out float catalogedVoiceVolume),
+            Is.True);
+        Assert.That(catalogedVoiceClip, Is.Not.Null);
+        Assert.That(catalogedVoiceClip.name, Is.EqualTo(catalogedVoiceLineId));
+        Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(catalogedVoiceClip)), Is.EqualTo("84efe7bf90e143bfb05245e94cffe965"));
+        Assert.That(catalogedVoiceClip.length, Is.GreaterThan(0f));
+        AudioSource serializedVoiceSource = GetPrivateField<AudioSource>(serializedVoicePlayback, "audioSource");
+        Assert.That(serializedVoiceSource, Is.Not.Null);
+        GameAudioSourceVolume serializedVoiceVolume = GetPrivateField<GameAudioSourceVolume>(serializedVoicePlayback, "audioVolumeBinding");
+        Assert.That(serializedVoiceVolume, Is.Not.Null, "The primary dialogue source must have its volume owner before first speech.");
+        Assert.That(serializedVoiceSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(serializedVoiceVolume));
+        bool inputEnabledBeforeSpeechTest = player.InputEnabled;
+        player.SetInputEnabled(true);
+        bool firstBlockingSpeechStarted = false;
+        bool firstBlockingSpeechCompleted = false;
+        bool inputEnabledWhenFirstSpeechStarted = true;
+        speech.BeginSpeakLine(
+            catalogedVoiceLineId,
+            "Butler",
+            "Welcome to Chateau Chantilly.",
+            blockInput: true,
+            onComplete: () => firstBlockingSpeechCompleted = true,
+            showSubtitleOverlay: false,
+            onSpeechLineStarted: (_, _) =>
+            {
+                firstBlockingSpeechStarted = true;
+                inputEnabledWhenFirstSpeechStarted = player.InputEnabled;
+            });
+        yield return null;
+
+        Assert.That(firstBlockingSpeechStarted, Is.True);
+        Assert.That(inputEnabledWhenFirstSpeechStarted, Is.False, "Blocking dialogue must disable the serialized Butler movement owner before presenting the line.");
+        Assert.That(serializedVoiceSource.clip, Is.SameAs(catalogedVoiceClip));
+        Assert.That(serializedVoiceSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(serializedVoiceVolume));
+        Assert.That(serializedVoiceVolume.Channel, Is.EqualTo(GameAudioChannel.Dialogue));
+        Assert.That(serializedVoiceVolume.BaseVolume, Is.EqualTo(catalogedVoiceVolume).Within(0.0001f));
+        Assert.That(
+            serializedVoiceSource.volume,
+            Is.EqualTo(catalogedVoiceVolume * GameAudioSettings.GetVolume(GameAudioChannel.Dialogue)).Within(0.0001f));
+        speech.CancelQueuedSpeech();
+        for (int frame = 0; frame < 60 && !firstBlockingSpeechCompleted; frame++)
+        {
+            yield return null;
+        }
+        Assert.That(firstBlockingSpeechCompleted, Is.True, "Cancelled blocking dialogue must unwind its input lease.");
+        Assert.That(speech.IsNormalSpeechActive, Is.False);
+        Assert.That(serializedVoicePlayback.IsPlaying, Is.False);
+        Assert.That(serializedVoiceSource.clip, Is.Null);
+        Assert.That(player.InputEnabled, Is.True, "Cancelling blocking dialogue must restore previously enabled input.");
+
+        player.SetInputEnabled(false);
+        bool secondBlockingSpeechStarted = false;
+        bool secondBlockingSpeechCompleted = false;
+        bool inputEnabledWhenSecondSpeechStarted = true;
+        speech.BeginSpeakLine(
+            catalogedVoiceLineId,
+            "Butler",
+            "Welcome to Chateau Chantilly.",
+            blockInput: true,
+            onComplete: () => secondBlockingSpeechCompleted = true,
+            showSubtitleOverlay: false,
+            onSpeechLineStarted: (_, _) =>
+            {
+                secondBlockingSpeechStarted = true;
+                inputEnabledWhenSecondSpeechStarted = player.InputEnabled;
+            });
+        yield return null;
+        Assert.That(secondBlockingSpeechStarted, Is.True);
+        Assert.That(inputEnabledWhenSecondSpeechStarted, Is.False);
+        Assert.That(serializedVoiceSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(serializedVoiceVolume));
+        speech.CancelQueuedSpeech();
+        for (int frame = 0; frame < 60 && !secondBlockingSpeechCompleted; frame++)
+        {
+            yield return null;
+        }
+        Assert.That(secondBlockingSpeechCompleted, Is.True);
+        Assert.That(serializedVoiceSource.clip, Is.Null);
+        Assert.That(player.InputEnabled, Is.False, "Cancelling dialogue must not enable input that was already disabled.");
+        player.SetInputEnabled(inputEnabledBeforeSpeechTest);
+
         speech.BeginSpeakLine(
             "ARCH_LIFECYCLE_DIALOGUE",
             "Butler",

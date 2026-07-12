@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class GuestVoiceLinePlayback : MonoBehaviour
+public sealed class GuestVoiceLinePlayback : MonoBehaviour, Chateau.Architecture.IArchitectureValidatable
 {
     private const string PlayerObjectName = "GuestVoiceLinePlayback";
     private const string DefaultCatalogResourcePath = "Audio/GuestVoiceLineCatalog";
@@ -13,6 +13,7 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
     [SerializeField] private bool logMissingVoiceLines;
 
     [SerializeField] private AudioSource audioSource;
+    [SerializeField] private GameAudioSourceVolume audioVolumeBinding;
     [SerializeField] private RoomNavigationManager navigationManager;
     private bool subscribedToRoomChanges;
     private string playbackRoom = string.Empty;
@@ -41,7 +42,7 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
             return PlayOverlappingClip(clip, lineVolume);
         }
 
-        if (!EnsureAudioSource())
+        if (audioSource == null || audioVolumeBinding == null)
         {
             return 0f;
         }
@@ -58,7 +59,7 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         audioSource.playOnAwake = false;
         audioSource.spatialBlend = 0f;
         audioSource.ignoreListenerVolume = true;
-        GameAudioSettings.EnsureBinding(audioSource, GameAudioChannel.Dialogue, sourceBaseVolume);
+        audioVolumeBinding.Configure(audioSource, GameAudioChannel.Dialogue, sourceBaseVolume);
         playbackRoom = navigationManager != null ? navigationManager.CurrentRoom : string.Empty;
         return GameAudioSettings.TryPlay(audioSource) ? clip.length : 0f;
     }
@@ -101,7 +102,6 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
             catalog = Resources.Load<GuestVoiceLineCatalog>(resourcePath);
         }
 
-        EnsureAudioSource();
         ResolveRoomNavigation();
         RegisterRoomChangeHandler();
     }
@@ -163,19 +163,49 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         UnregisterRoomChangeHandler();
     }
 
-    private bool EnsureAudioSource()
+    public void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
     {
-        if (audioSource == null)
+        if (report == null)
         {
-            audioSource = GetComponent<AudioSource>();
+            throw new ArgumentNullException(nameof(report));
+        }
+
+        if (catalog == null)
+        {
+            report.AddError("GuestVoiceLinePlayback requires its serialized voice catalog.", this);
         }
 
         if (audioSource == null)
         {
-            audioSource = gameObject.AddComponent<AudioSource>();
+            report.AddError("GuestVoiceLinePlayback requires its serialized AudioSource.", this);
         }
 
-        return audioSource != null;
+        if (audioVolumeBinding == null)
+        {
+            report.AddError("GuestVoiceLinePlayback requires its serialized channel-volume owner.", this);
+        }
+        else
+        {
+            if (audioSource != null && audioVolumeBinding.gameObject != audioSource.gameObject)
+            {
+                report.AddError("GuestVoiceLinePlayback AudioSource and volume owner must share one GameObject.", this);
+            }
+
+            if (audioVolumeBinding.Channel != GameAudioChannel.Dialogue)
+            {
+                report.AddError("GuestVoiceLinePlayback volume owner must use the Dialogue channel.", this);
+            }
+
+            if (audioVolumeBinding.BaseVolume <= 0f)
+            {
+                report.AddError("GuestVoiceLinePlayback requires a positive authored base volume.", this);
+            }
+        }
+
+        if (navigationManager == null)
+        {
+            report.AddError("GuestVoiceLinePlayback requires its serialized RoomNavigationManager.", this);
+        }
     }
 
     private void ResolveRoomNavigation()
