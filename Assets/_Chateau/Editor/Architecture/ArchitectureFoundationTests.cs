@@ -205,7 +205,7 @@ public sealed class ArchitectureFoundationTests
             Assert.That(CountOccurrences(sceneText, introHeaders[i]), Is.EqualTo(1), introHeaders[i]);
         }
 
-        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6014));
+        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6015));
         Assert.That(CountOccurrences(gameRootTransformDocument, "- {fileID: 1878887141}"), Is.Zero);
         Assert.That(sceneRootsDocument, Does.Not.Contain("1878887140"));
         Assert.That(CountOccurrences(sceneRootsDocument, "- {fileID: 1878887141}"), Is.EqualTo(1));

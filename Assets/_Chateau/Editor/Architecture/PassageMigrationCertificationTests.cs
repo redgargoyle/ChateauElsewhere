@@ -24,6 +24,7 @@ public sealed class PassageMigrationCertificationTests
     private const string PlayerTransformFileId = "81962843";
     private const string DoorAudioSourceFileId = "2201000013";
     private const string GameRootFileId = "1878886998";
+    private const string LibraryRoomDefinitionGuid = "8da3a3e936712e7b9f534786110323e4";
     private const string MusicLibraryPassageDefinitionGuid = "aefe77f20874eb81b83fccb6ff5b8046";
     private const string LibraryMusicPassageDefinitionGuid = "3a641d5febbfd7aec481ada678ba9fe4";
     private static readonly IReadOnlyDictionary<string, int> MigrationStages =
@@ -298,7 +299,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void MusicLibraryDataAuthoredRouteSnapshotPreservesExactLegacySceneBeforeViewBinding()
+    public void MusicLibraryViewBoundRouteSnapshotPreservesExactLegacySceneBeforePassageBinding()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 2)
@@ -323,15 +324,17 @@ public sealed class PassageMigrationCertificationTests
         string libraryContent = RequireDocument(documents, "2102000003");
         string libraryDoors = RequireDocument(documents, "2103000030");
         string libraryDoorsTransform = RequireDocument(documents, "2103000031");
+        string libraryView = RequireDocument(documents, "4100000004");
         string gameRoot = RequireDocument(documents, GameRootFileId);
 
+        Assert.That(documents, Has.Count.EqualTo(6015));
         Assert.That(group, Has.Count.EqualTo(2));
         RouteInventoryRow libraryRow = group.Single(row => row.ComponentFileId == "2300000079");
         RouteInventoryRow musicRow = group.Single(row => row.ComponentFileId == "552135204");
-        Assert.That(group.All(row => row.Status == "data-authored"), Is.True);
+        Assert.That(group.All(row => row.Status == "view-bound"), Is.True);
         Assert.That(group.All(row => row.Group == "Music-Library"), Is.True);
         Assert.That(group.All(row => row.Profile == "standard-door"), Is.True);
-        Assert.That(group.All(row => row.Notes == "data-assets-authored-view-next"), Is.True);
+        Assert.That(group.All(row => row.Notes == "passive-room-view-bound-passage-next"), Is.True);
         AssertReciprocal(libraryRow, musicRow);
         AssertReciprocal(musicRow, libraryRow);
         Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageFileId)), Is.True);
@@ -339,7 +342,8 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(musicRow.PassageDefinitionGuid, Is.EqualTo(MusicLibraryPassageDefinitionGuid));
         Assert.That(libraryRow.PassageStableId, Is.EqualTo("passage.library.music-room"));
         Assert.That(musicRow.PassageStableId, Is.EqualTo("passage.music-room.library"));
-        Assert.That(group.All(row => string.IsNullOrEmpty(row.SourceRoomViewFileId)), Is.True);
+        Assert.That(libraryRow.SourceRoomViewFileId, Is.EqualTo("4100000004"));
+        Assert.That(musicRow.SourceRoomViewFileId, Is.EqualTo("4100000003"));
         Assert.That(group.All(row =>
             string.IsNullOrEmpty(row.ApproachX) &&
             string.IsNullOrEmpty(row.ApproachY) &&
@@ -431,7 +435,7 @@ public sealed class PassageMigrationCertificationTests
             Is.EqualTo("c0f34d74a30db58bb2b87b6ec316120b"));
         Assert.That(ReadReferenceFileId(musicView, "legacyContentGroup"), Is.EqualTo("2102000001"));
 
-        AssertExactComponentIds(libraryRoom, "1367921345", "2102000003");
+        AssertExactComponentIds(libraryRoom, "1367921345", "2102000003", "4100000004");
         Assert.That(libraryRoom, Does.Contain("m_Name: Room_Library"));
         Assert.That(ReadField(libraryRoom, "m_IsActive"), Is.EqualTo("0"));
         Assert.That(libraryRoomTransform, Does.Contain(
@@ -453,12 +457,16 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(libraryContent, Does.Contain(
             "roomBackgroundTexture: {fileID: 2800000, guid: 0a85e4fdd73e4714fabde63002a457e7, type: 3}"));
         Assert.That(ReadReferenceFileId(libraryContent, "perspectiveProfile"), Is.EqualTo("0"));
+        Assert.That(libraryView, Does.Contain($"guid: {RoomViewGuid}"));
+        Assert.That(ReadReferenceFileId(libraryView, "m_GameObject"), Is.EqualTo("1367921344"));
+        Assert.That(ReadReferenceGuid(libraryView, "definition"), Is.EqualTo(LibraryRoomDefinitionGuid));
+        Assert.That(ReadReferenceFileId(libraryView, "legacyContentGroup"), Is.EqualTo("2102000003"));
         Assert.That(documents.Values.Count(document =>
             document.Contains($"guid: {RoomViewGuid}") &&
             document.Contains("m_GameObject: {fileID: 354156755}")), Is.EqualTo(1));
         Assert.That(documents.Values.Count(document =>
             document.Contains($"guid: {RoomViewGuid}") &&
-            document.Contains("m_GameObject: {fileID: 1367921344}")), Is.Zero);
+            document.Contains("m_GameObject: {fileID: 1367921344}")), Is.EqualTo(1));
 
         AssertBoundarySnapshot(
             documents,
@@ -549,7 +557,7 @@ public sealed class PassageMigrationCertificationTests
             "Ch2_Hide_Guest01", "Library", "{x: -255, y: -181}");
 
         Assert.That(documents.Values.Count(document => document.Contains($"guid: {RoomViewGuid}")),
-            Is.EqualTo(3));
+            Is.EqualTo(4));
         Assert.That(documents.Values.Count(document => document.Contains($"guid: {PassageGuid}")),
             Is.EqualTo(4));
         Assert.That(documents.Values.Count(document =>
@@ -565,6 +573,11 @@ public sealed class PassageMigrationCertificationTests
             Assert.That(CountOccurrences(gameRoot, $"{{fileID: {groupFileId}}}"), Is.Zero,
                 $"Group 02 legacy object {groupFileId} must not be registered with GameRoot yet.");
         }
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000004}"), Is.EqualTo(1));
+        Assert.That(gameRoot, Does.Contain(
+            "  - {fileID: 4100000003}\n" +
+            "  - {fileID: 4100000004}\n" +
+            "  - {fileID: 4100000011}"));
 
         Assert.That(CountOccurrences(database, "  - {fileID: 11400000, guid:"), Is.EqualTo(10));
         Assert.That(CountOccurrences(database, $"guid: {LibraryMusicPassageDefinitionGuid}"), Is.EqualTo(1));
@@ -744,7 +757,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000003}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000013}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000014}"), Is.EqualTo(1));
-        Assert.That(documents.Values.Count(document => document.Contains($"guid: {RoomViewGuid}")), Is.EqualTo(3));
+        Assert.That(documents.Values.Count(document => document.Contains($"guid: {RoomViewGuid}")), Is.EqualTo(4));
         Assert.That(documents.Values.Count(document => document.Contains($"guid: {PassageGuid}")), Is.EqualTo(4));
         Assert.That(ReadReferenceFileId(guestPanic, "leftExitTarget"), Is.EqualTo("2300000096"));
         Assert.That(ReadField(guestPanic, "leftExitTargetName"),

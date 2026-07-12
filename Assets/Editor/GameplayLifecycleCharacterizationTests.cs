@@ -2818,7 +2818,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(musicRoomView.LegacyContentGroup, Is.SameAs(musicRoomContent));
         Assert.That(musicRoomView.Root, Is.SameAs(musicRoomContent.transform));
         Assert.That(musicRoomView.HasGameContext, Is.True);
-        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(3));
+        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(4));
         Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(4));
         AssertDrawingMusicAuthoredAnchorPassages(
             forward,
@@ -3928,9 +3928,39 @@ public sealed class GameplayLifecycleCharacterizationTests
                 .Single(item => item.RoomName == MusicRoom);
             RoomContentGroup libraryRoomContent = FindInActiveScene<RoomContentGroup>()
                 .Single(item => item.RoomName == LibraryRoom);
+            CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
+            Assert.That(roomViews, Has.Length.EqualTo(4));
+            CanonicalRoomView libraryRoomView = roomViews.Single(item =>
+                item.Definition != null && item.Definition.StableId == "room.library");
+            Assert.That(libraryRoomView, Is.SameAs(libraryRoomContent.GetComponent<CanonicalRoomView>()));
+            Assert.That(libraryRoomContent.GetComponents<CanonicalRoomView>(), Has.Length.EqualTo(1));
+            Assert.That(libraryRoomView.Definition, Is.Not.Null);
+            Assert.That(libraryRoomView.Definition.StableId, Is.EqualTo("room.library"));
+            Assert.That(
+                AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                    libraryRoomView.Definition,
+                    out string libraryDefinitionGuid,
+                    out long libraryDefinitionFileId),
+                Is.True);
+            Assert.That(libraryDefinitionGuid, Is.EqualTo("8da3a3e936712e7b9f534786110323e4"));
+            Assert.That(libraryDefinitionFileId, Is.EqualTo(11400000L));
+            Assert.That(libraryRoomView.LegacyContentGroup, Is.SameAs(libraryRoomContent));
+            Assert.That(libraryRoomView.gameObject, Is.SameAs(libraryRoomContent.gameObject));
+            Assert.That(libraryRoomView.Root, Is.SameAs(libraryRoomContent.transform));
+            Assert.That(libraryRoomView.HasGameContext, Is.True);
+            Chateau.Architecture.ValidationReport libraryViewReport =
+                new Chateau.Architecture.ValidationReport();
+            libraryRoomView.ValidateConfiguration(libraryViewReport);
+            Assert.That(libraryViewReport.Messages, Is.Empty);
+            Chateau.Architecture.GameRoot gameRoot =
+                RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+            List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
+                GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
+            Assert.That(sceneBehaviours.Count(item => item == libraryRoomView), Is.EqualTo(1));
             Assert.That(RequireOnlyActiveRoom(MusicRoom), Is.SameAs(musicRoomContent));
             Assert.That(musicRoomContent.gameObject.name, Is.EqualTo("Room_Music_Room"));
             Assert.That(libraryRoomContent.gameObject.name, Is.EqualTo("Room_Library"));
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
             Assert.That(musicRoomContent.PerspectiveProfile, Is.Null);
             Assert.That(libraryRoomContent.PerspectiveProfile, Is.Null);
             Assert.That(musicRoomContent.TryGetRoomBackgroundTexture(out Texture musicBackground), Is.True);
@@ -4019,6 +4049,19 @@ public sealed class GameplayLifecycleCharacterizationTests
             string sceneText = System.IO.File.ReadAllText(System.IO.Path.Combine(projectRoot, GameplayScenePath));
             string serializedForward = RequireSerializedUnityDocument(sceneText, "552135204");
             string serializedReverse = RequireSerializedUnityDocument(sceneText, "2300000079");
+            string serializedLibraryView = RequireSerializedUnityDocument(sceneText, "4100000004");
+            string serializedGameRoot = RequireSerializedUnityDocument(sceneText, "1878886998");
+            Assert.That(serializedLibraryView, Does.Contain("m_GameObject: {fileID: 1367921344}"));
+            Assert.That(serializedLibraryView, Does.Contain(
+                "m_Script: {fileID: 11500000, guid: ccd2f3bd803e45aa8a1174cc881d6dc0, type: 3}"));
+            Assert.That(serializedLibraryView, Does.Contain(
+                "definition: {fileID: 11400000, guid: 8da3a3e936712e7b9f534786110323e4, type: 2}"));
+            Assert.That(serializedLibraryView, Does.Contain("legacyContentGroup: {fileID: 2102000003}"));
+            Assert.That(
+                serializedGameRoot.Split('\n')
+                    .Count(line => line.Trim() == "- {fileID: 4100000004}"),
+                Is.EqualTo(1),
+                "GameRoot must register the passive Library RoomView exactly once.");
             Assert.That(serializedForward, Does.Contain("sourceRoom: Music Room"));
             Assert.That(serializedForward, Does.Contain("doorName: MusicRoom_Library"));
             Assert.That(serializedForward, Does.Contain("destinationRoom: Library"));
@@ -4197,6 +4240,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.SameAs(libraryRoomContent));
             Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"),
                 Is.SameAs(libraryRoomContent.transform));
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
             Assert.That(forward.gameObject.activeInHierarchy, Is.False);
             Assert.That(reverse.gameObject.activeInHierarchy, Is.True);
             Assert.That(libraryHideAnchor.gameObject.activeInHierarchy, Is.True);
@@ -4290,6 +4334,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.SameAs(musicRoomContent));
             Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"),
                 Is.SameAs(musicRoomContent.transform));
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
             Assert.That(forward.gameObject.activeInHierarchy, Is.True);
             Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
             Assert.That(libraryHideAnchor.gameObject.activeInHierarchy, Is.False);
@@ -4326,6 +4371,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             forward.ActivateDoor();
             yield return WaitForSettledLayout();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
             Assert.That(player.HasDestination, Is.False);
             Assert.That(arrivedPositions, Has.Count.EqualTo(arrivedCountBeforeNear));
             Assert.That(movementStoppedPositions, Has.Count.EqualTo(stoppedCountBeforeNear));
@@ -4346,6 +4392,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             reverse.ActivateDoor();
             yield return WaitForSettledLayout();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
             Assert.That(player.HasDestination, Is.False);
             Assert.That(arrivedPositions, Has.Count.EqualTo(arrivedCountBeforeNear));
             Assert.That(movementStoppedPositions, Has.Count.EqualTo(stoppedCountBeforeNear));
@@ -4485,6 +4532,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Physics2D.SyncTransforms();
 
                 Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+                AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
                 Assert.That(
                     TryWarpToCharacterizedFarStart(player, forward, new Vector2(0f, -2f),
                         out float aspectForwardScreenDistance),
@@ -4536,6 +4584,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
                 Assert.That(RequireOnlyActiveRoom(LibraryRoom), Is.SameAs(libraryRoomContent));
                 Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(libraryBackground));
+                AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
                 Vector2 aspectForwardArrival = player.LogicalPosition;
                 AssertFinite(aspectForwardArrival, "aspect Music-to-Library arrival");
                 Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True);
@@ -4591,6 +4640,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
                 Assert.That(RequireOnlyActiveRoom(MusicRoom), Is.SameAs(musicRoomContent));
                 Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(musicBackground));
+                AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
                 Vector2 aspectReverseArrival = player.LogicalPosition;
                 AssertFinite(aspectReverseArrival, "aspect Library-to-Music arrival");
                 Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True);
@@ -4653,6 +4703,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
             Canvas.ForceUpdateCanvases();
             Physics2D.SyncTransforms();
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
             Assert.That(
                 TryWarpToCharacterizedFarStart(player, forward, new Vector2(0f, -2f),
                     out float maximumForwardScreenDistance),
@@ -4678,6 +4729,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             Canvas.ForceUpdateCanvases();
             Physics2D.SyncTransforms();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
             Vector2 maximumForwardArrival = player.LogicalPosition;
             AssertFinite(maximumForwardArrival, "maximum-zoom Music-to-Library arrival");
             AssertVector2Within(maximumForwardStart, new Vector2(0f, -2f), 0.001f,
@@ -4696,6 +4748,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
             Canvas.ForceUpdateCanvases();
             Physics2D.SyncTransforms();
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: true);
             Assert.That(
                 TryWarpToCharacterizedFarStart(player, reverse, new Vector2(0f, -2f),
                     out float maximumReverseScreenDistance),
@@ -4721,6 +4774,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             Canvas.ForceUpdateCanvases();
             Physics2D.SyncTransforms();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
             Vector2 maximumReverseArrival = player.LogicalPosition;
             AssertFinite(maximumReverseArrival, "maximum-zoom Library-to-Music arrival");
             AssertVector2Within(maximumReverseStart, new Vector2(0f, -2f), 0.001f,
@@ -4749,6 +4803,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
             }
             Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+            AssertLibraryRoomViewVisibility(libraryRoomView, libraryRoomContent, expectedVisible: false);
             Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
             Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation),
@@ -5308,8 +5363,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         bool drawingVisible)
     {
         CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-        Assert.That(roomViews, Has.Length.EqualTo(3),
-            "Entrance, Drawing, and Music must remain the only passive RoomView scene owners at this gate.");
+        Assert.That(roomViews, Has.Length.EqualTo(4),
+            "Entrance, Drawing, Music, and Library must remain the only passive RoomView scene owners at this gate.");
         CanonicalPassage[] passages = FindInActiveScene<CanonicalPassage>();
         Assert.That(passages, Has.Length.EqualTo(4),
             "The first two route grafts must remain exactly four reciprocal canonical scene bindings.");
@@ -5322,8 +5377,12 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.SameAs(drawingView));
         CanonicalRoomView musicView = roomViews.Single(item =>
             item.Definition != null && item.Definition.StableId == "room.music-room");
+        CanonicalRoomView libraryView = roomViews.Single(item =>
+            item.Definition != null && item.Definition.StableId == "room.library");
         RoomContentGroup musicContent = FindInActiveScene<RoomContentGroup>()
             .Single(item => item.RoomName == MusicRoom);
+        RoomContentGroup libraryContent = FindInActiveScene<RoomContentGroup>()
+            .Single(item => item.RoomName == "Library");
         Assert.That(entranceView.Definition, Is.SameAs(entranceDefinition));
         Assert.That(drawingView.Definition, Is.SameAs(drawingDefinition));
         Assert.That(entranceDefinition.StableId, Is.EqualTo("room.grand-entrance-hall"));
@@ -5342,6 +5401,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(musicView.Root, Is.SameAs(musicContent.transform));
         Assert.That(musicView.HasGameContext, Is.True);
         Assert.That(musicView.IsVisible, Is.EqualTo(musicContent.gameObject.activeSelf));
+        Assert.That(libraryView.Definition.StableId, Is.EqualTo("room.library"));
+        Assert.That(libraryView.LegacyContentGroup, Is.SameAs(libraryContent));
+        Assert.That(libraryView.gameObject, Is.SameAs(libraryContent.gameObject));
+        Assert.That(libraryView.Root, Is.SameAs(libraryContent.transform));
+        Assert.That(libraryView.HasGameContext, Is.True);
+        AssertLibraryRoomViewVisibility(
+            libraryView,
+            libraryContent,
+            expectedVisible: libraryContent.gameObject.activeSelf);
 
         DoorTriggerNavigation drawingMusicForwardTrigger =
             RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_DrawingRoom_MusicRoom");
@@ -5444,12 +5512,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Chateau.Architecture.ValidationReport entranceReport = new Chateau.Architecture.ValidationReport();
         Chateau.Architecture.ValidationReport drawingReport = new Chateau.Architecture.ValidationReport();
         Chateau.Architecture.ValidationReport musicReport = new Chateau.Architecture.ValidationReport();
+        Chateau.Architecture.ValidationReport libraryReport = new Chateau.Architecture.ValidationReport();
         entranceView.ValidateConfiguration(entranceReport);
         drawingView.ValidateConfiguration(drawingReport);
         musicView.ValidateConfiguration(musicReport);
+        libraryView.ValidateConfiguration(libraryReport);
         Assert.That(entranceReport.Messages, Is.Empty);
         Assert.That(drawingReport.Messages, Is.Empty);
         Assert.That(musicReport.Messages, Is.Empty);
+        Assert.That(libraryReport.Messages, Is.Empty);
         Chateau.Architecture.ValidationReport forwardReport = new Chateau.Architecture.ValidationReport();
         Chateau.Architecture.ValidationReport reverseReport = new Chateau.Architecture.ValidationReport();
         forwardPassage.ValidateConfiguration(forwardReport);
@@ -5463,8 +5534,22 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(sceneBehaviours.Count(item => item == entranceView), Is.EqualTo(1));
         Assert.That(sceneBehaviours.Count(item => item == drawingView), Is.EqualTo(1));
         Assert.That(sceneBehaviours.Count(item => item == musicView), Is.EqualTo(1));
+        Assert.That(sceneBehaviours.Count(item => item == libraryView), Is.EqualTo(1));
         Assert.That(sceneBehaviours.Count(item => item == forwardPassage), Is.EqualTo(1));
         Assert.That(sceneBehaviours.Count(item => item == reversePassage), Is.EqualTo(1));
+    }
+
+    private static void AssertLibraryRoomViewVisibility(
+        CanonicalRoomView libraryView,
+        RoomContentGroup libraryContent,
+        bool expectedVisible)
+    {
+        Assert.That(libraryView, Is.Not.Null);
+        Assert.That(libraryContent, Is.Not.Null);
+        Assert.That(libraryView.Root, Is.SameAs(libraryContent.transform));
+        Assert.That(libraryView.Root.gameObject.activeSelf, Is.EqualTo(libraryContent.gameObject.activeSelf));
+        Assert.That(libraryView.IsVisible, Is.EqualTo(libraryView.Root.gameObject.activeSelf));
+        Assert.That(libraryView.IsVisible, Is.EqualTo(expectedVisible));
     }
 
     private static void AssertDrawingMusicAuthoredAnchorPassages(

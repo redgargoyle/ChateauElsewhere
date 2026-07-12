@@ -36,7 +36,7 @@ public sealed class CanonicalRoomPassageContractTests
     private const string LibraryMusicPassageGuid = "3a641d5febbfd7aec481ada678ba9fe4";
 
     [Test]
-    public void CanonicalRouteDataViewsPassagesAndGroup02DataAuthoredCertificationAreExact()
+    public void CanonicalRouteDataViewsPassagesAndGroup02ViewBoundCertificationAreExact()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
@@ -238,7 +238,7 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(report.HasErrors, Is.False, string.Join("\n", report.Messages.Select(message => message.ToString())));
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
-        Assert.That(gameplayText, Does.Not.Contain($"guid: {LibraryRoomGuid}"));
+        Assert.That(CountOccurrences(gameplayText, $"guid: {LibraryRoomGuid}"), Is.EqualTo(1));
         Assert.That(gameplayText, Does.Not.Contain($"guid: {MusicLibraryPassageGuid}"));
         Assert.That(gameplayText, Does.Not.Contain($"guid: {LibraryMusicPassageGuid}"));
         Assert.That(CountOccurrences(gameplayText, "guid: 3167361ca4c671298c0e84f43320619b"), Is.EqualTo(1));
@@ -246,9 +246,11 @@ public sealed class CanonicalRoomPassageContractTests
         string entranceRoomObject = ExtractDocument(gameplayText, "--- !u!1 &567115833");
         string drawingRoomObject = ExtractDocument(gameplayText, "--- !u!1 &2300000005");
         string musicRoomObject = ExtractDocument(gameplayText, "--- !u!1 &354156755");
+        string libraryRoomObject = ExtractDocument(gameplayText, "--- !u!1 &1367921344");
         string entranceView = ExtractDocument(gameplayText, "--- !u!114 &4100000001");
         string drawingView = ExtractDocument(gameplayText, "--- !u!114 &4100000002");
         string musicView = ExtractDocument(gameplayText, "--- !u!114 &4100000003");
+        string libraryView = ExtractDocument(gameplayText, "--- !u!114 &4100000004");
         string gameRoot = ExtractDocument(gameplayText, "--- !u!114 &1878886998");
         string outboundObject = ExtractDocument(gameplayText, "--- !u!1 &109889176");
         string outboundTrigger = ExtractDocument(gameplayText, "--- !u!114 &109889178");
@@ -264,8 +266,8 @@ public sealed class CanonicalRoomPassageContractTests
         string musicDrawingPassage = ExtractDocument(gameplayText, "--- !u!114 &4100000014");
         string playerTransform = ExtractDocument(gameplayText, "--- !u!4 &81962843 stripped");
 
-        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(3),
-            "Only Entrance, Drawing, and the view-bound Music root may carry passive RoomViews at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(4),
+            "Entrance, Drawing, Music, and Library must be the only passive RoomView scene owners at this gate.");
         Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(4),
             "Only the two staged reciprocal route pairs may carry passive Passages at this gate.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage:"), Is.EqualTo(4),
@@ -280,6 +282,8 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(entranceRoomObject, Does.Contain("- component: {fileID: 4100000001}"));
         Assert.That(drawingRoomObject, Does.Contain("- component: {fileID: 4100000002}"));
         Assert.That(musicRoomObject, Does.Contain("- component: {fileID: 4100000003}"));
+        Assert.That(libraryRoomObject, Does.Contain("- component: {fileID: 4100000004}"));
+        Assert.That(CountOccurrences(libraryRoomObject, "- component:"), Is.EqualTo(3));
         Assert.That(entranceView, Does.Contain("m_GameObject: {fileID: 567115833}"));
         Assert.That(entranceView, Does.Contain(
             "m_Script: {fileID: 11500000, guid: ccd2f3bd803e45aa8a1174cc881d6dc0, type: 3}"));
@@ -298,10 +302,17 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(musicView, Does.Contain(
             "definition: {fileID: 11400000, guid: c0f34d74a30db58bb2b87b6ec316120b, type: 2}"));
         Assert.That(musicView, Does.Contain("legacyContentGroup: {fileID: 2102000001}"));
+        Assert.That(libraryView, Does.Contain("m_GameObject: {fileID: 1367921344}"));
+        Assert.That(libraryView, Does.Contain(
+            "m_Script: {fileID: 11500000, guid: ccd2f3bd803e45aa8a1174cc881d6dc0, type: 3}"));
+        Assert.That(libraryView, Does.Contain(
+            $"definition: {{fileID: 11400000, guid: {LibraryRoomGuid}, type: 2}}"));
+        Assert.That(libraryView, Does.Contain("legacyContentGroup: {fileID: 2102000003}"));
 
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000001}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000002}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000003}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000004}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000011}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000012}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000013}"), Is.EqualTo(1));
@@ -309,12 +320,17 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(gameRoot, Does.Contain(
             "  - {fileID: 4100000012}\n  - {fileID: 4100000013}\n  - {fileID: 4100000014}"),
             "New passive Passages must append after the certified pair without reordering existing registrations.");
+        Assert.That(gameRoot, Does.Contain(
+            "  - {fileID: 4100000003}\n  - {fileID: 4100000004}\n  - {fileID: 4100000011}"),
+            "The Library RoomView must follow the existing views without reordering certified Passages.");
         Assert.That(CountOccurrences(gameplayText, "4100000001"), Is.EqualTo(4),
             "The entrance RoomView should occur only on its owner, document header, GameRoot registration, and source Passage.");
         Assert.That(CountOccurrences(gameplayText, "4100000002"), Is.EqualTo(5),
             "The drawing-room RoomView should occur only on its owner, document header, GameRoot registration, and two source Passages.");
         Assert.That(CountOccurrences(gameplayText, "4100000003"), Is.EqualTo(4),
             "The Music RoomView should occur only on its owner, document header, GameRoot registration, and source Passage.");
+        Assert.That(CountOccurrences(gameplayText, "4100000004"), Is.EqualTo(3),
+            "The Library RoomView should occur only on its owner, document header, and GameRoot registration.");
         Assert.That(outboundObject, Does.Contain("- component: {fileID: 4100000011}"));
         Assert.That(reverseObject, Does.Contain("- component: {fileID: 4100000012}"));
         Assert.That(drawingMusicObject, Does.Contain("- component: {fileID: 4100000013}"));
@@ -858,7 +874,7 @@ public sealed class CanonicalRoomPassageContractTests
         }
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
-        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(3));
+        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(4));
         Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(4));
     }
 
