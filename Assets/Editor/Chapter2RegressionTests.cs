@@ -456,7 +456,7 @@ public class Chapter2RegressionTests
         string gameplaySceneText = File.ReadAllText(GameplayScenePath);
         string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
 
-        Assert.That(doorbellText, Does.Contain($"DefaultDoorbellClipResourcePath = \"{DoorbellClipResourcePath}\""), "Runtime-created doorbell systems should know where the imported clip lives.");
+        Assert.That(doorbellText, Does.Contain($"DefaultDoorbellClipResourcePath = \"{DoorbellClipResourcePath}\""), "The staged fallback should still know where the imported clip lives until cleanup.");
         Assert.That(doorbellText, Does.Contain("Resources.Load<AudioClip>(doorbellClipResourcePath)"), "The doorbell should load the imported clip before falling back to generated tones.");
         Assert.That(doorbellText, Does.Match(@"(?s)Resources\.Load<AudioClip>\(doorbellClipResourcePath\)[\s\S]*CreateDoorbellClip\(\)"), "The generated tone should remain only as a fallback after the imported clip is unavailable.");
         Assert.That(doorbellText, Does.Contain("FindAnyObjectByType<ChapterClock>"), "Characterization must retain the current clock discovery path until the serialized graft passes.");
@@ -464,8 +464,11 @@ public class Chapter2RegressionTests
         Assert.That(doorbellText, Does.Contain("GameAudioSettings.EnsureBinding(audioSource, GameAudioChannel.GameSounds, 1f)"), "Characterization must retain the current volume-binding factory until the serialized graft passes.");
         Assert.That(chapter1Text, Does.Contain("FindAnyObjectByType<DoorbellSystem>"), "Characterization must retain Chapter 1's current doorbell discovery path until the serialized graft passes.");
         Assert.That(chapter1Text, Does.Contain("gameObject.AddComponent<DoorbellSystem>()"), "Characterization must retain Chapter 1's current doorbell factory until the serialized graft passes.");
-        Assert.That(gameplaySceneText, Does.Contain("doorbellSystem: {fileID: 0}"), "Gameplay currently leaves the Chapter 1 doorbell edge empty before the graft.");
-        Assert.That(gameplaySceneText, Does.Not.Contain("guid: 4b5410ab5e584743be969413e655ecb4"), "Gameplay currently contains no serialized DoorbellSystem before the graft.");
+        Assert.That(gameplaySceneText, Does.Contain("doorbellSystem: {fileID: 3302000003}"), "Gameplay should bind the characterized DoorbellSystem directly.");
+        Assert.That(gameplaySceneText, Does.Contain("audioSource: {fileID: 3302000004}"), "The serialized doorbell should own its characterized source.");
+        Assert.That(gameplaySceneText, Does.Contain("audioVolumeBinding: {fileID: 3302000005}"), "The serialized doorbell should own its characterized Game-Sounds binding.");
+        Assert.That(gameplaySceneText, Does.Contain("doorbellClip: {fileID: 8300000, guid: 67dc6970d473422a86e0c071ef23abd1, type: 3}"), "The serialized doorbell should own the approved imported clip directly.");
+        Assert.That(Regex.Matches(gameplaySceneText, "guid: 4b5410ab5e584743be969413e655ecb4").Count, Is.EqualTo(1), "Gameplay should serialize exactly one DoorbellSystem.");
         Assert.That(doorbellMetaText, Does.Contain("guid: 67dc6970d473422a86e0c071ef23abd1"), "The characterized imported doorbell clip GUID must remain stable.");
         Assert.That(doorbellMetaText, Does.Contain("preloadAudioData: 1"), "The short doorbell one-shot should be preloaded so the first ring is immediate.");
     }

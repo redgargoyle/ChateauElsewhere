@@ -525,18 +525,49 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1HudOwnerIsSerializedOnce()
+    public void Chapter1HudAndDoorbellOwnersAreSerializedOnce()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+        string hostDocument = ExtractDocument(sceneText, "--- !u!1 &1696549391");
+        string controllerDocument = ExtractDocument(sceneText, "--- !u!114 &3302000001");
+        string doorbellDocument = ExtractDocument(sceneText, "--- !u!114 &3302000003");
+        string sourceDocument = ExtractDocument(sceneText, "--- !u!82 &3302000004");
+        string bindingDocument = ExtractDocument(sceneText, "--- !u!114 &3302000005");
 
         Assert.That(CountOccurrences(sceneText, "guid: a7a7a747ac7ae2fb48c9d60608ca3dc9"), Is.EqualTo(1));
         Assert.That(sceneText, Does.Contain("interactionHUD: {fileID: 3302000002}"));
         Assert.That(sceneText, Does.Contain("- component: {fileID: 3302000002}"));
+        Assert.That(CountOccurrences(sceneText, "guid: 4b5410ab5e584743be969413e655ecb4"), Is.EqualTo(1));
+        Assert.That(controllerDocument, Does.Contain("doorbellSystem: {fileID: 3302000003}"));
+        Assert.That(hostDocument, Does.Contain(
+            "  - component: {fileID: 3302000002}\n" +
+            "  - component: {fileID: 3302000003}\n" +
+            "  - component: {fileID: 3302000004}\n" +
+            "  - component: {fileID: 3302000005}"));
+        Assert.That(doorbellDocument, Does.Contain("m_GameObject: {fileID: 1696549391}"));
+        Assert.That(doorbellDocument, Does.Contain("chapterClock: {fileID: 3301000001}"));
+        Assert.That(doorbellDocument, Does.Contain("audioSource: {fileID: 3302000004}"));
+        Assert.That(doorbellDocument, Does.Contain("audioVolumeBinding: {fileID: 3302000005}"));
+        Assert.That(doorbellDocument, Does.Contain("doorbellClip: {fileID: 8300000, guid: 67dc6970d473422a86e0c071ef23abd1, type: 3}"));
+        Assert.That(sourceDocument, Does.Contain("m_GameObject: {fileID: 1696549391}"));
+        Assert.That(sourceDocument, Does.Contain("m_Resource: {fileID: 0}"));
+        Assert.That(sourceDocument, Does.Contain("m_PlayOnAwake: 0"));
+        Assert.That(sourceDocument, Does.Contain("m_Volume: 1"));
+        Assert.That(sourceDocument, Does.Contain("Loop: 0"));
+        Assert.That(sourceDocument, Does.Contain("Pan2D: 0"));
+        Assert.That(bindingDocument, Does.Contain("audioSource: {fileID: 3302000004}"));
+        Assert.That(bindingDocument, Does.Contain("channel: 1"));
+        Assert.That(bindingDocument, Does.Contain("baseVolume: 1"));
 
         string chapter1Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs");
+        string doorbellText = File.ReadAllText("Assets/Scripts/Story/DoorbellSystem.cs");
         Assert.That(chapter1Text, Does.Not.Contain("FindAnyObjectByType<Chapter1InteractionHUD>"));
         Assert.That(chapter1Text, Does.Not.Contain("AddComponent<Chapter1InteractionHUD>"));
         Assert.That(chapter1Text, Does.Not.Contain("createRuntimeHud"));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized DoorbellSystem."));
+        Assert.That(chapter1Text, Does.Contain("doorbellSystem.IsConfiguredFor(gameObject, chapterClock)"));
+        Assert.That(doorbellText, Does.Contain("public void ValidateConfiguration"));
+        Assert.That(doorbellText, Does.Contain("DoorbellSystem requires its serialized imported doorbell clip."));
     }
 
     [Test]
@@ -588,7 +619,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(CountOccurrences(sceneText, "speakingIndicator: {fileID: 1878887002}"), Is.EqualTo(2));
         Assert.That(sceneText, Does.Contain("audioSource: {fileID: 1878887000}"));
         Assert.That(sceneText, Does.Contain("audioVolumeBinding: {fileID: 1878887003}"));
-        Assert.That(CountOccurrences(sceneText, "guid: 5161da2d2e1b408d859e3792f47407f4"), Is.EqualTo(4));
+        Assert.That(CountOccurrences(sceneText, "guid: 5161da2d2e1b408d859e3792f47407f4"), Is.EqualTo(5));
         Assert.That(sceneText, Does.Match(@"--- !u!114 &1878887003[\s\S]*?m_GameObject: \{fileID: 1878886993\}[\s\S]*?audioSource: \{fileID: 1878887000\}[\s\S]*?channel: 0[\s\S]*?baseVolume: 1"));
         Assert.That(sceneText, Does.Contain("catalog: {fileID: 11400000, guid: 147a8473c4c849c9908200b092d13691, type: 2}"));
         Assert.That(sceneText, Does.Contain("bubbleSprite: {fileID: 21300000, guid: b40c2d5917304c3e822fad1b6f3e5960, type: 3}"));

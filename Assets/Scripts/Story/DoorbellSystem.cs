@@ -1,13 +1,14 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class DoorbellSystem : MonoBehaviour
+public class DoorbellSystem : MonoBehaviour, Chateau.Architecture.IArchitectureValidatable
 {
     private const string DefaultDoorbellClipResourcePath = "Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz";
 
     [Header("References")]
     [SerializeField] private ChapterClock chapterClock;
     [SerializeField] private AudioSource audioSource;
+    [SerializeField] private GameAudioSourceVolume audioVolumeBinding;
     [SerializeField] private AudioClip doorbellClip;
     [SerializeField] private string doorbellClipResourcePath = DefaultDoorbellClipResourcePath;
 
@@ -28,6 +29,60 @@ public class DoorbellSystem : MonoBehaviour
 
     public bool IsRinging => isRinging;
     public int CurrentIntensityLevel => Mathf.Max(0, currentIntensityLevel);
+
+    public bool IsConfiguredFor(GameObject expectedOwner, ChapterClock expectedClock)
+    {
+        return expectedOwner != null &&
+            gameObject == expectedOwner &&
+            chapterClock == expectedClock;
+    }
+
+    public void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        if (report == null)
+        {
+            return;
+        }
+
+        if (chapterClock == null)
+        {
+            report.AddError("DoorbellSystem requires its serialized ChapterClock.", this);
+        }
+
+        if (audioSource == null)
+        {
+            report.AddError("DoorbellSystem requires its serialized AudioSource.", this);
+        }
+
+        if (audioVolumeBinding == null)
+        {
+            report.AddError("DoorbellSystem requires its serialized Game-Sounds volume binding.", this);
+        }
+
+        if (doorbellClip == null)
+        {
+            report.AddError("DoorbellSystem requires its serialized imported doorbell clip.", this);
+        }
+
+        if (audioSource != null &&
+            (audioSource.gameObject != gameObject ||
+             GetComponents<AudioSource>().Length != 1 ||
+             audioSource.playOnAwake ||
+             audioSource.loop ||
+             audioSource.spatialBlend != 0f))
+        {
+            report.AddError("DoorbellSystem requires one same-owner, non-looping, play-on-awake-disabled 2D AudioSource.", this);
+        }
+
+        if (audioVolumeBinding != null &&
+            (audioVolumeBinding.gameObject != gameObject ||
+             GetComponents<GameAudioSourceVolume>().Length != 1 ||
+             audioVolumeBinding.Channel != GameAudioChannel.GameSounds ||
+             !Mathf.Approximately(audioVolumeBinding.BaseVolume, 1f)))
+        {
+            report.AddError("DoorbellSystem requires one same-owner Game-Sounds volume binding at base volume 1.", this);
+        }
+    }
 
     private void Awake()
     {
@@ -178,7 +233,7 @@ public class DoorbellSystem : MonoBehaviour
         audioSource.spatialBlend = 0f;
         audioSource.volume = 1f;
         audioSource.ignoreListenerPause = true;
-        GameAudioSettings.EnsureBinding(audioSource, GameAudioChannel.GameSounds, 1f);
+        audioVolumeBinding = GameAudioSettings.EnsureBinding(audioSource, GameAudioChannel.GameSounds, 1f);
     }
 
     private AudioClip ResolveDoorbellClip()

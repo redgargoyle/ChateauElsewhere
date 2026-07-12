@@ -262,6 +262,20 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             }
         }
 
+        if (doorbellSystem == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized DoorbellSystem.", this);
+        }
+        else
+        {
+            if (!doorbellSystem.IsConfiguredFor(gameObject, chapterClock))
+            {
+                report.AddError("Chapter1ArrivalController requires its same-owner doorbell to use the serialized ChapterClock.", this);
+            }
+
+            doorbellSystem.ValidateConfiguration(report);
+        }
+
         if (coatCloset == null)
         {
             report.AddError("Chapter1ArrivalController requires its serialized Entrance coat closet.", this);

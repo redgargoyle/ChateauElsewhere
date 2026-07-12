@@ -94,13 +94,14 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized the characterized catalog, Entrance placemark, Drawing Room door target, Entrance/Drawing `RoomContentGroup` owners, and ordered eight guest points directly on Chapter 1. Configuration validation now requires that exact complete graph while the lookup code remains staged for its cleanup gate.
 - Removed Chapter 1's footstep Resources fallback, RoomAnchor/object-name discovery, duplicate door-trigger scan, room-content scan, legacy three-seat fields, and generated-seat fallback. Guest placement now reads only the validated ordered eight-point graph; configuration rejects point reordering by exact `RoomAnchor` identity, and startup diagnostics consume the same authoritative report while unrelated dynamic guest creation remains intact.
 - Characterized Chapter 1's runtime doorbell graph before migration: first startup creates exactly one `DoorbellSystem`, `AudioSource`, and Game-Sounds binding on the Chapter 1 host; it binds the Chapter clock, loads approved clip GUID `67dc6970d473422a86e0c071ef23abd1` / fileID `8300000` on first ring, and reuses every identity thereafter.
+- Serialized that exact doorbell graph on the existing Chapter 1 host as components `3302000003`–`3302000005`, with direct clock/source/binding/imported-clip edges and configuration validation. The AudioSource resource remains empty because `DoorbellSystem` owns the one-shot clip, matching characterized behavior; repair paths remain staged for the cleanup gate.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 48,993 | -909 |
+| Runtime C# lines | 49,902 | 49,062 | -840 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
 | `FindObject*`/`GameObject.Find` | 199 | 122 | -77 |
 | `Resources.Load` | 27 | 18 | -9 |
@@ -141,6 +142,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - Chapter 1 immutable-data serialization changes only controller document `3302000001`, preserves all 5,977 document IDs/order and 13 roots, leaves every referenced object/asset document byte-identical, and passes strict configuration plus the same rendered identity lifecycle; the full suite remains 191/49 with an unchanged failure-name set;
 - Chapter 1 immutable-data cleanup removes only five obsolete properties from controller `3302000001`; document IDs/order/roots and every catalog/anchor/room document remain exact, source guards ban every retired resolver/factory path, and the rendered lifecycle retains all identities/transforms, rejects and recovers from an intentional point-order swap, and creates zero seats. The full suite is 194/46 with no new failures; corrected method/document extractors resolve the former false-red `WorldSpaceGuestsUseWorldSpaceDrawingRoomTargets`, `DrawingRoomGuestMovementUsesEditableScenePoints`, and `LiveDoorAnswerUsesStableEntranceWorldPositions` gates;
 - Chapter 1 doorbell characterization passes its pre-graft source/scene guard and rendered first-ring/repeated-resolution lifecycle, pinning one same-host owner/source/binding plus the exact imported clip while the existing factories remain intentionally staged; the full suite remains 194/46 with an unchanged failure-name set;
+- Chapter 1 doorbell serialization adds only documents `3302000003`–`3302000005`, changes only host `1696549391` and controller `3302000001`, preserves every prior document's order plus SceneRoots, and passes exact YAML, imported-clip, configuration, first-ring, repeated-resolution, and full-suite gates at 194/46 with an unchanged failure-name set;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -224,6 +226,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Serialize the characterized Chapter 1 doorbell owner/source/Game-Sounds binding/imported clip graph on the existing controller host while leaving the old fallback paths staged.
+1. Remove Chapter 1 doorbell discovery/component factories and the DoorbellSystem clock/source/binding/resource/generated-tone fallbacks, using only the validated serialized graph.
 
 Do not begin bulk deletion until those gates pass.

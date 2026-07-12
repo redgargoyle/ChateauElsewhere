@@ -47,7 +47,7 @@ Assets/Scripts/Audio/FireplaceAmbienceCatalog.cs,926ef3a5f44c4152b79ea814a82314a
 Assets/Scripts/Audio/FireplaceAmbienceController.cs,c5d8eebb18904780a5d77a1c9da6ce6f,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Audio/GameAudioChannel.cs,8fe4e69ce16b4d3e95089bb59143a5c4,0,
 Assets/Scripts/Audio/GameAudioSettings.cs,1b9a0f792f8f43148bda82fe619819c6,0,
-Assets/Scripts/Audio/GameAudioSourceVolume.cs,5161da2d2e1b408d859e3792f47407f4,4,Assets/Scenes/Gameplay.unity:4
+Assets/Scripts/Audio/GameAudioSourceVolume.cs,5161da2d2e1b408d859e3792f47407f4,5,Assets/Scenes/Gameplay.unity:5
 Assets/Scripts/Audio/GuestFootstepAudio.cs,97301c28479e2e1dc90448e43a36d7fe,0,
 Assets/Scripts/Audio/GuestFootstepCatalog.cs,c1e4c474e559b01dfdafba00f05810a6,1,Assets/Resources/Audio/GuestFootstepCatalog.asset:1
 Assets/Scripts/Audio/GuestVoiceLineCatalog.cs,0d2c7f4e9a0b4e4c8d5e6f708192a3b4,1,Assets/Resources/Audio/GuestVoiceLineCatalog.asset:1
@@ -97,7 +97,7 @@ Assets/Scripts/Story/ChapterIntroUI.cs,97af4a761ae641b1b180d4ae9898b061,1,Assets
 Assets/Scripts/Story/ChapterManager.cs,72afcfa1ce4e4ea6856af0ac40450211,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Story/ChapterTimeSettingsUI.cs,12bd9a3afa94b05b1e9ce52146c9c7f4,0,
 Assets/Scripts/Story/CoatCloset.cs,f46d1a47beb04599bf3126bbde4a7f25,1,Assets/Scenes/Gameplay.unity:1
-Assets/Scripts/Story/DoorbellSystem.cs,4b5410ab5e584743be969413e655ecb4,0,
+Assets/Scripts/Story/DoorbellSystem.cs,4b5410ab5e584743be969413e655ecb4,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Story/GameplayRuntimeState.cs,8f114fba8070459d9e0d5f2362cf8b2c,0,
 Assets/Scripts/Story/GrandfatherClockInteraction.cs,c6da9f56f65d9988ff5f7da0f8e59fb0,0,
 Assets/Scripts/Story/NPCWaypointMover.cs,4f0e848d27bb4cb1881c2cdf6617f6e9,0,

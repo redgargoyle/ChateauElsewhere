@@ -74,7 +74,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedDoorbell, Is.Not.Null);
         AudioSource characterizedDoorbellSource = GetPrivateField<AudioSource>(characterizedDoorbell, "audioSource");
         GameAudioSourceVolume characterizedDoorbellBinding = characterizedDoorbell.GetComponent<GameAudioSourceVolume>();
-        AudioClip characterizedDoorbellClipBeforeFirstUse = GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip");
+        AudioClip serializedDoorbellClip = GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip");
         Chapter1InteractionHUD chapter1Hud = RequireExactlyOneInActiveScene<Chapter1InteractionHUD>();
         Transform[] frontDoorTriggers = FindInActiveScene<Transform>()
             .Where(item => item.name == "Door_answer_trigger")
@@ -196,6 +196,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedDoorbellBinding.gameObject, Is.SameAs(arrival.gameObject));
         Assert.That(characterizedDoorbell.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
         Assert.That(GetPrivateField<AudioSource>(characterizedDoorbellBinding, "audioSource"), Is.SameAs(characterizedDoorbellSource));
+        Assert.That(GetPrivateField<GameAudioSourceVolume>(characterizedDoorbell, "audioVolumeBinding"), Is.SameAs(characterizedDoorbellBinding));
         Assert.That(characterizedDoorbellBinding.Channel, Is.EqualTo(GameAudioChannel.GameSounds));
         Assert.That(characterizedDoorbellBinding.BaseVolume, Is.EqualTo(1f).Within(0.0001f));
         Assert.That(characterizedDoorbellSource.playOnAwake, Is.False);
@@ -204,14 +205,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedDoorbellSource.enabled, Is.True);
         Assert.That(characterizedDoorbellSource.spatialBlend, Is.Zero.Within(0.0001f));
         Assert.That(characterizedDoorbellSource.ignoreListenerPause, Is.False);
-        Assert.That(characterizedDoorbellClipBeforeFirstUse, Is.Null);
+        Assert.That(characterizedDoorbellSource.clip, Is.Null, "DoorbellSystem should own the one-shot clip; the AudioSource resource remains empty.");
+        Assert.That(serializedDoorbellClip, Is.Not.Null);
         Assert.That(
             GetPrivateField<string>(characterizedDoorbell, "doorbellClipResourcePath"),
             Is.EqualTo("Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz"));
 
         characterizedDoorbell.StartRinging(clock.ElapsedGameMinutes, true, false);
         AudioClip characterizedDoorbellClip = GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip");
-        Assert.That(characterizedDoorbellClip, Is.Not.Null);
+        Assert.That(characterizedDoorbellClip, Is.SameAs(serializedDoorbellClip));
         Assert.That(
             AssetDatabase.GetAssetPath(characterizedDoorbellClip),
             Is.EqualTo("Assets/Resources/Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz.wav"));
