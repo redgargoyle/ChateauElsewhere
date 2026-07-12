@@ -489,14 +489,6 @@
       "RuntimeInitialize": 1,
       "PlayerPrefs": 0
     },
-    "Assets/_Chateau/Runtime/UI/GameTimeHUD.cs": {
-      "FindObject": 3,
-      "ResourcesLoad": 0,
-      "NewGameObject": 3,
-      "AddComponent": 1,
-      "RuntimeInitialize": 0,
-      "PlayerPrefs": 0
-    },
     "Assets/Scripts/Story/CoatCloset.cs": {
       "FindObject": 0,
       "ResourcesLoad": 0,

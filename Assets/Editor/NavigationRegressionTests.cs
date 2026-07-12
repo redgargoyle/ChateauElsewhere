@@ -260,17 +260,24 @@ public class NavigationRegressionTests
     public void ChapterClockUsesSingleBottomLeftHudReadout()
     {
         string gameTimeHudText = File.ReadAllText(GameTimeHUDPath);
+        string gameplaySceneText = File.ReadAllText(GameplayScenePath);
+        string gameTimeTextRect = ExtractUnityObjectBlock(gameplaySceneText, "--- !u!224 &1878887131");
         string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
         string gameAudioSettingsText = File.ReadAllText(GameAudioSettingsPath);
         string chapter1HudText = File.ReadAllText(Chapter1InteractionHUDPath);
         string chapter2HudText = File.ReadAllText(Chapter2InteractionHUDPath);
 
-        Assert.That(gameTimeHudText, Does.Contain("Text_CurrentGameTime"));
-        Assert.That(gameTimeHudText, Does.Contain("clockRect.anchorMin = new Vector2(0f, 0f)"));
-        Assert.That(gameTimeHudText, Does.Contain("clockRect.anchorMax = new Vector2(0f, 0f)"));
-        Assert.That(gameTimeHudText, Does.Contain("clockRect.pivot = new Vector2(0f, 0f)"));
-        Assert.That(gameTimeHudText, Does.Contain("clockRect.anchoredPosition = new Vector2(18f, 18f)"));
-        Assert.That(gameTimeHudText, Does.Contain("TextAlignmentOptions.BottomLeft"));
+        Assert.That(gameTimeHudText, Does.Contain("clockText.text = chapterClock.CurrentTimeLabel"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("GameObject.Find"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("new GameObject"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("AddComponent<"));
+        Assert.That(gameplaySceneText, Does.Contain("m_Name: Canvas_GameTimeHUD"));
+        Assert.That(gameplaySceneText, Does.Contain("m_Name: Text_CurrentGameTime"));
+        Assert.That(gameTimeTextRect, Does.Contain("m_AnchorMin: {x: 0, y: 0}"));
+        Assert.That(gameTimeTextRect, Does.Contain("m_AnchorMax: {x: 0, y: 0}"));
+        Assert.That(gameTimeTextRect, Does.Contain("m_AnchoredPosition: {x: 18, y: 18}"));
+        Assert.That(gameTimeTextRect, Does.Contain("m_SizeDelta: {x: 220, y: 36}"));
+        Assert.That(gameTimeTextRect, Does.Contain("m_Pivot: {x: 0, y: 0}"));
         Assert.That(gameTimeHudText, Does.Not.Contain("Slider_SecondsPerGameMinute"), "The editable game-time speed slider should not be created in the always-visible clock HUD.");
         Assert.That(gameTimeHudText, Does.Not.Contain("Input_SecondsPerGameMinute"), "The editable game-time speed input should not be created in the always-visible clock HUD.");
         Assert.That(runtimeSettingsText, Does.Contain("Control_DebugGameTimeSpeed"), "The game-time speed control should live in the runtime debug menu.");

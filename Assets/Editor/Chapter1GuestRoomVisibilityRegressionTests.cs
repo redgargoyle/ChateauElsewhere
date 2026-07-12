@@ -295,7 +295,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string screenBoundsBody = ExtractMethodBody(actionText, "private bool IsPointerInsideScreenBounds");
         string actionUpdateBody = ExtractMethodBody(actionText, "private void Update");
         string performActionBody = ExtractMethodBody(actionText, "private void PerformAction");
-        string resolveReferencesBody = ExtractMethodBody(controllerText, "ResolveReferences(bool createFallbacks)");
+        string resolveReferencesBody = ExtractMethodBody(controllerText, "private void ResolveReferences()");
 
         Assert.That(sceneText, Does.Contain("m_Name: entrance_coat_hanger_0"), "Gameplay should contain the authored entrance coat hanger object.");
         Assert.That(sceneText, Does.Contain("- component: {fileID: 1592234996}"), "The authored hanger should own its serialized trigger collider.");

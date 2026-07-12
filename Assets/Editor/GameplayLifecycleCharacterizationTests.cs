@@ -250,7 +250,6 @@ public sealed class GameplayLifecycleCharacterizationTests
             $"drawing={drawingRoomClockPlaceholder.GetInstanceID()} injectedComponents=0");
         Assert.That(characterizedTimeCanvas, Is.Not.Null);
         Assert.That(characterizedGameTimeHud.gameObject, Is.SameAs(characterizedTimeCanvas.gameObject));
-        Assert.That(GetPrivateField<GameTimeHUD>(arrival, "gameTimeHUD"), Is.SameAs(characterizedGameTimeHud));
         Assert.That(characterizedGameTimeHudClock, Is.SameAs(clock));
         Assert.That(characterizedGameTimeHud.IsConfiguredFor(clock), Is.True);
         Assert.That(characterizedGameTimeHud.GetComponents<GameTimeHUD>(), Has.Length.EqualTo(1));
@@ -546,8 +545,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.EqualTo("a97c105638bdf8b4a8650670310a4cd3"));
 
         entranceCoatCloset.StoreCoat("architecture_characterization_coat");
-        InvokePrivateBooleanMethod(arrival, "ResolveReferences", true);
-        InvokePrivateBooleanMethod(arrival, "ResolveReferences", true);
+        InvokePrivateMethod(arrival, "ResolveReferences");
+        InvokePrivateMethod(arrival, "ResolveReferences");
         Assert.That(GetPrivateField<ChapterManager>(arrival, "chapterManager"), Is.SameAs(serializedArrivalChapterManager));
         Assert.That(GetPrivateField<ChapterClock>(arrival, "chapterClock"), Is.SameAs(serializedArrivalClock));
         Assert.That(GetPrivateField<ChapterEventScheduler>(arrival, "eventScheduler"), Is.SameAs(serializedArrivalScheduler));
@@ -1564,7 +1563,6 @@ public sealed class GameplayLifecycleCharacterizationTests
         List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
             GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
         Assert.That(RequireExactlyOneInActiveScene<GameTimeHUD>(), Is.SameAs(gameTimeHud));
-        Assert.That(GetPrivateField<GameTimeHUD>(arrival, "gameTimeHUD"), Is.SameAs(gameTimeHud));
         Assert.That(arrival.GetComponent<GameTimeHUD>(), Is.Null);
         Assert.That(gameTimeHud.HasGameContext, Is.True);
         Assert.That(sceneBehaviours.Count(item => item == gameTimeHud), Is.EqualTo(1));
@@ -1740,18 +1738,6 @@ public sealed class GameplayLifecycleCharacterizationTests
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         Assert.That(field, Is.Not.Null, $"Missing private field '{fieldName}' on {owner.GetType().Name}.");
         field.SetValue(owner, value);
-    }
-
-    private static void InvokePrivateBooleanMethod(object owner, string methodName, bool value)
-    {
-        System.Reflection.MethodInfo method = owner.GetType().GetMethod(
-            methodName,
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-            null,
-            new[] { typeof(bool) },
-            null);
-        Assert.That(method, Is.Not.Null, $"Missing private method '{methodName}(bool)' on {owner.GetType().Name}.");
-        method.Invoke(owner, new object[] { value });
     }
 
     private static void InvokePrivateMethod(object owner, string methodName)

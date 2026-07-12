@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using Chateau.UI;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -66,8 +65,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [SerializeField] private GameObject playerButlerReference;
     [SerializeField] private CoatCloset coatCloset;
     [SerializeField] private DoorbellSystem doorbellSystem;
-    [FormerlySerializedAs("timeSettingsUI")]
-    [SerializeField] private GameTimeHUD gameTimeHUD;
     [SerializeField] private Chapter1InteractionHUD interactionHUD;
     [SerializeField] private Chapter1SceneAction frontDoorSceneAction;
     [SerializeField] private GuestRoomScaleApplier guestRoomScaleApplier;
@@ -275,15 +272,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             doorbellSystem.ValidateConfiguration(report);
         }
 
-        if (gameTimeHUD == null)
-        {
-            report.AddError("Chapter1ArrivalController requires its staged serialized GameTimeHUD edge.", this);
-        }
-        else if (!gameTimeHUD.IsConfiguredFor(chapterClock))
-        {
-            report.AddError("Chapter1ArrivalController requires GameTimeHUD to use the serialized ChapterClock and owned view graph.", this);
-        }
-
         if (coatCloset == null)
         {
             report.AddError("Chapter1ArrivalController requires its serialized Entrance coat closet.", this);
@@ -384,7 +372,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private void Awake()
     {
-        ResolveReferences(false);
+        ResolveReferences();
     }
 
     private void OnEnable()
@@ -449,7 +437,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     public void PrepareGuestsForChapterStart()
     {
-        ResolveReferences(true);
+        ResolveReferences();
         EnsureRuntimeInteractionSystems();
         ResetGuestStates(false);
         SetChapterSceneGuestsActive(false);
@@ -457,7 +445,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     public void PrepareGuestsForChapter2Skip()
     {
-        ResolveReferences(true);
+        ResolveReferences();
 
         StopAllCoroutines();
         guestRoomVisibilityRefreshRoutine = null;
@@ -504,7 +492,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     public void RefreshChapter2SkipGuestVisibilityAfterRoomChange()
     {
-        ResolveReferences(true);
+        ResolveReferences();
 
         ResetGuestStates(true);
         int requiredGuestCount = GetRequiredGuestCountForCurrentRun();
@@ -1470,7 +1458,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     public void ValidateRequiredReferences()
     {
-        ResolveReferences(false);
+        ResolveReferences();
 
         Chateau.Architecture.ValidationReport configurationReport = new Chateau.Architecture.ValidationReport();
         ValidateConfiguration(configurationReport);
@@ -4206,7 +4194,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         ResolveReferences();
 
         doorbellSystem?.Initialize(chapterClock);
-        gameTimeHUD?.Initialize(chapterClock);
 
         if (interactionHUD != null)
         {
@@ -5420,7 +5407,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             return null;
         }
 
-        ResolveReferences(false);
+        ResolveReferences();
         PointClickPlayerMovement butler = playerMovement;
 
         if (butler != null)
@@ -6396,27 +6383,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private void ResolveReferences()
     {
-        ResolveReferences(true);
-    }
-
-    private void ResolveReferences(bool createFallbacks)
-    {
         playerButlerReference = playerMovement != null ? playerMovement.gameObject : null;
-
-        ResolveStoryHelpers(createFallbacks);
-    }
-
-    private void ResolveStoryHelpers(bool createFallbacks)
-    {
-        if (gameTimeHUD == null)
-        {
-            gameTimeHUD = FindAnyObjectByType<GameTimeHUD>(FindObjectsInactive.Include);
-        }
-
-        if (gameTimeHUD == null && createFallbacks)
-        {
-            gameTimeHUD = gameObject.AddComponent<GameTimeHUD>();
-        }
     }
 
     private string GetRoomForTransform(Transform target)

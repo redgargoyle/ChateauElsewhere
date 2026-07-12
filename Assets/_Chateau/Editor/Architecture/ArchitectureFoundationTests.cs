@@ -627,10 +627,10 @@ public sealed class ArchitectureFoundationTests
         Assert.That(gameTimeHudMetaText, Does.Contain("guid: 12bd9a3afa94b05b1e9ce52146c9c7f4"));
         Assert.That(File.Exists("Assets/Scripts/Story/ChapterTimeSettingsUI.cs"), Is.False);
         Assert.That(File.Exists("Assets/Scripts/Story/ChapterTimeSettingsUI.cs.meta"), Is.False);
-        Assert.That(chapter1Text, Does.Contain("[FormerlySerializedAs(\"timeSettingsUI\")]"));
+        Assert.That(chapter1Text, Does.Not.Contain("[FormerlySerializedAs(\"timeSettingsUI\")]"));
         Assert.That(controllerDocument, Does.Not.Contain("timeSettingsUI:"));
+        Assert.That(controllerDocument, Does.Not.Contain("gameTimeHUD:"));
         Assert.That(CountOccurrences(sceneText, "guid: 12bd9a3afa94b05b1e9ce52146c9c7f4"), Is.EqualTo(1));
-        Assert.That(controllerDocument, Does.Contain("gameTimeHUD: {fileID: 1878887125}"));
         Assert.That(CountOccurrences(gameRootDocument, "- {fileID: 1878887125}"), Is.EqualTo(1));
         Assert.That(gameRootTransformDocument, Does.Contain("- {fileID: 1878887121}"));
         Assert.That(gameTimeObjectDocument, Does.Contain("m_Name: Canvas_GameTimeHUD"));
@@ -667,8 +667,10 @@ public sealed class ArchitectureFoundationTests
         Assert.That(gameTimeShadowDocument, Does.Contain("m_EffectDistance: {x: 2, y: -2}"));
         Assert.That(gameTimeShadowDocument, Does.Contain("m_UseGraphicAlpha: 1"));
         Assert.That(sceneText, Does.Not.Contain("m_Name: Canvas_ChapterTimeSettings"));
-        Assert.That(chapter1Text, Does.Contain("FindAnyObjectByType<GameTimeHUD>"));
-        Assert.That(chapter1Text, Does.Contain("gameObject.AddComponent<GameTimeHUD>()"));
+        Assert.That(chapter1Text, Does.Not.Contain("GameTimeHUD"));
+        Assert.That(chapter1Text, Does.Not.Contain("gameTimeHUD"));
+        Assert.That(chapter1Text, Does.Not.Contain("Chateau.UI"));
+        Assert.That(chapter1Text, Does.Not.Contain("ResolveStoryHelpers"));
         Assert.That(gameTimeHudText, Does.Contain("[SerializeField] private global::ChapterClock chapterClock"));
         Assert.That(gameTimeHudText, Does.Contain("[SerializeField] private Canvas canvas"));
         Assert.That(gameTimeHudText, Does.Contain("[SerializeField] private TMP_Text clockText"));
@@ -676,14 +678,19 @@ public sealed class ArchitectureFoundationTests
         Assert.That(gameTimeHudText, Does.Contain("namespace Chateau.UI"));
         Assert.That(gameTimeHudText, Does.Contain("public sealed class GameTimeHUD : UIScreenBase"));
         Assert.That(gameTimeHudText, Does.Contain("public override void ValidateConfiguration"));
-        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its staged serialized GameTimeHUD edge."));
-        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires GameTimeHUD to use the serialized ChapterClock and owned view graph."));
+        Assert.That(chapter1Text, Does.Not.Contain("staged serialized GameTimeHUD edge"));
         Assert.That(installerText, Does.Contain("RequireExactlyOne<Chateau.UI.GameTimeHUD>(scene, report, \"global game-time HUD\")"));
-        Assert.That(gameTimeHudText, Does.Contain("FindAnyObjectByType<global::ChapterClock>"));
-        Assert.That(gameTimeHudText, Does.Contain("GameObject.Find(\"Canvas_GameTimeHUD\")"));
-        Assert.That(gameTimeHudText, Does.Contain("new GameObject(\"Canvas_GameTimeHUD\""));
-        Assert.That(gameTimeHudText, Does.Contain("new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI))"));
-        Assert.That(gameTimeHudText, Does.Contain("clockText.gameObject.AddComponent<Shadow>()"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("public void Initialize"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("ResolveReferences"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("EnsureUI"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("CreateText"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("HideLegacyTimeSettingsPanel"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("EnsureEventSystem"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("GameObject.Find"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("FindAnyObjectByType"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("new GameObject"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("AddComponent<"));
+        Assert.That(gameTimeHudText, Does.Not.Contain("UnityEngine.EventSystems"));
     }
 
     [Test]
