@@ -1,0 +1,388 @@
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using Chateau.Architecture;
+using Chateau.World.Navigation;
+using Chateau.World.Rooms;
+using Chateau.World.Rooms.Passages;
+using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+
+using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
+
+public sealed class CanonicalRoomPassageContractTests
+{
+    private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    [Test]
+    public void RoomDefinitionSeparatesStableIdentityFromPresentationAndLegacyNames()
+    {
+        Texture2D background = new Texture2D(2, 2);
+        CanonicalRoomDefinition room = CreateRoomDefinition(
+            "EntranceDefinition",
+            "  room.grand-entrance-hall  ",
+            "  Grand Entrance Hall  ",
+            background,
+            "  GEH  ",
+            "Grand Entrance Hall");
+
+        try
+        {
+            Assert.That(room.StableId, Is.EqualTo("room.grand-entrance-hall"));
+            Assert.That(room.DisplayName, Is.EqualTo("Grand Entrance Hall"));
+            Assert.That(room.PrimaryLegacyName, Is.EqualTo("GEH"));
+            Assert.That(room.BackgroundTexture, Is.SameAs(background));
+            Assert.That(room.PerspectiveProfile, Is.Null);
+            Assert.That(room.MatchesLegacyName("geh"), Is.True);
+            Assert.That(room.MatchesLegacyName(" GRAND ENTRANCE HALL "), Is.True);
+            Assert.That(room.MatchesLegacyName("Drawing Room"), Is.False);
+
+            ValidationReport report = new ValidationReport();
+            room.ValidateConfiguration(report);
+            Assert.That(report.HasErrors, Is.False);
+
+            SetStableId(room, "not-a-room-id");
+            SetPrivateField(room, "displayName", " ");
+            SetPrivateField<Texture>(room, "backgroundTexture", null);
+            SetPrivateField(room, "legacyNames", new[] { "GEH", "geh", " " });
+            report = new ValidationReport();
+            room.ValidateConfiguration(report);
+
+            Assert.That(report.HasErrors, Is.True);
+            Assert.That(report.Messages.Any(message => message.Message.Contains("must start with 'room.'")), Is.True);
+            Assert.That(report.Messages.Any(message => message.Message.Contains("no display name")), Is.True);
+            Assert.That(report.Messages.Any(message => message.Message.Contains("requires a background texture")), Is.True);
+            Assert.That(report.Messages.Any(message => message.Message.Contains("repeats legacy name")), Is.True);
+            Assert.That(report.Messages.Any(message => message.Message.Contains("legacy-name slot 2 is empty")), Is.True);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(room);
+            UnityEngine.Object.DestroyImmediate(background);
+        }
+    }
+
+    [Test]
+    public void PassageDefinitionsRequireDirectedReciprocalEndpointsWithoutRecursiveValidation()
+    {
+        Texture2D entranceBackground = new Texture2D(2, 2);
+        Texture2D drawingBackground = new Texture2D(2, 2);
+        CanonicalRoomDefinition entrance = CreateRoomDefinition(
+            "EntranceDefinition",
+            "room.grand-entrance-hall",
+            "Grand Entrance Hall",
+            entranceBackground,
+            "Grand Entrance Hall");
+        CanonicalRoomDefinition drawing = CreateRoomDefinition(
+            "DrawingDefinition",
+            "room.drawing-room",
+            "Drawing Room",
+            drawingBackground,
+            "Drawing Room");
+        PassageDefinition forward = CreatePassageDefinition(
+            "ForwardPassage",
+            "passage.grand-entrance-hall.drawing-room",
+            entrance,
+            drawing,
+            "  Open Door  ",
+            "  GEH_Drawing_Room  ");
+        PassageDefinition reverse = CreatePassageDefinition(
+            "ReversePassage",
+            "passage.drawing-room.grand-entrance-hall",
+            drawing,
+            entrance,
+            "Open Door",
+            "DrawingRoom_GEH");
+
+        try
+        {
+            SetPrivateField(forward, "reverse", reverse);
+            SetPrivateField(reverse, "reverse", forward);
+
+            ValidationReport forwardReport = new ValidationReport();
+            ValidationReport reverseReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            reverse.ValidateConfiguration(reverseReport);
+
+            Assert.That(forwardReport.HasErrors, Is.False);
+            Assert.That(reverseReport.HasErrors, Is.False);
+            Assert.That(forward.SourceRoom, Is.SameAs(entrance));
+            Assert.That(forward.DestinationRoom, Is.SameAs(drawing));
+            Assert.That(forward.Reverse, Is.SameAs(reverse));
+            Assert.That(forward.Kind, Is.EqualTo(PassageKind.Door));
+            Assert.That(forward.PromptText, Is.EqualTo("Open Door"));
+            Assert.That(forward.LegacyDoorId, Is.EqualTo("GEH_Drawing_Room"));
+
+            SetPrivateField(reverse, "reverse", reverse);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forwardReport.Messages.Any(message => message.Message.Contains("link back")), Is.True);
+
+            SetPrivateField(reverse, "reverse", forward);
+            SetPrivateField(reverse, "sourceRoom", entrance);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forwardReport.Messages.Any(message => message.Message.Contains("swap its room endpoints")), Is.True);
+
+            SetPrivateField(reverse, "sourceRoom", drawing);
+            SetPrivateField(forward, "reverse", forward);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forwardReport.Messages.Any(message => message.Message.Contains("cannot reverse to itself")), Is.True);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(forward);
+            UnityEngine.Object.DestroyImmediate(reverse);
+            UnityEngine.Object.DestroyImmediate(entrance);
+            UnityEngine.Object.DestroyImmediate(drawing);
+            UnityEngine.Object.DestroyImmediate(entranceBackground);
+            UnityEngine.Object.DestroyImmediate(drawingBackground);
+        }
+    }
+
+    [Test]
+    public void RoomViewsAndPassagesArePassiveValidatedSceneBindings()
+    {
+        Texture2D entranceBackground = new Texture2D(2, 2);
+        Texture2D drawingBackground = new Texture2D(2, 2);
+        CanonicalRoomDefinition entranceDefinition = CreateRoomDefinition(
+            "EntranceDefinition",
+            "room.grand-entrance-hall",
+            "Grand Entrance Hall",
+            entranceBackground,
+            "Grand Entrance Hall");
+        CanonicalRoomDefinition drawingDefinition = CreateRoomDefinition(
+            "DrawingDefinition",
+            "room.drawing-room",
+            "Drawing Room",
+            drawingBackground,
+            "Drawing Room");
+        PassageDefinition forwardDefinition = CreatePassageDefinition(
+            "ForwardDefinition",
+            "passage.grand-entrance-hall.drawing-room",
+            entranceDefinition,
+            drawingDefinition,
+            "Open Door",
+            "GEH_Drawing_Room");
+        PassageDefinition reverseDefinition = CreatePassageDefinition(
+            "ReverseDefinition",
+            "passage.drawing-room.grand-entrance-hall",
+            drawingDefinition,
+            entranceDefinition,
+            "Open Door",
+            "DrawingRoom_GEH");
+        GameObject house = new GameObject("House");
+        GameObject entranceObject = new GameObject("Room_Grand_Entrance_Hall");
+        GameObject drawingObject = new GameObject("Room_Drawing_Room");
+        GameObject forwardObject = new GameObject("Passage_GEH_DrawingRoom");
+        GameObject reverseObject = new GameObject("Passage_DrawingRoom_GEH");
+
+        try
+        {
+            SetPrivateField(forwardDefinition, "reverse", reverseDefinition);
+            SetPrivateField(reverseDefinition, "reverse", forwardDefinition);
+            entranceObject.transform.SetParent(house.transform, false);
+            drawingObject.transform.SetParent(house.transform, false);
+            forwardObject.transform.SetParent(entranceObject.transform, false);
+            reverseObject.transform.SetParent(drawingObject.transform, false);
+
+            RoomContentGroup entranceContent = entranceObject.AddComponent<RoomContentGroup>();
+            RoomContentGroup drawingContent = drawingObject.AddComponent<RoomContentGroup>();
+            RoomView entranceView = entranceObject.AddComponent<RoomView>();
+            RoomView drawingView = drawingObject.AddComponent<RoomView>();
+            Passage forward = forwardObject.AddComponent<Passage>();
+            Passage reverse = reverseObject.AddComponent<Passage>();
+            SetPrivateField(entranceView, "definition", entranceDefinition);
+            SetPrivateField(entranceView, "legacyContentGroup", entranceContent);
+            SetPrivateField(drawingView, "definition", drawingDefinition);
+            SetPrivateField(drawingView, "legacyContentGroup", drawingContent);
+            ConfigurePassage(
+                forward,
+                forwardDefinition,
+                entranceView,
+                reverse,
+                new Vector2(-7.45909f, -1.955749f),
+                new Vector2(-7.45909f, -1.955749f));
+            ConfigurePassage(
+                reverse,
+                reverseDefinition,
+                drawingView,
+                forward,
+                new Vector2(5.167492f, -2.056576f),
+                Vector2.zero);
+
+            ValidationReport entranceReport = new ValidationReport();
+            ValidationReport drawingReport = new ValidationReport();
+            ValidationReport forwardReport = new ValidationReport();
+            ValidationReport reverseReport = new ValidationReport();
+            entranceView.ValidateConfiguration(entranceReport);
+            drawingView.ValidateConfiguration(drawingReport);
+            forward.ValidateConfiguration(forwardReport);
+            reverse.ValidateConfiguration(reverseReport);
+
+            Assert.That(entranceReport.HasErrors, Is.False);
+            Assert.That(drawingReport.HasErrors, Is.False);
+            Assert.That(forwardReport.HasErrors, Is.False);
+            Assert.That(reverseReport.HasErrors, Is.False);
+            Assert.That(entranceView.Root, Is.SameAs(entranceObject.transform));
+            Assert.That(entranceView.LegacyContentGroup, Is.SameAs(entranceContent));
+            Assert.That(forward.SourceRoomView, Is.SameAs(entranceView));
+            Assert.That(forward.ReversePassage, Is.SameAs(reverse));
+            Assert.That(forward.ArrivalAnchor.LogicalPosition, Is.EqualTo(new Vector2(-7.45909f, -1.955749f)));
+            Assert.That(reverse.ArrivalAnchor.LogicalPosition, Is.EqualTo(Vector2.zero),
+                "Logical zero is valid authored anchor data when the anchor object is present.");
+
+            house.SetActive(false);
+            Assert.That(entranceObject.activeSelf, Is.True);
+            Assert.That(entranceObject.activeInHierarchy, Is.False);
+            Assert.That(entranceView.IsVisible, Is.True,
+                "RoomView reports the room root's owned activeSelf value, not an ancestor's state.");
+
+            SetPrivateField(forward, "sourceRoomView", drawingView);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forwardReport.Messages.Any(message => message.Message.Contains("descendant")), Is.True);
+            Assert.That(forwardReport.Messages.Any(message => message.Message.Contains("definition source room")), Is.True);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(house);
+            UnityEngine.Object.DestroyImmediate(forwardDefinition);
+            UnityEngine.Object.DestroyImmediate(reverseDefinition);
+            UnityEngine.Object.DestroyImmediate(entranceDefinition);
+            UnityEngine.Object.DestroyImmediate(drawingDefinition);
+            UnityEngine.Object.DestroyImmediate(entranceBackground);
+            UnityEngine.Object.DestroyImmediate(drawingBackground);
+        }
+    }
+
+    [Test]
+    public void CanonicalContractsIntroduceNoSecondStateOwnerDiscoveryOrRuntimeMutation()
+    {
+        string roomDefinitionText = File.ReadAllText("Assets/_Chateau/Runtime/World/Rooms/RoomDefinition.cs");
+        string roomViewText = File.ReadAllText("Assets/_Chateau/Runtime/World/Rooms/RoomView.cs");
+        string passageDefinitionText = File.ReadAllText("Assets/_Chateau/Runtime/World/Rooms/Passages/PassageDefinition.cs");
+        string anchorText = File.ReadAllText("Assets/_Chateau/Runtime/World/Rooms/Passages/PassageAnchorData.cs");
+        string passageText = File.ReadAllText("Assets/_Chateau/Runtime/World/Rooms/Passages/Passage.cs");
+        string interfaceText = File.ReadAllText("Assets/_Chateau/Runtime/World/Navigation/INavigationService.cs");
+        string combinedText = string.Join(
+            "\n",
+            roomDefinitionText,
+            roomViewText,
+            passageDefinitionText,
+            anchorText,
+            passageText,
+            interfaceText);
+
+        string[] forbiddenRuntimePatterns =
+        {
+            "FindAnyObjectByType",
+            "FindFirstObjectByType",
+            "FindObjectsByType",
+            "GameObject.Find",
+            "Resources.Load",
+            "new GameObject",
+            "AddComponent<",
+            "RuntimeInitializeOnLoadMethod",
+            "static Instance"
+        };
+
+        for (int i = 0; i < forbiddenRuntimePatterns.Length; i++)
+        {
+            Assert.That(combinedText, Does.Not.Contain(forbiddenRuntimePatterns[i]));
+        }
+
+        Assert.That(roomViewText, Does.Not.Contain("SetVisible"));
+        Assert.That(roomViewText, Does.Not.Match(@"\b(?:Awake|Start|OnEnable|OnDisable|Update|LateUpdate|FixedUpdate)\s*\("));
+        Assert.That(passageText, Does.Not.Match(@"\b(?:Awake|Start|OnEnable|OnDisable|Update|LateUpdate|FixedUpdate)\s*\("));
+        Assert.That(typeof(RoomView).IsSubclassOf(typeof(RoomElementBase)), Is.True);
+        Assert.That(typeof(Passage).IsSubclassOf(typeof(RoomElementBase)), Is.True);
+        Assert.That(typeof(INavigationService).IsInterface, Is.True);
+        Assert.That(typeof(INavigationService).GetProperty("CurrentRoomDefinition")?.PropertyType, Is.EqualTo(typeof(CanonicalRoomDefinition)));
+        Assert.That(typeof(INavigationService).GetMethod("CanTraverse")?.ReturnType, Is.EqualTo(typeof(bool)));
+        Assert.That(typeof(INavigationService).GetMethod("TryTraverse")?.ReturnType, Is.EqualTo(typeof(bool)));
+        Assert.That(typeof(INavigationService).IsAssignableFrom(typeof(RoomNavigationManager)), Is.False,
+            "The pure-contract gate must not change the current navigation runtime path.");
+
+        string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+        string databaseText = File.ReadAllText("Assets/_Chateau/Data/GameDatabase.asset");
+        Assert.That(gameplayText, Does.Not.Contain("guid: ccd2f3bd803e45aa8a1174cc881d6dc0"));
+        Assert.That(gameplayText, Does.Not.Contain("guid: 518dad8adf634786a103bf4e76aa0881"));
+        Assert.That(databaseText, Does.Contain("definitions: []"));
+    }
+
+    private static CanonicalRoomDefinition CreateRoomDefinition(
+        string assetName,
+        string stableId,
+        string displayName,
+        Texture background,
+        params string[] legacyNames)
+    {
+        CanonicalRoomDefinition definition = ScriptableObject.CreateInstance<CanonicalRoomDefinition>();
+        definition.name = assetName;
+        SetStableId(definition, stableId);
+        SetPrivateField(definition, "displayName", displayName);
+        SetPrivateField(definition, "backgroundTexture", background);
+        SetPrivateField(definition, "legacyNames", legacyNames ?? Array.Empty<string>());
+        return definition;
+    }
+
+    private static PassageDefinition CreatePassageDefinition(
+        string assetName,
+        string stableId,
+        CanonicalRoomDefinition source,
+        CanonicalRoomDefinition destination,
+        string promptText,
+        string legacyDoorId)
+    {
+        PassageDefinition definition = ScriptableObject.CreateInstance<PassageDefinition>();
+        definition.name = assetName;
+        SetStableId(definition, stableId);
+        SetPrivateField(definition, "sourceRoom", source);
+        SetPrivateField(definition, "destinationRoom", destination);
+        SetPrivateField(definition, "kind", PassageKind.Door);
+        SetPrivateField(definition, "promptText", promptText);
+        SetPrivateField(definition, "legacyDoorId", legacyDoorId);
+        return definition;
+    }
+
+    private static void ConfigurePassage(
+        Passage passage,
+        PassageDefinition definition,
+        RoomView sourceRoomView,
+        Passage reverse,
+        Vector2 approachPosition,
+        Vector2 arrivalPosition)
+    {
+        PassageAnchorData approach = new PassageAnchorData();
+        PassageAnchorData arrival = new PassageAnchorData();
+        SetPrivateField(approach, "logicalPosition", approachPosition);
+        SetPrivateField(arrival, "logicalPosition", arrivalPosition);
+        SetPrivateField(passage, "definition", definition);
+        SetPrivateField(passage, "sourceRoomView", sourceRoomView);
+        SetPrivateField(passage, "reversePassage", reverse);
+        SetPrivateField(passage, "approachAnchor", approach);
+        SetPrivateField(passage, "arrivalAnchor", arrival);
+    }
+
+    private static void SetStableId(DefinitionAssetBase definition, string stableId)
+    {
+        SerializedObject serializedDefinition = new SerializedObject(definition);
+        SerializedProperty stableIdProperty = serializedDefinition.FindProperty("stableId");
+        Assert.That(stableIdProperty, Is.Not.Null);
+        stableIdProperty.stringValue = stableId;
+        serializedDefinition.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void SetPrivateField<T>(object owner, string fieldName, T value)
+    {
+        FieldInfo field = owner.GetType().GetField(fieldName, PrivateInstance);
+        Assert.That(field, Is.Not.Null, $"Missing private field '{fieldName}' on {owner.GetType().Name}.");
+        field.SetValue(owner, value);
+    }
+}
+#endif

@@ -131,6 +131,8 @@ The first route characterization is complete. Before canonical code or scene bin
 
 The route then migrates through separately reversible commits: pure contracts; definition assets and GameDatabase registration; passive room/passage scene bindings; direct serialized dependencies; façade-backed canonical traversal; authored arrival anchors; authored approach anchors; and final route certification. `RoomNavigationManager` remains the sole current-room owner until a later explicit owner cutover.
 
+Pure-contract status: complete. The canonical definition/view/passage/interface types are validation-only and have zero serialized instances. No service implementation, room activation command, scene binding, data asset, or legacy caller changed in that gate. The next slice is data-only: four definition assets plus direct `GameDatabase` registration.
+
 Room-local object cutouts are first-class props:
 
 ```text

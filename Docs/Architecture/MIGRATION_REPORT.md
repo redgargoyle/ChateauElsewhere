@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first three set pieces complete and the Grand Entrance Hall ↔ Drawing Room legacy passage behavior now fully characterized.**
+**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage characterized and its pure canonical room/passage contracts now implemented.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -108,13 +108,15 @@ This report records what is implemented in the repository at this commit. It mus
 - Removed every Chapter Intro discovery, factory, component-addition, reparenting, recursive layer/layout mutation, fallback warning/name, and `PostProcessSafeCanvasUtility` dependency. The final Canvas is an authored scene-root Screen-Space Overlay Canvas—the Unity-supported form and the original runtime hierarchy—with its stretched overlay as the serialized full-screen boundary. `ChapterIntroUI` now has only four direct view references, three transition values, presentation methods, and graph validation; it retains the same owner, callers, IDs, timings, title, fade/title visuals, sorting, EventSystem, and GUID.
 - Characterized the first canonical passage slice without changing production code or serialized assets. Exact YAML guards freeze the Grand Entrance Hall `GEH_Drawing_Room` trigger (`109889178`) and reciprocal Drawing Room `DrawingRoom_GEH` trigger (`2300000104`), their owning rooms, parents, geometry, script GUID, Inspector routes, and null legacy repair edges. The rendered MainMenu lifecycle freezes room-event order (`Drawing Room` then `Grand Entrance Hall`), camera/room/background ownership, prompt and cursor release, stable object/component counts, Chapter 1 continuity, exact logical arrivals `(5.167492, -2.056576)` and `(-7.45909, -1.955749)`, and the unchanged Butler presentation multiplier `0.752865`.
 - Characterized two migration debts on that same route before removing them: first door use adds and then reuses one Game-Sounds volume binding on shared source `2201000013`, and re-enabling a `RoomContentGroup` currently force-enables a deliberately disabled descendant renderer. The latter is a recorded defect to remove when the migrated `RoomView` takes visibility ownership, not target behavior to preserve indefinitely.
+- Added the pure `Chateau.World.Rooms` / `Passages` / `Navigation` contract layer: stable-ID `RoomDefinition`, directed reciprocal `PassageDefinition`, typed `PassageKind`, logical `PassageAnchorData`, passive validated `RoomView`/`Passage` bindings, and `INavigationService`. These files contain no search, resource load, factory, lifecycle mutation, singleton, or current-room state. `RoomView` deliberately has no visibility command, `Passage` has no interaction lifecycle, and `RoomNavigationManager` does not implement the interface yet, so the slice introduces no second owner or parallel runtime path.
+- Added contract tests using only temporary definitions and objects. They prove trimmed stable identity remains separate from display/legacy names, validate reciprocal directed endpoints without recursive validation, preserve logical `(0,0)` as valid authored anchor data, enforce room-owned passive scene bindings, and verify Gameplay/GameDatabase remain untouched and unbound.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
-| Runtime C# files | 90 | 105 | +15 |
-| Runtime C# lines | 49,902 | 48,130 | -1,772 |
+| Runtime C# files | 90 | 112 | +22 |
+| Runtime C# lines | 49,902 | 48,500 | -1,402 |
 | Direct `MonoBehaviour` declarations | 63 | 48 | -15 |
 | `FindObject*`/`GameObject.Find` | 199 | 106 | -93 |
 | `Resources.Load` | 27 | 17 | -10 |
@@ -226,6 +228,10 @@ The temporary source increase is the migration spine and verification tooling. I
 - all 147 C# scripts have `.meta` files and unique GUIDs.
 - the first-passage static characterization passes `1/1`, its rendered lifecycle passes `1/1`, and the full EditMode suite now discovers 241 tests: 195 pass and the exact same 46 pre-existing failure names remain, with no new failure;
 - the first-passage gate confirms `doors.txt` is not authoritative for this route: Gameplay contains zero serialized `DoorButton` instances, the forward legacy entry is absent, and both live directions remain Inspector-owned pending canonical data authoring;
+- the pure canonical-contract gate passes `4/4`; the architecture guard reports no new debt, all 154 C# scripts have matching unique GUIDs, and serialized-reference generation reports zero instances for every new runtime script;
+- generated architecture inventory now records 112 runtime files / 48,500 lines while every smell total remains unchanged (`FindObject` 106, `Resources.Load` 17, runtime `new GameObject` 67, `AddComponent` 51, runtime initialization 4, direct `MonoBehaviour` 48);
+- the rendered MainMenu/Entrance/Drawing Room lifecycle remains green with the exact characterized arrivals and `0.752865` Butler multiplier; the full EditMode suite now discovers 245 tests, 199 pass, and the same 46 pre-existing failure names remain with no new or removed failure;
+- Gameplay, MainMenu, and `GameDatabase.asset` hashes are byte-identical to the prior passing commit; the contract slice adds only new runtime contracts/tests/metas plus architecture documentation and generated inventories;
 
 ## Validation still requiring human/golden review
 
@@ -252,6 +258,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Add the pure, namespaced canonical room/passage contracts and validation tests only: `RoomDefinition`, `PassageDefinition`, reciprocal passage data, `RoomView`, `Passage`, arrival-anchor data, and `INavigationService`. Do not change Gameplay, route execution, arrival sampling, or introduce a second current-room owner in this commit.
+1. Author only the Grand Entrance Hall and Drawing Room `RoomDefinition` assets plus their two reciprocal directed `PassageDefinition` assets, then register those four definitions directly in `GameDatabase`. Keep Gameplay and every route component byte-identical; add exact asset/GUID/stable-ID/endpoint/texture/database validation before any scene binding.
 
-After that pure-contract gate passes, author the two room definitions and reciprocal passage assets in a separate commit. Do not begin scene grafting, route cutover, or bulk deletion before those independent gates pass.
+Do not begin scene grafting, route cutover, or bulk deletion before that data-only gate passes.
