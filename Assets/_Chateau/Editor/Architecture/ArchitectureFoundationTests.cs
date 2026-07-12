@@ -107,8 +107,10 @@ public sealed class ArchitectureFoundationTests
     public void ChapterStackIsSerializedInsteadOfRepairedAtRuntime()
     {
         string managerText = File.ReadAllText("Assets/Scripts/Story/ChapterManager.cs");
+        string introText = File.ReadAllText("Assets/Scripts/Story/ChapterIntroUI.cs");
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string playerInstanceDocument = ExtractDocument(sceneText, "--- !u!1001 &81962841");
+        string introDocument = ExtractDocument(sceneText, "--- !u!114 &3301000003");
 
         Assert.That(managerText, Does.Not.Contain("BootstrapChapterManagerForGameplay"));
         Assert.That(managerText, Does.Not.Contain("ChapterManager_Runtime"));
@@ -136,6 +138,19 @@ public sealed class ArchitectureFoundationTests
         Assert.That(CountOccurrences(sceneText, legacyMovementOverride), Is.EqualTo(1));
         Assert.That(managerText, Does.Contain("ChapterManager requires its serialized PointClickPlayerMovement."));
         Assert.That(managerText, Does.Contain("ChapterManager requires its serialized Chapter2Controller."));
+        Assert.That(CountOccurrences(sceneText, "guid: 97af4a761ae641b1b180d4ae9898b061"), Is.EqualTo(1));
+        Assert.That(introDocument, Does.Contain("canvas: {fileID: 0}"));
+        Assert.That(introDocument, Does.Contain("fadeImage: {fileID: 0}"));
+        Assert.That(introDocument, Does.Contain("titleText: {fileID: 0}"));
+        Assert.That(introDocument, Does.Contain("useDedicatedOverlayCanvas: 1"));
+        Assert.That(introDocument, Does.Contain("createRuntimeFallbackIfMissing: 1"));
+        Assert.That(introText, Does.Contain("GameObject.Find(canvasName)"));
+        Assert.That(introText, Does.Contain("new GameObject(\n                canvasName"));
+        Assert.That(introText, Does.Contain("new GameObject(overlayObjectName, typeof(RectTransform))"));
+        Assert.That(introText, Does.Contain("new GameObject(fadeObjectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image))"));
+        Assert.That(introText, Does.Contain("new GameObject(titleObjectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI))"));
+        Assert.That(introText, Does.Contain("canvasObject.AddComponent<CanvasScaler>()"));
+        Assert.That(introText, Does.Contain("canvasObject.AddComponent<GraphicRaycaster>()"));
 
         string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
         Assert.That(chapter2Text, Does.Not.Contain("AddComponent<Chapter2InteractionHUD>"));

@@ -43,6 +43,12 @@ public sealed class GameplayLifecycleCharacterizationTests
     [UnityTest]
     public IEnumerator MainMenuNewGameBootsGameplayAndNavigatesEntranceRoundTrip()
     {
+        LogAssert.Expect(
+            LogType.Warning,
+            "ChapterIntroUI missing required field: fadeImage. Created runtime fallback Image_ChapterIntroFade.");
+        LogAssert.Expect(
+            LogType.Warning,
+            "ChapterIntroUI missing required field: titleText. Created runtime fallback Text_ChapterIntroTitle.");
         MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
         menu.NewGame();
         yield return null;
@@ -67,6 +73,32 @@ public sealed class GameplayLifecycleCharacterizationTests
         ChapterClock clock = RequireExactlyOneInActiveScene<ChapterClock>();
         ChapterEventScheduler scheduler = RequireExactlyOneInActiveScene<ChapterEventScheduler>();
         ChapterIntroUI intro = RequireExactlyOneInActiveScene<ChapterIntroUI>();
+        GameObject characterizedIntroHost = intro.gameObject;
+        Canvas characterizedIntroCanvas = GetPrivateField<Canvas>(intro, "canvas");
+        RectTransform characterizedIntroOverlay = GetPrivateField<RectTransform>(intro, "overlayRoot");
+        Image characterizedIntroFade = GetPrivateField<Image>(intro, "fadeImage");
+        TMP_Text characterizedIntroTitle = GetPrivateField<TMP_Text>(intro, "titleText");
+        RectTransform characterizedIntroCanvasRect = characterizedIntroCanvas != null
+            ? characterizedIntroCanvas.GetComponent<RectTransform>()
+            : null;
+        CanvasScaler characterizedIntroScaler = characterizedIntroCanvas != null
+            ? characterizedIntroCanvas.GetComponent<CanvasScaler>()
+            : null;
+        GraphicRaycaster characterizedIntroRaycaster = characterizedIntroCanvas != null
+            ? characterizedIntroCanvas.GetComponent<GraphicRaycaster>()
+            : null;
+        RectTransform characterizedIntroFadeRect = characterizedIntroFade != null
+            ? characterizedIntroFade.GetComponent<RectTransform>()
+            : null;
+        RectTransform characterizedIntroTitleRect = characterizedIntroTitle != null
+            ? characterizedIntroTitle.GetComponent<RectTransform>()
+            : null;
+        TMP_FontAsset characterizedIntroFont = characterizedIntroTitle != null
+            ? characterizedIntroTitle.font
+            : null;
+        Material characterizedIntroFontMaterial = characterizedIntroTitle != null
+            ? characterizedIntroTitle.fontSharedMaterial
+            : null;
         Chapter1ArrivalController arrival = RequireExactlyOneInActiveScene<Chapter1ArrivalController>();
         ChapterManager serializedArrivalChapterManager = GetPrivateField<ChapterManager>(arrival, "chapterManager");
         ChapterClock serializedArrivalClock = GetPrivateField<ChapterClock>(arrival, "chapterClock");
@@ -221,6 +253,115 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(lighting, Is.Not.Null);
         Assert.That(chapter.Clock, Is.SameAs(clock));
         Assert.That(chapter.EventScheduler, Is.SameAs(scheduler));
+        Assert.That(GetPrivateField<ChapterIntroUI>(chapter, "introUI"), Is.SameAs(intro));
+        Assert.That(GetPrivateField<ChapterIntroUI>(serializedChapter2, "introUI"), Is.SameAs(intro));
+        InvokePrivateMethod(intro, "EnsureUI");
+        InvokePrivateMethod(intro, "EnsureUI");
+        Assert.That(intro.gameObject, Is.SameAs(characterizedIntroHost));
+        Assert.That(intro.gameObject, Is.SameAs(chapter.gameObject));
+        Assert.That(intro.GetComponents<ChapterIntroUI>(), Has.Length.EqualTo(1));
+        Assert.That(intro.GetComponent<Canvas>(), Is.Null);
+        Assert.That(GetPrivateField<Canvas>(intro, "canvas"), Is.SameAs(characterizedIntroCanvas));
+        Assert.That(GetPrivateField<RectTransform>(intro, "overlayRoot"), Is.SameAs(characterizedIntroOverlay));
+        Assert.That(GetPrivateField<Image>(intro, "fadeImage"), Is.SameAs(characterizedIntroFade));
+        Assert.That(GetPrivateField<TMP_Text>(intro, "titleText"), Is.SameAs(characterizedIntroTitle));
+        Assert.That(characterizedIntroCanvas, Is.Not.Null);
+        Assert.That(characterizedIntroCanvas.gameObject.name, Is.EqualTo("Canvas_ChapterIntroOverlay"));
+        Assert.That(characterizedIntroCanvas.transform.parent, Is.Null);
+        Assert.That(characterizedIntroCanvas.GetComponents<Component>(), Has.Length.EqualTo(4));
+        Assert.That(characterizedIntroCanvas.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("UI")));
+        Assert.That(characterizedIntroCanvas.gameObject.activeSelf, Is.True);
+        Assert.That(characterizedIntroCanvas.enabled, Is.True);
+        Assert.That(characterizedIntroCanvas.renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+        Assert.That(characterizedIntroCanvas.overrideSorting, Is.False);
+        Assert.That(characterizedIntroCanvas.sortingOrder, Is.EqualTo(12000));
+        Assert.That(characterizedIntroCanvas.transform.childCount, Is.EqualTo(1));
+        Assert.That(characterizedIntroCanvasRect, Is.Not.Null);
+        Assert.That(characterizedIntroCanvasRect.anchorMin, Is.EqualTo(Vector2.zero));
+        Assert.That(characterizedIntroCanvasRect.anchorMax, Is.EqualTo(Vector2.one));
+        Assert.That(characterizedIntroCanvasRect.offsetMin, Is.EqualTo(Vector2.zero));
+        Assert.That(characterizedIntroCanvasRect.offsetMax, Is.EqualTo(Vector2.zero));
+        Assert.That(characterizedIntroCanvasRect.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+        Assert.That(characterizedIntroCanvasRect.localScale, Is.EqualTo(Vector3.one));
+        Assert.That(characterizedIntroScaler, Is.Not.Null);
+        Assert.That(characterizedIntroScaler.uiScaleMode, Is.EqualTo(CanvasScaler.ScaleMode.ScaleWithScreenSize));
+        Assert.That(characterizedIntroScaler.referenceResolution, Is.EqualTo(new Vector2(1366f, 768f)));
+        Assert.That(characterizedIntroScaler.screenMatchMode, Is.EqualTo(CanvasScaler.ScreenMatchMode.MatchWidthOrHeight));
+        Assert.That(characterizedIntroScaler.matchWidthOrHeight, Is.EqualTo(0.5f).Within(0.0001f));
+        Assert.That(characterizedIntroRaycaster, Is.Not.Null);
+        Assert.That(characterizedIntroOverlay, Is.Not.Null);
+        Assert.That(characterizedIntroOverlay.gameObject.name, Is.EqualTo("ChapterIntroUI_Runtime"));
+        Assert.That(characterizedIntroOverlay.parent, Is.SameAs(characterizedIntroCanvas.transform));
+        Assert.That(characterizedIntroOverlay.GetComponents<Component>(), Has.Length.EqualTo(1));
+        Assert.That(characterizedIntroOverlay.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("UI")));
+        Assert.That(characterizedIntroOverlay.anchorMin, Is.EqualTo(Vector2.zero));
+        Assert.That(characterizedIntroOverlay.anchorMax, Is.EqualTo(Vector2.one));
+        Assert.That(characterizedIntroOverlay.offsetMin, Is.EqualTo(Vector2.zero));
+        Assert.That(characterizedIntroOverlay.offsetMax, Is.EqualTo(Vector2.zero));
+        Assert.That(characterizedIntroOverlay.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+        Assert.That(characterizedIntroOverlay.localScale, Is.EqualTo(Vector3.one));
+        Assert.That(characterizedIntroOverlay.childCount, Is.EqualTo(2));
+        Assert.That(characterizedIntroFade, Is.Not.Null);
+        Assert.That(characterizedIntroFade.gameObject.name, Is.EqualTo("Image_ChapterIntroFade"));
+        Assert.That(characterizedIntroFade.transform.parent, Is.SameAs(characterizedIntroOverlay));
+        Assert.That(characterizedIntroFade.GetComponents<Component>(), Has.Length.EqualTo(3));
+        Assert.That(characterizedIntroFade.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("UI")));
+        Assert.That(characterizedIntroFade.enabled, Is.True);
+        Assert.That(characterizedIntroFade.sprite, Is.Null);
+        Assert.That(characterizedIntroFade.raycastTarget, Is.True);
+        Assert.That(characterizedIntroFade.color.r, Is.Zero.Within(0.0001f));
+        Assert.That(characterizedIntroFade.color.g, Is.Zero.Within(0.0001f));
+        Assert.That(characterizedIntroFade.color.b, Is.Zero.Within(0.0001f));
+        Assert.That(characterizedIntroFadeRect, Is.Not.Null);
+        Assert.That(characterizedIntroFadeRect.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+        Assert.That(characterizedIntroFadeRect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+        Assert.That(characterizedIntroFadeRect.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+        Assert.That(characterizedIntroFadeRect.anchoredPosition, Is.EqualTo(Vector2.zero));
+        Assert.That(characterizedIntroFadeRect.sizeDelta, Is.EqualTo(new Vector2(10000f, 10000f)));
+        Assert.That(characterizedIntroFadeRect.localScale, Is.EqualTo(Vector3.one));
+        Assert.That(characterizedIntroTitle, Is.Not.Null);
+        Assert.That(characterizedIntroTitle.gameObject.name, Is.EqualTo("Text_ChapterIntroTitle"));
+        Assert.That(characterizedIntroTitle.transform.parent, Is.SameAs(characterizedIntroOverlay));
+        Assert.That(characterizedIntroTitle.GetComponents<Component>(), Has.Length.EqualTo(3));
+        Assert.That(characterizedIntroTitle.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("UI")));
+        Assert.That(characterizedIntroTitle.enabled, Is.True);
+        Assert.That(characterizedIntroTitle.fontSize, Is.EqualTo(72f).Within(0.0001f));
+        Assert.That(characterizedIntroTitle.color, Is.EqualTo(Color.white));
+        Assert.That(characterizedIntroTitle.alignment, Is.EqualTo(TextAlignmentOptions.Center));
+        Assert.That(characterizedIntroTitle.raycastTarget, Is.False);
+        Assert.That(characterizedIntroTitleRect, Is.Not.Null);
+        Assert.That(characterizedIntroTitleRect.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+        Assert.That(characterizedIntroTitleRect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+        Assert.That(characterizedIntroTitleRect.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+        Assert.That(characterizedIntroTitleRect.anchoredPosition, Is.EqualTo(Vector2.zero));
+        Assert.That(characterizedIntroTitleRect.sizeDelta, Is.EqualTo(new Vector2(900f, 180f)));
+        Assert.That(characterizedIntroTitleRect.localScale, Is.EqualTo(Vector3.one));
+        Assert.That(characterizedIntroFont, Is.Not.Null);
+        Assert.That(characterizedIntroFontMaterial, Is.Not.Null);
+        Assert.That(
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                characterizedIntroFont,
+                out string introFontGuid,
+                out long introFontFileId),
+            Is.True);
+        Assert.That(introFontGuid, Is.EqualTo("8f586378b4e144a9851e7b34d9b748ee"));
+        Assert.That(introFontFileId, Is.EqualTo(11400000L));
+        Assert.That(
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                characterizedIntroFontMaterial,
+                out string introFontMaterialGuid,
+                out long introFontMaterialFileId),
+            Is.True);
+        Assert.That(introFontMaterialGuid, Is.EqualTo("8f586378b4e144a9851e7b34d9b748ee"));
+        Assert.That(introFontMaterialFileId, Is.EqualTo(2180264L));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Canvas_ChapterIntroOverlay"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "ChapterIntroUI_Runtime"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Image_ChapterIntroFade"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Text_ChapterIntroTitle"), Is.EqualTo(1));
+        Debug.Log(
+            $"[ChapterIntroUICharacterization] owner={intro.GetInstanceID()} canvas={characterizedIntroCanvas.GetInstanceID()} " +
+            $"overlay={characterizedIntroOverlay.GetInstanceID()} fade={characterizedIntroFade.GetInstanceID()} " +
+            $"title={characterizedIntroTitle.GetInstanceID()}");
         Assert.That(serializedArrivalChapterManager, Is.SameAs(chapter));
         Assert.That(serializedArrivalClock, Is.SameAs(clock));
         Assert.That(serializedArrivalScheduler, Is.SameAs(scheduler));
@@ -1214,6 +1355,16 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<ChapterClock>(), Is.SameAs(clock));
         Assert.That(RequireExactlyOneInActiveScene<ChapterEventScheduler>(), Is.SameAs(scheduler));
         Assert.That(RequireExactlyOneInActiveScene<ChapterIntroUI>(), Is.SameAs(intro));
+        AssertChapterIntroGraphRemainsStable(
+            intro,
+            characterizedIntroHost,
+            characterizedIntroCanvas,
+            characterizedIntroOverlay,
+            characterizedIntroFade,
+            characterizedIntroTitle,
+            characterizedIntroFont,
+            characterizedIntroFontMaterial,
+            characterizedTimeEventSystem);
         Assert.That(RequireExactlyOneInActiveScene<Chapter1ArrivalController>(), Is.SameAs(arrival));
         Assert.That(RequireExactlyOneInActiveScene<Chapter1InteractionHUD>(), Is.SameAs(chapter1Hud));
         Assert.That(RequireExactlyOneInActiveScene<RoomLightingController>(), Is.SameAs(lighting));
@@ -1546,6 +1697,48 @@ public sealed class GameplayLifecycleCharacterizationTests
             Canvas.ForceUpdateCanvases();
             yield return null;
         }
+    }
+
+    private static void AssertChapterIntroGraphRemainsStable(
+        ChapterIntroUI intro,
+        GameObject introHost,
+        Canvas introCanvas,
+        RectTransform introOverlay,
+        Image introFade,
+        TMP_Text introTitle,
+        TMP_FontAsset introFont,
+        Material introFontMaterial,
+        EventSystem eventSystem)
+    {
+        ChapterManager chapterManager = RequireExactlyOneInActiveScene<ChapterManager>();
+        Chapter2Controller chapter2 = RequireExactlyOneInActiveScene<Chapter2Controller>();
+        Assert.That(RequireExactlyOneInActiveScene<ChapterIntroUI>(), Is.SameAs(intro));
+        Assert.That(intro.gameObject, Is.SameAs(introHost));
+        Assert.That(GetPrivateField<ChapterIntroUI>(chapterManager, "introUI"), Is.SameAs(intro));
+        Assert.That(GetPrivateField<ChapterIntroUI>(chapter2, "introUI"), Is.SameAs(intro));
+        Assert.That(GetPrivateField<Canvas>(intro, "canvas"), Is.SameAs(introCanvas));
+        Assert.That(GetPrivateField<RectTransform>(intro, "overlayRoot"), Is.SameAs(introOverlay));
+        Assert.That(GetPrivateField<Image>(intro, "fadeImage"), Is.SameAs(introFade));
+        Assert.That(GetPrivateField<TMP_Text>(intro, "titleText"), Is.SameAs(introTitle));
+        Assert.That(intro.GetComponents<ChapterIntroUI>(), Has.Length.EqualTo(1));
+        Assert.That(intro.GetComponent<Canvas>(), Is.Null);
+        Assert.That(introCanvas.transform.parent, Is.Null);
+        Assert.That(introCanvas.GetComponents<Component>(), Has.Length.EqualTo(4));
+        Assert.That(introCanvas.transform.childCount, Is.EqualTo(1));
+        Assert.That(introOverlay.parent, Is.SameAs(introCanvas.transform));
+        Assert.That(introOverlay.GetComponents<Component>(), Has.Length.EqualTo(1));
+        Assert.That(introOverlay.childCount, Is.EqualTo(2));
+        Assert.That(introFade.transform.parent, Is.SameAs(introOverlay));
+        Assert.That(introFade.GetComponents<Component>(), Has.Length.EqualTo(3));
+        Assert.That(introTitle.transform.parent, Is.SameAs(introOverlay));
+        Assert.That(introTitle.GetComponents<Component>(), Has.Length.EqualTo(3));
+        Assert.That(introTitle.font, Is.SameAs(introFont));
+        Assert.That(introTitle.fontSharedMaterial, Is.SameAs(introFontMaterial));
+        Assert.That(RequireExactlyOneInActiveScene<EventSystem>(), Is.SameAs(eventSystem));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Canvas_ChapterIntroOverlay"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "ChapterIntroUI_Runtime"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Image_ChapterIntroFade"), Is.EqualTo(1));
+        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Text_ChapterIntroTitle"), Is.EqualTo(1));
     }
 
     private static void AssertGameTimeHudGraphRemainsStable(
