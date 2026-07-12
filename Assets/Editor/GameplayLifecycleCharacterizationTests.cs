@@ -294,6 +294,16 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(playerObject, Is.Not.Null);
         PointClickPlayerMovement player = playerObject.GetComponent<PointClickPlayerMovement>();
         Assert.That(player, Is.Not.Null);
+        PlayerMovement legacyPlayerMovement = playerObject.GetComponent<PlayerMovement>();
+        CharacterController2D legacyPlayerController = playerObject.GetComponent<CharacterController2D>();
+        Assert.That(legacyPlayerMovement, Is.Not.Null);
+        Assert.That(legacyPlayerController, Is.Not.Null);
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(chapter, "playerInput"), Is.SameAs(player));
+        Assert.That(GetPrivateField<Chapter2Controller>(chapter, "chapter2Controller"), Is.SameAs(serializedChapter2));
+        Assert.That(chapter.PlayerButlerReference, Is.SameAs(playerObject));
+        Assert.That(player.enabled, Is.True);
+        Assert.That(legacyPlayerMovement.enabled, Is.False);
+        Assert.That(legacyPlayerController.enabled, Is.False);
         Assert.That(serializedGuestScaleApplier.Calibration, Is.SameAs(serializedGuestScaleCalibration));
         Assert.That(serializedGuestScaleCalibration.ButlerScaleSource, Is.SameAs(player));
         Assert.That(serializedVoicePlayback.IsPlaying, Is.False);

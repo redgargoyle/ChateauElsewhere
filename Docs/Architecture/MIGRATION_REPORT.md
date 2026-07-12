@@ -67,6 +67,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Migrated `purple_armchair_back` in place beneath the existing `Props / Set Pieces` owners. Its original GameObject/Transform/SpriteRenderer/component IDs, chair art/material, authored transforms, depth anchor/order, blocker identity, and four-point lower-seat polygon are preserved; its blocker now owns collision only and cannot rewrite presentation.
 - Characterized `purple_sofa` as the third set-piece candidate across Gameplay and both Drawing Room prefabs: its sofa art/material/transform/component identities are exact across all three assets, the room-local anchor resolves to order `5385`, and the Gameplay four-point seating footprint is frozen before migration.
 - Migrated `purple_sofa` beneath the existing `Props / Set Pieces` owners with one explicit `SetPieceView` per asset. Its original GameObject/Transform/SpriteRenderer IDs, art/material, authored transform, blocker identity, and four-point seating polygon are preserved; the blocker now owns collision only and cannot rewrite presentation.
+- Characterized ChapterManager's remaining player/Chapter 2 repair before removal: runtime resolves the exact Player `PointClickPlayerMovement` and already-serialized Chapter 2 controller, keeps point-click enabled, derives the public Player root correctly, and leaves both legacy Player controllers disabled.
 
 ## Current static result
 
