@@ -296,6 +296,282 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
+    public void MusicLibraryLegacyRouteSnapshotIsExactBeforeCanonicalData()
+    {
+        List<RouteInventoryRow> group = ReadInventory()
+            .Where(row => row.Order == 2)
+            .OrderBy(row => row.ComponentFileId)
+            .ToList();
+        Dictionary<string, string> documents = ReadUnityDocuments(File.ReadAllText(GameplayScenePath));
+        string database = File.ReadAllText(GameDatabasePath);
+        string musicOwner = RequireDocument(documents, "552135202");
+        string musicTransform = RequireDocument(documents, "552135203");
+        string musicTrigger = RequireDocument(documents, "552135204");
+        string libraryOwner = RequireDocument(documents, "2300000075");
+        string libraryTransform = RequireDocument(documents, "2300000076");
+        string libraryTrigger = RequireDocument(documents, "2300000079");
+        string musicRoom = RequireDocument(documents, "354156755");
+        string musicRoomTransform = RequireDocument(documents, "354156756");
+        string musicContent = RequireDocument(documents, "2102000001");
+        string musicDoors = RequireDocument(documents, "2103000010");
+        string musicDoorsTransform = RequireDocument(documents, "2103000011");
+        string musicView = RequireDocument(documents, "4100000003");
+        string libraryRoom = RequireDocument(documents, "1367921344");
+        string libraryRoomTransform = RequireDocument(documents, "1367921345");
+        string libraryContent = RequireDocument(documents, "2102000003");
+        string libraryDoors = RequireDocument(documents, "2103000030");
+        string libraryDoorsTransform = RequireDocument(documents, "2103000031");
+        string gameRoot = RequireDocument(documents, GameRootFileId);
+
+        Assert.That(group, Has.Count.EqualTo(2));
+        RouteInventoryRow libraryRow = group.Single(row => row.ComponentFileId == "2300000079");
+        RouteInventoryRow musicRow = group.Single(row => row.ComponentFileId == "552135204");
+        Assert.That(group.All(row => row.Status == "characterized"), Is.True);
+        Assert.That(group.All(row => row.Group == "Music-Library"), Is.True);
+        Assert.That(group.All(row => row.Profile == "standard-door"), Is.True);
+        Assert.That(group.All(row => row.Notes == "legacy-characterization-complete-data-next"), Is.True);
+        AssertReciprocal(libraryRow, musicRow);
+        AssertReciprocal(musicRow, libraryRow);
+        Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageFileId)), Is.True);
+        Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageDefinitionGuid)), Is.True);
+        Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageStableId)), Is.True);
+        Assert.That(group.All(row => string.IsNullOrEmpty(row.SourceRoomViewFileId)), Is.True);
+        Assert.That(group.All(row =>
+            string.IsNullOrEmpty(row.ApproachX) &&
+            string.IsNullOrEmpty(row.ApproachY) &&
+            string.IsNullOrEmpty(row.ArrivalX) &&
+            string.IsNullOrEmpty(row.ArrivalY)), Is.True);
+
+        AssertExactComponentIds(musicOwner, "552135203", "552135206", "552135205", "552135204");
+        Assert.That(musicOwner, Does.Contain("m_Name: DoorTrigger_MusicRoom_Library"));
+        Assert.That(ReadField(musicOwner, "m_Layer"), Is.EqualTo("5"));
+        Assert.That(ReadField(musicOwner, "m_IsActive"), Is.EqualTo("1"));
+        Assert.That(ReadReferenceFileId(musicTransform, "m_GameObject"), Is.EqualTo("552135202"));
+        Assert.That(ReadReferenceFileId(musicTransform, "m_Father"), Is.EqualTo("2103000011"));
+        Assert.That(ReadField(musicTransform, "m_LocalScale"), Is.EqualTo("{x: 0.95, y: 1, z: 1}"));
+        Assert.That(ReadField(musicTransform, "m_AnchoredPosition"), Is.EqualTo("{x: 682, y: 4}"));
+        Assert.That(ReadField(musicTransform, "m_SizeDelta"),
+            Is.EqualTo("{x: 197.70117, y: 390.22205}"));
+        Assert.That(ReadField(musicTransform, "m_AnchorMin"), Is.EqualTo("{x: 0.5, y: 0.5}"));
+        Assert.That(ReadField(musicTransform, "m_AnchorMax"), Is.EqualTo("{x: 0.5, y: 0.5}"));
+        Assert.That(ReadField(musicTransform, "m_Pivot"), Is.EqualTo("{x: 0.5, y: 0.5}"));
+        AssertLegacyTriggerSnapshot(
+            musicTrigger,
+            "552135202",
+            "552135205",
+            "Music Room",
+            "MusicRoom_Library",
+            "Library");
+
+        AssertExactComponentIds(libraryOwner, "2300000076", "2300000077", "2300000078", "2300000079");
+        Assert.That(libraryOwner, Does.Contain("m_Name: DoorTrigger_Library_MusicRoom"));
+        Assert.That(ReadField(libraryOwner, "m_Layer"), Is.EqualTo("5"));
+        Assert.That(ReadField(libraryOwner, "m_IsActive"), Is.EqualTo("1"));
+        Assert.That(ReadReferenceFileId(libraryTransform, "m_GameObject"), Is.EqualTo("2300000075"));
+        Assert.That(ReadReferenceFileId(libraryTransform, "m_Father"), Is.EqualTo("2103000031"));
+        Assert.That(ReadField(libraryTransform, "m_LocalScale"), Is.EqualTo("{x: 1, y: 1, z: 1}"));
+        Assert.That(ReadField(libraryTransform, "m_AnchoredPosition"),
+            Is.EqualTo("{x: -651.72284, y: 30.3167}"));
+        Assert.That(ReadField(libraryTransform, "m_SizeDelta"),
+            Is.EqualTo("{x: 157.0319, y: 359.0855}"));
+        Assert.That(ReadField(libraryTransform, "m_AnchorMin"), Is.EqualTo("{x: 0.5, y: 0.5}"));
+        Assert.That(ReadField(libraryTransform, "m_AnchorMax"), Is.EqualTo("{x: 0.5, y: 0.5}"));
+        Assert.That(ReadField(libraryTransform, "m_Pivot"), Is.EqualTo("{x: 0.5, y: 0.5}"));
+        AssertLegacyTriggerSnapshot(
+            libraryTrigger,
+            "2300000075",
+            "2300000078",
+            "Library",
+            "Library_MusicRoom",
+            "Music Room");
+
+        Assert.That(musicDoors, Does.Contain("m_Name: Doors"));
+        AssertExactComponentIds(musicDoors, "2103000011");
+        Assert.That(ReadReferenceFileId(musicDoorsTransform, "m_GameObject"), Is.EqualTo("2103000010"));
+        Assert.That(musicDoorsTransform, Does.Contain(
+            "  m_Children:\n" +
+            "  - {fileID: 552135203}\n" +
+            "  - {fileID: 2300000086}\n" +
+            "  m_Father: {fileID: 354156756}"));
+        Assert.That(libraryDoors, Does.Contain("m_Name: Doors"));
+        AssertExactComponentIds(libraryDoors, "2103000031");
+        Assert.That(ReadReferenceFileId(libraryDoorsTransform, "m_GameObject"), Is.EqualTo("2103000030"));
+        Assert.That(libraryDoorsTransform, Does.Contain(
+            "  m_Children:\n" +
+            "  - {fileID: 2300000076}\n" +
+            "  - {fileID: 2300000081}\n" +
+            "  m_Father: {fileID: 1367921345}"));
+
+        AssertExactComponentIds(musicRoom, "354156756", "2102000001", "4100000003");
+        Assert.That(musicRoom, Does.Contain("m_Name: Room_Music_Room"));
+        Assert.That(ReadField(musicRoom, "m_IsActive"), Is.EqualTo("0"));
+        Assert.That(musicRoomTransform, Does.Contain(
+            "  m_Children:\n" +
+            "  - {fileID: 1211449108}\n" +
+            "  - {fileID: 1305291220}\n" +
+            "  - {fileID: 2501000078}\n" +
+            "  - {fileID: 2103000011}\n" +
+            "  - {fileID: 598810695}\n" +
+            "  - {fileID: 1055422819}\n" +
+            "  - {fileID: 3601000011}\n" +
+            "  - {fileID: 636459574}\n" +
+            "  - {fileID: 1931113030}\n" +
+            "  m_Father: {fileID: 668915133}"));
+        Assert.That(ReadField(musicContent, "roomName"), Is.EqualTo("Music Room"));
+        Assert.That(musicContent, Does.Contain(
+            "roomBackgroundTexture: {fileID: 2800000, guid: 028084782cdcf3d4ab3b596624c8b7c5, type: 3}"));
+        Assert.That(ReadReferenceFileId(musicContent, "perspectiveProfile"), Is.EqualTo("0"));
+        Assert.That(musicView, Does.Contain($"guid: {RoomViewGuid}"));
+        Assert.That(ReadReferenceFileId(musicView, "m_GameObject"), Is.EqualTo("354156755"));
+        Assert.That(ReadReferenceGuid(musicView, "definition"),
+            Is.EqualTo("c0f34d74a30db58bb2b87b6ec316120b"));
+        Assert.That(ReadReferenceFileId(musicView, "legacyContentGroup"), Is.EqualTo("2102000001"));
+
+        AssertExactComponentIds(libraryRoom, "1367921345", "2102000003");
+        Assert.That(libraryRoom, Does.Contain("m_Name: Room_Library"));
+        Assert.That(ReadField(libraryRoom, "m_IsActive"), Is.EqualTo("0"));
+        Assert.That(libraryRoomTransform, Does.Contain(
+            "  m_Children:\n" +
+            "  - {fileID: 2108382636}\n" +
+            "  - {fileID: 2501000029}\n" +
+            "  - {fileID: 2103000031}\n" +
+            "  - {fileID: 764430749}\n" +
+            "  - {fileID: 834313925}\n" +
+            "  - {fileID: 1762572057}\n" +
+            "  - {fileID: 31657297}\n" +
+            "  - {fileID: 1199634577}\n" +
+            "  - {fileID: 3601000001}\n" +
+            "  - {fileID: 1154736409}\n" +
+            "  - {fileID: 1694187417}\n" +
+            "  - {fileID: 861739721}\n" +
+            "  m_Father: {fileID: 668915133}"));
+        Assert.That(ReadField(libraryContent, "roomName"), Is.EqualTo("Library"));
+        Assert.That(libraryContent, Does.Contain(
+            "roomBackgroundTexture: {fileID: 2800000, guid: 0a85e4fdd73e4714fabde63002a457e7, type: 3}"));
+        Assert.That(ReadReferenceFileId(libraryContent, "perspectiveProfile"), Is.EqualTo("0"));
+        Assert.That(documents.Values.Count(document =>
+            document.Contains($"guid: {RoomViewGuid}") &&
+            document.Contains("m_GameObject: {fileID: 354156755}")), Is.EqualTo(1));
+        Assert.That(documents.Values.Count(document =>
+            document.Contains($"guid: {RoomViewGuid}") &&
+            document.Contains("m_GameObject: {fileID: 1367921344}")), Is.Zero);
+
+        AssertBoundarySnapshot(
+            documents,
+            "1305291219",
+            "1305291220",
+            "1305291221",
+            "354156756",
+            "{x: 29.876, y: 33.383, z: 0}",
+            "{x: 437.96204, y: 649.6864, z: 4.888888}",
+            "    - - {x: 1.8357543, y: -0.5898214}\n" +
+            "      - {x: 0.7589498, y: -0.22648144}\n" +
+            "      - {x: -0.7301293, y: -0.21486577}\n" +
+            "      - {x: -1.9802924, y: -0.5537329}\n" +
+            "      - {x: -1.9835253, y: -0.7687184}\n" +
+            "      - {x: 0.58778536, y: -0.80901694}\n" +
+            "      - {x: 1.8477609, y: -0.7667822}");
+        AssertMovementBlockerSnapshot(
+            documents,
+            "636459573", "636459574", "636459576", "636459575",
+            "PlayerBlocker_grand_piano", "354156756", "598810694",
+            "grand_piano", "Music Room", "Piano", "0.35",
+            "    - - {x: -125.167755, y: -389}\n" +
+            "      - {x: 295.1678, y: -389}\n" +
+            "      - {x: 295.1678, y: -190.32002}\n" +
+            "      - {x: -125.167755, y: -190.32002}");
+        AssertMovementBlockerSnapshot(
+            documents,
+            "1931113029", "1931113030", "1931113032", "1931113031",
+            "PlayerBlocker_piano_bench", "354156756", "1055422818",
+            "piano_bench", "Music Room", "Seating", "0.32",
+            "    - - {x: -129.28714, y: -403}\n" +
+            "      - {x: 39.287136, y: -403}\n" +
+            "      - {x: 39.287136, y: -327.54892}\n" +
+            "      - {x: -129.28714, y: -327.54892}");
+        AssertRoomAnchorSnapshot(
+            documents,
+            "3601000010", "3601000011", "3601000012", "354156756",
+            "Ch2_Hide_Guest02", "Music Room", "{x: 306, y: -162}");
+
+        AssertBoundarySnapshot(
+            documents,
+            "1199634576",
+            "1199634577",
+            "1199634578",
+            "1367921345",
+            "{x: 30.163, y: -25.584, z: 0}",
+            "{x: 433.20193, y: 527.87036, z: 4.888888}",
+            "    - - {x: 0.46773112, y: -0.19898641}\n" +
+            "      - {x: -0.42814368, y: -0.1869666}\n" +
+            "      - {x: -1.1921569, y: -0.32165936}\n" +
+            "      - {x: -1.9963604, y: -0.5046056}\n" +
+            "      - {x: -1.9896692, y: -0.8412314}\n" +
+            "      - {x: 0.58778536, y: -0.80901694}\n" +
+            "      - {x: 1.600851, y: -0.8410295}\n" +
+            "      - {x: 1.5283847, y: -0.6539346}\n" +
+            "      - {x: 1.5442408, y: -0.5275091}\n" +
+            "      - {x: 1.61061, y: -0.40261146}");
+        AssertMovementBlockerSnapshot(
+            documents,
+            "861739720", "861739721", "861739723", "861739722",
+            "PlayerBlocker_librarychairandlamp_0", "1367921345", "31657296",
+            "librarychairandlamp_0", "Library", "Chair", "0.3",
+            "    - - {x: -744.629, y: -474.01364}\n" +
+            "      - {x: -437.63107, y: -474.01364}\n" +
+            "      - {x: -437.63107, y: -393.57547}\n" +
+            "      - {x: -744.629, y: -393.57547}");
+        AssertMovementBlockerSnapshot(
+            documents,
+            "1154736408", "1154736409", "1154736411", "1154736410",
+            "PlayerBlocker_writing_desk", "1367921345", "764430748",
+            "writing_desk", "Library", "Table", "0.3",
+            "    - - {x: -223.30817, y: -460.6}\n" +
+            "      - {x: 203.74817, y: -460.6}\n" +
+            "      - {x: 203.74817, y: -324.4257}\n" +
+            "      - {x: -223.30817, y: -324.4257}");
+        AssertMovementBlockerSnapshot(
+            documents,
+            "1694187416", "1694187417", "1694187419", "1694187418",
+            "PlayerBlocker_potted_plant", "1367921345", "1762572056",
+            "potted_plant", "Library", "Plant", "0.26",
+            "    - - {x: 679.4027, y: -512.55}\n" +
+            "      - {x: 830.5972, y: -512.55}\n" +
+            "      - {x: 830.5972, y: -340.43423}\n" +
+            "      - {x: 679.4027, y: -340.43423}");
+        AssertRoomAnchorSnapshot(
+            documents,
+            "3601000000", "3601000001", "3601000002", "1367921345",
+            "Ch2_Hide_Guest01", "Library", "{x: -255, y: -181}");
+
+        Assert.That(documents.Values.Count(document => document.Contains($"guid: {RoomViewGuid}")),
+            Is.EqualTo(3));
+        Assert.That(documents.Values.Count(document => document.Contains($"guid: {PassageGuid}")),
+            Is.EqualTo(4));
+        Assert.That(documents.Values.Count(document =>
+            document.Contains($"guid: {PassageGuid}") &&
+            (document.Contains("m_GameObject: {fileID: 552135202}") ||
+             document.Contains("m_GameObject: {fileID: 2300000075}"))), Is.Zero);
+        foreach (string groupFileId in new[]
+                 {
+                     "552135202", "552135203", "552135204",
+                     "2300000075", "2300000076", "2300000079"
+                 })
+        {
+            Assert.That(CountOccurrences(gameRoot, $"{{fileID: {groupFileId}}}"), Is.Zero,
+                $"Group 02 legacy object {groupFileId} must not be registered with GameRoot yet.");
+        }
+
+        Assert.That(CountOccurrences(database, "  - {fileID: 11400000, guid:"), Is.EqualTo(7));
+        string canonicalData = string.Join("\n", Directory
+            .GetFiles("Assets/_Chateau/Data", "*.asset", SearchOption.AllDirectories)
+            .Select(File.ReadAllText));
+        Assert.That(canonicalData, Does.Not.Contain("stableId: room.library"));
+        Assert.That(canonicalData, Does.Not.Contain("stableId: passage.music-room.library"));
+        Assert.That(canonicalData, Does.Not.Contain("stableId: passage.library.music-room"));
+    }
+
+    [Test]
     public void DrawingMusicCompleteCertificationPreservesAuthoredAnchorsCallersDependenciesAndTopology()
     {
         List<RouteInventoryRow> group = ReadInventory()
@@ -562,6 +838,161 @@ public sealed class PassageMigrationCertificationTests
             $@"(?m)^  {Regex.Escape(fieldName)}: \{{fileID: -?\d+, guid: (?<guid>[0-9a-f]{{32}}), type: \d+\}}$");
         Assert.That(match.Success, Is.True, $"Missing GUID reference field '{fieldName}'.");
         return match.Groups["guid"].Value;
+    }
+
+    private static void AssertExactComponentIds(string gameObject, params string[] expectedIds)
+    {
+        string[] componentIds = Regex.Matches(gameObject,
+                @"(?m)^  - component: \{fileID: (?<id>-?\d+)\}$")
+            .Cast<Match>()
+            .Select(match => match.Groups["id"].Value)
+            .ToArray();
+        Assert.That(componentIds, Is.EqualTo(expectedIds));
+    }
+
+    private static void AssertLegacyTriggerSnapshot(
+        string trigger,
+        string gameObjectFileId,
+        string imageFileId,
+        string sourceRoom,
+        string legacyDoorId,
+        string destinationRoom)
+    {
+        Assert.That(trigger, Does.Contain($"guid: {DoorTriggerGuid}"));
+        Assert.That(ReadReferenceFileId(trigger, "m_GameObject"), Is.EqualTo(gameObjectFileId));
+        Assert.That(ReadField(trigger, "sourceRoom"), Is.EqualTo(sourceRoom));
+        Assert.That(ReadField(trigger, "doorName"), Is.EqualTo(legacyDoorId));
+        Assert.That(ReadField(trigger, "destinationRoom"), Is.EqualTo(destinationRoom));
+        Assert.That(ReadField(trigger, "requirePlayerInSourceRoom"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "useCameraSequence"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "triggerKind"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "stairwayDirection"), Is.EqualTo("0"));
+        Assert.That(ReadReferenceFileId(trigger, "navigationManager"), Is.EqualTo("0"));
+        Assert.That(trigger, Does.Not.Contain("canonicalPassage:"));
+        Assert.That(ReadReferenceFileId(trigger, "image"), Is.EqualTo(imageFileId));
+        Assert.That(ReadReferenceFileId(trigger, "doorOpenAudioSource"), Is.EqualTo("0"));
+        Assert.That(ReadReferenceFileId(trigger, "player"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "makeInvisibleAtRuntime"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "runtimeColor"), Is.EqualTo("{r: 1, g: 1, b: 1, a: 0}"));
+        Assert.That(ReadField(trigger, "bringToFront"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "useBottomScreenEdgeInteraction"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "bottomScreenEdgeActivationPixels"), Is.EqualTo("28"));
+        Assert.That(ReadField(trigger, "disableGraphicRaycastForScreenEdgeInteraction"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "requirePlayerProximity"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "walkPlayerToTriggerWhenFar"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "autoActivateAfterApproach"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "playerObjectName"), Is.EqualTo("Player"));
+        Assert.That(ReadField(trigger, "maxPlayerScreenDistance"), Is.EqualTo("145"));
+        Assert.That(ReadField(trigger, "playDoorOpenSound"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "doorOpenAudioObjectName"), Is.EqualTo("Audio_DoorOpen"));
+        Assert.That(ReadReferenceFileId(trigger, "doorOpenSoundCatalog"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "doorOpenSoundCatalogResourcePath"),
+            Is.EqualTo("Audio/DoorOpenSoundCatalog"));
+        Assert.That(ReadReferenceFileId(trigger, "stairwaySoundCatalog"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "stairwaySoundCatalogResourcePath"),
+            Is.EqualTo("Audio/StairwaySoundCatalog"));
+    }
+
+    private static void AssertBoundarySnapshot(
+        Dictionary<string, string> documents,
+        string gameObjectFileId,
+        string transformFileId,
+        string colliderFileId,
+        string parentTransformFileId,
+        string localPosition,
+        string localScale,
+        string pointBlock)
+    {
+        string gameObject = RequireDocument(documents, gameObjectFileId);
+        string transform = RequireDocument(documents, transformFileId);
+        string collider = RequireDocument(documents, colliderFileId);
+
+        AssertExactComponentIds(gameObject, transformFileId, colliderFileId);
+        Assert.That(gameObject, Does.Contain("m_Name: PlayerBoundary"));
+        Assert.That(ReadReferenceFileId(transform, "m_GameObject"), Is.EqualTo(gameObjectFileId));
+        Assert.That(ReadReferenceFileId(transform, "m_Father"), Is.EqualTo(parentTransformFileId));
+        Assert.That(ReadField(transform, "m_LocalPosition"), Is.EqualTo(localPosition));
+        Assert.That(ReadField(transform, "m_LocalScale"), Is.EqualTo(localScale));
+        Assert.That(ReadReferenceFileId(collider, "m_GameObject"), Is.EqualTo(gameObjectFileId));
+        Assert.That(ReadField(collider, "m_Enabled"), Is.EqualTo("1"));
+        Assert.That(ReadField(collider, "m_IsTrigger"), Is.EqualTo("0"));
+        Assert.That(collider, Does.Contain(
+            "  m_Points:\n" +
+            "    m_Paths:\n" +
+            pointBlock + "\n" +
+            "  m_UseDelaunayMesh: 1"));
+    }
+
+    private static void AssertMovementBlockerSnapshot(
+        Dictionary<string, string> documents,
+        string gameObjectFileId,
+        string transformFileId,
+        string colliderFileId,
+        string markerFileId,
+        string gameObjectName,
+        string parentTransformFileId,
+        string sourceObjectFileId,
+        string sourceObjectName,
+        string sourceRoomName,
+        string category,
+        string footprintHeightFraction,
+        string pointBlock)
+    {
+        string gameObject = RequireDocument(documents, gameObjectFileId);
+        string transform = RequireDocument(documents, transformFileId);
+        string collider = RequireDocument(documents, colliderFileId);
+        string marker = RequireDocument(documents, markerFileId);
+
+        AssertExactComponentIds(gameObject, transformFileId, colliderFileId, markerFileId);
+        Assert.That(gameObject, Does.Contain($"m_Name: {gameObjectName}"));
+        Assert.That(ReadReferenceFileId(transform, "m_GameObject"), Is.EqualTo(gameObjectFileId));
+        Assert.That(ReadReferenceFileId(transform, "m_Father"), Is.EqualTo(parentTransformFileId));
+        Assert.That(ReadReferenceFileId(marker, "m_GameObject"), Is.EqualTo(gameObjectFileId));
+        Assert.That(ReadReferenceFileId(marker, "sourceObject"), Is.EqualTo(sourceObjectFileId));
+        Assert.That(ReadField(marker, "sourceObjectName"), Is.EqualTo(sourceObjectName));
+        Assert.That(ReadField(marker, "sourceRoomName"), Is.EqualTo(sourceRoomName));
+        Assert.That(ReadField(marker, "category"), Is.EqualTo(category));
+        Assert.That(ReadField(marker, "footprintHeightFraction"), Is.EqualTo(footprintHeightFraction));
+        Assert.That(ReadField(marker, "generatedByCollisionBoxTool"), Is.EqualTo("1"));
+        Assert.That(ReadField(marker, "sortSourceRenderers"), Is.EqualTo("1"));
+        Assert.That(ReadField(marker, "sourceSortingLayerName"), Is.EqualTo("People"));
+        Assert.That(ReadField(marker, "sourceSortingOrderBase"), Is.EqualTo("1000"));
+        Assert.That(ReadField(marker, "sourceSortingOrderPerYUnit"), Is.EqualTo("100"));
+        Assert.That(ReadField(marker, "sourceSortingOrderOffset"), Is.EqualTo("0"));
+        Assert.That(ReadField(marker, "forceSourcePivotSortPoint"), Is.EqualTo("1"));
+        Assert.That(ReadReferenceFileId(collider, "m_GameObject"), Is.EqualTo(gameObjectFileId));
+        Assert.That(ReadField(collider, "m_Enabled"), Is.EqualTo("1"));
+        Assert.That(ReadField(collider, "m_IsTrigger"), Is.EqualTo("1"));
+        Assert.That(collider, Does.Contain(
+            "  m_Points:\n" +
+            "    m_Paths:\n" +
+            pointBlock + "\n" +
+            "  m_UseDelaunayMesh: 1"));
+    }
+
+    private static void AssertRoomAnchorSnapshot(
+        Dictionary<string, string> documents,
+        string gameObjectFileId,
+        string transformFileId,
+        string anchorFileId,
+        string parentTransformFileId,
+        string anchorId,
+        string roomId,
+        string anchoredPosition)
+    {
+        string gameObject = RequireDocument(documents, gameObjectFileId);
+        string transform = RequireDocument(documents, transformFileId);
+        string anchor = RequireDocument(documents, anchorFileId);
+
+        AssertExactComponentIds(gameObject, transformFileId, anchorFileId);
+        Assert.That(gameObject, Does.Contain($"m_Name: {anchorId}"));
+        Assert.That(ReadReferenceFileId(transform, "m_GameObject"), Is.EqualTo(gameObjectFileId));
+        Assert.That(ReadReferenceFileId(transform, "m_Father"), Is.EqualTo(parentTransformFileId));
+        Assert.That(ReadField(transform, "m_AnchoredPosition"), Is.EqualTo(anchoredPosition));
+        Assert.That(ReadField(transform, "m_SizeDelta"), Is.EqualTo("{x: 100, y: 100}"));
+        Assert.That(ReadReferenceFileId(anchor, "m_GameObject"), Is.EqualTo(gameObjectFileId));
+        Assert.That(ReadField(anchor, "anchorId"), Is.EqualTo(anchorId));
+        Assert.That(ReadField(anchor, "roomId"), Is.EqualTo(roomId));
     }
 
     private static void AssertCallerBoundLegacyTriggerSnapshot(

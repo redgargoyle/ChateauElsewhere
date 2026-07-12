@@ -3850,6 +3850,969 @@ public sealed class GameplayLifecycleCharacterizationTests
     }
 
     [UnityTest]
+    public IEnumerator MusicLibraryLegacyPassagesAreCharacterizedBeforeCanonicalMigration()
+    {
+        const string LibraryRoom = "Library";
+
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        Button cursorButton = cursorChoice.GetComponent<Button>();
+        Assert.That(cursorButton, Is.Not.Null);
+        cursorButton.onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        INavigationService navigationFacade = navigation;
+        PointClickPlayerMovement player = GameObject.Find("Player").GetComponent<PointClickPlayerMovement>();
+        Assert.That(player, Is.Not.Null);
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        bool originalInputEnabled = player.InputEnabled;
+        float originalMoveSpeed = GetPrivateValue<float>(player, "moveSpeed");
+        bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
+        bool originalZoomRoomWithMouseWheel = cameraManager.zoomRoomWithMouseWheel;
+        DoorTriggerNavigation forward = null;
+        DoorTriggerNavigation reverse = null;
+        System.Action recordArrival = null;
+        System.Action recordMovementStopped = null;
+        UnityEngine.Events.UnityAction<string> recordRoomChanged = null;
+        bool lifecycleListenersAttached = false;
+
+        player.SetInputEnabled(true);
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+
+        try
+        {
+            cameraManager.ResetRoomLookForPreview();
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+
+            DoorTriggerNavigation entranceDrawingTrigger =
+                RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_GEH_DrawingRoom");
+            CanonicalPassage entranceDrawingPassage = entranceDrawingTrigger.GetComponent<CanonicalPassage>();
+            Assert.That(entranceDrawingPassage, Is.Not.Null);
+            Assert.That(player.TryWarpToExact(entranceDrawingPassage.ApproachAnchor.LogicalPosition), Is.True);
+            Assert.That(navigationFacade.TryTraverse(entranceDrawingPassage), Is.True);
+            yield return WaitForSettledLayout();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+
+            DoorTriggerNavigation drawingMusicTrigger =
+                RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_DrawingRoom_MusicRoom");
+            CanonicalPassage drawingMusicPassage = drawingMusicTrigger.GetComponent<CanonicalPassage>();
+            Assert.That(drawingMusicPassage, Is.Not.Null);
+            Assert.That(player.TryWarpToExact(drawingMusicPassage.ApproachAnchor.LogicalPosition), Is.True);
+            Assert.That(navigationFacade.TryTraverse(drawingMusicPassage), Is.True);
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+
+            forward = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_MusicRoom_Library");
+            reverse = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_Library_MusicRoom");
+            Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
+            Assert.That(forward.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(reverse.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(
+                FindInActiveScene<DoorTriggerNavigation>()
+                    .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
+                Is.EqualTo(4),
+                "Only the two already-certified reciprocal route pairs may have canonical callers before Group02.");
+
+            RoomContentGroup musicRoomContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == MusicRoom);
+            RoomContentGroup libraryRoomContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == LibraryRoom);
+            Assert.That(RequireOnlyActiveRoom(MusicRoom), Is.SameAs(musicRoomContent));
+            Assert.That(musicRoomContent.gameObject.name, Is.EqualTo("Room_Music_Room"));
+            Assert.That(libraryRoomContent.gameObject.name, Is.EqualTo("Room_Library"));
+            Assert.That(musicRoomContent.PerspectiveProfile, Is.Null);
+            Assert.That(libraryRoomContent.PerspectiveProfile, Is.Null);
+            Assert.That(musicRoomContent.TryGetRoomBackgroundTexture(out Texture musicBackground), Is.True);
+            Assert.That(libraryRoomContent.TryGetRoomBackgroundTexture(out Texture libraryBackground), Is.True);
+            Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(musicBackground));
+            Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"),
+                Is.SameAs(musicRoomContent));
+            Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"),
+                Is.SameAs(musicRoomContent.transform));
+
+            RectTransform forwardRect = forward.transform as RectTransform;
+            RectTransform reverseRect = reverse.transform as RectTransform;
+            Assert.That(forwardRect, Is.Not.Null);
+            Assert.That(reverseRect, Is.Not.Null);
+            Assert.That(forwardRect.parent.name, Is.EqualTo("Doors"));
+            Assert.That(reverseRect.parent.name, Is.EqualTo("Doors"));
+            Assert.That(forwardRect.parent.parent, Is.SameAs(musicRoomContent.transform));
+            Assert.That(reverseRect.parent.parent, Is.SameAs(libraryRoomContent.transform));
+            AssertVector2Within(forwardRect.anchoredPosition, new Vector2(682f, 4f), 0.0001f,
+                "Music-to-Library trigger position");
+            AssertVector2Within(forwardRect.sizeDelta, new Vector2(197.70117f, 390.22205f), 0.0001f,
+                "Music-to-Library trigger size");
+            AssertVector2Within(reverseRect.anchoredPosition, new Vector2(-651.72284f, 30.3167f), 0.0001f,
+                "Library-to-Music trigger position");
+            AssertVector2Within(reverseRect.sizeDelta, new Vector2(157.0319f, 359.0855f), 0.0001f,
+                "Library-to-Music trigger size");
+            Assert.That(forwardRect.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(forwardRect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(reverseRect.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(reverseRect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(forwardRect.localScale, Is.EqualTo(new Vector3(0.95f, 1f, 1f)));
+            Assert.That(reverseRect.localScale, Is.EqualTo(Vector3.one));
+            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(forward.GetComponent<CanvasRenderer>(), Is.Not.Null);
+            Assert.That(reverse.GetComponent<CanvasRenderer>(), Is.Not.Null);
+            Image forwardImage = forward.GetComponent<Image>();
+            Image reverseImage = reverse.GetComponent<Image>();
+            Assert.That(forwardImage, Is.Not.Null);
+            Assert.That(reverseImage, Is.Not.Null);
+            Assert.That(GetPrivateField<Image>(forward, "image"), Is.SameAs(forwardImage));
+            Assert.That(GetPrivateField<Image>(reverse, "image"), Is.SameAs(reverseImage));
+
+            Assert.That(forward.SourceRoom, Is.EqualTo(MusicRoom));
+            Assert.That(forward.DoorName, Is.EqualTo("MusicRoom_Library"));
+            Assert.That(forward.DestinationRoom, Is.EqualTo(LibraryRoom));
+            Assert.That(reverse.SourceRoom, Is.EqualTo(LibraryRoom));
+            Assert.That(reverse.DoorName, Is.EqualTo("Library_MusicRoom"));
+            Assert.That(reverse.DestinationRoom, Is.EqualTo(MusicRoom));
+            DoorTriggerNavigation[] legacyPair = { forward, reverse };
+            for (int triggerIndex = 0; triggerIndex < legacyPair.Length; triggerIndex++)
+            {
+                DoorTriggerNavigation trigger = legacyPair[triggerIndex];
+                Assert.That(GetPrivateValue<bool>(trigger, "requirePlayerInSourceRoom"), Is.True);
+                Assert.That(trigger.UsesCameraSequence, Is.False);
+                Assert.That(
+                    GetPrivateValue<DoorTriggerNavigation.NavigationTriggerKind>(trigger, "triggerKind"),
+                    Is.EqualTo(DoorTriggerNavigation.NavigationTriggerKind.Door));
+                Assert.That(
+                    GetPrivateValue<DoorTriggerNavigation.StairwayDirection>(trigger, "stairwayDirection"),
+                    Is.EqualTo(DoorTriggerNavigation.StairwayDirection.Auto));
+                Assert.That(GetPrivateValue<bool>(trigger, "makeInvisibleAtRuntime"), Is.True);
+                Assert.That(GetPrivateValue<Color>(trigger, "runtimeColor"), Is.EqualTo(new Color(1f, 1f, 1f, 0f)));
+                Assert.That(GetPrivateValue<bool>(trigger, "bringToFront"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "useBottomScreenEdgeInteraction"), Is.False);
+                Assert.That(GetPrivateValue<float>(trigger, "bottomScreenEdgeActivationPixels"),
+                    Is.EqualTo(28f).Within(0.0001f));
+                Assert.That(GetPrivateValue<bool>(trigger, "disableGraphicRaycastForScreenEdgeInteraction"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "requirePlayerProximity"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "walkPlayerToTriggerWhenFar"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "autoActivateAfterApproach"), Is.True);
+                Assert.That(GetPrivateValue<string>(trigger, "playerObjectName"), Is.EqualTo("Player"));
+                Assert.That(GetPrivateValue<float>(trigger, "maxPlayerScreenDistance"),
+                    Is.EqualTo(145f).Within(0.0001f));
+                Assert.That(GetPrivateValue<bool>(trigger, "playDoorOpenSound"), Is.True);
+                Assert.That(GetPrivateValue<string>(trigger, "doorOpenAudioObjectName"),
+                    Is.EqualTo("Audio_DoorOpen"));
+                Assert.That(GetPrivateValue<string>(trigger, "doorOpenSoundCatalogResourcePath"),
+                    Is.EqualTo("Audio/DoorOpenSoundCatalog"));
+                Assert.That(GetPrivateValue<string>(trigger, "stairwaySoundCatalogResourcePath"),
+                    Is.EqualTo("Audio/StairwaySoundCatalog"));
+                Assert.That(GetPrivateField<DoorOpenSoundCatalog>(trigger, "stairwaySoundCatalog"), Is.Null);
+            }
+
+            string projectRoot = System.IO.Directory.GetParent(Application.dataPath).FullName;
+            string sceneText = System.IO.File.ReadAllText(System.IO.Path.Combine(projectRoot, GameplayScenePath));
+            string serializedForward = RequireSerializedUnityDocument(sceneText, "552135204");
+            string serializedReverse = RequireSerializedUnityDocument(sceneText, "2300000079");
+            Assert.That(serializedForward, Does.Contain("sourceRoom: Music Room"));
+            Assert.That(serializedForward, Does.Contain("doorName: MusicRoom_Library"));
+            Assert.That(serializedForward, Does.Contain("destinationRoom: Library"));
+            Assert.That(serializedForward, Does.Contain("image: {fileID: 552135205}"));
+            Assert.That(serializedReverse, Does.Contain("sourceRoom: Library"));
+            Assert.That(serializedReverse, Does.Contain("doorName: Library_MusicRoom"));
+            Assert.That(serializedReverse, Does.Contain("destinationRoom: Music Room"));
+            Assert.That(serializedReverse, Does.Contain("image: {fileID: 2300000078}"));
+            string[] serializedLegacyTriggers = { serializedForward, serializedReverse };
+            for (int documentIndex = 0; documentIndex < serializedLegacyTriggers.Length; documentIndex++)
+            {
+                string triggerDocument = serializedLegacyTriggers[documentIndex];
+                Assert.That(triggerDocument, Does.Contain("navigationManager: {fileID: 0}"));
+                Assert.That(triggerDocument, Does.Not.Contain("canonicalPassage:"));
+                Assert.That(triggerDocument, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
+                Assert.That(triggerDocument, Does.Contain("player: {fileID: 0}"));
+                Assert.That(triggerDocument, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+                Assert.That(triggerDocument, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+                Assert.That(triggerDocument, Does.Contain("requirePlayerInSourceRoom: 1"));
+                Assert.That(triggerDocument, Does.Contain("useCameraSequence: 0"));
+                Assert.That(triggerDocument, Does.Contain("requirePlayerProximity: 1"));
+                Assert.That(triggerDocument, Does.Contain("walkPlayerToTriggerWhenFar: 1"));
+                Assert.That(triggerDocument, Does.Contain("autoActivateAfterApproach: 1"));
+            }
+
+            AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
+                .Single(item => item.gameObject.name == "Audio_DoorOpen");
+            for (int triggerIndex = 0; triggerIndex < legacyPair.Length; triggerIndex++)
+            {
+                DoorTriggerNavigation trigger = legacyPair[triggerIndex];
+                InvokePrivateMethod(trigger, "ResolveReferences");
+                InvokePrivateMethod(trigger, "ResolvePlayerReference");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenAudioSource");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenSoundCatalog");
+                Assert.That(GetPrivateField<RoomNavigationManager>(trigger, "navigationManager"), Is.SameAs(navigation));
+                Assert.That(GetPrivateField<Transform>(trigger, "player"), Is.SameAs(player.transform));
+                Assert.That(GetPrivateField<AudioSource>(trigger, "doorOpenAudioSource"), Is.SameAs(passageAudioSource));
+                DoorOpenSoundCatalog resolvedCatalog =
+                    GetPrivateField<DoorOpenSoundCatalog>(trigger, "doorOpenSoundCatalog");
+                Assert.That(resolvedCatalog, Is.Not.Null);
+                Assert.That(AssetDatabase.GetAssetPath(resolvedCatalog),
+                    Is.EqualTo("Assets/Resources/Audio/DoorOpenSoundCatalog.asset"));
+                Assert.That(GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage"), Is.Null);
+            }
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Is.Empty);
+
+            RoomAnchor libraryHideAnchor = RequireSceneObject<RoomAnchor>("Ch2_Hide_Guest01");
+            RoomAnchor musicHideAnchor = RequireSceneObject<RoomAnchor>("Ch2_Hide_Guest02");
+            RectTransform libraryHideRect = libraryHideAnchor.transform as RectTransform;
+            RectTransform musicHideRect = musicHideAnchor.transform as RectTransform;
+            Assert.That(libraryHideRect, Is.Not.Null);
+            Assert.That(musicHideRect, Is.Not.Null);
+            Assert.That(libraryHideAnchor.AnchorId, Is.EqualTo("Ch2_Hide_Guest01"));
+            Assert.That(libraryHideAnchor.RoomId, Is.EqualTo(LibraryRoom));
+            Assert.That(musicHideAnchor.AnchorId, Is.EqualTo("Ch2_Hide_Guest02"));
+            Assert.That(musicHideAnchor.RoomId, Is.EqualTo(MusicRoom));
+            Assert.That(libraryHideRect.parent, Is.SameAs(libraryRoomContent.transform));
+            Assert.That(musicHideRect.parent, Is.SameAs(musicRoomContent.transform));
+            AssertVector2Within(libraryHideRect.anchoredPosition, new Vector2(-255f, -181f), 0.0001f,
+                "Library Chapter2 hide anchor");
+            AssertVector2Within(musicHideRect.anchoredPosition, new Vector2(306f, -162f), 0.0001f,
+                "Music Room Chapter2 hide anchor");
+            AssertVector2Within(libraryHideRect.sizeDelta, new Vector2(100f, 100f), 0.0001f,
+                "Library Chapter2 hide anchor size");
+            AssertVector2Within(musicHideRect.sizeDelta, new Vector2(100f, 100f), 0.0001f,
+                "Music Room Chapter2 hide anchor size");
+            Assert.That(libraryHideAnchor.GetComponents<Component>(), Has.Length.EqualTo(2));
+            Assert.That(musicHideAnchor.GetComponents<Component>(), Has.Length.EqualTo(2));
+            Assert.That(libraryHideAnchor.gameObject.activeInHierarchy, Is.False);
+            Assert.That(musicHideAnchor.gameObject.activeInHierarchy, Is.True);
+
+            DoorPromptSequenceController prompts = RequireExactlyOneInActiveScene<DoorPromptSequenceController>();
+            TMP_Text passagePromptText = GetPrivateField<TMP_Text>(prompts, "promptText");
+            Assert.That(passagePromptText, Is.Not.Null);
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+            Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
+
+            List<string> orderedEvents = new List<string>();
+            List<Vector2> arrivedPositions = new List<Vector2>();
+            List<Vector2> movementStoppedPositions = new List<Vector2>();
+            List<Vector2> roomChangedPositions = new List<Vector2>();
+            recordArrival = () =>
+            {
+                arrivedPositions.Add(player.LogicalPosition);
+                orderedEvents.Add(
+                    $"arrived:{navigation.CurrentRoom}:" +
+                    (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") == null
+                        ? "audio-idle"
+                        : "audio-started"));
+            };
+            recordMovementStopped = () =>
+            {
+                movementStoppedPositions.Add(player.LogicalPosition);
+                orderedEvents.Add(
+                    $"movement-stopped:{navigation.CurrentRoom}:" +
+                    (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") == null
+                        ? "audio-idle"
+                        : "audio-started"));
+            };
+            recordRoomChanged = room =>
+            {
+                roomChangedPositions.Add(player.LogicalPosition);
+                orderedEvents.Add(
+                    $"room-changed:{room}:" +
+                    (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") == passageAudioSource
+                        ? "audio-started"
+                        : "audio-idle"));
+            };
+            player.ArrivedAtDestination += recordArrival;
+            player.MovementStopped += recordMovementStopped;
+            navigation.OnCurrentRoomChanged.AddListener(recordRoomChanged);
+            lifecycleListenersAttached = true;
+            SetPrivateField(player, "moveSpeed", 1000f);
+
+            Vector2 primaryForwardStart = player.LogicalPosition;
+            float primaryForwardStartDistance = InvokePrivateResult<float>(forward, "GetPlayerScreenDistanceToTrigger");
+            Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.False);
+            Assert.That(primaryForwardStartDistance,
+                Is.GreaterThan(GetPrivateValue<float>(forward, "maxPlayerScreenDistance")));
+            Assert.That(TryGetTriggerScreenBounds(forward, out Vector2 primaryForwardMin, out Vector2 primaryForwardMax),
+                Is.True);
+            Vector2 primaryForwardLeftClick = BuildPreferredTriggerClick(primaryForwardMin, primaryForwardMax, 0.15f);
+            Vector2 primaryForwardCenterClick = BuildPreferredTriggerClick(primaryForwardMin, primaryForwardMax, 0.5f);
+            Vector2 primaryForwardRightClick = BuildPreferredTriggerClick(primaryForwardMin, primaryForwardMax, 0.85f);
+            Assert.That(TryInvokeApproachDestination(
+                forward, player, true, out Vector2 primaryForwardNull), Is.True);
+            Assert.That(TryInvokeApproachDestination(
+                forward, player, true, out Vector2 primaryForwardLeft, primaryForwardLeftClick), Is.True);
+            Assert.That(TryInvokeApproachDestination(
+                forward, player, true, out Vector2 primaryForwardCenter, primaryForwardCenterClick), Is.True);
+            Assert.That(TryInvokeApproachDestination(
+                forward, player, true, out Vector2 primaryForwardRight, primaryForwardRightClick), Is.True);
+            AssertFinite(primaryForwardNull, "primary Music-to-Library null approach");
+            AssertFinite(primaryForwardLeft, "primary Music-to-Library left approach");
+            AssertFinite(primaryForwardCenter, "primary Music-to-Library center approach");
+            AssertFinite(primaryForwardRight, "primary Music-to-Library right approach");
+            AssertApproachWithinActivationDistance(forward, player, primaryForwardNull,
+                "primary Music-to-Library null approach");
+            AssertApproachWithinActivationDistance(forward, player, primaryForwardLeft,
+                "primary Music-to-Library left approach");
+            AssertApproachWithinActivationDistance(forward, player, primaryForwardCenter,
+                "primary Music-to-Library center approach");
+            AssertApproachWithinActivationDistance(forward, player, primaryForwardRight,
+                "primary Music-to-Library right approach");
+
+            forward.OnPointerEnter(null);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(forward));
+            Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"),
+                Is.SameAs(forward));
+            Assert.That(passagePromptText.gameObject.activeSelf, Is.True);
+            Assert.That(passagePromptText.text, Is.EqualTo("Open Door"));
+            SetPrivateField(forward, "lastPointerActivationFrame", -1);
+            forward.ActivateDoor();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+            Assert.That(player.HasDestination, Is.True);
+            Vector2 primaryForwardApproach = GetPrivateValue<Vector2>(player, "finalDestination");
+            AssertVector2Within(primaryForwardApproach, primaryForwardNull, 0.0001f,
+                "primary Music-to-Library production approach");
+            for (int frame = 0; frame < 160 && navigation.CurrentRoom == MusicRoom && player.HasDestination; frame++)
+            {
+                InvokePrivateMethod(player, "MoveTowardDestination");
+                yield return null;
+            }
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+            Assert.That(RequireOnlyActiveRoom(LibraryRoom), Is.SameAs(libraryRoomContent));
+            Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(libraryBackground));
+            Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"),
+                Is.SameAs(libraryRoomContent));
+            Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"),
+                Is.SameAs(libraryRoomContent.transform));
+            Assert.That(forward.gameObject.activeInHierarchy, Is.False);
+            Assert.That(reverse.gameObject.activeInHierarchy, Is.True);
+            Assert.That(libraryHideAnchor.gameObject.activeInHierarchy, Is.True);
+            Assert.That(musicHideAnchor.gameObject.activeInHierarchy, Is.False);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Not.SameAs(forward));
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+            Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"), Is.Null);
+            Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
+            Assert.That(player.HasDestination, Is.False);
+            Assert.That(arrivedPositions, Has.Count.EqualTo(1));
+            Assert.That(movementStoppedPositions, Has.Count.EqualTo(1));
+            Assert.That(roomChangedPositions, Has.Count.EqualTo(1));
+            AssertVector2Within(arrivedPositions[0], primaryForwardApproach, 0.0001f,
+                "primary Music-to-Library movement arrival");
+            AssertVector2Within(movementStoppedPositions[0], primaryForwardApproach, 0.0001f,
+                "primary Music-to-Library movement stop");
+            AssertVector2Within(roomChangedPositions[0], primaryForwardApproach, 0.0001f,
+                "primary Music-to-Library pre-warp event");
+            Vector2 primaryForwardArrival = player.LogicalPosition;
+            AssertFinite(primaryForwardArrival, "primary Music-to-Library arrival");
+            Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True,
+                "The legacy Library arrival must support the reciprocal near route.");
+            GameAudioSourceVolume characterizedBinding = passageAudioSource.GetComponent<GameAudioSourceVolume>();
+            Assert.That(characterizedBinding, Is.Not.Null);
+            Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            Assert.That(
+                TryWarpToCharacterizedFarStart(player, reverse, new Vector2(0f, -2f),
+                    out float primaryReverseStartDistance),
+                Is.True);
+            Vector2 primaryReverseStart = player.LogicalPosition;
+            Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.False);
+            Assert.That(primaryReverseStartDistance,
+                Is.GreaterThan(GetPrivateValue<float>(reverse, "maxPlayerScreenDistance")));
+            Assert.That(TryGetTriggerScreenBounds(reverse, out Vector2 primaryReverseMin, out Vector2 primaryReverseMax),
+                Is.True);
+            Vector2 primaryReverseLeftClick = BuildPreferredTriggerClick(primaryReverseMin, primaryReverseMax, 0.15f);
+            Vector2 primaryReverseCenterClick = BuildPreferredTriggerClick(primaryReverseMin, primaryReverseMax, 0.5f);
+            Vector2 primaryReverseRightClick = BuildPreferredTriggerClick(primaryReverseMin, primaryReverseMax, 0.85f);
+            Assert.That(TryInvokeApproachDestination(
+                reverse, player, true, out Vector2 primaryReverseNull), Is.True);
+            Assert.That(TryInvokeApproachDestination(
+                reverse, player, true, out Vector2 primaryReverseLeft, primaryReverseLeftClick), Is.True);
+            Assert.That(TryInvokeApproachDestination(
+                reverse, player, true, out Vector2 primaryReverseCenter, primaryReverseCenterClick), Is.True);
+            Assert.That(TryInvokeApproachDestination(
+                reverse, player, true, out Vector2 primaryReverseRight, primaryReverseRightClick), Is.True);
+            AssertFinite(primaryReverseNull, "primary Library-to-Music null approach");
+            AssertFinite(primaryReverseLeft, "primary Library-to-Music left approach");
+            AssertFinite(primaryReverseCenter, "primary Library-to-Music center approach");
+            AssertFinite(primaryReverseRight, "primary Library-to-Music right approach");
+            AssertApproachWithinActivationDistance(reverse, player, primaryReverseNull,
+                "primary Library-to-Music null approach");
+            AssertApproachWithinActivationDistance(reverse, player, primaryReverseLeft,
+                "primary Library-to-Music left approach");
+            AssertApproachWithinActivationDistance(reverse, player, primaryReverseCenter,
+                "primary Library-to-Music center approach");
+            AssertApproachWithinActivationDistance(reverse, player, primaryReverseRight,
+                "primary Library-to-Music right approach");
+
+            reverse.OnPointerEnter(null);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(reverse));
+            Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"),
+                Is.SameAs(reverse));
+            Assert.That(passagePromptText.gameObject.activeSelf, Is.True);
+            Assert.That(passagePromptText.text, Is.EqualTo("Open Door"));
+            SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+            reverse.ActivateDoor();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+            Assert.That(player.HasDestination, Is.True);
+            Vector2 primaryReverseApproach = GetPrivateValue<Vector2>(player, "finalDestination");
+            AssertVector2Within(primaryReverseApproach, primaryReverseNull, 0.0001f,
+                "primary Library-to-Music production approach");
+            for (int frame = 0; frame < 160 && navigation.CurrentRoom == LibraryRoom && player.HasDestination; frame++)
+            {
+                InvokePrivateMethod(player, "MoveTowardDestination");
+                yield return null;
+            }
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+            Assert.That(RequireOnlyActiveRoom(MusicRoom), Is.SameAs(musicRoomContent));
+            Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(musicBackground));
+            Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"),
+                Is.SameAs(musicRoomContent));
+            Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"),
+                Is.SameAs(musicRoomContent.transform));
+            Assert.That(forward.gameObject.activeInHierarchy, Is.True);
+            Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
+            Assert.That(libraryHideAnchor.gameObject.activeInHierarchy, Is.False);
+            Assert.That(musicHideAnchor.gameObject.activeInHierarchy, Is.True);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Not.SameAs(reverse));
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+            Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"), Is.Null);
+            Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
+            Assert.That(player.HasDestination, Is.False);
+            Assert.That(arrivedPositions, Has.Count.EqualTo(2));
+            Assert.That(movementStoppedPositions, Has.Count.EqualTo(2));
+            Assert.That(roomChangedPositions, Has.Count.EqualTo(2));
+            AssertVector2Within(arrivedPositions[1], primaryReverseApproach, 0.0001f,
+                "primary Library-to-Music movement arrival");
+            AssertVector2Within(movementStoppedPositions[1], primaryReverseApproach, 0.0001f,
+                "primary Library-to-Music movement stop");
+            AssertVector2Within(roomChangedPositions[1], primaryReverseApproach, 0.0001f,
+                "primary Library-to-Music pre-warp event");
+            Vector2 primaryReverseArrival = player.LogicalPosition;
+            AssertFinite(primaryReverseArrival, "primary Library-to-Music arrival");
+            Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True,
+                "The legacy Music Room arrival must support the reciprocal near route.");
+            Assert.That(passageAudioSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedBinding));
+
+            int arrivedCountBeforeNear = arrivedPositions.Count;
+            int stoppedCountBeforeNear = movementStoppedPositions.Count;
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            Vector2 primaryNearForwardSource = player.LogicalPosition;
+            SetPrivateField(forward, "lastPointerActivationFrame", -1);
+            forward.ActivateDoor();
+            yield return WaitForSettledLayout();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+            Assert.That(player.HasDestination, Is.False);
+            Assert.That(arrivedPositions, Has.Count.EqualTo(arrivedCountBeforeNear));
+            Assert.That(movementStoppedPositions, Has.Count.EqualTo(stoppedCountBeforeNear));
+            Assert.That(roomChangedPositions, Has.Count.EqualTo(3));
+            AssertVector2Within(roomChangedPositions[2], primaryNearForwardSource, 0.0001f,
+                "primary near Music-to-Library pre-warp event");
+            Vector2 primaryNearForwardArrival = player.LogicalPosition;
+            AssertFinite(primaryNearForwardArrival, "primary near Music-to-Library arrival");
+            Assert.That(player.TryWarpToExact(primaryNearForwardArrival), Is.True,
+                "The observed near Library arrival must remain exactly walkable.");
+            Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True,
+                "The observed near Library arrival must support the reciprocal route.");
+
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True);
+            Vector2 primaryNearReverseSource = player.LogicalPosition;
+            SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+            reverse.ActivateDoor();
+            yield return WaitForSettledLayout();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+            Assert.That(player.HasDestination, Is.False);
+            Assert.That(arrivedPositions, Has.Count.EqualTo(arrivedCountBeforeNear));
+            Assert.That(movementStoppedPositions, Has.Count.EqualTo(stoppedCountBeforeNear));
+            Assert.That(roomChangedPositions, Has.Count.EqualTo(4));
+            AssertVector2Within(roomChangedPositions[3], primaryNearReverseSource, 0.0001f,
+                "primary near Library-to-Music pre-warp event");
+            Vector2 primaryNearReverseArrival = player.LogicalPosition;
+            AssertFinite(primaryNearReverseArrival, "primary near Library-to-Music arrival");
+            Assert.That(player.TryWarpToExact(primaryNearReverseArrival), Is.True,
+                "The observed near Music Room arrival must remain exactly walkable.");
+            Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True,
+                "The observed near Music Room arrival must support the reciprocal route.");
+
+            AssertVector2Within(primaryForwardStart, new Vector2(-7.94f, -3.27f), 0.0001f,
+                "1366x768 primary Music-to-Library resolved start");
+            Assert.That(primaryForwardStartDistance, Is.EqualTo(1038.675f).Within(0.5f),
+                "1366x768 primary Music-to-Library screen distance changed.");
+            AssertVector2Within(primaryForwardNull, new Vector2(7.439471f, -2.846709f), 0.01f,
+                "1366x768 primary Music-to-Library legacy approach");
+            AssertVector2Within(primaryForwardLeft, primaryForwardNull, 0.0001f,
+                "1366x768 primary Music-to-Library left candidate");
+            AssertVector2Within(primaryForwardCenter, primaryForwardNull, 0.0001f,
+                "1366x768 primary Music-to-Library center candidate");
+            AssertVector2Within(primaryForwardRight, primaryForwardNull, 0.0001f,
+                "1366x768 primary Music-to-Library right candidate");
+            AssertVector2Within(primaryForwardArrival, new Vector2(-7.287828f, -2.936489f), 0.01f,
+                "1366x768 primary far Music-to-Library legacy arrival");
+            AssertVector2Within(primaryReverseStart, new Vector2(0f, -2f), 0.001f,
+                "1366x768 primary Library-to-Music resolved start");
+            Assert.That(primaryReverseStartDistance, Is.EqualTo(496.414f).Within(0.5f),
+                "1366x768 primary Library-to-Music screen distance changed.");
+            AssertVector2Within(primaryReverseNull, new Vector2(-7.244175f, -2.799095f), 0.01f,
+                "1366x768 primary Library-to-Music legacy approach");
+            AssertVector2Within(primaryReverseLeft, primaryReverseNull, 0.0001f,
+                "1366x768 primary Library-to-Music left candidate");
+            AssertVector2Within(primaryReverseCenter, primaryReverseNull, 0.0001f,
+                "1366x768 primary Library-to-Music center candidate");
+            AssertVector2Within(primaryReverseRight, primaryReverseNull, 0.0001f,
+                "1366x768 primary Library-to-Music right candidate");
+            AssertVector2Within(primaryReverseArrival, new Vector2(7.439471f, -2.846709f), 0.01f,
+                "1366x768 primary far Library-to-Music legacy arrival");
+            AssertVector2Within(primaryNearForwardArrival, new Vector2(-7.244175f, -2.799095f), 0.01f,
+                "1366x768 primary near Music-to-Library legacy arrival");
+            AssertVector2Within(primaryNearReverseArrival, new Vector2(7.439471f, -2.846709f), 0.01f,
+                "1366x768 primary near Library-to-Music legacy arrival");
+            Assert.That(Vector2.Distance(primaryForwardArrival, primaryNearForwardArrival), Is.GreaterThan(0.1f),
+                "The primary far and near Music-to-Library arrivals must retain their observed source-sensitive difference.");
+            AssertVector2Within(primaryNearForwardArrival, primaryReverseApproach, 0.001f,
+                "1366x768 near Library arrival and reciprocal approach");
+            AssertVector2Within(primaryReverseArrival, primaryForwardApproach, 0.001f,
+                "1366x768 far Music Room arrival reciprocity");
+            AssertVector2Within(primaryNearReverseArrival, primaryForwardApproach, 0.001f,
+                "1366x768 near Music Room arrival reciprocity");
+
+            Assert.That(orderedEvents, Is.EqualTo(new[]
+            {
+                $"arrived:{MusicRoom}:audio-idle",
+                $"movement-stopped:{MusicRoom}:audio-idle",
+                $"room-changed:{LibraryRoom}:audio-started",
+                $"arrived:{LibraryRoom}:audio-idle",
+                $"movement-stopped:{LibraryRoom}:audio-idle",
+                $"room-changed:{MusicRoom}:audio-started",
+                $"room-changed:{LibraryRoom}:audio-started",
+                $"room-changed:{MusicRoom}:audio-started"
+            }));
+            Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation),
+                "pendingApproachTrigger"), Is.Null);
+            Assert.That(GetPrivateField<PointClickPlayerMovement>(forward, "pendingApproachPlayer"), Is.Null);
+            Assert.That(GetPrivateField<PointClickPlayerMovement>(reverse, "pendingApproachPlayer"), Is.Null);
+            Debug.Log(
+                $"[MusicLibraryLegacyPrimary] viewport={Screen.width}x{Screen.height} " +
+                $"forwardStart={FormatVector(primaryForwardStart)} forwardScreenDistance={primaryForwardStartDistance:0.###} " +
+                $"forwardNull={FormatVector(primaryForwardNull)} forwardLeft={FormatVector(primaryForwardLeft)} " +
+                $"forwardCenter={FormatVector(primaryForwardCenter)} forwardRight={FormatVector(primaryForwardRight)} " +
+                $"forwardApproach={FormatVector(primaryForwardApproach)} forwardArrival={FormatVector(primaryForwardArrival)} " +
+                $"forwardLogicalDistance={Vector2.Distance(primaryForwardStart, primaryForwardApproach):0.######} " +
+                $"reverseStart={FormatVector(primaryReverseStart)} reverseScreenDistance={primaryReverseStartDistance:0.###} " +
+                $"reverseNull={FormatVector(primaryReverseNull)} reverseLeft={FormatVector(primaryReverseLeft)} " +
+                $"reverseCenter={FormatVector(primaryReverseCenter)} reverseRight={FormatVector(primaryReverseRight)} " +
+                $"reverseApproach={FormatVector(primaryReverseApproach)} reverseArrival={FormatVector(primaryReverseArrival)} " +
+                $"reverseLogicalDistance={Vector2.Distance(primaryReverseStart, primaryReverseApproach):0.######} " +
+                $"nearForwardArrival={FormatVector(primaryNearForwardArrival)} " +
+                $"nearReverseArrival={FormatVector(primaryNearReverseArrival)}");
+
+            player.ArrivedAtDestination -= recordArrival;
+            player.MovementStopped -= recordMovementStopped;
+            navigation.OnCurrentRoomChanged.RemoveListener(recordRoomChanged);
+            lifecycleListenersAttached = false;
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+
+            Vector2Int[] renderedSizes =
+            {
+                new Vector2Int(1366, 768),
+                new Vector2Int(1440, 1080),
+                new Vector2Int(1920, 1080),
+                new Vector2Int(2560, 1080)
+            };
+            float[] expectedForwardScreenDistances = { 510.326f, 715.654f, 717.292f, 959.093f };
+            float[] expectedReverseScreenDistances = { 496.414f, 698.193f, 697.742f, 930.666f };
+            Vector2[] expectedForwardApproaches =
+            {
+                new Vector2(7.439471f, -2.846709f),
+                new Vector2(6.44117f, -2.464709f),
+                new Vector2(7.43764f, -2.846008f),
+                new Vector2(8.625211f, -3.301598f)
+            };
+            Vector2[] expectedForwardArrivals =
+            {
+                new Vector2(-7.244175f, -2.799095f),
+                new Vector2(-6.289658f, -2.336391f),
+                new Vector2(-7.286079f, -2.935843f),
+                new Vector2(-8.344338f, -3.103644f)
+            };
+            Vector2[] expectedReverseApproaches =
+            {
+                new Vector2(-7.244175f, -2.799095f),
+                new Vector2(-6.272121f, -2.423502f),
+                new Vector2(-7.242414f, -2.798415f),
+                new Vector2(-8.3582f, -3.229418f)
+            };
+            Vector2[] expectedReverseArrivals =
+            {
+                new Vector2(7.439471f, -2.846709f),
+                new Vector2(6.44117f, -2.464709f),
+                new Vector2(7.43764f, -2.846008f),
+                new Vector2(8.625211f, -3.301598f)
+            };
+            for (int sizeIndex = 0; sizeIndex < renderedSizes.Length; sizeIndex++)
+            {
+                Vector2Int renderedSize = renderedSizes[sizeIndex];
+                yield return SetAndWaitForRenderedGameViewResolution(
+                    (uint)renderedSize.x,
+                    (uint)renderedSize.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+                Assert.That(
+                    TryWarpToCharacterizedFarStart(player, forward, new Vector2(0f, -2f),
+                        out float aspectForwardScreenDistance),
+                    Is.True);
+                Vector2 aspectForwardStart = player.LogicalPosition;
+                Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.False);
+                Assert.That(aspectForwardScreenDistance,
+                    Is.GreaterThan(GetPrivateValue<float>(forward, "maxPlayerScreenDistance")));
+                Assert.That(TryGetTriggerScreenBounds(forward, out Vector2 aspectForwardMin, out Vector2 aspectForwardMax),
+                    Is.True);
+                Vector2 aspectForwardLeftClick = BuildPreferredTriggerClick(aspectForwardMin, aspectForwardMax, 0.15f);
+                Vector2 aspectForwardCenterClick = BuildPreferredTriggerClick(aspectForwardMin, aspectForwardMax, 0.5f);
+                Vector2 aspectForwardRightClick = BuildPreferredTriggerClick(aspectForwardMin, aspectForwardMax, 0.85f);
+                Assert.That(TryInvokeApproachDestination(
+                    forward, player, true, out Vector2 aspectForwardNull), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    forward, player, true, out Vector2 aspectForwardLeft, aspectForwardLeftClick), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    forward, player, true, out Vector2 aspectForwardCenter, aspectForwardCenterClick), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    forward, player, true, out Vector2 aspectForwardRight, aspectForwardRightClick), Is.True);
+                AssertFinite(aspectForwardNull, "aspect Music-to-Library null approach");
+                AssertFinite(aspectForwardLeft, "aspect Music-to-Library left approach");
+                AssertFinite(aspectForwardCenter, "aspect Music-to-Library center approach");
+                AssertFinite(aspectForwardRight, "aspect Music-to-Library right approach");
+                AssertApproachWithinActivationDistance(forward, player, aspectForwardNull,
+                    "aspect Music-to-Library null approach");
+                AssertApproachWithinActivationDistance(forward, player, aspectForwardLeft,
+                    "aspect Music-to-Library left approach");
+                AssertApproachWithinActivationDistance(forward, player, aspectForwardCenter,
+                    "aspect Music-to-Library center approach");
+                AssertApproachWithinActivationDistance(forward, player, aspectForwardRight,
+                    "aspect Music-to-Library right approach");
+                SetPrivateField(forward, "lastPointerActivationFrame", -1);
+                forward.ActivateDoor();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+                Assert.That(player.HasDestination, Is.True);
+                Vector2 aspectForwardApproach = GetPrivateValue<Vector2>(player, "finalDestination");
+                AssertVector2Within(aspectForwardApproach, aspectForwardNull, 0.0001f,
+                    "aspect Music-to-Library production approach");
+                for (int frame = 0; frame < 160 && navigation.CurrentRoom == MusicRoom && player.HasDestination; frame++)
+                {
+                    InvokePrivateMethod(player, "MoveTowardDestination");
+                    yield return null;
+                }
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+                Assert.That(RequireOnlyActiveRoom(LibraryRoom), Is.SameAs(libraryRoomContent));
+                Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(libraryBackground));
+                Vector2 aspectForwardArrival = player.LogicalPosition;
+                AssertFinite(aspectForwardArrival, "aspect Music-to-Library arrival");
+                Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True);
+
+                Assert.That(
+                    TryWarpToCharacterizedFarStart(player, reverse, new Vector2(0f, -2f),
+                        out float aspectReverseScreenDistance),
+                    Is.True);
+                Vector2 aspectReverseStart = player.LogicalPosition;
+                Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.False);
+                Assert.That(aspectReverseScreenDistance,
+                    Is.GreaterThan(GetPrivateValue<float>(reverse, "maxPlayerScreenDistance")));
+                Assert.That(TryGetTriggerScreenBounds(reverse, out Vector2 aspectReverseMin, out Vector2 aspectReverseMax),
+                    Is.True);
+                Vector2 aspectReverseLeftClick = BuildPreferredTriggerClick(aspectReverseMin, aspectReverseMax, 0.15f);
+                Vector2 aspectReverseCenterClick = BuildPreferredTriggerClick(aspectReverseMin, aspectReverseMax, 0.5f);
+                Vector2 aspectReverseRightClick = BuildPreferredTriggerClick(aspectReverseMin, aspectReverseMax, 0.85f);
+                Assert.That(TryInvokeApproachDestination(
+                    reverse, player, true, out Vector2 aspectReverseNull), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    reverse, player, true, out Vector2 aspectReverseLeft, aspectReverseLeftClick), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    reverse, player, true, out Vector2 aspectReverseCenter, aspectReverseCenterClick), Is.True);
+                Assert.That(TryInvokeApproachDestination(
+                    reverse, player, true, out Vector2 aspectReverseRight, aspectReverseRightClick), Is.True);
+                AssertFinite(aspectReverseNull, "aspect Library-to-Music null approach");
+                AssertFinite(aspectReverseLeft, "aspect Library-to-Music left approach");
+                AssertFinite(aspectReverseCenter, "aspect Library-to-Music center approach");
+                AssertFinite(aspectReverseRight, "aspect Library-to-Music right approach");
+                AssertApproachWithinActivationDistance(reverse, player, aspectReverseNull,
+                    "aspect Library-to-Music null approach");
+                AssertApproachWithinActivationDistance(reverse, player, aspectReverseLeft,
+                    "aspect Library-to-Music left approach");
+                AssertApproachWithinActivationDistance(reverse, player, aspectReverseCenter,
+                    "aspect Library-to-Music center approach");
+                AssertApproachWithinActivationDistance(reverse, player, aspectReverseRight,
+                    "aspect Library-to-Music right approach");
+                SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+                reverse.ActivateDoor();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+                Assert.That(player.HasDestination, Is.True);
+                Vector2 aspectReverseApproach = GetPrivateValue<Vector2>(player, "finalDestination");
+                AssertVector2Within(aspectReverseApproach, aspectReverseNull, 0.0001f,
+                    "aspect Library-to-Music production approach");
+                for (int frame = 0; frame < 160 && navigation.CurrentRoom == LibraryRoom && player.HasDestination; frame++)
+                {
+                    InvokePrivateMethod(player, "MoveTowardDestination");
+                    yield return null;
+                }
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+                Assert.That(RequireOnlyActiveRoom(MusicRoom), Is.SameAs(musicRoomContent));
+                Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(musicBackground));
+                Vector2 aspectReverseArrival = player.LogicalPosition;
+                AssertFinite(aspectReverseArrival, "aspect Library-to-Music arrival");
+                Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True);
+
+                float viewportEnvelopeTolerance = sizeIndex == 0
+                    ? 0.15f
+                    : sizeIndex == renderedSizes.Length - 1 ? 0.2f : 0.05f;
+                AssertVector2Within(aspectForwardStart, new Vector2(0f, -2f), 0.001f,
+                    "aspect Music-to-Library resolved start");
+                Assert.That(aspectForwardScreenDistance,
+                    Is.EqualTo(expectedForwardScreenDistances[sizeIndex]).Within(0.75f),
+                    "aspect Music-to-Library screen distance changed.");
+                AssertVector2Within(aspectForwardNull, expectedForwardApproaches[sizeIndex],
+                    viewportEnvelopeTolerance, "aspect Music-to-Library null candidate");
+                AssertVector2Within(aspectForwardLeft, aspectForwardNull, 0.0001f,
+                    "aspect Music-to-Library left candidate");
+                AssertVector2Within(aspectForwardCenter, aspectForwardNull, 0.0001f,
+                    "aspect Music-to-Library center candidate");
+                AssertVector2Within(aspectForwardRight, aspectForwardNull, 0.0001f,
+                    "aspect Music-to-Library right candidate");
+                AssertVector2Within(aspectForwardApproach, expectedForwardApproaches[sizeIndex],
+                    viewportEnvelopeTolerance, "aspect Music-to-Library production approach");
+                AssertVector2Within(aspectForwardArrival, expectedForwardArrivals[sizeIndex],
+                    viewportEnvelopeTolerance, "aspect Music-to-Library legacy arrival");
+                AssertVector2Within(aspectReverseStart, new Vector2(0f, -2f), 0.001f,
+                    "aspect Library-to-Music resolved start");
+                Assert.That(aspectReverseScreenDistance,
+                    Is.EqualTo(expectedReverseScreenDistances[sizeIndex]).Within(0.75f),
+                    "aspect Library-to-Music screen distance changed.");
+                AssertVector2Within(aspectReverseNull, expectedReverseApproaches[sizeIndex],
+                    viewportEnvelopeTolerance, "aspect Library-to-Music null candidate");
+                AssertVector2Within(aspectReverseLeft, aspectReverseNull, 0.0001f,
+                    "aspect Library-to-Music left candidate");
+                AssertVector2Within(aspectReverseCenter, aspectReverseNull, 0.0001f,
+                    "aspect Library-to-Music center candidate");
+                AssertVector2Within(aspectReverseRight, aspectReverseNull, 0.0001f,
+                    "aspect Library-to-Music right candidate");
+                AssertVector2Within(aspectReverseApproach, expectedReverseApproaches[sizeIndex],
+                    viewportEnvelopeTolerance, "aspect Library-to-Music production approach");
+                AssertVector2Within(aspectReverseArrival, expectedReverseArrivals[sizeIndex],
+                    viewportEnvelopeTolerance, "aspect Library-to-Music legacy arrival");
+
+                Debug.Log(
+                    $"[MusicLibraryLegacyAspect] viewport={renderedSize.x}x{renderedSize.y} " +
+                    $"forwardStart={FormatVector(aspectForwardStart)} forwardScreenDistance={aspectForwardScreenDistance:0.###} " +
+                    $"forwardNull={FormatVector(aspectForwardNull)} forwardLeft={FormatVector(aspectForwardLeft)} " +
+                    $"forwardCenter={FormatVector(aspectForwardCenter)} forwardRight={FormatVector(aspectForwardRight)} " +
+                    $"forwardApproach={FormatVector(aspectForwardApproach)} forwardArrival={FormatVector(aspectForwardArrival)} " +
+                    $"forwardLogicalDistance={Vector2.Distance(aspectForwardStart, aspectForwardApproach):0.######} " +
+                    $"reverseStart={FormatVector(aspectReverseStart)} reverseScreenDistance={aspectReverseScreenDistance:0.###} " +
+                    $"reverseNull={FormatVector(aspectReverseNull)} reverseLeft={FormatVector(aspectReverseLeft)} " +
+                    $"reverseCenter={FormatVector(aspectReverseCenter)} reverseRight={FormatVector(aspectReverseRight)} " +
+                    $"reverseApproach={FormatVector(aspectReverseApproach)} reverseArrival={FormatVector(aspectReverseArrival)} " +
+                    $"reverseLogicalDistance={Vector2.Distance(aspectReverseStart, aspectReverseApproach):0.######}");
+                InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            }
+
+            SetPrivateField(cameraManager, "currentRoomZoom", cameraManager.maxRoomZoom);
+            SetPrivateField(cameraManager, "targetRoomZoom", cameraManager.maxRoomZoom);
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            Assert.That(
+                TryWarpToCharacterizedFarStart(player, forward, new Vector2(0f, -2f),
+                    out float maximumForwardScreenDistance),
+                Is.True);
+            Vector2 maximumForwardStart = player.LogicalPosition;
+            Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.False);
+            Assert.That(TryInvokeApproachDestination(
+                forward, player, true, out Vector2 maximumForwardApproach), Is.True,
+                "The maximum-zoom Music Room route must retain a reachable legacy approach.");
+            AssertApproachWithinActivationDistance(forward, player, maximumForwardApproach,
+                "maximum-zoom Music-to-Library approach");
+            SetPrivateField(forward, "lastPointerActivationFrame", -1);
+            forward.ActivateDoor();
+            Assert.That(player.HasDestination, Is.True);
+            AssertVector2Within(GetPrivateValue<Vector2>(player, "finalDestination"), maximumForwardApproach, 0.0001f,
+                "maximum-zoom Music-to-Library production approach");
+            for (int frame = 0; frame < 160 && navigation.CurrentRoom == MusicRoom && player.HasDestination; frame++)
+            {
+                InvokePrivateMethod(player, "MoveTowardDestination");
+                yield return null;
+            }
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+            Vector2 maximumForwardArrival = player.LogicalPosition;
+            AssertFinite(maximumForwardArrival, "maximum-zoom Music-to-Library arrival");
+            AssertVector2Within(maximumForwardStart, new Vector2(0f, -2f), 0.001f,
+                "maximum-zoom Music-to-Library resolved start");
+            Assert.That(maximumForwardScreenDistance, Is.EqualTo(1103.862f).Within(0.75f),
+                "maximum-zoom Music-to-Library screen distance changed.");
+            AssertVector2Within(maximumForwardApproach, new Vector2(8.625211f, -3.301599f), 0.2f,
+                "maximum-zoom Music-to-Library legacy approach");
+            AssertVector2Within(maximumForwardArrival, new Vector2(-8.3582f, -3.229418f), 0.2f,
+                "maximum-zoom Music-to-Library legacy arrival");
+            Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True,
+                "The maximum-zoom Library arrival must support the reciprocal route.");
+
+            SetPrivateField(cameraManager, "currentRoomZoom", cameraManager.maxRoomZoom);
+            SetPrivateField(cameraManager, "targetRoomZoom", cameraManager.maxRoomZoom);
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            Assert.That(
+                TryWarpToCharacterizedFarStart(player, reverse, new Vector2(0f, -2f),
+                    out float maximumReverseScreenDistance),
+                Is.True);
+            Vector2 maximumReverseStart = player.LogicalPosition;
+            Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.False);
+            Assert.That(TryInvokeApproachDestination(
+                reverse, player, true, out Vector2 maximumReverseApproach), Is.True,
+                "The maximum-zoom Library route must retain a reachable legacy approach around its blocker.");
+            AssertApproachWithinActivationDistance(reverse, player, maximumReverseApproach,
+                "maximum-zoom Library-to-Music approach");
+            SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+            reverse.ActivateDoor();
+            Assert.That(player.HasDestination, Is.True);
+            AssertVector2Within(GetPrivateValue<Vector2>(player, "finalDestination"), maximumReverseApproach, 0.0001f,
+                "maximum-zoom Library-to-Music production approach");
+            for (int frame = 0; frame < 160 && navigation.CurrentRoom == LibraryRoom && player.HasDestination; frame++)
+            {
+                InvokePrivateMethod(player, "MoveTowardDestination");
+                yield return null;
+            }
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+            Vector2 maximumReverseArrival = player.LogicalPosition;
+            AssertFinite(maximumReverseArrival, "maximum-zoom Library-to-Music arrival");
+            AssertVector2Within(maximumReverseStart, new Vector2(0f, -2f), 0.001f,
+                "maximum-zoom Library-to-Music resolved start");
+            Assert.That(maximumReverseScreenDistance, Is.EqualTo(1071.144f).Within(0.75f),
+                "maximum-zoom Library-to-Music screen distance changed.");
+            AssertVector2Within(maximumReverseApproach, new Vector2(-8.356381f, -3.228665f), 0.2f,
+                "maximum-zoom Library-to-Music legacy approach");
+            AssertVector2Within(maximumReverseArrival, new Vector2(8.676323f, -3.178201f), 0.2f,
+                "maximum-zoom Library-to-Music legacy arrival");
+            Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True,
+                "The maximum-zoom Music Room arrival must support the reciprocal route.");
+            Debug.Log(
+                $"[MusicLibraryLegacyMaximumZoom] viewport={Screen.width}x{Screen.height} zoom={cameraManager.maxRoomZoom:0.###} " +
+                $"forwardStart={FormatVector(maximumForwardStart)} forwardScreenDistance={maximumForwardScreenDistance:0.###} " +
+                $"forwardApproach={FormatVector(maximumForwardApproach)} forwardArrival={FormatVector(maximumForwardArrival)} " +
+                $"reverseStart={FormatVector(maximumReverseStart)} reverseScreenDistance={maximumReverseScreenDistance:0.###} " +
+                $"reverseApproach={FormatVector(maximumReverseApproach)} reverseArrival={FormatVector(maximumReverseArrival)}");
+
+            cameraManager.ResetRoomLookForPreview();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(MusicRoom));
+            Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
+            Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation),
+                "pendingApproachTrigger"), Is.Null);
+            Assert.That(GetPrivateField<PointClickPlayerMovement>(forward, "pendingApproachPlayer"), Is.Null);
+            Assert.That(GetPrivateField<PointClickPlayerMovement>(reverse, "pendingApproachPlayer"), Is.Null);
+            Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                "activeNavigationAudioSource"), Is.Null);
+            Assert.That(passageAudioSource.isPlaying, Is.False);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+            Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"), Is.Null);
+            Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
+            Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+            Assert.That(passageAudioSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedBinding));
+            Debug.Log(
+                $"[MusicLibraryLegacyProfile] forwardGeometry={FormatVector(forwardRect.anchoredPosition)}/" +
+                $"{FormatVector(forwardRect.sizeDelta)} reverseGeometry={FormatVector(reverseRect.anchoredPosition)}/" +
+                $"{FormatVector(reverseRect.sizeDelta)} profiles=none callers=null serializedDependencies=null " +
+                $"runtimeDependencies=resolved hideLibrary={FormatVector(libraryHideRect.anchoredPosition)} " +
+                $"hideMusic={FormatVector(musicHideRect.anchoredPosition)}");
+        }
+        finally
+        {
+            if (lifecycleListenersAttached)
+            {
+                if (recordArrival != null)
+                {
+                    player.ArrivedAtDestination -= recordArrival;
+                }
+                if (recordMovementStopped != null)
+                {
+                    player.MovementStopped -= recordMovementStopped;
+                }
+                if (recordRoomChanged != null)
+                {
+                    navigation.OnCurrentRoomChanged.RemoveListener(recordRoomChanged);
+                }
+            }
+            if (forward != null)
+            {
+                InvokePrivateMethod(forward, "CancelPendingPlayerApproach");
+            }
+            if (reverse != null)
+            {
+                InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+            }
+            if (player.HasDestination)
+            {
+                InvokePrivateMethod(player, "CancelDestination");
+            }
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            SetPrivateField(player, "moveSpeed", originalMoveSpeed);
+            player.SetInputEnabled(originalInputEnabled);
+            cameraManager.panRoomWithMouseEdges = originalPanRoomWithMouseEdges;
+            cameraManager.zoomRoomWithMouseWheel = originalZoomRoomWithMouseWheel;
+            cameraManager.ResetRoomLookForPreview();
+        }
+    }
+
+    [UnityTest]
     public IEnumerator EntranceDrawingPassageSelectionAndArrivalsAreCharacterizedAcrossRenderedAspects()
     {
         MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
