@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Chateau.UI;
 using Chateau.World.Rooms.Props;
+using CanonicalPassage = Chateau.World.Rooms.Passages.Passage;
+using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
+using CanonicalRoomView = Chateau.World.Rooms.RoomView;
 using NUnit.Framework;
 using TMPro;
 using UnityEditor;
@@ -159,6 +162,21 @@ public sealed class GameplayLifecycleCharacterizationTests
             .Single(item => item.RoomName == EntranceRoom);
         RoomContentGroup characterizedDrawingRoomContent = FindInActiveScene<RoomContentGroup>()
             .Single(item => item.RoomName == DrawingRoom);
+        CanonicalRoomView characterizedEntranceRoomView = FindInActiveScene<CanonicalRoomView>()
+            .Single(item => item.Definition != null && item.Definition.StableId == "room.grand-entrance-hall");
+        CanonicalRoomView characterizedDrawingRoomView = FindInActiveScene<CanonicalRoomView>()
+            .Single(item => item.Definition != null && item.Definition.StableId == "room.drawing-room");
+        CanonicalRoomDefinition characterizedEntranceRoomDefinition = characterizedEntranceRoomView.Definition;
+        CanonicalRoomDefinition characterizedDrawingRoomDefinition = characterizedDrawingRoomView.Definition;
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: true,
+            drawingVisible: false);
         Transform[] characterizedDrawingRoomGuestPoints = Enumerable.Range(1, 8)
             .Select(index => FindInActiveScene<Transform>()
                 .Single(item => item.name == $"DrawingRoomGuestPoint_{index:00}"))
@@ -1256,6 +1274,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedEntranceRoomContent.gameObject.activeInHierarchy, Is.True);
         Assert.That(characterizedDrawingRoomContent.gameObject.activeSelf, Is.False);
         Assert.That(characterizedDrawingRoomContent.gameObject.activeInHierarchy, Is.False);
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: true,
+            drawingVisible: false);
         Assert.That(outbound.gameObject.activeInHierarchy, Is.True);
         Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
         Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"), Is.SameAs(characterizedEntranceRoomContent));
@@ -1293,6 +1320,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedEntranceRoomContent.gameObject.activeInHierarchy, Is.False);
         Assert.That(characterizedDrawingRoomContent.gameObject.activeSelf, Is.True);
         Assert.That(characterizedDrawingRoomContent.gameObject.activeInHierarchy, Is.True);
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: false,
+            drawingVisible: true);
         Assert.That(outbound.gameObject.activeInHierarchy, Is.False);
         Assert.That(reverse.gameObject.activeInHierarchy, Is.True);
         Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"), Is.SameAs(characterizedDrawingRoomContent));
@@ -1336,7 +1372,11 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(teaTableRenderer.enabled, Is.False);
         characterizedDrawingRoomContent.gameObject.SetActive(false);
         Assert.That(teaTableRenderer.gameObject.activeInHierarchy, Is.False);
+        Assert.That(characterizedDrawingRoomView.IsVisible, Is.False);
+        Assert.That(characterizedDrawingRoomView.IsVisible, Is.EqualTo(characterizedDrawingRoomContent.gameObject.activeSelf));
         characterizedDrawingRoomContent.gameObject.SetActive(true);
+        Assert.That(characterizedDrawingRoomView.IsVisible, Is.True);
+        Assert.That(characterizedDrawingRoomView.IsVisible, Is.EqualTo(characterizedDrawingRoomContent.gameObject.activeSelf));
         Assert.That(teaTableRenderer.enabled, Is.True,
             "Legacy RoomContentGroup reactivation currently force-enables disabled descendant renderers; this defect is intentionally characterized before its ownership fix.");
         Assert.That(RequireOnlyActiveRoom(DrawingRoom), Is.SameAs(characterizedDrawingRoomContent));
@@ -1425,6 +1465,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedEntranceRoomContent.gameObject.activeInHierarchy, Is.True);
         Assert.That(characterizedDrawingRoomContent.gameObject.activeSelf, Is.False);
         Assert.That(characterizedDrawingRoomContent.gameObject.activeInHierarchy, Is.False);
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: true,
+            drawingVisible: false);
         Assert.That(outbound.gameObject.activeInHierarchy, Is.True);
         Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
         Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"), Is.SameAs(characterizedEntranceRoomContent));
@@ -1608,6 +1657,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         SetPrivateField(intro, "fadeFromBlackSeconds", 0f);
 
         Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: true,
+            drawingVisible: false);
         Assert.That(serializedChapter2.CurrentPhase, Is.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(GetPrivateValue<bool>(arrival, "sequenceActive"), Is.True);
         Assert.That(GetPrivateValue<bool>(arrival, "chapterCompletionRequested"), Is.False);
@@ -1620,6 +1678,15 @@ public sealed class GameplayLifecycleCharacterizationTests
                 true),
             Is.True);
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: false,
+            drawingVisible: true);
         Assert.That(GetPrivateValue<bool>(arrival, "chapterCompletionRequested"), Is.True);
         Assert.That(GetPrivateValue<bool>(arrival, "sequenceActive"), Is.False);
         Assert.That(GetPrivateValue<bool>(arrival, "subscribedToRoomChanges"), Is.False);
@@ -1637,6 +1704,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(chapter.CurrentChapterId, Is.EqualTo(ChapterManager.Chapter2Id));
         Assert.That(serializedChapter2.CurrentPhase, Is.Not.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: false,
+            drawingVisible: true);
         CollectionAssert.AreEquivalent(
             new[] { authoredFrontDoorAction, entranceCoatAction },
             FindInActiveScene<Chapter1SceneAction>());
@@ -1659,6 +1735,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Chapter2GuestSearchController guestSearch = RequireExactlyOneInActiveScene<Chapter2GuestSearchController>();
         Assert.That(chapter2.CurrentPhase, Is.Not.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: false,
+            drawingVisible: true);
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit"), Is.False);
         CollectionAssert.AreEquivalent(
             new[] { authoredFrontDoorAction, entranceCoatAction },
@@ -1700,6 +1785,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<Chapter2GuestPanicController>(), Is.SameAs(guestPanic));
         Assert.That(RequireExactlyOneInActiveScene<Chapter2GuestSearchController>(), Is.SameAs(guestSearch));
         Assert.That(GetPrivateField<RoomNavigationManager>(guestSearch, "navigationManager"), Is.SameAs(serializedGuestSearchNavigation));
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: false,
+            drawingVisible: true);
         Assert.That(RequireExactlyOneInActiveScene<Chapter1InteractionHUD>(), Is.SameAs(chapter1Hud));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
@@ -1790,6 +1884,15 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(navigation.DebugTeleportToRoom(DrawingRoom), Is.True);
         yield return WaitForSettledLayout();
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+        AssertCanonicalRoomViewsRemainStable(
+            characterizedEntranceRoomView,
+            characterizedDrawingRoomView,
+            characterizedEntranceRoomDefinition,
+            characterizedDrawingRoomDefinition,
+            characterizedEntranceRoomContent,
+            characterizedDrawingRoomContent,
+            entranceVisible: false,
+            drawingVisible: true);
         Assert.That(serializedMonsterStinger.GetComponents<AudioSource>(), Is.Empty);
         Assert.That(serializedMonsterStinger.GetComponents<GameAudioSourceVolume>(), Is.Empty);
         Assert.That(serializedMonsterObject.GetComponents<Canvas>(), Has.Length.EqualTo(1));
@@ -1993,6 +2096,59 @@ public sealed class GameplayLifecycleCharacterizationTests
             Is.True);
         Assert.That(catalogGuid, Is.EqualTo("d1c5479f74b94514cdf7a37d49f95fbe"));
         Assert.That(catalogFileId, Is.EqualTo(11400000L));
+    }
+
+    private static void AssertCanonicalRoomViewsRemainStable(
+        CanonicalRoomView entranceView,
+        CanonicalRoomView drawingView,
+        CanonicalRoomDefinition entranceDefinition,
+        CanonicalRoomDefinition drawingDefinition,
+        RoomContentGroup entranceContent,
+        RoomContentGroup drawingContent,
+        bool entranceVisible,
+        bool drawingVisible)
+    {
+        CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
+        Assert.That(roomViews, Has.Length.EqualTo(2), "The first room-view graft must remain exactly two passive scene owners.");
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Is.Empty,
+            "Canonical passages are deliberately deferred until the room-view compatibility edge is proven stable.");
+
+        Assert.That(
+            roomViews.Single(item => item.Definition != null && item.Definition.StableId == "room.grand-entrance-hall"),
+            Is.SameAs(entranceView));
+        Assert.That(
+            roomViews.Single(item => item.Definition != null && item.Definition.StableId == "room.drawing-room"),
+            Is.SameAs(drawingView));
+        Assert.That(entranceView.Definition, Is.SameAs(entranceDefinition));
+        Assert.That(drawingView.Definition, Is.SameAs(drawingDefinition));
+        Assert.That(entranceDefinition.StableId, Is.EqualTo("room.grand-entrance-hall"));
+        Assert.That(drawingDefinition.StableId, Is.EqualTo("room.drawing-room"));
+        Assert.That(entranceView.LegacyContentGroup, Is.SameAs(entranceContent));
+        Assert.That(drawingView.LegacyContentGroup, Is.SameAs(drawingContent));
+        Assert.That(entranceView.gameObject, Is.SameAs(entranceContent.gameObject));
+        Assert.That(drawingView.gameObject, Is.SameAs(drawingContent.gameObject));
+        Assert.That(entranceView.Root, Is.SameAs(entranceContent.transform));
+        Assert.That(drawingView.Root, Is.SameAs(drawingContent.transform));
+        Assert.That(entranceView.HasGameContext, Is.True);
+        Assert.That(drawingView.HasGameContext, Is.True);
+
+        Assert.That(entranceView.IsVisible, Is.EqualTo(entranceContent.gameObject.activeSelf));
+        Assert.That(drawingView.IsVisible, Is.EqualTo(drawingContent.gameObject.activeSelf));
+        Assert.That(entranceView.IsVisible, Is.EqualTo(entranceVisible));
+        Assert.That(drawingView.IsVisible, Is.EqualTo(drawingVisible));
+
+        Chateau.Architecture.ValidationReport entranceReport = new Chateau.Architecture.ValidationReport();
+        Chateau.Architecture.ValidationReport drawingReport = new Chateau.Architecture.ValidationReport();
+        entranceView.ValidateConfiguration(entranceReport);
+        drawingView.ValidateConfiguration(drawingReport);
+        Assert.That(entranceReport.Messages, Is.Empty);
+        Assert.That(drawingReport.Messages, Is.Empty);
+
+        Chateau.Architecture.GameRoot gameRoot = RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+        List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
+            GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
+        Assert.That(sceneBehaviours.Count(item => item == entranceView), Is.EqualTo(1));
+        Assert.That(sceneBehaviours.Count(item => item == drawingView), Is.EqualTo(1));
     }
 
     private static void AssertGrandfatherClockPlaceholdersRemainUnmodified(

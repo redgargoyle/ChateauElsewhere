@@ -133,7 +133,9 @@ The route then migrates through separately reversible commits: pure contracts; d
 
 Pure-contract status: complete. The canonical definition/view/passage/interface types are validation-only and have zero serialized instances. No service implementation, room activation command, scene binding, or legacy caller changed in that gate.
 
-Canonical-data status: complete. The two room definitions and two reciprocal directed passage definitions are exact, directly registered in `GameDatabase`, Unity-imported, and behaviorally inert. The next slice adds passive `RoomView` edges only; approach behavior must be characterized before scene `Passage` anchors are authored.
+Canonical-data status: complete. The two room definitions and two reciprocal directed passage definitions are exact, directly registered in `GameDatabase`, Unity-imported, and behaviorally inert; that data gate passed before any scene binding.
+
+Passive-room-view status: complete. The Entrance and Drawing roots each carry one definition-backed RoomView registered for validation, but no view can change visibility and no canonical Passage exists in the scene. The legacy manager remains the sole activation writer. Next, characterize near/far approach selection and viewport sensitivity before authoring logical approach anchors.
 
 Room-local object cutouts are first-class props:
 

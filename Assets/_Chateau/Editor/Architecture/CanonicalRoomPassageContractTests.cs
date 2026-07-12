@@ -23,7 +23,7 @@ public sealed class CanonicalRoomPassageContractTests
     private const string GameDatabasePath = "Assets/_Chateau/Data/GameDatabase.asset";
 
     [Test]
-    public void CanonicalGehDrawingDataAssetsAreExactValidatedAndNotYetSceneBound()
+    public void CanonicalGehDrawingDataAssetsAreExactValidatedAndPassivelyBoundToRoomViews()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
@@ -106,10 +106,55 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(report.HasErrors, Is.False, string.Join("\n", report.Messages.Select(message => message.ToString())));
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
-        Assert.That(gameplayText, Does.Not.Contain("guid: ccd2f3bd803e45aa8a1174cc881d6dc0"),
-            "Gameplay must still have zero serialized RoomView components at the data-only gate.");
+        string entranceRoomObject = ExtractDocument(gameplayText, "--- !u!1 &567115833");
+        string drawingRoomObject = ExtractDocument(gameplayText, "--- !u!1 &2300000005");
+        string entranceView = ExtractDocument(gameplayText, "--- !u!114 &4100000001");
+        string drawingView = ExtractDocument(gameplayText, "--- !u!114 &4100000002");
+        string gameRoot = ExtractDocument(gameplayText, "--- !u!114 &1878886998");
+        string outboundTrigger = ExtractDocument(gameplayText, "--- !u!114 &109889178");
+        string reverseTrigger = ExtractDocument(gameplayText, "--- !u!114 &2300000104");
+
+        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(2),
+            "Only the two characterized room roots may carry passive RoomViews at this gate.");
         Assert.That(gameplayText, Does.Not.Contain("guid: 518dad8adf634786a103bf4e76aa0881"),
-            "Gameplay must still have zero serialized Passage components at the data-only gate.");
+            "Passage behavior remains outside the scene until the passive RoomView graft is proven safe.");
+
+        Assert.That(entranceRoomObject, Does.Contain("- component: {fileID: 4100000001}"));
+        Assert.That(drawingRoomObject, Does.Contain("- component: {fileID: 4100000002}"));
+        Assert.That(entranceView, Does.Contain("m_GameObject: {fileID: 567115833}"));
+        Assert.That(entranceView, Does.Contain(
+            "m_Script: {fileID: 11500000, guid: ccd2f3bd803e45aa8a1174cc881d6dc0, type: 3}"));
+        Assert.That(entranceView, Does.Contain(
+            "definition: {fileID: 11400000, guid: 5e4e6adcd42c4058867aaa6c47b84de1, type: 2}"));
+        Assert.That(entranceView, Does.Contain("legacyContentGroup: {fileID: 2102000002}"));
+        Assert.That(drawingView, Does.Contain("m_GameObject: {fileID: 2300000005}"));
+        Assert.That(drawingView, Does.Contain(
+            "m_Script: {fileID: 11500000, guid: ccd2f3bd803e45aa8a1174cc881d6dc0, type: 3}"));
+        Assert.That(drawingView, Does.Contain(
+            "definition: {fileID: 11400000, guid: 057575e9763145759aa12184580d27d8, type: 2}"));
+        Assert.That(drawingView, Does.Contain("legacyContentGroup: {fileID: 2300000007}"));
+
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000001}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000002}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameplayText, "4100000001"), Is.EqualTo(3),
+            "The entrance RoomView should occur only on its owner, its document header, and GameRoot registration.");
+        Assert.That(CountOccurrences(gameplayText, "4100000002"), Is.EqualTo(3),
+            "The drawing-room RoomView should occur only on its owner, its document header, and GameRoot registration.");
+
+        AssertLegacyDoorTriggerUnchanged(
+            outboundTrigger,
+            "109889176",
+            "Grand Entrance Hall",
+            "GEH_Drawing_Room",
+            "Drawing Room",
+            "109889179");
+        AssertLegacyDoorTriggerUnchanged(
+            reverseTrigger,
+            "2300000100",
+            "Drawing Room",
+            "DrawingRoom_GEH",
+            "Grand Entrance Hall",
+            "2300000103");
     }
 
     [Test]
@@ -404,8 +449,51 @@ public sealed class CanonicalRoomPassageContractTests
             "The pure-contract gate must not change the current navigation runtime path.");
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
-        Assert.That(gameplayText, Does.Not.Contain("guid: ccd2f3bd803e45aa8a1174cc881d6dc0"));
+        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(2));
         Assert.That(gameplayText, Does.Not.Contain("guid: 518dad8adf634786a103bf4e76aa0881"));
+    }
+
+    private static void AssertLegacyDoorTriggerUnchanged(
+        string document,
+        string gameObjectFileId,
+        string sourceRoom,
+        string doorName,
+        string destinationRoom,
+        string imageFileId)
+    {
+        Assert.That(document, Does.Contain($"m_GameObject: {{fileID: {gameObjectFileId}}}"));
+        Assert.That(document, Does.Contain(
+            "m_Script: {fileID: 11500000, guid: 7e419b0f8f26d4f2d8d03e567fef4c52, type: 3}"));
+        Assert.That(document, Does.Contain($"sourceRoom: {sourceRoom}"));
+        Assert.That(document, Does.Contain($"doorName: {doorName}"));
+        Assert.That(document, Does.Contain($"destinationRoom: {destinationRoom}"));
+        Assert.That(document, Does.Contain("requirePlayerInSourceRoom: 1"));
+        Assert.That(document, Does.Contain("useCameraSequence: 0"));
+        Assert.That(document, Does.Contain("triggerKind: 0"));
+        Assert.That(document, Does.Contain("stairwayDirection: 0"));
+        Assert.That(document, Does.Contain("navigationManager: {fileID: 0}"));
+        Assert.That(document, Does.Contain($"image: {{fileID: {imageFileId}}}"));
+        Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
+        Assert.That(document, Does.Contain("player: {fileID: 0}"));
+        Assert.That(document, Does.Contain("requirePlayerProximity: 1"));
+        Assert.That(document, Does.Contain("walkPlayerToTriggerWhenFar: 1"));
+        Assert.That(document, Does.Contain("autoActivateAfterApproach: 1"));
+        Assert.That(document, Does.Contain("maxPlayerScreenDistance: 145"));
+        Assert.That(document, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+        Assert.That(document, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        return text.Split(new[] { value }, StringSplitOptions.None).Length - 1;
+    }
+
+    private static string ExtractDocument(string assetText, string header)
+    {
+        int start = assetText.IndexOf(header, StringComparison.Ordinal);
+        Assert.That(start, Is.GreaterThanOrEqualTo(0), $"Missing document '{header}'.");
+        int end = assetText.IndexOf("\n--- !u!", start + header.Length, StringComparison.Ordinal);
+        return end >= 0 ? assetText.Substring(start, end - start) : assetText.Substring(start);
     }
 
     private static CanonicalRoomDefinition CreateRoomDefinition(

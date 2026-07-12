@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage characterized, its canonical contracts implemented, and its four definition assets registered.**
+**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage characterized, its definitions registered, and its two room roots passively bound.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -112,6 +112,8 @@ This report records what is implemented in the repository at this commit. It mus
 - Added contract tests using only temporary definitions and objects. They prove trimmed stable identity remains separate from display/legacy names, validate reciprocal directed endpoints without recursive validation, preserve logical `(0,0)` as valid authored anchor data, enforce room-owned passive scene bindings, and verify Gameplay/GameDatabase remain untouched and unbound.
 - Authored the first canonical data graph without touching Gameplay: `room.grand-entrance-hall` and `room.drawing-room` directly own the exact current background texture GUIDs `3e163816317a638f5adedc338ec34d98` and `28c74b6dea1ed8e2c9c7d612355f9734`; directed passages `passage.grand-entrance-hall.drawing-room` and `passage.drawing-room.grand-entrance-hall` hold swapped endpoints, reciprocal asset links, Door kind, `Open Door` prompt, and their temporary legacy door IDs.
 - Registered those four definitions directly and deterministically in `GameDatabase.asset` (Entrance room, Drawing room, forward passage, reverse passage). Unity 6000.4.10f1 imported the hand-authored YAML without rewriting it; every asset uses fileID `11400000`, schema version `1`, unique literal GUIDs, and direct type-2 references. Both current room perspective profiles remain deliberately null to preserve behavior until actor/presentation calibration is separately characterized.
+- Grafted passive `RoomView` components `4100000001` and `4100000002` onto the existing Grand Entrance Hall and Drawing Room roots. Each directly binds its canonical definition and same-root `RoomContentGroup`; both are registered once with GameRoot for context and validation. `RoomView` still exposes no activation command or lifecycle method, so `RoomNavigationManager` remains the sole visibility writer while the view simply reports the root's `activeSelf` state.
+- Extended the rendered lifecycle to retain both exact RoomView/definition/content identities and clean validation through cold boot, Entrance ↔ Drawing travel, the characterized renderer-reactivation defect, Chapter 1 completion, Chapter 2 entry/re-entry, and debug travel. Exactly two RoomViews and zero canonical Passages exist throughout.
 
 ## Current static result
 
@@ -237,6 +239,9 @@ The temporary source increase is the migration spine and verification tooling. I
 - the canonical data gate passes `5/5`, including exact asset/database GUIDs, stable IDs, texture identities, reciprocal endpoints, order, uniqueness, schema, and complete `GameDatabase` validation; serialized-reference inventory now reports exactly two `RoomDefinition` and two `PassageDefinition` assets;
 - the unchanged rendered round trip passes with exact arrivals and Butler multiplier; the full EditMode suite discovers 246 tests, 200 pass, and the same 46 pre-existing failure names remain with no new or removed failure;
 - Gameplay, MainMenu, and `GameDatabase.asset.meta` remain byte-identical to `b7b6311c`; Unity left all four data YAML files unchanged after import, and the repository-wide meta scan reports no duplicate GUID;
+- the passive RoomView static gate passes `5/5` plus the exact scene-count guard; the rendered lifecycle passes `1/1`; the full suite remains 246 total / 200 passing / the same 46 pre-existing failure names;
+- Gameplay changes from 6,006 to 6,008 documents by adding only RoomViews `4100000001`/`4100000002`. Existing changed documents are limited to the two room GameObject component lists and GameRoot's `sceneBehaviours`; all other 6,003 prior documents, prior order, both RectTransforms, both `RoomContentGroup`s, both route triggers, GameRoot GameObject/Transform, and `SceneRoots` remain byte-identical;
+- serialized-reference inventory reports exactly two RoomView instances and zero Passage instances; architecture smell totals remain unchanged and the exact arrivals `(5.167492, -2.056576)` / `(-7.45909, -1.955749)` plus Butler multiplier `0.752865` remain stable;
 
 ## Validation still requiring human/golden review
 
@@ -263,6 +268,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Graft only passive `RoomView` bindings onto the existing Grand Entrance Hall and Drawing Room roots, directly referencing their canonical definitions and same-root `RoomContentGroup` compatibility owners. Preserve both existing room GameObject/RectTransform/RoomContentGroup documents byte-for-byte, add no activation writer, and keep every passage/route component unchanged.
+1. Characterize the real GEH ↔ Drawing Room player-approach behavior before authoring Passage anchor data: near/far starts, selected logical approach points, auto-activation ordering, trigger proximity threshold, and viewport/aspect sensitivity. This slice must change tests/docs only and leave scene/runtime/data byte-identical.
 
-After that room-view gate passes, characterize authored approach coordinates before grafting the reciprocal passive `Passage` components and logical anchor data. Do not begin route cutover or bulk deletion.
+After that characterization passes, graft the reciprocal passive `Passage` components with the exact logical arrival/approach data while the legacy triggers remain the only interaction/runtime path. Do not begin route cutover or bulk deletion.
