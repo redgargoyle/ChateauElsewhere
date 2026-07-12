@@ -21,6 +21,7 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
     [SerializeField] private string monsterSortingLayerName = "People";
     [SerializeField] private int monsterSortingOrder = 9999;
     [SerializeField] private int monsterOverlaySortingOrder = 10000;
+    [SerializeField] private Canvas monsterOverlayCanvas;
     [SerializeField] private Image monsterImage;
     [SerializeField] private SpriteRenderer monsterSpriteRenderer;
     [SerializeField] private Sprite[] monsterRunSprites = new Sprite[0];
@@ -99,6 +100,26 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
             !monsterSpriteRenderer.transform.IsChildOf(monsterObject.transform))
         {
             report.AddError("Chapter2MonsterStingerController monster SpriteRenderer must belong to its serialized monster object.", this);
+        }
+
+        if (monsterOverlayCanvas == null)
+        {
+            report.AddError("Chapter2MonsterStingerController requires its serialized monster overlay Canvas.", this);
+        }
+        else
+        {
+            if (monsterOverlayCanvas.gameObject != monsterObject)
+            {
+                report.AddError("Chapter2MonsterStingerController overlay Canvas must be owned by its monster object.", this);
+            }
+
+            if (monsterOverlayCanvas.renderMode != RenderMode.ScreenSpaceOverlay ||
+                !monsterOverlayCanvas.overrideSorting ||
+                monsterOverlayCanvas.sortingOrder != monsterOverlaySortingOrder ||
+                !string.Equals(monsterOverlayCanvas.sortingLayerName, monsterSortingLayerName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                report.AddError("Chapter2MonsterStingerController overlay Canvas must use its authored sorting layer and order.", this);
+            }
         }
 
         if (violinAudioSource == null)
@@ -725,12 +746,19 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
 
     private void EnsureMonsterOverlayCanvas()
     {
-        Canvas monsterCanvas = monsterObject.GetComponent<Canvas>();
+        Canvas monsterCanvas = monsterOverlayCanvas;
+
+        if (monsterCanvas == null)
+        {
+            monsterCanvas = monsterObject.GetComponent<Canvas>();
+        }
 
         if (monsterCanvas == null)
         {
             monsterCanvas = monsterObject.AddComponent<Canvas>();
         }
+
+        monsterOverlayCanvas = monsterCanvas;
 
         monsterCanvas.overrideSorting = true;
         monsterCanvas.sortingOrder = monsterOverlaySortingOrder;

@@ -152,6 +152,7 @@ public sealed class ArchitectureFoundationTests
         string monsterImageDocument = ExtractDocument(sceneText, "--- !u!114 &3700000003");
         string monsterViolinSourceDocument = ExtractDocument(sceneText, "--- !u!82 &3700000004");
         string monsterViolinBindingDocument = ExtractDocument(sceneText, "--- !u!114 &3700000005");
+        string monsterCanvasDocument = ExtractDocument(sceneText, "--- !u!223 &3700000006");
         string runStartGameObjectDocument = ExtractDocument(sceneText, "--- !u!1 &98514616");
         string runStartTransformDocument = ExtractDocument(sceneText, "--- !u!224 &98514617");
         string runStartAnchorDocument = ExtractDocument(sceneText, "--- !u!114 &3600000001");
@@ -175,6 +176,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerDocument, Does.Contain("navigationManager: {fileID: 1878886997}"));
         Assert.That(stingerDocument, Does.Contain("monsterImage: {fileID: 3700000003}"));
         Assert.That(stingerDocument, Does.Contain("monsterSpriteRenderer: {fileID: 0}"));
+        Assert.That(stingerDocument, Does.Contain("monsterOverlayCanvas: {fileID: 3700000006}"));
         Assert.That(stingerDocument, Does.Contain("violinAudioSource: {fileID: 3700000004}"));
         Assert.That(stingerDocument, Does.Contain("violinAudioVolumeBinding: {fileID: 3700000005}"));
         Assert.That(stingerDocument, Does.Contain("violinAudioClip: {fileID: 8300000, guid: 69f06d321e4549cdcad1133332661f6d, type: 3}"));
@@ -186,6 +188,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(monsterGameObjectDocument, Does.Contain("- component: {fileID: 3700000003}"));
         Assert.That(monsterGameObjectDocument, Does.Contain("- component: {fileID: 3700000004}"));
         Assert.That(monsterGameObjectDocument, Does.Contain("- component: {fileID: 3700000005}"));
+        Assert.That(monsterGameObjectDocument, Does.Contain("- component: {fileID: 3700000006}"));
         Assert.That(monsterTransformDocument, Does.Contain("m_Father: {fileID: 2300000006}"));
         Assert.That(monsterTransformDocument, Does.Contain("m_AnchoredPosition: {x: -600, y: -79}"));
         Assert.That(monsterTransformDocument, Does.Contain("m_SizeDelta: {x: 520, y: 435}"));
@@ -200,6 +203,11 @@ public sealed class ArchitectureFoundationTests
         Assert.That(monsterViolinBindingDocument, Does.Contain("audioSource: {fileID: 3700000004}"));
         Assert.That(monsterViolinBindingDocument, Does.Contain("channel: 1"));
         Assert.That(monsterViolinBindingDocument, Does.Contain("baseVolume: 1"));
+        Assert.That(monsterCanvasDocument, Does.Contain("m_GameObject: {fileID: 3700000000}"));
+        Assert.That(monsterCanvasDocument, Does.Contain("m_RenderMode: 0"));
+        Assert.That(monsterCanvasDocument, Does.Contain("m_OverrideSorting: 1"));
+        Assert.That(monsterCanvasDocument, Does.Contain("m_SortingLayerID: -114244515"));
+        Assert.That(monsterCanvasDocument, Does.Contain("m_SortingOrder: 10000"));
         Assert.That(CountOccurrences(sceneText, "69f06d321e4549cdcad1133332661f6d"), Is.EqualTo(2));
         Assert.That(runStartGameObjectDocument, Does.Contain("m_Name: Ch2_MonsterRunStart"));
         Assert.That(runStartGameObjectDocument, Does.Contain("- component: {fileID: 98514617}"));
@@ -233,6 +241,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized violin AudioSource."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized violin AudioClip."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized violin volume binding."));
+        Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized monster overlay Canvas."));
         Assert.That(stingerText, Does.Not.Contain("GetComponent<AudioSource>()"));
         Assert.That(stingerText, Does.Not.Contain("AddComponent<AudioSource>()"));
         Assert.That(stingerText, Does.Not.Contain("GameAudioSettings.EnsureBinding("));
@@ -241,6 +250,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerText, Does.Not.Contain("AssetDatabase.FindAssets"));
         Assert.That(stingerText, Does.Contain("violinAudioVolumeBinding.Configure("));
         Assert.That(stingerText, Does.Contain("Resources.LoadAll<Sprite>(monsterRunSpritesResourcePath)"));
+        Assert.That(stingerText, Does.Contain("monsterCanvas = monsterOverlayCanvas"));
         Assert.That(stingerText, Does.Contain("monsterObject.AddComponent<Canvas>()"));
         Assert.That(CountOccurrences(guestSearchDocument, "navigationManager: {fileID: 1878886997}"), Is.EqualTo(1));
         Assert.That(guestSearchText, Does.Not.Contain("ResolveRoomNavigation"));

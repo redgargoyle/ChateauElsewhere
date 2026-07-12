@@ -73,6 +73,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         RoomNavigationManager serializedMonsterNavigation = GetPrivateField<RoomNavigationManager>(serializedMonsterStinger, "navigationManager");
         Image serializedMonsterImage = GetPrivateField<Image>(serializedMonsterStinger, "monsterImage");
         SpriteRenderer serializedMonsterSpriteRenderer = GetPrivateField<SpriteRenderer>(serializedMonsterStinger, "monsterSpriteRenderer");
+        Canvas serializedMonsterOverlayCanvas = GetPrivateField<Canvas>(serializedMonsterStinger, "monsterOverlayCanvas");
         AudioSource serializedMonsterViolinSource = GetPrivateField<AudioSource>(serializedMonsterStinger, "violinAudioSource");
         GameAudioSourceVolume serializedMonsterViolinBinding = GetPrivateField<GameAudioSourceVolume>(serializedMonsterStinger, "violinAudioVolumeBinding");
         AudioClip serializedMonsterViolinClip = GetPrivateField<AudioClip>(serializedMonsterStinger, "violinAudioClip");
@@ -320,6 +321,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(serializedMonsterImage.gameObject, Is.SameAs(serializedMonsterObject));
         Assert.That(serializedMonsterSpriteRenderer, Is.Null);
         Assert.That(serializedMonsterOriginalSprite, Is.Not.Null);
+        Assert.That(serializedMonsterOverlayCanvas, Is.Not.Null);
+        Assert.That(serializedMonsterOverlayCanvas.gameObject, Is.SameAs(serializedMonsterObject));
+        Assert.That(serializedMonsterOverlayCanvas.renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+        Assert.That(serializedMonsterOverlayCanvas.overrideSorting, Is.True);
+        Assert.That(serializedMonsterOverlayCanvas.sortingLayerName, Is.EqualTo("People"));
+        Assert.That(serializedMonsterOverlayCanvas.sortingOrder, Is.EqualTo(10000));
         Assert.That(serializedMonsterViolinSource, Is.Not.Null);
         Assert.That(serializedMonsterViolinBinding, Is.Not.Null);
         Assert.That(serializedMonsterViolinClip, Is.Not.Null);
@@ -803,7 +810,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
         Assert.That(serializedMonsterStinger.GetComponents<AudioSource>(), Is.Empty);
         Assert.That(serializedMonsterStinger.GetComponents<GameAudioSourceVolume>(), Is.Empty);
-        Assert.That(serializedMonsterObject.GetComponents<Canvas>(), Is.Empty);
+        Assert.That(serializedMonsterObject.GetComponents<Canvas>(), Has.Length.EqualTo(1));
+        Assert.That(serializedMonsterObject.GetComponent<Canvas>(), Is.SameAs(serializedMonsterOverlayCanvas));
+        Assert.That(serializedMonsterOverlayCanvas.isActiveAndEnabled, Is.False);
 
         serializedMonsterStinger.BeginStinger();
         yield return null;
@@ -841,6 +850,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<AudioSource>(serializedMonsterViolinBindings[0], "audioSource"), Is.SameAs(serializedMonsterViolinSource));
         Canvas[] serializedMonsterCanvases = serializedMonsterObject.GetComponents<Canvas>();
         Assert.That(serializedMonsterCanvases, Has.Length.EqualTo(1));
+        Assert.That(serializedMonsterCanvases[0], Is.SameAs(serializedMonsterOverlayCanvas));
+        Assert.That(serializedMonsterCanvases[0].isActiveAndEnabled, Is.True);
         Assert.That(serializedMonsterCanvases[0].overrideSorting, Is.True);
         Assert.That(serializedMonsterCanvases[0].sortingLayerName, Is.EqualTo("People"));
         Assert.That(serializedMonsterCanvases[0].sortingOrder, Is.EqualTo(10000));
