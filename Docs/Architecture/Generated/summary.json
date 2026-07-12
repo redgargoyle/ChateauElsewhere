@@ -1,15 +1,15 @@
 {
-  "runtime_files": 106,
-  "runtime_loc": 48885,
+  "runtime_files": 105,
+  "runtime_loc": 48526,
   "smell_totals": {
-    "FindObject": 118,
+    "FindObject": 111,
     "ResourcesLoad": 17,
-    "NewGameObject": 80,
-    "AddComponent": 58,
+    "NewGameObject": 74,
+    "AddComponent": 55,
     "RuntimeInitialize": 4,
     "PlayerPrefs": 6
   },
-  "direct_monobehaviour_count": 50,
+  "direct_monobehaviour_count": 49,
   "direct_monobehaviours": [
     {
       "file": "Assets/Scripts/Audio/ClockTickingAmbienceController.cs",
@@ -154,10 +154,6 @@
     {
       "file": "Assets/Scripts/Story/DoorbellSystem.cs",
       "class": "DoorbellSystem"
-    },
-    {
-      "file": "Assets/Scripts/Story/GrandfatherClockInteraction.cs",
-      "class": "GrandfatherClockInteraction"
     },
     {
       "file": "Assets/Scripts/Story/NPCWaypointMover.cs",

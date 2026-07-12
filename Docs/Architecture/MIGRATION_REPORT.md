@@ -99,18 +99,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized the runtime-only Drawing Room exit click target before pruning. ChapterManager preparation creates one transparent `160x160` trigger under inactive Drawing Room anchors; another initialization duplicates it because `GameObject.Find` cannot see the inactive owner, and those identities persist into Chapter 2. Its action performs no navigation or state mutation beyond calling the same completion gate already owned by empty-door answer, coat storage, guest seating, and Drawing Room entry.
 - Pruned that runtime Drawing Room exit target and its factory/remover, wrapper, enum role, serialized toggle, and private coat-sprite cache without a replacement. The real authored passage owns navigation; empty-door answer, coat storage, guest seating, and the Drawing Room room-change event own completion. This also removes a transparent collider that persisted into Chapter 2 and could bypass answering the final empty door.
 - Characterized the legacy `GrandfatherClockInteraction` before retirement. The rendered lifecycle selects the empty `Grand Entrance Hall / Props / GrandfatherClock` placeholder in this environment, injects exactly one interaction, `AudioSource`, Atmosphere binding at base `0.28`, and in-memory `RuntimeGrandfatherClockTicking` clip (mono, 44.1 kHz, 88,200 samples), and retains every identity through repeated initialization, the Entrance/Drawing Room round trip, and Chapter 2. Its close-up stays disabled and creates no canvas. The separate serialized room-aware ambience owner/source/catalog and Chapter 2 strike/HUD graph remain exact, proving the injected loop is duplicate compatibility behavior rather than a missing requirement.
+- Retired `GrandfatherClockInteraction`, its script GUID, unordered global host selection, duplicate synthetic ticking/source/binding, unreachable modal, trailing `Chapter1SceneAction` role, and unused HUD/time pass-through. Both authored clock placeholders retain only their Transform/anchor data; the room-aware ambience and Chapter 2 clock presentation/strike graphs remain their sole intended owners.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
-| Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 48,885 | -1,017 |
-| Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
-| `FindObject*`/`GameObject.Find` | 199 | 118 | -81 |
+| Runtime C# files | 90 | 105 | +15 |
+| Runtime C# lines | 49,902 | 48,526 | -1,376 |
+| Direct `MonoBehaviour` declarations | 63 | 49 | -14 |
+| `FindObject*`/`GameObject.Find` | 199 | 111 | -88 |
 | `Resources.Load` | 27 | 17 | -10 |
-| runtime `new GameObject` | 98 | 80 | -18 |
-| runtime `AddComponent<T>` | 100 | 58 | -42 |
+| runtime `new GameObject` | 98 | 74 | -24 |
+| runtime `AddComponent<T>` | 100 | 55 | -45 |
 | runtime initialization hooks | 9 | 4 | -5 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -151,6 +152,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - Drawing Room exit-target characterization passes exact source/scene guards and a rendered lifecycle that freezes its inactive-parent component contract, proves repeat initialization grows the target count from one to two, and retains both identities through room travel and Chapter 2 while independent completion-gate callers remain pinned; the full suite remains 194/46 with an unchanged failure-name set;
 - Drawing Room exit-target pruning removes only `createRuntimeClickTargets` from controller document `3302000001`, preserves all 5,980 document IDs/order/roots and both authored action GUIDs, bans the entire runtime-target path, and leaves exactly the front-door/closet actions through repeated initialization, room travel, and Chapter 2. A completion-ready canonical Entrance→Drawing Room door transition requests Chapter 2 once, unsubscribes Chapter 1, disables input, and starts the same serialized Chapter 2 controller; the full suite remains 194/46 with no failure-name change;
 - legacy grandfather-clock characterization passes its static zero-serialized-instance/action guard and rendered full lifecycle, recording the selected Entrance placeholder plus the exact injected source/binding/generated-clip graph while proving no modal UI appears and the canonical ambience/Chapter 2 owners stay separate; the full suite remains 194/46 with an unchanged failure-name set;
+- grandfather-clock retirement deletes the zero-reference source and `.meta`, removes exactly three null YAML properties without adding/removing/reordering any of Gameplay's 5,980 documents, preserves `SceneRoots`, both ten-document authored clock subtrees, both Drawing Room prefabs, every clock art/audio asset, ambience documents `2201000031`–`2201000034`, and the Chapter 2 clock graph byte-for-byte; static/architecture/rendered lifecycle gates prove no injected component/source/binding/clip/modal returns, and the full suite remains exactly 194/46 with no failure-name delta or missing-script warning;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -234,6 +236,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Retire `GrandfatherClockInteraction` and its dead Chapter 1 field/action/HUD couplings without modifying either authored clock placeholder, its anchors, any clock prefab/art, the serialized room ambience graph, or the Chapter 2 clock presentation/strike graph.
+1. Characterize the remaining runtime-created `ChapterTimeSettingsUI` owner and its Chapter 1 `ResolveStoryHelpers` discovery/factory path, then decide whether the always-visible clock HUD fully supersedes it or whether its exact owner must be serialized before cleanup.
 
 Do not begin bulk deletion until those gates pass.

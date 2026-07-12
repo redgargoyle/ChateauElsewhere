@@ -65,7 +65,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [SerializeField] private GameObject playerButlerReference;
     [SerializeField] private CoatCloset coatCloset;
     [SerializeField] private DoorbellSystem doorbellSystem;
-    [SerializeField] private GrandfatherClockInteraction grandfatherClock;
     [SerializeField] private ChapterTimeSettingsUI timeSettingsUI;
     [SerializeField] private Chapter1InteractionHUD interactionHUD;
     [SerializeField] private Chapter1SceneAction frontDoorSceneAction;
@@ -4196,12 +4195,11 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         ResolveReferences();
 
         doorbellSystem?.Initialize(chapterClock);
-        grandfatherClock?.Initialize(chapterClock);
         timeSettingsUI?.Initialize(chapterClock);
 
         if (interactionHUD != null)
         {
-            interactionHUD.Initialize(this, chapterClock, grandfatherClock);
+            interactionHUD.Initialize(this);
         }
 
         ConfigureFrontDoorAction();
@@ -4215,7 +4213,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         }
 
         frontDoorSceneAction.gameObject.SetActive(true);
-        frontDoorSceneAction.Initialize(Chapter1SceneActionType.FrontDoor, this, grandfatherClock);
+        frontDoorSceneAction.Initialize(Chapter1SceneActionType.FrontDoor, this);
         frontDoorSceneAction.SetAvailable(true);
     }
 
@@ -6399,19 +6397,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private void ResolveStoryHelpers(bool createFallbacks)
     {
-        if (grandfatherClock == null)
-        {
-            grandfatherClock = FindAnyObjectByType<GrandfatherClockInteraction>(FindObjectsInactive.Include);
-        }
-
-        if (grandfatherClock == null && createFallbacks)
-        {
-            GameObject clockObject = FindGameObjectByNormalizedName("GrandfatherClock");
-            grandfatherClock = clockObject != null
-                ? clockObject.AddComponent<GrandfatherClockInteraction>()
-                : gameObject.AddComponent<GrandfatherClockInteraction>();
-        }
-
         if (timeSettingsUI == null)
         {
             timeSettingsUI = FindAnyObjectByType<ChapterTimeSettingsUI>(FindObjectsInactive.Include);
@@ -6421,24 +6406,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         {
             timeSettingsUI = gameObject.AddComponent<ChapterTimeSettingsUI>();
         }
-    }
-
-    private static GameObject FindGameObjectByNormalizedName(string normalizedName)
-    {
-        string cleanNeedle = NormalizeRoomName(normalizedName);
-        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < transforms.Length; i++)
-        {
-            Transform current = transforms[i];
-
-            if (current != null && NormalizeRoomName(current.name).Contains(cleanNeedle))
-            {
-                return current.gameObject;
-            }
-        }
-
-        return null;
     }
 
     private string GetRoomForTransform(Transform target)

@@ -8,8 +8,7 @@ using UnityEngine.InputSystem;
 public enum Chapter1SceneActionType
 {
     FrontDoor,
-    CoatCloset,
-    GrandfatherClock
+    CoatCloset
 }
 
 [DisallowMultipleComponent]
@@ -22,7 +21,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     [SerializeField] private Chapter1SceneActionType actionType;
     [SerializeField] private Chapter1ArrivalController arrivalController;
-    [SerializeField] private GrandfatherClockInteraction clockInteraction;
     [SerializeField] private bool isActionAvailable = true;
 
     private int lastPerformedFrame = -1;
@@ -39,12 +37,10 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     public void Initialize(
         Chapter1SceneActionType nextActionType,
-        Chapter1ArrivalController controller,
-        GrandfatherClockInteraction clock)
+        Chapter1ArrivalController controller)
     {
         actionType = nextActionType;
         arrivalController = controller;
-        clockInteraction = clock;
     }
 
     public void SetAvailable(bool value)
@@ -170,12 +166,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
                     arrivalController.HandleClosetClicked();
                 }
                 break;
-            case Chapter1SceneActionType.GrandfatherClock:
-                if (clockInteraction != null)
-                {
-                    clockInteraction.OpenCloseUp();
-                }
-                break;
         }
     }
 
@@ -290,11 +280,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         if (arrivalController == null)
         {
             arrivalController = FindAnyObjectByType<Chapter1ArrivalController>(FindObjectsInactive.Include);
-        }
-
-        if (clockInteraction == null)
-        {
-            clockInteraction = FindAnyObjectByType<GrandfatherClockInteraction>(FindObjectsInactive.Include);
         }
     }
 
@@ -484,11 +469,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return arrivalController != null && arrivalController.ButlerCarryingCoat
                 ? NavigationCursorController.HoverIcon.PlaceHangCoat
                 : NavigationCursorController.HoverIcon.Locked;
-        }
-
-        if (actionType == Chapter1SceneActionType.GrandfatherClock)
-        {
-            return NavigationCursorController.HoverIcon.Inspect;
         }
 
         return NavigationCursorController.HoverIcon.Door;

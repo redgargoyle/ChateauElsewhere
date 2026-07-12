@@ -92,6 +92,8 @@ public sealed class ArchitectureFoundationTests
         Assert.That(File.Exists("Assets/Scripts/PickupObject.cs"), Is.False);
         Assert.That(File.Exists("Assets/Scripts/Story/GameClockHandsDisplay.cs"), Is.False);
         Assert.That(File.Exists("Assets/Scripts/Story/GameClockHandsDisplay.cs.meta"), Is.False);
+        Assert.That(File.Exists("Assets/Scripts/Story/GrandfatherClockInteraction.cs"), Is.False);
+        Assert.That(File.Exists("Assets/Scripts/Story/GrandfatherClockInteraction.cs.meta"), Is.False);
     }
 
     [Test]
@@ -368,6 +370,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Document, Does.Contain("playerMovement: {fileID: 81962842}"));
         Assert.That(chapter1Document, Does.Contain("playerButlerReference: {fileID: 0}"));
         Assert.That(chapter1Document, Does.Contain("frontDoorSceneAction: {fileID: 1180734300}"));
+        Assert.That(chapter1Document, Does.Not.Contain("grandfatherClock:"));
         Assert.That(chapter1Document, Does.Contain("guestFootstepCatalog: {fileID: 11400000, guid: 0e780686c6653db1a1c74916a591d484, type: 2}"));
         Assert.That(chapter1Document, Does.Not.Contain("guestFootstepCatalogResourcePath"));
         Assert.That(chapter1Document, Does.Contain("guestEntranceSpawnPlacemark: {fileID: 3501000027}"));
@@ -410,6 +413,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(hangerActionDocument, Does.Contain("m_GameObject: {fileID: 1592234992}"));
         Assert.That(hangerActionDocument, Does.Contain("actionType: 1"));
         Assert.That(hangerActionDocument, Does.Contain("arrivalController: {fileID: 3302000001}"));
+        Assert.That(hangerActionDocument, Does.Not.Contain("clockInteraction:"));
         Assert.That(hangerActionDocument, Does.Contain("isActionAvailable: 1"));
         Assert.That(pantryPropsTransformDocument, Does.Contain("m_Children: []"));
         Assert.That(sceneText, Does.Not.Contain("&3503000002"));
@@ -444,8 +448,14 @@ public sealed class ArchitectureFoundationTests
         Assert.That(frontDoorColliderDocument, Does.Contain("m_Size: {x: 1, y: 1}"));
         Assert.That(frontDoorActionDocument, Does.Contain("actionType: 0"));
         Assert.That(frontDoorActionDocument, Does.Contain("arrivalController: {fileID: 3302000001}"));
+        Assert.That(frontDoorActionDocument, Does.Not.Contain("clockInteraction:"));
+        Assert.That(sceneText, Does.Not.Contain("c6da9f56f65d9988ff5f7da0f8e59fb0"));
+        Assert.That(File.Exists("Assets/Scripts/Story/GrandfatherClockInteraction.cs"), Is.False);
+        Assert.That(File.Exists("Assets/Scripts/Story/GrandfatherClockInteraction.cs.meta"), Is.False);
 
         string chapter1Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs");
+        string chapter1ActionText = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs");
+        string chapter1HudText = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs");
         string applierText = File.ReadAllText("Assets/Scripts/Characters/GuestRoomScaleApplier.cs");
         Assert.That(chapter1Text, Does.Not.Contain("GuestRoomScaleApplier.EnsureInScene"));
         Assert.That(chapter1Text, Does.Not.Contain("new GameObject(\"GuestRoomScaleCalibration\")"));
@@ -485,7 +495,17 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Contain("frontDoorSceneAction.IsConfiguredFor(Chapter1SceneActionType.FrontDoor, this)"));
         Assert.That(chapter1Text, Does.Contain("!frontDoorCollider.enabled || !frontDoorCollider.isTrigger"));
         Assert.That(chapter1Text, Does.Contain("ConfigureFrontDoorAction();"));
-        Assert.That(chapter1Text, Does.Contain("frontDoorSceneAction.Initialize(Chapter1SceneActionType.FrontDoor, this, grandfatherClock);"));
+        Assert.That(chapter1Text, Does.Contain("frontDoorSceneAction.Initialize(Chapter1SceneActionType.FrontDoor, this);"));
+        Assert.That(chapter1Text, Does.Contain("interactionHUD.Initialize(this);"));
+        Assert.That(chapter1Text, Does.Not.Contain("grandfatherClock"));
+        Assert.That(chapter1Text, Does.Not.Contain("FindGameObjectByNormalizedName"));
+        Assert.That(chapter1Text, Does.Not.Contain("AddComponent<GrandfatherClockInteraction>"));
+        Assert.That(chapter1ActionText, Does.Not.Contain("GrandfatherClock"));
+        Assert.That(chapter1ActionText, Does.Not.Contain("clockInteraction"));
+        Assert.That(chapter1ActionText, Does.Not.Contain("HoverIcon.Inspect"));
+        Assert.That(chapter1HudText, Does.Not.Contain("clockInteraction"));
+        Assert.That(chapter1HudText, Does.Not.Contain("chapterClock"));
+        Assert.That(chapter1HudText, Does.Not.Contain("Button_InspectClock"));
         Assert.That(chapter1Text, Does.Not.Contain("DoorAnswerTriggerName"));
         Assert.That(chapter1Text, Does.Not.Contain("FindDoorAnswerTriggerObject"));
         Assert.That(chapter1Text, Does.Not.Contain("CreateDoorAnswerTriggerFallback"));

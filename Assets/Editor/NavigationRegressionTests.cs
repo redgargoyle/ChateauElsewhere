@@ -45,7 +45,6 @@ public class NavigationRegressionTests
     private const string CursorPreviewSheetPath = "Assets/Art/UI/Cursors/preview/cursor_styles_contact_sheet.png";
     private const string CursorResourceRoot = "Assets/Resources/UI/Cursors/styles";
     private const string CursorExtractionScriptPath = "scripts/extract_cursor_icons.py";
-    private const string GrandfatherClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
     private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
@@ -173,7 +172,6 @@ public class NavigationRegressionTests
     public void AudioPlaybackGuardsAgainstDisabledSources()
     {
         string gameAudioSettingsText = File.ReadAllText(GameAudioSettingsPath);
-        string grandfatherClockText = File.ReadAllText(GrandfatherClockInteractionPath);
         string mainMenuText = File.ReadAllText(MainMenuControllerPath);
         string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
 
@@ -187,9 +185,6 @@ public class NavigationRegressionTests
         Assert.That(gameAudioSettingsText, Does.Contain("source.clip == null"), "TryPlay should not report success when an AudioSource has no assigned clip.");
         Assert.That(mainMenuText, Does.Contain("GameAudioSettings.TryPlay(menuSoundscapeSource)"), "Main menu audio should use the safe playback path.");
         Assert.That(runtimeSettingsText, Does.Contain("GameAudioSettings.TryPlay(musicSource)"), "Gameplay should explicitly start exploration music instead of only relying on Play On Awake.");
-        Assert.That(grandfatherClockText, Does.Contain("private void OnEnable()"), "Runtime-created clock audio should retry when an inactive room becomes active.");
-        Assert.That(grandfatherClockText, Does.Contain("GameAudioSettings.TryPlay(tickingAudioSource)"), "Clock ticking should not call Play directly on possibly inactive clock props.");
-
         string[] playbackScriptPaths =
         {
             MainMenuControllerPath,
@@ -201,7 +196,6 @@ public class NavigationRegressionTests
             StaticNoisePlayerPath,
             DoorbellSystemPath,
             DoorTriggerNavigationPath,
-            GrandfatherClockInteractionPath,
             Chapter2ControllerPath,
             Chapter2GuestPanicControllerPath,
             Chapter2MonsterStingerControllerPath
@@ -306,9 +300,11 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void GrandfatherClockCloseUpDoesNotOpenOverGameplay()
+    public void LegacyGrandfatherClockInteractionIsRetiredWithoutChangingCanonicalClockOwners()
     {
-        string clockInteractionText = File.ReadAllText(GrandfatherClockInteractionPath);
+        const string retiredClockInteractionPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs";
+        const string retiredClockInteractionMetaPath = "Assets/Scripts/Story/GrandfatherClockInteraction.cs.meta";
+        const string legacyClockGuid = "c6da9f56f65d9988ff5f7da0f8e59fb0";
         string chapter1ArrivalText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string chapter1ActionText = File.ReadAllText(Chapter1SceneActionPath);
         string chapter1HudText = File.ReadAllText(Chapter1InteractionHUDPath);
@@ -316,35 +312,58 @@ public class NavigationRegressionTests
         string gameplayText = File.ReadAllText(GameplayScenePath);
         string drawingRoomPrefabText = File.ReadAllText("Assets/Prefabs/Room_Drawing_Room.prefab");
         string drawingRoomPerspectivePrefabText = File.ReadAllText("Assets/Prefabs/Room_Drawing_Room_Perspective.prefab");
-        const string legacyClockGuid = "c6da9f56f65d9988ff5f7da0f8e59fb0";
 
-        Assert.That(clockInteractionText, Does.Contain("allowClockCloseUp = false"));
-        Assert.That(clockInteractionText, Does.Match(@"(?s)\bOpenCloseUp\s*\([^)]*\)\s*\{.*if \(!allowClockCloseUp\).*DisableCloseUpIfNeeded\(\).*return;"), "Clock close-up calls should be harmless unless explicitly enabled.");
-        Assert.That(clockInteractionText, Does.Contain("Canvas_GrandfatherClockCloseUp"));
-        Assert.That(clockInteractionText, Does.Contain("canvasObject.SetActive(false)"));
-        Assert.That(clockInteractionText, Does.Contain("RuntimeGrandfatherClockTicking"));
-        Assert.That(clockInteractionText, Does.Contain("AudioClip.Create"));
-        Assert.That(clockInteractionText, Does.Contain("GameAudioChannel.Atmosphere"));
-        Assert.That(clockInteractionText, Does.Contain("gameObject.AddComponent<AudioSource>()"));
-        Assert.That(chapter1ArrivalText, Does.Contain("[SerializeField] private GrandfatherClockInteraction grandfatherClock;"));
-        Assert.That(chapter1ArrivalText, Does.Contain("FindObjectsByType<Transform>(FindObjectsInactive.Include)"));
-        Assert.That(chapter1ArrivalText, Does.Contain("clockObject.AddComponent<GrandfatherClockInteraction>()"));
-        Assert.That(chapter1ActionText, Does.Contain("GrandfatherClock"));
-        Assert.That(chapter1ActionText, Does.Contain("clockInteraction.OpenCloseUp()"));
-        Assert.That(chapter1HudText, Does.Contain("private GrandfatherClockInteraction clockInteraction;"));
-        Assert.That(gameplayText, Does.Contain("grandfatherClock: {fileID: 0}"));
-        Assert.That(Regex.Matches(gameplayText, @"(?m)^  clockInteraction: \{fileID: 0\}$").Count, Is.EqualTo(2));
+        Assert.That(File.Exists(retiredClockInteractionPath), Is.False);
+        Assert.That(File.Exists(retiredClockInteractionMetaPath), Is.False);
+
+        string[] runtimeScriptPaths = Directory.GetFiles("Assets", "*.cs", SearchOption.AllDirectories);
+
+        for (int i = 0; i < runtimeScriptPaths.Length; i++)
+        {
+            string normalizedPath = runtimeScriptPaths[i].Replace('\\', '/');
+
+            if (normalizedPath.Contains("/Editor/"))
+            {
+                continue;
+            }
+
+            string runtimeText = File.ReadAllText(runtimeScriptPaths[i]);
+            Assert.That(runtimeText, Does.Not.Contain("GrandfatherClockInteraction"), normalizedPath);
+            Assert.That(runtimeText, Does.Not.Contain("RuntimeGrandfatherClockTicking"), normalizedPath);
+            Assert.That(runtimeText, Does.Not.Contain("Canvas_GrandfatherClockCloseUp"), normalizedPath);
+            Assert.That(runtimeText, Does.Not.Contain("Button_InspectClock"), normalizedPath);
+            Assert.That(runtimeText, Does.Not.Contain("Chapter1SceneActionType.GrandfatherClock"), normalizedPath);
+        }
+
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("grandfatherClock"));
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("FindGameObjectByNormalizedName"));
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("AddComponent<GrandfatherClockInteraction>"));
+        Assert.That(chapter1ArrivalText, Does.Contain("interactionHUD.Initialize(this);"));
+        Assert.That(chapter1ArrivalText, Does.Contain("frontDoorSceneAction.Initialize(Chapter1SceneActionType.FrontDoor, this);"));
+        Assert.That(chapter1ActionText, Does.Match(@"(?s)public enum Chapter1SceneActionType\s*\{\s*FrontDoor,\s*CoatCloset\s*\}"));
+        Assert.That(chapter1ActionText, Does.Not.Contain("clockInteraction"));
+        Assert.That(chapter1ActionText, Does.Not.Contain("HoverIcon.Inspect"));
+        Assert.That(chapter1HudText, Does.Contain("public void Initialize(Chapter1ArrivalController controller)"));
+        Assert.That(chapter1HudText, Does.Not.Contain("clockInteraction"));
+        Assert.That(chapter1HudText, Does.Not.Contain("chapterClock"));
+        Assert.That(gameplayText, Does.Not.Contain("grandfatherClock:"));
+        Assert.That(gameplayText, Does.Not.Contain("clockInteraction:"));
         Assert.That(Regex.Matches(gameplayText, @"(?m)^  actionType: 0$").Count, Is.EqualTo(1));
         Assert.That(Regex.Matches(gameplayText, @"(?m)^  actionType: 1$").Count, Is.EqualTo(1));
         Assert.That(Regex.Matches(gameplayText, @"(?m)^  actionType: 2$").Count, Is.Zero);
-        Assert.That(gameplayText, Does.Not.Contain(legacyClockGuid), "The legacy interaction must remain runtime-only before retirement.");
+        Assert.That(gameplayText, Does.Not.Contain(legacyClockGuid));
         Assert.That(drawingRoomPrefabText, Does.Not.Contain(legacyClockGuid));
         Assert.That(drawingRoomPerspectivePrefabText, Does.Not.Contain(legacyClockGuid));
-        Assert.That(gameplayText, Does.Contain("m_Name: GrandfatherClock"), "The authored Entrance placeholder remains separate world data.");
-        Assert.That(gameplayText, Does.Contain("m_Name: GrandfatherClock_Optional"), "The authored Drawing Room placeholder remains separate world data.");
+        Assert.That(Regex.Matches(gameplayText, @"(?m)^  m_Name: GrandfatherClock$").Count, Is.EqualTo(1), "The authored Entrance placeholder remains separate world data.");
+        Assert.That(Regex.Matches(gameplayText, @"(?m)^  m_Name: GrandfatherClock_Optional$").Count, Is.EqualTo(1), "The authored Drawing Room placeholder remains separate world data.");
+        Assert.That(drawingRoomPrefabText, Does.Contain("m_Name: GrandfatherClock_Optional"));
+        Assert.That(drawingRoomPerspectivePrefabText, Does.Contain("m_Name: GrandfatherClock_Optional"));
         Assert.That(gameplayText, Does.Contain("clockTickingAmbienceController: {fileID: 2201000034}"));
         Assert.That(gameplayText, Does.Contain("catalog: {fileID: 11400000, guid: d1c5479f74b94514cdf7a37d49f95fbe, type: 2}"));
         Assert.That(gameplayText, Does.Contain("audioSource: {fileID: 2201000033}"));
+        Assert.That(gameplayText, Does.Contain("clockStrikeAudioSource: {fileID: 3301000012}"));
+        Assert.That(gameplayText, Does.Contain("clockStrikeVolumeBinding: {fileID: 3301000013}"));
+        Assert.That(gameplayText, Does.Contain("clockStrikeClockFaceSprite: {fileID: 3571343685731824843, guid: 941ff15a69f3e194b9048e9b67b21e20, type: 3}"));
         Assert.That(clockAmbienceText, Does.Not.Contain("AudioClip.Create"), "The canonical ambience owner must use its imported catalog instead of the legacy synthetic tick.");
         Assert.That(chapter1ArrivalText, Does.Not.Contain("Chapter1_ClickTarget_GrandfatherClock"));
         Assert.That(chapter1ArrivalText, Does.Not.Contain("Chapter1_ClickTarget_CoatCloset"));
@@ -611,7 +630,6 @@ public class NavigationRegressionTests
         Assert.That(coatPickupText, Does.Contain("HoverIcon.PickUpCoat"));
         Assert.That(coatPickupText, Does.Contain("HoverIcon.Locked"));
         Assert.That(sceneActionText, Does.Contain("HoverIcon.PlaceHangCoat"));
-        Assert.That(sceneActionText, Does.Contain("HoverIcon.Inspect"));
         Assert.That(sceneActionText, Does.Not.Contain("Chapter1SceneActionType.DrawingRoomExit"));
         Assert.That(guestFindText, Does.Contain("HoverIcon.Talk"));
         Assert.That(playerText, Does.Contain("SetWalkHover"), "Floor hover should keep driving selected walk/blocked cursor actions.");
