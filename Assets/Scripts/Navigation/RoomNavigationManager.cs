@@ -72,6 +72,10 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase
         {
             report.AddError("RoomNavigationManager requires its serialized RuntimeSettingsMenu owner.", this);
         }
+        else
+        {
+            runtimeSettingsMenu.ValidateConfiguration(report);
+        }
 
         if (fireplaceAmbienceController == null)
         {

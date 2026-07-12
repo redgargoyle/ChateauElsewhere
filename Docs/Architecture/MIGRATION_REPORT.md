@@ -51,6 +51,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized the RuntimeSettingsMenu owner and correctly scaled overlay canvas under GameRoot, explicitly wiring navigation, chapter, clock, and exploration-music dependencies while keeping controls lazy.
 - Removed RuntimeSettingsMenu's global/root/canvas factory and made navigation initialize the serialized owner directly; nested controls remain lazy inside that owner.
 - Serialized the exploration-music `GameAudioSourceVolume` owner and bound it directly to RuntimeSettingsMenu. This removes its active component factory and fixes the migration regression that clamped the authored `0.125` base volume to zero whenever the already-serialized AudioSource bypassed legacy discovery.
+- Removed RuntimeSettingsMenu's eight scene-wide dependency searches, EventSystem creation, RectTransform repair, manager/clock/music resolvers, and per-frame source reconfiguration. Its complete serialized graph is now delegated into architecture validation; only the twelve owner-scoped control constructors and their eight UI-component additions remain dynamic.
 - Characterized fireplace and clock ambience before changing ownership: each has a distinct 2D looping source and assigned entrance clip, only fireplace has an enabled high-pass filter, and both owner/source identities survive room travel.
 - Serialized dedicated fireplace and clock ambience owners under GameRoot, explicitly binding navigation, catalogs, separate AudioSources, and the fireplace high-pass filter while retaining the old factories for a separate removal gate.
 - Removed both ambience root factories plus their global navigation lookup, Resources catalog repair, and AudioSource/filter component repair; room navigation now initializes only its serialized owners.
@@ -63,12 +64,12 @@ This report records what is implemented in the repository at this commit. It mus
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 107 | +17 |
-| Runtime C# lines | 49,902 | 50,304 | +402 |
+| Runtime C# lines | 49,902 | 50,277 | +375 |
 | Direct `MonoBehaviour` declarations | 63 | 51 | -12 |
-| `FindObject*`/`GameObject.Find` | 199 | 164 | -35 |
+| `FindObject*`/`GameObject.Find` | 199 | 156 | -43 |
 | `Resources.Load` | 27 | 25 | -2 |
-| runtime `new GameObject` | 98 | 86 | -12 |
-| runtime `AddComponent<T>` | 100 | 78 | -22 |
+| runtime `new GameObject` | 98 | 85 | -13 |
+| runtime `AddComponent<T>` | 100 | 77 | -23 |
 | runtime initialization hooks | 9 | 5 | -4 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -93,6 +94,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - the Chapter 1 HUD graft audit passed 5/5 checks: one owner document added, only its GameObject/controller changed, and all old document order stayed exact;
 - the RuntimeSettings owner graft audit passed 7/7 checks: eight documents added under GameRoot, only navigation/root-transform changed, and SceneRoots/old document order stayed exact;
 - the exploration-music ownership graft added exactly one component document, changed only its GameObject component list and RuntimeSettings binding, preserved the original AudioSource document hash (`3ed1ddba...2487`), old document order, root Transform, and SceneRoots; the desired `.125` lifecycle contract was red before the fix and green after it;
+- the RuntimeSettings dependency-cleanup static, scene-reset, and full lifecycle gates pass; the only scene edit authors the already-enforced `playOnAwake = false` value on the existing music AudioSource, with document order, component identity, roots, clip, pitch, loop, and base volume unchanged;
 - the focused ambience characterization passed and the full-suite gate retained the exact baseline failure-name set;
 - the ambience-owner graft audit passed 6/6 checks: nine documents added, only navigation/root-transform changed, every old document retained its exact order, and SceneRoots stayed byte-identical;
 - the ambience-factory cleanup audit passed 5/5 checks: no document churn, only the two ambience owner documents changed, document order stayed exact, and SceneRoots stayed byte-identical;
@@ -131,8 +133,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Retire dormant external dependency repair in the serialized RuntimeSettingsMenu while preserving its lazy owned controls.
+1. Serialize and validate the remaining stable dialogue dependencies before removing their repair paths.
 2. Characterize the next set piece before migrating it; do not bulk-convert room props from source-text assumptions.
-3. Serialize and validate the remaining stable dialogue dependencies before removing their repair paths.
+3. Prove whether the unreferenced clock-hands display is dead before any deletion.
 
 Do not begin bulk deletion until those gates pass.

@@ -285,6 +285,16 @@ public sealed class ArchitectureFoundationTests
         Assert.That(settingsText, Does.Not.Contain("GetOrCreateMenuCanvas"));
         Assert.That(settingsText, Does.Not.Contain("new GameObject(MenuObjectName"));
         Assert.That(settingsText, Does.Not.Contain("GameAudioSettings.EnsureBinding(musicSource"));
+        Assert.That(settingsText, Does.Not.Contain("FindAnyObjectByType"));
+        Assert.That(settingsText, Does.Not.Contain("FindObjectsByType"));
+        Assert.That(settingsText, Does.Not.Contain("GameObject.Find"));
+        Assert.That(settingsText, Does.Not.Contain("ResolveChapterManager"));
+        Assert.That(settingsText, Does.Not.Contain("ResolveChapterClock"));
+        Assert.That(settingsText, Does.Not.Contain("ResolveExplorationMusicSource"));
+        Assert.That(settingsText, Does.Not.Contain("EnsureEventSystem"));
+        Assert.That(settingsText, Does.Not.Contain("AddComponent<RectTransform>"));
+        Assert.That(settingsText, Does.Contain("public void ValidateConfiguration"));
+        Assert.That(navigationText, Does.Contain("runtimeSettingsMenu.ValidateConfiguration(report)"));
         Assert.That(navigationText, Does.Not.Contain("RuntimeSettingsMenu.FindOrCreate"));
         Assert.That(navigationText, Does.Contain("runtimeSettingsMenu?.Initialize(this)"));
         Assert.That(settingsText, Does.Contain("FindOrCreateSettingsOverlay"), "Nested settings controls remain deliberate owner-scoped view construction.");

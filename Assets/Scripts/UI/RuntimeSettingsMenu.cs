@@ -6,7 +6,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
-public class RuntimeSettingsMenu : MonoBehaviour
+[RequireComponent(typeof(RectTransform))]
+public class RuntimeSettingsMenu : MonoBehaviour, Chateau.Architecture.IArchitectureValidatable
 {
     private const string SettingsOverlayName = "Panel_SettingsOverlay";
     private const string SettingsPanelName = "Panel_SettingsModal";
@@ -23,8 +24,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private const string GameSoundsAudioControlName = "Control_AudioGameSounds";
     private const string AtmosphereAudioControlName = "Control_AudioAtmosphere";
     private const string MusicAudioControlName = "Control_AudioMusic";
-    private const string ExplorationMusicObjectName = "Audio_ExplorationMusic";
-    private const string ExplorationMusicClipName = "unity_dreadforge_soundscape";
     private const float ButtonWidth = 150f;
     private const float ButtonHeight = 34f;
     private const float SettingsPanelWidth = 640f;
@@ -103,6 +102,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private bool isUpdatingDebugTimeControl;
     private bool isUpdatingAudioControl;
     private bool timeScalePausedForSettings;
+    private bool initialized;
 
     public static bool BlocksGameInput { get; private set; }
 
@@ -110,21 +110,88 @@ public class RuntimeSettingsMenu : MonoBehaviour
     {
         BlocksGameInput = false;
         NavigationCursorController.SetGameplayHoverBlocked(false);
-
-        RuntimeSettingsMenu existing = FindAnyObjectByType<RuntimeSettingsMenu>(FindObjectsInactive.Include);
-
-        if (existing != null)
-        {
-            existing.ResetModalStateForRuntimeReset();
-        }
     }
 
-    public void Initialize(RoomNavigationManager navigationManager)
+    public void Initialize(RoomNavigationManager owner)
     {
-        this.navigationManager = navigationManager;
-        EnsureEventSystem();
+        if (navigationManager == null || owner != navigationManager)
+        {
+            Debug.LogError("RuntimeSettingsMenu requires the RoomNavigationManager serialized by its owner.", this);
+            return;
+        }
+
+        if (!initialized)
+        {
+            ResetModalStateForRuntimeReset();
+            initialized = true;
+        }
+
         EnsureUI();
         RefreshOpenState();
+    }
+
+    public void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        if (report == null)
+        {
+            throw new ArgumentNullException(nameof(report));
+        }
+
+        if (navigationManager == null)
+        {
+            report.AddError("RuntimeSettingsMenu requires its serialized RoomNavigationManager.", this);
+        }
+
+        if (chapterManager == null)
+        {
+            report.AddError("RuntimeSettingsMenu requires its serialized ChapterManager.", this);
+        }
+
+        if (chapterClock == null)
+        {
+            report.AddError("RuntimeSettingsMenu requires its serialized ChapterClock.", this);
+        }
+        else if (chapterManager != null && chapterManager.Clock != chapterClock)
+        {
+            report.AddError("RuntimeSettingsMenu and ChapterManager must reference the same ChapterClock.", this);
+        }
+
+        if (explorationMusicSource == null)
+        {
+            report.AddError("RuntimeSettingsMenu requires its serialized exploration-music AudioSource.", this);
+        }
+
+        if (explorationMusicVolumeBinding == null)
+        {
+            report.AddError("RuntimeSettingsMenu requires its serialized exploration-music volume owner.", this);
+        }
+        else
+        {
+            if (explorationMusicSource != null && explorationMusicVolumeBinding.gameObject != explorationMusicSource.gameObject)
+            {
+                report.AddError("RuntimeSettingsMenu exploration music source and volume owner must share one GameObject.", this);
+            }
+
+            if (explorationMusicVolumeBinding.Channel != GameAudioChannel.Music)
+            {
+                report.AddError("RuntimeSettingsMenu exploration music volume owner must use the Music channel.", this);
+            }
+
+            if (explorationMusicVolumeBinding.BaseVolume <= 0f)
+            {
+                report.AddError("RuntimeSettingsMenu exploration music requires a positive authored base volume.", this);
+            }
+        }
+
+        if (!(transform is RectTransform))
+        {
+            report.AddError("RuntimeSettingsMenu requires an authored RectTransform.", this);
+        }
+
+        if (GetComponentInParent<Canvas>() == null)
+        {
+            report.AddError("RuntimeSettingsMenu requires an authored parent Canvas.", this);
+        }
     }
 
     private void OnDisable()
@@ -143,7 +210,8 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
         if (rootRect == null)
         {
-            rootRect = gameObject.AddComponent<RectTransform>();
+            Debug.LogError("RuntimeSettingsMenu cannot build controls without its authored RectTransform.", this);
+            return;
         }
 
         Canvas canvas = GetComponentInParent<Canvas>();
@@ -207,7 +275,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
         roomList.anchoredPosition = new Vector2(SettingsPanelWidth - ButtonWidth - 28f, -80f);
 
         RefreshAudioControls();
-        EnsureRuntimeAudioBindings();
+        MaintainExplorationMusicPlayback();
     }
 
     private void DisableLegacyDebugChildren()
@@ -230,7 +298,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void Update()
     {
-        EnsureRuntimeAudioBindings();
+        MaintainExplorationMusicPlayback();
 
         if (settingsOpen)
         {
@@ -276,7 +344,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void SkipToChapter2()
     {
-        ChapterManager manager = ResolveChapterManager();
+        ChapterManager manager = chapterManager;
 
         if (manager == null)
         {
@@ -290,7 +358,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void SkipToChapter3()
     {
-        ChapterManager manager = ResolveChapterManager();
+        ChapterManager manager = chapterManager;
 
         if (manager == null)
         {
@@ -304,7 +372,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void SkipToSevenPM()
     {
-        ChapterManager manager = ResolveChapterManager();
+        ChapterManager manager = chapterManager;
 
         if (manager == null)
         {
@@ -504,51 +572,18 @@ public class RuntimeSettingsMenu : MonoBehaviour
     {
         if (navigationManager == null)
         {
-            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
-        }
-
-        if (navigationManager == null)
-        {
             return;
         }
 
-        ResolveChapterManager()?.StopActiveDialogueForDebugTransition();
+        chapterManager?.StopActiveDialogueForDebugTransition();
         navigationManager.DebugTeleportToRoom(roomName);
         roomListOpen = false;
         RefreshOpenState();
     }
 
-    private ChapterManager ResolveChapterManager()
-    {
-        if (chapterManager == null)
-        {
-            chapterManager = FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include);
-        }
-
-        return chapterManager;
-    }
-
-    private ChapterClock ResolveChapterClock()
-    {
-        if (chapterClock == null)
-        {
-            ChapterManager manager = ResolveChapterManager();
-            chapterClock = manager != null
-                ? manager.GetComponent<ChapterClock>()
-                : FindAnyObjectByType<ChapterClock>(FindObjectsInactive.Include);
-        }
-
-        if (chapterClock == null)
-        {
-            chapterClock = FindAnyObjectByType<ChapterClock>(FindObjectsInactive.Include);
-        }
-
-        return chapterClock;
-    }
-
     private void ApplyDebugGameTimeSpeed(float secondsPerGameMinute)
     {
-        ChapterClock clock = ResolveChapterClock();
+        ChapterClock clock = chapterClock;
 
         if (clock == null)
         {
@@ -563,24 +598,17 @@ public class RuntimeSettingsMenu : MonoBehaviour
     private void ApplyAudioVolume(GameAudioChannel channel, float normalizedVolume)
     {
         GameAudioSettings.SetVolume(channel, normalizedVolume);
-        EnsureRuntimeAudioBindings();
         RefreshAudioControls();
     }
 
-    private void EnsureRuntimeAudioBindings()
+    private void MaintainExplorationMusicPlayback()
     {
-        AudioSource musicSource = ResolveExplorationMusicSource();
+        AudioSource musicSource = explorationMusicSource;
 
-        if (musicSource == null)
+        if (musicSource == null || explorationMusicVolumeBinding == null)
         {
             return;
         }
-
-        musicSource.playOnAwake = false;
-        musicSource.loop = true;
-        musicSource.spatialBlend = 0f;
-        musicSource.ignoreListenerVolume = true;
-        explorationMusicVolumeBinding?.Apply();
 
         if (!musicSource.isPlaying)
         {
@@ -601,58 +629,9 @@ public class RuntimeSettingsMenu : MonoBehaviour
         }
     }
 
-    private AudioSource ResolveExplorationMusicSource()
-    {
-        if (explorationMusicSource != null)
-        {
-            return explorationMusicSource;
-        }
-
-        GameObject musicObject = GameObject.Find(ExplorationMusicObjectName);
-
-        if (musicObject != null)
-        {
-            explorationMusicSource = musicObject.GetComponent<AudioSource>();
-        }
-
-        if (explorationMusicSource == null)
-        {
-            AudioSource[] sources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include);
-
-            for (int i = 0; i < sources.Length; i++)
-            {
-                AudioSource source = sources[i];
-
-                if (IsExplorationMusicSource(source))
-                {
-                    explorationMusicSource = source;
-                    break;
-                }
-            }
-        }
-
-        return explorationMusicSource;
-    }
-
-    private static bool IsExplorationMusicSource(AudioSource source)
-    {
-        if (source == null)
-        {
-            return false;
-        }
-
-        if (source.gameObject.name == ExplorationMusicObjectName)
-        {
-            return true;
-        }
-
-        AudioClip clip = source.clip;
-        return clip != null && clip.name == ExplorationMusicClipName;
-    }
-
     private void RefreshDebugTimeControl()
     {
-        ChapterClock clock = ResolveChapterClock();
+        ChapterClock clock = chapterClock;
         bool hasClock = clock != null;
         float value = hasClock ? clock.SecondsPerGameMinute : MinSecondsPerGameMinute;
 
@@ -744,7 +723,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
 
     private void SetDebugSliderFromPointer(DebugSliderKind kind, RectTransform sliderRect, PointerEventData eventData)
     {
-        ChapterClock clock = kind == DebugSliderKind.Time ? ResolveChapterClock() : null;
+        ChapterClock clock = kind == DebugSliderKind.Time ? chapterClock : null;
 
         if (sliderRect == null || eventData == null)
         {
@@ -1454,16 +1433,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
         }
 
         return new string(result).Trim('_');
-    }
-
-    private static void EnsureEventSystem()
-    {
-        if (FindAnyObjectByType<EventSystem>(FindObjectsInactive.Include) != null)
-        {
-            return;
-        }
-
-        new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
     }
 
     private sealed class DebugSliderDragTarget : MonoBehaviour, IPointerDownHandler, IDragHandler
