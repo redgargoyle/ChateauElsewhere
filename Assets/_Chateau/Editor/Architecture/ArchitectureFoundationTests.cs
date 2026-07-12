@@ -338,7 +338,7 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1BindsSerializedGuestScaleAndCoatHangerOwners()
+    public void Chapter1OwnsCoatHangerAndCharacterizesCoreReferenceRepair()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter1Document = ExtractDocument(sceneText, "--- !u!114 &3302000001");
@@ -355,6 +355,13 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("butlerScaleSource: {fileID: 81962842}"));
         Assert.That(chapter1Document, Does.Contain("coatCloset: {fileID: 3303000001}"));
         Assert.That(chapter1Document, Does.Contain("closetPoint: {fileID: 1592234993}"));
+        Assert.That(chapter1Document, Does.Contain("chapterManager: {fileID: 3301000004}"));
+        Assert.That(chapter1Document, Does.Contain("eventScheduler: {fileID: 3301000002}"));
+        Assert.That(chapter1Document, Does.Contain("chapterClock: {fileID: 0}"));
+        Assert.That(chapter1Document, Does.Contain("cameraManager: {fileID: 0}"));
+        Assert.That(chapter1Document, Does.Contain("navigationManager: {fileID: 0}"));
+        Assert.That(chapter1Document, Does.Contain("playerMovement: {fileID: 0}"));
+        Assert.That(chapter1Document, Does.Contain("playerButlerReference: {fileID: 0}"));
         Assert.That(hangerDocument, Does.Contain("m_Name: entrance_coat_hanger_0"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234993}"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234994}"));
@@ -403,6 +410,13 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Not.Contain("FindPropAnchor(\"CoatCloset\""));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized Entrance coat closet."));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized Entrance closet approach point."));
+        Assert.That(chapter1Text, Does.Contain("FindAnyObjectByType<ChapterManager>"));
+        Assert.That(chapter1Text, Does.Contain("FindAnyObjectByType<ChapterClock>"));
+        Assert.That(chapter1Text, Does.Contain("FindAnyObjectByType<ChapterEventScheduler>"));
+        Assert.That(chapter1Text, Does.Contain("FindAnyObjectByType<RoomNavigationManager>"));
+        Assert.That(chapter1Text, Does.Contain("FindAnyObjectByType<CameraManager>"));
+        Assert.That(chapter1Text, Does.Contain("GameObject.Find(\"Player\")"));
+        Assert.That(chapter1Text, Does.Contain("FindPlayerMovement()"));
     }
 
     [Test]

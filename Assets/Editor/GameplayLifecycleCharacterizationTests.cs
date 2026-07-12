@@ -63,6 +63,13 @@ public sealed class GameplayLifecycleCharacterizationTests
         ChapterEventScheduler scheduler = RequireExactlyOneInActiveScene<ChapterEventScheduler>();
         ChapterIntroUI intro = RequireExactlyOneInActiveScene<ChapterIntroUI>();
         Chapter1ArrivalController arrival = RequireExactlyOneInActiveScene<Chapter1ArrivalController>();
+        ChapterManager serializedArrivalChapterManager = GetPrivateField<ChapterManager>(arrival, "chapterManager");
+        ChapterClock serializedArrivalClock = GetPrivateField<ChapterClock>(arrival, "chapterClock");
+        ChapterEventScheduler serializedArrivalScheduler = GetPrivateField<ChapterEventScheduler>(arrival, "eventScheduler");
+        CameraManager serializedArrivalCamera = GetPrivateField<CameraManager>(arrival, "cameraManager");
+        RoomNavigationManager serializedArrivalNavigation = GetPrivateField<RoomNavigationManager>(arrival, "navigationManager");
+        PointClickPlayerMovement serializedArrivalPlayerMovement = GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement");
+        GameObject serializedArrivalButlerRoot = GetPrivateField<GameObject>(arrival, "playerButlerReference");
         Chapter1InteractionHUD chapter1Hud = RequireExactlyOneInActiveScene<Chapter1InteractionHUD>();
         Transform entranceCoatHanger = FindInActiveScene<Transform>()
             .Single(item => item.name == "entrance_coat_hanger_0");
@@ -131,6 +138,13 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(lighting, Is.Not.Null);
         Assert.That(chapter.Clock, Is.SameAs(clock));
         Assert.That(chapter.EventScheduler, Is.SameAs(scheduler));
+        Assert.That(serializedArrivalChapterManager, Is.SameAs(chapter));
+        Assert.That(serializedArrivalClock, Is.SameAs(clock));
+        Assert.That(serializedArrivalScheduler, Is.SameAs(scheduler));
+        Assert.That(serializedArrivalCamera, Is.SameAs(cameraManager));
+        Assert.That(serializedArrivalNavigation, Is.SameAs(navigation));
+        Assert.That(serializedArrivalPlayerMovement, Is.Not.Null);
+        Assert.That(serializedArrivalButlerRoot, Is.SameAs(serializedArrivalPlayerMovement.gameObject));
         SubtitleService subtitle = RequireExactlyOneInActiveScene<SubtitleService>();
         DialogueSpeechService speech = RequireExactlyOneInActiveScene<DialogueSpeechService>();
         Assert.That(subtitle.IsInitialized, Is.True);
@@ -181,6 +195,13 @@ public sealed class GameplayLifecycleCharacterizationTests
         entranceCoatCloset.StoreCoat("architecture_characterization_coat");
         InvokePrivateBooleanMethod(arrival, "ResolveReferences", true);
         InvokePrivateBooleanMethod(arrival, "ResolveReferences", true);
+        Assert.That(GetPrivateField<ChapterManager>(arrival, "chapterManager"), Is.SameAs(serializedArrivalChapterManager));
+        Assert.That(GetPrivateField<ChapterClock>(arrival, "chapterClock"), Is.SameAs(serializedArrivalClock));
+        Assert.That(GetPrivateField<ChapterEventScheduler>(arrival, "eventScheduler"), Is.SameAs(serializedArrivalScheduler));
+        Assert.That(GetPrivateField<CameraManager>(arrival, "cameraManager"), Is.SameAs(serializedArrivalCamera));
+        Assert.That(GetPrivateField<RoomNavigationManager>(arrival, "navigationManager"), Is.SameAs(serializedArrivalNavigation));
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement"), Is.SameAs(serializedArrivalPlayerMovement));
+        Assert.That(GetPrivateField<GameObject>(arrival, "playerButlerReference"), Is.SameAs(serializedArrivalButlerRoot));
         Assert.That(GetPrivateField<CoatCloset>(arrival, "coatCloset"), Is.SameAs(entranceCoatCloset));
         Assert.That(GetPrivateField<Transform>(arrival, "closetPoint"), Is.SameAs(entranceCoatHanger));
         Assert.That(entranceCoatHanger.GetComponent<CoatCloset>(), Is.SameAs(entranceCoatCloset));
@@ -431,6 +452,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(playerObject, Is.Not.Null);
         PointClickPlayerMovement player = playerObject.GetComponent<PointClickPlayerMovement>();
         Assert.That(player, Is.Not.Null);
+        Assert.That(serializedArrivalPlayerMovement, Is.SameAs(player));
+        Assert.That(serializedArrivalButlerRoot, Is.SameAs(playerObject));
         PlayerMovement legacyPlayerMovement = playerObject.GetComponent<PlayerMovement>();
         CharacterController2D legacyPlayerController = playerObject.GetComponent<CharacterController2D>();
         Assert.That(legacyPlayerMovement, Is.Not.Null);
@@ -756,6 +779,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(entranceCoatHanger.GetComponent<Chapter1SceneAction>(), Is.SameAs(entranceCoatAction));
         Assert.That(entranceCoatHanger.GetComponent<BoxCollider2D>(), Is.SameAs(entranceCoatCollider));
         Assert.That(FindInActiveScene<CoatCloset>(), Has.Length.EqualTo(1));
+        Assert.That(GetPrivateField<ChapterClock>(arrival, "chapterClock"), Is.SameAs(serializedArrivalClock));
+        Assert.That(GetPrivateField<CameraManager>(arrival, "cameraManager"), Is.SameAs(serializedArrivalCamera));
+        Assert.That(GetPrivateField<RoomNavigationManager>(arrival, "navigationManager"), Is.SameAs(serializedArrivalNavigation));
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement"), Is.SameAs(serializedArrivalPlayerMovement));
         Debug.Log(
             $"[EntranceCoatHangerCharacterization] hanger={entranceCoatHanger.GetInstanceID()} " +
             $"closet={entranceCoatCloset.GetInstanceID()} action={entranceCoatAction.GetInstanceID()} " +
@@ -836,6 +863,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(guestPanic, Is.SameAs(serializedGuestPanic));
         Assert.That(guestSearch, Is.SameAs(serializedGuestSearch));
         Assert.That(GetPrivateField<RoomNavigationManager>(guestSearch, "navigationManager"), Is.SameAs(serializedGuestSearchNavigation));
+        Assert.That(GetPrivateField<ChapterClock>(arrival, "chapterClock"), Is.SameAs(serializedArrivalClock));
+        Assert.That(GetPrivateField<CameraManager>(arrival, "cameraManager"), Is.SameAs(serializedArrivalCamera));
+        Assert.That(GetPrivateField<RoomNavigationManager>(arrival, "navigationManager"), Is.SameAs(serializedArrivalNavigation));
+        Assert.That(GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement"), Is.SameAs(serializedArrivalPlayerMovement));
 
         chapter.SkipToChapter2ForTesting();
         yield return WaitForSettledLayout();
@@ -854,6 +885,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<ClockTickingAmbienceController>(), Is.SameAs(clockAmbience));
         Assert.That(RequireExactlyOneInActiveScene<EventSystem>(), Is.SameAs(serializedEventSystem));
         Assert.That(explorationMusicSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(explorationMusicBinding));
+        Assert.That(GetPrivateField<ChapterManager>(arrival, "chapterManager"), Is.SameAs(serializedArrivalChapterManager));
+        Assert.That(GetPrivateField<ChapterEventScheduler>(arrival, "eventScheduler"), Is.SameAs(serializedArrivalScheduler));
+        Assert.That(GetPrivateField<GameObject>(arrival, "playerButlerReference"), Is.SameAs(serializedArrivalButlerRoot));
 
         chapter.SkipToSevenPMForTesting();
         yield return null;
