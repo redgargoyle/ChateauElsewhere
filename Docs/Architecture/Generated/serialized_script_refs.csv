@@ -47,7 +47,7 @@ Assets/Scripts/Audio/FireplaceAmbienceCatalog.cs,926ef3a5f44c4152b79ea814a82314a
 Assets/Scripts/Audio/FireplaceAmbienceController.cs,c5d8eebb18904780a5d77a1c9da6ce6f,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Audio/GameAudioChannel.cs,8fe4e69ce16b4d3e95089bb59143a5c4,0,
 Assets/Scripts/Audio/GameAudioSettings.cs,1b9a0f792f8f43148bda82fe619819c6,0,
-Assets/Scripts/Audio/GameAudioSourceVolume.cs,5161da2d2e1b408d859e3792f47407f4,0,
+Assets/Scripts/Audio/GameAudioSourceVolume.cs,5161da2d2e1b408d859e3792f47407f4,1,Assets/Scenes/Gameplay.unity:1
 Assets/Scripts/Audio/GuestFootstepAudio.cs,97301c28479e2e1dc90448e43a36d7fe,0,
 Assets/Scripts/Audio/GuestFootstepCatalog.cs,c1e4c474e559b01dfdafba00f05810a6,1,Assets/Resources/Audio/GuestFootstepCatalog.asset:1
 Assets/Scripts/Audio/GuestVoiceLineCatalog.cs,0d2c7f4e9a0b4e4c8d5e6f708192a3b4,1,Assets/Resources/Audio/GuestVoiceLineCatalog.asset:1

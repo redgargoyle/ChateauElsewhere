@@ -5,6 +5,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -99,6 +100,37 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(chapter1Canvas.sortingOrder, Is.EqualTo(9100));
         Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Text_Chapter1Status"), Is.EqualTo(1));
         Canvas settingsCanvas = FindInActiveScene<Canvas>().Single(item => item.name == "Canvas_RuntimeSettingsMenu");
+        EventSystem serializedEventSystem = RequireExactlyOneInActiveScene<EventSystem>();
+        AudioSource explorationMusicSource = FindInActiveScene<AudioSource>()
+            .Single(item => item.gameObject.name == "Audio_ExplorationMusic");
+        GameAudioSourceVolume[] explorationMusicBindings = explorationMusicSource.GetComponents<GameAudioSourceVolume>();
+        Assert.That(GetPrivateField<RoomNavigationManager>(runtimeSettings, "navigationManager"), Is.SameAs(navigation));
+        Assert.That(GetPrivateField<ChapterManager>(runtimeSettings, "chapterManager"), Is.SameAs(chapter));
+        Assert.That(GetPrivateField<ChapterClock>(runtimeSettings, "chapterClock"), Is.SameAs(clock));
+        Assert.That(GetPrivateField<AudioSource>(runtimeSettings, "explorationMusicSource"), Is.SameAs(explorationMusicSource));
+        Assert.That(explorationMusicBindings, Has.Length.EqualTo(1), "Exploration music must have exactly one channel-volume owner after settings initialization.");
+        GameAudioSourceVolume explorationMusicBinding = explorationMusicBindings[0];
+        Assert.That(explorationMusicBinding.gameObject, Is.SameAs(explorationMusicSource.gameObject));
+        Assert.That(explorationMusicBinding.Channel, Is.EqualTo(GameAudioChannel.Music));
+        Assert.That(explorationMusicBinding.BaseVolume, Is.EqualTo(0.125f).Within(0.0001f));
+        Assert.That(explorationMusicSource.clip, Is.Not.Null);
+        Assert.That(explorationMusicSource.playOnAwake, Is.False);
+        Assert.That(explorationMusicSource.loop, Is.True);
+        Assert.That(explorationMusicSource.spatialBlend, Is.Zero);
+        Assert.That(explorationMusicSource.ignoreListenerVolume, Is.True);
+        Assert.That(
+            explorationMusicSource.volume,
+            Is.EqualTo(explorationMusicBinding.BaseVolume * GameAudioSettings.GetVolume(GameAudioChannel.Music)).Within(0.0001f));
+        int settingsDescendantCount = runtimeSettings.GetComponentsInChildren<Transform>(true).Length;
+        runtimeSettings.Initialize(navigation);
+        yield return null;
+        Assert.That(RequireExactlyOneInActiveScene<EventSystem>(), Is.SameAs(serializedEventSystem));
+        Assert.That(
+            FindInActiveScene<AudioSource>().Single(item => item.gameObject.name == "Audio_ExplorationMusic"),
+            Is.SameAs(explorationMusicSource));
+        Assert.That(explorationMusicSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+        Assert.That(explorationMusicSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(explorationMusicBinding));
+        Assert.That(runtimeSettings.GetComponentsInChildren<Transform>(true), Has.Length.EqualTo(settingsDescendantCount), "Reinitializing the serialized settings owner must reuse every lazy control.");
         Assert.That(settingsCanvas.sortingOrder, Is.EqualTo(10050));
         Assert.That(settingsCanvas.transform.localScale, Is.Not.EqualTo(Vector3.zero));
         Button settingsButton = FindInActiveScene<Button>().Single(item => item.name == "Button_Settings");
@@ -318,6 +350,11 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<RoomLightingController>(), Is.SameAs(lighting));
         Assert.That(RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>(), Is.SameAs(gameRoot));
         Assert.That(RequireExactlyOneInActiveScene<RuntimeSettingsMenu>(), Is.SameAs(runtimeSettings));
+        Assert.That(RequireExactlyOneInActiveScene<EventSystem>(), Is.SameAs(serializedEventSystem));
+        Assert.That(
+            FindInActiveScene<AudioSource>().Single(item => item.gameObject.name == "Audio_ExplorationMusic"),
+            Is.SameAs(explorationMusicSource));
+        Assert.That(explorationMusicSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(explorationMusicBinding));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleApplier>(), Is.SameAs(serializedGuestScaleApplier));
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
         Assert.That(RequireExactlyOneInActiveScene<RuntimeSettingsMenu>(), Is.SameAs(runtimeSettings));
@@ -376,6 +413,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(RequireExactlyOneInActiveScene<GuestRoomScaleCalibration>(), Is.SameAs(serializedGuestScaleCalibration));
         Assert.That(RequireExactlyOneInActiveScene<FireplaceAmbienceController>(), Is.SameAs(fireplaceAmbience));
         Assert.That(RequireExactlyOneInActiveScene<ClockTickingAmbienceController>(), Is.SameAs(clockAmbience));
+        Assert.That(RequireExactlyOneInActiveScene<EventSystem>(), Is.SameAs(serializedEventSystem));
+        Assert.That(explorationMusicSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(explorationMusicBinding));
     }
 
     private static IEnumerator WaitForSettledLayout()
@@ -424,6 +463,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             .FirstOrDefault(candidate => candidate.gameObject.name == objectName);
         Assert.That(component, Is.Not.Null, $"Missing active-scene object '{objectName}'.");
         return component;
+    }
+
+    private static T GetPrivateField<T>(object owner, string fieldName) where T : class
+    {
+        System.Reflection.FieldInfo field = owner.GetType().GetField(
+            fieldName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"Missing private field '{fieldName}' on {owner.GetType().Name}.");
+        return field.GetValue(owner) as T;
     }
 
     private static ScaleSnapshot CaptureScale(

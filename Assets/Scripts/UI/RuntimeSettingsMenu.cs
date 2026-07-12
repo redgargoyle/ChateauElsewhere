@@ -94,7 +94,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
     [SerializeField] private ChapterManager chapterManager;
     [SerializeField] private ChapterClock chapterClock;
     [SerializeField] private AudioSource explorationMusicSource;
-    private float explorationMusicBaseVolume = -1f;
+    [SerializeField] private GameAudioSourceVolume explorationMusicVolumeBinding;
     private bool loggedExplorationMusicStartFailure;
     private float timeScaleBeforeSettings = 1f;
     private bool settingsOpen;
@@ -580,7 +580,7 @@ public class RuntimeSettingsMenu : MonoBehaviour
         musicSource.loop = true;
         musicSource.spatialBlend = 0f;
         musicSource.ignoreListenerVolume = true;
-        GameAudioSettings.EnsureBinding(musicSource, GameAudioChannel.Music, Mathf.Max(0f, explorationMusicBaseVolume));
+        explorationMusicVolumeBinding?.Apply();
 
         if (!musicSource.isPlaying)
         {
@@ -629,11 +629,6 @@ public class RuntimeSettingsMenu : MonoBehaviour
                     break;
                 }
             }
-        }
-
-        if (explorationMusicSource != null && explorationMusicBaseVolume < 0f)
-        {
-            explorationMusicBaseVolume = explorationMusicSource.volume;
         }
 
         return explorationMusicSource;

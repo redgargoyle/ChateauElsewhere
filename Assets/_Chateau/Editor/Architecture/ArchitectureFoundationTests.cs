@@ -275,12 +275,16 @@ public sealed class ArchitectureFoundationTests
         Assert.That(sceneText, Does.Contain("chapterManager: {fileID: 3301000004}"));
         Assert.That(sceneText, Does.Contain("chapterClock: {fileID: 3301000001}"));
         Assert.That(sceneText, Does.Contain("explorationMusicSource: {fileID: 2201000003}"));
+        Assert.That(sceneText, Does.Contain("explorationMusicVolumeBinding: {fileID: 2201000004}"));
+        Assert.That(CountOccurrences(sceneText, "guid: 5161da2d2e1b408d859e3792f47407f4"), Is.EqualTo(1));
+        Assert.That(sceneText, Does.Match(@"--- !u!114 &2201000004[\s\S]*?m_GameObject: \{fileID: 2201000001\}[\s\S]*?audioSource: \{fileID: 2201000003\}[\s\S]*?channel: 3[\s\S]*?baseVolume: 0\.125"));
 
         string settingsText = File.ReadAllText("Assets/Scripts/UI/RuntimeSettingsMenu.cs");
         string navigationText = File.ReadAllText("Assets/Scripts/Navigation/RoomNavigationManager.cs");
         Assert.That(settingsText, Does.Not.Contain("RuntimeSettingsMenu FindOrCreate"));
         Assert.That(settingsText, Does.Not.Contain("GetOrCreateMenuCanvas"));
         Assert.That(settingsText, Does.Not.Contain("new GameObject(MenuObjectName"));
+        Assert.That(settingsText, Does.Not.Contain("GameAudioSettings.EnsureBinding(musicSource"));
         Assert.That(navigationText, Does.Not.Contain("RuntimeSettingsMenu.FindOrCreate"));
         Assert.That(navigationText, Does.Contain("runtimeSettingsMenu?.Initialize(this)"));
         Assert.That(settingsText, Does.Contain("FindOrCreateSettingsOverlay"), "Nested settings controls remain deliberate owner-scoped view construction.");

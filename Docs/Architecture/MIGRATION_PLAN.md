@@ -63,6 +63,7 @@ Only after Phase 2 passes:
 - ChapterManager owns serialized dialogue/subtitle services and one direct debug-transition cleanup command; settings and teleports delegate to it, and the final static voice-stop/global subtitle searches are removed;
 - the inert Chapter 1 HUD owner is serialized on the Chapter 1 controller; its lookup/factory/flag are removed while lazy canvas/text presentation remains deliberate;
 - RuntimeSettingsMenu and its correctly scaled canvas are serialized under GameRoot with explicit navigation/chapter/clock/music; root/canvas factories are removed while nested controls remain lazy and owner-scoped;
+- exploration music has one serialized channel-volume owner at its authored `0.125` base volume; RuntimeSettings no longer creates/reconfigures that component and the prior zero-volume migration regression is lifecycle-gated;
 - fireplace and clock ambience ownership is behaviorally frozen, then serialized under GameRoot with distinct sources, explicit catalogs/navigation, and a fireplace-only high-pass filter; their root, resource, and component-repair factories are removed;
 - remove `DialogueSpeechService.FindOrCreate` and `SubtitleService.FindOrCreate` call sites after callers receive serialized/service references;
 - replace `UrpPostProcessingBootstrap` with a serialized render rig;
