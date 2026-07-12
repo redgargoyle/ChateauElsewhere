@@ -31,6 +31,13 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
     private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.Door;
     private PointClickPlayerMovement pendingFrontDoorApproachPlayer;
 
+    public bool IsConfiguredFor(
+        Chapter1SceneActionType expectedActionType,
+        Chapter1ArrivalController expectedController)
+    {
+        return actionType == expectedActionType && arrivalController == expectedController;
+    }
+
     public void Initialize(
         Chapter1SceneActionType nextActionType,
         Chapter1ArrivalController controller,

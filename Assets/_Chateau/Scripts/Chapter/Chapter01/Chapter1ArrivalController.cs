@@ -68,6 +68,7 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [SerializeField] private GrandfatherClockInteraction grandfatherClock;
     [SerializeField] private ChapterTimeSettingsUI timeSettingsUI;
     [SerializeField] private Chapter1InteractionHUD interactionHUD;
+    [SerializeField] private Chapter1SceneAction frontDoorSceneAction;
     [SerializeField] private GuestRoomScaleApplier guestRoomScaleApplier;
 
     [Header("Rooms")]
@@ -145,7 +146,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private bool emptyDoorbellWaitingForAnswer;
     private bool butlerCarryingCoat;
     private string carriedCoatId = string.Empty;
-    private Chapter1SceneAction frontDoorSceneAction;
     private GuestRuntimeState carriedCoatGuest;
     private GuestRuntimeState pendingCoatPickupGuest;
     private bool guestScaleConfigurationErrorLogged;
@@ -254,6 +254,26 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             playerButlerReference != playerMovement.gameObject)
         {
             report.AddError("Chapter1ArrivalController Player movement and Butler root must identify the same actor.", this);
+        }
+
+        if (frontDoorSceneAction == null)
+        {
+            report.AddError("Chapter1ArrivalController requires its serialized front-door action.", this);
+        }
+        else
+        {
+            if (!frontDoorSceneAction.enabled ||
+                !frontDoorSceneAction.IsConfiguredFor(Chapter1SceneActionType.FrontDoor, this))
+            {
+                report.AddError("Chapter1ArrivalController requires its enabled front-door action to target this controller.", this);
+            }
+
+            BoxCollider2D frontDoorCollider = frontDoorSceneAction.GetComponent<BoxCollider2D>();
+
+            if (frontDoorCollider == null || !frontDoorCollider.enabled || !frontDoorCollider.isTrigger)
+            {
+                report.AddError("Chapter1ArrivalController front-door action requires its enabled authored trigger collider.", this);
+            }
         }
 
         if (coatCloset == null)
@@ -4169,7 +4189,9 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private void EnsureDoorAnswerTriggerAction(bool createFallback)
     {
-        GameObject targetObject = FindDoorAnswerTriggerObject();
+        GameObject targetObject = frontDoorSceneAction != null
+            ? frontDoorSceneAction.gameObject
+            : FindDoorAnswerTriggerObject();
 
         if (targetObject == null && createFallback)
         {

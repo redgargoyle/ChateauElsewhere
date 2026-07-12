@@ -338,7 +338,7 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void Chapter1CharacterizesAuthoredFrontDoorActionRepair()
+    public void Chapter1OwnsSerializedFrontDoorActionWithFallbackStaged()
     {
         string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string chapter1Document = ExtractDocument(sceneText, "--- !u!114 &3302000001");
@@ -367,7 +367,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Document, Does.Contain("navigationManager: {fileID: 1878886997}"));
         Assert.That(chapter1Document, Does.Contain("playerMovement: {fileID: 81962842}"));
         Assert.That(chapter1Document, Does.Contain("playerButlerReference: {fileID: 0}"));
-        Assert.That(chapter1Document, Does.Not.Contain("frontDoorSceneAction:"));
+        Assert.That(chapter1Document, Does.Contain("frontDoorSceneAction: {fileID: 1180734300}"));
         Assert.That(hangerDocument, Does.Contain("m_Name: entrance_coat_hanger_0"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234993}"));
         Assert.That(hangerDocument, Does.Contain("- component: {fileID: 1592234994}"));
@@ -444,7 +444,11 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Not.Contain("chapterManager = manager"));
         Assert.That(chapter1Text, Does.Contain("AcceptsManagerCommandFrom(manager)"));
         Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController rejected a command from a different ChapterManager."));
-        Assert.That(chapter1Text, Does.Contain("private Chapter1SceneAction frontDoorSceneAction;"));
+        Assert.That(chapter1Text, Does.Contain("[SerializeField] private Chapter1SceneAction frontDoorSceneAction;"));
+        Assert.That(chapter1Text, Does.Contain("frontDoorSceneAction != null"));
+        Assert.That(chapter1Text, Does.Contain("Chapter1ArrivalController requires its serialized front-door action."));
+        Assert.That(chapter1Text, Does.Contain("frontDoorSceneAction.IsConfiguredFor(Chapter1SceneActionType.FrontDoor, this)"));
+        Assert.That(chapter1Text, Does.Contain("!frontDoorCollider.enabled || !frontDoorCollider.isTrigger"));
         Assert.That(chapter1Text, Does.Contain("EnsureDoorAnswerTriggerAction(createRuntimeClickTargets)"));
         Assert.That(chapter1Text, Does.Contain("FindDoorAnswerTriggerObject"));
         Assert.That(chapter1Text, Does.Contain("CreateDoorAnswerTriggerFallback"));
