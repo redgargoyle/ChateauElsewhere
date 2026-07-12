@@ -59,7 +59,7 @@ Assets/Scripts/Story/ChapterIntroUI.cs,536,e341155b4ef32434b3e54451c6028a98b7f59
 Assets/Scripts/Story/ChapterManager.cs,619,861c09839ddf7b50f6cc2482ad27a5dbf7e5890abff16e4e83382e5e3a5a8edc,0,0,0,0,0,0,
 Assets/Scripts/Story/ChapterTimeSettingsUI.cs,138,4919887650f5464d406515086b8f8161ebc6d14aa175d35687adba343e2a8dd2,3,0,3,1,0,0,ChapterTimeSettingsUI
 Assets/Scripts/Story/CoatCloset.cs,43,652a66bdc0bb4453f7a350862423482f26c46687e055503efc2c194e301293a8,0,0,0,0,0,0,CoatCloset
-Assets/Scripts/Story/DoorbellSystem.cs,293,8858a9f2dd8642f948b8fd009808ffceb79ed3cdd70adf438347aee00ad03704,1,1,0,1,0,0,DoorbellSystem
+Assets/Scripts/Story/DoorbellSystem.cs,223,8e5ae769b3616e186be9497ef5218f6d189e76215a18b48c84fc25b47995c84f,0,0,0,0,0,0,DoorbellSystem
 Assets/Scripts/Story/GameplayRuntimeState.cs,55,1715d0c2f73ca80b5615794f07ffc583f3568c0a475cbb412b61edd4a89b3d09,0,0,0,0,1,0,
 Assets/Scripts/Story/GrandfatherClockInteraction.cs,298,13a94ff10eaf67bb17d1a1e819f3179ba74ac28efc34b2091bd19271e064cb59,4,0,6,1,0,0,GrandfatherClockInteraction
 Assets/Scripts/Story/NPCWaypointMover.cs,245,98b32aea8b442dd0ecc52979f3771d824dfd4cb1ddccfae45866d776456dbb16,0,0,0,0,0,0,NPCWaypointMover
@@ -93,7 +93,7 @@ Assets/_Chateau/Runtime/Gameplay/StoryBeatBase.cs,21,35aef3731071e18debe7233a75e
 Assets/_Chateau/Runtime/Gameplay/UIScreenBase.cs,6,866b461d97830757f363d92748de6765afca6ef83e8261b77c47be9559a9cfd1,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/RoomDepthResolver.cs,21,244cd5be85edfb4b9cd55b507504a66d4ddc3457b973e82e1e28ce01ac2bc049,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,86,0a57f7b78ff95045a4a14a104622dac4e302eeb3e0cfc9dc1e5e837de24bb39c,0,0,0,0,0,0,
-Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,6700,510445352d1a3dac4db2b95b22ccd9fbf1758f005f925ff77362ecaa955924a5,8,2,5,16,0,0,
+Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,6690,a6ec11b7e45a27168dbf6dd4bc913a54928dc221ad882295c183bd934c63f556,7,2,5,15,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,245,66ea4162715ef550570984aa5a7e8ade9906eb12fb1ded6dae2900ae91695b59,2,0,0,0,0,0,Chapter1CoatPickup
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,164,fbdd821a8687aace94f17e7d73ecd6bd409d5d6040d5443a799119f0acef44f9,3,0,3,0,0,0,Chapter1InteractionHUD
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,560,b5de44d038dc2cd3acd4bc4a7f097f4c0d057784185a9e989d18c43c4278c35b,4,0,0,0,0,0,Chapter1SceneAction

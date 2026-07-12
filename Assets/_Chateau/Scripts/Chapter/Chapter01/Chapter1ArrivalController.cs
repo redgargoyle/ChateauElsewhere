@@ -6484,16 +6484,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private void ResolveStoryHelpers(bool createFallbacks)
     {
-        if (doorbellSystem == null)
-        {
-            doorbellSystem = FindAnyObjectByType<DoorbellSystem>(FindObjectsInactive.Include);
-        }
-
-        if (doorbellSystem == null && createFallbacks)
-        {
-            doorbellSystem = gameObject.AddComponent<DoorbellSystem>();
-        }
-
         if (grandfatherClock == null)
         {
             grandfatherClock = FindAnyObjectByType<GrandfatherClockInteraction>(FindObjectsInactive.Include);

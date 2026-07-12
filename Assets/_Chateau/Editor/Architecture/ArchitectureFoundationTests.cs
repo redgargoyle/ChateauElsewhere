@@ -549,6 +549,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(doorbellDocument, Does.Contain("audioSource: {fileID: 3302000004}"));
         Assert.That(doorbellDocument, Does.Contain("audioVolumeBinding: {fileID: 3302000005}"));
         Assert.That(doorbellDocument, Does.Contain("doorbellClip: {fileID: 8300000, guid: 67dc6970d473422a86e0c071ef23abd1, type: 3}"));
+        Assert.That(doorbellDocument, Does.Not.Contain("doorbellClipResourcePath:"));
         Assert.That(sourceDocument, Does.Contain("m_GameObject: {fileID: 1696549391}"));
         Assert.That(sourceDocument, Does.Contain("m_Resource: {fileID: 0}"));
         Assert.That(sourceDocument, Does.Contain("m_PlayOnAwake: 0"));
@@ -568,6 +569,16 @@ public sealed class ArchitectureFoundationTests
         Assert.That(chapter1Text, Does.Contain("doorbellSystem.IsConfiguredFor(gameObject, chapterClock)"));
         Assert.That(doorbellText, Does.Contain("public void ValidateConfiguration"));
         Assert.That(doorbellText, Does.Contain("DoorbellSystem requires its serialized imported doorbell clip."));
+        Assert.That(chapter1Text, Does.Not.Contain("FindAnyObjectByType<DoorbellSystem>"));
+        Assert.That(chapter1Text, Does.Not.Contain("AddComponent<DoorbellSystem>"));
+        Assert.That(doorbellText, Does.Not.Contain("FindAnyObjectByType<ChapterClock>"));
+        Assert.That(doorbellText, Does.Not.Contain("GetComponent<AudioSource>"));
+        Assert.That(doorbellText, Does.Not.Contain("AddComponent<AudioSource>"));
+        Assert.That(doorbellText, Does.Not.Contain("GameAudioSettings.EnsureBinding"));
+        Assert.That(doorbellText, Does.Not.Contain("Resources.Load<AudioClip>"));
+        Assert.That(doorbellText, Does.Not.Contain("AudioClip.Create"));
+        Assert.That(doorbellText, Does.Not.Contain("doorbellClipResourcePath"));
+        Assert.That(doorbellText, Does.Contain("audioVolumeBinding.Configure(audioSource, GameAudioChannel.GameSounds, 1f)"));
     }
 
     [Test]

@@ -3,14 +3,11 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class DoorbellSystem : MonoBehaviour, Chateau.Architecture.IArchitectureValidatable
 {
-    private const string DefaultDoorbellClipResourcePath = "Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz";
-
     [Header("References")]
     [SerializeField] private ChapterClock chapterClock;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private GameAudioSourceVolume audioVolumeBinding;
     [SerializeField] private AudioClip doorbellClip;
-    [SerializeField] private string doorbellClipResourcePath = DefaultDoorbellClipResourcePath;
 
     [Header("Escalation")]
     [SerializeField] private float normalIntervalSeconds = 6f;
@@ -86,7 +83,7 @@ public class DoorbellSystem : MonoBehaviour, Chateau.Architecture.IArchitectureV
 
     private void Awake()
     {
-        ResolveReferences();
+        ConfigureSerializedAudio();
     }
 
     private void Update()
@@ -108,8 +105,13 @@ public class DoorbellSystem : MonoBehaviour, Chateau.Architecture.IArchitectureV
 
     public void Initialize(ChapterClock clock)
     {
-        chapterClock = clock != null ? clock : chapterClock;
-        ResolveReferences();
+        if (clock != null && clock != chapterClock)
+        {
+            Debug.LogError("DoorbellSystem rejected initialization from a different ChapterClock.", this);
+            return;
+        }
+
+        ConfigureSerializedAudio();
     }
 
     public void StartRinging(float queuedAtGameMinute, bool waitingGuests, bool isEmptyRing)
@@ -185,8 +187,6 @@ public class DoorbellSystem : MonoBehaviour, Chateau.Architecture.IArchitectureV
 
     private void RingOnce()
     {
-        ResolveReferences();
-
         float interval = currentIntensityLevel >= 2
             ? aggressiveIntervalSeconds
             : currentIntensityLevel == 1 ? urgentIntervalSeconds : normalIntervalSeconds;
@@ -195,13 +195,8 @@ public class DoorbellSystem : MonoBehaviour, Chateau.Architecture.IArchitectureV
             ? aggressiveVolume
             : currentIntensityLevel == 1 ? urgentVolume : normalVolume;
 
-        if (audioSource != null)
+        if (audioSource != null && doorbellClip != null)
         {
-            if (doorbellClip == null)
-            {
-                doorbellClip = ResolveDoorbellClip();
-            }
-
             GameAudioSettings.TryPlayOneShot(audioSource, doorbellClip, volume);
         }
 
@@ -209,21 +204,11 @@ public class DoorbellSystem : MonoBehaviour, Chateau.Architecture.IArchitectureV
         nextRingTime = Time.time + Mathf.Max(0.25f, interval);
     }
 
-    private void ResolveReferences()
+    private void ConfigureSerializedAudio()
     {
-        if (chapterClock == null)
+        if (audioSource == null || audioVolumeBinding == null)
         {
-            chapterClock = FindAnyObjectByType<ChapterClock>(FindObjectsInactive.Include);
-        }
-
-        if (audioSource == null)
-        {
-            audioSource = GetComponent<AudioSource>();
-        }
-
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
+            return;
         }
 
         audioSource.playOnAwake = false;
@@ -233,61 +218,6 @@ public class DoorbellSystem : MonoBehaviour, Chateau.Architecture.IArchitectureV
         audioSource.spatialBlend = 0f;
         audioSource.volume = 1f;
         audioSource.ignoreListenerPause = true;
-        audioVolumeBinding = GameAudioSettings.EnsureBinding(audioSource, GameAudioChannel.GameSounds, 1f);
-    }
-
-    private AudioClip ResolveDoorbellClip()
-    {
-        if (doorbellClip != null)
-        {
-            return doorbellClip;
-        }
-
-        if (!string.IsNullOrWhiteSpace(doorbellClipResourcePath))
-        {
-            doorbellClip = Resources.Load<AudioClip>(doorbellClipResourcePath);
-        }
-
-        if (doorbellClip == null)
-        {
-            doorbellClip = CreateDoorbellClip();
-        }
-
-        return doorbellClip;
-    }
-
-    private static AudioClip CreateDoorbellClip()
-    {
-        const int sampleRate = 44100;
-        int samples = Mathf.RoundToInt(sampleRate * 1.1f);
-        float[] data = new float[samples];
-
-        for (int i = 0; i < samples; i++)
-        {
-            float t = (float)i / sampleRate;
-            float sample = 0f;
-
-            if (t < 0.42f)
-            {
-                float envelope = Mathf.Exp(-4.8f * t);
-                float toneA = Mathf.Sin(2f * Mathf.PI * 880f * t);
-                float toneB = Mathf.Sin(2f * Mathf.PI * 1320f * t) * 0.45f;
-                sample = (toneA + toneB) * 0.55f * envelope;
-            }
-            else if (t > 0.52f)
-            {
-                float localTime = t - 0.52f;
-                float envelope = Mathf.Exp(-4.3f * localTime);
-                float toneA = Mathf.Sin(2f * Mathf.PI * 660f * localTime);
-                float toneB = Mathf.Sin(2f * Mathf.PI * 990f * localTime) * 0.45f;
-                sample = (toneA + toneB) * 0.58f * envelope;
-            }
-
-            data[i] = Mathf.Clamp(sample, -1f, 1f);
-        }
-
-        AudioClip clip = AudioClip.Create("RuntimeDoorbell", samples, 1, sampleRate, false);
-        clip.SetData(data, 0);
-        return clip;
+        audioVolumeBinding.Configure(audioSource, GameAudioChannel.GameSounds, 1f);
     }
 }

@@ -207,10 +207,6 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedDoorbellSource.ignoreListenerPause, Is.False);
         Assert.That(characterizedDoorbellSource.clip, Is.Null, "DoorbellSystem should own the one-shot clip; the AudioSource resource remains empty.");
         Assert.That(serializedDoorbellClip, Is.Not.Null);
-        Assert.That(
-            GetPrivateField<string>(characterizedDoorbell, "doorbellClipResourcePath"),
-            Is.EqualTo("Audio/SFX/old_fashioned_door_bell_youtube_IqFKjVlaOik_48khz"));
-
         characterizedDoorbell.StartRinging(clock.ElapsedGameMinutes, true, false);
         AudioClip characterizedDoorbellClip = GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip");
         Assert.That(characterizedDoorbellClip, Is.SameAs(serializedDoorbellClip));
