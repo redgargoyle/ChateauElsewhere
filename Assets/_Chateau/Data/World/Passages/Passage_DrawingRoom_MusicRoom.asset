@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca421b4be57a4e08aad75608f76ce6e4, type: 3}
+  m_Name: Passage_DrawingRoom_MusicRoom
+  m_EditorClassIdentifier: Assembly-CSharp::Chateau.World.Rooms.Passages.PassageDefinition
+  stableId: passage.drawing-room.music-room
+  schemaVersion: 1
+  sourceRoom: {fileID: 11400000, guid: 057575e9763145759aa12184580d27d8, type: 2}
+  destinationRoom: {fileID: 11400000, guid: c0f34d74a30db58bb2b87b6ec316120b, type: 2}
+  reverse: {fileID: 11400000, guid: 01544de8f55723585d60e5c0915345fd, type: 2}
+  kind: 0
+  promptText: Open Door
+  legacyDoorId: DrawingRoom_MusicRoom

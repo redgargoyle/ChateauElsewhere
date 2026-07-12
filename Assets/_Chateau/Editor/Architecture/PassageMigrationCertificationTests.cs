@@ -276,7 +276,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void DrawingMusicLegacyRouteSnapshotIsExactBeforeCanonicalData()
+    public void DrawingMusicDataIsAuthoredWithoutSceneBindingsOrCallerChanges()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 1)
@@ -302,10 +302,26 @@ public sealed class PassageMigrationCertificationTests
         string guestPanic = RequireDocument(documents, "3301000008");
 
         Assert.That(group, Has.Count.EqualTo(2));
-        Assert.That(group.All(row => row.Status == "characterized"), Is.True);
-        Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageDefinitionGuid)), Is.True);
+        Assert.That(group.All(row => row.Status == "data-authored"), Is.True);
+        Assert.That(group.Select(row => row.PassageDefinitionGuid).OrderBy(value => value),
+            Is.EqualTo(new[]
+            {
+                "01544de8f55723585d60e5c0915345fd",
+                "3167361ca4c671298c0e84f43320619b"
+            }));
+        Assert.That(group.Select(row => row.PassageStableId).OrderBy(value => value),
+            Is.EqualTo(new[]
+            {
+                "passage.drawing-room.music-room",
+                "passage.music-room.drawing-room"
+            }));
         Assert.That(group.All(row => string.IsNullOrEmpty(row.SourceRoomViewFileId)), Is.True);
         Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageFileId)), Is.True);
+        Assert.That(group.All(row =>
+            string.IsNullOrEmpty(row.ApproachX) &&
+            string.IsNullOrEmpty(row.ApproachY) &&
+            string.IsNullOrEmpty(row.ArrivalX) &&
+            string.IsNullOrEmpty(row.ArrivalY)), Is.True);
 
         Assert.That(drawingOwner, Does.Contain("m_Name: DoorTrigger_DrawingRoom_MusicRoom"));
         Assert.That(drawingOwner, Does.Contain("- component: {fileID: 2300000096}"));
