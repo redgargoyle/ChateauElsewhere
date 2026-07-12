@@ -650,17 +650,18 @@ public class NavigationRegressionTests
         Assert.That(ballroomView, Does.Contain("legacyContentGroup: {fileID: 2102000000}"));
         Assert.That(libraryBallroomObject, Does.Contain("- component: {fileID: 4100000017}"));
         Assert.That(ballroomLibraryObject, Does.Contain("- component: {fileID: 4100000018}"));
-        foreach (string dependenciesBoundTrigger in new[] { libraryBallroomTrigger, ballroomLibraryTrigger })
+        foreach (string callerBoundTrigger in new[] { libraryBallroomTrigger, ballroomLibraryTrigger })
         {
-            Assert.That(dependenciesBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain(
+            Assert.That(callerBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(callerBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(callerBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(callerBoundTrigger, Does.Contain(
                 "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
-            Assert.That(dependenciesBoundTrigger, Does.Not.Contain("canonicalPassage:"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("maxPlayerScreenDistance: 145"));
+            Assert.That(callerBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+            Assert.That(callerBoundTrigger, Does.Contain("maxPlayerScreenDistance: 145"));
         }
+        Assert.That(libraryBallroomTrigger, Does.Contain("canonicalPassage: {fileID: 4100000017}"));
+        Assert.That(ballroomLibraryTrigger, Does.Contain("canonicalPassage: {fileID: 4100000018}"));
         Assert.That(libraryBallroomPassage, Does.Contain(
             "definition: {fileID: 11400000, guid: 1de38005c66d42e2b2f1a65c59ce8ad8, type: 2}"));
         Assert.That(libraryBallroomPassage, Does.Contain("sourceRoomView: {fileID: 4100000004}"));

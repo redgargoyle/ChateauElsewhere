@@ -239,7 +239,8 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(rows.Count(row => row.Profile == "bottom-edge-door"), Is.EqualTo(3));
         Assert.That(rows.Count(row => row.Profile == "inferred-stairway"), Is.EqualTo(4));
         Assert.That(rows.Count(row => row.Status == "complete"), Is.EqualTo(6));
-        Assert.That(rows.Count(row => row.Status == "dependencies-bound"), Is.EqualTo(2));
+        Assert.That(rows.Count(row => row.Status == "dependencies-bound"), Is.Zero);
+        Assert.That(rows.Count(row => row.Status == "caller-bound"), Is.EqualTo(2));
         Assert.That(rows.Count(row => row.Status == "queued"), Is.EqualTo(32));
         Assert.That(rows.Count(row => row.Status == "blocked-one-way"), Is.EqualTo(2));
         Assert.That(rows.Count(row => row.Status == "blocked-parallel"), Is.EqualTo(3));
@@ -308,7 +309,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void LibraryBallroomDependenciesBoundSnapshotPreservesLegacySamplingAndTopology()
+    public void LibraryBallroomCallersAreBoundWithoutAnchorOrDependencyChanges()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 3)
@@ -338,10 +339,10 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(group, Has.Count.EqualTo(2));
         RouteInventoryRow ballroomRow = group.Single(row => row.ComponentFileId == "2101000025");
         RouteInventoryRow libraryRow = group.Single(row => row.ComponentFileId == "2300000084");
-        Assert.That(group.All(row => row.Status == "dependencies-bound"), Is.True);
+        Assert.That(group.All(row => row.Status == "caller-bound"), Is.True);
         Assert.That(group.All(row => row.Group == "Library-Ballroom"), Is.True);
         Assert.That(group.All(row => row.Profile == "standard-door"), Is.True);
-        Assert.That(group.All(row => row.Notes == "direct-dependencies-bound-caller-next"), Is.True);
+        Assert.That(group.All(row => row.Notes == "canonical-caller-bound-arrival-next"), Is.True);
         AssertReciprocal(ballroomRow, libraryRow);
         AssertReciprocal(libraryRow, ballroomRow);
         Assert.That(ballroomRow.PassageFileId, Is.EqualTo("4100000018"));
@@ -387,13 +388,15 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(ballroomTransform, "m_LocalScale"), Is.EqualTo("{x: 1, y: 1, z: 1}"));
         Assert.That(ReadField(ballroomTransform, "m_AnchoredPosition"), Is.EqualTo("{x: -724.69, y: 34.2}"));
         Assert.That(ReadField(ballroomTransform, "m_SizeDelta"), Is.EqualTo("{x: 195.35, y: 359.59}"));
-        AssertGroup03DependenciesBoundLegacyTriggerSnapshot(
+        AssertGroup03CallerBoundLegacyTriggerSnapshot(
             ballroomTrigger,
             "2101000021",
             "2101000024",
             "Ballroom",
             "Ballroom_Library",
             "Library",
+            "4100000018",
+            "44d6784f30c28c9dee4b209eefe8ac97340d9de28d9e3ad41d7fdd72191be856",
             "33f73a31f657f0ddef49736456e7e248c5364ad2b322313d85a4ed617e15c0f3",
             "fde492fc20476d3821b7cd81bea9880e1ce7480242f18845f8c2cc273612d1fe");
 
@@ -406,13 +409,15 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(libraryTransform, "m_LocalScale"), Is.EqualTo("{x: 3.299394, y: 2.6126, z: 1}"));
         Assert.That(ReadField(libraryTransform, "m_AnchoredPosition"), Is.EqualTo("{x: 669, y: 21.3902}"));
         Assert.That(ReadField(libraryTransform, "m_SizeDelta"), Is.EqualTo("{x: 51.8593, y: 142.1376}"));
-        AssertGroup03DependenciesBoundLegacyTriggerSnapshot(
+        AssertGroup03CallerBoundLegacyTriggerSnapshot(
             libraryTrigger,
             "2300000080",
             "2300000083",
             "Library",
             "Library_Ballroom",
             "Ballroom",
+            "4100000017",
+            "77171a4b3e59c988977011f3ab01f2e74fe2cae3dd400046cd0b9803f7cad3f6",
             "b81c9d24579a255d338339c61e120485319c0f72a696c2f9090e22e5a53eb939",
             "3088f9b3e29eec2df79c21670c6d19301b2f5dca4de990bd1b180c3d47f51f41");
 
@@ -1131,17 +1136,19 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(componentIds, Is.EqualTo(expectedIds));
     }
 
-    private static void AssertGroup03DependenciesBoundLegacyTriggerSnapshot(
+    private static void AssertGroup03CallerBoundLegacyTriggerSnapshot(
         string trigger,
         string gameObjectFileId,
         string imageFileId,
         string sourceRoom,
         string legacyDoorId,
         string destinationRoom,
+        string canonicalPassageFileId,
+        string expectedCallerBoundSha256,
         string expectedDependencyBoundSha256,
         string expectedPassageBoundSha256)
     {
-        Assert.That(ComputeSha256(trigger), Is.EqualTo(expectedDependencyBoundSha256));
+        Assert.That(ComputeSha256(trigger), Is.EqualTo(expectedCallerBoundSha256));
         Assert.That(trigger, Does.Contain($"guid: {DoorTriggerGuid}"));
         Assert.That(ReadReferenceFileId(trigger, "m_GameObject"), Is.EqualTo(gameObjectFileId));
         Assert.That(ReadField(trigger, "sourceRoom"), Is.EqualTo(sourceRoom));
@@ -1152,7 +1159,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(trigger, "triggerKind"), Is.EqualTo("0"));
         Assert.That(ReadField(trigger, "stairwayDirection"), Is.EqualTo("0"));
         Assert.That(ReadReferenceFileId(trigger, "navigationManager"), Is.EqualTo(NavigationManagerFileId));
-        Assert.That(trigger, Does.Not.Contain("canonicalPassage:"));
+        Assert.That(ReadReferenceFileId(trigger, "canonicalPassage"), Is.EqualTo(canonicalPassageFileId));
         Assert.That(ReadReferenceFileId(trigger, "image"), Is.EqualTo(imageFileId));
         Assert.That(ReadReferenceFileId(trigger, "doorOpenAudioSource"), Is.EqualTo(DoorAudioSourceFileId));
         Assert.That(ReadReferenceFileId(trigger, "player"), Is.EqualTo(PlayerTransformFileId));
@@ -1176,7 +1183,11 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadReferenceFileId(trigger, "stairwaySoundCatalog"), Is.EqualTo("0"));
         Assert.That(ReadField(trigger, "stairwaySoundCatalogResourcePath"),
             Is.EqualTo("Audio/StairwaySoundCatalog"));
-        AssertRevertsToPassageBoundTriggerHash(trigger, expectedPassageBoundSha256);
+        string dependencyBoundTrigger = AssertRevertsToDependenciesBoundTriggerHash(
+            trigger,
+            canonicalPassageFileId,
+            expectedDependencyBoundSha256);
+        AssertRevertsToPassageBoundTriggerHash(dependencyBoundTrigger, expectedPassageBoundSha256);
     }
 
     private static void AssertPassivePassageSnapshot(
