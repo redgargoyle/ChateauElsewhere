@@ -578,6 +578,13 @@ public class NavigationRegressionTests
         string musicDrawingPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000014");
         string musicLibraryPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000015");
         string libraryMusicPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000016");
+        string ballroomView = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000005");
+        string libraryBallroomObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000080");
+        string libraryBallroomTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000084");
+        string libraryBallroomPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000017");
+        string ballroomLibraryObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2101000021");
+        string ballroomLibraryTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2101000025");
+        string ballroomLibraryPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000018");
         string playerTransform = ExtractUnityObjectBlock(sceneText, "--- !u!4 &81962843 stripped");
 
         Assert.That(drawingRoomObject, Does.Contain("m_Name: Room_Drawing_Room"));
@@ -637,6 +644,41 @@ public class NavigationRegressionTests
         Assert.That(libraryMusicPassage, Does.Contain(
             "arrivalAnchor:\n    logicalPosition: {x: 7.714471, y: -3.121709}"));
         Assert.That(libraryMusicPassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(ballroomView, Does.Contain("m_GameObject: {fileID: 43637644}"));
+        Assert.That(ballroomView, Does.Contain(
+            "definition: {fileID: 11400000, guid: d3b02ee2732843d484037af98d0e53e7, type: 2}"));
+        Assert.That(ballroomView, Does.Contain("legacyContentGroup: {fileID: 2102000000}"));
+        Assert.That(libraryBallroomObject, Does.Contain("- component: {fileID: 4100000017}"));
+        Assert.That(ballroomLibraryObject, Does.Contain("- component: {fileID: 4100000018}"));
+        foreach (string dependenciesBoundTrigger in new[] { libraryBallroomTrigger, ballroomLibraryTrigger })
+        {
+            Assert.That(dependenciesBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain(
+                "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+            Assert.That(dependenciesBoundTrigger, Does.Not.Contain("canonicalPassage:"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("maxPlayerScreenDistance: 145"));
+        }
+        Assert.That(libraryBallroomPassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: 1de38005c66d42e2b2f1a65c59ce8ad8, type: 2}"));
+        Assert.That(libraryBallroomPassage, Does.Contain("sourceRoomView: {fileID: 4100000004}"));
+        Assert.That(libraryBallroomPassage, Does.Contain("reversePassage: {fileID: 4100000018}"));
+        Assert.That(libraryBallroomPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: 7.465074, y: -2.665671}"));
+        Assert.That(libraryBallroomPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: -8.107888, y: -2.079877}"));
+        Assert.That(libraryBallroomPassage, Does.Contain("anchorMigrationStage: 0"));
+        Assert.That(ballroomLibraryPassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: 0c60f4c2fe6f4e45947fc2a200cc6053, type: 2}"));
+        Assert.That(ballroomLibraryPassage, Does.Contain("sourceRoomView: {fileID: 4100000005}"));
+        Assert.That(ballroomLibraryPassage, Does.Contain("reversePassage: {fileID: 4100000017}"));
+        Assert.That(ballroomLibraryPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: -8.107888, y: -2.079877}"));
+        Assert.That(ballroomLibraryPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: 7.465074, y: -2.665671}"));
+        Assert.That(ballroomLibraryPassage, Does.Contain("anchorMigrationStage: 0"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));

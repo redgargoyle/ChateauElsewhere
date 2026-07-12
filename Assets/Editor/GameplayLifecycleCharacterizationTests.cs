@@ -2818,8 +2818,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(musicRoomView.LegacyContentGroup, Is.SameAs(musicRoomContent));
         Assert.That(musicRoomView.Root, Is.SameAs(musicRoomContent.transform));
         Assert.That(musicRoomView.HasGameContext, Is.True);
-        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(4));
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(6));
+        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(5));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(8));
         AssertDrawingMusicAuthoredAnchorPassages(
             forward,
             reverse,
@@ -3946,7 +3946,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             RoomContentGroup libraryRoomContent = FindInActiveScene<RoomContentGroup>()
                 .Single(item => item.RoomName == LibraryRoom);
             CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-            Assert.That(roomViews, Has.Length.EqualTo(4));
+            Assert.That(roomViews, Has.Length.EqualTo(5));
             CanonicalRoomView musicRoomView = roomViews.Single(item =>
                 item.Definition != null && item.Definition.StableId == "room.music-room");
             CanonicalRoomView libraryRoomView = roomViews.Single(item =>
@@ -4171,15 +4171,15 @@ public sealed class GameplayLifecycleCharacterizationTests
                     document.Contains("player: {fileID: 81962843}") &&
                     document.Contains(
                         "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
-                Is.EqualTo(6),
-                "Exactly the first three reciprocal route pairs may have direct compatibility bindings.");
+                Is.EqualTo(8),
+                "Exactly the first four reciprocal route pairs may have direct compatibility bindings.");
             Assert.That(
                 serializedGameplayTriggers.Count(document =>
                     document.Contains("navigationManager: {fileID: 0}") &&
                     document.Contains("doorOpenAudioSource: {fileID: 0}") &&
                     document.Contains("player: {fileID: 0}") &&
                     document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
-                Is.EqualTo(39),
+                Is.EqualTo(37),
                 "Every trigger before its dependency slice must retain all four null compatibility bindings.");
             Assert.That(
                 serializedGameplayTriggers.Count(document =>
@@ -5338,6 +5338,642 @@ public sealed class GameplayLifecycleCharacterizationTests
     }
 
     [UnityTest]
+    public IEnumerator LibraryBallroomLegacyPassagesAreCharacterizedBeforeCanonicalMigration()
+    {
+        const string BallroomRoom = "Ballroom";
+        const string LibraryRoom = "Library";
+
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        Button cursorButton = cursorChoice.GetComponent<Button>();
+        Assert.That(cursorButton, Is.Not.Null);
+        cursorButton.onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        INavigationService navigationFacade = navigation;
+        PointClickPlayerMovement player = GameObject.Find("Player").GetComponent<PointClickPlayerMovement>();
+        Assert.That(player, Is.Not.Null);
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        bool originalInputEnabled = player.InputEnabled;
+        float originalMoveSpeed = GetPrivateValue<float>(player, "moveSpeed");
+        bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
+        bool originalZoomRoomWithMouseWheel = cameraManager.zoomRoomWithMouseWheel;
+        DoorTriggerNavigation forward = null;
+        DoorTriggerNavigation reverse = null;
+
+        player.SetInputEnabled(true);
+        SetPrivateField(player, "moveSpeed", 1000f);
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+
+        try
+        {
+            cameraManager.ResetRoomLookForPreview();
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+
+            DoorTriggerNavigation entranceDrawingTrigger =
+                RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_GEH_DrawingRoom");
+            CanonicalPassage entranceDrawingPassage = entranceDrawingTrigger.GetComponent<CanonicalPassage>();
+            Assert.That(player.TryWarpToExact(entranceDrawingPassage.ApproachAnchor.LogicalPosition), Is.True);
+            Assert.That(navigationFacade.TryTraverse(entranceDrawingPassage), Is.True);
+            yield return WaitForSettledLayout();
+
+            DoorTriggerNavigation drawingMusicTrigger =
+                RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_DrawingRoom_MusicRoom");
+            CanonicalPassage drawingMusicPassage = drawingMusicTrigger.GetComponent<CanonicalPassage>();
+            Assert.That(player.TryWarpToExact(drawingMusicPassage.ApproachAnchor.LogicalPosition), Is.True);
+            Assert.That(navigationFacade.TryTraverse(drawingMusicPassage), Is.True);
+            yield return WaitForSettledLayout();
+
+            DoorTriggerNavigation musicLibraryTrigger =
+                RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_MusicRoom_Library");
+            CanonicalPassage musicLibraryPassage = musicLibraryTrigger.GetComponent<CanonicalPassage>();
+            Assert.That(player.TryWarpToExact(musicLibraryPassage.ApproachAnchor.LogicalPosition), Is.True);
+            Assert.That(navigationFacade.TryTraverse(musicLibraryPassage), Is.True);
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+
+            forward = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_Library_Ballroom");
+            reverse = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_Ballroom_Library");
+            CanonicalPassage libraryBallroomPassage = forward.GetComponent<CanonicalPassage>();
+            CanonicalPassage ballroomLibraryPassage = reverse.GetComponent<CanonicalPassage>();
+            Assert.That(libraryBallroomPassage, Is.Not.Null);
+            Assert.That(ballroomLibraryPassage, Is.Not.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
+            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(5));
+            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(5));
+            Assert.That(libraryBallroomPassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+            Assert.That(ballroomLibraryPassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+
+            RectTransform forwardRect = forward.GetComponent<RectTransform>();
+            RectTransform reverseRect = reverse.GetComponent<RectTransform>();
+            AssertVector2Within(forwardRect.anchoredPosition, new Vector2(669f, 21.3902f), 0.0001f,
+                "Library-to-Ballroom trigger position");
+            AssertVector2Within(forwardRect.sizeDelta, new Vector2(51.8593f, 142.1376f), 0.0001f,
+                "Library-to-Ballroom trigger size");
+            AssertVector2Within(reverseRect.anchoredPosition, new Vector2(-724.69f, 34.2f), 0.0001f,
+                "Ballroom-to-Library trigger position");
+            AssertVector2Within(reverseRect.sizeDelta, new Vector2(195.35f, 359.59f), 0.0001f,
+                "Ballroom-to-Library trigger size");
+            Assert.That(GetPrivateValue<float>(forward, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+            Assert.That(GetPrivateValue<float>(reverse, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+
+            string projectRoot = System.IO.Directory.GetParent(Application.dataPath).FullName;
+            string sceneText = System.IO.File.ReadAllText(System.IO.Path.Combine(projectRoot, GameplayScenePath));
+            string serializedForward = RequireSerializedUnityDocument(sceneText, "2300000084");
+            string serializedReverse = RequireSerializedUnityDocument(sceneText, "2101000025");
+            foreach (string document in new[] { serializedForward, serializedReverse })
+            {
+                Assert.That(document, Does.Contain("navigationManager: {fileID: 1878886997}"));
+                Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+                Assert.That(document, Does.Contain("player: {fileID: 81962843}"));
+                Assert.That(document, Does.Contain(
+                    "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
+                Assert.That(document, Does.Not.Contain("canonicalPassage:"));
+            }
+
+            InvokePrivateMethod(forward, "ResolveReferences");
+            InvokePrivateMethod(reverse, "ResolveReferences");
+            InvokePrivateMethod(forward, "ResolvePlayerReference");
+            InvokePrivateMethod(reverse, "ResolvePlayerReference");
+            InvokePrivateMethod(forward, "ResolveDoorOpenAudioSource");
+            InvokePrivateMethod(reverse, "ResolveDoorOpenAudioSource");
+            InvokePrivateMethod(forward, "ResolveDoorOpenSoundCatalog");
+            InvokePrivateMethod(reverse, "ResolveDoorOpenSoundCatalog");
+            AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
+                .Single(item => item.gameObject.name == "Audio_DoorOpen");
+            DoorOpenSoundCatalog passageDoorCatalog = Resources.Load<DoorOpenSoundCatalog>(
+                "Audio/DoorOpenSoundCatalog");
+            AssertDoorTriggerCompatibilityBindings(
+                forward,
+                reverse,
+                navigation,
+                player.transform,
+                passageAudioSource,
+                passageDoorCatalog);
+            DoorPromptSequenceController prompts = RequireExactlyOneInActiveScene<DoorPromptSequenceController>();
+            TMP_Text passagePromptText = GetPrivateField<TMP_Text>(prompts, "promptText");
+            Assert.That(passagePromptText, Is.Not.Null);
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
+
+            RoomContentGroup libraryContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == LibraryRoom);
+            RoomContentGroup ballroomContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == BallroomRoom);
+            Texture libraryBackground = GetPrivateField<Texture>(libraryContent, "roomBackgroundTexture");
+            Texture ballroomBackground = GetPrivateField<Texture>(ballroomContent, "roomBackgroundTexture");
+            Assert.That(libraryBackground, Is.Not.Null);
+            Assert.That(ballroomBackground, Is.Not.Null);
+            ObjectMovementBlocker2D[] libraryBlockers = FindInActiveScene<ObjectMovementBlocker2D>()
+                .Where(blocker => blocker.GetComponentInParent<RoomContentGroup>(true) == libraryContent)
+                .ToArray();
+            Assert.That(libraryBlockers, Has.Length.EqualTo(3));
+            Assert.That(libraryBlockers.Any(
+                blocker => blocker.gameObject.name == "PlayerBlocker_potted_plant"), Is.True);
+            Assert.That(FindInActiveScene<ObjectMovementBlocker2D>()
+                .Count(blocker => blocker.GetComponentInParent<RoomContentGroup>(true) == ballroomContent), Is.Zero);
+
+            LegacyDoorRoundTripObservation primary = null;
+            List<string> primaryEvents = new List<string>();
+            System.Action recordPrimaryArrival = () => primaryEvents.Add(
+                $"arrived:{navigation.CurrentRoom}:" +
+                (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") == null
+                    ? "audio-idle"
+                    : "audio-started"));
+            System.Action recordPrimaryMovementStopped = () => primaryEvents.Add(
+                $"movement-stopped:{navigation.CurrentRoom}:" +
+                (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") == null
+                    ? "audio-idle"
+                    : "audio-started"));
+            UnityEngine.Events.UnityAction<string> recordPrimaryRoomChanged = room => primaryEvents.Add(
+                $"room-changed:{room}:" +
+                (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") ==
+                    passageAudioSource
+                    ? "audio-started"
+                    : "audio-idle"));
+            player.ArrivedAtDestination += recordPrimaryArrival;
+            player.MovementStopped += recordPrimaryMovementStopped;
+            navigation.OnCurrentRoomChanged.AddListener(recordPrimaryRoomChanged);
+            forward.OnPointerEnter(null);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(forward));
+            Assert.That(passagePromptText.gameObject.activeSelf, Is.True);
+            Assert.That(passagePromptText.text, Is.EqualTo("Open Door"));
+            IEnumerator primaryRoutine = ObserveLegacyDoorRoundTrip(
+                navigation,
+                player,
+                cameraManager,
+                forward,
+                reverse,
+                LibraryRoom,
+                BallroomRoom,
+                new Vector2(0f, -2f),
+                new Vector2(0f, -2f),
+                includeNearRoundTrip: true,
+                maximumZoom: false,
+                observation => primary = observation);
+            try
+            {
+                while (primaryRoutine.MoveNext())
+                {
+                    yield return primaryRoutine.Current;
+                }
+            }
+            finally
+            {
+                player.ArrivedAtDestination -= recordPrimaryArrival;
+                player.MovementStopped -= recordPrimaryMovementStopped;
+                navigation.OnCurrentRoomChanged.RemoveListener(recordPrimaryRoomChanged);
+            }
+            Assert.That(primary, Is.Not.Null);
+            Assert.That(primaryEvents, Is.EqualTo(new[]
+            {
+                $"arrived:{LibraryRoom}:audio-idle",
+                $"movement-stopped:{LibraryRoom}:audio-idle",
+                $"room-changed:{BallroomRoom}:audio-started",
+                $"arrived:{BallroomRoom}:audio-idle",
+                $"movement-stopped:{BallroomRoom}:audio-idle",
+                $"room-changed:{LibraryRoom}:audio-started",
+                $"room-changed:{BallroomRoom}:audio-started",
+                $"room-changed:{LibraryRoom}:audio-started"
+            }));
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+            Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
+            Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+            AssertVector2Within(primary.ForwardStart, new Vector2(0f, -2f), 0.001f,
+                "primary Library-to-Ballroom far start");
+            Assert.That(primary.ForwardScreenDistance, Is.EqualTo(505.353f).Within(0.75f));
+            AssertVector2Within(primary.ForwardNull, new Vector2(7.465074f, -2.665671f), 0.01f,
+                "primary Library-to-Ballroom legacy approach");
+            AssertVector2Within(primary.ForwardLeft, primary.ForwardNull, 0.0001f,
+                "primary Library-to-Ballroom left candidate");
+            AssertVector2Within(primary.ForwardCenter, primary.ForwardNull, 0.0001f,
+                "primary Library-to-Ballroom center candidate");
+            AssertVector2Within(primary.ForwardRight, primary.ForwardNull, 0.0001f,
+                "primary Library-to-Ballroom right candidate");
+            AssertVector2Within(primary.ForwardArrival, new Vector2(-8.144631f, -2.043134f), 0.01f,
+                "primary source-sensitive far Ballroom arrival");
+            AssertVector2Within(primary.ReverseStart, new Vector2(0f, -2f), 0.001f,
+                "primary Ballroom-to-Library far start");
+            Assert.That(primary.ReverseScreenDistance, Is.EqualTo(543.042f).Within(0.75f));
+            AssertVector2Within(primary.ReverseNull, new Vector2(-8.107888f, -2.079877f), 0.01f,
+                "primary Ballroom-to-Library legacy approach");
+            AssertVector2Within(primary.ReverseLeft, primary.ReverseNull, 0.0001f,
+                "primary Ballroom-to-Library left candidate");
+            AssertVector2Within(primary.ReverseCenter, primary.ReverseNull, 0.0001f,
+                "primary Ballroom-to-Library center candidate");
+            AssertVector2Within(primary.ReverseRight, primary.ReverseNull, 0.0001f,
+                "primary Ballroom-to-Library right candidate");
+            AssertVector2Within(primary.ReverseArrival, new Vector2(7.465009f, -2.667542f), 0.01f,
+                "primary far Library arrival");
+            AssertVector2Within(primary.NearForwardArrival, primary.ReverseNull, 0.0001f,
+                "primary near Ballroom arrival");
+            AssertVector2Within(primary.NearReverseArrival, primary.ReverseArrival, 0.0001f,
+                "primary near Library arrival");
+            Assert.That(Vector2.Distance(primary.ForwardArrival, primary.NearForwardArrival),
+                Is.GreaterThan(0.04f),
+                "The first far Ballroom arrival must retain its source-sensitive distinction.");
+            Debug.Log($"[LibraryBallroomLegacyPrimary] {FormatLegacyDoorObservation(primary, includeNear: true)}");
+
+            Vector2Int[] renderedSizes =
+            {
+                new Vector2Int(1366, 768),
+                new Vector2Int(1440, 1080),
+                new Vector2Int(1920, 1080),
+                new Vector2Int(2560, 1080)
+            };
+            float[] expectedForwardScreenDistances = { 505.353f, 709.989f, 710.305f, 948.272f };
+            Vector2[] expectedForwardApproaches =
+            {
+                new Vector2(7.465074f, -2.665671f),
+                new Vector2(6.463309f, -2.308592f),
+                new Vector2(7.4805f, -2.666559f),
+                new Vector2(8.637738f, -3.079077f)
+            };
+            Vector2[] expectedForwardArrivals =
+            {
+                new Vector2(-8.107888f, -2.079877f),
+                new Vector2(-7.002691f, -1.842395f),
+                new Vector2(-8.142665f, -2.042618f),
+                new Vector2(-9.336933f, -2.456497f)
+            };
+            float[] expectedReverseScreenDistances = { 543.042f, 763.794f, 763.281f, 1017.828f };
+            Vector2[] expectedReverseApproaches =
+            {
+                new Vector2(-8.107888f, -2.079877f),
+                new Vector2(-7.019926f, -1.800787f),
+                new Vector2(-8.121919f, -2.086f),
+                new Vector2(-9.373829f, -2.406819f)
+            };
+            Vector2[] expectedReverseArrivals =
+            {
+                new Vector2(7.465009f, -2.667542f),
+                new Vector2(6.463295f, -2.309596f),
+                new Vector2(7.4805f, -2.666559f),
+                new Vector2(8.637738f, -3.079077f)
+            };
+            for (int sizeIndex = 0; sizeIndex < renderedSizes.Length; sizeIndex++)
+            {
+                Vector2Int renderedSize = renderedSizes[sizeIndex];
+                yield return SetAndWaitForRenderedGameViewResolution(
+                    (uint)renderedSize.x,
+                    (uint)renderedSize.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+                LegacyDoorRoundTripObservation aspect = null;
+                IEnumerator aspectRoutine = ObserveLegacyDoorRoundTrip(
+                    navigation,
+                    player,
+                    cameraManager,
+                    forward,
+                    reverse,
+                    LibraryRoom,
+                    BallroomRoom,
+                    new Vector2(0f, -2f),
+                    new Vector2(0f, -2f),
+                    includeNearRoundTrip: false,
+                    maximumZoom: false,
+                    observation => aspect = observation);
+                while (aspectRoutine.MoveNext())
+                {
+                    yield return aspectRoutine.Current;
+                }
+                Assert.That(aspect, Is.Not.Null);
+                float coordinateTolerance = sizeIndex == renderedSizes.Length - 1 ? 0.2f : 0.05f;
+                AssertVector2Within(aspect.ForwardStart, new Vector2(0f, -2f), 0.001f,
+                    "aspect Library-to-Ballroom far start");
+                Assert.That(aspect.ForwardScreenDistance,
+                    Is.EqualTo(expectedForwardScreenDistances[sizeIndex]).Within(0.75f));
+                AssertVector2Within(aspect.ForwardNull, expectedForwardApproaches[sizeIndex],
+                    coordinateTolerance, "aspect Library-to-Ballroom legacy approach");
+                AssertVector2Within(aspect.ForwardLeft, aspect.ForwardNull, 0.0001f,
+                    "aspect Library-to-Ballroom left candidate");
+                AssertVector2Within(aspect.ForwardCenter, aspect.ForwardNull, 0.0001f,
+                    "aspect Library-to-Ballroom center candidate");
+                AssertVector2Within(aspect.ForwardRight, aspect.ForwardNull, 0.0001f,
+                    "aspect Library-to-Ballroom right candidate");
+                AssertVector2Within(aspect.ForwardArrival, expectedForwardArrivals[sizeIndex],
+                    coordinateTolerance, "aspect Library-to-Ballroom arrival");
+                AssertVector2Within(aspect.ReverseStart, new Vector2(0f, -2f), 0.001f,
+                    "aspect Ballroom-to-Library far start");
+                Assert.That(aspect.ReverseScreenDistance,
+                    Is.EqualTo(expectedReverseScreenDistances[sizeIndex]).Within(0.75f));
+                AssertVector2Within(aspect.ReverseNull, expectedReverseApproaches[sizeIndex],
+                    coordinateTolerance, "aspect Ballroom-to-Library legacy approach");
+                AssertVector2Within(aspect.ReverseLeft, aspect.ReverseNull, 0.0001f,
+                    "aspect Ballroom-to-Library left candidate");
+                AssertVector2Within(aspect.ReverseCenter, aspect.ReverseNull, 0.0001f,
+                    "aspect Ballroom-to-Library center candidate");
+                AssertVector2Within(aspect.ReverseRight, aspect.ReverseNull, 0.0001f,
+                    "aspect Ballroom-to-Library right candidate");
+                AssertVector2Within(aspect.ReverseArrival, expectedReverseArrivals[sizeIndex],
+                    coordinateTolerance, "aspect Ballroom-to-Library arrival");
+                Debug.Log(
+                    $"[LibraryBallroomLegacyAspect] viewport={renderedSize.x}x{renderedSize.y} " +
+                    FormatLegacyDoorObservation(aspect, includeNear: false));
+            }
+
+            LegacyDoorRoundTripObservation maximum = null;
+            IEnumerator maximumRoutine = ObserveLegacyDoorRoundTrip(
+                navigation,
+                player,
+                cameraManager,
+                forward,
+                reverse,
+                LibraryRoom,
+                BallroomRoom,
+                new Vector2(0f, -2f),
+                new Vector2(0f, -2f),
+                includeNearRoundTrip: false,
+                maximumZoom: true,
+                observation => maximum = observation);
+            while (maximumRoutine.MoveNext())
+            {
+                yield return maximumRoutine.Current;
+            }
+            Assert.That(maximum, Is.Not.Null);
+            AssertVector2Within(maximum.ForwardStart, new Vector2(0f, -2f), 0.001f,
+                "maximum-zoom Library-to-Ballroom far start");
+            Assert.That(maximum.ForwardScreenDistance, Is.EqualTo(1091.407f).Within(0.75f));
+            AssertVector2Within(maximum.ForwardNull, new Vector2(8.637737f, -3.079077f), 0.2f,
+                "maximum-zoom Library-to-Ballroom approach");
+            AssertVector2Within(maximum.ForwardLeft, maximum.ForwardNull, 0.0001f,
+                "maximum-zoom Library-to-Ballroom left candidate");
+            AssertVector2Within(maximum.ForwardCenter, maximum.ForwardNull, 0.0001f,
+                "maximum-zoom Library-to-Ballroom center candidate");
+            AssertVector2Within(maximum.ForwardRight, maximum.ForwardNull, 0.0001f,
+                "maximum-zoom Library-to-Ballroom right candidate");
+            AssertVector2Within(maximum.ForwardArrival, new Vector2(-9.373829f, -2.406819f), 0.2f,
+                "maximum-zoom Ballroom arrival");
+            AssertVector2Within(maximum.ReverseStart, new Vector2(0f, -2f), 0.001f,
+                "maximum-zoom Ballroom-to-Library far start");
+            Assert.That(maximum.ReverseScreenDistance, Is.EqualTo(1171.462f).Within(0.75f));
+            AssertVector2Within(maximum.ReverseNull, new Vector2(-9.373829f, -2.40682f), 0.2f,
+                "maximum-zoom Ballroom-to-Library approach");
+            AssertVector2Within(maximum.ReverseLeft, maximum.ReverseNull, 0.0001f,
+                "maximum-zoom Ballroom-to-Library left candidate");
+            AssertVector2Within(maximum.ReverseCenter, maximum.ReverseNull, 0.0001f,
+                "maximum-zoom Ballroom-to-Library center candidate");
+            AssertVector2Within(maximum.ReverseRight, maximum.ReverseNull, 0.0001f,
+                "maximum-zoom Ballroom-to-Library right candidate");
+            AssertVector2Within(maximum.ReverseArrival, new Vector2(8.423751f, -3.305582f), 0.2f,
+                "maximum-zoom Library arrival");
+            Debug.Log(
+                $"[LibraryBallroomLegacyMaximumZoom] viewport={Screen.width}x{Screen.height} " +
+                $"zoom={cameraManager.maxRoomZoom:0.###} " +
+                FormatLegacyDoorObservation(maximum, includeNear: false));
+
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(LibraryRoom));
+            Assert.That(RequireOnlyActiveRoom(LibraryRoom), Is.SameAs(libraryContent));
+            Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(libraryBackground));
+            Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation),
+                "pendingApproachTrigger"), Is.Null);
+            Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                "activeNavigationAudioSource"), Is.Null);
+            Debug.Log(
+                $"[LibraryBallroomLegacyProfile] forwardGeometry={FormatVector(forwardRect.anchoredPosition)}/" +
+                $"{FormatVector(forwardRect.sizeDelta)} reverseGeometry={FormatVector(reverseRect.anchoredPosition)}/" +
+                $"{FormatVector(reverseRect.sizeDelta)} profiles=none callers=null serializedDependencies=bound " +
+                $"runtimeDependencies=resolved libraryBlockers=3 ballroomBlockers=0");
+        }
+        finally
+        {
+            if (forward != null)
+            {
+                InvokePrivateMethod(forward, "CancelPendingPlayerApproach");
+            }
+            if (reverse != null)
+            {
+                InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+            }
+            if (player.HasDestination)
+            {
+                InvokePrivateMethod(player, "CancelDestination");
+            }
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            SetPrivateField(player, "moveSpeed", originalMoveSpeed);
+            player.SetInputEnabled(originalInputEnabled);
+            cameraManager.panRoomWithMouseEdges = originalPanRoomWithMouseEdges;
+            cameraManager.zoomRoomWithMouseWheel = originalZoomRoomWithMouseWheel;
+            cameraManager.ResetRoomLookForPreview();
+        }
+    }
+
+    private sealed class LegacyDoorRoundTripObservation
+    {
+        public Vector2 ForwardStart;
+        public float ForwardScreenDistance;
+        public Vector2 ForwardNull;
+        public Vector2 ForwardLeft;
+        public Vector2 ForwardCenter;
+        public Vector2 ForwardRight;
+        public Vector2 ForwardArrival;
+        public Vector2 ReverseStart;
+        public float ReverseScreenDistance;
+        public Vector2 ReverseNull;
+        public Vector2 ReverseLeft;
+        public Vector2 ReverseCenter;
+        public Vector2 ReverseRight;
+        public Vector2 ReverseArrival;
+        public Vector2 NearForwardArrival;
+        public Vector2 NearReverseArrival;
+    }
+
+    private static IEnumerator ObserveLegacyDoorRoundTrip(
+        RoomNavigationManager navigation,
+        PointClickPlayerMovement player,
+        CameraManager cameraManager,
+        DoorTriggerNavigation forward,
+        DoorTriggerNavigation reverse,
+        string sourceRoom,
+        string destinationRoom,
+        Vector2 requestedForwardStart,
+        Vector2 requestedReverseStart,
+        bool includeNearRoundTrip,
+        bool maximumZoom,
+        System.Action<LegacyDoorRoundTripObservation> onComplete)
+    {
+        LegacyDoorRoundTripObservation observation = new LegacyDoorRoundTripObservation();
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(sourceRoom));
+        if (maximumZoom)
+        {
+            SetPrivateField(cameraManager, "currentRoomZoom", cameraManager.maxRoomZoom);
+            SetPrivateField(cameraManager, "targetRoomZoom", cameraManager.maxRoomZoom);
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+        }
+        Canvas.ForceUpdateCanvases();
+        Physics2D.SyncTransforms();
+        Assert.That(TryWarpToCharacterizedFarStart(
+            player, forward, requestedForwardStart, out observation.ForwardScreenDistance), Is.True);
+        observation.ForwardStart = player.LogicalPosition;
+        Assert.That(observation.ForwardScreenDistance,
+            Is.GreaterThan(GetPrivateValue<float>(forward, "maxPlayerScreenDistance")));
+        Assert.That(TryGetTriggerScreenBounds(forward, out Vector2 forwardMin, out Vector2 forwardMax), Is.True);
+        Assert.That(TryInvokeApproachDestination(
+            forward, player, true, out observation.ForwardNull), Is.True);
+        Assert.That(TryInvokeApproachDestination(
+            forward, player, true, out observation.ForwardLeft,
+            BuildPreferredTriggerClick(forwardMin, forwardMax, 0.15f)), Is.True);
+        Assert.That(TryInvokeApproachDestination(
+            forward, player, true, out observation.ForwardCenter,
+            BuildPreferredTriggerClick(forwardMin, forwardMax, 0.5f)), Is.True);
+        Assert.That(TryInvokeApproachDestination(
+            forward, player, true, out observation.ForwardRight,
+            BuildPreferredTriggerClick(forwardMin, forwardMax, 0.85f)), Is.True);
+        SetPrivateField(forward, "lastPointerActivationFrame", -1);
+        forward.ActivateDoor();
+        for (int frame = 0; frame < 180 && navigation.CurrentRoom == sourceRoom && player.HasDestination; frame++)
+        {
+            InvokePrivateMethod(player, "MoveTowardDestination");
+            yield return null;
+        }
+        for (int frame = 0; frame < 4; frame++)
+        {
+            Canvas.ForceUpdateCanvases();
+            yield return null;
+        }
+        Physics2D.SyncTransforms();
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(destinationRoom));
+        RoomContentGroup activeDestination = RequireOnlyActiveRoom(destinationRoom);
+        Assert.That(cameraManager.cameraBackground.texture,
+            Is.SameAs(GetPrivateField<Texture>(activeDestination, "roomBackgroundTexture")));
+        observation.ForwardArrival = player.LogicalPosition;
+        AssertFinite(observation.ForwardArrival, "Library-to-Ballroom legacy arrival");
+        InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+
+        if (maximumZoom)
+        {
+            SetPrivateField(cameraManager, "currentRoomZoom", cameraManager.maxRoomZoom);
+            SetPrivateField(cameraManager, "targetRoomZoom", cameraManager.maxRoomZoom);
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+        }
+        Canvas.ForceUpdateCanvases();
+        Physics2D.SyncTransforms();
+        Assert.That(TryWarpToCharacterizedFarStart(
+            player, reverse, requestedReverseStart, out observation.ReverseScreenDistance), Is.True);
+        observation.ReverseStart = player.LogicalPosition;
+        Assert.That(observation.ReverseScreenDistance,
+            Is.GreaterThan(GetPrivateValue<float>(reverse, "maxPlayerScreenDistance")));
+        Assert.That(TryGetTriggerScreenBounds(reverse, out Vector2 reverseMin, out Vector2 reverseMax), Is.True);
+        Assert.That(TryInvokeApproachDestination(
+            reverse, player, true, out observation.ReverseNull), Is.True);
+        Assert.That(TryInvokeApproachDestination(
+            reverse, player, true, out observation.ReverseLeft,
+            BuildPreferredTriggerClick(reverseMin, reverseMax, 0.15f)), Is.True);
+        Assert.That(TryInvokeApproachDestination(
+            reverse, player, true, out observation.ReverseCenter,
+            BuildPreferredTriggerClick(reverseMin, reverseMax, 0.5f)), Is.True);
+        Assert.That(TryInvokeApproachDestination(
+            reverse, player, true, out observation.ReverseRight,
+            BuildPreferredTriggerClick(reverseMin, reverseMax, 0.85f)), Is.True);
+        SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+        reverse.ActivateDoor();
+        for (int frame = 0; frame < 180 && navigation.CurrentRoom == destinationRoom && player.HasDestination; frame++)
+        {
+            InvokePrivateMethod(player, "MoveTowardDestination");
+            yield return null;
+        }
+        for (int frame = 0; frame < 4; frame++)
+        {
+            Canvas.ForceUpdateCanvases();
+            yield return null;
+        }
+        Physics2D.SyncTransforms();
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(sourceRoom));
+        RoomContentGroup activeSource = RequireOnlyActiveRoom(sourceRoom);
+        Assert.That(cameraManager.cameraBackground.texture,
+            Is.SameAs(GetPrivateField<Texture>(activeSource, "roomBackgroundTexture")));
+        observation.ReverseArrival = player.LogicalPosition;
+        AssertFinite(observation.ReverseArrival, "Ballroom-to-Library legacy arrival");
+
+        if (includeNearRoundTrip)
+        {
+            SetPrivateField(forward, "lastPointerActivationFrame", -1);
+            forward.ActivateDoor();
+            for (int frame = 0; frame < 180 && navigation.CurrentRoom == sourceRoom && player.HasDestination; frame++)
+            {
+                InvokePrivateMethod(player, "MoveTowardDestination");
+                yield return null;
+            }
+            for (int frame = 0; frame < 4; frame++)
+            {
+                Canvas.ForceUpdateCanvases();
+                yield return null;
+            }
+            Physics2D.SyncTransforms();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(destinationRoom));
+            observation.NearForwardArrival = player.LogicalPosition;
+            SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+            reverse.ActivateDoor();
+            for (int frame = 0; frame < 180 && navigation.CurrentRoom == destinationRoom && player.HasDestination; frame++)
+            {
+                InvokePrivateMethod(player, "MoveTowardDestination");
+                yield return null;
+            }
+            for (int frame = 0; frame < 4; frame++)
+            {
+                Canvas.ForceUpdateCanvases();
+                yield return null;
+            }
+            Physics2D.SyncTransforms();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(sourceRoom));
+            observation.NearReverseArrival = player.LogicalPosition;
+        }
+
+        InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+        onComplete(observation);
+    }
+
+    private static string FormatLegacyDoorObservation(
+        LegacyDoorRoundTripObservation observation,
+        bool includeNear)
+    {
+        string message =
+            $"forwardStart={FormatVector(observation.ForwardStart)} " +
+            $"forwardScreenDistance={observation.ForwardScreenDistance:0.###} " +
+            $"forwardNull={FormatVector(observation.ForwardNull)} " +
+            $"forwardLeft={FormatVector(observation.ForwardLeft)} " +
+            $"forwardCenter={FormatVector(observation.ForwardCenter)} " +
+            $"forwardRight={FormatVector(observation.ForwardRight)} " +
+            $"forwardArrival={FormatVector(observation.ForwardArrival)} " +
+            $"reverseStart={FormatVector(observation.ReverseStart)} " +
+            $"reverseScreenDistance={observation.ReverseScreenDistance:0.###} " +
+            $"reverseNull={FormatVector(observation.ReverseNull)} " +
+            $"reverseLeft={FormatVector(observation.ReverseLeft)} " +
+            $"reverseCenter={FormatVector(observation.ReverseCenter)} " +
+            $"reverseRight={FormatVector(observation.ReverseRight)} " +
+            $"reverseArrival={FormatVector(observation.ReverseArrival)}";
+        if (includeNear)
+        {
+            message +=
+                $" nearForwardArrival={FormatVector(observation.NearForwardArrival)} " +
+                $"nearReverseArrival={FormatVector(observation.NearReverseArrival)}";
+        }
+        return message;
+    }
+
+    [UnityTest]
     public IEnumerator EntranceDrawingPassageSelectionAndArrivalsAreCharacterizedAcrossRenderedAspects()
     {
         MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
@@ -5833,11 +6469,11 @@ public sealed class GameplayLifecycleCharacterizationTests
         bool drawingVisible)
     {
         CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-        Assert.That(roomViews, Has.Length.EqualTo(4),
-            "Entrance, Drawing, Music, and Library must remain the only passive RoomView scene owners at this gate.");
+        Assert.That(roomViews, Has.Length.EqualTo(5),
+            "Entrance, Drawing, Music, Library, and Ballroom must remain the only passive RoomView scene owners at this gate.");
         CanonicalPassage[] passages = FindInActiveScene<CanonicalPassage>();
-        Assert.That(passages, Has.Length.EqualTo(6),
-            "The three route grafts must remain exactly six reciprocal canonical scene bindings.");
+        Assert.That(passages, Has.Length.EqualTo(8),
+            "The four route grafts must remain exactly eight reciprocal canonical scene bindings.");
 
         Assert.That(
             roomViews.Single(item => item.Definition != null && item.Definition.StableId == "room.grand-entrance-hall"),
@@ -5849,10 +6485,14 @@ public sealed class GameplayLifecycleCharacterizationTests
             item.Definition != null && item.Definition.StableId == "room.music-room");
         CanonicalRoomView libraryView = roomViews.Single(item =>
             item.Definition != null && item.Definition.StableId == "room.library");
+        CanonicalRoomView ballroomView = roomViews.Single(item =>
+            item.Definition != null && item.Definition.StableId == "room.ballroom");
         RoomContentGroup musicContent = FindInActiveScene<RoomContentGroup>()
             .Single(item => item.RoomName == MusicRoom);
         RoomContentGroup libraryContent = FindInActiveScene<RoomContentGroup>()
             .Single(item => item.RoomName == "Library");
+        RoomContentGroup ballroomContent = FindInActiveScene<RoomContentGroup>()
+            .Single(item => item.RoomName == "Ballroom");
         Assert.That(entranceView.Definition, Is.SameAs(entranceDefinition));
         Assert.That(drawingView.Definition, Is.SameAs(drawingDefinition));
         Assert.That(entranceDefinition.StableId, Is.EqualTo("room.grand-entrance-hall"));
@@ -5880,6 +6520,12 @@ public sealed class GameplayLifecycleCharacterizationTests
             libraryView,
             libraryContent,
             expectedVisible: libraryContent.gameObject.activeSelf);
+        Assert.That(ballroomView.Definition.StableId, Is.EqualTo("room.ballroom"));
+        Assert.That(ballroomView.LegacyContentGroup, Is.SameAs(ballroomContent));
+        Assert.That(ballroomView.gameObject, Is.SameAs(ballroomContent.gameObject));
+        Assert.That(ballroomView.Root, Is.SameAs(ballroomContent.transform));
+        Assert.That(ballroomView.HasGameContext, Is.True);
+        Assert.That(ballroomView.IsVisible, Is.EqualTo(ballroomContent.gameObject.activeSelf));
 
         DoorTriggerNavigation drawingMusicForwardTrigger =
             RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_DrawingRoom_MusicRoom");
@@ -6560,7 +7206,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage, Is.Not.Null);
         Assert.That(musicView, Is.Not.Null);
         Assert.That(libraryView, Is.Not.Null);
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(6));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(8));
 
         Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
         Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));
@@ -6722,7 +7368,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage, Is.Not.Null);
         Assert.That(drawingView, Is.Not.Null);
         Assert.That(musicView, Is.Not.Null);
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(6));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(8));
 
         Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
         Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));
