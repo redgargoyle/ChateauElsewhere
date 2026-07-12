@@ -4121,15 +4121,16 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(serializedReverse, Does.Contain("doorName: Library_MusicRoom"));
             Assert.That(serializedReverse, Does.Contain("destinationRoom: Music Room"));
             Assert.That(serializedReverse, Does.Contain("image: {fileID: 2300000078}"));
-            string[] serializedLegacyTriggers = { serializedForward, serializedReverse };
-            for (int documentIndex = 0; documentIndex < serializedLegacyTriggers.Length; documentIndex++)
+            string[] serializedDependencyBoundTriggers = { serializedForward, serializedReverse };
+            for (int documentIndex = 0; documentIndex < serializedDependencyBoundTriggers.Length; documentIndex++)
             {
-                string triggerDocument = serializedLegacyTriggers[documentIndex];
-                Assert.That(triggerDocument, Does.Contain("navigationManager: {fileID: 0}"));
+                string triggerDocument = serializedDependencyBoundTriggers[documentIndex];
+                Assert.That(triggerDocument, Does.Contain("navigationManager: {fileID: 1878886997}"));
                 Assert.That(triggerDocument, Does.Not.Contain("canonicalPassage:"));
-                Assert.That(triggerDocument, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
-                Assert.That(triggerDocument, Does.Contain("player: {fileID: 0}"));
-                Assert.That(triggerDocument, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+                Assert.That(triggerDocument, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+                Assert.That(triggerDocument, Does.Contain("player: {fileID: 81962843}"));
+                Assert.That(triggerDocument, Does.Contain(
+                    "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
                 Assert.That(triggerDocument, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
                 Assert.That(triggerDocument, Does.Contain("requirePlayerInSourceRoom: 1"));
                 Assert.That(triggerDocument, Does.Contain("useCameraSequence: 0"));
@@ -4138,25 +4139,85 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Assert.That(triggerDocument, Does.Contain("autoActivateAfterApproach: 1"));
             }
 
+            string[] serializedGameplayTriggers = sceneText
+                .Replace("\r\n", "\n")
+                .Split(new[] { "\n--- !u!" }, System.StringSplitOptions.None)
+                .Where(document => document.Contains("guid: 7e419b0f8f26d4f2d8d03e567fef4c52"))
+                .ToArray();
+            Assert.That(serializedGameplayTriggers, Has.Length.EqualTo(45));
+            Assert.That(
+                serializedGameplayTriggers.Count(document =>
+                    document.Contains("navigationManager: {fileID: 1878886997}") &&
+                    document.Contains("doorOpenAudioSource: {fileID: 2201000013}") &&
+                    document.Contains("player: {fileID: 81962843}") &&
+                    document.Contains(
+                        "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
+                Is.EqualTo(6),
+                "Exactly the first three reciprocal route pairs may have direct compatibility bindings.");
+            Assert.That(
+                serializedGameplayTriggers.Count(document =>
+                    document.Contains("navigationManager: {fileID: 0}") &&
+                    document.Contains("doorOpenAudioSource: {fileID: 0}") &&
+                    document.Contains("player: {fileID: 0}") &&
+                    document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
+                Is.EqualTo(39),
+                "Every trigger before its dependency slice must retain all four null compatibility bindings.");
+            Assert.That(
+                serializedGameplayTriggers.Count(document =>
+                    document.Contains("canonicalPassage: {fileID:")),
+                Is.EqualTo(4),
+                "Dependency binding must not advance either Group02 canonical caller.");
+            Assert.That(
+                serializedGameplayTriggers.All(document =>
+                    document.Contains("stairwaySoundCatalog: {fileID: 0}")),
+                Is.True);
+
             AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
                 .Single(item => item.gameObject.name == "Audio_DoorOpen");
+            RoomNavigationManager[] serializedNavigationManagers = legacyPair
+                .Select(trigger => GetPrivateField<RoomNavigationManager>(trigger, "navigationManager"))
+                .ToArray();
+            Transform[] serializedPlayers = legacyPair
+                .Select(trigger => GetPrivateField<Transform>(trigger, "player"))
+                .ToArray();
+            AudioSource[] serializedDoorAudioSources = legacyPair
+                .Select(trigger => GetPrivateField<AudioSource>(trigger, "doorOpenAudioSource"))
+                .ToArray();
+            DoorOpenSoundCatalog[] serializedDoorCatalogs = legacyPair
+                .Select(trigger => GetPrivateField<DoorOpenSoundCatalog>(trigger, "doorOpenSoundCatalog"))
+                .ToArray();
             for (int triggerIndex = 0; triggerIndex < legacyPair.Length; triggerIndex++)
             {
                 DoorTriggerNavigation trigger = legacyPair[triggerIndex];
+                Assert.That(serializedNavigationManagers[triggerIndex], Is.SameAs(navigation));
+                Assert.That(serializedPlayers[triggerIndex], Is.SameAs(player.transform));
+                Assert.That(serializedDoorAudioSources[triggerIndex], Is.SameAs(passageAudioSource));
+                Assert.That(serializedDoorCatalogs[triggerIndex], Is.Not.Null);
+                Assert.That(AssetDatabase.GetAssetPath(serializedDoorCatalogs[triggerIndex]),
+                    Is.EqualTo("Assets/Resources/Audio/DoorOpenSoundCatalog.asset"));
                 InvokePrivateMethod(trigger, "ResolveReferences");
                 InvokePrivateMethod(trigger, "ResolvePlayerReference");
                 InvokePrivateMethod(trigger, "ResolveDoorOpenAudioSource");
                 InvokePrivateMethod(trigger, "ResolveDoorOpenSoundCatalog");
-                Assert.That(GetPrivateField<RoomNavigationManager>(trigger, "navigationManager"), Is.SameAs(navigation));
-                Assert.That(GetPrivateField<Transform>(trigger, "player"), Is.SameAs(player.transform));
-                Assert.That(GetPrivateField<AudioSource>(trigger, "doorOpenAudioSource"), Is.SameAs(passageAudioSource));
+                Assert.That(GetPrivateField<RoomNavigationManager>(trigger, "navigationManager"),
+                    Is.SameAs(serializedNavigationManagers[triggerIndex]));
+                Assert.That(GetPrivateField<Transform>(trigger, "player"),
+                    Is.SameAs(serializedPlayers[triggerIndex]));
+                Assert.That(GetPrivateField<AudioSource>(trigger, "doorOpenAudioSource"),
+                    Is.SameAs(serializedDoorAudioSources[triggerIndex]));
                 DoorOpenSoundCatalog resolvedCatalog =
                     GetPrivateField<DoorOpenSoundCatalog>(trigger, "doorOpenSoundCatalog");
-                Assert.That(resolvedCatalog, Is.Not.Null);
-                Assert.That(AssetDatabase.GetAssetPath(resolvedCatalog),
-                    Is.EqualTo("Assets/Resources/Audio/DoorOpenSoundCatalog.asset"));
+                Assert.That(resolvedCatalog, Is.SameAs(serializedDoorCatalogs[triggerIndex]));
                 Assert.That(GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage"), Is.Null);
             }
+            Assert.That(serializedDoorCatalogs[1], Is.SameAs(serializedDoorCatalogs[0]));
+            AssertDoorTriggerCompatibilityBindings(
+                forward,
+                reverse,
+                navigation,
+                player.transform,
+                passageAudioSource,
+                serializedDoorCatalogs[0]);
             InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
             Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Is.Empty);
 
@@ -4984,8 +5045,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             Debug.Log(
                 $"[MusicLibraryLegacyProfile] forwardGeometry={FormatVector(forwardRect.anchoredPosition)}/" +
                 $"{FormatVector(forwardRect.sizeDelta)} reverseGeometry={FormatVector(reverseRect.anchoredPosition)}/" +
-                $"{FormatVector(reverseRect.sizeDelta)} profiles=none callers=null serializedDependencies=null " +
-                $"runtimeDependencies=resolved hideLibrary={FormatVector(libraryHideRect.anchoredPosition)} " +
+                $"{FormatVector(reverseRect.sizeDelta)} profiles=none callers=null serializedDependencies=bound " +
+                $"runtimeDependencies=stable hideLibrary={FormatVector(libraryHideRect.anchoredPosition)} " +
                 $"hideMusic={FormatVector(musicHideRect.anchoredPosition)}");
         }
         finally
@@ -5840,6 +5901,24 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage.isActiveAndEnabled, Is.EqualTo(libraryVisible));
         Assert.That(GetPrivateField<CanonicalPassage>(forwardTrigger, "canonicalPassage"), Is.Null);
         Assert.That(GetPrivateField<CanonicalPassage>(reverseTrigger, "canonicalPassage"), Is.Null);
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        Transform serializedPlayer = GetPrivateField<Transform>(forwardTrigger, "player");
+        Assert.That(serializedPlayer, Is.Not.Null);
+        PointClickPlayerMovement player = serializedPlayer.GetComponent<PointClickPlayerMovement>();
+        Assert.That(player, Is.Not.Null);
+        AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
+            .Single(item => item.gameObject.name == "Audio_DoorOpen");
+        DoorOpenSoundCatalog passageDoorCatalog =
+            GetPrivateField<DoorOpenSoundCatalog>(forwardTrigger, "doorOpenSoundCatalog");
+        AssertDoorTriggerCompatibilityBindings(
+            forwardTrigger,
+            reverseTrigger,
+            navigation,
+            serializedPlayer,
+            passageAudioSource,
+            passageDoorCatalog);
+        Assert.That(GetPrivateField<DoorOpenSoundCatalog>(forwardTrigger, "stairwaySoundCatalog"), Is.Null);
+        Assert.That(GetPrivateField<DoorOpenSoundCatalog>(reverseTrigger, "stairwaySoundCatalog"), Is.Null);
         Assert.That(
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),

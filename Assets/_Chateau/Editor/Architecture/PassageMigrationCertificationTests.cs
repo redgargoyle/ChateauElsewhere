@@ -300,7 +300,7 @@ public sealed class PassageMigrationCertificationTests
     }
 
     [Test]
-    public void MusicLibraryPassageBoundRouteSnapshotPreservesExactLegacySceneBeforeDependencyBinding()
+    public void MusicLibraryDependenciesBoundRouteSnapshotPreservesExactLegacySceneBeforeCallerBinding()
     {
         List<RouteInventoryRow> group = ReadInventory()
             .Where(row => row.Order == 2)
@@ -334,10 +334,10 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(group, Has.Count.EqualTo(2));
         RouteInventoryRow libraryRow = group.Single(row => row.ComponentFileId == "2300000079");
         RouteInventoryRow musicRow = group.Single(row => row.ComponentFileId == "552135204");
-        Assert.That(group.All(row => row.Status == "passage-bound"), Is.True);
+        Assert.That(group.All(row => row.Status == "dependencies-bound"), Is.True);
         Assert.That(group.All(row => row.Group == "Music-Library"), Is.True);
         Assert.That(group.All(row => row.Profile == "standard-door"), Is.True);
-        Assert.That(group.All(row => row.Notes == "passive-passage-bound-dependencies-next"), Is.True);
+        Assert.That(group.All(row => row.Notes == "direct-dependencies-bound-caller-next"), Is.True);
         AssertReciprocal(libraryRow, musicRow);
         AssertReciprocal(musicRow, libraryRow);
         Assert.That(libraryRow.PassageFileId, Is.EqualTo("4100000016"));
@@ -396,7 +396,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(musicTransform, "m_AnchorMin"), Is.EqualTo("{x: 0.5, y: 0.5}"));
         Assert.That(ReadField(musicTransform, "m_AnchorMax"), Is.EqualTo("{x: 0.5, y: 0.5}"));
         Assert.That(ReadField(musicTransform, "m_Pivot"), Is.EqualTo("{x: 0.5, y: 0.5}"));
-        AssertLegacyTriggerSnapshot(
+        AssertDependencyBoundLegacyTriggerSnapshot(
             musicTrigger,
             "552135202",
             "552135205",
@@ -419,13 +419,19 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(libraryTransform, "m_AnchorMin"), Is.EqualTo("{x: 0.5, y: 0.5}"));
         Assert.That(ReadField(libraryTransform, "m_AnchorMax"), Is.EqualTo("{x: 0.5, y: 0.5}"));
         Assert.That(ReadField(libraryTransform, "m_Pivot"), Is.EqualTo("{x: 0.5, y: 0.5}"));
-        AssertLegacyTriggerSnapshot(
+        AssertDependencyBoundLegacyTriggerSnapshot(
             libraryTrigger,
             "2300000075",
             "2300000078",
             "Library",
             "Library_MusicRoom",
             "Music Room");
+        AssertRevertsToPassageBoundTriggerHash(
+            musicTrigger,
+            "e1706c94957de2d852784a32de5f8a4a20c0d6fecc5b8dbb4232149de3a6d86b");
+        AssertRevertsToPassageBoundTriggerHash(
+            libraryTrigger,
+            "6c47baaf887547bd673a73fefc07de810b7ecd2e2b572a60fb0f8beb2c53399a");
 
         Assert.That(musicDoors, Does.Contain("m_Name: Doors"));
         AssertExactComponentIds(musicDoors, "2103000011");
@@ -935,7 +941,7 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(componentIds, Is.EqualTo(expectedIds));
     }
 
-    private static void AssertLegacyTriggerSnapshot(
+    private static void AssertDependencyBoundLegacyTriggerSnapshot(
         string trigger,
         string gameObjectFileId,
         string imageFileId,
@@ -952,11 +958,11 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(trigger, "useCameraSequence"), Is.EqualTo("0"));
         Assert.That(ReadField(trigger, "triggerKind"), Is.EqualTo("0"));
         Assert.That(ReadField(trigger, "stairwayDirection"), Is.EqualTo("0"));
-        Assert.That(ReadReferenceFileId(trigger, "navigationManager"), Is.EqualTo("0"));
+        Assert.That(ReadReferenceFileId(trigger, "navigationManager"), Is.EqualTo(NavigationManagerFileId));
         Assert.That(trigger, Does.Not.Contain("canonicalPassage:"));
         Assert.That(ReadReferenceFileId(trigger, "image"), Is.EqualTo(imageFileId));
-        Assert.That(ReadReferenceFileId(trigger, "doorOpenAudioSource"), Is.EqualTo("0"));
-        Assert.That(ReadReferenceFileId(trigger, "player"), Is.EqualTo("0"));
+        Assert.That(ReadReferenceFileId(trigger, "doorOpenAudioSource"), Is.EqualTo(DoorAudioSourceFileId));
+        Assert.That(ReadReferenceFileId(trigger, "player"), Is.EqualTo(PlayerTransformFileId));
         Assert.That(ReadField(trigger, "makeInvisibleAtRuntime"), Is.EqualTo("1"));
         Assert.That(ReadField(trigger, "runtimeColor"), Is.EqualTo("{r: 1, g: 1, b: 1, a: 0}"));
         Assert.That(ReadField(trigger, "bringToFront"), Is.EqualTo("1"));
@@ -970,12 +976,54 @@ public sealed class PassageMigrationCertificationTests
         Assert.That(ReadField(trigger, "maxPlayerScreenDistance"), Is.EqualTo("145"));
         Assert.That(ReadField(trigger, "playDoorOpenSound"), Is.EqualTo("1"));
         Assert.That(ReadField(trigger, "doorOpenAudioObjectName"), Is.EqualTo("Audio_DoorOpen"));
-        Assert.That(ReadReferenceFileId(trigger, "doorOpenSoundCatalog"), Is.EqualTo("0"));
+        Assert.That(trigger, Does.Contain(
+            $"doorOpenSoundCatalog: {{fileID: 11400000, guid: {DoorCatalogGuid}, type: 2}}"));
         Assert.That(ReadField(trigger, "doorOpenSoundCatalogResourcePath"),
             Is.EqualTo("Audio/DoorOpenSoundCatalog"));
         Assert.That(ReadReferenceFileId(trigger, "stairwaySoundCatalog"), Is.EqualTo("0"));
         Assert.That(ReadField(trigger, "stairwaySoundCatalogResourcePath"),
             Is.EqualTo("Audio/StairwaySoundCatalog"));
+    }
+
+    private static void AssertRevertsToPassageBoundTriggerHash(string trigger, string expectedSha256)
+    {
+        KeyValuePair<string, string>[] dependencyReplacements =
+        {
+            new KeyValuePair<string, string>(
+                $"navigationManager: {{fileID: {NavigationManagerFileId}}}",
+                "navigationManager: {fileID: 0}"),
+            new KeyValuePair<string, string>(
+                $"doorOpenAudioSource: {{fileID: {DoorAudioSourceFileId}}}",
+                "doorOpenAudioSource: {fileID: 0}"),
+            new KeyValuePair<string, string>(
+                $"player: {{fileID: {PlayerTransformFileId}}}",
+                "player: {fileID: 0}"),
+            new KeyValuePair<string, string>(
+                $"doorOpenSoundCatalog: {{fileID: 11400000, guid: {DoorCatalogGuid}, type: 2}}",
+                "doorOpenSoundCatalog: {fileID: 0}")
+        };
+
+        string reverted = trigger;
+
+        for (int i = 0; i < dependencyReplacements.Length; i++)
+        {
+            KeyValuePair<string, string> replacement = dependencyReplacements[i];
+            Assert.That(CountOccurrences(reverted, replacement.Key), Is.EqualTo(1),
+                $"Dependency-bound trigger must contain exactly one '{replacement.Key}'.");
+            reverted = reverted.Replace(replacement.Key, replacement.Value);
+        }
+
+        Assert.That(ComputeSha256(reverted), Is.EqualTo(expectedSha256),
+            "Nulling only the four direct dependencies must reproduce the accepted passage-bound trigger bytes.");
+    }
+
+    private static string ComputeSha256(string value)
+    {
+        using (System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create())
+        {
+            byte[] digest = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(value));
+            return BitConverter.ToString(digest).Replace("-", string.Empty).ToLowerInvariant();
+        }
     }
 
     private static void AssertBoundarySnapshot(
