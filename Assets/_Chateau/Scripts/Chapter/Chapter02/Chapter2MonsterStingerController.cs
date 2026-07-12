@@ -102,6 +102,24 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
             report.AddError("Chapter2MonsterStingerController monster SpriteRenderer must belong to its serialized monster object.", this);
         }
 
+        if (monsterRunSprites == null || monsterRunSprites.Length != MonsterRunStutterFrameOrder.Length)
+        {
+            report.AddError("Chapter2MonsterStingerController requires its eight serialized monster run sprites.", this);
+        }
+        else
+        {
+            for (int i = 0; i < monsterRunSprites.Length; i++)
+            {
+                if (monsterRunSprites[i] != null)
+                {
+                    continue;
+                }
+
+                report.AddError($"Chapter2MonsterStingerController monster run sprite {i} is missing.", this);
+                break;
+            }
+        }
+
         if (monsterOverlayCanvas == null)
         {
             report.AddError("Chapter2MonsterStingerController requires its serialized monster overlay Canvas.", this);

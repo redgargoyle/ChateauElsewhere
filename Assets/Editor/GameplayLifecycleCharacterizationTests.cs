@@ -77,6 +77,18 @@ public sealed class GameplayLifecycleCharacterizationTests
         AudioSource serializedMonsterViolinSource = GetPrivateField<AudioSource>(serializedMonsterStinger, "violinAudioSource");
         GameAudioSourceVolume serializedMonsterViolinBinding = GetPrivateField<GameAudioSourceVolume>(serializedMonsterStinger, "violinAudioVolumeBinding");
         AudioClip serializedMonsterViolinClip = GetPrivateField<AudioClip>(serializedMonsterStinger, "violinAudioClip");
+        Sprite[] serializedMonsterRunSprites = GetPrivateField<Sprite[]>(serializedMonsterStinger, "monsterRunSprites");
+        string[] expectedMonsterRunSpriteGuids =
+        {
+            "8414d4be92f9485e8f33a1abb721c2fd",
+            "545dbfc1fc754f3fbfc3ba99fa334619",
+            "ee2e37acc05b4445ba6cfc7f8e70737e",
+            "432fbf9f626f4b6c84fa80dd3dab01fc",
+            "94976d1632474d90914e011e989f3ae7",
+            "f7e820a7807c4c159b8a465ec1909b89",
+            "32ccf6ba47fe4ce19bcb7e3354484363",
+            "ebfd9b9fdded4ed6a159c078f21829d3"
+        };
         Sprite serializedMonsterOriginalSprite = serializedMonsterImage != null ? serializedMonsterImage.sprite : null;
         Chapter2GuestPanicController serializedGuestPanic = RequireExactlyOneInActiveScene<Chapter2GuestPanicController>();
         Chapter2GuestSearchController serializedGuestSearch = RequireExactlyOneInActiveScene<Chapter2GuestSearchController>();
@@ -338,6 +350,14 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(serializedMonsterStinger.GetComponents<GameAudioSourceVolume>(), Is.Empty);
         Assert.That(serializedMonsterObject.GetComponents<AudioSource>(), Has.Length.EqualTo(1));
         Assert.That(serializedMonsterObject.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+        Assert.That(serializedMonsterRunSprites, Has.Length.EqualTo(expectedMonsterRunSpriteGuids.Length));
+        for (int i = 0; i < expectedMonsterRunSpriteGuids.Length; i++)
+        {
+            Assert.That(serializedMonsterRunSprites[i], Is.Not.Null);
+            Assert.That(
+                AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(serializedMonsterRunSprites[i])),
+                Is.EqualTo(expectedMonsterRunSpriteGuids[i]));
+        }
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter2_MonsterPlaceholder_Runtime"), Is.False);
         Assert.That(serializedGuestPanic.HasGameContext, Is.True);
         Assert.That(serializedGuestSearch.HasGameContext, Is.True);
@@ -829,7 +849,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<AudioSource>(serializedMonsterStinger, "violinAudioSource"), Is.SameAs(serializedMonsterViolinSource));
         Assert.That(GetPrivateField<GameAudioSourceVolume>(serializedMonsterStinger, "violinAudioVolumeBinding"), Is.SameAs(serializedMonsterViolinBinding));
         Assert.That(GetPrivateField<AudioClip>(serializedMonsterStinger, "violinAudioClip"), Is.SameAs(serializedMonsterViolinClip));
-        Sprite[] serializedMonsterRunSprites = GetPrivateField<Sprite[]>(serializedMonsterStinger, "monsterRunSprites");
+        Assert.That(GetPrivateField<Sprite[]>(serializedMonsterStinger, "monsterRunSprites"), Is.SameAs(serializedMonsterRunSprites));
         Assert.That(serializedMonsterViolinSource, Is.Not.Null);
         Assert.That(serializedMonsterViolinSource.gameObject, Is.SameAs(serializedMonsterObject));
         Assert.That(serializedMonsterViolinClip, Is.Not.Null);
@@ -856,24 +876,6 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(serializedMonsterCanvases[0].sortingLayerName, Is.EqualTo("People"));
         Assert.That(serializedMonsterCanvases[0].sortingOrder, Is.EqualTo(10000));
         Assert.That(serializedMonsterRunSprites, Has.Length.EqualTo(8));
-        string[] expectedMonsterRunSpriteGuids =
-        {
-            "8414d4be92f9485e8f33a1abb721c2fd",
-            "545dbfc1fc754f3fbfc3ba99fa334619",
-            "ee2e37acc05b4445ba6cfc7f8e70737e",
-            "432fbf9f626f4b6c84fa80dd3dab01fc",
-            "94976d1632474d90914e011e989f3ae7",
-            "f7e820a7807c4c159b8a465ec1909b89",
-            "32ccf6ba47fe4ce19bcb7e3354484363",
-            "ebfd9b9fdded4ed6a159c078f21829d3"
-        };
-        for (int i = 0; i < expectedMonsterRunSpriteGuids.Length; i++)
-        {
-            Assert.That(serializedMonsterRunSprites[i], Is.Not.Null);
-            Assert.That(
-                AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(serializedMonsterRunSprites[i])),
-                Is.EqualTo(expectedMonsterRunSpriteGuids[i]));
-        }
 
         serializedMonsterStinger.StopStinger();
         yield return null;

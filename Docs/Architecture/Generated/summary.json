@@ -1,6 +1,6 @@
 {
   "runtime_files": 106,
-  "runtime_loc": 49522,
+  "runtime_loc": 49540,
   "smell_totals": {
     "FindObject": 139,
     "ResourcesLoad": 20,

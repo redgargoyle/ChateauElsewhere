@@ -181,7 +181,18 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerDocument, Does.Contain("violinAudioVolumeBinding: {fileID: 3700000005}"));
         Assert.That(stingerDocument, Does.Contain("violinAudioClip: {fileID: 8300000, guid: 69f06d321e4549cdcad1133332661f6d, type: 3}"));
         Assert.That(stingerDocument, Does.Not.Contain("fallbackViolinClipName"));
-        Assert.That(stingerDocument, Does.Contain("monsterRunSprites: []"));
+        Assert.That(stingerDocument, Does.Not.Contain("monsterRunSprites: []"));
+        Assert.That(stingerDocument, Does.Contain(
+            "  monsterRunSprites:\n" +
+            "  - {fileID: 21300000, guid: 8414d4be92f9485e8f33a1abb721c2fd, type: 3}\n" +
+            "  - {fileID: 21300000, guid: 545dbfc1fc754f3fbfc3ba99fa334619, type: 3}\n" +
+            "  - {fileID: 21300000, guid: ee2e37acc05b4445ba6cfc7f8e70737e, type: 3}\n" +
+            "  - {fileID: 21300000, guid: 432fbf9f626f4b6c84fa80dd3dab01fc, type: 3}\n" +
+            "  - {fileID: 21300000, guid: 94976d1632474d90914e011e989f3ae7, type: 3}\n" +
+            "  - {fileID: 21300000, guid: f7e820a7807c4c159b8a465ec1909b89, type: 3}\n" +
+            "  - {fileID: 21300000, guid: 32ccf6ba47fe4ce19bcb7e3354484363, type: 3}\n" +
+            "  - {fileID: 21300000, guid: ebfd9b9fdded4ed6a159c078f21829d3, type: 3}\n"));
+        Assert.That(CountOccurrences(stingerDocument, "- {fileID: 21300000, guid:"), Is.EqualTo(8));
         Assert.That(stingerDocument, Does.Contain("monsterRunSpritesResourcePath: Chapter2/Monster/ArmSwing"));
         Assert.That(stingerDocument, Does.Not.Contain("createPlaceholderMonsterIfMissing"));
         Assert.That(monsterGameObjectDocument, Does.Contain("m_Name: Ch2_Monster"));
@@ -242,6 +253,7 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized violin AudioClip."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized violin volume binding."));
         Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its serialized monster overlay Canvas."));
+        Assert.That(stingerText, Does.Contain("Chapter2MonsterStingerController requires its eight serialized monster run sprites."));
         Assert.That(stingerText, Does.Not.Contain("GetComponent<AudioSource>()"));
         Assert.That(stingerText, Does.Not.Contain("AddComponent<AudioSource>()"));
         Assert.That(stingerText, Does.Not.Contain("GameAudioSettings.EnsureBinding("));
