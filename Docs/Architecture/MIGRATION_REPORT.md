@@ -50,6 +50,7 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized DialogueSpeechService's exact Butler movement owner and the primary voice source's `GameAudioSourceVolume`. Stable speech now configures that authored Dialogue binding directly and validates the playback graph; the intentional temporary overlap source/binding remains dynamic.
 - Replaced coroutine-local blocking-input restoration with a token-safe lease owned by DialogueSpeechService. Cancellation releases synchronously before chapter transitions apply their state, older routines cannot release newer speech, and service disable/shutdown cannot strand the Butler input-disabled.
 - Removed SubtitleService's line-bank resource/navigation repair and GuestVoiceLinePlayback's catalog/navigation repair. Both owners now use validated serialized dependencies directly; subtitle canvas/EventSystem composition and temporary overlap audio remain explicitly deferred presentation behavior.
+- Characterized the legacy `GameClockHandsDisplay` hook before deletion: it has zero serialized references and the MainMenu-to-Gameplay lifecycle proves it attaches zero components and creates zero analog-clock canvases in the Entrance, Drawing Room, and return path.
 - Serialized the inert Chapter 1 HUD owner on the Chapter 1 controller while preserving the characterized first-use canvas/text construction and sorting order.
 - Removed Chapter 1 HUD global lookup/runtime attachment and the obsolete `createRuntimeHud` flag; HUD child presentation remains lazy and owner-scoped.
 - Serialized the RuntimeSettingsMenu owner and correctly scaled overlay canvas under GameRoot, explicitly wiring navigation, chapter, clock, and exploration-music dependencies while keeping controls lazy.
@@ -103,6 +104,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - the real voice/input lifecycle initially exposed nondeterministic global player selection, then passed with the serialized `81962842` owner and pre-existing `1878887003` voice binding through repeated cancellation/reuse;
 - the blocking-input lease lifecycle proves enabled and disabled restoration, synchronous cancel-before-transition ordering, cancelled-coroutine non-interference, and same-frame replacement ownership; focused/static and full-suite gates pass;
 - the dialogue dependency cleanup changes only the serialized SubtitleService and GuestVoiceLinePlayback documents by removing their obsolete resource-path strings; document order, all references, GameRoot lists/Transform, and SceneRoots remain exact, while real voice/input lifecycle and full suite pass;
+- the clock-hands zero-instance lifecycle passes at startup, after Drawing Room activation, and after returning to the Entrance; full-suite discovery/failure names remain exact before deletion proof is finalized;
 - the focused ambience characterization passed and the full-suite gate retained the exact baseline failure-name set;
 - the ambience-owner graft audit passed 6/6 checks: nine documents added, only navigation/root-transform changed, every old document retained its exact order, and SceneRoots stayed byte-identical;
 - the ambience-factory cleanup audit passed 5/5 checks: no document churn, only the two ambience owner documents changed, document order stayed exact, and SceneRoots stayed byte-identical;
@@ -141,8 +143,8 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Characterize the next set piece before migrating it; do not bulk-convert room props from source-text assumptions.
-2. Prove whether the unreferenced clock-hands display is dead before any deletion.
+1. Complete serialized/code/resource proof and delete the now behaviorally-zero `GameClockHandsDisplay` hook as its own commit.
+2. Characterize the next set piece before migrating it; do not bulk-convert room props from source-text assumptions.
 3. Retire the already-serialized ChapterManager-to-Chapter2Controller lookup after a dedicated transition gate.
 
 Do not begin bulk deletion until those gates pass.

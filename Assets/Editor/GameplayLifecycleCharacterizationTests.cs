@@ -210,6 +210,11 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(gameRoot.Services, Has.Count.EqualTo(8));
         Assert.That(gameRoot.Services.Select(service => service.GetType()).Distinct().Count(), Is.EqualTo(8));
         Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "ChapterManager_Runtime"), Is.False);
+        Assert.That(
+            FindInActiveScene<MonoBehaviour>().Any(item => item.GetType().Name == "GameClockHandsDisplay"),
+            Is.False,
+            "The legacy analog-clock runtime hook should not attach to any authored Gameplay sprite.");
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("Canvas_AnalogClockHands")), Is.False);
         Assert.That(serializedChapter2.CurrentPhase, Is.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(serializedChapter2.HasGameContext, Is.True);
         Assert.That(serializedMonsterStinger.HasGameContext, Is.True);
@@ -455,6 +460,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(fireplaceSource.clip, Is.Not.Null);
         Assert.That(clockSource.clip, Is.Not.Null);
         Assert.That(teaTableView.gameObject.activeInHierarchy, Is.True);
+        Assert.That(FindInActiveScene<MonoBehaviour>().Any(item => item.GetType().Name == "GameClockHandsDisplay"), Is.False);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("Canvas_AnalogClockHands")), Is.False);
         Assert.That(teaTableBlocker.gameObject.activeInHierarchy, Is.True);
         teaTableRenderer.sortingOrder = -12345;
         Assert.That(teaTableView.ApplyPresentation(), Is.True);
@@ -520,6 +527,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(fireplaceSource.clip, Is.Not.Null);
         Assert.That(clockSource.clip, Is.Not.Null);
         Assert.That(teaTableView.gameObject.activeInHierarchy, Is.False);
+        Assert.That(FindInActiveScene<MonoBehaviour>().Any(item => item.GetType().Name == "GameClockHandsDisplay"), Is.False);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name.StartsWith("Canvas_AnalogClockHands")), Is.False);
         Assert.That(
             FindInActiveScene<SetPieceView>().Single(item => item.gameObject.name == "tea_service_table"),
             Is.SameAs(teaTableView));

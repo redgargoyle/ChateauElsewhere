@@ -72,6 +72,7 @@ Only after Phase 2 passes:
 - remove `DialogueSpeechService.FindOrCreate` and `SubtitleService.FindOrCreate` call sites after callers receive serialized/service references;
 - replace `UrpPostProcessingBootstrap` with a serialized render rig;
 - replace runtime clock-hand attachment with an authored `ClockView` reference.
+- `GameClockHandsDisplay` is proven behaviorally zero across the current gameplay route; finish all reference/resource checks and delete it rather than replacing an unused hook.
 
 Exit condition: required managers are never created via `new GameObject` or `AddComponent` at runtime.
 
