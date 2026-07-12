@@ -345,14 +345,14 @@ public sealed class CanonicalRoomPassageContractTests
                 forwardDefinition,
                 entranceView,
                 reverse,
-                new Vector2(-7.45909f, -1.955749f),
-                new Vector2(-7.45909f, -1.955749f));
+                new Vector2(-7.576081f, -1.986423f),
+                new Vector2(5.267176f, -2.104616f));
             ConfigurePassage(
                 reverse,
                 reverseDefinition,
                 drawingView,
                 forward,
-                new Vector2(5.167492f, -2.056576f),
+                new Vector2(5.280546f, -2.015396f),
                 Vector2.zero);
 
             ValidationReport entranceReport = new ValidationReport();
@@ -372,7 +372,7 @@ public sealed class CanonicalRoomPassageContractTests
             Assert.That(entranceView.LegacyContentGroup, Is.SameAs(entranceContent));
             Assert.That(forward.SourceRoomView, Is.SameAs(entranceView));
             Assert.That(forward.ReversePassage, Is.SameAs(reverse));
-            Assert.That(forward.ArrivalAnchor.LogicalPosition, Is.EqualTo(new Vector2(-7.45909f, -1.955749f)));
+            Assert.That(forward.ArrivalAnchor.LogicalPosition, Is.EqualTo(new Vector2(5.267176f, -2.104616f)));
             Assert.That(reverse.ArrivalAnchor.LogicalPosition, Is.EqualTo(Vector2.zero),
                 "Logical zero is valid authored anchor data when the anchor object is present.");
 

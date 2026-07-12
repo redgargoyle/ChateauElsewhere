@@ -124,7 +124,9 @@ The first route characterization is complete. Before canonical code or scene bin
 
 - exact Entrance/Drawing trigger IDs, parents, rectangles, route strings, script GUID, and current null repair edges;
 - one room-change event per direction, in transition-before-arrival order;
-- exact legacy logical arrivals: Drawing Room `(5.167492, -2.056576)` and Entrance return `(-7.45909, -1.955749)`;
+- neutral authored-view logical anchors at `1366x768`: representative far forward approach `(-7.576081, -1.986423)` / Drawing arrival `(5.267176, -2.104616)`, and representative far reverse approach `(5.280546, -2.015396)` / Entrance arrival `(-7.703568, -2.000136)`;
+- actual far activation ordering (`ArrivedAtDestination` -> `MovementStopped` -> audio -> room event -> destination warp), synchronous near activation, pending-subscription cleanup, and the `145`-pixel proximity boundary;
+- viewport envelopes at `1366x768`, `1440x1080`, `1920x1080`, and `2560x1080`, plus proof that left/center/right click positions converge for this pair while aspect ratio and source position still change the legacy logical result;
 - camera active-room/background ownership, prompt/cursor release, Chapter 1 continuity, object/component counts, and the `0.752865` Butler presentation multiplier;
 - shared door-audio first-use binding/reuse; and
 - the current `RoomContentGroup` force-enable defect, which must be intentionally removed when `RoomView` assumes visibility ownership.
@@ -135,7 +137,9 @@ Pure-contract status: complete. The canonical definition/view/passage/interface 
 
 Canonical-data status: complete. The two room definitions and two reciprocal directed passage definitions are exact, directly registered in `GameDatabase`, Unity-imported, and behaviorally inert; that data gate passed before any scene binding.
 
-Passive-room-view status: complete. The Entrance and Drawing roots each carry one definition-backed RoomView registered for validation, but no view can change visibility and no canonical Passage exists in the scene. The legacy manager remains the sole activation writer. Next, characterize near/far approach selection and viewport sensitivity before authoring logical approach anchors.
+Passive-room-view status: complete. The Entrance and Drawing roots each carry one definition-backed RoomView registered for validation, but no view can change visibility and no canonical Passage exists in the scene. The legacy manager remains the sole activation writer.
+
+Approach/viewport characterization status: complete. Rendered tests own and restore a real Game-view size, neutralize synthetic batch edge-pan, exercise both far walks and both near activations, and quantify the current viewport/source-position dependence. The old `50x29` batch result is no longer treated as an authored anchor. Next, serialize exactly two reciprocal passive Passage bindings with the neutral `1366x768` values while leaving legacy interaction/traversal untouched.
 
 Room-local object cutouts are first-class props:
 
