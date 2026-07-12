@@ -60,7 +60,6 @@ Assets/Scripts/Story/ChapterManager.cs,799,ea50d3a7974d266494f2c9e90394e918facfa
 Assets/Scripts/Story/ChapterTimeSettingsUI.cs,138,4919887650f5464d406515086b8f8161ebc6d14aa175d35687adba343e2a8dd2,3,0,3,1,0,0,ChapterTimeSettingsUI
 Assets/Scripts/Story/CoatCloset.cs,43,652a66bdc0bb4453f7a350862423482f26c46687e055503efc2c194e301293a8,0,0,0,0,0,0,CoatCloset
 Assets/Scripts/Story/DoorbellSystem.cs,238,6e5fd5dd2154ca7c89f1d198a6a0231bfc84a3882c6576e21d3cd57af08e377c,1,1,0,1,0,0,DoorbellSystem
-Assets/Scripts/Story/GameClockHandsDisplay.cs,610,b2031ec94f3cbec5a43c6a84fcd977de64f99750d9e21afbfde0f99282f54d7c,5,0,3,1,1,0,GameClockHandsDisplay
 Assets/Scripts/Story/GameplayRuntimeState.cs,55,1715d0c2f73ca80b5615794f07ffc583f3568c0a475cbb412b61edd4a89b3d09,0,0,0,0,1,0,
 Assets/Scripts/Story/GrandfatherClockInteraction.cs,298,13a94ff10eaf67bb17d1a1e819f3179ba74ac28efc34b2091bd19271e064cb59,4,0,6,1,0,0,GrandfatherClockInteraction
 Assets/Scripts/Story/NPCWaypointMover.cs,245,98b32aea8b442dd0ecc52979f3771d824dfd4cb1ddccfae45866d776456dbb16,0,0,0,0,0,0,NPCWaypointMover

@@ -86,10 +86,12 @@ public sealed class ArchitectureFoundationTests
     }
 
     [Test]
-    public void ProvenDeadStarterAndPickupScriptsStayPruned()
+    public void ProvenDeadRuntimeScriptsStayPruned()
     {
         Assert.That(File.Exists("Assets/Scripts/NewBehaviourScript.cs"), Is.False);
         Assert.That(File.Exists("Assets/Scripts/PickupObject.cs"), Is.False);
+        Assert.That(File.Exists("Assets/Scripts/Story/GameClockHandsDisplay.cs"), Is.False);
+        Assert.That(File.Exists("Assets/Scripts/Story/GameClockHandsDisplay.cs.meta"), Is.False);
     }
 
     [Test]

@@ -992,6 +992,7 @@
   ],
   "must_remain_pruned": [
     "Assets/Scripts/NewBehaviourScript.cs",
-    "Assets/Scripts/PickupObject.cs"
+    "Assets/Scripts/PickupObject.cs",
+    "Assets/Scripts/Story/GameClockHandsDisplay.cs"
   ]
 }
