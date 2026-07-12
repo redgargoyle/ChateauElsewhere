@@ -2,6 +2,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 public class Chapter2RegressionTests
 {
@@ -1573,6 +1574,60 @@ public class Chapter2RegressionTests
         Assert.That(managerText, Does.Contain("Chapter2Id"), "ChapterManager should expose the canonical Chapter 2 id.");
         Assert.That(managerText, Does.Contain("chapter_02_guest_search"), "ChapterManager should normalize Chapter 2 requests to the guest-search chapter id.");
         Assert.That(managerText, Does.Match(@"\.BeginChapter2\s*\(\s*this\s*\)"), "ChapterManager should begin Chapter 2 after the Chapter 1 fade-to-black.");
+    }
+
+    [Test]
+    public void Chapter2CommandsRejectMismatchedManagerWithoutRebinding()
+    {
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        string[] guardedMethods =
+        {
+            "public void BeginChapter2",
+            "public void DebugSkipToChapter3ForTesting",
+            "public void DebugSkipToSevenPMForTesting",
+            "public void DebugResetForChapter2Skip"
+        };
+
+        for (int i = 0; i < guardedMethods.Length; i++)
+        {
+            string body = ExtractMethodBody(controllerText, guardedMethods[i]);
+            Assert.That(body, Does.Contain("AcceptsManagerCommandFrom(manager)"), guardedMethods[i]);
+            Assert.That(body, Does.Not.Contain("chapterManager = manager"), guardedMethods[i]);
+        }
+
+        GameObject expectedManagerObject = new GameObject("ExpectedChapterManager");
+        GameObject unexpectedManagerObject = new GameObject("UnexpectedChapterManager");
+        GameObject controllerObject = new GameObject("Chapter2Controller");
+
+        try
+        {
+            ChapterManager expectedManager = expectedManagerObject.AddComponent<ChapterManager>();
+            ChapterManager unexpectedManager = unexpectedManagerObject.AddComponent<ChapterManager>();
+            Chapter2Controller controller = controllerObject.AddComponent<Chapter2Controller>();
+            System.Reflection.FieldInfo managerField = typeof(Chapter2Controller).GetField(
+                "chapterManager",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            System.Reflection.FieldInfo phaseField = typeof(Chapter2Controller).GetField(
+                "currentPhase",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            Assert.That(managerField, Is.Not.Null);
+            Assert.That(phaseField, Is.Not.Null);
+            managerField.SetValue(controller, expectedManager);
+            phaseField.SetValue(controller, Chapter2Phase.Complete);
+
+            LogAssert.Expect(LogType.Error, "Chapter2Controller rejected a command from a different ChapterManager.");
+            controller.DebugResetForChapter2Skip(unexpectedManager);
+
+            Assert.That(managerField.GetValue(controller), Is.SameAs(expectedManager));
+            Assert.That(controller.CurrentPhase, Is.EqualTo(Chapter2Phase.Complete));
+        }
+        finally
+        {
+            Object.DestroyImmediate(controllerObject);
+            Object.DestroyImmediate(unexpectedManagerObject);
+            Object.DestroyImmediate(expectedManagerObject);
+        }
     }
 
     [Test]

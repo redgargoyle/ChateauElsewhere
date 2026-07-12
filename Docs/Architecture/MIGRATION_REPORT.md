@@ -70,13 +70,14 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized ChapterManager's remaining player/Chapter 2 repair before removal: runtime resolves the exact Player `PointClickPlayerMovement` and already-serialized Chapter 2 controller, keeps point-click enabled, derives the public Player root correctly, and leaves both legacy Player controllers disabled.
 - Serialized ChapterManager's exact Player input (`81962842`) and removed all player, Chapter 2, and obsolete debug-canvas repair searches. Its full eight-owner graph is architecture-validated, the public Player root derives from the serialized input, and only the actual Player prefab instance authors legacy movement disabled.
 - Characterized Chapter2Controller's manager identity before tightening its entry boundary: the controller starts with ChapterManager `3301000004` and retains that exact serialized owner through first and repeated Chapter 2 debug entry.
+- Made Chapter2Controller's four external entry commands enforce their serialized ChapterManager instead of rebinding it from a caller. Valid and null convenience calls keep existing behavior; a missing or different manager is rejected before phase, navigation, clock, guest, or UI mutation.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,536 | -366 |
+| Runtime C# lines | 49,902 | 49,569 | -333 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
 | `FindObject*`/`GameObject.Find` | 199 | 143 | -56 |
 | `Resources.Load` | 27 | 23 | -4 |
@@ -127,8 +128,9 @@ The temporary source increase is the migration spine and verification tooling. I
 - the migrated purple-sofa lifecycle keeps the same view/blocker identities through activation and travel, resolves order `5385`, preserves its art, authored transform and all four collider points, and proves blocker sorting is a no-op;
 - the ChapterManager dependency-cleanup audit changes only scene documents `81962841` and `3301000004`: the exact Player instance gains two disabled legacy-controller overrides, the manager binds Player input `81962842`, every existing transform/scale/calibration value remains byte-identical, and document order/`SceneRoots` are unchanged;
 - ChapterManager now contains zero global searches or resolver methods; focused architecture/debug-skip/handoff tests and the full MainMenu/room-loop/repeated-Chapter-2 lifecycle pass with the same Player and controller identities;
+- the Chapter 2 manager-boundary test proves a mismatched manager cannot replace the serialized owner or reset phase state, while all four entry methods share the same guard; the valid repeated-entry lifecycle retains manager `3301000004`;
 - the Chapter 2 dependency-cleanup static, regression, and lifecycle gates pass; all eleven serialized references resolve exactly once, `ResolveReferences` and its seven scene-wide searches are absent, and repeated entry/debug paths retain the same owners;
-- the full EditMode discovery count is 239: 189 pass and 50 pre-existing failures remain, with no new failed test names; the only removed failure is the stale test that expected ChapterManager to own RuntimeSettingsMenu's debug button;
+- the full EditMode discovery count is 240: 190 pass and the same 50 pre-existing failures remain, with no new failed test names;
 - the MainMenu boot/navigation lifecycle passed three independent cold Unity processes;
 - each cold lifecycle run produced the same entrance multiplier (`0.752865`) at startup, after settling, and after the room round trip;
 - the ChapterManager dialogue-binding gate produced two consecutive clean full-suite reruns after one transient full-run GameView zoom assertion; no files changed between those three runs, and both reruns restored the exact `0.752865` entrance multiplier;
@@ -160,7 +162,7 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Make Chapter2Controller reject a mismatched manager argument instead of silently rebinding its serialized ChapterManager; preserve all entry ordering.
+1. Characterize and migrate Chapter 2's clock-strike audio ownership before removing its remaining resource/component fallback.
 2. Audit the remaining non-identical Drawing Room cutouts before selecting any fourth prop; do not infer parity from similar names.
 3. Continue one prop/owner at a time with exact art, transform, occlusion, and collision preservation.
 

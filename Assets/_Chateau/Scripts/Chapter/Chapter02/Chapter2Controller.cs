@@ -154,7 +154,11 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
             return;
         }
 
-        chapterManager = manager != null ? manager : chapterManager;
+        if (!AcceptsManagerCommandFrom(manager))
+        {
+            return;
+        }
+
         allGuestsFoundHandled = false;
         dinnerSeatingHandled = false;
         diningObjectiveTransitionRoutine = null;
@@ -229,7 +233,11 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
 
     public void DebugSkipToChapter3ForTesting(ChapterManager manager)
     {
-        chapterManager = manager != null ? manager : chapterManager;
+        if (!AcceptsManagerCommandFrom(manager))
+        {
+            return;
+        }
+
         RegisterRoomChangeHandler();
         StopChapter2Coroutines();
         SetPlayerInputEnabled(false);
@@ -269,7 +277,11 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
 
     public void DebugSkipToSevenPMForTesting(ChapterManager manager)
     {
-        chapterManager = manager != null ? manager : chapterManager;
+        if (!AcceptsManagerCommandFrom(manager))
+        {
+            return;
+        }
+
         RegisterRoomChangeHandler();
         StopChapter2Coroutines();
         SetPlayerInputEnabled(false);
@@ -321,7 +333,11 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
 
     public void DebugResetForChapter2Skip(ChapterManager manager)
     {
-        chapterManager = manager != null ? manager : chapterManager;
+        if (!AcceptsManagerCommandFrom(manager))
+        {
+            return;
+        }
+
         RegisterRoomChangeHandler();
         StopChapter2Coroutines();
 
@@ -363,6 +379,23 @@ public class Chapter2Controller : Chateau.Architecture.ChapterControllerBase
     public void SetGuestConversationInputEnabled(bool enabled)
     {
         SetPlayerInputEnabled(enabled);
+    }
+
+    private bool AcceptsManagerCommandFrom(ChapterManager manager)
+    {
+        if (chapterManager == null)
+        {
+            Debug.LogError("Chapter2Controller cannot run without its serialized ChapterManager.", this);
+            return false;
+        }
+
+        if (manager != null && manager != chapterManager)
+        {
+            Debug.LogError("Chapter2Controller rejected a command from a different ChapterManager.", this);
+            return false;
+        }
+
+        return true;
     }
 
     public void ShowGuestConversation(
