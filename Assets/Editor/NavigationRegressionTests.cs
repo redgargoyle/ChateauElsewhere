@@ -315,8 +315,11 @@ public class NavigationRegressionTests
         Assert.That(clockInteractionText, Does.Match(@"(?s)\bOpenCloseUp\s*\([^)]*\)\s*\{.*if \(!allowClockCloseUp\).*DisableCloseUpIfNeeded\(\).*return;"), "Clock close-up calls should be harmless unless explicitly enabled.");
         Assert.That(clockInteractionText, Does.Contain("Canvas_GrandfatherClockCloseUp"));
         Assert.That(clockInteractionText, Does.Contain("canvasObject.SetActive(false)"));
-        Assert.That(chapter1ArrivalText, Does.Contain("RemoveClickTarget(\"Chapter1_ClickTarget_GrandfatherClock\")"));
-        Assert.That(chapter1ArrivalText, Does.Not.Contain("CreateClickTarget(\"Chapter1_ClickTarget_GrandfatherClock\""), "Chapter 1 should not create a clock click target that opens the old modal.");
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("Chapter1_ClickTarget_GrandfatherClock"));
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("Chapter1_ClickTarget_CoatCloset"));
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("Chapter1_ClickTarget_DrawingRoomExit"));
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("CreateClickTarget"));
+        Assert.That(chapter1ArrivalText, Does.Not.Contain("RemoveClickTarget"));
     }
 
     [Test]
@@ -578,7 +581,7 @@ public class NavigationRegressionTests
         Assert.That(coatPickupText, Does.Contain("HoverIcon.Locked"));
         Assert.That(sceneActionText, Does.Contain("HoverIcon.PlaceHangCoat"));
         Assert.That(sceneActionText, Does.Contain("HoverIcon.Inspect"));
-        Assert.That(sceneActionText, Does.Contain("HoverIcon.ExitLeaveRoom"));
+        Assert.That(sceneActionText, Does.Not.Contain("Chapter1SceneActionType.DrawingRoomExit"));
         Assert.That(guestFindText, Does.Contain("HoverIcon.Talk"));
         Assert.That(playerText, Does.Contain("SetWalkHover"), "Floor hover should keep driving selected walk/blocked cursor actions.");
     }

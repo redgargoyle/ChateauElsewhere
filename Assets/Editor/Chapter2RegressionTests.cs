@@ -1710,9 +1710,19 @@ public class Chapter2RegressionTests
         Assert.That(chapter1Text, Does.Match(@"(?s)\bHandleRoomChanged\s*\([^)]*\)\s*\{.*SameRoom\(roomName, drawingRoomId\).*CheckChapterCompletionGate\(\)"), "Entering the Drawing Room should independently invoke the completion gate.");
         Assert.That(chapter1Text, Does.Match(@"(?s)\bCompleteGuestDrawingRoomArrival\s*\([^)]*\)\s*\{.*guest\.Seated = true;.*CheckChapterCompletionGate\(\)"), "The final guest seating path should independently invoke the completion gate.");
         Assert.That(chapter1Text, Does.Match(@"(?s)\bStoreCarriedCoatInCloset\s*\([^)]*\)\s*\{.*butlerCarryingCoat = false;.*CheckChapterCompletionGate\(\)"), "The final coat-storage path should independently invoke the completion gate.");
-        Assert.That(chapter1Text, Does.Match(@"(?s)\bTryCompleteChapterFromDrawingRoomExit\s*\([^)]*\)\s*\{\s*CheckChapterCompletionGate\(\);\s*\}"), "The runtime Drawing Room exit action currently adds no behavior beyond the shared gate.");
-        Assert.That(chapter1Text, Does.Contain("CreateClickTarget(\"Chapter1_ClickTarget_DrawingRoomExit\", drawingRoomEntryPoint, Chapter1SceneActionType.DrawingRoomExit)"));
-        Assert.That(chapter1ActionText, Does.Contain("case Chapter1SceneActionType.DrawingRoomExit:"));
+        Assert.That(chapter1Text, Does.Not.Contain("TryCompleteChapterFromDrawingRoomExit"));
+        Assert.That(chapter1Text, Does.Not.Contain("Chapter1_ClickTarget_DrawingRoomExit"));
+        Assert.That(chapter1Text, Does.Not.Contain("createRuntimeClickTargets"));
+        Assert.That(chapter1Text, Does.Not.Contain("EnsureSceneActionTargets"));
+        Assert.That(chapter1Text, Does.Not.Contain("RemoveClickTarget"));
+        Assert.That(chapter1Text, Does.Not.Contain("CreateClickTarget"));
+        Assert.That(chapter1Text, Does.Not.Contain("runtimeCoatSprite"));
+        Assert.That(chapter1Text, Does.Not.Contain("GetRuntimeCoatSprite"));
+        Assert.That(chapter1Text, Does.Contain("[SerializeField] private Transform drawingRoomEntryPoint;"));
+        Assert.That(chapter1ActionText, Does.Not.Contain("DrawingRoomExit"));
+        Assert.That(gameplaySceneText, Does.Not.Contain("createRuntimeClickTargets:"));
+        Assert.That(gameplaySceneText, Does.Contain("m_Name: DoorTrigger_DrawingRoom_GEH"));
+        Assert.That(gameplaySceneText, Does.Contain("m_Name: DoorTrigger_GEH_DrawingRoom"));
         Assert.That(gameplaySceneText, Does.Not.Contain("actionType: 3"), "No serialized scene action owns the runtime-only Drawing Room exit role.");
 
         Assert.That(managerText, Does.Contain("IsDuplicateChapter2Request"), "ChapterManager should reject duplicate Chapter 2 handoff requests before fading.");

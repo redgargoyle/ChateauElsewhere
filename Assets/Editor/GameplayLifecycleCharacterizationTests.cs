@@ -70,13 +70,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         RoomNavigationManager serializedArrivalNavigation = GetPrivateField<RoomNavigationManager>(arrival, "navigationManager");
         PointClickPlayerMovement serializedArrivalPlayerMovement = GetPrivateField<PointClickPlayerMovement>(arrival, "playerMovement");
         GameObject serializedArrivalButlerRoot = GetPrivateField<GameObject>(arrival, "playerButlerReference");
-        Transform serializedDrawingRoomEntryPoint = GetPrivateField<Transform>(arrival, "drawingRoomEntryPoint");
-        GameObject[] initialDrawingRoomExitTargets = FindInActiveScene<Transform>()
-            .Where(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit")
-            .Select(item => item.gameObject)
-            .ToArray();
-        Assert.That(initialDrawingRoomExitTargets, Has.Length.EqualTo(1), "ChapterManager preparation currently creates one inactive runtime exit target.");
-        GameObject initialDrawingRoomExitTarget = initialDrawingRoomExitTargets[0];
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit"), Is.False);
         DoorbellSystem characterizedDoorbell = GetPrivateField<DoorbellSystem>(arrival, "doorbellSystem");
         Assert.That(characterizedDoorbell, Is.Not.Null);
         AudioSource characterizedDoorbellSource = GetPrivateField<AudioSource>(characterizedDoorbell, "audioSource");
@@ -236,51 +230,17 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip"), Is.SameAs(characterizedDoorbellClip));
         Assert.That(FindInActiveScene<DoorbellSystem>(), Has.Length.EqualTo(1));
 
-        SpriteRenderer initialDrawingRoomExitRenderer = initialDrawingRoomExitTarget.GetComponent<SpriteRenderer>();
-        BoxCollider2D initialDrawingRoomExitCollider = initialDrawingRoomExitTarget.GetComponent<BoxCollider2D>();
-        Chapter1SceneAction initialDrawingRoomExitAction = initialDrawingRoomExitTarget.GetComponent<Chapter1SceneAction>();
-        Assert.That(serializedDrawingRoomEntryPoint, Is.Not.Null);
-        Assert.That(initialDrawingRoomExitTarget.transform.parent, Is.SameAs(serializedDrawingRoomEntryPoint.parent));
-        Assert.That(initialDrawingRoomExitTarget.transform.position, Is.EqualTo(serializedDrawingRoomEntryPoint.position));
-        Assert.That(initialDrawingRoomExitRenderer, Is.Not.Null);
-        Assert.That(initialDrawingRoomExitRenderer.sprite, Is.Not.Null);
-        Assert.That(initialDrawingRoomExitRenderer.sprite.name, Is.Empty);
-        Assert.That(initialDrawingRoomExitRenderer.sprite.texture.name, Is.EqualTo("RuntimeCoatSprite"));
-        Assert.That(initialDrawingRoomExitRenderer.color.a, Is.Zero.Within(0.0001f));
-        Assert.That(initialDrawingRoomExitRenderer.sortingLayerName, Is.EqualTo("People"));
-        Assert.That(initialDrawingRoomExitRenderer.sortingOrder, Is.EqualTo(6000));
-        Assert.That(initialDrawingRoomExitCollider, Is.Not.Null);
-        Assert.That(initialDrawingRoomExitCollider.size, Is.EqualTo(new Vector2(160f, 160f)));
-        Assert.That(initialDrawingRoomExitCollider.isTrigger, Is.True);
-        Assert.That(initialDrawingRoomExitAction, Is.Not.Null);
-        Assert.That(
-            GetPrivateValue<Chapter1SceneActionType>(initialDrawingRoomExitAction, "actionType"),
-            Is.EqualTo(Chapter1SceneActionType.DrawingRoomExit));
-        Assert.That(
-            GetPrivateField<Chapter1ArrivalController>(initialDrawingRoomExitAction, "arrivalController"),
-            Is.SameAs(arrival));
-        Assert.That(FindInActiveScene<Transform>().Count(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit"), Is.EqualTo(1));
-
-        int initialDrawingRoomExitTargetId = initialDrawingRoomExitTarget.GetInstanceID();
+        Chapter1SceneAction[] authoredChapter1Actions = FindInActiveScene<Chapter1SceneAction>();
+        Assert.That(authoredChapter1Actions, Has.Length.EqualTo(2));
+        CollectionAssert.AreEquivalent(
+            new[] { authoredFrontDoorAction, entranceCoatAction },
+            authoredChapter1Actions);
         InvokePrivateMethod(arrival, "EnsureRuntimeInteractionSystems");
-        GameObject[] characterizedDrawingRoomExitTargets = FindInActiveScene<Transform>()
-            .Where(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit")
-            .Select(item => item.gameObject)
-            .ToArray();
-        Assert.That(characterizedDrawingRoomExitTargets, Has.Length.EqualTo(2), "Inactive-target lookup currently duplicates the runtime exit target on repeated initialization.");
-        Assert.That(characterizedDrawingRoomExitTargets.Any(item => item.GetInstanceID() == initialDrawingRoomExitTargetId), Is.True);
-        GameObject characterizedDrawingRoomExitTarget = characterizedDrawingRoomExitTargets
-            .Single(item => item.GetInstanceID() != initialDrawingRoomExitTargetId);
-        int[] characterizedDrawingRoomExitTargetIds = characterizedDrawingRoomExitTargets
-            .Select(item => item.GetInstanceID())
-            .OrderBy(item => item)
-            .ToArray();
-        Assert.That(characterizedDrawingRoomExitTarget.GetComponents<SpriteRenderer>(), Has.Length.EqualTo(1));
-        Assert.That(characterizedDrawingRoomExitTarget.GetComponents<BoxCollider2D>(), Has.Length.EqualTo(1));
-        Assert.That(characterizedDrawingRoomExitTarget.GetComponents<Chapter1SceneAction>(), Has.Length.EqualTo(1));
-        Assert.That(
-            GetPrivateValue<Chapter1SceneActionType>(characterizedDrawingRoomExitTarget.GetComponent<Chapter1SceneAction>(), "actionType"),
-            Is.EqualTo(Chapter1SceneActionType.DrawingRoomExit));
+        InvokePrivateMethod(arrival, "EnsureRuntimeInteractionSystems");
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit"), Is.False);
+        CollectionAssert.AreEquivalent(
+            new[] { authoredFrontDoorAction, entranceCoatAction },
+            FindInActiveScene<Chapter1SceneAction>());
         Assert.That(authoredFrontDoorRenderer, Is.Not.Null);
         Assert.That(authoredFrontDoorCollider, Is.Not.Null);
         Assert.That(authoredFrontDoorAction, Is.Not.Null);
@@ -1052,14 +1012,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(characterizedDoorbell.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedDoorbellBinding));
         Assert.That(GetPrivateField<AudioClip>(characterizedDoorbell, "doorbellClip"), Is.SameAs(characterizedDoorbellClip));
         Assert.That(FindInActiveScene<DoorbellSystem>(), Has.Length.EqualTo(1));
-        GameObject[] retainedDrawingRoomExitTargets = FindInActiveScene<Transform>()
-            .Where(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit")
-            .Select(item => item.gameObject)
-            .ToArray();
-        Assert.That(
-            characterizedDrawingRoomExitTargetIds.All(id => retainedDrawingRoomExitTargets.Any(item => item.GetInstanceID() == id)),
-            Is.True,
-            "Room travel must retain every duplicated runtime exit target identity.");
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit"), Is.False);
+        CollectionAssert.AreEquivalent(
+            new[] { authoredFrontDoorAction, entranceCoatAction },
+            FindInActiveScene<Chapter1SceneAction>());
         Assert.That(InvokePrivateStringMethod<RoomContentGroup>(arrival, "FindRoomContentGroup", EntranceRoom), Is.SameAs(characterizedEntranceRoomContent));
         Assert.That(InvokePrivateStringMethod<RoomContentGroup>(arrival, "FindRoomContentGroup", DrawingRoom), Is.SameAs(characterizedDrawingRoomContent));
 
@@ -1129,6 +1085,53 @@ public sealed class GameplayLifecycleCharacterizationTests
             FindInActiveScene<ObjectMovementBlocker2D>().Single(item => item.SourceObjectName == "tea_service_table"),
             Is.SameAs(teaTableBlocker));
 
+        InvokePrivateMethod(chapter, "StopChapterCoroutines");
+        scheduler.Clear();
+        arrival.PrepareGuestsForChapter2Skip();
+        SetPrivateField(arrival, "sequenceActive", true);
+        SetPrivateField(arrival, "chapterCompletionRequested", false);
+        SetPrivateField(arrival, "finalEmptyDoorbellOccurred", true);
+        SetPrivateField(arrival, "emptyDoorbellWaitingForAnswer", false);
+        SetPrivateField(arrival, "butlerCarryingCoat", false);
+        InvokePrivateMethod(arrival, "SubscribeToRoomChanges");
+        SetPrivateField(chapter, "chapter1CompletionFadeOutDelaySeconds", 0f);
+        SetPrivateField(chapter, "skipIntro", true);
+        SetPrivateField(intro, "fadeFromBlackSeconds", 0f);
+
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+        Assert.That(serializedChapter2.CurrentPhase, Is.EqualTo(Chapter2Phase.NotStarted));
+        Assert.That(GetPrivateValue<bool>(arrival, "sequenceActive"), Is.True);
+        Assert.That(GetPrivateValue<bool>(arrival, "chapterCompletionRequested"), Is.False);
+        Assert.That(GetPrivateValue<bool>(arrival, "subscribedToRoomChanges"), Is.True);
+        Assert.That(
+            navigation.MoveThroughInspectorDoor(
+                outbound.SourceRoom,
+                outbound.DoorName,
+                outbound.DestinationRoom,
+                true),
+            Is.True);
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+        Assert.That(GetPrivateValue<bool>(arrival, "chapterCompletionRequested"), Is.True);
+        Assert.That(GetPrivateValue<bool>(arrival, "sequenceActive"), Is.False);
+        Assert.That(GetPrivateValue<bool>(arrival, "subscribedToRoomChanges"), Is.False);
+        Assert.That(chapter.CurrentPhase, Is.EqualTo(ChapterPhase.Complete));
+        Assert.That(serializedArrivalPlayerMovement.InputEnabled, Is.False);
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit"), Is.False);
+
+        for (int frame = 0; frame < 30 && chapter.CurrentChapterId != ChapterManager.Chapter2Id; frame++)
+        {
+            yield return null;
+        }
+
+        yield return WaitForSettledLayout();
+
+        Assert.That(chapter.CurrentChapterId, Is.EqualTo(ChapterManager.Chapter2Id));
+        Assert.That(serializedChapter2.CurrentPhase, Is.Not.EqualTo(Chapter2Phase.NotStarted));
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+        CollectionAssert.AreEquivalent(
+            new[] { authoredFrontDoorAction, entranceCoatAction },
+            FindInActiveScene<Chapter1SceneAction>());
+
         speech.BeginSpeakLine(
             "ARCH_LIFECYCLE_SKIP_DIALOGUE",
             "Butler",
@@ -1147,14 +1150,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         Chapter2GuestSearchController guestSearch = RequireExactlyOneInActiveScene<Chapter2GuestSearchController>();
         Assert.That(chapter2.CurrentPhase, Is.Not.EqualTo(Chapter2Phase.NotStarted));
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
-        GameObject[] chapter2DrawingRoomExitTargets = FindInActiveScene<Transform>()
-            .Where(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit")
-            .Select(item => item.gameObject)
-            .ToArray();
-        Assert.That(
-            characterizedDrawingRoomExitTargetIds.All(id => chapter2DrawingRoomExitTargets.Any(item => item.GetInstanceID() == id)),
-            Is.True,
-            "The runtime exit targets currently persist into Chapter 2 even though their completion action becomes inert.");
+        Assert.That(FindInActiveScene<Transform>().Any(item => item.name == "Chapter1_ClickTarget_DrawingRoomExit"), Is.False);
+        CollectionAssert.AreEquivalent(
+            new[] { authoredFrontDoorAction, entranceCoatAction },
+            FindInActiveScene<Chapter1SceneAction>());
         Assert.That(chapter2, Is.SameAs(serializedChapter2));
         Assert.That(GetPrivateField<ChapterManager>(chapter2, "chapterManager"), Is.SameAs(chapter));
         Assert.That(chapter2Hud, Is.SameAs(serializedChapter2Hud));
@@ -1380,6 +1379,15 @@ public sealed class GameplayLifecycleCharacterizationTests
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         Assert.That(field, Is.Not.Null, $"Missing private field '{fieldName}' on {owner.GetType().Name}.");
         return (T)field.GetValue(owner);
+    }
+
+    private static void SetPrivateField<T>(object owner, string fieldName, T value)
+    {
+        System.Reflection.FieldInfo field = owner.GetType().GetField(
+            fieldName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"Missing private field '{fieldName}' on {owner.GetType().Name}.");
+        field.SetValue(owner, value);
     }
 
     private static void InvokePrivateBooleanMethod(object owner, string methodName, bool value)

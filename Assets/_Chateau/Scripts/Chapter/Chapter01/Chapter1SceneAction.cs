@@ -9,8 +9,7 @@ public enum Chapter1SceneActionType
 {
     FrontDoor,
     CoatCloset,
-    GrandfatherClock,
-    DrawingRoomExit
+    GrandfatherClock
 }
 
 [DisallowMultipleComponent]
@@ -175,12 +174,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
                 if (clockInteraction != null)
                 {
                     clockInteraction.OpenCloseUp();
-                }
-                break;
-            case Chapter1SceneActionType.DrawingRoomExit:
-                if (arrivalController != null)
-                {
-                    arrivalController.TryCompleteChapterFromDrawingRoomExit();
                 }
                 break;
         }
@@ -496,11 +489,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         if (actionType == Chapter1SceneActionType.GrandfatherClock)
         {
             return NavigationCursorController.HoverIcon.Inspect;
-        }
-
-        if (actionType == Chapter1SceneActionType.DrawingRoomExit)
-        {
-            return NavigationCursorController.HoverIcon.ExitLeaveRoom;
         }
 
         return NavigationCursorController.HoverIcon.Door;

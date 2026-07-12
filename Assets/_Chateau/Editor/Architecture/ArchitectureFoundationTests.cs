@@ -562,6 +562,7 @@ public sealed class ArchitectureFoundationTests
 
         string chapter1Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs");
         string doorbellText = File.ReadAllText("Assets/Scripts/Story/DoorbellSystem.cs");
+        string chapter1ActionText = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs");
         Assert.That(chapter1Text, Does.Not.Contain("FindAnyObjectByType<Chapter1InteractionHUD>"));
         Assert.That(chapter1Text, Does.Not.Contain("AddComponent<Chapter1InteractionHUD>"));
         Assert.That(chapter1Text, Does.Not.Contain("createRuntimeHud"));
@@ -579,6 +580,16 @@ public sealed class ArchitectureFoundationTests
         Assert.That(doorbellText, Does.Not.Contain("AudioClip.Create"));
         Assert.That(doorbellText, Does.Not.Contain("doorbellClipResourcePath"));
         Assert.That(doorbellText, Does.Contain("audioVolumeBinding.Configure(audioSource, GameAudioChannel.GameSounds, 1f)"));
+        Assert.That(CountOccurrences(sceneText, "guid: 7a33ae09185ce66224eb1fc576eef96d"), Is.EqualTo(2));
+        Assert.That(sceneText, Does.Not.Contain("createRuntimeClickTargets:"));
+        Assert.That(chapter1Text, Does.Not.Contain("Chapter1_ClickTarget_DrawingRoomExit"));
+        Assert.That(chapter1Text, Does.Not.Contain("EnsureSceneActionTargets"));
+        Assert.That(chapter1Text, Does.Not.Contain("RemoveClickTarget"));
+        Assert.That(chapter1Text, Does.Not.Contain("CreateClickTarget"));
+        Assert.That(chapter1Text, Does.Not.Contain("runtimeCoatSprite"));
+        Assert.That(chapter1Text, Does.Not.Contain("GetRuntimeCoatSprite"));
+        Assert.That(chapter1Text, Does.Not.Contain("TryCompleteChapterFromDrawingRoomExit"));
+        Assert.That(chapter1ActionText, Does.Not.Contain("DrawingRoomExit"));
     }
 
     [Test]

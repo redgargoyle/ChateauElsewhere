@@ -97,18 +97,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Serialized that exact doorbell graph on the existing Chapter 1 host as components `3302000003`–`3302000005`, with direct clock/source/binding/imported-clip edges and configuration validation. The AudioSource resource remains empty because `DoorbellSystem` owns the one-shot clip, matching characterized behavior; repair paths remain staged for the cleanup gate.
 - Removed Chapter 1's doorbell discovery/component factory and `DoorbellSystem` clock/source/binding/resource/generated-tone fallbacks. Initialization rejects a different clock, configures only its direct source/binding, and rings only the validated imported clip.
 - Characterized the runtime-only Drawing Room exit click target before pruning. ChapterManager preparation creates one transparent `160x160` trigger under inactive Drawing Room anchors; another initialization duplicates it because `GameObject.Find` cannot see the inactive owner, and those identities persist into Chapter 2. Its action performs no navigation or state mutation beyond calling the same completion gate already owned by empty-door answer, coat storage, guest seating, and Drawing Room entry.
+- Pruned that runtime Drawing Room exit target and its factory/remover, wrapper, enum role, serialized toggle, and private coat-sprite cache without a replacement. The real authored passage owns navigation; empty-door answer, coat storage, guest seating, and the Drawing Room room-change event own completion. This also removes a transparent collider that persisted into Chapter 2 and could bypass answering the final empty door.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 48,982 | -920 |
+| Runtime C# lines | 49,902 | 48,885 | -1,017 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
-| `FindObject*`/`GameObject.Find` | 199 | 120 | -79 |
+| `FindObject*`/`GameObject.Find` | 199 | 118 | -81 |
 | `Resources.Load` | 27 | 17 | -10 |
-| runtime `new GameObject` | 98 | 81 | -17 |
-| runtime `AddComponent<T>` | 100 | 61 | -39 |
+| runtime `new GameObject` | 98 | 80 | -18 |
+| runtime `AddComponent<T>` | 100 | 58 | -42 |
 | runtime initialization hooks | 9 | 4 | -5 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -147,6 +148,7 @@ The temporary source increase is the migration spine and verification tooling. I
 - Chapter 1 doorbell serialization adds only documents `3302000003`–`3302000005`, changes only host `1696549391` and controller `3302000001`, preserves every prior document's order plus SceneRoots, and passes exact YAML, imported-clip, configuration, first-ring, repeated-resolution, and full-suite gates at 194/46 with an unchanged failure-name set;
 - Chapter 1 doorbell cleanup removes only the obsolete resource-path property from document `3302000003`, preserves all 5,980 document IDs/order/roots, bans every retired discovery/factory/resource/tone symbol, and retains the exact owner/source/binding/clip through first ring and room travel; the full suite remains 194/46 with an unchanged failure-name set;
 - Drawing Room exit-target characterization passes exact source/scene guards and a rendered lifecycle that freezes its inactive-parent component contract, proves repeat initialization grows the target count from one to two, and retains both identities through room travel and Chapter 2 while independent completion-gate callers remain pinned; the full suite remains 194/46 with an unchanged failure-name set;
+- Drawing Room exit-target pruning removes only `createRuntimeClickTargets` from controller document `3302000001`, preserves all 5,980 document IDs/order/roots and both authored action GUIDs, bans the entire runtime-target path, and leaves exactly the front-door/closet actions through repeated initialization, room travel, and Chapter 2. A completion-ready canonical Entrance→Drawing Room door transition requests Chapter 2 once, unsubscribes Chapter 1, disables input, and starts the same serialized Chapter 2 controller; the full suite remains 194/46 with no failure-name change;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -230,6 +232,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Prune the redundant runtime Drawing Room exit target, factory/remover, wrapper, enum role, and private sprite cache without serializing a replacement; retain and render-test the canonical room-change completion handoff.
+1. Characterize the runtime-created `GrandfatherClockInteraction` graph and prove whether its disabled modal/tick owner is fully superseded by the serialized room ambience and Chapter 2 clock systems before retiring it.
 
 Do not begin bulk deletion until those gates pass.

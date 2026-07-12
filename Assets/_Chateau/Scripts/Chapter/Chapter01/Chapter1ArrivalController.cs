@@ -116,7 +116,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     [SerializeField] private int entranceGuestSortingOrderSlotStep = 10;
 
     [Header("Interactions")]
-    [SerializeField] private bool createRuntimeClickTargets = true;
     [SerializeField] private bool snapGuestsIntoEntranceForFirstVisualPass = true;
     [SerializeField] private bool autoStoreCoatIfClosetMissing = false;
     [SerializeField] private float coatOffsetX = 34f;
@@ -152,7 +151,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
     private bool hasPendingClosetApproachDestination;
     private Vector2 pendingClosetApproachDestination;
     private GameObject carriedCoatVisual;
-    private Sprite runtimeCoatSprite;
     private Sprite runtimeGuestSprite;
     private bool subscribedToRoomChanges;
     private bool hasWorldDoorCenterPosition;
@@ -1371,11 +1369,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         carriedCoatGuest = null;
         RefreshInteractionState();
         CheckActiveGroupsReadyForDrawingRoom();
-        CheckChapterCompletionGate();
-    }
-
-    public void TryCompleteChapterFromDrawingRoomExit()
-    {
         CheckChapterCompletionGate();
     }
 
@@ -4212,37 +4205,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         }
 
         ConfigureFrontDoorAction();
-
-        if (createRuntimeClickTargets)
-        {
-            EnsureSceneActionTargets();
-        }
-    }
-
-    private void EnsureSceneActionTargets()
-    {
-        RemoveClickTarget("Chapter1_ClickTarget_CoatCloset");
-        RemoveClickTarget("Chapter1_ClickTarget_GrandfatherClock");
-        CreateClickTarget("Chapter1_ClickTarget_DrawingRoomExit", drawingRoomEntryPoint, Chapter1SceneActionType.DrawingRoomExit);
-    }
-
-    private void RemoveClickTarget(string objectName)
-    {
-        GameObject targetObject = GameObject.Find(objectName);
-
-        if (targetObject == null)
-        {
-            return;
-        }
-
-        if (Application.isPlaying)
-        {
-            Destroy(targetObject);
-        }
-        else
-        {
-            DestroyImmediate(targetObject);
-        }
     }
 
     private void ConfigureFrontDoorAction()
@@ -4255,43 +4217,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
         frontDoorSceneAction.gameObject.SetActive(true);
         frontDoorSceneAction.Initialize(Chapter1SceneActionType.FrontDoor, this, grandfatherClock);
         frontDoorSceneAction.SetAvailable(true);
-    }
-
-    private void CreateClickTarget(string objectName, Transform target, Chapter1SceneActionType actionType)
-    {
-        if (target == null)
-        {
-            return;
-        }
-
-        GameObject targetObject = GameObject.Find(objectName);
-
-        if (targetObject == null)
-        {
-            targetObject = new GameObject(objectName);
-            targetObject.transform.SetParent(target.parent, true);
-
-            SpriteRenderer renderer = targetObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = GetRuntimeCoatSprite();
-            renderer.color = new Color(1f, 1f, 1f, 0f);
-            renderer.sortingLayerName = "People";
-            renderer.sortingOrder = 6000;
-
-            BoxCollider2D collider = targetObject.AddComponent<BoxCollider2D>();
-            collider.size = new Vector2(160f, 160f);
-            collider.isTrigger = true;
-        }
-
-        targetObject.transform.position = target.position;
-
-        Chapter1SceneAction action = targetObject.GetComponent<Chapter1SceneAction>();
-
-        if (action == null)
-        {
-            action = targetObject.AddComponent<Chapter1SceneAction>();
-        }
-
-        action.Initialize(actionType, this, grandfatherClock);
     }
 
     private void EnsureGuestConfigs(bool createFallbacks)
@@ -6387,16 +6312,6 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
             case 6: return "We have been waiting at the door for some time. The house was listening with us.";
             default: return "At last. A closed door should not feel so pleased with itself.";
         }
-    }
-
-    private Sprite GetRuntimeCoatSprite()
-    {
-        if (runtimeCoatSprite == null)
-        {
-            runtimeCoatSprite = CreateSolidSprite("RuntimeCoatSprite", new Color(0.38f, 0.25f, 0.16f, 1f), 64, 42, new Vector2(0.5f, 0.5f), 2f);
-        }
-
-        return runtimeCoatSprite;
     }
 
     private Sprite GetRuntimeGuestSprite()
