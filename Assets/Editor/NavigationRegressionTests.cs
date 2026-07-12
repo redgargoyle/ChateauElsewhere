@@ -930,17 +930,19 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void ChapterManagerHasChapter2DebugSkipButton()
+    public void RuntimeSettingsOwnsChapter2DebugSkipButtonAndManagerUsesSerializedController()
     {
         string chapterManagerText = File.ReadAllText(ChapterManagerPath);
+        string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
 
-        Assert.That(chapterManagerText, Does.Contain("showSkipToChapter2Button"));
-        Assert.That(chapterManagerText, Does.Contain("Button_SkipToChapter2"));
         Assert.That(chapterManagerText, Does.Contain("SkipToChapter2ForTesting"));
-        Assert.That(chapterManagerText, Does.Contain("ResolveChapter2Controller()"));
+        Assert.That(chapterManagerText, Does.Not.Contain("ResolveChapter2Controller"));
+        Assert.That(chapterManagerText, Does.Not.Contain("Canvas_ChapterDebug"));
+        Assert.That(chapterManagerText, Does.Not.Contain("Button_SkipToChapter2"));
         Assert.That(chapterManagerText, Does.Not.Contain("AddComponent<Chapter2Controller>"));
+        Assert.That(runtimeSettingsText, Does.Contain("FindOrCreateButton(debugButtonRow, \"Button_SkipToChapter2\", \"Skip to Chapter 2\", SkipToChapter2)"));
         Assert.That(chapterManagerText, Does.Match(@"PrepareGuestsForChapter2Skip\s*\(\s*\)[\s\S]*BeginChapter2\(this\)"), "Skipping to Chapter 2 should stage Chapter 1 guests before Chapter 2 fades into the Drawing Room.");
-        Assert.That(chapterManagerText, Does.Match(@"ResolveChapter2Controller\(\)[\s\S]*DebugResetForChapter2Skip\(this\)[\s\S]*BeginChapter2\(this\)"), "Debug skip should reset the serialized Chapter 2 controller before replaying Chapter 2.");
+        Assert.That(chapterManagerText, Does.Match(@"if \(chapter2Controller != null\)[\s\S]*DebugResetForChapter2Skip\(this\)[\s\S]*BeginChapter2\(this\)"), "Debug skip should reset the serialized Chapter 2 controller before replaying Chapter 2.");
         Assert.That(chapterManagerText, Does.Match(@"BeginChapter2\(this\)[\s\S]*RefreshChapter2SkipGuestVisibilityAfterRoomChange\s*\(\s*\)"), "Skipping to Chapter 2 should recheck staged guest visibility after Chapter 2 moves to the Drawing Room.");
         Assert.That(chapterManagerText, Does.Contain("BeginChapter2(this)"));
     }

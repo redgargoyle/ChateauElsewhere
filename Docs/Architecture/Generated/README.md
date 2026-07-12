@@ -1,12 +1,12 @@
 # Generated architecture audit
 
 - Runtime C# files: **106**
-- Runtime C# lines: **49716**
+- Runtime C# lines: **49536**
 - Direct `MonoBehaviour` declarations: **50**
 
 ## Runtime dependency-repair and global-access occurrences
 
-- `FindObject`: **148**
+- `FindObject`: **143**
 - `ResourcesLoad`: **23**
 - `NewGameObject`: **82**
 - `AddComponent`: **75**

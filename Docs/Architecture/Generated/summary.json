@@ -1,8 +1,8 @@
 {
   "runtime_files": 106,
-  "runtime_loc": 49716,
+  "runtime_loc": 49536,
   "smell_totals": {
-    "FindObject": 148,
+    "FindObject": 143,
     "ResourcesLoad": 23,
     "NewGameObject": 82,
     "AddComponent": 75,

@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
 
 public enum ChapterPhase
 {
@@ -25,8 +24,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     private const string Chapter1Title = "Chapter 1";
     private const string Chapter2Title = "Chapter 2";
     private const string Chapter3Title = "Chapter 3";
-    private const string DebugCanvasName = "Canvas_ChapterDebug";
-    private const string SkipChapter2ButtonName = "Button_SkipToChapter2";
 
     [Header("Chapter")]
     [SerializeField] private string currentChapterId = Chapter1Id;
@@ -45,8 +42,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
 
     [Header("References")]
     [SerializeField] private PointClickPlayerMovement playerInput;
-    [SerializeField] private GameObject playerButlerReference;
-    [SerializeField] private ActorRoomState butlerActorState;
     [SerializeField] private ChapterClock chapterClock;
     [SerializeField] private ChapterEventScheduler eventScheduler;
     [SerializeField] private ChapterIntroUI introUI;
@@ -58,8 +53,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     private Coroutine chapterRoutine;
     private Coroutine chapterCompleteRoutine;
     private bool chapterStarted;
-    private bool searchedForLegacyDebugSkipButton;
-    private Button skipChapter2Button;
 
     public string CurrentChapterId => currentChapterId;
     public string DisplayedTitle => displayedTitle;
@@ -67,11 +60,41 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     public bool DebugFastMode => debugFastMode;
     public ChapterClock Clock => chapterClock;
     public ChapterEventScheduler EventScheduler => eventScheduler;
-    public GameObject PlayerButlerReference => playerButlerReference;
+    public GameObject PlayerButlerReference => playerInput != null ? playerInput.gameObject : null;
 
     public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
     {
         base.ValidateConfiguration(report);
+
+        if (playerInput == null)
+        {
+            report.AddError("ChapterManager requires its serialized PointClickPlayerMovement.", this);
+        }
+
+        if (chapterClock == null)
+        {
+            report.AddError("ChapterManager requires its serialized ChapterClock.", this);
+        }
+
+        if (eventScheduler == null)
+        {
+            report.AddError("ChapterManager requires its serialized ChapterEventScheduler.", this);
+        }
+
+        if (introUI == null)
+        {
+            report.AddError("ChapterManager requires its serialized ChapterIntroUI.", this);
+        }
+
+        if (chapter1ArrivalController == null)
+        {
+            report.AddError("ChapterManager requires its serialized Chapter1ArrivalController.", this);
+        }
+
+        if (chapter2Controller == null)
+        {
+            report.AddError("ChapterManager requires its serialized Chapter2Controller.", this);
+        }
 
         if (speechService == null)
         {
@@ -87,8 +110,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     private void Awake()
     {
         GameplayRuntimeState.ResetForGameplayStart();
-        ResolveReferences();
-        EnsureDebugSkipButton();
 
         if (autoStartChapter1)
         {
@@ -108,10 +129,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
 
     private void Start()
     {
-        ResolveReferences();
-        EnsureDebugSkipButton();
-        UpdateDebugSkipButtonVisibility();
-
         if (autoStartChapter1)
         {
             StartChapter1();
@@ -120,8 +137,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
 
     private void Update()
     {
-        UpdateDebugSkipButtonVisibility();
-
         if (triggerNextGuest)
         {
             triggerNextGuest = false;
@@ -143,7 +158,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             return;
         }
 
-        ResolveReferences();
         ValidateRequiredReferences();
 
         currentChapterId = Chapter1Id;
@@ -162,8 +176,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     [ContextMenu("Trigger Next Guest")]
     public void TriggerNextGuest()
     {
-        ResolveReferences();
-
         if (chapter1ArrivalController != null)
         {
             chapter1ArrivalController.TriggerNextGuest();
@@ -173,8 +185,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     [ContextMenu("Print Chapter State")]
     public void PrintChapterState()
     {
-        ResolveReferences();
-
         string arrivalState = chapter1ArrivalController != null
             ? chapter1ArrivalController.BuildDebugState()
             : "Chapter1ArrivalController missing.";
@@ -243,7 +253,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     [ContextMenu("Skip To Chapter 2 For Testing")]
     public void SkipToChapter2ForTesting()
     {
-        ResolveReferences();
         StopActiveDialogueForDebugTransition();
 
         StopChapterCoroutines();
@@ -262,14 +271,11 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
         currentChapterId = Chapter2Id;
         chapterStarted = true;
         SetPhase(ChapterPhase.Complete);
-        UpdateDebugSkipButtonVisibility();
 
         if (chapter1ArrivalController != null)
         {
             chapter1ArrivalController.PrepareGuestsForChapter2Skip();
         }
-
-        chapter2Controller = ResolveChapter2Controller();
 
         if (chapter2Controller != null)
         {
@@ -279,14 +285,13 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
         }
         else
         {
-            Debug.LogWarning("Skip to Chapter 2 requested, but Chapter2Controller could not be resolved.", this);
+            Debug.LogWarning("Skip to Chapter 2 requested, but the serialized Chapter2Controller is not configured.", this);
         }
     }
 
     [ContextMenu("Skip To Chapter 3 For Testing")]
     public void SkipToChapter3ForTesting()
     {
-        ResolveReferences();
         StopActiveDialogueForDebugTransition();
         StopChapterCoroutines();
 
@@ -310,7 +315,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
         displayedTitle = Chapter3Title;
         chapterStarted = true;
         SetPhase(ChapterPhase.Complete);
-        UpdateDebugSkipButtonVisibility();
 
         if (chapter1ArrivalController != null)
         {
@@ -318,15 +322,13 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             chapter1ArrivalController.HideGuestCoatsForChapter2Skip();
         }
 
-        chapter2Controller = ResolveChapter2Controller();
-
         if (chapter2Controller != null)
         {
             chapter2Controller.DebugSkipToChapter3ForTesting(this);
         }
         else
         {
-            Debug.LogWarning("Skip to Chapter 3 requested, but Chapter2Controller could not be resolved.", this);
+            Debug.LogWarning("Skip to Chapter 3 requested, but the serialized Chapter2Controller is not configured.", this);
             SetPlayerInputEnabled(true);
         }
     }
@@ -334,7 +336,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
     [ContextMenu("Skip To 7:00 PM For Testing")]
     public void SkipToSevenPMForTesting()
     {
-        ResolveReferences();
         StopActiveDialogueForDebugTransition();
         StopChapterCoroutines();
 
@@ -358,7 +359,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
         displayedTitle = Chapter2Title;
         chapterStarted = true;
         SetPhase(ChapterPhase.Complete);
-        UpdateDebugSkipButtonVisibility();
 
         if (chapter1ArrivalController != null)
         {
@@ -366,15 +366,13 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             chapter1ArrivalController.HideGuestCoatsForChapter2Skip();
         }
 
-        chapter2Controller = ResolveChapter2Controller();
-
         if (chapter2Controller != null)
         {
             chapter2Controller.DebugSkipToSevenPMForTesting(this);
         }
         else
         {
-            Debug.LogWarning("Skip to 7:00 PM requested, but Chapter2Controller could not be resolved.", this);
+            Debug.LogWarning("Skip to 7:00 PM requested, but the serialized Chapter2Controller is not configured.", this);
             SetPlayerInputEnabled(true);
         }
     }
@@ -524,7 +522,6 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             currentChapterId = Chapter2Id;
             displayedTitle = GetChapterTitle(cleanNextChapterId);
             chapterCompleteRoutine = null;
-            chapter2Controller = ResolveChapter2Controller();
 
             if (chapter2Controller != null)
             {
@@ -532,7 +529,7 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             }
             else
             {
-                Debug.LogWarning("Chapter 2 requested, but Chapter2Controller could not be resolved.", this);
+                Debug.LogWarning("Chapter 2 requested, but the serialized Chapter2Controller is not configured.", this);
             }
 
             yield break;
@@ -585,86 +582,20 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
             return false;
         }
 
-        ResolveChapter2Controller();
-
         return string.Equals(currentChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
             (chapter2Controller != null && chapter2Controller.CurrentPhase != Chapter2Phase.NotStarted);
     }
 
-    private Chapter2Controller ResolveChapter2Controller()
-    {
-        if (chapter2Controller == null)
-        {
-            chapter2Controller = GetComponent<Chapter2Controller>();
-        }
-
-        if (chapter2Controller == null)
-        {
-            chapter2Controller = FindAnyObjectByType<Chapter2Controller>(FindObjectsInactive.Include);
-        }
-
-        return chapter2Controller;
-    }
-
     private void SetPlayerInputEnabled(bool enabled)
     {
-        ResolvePlayerReference();
-
-        if (playerInput != null)
-        {
-            playerInput.enabled = true;
-            playerInput.SetInputEnabled(enabled);
-        }
-
-        if (playerButlerReference != null)
-        {
-            PlayerMovement legacyMovement = playerButlerReference.GetComponent<PlayerMovement>();
-            CharacterController2D legacyController = playerButlerReference.GetComponent<CharacterController2D>();
-
-            if (legacyMovement != null)
-            {
-                legacyMovement.enabled = false;
-            }
-
-            if (legacyController != null)
-            {
-                legacyController.enabled = false;
-            }
-        }
-    }
-
-    private void EnsureDebugSkipButton()
-    {
-        HideLegacyDebugSkipButton();
-    }
-
-    private void UpdateDebugSkipButtonVisibility()
-    {
-        HideLegacyDebugSkipButton();
-    }
-
-    private void HideLegacyDebugSkipButton()
-    {
-        if (skipChapter2Button == null && !searchedForLegacyDebugSkipButton)
-        {
-            searchedForLegacyDebugSkipButton = true;
-            GameObject canvasObject = GameObject.Find(DebugCanvasName);
-            Transform root = canvasObject != null ? canvasObject.transform : null;
-            Transform existing = root != null ? root.Find(SkipChapter2ButtonName) : null;
-            skipChapter2Button = existing != null ? existing.GetComponent<Button>() : null;
-        }
-
-        if (skipChapter2Button != null)
-        {
-            skipChapter2Button.gameObject.SetActive(false);
-        }
+        playerInput?.SetInputEnabled(enabled);
     }
 
     private void ValidateRequiredReferences()
     {
-        if (playerInput == null && playerButlerReference == null)
+        if (playerInput == null)
         {
-            Debug.LogWarning("ChapterManager missing required field: player/butler reference.", this);
+            Debug.LogWarning("ChapterManager missing required field: player input.", this);
         }
 
         if (introUI == null)
@@ -684,116 +615,5 @@ public class ChapterManager : Chateau.Architecture.GameServiceBase
         {
             chapter1ArrivalController.ValidateRequiredReferences();
         }
-    }
-
-    private void ResolveReferences()
-    {
-        if (chapterClock == null)
-        {
-            chapterClock = GetComponent<ChapterClock>();
-        }
-
-        if (eventScheduler == null)
-        {
-            eventScheduler = GetComponent<ChapterEventScheduler>();
-        }
-
-        if (introUI == null)
-        {
-            introUI = GetComponent<ChapterIntroUI>();
-        }
-
-        if (chapter1ArrivalController == null)
-        {
-            chapter1ArrivalController = GetComponent<Chapter1ArrivalController>();
-        }
-
-        if (chapter1ArrivalController == null)
-        {
-            chapter1ArrivalController = FindAnyObjectByType<Chapter1ArrivalController>(FindObjectsInactive.Include);
-        }
-
-        ResolveChapter2Controller();
-
-        ResolvePlayerReference();
-
-        if (butlerActorState == null && playerButlerReference != null)
-        {
-            butlerActorState = playerButlerReference.GetComponent<ActorRoomState>();
-        }
-
-        if (butlerActorState != null)
-        {
-            butlerActorState.SetAvailableInCurrentChapter(true);
-            butlerActorState.SetVisibleByChapterState(true);
-            butlerActorState.SetInteractable(true);
-        }
-    }
-
-    private void ResolvePlayerReference()
-    {
-        if (playerButlerReference == null || IsGuestObject(playerButlerReference))
-        {
-            GameObject namedPlayer = GameObject.Find("Player");
-
-            if (namedPlayer != null)
-            {
-                playerButlerReference = namedPlayer;
-                playerInput = namedPlayer.GetComponent<PointClickPlayerMovement>();
-            }
-        }
-
-        if (playerInput == null && playerButlerReference != null)
-        {
-            playerInput = playerButlerReference.GetComponent<PointClickPlayerMovement>();
-        }
-
-        if (playerInput == null)
-        {
-            playerInput = FindPlayerInput();
-        }
-
-        if ((playerButlerReference == null || IsGuestObject(playerButlerReference)) && playerInput != null)
-        {
-            playerButlerReference = playerInput.gameObject;
-        }
-    }
-
-    private static PointClickPlayerMovement FindPlayerInput()
-    {
-        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            PointClickPlayerMovement candidate = candidates[i];
-
-            if (candidate != null &&
-                candidate.gameObject.scene.IsValid() &&
-                !IsGuestObject(candidate.gameObject) &&
-                string.Equals(candidate.gameObject.name, "Player", System.StringComparison.OrdinalIgnoreCase))
-            {
-                return candidate;
-            }
-        }
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            PointClickPlayerMovement candidate = candidates[i];
-
-            if (candidate != null &&
-                candidate.gameObject.scene.IsValid() &&
-                !IsGuestObject(candidate.gameObject))
-            {
-                return candidate;
-            }
-        }
-
-        return null;
-    }
-
-    private static bool IsGuestObject(GameObject target)
-    {
-        return target != null &&
-            target.name.IndexOf("Guest", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 }

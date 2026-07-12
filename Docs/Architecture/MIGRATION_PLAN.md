@@ -64,6 +64,7 @@ Only after Phase 2 passes:
 - SubtitleService and GuestVoiceLinePlayback use validated serialized line-bank/catalog/navigation/source dependencies without resource or scene-search repair; lazy subtitle presentation and transient overlap playback remain separately gated;
 - SubtitleService is bound to the shared speaking-indicator owner; redundant static cleanup searches are removed from dialogue, subtitle, and Chapter 2 paths;
 - ChapterManager owns serialized dialogue/subtitle services and one direct debug-transition cleanup command; settings and teleports delegate to it, and the final static voice-stop/global subtitle searches are removed;
+- ChapterManager owns the exact serialized Player input and Chapter 2 controller; its player/controller/debug-canvas repair searches are removed, the public Player root is derived from that input, and legacy movement components are disabled only on the authored Player instance;
 - the inert Chapter 1 HUD owner is serialized on the Chapter 1 controller; its lookup/factory/flag are removed while lazy canvas/text presentation remains deliberate;
 - RuntimeSettingsMenu and its correctly scaled canvas are serialized under GameRoot with explicit navigation/chapter/clock/music; root/canvas factories are removed while nested controls remain lazy and owner-scoped;
 - exploration music has one serialized channel-volume owner at its authored `0.125` base volume; RuntimeSettings no longer creates/reconfigures that component and the prior zero-volume migration regression is lifecycle-gated;

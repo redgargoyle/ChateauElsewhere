@@ -105,6 +105,8 @@ public sealed class ArchitectureFoundationTests
     public void ChapterStackIsSerializedInsteadOfRepairedAtRuntime()
     {
         string managerText = File.ReadAllText("Assets/Scripts/Story/ChapterManager.cs");
+        string sceneText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+        string playerInstanceDocument = ExtractDocument(sceneText, "--- !u!1001 &81962841");
 
         Assert.That(managerText, Does.Not.Contain("BootstrapChapterManagerForGameplay"));
         Assert.That(managerText, Does.Not.Contain("ChapterManager_Runtime"));
@@ -113,10 +115,25 @@ public sealed class ArchitectureFoundationTests
         Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<ChapterIntroUI>"));
         Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<Chapter1ArrivalController>"));
         Assert.That(managerText, Does.Not.Contain("managerObject.AddComponent<ChapterManager>"));
-        Assert.That(managerText, Does.Contain("ResolveChapter2Controller()"));
-        Assert.That(managerText, Does.Not.Contain("ResolveChapter2Controller(true)"));
-        Assert.That(managerText, Does.Not.Contain("ResolveChapter2Controller(false)"));
         Assert.That(managerText, Does.Not.Contain("AddComponent<Chapter2Controller>"));
+        Assert.That(managerText, Does.Not.Contain("ResolveChapter2Controller"));
+        Assert.That(managerText, Does.Not.Contain("ResolveReferences"));
+        Assert.That(managerText, Does.Not.Contain("ResolvePlayerReference"));
+        Assert.That(managerText, Does.Not.Contain("FindPlayerInput"));
+        Assert.That(managerText, Does.Not.Contain("GameObject.Find"));
+        Assert.That(managerText, Does.Not.Contain("FindAnyObjectByType"));
+        Assert.That(managerText, Does.Not.Contain("FindObjectsByType"));
+        Assert.That(managerText, Does.Not.Contain("Canvas_ChapterDebug"));
+        Assert.That(sceneText, Does.Contain("playerInput: {fileID: 81962842}"));
+        Assert.That(sceneText, Does.Contain("chapter2Controller: {fileID: 3301000006}"));
+        string legacyControllerOverride = "target: {fileID: 7110128061864666233, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}\n      propertyPath: m_Enabled\n      value: 0";
+        string legacyMovementOverride = "target: {fileID: 7656683542599176262, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}\n      propertyPath: m_Enabled\n      value: 0";
+        Assert.That(playerInstanceDocument, Does.Contain(legacyControllerOverride));
+        Assert.That(playerInstanceDocument, Does.Contain(legacyMovementOverride));
+        Assert.That(CountOccurrences(sceneText, legacyControllerOverride), Is.EqualTo(1));
+        Assert.That(CountOccurrences(sceneText, legacyMovementOverride), Is.EqualTo(1));
+        Assert.That(managerText, Does.Contain("ChapterManager requires its serialized PointClickPlayerMovement."));
+        Assert.That(managerText, Does.Contain("ChapterManager requires its serialized Chapter2Controller."));
 
         string chapter2Text = File.ReadAllText("Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2Controller.cs");
         Assert.That(chapter2Text, Does.Not.Contain("AddComponent<Chapter2InteractionHUD>"));
@@ -364,6 +381,14 @@ public sealed class ArchitectureFoundationTests
     private static int CountOccurrences(string text, string value)
     {
         return text.Split(new[] { value }, StringSplitOptions.None).Length - 1;
+    }
+
+    private static string ExtractDocument(string assetText, string header)
+    {
+        int start = assetText.IndexOf(header, StringComparison.Ordinal);
+        Assert.That(start, Is.GreaterThanOrEqualTo(0), $"Missing document '{header}'.");
+        int end = assetText.IndexOf("\n--- !u!", start + header.Length, StringComparison.Ordinal);
+        return end >= 0 ? assetText.Substring(start, end - start) : assetText.Substring(start);
     }
 
     [Test]
