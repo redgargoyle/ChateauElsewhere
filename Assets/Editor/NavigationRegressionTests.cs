@@ -375,6 +375,8 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("TrySetDestinationFromScreenPoint"), "Navigation triggers need a public way to ask the player to walk toward a screen-space hitbox.");
         Assert.That(playerText, Does.Contain("TryEvaluateMovementAtScreenPoint"), "Cursor feedback and door approaches should use the same movement reachability query.");
         Assert.That(playerText, Does.Contain("TryGetScreenPointFromLogicalPosition"), "Door approaches need to score clamped floor points in screen space.");
+        Assert.That(playerText, Does.Contain("HasUsableCameraViewport(mainCamera)"), "Player screen/world conversion must wait for a valid camera viewport.");
+        Assert.That(playerText, Does.Contain("IsPointerInsideScreenBounds(screenPosition)"), "Player pointer queries must reject coordinates outside the game viewport.");
         Assert.That(triggerText, Does.Contain("IsPointerOverActiveTrigger"), "Door triggers should expose active hitbox priority for floor input.");
         Assert.That(playerText, Does.Contain("DoorTriggerNavigation.IsPointerOverActiveTrigger"), "Door UI clicks should not be overwritten by the floor click handler on the same frame.");
         Assert.That(playerText, Does.Contain("IsPointerOverBlockingUi"), "Floor clicks should ignore passive room visuals instead of relying on broad EventSystem UI blocking.");
@@ -831,6 +833,7 @@ public class NavigationRegressionTests
         Assert.That(cameraManagerText, Does.Contain("activeRoomStage.TransformPoint"), "The conversion should start from active room-stage local space.");
         Assert.That(cameraManagerText, Does.Contain("RectTransformUtility.WorldToScreenPoint"), "The conversion should go through screen space so Canvas resize and camera setup are respected.");
         Assert.That(cameraManagerText, Does.Contain("mainCamera.ScreenToWorldPoint"), "The conversion should end at the actor's world depth.");
+        Assert.That(cameraManagerText, Does.Contain("HasUsableCameraViewport(mainCamera)"), "Room-stage conversions must wait for a valid camera viewport before using screen coordinates.");
         Assert.That(actorRoomStateText, Does.Contain("hasRoomStageLocalBinding"), "World actors need an explicit room-stage local binding instead of inferred screen drift.");
         Assert.That(actorRoomStateText, Does.Contain("roomStageLocalPoint"), "ActorRoomState should store the room-stage local coordinate it is locked to.");
         Assert.That(actorRoomStateText, Does.Contain("boundWorldZ"), "ActorRoomState should preserve the actor's world depth while following the room stage.");

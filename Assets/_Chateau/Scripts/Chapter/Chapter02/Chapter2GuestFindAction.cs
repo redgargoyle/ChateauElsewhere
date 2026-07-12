@@ -33,7 +33,7 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
         Camera mainCamera = Camera.main;
         action = null;
 
-        if (mainCamera == null)
+        if (mainCamera == null || !IsValidScreenPosition(mainCamera, screenPosition))
         {
             return false;
         }
@@ -64,6 +64,16 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
         }
 
         return false;
+    }
+
+    private static bool IsValidScreenPosition(Camera camera, Vector2 screenPosition)
+    {
+        return camera != null &&
+            Screen.width > 0 &&
+            Screen.height > 0 &&
+            camera.pixelWidth > 0 &&
+            camera.pixelHeight > 0 &&
+            camera.pixelRect.Contains(screenPosition);
     }
 
     private static bool TryUseAvailableAction(Chapter2GuestFindAction candidate, out Chapter2GuestFindAction action)

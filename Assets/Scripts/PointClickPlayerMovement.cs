@@ -1192,7 +1192,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		screenPoint = Vector2.zero;
 
 		Camera mainCamera = Camera.main;
-		if (mainCamera == null)
+		if (!HasUsableCameraViewport(mainCamera))
 			return false;
 
 		UpdateVisualOffset(mainCamera);
@@ -1717,7 +1717,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		logicalPoint = Vector2.zero;
 
 		Camera mainCamera = Camera.main;
-		if (mainCamera == null)
+		if (!HasUsableCameraViewport(mainCamera))
 			return false;
 
 		UpdateVisualOffset(mainCamera);
@@ -1736,7 +1736,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (mouse != null && mouse.leftButton.wasPressedThisFrame)
 		{
 			screenPosition = mouse.position.ReadValue();
-			return true;
+			return IsPointerInsideScreenBounds(screenPosition);
 		}
 #endif
 
@@ -1747,7 +1747,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 				return false;
 
 			screenPosition = Input.mousePosition;
-			return true;
+			return IsPointerInsideScreenBounds(screenPosition);
 		}
 		catch (InvalidOperationException)
 		{
@@ -1767,7 +1767,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (mouse != null)
 		{
 			screenPosition = mouse.position.ReadValue();
-			return true;
+			return IsPointerInsideScreenBounds(screenPosition);
 		}
 #endif
 
@@ -1775,7 +1775,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		try
 		{
 			screenPosition = Input.mousePosition;
-			return true;
+			return IsPointerInsideScreenBounds(screenPosition);
 		}
 		catch (InvalidOperationException)
 		{
@@ -1784,6 +1784,16 @@ public class PointClickPlayerMovement : MonoBehaviour
 #else
 		return false;
 #endif
+	}
+
+	private static bool IsPointerInsideScreenBounds(Vector2 screenPosition)
+	{
+		return Screen.width > 0 &&
+			Screen.height > 0 &&
+			screenPosition.x >= 0f &&
+			screenPosition.x <= Screen.width &&
+			screenPosition.y >= 0f &&
+			screenPosition.y <= Screen.height;
 	}
 
 	private static bool IsPointerOverBlockingUi(Vector2 screenPosition)
@@ -2183,7 +2193,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		RectTransform roomStage = roomContent.transform as RectTransform;
 		Camera mainCamera = Camera.main;
 
-		if (roomStage != null && mainCamera != null)
+		if (roomStage != null && HasUsableCameraViewport(mainCamera))
 		{
 			Canvas canvas = roomStage.GetComponentInParent<Canvas>();
 			Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
@@ -2203,6 +2213,15 @@ public class PointClickPlayerMovement : MonoBehaviour
 			roomContent.transform.position.z));
 		roomLocalPoint = new Vector2(localPoint.x, localPoint.y);
 		return true;
+	}
+
+	private static bool HasUsableCameraViewport(Camera camera)
+	{
+		return camera != null &&
+			Screen.width > 0 &&
+			Screen.height > 0 &&
+			camera.pixelWidth > 0 &&
+			camera.pixelHeight > 0;
 	}
 
 	private bool TryGetCurrentRoomPerspectiveProfile(out RoomPerspectiveProfile profile)

@@ -208,7 +208,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public static bool IsPointerOverActiveTrigger(Vector2 screenPosition)
     {
-        if (RuntimeSettingsMenu.BlocksGameInput)
+        if (RuntimeSettingsMenu.BlocksGameInput || !IsPointerInsideScreenBounds(screenPosition))
         {
             return false;
         }
@@ -920,7 +920,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         if (mouse != null)
         {
             screenPosition = mouse.position.ReadValue();
-            return true;
+            return IsPointerInsideScreenBounds(screenPosition);
         }
 #endif
 
@@ -928,7 +928,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         try
         {
             screenPosition = Input.mousePosition;
-            return true;
+            return IsPointerInsideScreenBounds(screenPosition);
         }
         catch (InvalidOperationException)
         {
@@ -937,6 +937,16 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 #else
         return false;
 #endif
+    }
+
+    private static bool IsPointerInsideScreenBounds(Vector2 screenPosition)
+    {
+        return Screen.width > 0 &&
+            Screen.height > 0 &&
+            screenPosition.x >= 0f &&
+            screenPosition.x <= Screen.width &&
+            screenPosition.y >= 0f &&
+            screenPosition.y <= Screen.height;
     }
 
     private static bool TryGetPrimaryPointerDown()

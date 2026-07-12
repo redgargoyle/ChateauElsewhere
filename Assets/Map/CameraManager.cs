@@ -128,7 +128,7 @@ public class CameraManager : Chateau.Architecture.GameServiceBase
     {
         worldOffset = Vector3.zero;
 
-        if (worldCamera == null ||
+        if (!HasUsableCameraViewport(worldCamera) ||
             !TryGetRoomStageScreenTransform(out Vector2 viewportCenter, out Vector2 stageCenter, out _))
         {
             return false;
@@ -244,7 +244,7 @@ public class CameraManager : Chateau.Architecture.GameServiceBase
         stageScale = 1f;
 
         Camera mainCamera = Camera.main;
-        if (!UsesRoomStageLayout() || activeRoomStage == null || mainCamera == null)
+        if (!UsesRoomStageLayout() || activeRoomStage == null || !HasUsableCameraViewport(mainCamera))
         {
             return false;
         }
@@ -270,7 +270,7 @@ public class CameraManager : Chateau.Architecture.GameServiceBase
         roomStageLocalPoint = Vector2.zero;
 
         Camera mainCamera = Camera.main;
-        if (!UsesRoomStageLayout() || activeRoomStage == null || mainCamera == null)
+        if (!UsesRoomStageLayout() || activeRoomStage == null || !HasUsableCameraViewport(mainCamera))
         {
             return false;
         }
@@ -285,6 +285,15 @@ public class CameraManager : Chateau.Architecture.GameServiceBase
             screenPoint,
             canvasCamera,
             out roomStageLocalPoint);
+    }
+
+    private static bool HasUsableCameraViewport(Camera camera)
+    {
+        return camera != null &&
+            Screen.width > 0 &&
+            Screen.height > 0 &&
+            camera.pixelWidth > 0 &&
+            camera.pixelHeight > 0;
     }
 
     private void Reset()

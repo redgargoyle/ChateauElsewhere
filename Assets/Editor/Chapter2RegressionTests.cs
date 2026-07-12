@@ -1158,6 +1158,8 @@ public class Chapter2RegressionTests
 
         Assert.That(actionText, Does.Contain("IsPointerOverAvailableGuestAction"), "Guest actions should expose a shared priority helper.");
         Assert.That(actionText, Does.Contain("Physics2D.OverlapPointAll"), "The priority helper should check 2D colliders under the pointer.");
+        Assert.That(actionText, Does.Contain("IsValidScreenPosition(mainCamera, screenPosition)"), "Guest priority queries must reject invalid or not-yet-laid-out camera viewports before converting screen coordinates.");
+        Assert.That(actionText, Does.Contain("camera.pixelRect.Contains(screenPosition)"), "Guest priority queries must stay inside the active camera viewport.");
         Assert.That(actionText, Does.Contain("Physics2D.SyncTransforms()"), "Guest pointer checks should sync moved 2D colliders before querying.");
         Assert.That(actionText, Does.Contain("GetComponentInParent<Chapter2GuestFindAction>()"), "Child colliders should resolve to their guest action parent.");
         Assert.That(actionText, Does.Contain("GetComponentInChildren<Chapter2GuestFindAction>(true)"), "Existing actor colliders should be able to resolve to the dedicated child action.");
@@ -1173,6 +1175,7 @@ public class Chapter2RegressionTests
 
         Assert.That(doorTriggerText, Does.Match(@"(?s)\bOnPointerClick\s*\(\s*PointerEventData\s+eventData\s*\)\s*\{.*IsPointerOverAvailableGuestAction\(eventData\).*return;.*ActivateDoor\(\)"), "Door UI callbacks should defer to available hidden guests before activating.");
         Assert.That(doorTriggerText, Does.Match(@"(?s)\bUpdateFallbackPointerHoverAndClick\s*\([^)]*\)\s*\{.*TryGetPointerPosition\(out Vector2 screenPosition\).*IsPointerOverAvailableGuestAction\(screenPosition\).*ClearActiveDoorHover\(fallbackHoveredTrigger\).*return;.*FindTopmostTriggerAtScreenPoint"), "Door fallback hover/click should defer to available hidden guests before setting door hover or activating a trigger.");
+        Assert.That(doorTriggerText, Does.Contain("IsPointerInsideScreenBounds(screenPosition)"), "Door fallback queries must reject pointer coordinates outside a valid game viewport.");
     }
 
     [Test]
