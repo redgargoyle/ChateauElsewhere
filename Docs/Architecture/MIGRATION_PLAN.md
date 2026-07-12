@@ -120,6 +120,17 @@ InteractionRouter -> PassageInteraction -> NavigationService
 
 Create stable `RoomDefinition`, `PassageDefinition`, `RoomView`, `Passage`, and arrival-anchor data. Migrate one round trip, test it, then migrate the remaining routes.
 
+The first route characterization is complete. Before canonical code or scene binding, the tests now freeze:
+
+- exact Entrance/Drawing trigger IDs, parents, rectangles, route strings, script GUID, and current null repair edges;
+- one room-change event per direction, in transition-before-arrival order;
+- exact legacy logical arrivals: Drawing Room `(5.167492, -2.056576)` and Entrance return `(-7.45909, -1.955749)`;
+- camera active-room/background ownership, prompt/cursor release, Chapter 1 continuity, object/component counts, and the `0.752865` Butler presentation multiplier;
+- shared door-audio first-use binding/reuse; and
+- the current `RoomContentGroup` force-enable defect, which must be intentionally removed when `RoomView` assumes visibility ownership.
+
+The route then migrates through separately reversible commits: pure contracts; definition assets and GameDatabase registration; passive room/passage scene bindings; direct serialized dependencies; façade-backed canonical traversal; authored arrival anchors; authored approach anchors; and final route certification. `RoomNavigationManager` remains the sole current-room owner until a later explicit owner cutover.
+
 Room-local object cutouts are first-class props:
 
 ```text

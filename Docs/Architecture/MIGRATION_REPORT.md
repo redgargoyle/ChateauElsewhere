@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 3 serialized foundation complete; Phase 4 vertical migration is in progress with the first three set pieces complete and the first canonical passage route next.**
+**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first three set pieces complete and the Grand Entrance Hall ↔ Drawing Room legacy passage behavior now fully characterized.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -106,6 +106,8 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized `ChapterIntroUI` without production or scene changes. Cold boot keeps owner `3301000003` on ChapterManager, emits exactly two missing-view warnings, creates one UI-layer root `Canvas_ChapterIntroOverlay` at order `12000`, one stretched `ChapterIntroUI_Runtime` root, one black `10000x10000` raycast Image, and one centered `900x180` Liberation Sans SDF title at size `72`; repeated repair calls and the full Chapter 1/2 lifecycle reuse every identity and the authored EventSystem.
 - Serialized that exact four-object Chapter Intro view graph beneath GameRoot and bound its Canvas, overlay RectTransform, fade Image, and title TMP directly to the existing ChapterManager-hosted owner. The compatibility repair path is intentionally staged for one commit, but cold boot and repeated `EnsureUI` now reuse the authored graph without warnings or hierarchy/component growth. The component host, ChapterManager/Chapter 2 callers, timings, `Act 1` scene override, UI layer, sorting, font/material, and script GUID remain unchanged.
 - Removed every Chapter Intro discovery, factory, component-addition, reparenting, recursive layer/layout mutation, fallback warning/name, and `PostProcessSafeCanvasUtility` dependency. The final Canvas is an authored scene-root Screen-Space Overlay Canvas—the Unity-supported form and the original runtime hierarchy—with its stretched overlay as the serialized full-screen boundary. `ChapterIntroUI` now has only four direct view references, three transition values, presentation methods, and graph validation; it retains the same owner, callers, IDs, timings, title, fade/title visuals, sorting, EventSystem, and GUID.
+- Characterized the first canonical passage slice without changing production code or serialized assets. Exact YAML guards freeze the Grand Entrance Hall `GEH_Drawing_Room` trigger (`109889178`) and reciprocal Drawing Room `DrawingRoom_GEH` trigger (`2300000104`), their owning rooms, parents, geometry, script GUID, Inspector routes, and null legacy repair edges. The rendered MainMenu lifecycle freezes room-event order (`Drawing Room` then `Grand Entrance Hall`), camera/room/background ownership, prompt and cursor release, stable object/component counts, Chapter 1 continuity, exact logical arrivals `(5.167492, -2.056576)` and `(-7.45909, -1.955749)`, and the unchanged Butler presentation multiplier `0.752865`.
+- Characterized two migration debts on that same route before removing them: first door use adds and then reuses one Game-Sounds volume binding on shared source `2201000013`, and re-enabling a `RoomContentGroup` currently force-enables a deliberately disabled descendant renderer. The latter is a recorded defect to remove when the migrated `RoomView` takes visibility ownership, not target behavior to preserve indefinitely.
 
 ## Current static result
 
@@ -222,6 +224,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - the ChapterManager dialogue-binding gate produced two consecutive clean full-suite reruns after one transient full-run GameView zoom assertion; no files changed between those three runs, and both reruns restored the exact `0.752865` entrance multiplier;
 - Gameplay scene hashing confirmed that batch validation did not rewrite the reviewed scene;
 - all 147 C# scripts have `.meta` files and unique GUIDs.
+- the first-passage static characterization passes `1/1`, its rendered lifecycle passes `1/1`, and the full EditMode suite now discovers 241 tests: 195 pass and the exact same 46 pre-existing failure names remain, with no new failure;
+- the first-passage gate confirms `doors.txt` is not authoritative for this route: Gameplay contains zero serialized `DoorButton` instances, the forward legacy entry is absent, and both live directions remain Inspector-owned pending canonical data authoring;
 
 ## Validation still requiring human/golden review
 
@@ -248,6 +252,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Begin Phase 4 with a characterization-only Grand Entrance Hall ↔ Drawing Room passage slice: freeze the current forward/reverse room, arrival, camera, player, prompt, and room-view behavior before introducing the first canonical `RoomDefinition` / `PassageDefinition` route.
+1. Add the pure, namespaced canonical room/passage contracts and validation tests only: `RoomDefinition`, `PassageDefinition`, reciprocal passage data, `RoomView`, `Passage`, arrival-anchor data, and `INavigationService`. Do not change Gameplay, route execution, arrival sampling, or introduce a second current-room owner in this commit.
 
-Do not begin bulk deletion until those gates pass.
+After that pure-contract gate passes, author the two room definitions and reciprocal passage assets in a separate commit. Do not begin scene grafting, route cutover, or bulk deletion before those independent gates pass.

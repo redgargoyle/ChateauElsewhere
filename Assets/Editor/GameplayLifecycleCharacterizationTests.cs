@@ -1177,8 +1177,106 @@ public sealed class GameplayLifecycleCharacterizationTests
 
         DoorTriggerNavigation outbound = RequireSceneObject<DoorTriggerNavigation>(
             "DoorTrigger_GEH_DrawingRoom");
+        DoorTriggerNavigation reverse = RequireSceneObject<DoorTriggerNavigation>(
+            "DoorTrigger_DrawingRoom_GEH");
+        RectTransform outboundRect = outbound.transform as RectTransform;
+        RectTransform reverseRect = reverse.transform as RectTransform;
+        Image outboundImage = outbound.GetComponent<Image>();
+        Image reverseImage = reverse.GetComponent<Image>();
+        TMP_Text passagePromptText = GetPrivateField<TMP_Text>(prompts, "promptText");
+        AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
+            .Single(item => item.gameObject.name == "Audio_DoorOpen");
+        int characterizedDoorTriggerCount = FindInActiveScene<DoorTriggerNavigation>().Length;
+        int characterizedRoomContentGroupCount = FindInActiveScene<RoomContentGroup>().Length;
+        int characterizedAudioSourceCount = FindInActiveScene<AudioSource>().Length;
+        int characterizedCanvasCount = FindInActiveScene<Canvas>().Length;
+        int characterizedTextCount = FindInActiveScene<TMP_Text>().Length;
+        Vector2 outboundAnchoredPosition = outboundRect.anchoredPosition;
+        Vector2 outboundSizeDelta = outboundRect.sizeDelta;
+        Vector2 reverseAnchoredPosition = reverseRect.anchoredPosition;
+        Vector2 reverseSizeDelta = reverseRect.sizeDelta;
+        Vector3 entranceStageLocalPosition = characterizedEntranceRoomContent.transform.localPosition;
+        Vector3 entranceStageLocalScale = characterizedEntranceRoomContent.transform.localScale;
+        Assert.That(characterizedEntranceRoomContent.TryGetRoomBackgroundTexture(out Texture entranceBackground), Is.True);
+        Assert.That(characterizedDrawingRoomContent.TryGetRoomBackgroundTexture(out Texture drawingRoomBackground), Is.True);
+        List<string> characterizedPassageRoomChanges = new List<string>();
+        UnityEngine.Events.UnityAction<string> recordPassageRoomChange = characterizedPassageRoomChanges.Add;
+        navigation.OnCurrentRoomChanged.AddListener(recordPassageRoomChange);
+        bool characterizedPassageInputEnabled = player.InputEnabled;
+
         Assert.That(outbound.SourceRoom, Is.EqualTo(EntranceRoom));
+        Assert.That(outbound.DoorName, Is.EqualTo("GEH_Drawing_Room"));
         Assert.That(outbound.DestinationRoom, Is.EqualTo(DrawingRoom));
+        Assert.That(outbound.UsesCameraSequence, Is.False);
+        Assert.That(outbound.IsStairway, Is.False);
+        Assert.That(reverse.SourceRoom, Is.EqualTo(DrawingRoom));
+        Assert.That(reverse.DoorName, Is.EqualTo("DrawingRoom_GEH"));
+        Assert.That(reverse.DestinationRoom, Is.EqualTo(EntranceRoom));
+        Assert.That(reverse.UsesCameraSequence, Is.False);
+        Assert.That(reverse.IsStairway, Is.False);
+        Assert.That(outboundRect, Is.Not.Null);
+        Assert.That(reverseRect, Is.Not.Null);
+        Assert.That(outboundRect.parent.name, Is.EqualTo("Doors"));
+        Assert.That(reverseRect.parent.name, Is.EqualTo("Doors"));
+        Assert.That(outboundAnchoredPosition, Is.EqualTo(new Vector2(-687.8042f, 18.2886f)));
+        Assert.That(outboundSizeDelta, Is.EqualTo(new Vector2(211.9224f, 341.6918f)));
+        Assert.That(reverseAnchoredPosition, Is.EqualTo(new Vector2(582.52795f, 53.43762f)));
+        Assert.That(reverseSizeDelta, Is.EqualTo(new Vector2(345.5079f, 363.6107f)));
+        Assert.That(outboundImage, Is.Not.Null);
+        Assert.That(reverseImage, Is.Not.Null);
+        Assert.That(GetPrivateField<Image>(outbound, "image"), Is.SameAs(outboundImage));
+        Assert.That(GetPrivateField<RoomNavigationManager>(outbound, "navigationManager"), Is.SameAs(navigation));
+        Assert.That(GetPrivateField<Transform>(outbound, "player"), Is.Null,
+            "The current trigger resolves its legacy player repair reference only when interaction begins.");
+        Assert.That(GetPrivateField<AudioSource>(outbound, "doorOpenAudioSource"), Is.SameAs(passageAudioSource));
+        DoorOpenSoundCatalog passageDoorCatalog = GetPrivateField<DoorOpenSoundCatalog>(outbound, "doorOpenSoundCatalog");
+        Assert.That(passageDoorCatalog, Is.Not.Null);
+        Assert.That(AssetDatabase.GetAssetPath(passageDoorCatalog), Is.EqualTo("Assets/Resources/Audio/DoorOpenSoundCatalog.asset"));
+        AudioClip characterizedPassageFallbackClip = passageAudioSource.clip;
+        int passageAudioBindingCountBeforeUse = FindInActiveScene<GameAudioSourceVolume>().Length;
+        Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Is.Empty,
+            "The current shared passage source receives its legacy volume binding on first use.");
+        Assert.That(InvokePrivateResult<bool>(outbound, "TryPlayNavigationSoundNow"), Is.True);
+        GameAudioSourceVolume characterizedPassageAudioBinding = passageAudioSource.GetComponent<GameAudioSourceVolume>();
+        Assert.That(characterizedPassageAudioBinding, Is.Not.Null);
+        Assert.That(GetPrivateField<AudioSource>(characterizedPassageAudioBinding, "audioSource"), Is.SameAs(passageAudioSource));
+        Assert.That(characterizedPassageAudioBinding.Channel, Is.EqualTo(GameAudioChannel.GameSounds));
+        Assert.That(characterizedPassageAudioBinding.BaseVolume, Is.EqualTo(0.8f).Within(0.0001f));
+        Assert.That(passageAudioSource.clip, Is.SameAs(characterizedPassageFallbackClip));
+        Assert.That(FindInActiveScene<GameAudioSourceVolume>(), Has.Length.EqualTo(passageAudioBindingCountBeforeUse + 1));
+        InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+        Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource"), Is.Null);
+        Assert.That(InvokePrivateResult<bool>(outbound, "TryPlayNavigationSoundNow"), Is.True);
+        Assert.That(passageAudioSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedPassageAudioBinding));
+        Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+        Assert.That(FindInActiveScene<GameAudioSourceVolume>(), Has.Length.EqualTo(passageAudioBindingCountBeforeUse + 1));
+        InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+        int characterizedAudioBindingCount = FindInActiveScene<GameAudioSourceVolume>().Length;
+        Assert.That(characterizedEntranceRoomContent.gameObject.activeSelf, Is.True);
+        Assert.That(characterizedEntranceRoomContent.gameObject.activeInHierarchy, Is.True);
+        Assert.That(characterizedDrawingRoomContent.gameObject.activeSelf, Is.False);
+        Assert.That(characterizedDrawingRoomContent.gameObject.activeInHierarchy, Is.False);
+        Assert.That(outbound.gameObject.activeInHierarchy, Is.True);
+        Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
+        Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"), Is.SameAs(characterizedEntranceRoomContent));
+        Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"), Is.SameAs(characterizedEntranceRoomContent.transform));
+        Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(entranceBackground));
+        Assert.That(passagePromptText, Is.Not.Null);
+        Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
+        Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+        Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"), Is.Null);
+        Assert.That(player.InputEnabled, Is.EqualTo(characterizedPassageInputEnabled));
+        Assert.That(player.HasDestination, Is.False);
+        Assert.That(RuntimeSettingsMenu.BlocksGameInput, Is.False);
+        Assert.That(chapter.CurrentChapterId, Is.EqualTo(ChapterManager.Chapter1Id));
+
+        player.SetInputEnabled(true);
+        outbound.OnPointerEnter(null);
+        Assert.That(GetPrivateField<Transform>(outbound, "player"), Is.SameAs(player.transform));
+        Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(outbound));
+        Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"), Is.SameAs(outbound));
+        Assert.That(passagePromptText.gameObject.activeSelf, Is.True);
+        Assert.That(passagePromptText.text, Is.EqualTo("Open Door"));
         Assert.That(
             navigation.MoveThroughInspectorDoor(
                 outbound.SourceRoom,
@@ -1190,6 +1288,38 @@ public sealed class GameplayLifecycleCharacterizationTests
         yield return WaitForSettledLayout();
         Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
         RequireOnlyActiveRoom(DrawingRoom);
+        Assert.That(characterizedPassageRoomChanges, Is.EqualTo(new[] { DrawingRoom }));
+        Assert.That(characterizedEntranceRoomContent.gameObject.activeSelf, Is.False);
+        Assert.That(characterizedEntranceRoomContent.gameObject.activeInHierarchy, Is.False);
+        Assert.That(characterizedDrawingRoomContent.gameObject.activeSelf, Is.True);
+        Assert.That(characterizedDrawingRoomContent.gameObject.activeInHierarchy, Is.True);
+        Assert.That(outbound.gameObject.activeInHierarchy, Is.False);
+        Assert.That(reverse.gameObject.activeInHierarchy, Is.True);
+        Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"), Is.SameAs(characterizedDrawingRoomContent));
+        Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"), Is.SameAs(characterizedDrawingRoomContent.transform));
+        Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(drawingRoomBackground));
+        Assert.That(GetPrivateField<Image>(reverse, "image"), Is.SameAs(reverseImage));
+        Assert.That(GetPrivateField<RoomNavigationManager>(reverse, "navigationManager"), Is.SameAs(navigation));
+        Assert.That(GetPrivateField<Transform>(reverse, "player"), Is.Null,
+            "The newly enabled reverse trigger also defers its legacy player repair until interaction.");
+        Assert.That(GetPrivateField<AudioSource>(reverse, "doorOpenAudioSource"), Is.SameAs(passageAudioSource));
+        Assert.That(GetPrivateField<DoorOpenSoundCatalog>(reverse, "doorOpenSoundCatalog"), Is.SameAs(passageDoorCatalog));
+        Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+        Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"), Is.Null);
+        Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
+        Assert.That(player.InputEnabled, Is.True,
+            "Room traversal must not mutate the input state enabled for passage interaction.");
+        Assert.That(player.HasDestination, Is.False);
+        Vector2 characterizedDrawingRoomArrival = player.LogicalPosition;
+        Assert.That(reverse.TryFindArrivalDestination(player, out Vector2 evaluatedDrawingRoomArrival), Is.True);
+        Assert.That(float.IsNaN(characterizedDrawingRoomArrival.x) || float.IsInfinity(characterizedDrawingRoomArrival.x), Is.False);
+        Assert.That(float.IsNaN(characterizedDrawingRoomArrival.y) || float.IsInfinity(characterizedDrawingRoomArrival.y), Is.False);
+        Assert.That(float.IsNaN(evaluatedDrawingRoomArrival.x) || float.IsInfinity(evaluatedDrawingRoomArrival.x), Is.False);
+        Assert.That(float.IsNaN(evaluatedDrawingRoomArrival.y) || float.IsInfinity(evaluatedDrawingRoomArrival.y), Is.False);
+        Assert.That(characterizedDrawingRoomArrival.x, Is.EqualTo(5.167492f).Within(0.0001f));
+        Assert.That(characterizedDrawingRoomArrival.y, Is.EqualTo(-2.056576f).Within(0.0001f));
+        Assert.That(chapter.CurrentChapterId, Is.EqualTo(ChapterManager.Chapter1Id));
+        Debug.Log($"[PassageCharacterization] forwardArrival={characterizedDrawingRoomArrival.x:0.######},{characterizedDrawingRoomArrival.y:0.######}");
         Assert.That(RequireExactlyOneInActiveScene<FireplaceAmbienceController>(), Is.SameAs(fireplaceAmbience));
         Assert.That(RequireExactlyOneInActiveScene<ClockTickingAmbienceController>(), Is.SameAs(clockAmbience));
         AssertClockAmbienceGraphRemainsCanonical(
@@ -1202,6 +1332,14 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(clockAmbience.GetComponent<AudioSource>(), Is.SameAs(clockSource));
         Assert.That(fireplaceSource.clip, Is.Not.Null);
         Assert.That(clockSource.clip, Is.Not.Null);
+        teaTableRenderer.enabled = false;
+        Assert.That(teaTableRenderer.enabled, Is.False);
+        characterizedDrawingRoomContent.gameObject.SetActive(false);
+        Assert.That(teaTableRenderer.gameObject.activeInHierarchy, Is.False);
+        characterizedDrawingRoomContent.gameObject.SetActive(true);
+        Assert.That(teaTableRenderer.enabled, Is.True,
+            "Legacy RoomContentGroup reactivation currently force-enables disabled descendant renderers; this defect is intentionally characterized before its ownership fix.");
+        Assert.That(RequireOnlyActiveRoom(DrawingRoom), Is.SameAs(characterizedDrawingRoomContent));
         Assert.That(teaTableView.gameObject.activeInHierarchy, Is.True);
         Assert.That(purpleArmchairView.gameObject.activeInHierarchy, Is.True);
         Assert.That(purpleArmchairBlocker.gameObject.activeInHierarchy, Is.True);
@@ -1265,10 +1403,12 @@ public sealed class GameplayLifecycleCharacterizationTests
             $"[SetPieceMigration] tea_service_table order={projectionSortingOrder} " +
             $"blockerSorting={teaTableBlocker.SortSourceRenderers} footprintPoints={teaTableCollider.points.Length}");
 
-        DoorTriggerNavigation reverse = RequireSceneObject<DoorTriggerNavigation>(
-            "DoorTrigger_DrawingRoom_GEH");
-        Assert.That(reverse.SourceRoom, Is.EqualTo(DrawingRoom));
-        Assert.That(reverse.DestinationRoom, Is.EqualTo(EntranceRoom));
+        reverse.OnPointerEnter(null);
+        Assert.That(GetPrivateField<Transform>(reverse, "player"), Is.SameAs(player.transform));
+        Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(reverse));
+        Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"), Is.SameAs(reverse));
+        Assert.That(passagePromptText.gameObject.activeSelf, Is.True);
+        Assert.That(passagePromptText.text, Is.EqualTo("Open Door"));
         Assert.That(
             navigation.MoveThroughInspectorDoor(
                 reverse.SourceRoom,
@@ -1279,6 +1419,54 @@ public sealed class GameplayLifecycleCharacterizationTests
 
         yield return WaitForSettledLayout();
         Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+        Assert.That(characterizedPassageRoomChanges, Is.EqualTo(new[] { DrawingRoom, EntranceRoom }));
+        navigation.OnCurrentRoomChanged.RemoveListener(recordPassageRoomChange);
+        Assert.That(characterizedEntranceRoomContent.gameObject.activeSelf, Is.True);
+        Assert.That(characterizedEntranceRoomContent.gameObject.activeInHierarchy, Is.True);
+        Assert.That(characterizedDrawingRoomContent.gameObject.activeSelf, Is.False);
+        Assert.That(characterizedDrawingRoomContent.gameObject.activeInHierarchy, Is.False);
+        Assert.That(outbound.gameObject.activeInHierarchy, Is.True);
+        Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
+        Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"), Is.SameAs(characterizedEntranceRoomContent));
+        Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"), Is.SameAs(characterizedEntranceRoomContent.transform));
+        Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(entranceBackground));
+        Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Not.SameAs(reverse),
+            "Disabling the reverse passage must release its hover even if the zero-position batch pointer selects another Entrance trigger.");
+        Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"), Is.Not.SameAs(reverse));
+        if (DoorTriggerNavigation.HoveredTrigger != null)
+        {
+            DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+        }
+        Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+        Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController), "doorHoverOwner"), Is.Null);
+        Assert.That(passagePromptText.gameObject.activeSelf, Is.False);
+        Assert.That(player.InputEnabled, Is.True,
+            "The reverse traversal must preserve the input state used for passage interaction.");
+        Assert.That(player.HasDestination, Is.False);
+        Vector2 characterizedEntranceReturnArrival = player.LogicalPosition;
+        Assert.That(outbound.TryFindArrivalDestination(player, out Vector2 evaluatedEntranceArrival), Is.True);
+        Assert.That(float.IsNaN(characterizedEntranceReturnArrival.x) || float.IsInfinity(characterizedEntranceReturnArrival.x), Is.False);
+        Assert.That(float.IsNaN(characterizedEntranceReturnArrival.y) || float.IsInfinity(characterizedEntranceReturnArrival.y), Is.False);
+        Assert.That(float.IsNaN(evaluatedEntranceArrival.x) || float.IsInfinity(evaluatedEntranceArrival.x), Is.False);
+        Assert.That(float.IsNaN(evaluatedEntranceArrival.y) || float.IsInfinity(evaluatedEntranceArrival.y), Is.False);
+        Assert.That(characterizedEntranceReturnArrival.x, Is.EqualTo(-7.45909f).Within(0.0001f));
+        Assert.That(characterizedEntranceReturnArrival.y, Is.EqualTo(-1.955749f).Within(0.0001f));
+        Assert.That(chapter.CurrentChapterId, Is.EqualTo(ChapterManager.Chapter1Id));
+        Assert.That(outboundRect.anchoredPosition, Is.EqualTo(outboundAnchoredPosition));
+        Assert.That(outboundRect.sizeDelta, Is.EqualTo(outboundSizeDelta));
+        Assert.That(reverseRect.anchoredPosition, Is.EqualTo(reverseAnchoredPosition));
+        Assert.That(reverseRect.sizeDelta, Is.EqualTo(reverseSizeDelta));
+        Assert.That(characterizedEntranceRoomContent.transform.localPosition, Is.EqualTo(entranceStageLocalPosition));
+        Assert.That(characterizedEntranceRoomContent.transform.localScale, Is.EqualTo(entranceStageLocalScale));
+        Assert.That(FindInActiveScene<DoorTriggerNavigation>(), Has.Length.EqualTo(characterizedDoorTriggerCount));
+        Assert.That(FindInActiveScene<RoomContentGroup>(), Has.Length.EqualTo(characterizedRoomContentGroupCount));
+        Assert.That(FindInActiveScene<AudioSource>(), Has.Length.EqualTo(characterizedAudioSourceCount));
+        Assert.That(FindInActiveScene<GameAudioSourceVolume>(), Has.Length.EqualTo(characterizedAudioBindingCount));
+        Assert.That(FindInActiveScene<Canvas>(), Has.Length.EqualTo(characterizedCanvasCount));
+        Assert.That(FindInActiveScene<TMP_Text>(), Has.Length.EqualTo(characterizedTextCount));
+        player.SetInputEnabled(characterizedPassageInputEnabled);
+        Assert.That(player.InputEnabled, Is.EqualTo(characterizedPassageInputEnabled));
+        Debug.Log($"[PassageCharacterization] reverseArrival={characterizedEntranceReturnArrival.x:0.######},{characterizedEntranceReturnArrival.y:0.######} events={string.Join("->", characterizedPassageRoomChanges)}");
         ScaleSnapshot returnedScale = CaptureScale(player, RequireOnlyActiveRoom(EntranceRoom));
         Assert.That(
             returnedScale.AppliedMultiplier,
@@ -1918,6 +2106,39 @@ public sealed class GameplayLifecycleCharacterizationTests
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         Assert.That(field, Is.Not.Null, $"Missing private field '{fieldName}' on {owner.GetType().Name}.");
         return (T)field.GetValue(owner);
+    }
+
+    private static T GetPrivateStaticField<T>(System.Type ownerType, string fieldName)
+    {
+        System.Reflection.FieldInfo field = ownerType.GetField(
+            fieldName,
+            System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"Missing private static field '{fieldName}' on {ownerType.Name}.");
+        return (T)field.GetValue(null);
+    }
+
+    private static T InvokePrivateResult<T>(object owner, string methodName)
+    {
+        System.Reflection.MethodInfo method = owner.GetType().GetMethod(
+            methodName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null,
+            System.Type.EmptyTypes,
+            null);
+        Assert.That(method, Is.Not.Null, $"Missing private method '{methodName}()' on {owner.GetType().Name}.");
+        return (T)method.Invoke(owner, null);
+    }
+
+    private static void InvokePrivateStaticMethod(System.Type ownerType, string methodName)
+    {
+        System.Reflection.MethodInfo method = ownerType.GetMethod(
+            methodName,
+            System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic,
+            null,
+            System.Type.EmptyTypes,
+            null);
+        Assert.That(method, Is.Not.Null, $"Missing private static method '{methodName}()' on {ownerType.Name}.");
+        method.Invoke(null, null);
     }
 
     private static void SetPrivateField<T>(object owner, string fieldName, T value)

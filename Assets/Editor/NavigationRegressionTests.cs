@@ -483,6 +483,148 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void GrandEntranceDrawingRoomPassagePairIsCharacterizedBeforeCanonicalMigration()
+    {
+        const string doorTriggerGuid = "7e419b0f8f26d4f2d8d03e567fef4c52";
+        const string doorButtonGuid = "526d59741832df7afadeab75a481cf82";
+
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string navigationManagerText = File.ReadAllText(NavigationManagerPath);
+        string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
+        string legacyDoorDataText = File.ReadAllText("Assets/Resources/Navigation/doors.txt");
+
+        Assert.That(ReadGuid(DoorTriggerNavigationPath + ".meta"), Is.EqualTo(doorTriggerGuid));
+        Assert.That(ReadGuid("Assets/Scripts/Navigation/DoorButton.cs.meta"), Is.EqualTo(doorButtonGuid));
+        Assert.That(Regex.Matches(sceneText, $"guid: {doorButtonGuid}").Count, Is.Zero,
+            "Gameplay must not contain a legacy DoorButton that makes doors.txt authoritative again.");
+
+        string navigationOwner = ExtractUnityObjectBlock(sceneText, "--- !u!114 &1878886997");
+        Assert.That(navigationOwner, Does.Contain("roomVisualCatalog: {fileID: 0}"));
+        Assert.That(navigationOwner, Does.Contain("doorCameraSequence: {fileID: 0}"));
+        Assert.That(navigationOwner, Does.Contain("cameraManager: {fileID: 0}"));
+        Assert.That(navigationOwner, Does.Contain("doorButtonRoot: {fileID: 0}"));
+        Assert.That(navigationOwner, Does.Contain("roomContentRoot: {fileID: 0}"));
+        Assert.That(navigationOwner, Does.Contain("autoFindReferences: 1"));
+
+        string entranceRoomObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &567115833");
+        string entranceRoomTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &567115834");
+        string entranceRoomContent = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2102000002");
+        string entranceDoorsObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2103000020");
+        string entranceDoorsTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2103000021");
+        string outboundObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &109889176");
+        string outboundTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &109889177");
+        string outboundTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &109889178");
+        string outboundImage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &109889179");
+        string outboundCanvasRenderer = ExtractUnityObjectBlock(sceneText, "--- !u!222 &109889180");
+
+        Assert.That(entranceRoomObject, Does.Contain("m_Name: Room_Grand_Entrance_Hall"));
+        Assert.That(entranceRoomObject, Does.Contain("m_IsActive: 0"));
+        Assert.That(entranceRoomObject, Does.Contain("- component: {fileID: 567115834}"));
+        Assert.That(entranceRoomObject, Does.Contain("- component: {fileID: 2102000002}"));
+        Assert.That(entranceRoomTransform, Does.Contain("m_Father: {fileID: 668915133}"));
+        Assert.That(entranceRoomTransform, Does.Contain("- {fileID: 2103000021}"));
+        Assert.That(entranceRoomContent, Does.Contain($"m_Script: {{fileID: 11500000, guid: {RoomContentGroupGuid}, type: 3}}"));
+        Assert.That(entranceRoomContent, Does.Contain("m_GameObject: {fileID: 567115833}"));
+        Assert.That(entranceRoomContent, Does.Contain("roomName: Grand Entrance Hall"));
+        Assert.That(entranceRoomContent, Does.Contain("roomBackgroundTexture: {fileID: 2800000, guid: 3e163816317a638f5adedc338ec34d98, type: 3}"));
+        Assert.That(entranceDoorsObject, Does.Contain("m_Name: Doors"));
+        Assert.That(entranceDoorsObject, Does.Contain("- component: {fileID: 2103000021}"));
+        Assert.That(entranceDoorsTransform, Does.Contain("m_Father: {fileID: 567115834}"));
+        Assert.That(entranceDoorsTransform, Does.Contain("- {fileID: 109889177}"));
+
+        Assert.That(outboundObject, Does.Contain("- component: {fileID: 109889177}"));
+        Assert.That(outboundObject, Does.Contain("- component: {fileID: 109889180}"));
+        Assert.That(outboundObject, Does.Contain("- component: {fileID: 109889179}"));
+        Assert.That(outboundObject, Does.Contain("- component: {fileID: 109889178}"));
+        Assert.That(outboundObject, Does.Contain("m_Name: DoorTrigger_GEH_DrawingRoom"));
+        Assert.That(outboundObject, Does.Contain("m_Layer: 5"));
+        Assert.That(outboundTransform, Does.Contain("m_GameObject: {fileID: 109889176}"));
+        Assert.That(outboundTransform, Does.Contain("m_Father: {fileID: 2103000021}"));
+        Assert.That(outboundTransform, Does.Contain("m_AnchoredPosition: {x: -687.8042, y: 18.2886}"));
+        Assert.That(outboundTransform, Does.Contain("m_SizeDelta: {x: 211.9224, y: 341.6918}"));
+        Assert.That(outboundTrigger, Does.Contain($"m_Script: {{fileID: 11500000, guid: {doorTriggerGuid}, type: 3}}"));
+        Assert.That(outboundTrigger, Does.Contain("m_GameObject: {fileID: 109889176}"));
+        Assert.That(outboundTrigger, Does.Contain("sourceRoom: Grand Entrance Hall"));
+        Assert.That(outboundTrigger, Does.Contain("doorName: GEH_Drawing_Room"));
+        Assert.That(outboundTrigger, Does.Contain("destinationRoom: Drawing Room"));
+        Assert.That(outboundTrigger, Does.Contain("requirePlayerInSourceRoom: 1"));
+        Assert.That(outboundTrigger, Does.Contain("useCameraSequence: 0"));
+        Assert.That(outboundTrigger, Does.Contain("navigationManager: {fileID: 0}"));
+        Assert.That(outboundTrigger, Does.Contain("image: {fileID: 109889179}"));
+        Assert.That(outboundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
+        Assert.That(outboundTrigger, Does.Contain("player: {fileID: 0}"));
+        Assert.That(outboundTrigger, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+        Assert.That(outboundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+        Assert.That(outboundImage, Does.Contain("m_GameObject: {fileID: 109889176}"));
+        Assert.That(outboundImage, Does.Contain("m_RaycastTarget: 1"));
+        Assert.That(outboundCanvasRenderer, Does.Contain("m_GameObject: {fileID: 109889176}"));
+
+        string drawingRoomObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000005");
+        string drawingRoomTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000006");
+        string drawingRoomContent = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000007");
+        string drawingDoorsObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000008");
+        string drawingDoorsTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000009");
+        string reverseObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000100");
+        string reverseTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000101");
+        string reverseCanvasRenderer = ExtractUnityObjectBlock(sceneText, "--- !u!222 &2300000102");
+        string reverseImage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000103");
+        string reverseTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000104");
+
+        Assert.That(drawingRoomObject, Does.Contain("m_Name: Room_Drawing_Room"));
+        Assert.That(drawingRoomObject, Does.Contain("m_IsActive: 0"));
+        Assert.That(drawingRoomObject, Does.Contain("- component: {fileID: 2300000006}"));
+        Assert.That(drawingRoomObject, Does.Contain("- component: {fileID: 2300000007}"));
+        Assert.That(drawingRoomTransform, Does.Contain("m_Father: {fileID: 668915133}"));
+        Assert.That(drawingRoomTransform, Does.Contain("- {fileID: 2300000009}"));
+        Assert.That(drawingRoomContent, Does.Contain($"m_Script: {{fileID: 11500000, guid: {RoomContentGroupGuid}, type: 3}}"));
+        Assert.That(drawingRoomContent, Does.Contain("m_GameObject: {fileID: 2300000005}"));
+        Assert.That(drawingRoomContent, Does.Contain("roomName: Drawing Room"));
+        Assert.That(drawingRoomContent, Does.Contain("roomBackgroundTexture: {fileID: 2800000, guid: 28c74b6dea1ed8e2c9c7d612355f9734, type: 3}"));
+        Assert.That(drawingDoorsObject, Does.Contain("m_Name: Doors"));
+        Assert.That(drawingDoorsObject, Does.Contain("- component: {fileID: 2300000009}"));
+        Assert.That(drawingDoorsTransform, Does.Contain("m_Father: {fileID: 2300000006}"));
+        Assert.That(drawingDoorsTransform, Does.Contain("- {fileID: 2300000101}"));
+
+        Assert.That(reverseObject, Does.Contain("- component: {fileID: 2300000101}"));
+        Assert.That(reverseObject, Does.Contain("- component: {fileID: 2300000102}"));
+        Assert.That(reverseObject, Does.Contain("- component: {fileID: 2300000103}"));
+        Assert.That(reverseObject, Does.Contain("- component: {fileID: 2300000104}"));
+        Assert.That(reverseObject, Does.Contain("m_Name: DoorTrigger_DrawingRoom_GEH"));
+        Assert.That(reverseObject, Does.Contain("m_Layer: 5"));
+        Assert.That(reverseTransform, Does.Contain("m_GameObject: {fileID: 2300000100}"));
+        Assert.That(reverseTransform, Does.Contain("m_Father: {fileID: 2300000009}"));
+        Assert.That(reverseTransform, Does.Contain("m_AnchoredPosition: {x: 582.52795, y: 53.43762}"));
+        Assert.That(reverseTransform, Does.Contain("m_SizeDelta: {x: 345.5079, y: 363.6107}"));
+        Assert.That(reverseTrigger, Does.Contain($"m_Script: {{fileID: 11500000, guid: {doorTriggerGuid}, type: 3}}"));
+        Assert.That(reverseTrigger, Does.Contain("m_GameObject: {fileID: 2300000100}"));
+        Assert.That(reverseTrigger, Does.Contain("sourceRoom: Drawing Room"));
+        Assert.That(reverseTrigger, Does.Contain("doorName: DrawingRoom_GEH"));
+        Assert.That(reverseTrigger, Does.Contain("destinationRoom: Grand Entrance Hall"));
+        Assert.That(reverseTrigger, Does.Contain("requirePlayerInSourceRoom: 1"));
+        Assert.That(reverseTrigger, Does.Contain("useCameraSequence: 0"));
+        Assert.That(reverseTrigger, Does.Contain("navigationManager: {fileID: 0}"));
+        Assert.That(reverseTrigger, Does.Contain("image: {fileID: 2300000103}"));
+        Assert.That(reverseTrigger, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
+        Assert.That(reverseTrigger, Does.Contain("player: {fileID: 0}"));
+        Assert.That(reverseTrigger, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+        Assert.That(reverseTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+        Assert.That(reverseImage, Does.Contain("m_GameObject: {fileID: 2300000100}"));
+        Assert.That(reverseImage, Does.Contain("m_RaycastTarget: 1"));
+        Assert.That(reverseCanvasRenderer, Does.Contain("m_GameObject: {fileID: 2300000100}"));
+
+        string legacyLoadBody = ExtractMethodBody(navigationManagerText, "private void LoadLegacyDoorDataIfNeeded");
+        Assert.That(legacyLoadBody, Does.Contain("if (cachedDoorButtons.Length == 0)"));
+        Assert.That(legacyLoadBody, Does.Contain("routesByDoorId = new Dictionary<string, DoorRoute>"));
+        Assert.That(legacyLoadBody, Does.Contain("return;"));
+        Assert.That(triggerText, Does.Contain("MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom)"));
+        Assert.That(triggerText, Does.Not.Contain("TryMoveThroughDoor"));
+        Assert.That(legacyDoorDataText, Does.Not.Contain("GEH_Drawing_Room:"),
+            "The forward passage must remain provably independent of the incomplete legacy doors.txt graph.");
+        Assert.That(legacyDoorDataText, Does.Contain("DrawingRoom_GEH: Grand Entrance Hall"),
+            "The reverse legacy entry is only compatibility data; the serialized reverse passage still owns its destination.");
+    }
+
+    [Test]
     public void PlayerCursorShowsWalkability()
     {
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
