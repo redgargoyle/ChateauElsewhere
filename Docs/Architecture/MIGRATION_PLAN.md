@@ -143,6 +143,8 @@ Approach/viewport characterization status: complete. Rendered tests own and rest
 
 Passive-passage status: complete. The two existing trigger owners now each carry one definition-backed, reciprocal, GameRoot-registered Passage with the neutral reference approach/arrival data. Passage has no lifecycle or command and is not called by any legacy or canonical service. Next, bind the two legacy trigger owners' stable navigation, Player, shared door-audio, and catalog dependencies directly in one separately gated compatibility slice; do not implement `INavigationService` or change traversal yet.
 
+Direct-dependency status: complete. Only the GEH/Drawing reciprocal trigger pair now directly references the existing `RoomNavigationManager`, exact live Player Transform, shared `Audio_DoorOpen` source, and approved `DoorOpenSoundCatalog`; the other 43 scene trigger documents retain all four null compatibility edges. The Player prefab instance required one type-correct stripped Transform proxy, so the proven minimum scene delta is two changed trigger documents plus one added proxy document. Every legacy resolver remains for unmigrated routes. Next, make the existing `RoomNavigationManager` implement `INavigationService` as a no-new-state compatibility façade, prove it delegates to the same inspector-owned route path, and do not cut over either trigger caller in that implementation-only slice.
+
 Room-local object cutouts are first-class props:
 
 ```text

@@ -117,6 +117,7 @@ public sealed class CanonicalRoomPassageContractTests
         string reverseObject = ExtractDocument(gameplayText, "--- !u!1 &2300000100");
         string reverseTrigger = ExtractDocument(gameplayText, "--- !u!114 &2300000104");
         string reversePassage = ExtractDocument(gameplayText, "--- !u!114 &4100000012");
+        string playerTransform = ExtractDocument(gameplayText, "--- !u!4 &81962843 stripped");
 
         Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(2),
             "Only the two characterized room roots may carry passive RoomViews at this gate.");
@@ -152,6 +153,39 @@ public sealed class CanonicalRoomPassageContractTests
             "The forward Passage should occur only on its owner, header, GameRoot registration, and reciprocal link.");
         Assert.That(CountOccurrences(gameplayText, "4100000012"), Is.EqualTo(4),
             "The reverse Passage should occur only on its owner, header, GameRoot registration, and reciprocal link.");
+        Assert.That(CountOccurrences(gameplayText, "player: {fileID: 81962843}"), Is.EqualTo(2),
+            "Only the characterized reciprocal trigger pair may bind the exact Player transform at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "81962843"), Is.EqualTo(3),
+            "The Player Transform proxy should occur only in its header and the two trigger bindings.");
+        string[] legacyTriggerDocuments = gameplayText
+            .Split(new[] { "\n--- !u!" }, StringSplitOptions.None)
+            .Where(document => document.Contains("guid: 7e419b0f8f26d4f2d8d03e567fef4c52"))
+            .ToArray();
+        Assert.That(legacyTriggerDocuments, Has.Length.EqualTo(45));
+        Assert.That(
+            legacyTriggerDocuments.Count(document =>
+                document.Contains("navigationManager: {fileID: 1878886997}") &&
+                document.Contains("doorOpenAudioSource: {fileID: 2201000013}") &&
+                document.Contains("player: {fileID: 81962843}") &&
+                document.Contains("doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
+            Is.EqualTo(2),
+            "Only the characterized reciprocal route may receive direct compatibility bindings in this slice.");
+        Assert.That(
+            legacyTriggerDocuments.Count(document =>
+                document.Contains("navigationManager: {fileID: 0}") &&
+                document.Contains("doorOpenAudioSource: {fileID: 0}") &&
+                document.Contains("player: {fileID: 0}") &&
+                document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
+            Is.EqualTo(43),
+            "Every unmigrated legacy trigger must remain byte-semantically unbound until its own route slice.");
+        Assert.That(
+            legacyTriggerDocuments.All(document => document.Contains("stairwaySoundCatalog: {fileID: 0}")),
+            Is.True,
+            "The door-only binding slice must not mutate stairway audio ownership.");
+        Assert.That(playerTransform, Does.Contain(
+            "m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
+        Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
+        Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));
 
         AssertPassivePassageDocument(
             forwardPassage,
@@ -170,14 +204,14 @@ public sealed class CanonicalRoomPassageContractTests
             "{x: 5.280546, y: -2.015396}",
             "{x: -7.703568, y: -2.000136}");
 
-        AssertLegacyDoorTriggerUnchanged(
+        AssertLegacyDoorTriggerCompatibilityBound(
             outboundTrigger,
             "109889176",
             "Grand Entrance Hall",
             "GEH_Drawing_Room",
             "Drawing Room",
             "109889179");
-        AssertLegacyDoorTriggerUnchanged(
+        AssertLegacyDoorTriggerCompatibilityBound(
             reverseTrigger,
             "2300000100",
             "Drawing Room",
@@ -502,7 +536,7 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(document, Does.Contain($"arrivalAnchor:\n    logicalPosition: {arrivalPosition}"));
     }
 
-    private static void AssertLegacyDoorTriggerUnchanged(
+    private static void AssertLegacyDoorTriggerCompatibilityBound(
         string document,
         string gameObjectFileId,
         string sourceRoom,
@@ -520,15 +554,16 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(document, Does.Contain("useCameraSequence: 0"));
         Assert.That(document, Does.Contain("triggerKind: 0"));
         Assert.That(document, Does.Contain("stairwayDirection: 0"));
-        Assert.That(document, Does.Contain("navigationManager: {fileID: 0}"));
+        Assert.That(document, Does.Contain("navigationManager: {fileID: 1878886997}"));
         Assert.That(document, Does.Contain($"image: {{fileID: {imageFileId}}}"));
-        Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
-        Assert.That(document, Does.Contain("player: {fileID: 0}"));
+        Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+        Assert.That(document, Does.Contain("player: {fileID: 81962843}"));
         Assert.That(document, Does.Contain("requirePlayerProximity: 1"));
         Assert.That(document, Does.Contain("walkPlayerToTriggerWhenFar: 1"));
         Assert.That(document, Does.Contain("autoActivateAfterApproach: 1"));
         Assert.That(document, Does.Contain("maxPlayerScreenDistance: 145"));
-        Assert.That(document, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+        Assert.That(document, Does.Contain(
+            "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
         Assert.That(document, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
     }
 

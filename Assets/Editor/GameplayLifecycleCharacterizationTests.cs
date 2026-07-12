@@ -1286,12 +1286,19 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reverseImage, Is.Not.Null);
         Assert.That(GetPrivateField<Image>(outbound, "image"), Is.SameAs(outboundImage));
         Assert.That(GetPrivateField<RoomNavigationManager>(outbound, "navigationManager"), Is.SameAs(navigation));
-        Assert.That(GetPrivateField<Transform>(outbound, "player"), Is.Null,
-            "The current trigger resolves its legacy player repair reference only when interaction begins.");
+        Assert.That(GetPrivateField<Transform>(outbound, "player"), Is.SameAs(player.transform),
+            "The characterized trigger must deserialize the exact Player transform before interaction.");
         Assert.That(GetPrivateField<AudioSource>(outbound, "doorOpenAudioSource"), Is.SameAs(passageAudioSource));
         DoorOpenSoundCatalog passageDoorCatalog = GetPrivateField<DoorOpenSoundCatalog>(outbound, "doorOpenSoundCatalog");
         Assert.That(passageDoorCatalog, Is.Not.Null);
         Assert.That(AssetDatabase.GetAssetPath(passageDoorCatalog), Is.EqualTo("Assets/Resources/Audio/DoorOpenSoundCatalog.asset"));
+        AssertDoorTriggerCompatibilityBindings(
+            outbound,
+            reverse,
+            navigation,
+            player.transform,
+            passageAudioSource,
+            passageDoorCatalog);
         AudioClip characterizedPassageFallbackClip = passageAudioSource.clip;
         int passageAudioBindingCountBeforeUse = FindInActiveScene<GameAudioSourceVolume>().Length;
         Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Is.Empty,
@@ -1378,8 +1385,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(drawingRoomBackground));
         Assert.That(GetPrivateField<Image>(reverse, "image"), Is.SameAs(reverseImage));
         Assert.That(GetPrivateField<RoomNavigationManager>(reverse, "navigationManager"), Is.SameAs(navigation));
-        Assert.That(GetPrivateField<Transform>(reverse, "player"), Is.Null,
-            "The newly enabled reverse trigger also defers its legacy player repair until interaction.");
+        Assert.That(GetPrivateField<Transform>(reverse, "player"), Is.SameAs(player.transform),
+            "The inactive reverse trigger must already contain the serialized Player transform.");
         Assert.That(GetPrivateField<AudioSource>(reverse, "doorOpenAudioSource"), Is.SameAs(passageAudioSource));
         Assert.That(GetPrivateField<DoorOpenSoundCatalog>(reverse, "doorOpenSoundCatalog"), Is.SameAs(passageDoorCatalog));
         Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
@@ -1518,6 +1525,13 @@ public sealed class GameplayLifecycleCharacterizationTests
             drawingVisible: false);
         Assert.That(outbound.gameObject.activeInHierarchy, Is.True);
         Assert.That(reverse.gameObject.activeInHierarchy, Is.False);
+        AssertDoorTriggerCompatibilityBindings(
+            outbound,
+            reverse,
+            navigation,
+            player.transform,
+            passageAudioSource,
+            passageDoorCatalog);
         Assert.That(GetPrivateField<RoomContentGroup>(cameraManager, "activeRoomContentGroup"), Is.SameAs(characterizedEntranceRoomContent));
         Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"), Is.SameAs(characterizedEntranceRoomContent.transform));
         Assert.That(cameraManager.cameraBackground.texture, Is.SameAs(entranceBackground));
@@ -2046,6 +2060,14 @@ public sealed class GameplayLifecycleCharacterizationTests
         DoorTriggerNavigation reverse = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_DrawingRoom_GEH");
         AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
             .Single(item => item.gameObject.name == "Audio_DoorOpen");
+        DoorOpenSoundCatalog passageDoorCatalog = GetPrivateField<DoorOpenSoundCatalog>(outbound, "doorOpenSoundCatalog");
+        AssertDoorTriggerCompatibilityBindings(
+            outbound,
+            reverse,
+            navigation,
+            player.transform,
+            passageAudioSource,
+            passageDoorCatalog);
         CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
         Camera mainCamera = Camera.main;
         Assert.That(mainCamera, Is.Not.Null);
@@ -2250,6 +2272,26 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(movementStoppedPositions, Has.Count.EqualTo(movementStopCountBeforeNearRoutes));
         Vector2 nearReverseArrival = player.LogicalPosition;
         AssertVector2Within(nearReverseArrival, reverseArrival, 0.0001f, "1366x768 near reverse arrival");
+        Assert.That(orderedEvents, Is.EqualTo(new[]
+        {
+            $"arrived:{EntranceRoom}:audio-idle",
+            $"movement-stopped:{EntranceRoom}:audio-idle",
+            $"room-changed:{DrawingRoom}:audio-started",
+            $"arrived:{DrawingRoom}:audio-idle",
+            $"movement-stopped:{DrawingRoom}:audio-idle",
+            $"room-changed:{EntranceRoom}:audio-started",
+            $"room-changed:{DrawingRoom}:audio-started",
+            $"room-changed:{EntranceRoom}:audio-started"
+        }));
+        Assert.That(passageAudioSource.GetComponents<GameAudioSourceVolume>(), Has.Length.EqualTo(1));
+        Assert.That(passageAudioSource.GetComponent<GameAudioSourceVolume>(), Is.SameAs(characterizedPassageBinding));
+        AssertDoorTriggerCompatibilityBindings(
+            outbound,
+            reverse,
+            navigation,
+            player.transform,
+            passageAudioSource,
+            passageDoorCatalog);
 
         Debug.Log(
             $"[PassageApproachCharacterization] viewport={Screen.width}x{Screen.height} camera={mainCamera.pixelRect} " +
@@ -2296,6 +2338,9 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(player, Is.Not.Null);
         DoorTriggerNavigation outbound = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_GEH_DrawingRoom");
         DoorTriggerNavigation reverse = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_DrawingRoom_GEH");
+        AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
+            .Single(item => item.gameObject.name == "Audio_DoorOpen");
+        DoorOpenSoundCatalog passageDoorCatalog = GetPrivateField<DoorOpenSoundCatalog>(outbound, "doorOpenSoundCatalog");
         CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
         bool originalInputEnabled = player.InputEnabled;
         bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
@@ -2305,6 +2350,13 @@ public sealed class GameplayLifecycleCharacterizationTests
         cameraManager.zoomRoomWithMouseWheel = false;
         cameraManager.ResetRoomLookForPreview();
         yield return WaitForSettledLayout();
+        AssertDoorTriggerCompatibilityBindings(
+            outbound,
+            reverse,
+            navigation,
+            player.transform,
+            passageAudioSource,
+            passageDoorCatalog);
 
         Vector2Int[] renderedSizes =
         {
@@ -2434,6 +2486,13 @@ public sealed class GameplayLifecycleCharacterizationTests
             Vector2 reverseArrival = player.LogicalPosition;
             AssertVector2Within(reverseArrival, expectedReverseArrivals[sizeIndex], viewportEnvelopeTolerance, "rendered reverse arrival");
             Assert.That(player.HasDestination, Is.False);
+            AssertDoorTriggerCompatibilityBindings(
+                outbound,
+                reverse,
+                navigation,
+                player.transform,
+                passageAudioSource,
+                passageDoorCatalog);
 
             Debug.Log(
                 $"[PassageViewportCharacterization] viewport={renderedSize.x}x{renderedSize.y} " +
@@ -2459,6 +2518,30 @@ public sealed class GameplayLifecycleCharacterizationTests
         {
             Canvas.ForceUpdateCanvases();
             yield return null;
+        }
+    }
+
+    private static void AssertDoorTriggerCompatibilityBindings(
+        DoorTriggerNavigation outbound,
+        DoorTriggerNavigation reverse,
+        RoomNavigationManager navigation,
+        Transform playerTransform,
+        AudioSource passageAudioSource,
+        DoorOpenSoundCatalog passageDoorCatalog)
+    {
+        Assert.That(passageDoorCatalog, Is.Not.Null);
+        Assert.That(
+            AssetDatabase.GetAssetPath(passageDoorCatalog),
+            Is.EqualTo("Assets/Resources/Audio/DoorOpenSoundCatalog.asset"));
+
+        DoorTriggerNavigation[] triggers = { outbound, reverse };
+        for (int i = 0; i < triggers.Length; i++)
+        {
+            DoorTriggerNavigation trigger = triggers[i];
+            Assert.That(GetPrivateField<RoomNavigationManager>(trigger, "navigationManager"), Is.SameAs(navigation));
+            Assert.That(GetPrivateField<Transform>(trigger, "player"), Is.SameAs(playerTransform));
+            Assert.That(GetPrivateField<AudioSource>(trigger, "doorOpenAudioSource"), Is.SameAs(passageAudioSource));
+            Assert.That(GetPrivateField<DoorOpenSoundCatalog>(trigger, "doorOpenSoundCatalog"), Is.SameAs(passageDoorCatalog));
         }
     }
 

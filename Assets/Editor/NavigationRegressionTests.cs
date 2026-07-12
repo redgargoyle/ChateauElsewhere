@@ -550,11 +550,11 @@ public class NavigationRegressionTests
         Assert.That(outboundTrigger, Does.Contain("destinationRoom: Drawing Room"));
         Assert.That(outboundTrigger, Does.Contain("requirePlayerInSourceRoom: 1"));
         Assert.That(outboundTrigger, Does.Contain("useCameraSequence: 0"));
-        Assert.That(outboundTrigger, Does.Contain("navigationManager: {fileID: 0}"));
+        Assert.That(outboundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
         Assert.That(outboundTrigger, Does.Contain("image: {fileID: 109889179}"));
-        Assert.That(outboundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
-        Assert.That(outboundTrigger, Does.Contain("player: {fileID: 0}"));
-        Assert.That(outboundTrigger, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+        Assert.That(outboundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+        Assert.That(outboundTrigger, Does.Contain("player: {fileID: 81962843}"));
+        Assert.That(outboundTrigger, Does.Contain("doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
         Assert.That(outboundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
         Assert.That(outboundImage, Does.Contain("m_GameObject: {fileID: 109889176}"));
         Assert.That(outboundImage, Does.Contain("m_RaycastTarget: 1"));
@@ -570,6 +570,7 @@ public class NavigationRegressionTests
         string reverseCanvasRenderer = ExtractUnityObjectBlock(sceneText, "--- !u!222 &2300000102");
         string reverseImage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000103");
         string reverseTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000104");
+        string playerTransform = ExtractUnityObjectBlock(sceneText, "--- !u!4 &81962843 stripped");
 
         Assert.That(drawingRoomObject, Does.Contain("m_Name: Room_Drawing_Room"));
         Assert.That(drawingRoomObject, Does.Contain("m_IsActive: 0"));
@@ -604,15 +605,18 @@ public class NavigationRegressionTests
         Assert.That(reverseTrigger, Does.Contain("destinationRoom: Grand Entrance Hall"));
         Assert.That(reverseTrigger, Does.Contain("requirePlayerInSourceRoom: 1"));
         Assert.That(reverseTrigger, Does.Contain("useCameraSequence: 0"));
-        Assert.That(reverseTrigger, Does.Contain("navigationManager: {fileID: 0}"));
+        Assert.That(reverseTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
         Assert.That(reverseTrigger, Does.Contain("image: {fileID: 2300000103}"));
-        Assert.That(reverseTrigger, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
-        Assert.That(reverseTrigger, Does.Contain("player: {fileID: 0}"));
-        Assert.That(reverseTrigger, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+        Assert.That(reverseTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+        Assert.That(reverseTrigger, Does.Contain("player: {fileID: 81962843}"));
+        Assert.That(reverseTrigger, Does.Contain("doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
         Assert.That(reverseTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
         Assert.That(reverseImage, Does.Contain("m_GameObject: {fileID: 2300000100}"));
         Assert.That(reverseImage, Does.Contain("m_RaycastTarget: 1"));
         Assert.That(reverseCanvasRenderer, Does.Contain("m_GameObject: {fileID: 2300000100}"));
+        Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
+        Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
+        Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));
 
         string legacyLoadBody = ExtractMethodBody(navigationManagerText, "private void LoadLegacyDoorDataIfNeeded");
         Assert.That(legacyLoadBody, Does.Contain("if (cachedDoorButtons.Length == 0)"));
@@ -620,6 +624,9 @@ public class NavigationRegressionTests
         Assert.That(legacyLoadBody, Does.Contain("return;"));
         Assert.That(triggerText, Does.Contain("MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom)"));
         Assert.That(triggerText, Does.Not.Contain("TryMoveThroughDoor"));
+        Assert.That(triggerText, Does.Not.Contain("INavigationService"));
+        Assert.That(triggerText, Does.Not.Contain("TryTraverse"));
+        Assert.That(triggerText, Does.Not.Contain("Chateau.World.Rooms.Passages"));
         Assert.That(legacyDoorDataText, Does.Not.Contain("GEH_Drawing_Room:"),
             "The forward passage must remain provably independent of the incomplete legacy doors.txt graph.");
         Assert.That(legacyDoorDataText, Does.Contain("DrawingRoom_GEH: Grand Entrance Hall"),

@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage's data, passive room roots, rendered behavior, and reciprocal passive scene bindings complete.**
+**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress, with the first passage's data, passive scene bindings, rendered behavior, and direct legacy compatibility dependencies complete.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -252,6 +252,10 @@ The temporary source increase is the migration spine and verification tooling. I
 - passive Passages `4100000011` and `4100000012` are now co-located with the unchanged forward/reverse legacy trigger owners, directly bound to the existing definitions and source RoomViews, reciprocally linked, registered once with GameRoot, and serialized with the four neutral reference vectors. Neither exposes nor receives an interaction/traversal command;
 - the exact scene audit passes: Gameplay grows only from 6,008 to 6,010 documents; the two Passage documents are the only additions; only trigger GameObjects `109889176`/`2300000100` and GameRoot `1878886998` change among prior documents; all other 6,005 prior documents, prior relative order, legacy trigger documents, RectTransforms, RoomViews, and `SceneRoots` remain byte-identical;
 - the passive-binding gates pass: canonical contracts `5/5`, architecture foundation `17/17`, exact navigation static guard `1/1`, and rendered lifecycle `3/3`. The full rendered EditMode suite remains `248` discovered / `202` passed / `46` known failures, with the failure-name set exactly equal to the pre-slice baseline;
+- only legacy trigger documents `109889178` and `2300000104` now directly reference navigation manager `1878886997`, shared door AudioSource `2201000013`, Player Transform proxy `81962843`, and catalog `{fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}`. Exactly 2 of 45 scene door triggers carry all four bindings; the other 43 retain all four null edges, and every resolver remains intact;
+- the type-correct Player edge adds one stripped Transform proxy for source Transform `7967904164350347880` on Player prefab instance `81962841`. The scene audit passes at 6,011 documents: only that proxy is added, only the two target trigger documents change, no document is removed, all prior relative order and `SceneRoots` are byte-identical, and Unity preserves candidate SHA-256 `49257b27e097b4db4406a4342a6acf5da4074223d7660716c6107bb7d9e3461e` after import and testing;
+- the direct-binding gates pass: canonical contracts `5/5`, architecture foundation `17/17`, exact navigation static guard `1/1`, and rendered lifecycle `3/3`. Far/near event order, audio timing and single binding reuse, all four viewport envelopes, inactive reverse-trigger identity, room activation, and component counts remain exact. The full rendered suite remains `248` discovered / `202` passed / the identical `46` known failure names;
+- the architecture guard reports no new debt; inventory remains 112 runtime files / 48,500 lines with unchanged smell totals and 48 direct `MonoBehaviour` classes. Serialized script-reference inventory remains byte-identical, and the Y-axis occlusion audit reports zero hard errors plus the same 38 explicitly tracked design-required set-piece findings for later one-prop-at-a-time migration;
 
 ## Validation still requiring human/golden review
 
@@ -279,6 +283,6 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Serialize the stable compatibility dependencies on only the two GEH/Drawing legacy triggers: the existing `RoomNavigationManager`, exact Player transform, shared `Audio_DoorOpen` source, and approved `DoorOpenSoundCatalog`. Characterize any still-null edge first, preserve every existing object/component/GUID, and remove no resolver in that binding-only slice.
+1. Make the existing `RoomNavigationManager` implement `INavigationService` as a compatibility façade with no new current-room field, event, scene component, or activation writer. Map `CurrentRoomDefinition`, `CanTraverse(Passage)`, and `TryTraverse(Passage)` through the already-authored first-route definitions and the existing Inspector-owned traversal method.
 
-That next slice must leave both legacy `DoorTriggerNavigation` components as the only interaction and traversal path, make no caller/facade cutover, and prove an exact two-document-only scene edit plus the full rendered lifecycle. Do not begin route cutover, resolver removal, remaining-route migration, or bulk deletion.
+That next implementation-only slice must leave both `DoorTriggerNavigation` callers unchanged, create no second navigation owner, serialize nothing new, remove no resolver, and prove direct façade calls emit the same single room event and exact legacy arrival behavior. Caller cutover, authored-anchor normalization, remaining-route migration, and deletion stay separate later gates.
