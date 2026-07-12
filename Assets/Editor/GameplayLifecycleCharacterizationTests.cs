@@ -3299,6 +3299,13 @@ public sealed class GameplayLifecycleCharacterizationTests
             Physics2D.SyncTransforms();
 
             Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
+            AssertFutureAuthoredApproachPathReachable(
+                player,
+                forward,
+                forwardPassage,
+                forwardPassage.ApproachAnchor.LogicalPosition,
+                new[] { new Vector2(0f, -2f), new Vector2(5.267176f, -2.104616f) },
+                $"{renderedSize.x}x{renderedSize.y} Drawing-to-Music future authored approach");
             Assert.That(player.TryWarpTo(new Vector2(0f, -2f), true), Is.True);
             Vector2 aspectForwardStart = player.LogicalPosition;
             Assert.That(TryInvokeApproachDestination(forward, player, true, out Vector2 aspectForwardApproach), Is.True);
@@ -3336,6 +3343,13 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True,
                 "The authored Music Room arrival must remain within reverse-trigger activation distance.");
 
+            AssertFutureAuthoredApproachPathReachable(
+                player,
+                reverse,
+                reversePassage,
+                reversePassage.ApproachAnchor.LogicalPosition,
+                new[] { new Vector2(0f, -2f), new Vector2(-2f, -2f) },
+                $"{renderedSize.x}x{renderedSize.y} Music-to-Drawing future authored approach");
             Assert.That(player.TryWarpTo(new Vector2(0f, -2f), true), Is.True);
             Vector2 aspectReverseStart = player.LogicalPosition;
             Assert.That(TryInvokeApproachDestination(reverse, player, true, out Vector2 aspectReverseApproach), Is.True);
@@ -3404,6 +3418,13 @@ public sealed class GameplayLifecycleCharacterizationTests
                 InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
                 Canvas.ForceUpdateCanvases();
                 Physics2D.SyncTransforms();
+                AssertFutureAuthoredApproachPathReachable(
+                    player,
+                    forward,
+                    forwardPassage,
+                    forwardPassage.ApproachAnchor.LogicalPosition,
+                    new[] { new Vector2(0f, -2f), new Vector2(5.267176f, -2.104616f) },
+                    "2560x1080 maximum-zoom Drawing-to-Music future authored approach");
                 Assert.That(player.TryWarpToExact(originalReverseArrivalAnchor), Is.True,
                     "The Drawing Room authored arrival must remain exact and walkable at maximum zoom.");
                 Assert.That(InvokePrivateResult<bool>(forward, "IsPlayerCloseEnough"), Is.True,
@@ -3426,6 +3447,13 @@ public sealed class GameplayLifecycleCharacterizationTests
                 InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
                 Canvas.ForceUpdateCanvases();
                 Physics2D.SyncTransforms();
+                AssertFutureAuthoredApproachPathReachable(
+                    player,
+                    reverse,
+                    reversePassage,
+                    reversePassage.ApproachAnchor.LogicalPosition,
+                    new[] { new Vector2(0f, -2f), new Vector2(-2f, -2f) },
+                    "2560x1080 maximum-zoom Music-to-Drawing future authored approach");
                 Assert.That(player.TryWarpToExact(originalForwardArrivalAnchor), Is.True,
                     "The Music Room authored arrival must remain exact and walkable at maximum zoom.");
                 Assert.That(InvokePrivateResult<bool>(reverse, "IsPlayerCloseEnough"), Is.True,
@@ -4560,6 +4588,64 @@ public sealed class GameplayLifecycleCharacterizationTests
         return found;
     }
 
+    private static bool TryInvokeCanonicalApproachDestination(
+        DoorTriggerNavigation trigger,
+        PointClickPlayerMovement player,
+        out Vector2 destination)
+    {
+        System.Reflection.MethodInfo method = typeof(DoorTriggerNavigation).GetMethod(
+            "TryFindCanonicalApproachDestination",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null,
+            new[]
+            {
+                typeof(PointClickPlayerMovement),
+                typeof(Vector2).MakeByRefType()
+            },
+            null);
+        Assert.That(method, Is.Not.Null,
+            "Missing private DoorTriggerNavigation.TryFindCanonicalApproachDestination seam.");
+
+        object[] arguments = { player, Vector2.zero };
+        bool found = (bool)method.Invoke(trigger, arguments);
+        destination = (Vector2)arguments[1];
+        return found;
+    }
+
+    private static bool TryEvaluateExactReachableMovementTarget(
+        PointClickPlayerMovement player,
+        Vector2 target,
+        out PointClickPlayerMovement.MovementTargetQuery query)
+    {
+        System.Reflection.MethodInfo method = typeof(PointClickPlayerMovement).GetMethod(
+            "TryEvaluateMovementTarget",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+            null,
+            new[]
+            {
+                typeof(Vector2),
+                typeof(bool),
+                typeof(Vector2),
+                typeof(bool),
+                typeof(PointClickPlayerMovement.MovementTargetQuery).MakeByRefType()
+            },
+            null);
+        Assert.That(method, Is.Not.Null,
+            "Missing private PointClickPlayerMovement.TryEvaluateMovementTarget reachable-path seam.");
+
+        object[] arguments =
+        {
+            target,
+            false,
+            Vector2.zero,
+            true,
+            default(PointClickPlayerMovement.MovementTargetQuery)
+        };
+        bool evaluated = (bool)method.Invoke(player, arguments);
+        query = (PointClickPlayerMovement.MovementTargetQuery)arguments[4];
+        return evaluated;
+    }
+
     private static bool TryGetTriggerScreenBounds(
         DoorTriggerNavigation trigger,
         out Vector2 min,
@@ -4638,6 +4724,103 @@ public sealed class GameplayLifecycleCharacterizationTests
             screenDistance,
             Is.LessThanOrEqualTo(activationDistance + 0.5f),
             $"{label} must finish close enough for automatic activation.");
+    }
+
+    private static void AssertFutureAuthoredApproachPathReachable(
+        PointClickPlayerMovement player,
+        DoorTriggerNavigation trigger,
+        CanonicalPassage passage,
+        Vector2 futureApproach,
+        Vector2[] requestedFarStarts,
+        string label)
+    {
+        Vector2 originalPosition = player.LogicalPosition;
+        Assert.That(player.HasDestination, Is.False, $"{label} preflight requires an idle player.");
+        Assert.That(passage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredArrival));
+        Assert.That(passage.UsesAuthoredArrival, Is.True);
+        Assert.That(passage.UsesAuthoredApproach, Is.False,
+            $"{label} must remain non-authoritative during the preflight commit.");
+        AssertApproachWithinActivationDistance(trigger, player, futureApproach, label);
+        List<Vector2> resolvedStarts = new List<Vector2>();
+
+        try
+        {
+            for (int startIndex = 0; startIndex < requestedFarStarts.Length; startIndex++)
+            {
+                Assert.That(player.TryWarpToExact(requestedFarStarts[startIndex]), Is.True,
+                    $"{label} start {startIndex} must be exact and walkable without projection.");
+                Vector2 resolvedStart = player.LogicalPosition;
+                resolvedStarts.Add(resolvedStart);
+                AssertVector2Within(
+                    resolvedStart,
+                    requestedFarStarts[startIndex],
+                    0.0001f,
+                    $"{label} exact start {startIndex}");
+                Assert.That(Vector2.Distance(resolvedStart, futureApproach), Is.GreaterThan(1f),
+                    $"{label} start {startIndex} must exercise a real path instead of the stop-distance branch.");
+                Assert.That(InvokePrivateResult<bool>(trigger, "IsPlayerCloseEnough"), Is.False,
+                    $"{label} start {startIndex} must be outside the real trigger's activation envelope.");
+                Assert.That(
+                    InvokePrivateResult<float>(trigger, "GetPlayerScreenDistanceToTrigger"),
+                    Is.GreaterThan(GetPrivateValue<float>(trigger, "maxPlayerScreenDistance")),
+                    $"{label} start {startIndex} must exercise far-approach behavior.");
+
+                Assert.That(
+                    TryInvokeCanonicalApproachDestination(trigger, player, out Vector2 canonicalCandidate),
+                    Is.True,
+                    $"{label} future canonical candidate must pass graph and proximity validation.");
+                AssertVector2Within(
+                    canonicalCandidate,
+                    futureApproach,
+                    0.0001f,
+                    $"{label} future canonical candidate from start {startIndex}");
+                Assert.That(
+                    TryInvokeTraversalApproachDestination(trigger, player, out Vector2 liveStageOneCandidate, null),
+                    Is.True,
+                    $"{label} live stage-1 dispatch must still resolve through the legacy sampler.");
+                Assert.That(Vector2.Distance(liveStageOneCandidate, futureApproach), Is.GreaterThan(0.05f),
+                    $"{label} stage-1 dispatch must not consume the future authored approach early.");
+
+                Assert.That(
+                    TryEvaluateExactReachableMovementTarget(
+                        player,
+                        futureApproach,
+                        out PointClickPlayerMovement.MovementTargetQuery movementQuery),
+                    Is.True,
+                    $"{label} start {startIndex} must evaluate through the production path query.");
+                Assert.That(movementQuery.ExactPointWalkable, Is.True,
+                    $"{label} must be exactly walkable from start {startIndex}.");
+                Assert.That(movementQuery.HasReachableDestination, Is.True,
+                    $"{label} must be collision/path reachable from start {startIndex}.");
+                Assert.That(movementQuery.UsesProjectedDestination, Is.False,
+                    $"{label} must not depend on clamping or projection from start {startIndex}.");
+                Assert.That(movementQuery.WouldMove, Is.True,
+                    $"{label} start {startIndex} must exercise a real movement query.");
+                AssertVector2Within(
+                    movementQuery.Destination,
+                    futureApproach,
+                    0.0001f,
+                    $"{label} exact movement destination from start {startIndex}");
+                AssertVector2Within(
+                    player.LogicalPosition,
+                    resolvedStart,
+                    0.0001f,
+                    $"{label} path evaluation must not move the player at start {startIndex}");
+                Assert.That(player.HasDestination, Is.False);
+            }
+
+            Assert.That(Vector2.Distance(resolvedStarts[0], resolvedStarts[1]), Is.GreaterThan(1f),
+                $"{label} must prove reachability from two distinct resolved starts.");
+        }
+        finally
+        {
+            Assert.That(player.TryWarpToExact(originalPosition), Is.True,
+                $"{label} must restore the preflight player position exactly.");
+            Assert.That(player.HasDestination, Is.False);
+        }
+
+        Assert.That(passage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredArrival));
+        Assert.That(passage.UsesAuthoredApproach, Is.False);
     }
 
     private static void AssertVector2Within(Vector2 actual, Vector2 expected, float tolerance, string label)
