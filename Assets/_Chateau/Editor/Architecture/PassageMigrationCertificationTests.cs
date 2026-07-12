@@ -275,6 +275,100 @@ public sealed class PassageMigrationCertificationTests
             Is.EqualTo(new[] { "106972347", "2300000069", "2300000189", "2300000194" }));
     }
 
+    [Test]
+    public void DrawingMusicLegacyRouteSnapshotIsExactBeforeCanonicalData()
+    {
+        List<RouteInventoryRow> group = ReadInventory()
+            .Where(row => row.Order == 1)
+            .OrderBy(row => row.ComponentFileId)
+            .ToList();
+        Dictionary<string, string> documents = ReadUnityDocuments(File.ReadAllText(GameplayScenePath));
+        string drawingOwner = RequireDocument(documents, "2300000095");
+        string drawingTransform = RequireDocument(documents, "2300000096");
+        string drawingTrigger = RequireDocument(documents, "2300000099");
+        string musicOwner = RequireDocument(documents, "2300000085");
+        string musicTransform = RequireDocument(documents, "2300000086");
+        string musicTrigger = RequireDocument(documents, "2300000089");
+        string drawingRoom = RequireDocument(documents, "2300000005");
+        string drawingRoomTransform = RequireDocument(documents, "2300000006");
+        string drawingContent = RequireDocument(documents, "2300000007");
+        string drawingDoors = RequireDocument(documents, "2300000008");
+        string drawingDoorsTransform = RequireDocument(documents, "2300000009");
+        string musicRoom = RequireDocument(documents, "354156755");
+        string musicRoomTransform = RequireDocument(documents, "354156756");
+        string musicContent = RequireDocument(documents, "2102000001");
+        string musicDoors = RequireDocument(documents, "2103000010");
+        string musicDoorsTransform = RequireDocument(documents, "2103000011");
+        string guestPanic = RequireDocument(documents, "3301000008");
+
+        Assert.That(group, Has.Count.EqualTo(2));
+        Assert.That(group.All(row => row.Status == "characterized"), Is.True);
+        Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageDefinitionGuid)), Is.True);
+        Assert.That(group.All(row => string.IsNullOrEmpty(row.SourceRoomViewFileId)), Is.True);
+        Assert.That(group.All(row => string.IsNullOrEmpty(row.PassageFileId)), Is.True);
+
+        Assert.That(drawingOwner, Does.Contain("m_Name: DoorTrigger_DrawingRoom_MusicRoom"));
+        Assert.That(drawingOwner, Does.Contain("- component: {fileID: 2300000096}"));
+        Assert.That(drawingOwner, Does.Contain("- component: {fileID: 2300000099}"));
+        Assert.That(Regex.Matches(drawingOwner, @"(?m)^  - component:").Count, Is.EqualTo(4));
+        Assert.That(ReadReferenceFileId(drawingTransform, "m_Father"), Is.EqualTo("2300000009"));
+        Assert.That(ReadField(drawingTransform, "m_LocalScale"), Is.EqualTo("{x: 1, y: 1, z: 1}"));
+        Assert.That(ReadField(drawingTransform, "m_AnchoredPosition"), Is.EqualTo("{x: -628, y: 55}"));
+        Assert.That(ReadField(drawingTransform, "m_SizeDelta"), Is.EqualTo("{x: 163.2982, y: 299.816}"));
+        Assert.That(drawingDoors, Does.Contain("m_Name: Doors"));
+        Assert.That(ReadReferenceFileId(drawingDoorsTransform, "m_GameObject"), Is.EqualTo("2300000008"));
+        Assert.That(ReadReferenceFileId(drawingDoorsTransform, "m_Father"), Is.EqualTo("2300000006"));
+        Assert.That(ReadReferenceFileId(drawingRoomTransform, "m_GameObject"), Is.EqualTo("2300000005"));
+        Assert.That(ReadReferenceFileId(drawingRoomTransform, "m_Father"), Is.EqualTo("668915133"));
+        AssertLegacyTriggerSnapshot(
+            drawingTrigger,
+            "2300000095",
+            "2300000098",
+            "Drawing Room",
+            "DrawingRoom_MusicRoom",
+            "Music Room");
+
+        Assert.That(musicOwner, Does.Contain("m_Name: DoorTrigger_MusicRoom_DrawingRoom"));
+        Assert.That(musicOwner, Does.Contain("- component: {fileID: 2300000086}"));
+        Assert.That(musicOwner, Does.Contain("- component: {fileID: 2300000089}"));
+        Assert.That(Regex.Matches(musicOwner, @"(?m)^  - component:").Count, Is.EqualTo(4));
+        Assert.That(ReadReferenceFileId(musicTransform, "m_Father"), Is.EqualTo("2103000011"));
+        Assert.That(ReadField(musicTransform, "m_LocalScale"), Is.EqualTo("{x: 0.8625, y: 1, z: 1}"));
+        Assert.That(ReadField(musicTransform, "m_AnchoredPosition"), Is.EqualTo("{x: -685, y: -36}"));
+        Assert.That(ReadField(musicTransform, "m_SizeDelta"), Is.EqualTo("{x: 210.47021, y: 416.47205}"));
+        Assert.That(musicDoors, Does.Contain("m_Name: Doors"));
+        Assert.That(ReadReferenceFileId(musicDoorsTransform, "m_GameObject"), Is.EqualTo("2103000010"));
+        Assert.That(ReadReferenceFileId(musicDoorsTransform, "m_Father"), Is.EqualTo("354156756"));
+        Assert.That(ReadReferenceFileId(musicRoomTransform, "m_GameObject"), Is.EqualTo("354156755"));
+        Assert.That(ReadReferenceFileId(musicRoomTransform, "m_Father"), Is.EqualTo("668915133"));
+        AssertLegacyTriggerSnapshot(
+            musicTrigger,
+            "2300000085",
+            "2300000088",
+            "Music Room",
+            "MusicRoom_DrawingRoom",
+            "Drawing Room");
+
+        Assert.That(drawingRoom, Does.Contain("m_Name: Room_Drawing_Room"));
+        Assert.That(drawingRoom, Does.Contain("m_IsActive: 0"));
+        Assert.That(ReadField(drawingContent, "roomName"), Is.EqualTo("Drawing Room"));
+        Assert.That(drawingContent, Does.Contain(
+            "roomBackgroundTexture: {fileID: 2800000, guid: 28c74b6dea1ed8e2c9c7d612355f9734, type: 3}"));
+        Assert.That(ReadReferenceFileId(drawingContent, "perspectiveProfile"), Is.EqualTo("0"));
+        Assert.That(musicRoom, Does.Contain("m_Name: Room_Music_Room"));
+        Assert.That(musicRoom, Does.Contain("m_IsActive: 0"));
+        Assert.That(ReadField(musicContent, "roomName"), Is.EqualTo("Music Room"));
+        Assert.That(musicContent, Does.Contain(
+            "roomBackgroundTexture: {fileID: 2800000, guid: 028084782cdcf3d4ab3b596624c8b7c5, type: 3}"));
+        Assert.That(ReadReferenceFileId(musicContent, "perspectiveProfile"), Is.EqualTo("0"));
+        Assert.That(documents.Values.Count(document =>
+            document.Contains($"guid: {RoomViewGuid}") &&
+            document.Contains("m_GameObject: {fileID: 354156755}")), Is.Zero);
+        Assert.That(ReadReferenceFileId(guestPanic, "leftExitTarget"), Is.EqualTo("2300000096"));
+        Assert.That(ReadField(guestPanic, "leftExitTargetName"),
+            Is.EqualTo("DoorTrigger_DrawingRoom_MusicRoom"));
+    }
+
     private static List<RouteInventoryRow> ReadInventory()
     {
         Assert.That(File.Exists(InventoryPath), Is.True, $"Missing route inventory at {InventoryPath}.");
@@ -368,6 +462,38 @@ public sealed class PassageMigrationCertificationTests
             $@"(?m)^  {Regex.Escape(fieldName)}: \{{fileID: -?\d+, guid: (?<guid>[0-9a-f]{{32}}), type: \d+\}}$");
         Assert.That(match.Success, Is.True, $"Missing GUID reference field '{fieldName}'.");
         return match.Groups["guid"].Value;
+    }
+
+    private static void AssertLegacyTriggerSnapshot(
+        string trigger,
+        string gameObjectFileId,
+        string imageFileId,
+        string sourceRoom,
+        string legacyDoorId,
+        string destinationRoom)
+    {
+        Assert.That(trigger, Does.Contain($"guid: {DoorTriggerGuid}"));
+        Assert.That(ReadReferenceFileId(trigger, "m_GameObject"), Is.EqualTo(gameObjectFileId));
+        Assert.That(ReadField(trigger, "sourceRoom"), Is.EqualTo(sourceRoom));
+        Assert.That(ReadField(trigger, "doorName"), Is.EqualTo(legacyDoorId));
+        Assert.That(ReadField(trigger, "destinationRoom"), Is.EqualTo(destinationRoom));
+        Assert.That(ReadField(trigger, "requirePlayerInSourceRoom"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "useCameraSequence"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "triggerKind"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "stairwayDirection"), Is.EqualTo("0"));
+        Assert.That(ReadReferenceFileId(trigger, "navigationManager"), Is.EqualTo("0"));
+        Assert.That(trigger, Does.Not.Contain("canonicalPassage:"));
+        Assert.That(ReadReferenceFileId(trigger, "image"), Is.EqualTo(imageFileId));
+        Assert.That(ReadReferenceFileId(trigger, "doorOpenAudioSource"), Is.EqualTo("0"));
+        Assert.That(ReadReferenceFileId(trigger, "player"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "useBottomScreenEdgeInteraction"), Is.EqualTo("0"));
+        Assert.That(ReadField(trigger, "requirePlayerProximity"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "walkPlayerToTriggerWhenFar"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "autoActivateAfterApproach"), Is.EqualTo("1"));
+        Assert.That(ReadField(trigger, "maxPlayerScreenDistance"), Is.EqualTo("145"));
+        Assert.That(ReadField(trigger, "playDoorOpenSound"), Is.EqualTo("1"));
+        Assert.That(ReadReferenceFileId(trigger, "doorOpenSoundCatalog"), Is.EqualTo("0"));
+        Assert.That(ReadReferenceFileId(trigger, "stairwaySoundCatalog"), Is.EqualTo("0"));
     }
 
     private static void AssertStagedRouteSerialization(

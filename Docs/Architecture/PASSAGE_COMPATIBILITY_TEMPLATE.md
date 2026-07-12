@@ -68,11 +68,12 @@ The manifest supports the reversible intermediate statuses `queued`, `characteri
 Gameplay contains 45 trigger owners across 23 connectivity groups:
 
 - 2 triggers in the automatically certified GEH/Drawing template;
-- 38 triggers in 19 uniquely reciprocal queued pairs;
+- 2 Drawing/Music triggers in 1 characterized reciprocal pair;
+- 36 triggers in 18 uniquely reciprocal queued pairs;
 - 2 one-way triggers blocked by missing reverse owners;
 - 3 GEH/Upper Gallery stair triggers blocked by a two-outbound/one-return shape that the strict one-to-one reverse contract cannot represent.
 
-There are 19 room roots. GEH and Drawing Room are canonical; the queued order introduces the other 17 exactly once before closing the Nursery/Blue Bedroom cycle. All 45 trigger owners already descend from the matching source room root.
+There are 19 room roots. GEH and Drawing Room are canonical; the migration order introduces the other 17 exactly once before closing the Nursery/Blue Bedroom cycle. All 45 trigger owners already descend from the matching source room root.
 
 Special profiles are part of behavior, not cleanup noise:
 
@@ -92,5 +93,9 @@ The blocked one-way triggers are `1615236111` (GEH Rear -> Library) and `2300000
 - architecture inventory: 112 runtime files / 48,741 lines, 48 direct `MonoBehaviour` declarations, unchanged smell totals;
 - Y-axis/set-piece audit: zero hard errors and 38 tracked design-required findings;
 - Gameplay contains 6,011 unchanged YAML documents. Production serialized references are unchanged; the generated script-reference inventory adds only `PassageMigrationCertificationTests.cs` with zero serialized instances, while all prior 154 rows remain unchanged.
+
+The first use of this template has completed characterization only for group `01`, Drawing Room <-> Music Room. At `1366x768`, the legacy reciprocal room-side samples are Drawing `(-7.106010, -1.508934)` and Music `(-7.737432, -3.180156)`; far/near traversal, event/audio order, camera/background/active-stage ownership, prompt/cursor cleanup, and the Chapter 2 guest-panic left-exit identity all pass without a production or serialized-content change. The four-aspect evidence remains explicitly legacy and viewport-sensitive: `1440x1080` yields Drawing/Music `(-6.152483, -1.306456)` / `(-6.699176, -2.753424)`, `1920x1080` yields `(-7.104277, -1.508566)` / `(-7.735544, -3.179381)`, and `2560x1080` has produced valid forward candidates `(-8.188315, -1.742414)` and `(-8.212471, -1.426609)`. The reviewed envelope retains both instead of inventing exact determinism; recorded Music arrival/reverse is `(-8.932235, -3.671232)` and reverse-arrival evidence is `(-8.188308, -1.741942)`. No RoomDefinition, PassageDefinition, RoomView, Passage component, direct edge, canonical caller, or authored anchor exists for group `01` yet.
+
+Group `01` characterization gates: manifest fixture `4/4`, combined manifest/static/contract/foundation safety `27/27`, rendered lifecycle `5/5`, and full suite `254` discovered / `208` passed / the same `46` known failures with failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`. Architecture and serialized-reference inventories remain unchanged; the Y-axis/set-piece audit remains zero hard errors / 38 tracked findings.
 
 Human review still required: visually confirm that walking to and landing on both shared points places the Butler's feet at the intended painted doorway sides. Final target-route certification additionally requires the later interaction, room-view, and camera ownership transfers.
