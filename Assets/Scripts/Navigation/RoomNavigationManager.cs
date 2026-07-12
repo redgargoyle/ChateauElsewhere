@@ -554,6 +554,8 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             return;
         }
 
+        // Room activation can resize the destination stage immediately before this query.
+        Physics2D.SyncTransforms();
         playerMovement.RefreshWalkableFloorForCurrentRoom();
         Vector2 arrivalPosition = passage.ArrivalAnchor.LogicalPosition;
 
