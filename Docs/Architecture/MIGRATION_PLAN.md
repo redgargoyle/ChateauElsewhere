@@ -57,7 +57,7 @@ Only after Phase 2 passes:
 - exactly one inert `Chapter2Controller`, HUD, monster-stinger owner, panic owner, and guest-search owner serialized and explicitly wired; all five top-level Chapter 2 creation fallbacks are removed;
 - the monster stinger validates and directly uses its serialized monster, Drawing Room anchors, navigation, and Image; its structural searches, child-visual repair, and primitive placeholder are removed while audio/sprite/overlay presentation remains separately gated;
 - the inactive monster object owns its serialized looping violin source, Game-Sounds binding, and imported clip; host/resource/Editor/component fallbacks are removed while sprites and overlay Canvas stay separately gated;
-- the monster object owns its serialized screen-space overlay Canvas at People order `10000`; its Get/Add fallback remains temporarily for the next cleanup gate while run sprites stay separately gated;
+- the monster object owns its serialized screen-space overlay Canvas at People order `10000`; the Get/Add component fallback is removed while run sprites stay separately gated;
 - Guest Search owns the serialized GameRoot navigation service from scene load; its five lazy repair calls and global resolver are removed while room-change subscription stays idempotent;
 - `Chapter2Controller` validates and directly uses its fourteen serialized stable dependencies; its monolithic `ResolveReferences` repair search is removed;
 - Chapter 2 clock-strike playback owns a dedicated serialized child `AudioSource`, Game-Sounds `GameAudioSourceVolume`, and imported clip; its resource load, runtime tone generator, source factory, and binding factory are removed;

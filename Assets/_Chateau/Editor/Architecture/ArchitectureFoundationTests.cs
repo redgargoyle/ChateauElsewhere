@@ -250,8 +250,11 @@ public sealed class ArchitectureFoundationTests
         Assert.That(stingerText, Does.Not.Contain("AssetDatabase.FindAssets"));
         Assert.That(stingerText, Does.Contain("violinAudioVolumeBinding.Configure("));
         Assert.That(stingerText, Does.Contain("Resources.LoadAll<Sprite>(monsterRunSpritesResourcePath)"));
-        Assert.That(stingerText, Does.Contain("monsterCanvas = monsterOverlayCanvas"));
-        Assert.That(stingerText, Does.Contain("monsterObject.AddComponent<Canvas>()"));
+        Assert.That(stingerText, Does.Not.Contain("GetComponent<Canvas>()"));
+        Assert.That(stingerText, Does.Not.Contain("AddComponent<Canvas>()"));
+        Assert.That(stingerText, Does.Not.Contain("EnsureMonsterOverlayCanvas"));
+        Assert.That(stingerText, Does.Contain("ApplyMonsterOverlaySorting"));
+        Assert.That(stingerText, Does.Contain("monsterOverlayCanvas.overrideSorting = true"));
         Assert.That(CountOccurrences(guestSearchDocument, "navigationManager: {fileID: 1878886997}"), Is.EqualTo(1));
         Assert.That(guestSearchText, Does.Not.Contain("ResolveRoomNavigation"));
         Assert.That(guestSearchText, Does.Not.Contain("FindAnyObjectByType<RoomNavigationManager>"));

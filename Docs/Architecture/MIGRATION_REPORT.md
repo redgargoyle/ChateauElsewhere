@@ -76,19 +76,19 @@ This report records what is implemented in the repository at this commit. It mus
 - Characterized and serialized Guest Search's navigation owner: the pre-migration field was null until seven-PM staging, while the migrated owner is the exact GameRoot service from boot through repeated Chapter 2 and seven-PM paths; all five lazy repair calls and the resolver are removed.
 - Characterized the monster presentation fallback before authoring it: first visible use creates one host violin source and Game-Sounds binding, loads clip GUID `69f06d321e4549cdcad1133332661f6d`, adds one sorted Canvas to the monster, loads eight ordered run sprites, and reuses every identity on repetition.
 - Grafted the violin source and Game-Sounds binding directly onto the existing inactive monster object, serialized the imported clip, and removed every host/resource/Editor/component fallback. Playback configures only that owned graph without a hierarchy expansion or ChapterManager-host collision.
-- Grafted the characterized overlay Canvas directly onto the same monster object with screen-space overlay and People order `10000`. The stinger validates and reuses that exact Canvas without a new hierarchy object; its component fallback remains temporarily for the cleanup-specific gate.
+- Grafted the characterized overlay Canvas directly onto the same monster object with screen-space overlay and People order `10000`, then removed its dormant Get/Add component fallback. The stinger validates and configures that exact Canvas without adding a hierarchy object or component.
 
 ## Current static result
 
 | Metric | Baseline | Candidate | Delta |
 |---|---:|---:|---:|
 | Runtime C# files | 90 | 106 | +16 |
-| Runtime C# lines | 49,902 | 49,531 | -371 |
+| Runtime C# lines | 49,902 | 49,522 | -380 |
 | Direct `MonoBehaviour` declarations | 63 | 50 | -13 |
 | `FindObject*`/`GameObject.Find` | 199 | 139 | -60 |
 | `Resources.Load` | 27 | 20 | -7 |
 | runtime `new GameObject` | 98 | 82 | -16 |
-| runtime `AddComponent<T>` | 100 | 73 | -27 |
+| runtime `AddComponent<T>` | 100 | 72 | -28 |
 | runtime initialization hooks | 9 | 4 | -5 |
 
 The temporary source increase is the migration spine and verification tooling. It is not evidence that the cleanup is finished.
@@ -103,6 +103,8 @@ The temporary source increase is the migration spine and verification tooling. I
 - serialized text-asset reference inventory was regenerated;
 - new architecture files passed lightweight delimiter/preprocessor checks.
 - Unity `6000.4.10f1` compiled the project and produced result XML for every automated run;
+- monster overlay cleanup passed its static ownership guard and rendered lifecycle gate; the full suite remained exactly 240 total / 190 passing / 50 known failures with an unchanged failure-name set;
+- the Canvas cleanup changed no scene, prefab, asset, `.meta`, component ID, or script GUID;
 - the strict GameRoot graft audit passed 53/53 checks;
 - the Chapter 2 feature graft audit passed 22/22 checks: three documents added, only three intended existing documents changed, and all other scene documents/order/roots preserved;
 - the guest-scale ownership-chain audit passed 6/6 checks: no documents added/deleted, only the Chapter 1 component changed, and document order stayed exact;
@@ -186,8 +188,7 @@ The following remain intentionally because their replacements have not yet passe
 
 ## Next approved phase
 
-1. Remove the monster overlay Canvas's dormant Get/Add component fallback.
-2. Serialize the eight approved monster run sprites and remove their Resources fallback.
-3. Characterize and author the Entrance coat-hanger interaction components without changing its art, transform, hitbox, or coat behavior.
+1. Serialize the eight approved monster run sprites and remove their Resources fallback.
+2. Characterize and author the Entrance coat-hanger interaction components without changing its art, transform, hitbox, or coat behavior.
 
 Do not begin bulk deletion until those gates pass.

@@ -722,7 +722,7 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
         }
 
         monsterObject.transform.SetAsLastSibling();
-        EnsureMonsterOverlayCanvas();
+        ApplyMonsterOverlaySorting();
 
         Renderer[] renderers = monsterObject.GetComponentsInChildren<Renderer>(true);
 
@@ -744,28 +744,19 @@ public class Chapter2MonsterStingerController : Chateau.Architecture.ChapterFeat
         }
     }
 
-    private void EnsureMonsterOverlayCanvas()
+    private void ApplyMonsterOverlaySorting()
     {
-        Canvas monsterCanvas = monsterOverlayCanvas;
-
-        if (monsterCanvas == null)
+        if (monsterOverlayCanvas == null)
         {
-            monsterCanvas = monsterObject.GetComponent<Canvas>();
+            return;
         }
 
-        if (monsterCanvas == null)
-        {
-            monsterCanvas = monsterObject.AddComponent<Canvas>();
-        }
-
-        monsterOverlayCanvas = monsterCanvas;
-
-        monsterCanvas.overrideSorting = true;
-        monsterCanvas.sortingOrder = monsterOverlaySortingOrder;
+        monsterOverlayCanvas.overrideSorting = true;
+        monsterOverlayCanvas.sortingOrder = monsterOverlaySortingOrder;
 
         if (HasSortingLayer(monsterSortingLayerName))
         {
-            monsterCanvas.sortingLayerName = monsterSortingLayerName;
+            monsterOverlayCanvas.sortingLayerName = monsterSortingLayerName;
         }
     }
 
