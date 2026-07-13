@@ -1,7 +1,11 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 public class RoomProjectionRegressionTests
 {
@@ -561,7 +565,8 @@ public class RoomProjectionRegressionTests
         Assert.That(walkerText, Does.Contain("UsesPerspectiveProfile"), "Editor refreshes should only target standalone walkers using the edited profile.");
         Assert.That(ySortApplyBody, Does.Contain("roomProjection.IsProjectionActive"), "WorldYSortSpriteRenderer should not fight projected sorting orders.");
         Assert.That(projectedTargetBody, Does.Contain("roomProjection.CanProjectTarget(target)"), "NPC waypoint movement should not project anchors from the wrong room profile.");
-        Assert.That(projectedTargetBody, Does.Contain("roomProjection.IsProjectionActive"), "NPC waypoint movement should only use projected motion when projection owns the actor's current room.");
+        Assert.That(projectedTargetBody, Does.Contain("CanUseProjectionAsMotionOwner(roomProjection)"), "NPC waypoint movement should defer projection ownership to the shared helper.");
+        Assert.That(projectedTargetBody, Does.Not.Contain("roomProjection.IsProjectionActive"), "The shared motion-owner helper should own the active positional-projection criterion.");
     }
 
     [Test]
@@ -587,6 +592,108 @@ public class RoomProjectionRegressionTests
         {
             DestroyEntity(projection);
             UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void ActiveProjectionWithoutPositionOwnershipCannotOwnWaypointMovement()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        RoomProjectedEntity projection = CreateProjectedEntity(
+            "NonPositionOwningProjectedGuest",
+            profile,
+            null,
+            Vector2.zero);
+
+        try
+        {
+            SerializedObject serializedProjection = new SerializedObject(projection);
+            serializedProjection.FindProperty("applyPosition").boolValue = false;
+            serializedProjection.ApplyModifiedPropertiesWithoutUndo();
+
+            Assert.That(projection.IsProjectionActive, Is.True);
+            Assert.That(
+                NPCWaypointMover.CanUseProjectionAsMotionOwner(projection),
+                Is.False,
+                "An active projection that does not apply position cannot own waypoint movement.");
+        }
+        finally
+        {
+            DestroyEntity(projection);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator DetachedPositionOwningProjectionMovesVisibleFootPointWithoutMovingActorRoot()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject actor = new GameObject("DetachedProjectedActor");
+        GameObject projectedVisual = new GameObject("ProjectedVisual");
+        GameObject room = new GameObject("Room_Drawing_Room");
+        GameObject target = new GameObject("ExitTarget");
+        projectedVisual.transform.SetParent(actor.transform, false);
+        target.transform.SetParent(room.transform, false);
+        actor.transform.position = new Vector3(0f, 0f, 5f);
+        target.transform.localPosition = new Vector3(6f, -2f, 0f);
+        projectedVisual.AddComponent<SpriteRenderer>();
+        RoomProjectedEntity projection = projectedVisual.AddComponent<RoomProjectedEntity>();
+        NPCWaypointMover mover = actor.AddComponent<NPCWaypointMover>();
+        room.AddComponent<RoomContentGroup>();
+        projection.SetRoomProfile(profile);
+        projection.SetRoomLocalFootPoint(new Vector2(-6f, -2f));
+        mover.MoveSpeed = 100f;
+        Vector3 actorStartPosition = actor.transform.position;
+        Vector2 targetFootPoint = new Vector2(target.transform.position.x, target.transform.position.y);
+
+        try
+        {
+            Assert.That(projection.IsProjectionActive, Is.True);
+            Assert.That(projection.CanProjectTarget(target.transform), Is.True);
+
+            yield return RunToCompletion(mover.MoveToRoutine(target.transform));
+
+            Assert.That(projection.RoomLocalFootPoint, Is.EqualTo(targetFootPoint).Within(0.001f));
+            Assert.That((Vector2)projection.transform.position, Is.EqualTo(targetFootPoint).Within(0.001f));
+            Assert.That(actor.transform.position, Is.EqualTo(actorStartPosition));
+            Assert.That(mover.IsMoving, Is.False);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(actor);
+            UnityEngine.Object.DestroyImmediate(room);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void ProjectionRejectsTargetsInDifferentRooms()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        RoomProjectedEntity projection = CreateProjectedEntity(
+            "DetachedProjectedGuest",
+            profile,
+            null,
+            Vector2.zero);
+        GameObject matchingRoom = new GameObject("Room_Drawing_Room");
+        GameObject wrongRoom = new GameObject("Room_Dining_Room");
+        GameObject matchingTarget = new GameObject("MatchingTarget");
+        GameObject wrongTarget = new GameObject("WrongTarget");
+        matchingRoom.AddComponent<RoomContentGroup>();
+        wrongRoom.AddComponent<RoomContentGroup>();
+        matchingTarget.transform.SetParent(matchingRoom.transform, false);
+        wrongTarget.transform.SetParent(wrongRoom.transform, false);
+
+        try
+        {
+            Assert.That(projection.CanProjectTarget(matchingTarget.transform), Is.True);
+            Assert.That(projection.CanProjectTarget(wrongTarget.transform), Is.False);
+        }
+        finally
+        {
+            DestroyEntity(projection);
+            UnityEngine.Object.DestroyImmediate(matchingRoom);
+            UnityEngine.Object.DestroyImmediate(wrongRoom);
         }
     }
 
@@ -639,6 +746,31 @@ public class RoomProjectionRegressionTests
         if (entity != null)
         {
             UnityEngine.Object.DestroyImmediate(entity.gameObject);
+        }
+    }
+
+    private static IEnumerator RunToCompletion(IEnumerator routine)
+    {
+        Stack<IEnumerator> routines = new Stack<IEnumerator>();
+        routines.Push(routine);
+
+        while (routines.Count > 0)
+        {
+            IEnumerator current = routines.Peek();
+
+            if (!current.MoveNext())
+            {
+                routines.Pop();
+                continue;
+            }
+
+            if (current.Current is IEnumerator nestedRoutine)
+            {
+                routines.Push(nestedRoutine);
+                continue;
+            }
+
+            yield return current.Current;
         }
     }
 

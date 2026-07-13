@@ -71,6 +71,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public Transform VisualRoot => visualRoot != null ? visualRoot : transform;
     public bool HasUsableProfile => roomProfile != null;
     public bool IsProjectionActive => ShouldApplyProjection();
+    public bool OwnsProjectedPosition => applyPosition && IsProjectionActive;
     public float CurrentScale => currentScale;
     public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;

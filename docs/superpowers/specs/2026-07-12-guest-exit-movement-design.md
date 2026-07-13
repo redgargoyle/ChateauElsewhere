@@ -19,17 +19,19 @@ This flow must remain the only Chapter 2 guest-order departure pathway.
 
 Chapter 2 moves non-UI guest roots out of their `RoomContentGroup` and under `ChapterActors_Runtime` so room activation does not destroy or hide persistent actor state. Their `RoomProjectedEntity` remains active and continues to own the visible position through `roomLocalFootPoint`; `ActorRoomState.PlaceAt` already relies on this behavior for detached guests.
 
-`NPCWaypointMover.CanUseProjectionAsMotionOwner` instead requires the projection to remain parented under a `RoomContentGroup`. For a detached but active projection, the mover therefore advances the actor root transform while `RoomProjectedEntity.LateUpdate` reapplies the unchanged projected foot point to the visible guest. The animator walks, the visible guest stays in place, and the exit timeout eventually stages the guest out of view.
+`NPCWaypointMover` must only select a projection that owns visible position. An active projection with `applyPosition` disabled still accepts room-local foot-point updates, but never applies them to its visible transform; selecting it therefore leaves the visible actor behind. Detached projections with active positional ownership, by contrast, must remain valid motion owners even without a `RoomContentGroup` parent.
 
 ## Approaches Considered
 
-1. **Use any active projection as the shared mover's motion owner.** This matches `ActorRoomState.PlaceAt`, preserves projected scale/sorting, and fixes all callers of `NPCWaypointMover` without adding a departure implementation. This is the selected approach.
+1. **Use any active position-owning projection as the shared mover's motion owner.** This matches `ActorRoomState.PlaceAt`, preserves projected scale/sorting, and fixes all callers of `NPCWaypointMover` without adding a departure implementation. This is the selected approach.
 2. **Reparent the guest into the source room for departure.** This adds Chapter 2-specific hierarchy changes and risks room-visibility and persistent-actor regressions.
 3. **Disable projection during departure and move the actor transform.** This requires restoring projection state and can disrupt projected position, scale, tint, and sorting.
 
 ## Design
 
-Change `NPCWaypointMover.CanUseProjectionAsMotionOwner` to return true when the projection exists and `IsProjectionActive` is true. Keep the existing `TryGetProjectedTarget`, `MoveProjectedToRoutine`, controller routing, timeout, pending-exit gate, and Dining Room staging behavior unchanged.
+Expose `RoomProjectedEntity.OwnsProjectedPosition`, defined as `applyPosition && IsProjectionActive`. `NPCWaypointMover.CanUseProjectionAsMotionOwner` consumes that property, making the helper the sole owner of the projection-active positional criterion. `TryGetProjectedTarget` and `TryPlaceProjectedAtTarget` retain their `CanProjectTarget` checks but do not repeat active-projection checks.
+
+Keep `MoveProjectedToRoutine`, controller routing, timeout, pending-exit gate, and Dining Room staging behavior unchanged.
 
 The visible movement remains:
 
@@ -39,4 +41,10 @@ If no valid door exists or movement exceeds the existing timeout, the current wa
 
 ## Testing
 
-Add an EditMode behavior regression proving that a detached `RoomProjectedEntity` with an active room profile is accepted as the `NPCWaypointMover` motion owner. Verify the test fails before the production change and passes after it. Then run the complete `RoomProjectionRegressionTests`, `Chapter2RegressionTests`, and full EditMode suite.
+Add EditMode regressions for:
+
+1. An active projection with `applyPosition=false` cannot own waypoint motion.
+2. A detached actor root with a child position-owning projection moves its projected foot point and visible projected transform to a compatible same-room target, does not move the actor root as fallback, and finishes movement.
+3. Matching-room targets remain projectable and wrong-room targets remain rejected by `CanProjectTarget`.
+
+Verify both ownership and coroutine behavior regressions fail before the production correction and pass afterward. Then run the focused Chapter 2 exit regression plus the complete `RoomProjectionRegressionTests` and `Chapter2RegressionTests` suites, recording unrelated existing failures separately.

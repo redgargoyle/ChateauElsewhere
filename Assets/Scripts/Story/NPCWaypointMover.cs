@@ -156,7 +156,7 @@ public class NPCWaypointMover : MonoBehaviour
 
     public static bool CanUseProjectionAsMotionOwner(RoomProjectedEntity projection)
     {
-        return projection != null && projection.IsProjectionActive;
+        return projection != null && projection.OwnsProjectedPosition;
     }
 
     private Vector3 GetTargetPosition(Transform target)
@@ -202,7 +202,6 @@ public class NPCWaypointMover : MonoBehaviour
 
         roomProjection.UseProfileFromRoomTarget(target);
         return CanUseProjectionAsMotionOwner(roomProjection) &&
-            roomProjection.IsProjectionActive &&
             roomProjection.CanProjectTarget(target) &&
             roomProjection.TrySetRoomLocalFootPointFromTarget(target);
     }
@@ -219,7 +218,6 @@ public class NPCWaypointMover : MonoBehaviour
 
         roomProjection.UseProfileFromRoomTarget(target);
         return CanUseProjectionAsMotionOwner(roomProjection) &&
-            roomProjection.IsProjectionActive &&
             roomProjection.CanProjectTarget(target) &&
             roomProjection.TryGetRoomLocalFootPointForTarget(target, out targetFootPoint);
     }
