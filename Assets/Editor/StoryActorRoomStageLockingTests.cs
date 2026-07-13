@@ -76,6 +76,7 @@ public class StoryActorRoomStageLockingTests
             Vector3 startPosition = rig.ActorState.transform.position;
 
             NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.MoveSpeed = 100f;
             IEnumerator move = mover.MoveToRoutine(exit);
 
             Assert.That(move.MoveNext(), Is.True, "The exit waypoint should require at least one movement step.");
