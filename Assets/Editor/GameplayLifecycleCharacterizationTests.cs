@@ -2818,8 +2818,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(musicRoomView.LegacyContentGroup, Is.SameAs(musicRoomContent));
         Assert.That(musicRoomView.Root, Is.SameAs(musicRoomContent.transform));
         Assert.That(musicRoomView.HasGameContext, Is.True);
-        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(6));
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(10));
+        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(7));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
         AssertDrawingMusicAuthoredAnchorPassages(
             forward,
             reverse,
@@ -3946,7 +3946,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             RoomContentGroup libraryRoomContent = FindInActiveScene<RoomContentGroup>()
                 .Single(item => item.RoomName == LibraryRoom);
             CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-            Assert.That(roomViews, Has.Length.EqualTo(6));
+            Assert.That(roomViews, Has.Length.EqualTo(7));
             CanonicalRoomView musicRoomView = roomViews.Single(item =>
                 item.Definition != null && item.Definition.StableId == "room.music-room");
             CanonicalRoomView libraryRoomView = roomViews.Single(item =>
@@ -4171,15 +4171,15 @@ public sealed class GameplayLifecycleCharacterizationTests
                     document.Contains("player: {fileID: 81962843}") &&
                     document.Contains(
                         "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
-                Is.EqualTo(10),
-                "Exactly the first five reciprocal route pairs may have direct compatibility bindings.");
+                Is.EqualTo(12),
+                "Exactly the first five complete reciprocal pairs plus the dependency-bound pantry pair may have direct compatibility bindings.");
             Assert.That(
                 serializedGameplayTriggers.Count(document =>
                     document.Contains("navigationManager: {fileID: 0}") &&
                     document.Contains("doorOpenAudioSource: {fileID: 0}") &&
                     document.Contains("player: {fileID: 0}") &&
                     document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
-                Is.EqualTo(35),
+                Is.EqualTo(33),
                 "Every trigger before its dependency slice must retain all four null compatibility bindings.");
             Assert.That(
                 serializedGameplayTriggers.Count(document =>
@@ -5927,8 +5927,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(reversePassage.UsesAuthoredArrival, Is.True);
             Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.SameAs(forwardPassage));
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.SameAs(reversePassage));
-            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(10));
-            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(6));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(7));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
                 Is.EqualTo(10));
@@ -6396,6 +6396,457 @@ public sealed class GameplayLifecycleCharacterizationTests
         {
             InvokePrivateMethod(forward, "CancelPendingPlayerApproach");
             InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+            if (player.HasDestination)
+            {
+                InvokePrivateMethod(player, "CancelDestination");
+            }
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            SetPrivateField(player, "moveSpeed", originalMoveSpeed);
+            player.SetInputEnabled(originalInputEnabled);
+            cameraManager.panRoomWithMouseEdges = originalPanRoomWithMouseEdges;
+            cameraManager.zoomRoomWithMouseWheel = originalZoomRoomWithMouseWheel;
+            cameraManager.ResetRoomLookForPreview();
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator DiningButlersPantryLegacyPassagesAreCharacterizedBeforeCanonicalMigration()
+    {
+        const string DiningRoom = "Dining Room";
+        const string ButlersPantry = "Butlers Pantry";
+
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        Button cursorButton = cursorChoice.GetComponent<Button>();
+        Assert.That(cursorButton, Is.Not.Null);
+        cursorButton.onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        INavigationService navigationFacade = navigation;
+        PointClickPlayerMovement player = GameObject.Find("Player").GetComponent<PointClickPlayerMovement>();
+        Assert.That(player, Is.Not.Null);
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        bool originalInputEnabled = player.InputEnabled;
+        float originalMoveSpeed = GetPrivateValue<float>(player, "moveSpeed");
+        bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
+        bool originalZoomRoomWithMouseWheel = cameraManager.zoomRoomWithMouseWheel;
+        DoorTriggerNavigation forward = null;
+        DoorTriggerNavigation reverse = null;
+
+        player.SetInputEnabled(true);
+        SetPrivateField(player, "moveSpeed", 1000f);
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+
+        try
+        {
+            cameraManager.ResetRoomLookForPreview();
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+
+            DoorTriggerNavigation setupTrigger =
+                RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_GEH_DiningRoom");
+            CanonicalPassage setupPassage = setupTrigger.GetComponent<CanonicalPassage>();
+            Assert.That(setupPassage, Is.Not.Null);
+            Assert.That(player.TryWarpToExact(setupPassage.ApproachAnchor.LogicalPosition), Is.True);
+            Assert.That(navigationFacade.TryTraverse(setupPassage), Is.True);
+            yield return WaitForSettledLayout();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(DiningRoom));
+
+            forward = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_DiningRoom_ButlersPantry");
+            reverse = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_ButlersPantry_DiningRoom");
+            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(5));
+            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(5));
+            CanonicalPassage forwardPassage = forward.GetComponent<CanonicalPassage>();
+            CanonicalPassage reversePassage = reverse.GetComponent<CanonicalPassage>();
+            Assert.That(forwardPassage, Is.Not.Null);
+            Assert.That(reversePassage, Is.Not.Null);
+            Assert.That(forwardPassage.SourceRoomView.Definition.StableId, Is.EqualTo("room.dining-room"));
+            Assert.That(reversePassage.SourceRoomView.Definition.StableId, Is.EqualTo("room.butlers-pantry"));
+            Assert.That(forwardPassage.ReversePassage, Is.SameAs(reversePassage));
+            Assert.That(reversePassage.ReversePassage, Is.SameAs(forwardPassage));
+            AssertVector2Within(forwardPassage.ApproachAnchor.LogicalPosition,
+                new Vector2(2.891918f, 0f), 0.0001f, "passive Dining-to-Pantry approach");
+            AssertVector2Within(forwardPassage.ArrivalAnchor.LogicalPosition,
+                new Vector2(-4.663103f, -3.103186f), 0.0001f, "passive Dining-to-Pantry arrival");
+            AssertVector2Within(reversePassage.ApproachAnchor.LogicalPosition,
+                new Vector2(-4.663103f, -3.103186f), 0.0001f, "passive Pantry-to-Dining approach");
+            AssertVector2Within(reversePassage.ArrivalAnchor.LogicalPosition,
+                new Vector2(2.891918f, 0f), 0.0001f, "passive Pantry-to-Dining arrival");
+            Assert.That(forwardPassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+            Assert.That(reversePassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+            Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(7));
+            Assert.That(FindInActiveScene<DoorTriggerNavigation>()
+                .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
+                Is.EqualTo(10));
+            Assert.That(FindInActiveScene<DoorTriggerNavigation>()
+                .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
+                Is.EqualTo(35));
+
+            RectTransform forwardRect = forward.transform as RectTransform;
+            RectTransform reverseRect = reverse.transform as RectTransform;
+            Assert.That(forwardRect, Is.Not.Null);
+            Assert.That(reverseRect, Is.Not.Null);
+            AssertVector2Within(forwardRect.anchoredPosition, new Vector2(266.91895f, 119.43254f), 0.0001f,
+                "Dining-to-Pantry trigger position");
+            AssertVector2Within(forwardRect.sizeDelta, new Vector2(89.6393f, 238.8651f), 0.0001f,
+                "Dining-to-Pantry trigger size");
+            AssertVector2Within(reverseRect.anchoredPosition, new Vector2(-463f, 16f), 0.0001f,
+                "Pantry-to-Dining trigger position");
+            AssertVector2Within(reverseRect.sizeDelta, new Vector2(209.7474f, 508.6494f), 0.0001f,
+                "Pantry-to-Dining trigger size");
+            foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
+            {
+                Assert.That(GetPrivateValue<float>(trigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+                InvokePrivateMethod(trigger, "ResolveReferences");
+                InvokePrivateMethod(trigger, "ResolvePlayerReference");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenAudioSource");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenSoundCatalog");
+            }
+
+            AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
+                .Single(item => item.gameObject.name == "Audio_DoorOpen");
+            DoorOpenSoundCatalog passageDoorCatalog = Resources.Load<DoorOpenSoundCatalog>(
+                "Audio/DoorOpenSoundCatalog");
+            AssertDoorTriggerCompatibilityBindings(
+                forward,
+                reverse,
+                navigation,
+                player.transform,
+                passageAudioSource,
+                passageDoorCatalog);
+
+            RoomContentGroup diningContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == DiningRoom);
+            RoomContentGroup pantryContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == ButlersPantry);
+            Assert.That(RequireOnlyActiveRoom(DiningRoom), Is.SameAs(diningContent));
+            Assert.That(diningContent.GetComponent<CanonicalRoomView>(), Is.Not.Null);
+            CanonicalRoomView pantryView = pantryContent.GetComponent<CanonicalRoomView>();
+            Assert.That(pantryView, Is.Not.Null);
+            Assert.That(pantryView.Definition.StableId, Is.EqualTo("room.butlers-pantry"));
+            Assert.That(pantryView.Definition.LegacyNames,
+                Is.EqualTo(new[] { "Butlers Pantry", "Butler's Pantry" }));
+            Assert.That(pantryView.LegacyContentGroup, Is.SameAs(pantryContent));
+            Assert.That(diningContent.PerspectiveProfile, Is.Not.Null);
+            Assert.That(pantryContent.PerspectiveProfile, Is.Null);
+            Assert.That(pantryView.Definition.PerspectiveProfile, Is.Null);
+
+            DoorRoundTripObservation primary = null;
+            List<string> primaryEvents = new List<string>();
+            System.Action recordArrival = () => primaryEvents.Add(
+                $"arrived:{navigation.CurrentRoom}:" +
+                (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") == null
+                    ? "audio-idle"
+                    : "audio-started"));
+            System.Action recordMovementStopped = () => primaryEvents.Add(
+                $"movement-stopped:{navigation.CurrentRoom}:" +
+                (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") == null
+                    ? "audio-idle"
+                    : "audio-started"));
+            UnityEngine.Events.UnityAction<string> recordRoomChanged = room => primaryEvents.Add(
+                $"room-changed:{room}:" +
+                (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") ==
+                    passageAudioSource
+                    ? "audio-started"
+                    : "audio-idle"));
+            player.ArrivedAtDestination += recordArrival;
+            player.MovementStopped += recordMovementStopped;
+            navigation.OnCurrentRoomChanged.AddListener(recordRoomChanged);
+            IEnumerator primaryRoutine = ObserveDoorRoundTrip(
+                navigation,
+                player,
+                cameraManager,
+                forward,
+                reverse,
+                DiningRoom,
+                ButlersPantry,
+                new Vector2(0f, -1f),
+                new Vector2(0f, -2f),
+                includeNearRoundTrip: true,
+                maximumZoom: false,
+                observation => primary = observation);
+            try
+            {
+                while (primaryRoutine.MoveNext())
+                {
+                    yield return primaryRoutine.Current;
+                }
+            }
+            finally
+            {
+                player.ArrivedAtDestination -= recordArrival;
+                player.MovementStopped -= recordMovementStopped;
+                navigation.OnCurrentRoomChanged.RemoveListener(recordRoomChanged);
+            }
+            Assert.That(primary, Is.Not.Null);
+            Assert.That(primaryEvents, Is.EqualTo(new[]
+            {
+                $"arrived:{DiningRoom}:audio-idle",
+                $"movement-stopped:{DiningRoom}:audio-idle",
+                $"room-changed:{ButlersPantry}:audio-started",
+                $"arrived:{ButlersPantry}:audio-idle",
+                $"movement-stopped:{ButlersPantry}:audio-idle",
+                $"room-changed:{DiningRoom}:audio-started",
+                $"room-changed:{ButlersPantry}:audio-started",
+                $"room-changed:{DiningRoom}:audio-started"
+            }));
+            AssertVector2Within(primary.ForwardStart, new Vector2(0f, -1f), 0.001f,
+                "primary Dining-to-Pantry far start");
+            Assert.That(primary.ForwardScreenDistance, Is.EqualTo(203.514f).Within(0.75f));
+            AssertVector2Within(primary.ForwardNull, new Vector2(2.891918f, 0f), 0.01f,
+                "primary Dining-to-Pantry null approach");
+            AssertVector2Within(primary.ForwardLeft, new Vector2(3.066995f, 0f), 0.01f,
+                "primary Dining-to-Pantry left approach");
+            AssertVector2Within(primary.ForwardCenter, new Vector2(3.475507f, 0f), 0.01f,
+                "primary Dining-to-Pantry center approach");
+            AssertVector2Within(primary.ForwardRight, new Vector2(3.884019f, 0f), 0.01f,
+                "primary Dining-to-Pantry right approach");
+            AssertVector2Within(primary.ForwardDispatch, primary.ForwardNull, 0.0001f,
+                "primary Dining-to-Pantry stage-0 dispatch");
+            AssertVector2Within(primary.ForwardProductionApproach, primary.ForwardNull, 0.0001f,
+                "primary Dining-to-Pantry production approach");
+            AssertVector2Within(primary.ForwardArrival, new Vector2(-4.663103f, -3.103186f), 0.01f,
+                "primary Pantry arrival");
+            AssertVector2Within(primary.ReverseStart, new Vector2(0f, -2f), 0.001f,
+                "primary Pantry-to-Dining far start");
+            Assert.That(primary.ReverseScreenDistance, Is.EqualTo(318.7f).Within(0.75f));
+            AssertVector2Within(primary.ReverseNull, new Vector2(-4.663103f, -3.103186f), 0.01f,
+                "primary Pantry-to-Dining null approach");
+            AssertVector2Within(primary.ReverseLeft, primary.ReverseNull, 0.0001f,
+                "primary Pantry-to-Dining left approach");
+            AssertVector2Within(primary.ReverseCenter, new Vector2(-6.028646f, -3.103186f), 0.01f,
+                "primary Pantry-to-Dining center approach");
+            AssertVector2Within(primary.ReverseRight, new Vector2(-5.072765f, -3.103186f), 0.01f,
+                "primary Pantry-to-Dining right approach");
+            AssertVector2Within(primary.ReverseDispatch, primary.ReverseNull, 0.0001f,
+                "primary Pantry-to-Dining stage-0 dispatch");
+            AssertVector2Within(primary.ReverseProductionApproach, primary.ReverseNull, 0.0001f,
+                "primary Pantry-to-Dining production approach");
+            AssertVector2Within(primary.ReverseArrival, new Vector2(2.891918f, 0f), 0.01f,
+                "primary Dining arrival");
+            AssertVector2Within(primary.NearForwardArrival, primary.ForwardArrival, 0.0001f,
+                "primary near Pantry arrival");
+            AssertVector2Within(primary.NearReverseArrival, primary.ReverseArrival, 0.0001f,
+                "primary near Dining arrival");
+            Debug.Log($"[DiningButlersLegacyPrimary] events={string.Join("|", primaryEvents)} " +
+                FormatDoorRoundTripObservation(primary, includeNear: true));
+
+            Vector2Int[] renderedSizes =
+            {
+                new Vector2Int(1366, 768),
+                new Vector2Int(1440, 1080),
+                new Vector2Int(1920, 1080),
+                new Vector2Int(2560, 1080)
+            };
+            float[] expectedForwardDistances = { 203.514f, 290.954f, 286.059f, 376.283f };
+            Vector2[] expectedForwardNulls =
+            {
+                new Vector2(2.891918f, 0f),
+                new Vector2(2.503864f, -0.000001f),
+                new Vector2(2.891213f, 0f),
+                new Vector2(3.338484f, 0f)
+            };
+            Vector2[] expectedForwardLeft =
+            {
+                new Vector2(3.066995f, 0f),
+                new Vector2(2.655447f, -0.000001f),
+                new Vector2(3.066248f, 0f),
+                new Vector2(3.540595f, 0f)
+            };
+            Vector2[] expectedForwardCenter =
+            {
+                new Vector2(3.475507f, 0f),
+                new Vector2(3.009144f, -0.000001f),
+                new Vector2(3.474659f, 0f),
+                new Vector2(4.01219f, 0f)
+            };
+            Vector2[] expectedForwardRight =
+            {
+                new Vector2(3.884019f, 0f),
+                new Vector2(3.362839f, -0.000001f),
+                new Vector2(3.883071f, 0f),
+                new Vector2(4.483785f, 0f)
+            };
+            Vector2[] expectedPantryPoints =
+            {
+                new Vector2(-4.663103f, -3.103186f),
+                new Vector2(-4.03738f, -2.686783f),
+                new Vector2(-4.661965f, -3.102429f),
+                new Vector2(-5.383173f, -3.582376f)
+            };
+            float[] expectedReverseDistances = { 318.7f, 441.947f, 447.943f, 605.817f };
+            Vector2[] expectedReverseCenter =
+            {
+                new Vector2(-6.028646f, -3.103186f),
+                new Vector2(-5.219687f, -2.686783f),
+                new Vector2(-6.027174f, -3.102429f),
+                new Vector2(-6.959581f, -3.582376f)
+            };
+            Vector2[] expectedReverseRight =
+            {
+                new Vector2(-5.072765f, -3.103186f),
+                new Vector2(-4.392071f, -2.686783f),
+                new Vector2(-5.071528f, -3.102429f),
+                new Vector2(-5.856095f, -3.582376f)
+            };
+            for (int sizeIndex = 0; sizeIndex < renderedSizes.Length; sizeIndex++)
+            {
+                Vector2Int renderedSize = renderedSizes[sizeIndex];
+                yield return SetAndWaitForRenderedGameViewResolution(
+                    (uint)renderedSize.x,
+                    (uint)renderedSize.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+                DoorRoundTripObservation aspect = null;
+                IEnumerator aspectRoutine = ObserveDoorRoundTrip(
+                    navigation,
+                    player,
+                    cameraManager,
+                    forward,
+                    reverse,
+                    DiningRoom,
+                    ButlersPantry,
+                    new Vector2(0f, -1f),
+                    new Vector2(0f, -2f),
+                    includeNearRoundTrip: false,
+                    maximumZoom: false,
+                    observation => aspect = observation);
+                while (aspectRoutine.MoveNext())
+                {
+                    yield return aspectRoutine.Current;
+                }
+                Assert.That(aspect, Is.Not.Null);
+                float coordinateTolerance = sizeIndex == renderedSizes.Length - 1 ? 0.2f : 0.05f;
+                AssertVector2Within(aspect.ForwardStart, new Vector2(0f, -1f), 0.001f,
+                    "aspect Dining-to-Pantry far start");
+                Assert.That(aspect.ForwardScreenDistance,
+                    Is.EqualTo(expectedForwardDistances[sizeIndex]).Within(0.75f));
+                AssertVector2Within(aspect.ForwardNull, expectedForwardNulls[sizeIndex],
+                    coordinateTolerance, "aspect Dining-to-Pantry null approach");
+                AssertVector2Within(aspect.ForwardLeft, expectedForwardLeft[sizeIndex],
+                    coordinateTolerance, "aspect Dining-to-Pantry left approach");
+                AssertVector2Within(aspect.ForwardCenter, expectedForwardCenter[sizeIndex],
+                    coordinateTolerance, "aspect Dining-to-Pantry center approach");
+                AssertVector2Within(aspect.ForwardRight, expectedForwardRight[sizeIndex],
+                    coordinateTolerance, "aspect Dining-to-Pantry right approach");
+                AssertVector2Within(aspect.ForwardDispatch, aspect.ForwardNull, 0.0001f,
+                    "aspect Dining-to-Pantry stage-0 dispatch");
+                AssertVector2Within(aspect.ForwardProductionApproach, aspect.ForwardNull, 0.0001f,
+                    "aspect Dining-to-Pantry production approach");
+                AssertVector2Within(aspect.ForwardArrival, expectedPantryPoints[sizeIndex],
+                    coordinateTolerance, "aspect Pantry arrival");
+                AssertVector2Within(aspect.ReverseStart, new Vector2(0f, -2f), 0.001f,
+                    "aspect Pantry-to-Dining far start");
+                Assert.That(aspect.ReverseScreenDistance,
+                    Is.EqualTo(expectedReverseDistances[sizeIndex]).Within(0.75f));
+                AssertVector2Within(aspect.ReverseNull, expectedPantryPoints[sizeIndex],
+                    coordinateTolerance, "aspect Pantry-to-Dining null approach");
+                AssertVector2Within(aspect.ReverseLeft, aspect.ReverseNull, 0.0001f,
+                    "aspect Pantry-to-Dining left approach");
+                AssertVector2Within(aspect.ReverseCenter, expectedReverseCenter[sizeIndex],
+                    coordinateTolerance, "aspect Pantry-to-Dining center approach");
+                AssertVector2Within(aspect.ReverseRight, expectedReverseRight[sizeIndex],
+                    coordinateTolerance, "aspect Pantry-to-Dining right approach");
+                AssertVector2Within(aspect.ReverseDispatch, aspect.ReverseNull, 0.0001f,
+                    "aspect Pantry-to-Dining stage-0 dispatch");
+                AssertVector2Within(aspect.ReverseProductionApproach, aspect.ReverseNull, 0.0001f,
+                    "aspect Pantry-to-Dining production approach");
+                AssertVector2Within(aspect.ReverseArrival, expectedForwardNulls[sizeIndex],
+                    coordinateTolerance, "aspect Dining arrival");
+                Debug.Log($"[DiningButlersLegacyAspect] viewport={renderedSize.x}x{renderedSize.y} " +
+                    FormatDoorRoundTripObservation(aspect, includeNear: false));
+            }
+
+            DoorRoundTripObservation maximum = null;
+            IEnumerator maximumRoutine = ObserveDoorRoundTrip(
+                navigation,
+                player,
+                cameraManager,
+                forward,
+                reverse,
+                DiningRoom,
+                ButlersPantry,
+                new Vector2(0f, -1f),
+                new Vector2(0f, -2f),
+                includeNearRoundTrip: false,
+                maximumZoom: true,
+                observation => maximum = observation);
+            while (maximumRoutine.MoveNext())
+            {
+                yield return maximumRoutine.Current;
+            }
+            Assert.That(maximum, Is.Not.Null);
+            AssertVector2Within(maximum.ForwardStart, new Vector2(0f, -1f), 0.001f,
+                "maximum-zoom Dining-to-Pantry far start");
+            Assert.That(maximum.ForwardScreenDistance, Is.EqualTo(433.081f).Within(0.75f));
+            AssertVector2Within(maximum.ForwardNull, new Vector2(3.338485f, 0f), 0.2f,
+                "maximum-zoom Dining-to-Pantry null approach");
+            AssertVector2Within(maximum.ForwardLeft, new Vector2(3.540596f, 0f), 0.2f,
+                "maximum-zoom Dining-to-Pantry left approach");
+            AssertVector2Within(maximum.ForwardCenter, new Vector2(4.01219f, 0f), 0.2f,
+                "maximum-zoom Dining-to-Pantry center approach");
+            AssertVector2Within(maximum.ForwardRight, new Vector2(4.483785f, 0f), 0.2f,
+                "maximum-zoom Dining-to-Pantry right approach");
+            AssertVector2Within(maximum.ForwardDispatch, maximum.ForwardNull, 0.0001f,
+                "maximum-zoom Dining-to-Pantry stage-0 dispatch");
+            AssertVector2Within(maximum.ForwardProductionApproach, maximum.ForwardNull, 0.0001f,
+                "maximum-zoom Dining-to-Pantry production approach");
+            AssertVector2Within(maximum.ForwardArrival, new Vector2(-5.383173f, -3.582376f), 0.2f,
+                "maximum-zoom Pantry arrival");
+            AssertVector2Within(maximum.ReverseStart, new Vector2(0f, -2f), 0.001f,
+                "maximum-zoom Pantry-to-Dining far start");
+            Assert.That(maximum.ReverseScreenDistance, Is.EqualTo(697.262f).Within(0.75f));
+            AssertVector2Within(maximum.ReverseNull, new Vector2(-5.383173f, -3.582376f), 0.2f,
+                "maximum-zoom Pantry-to-Dining null approach");
+            AssertVector2Within(maximum.ReverseLeft, maximum.ReverseNull, 0.0001f,
+                "maximum-zoom Pantry-to-Dining left approach");
+            AssertVector2Within(maximum.ReverseCenter, new Vector2(-6.959581f, -3.582376f), 0.2f,
+                "maximum-zoom Pantry-to-Dining center approach");
+            AssertVector2Within(maximum.ReverseRight, new Vector2(-5.856096f, -3.582376f), 0.2f,
+                "maximum-zoom Pantry-to-Dining right approach");
+            AssertVector2Within(maximum.ReverseDispatch, maximum.ReverseNull, 0.0001f,
+                "maximum-zoom Pantry-to-Dining stage-0 dispatch");
+            AssertVector2Within(maximum.ReverseProductionApproach, maximum.ReverseNull, 0.0001f,
+                "maximum-zoom Pantry-to-Dining production approach");
+            AssertVector2Within(maximum.ReverseArrival, new Vector2(3.338484f, 0f), 0.2f,
+                "maximum-zoom Dining arrival");
+            Debug.Log($"[DiningButlersLegacyMaximumZoom] viewport={Screen.width}x{Screen.height} " +
+                $"zoom={cameraManager.maxRoomZoom:0.###} " +
+                FormatDoorRoundTripObservation(maximum, includeNear: false));
+            Debug.Log(
+                $"[DiningButlersLegacyProfile] forwardGeometry={FormatVector(forwardRect.anchoredPosition)}/" +
+                $"{FormatVector(forwardRect.sizeDelta)} reverseGeometry={FormatVector(reverseRect.anchoredPosition)}/" +
+                $"{FormatVector(reverseRect.sizeDelta)} profiles=none callers=null serializedDependencies=bound " +
+                $"runtimeDependencies=resolved");
+        }
+        finally
+        {
+            if (forward != null)
+            {
+                InvokePrivateMethod(forward, "CancelPendingPlayerApproach");
+            }
+            if (reverse != null)
+            {
+                InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+            }
             if (player.HasDestination)
             {
                 InvokePrivateMethod(player, "CancelDestination");
@@ -8254,11 +8705,11 @@ public sealed class GameplayLifecycleCharacterizationTests
         bool drawingVisible)
     {
         CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-        Assert.That(roomViews, Has.Length.EqualTo(6),
-            "Entrance, Drawing, Music, Library, Ballroom, and Dining must remain the only passive RoomView scene owners at this gate.");
+        Assert.That(roomViews, Has.Length.EqualTo(7),
+            "Entrance, Drawing, Music, Library, Ballroom, Dining, and Butlers Pantry must remain the only passive RoomView scene owners at this gate.");
         CanonicalPassage[] passages = FindInActiveScene<CanonicalPassage>();
-        Assert.That(passages, Has.Length.EqualTo(10),
-            "The five route grafts must remain exactly ten reciprocal canonical scene bindings.");
+        Assert.That(passages, Has.Length.EqualTo(12),
+            "The five complete route grafts and dependency-bound pantry graft must remain exactly twelve reciprocal canonical scene bindings.");
 
         Assert.That(
             roomViews.Single(item => item.Definition != null && item.Definition.StableId == "room.grand-entrance-hall"),
@@ -9001,7 +9452,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage, Is.Not.Null);
         Assert.That(musicView, Is.Not.Null);
         Assert.That(libraryView, Is.Not.Null);
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(10));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
 
         Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
         Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));
@@ -9163,7 +9614,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage, Is.Not.Null);
         Assert.That(drawingView, Is.Not.Null);
         Assert.That(musicView, Is.Not.Null);
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(10));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
 
         Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
         Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));

@@ -592,6 +592,13 @@ public class NavigationRegressionTests
         string diningEntranceObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000105");
         string diningEntranceTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000109");
         string diningEntrancePassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000020");
+        string butlersPantryView = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000007");
+        string diningButlersObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000115");
+        string diningButlersTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000119");
+        string diningButlersPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000021");
+        string butlersDiningObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000135");
+        string butlersDiningTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000139");
+        string butlersDiningPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000022");
         string playerTransform = ExtractUnityObjectBlock(sceneText, "--- !u!4 &81962843 stripped");
 
         Assert.That(drawingRoomObject, Does.Contain("m_Name: Room_Drawing_Room"));
@@ -722,6 +729,33 @@ public class NavigationRegressionTests
         Assert.That(diningEntrancePassage, Does.Contain(
             "arrivalAnchor:\n    logicalPosition: {x: 8.705841, y: -2.346406}"));
         Assert.That(diningEntrancePassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(butlersPantryView, Does.Contain("m_GameObject: {fileID: 2300000020}"));
+        Assert.That(butlersPantryView, Does.Contain(
+            "definition: {fileID: 11400000, guid: f2e9016bf08c45ebba8600eabc9e0b4d, type: 2}"));
+        Assert.That(butlersPantryView, Does.Contain("legacyContentGroup: {fileID: 2300000022}"));
+        Assert.That(diningButlersObject, Does.Contain("- component: {fileID: 4100000021}"));
+        Assert.That(butlersDiningObject, Does.Contain("- component: {fileID: 4100000022}"));
+        foreach (string dependenciesBoundTrigger in new[] { diningButlersTrigger, butlersDiningTrigger })
+        {
+            Assert.That(dependenciesBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain(
+                "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
+            Assert.That(dependenciesBoundTrigger, Does.Not.Contain("canonicalPassage:"));
+        }
+        Assert.That(diningButlersPassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: 1dedaedb6c544e9e8ca4fd2a5be912cf, type: 2}"));
+        Assert.That(diningButlersPassage, Does.Contain("sourceRoomView: {fileID: 4100000006}"));
+        Assert.That(diningButlersPassage, Does.Contain("reversePassage: {fileID: 4100000022}"));
+        Assert.That(diningButlersPassage, Does.Contain("logicalPosition: {x: 2.891918, y: 0}"));
+        Assert.That(diningButlersPassage, Does.Contain("logicalPosition: {x: -4.663103, y: -3.103186}"));
+        Assert.That(diningButlersPassage, Does.Contain("anchorMigrationStage: 0"));
+        Assert.That(butlersDiningPassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: d42e018868914021a713f19df8fe60e8, type: 2}"));
+        Assert.That(butlersDiningPassage, Does.Contain("sourceRoomView: {fileID: 4100000007}"));
+        Assert.That(butlersDiningPassage, Does.Contain("reversePassage: {fileID: 4100000021}"));
+        Assert.That(butlersDiningPassage, Does.Contain("anchorMigrationStage: 0"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));
