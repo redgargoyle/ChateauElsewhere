@@ -6918,6 +6918,608 @@ public sealed class GameplayLifecycleCharacterizationTests
         }
     }
 
+    [UnityTest]
+    public IEnumerator ButlersPantryBilliardRoomLegacyPassagesAreCharacterizedBeforeCanonicalMigration()
+    {
+        const string ButlersPantry = "Butlers Pantry";
+        const string BilliardRoom = "Billiard Room";
+        const string LegacyObservationSha256 =
+            "528af110846bebb59cc866eb6f94f14e3db1e4fdaad971434eec2e057e9b872e";
+        Vector2 requestedForwardStart = new Vector2(0f, -2f);
+        Vector2 requestedReverseStart = new Vector2(0f, -2f);
+        List<string> observationProfileLines = new List<string>(7);
+
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        Button cursorButton = cursorChoice.GetComponent<Button>();
+        Assert.That(cursorButton, Is.Not.Null);
+        cursorButton.onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        INavigationService navigationFacade = navigation;
+        PointClickPlayerMovement player = GameObject.Find("Player").GetComponent<PointClickPlayerMovement>();
+        Assert.That(player, Is.Not.Null);
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        bool originalInputEnabled = player.InputEnabled;
+        float originalMoveSpeed = GetPrivateValue<float>(player, "moveSpeed");
+        bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
+        bool originalZoomRoomWithMouseWheel = cameraManager.zoomRoomWithMouseWheel;
+        DoorTriggerNavigation forward = null;
+        DoorTriggerNavigation reverse = null;
+
+        player.SetInputEnabled(true);
+        SetPrivateField(player, "moveSpeed", 1000f);
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+
+        try
+        {
+            cameraManager.ResetRoomLookForPreview();
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+
+            DoorTriggerNavigation diningSetupTrigger =
+                RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_GEH_DiningRoom");
+            CanonicalPassage diningSetupPassage = diningSetupTrigger.GetComponent<CanonicalPassage>();
+            Assert.That(diningSetupPassage, Is.Not.Null);
+            Assert.That(player.TryWarpToExact(diningSetupPassage.ApproachAnchor.LogicalPosition), Is.True);
+            Assert.That(navigationFacade.TryTraverse(diningSetupPassage), Is.True);
+            yield return WaitForSettledLayout();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo("Dining Room"));
+
+            DoorTriggerNavigation pantrySetupTrigger =
+                RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_DiningRoom_ButlersPantry");
+            CanonicalPassage pantrySetupPassage = pantrySetupTrigger.GetComponent<CanonicalPassage>();
+            Assert.That(pantrySetupPassage, Is.Not.Null);
+            Assert.That(pantrySetupPassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+            Assert.That(player.TryWarpToExact(pantrySetupPassage.ApproachAnchor.LogicalPosition), Is.True);
+            Assert.That(navigationFacade.TryTraverse(pantrySetupPassage), Is.True);
+            yield return WaitForSettledLayout();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(ButlersPantry));
+
+            forward = RequireSceneObject<DoorTriggerNavigation>(
+                "DoorTrigger_Butlers_Pantry_BilliardRoom");
+            reverse = RequireSceneObject<DoorTriggerNavigation>(
+                "DoorTrigger_BilliardRoom_ButlersPantry");
+            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(forward.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(reverse.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(7));
+            Assert.That(FindInActiveScene<DoorTriggerNavigation>()
+                .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
+                Is.EqualTo(12));
+            Assert.That(FindInActiveScene<DoorTriggerNavigation>()
+                .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
+                Is.EqualTo(33));
+
+            Assert.That(forward.SourceRoom, Is.EqualTo(ButlersPantry));
+            Assert.That(forward.DoorName, Is.EqualTo("Butlers_Pantry_BilliardRoom"));
+            Assert.That(forward.DestinationRoom, Is.EqualTo(BilliardRoom));
+            Assert.That(reverse.SourceRoom, Is.EqualTo(BilliardRoom));
+            Assert.That(reverse.DoorName, Is.EqualTo("BilliardRoom_ButlersPantry"));
+            Assert.That(reverse.DestinationRoom, Is.EqualTo(ButlersPantry));
+            Assert.That(forward.UsesCameraSequence, Is.False);
+            Assert.That(reverse.UsesCameraSequence, Is.False);
+            Assert.That(forward.IsStairway, Is.False);
+            Assert.That(reverse.IsStairway, Is.False);
+            foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
+            {
+                Assert.That(GetPrivateValue<float>(trigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+                Assert.That(GetPrivateValue<bool>(trigger, "requirePlayerInSourceRoom"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "requirePlayerProximity"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "walkPlayerToTriggerWhenFar"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "autoActivateAfterApproach"), Is.True);
+            }
+
+            RectTransform forwardRect = forward.transform as RectTransform;
+            RectTransform reverseRect = reverse.transform as RectTransform;
+            Assert.That(forwardRect, Is.Not.Null);
+            Assert.That(reverseRect, Is.Not.Null);
+            AssertVector2Within(forwardRect.anchoredPosition, new Vector2(304.7408f, 0.153f), 0.0001f,
+                "Pantry-to-Billiard trigger position");
+            AssertVector2Within(forwardRect.sizeDelta, new Vector2(187.9324f, 422.4507f), 0.0001f,
+                "Pantry-to-Billiard trigger size");
+            AssertVector2Within(reverseRect.anchoredPosition, new Vector2(565f, 52.91918f), 0.0001f,
+                "Billiard-to-Pantry trigger position");
+            AssertVector2Within(reverseRect.sizeDelta, new Vector2(120f, 333.8383f), 0.0001f,
+                "Billiard-to-Pantry trigger size");
+
+            RoomContentGroup pantryContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == ButlersPantry);
+            RoomContentGroup billiardContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == BilliardRoom);
+            Assert.That(RequireOnlyActiveRoom(ButlersPantry), Is.SameAs(pantryContent));
+            Assert.That(forward.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(pantryContent));
+            Assert.That(reverse.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(billiardContent));
+            Assert.That(forwardRect.parent.name, Is.EqualTo("Doors"));
+            Assert.That(reverseRect.parent.name, Is.EqualTo("Doors"));
+            Assert.That(pantryContent.GetComponent<CanonicalRoomView>(), Is.Not.Null);
+            Assert.That(billiardContent.GetComponent<CanonicalRoomView>(), Is.Null);
+            Assert.That(GetPrivateField<Texture>(pantryContent, "roomBackgroundTexture"), Is.Not.Null);
+            Assert.That(GetPrivateField<Texture>(billiardContent, "roomBackgroundTexture"), Is.Not.Null);
+            Assert.That(GetPrivateField<Texture>(pantryContent, "roomBackgroundTexture"),
+                Is.Not.SameAs(GetPrivateField<Texture>(billiardContent, "roomBackgroundTexture")));
+            Assert.That(pantryContent.PerspectiveProfile, Is.Null);
+            Assert.That(billiardContent.PerspectiveProfile, Is.Null);
+            Assert.That(FindInActiveScene<ObjectMovementBlocker2D>()
+                .Count(blocker => blocker.GetComponentInParent<RoomContentGroup>(true) == pantryContent),
+                Is.Zero);
+            Assert.That(FindInActiveScene<ObjectMovementBlocker2D>()
+                .Count(blocker => blocker.GetComponentInParent<RoomContentGroup>(true) == billiardContent),
+                Is.EqualTo(3));
+
+            string projectRoot = System.IO.Directory.GetParent(Application.dataPath).FullName;
+            string sceneText = System.IO.File.ReadAllText(System.IO.Path.Combine(projectRoot, GameplayScenePath));
+            string serializedForward = RequireSerializedUnityDocument(sceneText, "1505671646");
+            string serializedReverse = RequireSerializedUnityDocument(sceneText, "2300000134");
+            string serializedForwardRect = RequireSerializedUnityDocument(sceneText, "1505671645", "224");
+            string serializedReverseRect = RequireSerializedUnityDocument(sceneText, "2300000131", "224");
+            string serializedPantryContent = RequireSerializedUnityDocument(sceneText, "2300000022");
+            string serializedBilliardContent = RequireSerializedUnityDocument(sceneText, "2300000012");
+            Assert.That(serializedForward, Does.Not.Contain("canonicalPassage:"));
+            Assert.That(serializedReverse, Does.Not.Contain("canonicalPassage:"));
+            foreach (string document in new[] { serializedForward, serializedReverse })
+            {
+                Assert.That(document, Does.Contain("navigationManager: {fileID: 0}"));
+                Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
+                Assert.That(document, Does.Contain("player: {fileID: 0}"));
+                Assert.That(document, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+                Assert.That(document, Does.Contain("maxPlayerScreenDistance: 145"));
+            }
+            Assert.That(serializedForwardRect, Does.Contain("m_Father: {fileID: 2300000024}"));
+            Assert.That(serializedReverseRect, Does.Contain("m_Father: {fileID: 2300000014}"));
+            Assert.That(serializedPantryContent, Does.Contain("roomName: Butlers Pantry"));
+            Assert.That(serializedPantryContent, Does.Contain(
+                "roomBackgroundTexture: {fileID: 2800000, guid: e73e44419d3782452bb6abd0e8edd452, type: 3}"));
+            Assert.That(serializedPantryContent, Does.Contain("perspectiveProfile: {fileID: 0}"));
+            Assert.That(serializedBilliardContent, Does.Contain("roomName: Billiard Room"));
+            Assert.That(serializedBilliardContent, Does.Contain(
+                "roomBackgroundTexture: {fileID: 2800000, guid: 5987c5a8b3a09fc1ca848ac0ece03658, type: 3}"));
+            Assert.That(serializedBilliardContent, Does.Contain("perspectiveProfile: {fileID: 0}"));
+
+            AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
+                .Single(item => item.gameObject.name == "Audio_DoorOpen");
+            DoorOpenSoundCatalog passageDoorCatalog = Resources.Load<DoorOpenSoundCatalog>(
+                "Audio/DoorOpenSoundCatalog");
+            foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
+            {
+                InvokePrivateMethod(trigger, "ResolveReferences");
+                InvokePrivateMethod(trigger, "ResolvePlayerReference");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenAudioSource");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenSoundCatalog");
+            }
+            AssertDoorTriggerCompatibilityBindings(
+                forward,
+                reverse,
+                navigation,
+                player.transform,
+                passageAudioSource,
+                passageDoorCatalog);
+
+            DoorRoundTripObservation primary = null;
+            List<string> primaryEvents = new List<string>();
+            System.Action recordArrival = () => primaryEvents.Add(
+                $"arrived:{navigation.CurrentRoom}:" +
+                (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") == null
+                    ? "audio-idle"
+                    : "audio-started"));
+            System.Action recordMovementStopped = () => primaryEvents.Add(
+                $"movement-stopped:{navigation.CurrentRoom}:" +
+                (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") == null
+                    ? "audio-idle"
+                    : "audio-started"));
+            UnityEngine.Events.UnityAction<string> recordRoomChanged = room => primaryEvents.Add(
+                $"room-changed:{room}:" +
+                (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation), "activeNavigationAudioSource") ==
+                    passageAudioSource
+                    ? "audio-started"
+                    : "audio-idle"));
+            player.ArrivedAtDestination += recordArrival;
+            player.MovementStopped += recordMovementStopped;
+            navigation.OnCurrentRoomChanged.AddListener(recordRoomChanged);
+            IEnumerator primaryRoutine = ObserveDoorRoundTrip(
+                navigation,
+                player,
+                cameraManager,
+                forward,
+                reverse,
+                ButlersPantry,
+                BilliardRoom,
+                requestedForwardStart,
+                requestedReverseStart,
+                includeNearRoundTrip: true,
+                maximumZoom: false,
+                observation => primary = observation);
+            try
+            {
+                while (primaryRoutine.MoveNext())
+                {
+                    yield return primaryRoutine.Current;
+                }
+            }
+            finally
+            {
+                player.ArrivedAtDestination -= recordArrival;
+                player.MovementStopped -= recordMovementStopped;
+                navigation.OnCurrentRoomChanged.RemoveListener(recordRoomChanged);
+            }
+            Assert.That(primaryEvents, Is.EqualTo(new[]
+            {
+                $"arrived:{ButlersPantry}:audio-idle",
+                $"movement-stopped:{ButlersPantry}:audio-idle",
+                $"room-changed:{BilliardRoom}:audio-started",
+                $"arrived:{BilliardRoom}:audio-idle",
+                $"movement-stopped:{BilliardRoom}:audio-idle",
+                $"room-changed:{ButlersPantry}:audio-started",
+                $"room-changed:{BilliardRoom}:audio-started",
+                $"room-changed:{ButlersPantry}:audio-started"
+            }));
+            AssertButlersBilliardLegacyObservationStructure(primary, includeNear: true, "primary");
+            AssertVector2Within(primary.ForwardStart, requestedForwardStart, 0.001f,
+                "primary Pantry-to-Billiard far start");
+            Assert.That(primary.ForwardScreenDistance, Is.EqualTo(189.196f).Within(0.75f));
+            AssertVector2Within(primary.ForwardNull, new Vector2(2.744461f, -2.748338f), 0.01f,
+                "primary Pantry-to-Billiard null approach");
+            AssertVector2Within(primary.ForwardLeft, new Vector2(3.111516f, -2.748338f), 0.01f,
+                "primary Pantry-to-Billiard left approach");
+            AssertVector2Within(primary.ForwardCenter, new Vector2(3.967978f, -2.748338f), 0.01f,
+                "primary Pantry-to-Billiard center approach");
+            AssertVector2Within(primary.ForwardRight, new Vector2(4.824442f, -2.748338f), 0.01f,
+                "primary Pantry-to-Billiard right approach");
+            AssertVector2Within(primary.ForwardDispatch, primary.ForwardNull, 0.0001f,
+                "primary Pantry-to-Billiard stage-0 dispatch");
+            AssertVector2Within(primary.ForwardProductionApproach, primary.ForwardNull, 0.0001f,
+                "primary Pantry-to-Billiard production approach");
+            AssertVector2Within(primary.ForwardArrival, new Vector2(6.575521f, -1.484375f), 0.01f,
+                "primary Billiard arrival");
+            AssertVector2Within(primary.ReverseStart, requestedReverseStart, 0.001f,
+                "primary Billiard-to-Pantry far start");
+            Assert.That(primary.ReverseScreenDistance, Is.EqualTo(438.675f).Within(0.75f));
+            AssertVector2Within(primary.ReverseNull, new Vector2(6.575521f, -1.484375f), 0.01f,
+                "primary Billiard-to-Pantry null approach");
+            AssertVector2Within(primary.ReverseLeft, new Vector2(6.809896f, -1.484375f), 0.01f,
+                "primary Billiard-to-Pantry left approach");
+            AssertVector2Within(primary.ReverseCenter, new Vector2(6.575521f, -1.484375f), 0.01f,
+                "primary Billiard-to-Pantry center approach");
+            AssertVector2Within(primary.ReverseRight, new Vector2(6.575521f, -1.484375f), 0.01f,
+                "primary Billiard-to-Pantry right approach");
+            AssertVector2Within(primary.ReverseDispatch, primary.ReverseNull, 0.0001f,
+                "primary Billiard-to-Pantry stage-0 dispatch");
+            AssertVector2Within(primary.ReverseProductionApproach, primary.ReverseNull, 0.0001f,
+                "primary Billiard-to-Pantry production approach");
+            AssertVector2Within(primary.ReverseArrival, new Vector2(5.191498f, -2.748338f), 0.01f,
+                "primary Pantry arrival");
+            AssertVector2Within(primary.ForwardArrival, primary.ReverseNull, 0.0001f,
+                "primary source-sensitive Billiard arrival");
+            Assert.That(Vector2.Distance(primary.ReverseArrival, primary.ForwardNull), Is.GreaterThan(1f),
+                "The Pantry return must preserve its distinct source-sensitive legacy sampling result.");
+            AssertVector2Within(primary.NearForwardArrival, primary.ForwardArrival, 0.0001f,
+                "primary near Billiard arrival");
+            AssertVector2Within(primary.NearReverseArrival, primary.ReverseArrival, 0.0001f,
+                "primary near Pantry arrival");
+            string primaryObservationLine =
+                $"[ButlersBilliardLegacyPrimary] events={string.Join("|", primaryEvents)} " +
+                FormatDoorRoundTripObservation(primary, includeNear: true);
+            observationProfileLines.Add(primaryObservationLine);
+            Debug.Log(primaryObservationLine);
+
+            Vector2Int[] renderedSizes =
+            {
+                new Vector2Int(1366, 768),
+                new Vector2Int(1440, 1080),
+                new Vector2Int(1920, 1080),
+                new Vector2Int(2560, 1080)
+            };
+            float[] expectedForwardDistances = { 189.196f, 259.674f, 265.915f, 364.763f };
+            Vector2[] expectedForwardNulls =
+            {
+                new Vector2(2.744461f, -2.748338f),
+                new Vector2(2.376193f, -2.37955f),
+                new Vector2(2.743791f, -2.747668f),
+                new Vector2(3.168257f, -3.172733f)
+            };
+            Vector2[] expectedForwardLeft =
+            {
+                new Vector2(3.111516f, -2.748338f),
+                new Vector2(2.693994f, -2.37955f),
+                new Vector2(3.110757f, -2.747668f),
+                new Vector2(3.591993f, -3.172733f)
+            };
+            Vector2[] expectedForwardCenter =
+            {
+                new Vector2(3.967978f, -2.748338f),
+                new Vector2(3.435532f, -2.37955f),
+                new Vector2(3.96701f, -2.747668f),
+                new Vector2(4.580709f, -3.172733f)
+            };
+            Vector2[] expectedForwardRight =
+            {
+                new Vector2(4.824442f, -2.748338f),
+                new Vector2(4.17707f, -2.37955f),
+                new Vector2(4.823266f, -2.747668f),
+                new Vector2(5.569427f, -3.172733f)
+            };
+            Vector2[] expectedBilliardPoints =
+            {
+                new Vector2(6.575521f, -1.484375f),
+                new Vector2(5.693179f, -1.285192f),
+                new Vector2(6.573917f, -1.484013f),
+                new Vector2(7.590901f, -1.71359f)
+            };
+            float[] expectedReverseDistances = { 438.675f, 619.196f, 616.589f, 820.181f };
+            Vector2[] expectedReverseLeft =
+            {
+                new Vector2(6.809896f, -1.484375f),
+                new Vector2(5.896104f, -1.285192f),
+                new Vector2(6.808235f, -1.484013f),
+                new Vector2(7.861468f, -1.71359f)
+            };
+            Vector2[] expectedPantryArrivals =
+            {
+                new Vector2(5.191498f, -2.748338f),
+                new Vector2(4.494872f, -2.37955f),
+                new Vector2(5.19023f, -2.747668f),
+                new Vector2(5.993162f, -3.172733f)
+            };
+            for (int sizeIndex = 0; sizeIndex < renderedSizes.Length; sizeIndex++)
+            {
+                Vector2Int renderedSize = renderedSizes[sizeIndex];
+                yield return SetAndWaitForRenderedGameViewResolution(
+                    (uint)renderedSize.x,
+                    (uint)renderedSize.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+                DoorRoundTripObservation aspect = null;
+                IEnumerator aspectRoutine = ObserveDoorRoundTrip(
+                    navigation,
+                    player,
+                    cameraManager,
+                    forward,
+                    reverse,
+                    ButlersPantry,
+                    BilliardRoom,
+                    requestedForwardStart,
+                    requestedReverseStart,
+                    includeNearRoundTrip: false,
+                    maximumZoom: false,
+                    observation => aspect = observation);
+                while (aspectRoutine.MoveNext())
+                {
+                    yield return aspectRoutine.Current;
+                }
+                AssertButlersBilliardLegacyObservationStructure(
+                    aspect,
+                    includeNear: false,
+                    $"aspect {renderedSize.x}x{renderedSize.y}");
+                float coordinateTolerance = sizeIndex == renderedSizes.Length - 1 ? 0.2f : 0.05f;
+                AssertVector2Within(aspect.ForwardStart, requestedForwardStart, 0.001f,
+                    "aspect Pantry-to-Billiard far start");
+                Assert.That(aspect.ForwardScreenDistance,
+                    Is.EqualTo(expectedForwardDistances[sizeIndex]).Within(0.75f));
+                AssertVector2Within(aspect.ForwardNull, expectedForwardNulls[sizeIndex],
+                    coordinateTolerance, "aspect Pantry-to-Billiard null approach");
+                AssertVector2Within(aspect.ForwardLeft, expectedForwardLeft[sizeIndex],
+                    coordinateTolerance, "aspect Pantry-to-Billiard left approach");
+                AssertVector2Within(aspect.ForwardCenter, expectedForwardCenter[sizeIndex],
+                    coordinateTolerance, "aspect Pantry-to-Billiard center approach");
+                AssertVector2Within(aspect.ForwardRight, expectedForwardRight[sizeIndex],
+                    coordinateTolerance, "aspect Pantry-to-Billiard right approach");
+                AssertVector2Within(aspect.ForwardDispatch, aspect.ForwardNull, 0.0001f,
+                    "aspect Pantry-to-Billiard stage-0 dispatch");
+                AssertVector2Within(aspect.ForwardProductionApproach, aspect.ForwardNull, 0.0001f,
+                    "aspect Pantry-to-Billiard production approach");
+                AssertVector2Within(aspect.ForwardArrival, expectedBilliardPoints[sizeIndex],
+                    coordinateTolerance, "aspect Billiard arrival");
+                AssertVector2Within(aspect.ReverseStart, requestedReverseStart, 0.001f,
+                    "aspect Billiard-to-Pantry far start");
+                Assert.That(aspect.ReverseScreenDistance,
+                    Is.EqualTo(expectedReverseDistances[sizeIndex]).Within(0.75f));
+                AssertVector2Within(aspect.ReverseNull, expectedBilliardPoints[sizeIndex],
+                    coordinateTolerance, "aspect Billiard-to-Pantry null approach");
+                AssertVector2Within(aspect.ReverseLeft, expectedReverseLeft[sizeIndex],
+                    coordinateTolerance, "aspect Billiard-to-Pantry left approach");
+                AssertVector2Within(aspect.ReverseCenter, expectedBilliardPoints[sizeIndex],
+                    coordinateTolerance, "aspect Billiard-to-Pantry center approach");
+                AssertVector2Within(aspect.ReverseRight, expectedBilliardPoints[sizeIndex],
+                    coordinateTolerance, "aspect Billiard-to-Pantry right approach");
+                AssertVector2Within(aspect.ReverseDispatch, aspect.ReverseNull, 0.0001f,
+                    "aspect Billiard-to-Pantry stage-0 dispatch");
+                AssertVector2Within(aspect.ReverseProductionApproach, aspect.ReverseNull, 0.0001f,
+                    "aspect Billiard-to-Pantry production approach");
+                AssertVector2Within(aspect.ReverseArrival, expectedPantryArrivals[sizeIndex],
+                    coordinateTolerance, "aspect Pantry arrival");
+                AssertVector2Within(aspect.ForwardArrival, aspect.ReverseNull, 0.0001f,
+                    "aspect source-sensitive Billiard arrival");
+                Assert.That(Vector2.Distance(aspect.ReverseArrival, aspect.ForwardNull), Is.GreaterThan(1f),
+                    "The aspect Pantry return must remain distinct from the forward null sampler.");
+                string aspectObservationLine =
+                    $"[ButlersBilliardLegacyAspect] viewport={renderedSize.x}x{renderedSize.y} " +
+                    FormatDoorRoundTripObservation(aspect, includeNear: false);
+                observationProfileLines.Add(aspectObservationLine);
+                Debug.Log(aspectObservationLine);
+            }
+
+            DoorRoundTripObservation maximum = null;
+            IEnumerator maximumRoutine = ObserveDoorRoundTrip(
+                navigation,
+                player,
+                cameraManager,
+                forward,
+                reverse,
+                ButlersPantry,
+                BilliardRoom,
+                requestedForwardStart,
+                requestedReverseStart,
+                includeNearRoundTrip: false,
+                maximumZoom: true,
+                observation => maximum = observation);
+            while (maximumRoutine.MoveNext())
+            {
+                yield return maximumRoutine.Current;
+            }
+            AssertButlersBilliardLegacyObservationStructure(maximum, includeNear: false, "maximum zoom");
+            AssertVector2Within(maximum.ForwardStart, requestedForwardStart, 0.001f,
+                "maximum-zoom Pantry-to-Billiard far start");
+            Assert.That(maximum.ForwardScreenDistance, Is.EqualTo(419.821f).Within(0.75f));
+            AssertVector2Within(maximum.ForwardNull, new Vector2(3.168258f, -3.172733f), 0.2f,
+                "maximum-zoom Pantry-to-Billiard null approach");
+            AssertVector2Within(maximum.ForwardLeft, new Vector2(3.591992f, -3.172733f), 0.2f,
+                "maximum-zoom Pantry-to-Billiard left approach");
+            AssertVector2Within(maximum.ForwardCenter, new Vector2(4.580709f, -3.172733f), 0.2f,
+                "maximum-zoom Pantry-to-Billiard center approach");
+            AssertVector2Within(maximum.ForwardRight, new Vector2(5.569427f, -3.172733f), 0.2f,
+                "maximum-zoom Pantry-to-Billiard right approach");
+            AssertVector2Within(maximum.ForwardDispatch, maximum.ForwardNull, 0.0001f,
+                "maximum-zoom Pantry-to-Billiard stage-0 dispatch");
+            AssertVector2Within(maximum.ForwardProductionApproach, maximum.ForwardNull, 0.0001f,
+                "maximum-zoom Pantry-to-Billiard production approach");
+            AssertVector2Within(maximum.ForwardArrival, new Vector2(7.590901f, -1.71359f), 0.2f,
+                "maximum-zoom Billiard arrival");
+            AssertVector2Within(maximum.ReverseStart, requestedReverseStart, 0.001f,
+                "maximum-zoom Billiard-to-Pantry far start");
+            Assert.That(maximum.ReverseScreenDistance, Is.EqualTo(943.982f).Within(0.75f));
+            AssertVector2Within(maximum.ReverseNull, new Vector2(7.590905f, -1.71359f), 0.2f,
+                "maximum-zoom Billiard-to-Pantry null approach");
+            AssertVector2Within(maximum.ReverseLeft, new Vector2(7.861472f, -1.71359f), 0.2f,
+                "maximum-zoom Billiard-to-Pantry left approach");
+            AssertVector2Within(maximum.ReverseCenter, new Vector2(7.590905f, -1.71359f), 0.2f,
+                "maximum-zoom Billiard-to-Pantry center approach");
+            AssertVector2Within(maximum.ReverseRight, new Vector2(7.590905f, -1.71359f), 0.2f,
+                "maximum-zoom Billiard-to-Pantry right approach");
+            AssertVector2Within(maximum.ReverseDispatch, maximum.ReverseNull, 0.0001f,
+                "maximum-zoom Billiard-to-Pantry stage-0 dispatch");
+            AssertVector2Within(maximum.ReverseProductionApproach, maximum.ReverseNull, 0.0001f,
+                "maximum-zoom Billiard-to-Pantry production approach");
+            AssertVector2Within(maximum.ReverseArrival, new Vector2(5.993162f, -3.172733f), 0.2f,
+                "maximum-zoom Pantry arrival");
+            AssertVector2Within(maximum.ForwardArrival, maximum.ReverseNull, 0.0001f,
+                "maximum-zoom source-sensitive Billiard arrival");
+            Assert.That(Vector2.Distance(maximum.ReverseArrival, maximum.ForwardNull), Is.GreaterThan(1f),
+                "The maximum-zoom Pantry return must remain distinct from the forward null sampler.");
+            string maximumObservationLine =
+                $"[ButlersBilliardLegacyMaximumZoom] viewport={Screen.width}x{Screen.height} " +
+                $"zoom={cameraManager.maxRoomZoom:0.###} " +
+                FormatDoorRoundTripObservation(maximum, includeNear: false);
+            observationProfileLines.Add(maximumObservationLine);
+            Debug.Log(maximumObservationLine);
+            string profileObservationLine =
+                $"[ButlersBilliardLegacyProfile] forwardGeometry={FormatVector(forwardRect.anchoredPosition)}/" +
+                $"{FormatVector(forwardRect.sizeDelta)} reverseGeometry={FormatVector(reverseRect.anchoredPosition)}/" +
+                $"{FormatVector(reverseRect.sizeDelta)} profiles=none callers=null serializedDependencies=null " +
+                $"runtimeDependencies=resolved blockers=0/3";
+            observationProfileLines.Add(profileObservationLine);
+            Debug.Log(profileObservationLine);
+            Assert.That(observationProfileLines, Has.Count.EqualTo(7));
+            string observationProfile = string.Join("\n", observationProfileLines);
+            Assert.That(observationProfile.EndsWith("\n", System.StringComparison.Ordinal), Is.False,
+                "The seven-line observation fingerprint must not include a trailing newline.");
+            Assert.That(ComputeSha256(observationProfile), Is.EqualTo(LegacyObservationSha256));
+
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(ButlersPantry));
+            Assert.That(RequireOnlyActiveRoom(ButlersPantry), Is.SameAs(pantryContent));
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+            Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation),
+                "pendingApproachTrigger"), Is.Null);
+            Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                "activeNavigationAudioSource"), Is.Null);
+            Assert.That(passageAudioSource.isPlaying, Is.False);
+        }
+        finally
+        {
+            if (forward != null)
+            {
+                InvokePrivateMethod(forward, "CancelPendingPlayerApproach");
+            }
+            if (reverse != null)
+            {
+                InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+            }
+            if (player.HasDestination)
+            {
+                InvokePrivateMethod(player, "CancelDestination");
+            }
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            SetPrivateField(player, "moveSpeed", originalMoveSpeed);
+            player.SetInputEnabled(originalInputEnabled);
+            cameraManager.panRoomWithMouseEdges = originalPanRoomWithMouseEdges;
+            cameraManager.zoomRoomWithMouseWheel = originalZoomRoomWithMouseWheel;
+            cameraManager.ResetRoomLookForPreview();
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+        }
+    }
+
+    private static void AssertButlersBilliardLegacyObservationStructure(
+        DoorRoundTripObservation observation,
+        bool includeNear,
+        string label)
+    {
+        Assert.That(observation, Is.Not.Null);
+        Assert.That(float.IsNaN(observation.ForwardScreenDistance) ||
+            float.IsInfinity(observation.ForwardScreenDistance), Is.False,
+            $"{label} forward screen distance must be finite.");
+        Assert.That(float.IsNaN(observation.ReverseScreenDistance) ||
+            float.IsInfinity(observation.ReverseScreenDistance), Is.False,
+            $"{label} reverse screen distance must be finite.");
+        Assert.That(observation.ForwardScreenDistance, Is.GreaterThan(145f));
+        Assert.That(observation.ReverseScreenDistance, Is.GreaterThan(145f));
+        AssertFinite(observation.ForwardStart, $"{label} forward start");
+        AssertFinite(observation.ForwardNull, $"{label} forward null approach");
+        AssertFinite(observation.ForwardLeft, $"{label} forward left approach");
+        AssertFinite(observation.ForwardCenter, $"{label} forward center approach");
+        AssertFinite(observation.ForwardRight, $"{label} forward right approach");
+        AssertFinite(observation.ForwardDispatch, $"{label} forward dispatch");
+        AssertFinite(observation.ForwardProductionApproach, $"{label} forward production approach");
+        AssertFinite(observation.ForwardArrival, $"{label} forward arrival");
+        AssertFinite(observation.ReverseStart, $"{label} reverse start");
+        AssertFinite(observation.ReverseNull, $"{label} reverse null approach");
+        AssertFinite(observation.ReverseLeft, $"{label} reverse left approach");
+        AssertFinite(observation.ReverseCenter, $"{label} reverse center approach");
+        AssertFinite(observation.ReverseRight, $"{label} reverse right approach");
+        AssertFinite(observation.ReverseDispatch, $"{label} reverse dispatch");
+        AssertFinite(observation.ReverseProductionApproach, $"{label} reverse production approach");
+        AssertFinite(observation.ReverseArrival, $"{label} reverse arrival");
+        AssertVector2Within(observation.ForwardDispatch, observation.ForwardNull, 0.0001f,
+            $"{label} forward stage-0 dispatch");
+        AssertVector2Within(observation.ForwardProductionApproach, observation.ForwardNull, 0.0001f,
+            $"{label} forward production fallback approach");
+        AssertVector2Within(observation.ReverseDispatch, observation.ReverseNull, 0.0001f,
+            $"{label} reverse stage-0 dispatch");
+        AssertVector2Within(observation.ReverseProductionApproach, observation.ReverseNull, 0.0001f,
+            $"{label} reverse production fallback approach");
+        if (includeNear)
+        {
+            AssertFinite(observation.NearForwardArrival, $"{label} near forward arrival");
+            AssertFinite(observation.NearReverseArrival, $"{label} near reverse arrival");
+        }
+    }
+
+    private static string ComputeSha256(string value)
+    {
+        using (System.Security.Cryptography.SHA256 sha256 =
+            System.Security.Cryptography.SHA256.Create())
+        {
+            byte[] digest = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(value));
+            return string.Concat(digest.Select(item => item.ToString("x2")));
+        }
+    }
+
     private static IEnumerator AssertDiningButlersCallerBoundStageZeroPoisonProof(
         RoomNavigationManager navigation,
         PointClickPlayerMovement player,
@@ -10425,12 +11027,16 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(triggerDocument, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
     }
 
-    private static string RequireSerializedUnityDocument(string sceneText, string fileId)
+    private static string RequireSerializedUnityDocument(
+        string sceneText,
+        string fileId,
+        string unityType = "114")
     {
         string normalizedText = sceneText.Replace("\r\n", "\n");
-        string header = $"--- !u!114 &{fileId}\n";
+        string header = $"--- !u!{unityType} &{fileId}\n";
         int start = normalizedText.IndexOf(header, System.StringComparison.Ordinal);
-        Assert.That(start, Is.GreaterThanOrEqualTo(0), $"Missing serialized MonoBehaviour document {fileId}.");
+        Assert.That(start, Is.GreaterThanOrEqualTo(0),
+            $"Missing serialized Unity type {unityType} document {fileId}.");
         int end = normalizedText.IndexOf("\n--- !u!", start + header.Length, System.StringComparison.Ordinal);
         return end < 0 ? normalizedText.Substring(start) : normalizedText.Substring(start, end - start);
     }

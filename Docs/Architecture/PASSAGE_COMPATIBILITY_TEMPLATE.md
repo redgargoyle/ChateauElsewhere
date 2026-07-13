@@ -68,7 +68,8 @@ The manifest supports the reversible intermediate statuses `queued`, `characteri
 Gameplay contains 45 trigger owners across 23 connectivity groups:
 
 - 12 complete triggers in 6 fully template-certified reciprocal pairs: GEH/Drawing, Drawing/Music, Music/Library, Library/Ballroom, GEH/Dining, and Dining/Butlers;
-- 28 triggers in 14 uniquely reciprocal queued pairs;
+- 2 triggers in the characterized Group `06` reciprocal pair, with canonical columns intentionally empty;
+- 26 triggers in 13 uniquely reciprocal queued pairs;
 - 2 one-way triggers blocked by missing reverse owners;
 - 3 GEH/Upper Gallery stair triggers blocked by a two-outbound/one-return shape that the strict one-to-one reverse contract cannot represent.
 
@@ -84,14 +85,13 @@ The blocked one-way triggers are `1615236111` (GEH Rear -> Library) and `2300000
 
 ## Current automated evidence
 
-- Group `05` targeted ownership/certification proof: `1/1`;
-- focused canonical/manifest gates: `13/13`;
-- combined safety gates: `31/31`;
-- rendered lifecycle: `9/9`;
-- full suite: `262` discovered / `216` passed / the same `46` known failures, failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`;
-- architecture inventory: 112 runtime files / 48,789 lines / 48 direct `MonoBehaviour` declarations / 155 serialized-script rows;
-- Y-axis/set-piece audit: zero hard errors and 38 tracked design-required findings;
-- Gameplay contains 6,026 YAML documents, seven RoomViews, and twelve stage-2 Passages; `GameDatabase` contains 19 definitions; dependencies/callers are each `12 bound / 33 null`; inventory is 12 complete, 28 queued, 2 blocked-one-way, and 3 blocked-parallel.
+- Group `06` targeted tests-only characterization proof: `1/1`;
+- focused canonical/manifest gates: `14/14`;
+- combined safety gates: `32/32`;
+- rendered lifecycle: `10/10`;
+- full suite: `264` discovered / `218` passed / the same `46` known failures, failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`;
+- architecture/serialization/Y-axis: `112 / 48,789 / 48 / 155 / zero hard errors / 38 findings`;
+- Gameplay remains 6,026 YAML documents, seven RoomViews, and twelve stage-2 Passages; `GameDatabase` remains 19 definitions; dependencies/callers remain each `12 bound / 33 null`; inventory is 12 complete, 2 characterized, 26 queued, 2 blocked-one-way, and 3 blocked-parallel.
 
 The first use of this template completed its characterization gate for group `01`, Drawing Room <-> Music Room, before data authoring. At `1366x768`, the legacy reciprocal room-side samples are Drawing `(-7.106010, -1.508934)` and Music `(-7.737432, -3.180156)`; far/near traversal, event/audio order, camera/background/active-stage ownership, prompt/cursor cleanup, and the Chapter 2 guest-panic left-exit identity all pass without a production or serialized-content change. The four-aspect evidence remains explicitly legacy and viewport-sensitive: `1440x1080` yields Drawing/Music `(-6.152483, -1.306456)` / `(-6.699176, -2.753424)`, `1920x1080` yields `(-7.104277, -1.508566)` / `(-7.735544, -3.179381)`, and `2560x1080` yields forward approach `(-8.188315, -1.742414)`, Music arrival/reverse approach `(-8.932235, -3.671232)`, and reverse arrival `(-8.188308, -1.741942)`. Both rendered aspect probes explicitly synchronize 2D physics after GameView layout changes so their PolygonCollider queries remain deterministic. At that characterization checkpoint, no RoomDefinition, PassageDefinition, RoomView, Passage component, direct edge, canonical caller, or authored anchor existed for group `01`.
 
@@ -170,3 +170,35 @@ The database now has 19 definitions. Gameplay has 6,026 documents / seven RoomVi
 Group `05` is now authored through `complete` in one bounded caller-plus-five-ownership batch. Triggers `2300000119` / `2300000139` bind co-located Passages `4100000021` / `4100000022`, then the batch gates arrival preflight/ownership, approach preflight/ownership, and complete certification. The authoritative reciprocal points are Dining `(3.391918, -0.36)` and Butlers Pantry `(-5.163103, -3.463186)`, with both Passages at `AuthoredAnchors = 2`. Dining rendered distances are `23.943, 38.849, 33.662, 38.87, 44.737`; Butlers Pantry distances are `23.943, 83.785, 33.733, 27.022, 31.101`; worst `83.785` remains inside each unchanged `145`-pixel threshold.
 
 Relative to foundation, the scene numstat is `8 insertions / 6 deletions`: two caller additions plus replacements of four anchor-coordinate lines and two stage lines. No GUID, `.meta`, topology, dependency, threshold, GameRoot registration, serialized identity, runtime source, prefab, data asset, hierarchy, collider, prop, occlusion, activation, or camera owner changes. Gameplay remains 6,026 documents / seven RoomViews / twelve Passages, `GameDatabase` remains 19 definitions, stages become `0 / 0 / 12`, and dependencies/callers are each `12 / 33`. The manifest becomes 12 complete, 28 queued, 2 blocked-one-way, and 3 blocked-parallel rows. The no-trailing-newline authored seven-line SHA-256 is `78267865829752279aaa796771f8d51c92b0fac44dc2fe93a4dd12885ccf2d7e`. Final gates pass targeted `1/1`, focused `13/13`, safety `31/31`, lifecycle `9/9`, and full `262/216/46` with unchanged failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`; architecture/serialization/Y-axis audits pass at `112 / 48,789 / 48 / 155 / zero hard errors / 38 findings`. Human review must confirm Butler foot placement at both painted doorway sides. The exact next safe step is tests-only Group `06` Butlers Pantry <-> Billiard Room characterization.
+
+## Group 06 characterized checkpoint
+
+Group `06` is now tests-only `characterized`; its two manifest rows carry `legacy-behavior-locked-data-next` with every canonical column empty. No production or serialized content changed, so the six-pair state remains `GameDatabase 19`, Gameplay `6,026`, RoomViews `7`, Passages/stage2 `12`, and dependencies/callers `12 bound / 33 null`. Inventory is `12 complete / 2 characterized / 26 queued / 2 blocked-one-way / 3 blocked-parallel`.
+
+The exact pair contract is:
+
+| Field | Butlers Pantry -> Billiard Room | Billiard Room -> Butlers Pantry |
+|---|---|---|
+| owner / RectTransform / trigger | `1505671644` / `1505671645` / `1505671646` | `2300000130` / `2300000131` / `2300000134` |
+| room root / content / Doors | `2300000020` / `2300000022` / `2300000024` | `2300000010` / `2300000012` / `2300000014` |
+| rectangle position / size | `(304.7408, 0.153)` / `(187.9324, 422.4507)` | `(565, 52.91918)` / `(120, 333.8383)` |
+| exact Inspector route | `Butlers Pantry` / `Butlers_Pantry_BilliardRoom` / `Billiard Room` | `Billiard Room` / `BilliardRoom_ButlersPantry` / `Butlers Pantry` |
+| profile | standard Door / `145` / no camera sequence | standard Door / `145` / no camera sequence |
+| canonical state | no Passage; caller null; serialized dependencies null | no Passage; caller null; serialized dependencies null |
+| runtime state | legacy dependencies resolve | legacy dependencies resolve |
+
+Butlers Pantry background/profile remain `e73e44419d3782452bb6abd0e8edd452` / null and it retains RoomView `4100000007`. Billiard background/profile remain `5987c5a8b3a09fc1ca848ac0ece03658` / null and it has no RoomView. Its protected three foreground cutout/blocker pairs are `billiard_table` / `PlayerBlocker_billiard_table`, `billiard_left_armchair` / `PlayerBlocker_billiard_left_armchair`, and `billiard_left_lamp_table` / `PlayerBlocker_billiard_left_lamp_table`. `doors.txt` has neither exact Inspector door ID, so it is explicitly non-authoritative for this pair.
+
+The exact seven rendered records are the literal Primary, Aspect `1366x768`, Aspect `1440x1080`, Aspect `1920x1080`, Aspect `2560x1080`, MaximumZoom `2560x1080 @ 1.22`, and Profile lines reproduced in `MIGRATION_REPORT.md`. Joined with `\n` and no trailing newline, they hash to `528af110846bebb59cc866eb6f94f14e3db1e4fdaad971434eec2e057e9b872e`. The locked neutral forward/reverse approach/arrival tuples are:
+
+| Record | forward approach | forward arrival | reverse approach | reverse arrival | screen distances |
+|---|---:|---:|---:|---:|---:|
+| Primary / `1366x768` | `(2.744461, -2.748338)` | `(6.575521, -1.484375)` | `(6.575521, -1.484375)` | `(5.191498, -2.748338)` | `189.196 / 438.675` |
+| `1440x1080` | `(2.376193, -2.37955)` | `(5.693179, -1.285192)` | `(5.693179, -1.285192)` | `(4.494872, -2.37955)` | `259.674 / 619.196` |
+| `1920x1080` | `(2.743791, -2.747668)` | `(6.573917, -1.484013)` | `(6.573917, -1.484013)` | `(5.19023, -2.747668)` | `265.915 / 616.589` |
+| `2560x1080` | `(3.168257, -3.172733)` | `(7.590901, -1.71359)` | `(7.590901, -1.71359)` | `(5.993162, -3.172733)` | `364.763 / 820.181` |
+| maximum zoom | `(3.168258, -3.172733)` | `(7.590901, -1.71359)` | `(7.590905, -1.71359)` | `(5.993162, -3.172733)` | `419.821 / 943.982` |
+
+The primary near arrivals are exactly Billiard `(6.575521, -1.484375)` and Butlers `(5.191498, -2.748338)`. Its eight-event sequence is arrival/movement-stop in Butlers, room change/arrival/movement-stop in Billiard, room change to Butlers, then the near room-change pair Billiard/Butlers; each room change starts the shared navigation audio and each movement callback observes audio idle. Profile line geometry is exactly `304.7408,0.153/187.9324,422.4507` and `565,52.91918/120,333.8383`, `profiles=none callers=null serializedDependencies=null runtimeDependencies=resolved blockers=0/3`.
+
+Final characterization gates pass targeted `1/1`, focused `14/14`, safety `32/32`, rendered lifecycle `10/10`, and full `264/218/46` with unchanged failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`. Architecture/serialization/Y-axis audits pass at `112 / 48,789 / 48 / 155 / zero hard errors / 38 findings`. Human review of doorway foot placement, camera/visibility, and all three Billiard cutout/blocker occlusion relationships remains required. The exact next safe step is one bounded Group `06` foundation batch: Billiard Room data, one passive RoomView, two passive reciprocal stage-0 Passages, and both direct-dependency sets. No caller, stage ownership, geometry, threshold, hierarchy, cutout, blocker, activation, or camera change is permitted in that batch.
