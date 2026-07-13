@@ -156,8 +156,7 @@ public class NPCWaypointMover : MonoBehaviour
 
     public static bool CanUseProjectionAsMotionOwner(RoomProjectedEntity projection)
     {
-        return projection != null &&
-            projection.transform.GetComponentInParent<RoomContentGroup>(true) != null;
+        return projection != null && projection.IsProjectionActive;
     }
 
     private Vector3 GetTargetPosition(Transform target)

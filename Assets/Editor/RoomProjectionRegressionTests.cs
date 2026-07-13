@@ -564,6 +564,32 @@ public class RoomProjectionRegressionTests
         Assert.That(projectedTargetBody, Does.Contain("roomProjection.IsProjectionActive"), "NPC waypoint movement should only use projected motion when projection owns the actor's current room.");
     }
 
+    [Test]
+    public void DetachedActiveProjectionCanOwnWaypointMovement()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        RoomProjectedEntity projection = CreateProjectedEntity(
+            "DetachedProjectedGuest",
+            profile,
+            null,
+            Vector2.zero);
+
+        try
+        {
+            Assert.That(projection.GetComponentInParent<RoomContentGroup>(true), Is.Null);
+            Assert.That(projection.IsProjectionActive, Is.True);
+            Assert.That(
+                NPCWaypointMover.CanUseProjectionAsMotionOwner(projection),
+                Is.True,
+                "A detached active projection still owns the visible foot point and must be moved instead of its pinned actor root.");
+        }
+        finally
+        {
+            DestroyEntity(projection);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
     private static RoomPerspectiveProfile CreatePerspectiveProfile()
     {
         RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
