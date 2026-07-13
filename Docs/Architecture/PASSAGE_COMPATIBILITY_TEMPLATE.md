@@ -67,8 +67,7 @@ The manifest supports the reversible intermediate statuses `queued`, `characteri
 
 Gameplay contains 45 trigger owners across 23 connectivity groups:
 
-- 10 complete triggers in 5 fully template-certified reciprocal pairs: GEH/Drawing, Drawing/Music, Music/Library, Library/Ballroom, and GEH/Dining;
-- 2 Group `05` Dining/Butlers triggers are dependencies-bound with passive stage-0 Passages and null canonical callers;
+- 12 complete triggers in 6 fully template-certified reciprocal pairs: GEH/Drawing, Drawing/Music, Music/Library, Library/Ballroom, GEH/Dining, and Dining/Butlers;
 - 28 triggers in 14 uniquely reciprocal queued pairs;
 - 2 one-way triggers blocked by missing reverse owners;
 - 3 GEH/Upper Gallery stair triggers blocked by a two-outbound/one-return shape that the strict one-to-one reverse contract cannot represent.
@@ -85,14 +84,14 @@ The blocked one-way triggers are `1615236111` (GEH Rear -> Library) and `2300000
 
 ## Current automated evidence
 
-- `PassageMigrationCertificationTests`: manifest/template/topology gate;
-- canonical/static/foundation safety: `23/23` before this certification fixture;
-- rendered lifecycle: `4/4`;
-- full pre-certification suite: `249` discovered / `203` passed / the same `46` known failures, failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`;
-- certification fixture `3/3`; combined manifest/static/contract/foundation safety `26/26`; rendered lifecycle `4/4`; full certification suite `252` discovered / `206` passed / the same `46` known failures with the same failure-name hash;
-- architecture inventory: 112 runtime files / 48,741 lines, 48 direct `MonoBehaviour` declarations, unchanged smell totals;
+- Group `05` targeted ownership/certification proof: `1/1`;
+- focused canonical/manifest gates: `13/13`;
+- combined safety gates: `31/31`;
+- rendered lifecycle: `9/9`;
+- full suite: `262` discovered / `216` passed / the same `46` known failures, failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`;
+- architecture inventory: 112 runtime files / 48,789 lines / 48 direct `MonoBehaviour` declarations / 155 serialized-script rows;
 - Y-axis/set-piece audit: zero hard errors and 38 tracked design-required findings;
-- Gameplay contains 6,011 unchanged YAML documents. Production serialized references are unchanged; the generated script-reference inventory adds only `PassageMigrationCertificationTests.cs` with zero serialized instances, while all prior 154 rows remain unchanged.
+- Gameplay contains 6,026 YAML documents, seven RoomViews, and twelve stage-2 Passages; `GameDatabase` contains 19 definitions; dependencies/callers are each `12 bound / 33 null`; inventory is 12 complete, 28 queued, 2 blocked-one-way, and 3 blocked-parallel.
 
 The first use of this template completed its characterization gate for group `01`, Drawing Room <-> Music Room, before data authoring. At `1366x768`, the legacy reciprocal room-side samples are Drawing `(-7.106010, -1.508934)` and Music `(-7.737432, -3.180156)`; far/near traversal, event/audio order, camera/background/active-stage ownership, prompt/cursor cleanup, and the Chapter 2 guest-panic left-exit identity all pass without a production or serialized-content change. The four-aspect evidence remains explicitly legacy and viewport-sensitive: `1440x1080` yields Drawing/Music `(-6.152483, -1.306456)` / `(-6.699176, -2.753424)`, `1920x1080` yields `(-7.104277, -1.508566)` / `(-7.735544, -3.179381)`, and `2560x1080` yields forward approach `(-8.188315, -1.742414)`, Music arrival/reverse approach `(-8.932235, -3.671232)`, and reverse arrival `(-8.188308, -1.741942)`. Both rendered aspect probes explicitly synchronize 2D physics after GameView layout changes so their PolygonCollider queries remain deterministic. At that characterization checkpoint, no RoomDefinition, PassageDefinition, RoomView, Passage component, direct edge, canonical caller, or authored anchor existed for group `01`.
 
@@ -167,3 +166,7 @@ Apart from the two reciprocal anchor vectors and two stage scalars, the batch ch
 Group `05` Dining Room <-> Butlers Pantry is accepted at `dependencies-bound` after the reusable bounded foundation batch. Butlers Pantry RoomDefinition GUID `f2e9016bf08c45ebba8600eabc9e0b4d` owns stable ID `room.butlers-pantry`, primary/display and first alias `Butlers Pantry`, second exact alias `Butler's Pantry`, background GUID `e73e44419d3782452bb6abd0e8edd452`, and a null profile. Reciprocal standard Door / `Open Door` definitions use GUIDs `1dedaedb6c544e9e8ca4fd2a5be912cf` and `d42e018868914021a713f19df8fe60e8`. Passive RoomView `4100000007` and Passages `4100000021` / `4100000022` preserve Dining `(2.891918, 0)` and Butlers Pantry `(-4.663103, -3.103186)` reciprocally at stage `0`. Direct dependencies are bound; both callers remain null, so approach and arrival remain legacy-owned.
 
 The database now has 19 definitions. Gameplay has 6,026 documents / seven RoomViews / twelve Passages with stages `2 / 0 / 10`, dependencies `12 / 33`, and callers `10 / 35`. The manifest has 10 complete, 2 dependencies-bound, 28 queued, 2 blocked-one-way, and 3 blocked-parallel rows. Pre-edit observation SHA-256 `32c4e3227cf5135f264c1b6f720a771ff3a5333a4cec1c032954bed69f5f5dbb` changes only its dependency-profile token to accepted hash `319285f885882c452f985bcb6eafb3a69d79065efc1476a990ade17094610123`. Targeted/focused/safety/lifecycle gates pass `1/1`, `13/13`, `31/31`, and `9/9`; the full suite remains `262/216/46` with unchanged failure-name hash; audits remain `112 / 48,789 / 48 / 155 / zero hard errors / 38 findings`. No runtime source, prefab, existing `.meta`/GUID, caller, threshold, stage ownership, hierarchy, collider, prop, occlusion, activation, or camera ownership changed. Exact next step: bind only callers `2300000119 -> 4100000021` and `2300000139 -> 4100000022` while retaining stage `0`.
+
+Group `05` is now authored through `complete` in one bounded caller-plus-five-ownership batch. Triggers `2300000119` / `2300000139` bind co-located Passages `4100000021` / `4100000022`, then the batch gates arrival preflight/ownership, approach preflight/ownership, and complete certification. The authoritative reciprocal points are Dining `(3.391918, -0.36)` and Butlers Pantry `(-5.163103, -3.463186)`, with both Passages at `AuthoredAnchors = 2`. Dining rendered distances are `23.943, 38.849, 33.662, 38.87, 44.737`; Butlers Pantry distances are `23.943, 83.785, 33.733, 27.022, 31.101`; worst `83.785` remains inside each unchanged `145`-pixel threshold.
+
+Relative to foundation, the scene numstat is `8 insertions / 6 deletions`: two caller additions plus replacements of four anchor-coordinate lines and two stage lines. No GUID, `.meta`, topology, dependency, threshold, GameRoot registration, serialized identity, runtime source, prefab, data asset, hierarchy, collider, prop, occlusion, activation, or camera owner changes. Gameplay remains 6,026 documents / seven RoomViews / twelve Passages, `GameDatabase` remains 19 definitions, stages become `0 / 0 / 12`, and dependencies/callers are each `12 / 33`. The manifest becomes 12 complete, 28 queued, 2 blocked-one-way, and 3 blocked-parallel rows. The no-trailing-newline authored seven-line SHA-256 is `78267865829752279aaa796771f8d51c92b0fac44dc2fe93a4dd12885ccf2d7e`. Final gates pass targeted `1/1`, focused `13/13`, safety `31/31`, lifecycle `9/9`, and full `262/216/46` with unchanged failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`; architecture/serialization/Y-axis audits pass at `112 / 48,789 / 48 / 155 / zero hard errors / 38 findings`. Human review must confirm Butler foot placement at both painted doorway sides. The exact next safe step is tests-only Group `06` Butlers Pantry <-> Billiard Room characterization.

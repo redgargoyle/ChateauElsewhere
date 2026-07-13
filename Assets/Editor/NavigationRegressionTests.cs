@@ -735,27 +735,35 @@ public class NavigationRegressionTests
         Assert.That(butlersPantryView, Does.Contain("legacyContentGroup: {fileID: 2300000022}"));
         Assert.That(diningButlersObject, Does.Contain("- component: {fileID: 4100000021}"));
         Assert.That(butlersDiningObject, Does.Contain("- component: {fileID: 4100000022}"));
-        foreach (string dependenciesBoundTrigger in new[] { diningButlersTrigger, butlersDiningTrigger })
+        foreach (string callerBoundTrigger in new[] { diningButlersTrigger, butlersDiningTrigger })
         {
-            Assert.That(dependenciesBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain(
+            Assert.That(callerBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(callerBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(callerBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(callerBoundTrigger, Does.Contain(
                 "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
-            Assert.That(dependenciesBoundTrigger, Does.Not.Contain("canonicalPassage:"));
+            Assert.That(callerBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
         }
+        Assert.That(diningButlersTrigger, Does.Contain("canonicalPassage: {fileID: 4100000021}"));
+        Assert.That(butlersDiningTrigger, Does.Contain("canonicalPassage: {fileID: 4100000022}"));
         Assert.That(diningButlersPassage, Does.Contain(
             "definition: {fileID: 11400000, guid: 1dedaedb6c544e9e8ca4fd2a5be912cf, type: 2}"));
         Assert.That(diningButlersPassage, Does.Contain("sourceRoomView: {fileID: 4100000006}"));
         Assert.That(diningButlersPassage, Does.Contain("reversePassage: {fileID: 4100000022}"));
-        Assert.That(diningButlersPassage, Does.Contain("logicalPosition: {x: 2.891918, y: 0}"));
-        Assert.That(diningButlersPassage, Does.Contain("logicalPosition: {x: -4.663103, y: -3.103186}"));
-        Assert.That(diningButlersPassage, Does.Contain("anchorMigrationStage: 0"));
+        Assert.That(diningButlersPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: 3.391918, y: -0.36}"));
+        Assert.That(diningButlersPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: -5.163103, y: -3.463186}"));
+        Assert.That(diningButlersPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(butlersDiningPassage, Does.Contain(
             "definition: {fileID: 11400000, guid: d42e018868914021a713f19df8fe60e8, type: 2}"));
         Assert.That(butlersDiningPassage, Does.Contain("sourceRoomView: {fileID: 4100000007}"));
         Assert.That(butlersDiningPassage, Does.Contain("reversePassage: {fileID: 4100000021}"));
-        Assert.That(butlersDiningPassage, Does.Contain("anchorMigrationStage: 0"));
+        Assert.That(butlersDiningPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: -5.163103, y: -3.463186}"));
+        Assert.That(butlersDiningPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: 3.391918, y: -0.36}"));
+        Assert.That(butlersDiningPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));

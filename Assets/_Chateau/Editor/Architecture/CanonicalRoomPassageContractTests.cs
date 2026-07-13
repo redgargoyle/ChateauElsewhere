@@ -61,7 +61,7 @@ public sealed class CanonicalRoomPassageContractTests
     private const string ButlersPantryDiningPassageGuid = "d42e018868914021a713f19df8fe60e8";
 
     [Test]
-    public void CanonicalRouteDataViewsPassagesAndGroup05FoundationAreExact()
+    public void CanonicalRouteDataViewsPassagesAndGroup05CompleteCertificationAreExact()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
@@ -503,12 +503,12 @@ public sealed class CanonicalRoomPassageContractTests
             "The six introduced reciprocal pairs must be the only Passages at this gate.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage:"), Is.EqualTo(12),
             "Every staged Passage must serialize exactly one explicit anchor-ownership mode.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 0"), Is.EqualTo(2),
-            "Only the dependency-bound Dining/Butlers Pantry pair may retain legacy sampling.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 0"), Is.Zero,
+            "No completed reciprocal pair may retain legacy sampling.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 1"), Is.Zero,
             "No completed reciprocal pair may retain legacy approach sampling.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(10),
-            "All five completed reciprocal pairs must own their authored approach and arrival anchors.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(12),
+            "All six completed reciprocal pairs must own their authored approach and arrival anchors.");
         Assert.That(CountOccurrences(gameplayText, "maxPlayerScreenDistance: 145"), Is.EqualTo(44),
             "Every trigger except the calibrated Library-to-Music endpoint must retain the legacy threshold.");
         Assert.That(CountOccurrences(gameplayText, "maxPlayerScreenDistance: 149"), Is.EqualTo(1),
@@ -590,7 +590,7 @@ public sealed class CanonicalRoomPassageContractTests
             "  - {fileID: 4100000020}\n" +
             "  - {fileID: 4100000021}\n" +
             "  - {fileID: 4100000022}"),
-            "The Group 05 foundation must follow the previously certified Passages.");
+            "The completed Group 05 pair must follow the previously certified Passages.");
         Assert.That(gameRoot, Does.Contain(
             "  - {fileID: 4100000003}\n" +
             "  - {fileID: 4100000004}\n" +
@@ -655,14 +655,14 @@ public sealed class CanonicalRoomPassageContractTests
             "The Entrance-to-Dining Passage should occur only on its owner, header, GameRoot, reverse link, and caller.");
         Assert.That(CountOccurrences(gameplayText, "4100000020"), Is.EqualTo(5),
             "The Dining-to-Entrance Passage should occur only on its owner, header, GameRoot, reverse link, and caller.");
-        Assert.That(CountOccurrences(gameplayText, "4100000021"), Is.EqualTo(4),
-            "The Dining-to-Butlers Passage must remain passive until the caller-only slice.");
-        Assert.That(CountOccurrences(gameplayText, "4100000022"), Is.EqualTo(4),
-            "The Butlers-to-Dining Passage must remain passive until the caller-only slice.");
-        Assert.That(CountOccurrences(gameplayText, "canonicalPassage: {fileID:"), Is.EqualTo(10),
-            "All five certified reciprocal routes must use canonical identity at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "4100000021"), Is.EqualTo(5),
+            "The Dining-to-Butlers Passage should occur only on its owner, header, GameRoot, reverse link, and caller.");
+        Assert.That(CountOccurrences(gameplayText, "4100000022"), Is.EqualTo(5),
+            "The Butlers-to-Dining Passage should occur only on its owner, header, GameRoot, reverse link, and caller.");
+        Assert.That(CountOccurrences(gameplayText, "canonicalPassage: {fileID:"), Is.EqualTo(12),
+            "All six certified reciprocal routes must use canonical identity at this gate.");
         Assert.That(CountOccurrences(gameplayText, "player: {fileID: 81962843}"), Is.EqualTo(12),
-            "Exactly six dependency-bound reciprocal pairs may bind the Player transform at this gate.");
+            "Exactly the six certified reciprocal pairs may bind the Player transform at this gate.");
         Assert.That(CountOccurrences(gameplayText, "81962843"), Is.EqualTo(13),
             "The Player Transform proxy should occur only in its header and twelve trigger bindings.");
         string[] legacyTriggerDocuments = gameplayText
@@ -677,7 +677,7 @@ public sealed class CanonicalRoomPassageContractTests
                 document.Contains("player: {fileID: 81962843}") &&
                 document.Contains("doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
             Is.EqualTo(12),
-            "Exactly the first six reciprocal routes may receive direct compatibility bindings at this gate.");
+            "Exactly the six certified reciprocal routes may receive direct compatibility bindings at this gate.");
         Assert.That(
             legacyTriggerDocuments.Count(document =>
                 document.Contains("navigationManager: {fileID: 0}") &&
@@ -692,10 +692,10 @@ public sealed class CanonicalRoomPassageContractTests
             "The door-only binding slice must not mutate stairway audio ownership.");
         Assert.That(
             legacyTriggerDocuments.Count(document => document.Contains("canonicalPassage: {fileID:")),
-            Is.EqualTo(10));
+            Is.EqualTo(12));
         Assert.That(
             legacyTriggerDocuments.Count(document => !document.Contains("canonicalPassage:")),
-            Is.EqualTo(35),
+            Is.EqualTo(33),
             "Every trigger before its caller slice must deserialize a null canonical edge and retain the fallback.");
         Assert.That(playerTransform, Does.Contain(
             "m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
@@ -798,25 +798,25 @@ public sealed class CanonicalRoomPassageContractTests
             DiningButlersPantryPassageGuid,
             "4100000006",
             "4100000022",
-            "{x: 2.891918, y: 0}",
-            "{x: -4.663103, y: -3.103186}",
-            PassageAnchorMigrationStage.LegacySampling);
+            "{x: 3.391918, y: -0.36}",
+            "{x: -5.163103, y: -3.463186}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
         AssertPassivePassageDocument(
             butlersDiningPassage,
             "2300000135",
             ButlersPantryDiningPassageGuid,
             "4100000007",
             "4100000021",
-            "{x: -4.663103, y: -3.103186}",
-            "{x: 2.891918, y: 0}",
-            PassageAnchorMigrationStage.LegacySampling);
+            "{x: -5.163103, y: -3.463186}",
+            "{x: 3.391918, y: -0.36}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
 
-        AssertLegacyDoorTriggerDependenciesBound(
+        AssertLegacyDoorTriggerCallerBound(
             diningButlersTrigger, "2300000115", "Dining Room", "DiningRoom_ButlersPantry",
-            "Butlers Pantry", "2300000118");
-        AssertLegacyDoorTriggerDependenciesBound(
+            "Butlers Pantry", "2300000118", "4100000021");
+        AssertLegacyDoorTriggerCallerBound(
             butlersDiningTrigger, "2300000135", "Butlers Pantry", "ButlersPantry_DiningRoom",
-            "Dining Room", "2300000138");
+            "Dining Room", "2300000138", "4100000022");
 
         AssertLegacyDoorTriggerCallerBound(
             entranceDiningTrigger, "340611598", "Grand Entrance Hall", "GEH_DiningRoom",
