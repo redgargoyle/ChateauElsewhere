@@ -4,7 +4,7 @@
 
 **Goal:** Make world-space Chapter 2 guests physically reach the existing authored door or stairway before Dining Room staging.
 
-**Architecture:** Keep `Chapter2GuestSearchController` on its existing route-selection and `NPCWaypointMover` pathway. Transfer position ownership inside the shared mover by clearing a colocated `ActorRoomState` room-stage binding immediately before transform-owned movement.
+**Architecture:** Keep `Chapter2GuestSearchController` on its existing route-selection and `NPCWaypointMover` pathway. Transfer position ownership inside the shared mover by clearing a colocated `ActorRoomState` room-stage binding immediately before transform-owned movement, then resample live room-stage targets on every movement step.
 
 **Tech Stack:** Unity 6000.4.10f1, C#, NUnit EditMode tests, Unity Test Framework 1.6.0
 
@@ -14,6 +14,7 @@
 - Continue selecting authored `DoorTriggerNavigation` door and stair targets through `FindExitDoorTowardDiningRoom`.
 - Keep guests visible until arrival or the existing timeout, then use `StageGuestForDiningRoomReveal`.
 - Preserve projection-owned movement and the branch's existing projection ownership guard.
+- Follow the current world position of authored room-stage doors and stairs while the camera pans or zooms.
 - Do not modify `Assets/Scenes/Gameplay.unity` or `.vscode/settings.json`.
 
 ---
@@ -112,7 +113,13 @@ private void ReleaseRoomStageBindingForTransformMotion()
 
 Use it before `transform.position = GetTargetPosition(target)` in the disabled-mover fallback and immediately after projected-target selection fails in `MoveToRoutine`. Do not call it inside `MoveProjectedToRoutine`.
 
-- [ ] **Step 5: Run focused GREEN verification**
+Replace the cached transform target with a loop that calls `GetTargetPosition(target)` before each distance check and again for final placement. Stop cleanly if the target is destroyed during movement. Keep the actor-state reference as a runtime cache rather than a serialized cross-object reference.
+
+- [ ] **Step 5: Verify moving and instant targets**
+
+Add behavior tests that reverse a transform target after the first movement step and that call `MoveTo` while the mover is disabled on a bound world actor. Verify both tests fail before their respective implementation and pass afterward.
+
+- [ ] **Step 6: Run focused GREEN verification**
 
 Run the stage-binding behavior test from Step 2 again with results at `/tmp/dreadforge-guest-exit-binding-green.xml`. Expected: one passed test, zero failures.
 
@@ -124,11 +131,11 @@ Run:
 
 Expected: one passed test, zero failures.
 
-- [ ] **Step 6: Run related regression fixtures**
+- [ ] **Step 7: Run related regression fixtures**
 
 Run `StoryActorRoomStageLockingTests`, `Chapter2RegressionTests`, `RoomProjectionRegressionTests`, and `NavigationRegressionTests` as separate EditMode test filters. Write their XML and logs under `/tmp/dreadforge-<fixture>.xml` and `/tmp/dreadforge-<fixture>.log`. Record exact pass/fail counts and distinguish any pre-existing failures from the focused behavior.
 
-- [ ] **Step 7: Inspect scope and commit owned files**
+- [ ] **Step 8: Inspect scope and commit owned files**
 
 Run:
 

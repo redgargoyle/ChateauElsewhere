@@ -10,6 +10,7 @@ public class NPCWaypointMover : MonoBehaviour
     [SerializeField, Range(0.1f, 1f)] private float horizontalDirectionThreshold = 0.55f;
     [SerializeField] private RoomPersonWalker2D ambientWalker;
     [SerializeField] private RoomProjectedEntity roomProjection;
+    private ActorRoomState actorRoomState;
     [SerializeField] private Animator animator;
 
     private Coroutine moveRoutine;
@@ -47,6 +48,7 @@ public class NPCWaypointMover : MonoBehaviour
         {
             if (!TryPlaceProjectedAtTarget(target))
             {
+                ReleaseRoomStageBindingForTransformMotion();
                 transform.position = GetTargetPosition(target);
             }
 
@@ -84,11 +86,18 @@ public class NPCWaypointMover : MonoBehaviour
             yield break;
         }
 
+        ReleaseRoomStageBindingForTransformMotion();
         isMoving = true;
-        Vector3 targetPosition = GetTargetPosition(target);
 
-        while (Vector2.Distance(transform.position, targetPosition) > stopDistance)
+        while (target != null)
         {
+            Vector3 targetPosition = GetTargetPosition(target);
+
+            if (Vector2.Distance(transform.position, targetPosition) <= stopDistance)
+            {
+                break;
+            }
+
             Vector3 previousPosition = transform.position;
             Vector3 nextPosition = Vector3.MoveTowards(
                 transform.position,
@@ -99,7 +108,11 @@ public class NPCWaypointMover : MonoBehaviour
             yield return null;
         }
 
-        transform.position = targetPosition;
+        if (target != null)
+        {
+            transform.position = GetTargetPosition(target);
+        }
+
         UpdateAnimator(Vector2.zero, false);
         isMoving = false;
         moveRoutine = null;
@@ -160,6 +173,16 @@ public class NPCWaypointMover : MonoBehaviour
             projection.transform.GetComponentInParent<RoomContentGroup>(true) != null;
     }
 
+    private void ReleaseRoomStageBindingForTransformMotion()
+    {
+        ResolveReferences();
+
+        if (actorRoomState != null)
+        {
+            actorRoomState.ClearRoomStagePointBinding();
+        }
+    }
+
     private Vector3 GetTargetPosition(Transform target)
     {
         Vector3 targetPosition = target.position;
@@ -182,6 +205,11 @@ public class NPCWaypointMover : MonoBehaviour
         if (roomProjection == null)
         {
             roomProjection = GetComponentInChildren<RoomProjectedEntity>(true);
+        }
+
+        if (actorRoomState == null)
+        {
+            actorRoomState = GetComponent<ActorRoomState>();
         }
 
         if (animator == null)

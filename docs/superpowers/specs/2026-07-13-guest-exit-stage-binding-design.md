@@ -33,6 +33,8 @@ Keep the existing departure data flow unchanged:
 
 Before `NPCWaypointMover` writes its own transform, it resolves a colocated `ActorRoomState` and calls the existing `ClearRoomStagePointBinding()` API. Projection-owned movement remains unchanged. The disabled-mover instant-placement fallback also releases the binding before assigning the transform, preventing a later stage update from restoring a stale point.
 
+Authored doors and stairs are live `RectTransform` targets under the room stage. Transform-owned movement therefore reads the target's current world position on every step and once more for final placement. If room pan or zoom moves the stage during the walk, the guest continues toward the visible door instead of a cached coordinate.
+
 No Chapter 2-specific movement coroutine, route planner, fake offset, or scene edit is added. `FindExitDoorTowardDiningRoom`, authored `DoorTriggerNavigation` targets, animation handling, pending-exit gating, timeout behavior, and `StageGuestForDiningRoomReveal` remain intact.
 
 ## Testing
@@ -43,5 +45,7 @@ Add an EditMode regression using the existing room-stage locking rig:
 2. Place it at a room-stage anchor and prove the binding is active.
 3. Start `NPCWaypointMover.MoveToRoutine` toward another point in the room.
 4. Assert the binding can no longer reapply after the mover's first step.
+5. Move a target after the first step and assert the mover changes direction toward its current position.
+6. Disable the mover, request instant transform placement, and assert the stale binding cannot restore the old anchor.
 
 Also strengthen the Chapter 2 source-contract regression to require the shared mover to perform the release and to reject a duplicate binding clear in the Chapter 2 exit-preparation method. Run the focused tests first, then the complete stage-locking, Chapter 2, room-projection, and navigation regression fixtures.

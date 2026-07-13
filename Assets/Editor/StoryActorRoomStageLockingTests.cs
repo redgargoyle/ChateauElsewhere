@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
@@ -49,6 +50,117 @@ public class StoryActorRoomStageLockingTests
 
             Assert.That(ApplyBinding(stageActorState), Is.False);
             Assert.That(stageActor.transform.localPosition, Is.EqualTo(originalLocalPosition));
+        }
+        finally
+        {
+            rig.Destroy();
+        }
+    }
+
+    [Test]
+    public void TransformWaypointMovementReleasesRoomStageBindingBeforeFirstStep()
+    {
+        TestRig rig = CreateRig();
+        RectTransform exit = new GameObject("Exit", typeof(RectTransform)).GetComponent<RectTransform>();
+        exit.SetParent(rig.Stage, false);
+        exit.anchoredPosition = rig.Anchor.anchoredPosition + new Vector2(120f, 0f);
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            rig.ActorState.PlaceAt(rig.Anchor);
+            Assert.That(
+                ApplyBinding(rig.ActorState),
+                Is.True,
+                "The real Chapter 2 guest starts bound to its hide anchor.");
+            Vector3 startPosition = rig.ActorState.transform.position;
+
+            NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.MoveSpeed = 100f;
+            IEnumerator move = mover.MoveToRoutine(exit);
+
+            Assert.That(move.MoveNext(), Is.True, "The exit waypoint should require at least one movement step.");
+            Vector3 positionAfterFirstStep = rig.ActorState.transform.position;
+            Assert.That(
+                Vector2.Distance(startPosition, positionAfterFirstStep),
+                Is.GreaterThan(0.0001f),
+                "The visible world-space guest should physically advance on the first exit step.");
+            Assert.That(
+                ApplyBinding(rig.ActorState),
+                Is.False,
+                "Scripted transform movement must release the passive stage binding before LateUpdate can pin the guest.");
+            Assert.That(
+                rig.ActorState.transform.position,
+                Is.EqualTo(positionAfterFirstStep),
+                "The released binding must not restore the guest to the hide anchor.");
+
+            mover.StopMoving();
+        }
+        finally
+        {
+            rig.Destroy();
+        }
+    }
+
+    [Test]
+    public void TransformWaypointMovementTracksTargetMovedDuringWalk()
+    {
+        GameObject actor = new GameObject("MovingTargetActor", typeof(NPCWaypointMover));
+        GameObject target = new GameObject("MovingTarget");
+        actor.transform.position = Vector3.zero;
+        target.transform.position = new Vector3(1000f, 0f, 0f);
+
+        try
+        {
+            NPCWaypointMover mover = actor.GetComponent<NPCWaypointMover>();
+            mover.MoveSpeed = 100f;
+            IEnumerator move = mover.MoveToRoutine(target.transform);
+
+            Assert.That(move.MoveNext(), Is.True);
+            float positionAfterFirstStep = actor.transform.position.x;
+            target.transform.position = new Vector3(-1000f, 0f, 0f);
+
+            Assert.That(move.MoveNext(), Is.True);
+            Assert.That(
+                actor.transform.position.x,
+                Is.LessThan(positionAfterFirstStep),
+                "Transform movement should pursue the room-stage target's current world position each step.");
+
+            mover.StopMoving();
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor);
+            Object.DestroyImmediate(target);
+        }
+    }
+
+    [Test]
+    public void DisabledTransformWaypointPlacementReleasesRoomStageBinding()
+    {
+        TestRig rig = CreateRig();
+        RectTransform exit = new GameObject("InstantExit", typeof(RectTransform)).GetComponent<RectTransform>();
+        exit.SetParent(rig.Stage, false);
+        exit.anchoredPosition = rig.Anchor.anchoredPosition + new Vector2(120f, 0f);
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            rig.ActorState.PlaceAt(rig.Anchor);
+            Assert.That(ApplyBinding(rig.ActorState), Is.True);
+
+            NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.enabled = false;
+            Vector3 expectedPosition = exit.position;
+            expectedPosition.z = rig.ActorState.transform.position.z;
+
+            Assert.That(mover.MoveTo(exit), Is.Null);
+            Assert.That(rig.ActorState.transform.position, Is.EqualTo(expectedPosition));
+            Assert.That(
+                ApplyBinding(rig.ActorState),
+                Is.False,
+                "Instant transform placement must release the old room-stage anchor binding.");
+            Assert.That(rig.ActorState.transform.position, Is.EqualTo(expectedPosition));
         }
         finally
         {

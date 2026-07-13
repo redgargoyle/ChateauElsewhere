@@ -1394,6 +1394,7 @@ public class Chapter2RegressionTests
         string exitBody = ExtractMethodBody(guestSearchText, "private IEnumerator RunGuestExitToDiningRoomRoutine");
         string exitSpeedBody = ExtractMethodBody(guestSearchText, "private float GetGuestExitMoveSpeed");
         string routeBody = ExtractMethodBody(guestSearchText, "private Transform FindExitDoorTowardDiningRoom");
+        string prepareExitBody = ExtractMethodBody(guestSearchText, "private void PrepareGuestForExitWalk");
         string prepareTransferBody = ExtractMethodBody(guestSearchText, "public void PrepareGuestsForDiningTransfer");
         string hideTransferBody = ExtractMethodBody(guestSearchText, "private void HideGuestForDiningRoomTransfer");
         string notifyExitBody = ExtractMethodBody(guestSearchText, "private void NotifyGuestExitToDiningComplete");
@@ -1428,6 +1429,8 @@ public class Chapter2RegressionTests
         Assert.That(waypointText, Does.Contain("MoveProjectedToRoutine"), "The shared mover still supports the same projection foot-point movement used by working room-projected actors.");
         Assert.That(waypointText, Does.Contain("roomProjection.SetRoomLocalFootPoint(nextPosition)"), "Projected actors should have their visible room-local foot point advanced every frame by the shared mover.");
         Assert.That(waypointText, Does.Contain("transform.position = nextPosition"), "Detached/world-space actors should have their visible transform advanced every frame by the shared mover.");
+        Assert.That(waypointText, Does.Contain("actorRoomState.ClearRoomStagePointBinding()"), "The shared mover should release passive room-stage binding whenever it owns the actor transform.");
+        Assert.That(prepareExitBody, Does.Not.Contain("ClearRoomStagePointBinding"), "Chapter 2 should not duplicate a transform-movement prerequisite owned by NPCWaypointMover.");
         Assert.That(exitBody, Does.Contain("StageGuestForDiningRoomReveal(guest)"));
         Assert.That(exitSpeedBody, Does.Contain("NPCWaypointMover.CanUseProjectionAsMotionOwner"), "Projected guest exits should use the shared mover's projection-ownership test before selecting pixel speed.");
         Assert.That(exitSpeedBody, Does.Contain("MinimumProjectedGuestExitMoveSpeed"), "Projection-owned exits should be clamped to the established pixel-speed scale.");
