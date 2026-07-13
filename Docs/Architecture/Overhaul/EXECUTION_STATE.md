@@ -3,33 +3,33 @@
 ## Repository
 
 - Branch: `refactor/final-architecture-overhaul`
-- HEAD: `daa11ed6d746e1a74c82ddec985ed8286d2b6cf9` at slice start
+- HEAD: `bb64c7c38ec16b6aa35c8bdf8026a723bce20b9e` at slice start
 - Unity: `/home/hamzak/Unity/Hub/Editor/6000.4.10f1/Editor/Unity` (`6000.4.10f1`, revision `feeafc12a938`)
 - Working tree clean: yes at slice start
-- Last passing commit: `daa11ed6d746e1a74c82ddec985ed8286d2b6cf9`
+- Last passing commit: `bb64c7c38ec16b6aa35c8bdf8026a723bce20b9e`
 
 ## Current slice
 
-- Slice ID: `0.3` — establish real EditMode, PlayMode, and fixed-resolution golden test truth without changing production behavior
-- Sole ownership change: architecture evidence gains an explicit real-PlayMode test boundary and committed fixed-resolution measurements; no runtime ownership transfers in this slice.
-- Starting commit: `daa11ed6d746e1a74c82ddec985ed8286d2b6cf9`
-- Allowed files/assets: this execution-state record; the new `Assets/Tests.meta`, `Assets/Tests/PlayMode.meta`, and test-only files with matching new `.meta` files under `Assets/Tests/PlayMode/`; the existing `Assets/Editor/GameplayLifecycleCharacterizationTests.cs` and `.meta` only if a minimal test split proves necessary; `Docs/Architecture/Overhaul/Evidence/Slice_0_3/`; deterministic reports under `Docs/Architecture/Generated/`; and the architecture audit's shared runtime-file classifier plus its focused unit test if needed to keep test-only assemblies out of production metrics.
-- Compatibility surface preserved: all production scripts and script GUIDs, public APIs, serialized file IDs/references, scenes, prefabs, ScriptableObjects, art/audio assets, approved gameplay, visuals, timing, scale, dialogue, input, room navigation, and current known defects. No production `.asmdef`, namespace, service, owner, or behavior may be introduced or changed.
-- Characterization test: the fresh full EditMode result at `Logs/ArchitectureOverhaul/Slice-0.3/baseline-editmode-8ec90df4.xml` must remain exactly `264/218/46/0` with failed-test SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9` until any tests are deliberately reclassified; every reclassified test must be accounted for by exact EditMode plus PlayMode counts.
-- Focused test filter and expected count: `ArchitecturePlayModeDiscoveryTests;ArchitectureBaselinePlayModeTests` must produce exactly `4/4` real PlayMode tests with zero failures; all architecture-tool unit tests must pass. The existing `GameplayLifecycleCharacterizationTests` filter remains expected `10/10` until explicitly split.
-- PlayMode/manual/golden gate: at `1366x768`, prove MainMenu -> New Game -> Gameplay, initial GameRoot/service/chapter/beat/time/room state, one passage round trip, room-root visibility and the current hidden-child behavior, player movement/collision, Butler scale, and dialogue/subtitle startup; commit entrance, Drawing Room, one passage-transition, and one Chapter 2 panic-frame measurements.
-- Rollback commit: `daa11ed6d746e1a74c82ddec985ed8286d2b6cf9`
+- Slice ID: `0.4a` — characterize deterministic Butler/guest scale and sort across independent cold starts before changing scale behavior
+- Sole ownership change: architecture evidence gains one canonical startup scale/sort fingerprint and a ten-process cold-start gate; no runtime or editor ownership changes occur in this characterization sub-slice.
+- Starting commit: `bb64c7c38ec16b6aa35c8bdf8026a723bce20b9e`
+- Allowed files/assets: this execution-state record; the existing `Assets/Tests/PlayMode/ArchitectureBaselinePlayModeTests.cs`; and new evidence files only under `Docs/Architecture/Overhaul/Evidence/Slice_0_4/`. Deterministic generated reports may be refreshed only if a required gate proves them stale. No production script, editor tool, scene, prefab, ScriptableObject, existing `.meta`, package, ProjectSettings, or large asset may change.
+- Compatibility surface preserved: every existing public API, script GUID, serialized file ID/reference, all nineteen Butler endpoint records, all nineteen guest calibration records, eight guest captured-base values, Player prefab presentation multiplier `0.7528645`, existing room perspective profiles, and approved visuals/timing/gameplay. Current scale components remain temporary compatibility owners; the profile conversion and sole `ActorPresenter` transfer remain Phase `4` work.
+- Characterization test: preserve Slice `0.3` PlayMode `4/4` and full EditMode `264/218/46/0` with failed-test SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`; add one real PlayMode cold-start observation that performs MainMenu -> New Game -> Gameplay at `1366x768`, samples the Butler at the existing front-door approach, stages Chapter 2 without starting random panic motion, and emits a canonical identity-sorted fingerprint for all eight visible guests.
+- Focused test filter and expected count: the new cold-start test method must produce exactly `1/1/0/0` in each of ten independent Unity processes; the combined `ArchitecturePlayModeDiscoveryTests;ArchitectureBaselinePlayModeTests` filter must then produce exactly `5/5/0/0`. Architecture-tool unit tests remain `4/4`.
+- PlayMode/manual/golden gate: all ten independent processes must produce byte-identical canonical scale/sort fingerprints, exact actor identities/room/count, and no tracked-file mutation. Preserve the accepted entrance values: presentation multiplier `0.7528645 +/- 0.000001`, Butler height `114.417 +/- 0.5 px`, door height `141.481 +/- 0.5 px`, ratio `0.808710 +/- 0.001`, and sorting order `1075`; the broad visual sanity remains `0.65-0.85` rather than silently retuning the approved baseline to mathematical `0.75`.
+- Rollback commit: `bb64c7c38ec16b6aa35c8bdf8026a723bce20b9e`
 
 ## Evidence
 
-- Static guard: passed for Slice `0.3`; all architecture-tool tests pass `4/4`, the architecture guard passes, and the deterministic audit remains `112` runtime files / `48,789` lines.
+- Static guard: passed for Slice `0.4a`; all architecture-tool tests pass `4/4`, the architecture guard passes, and the deterministic audit remains `112` runtime files / `48,789` lines.
 - Runtime ledger: passed, `112` runtime files / `112` exact rows.
 - Unity script integrity: passed, `157` current scripts / `1,926` serialized references / `856` external-package references.
-- Compile log: passed with no compiler errors at `Logs/ArchitectureOverhaul/Slice-0.3/compile-after-movement-daa11ed6.log`.
-- EditMode XML: `Logs/ArchitectureOverhaul/Slice-0.3/editmode-final-daa11ed6.xml` is nonempty and verified at exactly `264` total / `218` passed / `46` known failed / `0` skipped, with the same 46-case SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`. The focused architecture filter passes `31/31`, and the preserved `GameplayLifecycleCharacterizationTests` filter separately passes `10/10`.
-- PlayMode XML: passed `4/4` at `Logs/ArchitectureOverhaul/Slice-0.3/playmode-after-movement-daa11ed6.xml`; the test-only `Chateau.Tests.PlayMode` assembly advances the real player loop, exercises actual player movement over frames, and has no production dependency edge.
-- Manual/golden result: automated fixed-resolution measurements passed at `1366x768`; committed evidence covers Entrance, Drawing Room, a canonical passage round trip and a Chapter 2 panic frame. Entrance Butler/door ratio at the real door approach is `0.808710`, with approved presentation scale `0.7528645`.
-- Scene/prefab diff reviewed: passed; no existing scene, prefab, ScriptableObject, production asset, production script, or existing `.meta` file changed. The only new Unity GUIDs belong to the test folder, PlayMode test assembly, and its two test scripts.
+- Compile result: passed with no compiler errors in every certified cold-start process; the dedicated compile log remains `Logs/ArchitectureOverhaul/Slice-0.4/compile-final.log`.
+- EditMode XML: `Logs/ArchitectureOverhaul/Slice-0.4/editmode-full.xml` is nonempty and verified at exactly `264` total / `218` passed / `46` known failed / `0` skipped, with unchanged 46-case SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`.
+- PlayMode XML: the combined real PlayMode filter passes exactly `5/5/0/0` at `Logs/ArchitectureOverhaul/Slice_0_4/playmode-combined-candidate.xml`. With the approved digest assertion enabled, the cold-start method separately passes exactly `1/1/0/0` in each of ten final independent display-backed processes under `Logs/ArchitectureOverhaul/Slice-0.4/cold-start-10-certified/`.
+- Manual/golden result: all ten independent runs produce fingerprint SHA-256 `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`, Butler `114.417 px`, entrance door `141.481 px`, ratio `0.808710`, presentation multiplier `0.7528645`, sort `1075`, and the same eight identity-sorted Drawing Room guest scale/sort records. The tracked status and binary diff digest stayed byte-identical during every process.
+- Scene/prefab diff reviewed: passed; the selected calibration-sensitive scene, Player prefab, two current `RoomPerspectiveProfile` assets, and relevant script metas remain byte-identical to `Evidence/Slice_0_4/calibration_asset_hashes.csv`. Full Git diff review shows no other scene, prefab, ScriptableObject, or `.meta` change, and no Unity GUID was added or changed.
 
 ## Completed slices
 
@@ -39,6 +39,7 @@
 | `0.2` | `62a389254d4cedfc8128b181d0a17bbe5fdaebf3` | Static controls | Final ledgers, verifier, integrity scanner, and slice-gate controls installed. |
 | `0.2 evidence` | `8ec90df46a0e2917a52356692e4938140ed66081` | Integrity scanner `155/1926/856`; guard and ledger pass | Deterministic `script_integrity.csv` tracked as its own commit. |
 | `0.2.1` | `daa11ed6d746e1a74c82ddec985ed8286d2b6cf9` | Verifier tests `3/3`; exact baseline XML `264/218/46/0` | NUnit failure evidence now excludes failed suite paths and verifies exact result counts. |
+| `0.3` | `bb64c7c38ec16b6aa35c8bdf8026a723bce20b9e` | Real PlayMode `4/4`; lifecycle `10/10`; focused EditMode `31/31`; full EditMode `264/218/46/0`; static controls pass | Real startup, movement/collision, canonical room round trip, current hidden-child defect, Butler visual baseline, and Chapter 2 panic measurements committed without production changes. |
 
 ## Remaining adapters and debt
 
@@ -49,7 +50,7 @@
 
 ## Exact next safe slice
 
-- Begin Slice `0.4`: declare the deterministic Butler/guest scale ownership change from the clean Slice `0.3` commit, characterize the editor calibration write path, and gate ten cold starts at the approved entrance-door visual.
+- Complete Slice `0.4a` from the clean Slice `0.3` commit. If all ten cold starts match, begin a separate `0.4b` editor-only slice that makes calibration-window repaint/open/selection reads non-mutating and protects every intentional write with Undo. Change runtime scale behavior only in a later sub-slice if a focused characterization first proves a deterministic defect.
 
 ## Resume command
 

@@ -1,0 +1,4 @@
+capture_id,resolution,horizontal_pan,vertical_pan,fov,zoom,screen_x,screen_y,logical_x,logical_y,tolerance,notes
+entrance_butler,1366x768,-0.55,-1,0.8,1.06,,,-0.093960,-1.223958,0.001 logical and 0.5 px,"Butler 114.417 px; door 141.481 px; ratio 0.808710; sort 1075"
+drawing_tea_table_blocker,1366x768,-0.55,-1,0.8,1.06,654.4744,135.5689,-1.045052,-3.514679,0.5 px and 0.001 logical,"Exact collider-center click is blocked; projected movement completes at the unchanged logical destination"
+chapter2_panic_guest_1,1366x768,-0.55,-1,0.8,1.06,477.884,301.136,,,1 px,"Approved Slice 0.3 center; four final observations x=477.127-477.599 y=300.658-300.956; height 255.668 px; sort 1620"

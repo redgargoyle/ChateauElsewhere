@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -18,15 +21,22 @@ public sealed class ArchitectureBaselinePlayModeTests
     private const uint EvidenceWidth = 1366;
     private const uint EvidenceHeight = 768;
     private const string EvidenceResolutionName = "Chantilly Architecture Slice 0.3";
+    private const float EvidenceHorizontalRoomPan = -0.55f;
+    private const float EvidenceVerticalRoomPan = -1f;
+    private const float EvidenceRoomFov = 0.8f;
+    private const string ExpectedColdStartFingerprintSha256 =
+        "34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96";
     private uint previousRenderingWidth;
     private uint previousRenderingHeight;
     private UnityEngine.Random.State previousRandomState;
+    private float previousCaptureDeltaTime;
 
     [UnitySetUp]
     public IEnumerator SetUp()
     {
         GetRenderingResolution(out previousRenderingWidth, out previousRenderingHeight);
         previousRandomState = UnityEngine.Random.state;
+        previousCaptureDeltaTime = Time.captureDeltaTime;
         SetFixedRenderingResolution(EvidenceWidth, EvidenceHeight);
         SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
         yield return WaitForScene(MainMenuSceneName, 120);
@@ -47,6 +57,7 @@ public sealed class ArchitectureBaselinePlayModeTests
         yield return WaitForScene(MainMenuSceneName, 120);
 
         UnityEngine.Random.state = previousRandomState;
+        Time.captureDeltaTime = previousCaptureDeltaTime;
 
         if (previousRenderingWidth > 0 && previousRenderingHeight > 0)
         {
@@ -132,6 +143,8 @@ public sealed class ArchitectureBaselinePlayModeTests
         object[] frontDoorApproachArguments = { player, Vector2.zero };
         Assert.That((bool)frontDoorApproachMethod.Invoke(arrival, frontDoorApproachArguments), Is.True);
         Vector2 frontDoorApproach = (Vector2)frontDoorApproachArguments[1];
+        Assert.That(frontDoorApproach.x, Is.EqualTo(-0.09396f).Within(0.001f));
+        Assert.That(frontDoorApproach.y, Is.EqualTo(-1.223958f).Within(0.001f));
         Assert.That((bool)InvokeMethod(player, "TryWarpToExact", frontDoorApproach), Is.True);
         yield return null;
         yield return null;
@@ -163,6 +176,90 @@ public sealed class ArchitectureBaselinePlayModeTests
     }
 
     [UnityTest]
+    public IEnumerator ColdStartScaleAndSortFingerprintMatchesApprovedBaseline()
+    {
+        yield return BootGameplayFromRealMenu();
+
+        MonoBehaviour navigation = RequireSingleSceneComponent("RoomNavigationManager");
+        MonoBehaviour chapter = RequireSingleSceneComponent("ChapterManager");
+        MonoBehaviour arrival = RequireSingleSceneComponent("Chapter1ArrivalController");
+        MonoBehaviour player = RequireComponentOnGameObject("Player", "PointClickPlayerMovement");
+        SpriteRenderer playerRenderer = player.GetComponent<SpriteRenderer>();
+        SpriteRenderer doorRenderer = RequireSceneGameObject("Door_answer_trigger").GetComponent<SpriteRenderer>();
+        Camera camera = Camera.main;
+
+        Assert.That(playerRenderer, Is.Not.Null);
+        Assert.That(doorRenderer, Is.Not.Null);
+        Assert.That(camera, Is.Not.Null);
+
+        MethodInfo frontDoorApproachMethod = RequireMethod(arrival, "TryGetFrontDoorApproachDestination", 2);
+        object[] frontDoorApproachArguments = { player, Vector2.zero };
+        Assert.That((bool)frontDoorApproachMethod.Invoke(arrival, frontDoorApproachArguments), Is.True);
+        Vector2 frontDoorApproach = (Vector2)frontDoorApproachArguments[1];
+        Assert.That(frontDoorApproach.x, Is.EqualTo(-0.09396f).Within(0.001f));
+        Assert.That(frontDoorApproach.y, Is.EqualTo(-1.223958f).Within(0.001f));
+        Assert.That((bool)InvokeMethod(player, "TryWarpToExact", frontDoorApproach), Is.True);
+        yield return null;
+        yield return null;
+
+        float playerScreenHeight = GetRenderedScreenHeight(playerRenderer, camera);
+        float doorScreenHeight = GetRenderedScreenHeight(doorRenderer, camera);
+        float playerDoorRatio = playerScreenHeight / doorScreenHeight;
+        Assert.That(GetProperty<float>(player, "RoomPresentationScale"), Is.EqualTo(0.7528645f).Within(0.000001f));
+        Assert.That(GetProperty<float>(player, "CurrentWorldActorScaleMultiplier"), Is.EqualTo(0.7528645f).Within(0.001f));
+        Assert.That(playerScreenHeight, Is.EqualTo(114.417f).Within(0.5f));
+        Assert.That(doorScreenHeight, Is.EqualTo(141.481f).Within(0.5f));
+        Assert.That(playerDoorRatio, Is.EqualTo(0.808710f).Within(0.001f));
+        Assert.That(playerDoorRatio, Is.InRange(0.65f, 0.85f));
+        Assert.That(playerRenderer.sortingOrder, Is.EqualTo(1075));
+
+        string butlerFingerprint = BuildButlerScaleFingerprint(player, playerRenderer);
+        yield return null;
+        yield return null;
+        Assert.That(
+            BuildButlerScaleFingerprint(player, playerRenderer),
+            Is.EqualTo(butlerFingerprint),
+            "Butler scale/sort must settle before the cold-start observation and remain idempotent.");
+
+        InvokeMethod(chapter, "SkipToChapter2ForTesting");
+        yield return WaitForCurrentRoom(navigation, DrawingRoomName, 120);
+        FreezeRoomLookForEvidence();
+        yield return null;
+        yield return null;
+
+        MonoBehaviour[] visibleGuests = FindSceneComponents("ActorRoomState")
+            .Where(actor => GetProperty<bool>(actor, "IsVisibleInCurrentRoom"))
+            .OrderBy(actor => GetProperty<string>(actor, "ActorId"), StringComparer.Ordinal)
+            .ToArray();
+        Assert.That(visibleGuests, Has.Length.EqualTo(8));
+        Assert.That(
+            visibleGuests.Select(actor => GetProperty<string>(actor, "ActorId")).Distinct().Count(),
+            Is.EqualTo(8));
+
+        string guestFingerprint = BuildGuestScaleFingerprint(visibleGuests);
+        yield return null;
+        yield return null;
+        Assert.That(
+            BuildGuestScaleFingerprint(visibleGuests),
+            Is.EqualTo(guestFingerprint),
+            "Guest scale/sort must settle before the cold-start observation and remain idempotent.");
+
+        AssertFixedRenderingResolution();
+        string canonicalFingerprint = $"{butlerFingerprint}|{guestFingerprint}";
+        string fingerprintSha256 = ComputeSha256(canonicalFingerprint);
+
+        Debug.Log(
+            $"[Slice04ColdStartFingerprint] sha256={fingerprintSha256} " +
+            $"playerHeight={playerScreenHeight:0.###} doorHeight={doorScreenHeight:0.###} " +
+            $"ratio={playerDoorRatio:0.######} canonical={canonicalFingerprint}");
+
+        Assert.That(
+            fingerprintSha256,
+            Is.EqualTo(ExpectedColdStartFingerprintSha256),
+            "The authored cold-start scale/sort baseline changed.");
+    }
+
+    [UnityTest]
     public IEnumerator DrawingRoomRoundTripCharacterizesVisibilityCollisionAndHiddenChildDebt()
     {
         yield return BootGameplayFromRealMenu();
@@ -185,6 +282,7 @@ public sealed class ArchitectureBaselinePlayModeTests
 
         Assert.That((bool)InvokeMethod(navigation, "TryTraverse", forwardPassage), Is.True);
         yield return WaitForCurrentRoom(navigation, DrawingRoomName, 60);
+        FreezeRoomLookForEvidence();
         yield return null;
 
         Assert.That(GetProperty<bool>(entranceView, "IsVisible"), Is.False);
@@ -235,10 +333,14 @@ public sealed class ArchitectureBaselinePlayModeTests
             Is.False,
             "The completed movement must stop outside the real tea-table blocker.");
 
+        Debug.Log(
+            $"[Slice04FixedLookDrawingMeasurement] blockedClick={Format(blockedScreenPoint)} " +
+            $"projectedDestination={Format(projectedDestination)} movementEnd={Format(movementEnd)}");
+
         Assert.That(drawingPosition.x, Is.EqualTo(5.267176f).Within(0.001f));
         Assert.That(drawingPosition.y, Is.EqualTo(-2.104616f).Within(0.001f));
-        Assert.That(blockedScreenPoint.x, Is.EqualTo(614.4352f).Within(0.5f));
-        Assert.That(blockedScreenPoint.y, Is.EqualTo(114.2008f).Within(0.5f));
+        Assert.That(blockedScreenPoint.x, Is.EqualTo(654.4744f).Within(0.5f));
+        Assert.That(blockedScreenPoint.y, Is.EqualTo(135.5689f).Within(0.5f));
         Assert.That(projectedDestination.x, Is.EqualTo(-1.045052f).Within(0.001f));
         Assert.That(projectedDestination.y, Is.EqualTo(-3.514679f).Within(0.001f));
 
@@ -288,8 +390,10 @@ public sealed class ArchitectureBaselinePlayModeTests
 
         InvokeMethod(chapter, "SkipToChapter2ForTesting");
         yield return WaitForCurrentRoom(navigation, DrawingRoomName, 120);
+        FreezeRoomLookForEvidence();
         yield return null;
 
+        Time.captureDeltaTime = 1f / 60f;
         UnityEngine.Random.InitState(20260713);
         object panicRoutine = InvokeMethod(panic, "BeginPanic");
         Assert.That(panicRoutine, Is.Not.Null);
@@ -308,10 +412,14 @@ public sealed class ArchitectureBaselinePlayModeTests
         float guestScreenHeight = GetRenderedScreenHeight(firstGuestRenderer, Camera.main);
         Vector3 guestScreenPoint = Camera.main.WorldToScreenPoint(firstGuestRenderer.bounds.center);
 
+        Debug.Log(
+            $"[Slice04FixedPanicMeasurement] screenCenter={guestScreenPoint.x:0.###},{guestScreenPoint.y:0.###} " +
+            $"screenHeight={guestScreenHeight:0.###} sorting={firstGuestRenderer.sortingOrder}");
+
         Assert.That(firstGuest.gameObject.name, Is.EqualTo("Guest 1"));
         Assert.That(firstGuestRenderer.sprite.name, Is.EqualTo("lady_sitting_01"));
-        Assert.That(guestScreenPoint.x, Is.EqualTo(476.917f).Within(1f));
-        Assert.That(guestScreenPoint.y, Is.EqualTo(300.525f).Within(1f));
+        Assert.That(guestScreenPoint.x, Is.EqualTo(477.884f).Within(1f));
+        Assert.That(guestScreenPoint.y, Is.EqualTo(301.136f).Within(1f));
         Assert.That(guestScreenHeight, Is.EqualTo(255.668f).Within(1f));
         Assert.That(firstGuestRenderer.sortingOrder, Is.EqualTo(1620));
 
@@ -326,6 +434,7 @@ public sealed class ArchitectureBaselinePlayModeTests
 
         InvokeMethod(panic, "StopPanic");
         Assert.That(GetProperty<bool>(panic, "IsRunning"), Is.False);
+        Time.captureDeltaTime = previousCaptureDeltaTime;
         yield return null;
     }
 
@@ -337,7 +446,91 @@ public sealed class ArchitectureBaselinePlayModeTests
         yield return WaitForScene(GameplaySceneName, 240);
         SetFixedRenderingResolution(EvidenceWidth, EvidenceHeight);
         yield return WaitForFixedRenderingResolution(EvidenceWidth, EvidenceHeight, 30);
+        FreezeRoomLookForEvidence();
         yield return null;
+    }
+
+    private static void FreezeRoomLookForEvidence()
+    {
+        MonoBehaviour cameraManager = RequireSingleSceneComponent("CameraManager");
+        SetField(cameraManager, "panRoomWithMouseEdges", false);
+        SetField(cameraManager, "moveRoomVerticallyWithMouseEdges", false);
+        SetField(cameraManager, "autoEnableVerticalRoomPan", false);
+        SetField(cameraManager, "zoomRoomWithMouseWheel", false);
+        InvokeMethod(
+            cameraManager,
+            "SetRoomLookForPreview",
+            EvidenceHorizontalRoomPan,
+            EvidenceVerticalRoomPan,
+            EvidenceRoomFov);
+        Assert.That(
+            GetProperty<float>(cameraManager, "CurrentRoomHorizontalPan"),
+            Is.EqualTo(EvidenceHorizontalRoomPan).Within(0.000001f));
+        Assert.That(
+            GetProperty<float>(cameraManager, "CurrentRoomVerticalPan"),
+            Is.EqualTo(EvidenceVerticalRoomPan).Within(0.000001f));
+        Assert.That(
+            GetProperty<float>(cameraManager, "CurrentRoomFov"),
+            Is.EqualTo(EvidenceRoomFov).Within(0.000001f));
+    }
+
+    private static string BuildButlerScaleFingerprint(
+        MonoBehaviour player,
+        SpriteRenderer renderer)
+    {
+        return string.Join(
+            ",",
+            "butler",
+            $"room={GetProperty<string>(RequireSingleSceneComponent("RoomNavigationManager"), "CurrentRoom")}",
+            $"localScale={FormatFingerprint(player.transform.localScale)}",
+            $"presentation={FormatFingerprint(GetProperty<float>(player, "RoomPresentationScale"))}",
+            $"worldMultiplier={FormatFingerprint(GetProperty<float>(player, "CurrentWorldActorScaleMultiplier"))}",
+            $"sort={renderer.sortingOrder}");
+    }
+
+    private static string BuildGuestScaleFingerprint(IEnumerable<MonoBehaviour> actors)
+    {
+        return "guests=" + string.Join(
+            ";",
+            actors.Select(actor =>
+            {
+                MonoBehaviour participant = actor.GetComponents<MonoBehaviour>()
+                    .Single(component => TypeMatches(component, "GuestScaleParticipant"));
+                Transform scaleRoot = GetProperty<Transform>(participant, "ScaleRoot");
+                SpriteRenderer renderer = actor.GetComponentsInChildren<SpriteRenderer>(true)
+                    .First(candidate => candidate.sprite != null);
+                Assert.That(scaleRoot, Is.Not.Null, $"Guest '{actor.gameObject.name}' has no scale root.");
+
+                return string.Join(
+                    ",",
+                    GetProperty<string>(actor, "ActorId"),
+                    $"room={GetProperty<string>(actor, "CurrentRoomId")}",
+                    $"character={GetProperty<string>(participant, "CharacterId")}",
+                    $"localScale={FormatFingerprint(scaleRoot.localScale)}",
+                    $"capturedBase={FormatFingerprint(GetProperty<Vector3>(participant, "CapturedBaseScale"))}",
+                    $"hasBase={GetProperty<bool>(participant, "HasCapturedBaseScale")}",
+                    $"butlerScale={FormatFingerprint(GetProperty<float>(actor, "CurrentButlerCharacterScale"))}",
+                    $"sort={renderer.sortingOrder}");
+            }));
+    }
+
+    private static string ComputeSha256(string value)
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] digest = sha256.ComputeHash(Encoding.UTF8.GetBytes(value));
+            return BitConverter.ToString(digest).Replace("-", string.Empty).ToLowerInvariant();
+        }
+    }
+
+    private static string FormatFingerprint(float value)
+    {
+        return value.ToString("0.######", CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatFingerprint(Vector3 value)
+    {
+        return $"{FormatFingerprint(value.x)}:{FormatFingerprint(value.y)}:{FormatFingerprint(value.z)}";
     }
 
     private static IEnumerator WaitForScene(string sceneName, int maximumFrames)
@@ -554,6 +747,16 @@ public sealed class ArchitectureBaselinePlayModeTests
         Assert.That(property, Is.Not.Null,
             $"Missing property '{propertyName}' on {owner.GetType().FullName}.");
         return (T)property.GetValue(owner);
+    }
+
+    private static void SetField(object owner, string fieldName, object value)
+    {
+        FieldInfo field = owner.GetType().GetField(
+            fieldName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null,
+            $"Missing field '{fieldName}' on {owner.GetType().FullName}.");
+        field.SetValue(owner, value);
     }
 
     private static object InvokeMethod(object owner, string methodName, params object[] arguments)
