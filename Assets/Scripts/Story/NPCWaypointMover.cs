@@ -10,6 +10,7 @@ public class NPCWaypointMover : MonoBehaviour
     [SerializeField, Range(0.1f, 1f)] private float horizontalDirectionThreshold = 0.55f;
     [SerializeField] private RoomPersonWalker2D ambientWalker;
     [SerializeField] private RoomProjectedEntity roomProjection;
+    [SerializeField] private ActorRoomState actorRoomState;
     [SerializeField] private Animator animator;
 
     private Coroutine moveRoutine;
@@ -47,6 +48,7 @@ public class NPCWaypointMover : MonoBehaviour
         {
             if (!TryPlaceProjectedAtTarget(target))
             {
+                ReleaseRoomStageBindingForTransformMotion();
                 transform.position = GetTargetPosition(target);
             }
 
@@ -84,6 +86,7 @@ public class NPCWaypointMover : MonoBehaviour
             yield break;
         }
 
+        ReleaseRoomStageBindingForTransformMotion();
         isMoving = true;
         Vector3 targetPosition = GetTargetPosition(target);
 
@@ -159,6 +162,16 @@ public class NPCWaypointMover : MonoBehaviour
         return projection != null && projection.OwnsProjectedPosition;
     }
 
+    private void ReleaseRoomStageBindingForTransformMotion()
+    {
+        ResolveReferences();
+
+        if (actorRoomState != null)
+        {
+            actorRoomState.ClearRoomStagePointBinding();
+        }
+    }
+
     private Vector3 GetTargetPosition(Transform target)
     {
         Vector3 targetPosition = target.position;
@@ -181,6 +194,11 @@ public class NPCWaypointMover : MonoBehaviour
         if (roomProjection == null)
         {
             roomProjection = GetComponentInChildren<RoomProjectedEntity>(true);
+        }
+
+        if (actorRoomState == null)
+        {
+            actorRoomState = GetComponent<ActorRoomState>();
         }
 
         if (animator == null)
