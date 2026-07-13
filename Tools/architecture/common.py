@@ -40,6 +40,7 @@ def runtime_csharp_files(root: Path) -> list[Path]:
         path
         for path in (root / "Assets").rglob("*.cs")
         if "Editor" not in path.parts
+        and path.relative_to(root / "Assets").parts[:1] != ("Tests",)
     )
 
 

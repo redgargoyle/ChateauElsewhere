@@ -1,0 +1,6 @@
+{
+    "name": "Chateau.Tests.PlayMode",
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}
