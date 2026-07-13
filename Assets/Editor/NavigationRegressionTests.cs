@@ -601,13 +601,16 @@ public class NavigationRegressionTests
         string butlersDiningPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000022");
         string billiardRoomObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000010");
         string billiardRoomContent = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000012");
+        string billiardRoomView = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000008");
         string billiardDoorsTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000014");
         string pantryBilliardObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &1505671644");
         string pantryBilliardTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &1505671645");
         string pantryBilliardTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &1505671646");
+        string pantryBilliardPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000023");
         string billiardPantryObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000130");
         string billiardPantryTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000131");
         string billiardPantryTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000134");
+        string billiardPantryPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000024");
         string playerTransform = ExtractUnityObjectBlock(sceneText, "--- !u!4 &81962843 stripped");
 
         Assert.That(drawingRoomObject, Does.Contain("m_Name: Room_Drawing_Room"));
@@ -776,18 +779,23 @@ public class NavigationRegressionTests
         Assert.That(billiardRoomObject, Does.Contain("m_Name: Room_Billiard_Room"));
         Assert.That(billiardRoomObject, Does.Contain("- component: {fileID: 2300000011}"));
         Assert.That(billiardRoomObject, Does.Contain("- component: {fileID: 2300000012}"));
-        Assert.That(Regex.Matches(billiardRoomObject, @"(?m)^  - component:").Count, Is.EqualTo(2),
-            "The characterized Billiard room must not gain a CanonicalRoomView before its data step.");
+        Assert.That(billiardRoomObject, Does.Contain("- component: {fileID: 4100000008}"));
+        Assert.That(Regex.Matches(billiardRoomObject, @"(?m)^  - component:").Count, Is.EqualTo(3));
         Assert.That(billiardRoomContent, Does.Contain("roomName: Billiard Room"));
         Assert.That(billiardRoomContent, Does.Contain(
             "roomBackgroundTexture: {fileID: 2800000, guid: 5987c5a8b3a09fc1ca848ac0ece03658, type: 3}"));
         Assert.That(billiardRoomContent, Does.Contain("perspectiveProfile: {fileID: 0}"));
+        Assert.That(billiardRoomView, Does.Contain("m_GameObject: {fileID: 2300000010}"));
+        Assert.That(billiardRoomView, Does.Contain(
+            "definition: {fileID: 11400000, guid: bed158a9affd015fcc961340d9be5dd8, type: 2}"));
+        Assert.That(billiardRoomView, Does.Contain("legacyContentGroup: {fileID: 2300000012}"));
         Assert.That(billiardDoorsTransform, Does.Contain("- {fileID: 2300000131}"));
-        foreach (string fourComponentTriggerObject in new[] { pantryBilliardObject, billiardPantryObject })
+        Assert.That(pantryBilliardObject, Does.Contain("- component: {fileID: 4100000023}"));
+        Assert.That(billiardPantryObject, Does.Contain("- component: {fileID: 4100000024}"));
+        foreach (string passageBoundTriggerObject in new[] { pantryBilliardObject, billiardPantryObject })
         {
-            Assert.That(Regex.Matches(fourComponentTriggerObject, @"(?m)^  - component:").Count,
-                Is.EqualTo(4),
-                "Group 06 must remain a four-component legacy trigger with no passive Passage yet.");
+            Assert.That(Regex.Matches(passageBoundTriggerObject, @"(?m)^  - component:").Count,
+                Is.EqualTo(5));
         }
         Assert.That(pantryBilliardTransform, Does.Contain("m_Father: {fileID: 2300000024}"));
         Assert.That(pantryBilliardTransform, Does.Contain("m_AnchoredPosition: {x: 304.7408, y: 0.153}"));
@@ -801,15 +809,34 @@ public class NavigationRegressionTests
         Assert.That(billiardPantryTrigger, Does.Contain("sourceRoom: Billiard Room"));
         Assert.That(billiardPantryTrigger, Does.Contain("doorName: BilliardRoom_ButlersPantry"));
         Assert.That(billiardPantryTrigger, Does.Contain("destinationRoom: Butlers Pantry"));
-        foreach (string characterizedLegacyTrigger in new[] { pantryBilliardTrigger, billiardPantryTrigger })
+        foreach (string dependenciesBoundTrigger in new[] { pantryBilliardTrigger, billiardPantryTrigger })
         {
-            Assert.That(characterizedLegacyTrigger, Does.Contain("navigationManager: {fileID: 0}"));
-            Assert.That(characterizedLegacyTrigger, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
-            Assert.That(characterizedLegacyTrigger, Does.Contain("player: {fileID: 0}"));
-            Assert.That(characterizedLegacyTrigger, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
-            Assert.That(characterizedLegacyTrigger, Does.Not.Contain("canonicalPassage:"));
-            Assert.That(characterizedLegacyTrigger, Does.Contain("maxPlayerScreenDistance: 145"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain(
+                "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
+            Assert.That(dependenciesBoundTrigger, Does.Not.Contain("canonicalPassage:"));
+            Assert.That(dependenciesBoundTrigger, Does.Contain("maxPlayerScreenDistance: 145"));
         }
+        Assert.That(pantryBilliardPassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: 71ea8ce4d4eb8fa7f107abe24d7c903e, type: 2}"));
+        Assert.That(pantryBilliardPassage, Does.Contain("sourceRoomView: {fileID: 4100000007}"));
+        Assert.That(pantryBilliardPassage, Does.Contain("reversePassage: {fileID: 4100000024}"));
+        Assert.That(pantryBilliardPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: 2.744461, y: -2.748338}"));
+        Assert.That(pantryBilliardPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: 6.575521, y: -1.484375}"));
+        Assert.That(pantryBilliardPassage, Does.Contain("anchorMigrationStage: 0"));
+        Assert.That(billiardPantryPassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: be2f1b94b724dcfa061876e33bce02ca, type: 2}"));
+        Assert.That(billiardPantryPassage, Does.Contain("sourceRoomView: {fileID: 4100000008}"));
+        Assert.That(billiardPantryPassage, Does.Contain("reversePassage: {fileID: 4100000023}"));
+        Assert.That(billiardPantryPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: 6.575521, y: -1.484375}"));
+        Assert.That(billiardPantryPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: 2.744461, y: -2.748338}"));
+        Assert.That(billiardPantryPassage, Does.Contain("anchorMigrationStage: 0"));
         Assert.That(legacyDoorDataText, Does.Not.Contain("Butlers_Pantry_BilliardRoom"));
         Assert.That(legacyDoorDataText, Does.Not.Contain("BilliardRoom_ButlersPantry"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));

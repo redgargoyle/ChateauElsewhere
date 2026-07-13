@@ -2818,8 +2818,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(musicRoomView.LegacyContentGroup, Is.SameAs(musicRoomContent));
         Assert.That(musicRoomView.Root, Is.SameAs(musicRoomContent.transform));
         Assert.That(musicRoomView.HasGameContext, Is.True);
-        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(7));
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
+        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(8));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(14));
         AssertDrawingMusicAuthoredAnchorPassages(
             forward,
             reverse,
@@ -3946,7 +3946,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             RoomContentGroup libraryRoomContent = FindInActiveScene<RoomContentGroup>()
                 .Single(item => item.RoomName == LibraryRoom);
             CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-            Assert.That(roomViews, Has.Length.EqualTo(7));
+            Assert.That(roomViews, Has.Length.EqualTo(8));
             CanonicalRoomView musicRoomView = roomViews.Single(item =>
                 item.Definition != null && item.Definition.StableId == "room.music-room");
             CanonicalRoomView libraryRoomView = roomViews.Single(item =>
@@ -4171,15 +4171,15 @@ public sealed class GameplayLifecycleCharacterizationTests
                     document.Contains("player: {fileID: 81962843}") &&
                     document.Contains(
                         "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
-                Is.EqualTo(12),
-                "Exactly the first six complete reciprocal route pairs may have direct compatibility bindings.");
+                Is.EqualTo(14),
+                "Exactly the six complete reciprocal pairs plus the dependency-bound Billiard pair may have direct compatibility bindings.");
             Assert.That(
                 serializedGameplayTriggers.Count(document =>
                     document.Contains("navigationManager: {fileID: 0}") &&
                     document.Contains("doorOpenAudioSource: {fileID: 0}") &&
                     document.Contains("player: {fileID: 0}") &&
                     document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
-                Is.EqualTo(33),
+                Is.EqualTo(31),
                 "Every trigger before its dependency slice must retain all four null compatibility bindings.");
             Assert.That(
                 serializedGameplayTriggers.Count(document =>
@@ -5927,8 +5927,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(reversePassage.UsesAuthoredArrival, Is.True);
             Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.SameAs(forwardPassage));
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.SameAs(reversePassage));
-            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
-            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(7));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(14));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(8));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
                 Is.EqualTo(12));
@@ -6499,8 +6499,8 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.SameAs(forwardPassage));
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"),
                 Is.SameAs(reversePassage));
-            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
-            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(7));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(14));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(8));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
                 Is.EqualTo(12));
@@ -6924,7 +6924,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         const string ButlersPantry = "Butlers Pantry";
         const string BilliardRoom = "Billiard Room";
         const string LegacyObservationSha256 =
-            "528af110846bebb59cc866eb6f94f14e3db1e4fdaad971434eec2e057e9b872e";
+            "b6fbb280fed2f2310b32de4cefa85ce8dbb7ed5ebfebae72b55951ba0026093f";
         Vector2 requestedForwardStart = new Vector2(0f, -2f);
         Vector2 requestedReverseStart = new Vector2(0f, -2f);
         List<string> observationProfileLines = new List<string>(7);
@@ -6988,14 +6988,25 @@ public sealed class GameplayLifecycleCharacterizationTests
                 "DoorTrigger_Butlers_Pantry_BilliardRoom");
             reverse = RequireSceneObject<DoorTriggerNavigation>(
                 "DoorTrigger_BilliardRoom_ButlersPantry");
-            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(4));
-            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(4));
-            Assert.That(forward.GetComponent<CanonicalPassage>(), Is.Null);
-            Assert.That(reverse.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(5));
+            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(5));
+            CanonicalPassage forwardPassage = forward.GetComponent<CanonicalPassage>();
+            CanonicalPassage reversePassage = reverse.GetComponent<CanonicalPassage>();
+            Assert.That(forwardPassage, Is.Not.Null);
+            Assert.That(reversePassage, Is.Not.Null);
             Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
-            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
-            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(7));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(14));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(8));
+            Assert.That(FindInActiveScene<CanonicalPassage>()
+                .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.LegacySampling),
+                Is.EqualTo(2));
+            Assert.That(FindInActiveScene<CanonicalPassage>()
+                .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredArrival),
+                Is.Zero);
+            Assert.That(FindInActiveScene<CanonicalPassage>()
+                .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors),
+                Is.EqualTo(12));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
                 Is.EqualTo(12));
@@ -7013,6 +7024,36 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(reverse.UsesCameraSequence, Is.False);
             Assert.That(forward.IsStairway, Is.False);
             Assert.That(reverse.IsStairway, Is.False);
+            Assert.That(forwardPassage.Definition.StableId,
+                Is.EqualTo("passage.butlers-pantry.billiard-room"));
+            Assert.That(reversePassage.Definition.StableId,
+                Is.EqualTo("passage.billiard-room.butlers-pantry"));
+            Assert.That(forwardPassage.Definition.LegacyDoorId, Is.EqualTo(forward.DoorName));
+            Assert.That(reversePassage.Definition.LegacyDoorId, Is.EqualTo(reverse.DoorName));
+            Assert.That(forwardPassage.Definition.Reverse, Is.SameAs(reversePassage.Definition));
+            Assert.That(reversePassage.Definition.Reverse, Is.SameAs(forwardPassage.Definition));
+            Assert.That(forwardPassage.ReversePassage, Is.SameAs(reversePassage));
+            Assert.That(reversePassage.ReversePassage, Is.SameAs(forwardPassage));
+            Assert.That(forwardPassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+            Assert.That(reversePassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+            Assert.That(forwardPassage.UsesAuthoredApproach, Is.False);
+            Assert.That(forwardPassage.UsesAuthoredArrival, Is.False);
+            Assert.That(reversePassage.UsesAuthoredApproach, Is.False);
+            Assert.That(reversePassage.UsesAuthoredArrival, Is.False);
+            AssertVector2Within(forwardPassage.ApproachAnchor.LogicalPosition,
+                new Vector2(2.744461f, -2.748338f), 0.0001f,
+                "passive Pantry-to-Billiard approach anchor");
+            AssertVector2Within(forwardPassage.ArrivalAnchor.LogicalPosition,
+                new Vector2(6.575521f, -1.484375f), 0.0001f,
+                "passive Pantry-to-Billiard arrival anchor");
+            AssertVector2Within(reversePassage.ApproachAnchor.LogicalPosition,
+                new Vector2(6.575521f, -1.484375f), 0.0001f,
+                "passive Billiard-to-Pantry approach anchor");
+            AssertVector2Within(reversePassage.ArrivalAnchor.LogicalPosition,
+                new Vector2(2.744461f, -2.748338f), 0.0001f,
+                "passive Billiard-to-Pantry arrival anchor");
             foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
             {
                 Assert.That(GetPrivateValue<float>(trigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
@@ -7044,8 +7085,31 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(reverse.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(billiardContent));
             Assert.That(forwardRect.parent.name, Is.EqualTo("Doors"));
             Assert.That(reverseRect.parent.name, Is.EqualTo("Doors"));
-            Assert.That(pantryContent.GetComponent<CanonicalRoomView>(), Is.Not.Null);
-            Assert.That(billiardContent.GetComponent<CanonicalRoomView>(), Is.Null);
+            CanonicalRoomView pantryView = pantryContent.GetComponent<CanonicalRoomView>();
+            CanonicalRoomView billiardView = billiardContent.GetComponent<CanonicalRoomView>();
+            Assert.That(pantryView, Is.Not.Null);
+            Assert.That(billiardView, Is.Not.Null);
+            Assert.That(forwardPassage.SourceRoomView, Is.SameAs(pantryView));
+            Assert.That(reversePassage.SourceRoomView, Is.SameAs(billiardView));
+            Assert.That(forwardPassage.Definition.SourceRoom, Is.SameAs(pantryView.Definition));
+            Assert.That(forwardPassage.Definition.DestinationRoom, Is.SameAs(billiardView.Definition));
+            Assert.That(reversePassage.Definition.SourceRoom, Is.SameAs(billiardView.Definition));
+            Assert.That(reversePassage.Definition.DestinationRoom, Is.SameAs(pantryView.Definition));
+            Assert.That(billiardView.Definition.StableId, Is.EqualTo("room.billiard-room"));
+            Assert.That(billiardView.Definition.DisplayName, Is.EqualTo(BilliardRoom));
+            Assert.That(billiardView.Definition.LegacyNames, Is.EqualTo(new[] { BilliardRoom }));
+            Assert.That(billiardView.LegacyContentGroup, Is.SameAs(billiardContent));
+            Assert.That(billiardView.Root, Is.SameAs(billiardContent.transform));
+            Assert.That(pantryView.IsVisible, Is.True);
+            Assert.That(billiardView.IsVisible, Is.False);
+            Assert.That(billiardView.HasGameContext, Is.True);
+            Assert.That(forwardPassage.HasGameContext, Is.True);
+            Assert.That(reversePassage.HasGameContext, Is.True);
+            Assert.That(forwardPassage.isActiveAndEnabled, Is.True);
+            Assert.That(reversePassage.isActiveAndEnabled, Is.False);
+            Assert.That(billiardView.Definition.BackgroundTexture,
+                Is.SameAs(GetPrivateField<Texture>(billiardContent, "roomBackgroundTexture")));
+            Assert.That(billiardView.Definition.PerspectiveProfile, Is.Null);
             Assert.That(GetPrivateField<Texture>(pantryContent, "roomBackgroundTexture"), Is.Not.Null);
             Assert.That(GetPrivateField<Texture>(billiardContent, "roomBackgroundTexture"), Is.Not.Null);
             Assert.That(GetPrivateField<Texture>(pantryContent, "roomBackgroundTexture"),
@@ -7058,23 +7122,114 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(FindInActiveScene<ObjectMovementBlocker2D>()
                 .Count(blocker => blocker.GetComponentInParent<RoomContentGroup>(true) == billiardContent),
                 Is.EqualTo(3));
+            string[] expectedCutoutNames =
+            {
+                "billiard_table",
+                "billiard_left_armchair",
+                "billiard_left_lamp_table"
+            };
+            int[] expectedCutoutComponentCounts = { 3, 2, 2 };
+            int[] expectedCutoutSortingOrders = { 1000, 1000, 1000 };
+            string[] expectedBlockerNames =
+            {
+                "PlayerBlocker_billiard_table",
+                "PlayerBlocker_billiard_left_armchair",
+                "PlayerBlocker_billiard_left_lamp_table"
+            };
+            for (int cutoutIndex = 0; cutoutIndex < expectedCutoutNames.Length; cutoutIndex++)
+            {
+                string cutoutName = expectedCutoutNames[cutoutIndex];
+                Transform cutout = FindInActiveScene<Transform>().Single(item => item.name == cutoutName);
+                Assert.That(cutout.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(billiardContent));
+                Assert.That(cutout.GetComponents<Component>(),
+                    Has.Length.EqualTo(expectedCutoutComponentCounts[cutoutIndex]));
+                Assert.That(cutout.GetComponent<SpriteRenderer>(), Is.Not.Null);
+                Assert.That(cutout.GetComponent<SpriteRenderer>().sortingOrder,
+                    Is.EqualTo(expectedCutoutSortingOrders[cutoutIndex]));
+            }
+            foreach (string blockerName in expectedBlockerNames)
+            {
+                ObjectMovementBlocker2D blocker = FindInActiveScene<ObjectMovementBlocker2D>()
+                    .Single(item => item.name == blockerName);
+                Assert.That(blocker.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(billiardContent));
+                Assert.That(blocker.GetComponents<Component>(), Has.Length.EqualTo(3));
+            }
+
+            Chateau.Architecture.ValidationReport billiardViewReport =
+                new Chateau.Architecture.ValidationReport();
+            Chateau.Architecture.ValidationReport forwardPassageReport =
+                new Chateau.Architecture.ValidationReport();
+            Chateau.Architecture.ValidationReport reversePassageReport =
+                new Chateau.Architecture.ValidationReport();
+            billiardView.ValidateConfiguration(billiardViewReport);
+            forwardPassage.ValidateConfiguration(forwardPassageReport);
+            reversePassage.ValidateConfiguration(reversePassageReport);
+            Assert.That(billiardViewReport.Messages, Is.Empty);
+            Assert.That(forwardPassageReport.Messages, Is.Empty);
+            Assert.That(reversePassageReport.Messages, Is.Empty);
+
+            Chateau.Architecture.GameRoot gameRoot =
+                RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+            Assert.That(gameRoot.Context.Database.Definitions, Has.Count.EqualTo(22));
+            Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(billiardView.Definition));
+            Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(forwardPassage.Definition));
+            Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(reversePassage.Definition));
+            Assert.That(AssetDatabase.GetAssetPath(billiardView.Definition),
+                Is.EqualTo("Assets/_Chateau/Data/World/Rooms/Room_BilliardRoom.asset"));
+            Assert.That(AssetDatabase.GetAssetPath(forwardPassage.Definition),
+                Is.EqualTo("Assets/_Chateau/Data/World/Passages/Passage_ButlersPantry_BilliardRoom.asset"));
+            Assert.That(AssetDatabase.GetAssetPath(reversePassage.Definition),
+                Is.EqualTo("Assets/_Chateau/Data/World/Passages/Passage_BilliardRoom_ButlersPantry.asset"));
+            List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
+                GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
+            Assert.That(sceneBehaviours.Count(item => item == billiardView), Is.EqualTo(1));
+            Assert.That(sceneBehaviours.Count(item => item == forwardPassage), Is.EqualTo(1));
+            Assert.That(sceneBehaviours.Count(item => item == reversePassage), Is.EqualTo(1));
 
             string projectRoot = System.IO.Directory.GetParent(Application.dataPath).FullName;
             string sceneText = System.IO.File.ReadAllText(System.IO.Path.Combine(projectRoot, GameplayScenePath));
+            string databaseText = System.IO.File.ReadAllText(System.IO.Path.Combine(
+                projectRoot,
+                AssetDatabase.GetAssetPath(gameRoot.Context.Database)));
+            Assert.That(System.Text.RegularExpressions.Regex.Matches(
+                databaseText,
+                "^  - \\{fileID: 11400000, guid:",
+                System.Text.RegularExpressions.RegexOptions.Multiline).Count,
+                Is.EqualTo(22));
+            foreach (string definitionGuid in new[]
+            {
+                "bed158a9affd015fcc961340d9be5dd8",
+                "71ea8ce4d4eb8fa7f107abe24d7c903e",
+                "be2f1b94b724dcfa061876e33bce02ca"
+            })
+            {
+                Assert.That(databaseText, Does.Contain(
+                    $"  - {{fileID: 11400000, guid: {definitionGuid}, type: 2}}"));
+            }
             string serializedForward = RequireSerializedUnityDocument(sceneText, "1505671646");
             string serializedReverse = RequireSerializedUnityDocument(sceneText, "2300000134");
             string serializedForwardRect = RequireSerializedUnityDocument(sceneText, "1505671645", "224");
             string serializedReverseRect = RequireSerializedUnityDocument(sceneText, "2300000131", "224");
             string serializedPantryContent = RequireSerializedUnityDocument(sceneText, "2300000022");
             string serializedBilliardContent = RequireSerializedUnityDocument(sceneText, "2300000012");
+            string serializedBilliardView = RequireSerializedUnityDocument(sceneText, "4100000008");
+            string serializedForwardPassage = RequireSerializedUnityDocument(sceneText, "4100000023");
+            string serializedReversePassage = RequireSerializedUnityDocument(sceneText, "4100000024");
+            string serializedGameRoot = RequireSerializedUnityDocument(sceneText, "1878886998");
+            Assert.That(System.Text.RegularExpressions.Regex.Matches(
+                sceneText,
+                "^--- !u!",
+                System.Text.RegularExpressions.RegexOptions.Multiline).Count,
+                Is.EqualTo(6029));
             Assert.That(serializedForward, Does.Not.Contain("canonicalPassage:"));
             Assert.That(serializedReverse, Does.Not.Contain("canonicalPassage:"));
             foreach (string document in new[] { serializedForward, serializedReverse })
             {
-                Assert.That(document, Does.Contain("navigationManager: {fileID: 0}"));
-                Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
-                Assert.That(document, Does.Contain("player: {fileID: 0}"));
-                Assert.That(document, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+                Assert.That(document, Does.Contain("navigationManager: {fileID: 1878886997}"));
+                Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+                Assert.That(document, Does.Contain("player: {fileID: 81962843}"));
+                Assert.That(document, Does.Contain(
+                    "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
                 Assert.That(document, Does.Contain("maxPlayerScreenDistance: 145"));
             }
             Assert.That(serializedForwardRect, Does.Contain("m_Father: {fileID: 2300000024}"));
@@ -7087,11 +7242,70 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(serializedBilliardContent, Does.Contain(
                 "roomBackgroundTexture: {fileID: 2800000, guid: 5987c5a8b3a09fc1ca848ac0ece03658, type: 3}"));
             Assert.That(serializedBilliardContent, Does.Contain("perspectiveProfile: {fileID: 0}"));
+            Assert.That(serializedBilliardView, Does.Contain(
+                "definition: {fileID: 11400000, guid: bed158a9affd015fcc961340d9be5dd8, type: 2}"));
+            Assert.That(serializedBilliardView, Does.Contain("legacyContentGroup: {fileID: 2300000012}"));
+            Assert.That(serializedForwardPassage, Does.Contain(
+                "definition: {fileID: 11400000, guid: 71ea8ce4d4eb8fa7f107abe24d7c903e, type: 2}"));
+            Assert.That(serializedForwardPassage, Does.Contain("sourceRoomView: {fileID: 4100000007}"));
+            Assert.That(serializedForwardPassage, Does.Contain("reversePassage: {fileID: 4100000024}"));
+            Assert.That(serializedForwardPassage, Does.Contain(
+                "  approachAnchor:\n    logicalPosition: {x: 2.744461, y: -2.748338}"));
+            Assert.That(serializedForwardPassage, Does.Contain(
+                "  arrivalAnchor:\n    logicalPosition: {x: 6.575521, y: -1.484375}"));
+            Assert.That(serializedForwardPassage, Does.Contain("anchorMigrationStage: 0"));
+            Assert.That(serializedReversePassage, Does.Contain(
+                "definition: {fileID: 11400000, guid: be2f1b94b724dcfa061876e33bce02ca, type: 2}"));
+            Assert.That(serializedReversePassage, Does.Contain("sourceRoomView: {fileID: 4100000008}"));
+            Assert.That(serializedReversePassage, Does.Contain("reversePassage: {fileID: 4100000023}"));
+            Assert.That(serializedReversePassage, Does.Contain(
+                "  approachAnchor:\n    logicalPosition: {x: 6.575521, y: -1.484375}"));
+            Assert.That(serializedReversePassage, Does.Contain(
+                "  arrivalAnchor:\n    logicalPosition: {x: 2.744461, y: -2.748338}"));
+            Assert.That(serializedReversePassage, Does.Contain("anchorMigrationStage: 0"));
+            foreach (string fileId in new[] { "4100000008", "4100000023", "4100000024" })
+            {
+                Assert.That(serializedGameRoot, Does.Contain($"  - {{fileID: {fileId}}}"));
+            }
+
+            System.Text.RegularExpressions.MatchCollection triggerDocuments =
+                System.Text.RegularExpressions.Regex.Matches(
+                    sceneText.Replace("\r\n", "\n"),
+                    "(?ms)^--- !u!114 &\\d+\\n.*?(?=^--- !u!|\\z)");
+            string triggerScriptGuid = "7e419b0f8f26d4f2d8d03e567fef4c52";
+            string[] serializedTriggerDocuments = triggerDocuments.Cast<System.Text.RegularExpressions.Match>()
+                .Select(item => item.Value)
+                .Where(document => document.Contains($"guid: {triggerScriptGuid}"))
+                .ToArray();
+            Assert.That(serializedTriggerDocuments, Has.Length.EqualTo(45));
+            Assert.That(serializedTriggerDocuments.Count(document =>
+                document.Contains("navigationManager: {fileID: 1878886997}") &&
+                document.Contains("doorOpenAudioSource: {fileID: 2201000013}") &&
+                document.Contains("player: {fileID: 81962843}") &&
+                document.Contains("doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
+                Is.EqualTo(14));
+            Assert.That(serializedTriggerDocuments.Count(document =>
+                document.Contains("navigationManager: {fileID: 0}") &&
+                document.Contains("doorOpenAudioSource: {fileID: 0}") &&
+                document.Contains("player: {fileID: 0}") &&
+                document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
+                Is.EqualTo(31));
+            Assert.That(serializedTriggerDocuments.Count(document =>
+                document.Contains("canonicalPassage: {fileID:") &&
+                !document.Contains("canonicalPassage: {fileID: 0}")),
+                Is.EqualTo(12));
 
             AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
                 .Single(item => item.gameObject.name == "Audio_DoorOpen");
             DoorOpenSoundCatalog passageDoorCatalog = Resources.Load<DoorOpenSoundCatalog>(
                 "Audio/DoorOpenSoundCatalog");
+            AssertDoorTriggerCompatibilityBindings(
+                forward,
+                reverse,
+                navigation,
+                player.transform,
+                passageAudioSource,
+                passageDoorCatalog);
             foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
             {
                 InvokePrivateMethod(trigger, "ResolveReferences");
@@ -7418,7 +7632,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             string profileObservationLine =
                 $"[ButlersBilliardLegacyProfile] forwardGeometry={FormatVector(forwardRect.anchoredPosition)}/" +
                 $"{FormatVector(forwardRect.sizeDelta)} reverseGeometry={FormatVector(reverseRect.anchoredPosition)}/" +
-                $"{FormatVector(reverseRect.sizeDelta)} profiles=none callers=null serializedDependencies=null " +
+                $"{FormatVector(reverseRect.sizeDelta)} profiles=none callers=null serializedDependencies=bound " +
                 $"runtimeDependencies=resolved blockers=0/3";
             observationProfileLines.Add(profileObservationLine);
             Debug.Log(profileObservationLine);
@@ -7430,6 +7644,12 @@ public sealed class GameplayLifecycleCharacterizationTests
 
             Assert.That(navigation.CurrentRoom, Is.EqualTo(ButlersPantry));
             Assert.That(RequireOnlyActiveRoom(ButlersPantry), Is.SameAs(pantryContent));
+            Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
+            Assert.That(forwardPassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
+            Assert.That(reversePassage.AnchorMigrationStage,
+                Is.EqualTo(PassageAnchorMigrationStage.LegacySampling));
             Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
             Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation),
                 "pendingApproachTrigger"), Is.Null);
@@ -9937,11 +10157,11 @@ public sealed class GameplayLifecycleCharacterizationTests
         bool drawingVisible)
     {
         CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-        Assert.That(roomViews, Has.Length.EqualTo(7),
-            "Entrance, Drawing, Music, Library, Ballroom, Dining, and Butlers Pantry must remain the only passive RoomView scene owners at this gate.");
+        Assert.That(roomViews, Has.Length.EqualTo(8),
+            "Entrance, Drawing, Music, Library, Ballroom, Dining, Butlers Pantry, and Billiard Room must remain the only passive RoomView scene owners at this gate.");
         CanonicalPassage[] passages = FindInActiveScene<CanonicalPassage>();
-        Assert.That(passages, Has.Length.EqualTo(12),
-            "The six complete route grafts must remain exactly twelve reciprocal canonical scene bindings.");
+        Assert.That(passages, Has.Length.EqualTo(14),
+            "The six complete route grafts plus the dependency-bound Billiard graft must remain exactly fourteen reciprocal canonical scene bindings.");
 
         Assert.That(
             roomViews.Single(item => item.Definition != null && item.Definition.StableId == "room.grand-entrance-hall"),
@@ -10684,7 +10904,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage, Is.Not.Null);
         Assert.That(musicView, Is.Not.Null);
         Assert.That(libraryView, Is.Not.Null);
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(14));
 
         Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
         Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));
@@ -10846,7 +11066,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage, Is.Not.Null);
         Assert.That(drawingView, Is.Not.Null);
         Assert.That(musicView, Is.Not.Null);
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(12));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(14));
 
         Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
         Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));
