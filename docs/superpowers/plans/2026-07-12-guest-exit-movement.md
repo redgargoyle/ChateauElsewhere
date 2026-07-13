@@ -21,6 +21,7 @@
 
 **Files:**
 - Modify: `Assets/Editor/RoomProjectionRegressionTests.cs`
+- Modify: `Assets/Scripts/Characters/RoomProjectedEntity.cs` - exposes the active position-ownership contract consumed by waypoint movement.
 - Modify: `Assets/Scripts/Story/NPCWaypointMover.cs`
 
 **Interfaces:**
