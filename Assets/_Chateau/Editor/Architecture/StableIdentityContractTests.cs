@@ -285,7 +285,9 @@ public sealed class StableIdentityContractTests
             "passage.upper-gallery.upper-sitting-hall",
             "passage.upper-sitting-hall.upper-gallery",
             "passage.upper-gallery.master-bedroom-suite",
-            "passage.master-bedroom-suite.upper-gallery"
+            "passage.master-bedroom-suite.upper-gallery",
+            "passage.upper-sitting-hall.nursery",
+            "passage.nursery.upper-sitting-hall"
         };
 
         CanonicalRoomDefinition[] rooms = AssetDatabase.FindAssets(
@@ -304,7 +306,7 @@ public sealed class StableIdentityContractTests
             .ToArray();
 
         Assert.That(rooms, Has.Length.EqualTo(19));
-        Assert.That(passages, Has.Length.EqualTo(34));
+        Assert.That(passages, Has.Length.EqualTo(36));
         Assert.That(rooms.Select(definition => definition.StableId), Is.EquivalentTo(expectedRoomIds));
         Assert.That(passages.Select(definition => definition.StableId), Is.EquivalentTo(expectedPassageIds));
 
