@@ -29,6 +29,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private const string DefaultDoorOpenSoundCatalogResourcePath = "Audio/DoorOpenSoundCatalog";
     private const string DefaultStairwaySoundCatalogResourcePath = "Audio/StairwaySoundCatalog";
+    private const float FallbackDoorBaseVolume = 0.36f;
+    private const float FallbackDoorHighPassCutoffFrequency = 180f;
+    private const float FallbackDoorLowPassCutoffFrequency = 7800f;
+    private const float FallbackStairwayBaseVolume = 0.42f;
+    private const float FallbackStairwayHighPassCutoffFrequency = 140f;
+    private const float FallbackStairwayLowPassCutoffFrequency = 9000f;
     private const float ApproachTriggerDistanceWeight = 10f;
     private const float ApproachPlayerDistanceWeight = 0.01f;
     private const float ApproachExactPointPenalty = 25f;
@@ -1212,10 +1218,7 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         StopCurrentNavigationSound();
         activeNavigationAudioSource = doorOpenAudioSource;
         doorOpenAudioSource.Stop();
-        GameAudioSettings.EnsureBinding(
-            doorOpenAudioSource,
-            GameAudioChannel.GameSounds,
-            GameAudioSettings.GetCurrentOrBoundBaseVolume(doorOpenAudioSource, GameAudioChannel.GameSounds));
+        ApplyNavigationAudioMix();
 
         if (TryGetNavigationClip(out AudioClip randomClip))
         {
@@ -1288,6 +1291,46 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         ResolveDoorOpenSoundCatalog();
 
         return doorOpenSoundCatalog != null && doorOpenSoundCatalog.TryGetRandomClip(ref lastDoorOpenClipIndex, out clip);
+    }
+
+    private void ApplyNavigationAudioMix()
+    {
+        DoorOpenSoundCatalog activeCatalog;
+
+        if (IsStairway)
+        {
+            ResolveStairwaySoundCatalog();
+            activeCatalog = stairwaySoundCatalog;
+        }
+        else
+        {
+            ResolveDoorOpenSoundCatalog();
+            activeCatalog = doorOpenSoundCatalog;
+        }
+
+        if (activeCatalog != null)
+        {
+            activeCatalog.ApplyMixTo(doorOpenAudioSource);
+            return;
+        }
+
+        float fallbackBaseVolume = IsStairway ? FallbackStairwayBaseVolume : FallbackDoorBaseVolume;
+        float fallbackHighPassCutoffFrequency = IsStairway
+            ? FallbackStairwayHighPassCutoffFrequency
+            : FallbackDoorHighPassCutoffFrequency;
+        float fallbackLowPassCutoffFrequency = IsStairway
+            ? FallbackStairwayLowPassCutoffFrequency
+            : FallbackDoorLowPassCutoffFrequency;
+
+        GameAudioSettings.EnsureBinding(doorOpenAudioSource, GameAudioChannel.GameSounds, fallbackBaseVolume);
+        GameAudioSettings.EnsureSafetyFilters(
+            doorOpenAudioSource,
+            fallbackHighPassCutoffFrequency,
+            1f,
+            fallbackLowPassCutoffFrequency,
+            1f,
+            out _,
+            out _);
     }
 
     private void ResolveDoorOpenSoundCatalog()

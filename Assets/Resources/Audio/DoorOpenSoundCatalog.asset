@@ -20,3 +20,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: b4b7000b59187e681842ce176d3af8f1, type: 3}
   - {fileID: 8300000, guid: f4956ecaf6e87b614986f660c1aec946, type: 3}
   - {fileID: 8300000, guid: 49f61a323f4368579841779cab219288, type: 3}
+  baseVolume: 0.36
+  highPassCutoffFrequency: 180
+  highPassResonanceQ: 1
+  lowPassCutoffFrequency: 7800
+  lowPassResonanceQ: 1

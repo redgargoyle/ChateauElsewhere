@@ -15,26 +15,30 @@ MonoBehaviour:
   assignments:
   - guestNumber: 1
     clip: {fileID: 8300000, guid: 84d42512a78f628d3a59304de9424ef1, type: 3}
-    volume: 0.92
+    volume: 0.07
   - guestNumber: 2
     clip: {fileID: 8300000, guid: 0092f798879fd9e5e6e19a72526396ee, type: 3}
-    volume: 0.88
+    volume: 0.06
   - guestNumber: 3
     clip: {fileID: 8300000, guid: a86a73cd94f1a007524ccdb253b12cd9, type: 3}
-    volume: 0.9
+    volume: 0.065
   - guestNumber: 4
     clip: {fileID: 8300000, guid: 18989dc942c1c69928f4756ba7757917, type: 3}
-    volume: 0.9
+    volume: 0.06
   - guestNumber: 5
     clip: {fileID: 8300000, guid: 3c1f970752441ace0deb07d669c3e36c, type: 3}
-    volume: 0.82
+    volume: 0.055
   - guestNumber: 6
     clip: {fileID: 8300000, guid: fec5f87480670060f9ca07aab71dc81a, type: 3}
-    volume: 0.86
+    volume: 0.055
   - guestNumber: 7
     clip: {fileID: 8300000, guid: 607ec06e2c926392c76324c64482e95e, type: 3}
-    volume: 0.82
+    volume: 0.05
   - guestNumber: 8
     clip: {fileID: 8300000, guid: b00ccfbdafc3928019e8ea8d5373e4a7, type: 3}
-    volume: 0.84
-  defaultVolume: 0.9
+    volume: 0.055
+  defaultVolume: 0.06
+  highPassCutoffFrequency: 180
+  highPassResonanceQ: 0.8
+  lowPassCutoffFrequency: 6000
+  lowPassResonanceQ: 0.8

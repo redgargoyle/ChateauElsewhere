@@ -307,7 +307,14 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         if (panicScreamCatalog.TryGetScreamForGuest(participant.GuestNumber, out AudioClip clip, out float volume))
         {
-            participant.ConfigurePanicScream(clip, volume, PanicScreamAudioObjectName);
+            participant.ConfigurePanicScream(
+                clip,
+                volume,
+                PanicScreamAudioObjectName,
+                panicScreamCatalog.HighPassCutoffFrequency,
+                panicScreamCatalog.HighPassResonanceQ,
+                panicScreamCatalog.LowPassCutoffFrequency,
+                panicScreamCatalog.LowPassResonanceQ);
         }
     }
 
@@ -1477,7 +1484,14 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             controlledByScript = controlled;
         }
 
-        public void ConfigurePanicScream(AudioClip clip, float baseVolume, string audioObjectName)
+        public void ConfigurePanicScream(
+            AudioClip clip,
+            float baseVolume,
+            string audioObjectName,
+            float highPassCutoffFrequency,
+            float highPassResonanceQ,
+            float lowPassCutoffFrequency,
+            float lowPassResonanceQ)
         {
             if (clip == null || targetTransform == null)
             {
@@ -1485,7 +1499,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             panicScreamClip = clip;
-            panicScreamBaseVolume = Mathf.Max(0f, baseVolume);
+            panicScreamBaseVolume = Chapter2PanicScreamCatalog.ClampSafeVolume(baseVolume);
             panicScreamAudioSource = FindOrCreatePanicScreamAudioSource(audioObjectName);
 
             if (panicScreamAudioSource == null)
@@ -1498,6 +1512,14 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             panicScreamAudioSource.loop = false;
             panicScreamAudioSource.spatialBlend = 0f;
             panicScreamAudioSource.ignoreListenerVolume = true;
+            GameAudioSettings.EnsureSafetyFilters(
+                panicScreamAudioSource,
+                highPassCutoffFrequency,
+                highPassResonanceQ,
+                lowPassCutoffFrequency,
+                lowPassResonanceQ,
+                out _,
+                out _);
             GameAudioSettings.EnsureBinding(panicScreamAudioSource, GameAudioChannel.GameSounds, panicScreamBaseVolume);
         }
 

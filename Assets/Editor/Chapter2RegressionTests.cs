@@ -408,7 +408,8 @@ public class Chapter2RegressionTests
         };
 
         Assert.That(audioText, Does.Contain("AudioHighPassFilter"), "Each guest footstep source should high-pass its one-shots before they enter the mix.");
-        Assert.That(audioText, Does.Contain("highpassResonanceQ"), "The high-pass resonance should be serialized through the source component.");
+        Assert.That(audioText, Does.Contain("highPassResonanceQ"), "The high-pass resonance should be serialized through the source component.");
+        Assert.That(audioText, Does.Contain("EnsureSafetyFilters"), "Guest footsteps should use the shared audio filter setup.");
         Assert.That(audioText, Does.Contain("source.loop = false"), "Footsteps should trigger one-shots, not long loops.");
         Assert.That(audioText, Does.Contain("PlayOneShot"), "Footsteps should be rhythmically triggered by code.");
         Assert.That(audioText, Does.Contain("stepIntervalSeconds"), "Footstep cadence should be serialized through the source component.");
@@ -429,7 +430,7 @@ public class Chapter2RegressionTests
             Assert.That(File.Exists(clipPath), Is.True, $"Guest {guestNumber} footstep clip should exist at {clipPath}.");
             Assert.That(
                 catalogText,
-                Does.Match($@"(?s)- guestNumber: {guestNumber}\s+clip: \{{fileID: 8300000, guid: {clipGuid}, type: 3\}}\s+clips: "),
+                Does.Match($@"(?s)- guestNumber: {guestNumber}\s+clip: \{{fileID: 8300000, guid: {clipGuid}, type: 3\}}\s+clips:\s+"),
                 $"Guest {guestNumber} should be assigned to {Path.GetFileName(clipPath)}.");
         }
 

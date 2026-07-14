@@ -189,7 +189,7 @@ public sealed class SpeakingCharacterIndicator : MonoBehaviour
         return true;
     }
 
-    private bool TryResolveSpeakerTarget(string lineId, string speaker, out Transform target, out ActorRoomState actor)
+    private static bool TryResolveSpeakerTarget(string lineId, string speaker, out Transform target, out ActorRoomState actor)
     {
         target = null;
         actor = null;
@@ -199,13 +199,42 @@ public sealed class SpeakingCharacterIndicator : MonoBehaviour
             return TryResolveButlerTarget(out target, out actor);
         }
 
+        if (TryResolveGuestSpeakerTarget(lineId, speaker, out target, out actor))
+        {
+            return true;
+        }
+
+        return TryResolveNamedActor(speaker, out target, out actor);
+    }
+
+    public static bool TryResolveGuestSpeakerTarget(
+        string lineId,
+        string speaker,
+        out Transform target,
+        out ActorRoomState actor)
+    {
+        target = null;
+        actor = null;
+
+        if (IsButlerSpeaker(lineId, speaker))
+        {
+            return false;
+        }
+
         if (TryResolveGuestNumber(lineId, speaker, out int guestNumber) &&
             TryResolveGuestTarget(guestNumber, speaker, out target, out actor))
         {
             return true;
         }
 
-        return TryResolveNamedActor(speaker, out target, out actor);
+        if (!TryResolveNamedActor(speaker, out target, out actor) || !LooksLikeGuestActor(actor))
+        {
+            target = null;
+            actor = null;
+            return false;
+        }
+
+        return true;
     }
 
     private static bool TryResolveButlerTarget(out Transform target, out ActorRoomState actor)
@@ -351,6 +380,11 @@ public sealed class SpeakingCharacterIndicator : MonoBehaviour
             }
         }
 
+        if (score == 0)
+        {
+            return 0;
+        }
+
         if (candidate.IsVisibleInCurrentRoom)
         {
             score += 20;
@@ -362,6 +396,20 @@ public sealed class SpeakingCharacterIndicator : MonoBehaviour
         }
 
         return score;
+    }
+
+    private static bool LooksLikeGuestActor(ActorRoomState actor)
+    {
+        return actor != null &&
+            (ContainsOrdinalIgnoreCase(actor.ActorId, "guest") ||
+             ContainsOrdinalIgnoreCase(actor.gameObject.name, "guest"));
+    }
+
+    private static bool ContainsOrdinalIgnoreCase(string value, string token)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            !string.IsNullOrWhiteSpace(token) &&
+            value.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private bool TryGetTargetBounds(Transform target, out Bounds bounds, out int sortingLayerId, out int sortingOrder)

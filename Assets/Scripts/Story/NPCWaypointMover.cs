@@ -12,13 +12,17 @@ public class NPCWaypointMover : MonoBehaviour
     [SerializeField] private RoomProjectedEntity roomProjection;
     [SerializeField] private ActorRoomState actorRoomState;
     [SerializeField] private Animator animator;
+    [SerializeField] private GuestFootstepAudio footstepAudio;
 
     private Coroutine moveRoutine;
     private bool isMoving;
+    private int speechPauseCount;
+    private bool restoreAmbientWalkerAfterSpeechPause;
     private CharacterAnimatorDriver.ParameterCache animatorParameters;
     private CharacterWalkDirection walkDirection = CharacterWalkDirection.Down;
 
     public bool IsMoving => isMoving;
+    public bool IsSpeechPaused => speechPauseCount > 0;
     public float MoveSpeed
     {
         get => moveSpeed;
@@ -92,6 +96,13 @@ public class NPCWaypointMover : MonoBehaviour
 
         while (Vector2.Distance(transform.position, targetPosition) > stopDistance)
         {
+            if (IsSpeechPaused)
+            {
+                ApplySpeechPauseIdle();
+                yield return null;
+                continue;
+            }
+
             Vector3 previousPosition = transform.position;
             Vector3 nextPosition = Vector3.MoveTowards(
                 transform.position,
@@ -115,6 +126,13 @@ public class NPCWaypointMover : MonoBehaviour
         while (roomProjection != null &&
             Vector2.Distance(roomProjection.RoomLocalFootPoint, targetFootPoint) > stopDistance)
         {
+            if (IsSpeechPaused)
+            {
+                ApplySpeechPauseIdle();
+                yield return null;
+                continue;
+            }
+
             Vector2 previousPosition = roomProjection.RoomLocalFootPoint;
             Vector2 nextPosition = Vector2.MoveTowards(
                 previousPosition,
@@ -145,6 +163,54 @@ public class NPCWaypointMover : MonoBehaviour
 
         isMoving = false;
         UpdateAnimator(Vector2.zero, false);
+    }
+
+    public void AcquireSpeechPause()
+    {
+        ResolveReferences();
+        speechPauseCount++;
+
+        if (speechPauseCount > 1)
+        {
+            return;
+        }
+
+        restoreAmbientWalkerAfterSpeechPause = ambientWalker != null && ambientWalker.enabled;
+
+        if (restoreAmbientWalkerAfterSpeechPause)
+        {
+            ambientWalker.enabled = false;
+        }
+
+        ApplySpeechPauseIdle();
+    }
+
+    public void ReleaseSpeechPause()
+    {
+        if (speechPauseCount <= 0)
+        {
+            return;
+        }
+
+        speechPauseCount--;
+
+        if (speechPauseCount > 0)
+        {
+            return;
+        }
+
+        bool shouldRestoreAmbientWalker = restoreAmbientWalkerAfterSpeechPause && !isMoving;
+        restoreAmbientWalkerAfterSpeechPause = false;
+
+        if (shouldRestoreAmbientWalker && ambientWalker != null)
+        {
+            ambientWalker.enabled = true;
+        }
+
+        if (isMoving)
+        {
+            footstepAudio?.PlayWalking();
+        }
     }
 
     public void SetAmbientWalkerEnabled(bool value)
@@ -206,7 +272,18 @@ public class NPCWaypointMover : MonoBehaviour
             animator = GetComponentInChildren<Animator>(true);
         }
 
+        if (footstepAudio == null)
+        {
+            footstepAudio = GetComponentInChildren<GuestFootstepAudio>(true);
+        }
+
         animatorParameters = CharacterAnimatorDriver.ParameterCache.FromAnimator(animator);
+    }
+
+    private void ApplySpeechPauseIdle()
+    {
+        footstepAudio?.StopWalking();
+        UpdateAnimator(Vector2.zero, false);
     }
 
     private bool TryPlaceProjectedAtTarget(Transform target)
