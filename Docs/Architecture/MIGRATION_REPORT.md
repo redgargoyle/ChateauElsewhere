@@ -2,9 +2,17 @@
 
 ## Current phase
 
-**Phase 3 serialized foundation is complete; Phase 4 vertical migration is in progress. Six reciprocal pairs are complete at `AuthoredAnchors` stage 2, and Group `06` Butlers Pantry/Billiard Room is now `dependencies-bound` at stage 0 after its bounded five-change foundation batch. Fourteen direct-dependency sets and twelve canonical callers are bound; 31 triggers retain null dependencies and 33 callers remain null. Gameplay has 6,029 documents, eight RoomViews, and fourteen Passages; `GameDatabase` has 22 definitions. The manifest contains 12 complete, 2 dependencies-bound, 26 queued, 2 blocked-one-way, and 3 blocked-parallel triggers. Final Group `06` foundation gates pass targeted `1/1`, focused `14/14`, safety `32/32`, rendered lifecycle `10/10`, and full `264/218/46` with unchanged failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`; architecture/serialization/Y-axis audits pass at `112 runtime files / 48,789 lines / 48 direct MonoBehaviour declarations / 155 serialized script records / zero hard errors / 38 findings`. Human doorway/camera/visibility and Billiard cutout/blocker review remains pending. The exact next safe step is caller-only Group `06` binding while both Passages remain at stage 0.**
+**The final-overhaul continuation has completed its trustworthy Phase 0 baseline and the fully passing Phase 1.1 typed-identity slice. Core now defines serializable, type-separated `RoomId`, `PassageId`, `ActorId`, `ChapterId`, `BeatId`, and `ObjectiveId` contracts. Canonical room and passage definitions expose typed read seams, while every existing serialized string and compatibility API remains unchanged. Unity compilation passes; focused identity tests pass `12/12`; Core/canonical compatibility tests pass `34/34`; the rendered cold-start fingerprint passes `1/1` at the exact approved digest `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`; architecture, runtime-ledger, GUID, and serialized-reference controls pass at `113` runtime files / `113` exact rows / `159` current scripts / `1,926` serialized references. The exact next architecture slice is typed `GameContext` service properties and initialization-order validation.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
+
+### Typed-identity boundary decisions
+
+- The six value types validate canonical lexical form and prevent accidental cross-domain assignment. Catalog membership remains the responsibility of typed definitions and `GameDatabase` indexes; parsing a token alone never proves that authored content exists.
+- `ChapterId` preserves the approved `chapter_01_arrivals` compatibility format. Scheduler event strings are not chapter identities and must never be parsed at the chapter boundary; the Phase 1 data index and Phase 5 chapter definitions will reject unregistered chapter tokens.
+- New actor identities use `actor.*`. Existing `guest_1` strings, object names, and speaker labels remain legacy aliases until Phase 4 provides an explicit authored mapping; they are deliberately rejected rather than silently slugified.
+- New beats and objectives use `beat.*` and `objective.*`. The old `StoryBeatBase(string)` constructor remains compatibility-only and exposes `TryGetId == false` for a noncanonical legacy label; all new beats use the typed constructor.
+- Room and passage IDs intentionally validate lexical identity rather than topology. Endpoint references, directed-edge shape, one-way/shared-return rules, and uniqueness are validated by `RoomDefinition`, `PassageDefinition`, and the later typed database indexes.
 
 ## Source baseline
 

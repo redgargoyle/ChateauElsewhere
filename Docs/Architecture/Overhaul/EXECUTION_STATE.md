@@ -3,33 +3,33 @@
 ## Repository
 
 - Branch: `refactor/final-architecture-overhaul`
-- HEAD: `c86beaea48f4910c2c1937d54574ec7360df8bd5` at slice start
+- HEAD: `e795181c0e27d1cb9d85eed2694013ac45995b46` at slice start
 - Unity: `/home/hamzak/Unity/Hub/Editor/6000.4.10f1/Editor/Unity` (`6000.4.10f1`, revision `feeafc12a938`)
 - Working tree clean: yes at slice start
-- Last passing commit: `c86beaea48f4910c2c1937d54574ec7360df8bd5`
+- Last passing commit: `e795181c0e27d1cb9d85eed2694013ac45995b46`
 
 ## Current slice
 
-- Slice ID: `0.4b` — make calibration-window reads non-mutating and intentional editor writes Undo-safe
-- Sole ownership change: the two temporary actor-scale calibration windows become read-only during open, selection, layout, and repaint. Pure query extraction leaves existing mutating compatibility APIs intact, and calibration-reference writes touched by this batch record Unity Undo first. No runtime scale owner or serialized calibration data moves in this slice.
-- Starting commit: `c86beaea48f4910c2c1937d54574ec7360df8bd5`
-- Allowed files/assets: this execution-state record; `Assets/Editor/ButlerRoomScaleCalibrationWindow.cs`; `Assets/Editor/GuestRoomScaleMasterWindow.cs`; `Assets/Editor/GuestButlerScaleRegressionTests.cs`; and pure, compatibility-preserving query extraction only in `Assets/Scripts/Characters/GuestRoomScaleCalibration.cs` and `Assets/Scripts/Characters/GuestScaleParticipant.cs`. No runtime scale output or write path, scene, prefab, ScriptableObject, `.meta`, package, ProjectSettings, generated baseline, large asset, or existing calibration record may change.
-- Compatibility surface preserved: every public/runtime API, script GUID, serialized file ID/reference, all nineteen Butler endpoint records, all nineteen guest calibration records, eight guest captured-base values, the certified fingerprint `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`, and all approved gameplay/visual/timing behavior. The temporary editor windows keep their menus and workflows; actor-profile conversion remains Phase `4` work.
-- Characterization test: add behavior-level EditMode coverage proving Butler selection/open reads do not initialize serialized base scale; guest room/repaint reads do not sanitize calibration entries or cache guest presentation fields; and calibration-reference assignment records Undo before mutation.
-- Focused test filter and expected count: `GuestRoomScaleRegressionTests` must discover exactly `62` tests with the four new regressions passing and the same four certified legacy failures only (`58 passed / 4 known failed / 0 skipped`, failed-name SHA-256 `b3e17ee67f553f0ec455ca79052a7aff16d984462c04601ceb1b2cb5b7434ab5`). Use one Unity process for the completed batch, not one process per small edit.
-- PlayMode/manual/golden gate: inspect the complete diff for pure-query-only runtime changes and zero scene/prefab/meta change, then run the certified cold-start fingerprint once and require exact digest `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`. Behavior-level regressions must prove window open/selection/read paths leave serialized state unchanged until an explicit control is used.
-- Rollback commit: `c86beaea48f4910c2c1937d54574ec7360df8bd5`
+- Slice ID: `1.1` — establish typed stable-identity contracts without migrating serialized identity storage
+- Sole ownership change: Core becomes the sole owner of the canonical stable-ID syntax and the six domain value contracts (`RoomId`, `PassageId`, `ActorId`, `ChapterId`, `BeatId`, and `ObjectiveId`). Room and passage definitions expose typed read seams, and `StoryBeatBase` exposes a typed identity while retaining its existing string API. This slice does not transfer any gameplay state or replace any serialized string field.
+- Starting commit: `e795181c0e27d1cb9d85eed2694013ac45995b46`
+- Allowed files/assets: this execution-state record; `Docs/Architecture/Overhaul/FINAL_RUNTIME_MIGRATION_LEDGER.csv`; `Docs/Architecture/Overhaul/FINAL_EDITOR_TOOL_LEDGER.csv`; the Phase `1.1` migration-report entry; generated architecture evidence; new folder metadata and `Assets/_Chateau/Runtime/Core/Contracts/IDs/StableIds.cs`; `Assets/_Chateau/Runtime/World/Rooms/RoomDefinition.cs`; `Assets/_Chateau/Runtime/World/Rooms/Passages/PassageDefinition.cs`; `Assets/_Chateau/Runtime/Gameplay/StoryBeatBase.cs`; and one focused `StableIdentityContractTests` EditMode source plus its new `.meta`. No scene, prefab, ScriptableObject, package, ProjectSettings, large asset, existing `.meta`, or serialized identity field may change.
+- Compatibility surface preserved: `DefinitionAssetBase.stableId`, every legacy room/actor/chapter string, `RoomDefinition.StableId`, `PassageDefinition.StableId`, `StoryBeatBase(string)`, `StoryBeatBase.BeatId`, all public runtime APIs, all existing GUIDs and serialized file IDs/references, and the certified visual fingerprint `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`. The new contracts reject display labels but do not silently rewrite legacy serialized values.
+- Characterization test: focused EditMode coverage must prove all six types accept their approved canonical token forms, reject display labels and malformed tokens, remain type-separated, handle defaults and invalid parsing explicitly, round-trip through Unity serialization, expose typed canonical room/passage IDs, and preserve the existing StoryBeat string surface.
+- Focused test filter and expected count: `StableIdentityContractTests` must discover and pass exactly `12/12` tests with zero failures or skips. Run it once after the cohesive batch, not after each test-only adjustment.
+- PlayMode/manual/golden gate: compile under Unity `6000.4.10f1`, inspect the complete diff for zero serialized asset mutation, then run the certified cold-start fingerprint exactly once and require `1/1` with digest `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`. Manually confirm only new `.meta` GUIDs exist and every existing GUID remains unchanged.
+- Rollback commit: `e795181c0e27d1cb9d85eed2694013ac45995b46`
 
 ## Evidence
 
-- Static guard: passed for Slice `0.4b`; all architecture-tool tests pass `4/4` and the architecture guard reports no debt above the committed baseline.
-- Runtime ledger: passed, `112` runtime files / `112` exact rows.
-- Unity script integrity: passed, `157` current scripts / `1,926` serialized references / `856` external-package references.
-- Compile result: passed with no compiler errors during the focused EditMode and certified PlayMode processes under `Logs/ArchitectureOverhaul/Slice-0.4b/`.
-- EditMode XML: `Logs/ArchitectureOverhaul/Slice-0.4b/editmode-focused.xml` is verified at exactly `62 total / 58 passed / 4 known failed / 0 skipped`, with exact four-case SHA-256 `b3e17ee67f553f0ec455ca79052a7aff16d984462c04601ceb1b2cb5b7434ab5`; all four new write-safety regressions pass.
-- PlayMode XML: `Logs/ArchitectureOverhaul/Slice-0.4b/cold-start.xml` passes exactly `1/1/0/0` and asserts fingerprint SHA-256 `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`.
-- Manual/golden result: behavior-level Editor serialization snapshots remain byte-identical across Butler selection and guest calibration/participant read-only queries; applier calibration assignment restores through Undo. The certified Butler `114.417 px`, entrance door `141.481 px`, ratio `0.808710`, presentation multiplier `0.7528645`, sort `1075`, and eight guest records remain unchanged.
-- Scene/prefab diff reviewed: passed; full Git diff contains no scene, prefab, ScriptableObject, `.meta`, package, ProjectSettings, or large-asset change. The calibration-sensitive scene/prefab hashes remain those committed in `Evidence/Slice_0_4/calibration_asset_hashes.csv`, and no Unity GUID was added or changed.
+- Static guard: passed for Slice `1.1`; all architecture-tool tests pass `4/4`, the architecture guard reports no debt above the committed baseline, and the generated audit remains at `48` direct `MonoBehaviour` declarations with unchanged smell totals.
+- Runtime ledger: passed, `113` runtime files / `113` exact rows; the one new runtime contract file is explicitly classified `KEEP` under Core ownership.
+- Unity script integrity: passed, `159` current scripts / `1,926` serialized references / `856` external-package references. Both new script GUIDs are unique and correctly report zero serialized references.
+- Compile result: Unity `6000.4.10f1` final batch compilation passes with no compiler errors; evidence is `Logs/ArchitectureOverhaul/Slice-1.1/compile-final.log`.
+- EditMode XML: the post-review `Logs/ArchitectureOverhaul/Slice-1.1/editmode-focused-certified.xml` is verified at exactly `12/12/0/0` and enumerates all eight current room plus fourteen current passage assets; the compatibility filter across identity, Core foundation, and canonical room/passage contracts is independently verified at `34/34/0/0` in `editmode-compatibility.xml`.
+- PlayMode XML: `Logs/ArchitectureOverhaul/Slice-1.1/cold-start.xml` passes exactly `1/1/0/0` and asserts fingerprint SHA-256 `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`.
+- Manual/golden result: the certified Butler remains `114.417 px` against the `141.481 px` entrance door (`0.808710` ratio), presentation multiplier `0.7528645`, and sort `1075`; all eight guest scale/sort records remain byte-for-byte represented by the same fingerprint.
+- Scene/prefab diff reviewed: passed; no `.unity`, `.prefab`, `.asset`, package, ProjectSettings, existing `.meta`, or large-asset file changed. The only new metadata belongs to the two new folders and two new scripts; no existing Unity GUID or serialized identity field changed.
 
 ## Completed slices
 
@@ -41,6 +41,14 @@
 | `0.2.1` | `daa11ed6d746e1a74c82ddec985ed8286d2b6cf9` | Verifier tests `3/3`; exact baseline XML `264/218/46/0` | NUnit failure evidence now excludes failed suite paths and verifies exact result counts. |
 | `0.3` | `bb64c7c38ec16b6aa35c8bdf8026a723bce20b9e` | Real PlayMode `4/4`; lifecycle `10/10`; focused EditMode `31/31`; full EditMode `264/218/46/0`; static controls pass | Real startup, movement/collision, canonical room round trip, current hidden-child defect, Butler visual baseline, and Chapter 2 panic measurements committed without production changes. |
 | `0.4a` | `c86beaea48f4910c2c1937d54574ec7360df8bd5` | Ten cold starts `10 x 1/1`; combined real PlayMode `5/5`; exact fingerprint; static controls pass | Certified deterministic Butler/guest scale and sort without production, editor, scene, prefab, or meta changes. |
+| `0.4b` | `e795181c0e27d1cb9d85eed2694013ac45995b46` | Focused EditMode `62/58/4/0` with the exact four known legacy failures; cold fingerprint `1/1`; static controls pass | Calibration-window reads are non-mutating and intentional reference writes record Unity Undo; approved scale data and output remain exact. |
+
+## Failed-gate audit within current slice
+
+- `editmode-focused-final.xml` initially produced `12 total / 11 passed / 1 failed`: the expanded current-asset assertion expected eight rooms but received zero.
+- Diagnosis: Unity `AssetDatabase.FindAssets("t:RoomDefinition", ...)` does not resolve the namespaced canonical definition type in this project. The fourteen-passage query used the same unsupported assumption. No runtime code, scene, prefab, ScriptableObject, or existing metadata changed.
+- Minimal in-scope repair: enumerate only the two canonical data folders and retain assets through typed `LoadAssetAtPath<T>` filtering. The exact eight-room/fourteen-passage identity, uniqueness, and string-preservation assertions remain unchanged. Preserve the failed XML/log and require the complete `12/12` focused rerun before commit.
+- Repair result: `editmode-focused-certified.xml` passes exactly `12/12/0/0`; the failed `editmode-focused-final.xml` and its log remain preserved as diagnostic evidence under `Logs/ArchitectureOverhaul/Slice-1.1/`.
 
 ## Remaining adapters and debt
 
@@ -48,10 +56,13 @@
 - The legacy `264` tests remain discovered as EditMode, including ten editor-hosted `[UnityTest]` methods that depend on `UnityEditor`, `AssetDatabase`, and predefined-assembly production types. Four new black-box tests now run in a genuine PlayMode test assembly; mechanically relocating the ten editor-hosted tests remains a Phase 8 test-structure task rather than a production architecture change.
 - `RoomContentGroup` still force-enables an intentionally hidden child when its room is reactivated. Slice `0.3` records that existing defect; the later room-visibility ownership slice must reverse the assertion.
 - The `46` exact legacy EditMode failures remain migration debt and are not an accepted final state.
+- Typed IDs are additive boundaries only: legacy room display strings, `guest_1` actor aliases, and serialized chapter strings are not migrated in Slice `1.1`. Actor aliases require an explicit Phase `4` mapping; no name-derived conversion is permitted.
+- `ChapterId` provides lexical/type safety but not catalog membership. Scheduler event IDs remain strings and must not cross the typed chapter boundary; Phase `1.5` database indexes and Phase `5` chapter definitions must reject unregistered values.
+- `StoryBeatBase(string)` remains a compatibility constructor and reports no valid typed ID for a legacy label. New beat implementations must use `StoryBeatBase(BeatId)`.
 
 ## Exact next safe slice
 
-- Complete the five closely related editor read/write-safety changes in Slice `0.4b`, run one focused EditMode suite and one certified cold-start fingerprint, then commit from the clean `0.4a` baseline. Do not change runtime scale output or migrate calibration profiles in this slice.
+- Commit the fully passing Slice `1.1` from rollback commit `e795181c0e27d1cb9d85eed2694013ac45995b46`. Then begin Slice `1.2` from that clean commit: characterize `GameContext` initialization order and add explicit typed service properties without a generic lookup, singleton, or service-state duplication.
 
 ## Resume command
 

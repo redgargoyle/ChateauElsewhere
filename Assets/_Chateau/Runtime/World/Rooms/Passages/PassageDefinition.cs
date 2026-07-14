@@ -21,6 +21,12 @@ namespace Chateau.World.Rooms.Passages
         public PassageKind Kind => kind;
         public string PromptText => Clean(promptText);
         public string LegacyDoorId => Clean(legacyDoorId);
+        public PassageId Id => PassageId.Parse(StableId);
+
+        public bool TryGetId(out PassageId id)
+        {
+            return PassageId.TryParse(StableId, out id);
+        }
 
         public override void ValidateConfiguration(ValidationReport report)
         {
@@ -30,6 +36,12 @@ namespace Chateau.World.Rooms.Passages
                 !StableId.StartsWith("passage.", StringComparison.Ordinal))
             {
                 report.AddError($"PassageDefinition '{name}' stable ID must start with 'passage.'.", this);
+            }
+            else if (!string.IsNullOrWhiteSpace(StableId) && !TryGetId(out _))
+            {
+                report.AddError(
+                    $"PassageDefinition '{name}' stable ID must be a canonical lowercase PassageId.",
+                    this);
             }
 
             if (sourceRoom == null)

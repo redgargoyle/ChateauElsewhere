@@ -17,6 +17,12 @@ namespace Chateau.World.Rooms
         public IReadOnlyList<string> LegacyNames => legacyNames ?? Array.Empty<string>();
         public Texture BackgroundTexture => backgroundTexture;
         public global::RoomPerspectiveProfile PerspectiveProfile => perspectiveProfile;
+        public RoomId Id => RoomId.Parse(StableId);
+
+        public bool TryGetId(out RoomId id)
+        {
+            return RoomId.TryParse(StableId, out id);
+        }
 
         public string PrimaryLegacyName
         {
@@ -73,6 +79,12 @@ namespace Chateau.World.Rooms
                 !StableId.StartsWith("room.", StringComparison.Ordinal))
             {
                 report.AddError($"RoomDefinition '{name}' stable ID must start with 'room.'.", this);
+            }
+            else if (!string.IsNullOrWhiteSpace(StableId) && !TryGetId(out _))
+            {
+                report.AddError(
+                    $"RoomDefinition '{name}' stable ID must be a canonical lowercase RoomId.",
+                    this);
             }
 
             if (string.IsNullOrWhiteSpace(DisplayName))

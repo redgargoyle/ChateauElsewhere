@@ -42,3 +42,4 @@ Assets/_Chateau/Editor/Architecture/CanonicalRoomPassageContractTests.cs,EditMod
 Assets/_Chateau/Editor/Architecture/GameRootInstaller.cs,Migration Tool,DELETE_OR_NARROW_AFTER_FINAL_SCENE,Editor/Migration/Core,Delete once final scenes are authored; keep only validator if useful.
 Assets/_Chateau/Editor/Architecture/PassageMigrationCertificationTests.cs,EditMode Test,MOVE_KEEP_UNTIL_COMPLETE,Tests/EditMode/Game/World/Navigation,Retire migration-stage assertions after all passages canonical; retain final invariants.
 Assets/_Chateau/Editor/Architecture/SetPieceViewTests.cs,EditMode Test,MOVE_KEEP,Tests/EditMode/Game/World/SetPieces,Expand across all rooms.
+Assets/_Chateau/Editor/Architecture/StableIdentityContractTests.cs,EditMode Test,MOVE_KEEP,Tests/EditMode/Core/Contracts/IDs,Retain canonical syntax serialization type-safety and compatibility-boundary coverage.
