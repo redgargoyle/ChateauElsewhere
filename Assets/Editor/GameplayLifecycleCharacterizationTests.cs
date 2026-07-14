@@ -17308,6 +17308,622 @@ public sealed class GameplayLifecycleCharacterizationTests
         }
     }
 
+    [UnityTest]
+    public IEnumerator UpperGalleryMasterBedroomSuiteStandardDoorLegacyPassagesAreCharacterizedAcrossRenderedAspects()
+    {
+        const string UpperGallery = "Upper Gallery";
+        const string MasterBedroom = "Master Bedroom Suite";
+        // Frozen only after all five rendered lines plus the structural line were independently
+        // reconstructed and reviewed; prior groups' fingerprints remain untouched.
+        const string ExpectedObservationSha256 =
+            "f97e30d0807e46ee1846bc1421ebcb0f72a694988c8fda915bb7e87b4b3acb0f";
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        cursorChoice.GetComponent<Button>().onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        INavigationService navigationFacade = navigation;
+        PointClickPlayerMovement player = GameObject.Find("Player").GetComponent<PointClickPlayerMovement>();
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        ChapterManager chapterManager = RequireExactlyOneInActiveScene<ChapterManager>();
+        bool originalInputEnabled = player.InputEnabled;
+        float originalMoveSpeed = GetPrivateValue<float>(player, "moveSpeed");
+        bool originalPan = cameraManager.panRoomWithMouseEdges;
+        bool originalZoom = cameraManager.zoomRoomWithMouseWheel;
+        DoorTriggerNavigation forward = null;
+        DoorTriggerNavigation reverse = null;
+        List<string> profileLines = new List<string>(6);
+        InvokePrivateMethod(chapterManager, "StopChapterCoroutines");
+        chapterManager.StopActiveDialogueForDebugTransition();
+        player.SetInputEnabled(true);
+        SetPrivateField(player, "moveSpeed", 1000f);
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+
+        try
+        {
+            foreach (string setupName in new[]
+            {
+                "DoorTrigger_GEH_DiningRoom",
+                "DoorTrigger_DiningRoom_ButlersPantry",
+                "DoorTrigger_ButlersPantry_ServiceCorridor",
+                "DoorTrigger_ServiceCorridor_SideStairMudroom"
+            })
+            {
+                CanonicalPassage setup = RequireSceneObject<DoorTriggerNavigation>(setupName)
+                    .GetComponent<CanonicalPassage>();
+                Assert.That(setup, Is.Not.Null);
+                Assert.That(setup.AnchorMigrationStage,
+                    Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+                Assert.That(navigationFacade.TryTraverse(setup), Is.True);
+                yield return WaitForSettledLayout();
+            }
+
+            Assert.That(navigation.MoveToRoom("Side Stair Mudroom"), Is.True);
+            yield return WaitForSettledLayout();
+            foreach (string setupName in new[]
+            {
+                "StairwayTrigger_SideStairMudroom_UpperSittingHall",
+                "DoorTrigger_UpperSittingHall_UpperGallery"
+            })
+            {
+                CanonicalPassage setup = RequireSceneObject<DoorTriggerNavigation>(setupName)
+                    .GetComponent<CanonicalPassage>();
+                Assert.That(setup, Is.Not.Null);
+                Assert.That(setup.AnchorMigrationStage,
+                    Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+                Assert.That(navigationFacade.TryTraverse(setup), Is.True);
+                yield return WaitForSettledLayout();
+            }
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(UpperGallery));
+
+            forward = RequireSceneObject<DoorTriggerNavigation>(
+                "DoorTrigger_UpperGallery_MasterBedroomSuite");
+            reverse = RequireSceneObject<DoorTriggerNavigation>(
+                "DoorTrigger_MasterBedroomSuite_UpperGallery");
+            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(forward.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(reverse.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
+            Assert.That(forward.SourceRoom, Is.EqualTo(UpperGallery));
+            Assert.That(forward.DoorName, Is.EqualTo("UpperGallery_MasterBedroomSuite"));
+            Assert.That(forward.DestinationRoom, Is.EqualTo(MasterBedroom));
+            Assert.That(reverse.SourceRoom, Is.EqualTo(MasterBedroom));
+            Assert.That(reverse.DoorName, Is.EqualTo("MasterBedroomSuite_UpperGallery"));
+            Assert.That(reverse.DestinationRoom, Is.EqualTo(UpperGallery));
+
+            foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
+            {
+                Assert.That(GetPrivateValue<DoorTriggerNavigation.NavigationTriggerKind>(
+                    trigger, "triggerKind"), Is.EqualTo(DoorTriggerNavigation.NavigationTriggerKind.Door));
+                Assert.That(GetPrivateValue<DoorTriggerNavigation.StairwayDirection>(
+                    trigger, "stairwayDirection"), Is.EqualTo(DoorTriggerNavigation.StairwayDirection.Auto));
+                Assert.That(trigger.IsStairway, Is.False);
+                Assert.That(trigger.InteractionLabel, Is.EqualTo("Door"));
+                Assert.That(InvokePrivateResult<NavigationCursorController.HoverIcon>(
+                    trigger, "GetNavigationCursorIcon"),
+                    Is.EqualTo(NavigationCursorController.HoverIcon.Door));
+                Assert.That(trigger.UsesCameraSequence, Is.False);
+                Assert.That(GetPrivateValue<bool>(trigger, "requirePlayerInSourceRoom"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "useBottomScreenEdgeInteraction"), Is.False);
+                Assert.That(GetPrivateValue<bool>(trigger, "requirePlayerProximity"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "walkPlayerToTriggerWhenFar"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "autoActivateAfterApproach"), Is.True);
+                Assert.That(GetPrivateValue<float>(trigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+                Assert.That(GetPrivateValue<bool>(trigger, "playDoorOpenSound"), Is.True);
+                Assert.That(trigger.GetComponent<Image>().raycastTarget, Is.True);
+            }
+
+            RectTransform forwardRect = (RectTransform)forward.transform;
+            RectTransform reverseRect = (RectTransform)reverse.transform;
+            AssertVector2Within(forwardRect.anchoredPosition,
+                new Vector2(-663.42664f, 62.99999f), 0.0001f, "Gallery-to-Master position");
+            AssertVector2Within(forwardRect.sizeDelta,
+                new Vector2(118.8122f, 266f), 0.0001f, "Gallery-to-Master size");
+            AssertVector2Within(reverseRect.anchoredPosition,
+                new Vector2(-685f, 27f), 0.0001f, "Master-to-Gallery position");
+            AssertVector2Within(reverseRect.sizeDelta,
+                new Vector2(120f, 140f), 0.0001f, "Master-to-Gallery size");
+            AssertVector2Within((Vector2)forwardRect.localScale, Vector2.one, 0.0001f,
+                "Gallery-to-Master scale");
+            AssertVector2Within((Vector2)reverseRect.localScale,
+                new Vector2(1.4251f, 3.3875f), 0.0001f,
+                "Master-to-Gallery authored nonunit scale");
+
+            DoorTriggerNavigation[] allTriggers = FindInActiveScene<DoorTriggerNavigation>();
+            Assert.That(allTriggers, Has.Length.EqualTo(45));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(16));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(32));
+            Assert.That(allTriggers.Count(item =>
+                GetPrivateField<CanonicalPassage>(item, "canonicalPassage") != null), Is.EqualTo(32));
+            Assert.That(allTriggers.Count(item =>
+                GetPrivateField<CanonicalPassage>(item, "canonicalPassage") == null), Is.EqualTo(13));
+
+            RoomContentGroup galleryContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == UpperGallery);
+            RoomContentGroup masterContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == MasterBedroom);
+            CanonicalRoomView galleryView = galleryContent.GetComponent<CanonicalRoomView>();
+            Assert.That(galleryView, Is.Not.Null);
+            Assert.That(masterContent.GetComponent<CanonicalRoomView>(), Is.Null);
+            Assert.That(galleryContent.GetComponents<Component>(), Has.Length.EqualTo(3));
+            Assert.That(masterContent.GetComponents<Component>(), Has.Length.EqualTo(2));
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "RawImage", "AnimatedPatches", "PlayerBoundary",
+                    "PlayerBlocker_UpperGallery_Stairwell", "upper_gallery_railing", "Lighting",
+                    "Doors", "Ch2_Hide_Guest07", "upper_gallery_left_plant_0", "Square",
+                    "upper_gallery_right_plant_0", "PlayerBlocker_upper_gallery_left_plant_0",
+                    "PlayerBlocker_upper_gallery_right_plant_0"
+                },
+                galleryContent.transform.Cast<Transform>().Select(item => item.name));
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "AnimatedPatches", "Lighting", "Flame (20)", "Flame (25)", "Flame (26)",
+                    "Flame (21)", "Flame (22)", "Flame (23)", "Flame (24)", "Flame (27)",
+                    "Flame (28)", "Flame (29)", "Flame (30)", "Flame (31)", "Flame (32)",
+                    "Flame (34)", "Flame (35)", "Flame (36)", "Doors", "bedroomchair_0",
+                    "PlayerBoundary", "bed_0", "Master_bedroom_loveseat_0",
+                    "PlayerBlocker_bedroomchair_0", "PlayerBlocker_bed_0",
+                    "PlayerBlocker_Master_bedroom_loveseat_0"
+                },
+                masterContent.transform.Cast<Transform>().Select(item => item.name));
+            Assert.That(forward.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(galleryContent));
+            Assert.That(reverse.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(masterContent));
+            Assert.That(forward.transform.parent.childCount, Is.EqualTo(3));
+            Assert.That(reverse.transform.parent.childCount, Is.EqualTo(1));
+
+            PolygonCollider2D galleryBoundary = galleryContent.GetComponentsInChildren<PolygonCollider2D>(true)
+                .Single(item => item.name == "PlayerBoundary" && item.transform.parent == galleryContent.transform);
+            PolygonCollider2D masterBoundary = masterContent.GetComponentsInChildren<PolygonCollider2D>(true)
+                .Single(item => item.name == "PlayerBoundary" && item.transform.parent == masterContent.transform);
+            PolygonCollider2D galleryStairwell = galleryContent.GetComponentsInChildren<PolygonCollider2D>(true)
+                .Single(item => item.name == "PlayerBlocker_UpperGallery_Stairwell");
+            Assert.That(galleryBoundary.GetPath(0), Has.Length.EqualTo(12));
+            Assert.That(masterBoundary.GetPath(0), Has.Length.EqualTo(20));
+            Assert.That(masterBoundary.isTrigger, Is.False);
+            Assert.That(galleryStairwell.GetPath(0), Has.Length.EqualTo(16));
+            Assert.That(FindInActiveScene<ObjectMovementBlocker2D>().Count(item =>
+                item.GetComponentInParent<RoomContentGroup>(true) == galleryContent), Is.EqualTo(2));
+            ObjectMovementBlocker2D[] masterBlockers = FindInActiveScene<ObjectMovementBlocker2D>()
+                .Where(item => item.GetComponentInParent<RoomContentGroup>(true) == masterContent)
+                .ToArray();
+            Assert.That(masterBlockers, Has.Length.EqualTo(3));
+            SpriteRenderer galleryRailing = FindInActiveScene<SpriteRenderer>()
+                .Single(item => item.name == "upper_gallery_railing");
+            Assert.That(galleryRailing.transform.parent, Is.SameAs(galleryContent.transform));
+            Assert.That(galleryRailing.sortingOrder, Is.EqualTo(1300));
+            foreach (string protectedName in new[]
+            {
+                "upper_gallery_left_plant_0", "upper_gallery_right_plant_0", "Ch2_Hide_Guest07"
+            })
+            {
+                Transform protectedTransform = FindInActiveScene<Transform>()
+                    .Single(item => item.name == protectedName);
+                Assert.That(protectedTransform.parent, Is.SameAs(galleryContent.transform));
+            }
+            string[] masterCutouts =
+            {
+                "bedroomchair_0", "bed_0", "Master_bedroom_loveseat_0"
+            };
+            string[] masterBlockerNames =
+            {
+                "PlayerBlocker_bedroomchair_0", "PlayerBlocker_bed_0",
+                "PlayerBlocker_Master_bedroom_loveseat_0"
+            };
+            for (int itemIndex = 0; itemIndex < masterCutouts.Length; itemIndex++)
+            {
+                Transform cutout = FindInActiveScene<Transform>()
+                    .Single(item => item.name == masterCutouts[itemIndex]);
+                Assert.That(cutout.parent, Is.SameAs(masterContent.transform));
+                Assert.That(cutout.GetComponents<Component>(), Has.Length.EqualTo(2));
+                SpriteRenderer cutoutRenderer = cutout.GetComponent<SpriteRenderer>();
+                Assert.That(cutoutRenderer, Is.Not.Null);
+                Assert.That(cutoutRenderer.sortingLayerID, Is.EqualTo(-114244515));
+                Assert.That(cutoutRenderer.sortingOrder, Is.EqualTo(1000));
+                Assert.That(cutout.GetComponent<Collider2D>(), Is.Null);
+                ObjectMovementBlocker2D blocker = masterBlockers
+                    .Single(item => item.name == masterBlockerNames[itemIndex]);
+                Assert.That(blocker.GetComponents<Component>(), Has.Length.EqualTo(3));
+                Assert.That(blocker.SourceObjectName, Is.EqualTo(masterCutouts[itemIndex]));
+                Assert.That(blocker.SourceRoomName, Is.EqualTo(MasterBedroom));
+                Assert.That(blocker.BlockingCollider, Is.Not.Null);
+                Assert.That(blocker.BlockingCollider.isTrigger, Is.True);
+                Assert.That(((PolygonCollider2D)blocker.BlockingCollider).GetPath(0), Has.Length.EqualTo(4));
+            }
+
+            DoorTriggerNavigation completedGroup15 = RequireSceneObject<DoorTriggerNavigation>(
+                "DoorTrigger_UpperGallery_UpperSittingHall");
+            Assert.That(completedGroup15.GetComponents<Component>(), Has.Length.EqualTo(5));
+            Assert.That(completedGroup15.GetComponent<CanonicalPassage>(), Is.Not.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(completedGroup15, "canonicalPassage"),
+                Is.SameAs(completedGroup15.GetComponent<CanonicalPassage>()));
+            DoorTriggerNavigation blockedGroup22 = RequireSceneObject<DoorTriggerNavigation>(
+                "StairwayTrigger_UpperGallery_GEH");
+            Assert.That(blockedGroup22.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(blockedGroup22.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(GetPrivateField<CanonicalPassage>(blockedGroup22, "canonicalPassage"), Is.Null);
+
+            Chateau.Architecture.GameRoot gameRoot =
+                RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+            Assert.That(gameRoot.Context.Database.Definitions, Has.Count.EqualTo(51));
+            CanonicalRoomDefinition galleryDefinition = gameRoot.Context.Database.Definitions
+                .OfType<CanonicalRoomDefinition>().Single(item => item.StableId == "room.upper-gallery");
+            CanonicalRoomDefinition masterDefinition = gameRoot.Context.Database.Definitions
+                .OfType<CanonicalRoomDefinition>().Single(item => item.StableId == "room.master-bedroom-suite");
+            Assert.That(galleryDefinition.DisplayName, Is.EqualTo(UpperGallery));
+            Assert.That(galleryDefinition.LegacyNames, Is.EqualTo(new[] { UpperGallery }));
+            Assert.That(masterDefinition.DisplayName, Is.EqualTo(MasterBedroom));
+            Assert.That(masterDefinition.LegacyNames, Is.EqualTo(new[] { MasterBedroom }));
+            Assert.That(galleryDefinition.BackgroundTexture,
+                Is.SameAs(GetPrivateField<Texture>(galleryContent, "roomBackgroundTexture")));
+            Assert.That(masterDefinition.BackgroundTexture,
+                Is.SameAs(GetPrivateField<Texture>(masterContent, "roomBackgroundTexture")));
+            Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(galleryDefinition)),
+                Is.EqualTo("d89c065ce9d049d4b6f5ba012b16761d"));
+            Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(masterDefinition)),
+                Is.EqualTo("5acd179b4f7543438b4e55e5c0e5f6ca"));
+            Assert.That(galleryView.Definition, Is.SameAs(galleryDefinition));
+            Assert.That(galleryView.LegacyContentGroup, Is.SameAs(galleryContent));
+            Assert.That(galleryView.Root, Is.SameAs(galleryContent.transform));
+            Assert.That(galleryView.HasGameContext, Is.True);
+            List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
+                GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
+            Assert.That(sceneBehaviours, Has.Count.EqualTo(57));
+            Assert.That(sceneBehaviours.Count(item => item == galleryView), Is.EqualTo(1));
+            Assert.That(masterContent.GetComponents<Chateau.Architecture.ChateauBehaviour>(), Is.Empty);
+
+            string projectRoot = System.IO.Directory.GetParent(Application.dataPath).FullName;
+            string sceneText = System.IO.File.ReadAllText(
+                System.IO.Path.Combine(projectRoot, GameplayScenePath));
+            string serializedForwardHost = RequireSerializedUnityDocument(sceneText, "2300000200", "1");
+            string serializedForwardRect = RequireSerializedUnityDocument(sceneText, "2300000201", "224");
+            string serializedForward = RequireSerializedUnityDocument(sceneText, "2300000204");
+            string serializedReverseHost = RequireSerializedUnityDocument(sceneText, "2300000210", "1");
+            string serializedReverseRect = RequireSerializedUnityDocument(sceneText, "2300000211", "224");
+            string serializedReverse = RequireSerializedUnityDocument(sceneText, "2300000214");
+            string serializedGalleryRoot = RequireSerializedUnityDocument(sceneText, "2300000040", "1");
+            string serializedMasterRoot = RequireSerializedUnityDocument(sceneText, "2300000045", "1");
+            string inventoryText = System.IO.File.ReadAllText(System.IO.Path.Combine(
+                projectRoot, "Docs/Architecture/RemainingRouteInventory.csv"));
+            Assert.That(System.Text.RegularExpressions.Regex.Matches(
+                sceneText, "^--- !u!", System.Text.RegularExpressions.RegexOptions.Multiline).Count,
+                Is.EqualTo(6055));
+            Assert.That(serializedForwardHost,
+                Does.Contain("m_Name: DoorTrigger_UpperGallery_MasterBedroomSuite"));
+            Assert.That(serializedForwardHost, Does.Contain("- component: {fileID: 2300000204}"));
+            Assert.That(serializedReverseHost,
+                Does.Contain("m_Name: DoorTrigger_MasterBedroomSuite_UpperGallery"));
+            Assert.That(serializedReverseHost, Does.Contain("- component: {fileID: 2300000214}"));
+            Assert.That(serializedForwardHost, Does.Not.Contain("410000"));
+            Assert.That(serializedReverseHost, Does.Not.Contain("410000"));
+            Assert.That(serializedForwardRect,
+                Does.Contain("m_LocalScale: {x: 1, y: 1, z: 1}"));
+            Assert.That(serializedForwardRect,
+                Does.Contain("m_AnchoredPosition: {x: -663.42664, y: 62.99999}"));
+            Assert.That(serializedForwardRect,
+                Does.Contain("m_SizeDelta: {x: 118.8122, y: 266}"));
+            Assert.That(serializedReverseRect,
+                Does.Contain("m_LocalScale: {x: 1.4251, y: 3.3875, z: 1}"));
+            Assert.That(serializedReverseRect, Does.Contain("m_AnchoredPosition: {x: -685, y: 27}"));
+            Assert.That(serializedReverseRect, Does.Contain("m_SizeDelta: {x: 120, y: 140}"));
+            Assert.That(serializedGalleryRoot, Does.Contain("- component: {fileID: 4100000046}"));
+            Assert.That(serializedMasterRoot, Does.Not.Contain("410000"));
+            foreach (string document in new[] { serializedForward, serializedReverse })
+            {
+                Assert.That(document, Does.Contain("navigationManager: {fileID: 0}"));
+                Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
+                Assert.That(document, Does.Contain("player: {fileID: 0}"));
+                Assert.That(document, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+                Assert.That(document, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+                Assert.That(document, Does.Not.Contain("canonicalPassage:"));
+            }
+            Assert.That(serializedForward, Does.Contain("sourceRoom: Upper Gallery"));
+            Assert.That(serializedForward,
+                Does.Contain("doorName: UpperGallery_MasterBedroomSuite"));
+            Assert.That(serializedForward,
+                Does.Contain("destinationRoom: Master Bedroom Suite"));
+            Assert.That(serializedReverse,
+                Does.Contain("sourceRoom: Master Bedroom Suite"));
+            Assert.That(serializedReverse,
+                Does.Contain("doorName: MasterBedroomSuite_UpperGallery"));
+            Assert.That(serializedReverse, Does.Contain("destinationRoom: Upper Gallery"));
+
+            System.Text.RegularExpressions.MatchCollection triggerDocuments =
+                System.Text.RegularExpressions.Regex.Matches(
+                    sceneText.Replace("\r\n", "\n"),
+                    "(?ms)^--- !u!114 &\\d+\\n.*?(?=^--- !u!|\\z)");
+            string[] serializedTriggerDocuments = triggerDocuments
+                .Cast<System.Text.RegularExpressions.Match>()
+                .Select(item => item.Value)
+                .Where(document => document.Contains("guid: 7e419b0f8f26d4f2d8d03e567fef4c52"))
+                .ToArray();
+            Assert.That(serializedTriggerDocuments, Has.Length.EqualTo(45));
+            Assert.That(serializedTriggerDocuments.Count(document =>
+                document.Contains("navigationManager: {fileID: 1878886997}") &&
+                document.Contains("doorOpenAudioSource: {fileID: 2201000013}") &&
+                document.Contains("player: {fileID: 81962843}") &&
+                document.Contains(
+                    "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
+                Is.EqualTo(31));
+            Assert.That(serializedTriggerDocuments.Count(document =>
+                document.Contains("navigationManager: {fileID: 1878886997}") &&
+                document.Contains("doorOpenAudioSource: {fileID: 2201000013}") &&
+                document.Contains("player: {fileID: 81962843}") &&
+                document.Contains(
+                    "stairwaySoundCatalog: {fileID: 11400000, guid: ca795d9a1ee74c14aa22f9f38a14f8ea, type: 2}")),
+                Is.EqualTo(1));
+            Assert.That(serializedTriggerDocuments.Count(document =>
+                document.Contains("navigationManager: {fileID: 0}") &&
+                document.Contains("doorOpenAudioSource: {fileID: 0}") &&
+                document.Contains("player: {fileID: 0}") &&
+                document.Contains("doorOpenSoundCatalog: {fileID: 0}")), Is.EqualTo(13));
+            Assert.That(serializedTriggerDocuments.Count(document =>
+                document.Contains("canonicalPassage: {fileID:") &&
+                !document.Contains("canonicalPassage: {fileID: 0}")), Is.EqualTo(32));
+            Assert.That(serializedTriggerDocuments.Count(document =>
+                !document.Contains("canonicalPassage:")), Is.EqualTo(13));
+            Assert.That(inventoryText, Does.Contain(
+                "16,queued,UpperGallery-Master,standard-door,2300000204," +
+                "DoorTrigger_UpperGallery_MasterBedroomSuite,Upper Gallery," +
+                "UpperGallery_MasterBedroomSuite,Master Bedroom Suite,2300000214"));
+            Assert.That(inventoryText, Does.Contain(
+                "16,queued,UpperGallery-Master,standard-door,2300000214," +
+                "DoorTrigger_MasterBedroomSuite_UpperGallery,Master Bedroom Suite," +
+                "MasterBedroomSuite_UpperGallery,Upper Gallery,2300000204"));
+            Assert.That(inventoryText, Does.Not.Contain("16,complete,UpperGallery-Master"));
+            Assert.That(AssetDatabase.LoadAssetAtPath<CanonicalPassageDefinition>(
+                "Assets/_Chateau/Data/World/Passages/Passage_UpperGallery_MasterBedroomSuite.asset"),
+                Is.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<CanonicalPassageDefinition>(
+                "Assets/_Chateau/Data/World/Passages/Passage_MasterBedroomSuite_UpperGallery.asset"),
+                Is.Null);
+
+            DoorDataParseResult catalog = DoorDataParser.Parse(System.IO.File.ReadAllText(
+                System.IO.Path.Combine(projectRoot, "Assets/Resources/Navigation/doors.txt")));
+            Assert.That(catalog.IsValid, Is.True);
+            Assert.That(catalog.Errors, Is.Empty);
+            Assert.That(catalog.Warnings, Is.Empty);
+            Assert.That(catalog.RoomsByName, Has.Count.EqualTo(18));
+            Assert.That(catalog.RoutesByDoorId, Has.Count.EqualTo(44));
+            DoorRoute forwardCatalog = catalog.RoutesByDoorId["UpperGallery_MasterBedroomSuite"];
+            DoorRoute reverseCatalog = catalog.RoutesByDoorId["MasterBedroomSuite_UpperGallery"];
+            Assert.That(forwardCatalog.SourceRoom, Is.EqualTo(UpperGallery));
+            Assert.That(forwardCatalog.DestinationRoom, Is.EqualTo(MasterBedroom));
+            Assert.That(reverseCatalog.SourceRoom, Is.EqualTo(MasterBedroom));
+            Assert.That(reverseCatalog.DestinationRoom, Is.EqualTo(UpperGallery));
+
+            AudioSource passageAudio = FindInActiveScene<AudioSource>()
+                .Single(item => item.gameObject.name == "Audio_DoorOpen");
+            DoorOpenSoundCatalog doorCatalog =
+                Resources.Load<DoorOpenSoundCatalog>("Audio/DoorOpenSoundCatalog");
+            foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
+            {
+                InvokePrivateMethod(trigger, "ResolveReferences");
+                InvokePrivateMethod(trigger, "ResolvePlayerReference");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenAudioSource");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenSoundCatalog");
+                Assert.That(GetPrivateField<RoomNavigationManager>(trigger, "navigationManager"),
+                    Is.SameAs(navigation));
+                Assert.That(GetPrivateField<Transform>(trigger, "player"), Is.SameAs(player.transform));
+                Assert.That(GetPrivateField<AudioSource>(trigger, "doorOpenAudioSource"),
+                    Is.SameAs(passageAudio));
+                Assert.That(GetPrivateField<DoorOpenSoundCatalog>(trigger, "doorOpenSoundCatalog"),
+                    Is.SameAs(doorCatalog));
+                Assert.That(GetPrivateField<DoorOpenSoundCatalog>(trigger, "stairwaySoundCatalog"), Is.Null);
+                Assert.That(GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage"), Is.Null);
+            }
+            Assert.That(AssetDatabase.GetAssetPath(doorCatalog),
+                Is.EqualTo("Assets/Resources/Audio/DoorOpenSoundCatalog.asset"));
+
+            DoorPromptSequenceController prompts =
+                RequireExactlyOneInActiveScene<DoorPromptSequenceController>();
+            TMP_Text promptText = GetPrivateField<TMP_Text>(prompts, "promptText");
+            forward.OnPointerEnter(null);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(forward));
+            Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController),
+                "doorHoverOwner"), Is.SameAs(forward));
+            Assert.That(promptText.gameObject.activeSelf, Is.True);
+            Assert.That(promptText.text, Is.EqualTo("Open Door"));
+            forward.OnPointerExit(null);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+            Assert.That(promptText.gameObject.activeSelf, Is.False);
+            Assert.That(navigation.MoveToRoom(MasterBedroom), Is.True);
+            yield return WaitForSettledLayout();
+            reverse.OnPointerEnter(null);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(reverse));
+            Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController),
+                "doorHoverOwner"), Is.SameAs(reverse));
+            Assert.That(promptText.gameObject.activeSelf, Is.True);
+            Assert.That(promptText.text, Is.EqualTo("Open Door"));
+            reverse.OnPointerExit(null);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+            Assert.That(promptText.gameObject.activeSelf, Is.False);
+            Assert.That(navigation.MoveToRoom(UpperGallery), Is.True);
+            yield return WaitForSettledLayout();
+
+            Vector2Int[] renderedSizes =
+            {
+                new Vector2Int(1366, 768), new Vector2Int(1440, 1080),
+                new Vector2Int(1920, 1080), new Vector2Int(2560, 1080),
+                new Vector2Int(2560, 1080)
+            };
+            for (int profileIndex = 0; profileIndex < renderedSizes.Length; profileIndex++)
+            {
+                Vector2Int size = renderedSizes[profileIndex];
+                bool maximumZoom = profileIndex == renderedSizes.Length - 1;
+                yield return SetAndWaitForRenderedGameViewResolution((uint)size.x, (uint)size.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                Vector2[] forwardCorners = CaptureRectCornersInRoomRoot(
+                    forwardRect, galleryContent.transform);
+                Vector2[] reverseCorners = CaptureRectCornersInRoomRoot(
+                    reverseRect, masterContent.transform);
+                List<string> events = new List<string>();
+                List<Vector2> stopLocals = new List<Vector2>();
+                System.Action recordArrival = () =>
+                {
+                    events.Add($"arrived:{navigation.CurrentRoom}:" +
+                        (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                            "activeNavigationAudioSource") == null ? "audio-idle" : "audio-started"));
+                    Assert.That(TryMapLogicalPointToActiveRoomStageLocal(
+                        player, cameraManager, player.LogicalPosition, out Vector2 local), Is.True);
+                    stopLocals.Add(local);
+                };
+                System.Action recordStop = () => events.Add(
+                    $"movement-stopped:{navigation.CurrentRoom}:" +
+                    (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                        "activeNavigationAudioSource") == null ? "audio-idle" : "audio-started"));
+                UnityEngine.Events.UnityAction<string> recordRoom = room => events.Add(
+                    $"room-changed:{room}:" +
+                    (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                        "activeNavigationAudioSource") == passageAudio ? "audio-started" : "audio-idle"));
+                player.ArrivedAtDestination += recordArrival;
+                player.MovementStopped += recordStop;
+                navigation.OnCurrentRoomChanged.AddListener(recordRoom);
+                DoorRoundTripObservation observation = null;
+                try
+                {
+                    IEnumerator routine = ObserveDoorRoundTrip(
+                        navigation, player, cameraManager, forward, reverse,
+                        UpperGallery, MasterBedroom, new Vector2(5f, -2f), new Vector2(-5f, -2f),
+                        false, maximumZoom, value => observation = value);
+                    while (routine.MoveNext())
+                    {
+                        yield return routine.Current;
+                    }
+                }
+                finally
+                {
+                    player.ArrivedAtDestination -= recordArrival;
+                    player.MovementStopped -= recordStop;
+                    navigation.OnCurrentRoomChanged.RemoveListener(recordRoom);
+                }
+
+                Assert.That(observation, Is.Not.Null);
+                Assert.That(observation.HasForwardArrivalRoomViewLocal &&
+                    observation.HasReverseArrivalRoomViewLocal, Is.True);
+                AssertVector2BitExact(observation.ForwardDispatch, observation.ForwardNull,
+                    $"profile {profileIndex} forward legacy dispatch");
+                AssertVector2BitExact(observation.ReverseDispatch, observation.ReverseNull,
+                    $"profile {profileIndex} reverse legacy dispatch");
+                AssertVector2Within(observation.ForwardProductionApproach,
+                    observation.ForwardDispatch, 0.0001f, "forward production approach");
+                AssertVector2Within(observation.ReverseProductionApproach,
+                    observation.ReverseDispatch, 0.0001f, "reverse production approach");
+                Assert.That(stopLocals, Has.Count.EqualTo(2));
+                Assert.That(events, Is.EqualTo(new[]
+                {
+                    $"arrived:{UpperGallery}:audio-idle",
+                    $"movement-stopped:{UpperGallery}:audio-idle",
+                    $"room-changed:{MasterBedroom}:audio-started",
+                    $"arrived:{MasterBedroom}:audio-idle",
+                    $"movement-stopped:{MasterBedroom}:audio-idle",
+                    $"room-changed:{UpperGallery}:audio-started"
+                }));
+                if (DoorTriggerNavigation.HoveredTrigger != null)
+                {
+                    DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+                }
+                Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation),
+                    "pendingApproachTrigger"), Is.Null);
+                Assert.That(GetPrivateField<PointClickPlayerMovement>(forward,
+                    "pendingApproachPlayer"), Is.Null);
+                Assert.That(GetPrivateField<PointClickPlayerMovement>(reverse,
+                    "pendingApproachPlayer"), Is.Null);
+                Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                    "activeNavigationAudioSource"), Is.Null);
+                Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController),
+                    "doorHoverOwner"), Is.Null);
+                Assert.That(promptText.gameObject.activeSelf, Is.False);
+                Assert.That(cameraManager.cameraBackground.texture,
+                    Is.SameAs(GetPrivateField<Texture>(galleryContent, "roomBackgroundTexture")));
+                string profileLine =
+                    $"[UpperGalleryMasterBedroomSuiteLegacyProfile] viewport={size.x}x{size.y} " +
+                    $"zoom={(maximumZoom ? "maximum" : "default")} events={string.Join("|", events)} " +
+                    $"forwardCorners={FormatCornerQuadFingerprint(forwardCorners)} " +
+                    $"reverseCorners={FormatCornerQuadFingerprint(reverseCorners)} " +
+                    $"forwardStopLocal={FormatVectorFingerprint(stopLocals[0])} " +
+                    $"masterLandingLocal={FormatVectorFingerprint(observation.ForwardArrivalRoomViewLocal)} " +
+                    $"reverseStopLocal={FormatVectorFingerprint(stopLocals[1])} " +
+                    $"galleryLandingLocal={FormatVectorFingerprint(observation.ReverseArrivalRoomViewLocal)} " +
+                    FormatDoorRoundTripObservation(observation, false);
+                profileLines.Add(profileLine);
+                Debug.Log(profileLine);
+            }
+
+            const string structuralLine =
+                "[UpperGalleryMasterBedroomSuiteLegacyStructure] ids=2300000200/201/204/" +
+                "2300000210/211/214 names=DoorTrigger_UpperGallery_MasterBedroomSuite/" +
+                "DoorTrigger_MasterBedroomSuite_UpperGallery aliases=Upper Gallery/Master Bedroom Suite " +
+                "geometry=-663.42664,62.99999/118.8122,266/-685,27/120,140 " +
+                "scale=1,1/1.4251,3.3875 components=4/4 profile=standard-door-proximity145-autowalk " +
+                "serializedDependencies=null/null callers=null/null " +
+                "counts=45/16/32/32/13/51/6055/65 roomViews=gallery-present/master-absent " +
+                "boundaries=12/20 galleryStairwell=16 blockers=gallery2/master3 " +
+                "protected=gallery-railing/plants/ch2-hide/master-chair-bed-loveseat/flames " +
+                "neighbors=group15-complete/group22-blocked-parallel " +
+                "definitions=d89c065ce9d049d4b6f5ba012b16761d/" +
+                "5acd179b4f7543438b4e55e5c0e5f6ca catalog=actual-reciprocal-ids-present";
+            profileLines.Add(structuralLine);
+            Debug.Log(structuralLine);
+            Assert.That(profileLines, Has.Count.EqualTo(6));
+            string observationProfile = string.Join("\n", profileLines);
+            Assert.That(observationProfile.EndsWith("\n", System.StringComparison.Ordinal), Is.False);
+            string actualSha256 = ComputeSha256(observationProfile);
+            Debug.Log($"[UpperGalleryMasterBedroomSuiteLegacySha256] {actualSha256}");
+            Assert.That(actualSha256, Is.EqualTo(ExpectedObservationSha256),
+                "Capture and review the six-line Group16 legacy-route fingerprint before freezing it.");
+            const string canonicalAbsenceLine =
+                "[UpperGalleryMasterBedroomSuiteCanonicalAbsence] roomViews=16 passages=32 " +
+                "callers=32/13 targetRoomView=absent targetPassages=absent " +
+                "targetCallers=null/null inventory=queued";
+            Debug.Log(canonicalAbsenceLine);
+            Assert.That(observationProfile,
+                Does.Not.Contain("[UpperGalleryMasterBedroomSuiteCanonicalAbsence]"),
+                "Canonical absence proof must stay outside the six-line Group16 SHA input.");
+        }
+        finally
+        {
+            if (forward != null)
+            {
+                InvokePrivateMethod(forward, "CancelPendingPlayerApproach");
+            }
+            if (reverse != null)
+            {
+                InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+            }
+            if (player.HasDestination)
+            {
+                InvokePrivateMethod(player, "CancelDestination");
+            }
+            if (navigation.CurrentRoom == MasterBedroom && reverse != null)
+            {
+                navigation.MoveThroughInspectorDoor(
+                    MasterBedroom, reverse.DoorName, UpperGallery, false);
+            }
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            player.SetInputEnabled(originalInputEnabled);
+            SetPrivateField(player, "moveSpeed", originalMoveSpeed);
+            cameraManager.panRoomWithMouseEdges = originalPan;
+            cameraManager.zoomRoomWithMouseWheel = originalZoom;
+            cameraManager.ResetRoomLookForPreview();
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+        }
+    }
+
     private static void AssertCanonicalSourceAndArrivalRegionPassage(
         CanonicalPassage passage,
         CanonicalPassageDefinition expectedDefinition,
