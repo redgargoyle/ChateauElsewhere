@@ -1479,6 +1479,90 @@ public sealed class CanonicalRoomPassageContractTests
     }
 
     [Test]
+    public void PassageAnchorsDeclareBackwardCompatibleFailClosedRoomViewLocalCoordinates()
+    {
+        Type anchorType = typeof(PassageAnchorData);
+        Type coordinateSpaceType = anchorType.Assembly.GetType(
+            "Chateau.World.Rooms.Passages.PassageAnchorCoordinateSpace");
+        Assert.That(coordinateSpaceType, Is.Not.Null,
+            "The aspect-invariant prerequisite requires an explicit serialized coordinate-space discriminator.");
+        Assert.That(coordinateSpaceType.IsEnum, Is.True);
+        Assert.That(Enum.GetNames(coordinateSpaceType), Is.EqualTo(new[]
+        {
+            "LegacyPlayerLogical",
+            "RoomViewLocal"
+        }));
+        Assert.That(Enum.GetValues(coordinateSpaceType).Cast<object>().Select(Convert.ToInt32),
+            Is.EqualTo(new[] { 0, 1 }));
+
+        FieldInfo coordinateSpaceField = anchorType.GetField("coordinateSpace", PrivateInstance);
+        FieldInfo logicalPositionField = anchorType.GetField("logicalPosition", PrivateInstance);
+        FieldInfo roomViewLocalPositionField = anchorType.GetField("roomViewLocalPosition", PrivateInstance);
+        Assert.That(coordinateSpaceField, Is.Not.Null);
+        Assert.That(logicalPositionField, Is.Not.Null,
+            "The existing serialized logicalPosition compatibility field must not be renamed or removed.");
+        Assert.That(roomViewLocalPositionField, Is.Not.Null);
+        Assert.That(anchorType.GetProperty("LogicalPosition"), Is.Not.Null,
+            "The existing public LogicalPosition compatibility API must remain available.");
+        Assert.That(anchorType.GetProperty("CoordinateSpace"), Is.Not.Null);
+        Assert.That(anchorType.GetProperty("RoomViewLocalPosition"), Is.Not.Null);
+        Assert.That(anchorType.GetProperty("HasValidCoordinateSpace"), Is.Not.Null);
+        Assert.That(anchorType.GetProperty("HasFiniteAuthoredPosition"), Is.Not.Null);
+
+        MethodInfo resolveMethod = anchorType.GetMethod("TryResolveLogicalPosition");
+        Assert.That(resolveMethod, Is.Not.Null);
+        ParameterInfo[] resolveParameters = resolveMethod.GetParameters();
+        Assert.That(resolveParameters, Has.Length.EqualTo(2));
+        Assert.That(resolveParameters[0].ParameterType.Name, Is.EqualTo("IRoomViewLocalCoordinateMapper"));
+        Assert.That(resolveParameters[1].IsOut, Is.True);
+
+        PassageAnchorData anchor = new PassageAnchorData();
+        Vector2 legacyPoint = new Vector2(3.25f, -1.75f);
+        logicalPositionField.SetValue(anchor, legacyPoint);
+        object[] legacyArguments = { null, Vector2.zero };
+        Assert.That((bool)resolveMethod.Invoke(anchor, legacyArguments), Is.True,
+            "Default-zero deserialization must preserve legacy logical anchors without requiring a mapper.");
+        Assert.That((Vector2)legacyArguments[1], Is.EqualTo(legacyPoint));
+
+        coordinateSpaceField.SetValue(anchor, Enum.ToObject(coordinateSpaceType, 1));
+        Vector2 roomViewPoint = new Vector2(640f, -360f);
+        roomViewLocalPositionField.SetValue(anchor, roomViewPoint);
+        object[] missingMapperArguments = { null, Vector2.zero };
+        Assert.That((bool)resolveMethod.Invoke(anchor, missingMapperArguments), Is.False,
+            "RoomView-local anchors must fail closed when their explicit coordinate mapper is unavailable.");
+        Assert.That((Vector2)missingMapperArguments[1], Is.EqualTo(Vector2.zero));
+
+        Vector2 mappedLogicalPoint = new Vector2(8.75f, -4.5f);
+        StubRoomViewLocalCoordinateMapper mapper = new StubRoomViewLocalCoordinateMapper
+        {
+            ResolvedLogicalPosition = mappedLogicalPoint
+        };
+        object[] mappedArguments = { mapper, Vector2.zero };
+        Assert.That((bool)resolveMethod.Invoke(anchor, mappedArguments), Is.True);
+        Assert.That((Vector2)mappedArguments[1], Is.EqualTo(mappedLogicalPoint));
+        Assert.That(mapper.RequestedRoomViewLocalPosition, Is.EqualTo(roomViewPoint));
+        Assert.That(mapper.ResolveCount, Is.EqualTo(1));
+        Assert.That(typeof(IRoomViewLocalCoordinateMapper).IsAssignableFrom(typeof(PointClickPlayerMovement)),
+            Is.True,
+            "The existing movement owner must perform presentation conversion without coupling anchor data to CameraManager.");
+
+        mapper.ResolvedLogicalPosition = new Vector2(float.NaN, 1f);
+        object[] nonFiniteMapperArguments = { mapper, new Vector2(99f, 99f) };
+        Assert.That((bool)resolveMethod.Invoke(anchor, nonFiniteMapperArguments), Is.False,
+            "A mapper must not leak a non-finite runtime result into navigation.");
+        Assert.That((Vector2)nonFiniteMapperArguments[1], Is.EqualTo(Vector2.zero));
+
+        coordinateSpaceField.SetValue(anchor, Enum.ToObject(coordinateSpaceType, 99));
+        Assert.That((bool)anchorType.GetProperty("HasValidCoordinateSpace").GetValue(anchor), Is.False);
+        Assert.That((bool)anchorType.GetProperty("HasFiniteAuthoredPosition").GetValue(anchor), Is.False);
+
+        string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
+        Assert.That(gameplayText, Does.Not.Contain("coordinateSpace:"),
+            "The prerequisite must not silently migrate or rewrite existing Passage serialization.");
+        Assert.That(gameplayText, Does.Not.Contain("roomViewLocalPosition:"));
+    }
+
+    [Test]
     public void CanonicalContractsIntroduceNoSecondStateOwnerDiscoveryOrRuntimeMutation()
     {
         string roomDefinitionText = File.ReadAllText("Assets/_Chateau/Runtime/World/Rooms/RoomDefinition.cs");
@@ -1572,12 +1656,13 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(navigationManagerText, Does.Contain("reverse.HasValidAnchorMigrationStage"));
         Assert.That(navigationManagerText, Does.Contain(
             "reverse.AnchorMigrationStage == passage.AnchorMigrationStage"));
-        Assert.That(navigationManagerText, Does.Contain("Vector2 arrivalPosition = passage.ArrivalAnchor.LogicalPosition;"));
+        Assert.That(navigationManagerText, Does.Contain(
+            "passage.ArrivalAnchor.TryResolveLogicalPosition(playerMovement, out Vector2 arrivalPosition)"));
         Assert.That(navigationManagerText, Does.Contain("playerMovement.TryWarpToExact(arrivalPosition)"));
         Assert.That(navigationManagerText, Does.Contain(
-            "(!passage.UsesAuthoredArrival || IsFinite(arrivalAnchor.LogicalPosition))"));
+            "(arrivalAnchor.HasValidCoordinateSpace && arrivalAnchor.HasFiniteAuthoredPosition)"));
         Assert.That(navigationManagerText, Does.Contain(
-            "(!passage.UsesAuthoredApproach || IsFinite(approachAnchor.LogicalPosition))"));
+            "(approachAnchor.HasValidCoordinateSpace && approachAnchor.HasFiniteAuthoredPosition)"));
         Assert.That(navigationManagerText, Does.Contain("if (passage.UsesAuthoredArrival)"));
         Assert.That(navigationManagerText, Does.Contain("PlacePlayerAtCanonicalArrival(passage);"));
         Assert.That(navigationManagerText, Does.Contain("PlacePlayerAtDestinationDoor("));
@@ -1593,7 +1678,8 @@ public sealed class CanonicalRoomPassageContractTests
             "if (canonicalPassage == null || !canonicalPassage.UsesAuthoredApproach)"));
         Assert.That(passageText, Does.Contain(
             "Passage reciprocal pair must share one anchor migration stage."));
-        Assert.That(doorTriggerText, Does.Contain("canonicalPassage.ApproachAnchor.LogicalPosition"));
+        Assert.That(doorTriggerText, Does.Contain(
+            "approachAnchor.TryResolveLogicalPosition(playerMovement, out Vector2 authoredDestination)"));
         Assert.That(doorTriggerText, Does.Contain(
             "navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom)"));
         Assert.That(
@@ -1740,6 +1826,23 @@ public sealed class CanonicalRoomPassageContractTests
     private static int CountOccurrences(string text, string value)
     {
         return text.Split(new[] { value }, StringSplitOptions.None).Length - 1;
+    }
+
+    private sealed class StubRoomViewLocalCoordinateMapper : IRoomViewLocalCoordinateMapper
+    {
+        public Vector2 ResolvedLogicalPosition { get; set; }
+        public Vector2 RequestedRoomViewLocalPosition { get; private set; }
+        public int ResolveCount { get; private set; }
+
+        public bool TryGetLogicalPositionFromActiveRoomViewLocalPoint(
+            Vector2 roomViewLocalPosition,
+            out Vector2 logicalPosition)
+        {
+            RequestedRoomViewLocalPosition = roomViewLocalPosition;
+            ResolveCount++;
+            logicalPosition = ResolvedLogicalPosition;
+            return true;
+        }
     }
 
     private static string ExtractDocument(string assetText, string header)

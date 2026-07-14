@@ -105,12 +105,28 @@ namespace Chateau.World.Rooms.Passages
 
             if (approachAnchor == null)
             {
-                report.AddError("Passage requires authored logical approach data.", this);
+                report.AddError("Passage requires authored approach data.", this);
+            }
+            else if (!approachAnchor.HasValidCoordinateSpace)
+            {
+                report.AddError("Passage approach has an unknown coordinate space.", this);
+            }
+            else if (UsesAuthoredApproach && !approachAnchor.HasFiniteAuthoredPosition)
+            {
+                report.AddError("Passage approach requires a finite authored position.", this);
             }
 
             if (arrivalAnchor == null)
             {
-                report.AddError("Passage requires authored logical arrival data.", this);
+                report.AddError("Passage requires authored arrival data.", this);
+            }
+            else if (!arrivalAnchor.HasValidCoordinateSpace)
+            {
+                report.AddError("Passage arrival has an unknown coordinate space.", this);
+            }
+            else if (UsesAuthoredArrival && !arrivalAnchor.HasFiniteAuthoredPosition)
+            {
+                report.AddError("Passage arrival requires a finite authored position.", this);
             }
         }
     }

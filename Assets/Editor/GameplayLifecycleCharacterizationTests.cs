@@ -5,6 +5,8 @@ using Chateau.UI;
 using Chateau.World.Navigation;
 using Chateau.World.Rooms.Props;
 using CanonicalPassage = Chateau.World.Rooms.Passages.Passage;
+using PassageAnchorCoordinateSpace = Chateau.World.Rooms.Passages.PassageAnchorCoordinateSpace;
+using PassageAnchorData = Chateau.World.Rooms.Passages.PassageAnchorData;
 using PassageAnchorMigrationStage = Chateau.World.Rooms.Passages.PassageAnchorMigrationStage;
 using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
 using CanonicalRoomView = Chateau.World.Rooms.RoomView;
@@ -7499,6 +7501,207 @@ public sealed class GameplayLifecycleCharacterizationTests
         }
     }
 
+    [UnityTest]
+    public IEnumerator RoomViewLocalPassageCoordinatesRemainAttachedAcrossRenderedAspects()
+    {
+        const string ServiceCorridor = "Service Corridor";
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        Button cursorButton = cursorChoice.GetComponent<Button>();
+        Assert.That(cursorButton, Is.Not.Null);
+        cursorButton.onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        INavigationService navigationFacade = navigation;
+        PointClickPlayerMovement player = GameObject.Find("Player").GetComponent<PointClickPlayerMovement>();
+        Assert.That(player, Is.Not.Null);
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
+        bool originalZoomRoomWithMouseWheel = cameraManager.zoomRoomWithMouseWheel;
+
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+
+        try
+        {
+            foreach (string setupTriggerName in new[]
+            {
+                "DoorTrigger_GEH_DiningRoom",
+                "DoorTrigger_DiningRoom_ButlersPantry",
+                "DoorTrigger_ButlersPantry_ServiceCorridor"
+            })
+            {
+                CanonicalPassage setupPassage =
+                    RequireSceneObject<DoorTriggerNavigation>(setupTriggerName).GetComponent<CanonicalPassage>();
+                Assert.That(setupPassage, Is.Not.Null);
+                Assert.That(navigationFacade.TryTraverse(setupPassage), Is.True);
+                yield return WaitForSettledLayout();
+            }
+
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(ServiceCorridor));
+            RoomContentGroup serviceContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == ServiceCorridor);
+            RectTransform serviceRoomStage = serviceContent.transform as RectTransform;
+            Assert.That(serviceRoomStage, Is.Not.Null);
+            DoorTriggerNavigation kitchenTrigger =
+                RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_ServiceCorridor_Kitchen");
+            RectTransform kitchenTriggerRect = kitchenTrigger.transform as RectTransform;
+            Assert.That(kitchenTriggerRect, Is.Not.Null);
+            Assert.That(kitchenTrigger.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(serviceContent));
+
+            Vector2 roomViewLocalAnchor = serviceRoomStage.InverseTransformPoint(
+                kitchenTriggerRect.TransformPoint(Vector3.zero));
+            PassageAnchorData roomViewLocalAnchorData = new PassageAnchorData();
+            SetPrivateField(
+                roomViewLocalAnchorData,
+                "coordinateSpace",
+                PassageAnchorCoordinateSpace.RoomViewLocal);
+            SetPrivateField(roomViewLocalAnchorData, "roomViewLocalPosition", roomViewLocalAnchor);
+            List<Vector2> resolvedLogicalPositions = new List<Vector2>();
+            Vector2Int[] renderedSizes =
+            {
+                new Vector2Int(1366, 768),
+                new Vector2Int(1440, 1080),
+                new Vector2Int(1920, 1080),
+                new Vector2Int(2560, 1080)
+            };
+
+            for (int sizeIndex = 0; sizeIndex < renderedSizes.Length; sizeIndex++)
+            {
+                Vector2Int renderedSize = renderedSizes[sizeIndex];
+                yield return SetAndWaitForRenderedGameViewResolution(
+                    (uint)renderedSize.x,
+                    (uint)renderedSize.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                Canvas.ForceUpdateCanvases();
+                Physics2D.SyncTransforms();
+
+                Vector2 logicalPosition = AssertRoomViewLocalCoordinateRoundTrip(
+                    player,
+                    cameraManager,
+                    serviceRoomStage,
+                    kitchenTriggerRect,
+                    roomViewLocalAnchorData,
+                    roomViewLocalAnchor,
+                    $"{renderedSize.x}x{renderedSize.y}");
+                resolvedLogicalPositions.Add(logicalPosition);
+                Debug.Log(
+                    $"[RoomViewLocalAnchorProbe] viewport={renderedSize.x}x{renderedSize.y} " +
+                    $"local={FormatVector(roomViewLocalAnchor)} logical={FormatVector(logicalPosition)} zoom=default");
+            }
+
+            ApplyMaximumRoomZoom(cameraManager);
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+            Vector2 maximumZoomLogicalPosition = AssertRoomViewLocalCoordinateRoundTrip(
+                player,
+                cameraManager,
+                serviceRoomStage,
+                kitchenTriggerRect,
+                roomViewLocalAnchorData,
+                roomViewLocalAnchor,
+                "2560x1080 maximum zoom");
+            resolvedLogicalPositions.Add(maximumZoomLogicalPosition);
+            Debug.Log(
+                $"[RoomViewLocalAnchorProbe] viewport={Screen.width}x{Screen.height} " +
+                $"local={FormatVector(roomViewLocalAnchor)} logical={FormatVector(maximumZoomLogicalPosition)} " +
+                $"zoom=maximum");
+
+            Assert.That(resolvedLogicalPositions.Any(position =>
+                    Vector2.Distance(position, resolvedLogicalPositions[0]) > 0.01f),
+                Is.True,
+                "The probe must exercise aspect- or zoom-specific logical coordinates, not accidentally certify one fixed legacy point.");
+        }
+        finally
+        {
+            cameraManager.panRoomWithMouseEdges = originalPanRoomWithMouseEdges;
+            cameraManager.zoomRoomWithMouseWheel = originalZoomRoomWithMouseWheel;
+            cameraManager.ResetRoomLookForPreview();
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+        }
+    }
+
+    private static Vector2 AssertRoomViewLocalCoordinateRoundTrip(
+        PointClickPlayerMovement player,
+        CameraManager cameraManager,
+        RectTransform activeRoomStage,
+        RectTransform attachedTransform,
+        PassageAnchorData anchor,
+        Vector2 expectedRoomViewLocalPosition,
+        string profile)
+    {
+        Assert.That(GetPrivateField<RectTransform>(cameraManager, "activeRoomStage"),
+            Is.SameAs(activeRoomStage),
+            $"{profile} must resolve against the active Service Corridor RoomView.");
+        Vector2 attachedRoomViewLocalPosition = activeRoomStage.InverseTransformPoint(
+            attachedTransform.TransformPoint(Vector3.zero));
+        AssertVector2Within(
+            attachedRoomViewLocalPosition,
+            expectedRoomViewLocalPosition,
+            0.01f,
+            $"{profile} attached native RoomView point");
+        Assert.That(anchor.CoordinateSpace, Is.EqualTo(PassageAnchorCoordinateSpace.RoomViewLocal));
+        Assert.That(anchor.RoomViewLocalPosition, Is.EqualTo(expectedRoomViewLocalPosition));
+        Assert.That(anchor.TryResolveLogicalPosition(player, out Vector2 logicalPosition), Is.True);
+        AssertFinite(logicalPosition, $"{profile} resolved logical position");
+        Assert.That(player.TryGetWorldPointFromLogicalPosition(logicalPosition, out Vector2 worldPosition), Is.True);
+        Camera mainCamera = Camera.main;
+        Assert.That(mainCamera, Is.Not.Null);
+        float worldDepth = player.transform.position.z - mainCamera.transform.position.z;
+        if (worldDepth <= 0.01f)
+        {
+            worldDepth = Mathf.Abs(worldDepth);
+        }
+        if (worldDepth <= 0.01f)
+        {
+            worldDepth = 10f;
+        }
+        Assert.That(cameraManager.TryGetActiveRoomStageWorldPoint(
+            expectedRoomViewLocalPosition,
+            worldDepth,
+            out Vector3 directRoomStageWorldPosition), Is.True);
+        AssertVector2Within(
+            worldPosition,
+            directRoomStageWorldPosition,
+            0.001f,
+            $"{profile} direct RoomView world attachment");
+        Vector3 resolvedWorldPosition = new Vector3(
+            worldPosition.x,
+            worldPosition.y,
+            player.transform.position.z);
+        Assert.That(cameraManager.TryGetActiveRoomStageLocalPoint(
+            resolvedWorldPosition,
+            out Vector2 roundTripLocalPosition),
+            Is.True);
+        AssertVector2Within(
+            roundTripLocalPosition,
+            expectedRoomViewLocalPosition,
+            0.05f,
+            $"{profile} RoomView-local round trip");
+        Canvas canvas = activeRoomStage.GetComponentInParent<Canvas>();
+        Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+        Vector2 directScreenPosition = RectTransformUtility.WorldToScreenPoint(
+            canvasCamera,
+            activeRoomStage.TransformPoint(expectedRoomViewLocalPosition));
+        Assert.That(player.TryGetScreenPointFromLogicalPosition(logicalPosition, out Vector2 mappedScreenPosition),
+            Is.True);
+        AssertVector2Within(
+            mappedScreenPosition,
+            directScreenPosition,
+            0.25f,
+            $"{profile} rendered RoomView attachment");
+        return logicalPosition;
+    }
+
     private static IEnumerator AssertGroup07AnchorCandidatesAndReturnToPantry(
         RoomNavigationManager navigation,
         PointClickPlayerMovement player,
@@ -10970,7 +11173,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         bool originalInputEnabled = player.InputEnabled;
         bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
         bool originalZoomRoomWithMouseWheel = cameraManager.zoomRoomWithMouseWheel;
-        player.SetInputEnabled(true);
+        player.SetInputEnabled(false);
         cameraManager.panRoomWithMouseEdges = false;
         cameraManager.zoomRoomWithMouseWheel = false;
         cameraManager.ResetRoomLookForPreview();
@@ -11093,6 +11296,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             AssertVector2Within(canonicalForwardCenter, canonicalForwardNull, 0.0001f, "canonical forward center-click approach");
             AssertVector2Within(canonicalForwardRight, canonicalForwardNull, 0.0001f, "canonical forward right-click approach");
             SetPrivateField(outbound, "lastPointerActivationFrame", -1);
+            player.SetInputEnabled(true);
             outbound.ActivateDoor();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
             Assert.That(player.HasDestination, Is.True);
@@ -11106,6 +11310,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             InvokePrivateMethod(outbound, "CancelPendingPlayerApproach");
             Assert.That(player.TryWarpToExact(invariantStart), Is.True);
             Assert.That(player.HasDestination, Is.False);
+            player.SetInputEnabled(false);
 
             Assert.That(player.TryWarpTo(forwardApproach, false), Is.True);
             Assert.That(
@@ -11178,6 +11383,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             AssertVector2Within(canonicalReverseCenter, canonicalReverseNull, 0.0001f, "canonical reverse center-click approach");
             AssertVector2Within(canonicalReverseRight, canonicalReverseNull, 0.0001f, "canonical reverse right-click approach");
             SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+            player.SetInputEnabled(true);
             reverse.ActivateDoor();
             Assert.That(navigation.CurrentRoom, Is.EqualTo(DrawingRoom));
             Assert.That(player.HasDestination, Is.True);
@@ -11191,6 +11397,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
             Assert.That(player.TryWarpToExact(reverseInvariantStart), Is.True);
             Assert.That(player.HasDestination, Is.False);
+            player.SetInputEnabled(false);
 
             Assert.That(player.TryWarpTo(reverseApproach, false), Is.True);
             Assert.That(

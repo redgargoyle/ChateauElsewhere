@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Chateau.World.Rooms.Passages;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
@@ -9,7 +10,7 @@ using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Animator))]
-public class PointClickPlayerMovement : MonoBehaviour
+public class PointClickPlayerMovement : MonoBehaviour, IRoomViewLocalCoordinateMapper
 {
 	private const string DiagnosticPrefix = "[Ch2ClickDiag]";
 	private const float MovementEpsilon = 0.0001f;
@@ -3712,6 +3713,47 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		return worldPoint - new Vector2(currentVisualOffset.x, currentVisualOffset.y);
+	}
+
+	public bool TryGetLogicalPositionFromActiveRoomViewLocalPoint(
+		Vector2 roomViewLocalPosition,
+		out Vector2 resolvedLogicalPosition)
+	{
+		resolvedLogicalPosition = Vector2.zero;
+
+		if (!isReady)
+			return false;
+
+		RefreshWalkableFloorForCurrentRoom();
+
+		Camera mainCamera = Camera.main;
+
+		if (!HasUsableCameraViewport(mainCamera))
+			return false;
+
+		UpdateVisualOffset(mainCamera);
+
+		if (cameraManager == null ||
+			!cameraManager.TryGetActiveRoomStageWorldPoint(
+				roomViewLocalPosition,
+				GetVisualWorldDepth(mainCamera),
+				out Vector3 worldPoint))
+		{
+			return false;
+		}
+
+		resolvedLogicalPosition = WalkableWorldToLogicalPoint(worldPoint);
+
+		if (float.IsNaN(resolvedLogicalPosition.x) ||
+			float.IsInfinity(resolvedLogicalPosition.x) ||
+			float.IsNaN(resolvedLogicalPosition.y) ||
+			float.IsInfinity(resolvedLogicalPosition.y))
+		{
+			resolvedLogicalPosition = Vector2.zero;
+			return false;
+		}
+
+		return true;
 	}
 
 	private Vector2 ClampToWalkableArea(Vector2 point)

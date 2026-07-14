@@ -154,9 +154,11 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             passage.SourceRoomView.Definition == currentDefinition &&
             passage.HasValidAnchorMigrationStage &&
             approachAnchor != null &&
-            (!passage.UsesAuthoredApproach || IsFinite(approachAnchor.LogicalPosition)) &&
+            (!passage.UsesAuthoredApproach ||
+                (approachAnchor.HasValidCoordinateSpace && approachAnchor.HasFiniteAuthoredPosition)) &&
             arrivalAnchor != null &&
-            (!passage.UsesAuthoredArrival || IsFinite(arrivalAnchor.LogicalPosition)) &&
+            (!passage.UsesAuthoredArrival ||
+                (arrivalAnchor.HasValidCoordinateSpace && arrivalAnchor.HasFiniteAuthoredPosition)) &&
             reverse != passage &&
             reverse.HasValidAnchorMigrationStage &&
             reverse.AnchorMigrationStage == passage.AnchorMigrationStage &&
@@ -182,14 +184,6 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
         }
 
         return MoveThroughCanonicalPassage(passage);
-    }
-
-    private static bool IsFinite(Vector2 value)
-    {
-        return !float.IsNaN(value.x) &&
-            !float.IsInfinity(value.x) &&
-            !float.IsNaN(value.y) &&
-            !float.IsInfinity(value.y);
     }
 
     public bool ReloadDoorData()
@@ -559,7 +553,12 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
         // Room activation can resize the destination stage immediately before this query.
         Physics2D.SyncTransforms();
         playerMovement.RefreshWalkableFloorForCurrentRoom();
-        Vector2 arrivalPosition = passage.ArrivalAnchor.LogicalPosition;
+
+        if (!passage.ArrivalAnchor.TryResolveLogicalPosition(playerMovement, out Vector2 arrivalPosition))
+        {
+            Warn($"Canonical passage '{passage.Definition.StableId}' could not resolve its authored arrival.");
+            return;
+        }
 
         if (!playerMovement.TryWarpToExact(arrivalPosition))
         {

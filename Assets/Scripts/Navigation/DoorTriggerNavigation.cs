@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Chateau.World.Navigation;
+using Chateau.World.Rooms.Passages;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -385,7 +386,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return false;
         }
 
-        Vector2 authoredDestination = canonicalPassage.ApproachAnchor.LogicalPosition;
+        PassageAnchorData approachAnchor = canonicalPassage.ApproachAnchor;
+
+        if (approachAnchor == null ||
+            !approachAnchor.TryResolveLogicalPosition(playerMovement, out Vector2 authoredDestination))
+        {
+            return false;
+        }
 
         if (!playerMovement.TryGetScreenPointFromLogicalPosition(authoredDestination, out Vector2 destinationScreenPoint) ||
             !TryGetTriggerScreenBounds(out Vector2 min, out Vector2 max))

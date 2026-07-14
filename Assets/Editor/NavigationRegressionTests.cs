@@ -980,9 +980,9 @@ public class NavigationRegressionTests
         Assert.That(canTraverseBody, Does.Contain(
             "reverse.AnchorMigrationStage == passage.AnchorMigrationStage"));
         Assert.That(canTraverseBody, Does.Contain(
-            "(!passage.UsesAuthoredApproach || IsFinite(approachAnchor.LogicalPosition))"));
+            "(approachAnchor.HasValidCoordinateSpace && approachAnchor.HasFiniteAuthoredPosition)"));
         Assert.That(canTraverseBody, Does.Contain(
-            "(!passage.UsesAuthoredArrival || IsFinite(arrivalAnchor.LogicalPosition))"));
+            "(arrivalAnchor.HasValidCoordinateSpace && arrivalAnchor.HasFiniteAuthoredPosition)"));
         Assert.That(Regex.Matches(canonicalMoveBody, @"\bSetCurrentRoom\s*\(").Count, Is.EqualTo(1));
         Assert.That(Regex.Matches(canonicalMoveBody, @"\bPlacePlayerAtCanonicalArrival\s*\(").Count, Is.EqualTo(1));
         Assert.That(
@@ -997,7 +997,8 @@ public class NavigationRegressionTests
         Assert.That(canonicalMoveBody, Does.Not.Contain("TryFindArrivalDestination"));
         Assert.That(canonicalMoveBody, Does.Not.Contain("ApproachAnchor"));
         Assert.That(canonicalMoveBody, Does.Not.Match(@"\bPlay(?:OneShot)?\s*\("));
-        Assert.That(canonicalPlacementBody, Does.Contain("passage.ArrivalAnchor.LogicalPosition"));
+        Assert.That(canonicalPlacementBody, Does.Contain(
+            "passage.ArrivalAnchor.TryResolveLogicalPosition(playerMovement, out Vector2 arrivalPosition)"));
         Assert.That(canonicalPlacementBody, Does.Contain("RefreshWalkableFloorForCurrentRoom"));
         Assert.That(Regex.Matches(canonicalPlacementBody, @"\bTryWarpToExact\s*\(").Count, Is.EqualTo(1));
         Assert.That(canonicalPlacementBody, Does.Contain("TryWarpToExact(arrivalPosition)"));
@@ -1043,7 +1044,8 @@ public class NavigationRegressionTests
         Assert.That(Regex.Matches(traversalApproachBody, @"\bTryFindCanonicalApproachDestination\s*\(").Count, Is.EqualTo(1));
         Assert.That(traversalApproachBody, Does.Not.Contain("ApproachAnchor"));
         Assert.That(canonicalApproachBody, Does.Contain("navigationService.CanTraverse(canonicalPassage)"));
-        Assert.That(canonicalApproachBody, Does.Contain("canonicalPassage.ApproachAnchor.LogicalPosition"));
+        Assert.That(canonicalApproachBody, Does.Contain(
+            "approachAnchor.TryResolveLogicalPosition(playerMovement, out Vector2 authoredDestination)"));
         Assert.That(canonicalApproachBody, Does.Contain("TryGetScreenPointFromLogicalPosition"));
         Assert.That(canonicalApproachBody, Does.Contain("TryGetTriggerScreenBounds"));
         Assert.That(canonicalApproachBody, Does.Contain("Mathf.Max(1f, maxPlayerScreenDistance)"));
