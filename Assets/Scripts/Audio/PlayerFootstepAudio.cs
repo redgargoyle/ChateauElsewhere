@@ -17,7 +17,7 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
     [SerializeField, Min(0.05f)] private float stepIntervalSeconds = DefaultButlerStepIntervalSeconds;
     [SerializeField, Min(0f)] private float stepIntervalJitterSeconds = DefaultStepIntervalJitterSeconds;
     [SerializeField, Min(0f)] private float minimumMovementSpeed = 0.01f;
-    [SerializeField, Min(10f)] private float highPassCutoffFrequency = 200f;
+    [SerializeField, Min(10f)] private float highPassCutoffFrequency = 180f;
     [SerializeField, Range(0.1f, 10f)] private float highPassResonanceQ = 1.1f;
     [SerializeField, Min(10f)] private float lowPassCutoffFrequency = 9000f;
     [SerializeField] private string audioObjectName = DefaultAudioObjectName;
@@ -148,17 +148,14 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
         source.spatialBlend = 0f;
         source.ignoreListenerVolume = true;
 
-        if (highPassFilter != null)
-        {
-            highPassFilter.cutoffFrequency = Mathf.Max(10f, highPassCutoffFrequency);
-            highPassFilter.highpassResonanceQ = Mathf.Clamp(highPassResonanceQ, 0.1f, 10f);
-        }
-
-        if (lowPassFilter != null)
-        {
-            lowPassFilter.cutoffFrequency = Mathf.Max(10f, lowPassCutoffFrequency);
-            lowPassFilter.lowpassResonanceQ = 1f;
-        }
+        GameAudioSettings.EnsureSafetyFilters(
+            source,
+            highPassCutoffFrequency,
+            highPassResonanceQ,
+            lowPassCutoffFrequency,
+            1f,
+            out highPassFilter,
+            out lowPassFilter);
 
         GameAudioSettings.EnsureBinding(source, GameAudioChannel.GameSounds, baseVolume);
     }
@@ -261,7 +258,7 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
 
     private bool EnsureAudioSource()
     {
-        if (source != null && highPassFilter != null && lowPassFilter != null)
+        if (source != null)
         {
             return true;
         }
@@ -283,20 +280,6 @@ public sealed class PlayerFootstepAudio : MonoBehaviour
         if (source == null)
         {
             source = audioObject.AddComponent<AudioSource>();
-        }
-
-        highPassFilter = audioObject.GetComponent<AudioHighPassFilter>();
-
-        if (highPassFilter == null)
-        {
-            highPassFilter = audioObject.AddComponent<AudioHighPassFilter>();
-        }
-
-        lowPassFilter = audioObject.GetComponent<AudioLowPassFilter>();
-
-        if (lowPassFilter == null)
-        {
-            lowPassFilter = audioObject.AddComponent<AudioLowPassFilter>();
         }
 
         return source != null;

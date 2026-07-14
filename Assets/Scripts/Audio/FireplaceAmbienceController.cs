@@ -7,6 +7,7 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
     private const string ControllerObjectName = "Audio_FireplaceAmbience";
     private const string DefaultCatalogResourcePath = "Audio/FireplaceAmbienceCatalog";
     private const float DefaultHighPassCutoffFrequency = 200f;
+    private const float DefaultLowPassCutoffFrequency = 8500f;
 
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private FireplaceAmbienceCatalog catalog;
@@ -14,11 +15,14 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField, Min(10f)] private float highPassCutoffFrequency = DefaultHighPassCutoffFrequency;
     [SerializeField, Range(0.1f, 10f)] private float highPassResonanceQ = 1f;
+    [SerializeField, Min(10f)] private float lowPassCutoffFrequency = DefaultLowPassCutoffFrequency;
+    [SerializeField, Range(0.1f, 10f)] private float lowPassResonanceQ = 1f;
 
     private int lastClipIndex = -1;
     private float activeBaseVolume;
     private Coroutine fadeRoutine;
     private AudioHighPassFilter highPassFilter;
+    private AudioLowPassFilter lowPassFilter;
 
     public static FireplaceAmbienceController FindOrCreate(RoomNavigationManager navigationManager)
     {
@@ -90,19 +94,15 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
         audioSource.spatialBlend = 0f;
         audioSource.ignoreListenerVolume = true;
 
-        if (highPassFilter == null)
-        {
-            highPassFilter = GetComponent<AudioHighPassFilter>();
-        }
-
-        if (highPassFilter == null)
-        {
-            highPassFilter = gameObject.AddComponent<AudioHighPassFilter>();
-        }
-
-        highPassFilter.enabled = true;
-        highPassFilter.cutoffFrequency = ResolveHighPassCutoffFrequency();
-        highPassFilter.highpassResonanceQ = Mathf.Clamp(highPassResonanceQ, 0.1f, 10f);
+        float resolvedHighPassCutoffFrequency = ResolveHighPassCutoffFrequency();
+        GameAudioSettings.EnsureSafetyFilters(
+            audioSource,
+            resolvedHighPassCutoffFrequency,
+            highPassResonanceQ,
+            ResolveLowPassCutoffFrequency(resolvedHighPassCutoffFrequency),
+            lowPassResonanceQ,
+            out highPassFilter,
+            out lowPassFilter);
 
         if (catalog == null)
         {
@@ -263,5 +263,16 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
         return highPassCutoffFrequency > 0f
             ? Mathf.Max(DefaultHighPassCutoffFrequency, highPassCutoffFrequency)
             : DefaultHighPassCutoffFrequency;
+    }
+
+    private float ResolveLowPassCutoffFrequency(float resolvedHighPassCutoffFrequency)
+    {
+        float configuredCutoff = lowPassCutoffFrequency > 0f
+            ? lowPassCutoffFrequency
+            : DefaultLowPassCutoffFrequency;
+        float safeLowerBound = Mathf.Min(
+            DefaultLowPassCutoffFrequency,
+            Mathf.Max(10f, resolvedHighPassCutoffFrequency));
+        return Mathf.Clamp(configuredCutoff, safeLowerBound, DefaultLowPassCutoffFrequency);
     }
 }

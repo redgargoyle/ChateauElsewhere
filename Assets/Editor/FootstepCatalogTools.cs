@@ -53,7 +53,7 @@ public static class FootstepCatalogTools
         serializedCatalog.FindProperty("guestStepIntervalSeconds").floatValue = 0.54f;
         serializedCatalog.FindProperty("butlerStepIntervalSeconds").floatValue = 0.6f;
         serializedCatalog.FindProperty("stepIntervalJitterSeconds").floatValue = 0.025f;
-        serializedCatalog.FindProperty("highPassCutoffFrequency").floatValue = 200f;
+        serializedCatalog.FindProperty("highPassCutoffFrequency").floatValue = 180f;
         serializedCatalog.FindProperty("highPassResonanceQ").floatValue = 1.1f;
         serializedCatalog.FindProperty("lowPassCutoffFrequency").floatValue = 9000f;
 

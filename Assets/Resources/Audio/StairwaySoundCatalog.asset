@@ -14,3 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   clips:
   - {fileID: 8300000, guid: a599035f4d65f7614a7cb90bfb65c96d, type: 3}
+  baseVolume: 0.42
+  highPassCutoffFrequency: 140
+  highPassResonanceQ: 1
+  lowPassCutoffFrequency: 9000
+  lowPassResonanceQ: 1

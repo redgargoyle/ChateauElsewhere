@@ -4,8 +4,31 @@ using UnityEngine;
 public class DoorOpenSoundCatalog : ScriptableObject
 {
     [SerializeField] private AudioClip[] clips = new AudioClip[0];
+    [SerializeField, Range(0f, 1f)] private float baseVolume = 0.36f;
+    [SerializeField, Min(10f)] private float highPassCutoffFrequency = 180f;
+    [SerializeField, Range(0.1f, 10f)] private float highPassResonanceQ = 1f;
+    [SerializeField, Min(10f)] private float lowPassCutoffFrequency = 7800f;
+    [SerializeField, Range(0.1f, 10f)] private float lowPassResonanceQ = 1f;
 
     public int ClipCount => clips != null ? clips.Length : 0;
+
+    public void ApplyMixTo(AudioSource source)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        GameAudioSettings.EnsureBinding(source, GameAudioChannel.GameSounds, Mathf.Clamp01(baseVolume));
+        GameAudioSettings.EnsureSafetyFilters(
+            source,
+            highPassCutoffFrequency,
+            highPassResonanceQ,
+            lowPassCutoffFrequency,
+            lowPassResonanceQ,
+            out _,
+            out _);
+    }
 
     public bool TryGetRandomClip(ref int lastClipIndex, out AudioClip clip)
     {

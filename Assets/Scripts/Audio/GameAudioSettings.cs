@@ -115,6 +115,49 @@ public static class GameAudioSettings
         return binding;
     }
 
+    public static void EnsureSafetyFilters(
+        AudioSource source,
+        float highPassCutoffFrequency,
+        float highPassResonanceQ,
+        float lowPassCutoffFrequency,
+        float lowPassResonanceQ,
+        out AudioHighPassFilter highPassFilter,
+        out AudioLowPassFilter lowPassFilter)
+    {
+        highPassFilter = null;
+        lowPassFilter = null;
+
+        if (source == null || source.gameObject == null)
+        {
+            return;
+        }
+
+        source.bypassEffects = false;
+        highPassFilter = source.GetComponent<AudioHighPassFilter>();
+
+        if (highPassFilter == null)
+        {
+            highPassFilter = source.gameObject.AddComponent<AudioHighPassFilter>();
+        }
+
+        lowPassFilter = source.GetComponent<AudioLowPassFilter>();
+
+        if (lowPassFilter == null)
+        {
+            lowPassFilter = source.gameObject.AddComponent<AudioLowPassFilter>();
+        }
+
+        float safeHighPassCutoff = Mathf.Clamp(highPassCutoffFrequency, 10f, 22000f);
+        float safeLowPassCutoff = Mathf.Clamp(lowPassCutoffFrequency, safeHighPassCutoff, 22000f);
+
+        highPassFilter.enabled = true;
+        highPassFilter.cutoffFrequency = safeHighPassCutoff;
+        highPassFilter.highpassResonanceQ = Mathf.Clamp(highPassResonanceQ, 0.1f, 10f);
+        lowPassFilter.enabled = true;
+        lowPassFilter.cutoffFrequency = safeLowPassCutoff;
+        lowPassFilter.lowpassResonanceQ = Mathf.Clamp(lowPassResonanceQ, 0.1f, 10f);
+    }
+
     public static float GetCurrentOrBoundBaseVolume(AudioSource source, GameAudioChannel channel)
     {
         if (source == null)
