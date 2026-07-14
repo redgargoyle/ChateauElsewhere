@@ -437,7 +437,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(depthSortMethodBody, Does.Not.Contain("9000"), "Drawing Room depth sorting should not reuse the entrance fallback sorting band.");
 
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "tea_service_table", "roomLocalFootPoint: {x: -80.26, y: -211.67}", "m_SortingOrder: 6627");
-        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawing_room_red_chair_guest6", "roomLocalFootPoint: {x: 59, y: -208.5}", "m_SortingOrder: 800", "sortingOffset: -5776");
+        AssertDrawingRoomChairUsesSharedButlerYSort(gameplaySceneText);
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -479.54, y: -281.56}", "m_SortingOrder: 7745");
         AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair[_0", "roomLocalFootPoint: {x: -408.72, y: -261.91}", "m_SortingOrder: 7431");
@@ -488,6 +488,19 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         {
             Assert.That(objectBlock, Does.Contain(expectedSortingOffset), $"The Drawing Room object '{objectName}' should keep its authored projection sorting offset.");
         }
+    }
+
+    private static void AssertDrawingRoomChairUsesSharedButlerYSort(string assetText)
+    {
+        string chairBlock = ExtractObjectBlock(assetText, "drawing_room_red_chair_guest6");
+        string blockerBlock = ExtractObjectBlock(assetText, "PlayerBlocker_drawing_room_red_chair_guest6");
+
+        Assert.That(chairBlock, Does.Contain("roomLocalFootPoint: {x: 59, y: -208.5}"));
+        Assert.That(chairBlock, Does.Contain("applySorting: 0"), "The chair must not compete with the shared Butler y-axis sorter.");
+        Assert.That(chairBlock, Does.Contain("sortingOffset: 0"), "The old forced-low chair order must remain removed.");
+        Assert.That(chairBlock, Does.Not.Contain("sortingOffset: -5776"));
+        Assert.That(blockerBlock, Does.Contain("sourceObjectName: drawing_room_red_chair_guest6"));
+        Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 1"), "The chair should use its lower movement footprint as the shared y-axis sort edge.");
     }
 
     private static string ExtractObjectBlock(string assetText, string objectName)

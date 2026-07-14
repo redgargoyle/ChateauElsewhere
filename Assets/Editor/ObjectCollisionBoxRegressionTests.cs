@@ -134,7 +134,7 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
-    public void DrawingRoomPurpleArmchairUsesLowerFootprintWithoutTakingOverProjectedSorting()
+    public void DrawingRoomPurpleArmchairUsesLowerFootprintForSharedButlerYSort()
     {
         SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
 
@@ -155,11 +155,12 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(projectedEntity, Is.Not.Null, "The chair must keep the shared Drawing Room y-axis occlusion component.");
             Assert.That(projectedEntity.Mode, Is.EqualTo(RoomProjectedEntity.ProjectionMode.ForegroundOccluder));
             Assert.That(projectedEntity.RoomLocalFootPoint, Is.EqualTo(new Vector2(59f, -208.5f)));
-            Assert.That(chairRenderer.sortingOrder, Is.EqualTo(800), "The seated guest's authored chair layering should remain unchanged.");
 
             SerializedObject serializedProjection = new SerializedObject(projectedEntity);
-            Assert.That(serializedProjection.FindProperty("applySorting").boolValue, Is.True);
-            Assert.That(serializedProjection.FindProperty("sortingOffset").intValue, Is.EqualTo(-5776));
+            Assert.That(serializedProjection.FindProperty("applySorting").boolValue, Is.False,
+                "The chair must not fight the shared Butler/furniture y-axis sorter with a second sorting writer.");
+            Assert.That(serializedProjection.FindProperty("sortingOffset").intValue, Is.Zero,
+                "The legacy seated-guest offset must not bypass the shared y-axis sorter.");
 
             Transform blockerTransform = FindDescendant(room, $"PlayerBlocker_{DrawingRoomChairName}");
             Assert.That(blockerTransform, Is.Not.Null, "The purple front armchair needs a separate movement footprint.");
@@ -174,8 +175,8 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(marker.FootprintHeightFraction, Is.EqualTo(0.3f).Within(0.001f));
             Assert.That(marker.GeneratedByCollisionBoxTool, Is.False,
                 "This explicitly authored exception must survive generated-blocker cleanup because the broad scanner skips projected guest-named props.");
-            Assert.That(marker.SortSourceRenderers, Is.False,
-                "RoomProjectedEntity must remain the chair's only sorting owner so the seated guest layering is not disturbed.");
+            Assert.That(marker.SortSourceRenderers, Is.True,
+                "The chair must use the same lower-footprint y-axis sorter as the Butler and other furniture.");
 
             Assert.That(blocker, Is.Not.Null);
             Assert.That(blocker.enabled, Is.True);
@@ -220,8 +221,19 @@ public class ObjectCollisionBoxRegressionTests
                     "The chair blocker should become active with the current Drawing Room.");
                 Assert.That(blocker.OverlapPoint(expected.center), Is.True,
                     "The active Physics2D trigger should cover the authored chair footprint.");
-                Assert.That(chairRenderer.sortingOrder, Is.EqualTo(800),
-                    "Activating the movement blocker must not take over the chair's seated-guest sorting.");
+
+                marker.ApplySourceSortingNow();
+                int expectedChairOrder = 1000 - Mathf.RoundToInt(blocker.bounds.min.y * 100f);
+                int butlerOrderJustBehindChair = 1000 - Mathf.RoundToInt((blocker.bounds.min.y + 0.1f) * 100f);
+                int butlerOrderJustInFrontOfChair = 1000 - Mathf.RoundToInt((blocker.bounds.min.y - 0.1f) * 100f);
+
+                Assert.That(chairRenderer.sortingOrder, Is.EqualTo(expectedChairOrder),
+                    "The chair must use the exact visible-feet y-axis order that the Butler uses when walking behind or in front of it.");
+                Assert.That(chairRenderer.sortingOrder, Is.EqualTo(marker.CurrentSortingOrder));
+                Assert.That(butlerOrderJustBehindChair, Is.LessThan(chairRenderer.sortingOrder),
+                    "A Butler whose visible feet are above the chair's lower edge must render behind the chair.");
+                Assert.That(butlerOrderJustInFrontOfChair, Is.GreaterThan(chairRenderer.sortingOrder),
+                    "A Butler whose visible feet are below the chair's lower edge must render in front of the chair.");
             }
             finally
             {
