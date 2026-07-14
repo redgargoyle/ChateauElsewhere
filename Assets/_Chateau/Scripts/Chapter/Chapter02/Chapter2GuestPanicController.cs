@@ -139,6 +139,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         isRunning = true;
         ChooseDoorExitTargets();
+        BeginSharedParticipantAnimatorWalks();
         ApplyAssignedRunFrame(0, 0f, false);
         panicRoutine = StartCoroutine(RunExitToDoorsRoutine());
         return panicRoutine;
@@ -471,7 +472,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             yield return HoldScriptedGuestPanicFrame(participant, panicSprite);
         }
 
-        participant.StopScriptedAnimatorWalk(participant.CurrentRunAction);
+        participant.StopAnimatorWalk(participant.CurrentRunAction);
         participant.SetControlledByScript(false);
         MarkScriptedGuestRoutineFinished();
 
@@ -595,7 +596,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         float secondsPerFrame = GetSecondsPerFrame();
         float elapsedSeconds = 0f;
         int frameIndex = 0;
-        bool usingAnimator = participant.BeginScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed);
+        bool usingAnimator = participant.BeginAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed);
 
         while (isRunning && elapsedSeconds < durationSeconds)
         {
@@ -610,7 +611,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             if (usingAnimator)
             {
-                participant.UpdateScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed);
+                participant.UpdateAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed);
             }
             else
             {
@@ -629,7 +630,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             yield return null;
         }
 
-        participant.StopScriptedAnimatorWalk(lockedRunAction);
+        participant.StopAnimatorWalk(lockedRunAction);
     }
 
     private IEnumerator HoldScriptedGuestPanicFrame(PanicParticipant participant, Sprite panicSprite)
@@ -642,7 +643,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         float durationSeconds = GetScriptedGuestTransitionSeconds();
         float elapsedSeconds = 0f;
         Vector2 baseOffset = participant.CurrentPanicOffset;
-        participant.StopScriptedAnimatorWalk(participant.CurrentRunAction);
+        participant.StopAnimatorWalk(participant.CurrentRunAction);
 
         while (isRunning && elapsedSeconds < durationSeconds)
         {
@@ -670,8 +671,23 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 continue;
             }
 
-            participant.StopScriptedAnimatorWalk(participant.CurrentRunAction);
+            participant.StopAnimatorWalk(participant.CurrentRunAction);
             participant.SetControlledByScript(false);
+        }
+    }
+
+    private void BeginSharedParticipantAnimatorWalks()
+    {
+        for (int i = 0; i < participants.Count; i++)
+        {
+            PanicParticipant participant = participants[i];
+
+            if (participant == null || participant.IsControlledByScript || participant.IsHiddenAfterExitArrival)
+            {
+                continue;
+            }
+
+            participant.BeginAnimatorWalk(participant.CurrentRunAction, scriptedGuestWalkAnimationSpeed);
         }
     }
 
@@ -936,6 +952,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             if (arrived)
             {
+                participant.StopAnimatorWalk(participant.CurrentRunAction);
+
                 if (hideParticipantsOnArrival && participant.ShouldHideAfterCurrentTargetArrival)
                 {
                     participant.HideAfterExitArrival();
@@ -944,10 +962,12 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 continue;
             }
 
-            if (!arrived)
+            if (participant.IsUsingAnimatorWalk)
             {
-                allArrived = false;
+                participant.UpdateAnimatorWalk(participant.CurrentRunAction, scriptedGuestWalkAnimationSpeed);
             }
+
+            allArrived = false;
         }
 
         return allArrived;
@@ -1005,8 +1025,12 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 continue;
             }
 
-            PanicAction visualAction = participant.CurrentRunAction;
-            participant.SetSprite(GetFrame(participant.Animation, visualAction, participant.GetRunClipFrameIndex(frameIndex)));
+            if (!participant.IsUsingAnimatorWalk)
+            {
+                PanicAction visualAction = participant.CurrentRunAction;
+                participant.SetSprite(GetFrame(participant.Animation, visualAction, participant.GetRunClipFrameIndex(frameIndex)));
+            }
+
             participant.ApplyPanicVisualOffset(participant.GetPanicOffset(motionFrame, jitter, jitterPixels), worldUnitsPerRoomPixel);
         }
     }
@@ -1332,6 +1356,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private PanicAction currentStopAction = PanicAction.PanicHandsUp;
         private int guestNumber;
         private bool controlledByScript;
+        private bool usingAnimatorWalk;
         private bool hiddenAfterExitArrival;
         private bool hideAfterCurrentTargetArrival;
 
@@ -1341,6 +1366,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         public PanicAction CurrentStopAction => currentStopAction;
         public int GuestNumber => guestNumber;
         public bool IsControlledByScript => controlledByScript;
+        public bool IsUsingAnimatorWalk => usingAnimatorWalk;
         public bool IsHiddenAfterExitArrival => hiddenAfterExitArrival;
         public bool ShouldHideAfterCurrentTargetArrival => hideAfterCurrentTargetArrival;
         public Vector2 CurrentPanicOffset => currentPanicOffset;
@@ -1781,7 +1807,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             hiddenAfterExitArrival = true;
             StopPanicScream();
             StopFootsteps();
-            StopScriptedAnimatorWalk(currentRunAction);
+            StopAnimatorWalk(currentRunAction);
 
             if (actorState != null)
             {
@@ -1791,7 +1817,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
         }
 
-        public bool BeginScriptedAnimatorWalk(PanicAction runAction, float animationSpeed)
+        public bool BeginAnimatorWalk(PanicAction runAction, float animationSpeed)
         {
             currentPanicSprite = null;
             currentPanicSpriteScaleMultiplier = 1f;
@@ -1803,10 +1829,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             PlayFootsteps();
-            return UpdateScriptedAnimatorWalk(runAction, animationSpeed);
+            usingAnimatorWalk = UpdateAnimatorWalk(runAction, animationSpeed);
+            return usingAnimatorWalk;
         }
 
-        public bool UpdateScriptedAnimatorWalk(PanicAction runAction, float animationSpeed)
+        public bool UpdateAnimatorWalk(PanicAction runAction, float animationSpeed)
         {
             CharacterWalkDirection direction = GetWalkDirectionForRunAction(runAction);
             bool applied = false;
@@ -1815,7 +1842,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             {
                 Animator animator = animators[i];
 
-                if (animator == null || !WasAnimatorOriginallyEnabled(i))
+                if (animator == null || animator.runtimeAnimatorController == null || !WasAnimatorOriginallyEnabled(i))
                 {
                     continue;
                 }
@@ -1831,10 +1858,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             }
 
             SetCurrentRunAction(runAction);
+            usingAnimatorWalk = applied;
             return applied;
         }
 
-        public void StopScriptedAnimatorWalk(PanicAction facingAction)
+        public void StopAnimatorWalk(PanicAction facingAction)
         {
             CharacterWalkDirection direction = GetWalkDirectionForRunAction(facingAction);
 
@@ -1855,6 +1883,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 animator.enabled = false;
             }
 
+            usingAnimatorWalk = false;
             StopFootsteps();
         }
 
@@ -2566,6 +2595,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             currentPanicSprite = null;
             currentPanicSpriteScaleMultiplier = 1f;
             controlledByScript = false;
+            usingAnimatorWalk = false;
             hiddenAfterExitArrival = false;
             hideAfterCurrentTargetArrival = false;
 

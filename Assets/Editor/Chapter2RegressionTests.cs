@@ -467,8 +467,8 @@ public class Chapter2RegressionTests
         string chapter1BeginMoveBody = ExtractMethodBody(chapter1Text, "private void BeginGuestMoveTo");
         string chapter1DisableBody = ExtractMethodBody(chapter1Text, "private void DisableGuestMovement");
         string panicStepBody = ExtractMethodBody(panicText, "private bool StepParticipantsTowardAssignedTargets(float deltaTime, float moveSpeedPixels, bool hideParticipantsOnArrival)");
-        string scriptedBeginBody = ExtractMethodBody(panicText, "public bool BeginScriptedAnimatorWalk");
-        string scriptedStopBody = ExtractMethodBody(panicText, "public void StopScriptedAnimatorWalk");
+        string scriptedBeginBody = ExtractMethodBody(panicText, "public bool BeginAnimatorWalk");
+        string scriptedStopBody = ExtractMethodBody(panicText, "public void StopAnimatorWalk");
         string hideAfterExitBody = ExtractMethodBody(panicText, "public void HideAfterExitArrival");
 
         Assert.That(chapter1Text, Does.Contain("GuestFootstepCatalog"), "Chapter 1 should use the shared footstep catalog.");
@@ -834,10 +834,10 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("Vector2.right"));
         Assert.That(panicText, Does.Contain("Vector2.up"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestMoveForSeconds(participant, durationSeconds, moveSpeedPixels, true, runAction)"), "Scripted guest runs should lock to each randomly requested four-direction beat.");
-        Assert.That(panicText, Does.Contain("BeginScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Scripted run beats should use the existing Animator walk clips, not panic still sprites.");
-        Assert.That(panicText, Does.Contain("UpdateScriptedAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Scripted run beats should keep the Animator walking in the scripted direction.");
+        Assert.That(panicText, Does.Contain("BeginAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Scripted run beats should use the existing Animator walk clips, not panic still sprites.");
+        Assert.That(panicText, Does.Contain("UpdateAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Scripted run beats should keep the Animator walking in the scripted direction.");
         Assert.That(panicText, Does.Contain("panicFrames[UnityEngine.Random.Range(0, panicFrames.Length)]"), "Each transition should choose one random panic still instead of playing a coordinated sequence.");
-        Assert.That(panicText, Does.Contain("StopScriptedAnimatorWalk(participant.CurrentRunAction)"), "Scripted panic holds should stop the Animator before showing one panic still.");
+        Assert.That(panicText, Does.Contain("StopAnimatorWalk(participant.CurrentRunAction)"), "Scripted panic holds should stop the Animator before showing one panic still.");
         Assert.That(panicText, Does.Contain("SetSprite(panicSprite, scriptedGuestPanicSpriteScaleMultiplier)"), "Scripted panic stills should stay sized against each guest's authored body scale.");
         Assert.That(panicText, Does.Contain("HoldScriptedGuestPanicFrame"));
         Assert.That(panicText, Does.Not.Contain("SetInputEnabled(false)"), "Guest panic must not lock the global point-click input/cursor state.");
@@ -919,6 +919,110 @@ public class Chapter2RegressionTests
 
         string cameraManagerText = File.ReadAllText(CameraManagerPath);
         Assert.That(cameraManagerText, Does.Contain("TryGetActiveRoomStageLocalPoint"), "Projected guest panic needs the inverse of CameraManager's active room-stage world conversion.");
+    }
+
+    [TestCase("Lady", "Assets/Animation/Lady/Lady.overrideController")]
+    [TestCase("ButlerGuest", "Assets/Animation/ButlerGuest/ButlerGuest.overrideController")]
+    [TestCase("MisterFlorianKnell", "Assets/Animation/MisterFlorianKnell/MisterFlorianKnell.overrideController")]
+    [TestCase("CountessElowenDusk", "Assets/Animation/CountessElowenDusk/CountessElowenDusk.overrideController")]
+    [TestCase("BaronHectorGlass", "Assets/Animation/BaronHectorGlass/BaronHectorGlass.overrideController")]
+    [TestCase("LadySabineMarrow", "Assets/Animation/LadySabineMarrow/LadySabineMarrow.overrideController")]
+    [TestCase("LordAmbroseVeil", "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil.overrideController")]
+    [TestCase("MadameCoralieThread", "Assets/Animation/MadameCoralieThread/MadameCoralieThread.overrideController")]
+    public void Chapter2GuestPanicExitAdvancesAuthoredWalkFrames(string characterId, string controllerPath)
+    {
+        GameObject root = new GameObject("Chapter2PanicExitAnimatorTestRoot");
+        GameObject actor = new GameObject("Guest 2");
+        GameObject exit = new GameObject("DrawingRoomExit");
+        Texture2D texture = null;
+        Sprite originalSprite = null;
+        Chapter2GuestPanicController panic = null;
+
+        try
+        {
+            actor.transform.SetParent(root.transform);
+            actor.transform.position = Vector3.zero;
+            exit.transform.position = new Vector3(12f, 0f, 0f);
+
+            texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            texture.SetPixels(new[]
+            {
+                Color.white,
+                Color.white,
+                Color.white,
+                Color.white
+            });
+            texture.Apply();
+            originalSprite = Sprite.Create(texture, new Rect(0f, 0f, 2f, 2f), new Vector2(0.5f, 0f));
+
+            SpriteRenderer renderer = actor.AddComponent<SpriteRenderer>();
+            renderer.sprite = originalSprite;
+            Animator animator = actor.AddComponent<Animator>();
+            animator.runtimeAnimatorController = UnityEditor.AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(controllerPath);
+            Assert.That(animator.runtimeAnimatorController, Is.Not.Null, $"{characterId}'s scene-authored walk controller should be available.");
+            animator.enabled = true;
+            animator.Rebind();
+            animator.Update(0f);
+
+            ActorRoomState actorState = actor.AddComponent<ActorRoomState>();
+            actorState.SetCurrentRoom("Drawing Room");
+            actorState.SetAvailableInCurrentChapter(true);
+            actorState.SetVisibleByChapterState(true);
+
+            Chapter2PanicAnimationLibrary library = Resources.Load<Chapter2PanicAnimationLibrary>(Chapter2PanicAnimationLibrary.ResourcesPath);
+            Assert.That(library, Is.Not.Null);
+            Assert.That(library.TryGetCharacter(characterId, out Chapter2PanicCharacterAnimation animation), Is.True);
+
+            System.Type participantType = typeof(Chapter2GuestPanicController).GetNestedType(
+                "PanicParticipant",
+                System.Reflection.BindingFlags.NonPublic);
+            Assert.That(participantType, Is.Not.Null);
+
+            System.Reflection.MethodInfo createParticipant = participantType.GetMethod(
+                "Create",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            object participant = createParticipant.Invoke(null, new object[] { actorState, animation });
+            participantType.GetMethod("ConfigureRunMotion").Invoke(participant, new object[] { 0, 2 });
+            participantType.GetMethod("ApplyPanicState").Invoke(participant, null);
+            Assert.That(animator.enabled, Is.False, "Panic still playback should initially own the sprite.");
+
+            panic = root.AddComponent<Chapter2GuestPanicController>();
+            System.Reflection.BindingFlags instanceFields =
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            System.Reflection.FieldInfo participantsField = typeof(Chapter2GuestPanicController).GetField("participants", instanceFields);
+            System.Collections.IList participants = (System.Collections.IList)participantsField.GetValue(panic);
+            participants.Add(participant);
+            typeof(Chapter2GuestPanicController).GetField("leftExitTarget", instanceFields).SetValue(panic, exit.transform);
+            typeof(Chapter2GuestPanicController).GetField("rightExitTarget", instanceFields).SetValue(panic, exit.transform);
+
+            Assert.That(panic.BeginExitToDoors(), Is.Not.Null);
+            Assert.That(actor.transform.position.x, Is.GreaterThan(0f), "Animator ownership must preserve the existing door-route movement.");
+            Assert.That(animator.enabled, Is.True, "Door departure should return visual ownership to the authored walk Animator.");
+            Assert.That(animator.GetBool("IsWalkingRight"), Is.True, "The rightward walk state should remain active while the guest moves toward the door.");
+
+            Sprite firstWalkFrame = renderer.sprite;
+            bool advancedFrame = false;
+
+            for (int i = 0; i < 12 && !advancedFrame; i++)
+            {
+                animator.Update(0.1f);
+                advancedFrame = renderer.sprite != firstWalkFrame;
+            }
+
+            Assert.That(advancedFrame, Is.True, "The visible guest sprite should advance through authored leg-motion frames during departure.");
+        }
+        finally
+        {
+            if (panic != null)
+            {
+                panic.StopPanic();
+            }
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(exit);
+            Object.DestroyImmediate(originalSprite);
+            Object.DestroyImmediate(texture);
+        }
     }
 
     [Test]
