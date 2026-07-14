@@ -103,8 +103,8 @@ TextureImporter:
       name: upper_gallery_left_plant_0
       rect:
         serializedVersion: 2
-        x: 612
-        y: 423
+        x: 0
+        y: 0
         width: 101
         height: 222
       alignment: 0

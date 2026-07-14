@@ -65,6 +65,10 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
     [SerializeField] private bool logScaleDiagnostics;
 
     private readonly List<GuestScaleParticipant> participants = new List<GuestScaleParticipant>();
+    private readonly Dictionary<GuestScaleParticipant, RuntimeScaleSnapshot> runtimeSnapshots = new Dictionary<GuestScaleParticipant, RuntimeScaleSnapshot>();
+    private bool runtimeParticipantCacheInitialized;
+    private CameraManager runtimeCameraManager;
+    private RoomNavigationManager runtimeNavigationManager;
 
     public GuestRoomScaleCalibration Calibration => calibration;
     public bool LogScaleDiagnostics
@@ -73,17 +77,30 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         set => logScaleDiagnostics = value;
     }
 
+    private void OnEnable()
+    {
+        GuestScaleParticipant.RuntimeScaleStateChanged -= HandleRuntimeScaleStateChanged;
+        GuestScaleParticipant.RuntimeScaleStateChanged += HandleRuntimeScaleStateChanged;
+        runtimeParticipantCacheInitialized = false;
+    }
+
+    private void OnDisable()
+    {
+        GuestScaleParticipant.RuntimeScaleStateChanged -= HandleRuntimeScaleStateChanged;
+    }
+
     private void LateUpdate()
     {
         if (Application.isPlaying)
         {
-            RefreshAllNow();
+            RefreshRuntimeChangesNow();
         }
     }
 
     public void SetCalibration(GuestRoomScaleCalibration value)
     {
         calibration = value;
+        runtimeSnapshots.Clear();
     }
 
     public static GuestRoomScaleApplier EnsureInScene()
@@ -154,6 +171,76 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
     public int RefreshAllNow()
     {
         return RefreshAllWithResultNow().Applied;
+    }
+
+    public GuestScaleApplyResult RefreshRuntimeChangesNow()
+    {
+        ResolveCalibration();
+
+        if (calibration == null)
+        {
+            return new GuestScaleApplyResult(0, 0);
+        }
+
+        if (!runtimeParticipantCacheInitialized)
+        {
+            RefreshParticipantList();
+        }
+
+        ResolveRuntimeContext(
+            out string navigationRoomId,
+            out float roomStageScale,
+            out int calibrationRevision,
+            out int butlerScaleRevision);
+        int applied = 0;
+        int changed = 0;
+
+        for (int i = participants.Count - 1; i >= 0; i--)
+        {
+            GuestScaleParticipant participant = participants[i];
+
+            if (participant == null)
+            {
+                participants.RemoveAt(i);
+                continue;
+            }
+
+            if (!participant.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            RuntimeScaleSnapshot current = RuntimeScaleSnapshot.Capture(
+                participant,
+                navigationRoomId,
+                roomStageScale,
+                calibrationRevision,
+                butlerScaleRevision);
+
+            if (runtimeSnapshots.TryGetValue(participant, out RuntimeScaleSnapshot previous) && previous.Matches(current))
+            {
+                continue;
+            }
+
+            if (RefreshParticipantNow(participant, out bool participantChanged))
+            {
+                applied++;
+
+                if (participantChanged)
+                {
+                    changed++;
+                }
+            }
+
+            runtimeSnapshots[participant] = RuntimeScaleSnapshot.Capture(
+                participant,
+                navigationRoomId,
+                roomStageScale,
+                calibrationRevision,
+                butlerScaleRevision);
+        }
+
+        return new GuestScaleApplyResult(applied, changed);
     }
 
     public GuestScaleApplyResult RefreshAllWithResultNow()
@@ -495,6 +582,187 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             ? FindObjectsInactive.Include
             : FindObjectsInactive.Exclude;
         participants.AddRange(FindObjectsByType<GuestScaleParticipant>(inactiveMode));
+        runtimeParticipantCacheInitialized = true;
+        PruneRuntimeSnapshots();
+    }
+
+    private void HandleRuntimeScaleStateChanged(GuestScaleParticipant participant)
+    {
+        if (participant == null)
+        {
+            runtimeParticipantCacheInitialized = false;
+            return;
+        }
+
+        runtimeSnapshots.Remove(participant);
+
+        if (!participants.Contains(participant))
+        {
+            participants.Add(participant);
+        }
+    }
+
+    private void ResolveRuntimeContext(
+        out string navigationRoomId,
+        out float roomStageScale,
+        out int calibrationRevision,
+        out int butlerScaleRevision)
+    {
+        if (runtimeNavigationManager == null)
+        {
+            runtimeNavigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Exclude);
+            runtimeNavigationManager ??= FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+
+        navigationRoomId = runtimeNavigationManager != null
+            ? runtimeNavigationManager.CurrentRoom ?? string.Empty
+            : string.Empty;
+
+        if (runtimeCameraManager == null)
+        {
+            runtimeCameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Exclude);
+            runtimeCameraManager ??= FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
+        }
+
+        roomStageScale = 1f;
+
+        if (runtimeCameraManager != null &&
+            runtimeCameraManager.TryGetRoomStageScreenTransform(out _, out _, out float activeStageScale))
+        {
+            roomStageScale = GuestRoomStageScaleUtility.SanitizeRoomStageScale(activeStageScale);
+        }
+
+        calibrationRevision = calibration != null ? calibration.RuntimeScaleRevision : 0;
+        PointClickPlayerMovement butlerScaleSource = calibration != null ? calibration.ButlerScaleSource : null;
+        butlerScaleRevision = butlerScaleSource != null ? butlerScaleSource.ButlerScaleRevision : 0;
+    }
+
+    private void PruneRuntimeSnapshots()
+    {
+        if (runtimeSnapshots.Count == 0)
+        {
+            return;
+        }
+
+        List<GuestScaleParticipant> staleParticipants = null;
+
+        foreach (KeyValuePair<GuestScaleParticipant, RuntimeScaleSnapshot> entry in runtimeSnapshots)
+        {
+            if (entry.Key != null && participants.Contains(entry.Key))
+            {
+                continue;
+            }
+
+            staleParticipants ??= new List<GuestScaleParticipant>();
+            staleParticipants.Add(entry.Key);
+        }
+
+        if (staleParticipants == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < staleParticipants.Count; i++)
+        {
+            runtimeSnapshots.Remove(staleParticipants[i]);
+        }
+    }
+
+    private readonly struct RuntimeScaleSnapshot
+    {
+        private const float VectorTolerance = 0.000001f;
+
+        private RuntimeScaleSnapshot(
+            Transform scaleRoot,
+            Vector3 worldPosition,
+            Vector3 localScale,
+            Vector3 parentLossyScale,
+            string currentRoomId,
+            string roomIdOverride,
+            CharacterPose pose,
+            float fineTune,
+            string navigationRoomId,
+            float roomStageScale,
+            int participantRevision,
+            string resolvedRoomId,
+            int calibrationRevision,
+            int butlerScaleRevision)
+        {
+            ScaleRoot = scaleRoot;
+            WorldPosition = worldPosition;
+            LocalScale = localScale;
+            ParentLossyScale = parentLossyScale;
+            CurrentRoomId = currentRoomId;
+            RoomIdOverride = roomIdOverride;
+            Pose = pose;
+            FineTune = fineTune;
+            NavigationRoomId = navigationRoomId;
+            RoomStageScale = roomStageScale;
+            ParticipantRevision = participantRevision;
+            ResolvedRoomId = resolvedRoomId;
+            CalibrationRevision = calibrationRevision;
+            ButlerScaleRevision = butlerScaleRevision;
+        }
+
+        private Transform ScaleRoot { get; }
+        private Vector3 WorldPosition { get; }
+        private Vector3 LocalScale { get; }
+        private Vector3 ParentLossyScale { get; }
+        private string CurrentRoomId { get; }
+        private string RoomIdOverride { get; }
+        private CharacterPose Pose { get; }
+        private float FineTune { get; }
+        private string NavigationRoomId { get; }
+        private float RoomStageScale { get; }
+        private int ParticipantRevision { get; }
+        private string ResolvedRoomId { get; }
+        private int CalibrationRevision { get; }
+        private int ButlerScaleRevision { get; }
+
+        public static RuntimeScaleSnapshot Capture(
+            GuestScaleParticipant participant,
+            string navigationRoomId,
+            float roomStageScale,
+            int calibrationRevision,
+            int butlerScaleRevision)
+        {
+            Transform scaleRoot = participant != null ? participant.ResolveScaleRoot() : null;
+            Transform parent = scaleRoot != null ? scaleRoot.parent : null;
+
+            return new RuntimeScaleSnapshot(
+                scaleRoot,
+                scaleRoot != null ? scaleRoot.position : Vector3.zero,
+                scaleRoot != null ? scaleRoot.localScale : Vector3.one,
+                parent != null ? parent.lossyScale : Vector3.one,
+                participant != null ? participant.CurrentRoomId : string.Empty,
+                participant != null ? participant.RoomIdOverride : string.Empty,
+                participant != null ? participant.Pose : CharacterPose.Auto,
+                participant != null ? participant.ManualFineTuneMultiplier : 1f,
+                navigationRoomId,
+                roomStageScale,
+                participant != null ? participant.RuntimeScaleRevision : 0,
+                participant != null ? participant.ResolveRoomId() : string.Empty,
+                calibrationRevision,
+                butlerScaleRevision);
+        }
+
+        public bool Matches(RuntimeScaleSnapshot other)
+        {
+            return ScaleRoot == other.ScaleRoot &&
+                (WorldPosition - other.WorldPosition).sqrMagnitude <= VectorTolerance &&
+                (LocalScale - other.LocalScale).sqrMagnitude <= VectorTolerance &&
+                (ParentLossyScale - other.ParentLossyScale).sqrMagnitude <= VectorTolerance &&
+                string.Equals(CurrentRoomId, other.CurrentRoomId, System.StringComparison.Ordinal) &&
+                string.Equals(RoomIdOverride, other.RoomIdOverride, System.StringComparison.Ordinal) &&
+                Pose == other.Pose &&
+                Mathf.Approximately(FineTune, other.FineTune) &&
+                string.Equals(NavigationRoomId, other.NavigationRoomId, System.StringComparison.Ordinal) &&
+                Mathf.Approximately(RoomStageScale, other.RoomStageScale) &&
+                ParticipantRevision == other.ParticipantRevision &&
+                string.Equals(ResolvedRoomId, other.ResolvedRoomId, System.StringComparison.Ordinal) &&
+                CalibrationRevision == other.CalibrationRevision &&
+                ButlerScaleRevision == other.ButlerScaleRevision;
+        }
     }
 
     private static bool TryResolveParticipantOverrideRoomId(GameObject guestObject, out string roomId)

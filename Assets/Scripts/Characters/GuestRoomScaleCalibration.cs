@@ -67,24 +67,39 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
     [SerializeField] private bool enableGuestRoomScaling = true;
     [SerializeField] private PointClickPlayerMovement butlerScaleSource;
     [SerializeField] private List<GuestRoomScaleEntry> rooms = new List<GuestRoomScaleEntry>();
+    [NonSerialized] private int runtimeScaleRevision;
 
     public bool EnableGuestRoomScaling => enableGuestRoomScaling;
     public List<GuestRoomScaleEntry> Rooms => rooms;
     public PointClickPlayerMovement ButlerScaleSource => butlerScaleSource;
+    public int RuntimeScaleRevision => runtimeScaleRevision;
 
     private void OnValidate()
     {
         SanitizeRooms();
+        MarkRuntimeScaleChanged();
     }
 
     public void SetGuestRoomScalingEnabled(bool value)
     {
+        if (enableGuestRoomScaling == value)
+        {
+            return;
+        }
+
         enableGuestRoomScaling = value;
+        MarkRuntimeScaleChanged();
     }
 
     public void SetButlerScaleSource(PointClickPlayerMovement source)
     {
+        if (butlerScaleSource == source)
+        {
+            return;
+        }
+
         butlerScaleSource = source;
+        MarkRuntimeScaleChanged();
     }
 
     public GuestRoomScaleEntry GetOrCreateRoom(string roomId)
@@ -114,6 +129,7 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
 
         GuestRoomScaleEntry created = new GuestRoomScaleEntry(cleanRoomId);
         rooms.Add(created);
+        MarkRuntimeScaleChanged();
         return created;
     }
 
@@ -194,14 +210,30 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
     public void SetRoomMultiplier(string roomId, float multiplier)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
-        entry.roomGuestScaleMultiplier = Mathf.Max(0.001f, multiplier);
+        float safeMultiplier = Mathf.Max(0.001f, multiplier);
+
+        if (Mathf.Approximately(entry.roomGuestScaleMultiplier, safeMultiplier))
+        {
+            return;
+        }
+
+        entry.roomGuestScaleMultiplier = safeMultiplier;
+        MarkRuntimeScaleChanged();
     }
 
     public void SetReferenceRoomStageScale(string roomId, float stageScale)
     {
         GuestRoomScaleEntry entry = GetOrCreateRoom(roomId);
+        float safeStageScale = SanitizeRoomStageScale(stageScale);
+
+        if (entry.hasReferenceRoomStageScale && Mathf.Approximately(entry.referenceRoomStageScale, safeStageScale))
+        {
+            return;
+        }
+
         entry.hasReferenceRoomStageScale = true;
-        entry.referenceRoomStageScale = SanitizeRoomStageScale(stageScale);
+        entry.referenceRoomStageScale = safeStageScale;
+        MarkRuntimeScaleChanged();
     }
 
     public bool TryGetReferenceRoomStageScale(string roomId, out float stageScale)
@@ -232,6 +264,7 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
             if (entry != null && entry.Matches(roomId))
             {
                 rooms.RemoveAt(i);
+                MarkRuntimeScaleChanged();
                 return true;
             }
         }
@@ -246,7 +279,7 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
             return;
         }
 
-        butlerScaleSource = butler;
+        SetButlerScaleSource(butler);
         List<string> butlerRooms = new List<string>();
         butler.GetButlerScaleOverrideRoomIds(butlerRooms);
 
@@ -267,8 +300,7 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
 
             if (!entry.hasReferenceRoomStageScale)
             {
-                entry.hasReferenceRoomStageScale = true;
-                entry.referenceRoomStageScale = SanitizeRoomStageScale(referenceRoomStageScale);
+                SetReferenceRoomStageScale(roomId, referenceRoomStageScale);
             }
         }
     }
@@ -325,6 +357,14 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         for (int i = 0; i < rooms.Count; i++)
         {
             rooms[i]?.Sanitize();
+        }
+    }
+
+    private void MarkRuntimeScaleChanged()
+    {
+        unchecked
+        {
+            runtimeScaleRevision++;
         }
     }
 

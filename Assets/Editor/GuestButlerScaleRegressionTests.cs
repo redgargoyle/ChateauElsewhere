@@ -252,6 +252,98 @@ public sealed class GuestRoomScaleRegressionTests
     }
 
     [Test]
+    public void GuestRoomScaleApplierRuntimeRefreshSkipsUnchangedParticipants()
+    {
+        MethodInfo runtimeRefresh = typeof(GuestRoomScaleApplier).GetMethod(
+            "RefreshRuntimeChangesNow",
+            BindingFlags.Instance | BindingFlags.Public);
+        Assert.That(runtimeRefresh, Is.Not.Null, "Runtime scaling needs a change-driven refresh entry point.");
+
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.25f);
+        GameObject guest = new GameObject("Guest 1 Runtime Scale");
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.SetScaleRoot(guest.transform);
+            participant.CaptureBaseScale(true);
+
+            GuestScaleApplyResult initial = (GuestScaleApplyResult)runtimeRefresh.Invoke(scene.Applier, null);
+            GuestScaleApplyResult unchanged = (GuestScaleApplyResult)runtimeRefresh.Invoke(scene.Applier, null);
+
+            guest.transform.localPosition = new Vector3(0f, 10f, 0f);
+            GuestScaleApplyResult moved = (GuestScaleApplyResult)runtimeRefresh.Invoke(scene.Applier, null);
+
+            Assert.That(initial.Applied, Is.EqualTo(1));
+            Assert.That(unchanged.Applied, Is.EqualTo(0), "Stationary guests must not be rediscovered and rescaled every frame.");
+            Assert.That(moved.Applied, Is.EqualTo(1), "Moving a guest must invalidate its perspective scale.");
+        }
+        finally
+        {
+            DestroyScaleTestScene(scene);
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierRuntimeRefreshRespondsToCalibrationChanges()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.25f);
+        GameObject guest = new GameObject("Guest 1 Calibration Refresh");
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.SetScaleRoot(guest.transform);
+            participant.CaptureBaseScale(true);
+
+            scene.Applier.RefreshRuntimeChangesNow();
+            GuestScaleApplyResult unchanged = scene.Applier.RefreshRuntimeChangesNow();
+            scene.Calibration.SetRoomMultiplier("Grand Entrance Hall", 2f);
+            GuestScaleApplyResult recalibrated = scene.Applier.RefreshRuntimeChangesNow();
+
+            Assert.That(unchanged.Applied, Is.EqualTo(0));
+            Assert.That(recalibrated.Applied, Is.EqualTo(1));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(3f).Within(0.0001f));
+        }
+        finally
+        {
+            DestroyScaleTestScene(scene);
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void GuestRoomScaleApplierRuntimeRefreshRespondsToCharacterIdentityChanges()
+    {
+        ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.25f);
+        GameObject guest = new GameObject("Unmanaged Visitor");
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetRoomIdOverride("Grand Entrance Hall");
+            participant.SetScaleRoot(guest.transform);
+            participant.CaptureBaseScale(true);
+
+            GuestScaleApplyResult unmanaged = scene.Applier.RefreshRuntimeChangesNow();
+            participant.SetCharacterId("Guest 1");
+            GuestScaleApplyResult managed = scene.Applier.RefreshRuntimeChangesNow();
+
+            Assert.That(unmanaged.Applied, Is.EqualTo(0));
+            Assert.That(managed.Applied, Is.EqualTo(1));
+            Assert.That(guest.transform.localScale.y, Is.EqualTo(1.5f * 1.25f).Within(0.0001f));
+        }
+        finally
+        {
+            DestroyScaleTestScene(scene);
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
     public void GuestRoomScaleApplierUsesWalkerTargetGraphic()
     {
         ScaleTestScene scene = CreateScaleTestScene("Grand Entrance Hall", 1.1f);

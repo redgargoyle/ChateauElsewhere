@@ -55,6 +55,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	[SerializeField] private Vector3 butlerCalibrationBaseLocalScale = Vector3.one;
 	[SerializeField, HideInInspector] private string editorSelectedButlerScaleRoomId = string.Empty;
 	[SerializeField, HideInInspector] private List<ButlerRoomScaleOverride> butlerRoomScaleOverrides = new List<ButlerRoomScaleOverride>();
+	[NonSerialized] private int butlerScaleRevision;
 	[SerializeField] private bool applyPerspectiveScale = true;
 	[SerializeField] private bool applyPlayerSorting = true;
 	[SerializeField] private float runningAnimationSpeed = 40f;
@@ -129,6 +130,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public bool UsesButlerRoomScaleOverrides => useButlerRoomScaleOverrides;
 	public bool HasButlerCalibrationBaseLocalScale => hasButlerCalibrationBaseLocalScale;
 	public Vector3 ButlerCalibrationBaseLocalScale => butlerCalibrationBaseLocalScale;
+	public int ButlerScaleRevision => butlerScaleRevision;
 	public string EditorSelectedButlerScaleRoomId => editorSelectedButlerScaleRoomId;
 	public string CurrentButlerScaleRoomId => GetCurrentButlerScaleRoomId();
 	public string CurrentRoomPerspectiveProfileRoomId
@@ -287,12 +289,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		butlerCalibrationBaseLocalScale = transform.localScale;
 		hasButlerCalibrationBaseLocalScale = true;
+		MarkButlerScaleChanged();
 	}
 
 	public void CaptureCurrentTransformAsButlerCalibrationBaseScale()
 	{
 		butlerCalibrationBaseLocalScale = transform.localScale;
 		hasButlerCalibrationBaseLocalScale = true;
+		MarkButlerScaleChanged();
 	}
 
 	public void RestoreButlerCalibrationBaseScalePreview()
@@ -466,6 +470,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		roomScale.SetFront(roomLocalFootY, finalLocalScaleY);
 		useButlerRoomScaleOverrides = true;
 		SetEditorSelectedButlerScaleRoomId(roomScale.RoomId);
+		MarkButlerScaleChanged();
 
 		if (applyImmediately)
 		{
@@ -491,6 +496,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		roomScale.SetBack(roomLocalFootY, finalLocalScaleY);
 		useButlerRoomScaleOverrides = true;
 		SetEditorSelectedButlerScaleRoomId(roomScale.RoomId);
+		MarkButlerScaleChanged();
 
 		if (applyImmediately)
 		{
@@ -508,6 +514,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		butlerRoomScaleOverrides.RemoveAt(existingIndex);
+		MarkButlerScaleChanged();
 
 		if (applyImmediately)
 		{
@@ -4078,6 +4085,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 		ButlerRoomScaleOverride roomScale = new ButlerRoomScaleOverride(cleanRoomId);
 		butlerRoomScaleOverrides.Add(roomScale);
 		return roomScale;
+	}
+
+	private void MarkButlerScaleChanged()
+	{
+		unchecked
+		{
+			butlerScaleRevision++;
+		}
 	}
 
 	private int GetButlerScaleOverrideIndex(string roomId)

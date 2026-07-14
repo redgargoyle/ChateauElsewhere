@@ -71,6 +71,8 @@ public readonly struct GuestRoomResolutionTrace
 [AddComponentMenu("Dreadforge/Characters/Guest Scale Participant")]
 public sealed class GuestScaleParticipant : MonoBehaviour
 {
+    public static event Action<GuestScaleParticipant> RuntimeScaleStateChanged;
+
     [SerializeField] private string characterId;
     [SerializeField] private string currentRoomId;
     [SerializeField] private string roomIdOverride;
@@ -83,6 +85,7 @@ public sealed class GuestScaleParticipant : MonoBehaviour
     [SerializeField, Min(0.001f)] private float manualFineTuneMultiplier = 1f;
     [SerializeField] private Vector3 capturedBaseScale = Vector3.one;
     [SerializeField] private bool hasCapturedBaseScale;
+    [NonSerialized] private int runtimeScaleRevision;
 
     public string CharacterId => string.IsNullOrWhiteSpace(characterId) ? gameObject.name : characterId.Trim();
     public string CurrentRoomId => currentRoomId;
@@ -96,6 +99,7 @@ public sealed class GuestScaleParticipant : MonoBehaviour
     public float ManualFineTuneMultiplier => Mathf.Max(0.001f, manualFineTuneMultiplier);
     public Vector3 CapturedBaseScale => capturedBaseScale;
     public bool HasCapturedBaseScale => hasCapturedBaseScale;
+    public int RuntimeScaleRevision => runtimeScaleRevision;
 
     private void Reset()
     {
@@ -105,59 +109,168 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         CaptureBaseScale(true);
     }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeState()
+    {
+        RuntimeScaleStateChanged = null;
+    }
+
+    private void OnEnable()
+    {
+        NotifyRuntimeScaleStateChanged();
+    }
+
+    private void OnDisable()
+    {
+        NotifyRuntimeScaleStateChanged();
+    }
+
+    private void OnDestroy()
+    {
+        NotifyRuntimeScaleStateChanged();
+    }
+
+    private void OnTransformParentChanged()
+    {
+        NotifyRuntimeScaleStateChanged();
+    }
+
     private void OnValidate()
     {
         manualFineTuneMultiplier = Mathf.Max(0.001f, manualFineTuneMultiplier);
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void SetCharacterId(string value)
     {
-        characterId = string.IsNullOrWhiteSpace(value) ? gameObject.name : value.Trim();
+        string resolvedId = string.IsNullOrWhiteSpace(value) ? gameObject.name : value.Trim();
+
+        if (string.Equals(characterId, resolvedId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        characterId = resolvedId;
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void SetCurrentRoomId(string value)
     {
-        currentRoomId = GuestRoomScaleCalibration.CleanRoomId(value);
+        string cleanValue = GuestRoomScaleCalibration.CleanRoomId(value);
+
+        if (string.Equals(currentRoomId, cleanValue, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        currentRoomId = cleanValue;
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void ClearCurrentRoomId()
     {
+        if (string.IsNullOrEmpty(currentRoomId))
+        {
+            return;
+        }
+
         currentRoomId = string.Empty;
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void SetRoomIdOverride(string value)
     {
-        roomIdOverride = GuestRoomScaleCalibration.CleanRoomId(value);
+        string cleanValue = GuestRoomScaleCalibration.CleanRoomId(value);
+
+        if (string.Equals(roomIdOverride, cleanValue, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        roomIdOverride = cleanValue;
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void SetPose(CharacterPose value)
     {
+        if (pose == value)
+        {
+            return;
+        }
+
         pose = value;
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void SetScaleRoot(Transform value)
     {
-        scaleRoot = IsUsableBodyTransform(value) ? value : transform;
+        Transform resolvedRoot = IsUsableBodyTransform(value) ? value : transform;
+
+        if (scaleRoot == resolvedRoot)
+        {
+            return;
+        }
+
+        scaleRoot = resolvedRoot;
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void SetBodyRoot(Transform value)
     {
-        bodyRoot = IsUsableBodyTransform(value) ? value : null;
+        Transform resolvedRoot = IsUsableBodyTransform(value) ? value : null;
+
+        if (bodyRoot == resolvedRoot)
+        {
+            return;
+        }
+
+        bodyRoot = resolvedRoot;
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void SetExcludedFromGuestScaling(bool value)
     {
+        if (excludeFromGuestScaling == value)
+        {
+            return;
+        }
+
         excludeFromGuestScaling = value;
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void SetIsButler(bool value)
     {
+        if (isButler == value)
+        {
+            return;
+        }
+
         isButler = value;
+        NotifyRuntimeScaleStateChanged();
     }
 
     public void SetManualFineTuneMultiplier(float value)
     {
-        manualFineTuneMultiplier = Mathf.Max(0.001f, value);
+        float safeValue = Mathf.Max(0.001f, value);
+
+        if (Mathf.Approximately(manualFineTuneMultiplier, safeValue))
+        {
+            return;
+        }
+
+        manualFineTuneMultiplier = safeValue;
+        NotifyRuntimeScaleStateChanged();
+    }
+
+    private void NotifyRuntimeScaleStateChanged()
+    {
+        unchecked
+        {
+            runtimeScaleRevision++;
+        }
+
+        RuntimeScaleStateChanged?.Invoke(this);
     }
 
     public Transform ResolveScaleRoot()
@@ -616,8 +729,15 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         }
 
         Transform root = ResolveScaleRoot();
-        capturedBaseScale = root != null ? SanitizeScale(root.localScale) : Vector3.one;
+        Vector3 resolvedBaseScale = root != null ? SanitizeScale(root.localScale) : Vector3.one;
+        bool changed = !hasCapturedBaseScale || capturedBaseScale != resolvedBaseScale;
+        capturedBaseScale = resolvedBaseScale;
         hasCapturedBaseScale = true;
+
+        if (changed)
+        {
+            NotifyRuntimeScaleStateChanged();
+        }
     }
 
     public void RestoreCapturedBaseScale()
@@ -626,7 +746,13 @@ public sealed class GuestScaleParticipant : MonoBehaviour
 
         if (root != null && hasCapturedBaseScale)
         {
+            bool changed = root.localScale != capturedBaseScale;
             root.localScale = capturedBaseScale;
+
+            if (changed)
+            {
+                NotifyRuntimeScaleStateChanged();
+            }
         }
     }
 
