@@ -87,8 +87,7 @@ public sealed class GameDatabaseDefinitionContractTests
             "room.kitchen",
             "Kitchen",
             new[] { "Kitchen" },
-            "788c4ce8a4f6e8b8580f808a95b41c05",
-            isDataOnly: true),
+            "788c4ce8a4f6e8b8580f808a95b41c05"),
         new RoomExpectation(
             "Assets/_Chateau/Data/World/Rooms/Room_Chapel.asset",
             "room.chapel",
@@ -182,6 +181,28 @@ public sealed class GameDatabaseDefinitionContractTests
         new SceneRoomExpectation("2300000052", "2300000050", "Upper Sitting Hall", "45a669872351e5ba0b2a6749ecc2065f")
     };
 
+    private static readonly string[] ApprovedPassageAssetPathsInDatabaseOrder =
+    {
+        "Assets/_Chateau/Data/World/Passages/Passage_GEH_DrawingRoom.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_DrawingRoom_GEH.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_DrawingRoom_MusicRoom.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_MusicRoom_DrawingRoom.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_MusicRoom_Library.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_Library_MusicRoom.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_Library_Ballroom.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_Ballroom_Library.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_GEH_DiningRoom.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_DiningRoom_GEH.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_DiningRoom_ButlersPantry.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_ButlersPantry_DiningRoom.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_ButlersPantry_BilliardRoom.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_BilliardRoom_ButlersPantry.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_ButlersPantry_ServiceCorridor.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_ServiceCorridor_ButlersPantry.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_ServiceCorridor_Kitchen.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_Kitchen_ServiceCorridor.asset"
+    };
+
     private readonly List<UnityEngine.Object> transientObjects = new List<UnityEngine.Object>();
 
     [TearDown]
@@ -205,9 +226,12 @@ public sealed class GameDatabaseDefinitionContractTests
         GameDatabase database = LoadDatabase();
 
         Assert.That(rooms, Has.Length.EqualTo(19));
-        Assert.That(database.Definitions, Has.Count.EqualTo(35));
+        Assert.That(database.Definitions, Has.Count.EqualTo(37));
         Assert.That(database.RoomDefinitions, Has.Count.EqualTo(19));
-        Assert.That(database.PassageDefinitions, Has.Count.EqualTo(16));
+        Assert.That(database.PassageDefinitions, Has.Count.EqualTo(18));
+        Assert.That(database.PassageDefinitions.Select(definition => AssetDatabase.GetAssetPath(definition)),
+            Is.EqualTo(ApprovedPassageAssetPathsInDatabaseOrder),
+            "The canonical directed-passage catalog must remain in migration order through Group08.");
         Assert.That(rooms.Select(room => room.StableId),
             Is.EquivalentTo(ApprovedRooms.Select(room => room.StableId)));
 
@@ -254,12 +278,12 @@ public sealed class GameDatabaseDefinitionContractTests
     }
 
     [Test]
-    public void TypedPassageIndexResolvesAllSixteenPassagesAndRejectsUnknownIds()
+    public void TypedPassageIndexResolvesAllEighteenPassagesAndRejectsUnknownIds()
     {
         GameDatabase database = LoadDatabase();
         PassageDefinition[] passages = LoadDefinitions<PassageDefinition>(PassagesFolder);
 
-        Assert.That(passages, Has.Length.EqualTo(16));
+        Assert.That(passages, Has.Length.EqualTo(18));
 
         foreach (PassageDefinition passage in passages)
         {
@@ -411,10 +435,10 @@ public sealed class GameDatabaseDefinitionContractTests
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
 
-        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6032));
+        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6035));
         Assert.That(CountOccurrences(sceneText, $"guid: {RoomContentGroupGuid}"), Is.EqualTo(19));
-        Assert.That(CountOccurrences(sceneText, $"guid: {RoomViewGuid}"), Is.EqualTo(9));
-        Assert.That(CountOccurrences(sceneText, $"guid: {PassageGuid}"), Is.EqualTo(16));
+        Assert.That(CountOccurrences(sceneText, $"guid: {RoomViewGuid}"), Is.EqualTo(10));
+        Assert.That(CountOccurrences(sceneText, $"guid: {PassageGuid}"), Is.EqualTo(18));
         Assert.That(CountOccurrences(sceneText, $"guid: {LegacyDoorTriggerGuid}"), Is.EqualTo(45));
         Assert.That(CountOccurrences(sceneText, $"guid: {GameRootGuid}"), Is.EqualTo(1));
 

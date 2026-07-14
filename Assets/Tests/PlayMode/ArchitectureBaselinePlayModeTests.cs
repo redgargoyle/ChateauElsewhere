@@ -598,6 +598,102 @@ public sealed class ArchitectureBaselinePlayModeTests
     }
 
     [UnityTest]
+    public IEnumerator ServiceCorridorKitchenRoundTripUsesRoomViewLocalCanonicalPassages()
+    {
+        const string DiningRoomName = "Dining Room";
+        const string ButlersPantryRoomName = "Butlers Pantry";
+        const string ServiceCorridorRoomName = "Service Corridor";
+        const string KitchenRoomName = "Kitchen";
+        Vector2 serviceAnchor = new Vector2(589.9897f, -419.25894f);
+        Vector2 kitchenAnchor = new Vector2(-478.36285f, -156.76599f);
+
+        yield return BootGameplayFromRealMenu();
+
+        MonoBehaviour navigation = RequireSingleSceneComponent("RoomNavigationManager");
+        MonoBehaviour player = RequireComponentOnGameObject("Player", "PointClickPlayerMovement");
+        MonoBehaviour cameraManager = RequireSingleSceneComponent("CameraManager");
+        MonoBehaviour entranceToDining = RequireComponentOnGameObject(
+            "DoorTrigger_GEH_DiningRoom",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour diningToPantry = RequireComponentOnGameObject(
+            "DoorTrigger_DiningRoom_ButlersPantry",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour pantryToService = RequireComponentOnGameObject(
+            "DoorTrigger_ButlersPantry_ServiceCorridor",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour serviceToKitchen = RequireComponentOnGameObject(
+            "DoorTrigger_ServiceCorridor_Kitchen",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour kitchenToService = RequireComponentOnGameObject(
+            "DoorTrigger_Kitchen_ServiceCorridor",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour serviceTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_ServiceCorridor_Kitchen",
+            "DoorTriggerNavigation");
+        MonoBehaviour kitchenTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_Kitchen_ServiceCorridor",
+            "DoorTriggerNavigation");
+        MonoBehaviour serviceView = RequireRoomView("room.service-corridor");
+        MonoBehaviour kitchenView = RequireRoomView("room.kitchen");
+
+        Assert.That(GetField<MonoBehaviour>(serviceTrigger, "canonicalPassage"), Is.SameAs(serviceToKitchen));
+        Assert.That(GetField<MonoBehaviour>(kitchenTrigger, "canonicalPassage"), Is.SameAs(kitchenToService));
+        Assert.That(GetField<float>(serviceTrigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+        Assert.That(GetField<float>(kitchenTrigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+        Assert.That(GetProperty<object>(serviceToKitchen, "AnchorMigrationStage").ToString(),
+            Is.EqualTo("AuthoredAnchors"));
+        Assert.That(GetProperty<object>(kitchenToService, "AnchorMigrationStage").ToString(),
+            Is.EqualTo("AuthoredAnchors"));
+        AssertRoomViewLocalPassageAnchors(serviceToKitchen, serviceAnchor, kitchenAnchor);
+        AssertRoomViewLocalPassageAnchors(kitchenToService, kitchenAnchor, serviceAnchor);
+
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", entranceToDining), Is.True);
+        yield return WaitForCurrentRoom(navigation, DiningRoomName, 60);
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", diningToPantry), Is.True);
+        yield return WaitForCurrentRoom(navigation, ButlersPantryRoomName, 60);
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", pantryToService), Is.True);
+        yield return WaitForCurrentRoom(navigation, ServiceCorridorRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<bool>(serviceView, "IsVisible"), Is.True);
+        Assert.That(GetProperty<bool>(kitchenView, "IsVisible"), Is.False);
+        InvokeMethod(player, "SetInputEnabled", true);
+        Vector2 serviceApproach = ResolvePassageAnchorLogicalPosition(
+            serviceToKitchen,
+            "ApproachAnchor",
+            player);
+        Assert.That((bool)InvokeMethod(player, "TryWarpToExact", serviceApproach), Is.True);
+        yield return null;
+        AssertRoomViewLocalPlayerPosition(player, cameraManager, serviceAnchor, "Service approach");
+
+        SetField(serviceTrigger, "lastPointerActivationFrame", -1);
+        InvokeMethod(serviceTrigger, "ActivateDoor");
+        yield return WaitForCurrentRoom(navigation, KitchenRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<bool>(serviceView, "IsVisible"), Is.False);
+        Assert.That(GetProperty<bool>(kitchenView, "IsVisible"), Is.True);
+        AssertRoomViewLocalPlayerPosition(player, cameraManager, kitchenAnchor, "Kitchen arrival");
+
+        SetField(kitchenTrigger, "lastPointerActivationFrame", -1);
+        InvokeMethod(kitchenTrigger, "ActivateDoor");
+        yield return WaitForCurrentRoom(navigation, ServiceCorridorRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<bool>(serviceView, "IsVisible"), Is.True);
+        Assert.That(GetProperty<bool>(kitchenView, "IsVisible"), Is.False);
+        AssertRoomViewLocalPlayerPosition(player, cameraManager, serviceAnchor, "Service return arrival");
+        AssertFixedRenderingResolution();
+        Debug.Log(
+            $"[Slice22Group08PlayMode] resolution={Screen.width}x{Screen.height} " +
+            $"serviceLocal={Format(serviceAnchor)} kitchenLocal={Format(kitchenAnchor)} " +
+            "callers=bound stages=authored-anchors space=room-view-local threshold=145");
+    }
+
+    [UnityTest]
     public IEnumerator Chapter2PanicFrameHasApprovedGuestsAndStableRenderedEvidence()
     {
         yield return BootGameplayFromRealMenu();
@@ -920,6 +1016,77 @@ public sealed class ArchitectureBaselinePlayModeTests
         List<MonoBehaviour> matches = FindSceneComponents(typeName);
         Assert.That(matches, Has.Count.EqualTo(1), $"Expected one active-scene component '{typeName}'.");
         return matches[0];
+    }
+
+    private static void AssertRoomViewLocalPassageAnchors(
+        MonoBehaviour passage,
+        Vector2 expectedApproach,
+        Vector2 expectedArrival)
+    {
+        object approach = GetProperty<object>(passage, "ApproachAnchor");
+        object arrival = GetProperty<object>(passage, "ArrivalAnchor");
+
+        Assert.That(GetProperty<object>(approach, "CoordinateSpace").ToString(), Is.EqualTo("RoomViewLocal"));
+        Assert.That(GetProperty<object>(arrival, "CoordinateSpace").ToString(), Is.EqualTo("RoomViewLocal"));
+        Assert.That(GetProperty<Vector2>(approach, "LogicalPosition"), Is.EqualTo(Vector2.zero));
+        Assert.That(GetProperty<Vector2>(arrival, "LogicalPosition"), Is.EqualTo(Vector2.zero));
+        AssertVector2Within(
+            GetProperty<Vector2>(approach, "RoomViewLocalPosition"),
+            expectedApproach,
+            0.0001f,
+            $"{passage.gameObject.name} approach data");
+        AssertVector2Within(
+            GetProperty<Vector2>(arrival, "RoomViewLocalPosition"),
+            expectedArrival,
+            0.0001f,
+            $"{passage.gameObject.name} arrival data");
+    }
+
+    private static Vector2 ResolvePassageAnchorLogicalPosition(
+        MonoBehaviour passage,
+        string anchorProperty,
+        MonoBehaviour player)
+    {
+        object anchor = GetProperty<object>(passage, anchorProperty);
+        object[] arguments = { player, Vector2.zero };
+        Assert.That(
+            (bool)RequireMethod(anchor, "TryResolveLogicalPosition", 2).Invoke(anchor, arguments),
+            Is.True,
+            $"{passage.gameObject.name} {anchorProperty} must resolve through the active RoomView.");
+        return (Vector2)arguments[1];
+    }
+
+    private static void AssertRoomViewLocalPlayerPosition(
+        MonoBehaviour player,
+        MonoBehaviour cameraManager,
+        Vector2 expected,
+        string label)
+    {
+        Vector2 logicalPosition = GetProperty<Vector2>(player, "LogicalPosition");
+        object[] worldArguments = { logicalPosition, Vector2.zero };
+        Assert.That(
+            (bool)RequireMethod(player, "TryGetWorldPointFromLogicalPosition", 2)
+                .Invoke(player, worldArguments),
+            Is.True,
+            $"{label} must resolve to a world foot point.");
+        Vector2 worldPoint = (Vector2)worldArguments[1];
+        object[] localArguments =
+        {
+            new Vector3(worldPoint.x, worldPoint.y, player.transform.position.z),
+            Vector2.zero
+        };
+        Assert.That(
+            (bool)RequireMethod(cameraManager, "TryGetActiveRoomStageLocalPoint", 2)
+                .Invoke(cameraManager, localArguments),
+            Is.True,
+            $"{label} must map back through the active RoomView.");
+        AssertVector2Within((Vector2)localArguments[1], expected, 0.05f, label);
+    }
+
+    private static void AssertVector2Within(Vector2 actual, Vector2 expected, float tolerance, string label)
+    {
+        Assert.That(actual.x, Is.EqualTo(expected.x).Within(tolerance), $"{label} x changed.");
+        Assert.That(actual.y, Is.EqualTo(expected.y).Within(tolerance), $"{label} y changed.");
     }
 
     private static List<MonoBehaviour> FindSceneComponents(string typeName)

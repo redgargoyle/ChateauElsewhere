@@ -2820,8 +2820,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(musicRoomView.LegacyContentGroup, Is.SameAs(musicRoomContent));
         Assert.That(musicRoomView.Root, Is.SameAs(musicRoomContent.transform));
         Assert.That(musicRoomView.HasGameContext, Is.True);
-        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(9));
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(16));
+        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(10));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(18));
         AssertDrawingMusicAuthoredAnchorPassages(
             forward,
             reverse,
@@ -3935,20 +3935,20 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(
                 FindInActiveScene<DoorTriggerNavigation>()
                     .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-                Is.EqualTo(16),
-                "The first eight reciprocal route pairs must have canonical callers at this gate.");
+                Is.EqualTo(18),
+                "The first nine reciprocal route pairs must have canonical callers at this gate.");
             Assert.That(
                 FindInActiveScene<DoorTriggerNavigation>()
                     .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-                Is.EqualTo(29),
-                "Every trigger outside the first eight reciprocal pairs must retain its null caller.");
+                Is.EqualTo(27),
+                "Every trigger outside the first nine reciprocal pairs must retain its null caller.");
 
             RoomContentGroup musicRoomContent = FindInActiveScene<RoomContentGroup>()
                 .Single(item => item.RoomName == MusicRoom);
             RoomContentGroup libraryRoomContent = FindInActiveScene<RoomContentGroup>()
                 .Single(item => item.RoomName == LibraryRoom);
             CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-            Assert.That(roomViews, Has.Length.EqualTo(9));
+            Assert.That(roomViews, Has.Length.EqualTo(10));
             CanonicalRoomView musicRoomView = roomViews.Single(item =>
                 item.Definition != null && item.Definition.StableId == "room.music-room");
             CanonicalRoomView libraryRoomView = roomViews.Single(item =>
@@ -4173,25 +4173,25 @@ public sealed class GameplayLifecycleCharacterizationTests
                     document.Contains("player: {fileID: 81962843}") &&
                     document.Contains(
                         "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
-                Is.EqualTo(16),
-                "Exactly the eight complete reciprocal pairs may have direct compatibility bindings.");
+                Is.EqualTo(18),
+                "Exactly the nine complete reciprocal pairs may have direct compatibility bindings.");
             Assert.That(
                 serializedGameplayTriggers.Count(document =>
                     document.Contains("navigationManager: {fileID: 0}") &&
                     document.Contains("doorOpenAudioSource: {fileID: 0}") &&
                     document.Contains("player: {fileID: 0}") &&
                     document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
-                Is.EqualTo(29),
+                Is.EqualTo(27),
                 "Every trigger before its dependency slice must retain all four null compatibility bindings.");
             Assert.That(
                 serializedGameplayTriggers.Count(document =>
                     document.Contains("canonicalPassage: {fileID:")),
-                Is.EqualTo(16),
-                "The first eight reciprocal route pairs must have canonical callers.");
+                Is.EqualTo(18),
+                "The first nine reciprocal route pairs must have canonical callers.");
             Assert.That(
                 serializedGameplayTriggers.Count(document =>
                     !document.Contains("canonicalPassage: {fileID:")),
-                Is.EqualTo(29),
+                Is.EqualTo(27),
                 "Every remaining trigger must retain a null canonical caller.");
             Assert.That(
                 serializedGameplayTriggers.All(document =>
@@ -5422,10 +5422,10 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.SameAs(ballroomLibraryPassage));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-                Is.EqualTo(16));
+                Is.EqualTo(18));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-                Is.EqualTo(29));
+                Is.EqualTo(27));
             Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(5));
             Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(5));
             Assert.That(libraryBallroomPassage.AnchorMigrationStage,
@@ -5929,14 +5929,14 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(reversePassage.UsesAuthoredArrival, Is.True);
             Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.SameAs(forwardPassage));
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.SameAs(reversePassage));
-            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(16));
-            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(9));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(18));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(10));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-                Is.EqualTo(16));
+                Is.EqualTo(18));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-                Is.EqualTo(29));
+                Is.EqualTo(27));
             foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
             {
                 Assert.That(GetPrivateValue<float>(trigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
@@ -6501,14 +6501,14 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.SameAs(forwardPassage));
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"),
                 Is.SameAs(reversePassage));
-            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(16));
-            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(9));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(18));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(10));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-                Is.EqualTo(16));
+                Is.EqualTo(18));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-                Is.EqualTo(29));
+                Is.EqualTo(27));
 
             RectTransform forwardRect = forward.transform as RectTransform;
             RectTransform reverseRect = reverse.transform as RectTransform;
@@ -7000,8 +7000,8 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.SameAs(forwardPassage));
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"),
                 Is.SameAs(reversePassage));
-            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(16));
-            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(9));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(18));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(10));
             Assert.That(FindInActiveScene<CanonicalPassage>()
                 .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.LegacySampling),
                 Is.Zero);
@@ -7010,13 +7010,13 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.Zero);
             Assert.That(FindInActiveScene<CanonicalPassage>()
                 .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors),
-                Is.EqualTo(16));
+                Is.EqualTo(18));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-                Is.EqualTo(16));
+                Is.EqualTo(18));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-                Is.EqualTo(29));
+                Is.EqualTo(27));
 
             Assert.That(forward.SourceRoom, Is.EqualTo(ButlersPantry));
             Assert.That(forward.DoorName, Is.EqualTo("ButlersPantry_ServiceCorridor"));
@@ -7155,7 +7155,7 @@ public sealed class GameplayLifecycleCharacterizationTests
 
             Chateau.Architecture.GameRoot gameRoot =
                 RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
-            Assert.That(gameRoot.Context.Database.Definitions, Has.Count.EqualTo(35));
+            Assert.That(gameRoot.Context.Database.Definitions, Has.Count.EqualTo(37));
             Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(serviceView.Definition));
             Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(forwardPassage.Definition));
             Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(reversePassage.Definition));
@@ -7180,12 +7180,12 @@ public sealed class GameplayLifecycleCharacterizationTests
                 sceneText,
                 "^--- !u!",
                 System.Text.RegularExpressions.RegexOptions.Multiline).Count,
-                Is.EqualTo(6032));
+                Is.EqualTo(6035));
             Assert.That(System.Text.RegularExpressions.Regex.Matches(
                 databaseText,
                 "^  - \\{fileID: 11400000, guid:",
                 System.Text.RegularExpressions.RegexOptions.Multiline).Count,
-                Is.EqualTo(35));
+                Is.EqualTo(37));
             foreach (string definitionGuid in new[]
             {
                 "85d51b6fcb4840458d45f66bbf6c233b",
@@ -7628,6 +7628,413 @@ public sealed class GameplayLifecycleCharacterizationTests
         }
     }
 
+    [UnityTest]
+    public IEnumerator ServiceCorridorKitchenPassagesUseRoomViewLocalAnchorsAcrossRenderedAspects()
+    {
+        const string ServiceCorridor = "Service Corridor";
+        const string Kitchen = "Kitchen";
+        Vector2 serviceAnchor = new Vector2(589.9897f, -419.25894f);
+        Vector2 kitchenAnchor = new Vector2(-478.36285f, -156.76599f);
+
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        Button cursorButton = cursorChoice.GetComponent<Button>();
+        Assert.That(cursorButton, Is.Not.Null);
+        cursorButton.onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        INavigationService navigationFacade = navigation;
+        PointClickPlayerMovement player = GameObject.Find("Player").GetComponent<PointClickPlayerMovement>();
+        Assert.That(player, Is.Not.Null);
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        bool originalInputEnabled = player.InputEnabled;
+        float originalMoveSpeed = GetPrivateValue<float>(player, "moveSpeed");
+        bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
+        bool originalZoomRoomWithMouseWheel = cameraManager.zoomRoomWithMouseWheel;
+        DoorTriggerNavigation forward = null;
+        DoorTriggerNavigation reverse = null;
+
+        player.SetInputEnabled(true);
+        SetPrivateField(player, "moveSpeed", 1000f);
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+
+        try
+        {
+            cameraManager.ResetRoomLookForPreview();
+            yield return WaitForSettledLayout();
+            Canvas.ForceUpdateCanvases();
+            Physics2D.SyncTransforms();
+
+            foreach (string setupTriggerName in new[]
+            {
+                "DoorTrigger_GEH_DiningRoom",
+                "DoorTrigger_DiningRoom_ButlersPantry",
+                "DoorTrigger_ButlersPantry_ServiceCorridor"
+            })
+            {
+                CanonicalPassage setupPassage =
+                    RequireSceneObject<DoorTriggerNavigation>(setupTriggerName).GetComponent<CanonicalPassage>();
+                Assert.That(setupPassage, Is.Not.Null);
+                Assert.That(navigationFacade.TryTraverse(setupPassage), Is.True);
+                yield return WaitForSettledLayout();
+            }
+
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(ServiceCorridor));
+            forward = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_ServiceCorridor_Kitchen");
+            reverse = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_Kitchen_ServiceCorridor");
+            CanonicalPassage forwardPassage = forward.GetComponent<CanonicalPassage>();
+            CanonicalPassage reversePassage = reverse.GetComponent<CanonicalPassage>();
+            Assert.That(forwardPassage, Is.Not.Null);
+            Assert.That(reversePassage, Is.Not.Null);
+            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(5));
+            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(5));
+            Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"),
+                Is.SameAs(forwardPassage));
+            Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"),
+                Is.SameAs(reversePassage));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(10));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(18));
+            Assert.That(FindInActiveScene<CanonicalPassage>().All(passage =>
+                passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors), Is.True);
+            Assert.That(FindInActiveScene<DoorTriggerNavigation>().Count(trigger =>
+                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(18));
+            Assert.That(FindInActiveScene<DoorTriggerNavigation>().Count(trigger =>
+                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(27));
+
+            Assert.That(forward.SourceRoom, Is.EqualTo(ServiceCorridor));
+            Assert.That(forward.DoorName, Is.EqualTo("ServiceCorridor_Kitchen"));
+            Assert.That(forward.DestinationRoom, Is.EqualTo(Kitchen));
+            Assert.That(reverse.SourceRoom, Is.EqualTo(Kitchen));
+            Assert.That(reverse.DoorName, Is.EqualTo("Kitchen_ServiceCorridor"));
+            Assert.That(reverse.DestinationRoom, Is.EqualTo(ServiceCorridor));
+            Assert.That(forwardPassage.Definition.StableId,
+                Is.EqualTo("passage.service-corridor.kitchen"));
+            Assert.That(reversePassage.Definition.StableId,
+                Is.EqualTo("passage.kitchen.service-corridor"));
+            Assert.That(forwardPassage.Definition.Reverse, Is.SameAs(reversePassage.Definition));
+            Assert.That(reversePassage.Definition.Reverse, Is.SameAs(forwardPassage.Definition));
+            Assert.That(forwardPassage.ReversePassage, Is.SameAs(reversePassage));
+            Assert.That(reversePassage.ReversePassage, Is.SameAs(forwardPassage));
+            Assert.That(forwardPassage.SourceRoomView.Definition.StableId,
+                Is.EqualTo("room.service-corridor"));
+            Assert.That(reversePassage.SourceRoomView.Definition.StableId, Is.EqualTo("room.kitchen"));
+            Assert.That(forwardPassage.ApproachAnchor.CoordinateSpace,
+                Is.EqualTo(PassageAnchorCoordinateSpace.RoomViewLocal));
+            Assert.That(forwardPassage.ArrivalAnchor.CoordinateSpace,
+                Is.EqualTo(PassageAnchorCoordinateSpace.RoomViewLocal));
+            Assert.That(reversePassage.ApproachAnchor.CoordinateSpace,
+                Is.EqualTo(PassageAnchorCoordinateSpace.RoomViewLocal));
+            Assert.That(reversePassage.ArrivalAnchor.CoordinateSpace,
+                Is.EqualTo(PassageAnchorCoordinateSpace.RoomViewLocal));
+            AssertVector2Within(forwardPassage.ApproachAnchor.RoomViewLocalPosition,
+                serviceAnchor, 0.0001f, "Service-to-Kitchen room-local approach");
+            AssertVector2Within(forwardPassage.ArrivalAnchor.RoomViewLocalPosition,
+                kitchenAnchor, 0.0001f, "Service-to-Kitchen room-local arrival");
+            AssertVector2Within(reversePassage.ApproachAnchor.RoomViewLocalPosition,
+                kitchenAnchor, 0.0001f, "Kitchen-to-Service room-local approach");
+            AssertVector2Within(reversePassage.ArrivalAnchor.RoomViewLocalPosition,
+                serviceAnchor, 0.0001f, "Kitchen-to-Service room-local arrival");
+            Assert.That(GetPrivateValue<float>(forward, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+            Assert.That(GetPrivateValue<float>(reverse, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+
+            RoomContentGroup serviceContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == ServiceCorridor);
+            RoomContentGroup kitchenContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == Kitchen);
+            Assert.That(forwardPassage.SourceRoomView.LegacyContentGroup, Is.SameAs(serviceContent));
+            Assert.That(reversePassage.SourceRoomView.LegacyContentGroup, Is.SameAs(kitchenContent));
+            Assert.That(RequireOnlyActiveRoom(ServiceCorridor), Is.SameAs(serviceContent));
+            Assert.That(FindInActiveScene<ObjectMovementBlocker2D>().Count(blocker =>
+                blocker.GetComponentInParent<RoomContentGroup>(true) == serviceContent), Is.EqualTo(2));
+            Assert.That(FindInActiveScene<ObjectMovementBlocker2D>().Count(blocker =>
+                blocker.GetComponentInParent<RoomContentGroup>(true) == kitchenContent), Is.EqualTo(1));
+
+            Chateau.Architecture.ValidationReport forwardReport = new Chateau.Architecture.ValidationReport();
+            Chateau.Architecture.ValidationReport reverseReport = new Chateau.Architecture.ValidationReport();
+            forwardPassage.ValidateConfiguration(forwardReport);
+            reversePassage.ValidateConfiguration(reverseReport);
+            Assert.That(forwardReport.Messages, Is.Empty);
+            Assert.That(reverseReport.Messages, Is.Empty);
+
+            Chateau.Architecture.GameRoot gameRoot =
+                RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+            Assert.That(gameRoot.Context.Database.Definitions, Has.Count.EqualTo(37));
+            Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(forwardPassage.Definition));
+            Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(reversePassage.Definition));
+            List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
+                GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
+            Assert.That(sceneBehaviours.Count(item => item == reversePassage.SourceRoomView), Is.EqualTo(1));
+            Assert.That(sceneBehaviours.Count(item => item == forwardPassage), Is.EqualTo(1));
+            Assert.That(sceneBehaviours.Count(item => item == reversePassage), Is.EqualTo(1));
+
+            Vector2Int[] renderedSizes =
+            {
+                new Vector2Int(1366, 768),
+                new Vector2Int(1440, 1080),
+                new Vector2Int(1920, 1080),
+                new Vector2Int(2560, 1080)
+            };
+            foreach (Vector2Int renderedSize in renderedSizes)
+            {
+                yield return SetAndWaitForRenderedGameViewResolution(
+                    (uint)renderedSize.x,
+                    (uint)renderedSize.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                IEnumerator routine = AssertServiceKitchenRoomViewLocalRoundTrip(
+                    navigation,
+                    player,
+                    cameraManager,
+                    forward,
+                    reverse,
+                    forwardPassage,
+                    reversePassage,
+                    serviceAnchor,
+                    kitchenAnchor,
+                    maximumZoom: false,
+                    $"{renderedSize.x}x{renderedSize.y}");
+                while (routine.MoveNext())
+                {
+                    yield return routine.Current;
+                }
+            }
+
+            IEnumerator maximumRoutine = AssertServiceKitchenRoomViewLocalRoundTrip(
+                navigation,
+                player,
+                cameraManager,
+                forward,
+                reverse,
+                forwardPassage,
+                reversePassage,
+                serviceAnchor,
+                kitchenAnchor,
+                maximumZoom: true,
+                "2560x1080 maximum zoom");
+            while (maximumRoutine.MoveNext())
+            {
+                yield return maximumRoutine.Current;
+            }
+
+            string projectRoot = System.IO.Directory.GetParent(Application.dataPath).FullName;
+            string sceneText = System.IO.File.ReadAllText(System.IO.Path.Combine(projectRoot, GameplayScenePath));
+            string serializedForward = RequireSerializedUnityDocument(sceneText, "4100000027");
+            string serializedReverse = RequireSerializedUnityDocument(sceneText, "4100000028");
+            Assert.That(serializedForward, Does.Contain("sourceRoomView: {fileID: 4100000009}"));
+            Assert.That(serializedReverse, Does.Contain("sourceRoomView: {fileID: 4100000010}"));
+            Assert.That(serializedForward, Does.Contain("reversePassage: {fileID: 4100000028}"));
+            Assert.That(serializedReverse, Does.Contain("reversePassage: {fileID: 4100000027}"));
+            foreach (string document in new[] { serializedForward, serializedReverse })
+            {
+                Assert.That(System.Text.RegularExpressions.Regex.Matches(
+                    document,
+                    "coordinateSpace: 1").Count, Is.EqualTo(2));
+                Assert.That(System.Text.RegularExpressions.Regex.Matches(
+                    document,
+                    "logicalPosition: \\{x: 0, y: 0\\}").Count, Is.EqualTo(2));
+                Assert.That(document, Does.Contain("anchorMigrationStage: 2"));
+            }
+            Assert.That(serializedForward, Does.Contain(
+                "roomViewLocalPosition: {x: 589.9897, y: -419.25894}"));
+            Assert.That(serializedForward, Does.Contain(
+                "roomViewLocalPosition: {x: -478.36285, y: -156.76599}"));
+            Assert.That(serializedReverse, Does.Contain(
+                "roomViewLocalPosition: {x: -478.36285, y: -156.76599}"));
+            Assert.That(serializedReverse, Does.Contain(
+                "roomViewLocalPosition: {x: 589.9897, y: -419.25894}"));
+        }
+        finally
+        {
+            if (forward != null)
+            {
+                InvokePrivateMethod(forward, "CancelPendingPlayerApproach");
+            }
+            if (reverse != null)
+            {
+                InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+            }
+            if (player.HasDestination)
+            {
+                InvokePrivateMethod(player, "CancelDestination");
+            }
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            SetPrivateField(player, "moveSpeed", originalMoveSpeed);
+            player.SetInputEnabled(originalInputEnabled);
+            cameraManager.panRoomWithMouseEdges = originalPanRoomWithMouseEdges;
+            cameraManager.zoomRoomWithMouseWheel = originalZoomRoomWithMouseWheel;
+            cameraManager.ResetRoomLookForPreview();
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+        }
+    }
+
+    private static IEnumerator AssertServiceKitchenRoomViewLocalRoundTrip(
+        RoomNavigationManager navigation,
+        PointClickPlayerMovement player,
+        CameraManager cameraManager,
+        DoorTriggerNavigation forward,
+        DoorTriggerNavigation reverse,
+        CanonicalPassage forwardPassage,
+        CanonicalPassage reversePassage,
+        Vector2 serviceAnchor,
+        Vector2 kitchenAnchor,
+        bool maximumZoom,
+        string profile)
+    {
+        const string ServiceCorridor = "Service Corridor";
+        const string Kitchen = "Kitchen";
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(ServiceCorridor));
+        if (maximumZoom)
+        {
+            ApplyMaximumRoomZoom(cameraManager);
+            yield return WaitForSettledLayout();
+        }
+        Canvas.ForceUpdateCanvases();
+        Physics2D.SyncTransforms();
+        Assert.That(TryWarpToCharacterizedFarStart(
+            player,
+            forward,
+            new Vector2(0f, -2.5f),
+            out float serviceStartDistance), Is.True);
+        Assert.That(serviceStartDistance, Is.GreaterThan(145f));
+        Vector2 serviceLogical = AssertActiveRoomViewLocalAnchor(
+            player,
+            cameraManager,
+            forward,
+            forwardPassage,
+            forwardPassage.ApproachAnchor,
+            serviceAnchor,
+            requireMovement: true,
+            label: $"{profile} Service approach");
+        SetPrivateField(forward, "lastPointerActivationFrame", -1);
+        forward.ActivateDoor();
+        Assert.That(player.HasDestination, Is.True);
+        AssertVector2Within(GetPrivateValue<Vector2>(player, "finalDestination"),
+            serviceLogical, 0.0001f, $"{profile} Service production approach");
+        for (int frame = 0; frame < 180 && navigation.CurrentRoom == ServiceCorridor && player.HasDestination; frame++)
+        {
+            InvokePrivateMethod(player, "MoveTowardDestination");
+            yield return null;
+        }
+        yield return WaitForSettledLayout();
+        Physics2D.SyncTransforms();
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(Kitchen));
+        Vector2 kitchenLogical = AssertActiveRoomViewLocalAnchor(
+            player,
+            cameraManager,
+            reverse,
+            reversePassage,
+            reversePassage.ApproachAnchor,
+            kitchenAnchor,
+            requireMovement: false,
+            label: $"{profile} Kitchen approach");
+        AssertVector2Within(player.LogicalPosition, kitchenLogical, 0.001f,
+            $"{profile} Kitchen room-local arrival");
+
+        if (maximumZoom)
+        {
+            ApplyMaximumRoomZoom(cameraManager);
+            yield return WaitForSettledLayout();
+        }
+
+        Assert.That(TryWarpToCharacterizedFarStart(
+            player,
+            reverse,
+            new Vector2(0f, -2f),
+            out float kitchenStartDistance), Is.True);
+        Assert.That(kitchenStartDistance, Is.GreaterThan(145f));
+        kitchenLogical = AssertActiveRoomViewLocalAnchor(
+            player,
+            cameraManager,
+            reverse,
+            reversePassage,
+            reversePassage.ApproachAnchor,
+            kitchenAnchor,
+            requireMovement: true,
+            label: $"{profile} Kitchen far approach");
+        SetPrivateField(reverse, "lastPointerActivationFrame", -1);
+        reverse.ActivateDoor();
+        Assert.That(player.HasDestination, Is.True);
+        AssertVector2Within(GetPrivateValue<Vector2>(player, "finalDestination"),
+            kitchenLogical, 0.0001f, $"{profile} Kitchen production approach");
+        for (int frame = 0; frame < 180 && navigation.CurrentRoom == Kitchen && player.HasDestination; frame++)
+        {
+            InvokePrivateMethod(player, "MoveTowardDestination");
+            yield return null;
+        }
+        yield return WaitForSettledLayout();
+        Physics2D.SyncTransforms();
+        Assert.That(navigation.CurrentRoom, Is.EqualTo(ServiceCorridor));
+        serviceLogical = AssertActiveRoomViewLocalAnchor(
+            player,
+            cameraManager,
+            forward,
+            forwardPassage,
+            forwardPassage.ApproachAnchor,
+            serviceAnchor,
+            requireMovement: false,
+            label: $"{profile} Service return approach");
+        AssertVector2Within(player.LogicalPosition, serviceLogical, 0.001f,
+            $"{profile} Service room-local arrival");
+        InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+        Debug.Log(
+            $"[ServiceKitchenRoomLocal] profile={profile} " +
+            $"serviceLocal={FormatVector(serviceAnchor)} serviceLogical={FormatVector(serviceLogical)} " +
+            $"kitchenLocal={FormatVector(kitchenAnchor)} kitchenLogical={FormatVector(kitchenLogical)}");
+    }
+
+    private static Vector2 AssertActiveRoomViewLocalAnchor(
+        PointClickPlayerMovement player,
+        CameraManager cameraManager,
+        DoorTriggerNavigation trigger,
+        CanonicalPassage passage,
+        PassageAnchorData anchor,
+        Vector2 expectedRoomViewLocalPosition,
+        bool requireMovement,
+        string label)
+    {
+        Assert.That(passage.SourceRoomView, Is.Not.Null);
+        Assert.That(passage.SourceRoomView.IsVisible, Is.True);
+        Assert.That(anchor.CoordinateSpace, Is.EqualTo(PassageAnchorCoordinateSpace.RoomViewLocal));
+        AssertVector2Within(anchor.RoomViewLocalPosition,
+            expectedRoomViewLocalPosition, 0.0001f, $"{label} authored native coordinate");
+        Assert.That(anchor.TryResolveLogicalPosition(player, out Vector2 logicalPosition), Is.True);
+        AssertFinite(logicalPosition, $"{label} resolved logical coordinate");
+        Assert.That(player.TryGetWorldPointFromLogicalPosition(logicalPosition, out Vector2 worldPosition), Is.True);
+        Assert.That(cameraManager.TryGetActiveRoomStageLocalPoint(
+            new Vector3(worldPosition.x, worldPosition.y, player.transform.position.z),
+            out Vector2 roundTripLocalPosition), Is.True);
+        AssertVector2Within(roundTripLocalPosition,
+            expectedRoomViewLocalPosition, 0.05f, $"{label} native round trip");
+        Assert.That(TryEvaluateExactReachableMovementTarget(
+            player,
+            logicalPosition,
+            out PointClickPlayerMovement.MovementTargetQuery movementQuery), Is.True);
+        Assert.That(movementQuery.ExactPointWalkable, Is.True, $"{label} must be exactly walkable.");
+        Assert.That(movementQuery.HasReachableDestination, Is.True, $"{label} must be path reachable.");
+        Assert.That(movementQuery.UsesProjectedDestination, Is.False, $"{label} must not use projection.");
+        Assert.That(movementQuery.WouldMove, Is.EqualTo(requireMovement),
+            $"{label} movement state must match whether the player starts at the anchor.");
+        AssertVector2Within(movementQuery.Destination,
+            logicalPosition, 0.0001f, $"{label} exact movement destination");
+        Assert.That(TryInvokeCanonicalApproachDestination(trigger, player, out Vector2 canonical), Is.True);
+        Assert.That(TryInvokeTraversalApproachDestination(trigger, player, out Vector2 traversal, null), Is.True);
+        AssertVector2Within(canonical, logicalPosition, 0.0001f, $"{label} canonical resolution");
+        AssertVector2Within(traversal, logicalPosition, 0.0001f, $"{label} traversal resolution");
+        AssertApproachWithinActivationDistance(trigger, player, logicalPosition, label);
+        Assert.That(GetAuthoredAnchorScreenDistance(player, trigger, logicalPosition), Is.LessThanOrEqualTo(1f));
+        return logicalPosition;
+    }
+
     private static Vector2 AssertRoomViewLocalCoordinateRoundTrip(
         PointClickPlayerMovement player,
         CameraManager cameraManager,
@@ -7748,6 +8155,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         if (maximumZoom)
         {
             ApplyMaximumRoomZoom(cameraManager);
+            yield return null;
         }
         Canvas.ForceUpdateCanvases();
         Physics2D.SyncTransforms();
@@ -7755,6 +8163,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             .Single(item => item.name == "PlayerBlocker_service_corridor_left_table_0");
         ObjectMovementBlocker2D rightDeskBlocker = FindInActiveScene<ObjectMovementBlocker2D>()
             .Single(item => item.name == "PlayerBlocker_service_corridor_right_desk_0");
+        leftTableBlocker.ApplySourceSortingNow();
+        rightDeskBlocker.ApplySourceSortingNow();
         SpriteRenderer leftTableRenderer = FindInActiveScene<SpriteRenderer>()
             .Single(item => item.name == "service_corridor_left_table_0");
         SpriteRenderer rightDeskRenderer = FindInActiveScene<SpriteRenderer>()
@@ -7882,8 +8292,8 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.SameAs(forwardPassage));
             Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"),
                 Is.SameAs(reversePassage));
-            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(16));
-            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(9));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(18));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(10));
             Assert.That(FindInActiveScene<CanonicalPassage>()
                 .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.LegacySampling),
                 Is.Zero);
@@ -7892,13 +8302,13 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.Zero);
             Assert.That(FindInActiveScene<CanonicalPassage>()
                 .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors),
-                Is.EqualTo(16));
+                Is.EqualTo(18));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-                Is.EqualTo(16));
+                Is.EqualTo(18));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-                Is.EqualTo(29));
+                Is.EqualTo(27));
 
             Assert.That(forward.SourceRoom, Is.EqualTo(ButlersPantry));
             Assert.That(forward.DoorName, Is.EqualTo("Butlers_Pantry_BilliardRoom"));
@@ -8056,7 +8466,7 @@ public sealed class GameplayLifecycleCharacterizationTests
 
             Chateau.Architecture.GameRoot gameRoot =
                 RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
-            Assert.That(gameRoot.Context.Database.Definitions, Has.Count.EqualTo(35));
+            Assert.That(gameRoot.Context.Database.Definitions, Has.Count.EqualTo(37));
             Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(billiardView.Definition));
             Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(forwardPassage.Definition));
             Assert.That(gameRoot.Context.Database.Definitions, Does.Contain(reversePassage.Definition));
@@ -8081,7 +8491,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 databaseText,
                 "^  - \\{fileID: 11400000, guid:",
                 System.Text.RegularExpressions.RegexOptions.Multiline).Count,
-                Is.EqualTo(35));
+                Is.EqualTo(37));
             foreach (string definitionGuid in new[]
             {
                 "bed158a9affd015fcc961340d9be5dd8",
@@ -8106,7 +8516,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 sceneText,
                 "^--- !u!",
                 System.Text.RegularExpressions.RegexOptions.Multiline).Count,
-                Is.EqualTo(6032));
+                Is.EqualTo(6035));
             Assert.That(serializedForward, Does.Contain("canonicalPassage: {fileID: 4100000023}"));
             Assert.That(serializedReverse, Does.Contain("canonicalPassage: {fileID: 4100000024}"));
             foreach (string document in new[] { serializedForward, serializedReverse })
@@ -8169,20 +8579,20 @@ public sealed class GameplayLifecycleCharacterizationTests
                 document.Contains("doorOpenAudioSource: {fileID: 2201000013}") &&
                 document.Contains("player: {fileID: 81962843}") &&
                 document.Contains("doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
-                Is.EqualTo(16));
+                Is.EqualTo(18));
             Assert.That(serializedTriggerDocuments.Count(document =>
                 document.Contains("navigationManager: {fileID: 0}") &&
                 document.Contains("doorOpenAudioSource: {fileID: 0}") &&
                 document.Contains("player: {fileID: 0}") &&
                 document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
-                Is.EqualTo(29));
+                Is.EqualTo(27));
             Assert.That(serializedTriggerDocuments.Count(document =>
                 document.Contains("canonicalPassage: {fileID:") &&
                 !document.Contains("canonicalPassage: {fileID: 0}")),
-                Is.EqualTo(16));
+                Is.EqualTo(18));
             Assert.That(serializedTriggerDocuments.Count(document =>
                 !document.Contains("canonicalPassage: {fileID:")),
-                Is.EqualTo(29));
+                Is.EqualTo(27));
 
             AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
                 .Single(item => item.gameObject.name == "Audio_DoorOpen");
@@ -9003,8 +9413,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         bool cleanupPlayerRestored = true;
 
         Assert.That(allTriggers, Has.Length.EqualTo(45));
-        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(16));
-        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(29));
+        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(18));
+        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(27));
         Assert.That(originalCallers[forwardTrigger], Is.SameAs(forwardPassage));
         Assert.That(originalCallers[reverseTrigger], Is.SameAs(reversePassage));
         Assert.That(originalForwardStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
@@ -9017,9 +9427,9 @@ public sealed class GameplayLifecycleCharacterizationTests
             SetPrivateField(forwardPassage, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
             SetPrivateField(reversePassage, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
             Assert.That(allTriggers.Count(trigger =>
-                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(14));
+                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(16));
             Assert.That(allTriggers.Count(trigger =>
-                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(31));
+                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(29));
             foreach (KeyValuePair<DoorTriggerNavigation, CanonicalPassage> pair in originalCallers)
             {
                 if (pair.Key == forwardTrigger || pair.Key == reverseTrigger)
@@ -9079,9 +9489,9 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(GetPrivateField<CanonicalPassage>(pair.Key, "canonicalPassage"), Is.SameAs(pair.Value));
         }
         Assert.That(allTriggers.Count(trigger =>
-            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(16));
+            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(18));
         Assert.That(allTriggers.Count(trigger =>
-            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(29));
+            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(27));
         Assert.That(forwardPassage.AnchorMigrationStage, Is.EqualTo(originalForwardStage));
         Assert.That(reversePassage.AnchorMigrationStage, Is.EqualTo(originalReverseStage));
         AssertVector2Within(player.LogicalPosition, originalPlayerPosition, 0.0001f,
@@ -9638,8 +10048,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         bool cleanupPlayerRestored = true;
 
         Assert.That(allTriggers, Has.Length.EqualTo(45));
-        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(16));
-        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(29));
+        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(18));
+        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(27));
         Assert.That(originalCallers[forwardTrigger], Is.SameAs(forwardPassage));
         Assert.That(originalCallers[reverseTrigger], Is.SameAs(reversePassage));
         Assert.That(originalForwardStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
@@ -9652,9 +10062,9 @@ public sealed class GameplayLifecycleCharacterizationTests
             SetPrivateField(forwardPassage, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
             SetPrivateField(reversePassage, "anchorMigrationStage", PassageAnchorMigrationStage.LegacySampling);
             Assert.That(allTriggers.Count(trigger =>
-                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(14));
+                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(16));
             Assert.That(allTriggers.Count(trigger =>
-                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(31));
+                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(29));
             foreach (KeyValuePair<DoorTriggerNavigation, CanonicalPassage> pair in originalCallers)
             {
                 if (pair.Key == forwardTrigger || pair.Key == reverseTrigger)
@@ -9713,9 +10123,9 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(GetPrivateField<CanonicalPassage>(pair.Key, "canonicalPassage"), Is.SameAs(pair.Value));
         }
         Assert.That(allTriggers.Count(trigger =>
-            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(16));
+            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(18));
         Assert.That(allTriggers.Count(trigger =>
-            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(29));
+            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(27));
         Assert.That(forwardPassage.AnchorMigrationStage, Is.EqualTo(originalForwardStage));
         Assert.That(reversePassage.AnchorMigrationStage, Is.EqualTo(originalReverseStage));
         AssertVector2Within(player.LogicalPosition, originalPlayerPosition, 0.0001f,
@@ -10121,8 +10531,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage"));
 
         Assert.That(allTriggers, Has.Length.EqualTo(45));
-        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(16));
-        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(29));
+        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(18));
+        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(27));
         Assert.That(originalCallers[forwardTrigger], Is.SameAs(forwardPassage));
         Assert.That(originalCallers[reverseTrigger], Is.SameAs(reversePassage));
 
@@ -10131,9 +10541,9 @@ public sealed class GameplayLifecycleCharacterizationTests
             SetPrivateField<CanonicalPassage>(forwardTrigger, "canonicalPassage", null);
             SetPrivateField<CanonicalPassage>(reverseTrigger, "canonicalPassage", null);
             Assert.That(allTriggers.Count(trigger =>
-                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(14));
+                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(16));
             Assert.That(allTriggers.Count(trigger =>
-                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(31));
+                GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(29));
             foreach (KeyValuePair<DoorTriggerNavigation, CanonicalPassage> pair in originalCallers)
             {
                 if (pair.Key == forwardTrigger || pair.Key == reverseTrigger)
@@ -10185,9 +10595,9 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(GetPrivateField<CanonicalPassage>(pair.Key, "canonicalPassage"), Is.SameAs(pair.Value));
         }
         Assert.That(allTriggers.Count(trigger =>
-            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(16));
+            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(18));
         Assert.That(allTriggers.Count(trigger =>
-            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(29));
+            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(27));
         AssertVector2Within(player.LogicalPosition, originalPlayerPosition, 0.0001f,
             "restored pair-local fallback player position");
     }
@@ -10917,8 +11327,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage"));
 
         Assert.That(allTriggers, Has.Length.EqualTo(45));
-        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(16));
-        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(29));
+        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(18));
+        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(27));
         Assert.That(originalCallers[forwardTrigger], Is.SameAs(forwardPassage));
         Assert.That(originalCallers[reverseTrigger], Is.SameAs(reversePassage));
 
@@ -10928,10 +11338,10 @@ public sealed class GameplayLifecycleCharacterizationTests
             SetPrivateField<CanonicalPassage>(reverseTrigger, "canonicalPassage", null);
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-                Is.EqualTo(14));
+                Is.EqualTo(16));
             Assert.That(FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-                Is.EqualTo(31));
+                Is.EqualTo(29));
             foreach (KeyValuePair<DoorTriggerNavigation, CanonicalPassage> pair in originalCallers)
             {
                 if (pair.Key == forwardTrigger || pair.Key == reverseTrigger)
@@ -10985,10 +11395,10 @@ public sealed class GameplayLifecycleCharacterizationTests
         }
         Assert.That(FindInActiveScene<DoorTriggerNavigation>()
             .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-            Is.EqualTo(16));
+            Is.EqualTo(18));
         Assert.That(FindInActiveScene<DoorTriggerNavigation>()
             .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-            Is.EqualTo(29));
+            Is.EqualTo(27));
         AssertVector2Within(player.LogicalPosition, originalPlayerPosition, 0.0001f,
             "restored pair-local fallback player position");
     }
@@ -11640,11 +12050,11 @@ public sealed class GameplayLifecycleCharacterizationTests
         bool drawingVisible)
     {
         CanonicalRoomView[] roomViews = FindInActiveScene<CanonicalRoomView>();
-        Assert.That(roomViews, Has.Length.EqualTo(9),
-            "The first eight completed reciprocal groups must retain their nine passive RoomView scene owners.");
+        Assert.That(roomViews, Has.Length.EqualTo(10),
+            "The first nine completed reciprocal groups must retain their ten passive RoomView scene owners.");
         CanonicalPassage[] passages = FindInActiveScene<CanonicalPassage>();
-        Assert.That(passages, Has.Length.EqualTo(16),
-            "The eight complete route grafts must remain exactly sixteen reciprocal canonical scene bindings.");
+        Assert.That(passages, Has.Length.EqualTo(18),
+            "The nine complete route grafts must remain exactly eighteen reciprocal canonical scene bindings.");
 
         Assert.That(
             roomViews.Single(item => item.Definition != null && item.Definition.StableId == "room.grand-entrance-hall"),
@@ -11776,12 +12186,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-            Is.EqualTo(16),
-            "All sixteen complete stage-2 Passages must retain their canonical callers.");
+            Is.EqualTo(18),
+            "All eighteen complete stage-2 Passages must retain their canonical callers.");
         Assert.That(
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-            Is.EqualTo(29));
+            Is.EqualTo(27));
         AssertVector2Within(
             forwardPassage.ApproachAnchor.LogicalPosition,
             new Vector2(-7.75f, -2.22f),
@@ -12026,8 +12436,8 @@ public sealed class GameplayLifecycleCharacterizationTests
             trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage"));
 
         Assert.That(allTriggers, Has.Length.EqualTo(45));
-        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(16));
-        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(29));
+        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(18));
+        Assert.That(originalCallers.Count(pair => pair.Value == null), Is.EqualTo(27));
         Assert.That(originalCallers[forwardTrigger], Is.SameAs(forwardPassage));
         Assert.That(originalCallers[reverseTrigger], Is.SameAs(reversePassage));
 
@@ -12040,12 +12450,12 @@ public sealed class GameplayLifecycleCharacterizationTests
             Assert.That(
                 allTriggers.Count(trigger =>
                     GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-                Is.EqualTo(14),
+                Is.EqualTo(16),
                 "The fallback proof may null only the Group02 pair.");
             Assert.That(
                 allTriggers.Count(trigger =>
                     GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-                Is.EqualTo(31));
+                Is.EqualTo(29));
             foreach (DoorTriggerNavigation trigger in allTriggers.Where(item =>
                 item != forwardTrigger && item != reverseTrigger))
             {
@@ -12101,15 +12511,15 @@ public sealed class GameplayLifecycleCharacterizationTests
                 Is.SameAs(originalCallers[trigger]),
                 $"Caller '{trigger.name}' must be restored after the pair-local fallback proof.");
         }
-        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(16));
+        Assert.That(originalCallers.Count(pair => pair.Value != null), Is.EqualTo(18));
         Assert.That(
             allTriggers.Count(trigger =>
                 GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-            Is.EqualTo(16));
+            Is.EqualTo(18));
         Assert.That(
             allTriggers.Count(trigger =>
                 GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-            Is.EqualTo(29));
+            Is.EqualTo(27));
         AssertVector2Within(player.LogicalPosition, originalPlayerPosition, 0.0001f,
             "restored pair-local fallback player position");
     }
@@ -12387,7 +12797,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage, Is.Not.Null);
         Assert.That(musicView, Is.Not.Null);
         Assert.That(libraryView, Is.Not.Null);
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(16));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(18));
 
         Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
         Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));
@@ -12477,8 +12887,8 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(
             FindInActiveScene<CanonicalPassage>()
                 .Count(passage => passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors),
-            Is.EqualTo(16),
-            "All sixteen registered scene passages must be complete stage-2 routes.");
+            Is.EqualTo(18),
+            "All eighteen registered scene passages must be complete stage-2 routes.");
         Assert.That(forwardPassage.HasGameContext, Is.True);
         Assert.That(reversePassage.HasGameContext, Is.True);
         Assert.That(forwardPassage.enabled, Is.True);
@@ -12512,12 +12922,12 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null),
-            Is.EqualTo(16),
-            "All sixteen complete stage-2 Passages must retain their canonical callers.");
+            Is.EqualTo(18),
+            "All eighteen complete stage-2 Passages must retain their canonical callers.");
         Assert.That(
             FindInActiveScene<DoorTriggerNavigation>()
                 .Count(trigger => GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null),
-            Is.EqualTo(29));
+            Is.EqualTo(27));
 
         Chateau.Architecture.ValidationReport forwardReport = new Chateau.Architecture.ValidationReport();
         Chateau.Architecture.ValidationReport reverseReport = new Chateau.Architecture.ValidationReport();
@@ -12549,7 +12959,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(reversePassage, Is.Not.Null);
         Assert.That(drawingView, Is.Not.Null);
         Assert.That(musicView, Is.Not.Null);
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(16));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(18));
 
         Assert.That(forwardPassage.gameObject, Is.SameAs(forwardTrigger.gameObject));
         Assert.That(reversePassage.gameObject, Is.SameAs(reverseTrigger.gameObject));
