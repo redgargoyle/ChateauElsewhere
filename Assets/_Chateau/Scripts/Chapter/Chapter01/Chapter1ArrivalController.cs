@@ -1697,10 +1697,13 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
 
     private void ScheduleArrivalTimeline()
     {
-        if (eventScheduler != null)
+        if (eventScheduler == null)
         {
-            eventScheduler.Clear();
+            Debug.LogError("Chapter 1 cannot schedule its arrival timeline without the serialized game scheduler.", this);
+            return;
         }
+
+        eventScheduler.Clear();
 
         for (int i = 0; i < guestGroups.Count; i++)
         {
@@ -1709,25 +1712,12 @@ public class Chapter1ArrivalController : Chateau.Architecture.ChapterControllerB
                 ? "chapter_01_empty_6_04_doorbell"
                 : $"chapter_01_guest_group_{group.GroupIndex + 1:00}";
 
-            if (eventScheduler != null)
-            {
-                eventScheduler.ScheduleOneShotAtClockTime(eventId, group.ArrivalHour, group.ArrivalMinute, () => HandleScheduledDoorbell(group));
-            }
-            else
-            {
-                StartCoroutine(FallbackScheduleAtClockTime(group));
-            }
+            eventScheduler.ScheduleOneShotAtClockTime(
+                eventId,
+                group.ArrivalHour,
+                group.ArrivalMinute,
+                () => HandleScheduledDoorbell(group));
         }
-    }
-
-    private IEnumerator FallbackScheduleAtClockTime(GuestGroupRuntimeState group)
-    {
-        while (chapterClock != null && !chapterClock.HasReachedTime(group.ArrivalHour, group.ArrivalMinute))
-        {
-            yield return null;
-        }
-
-        HandleScheduledDoorbell(group);
     }
 
     private void HandleScheduledDoorbell(GuestGroupRuntimeState group)

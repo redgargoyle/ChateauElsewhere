@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**The final-overhaul continuation has completed its trustworthy Phase 0 baseline and the fully passing Phase 1.1 typed-identity, Phase 1.2 typed-`GameContext`, and Phase 1.3 strict-`GameRoot` slices. Production Gameplay now rejects any root validation error; all eight serialized services initialize in deterministic order before the 31 serialized scene behaviours bind; binders release while services are still alive; and services then shut down in reverse order. Editor validation proves exact, inactive-inclusive serialized membership without repairing or dirtying Gameplay. Lifecycle transitions reject reentry/cross-context ownership and complete rollback even when bind, initialize, unbind, or shutdown callbacks fail. The only serialized gameplay change is the existing strict-startup scalar from `0` to `1`; every existing GUID, file ID, service API, legacy `Awake`/`OnEnable`/`Start` side effect, prefab, and large asset remains unchanged. Unity compilation passes; focused lifecycle tests pass `5/5`; Core/context compatibility passes `29/29`; the rendered cold-start role/order and visual fingerprint gate passes `1/1` at the exact approved digest `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`; architecture, runtime-ledger, GUID, and serialized-reference controls pass at `113` runtime files / `113` exact rows / `161` current scripts / `1,926` serialized references. The exact next architecture slice is Phase 1.4 Clock ownership.**
+**The final-overhaul continuation has completed its trustworthy Phase 0 baseline and the fully passing Phase 1.1 typed-identity, Phase 1.2 typed-`GameContext`, Phase 1.3 strict-`GameRoot`, and Phase 1.4 Clock/Scheduler ownership slices. `ChapterClock` remains the serialized compatibility component and is now the lifecycle-gated sole in-game-time writer; it captures/restores all clock values atomically and emits one deterministic post-advance signal. `ChapterEventScheduler` remains the serialized compatibility component and is now the sole clock-driven callback executor; it consumes that signal, supports case-insensitive per-ID cancellation, clears/unsubscribes on shutdown, and never searches for or repairs its clock. Chapter 1's competing polling coroutine is removed. No scene, prefab, ScriptableObject, existing `.meta`, GUID, file ID, serialized field, service registration, chapter schedule value, or large asset changed in Slice 1.4. Unity compilation passes; focused Clock/Scheduler tests pass `8/8`; combined Core compatibility passes `37/37`; the real Gameplay pause/resume callback gate passes `1/1`; and the rendered cold-start role/order and visual fingerprint gate passes `1/1` at the exact approved digest `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`. Architecture, runtime-ledger, GUID, and serialized-reference controls pass at `113` runtime files / `113` exact rows / `163` current scripts / `1,926` serialized references. The exact next architecture slice is Phase 1.5 complete canonical definitions and typed `GameDatabase` indexes.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -16,7 +16,7 @@ This report records what is implemented in the repository at this commit. It mus
 
 ### Typed-`GameContext` boundary decisions
 
-- The seven public role interfaces do not extend `IGameService`. Typed context consumers therefore cannot initialize, shut down, or validate services; lifecycle remains owned by `GameRoot`. Domain methods will be added or replaced only in each owning migration slice.
+- The seven public role interfaces do not extend `IGameService`. Typed context consumers therefore cannot initialize, shut down, or validate services; lifecycle remains owned by `GameRoot`. Slice 1.4 promotes only `IClockService` and `ISchedulerService` from markers to their narrow behavioral contracts; Camera, Navigation, Lighting, Dialogue, and GameFlow remain lifecycle-free markers until their owning slices.
 - `GameContext.Services` is a copied, read-only snapshot in deterministic context-binding order. Preserved `GameRoot.Services` remains the serialized Inspector registration order. They intentionally answer different questions and no new consumer should enumerate either list as a locator.
 - Additional role-less transition/future services are allowed when the complete snapshot has unique, strictly increasing order values. Required canonical roles remain exactly one each, so missing, duplicate, multi-role, null, tied, or reversed composition fails explicitly without freezing the project at exactly eight services.
 - `SubtitleService` remains the transitional service at order `600`; it is not a permanent Core role. Final `DialogueService` owns subtitle state and `SubtitleScreen` renders it, so later deletion does not require breaking the new context API.
@@ -31,11 +31,20 @@ This report records what is implemented in the repository at this commit. It mus
 - `GameRoot` and `GameServiceBase` explicitly reject unsafe reentry and cross-context lifecycle calls. Cleanup continues after individual callback failures, and a primary lifecycle exception is preserved alongside any cleanup exception.
 - Fatal root validation is context-fatal, not yet globally game-fatal: unrelated legacy components can still run their own `Awake`/`OnEnable`/`Start` until later ownership slices migrate them. This slice makes no broader readiness claim.
 
+### Clock/Scheduler boundary decisions
+
+- `ChapterClock` and `ChapterEventScheduler` keep their existing classes, files, script GUIDs, serialized fields, concrete public APIs, and Gameplay file IDs. They are in-place compatibility services until their remaining concrete consumers and final paths migrate; no second clock or scheduler was introduced.
+- Clock advancement is ignored outside `GameRoot` lifecycle. A valid advance updates time first and then raises `TimeAdvanced`; Scheduler subscribes during ordered initialization and evaluates every due callback from that exact post-advance state. The old independent Scheduler `Update` race is gone.
+- `GameClockState` is immutable and round-trips start hour/minute, seconds per game minute, sub-minute elapsed seconds, and running state in one atomic restore. Shutdown stops the clock without resetting elapsed/configuration values.
+- Scheduler queues are transient derived state because their callbacks are Story-owned delegates. Shutdown clears them; restore orchestration must explicitly clear Scheduler, restore clock/Story values, and then let the owning Story beat re-arm callbacks. Serializing callback-free event metadata is deliberately deferred rather than creating dead scheduled entries or putting Story knowledge in Game Scheduler.
+- Same-day absolute clock-time behavior is preserved. Midnight rollover was ambiguous in the legacy contract and is not silently redefined in this slice.
+- `RuntimeSettingsMenu`/`GameplayRuntimeState` writes to Unity `Time.timeScale`, Doorbell cadence, animation timers, audio timers, and presentation timers remain separate ownership debt for their UI/prop/presentation slices; they do not write canonical in-game clock state.
+
 ## Source baseline
 
 - Unity editor version: `6000.4.10f1`
 - Runtime C# files: 113
-- Runtime C# lines: 49,679
+- Runtime C# lines: 49,915
 - Direct `MonoBehaviour` declarations: 48
 - Architecture-smell counts are recorded in `Baseline/architecture_guard_baseline.json`.
 
@@ -45,7 +54,8 @@ This report records what is implemented in the repository at this commit. It mus
 - Added service, chapter, room, interaction, actor, motor, presenter, UI, definition, story-beat and state-machine bases.
 - Rebased selected major managers/controllers while retaining their existing script filenames and `.meta` GUIDs.
 - Added strict production configuration validation, deterministic service-before-binder initialization, binder-first reverse teardown, transition guards, and complete partial-failure rollback.
-- Removed the scheduler's global clock search fallback.
+- Removed the scheduler's clock search/repair fallback and Chapter 1's competing clock-polling fallback coroutine; Clock now deterministically drives the sole Scheduler through an explicit initialized-service signal.
+- Added immutable full-value clock capture/restore, lifecycle freeze, Scheduler cancellation/clear/rearm behavior, eight focused EditMode contracts, and one real Gameplay PlayMode pause/resume callback contract.
 - Added an Editor-only GameRoot installer and active-scene validator.
 - Added static architecture inventory, serialized-reference scan and debt-ceiling guard.
 - Added CI guard workflow.

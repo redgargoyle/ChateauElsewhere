@@ -1,3 +1,5 @@
+using System;
+using Chateau.Architecture;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -14,6 +16,8 @@ public class ChapterClock : Chateau.Architecture.GameServiceBase, Chateau.Archit
     private float elapsedSeconds;
     private bool isRunning;
 
+    public event Action TimeAdvanced;
+
     public float ElapsedSeconds => elapsedSeconds;
     public bool IsRunning => isRunning;
     public float SecondsPerGameMinute => secondsPerGameMinute;
@@ -26,17 +30,17 @@ public class ChapterClock : Chateau.Architecture.GameServiceBase, Chateau.Archit
 
     private void Update()
     {
-        if (!isRunning)
+        if (!IsInitialized)
         {
             return;
         }
 
-        elapsedSeconds += Time.deltaTime;
+        Advance(Time.deltaTime);
     }
 
     private void OnValidate()
     {
-        secondsPerGameMinute = Mathf.Max(1f, secondsPerGameMinute);
+        secondsPerGameMinute = SanitizeSecondsPerGameMinute(secondsPerGameMinute);
         startHour = Mathf.Clamp(startHour, 0, 23);
         startMinute = Mathf.Clamp(startMinute, 0, 59);
     }
@@ -56,8 +60,27 @@ public class ChapterClock : Chateau.Architecture.GameServiceBase, Chateau.Archit
     public void SetSecondsPerGameMinute(float value)
     {
         float elapsedGameMinutes = ElapsedGameMinutes;
-        secondsPerGameMinute = Mathf.Max(1f, value);
+        secondsPerGameMinute = SanitizeSecondsPerGameMinute(value);
         elapsedSeconds = elapsedGameMinutes * secondsPerGameMinute;
+    }
+
+    public GameClockState CaptureState()
+    {
+        return new GameClockState(
+            elapsedSeconds,
+            isRunning,
+            secondsPerGameMinute,
+            startHour,
+            startMinute);
+    }
+
+    public void RestoreState(GameClockState state)
+    {
+        elapsedSeconds = SanitizeElapsedSeconds(state.ElapsedSeconds);
+        isRunning = state.IsRunning;
+        secondsPerGameMinute = SanitizeSecondsPerGameMinute(state.SecondsPerGameMinute);
+        startHour = Mathf.Clamp(state.StartHour, 0, 23);
+        startMinute = Mathf.Clamp(state.StartMinute, 0, 59);
     }
 
     public bool HasReachedTime(int hour, int minute)
@@ -88,6 +111,59 @@ public class ChapterClock : Chateau.Architecture.GameServiceBase, Chateau.Archit
         {
             Debug.Log("Chapter clock stopped.", this);
         }
+    }
+
+    public override void ValidateConfiguration(Chateau.Architecture.ValidationReport report)
+    {
+        base.ValidateConfiguration(report);
+
+        if (secondsPerGameMinute < 1f)
+        {
+            report.AddError("ChapterClock requires at least one real second per game minute.", this);
+        }
+
+        if (startHour < 0 || startHour > 23 || startMinute < 0 || startMinute > 59)
+        {
+            report.AddError("ChapterClock requires a valid serialized 24-hour start time.", this);
+        }
+    }
+
+    protected override void OnShutdown(Chateau.Architecture.GameContext context)
+    {
+        StopClock();
+        TimeAdvanced = null;
+    }
+
+    private void Advance(float deltaSeconds)
+    {
+        if (!isRunning)
+        {
+            return;
+        }
+
+        float cleanDeltaSeconds = SanitizeElapsedSeconds(deltaSeconds);
+
+        if (cleanDeltaSeconds <= 0f)
+        {
+            return;
+        }
+
+        elapsedSeconds += cleanDeltaSeconds;
+        TimeAdvanced?.Invoke();
+    }
+
+    private static float SanitizeElapsedSeconds(float value)
+    {
+        return float.IsNaN(value) || float.IsInfinity(value)
+            ? 0f
+            : Mathf.Max(0f, value);
+    }
+
+    private static float SanitizeSecondsPerGameMinute(float value)
+    {
+        return float.IsNaN(value) || float.IsInfinity(value)
+            ? 1f
+            : Mathf.Max(1f, value);
     }
 
     public static int ToTotalMinutes(int hour, int minute)

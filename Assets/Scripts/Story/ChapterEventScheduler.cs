@@ -7,7 +7,7 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
 {
     public override int InitializationOrder => Chateau.Architecture.GameServiceInitializationOrder.Scheduler;
 
-    private sealed class ScheduledChapterEvent
+    private sealed class ScheduledEvent
     {
         public string EventId;
         public float FireAtElapsedSeconds;
@@ -20,41 +20,25 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
 
     [SerializeField] private ChapterClock chapterClock;
 
-    private readonly List<ScheduledChapterEvent> scheduledEvents = new List<ScheduledChapterEvent>();
+    private readonly List<ScheduledEvent> scheduledEvents = new List<ScheduledEvent>();
 
-    private void Awake()
+    public int PendingEventCount
     {
-        ResolveReferences();
-    }
-
-    private void Update()
-    {
-        if (chapterClock == null || !chapterClock.IsRunning)
+        get
         {
-            return;
-        }
+            int pendingCount = 0;
 
-        float elapsedSeconds = chapterClock.ElapsedSeconds;
-
-        for (int i = 0; i < scheduledEvents.Count; i++)
-        {
-            ScheduledChapterEvent scheduledEvent = scheduledEvents[i];
-
-            if (scheduledEvent == null || scheduledEvent.Fired)
+            for (int i = 0; i < scheduledEvents.Count; i++)
             {
-                continue;
+                ScheduledEvent scheduledEvent = scheduledEvents[i];
+
+                if (scheduledEvent != null && !scheduledEvent.Fired)
+                {
+                    pendingCount++;
+                }
             }
 
-            bool shouldFire = scheduledEvent.UsesGameTime
-                ? chapterClock.CurrentTotalMinutes >= scheduledEvent.FireAtGameTotalMinutes
-                : elapsedSeconds >= scheduledEvent.FireAtElapsedSeconds;
-
-            if (!shouldFire)
-            {
-                continue;
-            }
-
-            FireEvent(scheduledEvent);
+            return pendingCount;
         }
     }
 
@@ -65,16 +49,22 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
             return false;
         }
 
-        string cleanEventId = string.IsNullOrWhiteSpace(eventId) ? "chapter_event" : eventId.Trim();
+        if (float.IsNaN(delaySeconds) || float.IsInfinity(delaySeconds))
+        {
+            Debug.LogError("ChapterEventScheduler requires a finite one-shot delay.", this);
+            return false;
+        }
+
+        string cleanEventId = string.IsNullOrWhiteSpace(eventId) ? "scheduled_event" : eventId.Trim();
 
         if (HasPendingOrFiredEvent(cleanEventId))
         {
-            Debug.LogWarning($"Chapter event '{cleanEventId}' was already scheduled or fired and will not be scheduled twice.", this);
+            Debug.LogWarning($"Scheduled event '{cleanEventId}' was already scheduled or fired and will not be scheduled twice.", this);
             return false;
         }
 
         float elapsedSeconds = chapterClock != null ? chapterClock.ElapsedSeconds : 0f;
-        ScheduledChapterEvent scheduledEvent = new ScheduledChapterEvent
+        ScheduledEvent scheduledEvent = new ScheduledEvent
         {
             EventId = cleanEventId,
             FireAtElapsedSeconds = elapsedSeconds + Mathf.Max(0f, delaySeconds),
@@ -85,7 +75,7 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
         };
 
         scheduledEvents.Add(scheduledEvent);
-        Debug.Log($"Chapter event scheduled: {cleanEventId} at {scheduledEvent.FireAtElapsedSeconds:0.00}s", this);
+        Debug.Log($"Scheduled event registered: {cleanEventId} at {scheduledEvent.FireAtElapsedSeconds:0.00}s", this);
         return true;
     }
 
@@ -96,16 +86,16 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
             return false;
         }
 
-        string cleanEventId = string.IsNullOrWhiteSpace(eventId) ? "chapter_clock_event" : eventId.Trim();
+        string cleanEventId = string.IsNullOrWhiteSpace(eventId) ? "scheduled_clock_event" : eventId.Trim();
 
         if (HasPendingOrFiredEvent(cleanEventId))
         {
-            Debug.LogWarning($"Chapter event '{cleanEventId}' was already scheduled or fired and will not be scheduled twice.", this);
+            Debug.LogWarning($"Scheduled event '{cleanEventId}' was already scheduled or fired and will not be scheduled twice.", this);
             return false;
         }
 
         int targetTotalMinutes = ChapterClock.ToTotalMinutes(hour, minute);
-        ScheduledChapterEvent scheduledEvent = new ScheduledChapterEvent
+        ScheduledEvent scheduledEvent = new ScheduledEvent
         {
             EventId = cleanEventId,
             FireAtGameTotalMinutes = targetTotalMinutes,
@@ -116,8 +106,36 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
         };
 
         scheduledEvents.Add(scheduledEvent);
-        Debug.Log($"Chapter event scheduled: {cleanEventId} at {ChapterClock.FormatTime(hour, minute)}", this);
+        Debug.Log($"Scheduled event registered: {cleanEventId} at {ChapterClock.FormatTime(hour, minute)}", this);
         return true;
+    }
+
+    public bool Cancel(string eventId)
+    {
+        if (string.IsNullOrWhiteSpace(eventId))
+        {
+            return false;
+        }
+
+        string cleanEventId = eventId.Trim();
+
+        for (int i = 0; i < scheduledEvents.Count; i++)
+        {
+            ScheduledEvent scheduledEvent = scheduledEvents[i];
+
+            if (scheduledEvent == null ||
+                scheduledEvent.Fired ||
+                !string.Equals(scheduledEvent.EventId, cleanEventId, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            scheduledEvents.RemoveAt(i);
+            Debug.Log($"Scheduled event cancelled: {scheduledEvent.EventId}", this);
+            return true;
+        }
+
+        return false;
     }
 
     public void Clear()
@@ -125,10 +143,93 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
         scheduledEvents.Clear();
     }
 
-    private void FireEvent(ScheduledChapterEvent scheduledEvent)
+    protected override void OnInitialize(Chateau.Architecture.GameContext context)
+    {
+        if (chapterClock == null)
+        {
+            throw new InvalidOperationException(
+                "ChapterEventScheduler cannot initialize without its serialized ChapterClock.");
+        }
+
+        if (!ReferenceEquals(context.Clock, chapterClock))
+        {
+            throw new InvalidOperationException(
+                "ChapterEventScheduler requires the same ChapterClock registered in GameContext.");
+        }
+
+        chapterClock.TimeAdvanced += HandleClockAdvanced;
+    }
+
+    protected override void OnShutdown(Chateau.Architecture.GameContext context)
+    {
+        if (chapterClock != null)
+        {
+            chapterClock.TimeAdvanced -= HandleClockAdvanced;
+        }
+
+        Clear();
+    }
+
+    private void HandleClockAdvanced()
+    {
+        if (!IsInitialized || chapterClock == null || !chapterClock.IsRunning)
+        {
+            return;
+        }
+
+        ProcessDueEvents(chapterClock.ElapsedSeconds, chapterClock.CurrentTotalMinutes);
+    }
+
+    private void ProcessDueEvents(float elapsedSeconds, int currentTotalMinutes)
+    {
+        List<ScheduledEvent> dueEvents = null;
+
+        for (int i = 0; i < scheduledEvents.Count; i++)
+        {
+            ScheduledEvent scheduledEvent = scheduledEvents[i];
+
+            if (scheduledEvent == null || scheduledEvent.Fired)
+            {
+                continue;
+            }
+
+            bool shouldFire = scheduledEvent.UsesGameTime
+                ? currentTotalMinutes >= scheduledEvent.FireAtGameTotalMinutes
+                : elapsedSeconds >= scheduledEvent.FireAtElapsedSeconds;
+
+            if (!shouldFire)
+            {
+                continue;
+            }
+
+            if (dueEvents == null)
+            {
+                dueEvents = new List<ScheduledEvent>();
+            }
+
+            dueEvents.Add(scheduledEvent);
+        }
+
+        if (dueEvents == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < dueEvents.Count; i++)
+        {
+            ScheduledEvent scheduledEvent = dueEvents[i];
+
+            if (scheduledEvents.Contains(scheduledEvent) && !scheduledEvent.Fired)
+            {
+                FireEvent(scheduledEvent);
+            }
+        }
+    }
+
+    private void FireEvent(ScheduledEvent scheduledEvent)
     {
         scheduledEvent.Fired = true;
-        Debug.Log($"Chapter event fired: {scheduledEvent.EventId}", this);
+        Debug.Log($"Scheduled event fired: {scheduledEvent.EventId}", this);
 
         try
         {
@@ -137,7 +238,7 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
         finally
         {
             scheduledEvent.Completed = true;
-            Debug.Log($"Chapter event completed: {scheduledEvent.EventId}", this);
+            Debug.Log($"Scheduled event completed: {scheduledEvent.EventId}", this);
         }
     }
 
@@ -145,7 +246,7 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
     {
         for (int i = 0; i < scheduledEvents.Count; i++)
         {
-            ScheduledChapterEvent scheduledEvent = scheduledEvents[i];
+            ScheduledEvent scheduledEvent = scheduledEvents[i];
 
             if (scheduledEvent != null &&
                 string.Equals(scheduledEvent.EventId, eventId, StringComparison.OrdinalIgnoreCase))
@@ -165,12 +266,14 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
         {
             report.AddError("ChapterEventScheduler requires an explicit ChapterClock reference on the same configured gameplay root.", this);
         }
+        else if (chapterClock.gameObject != gameObject)
+        {
+            report.AddError("ChapterEventScheduler and its serialized ChapterClock must share the configured gameplay root.", this);
+        }
     }
 
     private bool EnsureClockReference()
     {
-        ResolveReferences();
-
         if (chapterClock != null)
         {
             return true;
@@ -178,13 +281,5 @@ public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chate
 
         Debug.LogError("ChapterEventScheduler cannot schedule an event because no ChapterClock is assigned.", this);
         return false;
-    }
-
-    private void ResolveReferences()
-    {
-        if (chapterClock == null)
-        {
-            chapterClock = GetComponent<ChapterClock>();
-        }
     }
 }

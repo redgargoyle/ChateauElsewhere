@@ -53,8 +53,8 @@ Assets/Scripts/StaticNoisePlayer.cs,305,72ec16941ba8525c25778164fa389c07a937790f
 Assets/Scripts/StaticSet.cs,35,102d81689aba1e00eb5597e6f8c639fc6c11d111743c6dc53509bc58fdbb7489,0,0,0,0,0,0,
 Assets/Scripts/StaticSetImagePlayer.cs,288,5917df17424f54974dd13fddda9f9de158dd1b818a0597ea3da17c3c2fa4c9f0,0,0,0,0,0,0,StaticSetImagePlayer
 Assets/Scripts/Story/ActorRoomState.cs,1012,a38f215b57e4ab61f116346c6b7cfaf288d5b92dba60db422dec6f3e5842e684,3,0,0,0,0,0,ActorRoomState
-Assets/Scripts/Story/ChapterClock.cs,112,1c4724a3887cbab670e9e9dadf686d48bbd9a562a4997f222fcf5f28cd208ed2,0,0,0,0,0,0,
-Assets/Scripts/Story/ChapterEventScheduler.cs,190,cf9c83e359b4106172642e9b17f5da337d612c00eaec184aafc952dbd4781c2a,0,0,0,0,0,0,
+Assets/Scripts/Story/ChapterClock.cs,188,25f3b60df7d05c592b28fbf761a73841f5b5ca7fc97c0deeb3241c1e11a5b356,0,0,0,0,0,0,
+Assets/Scripts/Story/ChapterEventScheduler.cs,285,f2de7d2c87fb5ff2478c83fe0942e5eb7c19a16b4d97046e23f8e22f305e292c,0,0,0,0,0,0,
 Assets/Scripts/Story/ChapterIntroUI.cs,211,e657697345c484e383db69e5768c1a5ec2f2fc1cb089b23f33890db3aa08e432,0,0,0,0,0,0,ChapterIntroUI
 Assets/Scripts/Story/ChapterManager.cs,621,45721d60fa85f0bfdb0ce82903d399f8e7c23ea0a514268be6c7760a26d7949f,0,0,0,0,0,0,
 Assets/Scripts/Story/CoatCloset.cs,43,652a66bdc0bb4453f7a350862423482f26c46687e055503efc2c194e301293a8,0,0,0,0,0,0,CoatCloset
@@ -76,7 +76,7 @@ Assets/_Chateau/Runtime/Core/Contracts/IDs/StableIds.cs,321,ff60cf03bf7fa8e5ef0b
 Assets/_Chateau/Runtime/Core/GameContext.cs,229,e4b3d5ec2d355387ae36c5ac08211ef95a3c1af2ec46b77bfaf892dd9f52336d,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Core/GameRoot.cs,365,e0c689e12c906447220ca80bc7e35f6a2b10602d5da5128ad7c4cac00eff4589,0,0,0,0,0,0,GameRoot
 Assets/_Chateau/Runtime/Core/GameServiceBase.cs,154,1829ec801d199eb40c8fc7b68a6b6eb48f25f15b7ac817dcf85237b0752ef36f,0,0,0,0,0,0,
-Assets/_Chateau/Runtime/Core/IGameService.cs,53,ac1b7d52f7180e5dea076e6d0454dd37ae7ee95093878daecf50f193cc1af18d,0,0,0,0,0,0,
+Assets/_Chateau/Runtime/Core/IGameService.cs,128,1c961a9317ed988e529db1b3f57e940e2d7366b485a6a84f75e2b0447490cc26,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Core/StateMachine.cs,62,4e0ce2b3c2774a1191e91420f15776d9a09cad762586a9be1f2920c98798b8e7,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Core/ValidationReport.cs,101,55837cc169746a77d6da17073a34ab903b09da10bec14e71668782a3177c2d0c,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Data/DefinitionAssetBase.cs,27,06084c1839309fe191e24e23572b9339d0510aeef79d0ca64af1e6e80bce5163,0,0,0,0,0,0,
@@ -100,7 +100,7 @@ Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/RoomDepthResolver.cs,21,244c
 Assets/_Chateau/Runtime/World/Rooms/Props/SetPieces/SetPieceView.cs,86,0a57f7b78ff95045a4a14a104622dac4e302eeb3e0cfc9dc1e5e837de24bb39c,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/World/Rooms/RoomDefinition.cs,130,976515540c98a19b366f7e7fbda63cad7107bb27a9188933ac120feb48235f09,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/World/Rooms/RoomView.cs,46,b0d8a500af530275c7a08f410cb659e3886452161a70e2e77df674de904efa6e,0,0,0,0,0,0,
-Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,6550,a570e7b22bf6bf0c240c634be45358a31753545f01542ad3a9cbdd0e3d6e4689,2,2,4,9,0,0,
+Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs,6540,0f618d4e67c1d5fb35047d3de12797da8e8104d2f9095e62d6500774fa5678e9,2,2,4,9,0,0,
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs,245,66ea4162715ef550570984aa5a7e8ade9906eb12fb1ded6dae2900ae91695b59,2,0,0,0,0,0,Chapter1CoatPickup
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1InteractionHUD.cs,156,fe4618ccb76b6962f37035999660df21f5eea99979be71fb6cbe19cfa20de896,3,0,3,0,0,0,Chapter1InteractionHUD
 Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs,528,370d3022388c7dafab7a291962bde32ae8a4fa9577a3a4c15086a7a37101d20c,3,0,0,0,0,0,Chapter1SceneAction

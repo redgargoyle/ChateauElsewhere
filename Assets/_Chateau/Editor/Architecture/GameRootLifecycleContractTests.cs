@@ -607,6 +607,17 @@ internal abstract class LifecycleFixtureService : GameServiceBase
     internal bool ReenterInitialize;
     internal bool ReenterShutdown;
     protected abstract string RoleName { get; }
+    public event Action TimeAdvanced { add { } remove { } }
+    public float ElapsedSeconds => 0f;
+    public bool IsRunning => false;
+    public float SecondsPerGameMinute => 1f;
+    public float ElapsedGameMinutes => 0f;
+    public int StartTotalMinutes => 0;
+    public int CurrentTotalMinutes => 0;
+    public int CurrentHour => 0;
+    public int CurrentMinute => 0;
+    public string CurrentTimeLabel => "12:00 AM";
+    public int PendingEventCount => 0;
 
     internal void Configure(List<string> trace, GameRoot root)
     {
@@ -622,6 +633,18 @@ internal abstract class LifecycleFixtureService : GameServiceBase
         ReenterInitialize = false;
         ReenterShutdown = false;
     }
+
+    public void ResetClock() { }
+    public void SetStartTime(int hour, int minute) { }
+    public void SetSecondsPerGameMinute(float value) { }
+    public GameClockState CaptureState() => default;
+    public void RestoreState(GameClockState state) { }
+    public void StartClock() { }
+    public void StopClock() { }
+    public bool ScheduleOneShot(string eventId, float delaySeconds, Action callback) => true;
+    public bool ScheduleOneShotAtClockTime(string eventId, int hour, int minute, Action callback) => true;
+    public bool Cancel(string eventId) => true;
+    public void Clear() { }
 
     protected override void OnGameContextBound(GameContext context)
     {
