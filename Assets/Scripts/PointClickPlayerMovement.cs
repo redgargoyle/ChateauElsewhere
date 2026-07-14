@@ -124,6 +124,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public Vector2 LogicalPosition => logicalPosition;
 	public bool HasDestination => hasDestination;
 	public int CurrentSortingOrder => currentSortingOrder;
+	public string CurrentSortingLayerName => GetSortingLayerName(playerSortingLayerName);
+
+	public int GetSortingOrderForFootY(float footY)
+	{
+		return playerSortingOrderBase - Mathf.RoundToInt((footY + playerSortingYOffset) * playerSortingOrderPerYUnit);
+	}
 	public bool InputEnabled => inputEnabled;
 	public bool AppliesPerspectiveScale => applyPerspectiveScale;
 	public bool AppliesPlayerSorting => applyPlayerSorting;
@@ -4212,9 +4218,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (spriteRenderers == null || spriteRenderers.Length == 0)
 			return;
 
-		string sortingLayerName = GetSortingLayerName(playerSortingLayerName);
+		string sortingLayerName = CurrentSortingLayerName;
 		float sortingY = GetPlayerSortingY();
-		int sortingOrder = playerSortingOrderBase - Mathf.RoundToInt(sortingY * playerSortingOrderPerYUnit);
+		int sortingOrder = GetSortingOrderForFootY(sortingY);
 		currentSortingOrder = sortingOrder;
 
 		for (int i = 0; i < spriteRenderers.Length; i++)
@@ -4225,6 +4231,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 			targetRenderer.sortingLayerName = sortingLayerName;
 			targetRenderer.sortingOrder = sortingOrder;
+			targetRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
 		}
 	}
 
@@ -4256,7 +4263,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			}
 		}
 
-		return sortingY + playerSortingYOffset;
+		return sortingY;
 	}
 
 	private static string GetSortingLayerName(string requestedLayerName)

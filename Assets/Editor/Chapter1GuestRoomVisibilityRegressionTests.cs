@@ -382,30 +382,36 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void EntranceHallTemporarilySortsGuestsByArrivalPair()
+    public void EntranceHallGuestsUseSharedFootDepthSortingAndPivotSortPoints()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
-        string resetMethodBody = ExtractMethodBody(controllerText, "ResetChapterRuntime");
-        string prepareMethodBody = ExtractMethodBody(controllerText, "PrepareSceneGuestObject");
-        string activateMethodBody = ExtractMethodBody(controllerText, "ActivateAuthoredChapterGuestObject");
-        string forceVisibleMethodBody = ExtractMethodBody(controllerText, "ForceGuestVisibleForDoorFlow");
-        string applyMethodBody = ExtractMethodBody(controllerText, "ApplyEntranceHallGuestSorting");
-        string coatSortingMethodBody = ExtractMethodBody(controllerText, "ConfigureAssignedCoatSorting");
-        string cacheCoatSortingMethodBody = ExtractMethodBody(controllerText, "CacheConfiguredCoatSorting");
-        string moveMethodBody = ExtractMethodBody(controllerText, "MoveGuestToDrawingRoom");
-        string banisterSafeWalkMethodBody = ExtractMethodBody(controllerText, "ApplyEntranceBanisterSafeWalkingSorting");
-        string completeMethodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
-        string skipStageMethodBody = ExtractMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
+        string playerMovementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string prepareMethodBody = ExtractDeclaredMethodBody(controllerText, "PrepareSceneGuestObject");
+        string activateMethodBody = ExtractDeclaredMethodBody(controllerText, "ActivateAuthoredChapterGuestObject");
+        string forceVisibleMethodBody = ExtractDeclaredMethodBody(controllerText, "ForceGuestVisibleForDoorFlow");
+        string applyMethodBody = ExtractDeclaredMethodBody(controllerText, "ApplyEntranceHallGuestSorting");
+        string footPointMethodBody = ExtractDeclaredMethodBody(controllerText, "GetEntranceHallGuestFootY");
+        string sortingMethodBody = ExtractDeclaredMethodBody(controllerText, "GetEntranceHallGuestSortingOrder");
+        string playerSortingMethodBody = ExtractDeclaredMethodBody(playerMovementText, "ApplyPlayerSorting");
+        string coatSortingMethodBody = ExtractDeclaredMethodBody(controllerText, "ConfigureAssignedCoatSorting");
+        string cacheCoatSortingMethodBody = ExtractDeclaredMethodBody(controllerText, "CacheConfiguredCoatSorting");
+        string moveMethodBody = ExtractDeclaredMethodBody(controllerText, "MoveGuestToDrawingRoom");
+        string banisterSafeWalkMethodBody = ExtractDeclaredMethodBody(controllerText, "ApplyEntranceBanisterSafeWalkingSorting");
+        string completeMethodBody = ExtractDeclaredMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
+        string skipStageMethodBody = ExtractDeclaredMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
 
-        Assert.That(controllerText, Does.Contain("[Header(\"Entrance Sorting\")]"), "Entrance hall should have its own temporary sorting controls.");
-        Assert.That(controllerText, Does.Contain("entranceGuestSortingOrderGroupStep"), "Entrance sorting should step each arrival pair above the previous pair.");
         Assert.That(controllerText, Does.Contain("authoredGuestRendererSorting"), "The temporary entrance override should preserve drawing-room authored sorting.");
-        Assert.That(resetMethodBody, Does.Contain("authoredGuestRendererSorting.Clear()"), "A fresh Chapter 1 run should not reuse stale renderer sorting cache entries.");
         Assert.That(prepareMethodBody, Does.Contain("CacheGuestAuthoredSorting(guestObject)"), "Guest preparation should cache the drawing-room-authored sort order before hallway overrides.");
         Assert.That(activateMethodBody, Does.Contain("ApplyEntranceHallGuestSorting(guestState)"), "Authored scene guests should receive the entrance hallway pair order when admitted.");
         Assert.That(forceVisibleMethodBody, Does.Contain("ApplyEntranceHallGuestSorting(guestState)"), "Door-flow visibility refreshes should reapply the entrance pair order after movement/state changes.");
-        Assert.That(applyMethodBody, Does.Contain("groupIndex * Mathf.Max(1, entranceGuestSortingOrderGroupStep)"), "Later arrival pairs should render above earlier pairs.");
-        Assert.That(applyMethodBody, Does.Contain("slotIndex * Mathf.Max(1, entranceGuestSortingOrderSlotStep)"), "Guests inside a pair should still have a stable left/right order.");
+        Assert.That(playerMovementText, Does.Contain("public int GetSortingOrderForFootY(float footY)"), "The butler should expose the same foot-Y sorting calculation used for player occlusion.");
+        Assert.That(playerSortingMethodBody, Does.Contain("GetSortingOrderForFootY(sortingY)"), "The shared sorting helper must remain the butler's authoritative ordering path.");
+        Assert.That(applyMethodBody, Does.Contain("GetEntranceHallGuestSortingOrder"), "Entrance guests should derive their order from their physical foot position.");
+        Assert.That(applyMethodBody, Does.Not.Contain("entranceGuestSortingOrderBase"), "Entrance guests must not remain in a fixed high sorting band above the player.");
+        Assert.That(applyMethodBody, Does.Not.Contain("entranceGuestSortingOrderGroupStep"), "Arrival grouping must not override physical Y occlusion.");
+        Assert.That(footPointMethodBody, Does.Contain("spriteRenderer.bounds.min.y"), "Guest depth should be measured from visible feet, not from a centered transform.");
+        Assert.That(sortingMethodBody, Does.Contain("playerMovement.GetSortingOrderForFootY"), "Guests should reuse the butler's sorting scale instead of duplicating a second Y-sort formula.");
+        Assert.That(applyMethodBody, Does.Contain("spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot"), "Guest renderers should use their bottom sprite pivots for transparent sorting.");
         Assert.That(applyMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - authoredReferenceOrder"), "Coat/body renderer offsets should survive the temporary hallway override.");
         Assert.That(coatSortingMethodBody, Does.Contain("CacheConfiguredCoatSorting(coatRenderer)"), "Coat sorting should refresh the cached renderer order after being moved in front of the guest.");
         Assert.That(cacheCoatSortingMethodBody, Does.Contain("authoredGuestRendererSorting[coatRenderer]"), "Coat cache refresh should replace stale scene coat ordering, not preserve order zero behind the guest.");
@@ -502,6 +508,39 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         return blockEnd >= 0
             ? assetText.Substring(blockStart, blockEnd - blockStart)
             : assetText.Substring(blockStart);
+    }
+
+    private static string ExtractDeclaredMethodBody(string sourceText, string methodName)
+    {
+        Match methodMatch = Regex.Match(
+            sourceText,
+            $@"(?m)^\s*(?:(?:public|private|protected|internal|static|virtual|override|sealed|async|new)\s+)*[A-Za-z_][A-Za-z0-9_<>,\[\]?]*\s+{Regex.Escape(methodName)}\s*\(");
+        Assert.That(methodMatch.Success, Is.True, $"Could not find declaration for method '{methodName}'.");
+
+        int bodyStart = sourceText.IndexOf('{', methodMatch.Index);
+        Assert.That(bodyStart, Is.GreaterThanOrEqualTo(0), $"Could not find method body for '{methodName}'.");
+
+        int depth = 0;
+
+        for (int i = bodyStart; i < sourceText.Length; i++)
+        {
+            if (sourceText[i] == '{')
+            {
+                depth++;
+            }
+            else if (sourceText[i] == '}')
+            {
+                depth--;
+
+                if (depth == 0)
+                {
+                    return sourceText.Substring(bodyStart, i - bodyStart + 1);
+                }
+            }
+        }
+
+        Assert.Fail($"Could not find end of method body for '{methodName}'.");
+        return string.Empty;
     }
 
     private static string ExtractMethodBody(string sourceText, string methodName)

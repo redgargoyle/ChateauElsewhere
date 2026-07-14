@@ -107,12 +107,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private string guestFootstepCatalogResourcePath = DefaultGuestFootstepCatalogResourcePath;
     [SerializeField] private bool playGuestFootsteps = true;
 
-    [Header("Entrance Sorting")]
-    [SerializeField] private string entranceGuestSortingLayerName = "People";
-    [SerializeField] private int entranceGuestSortingOrderBase = 9000;
-    [SerializeField] private int entranceGuestSortingOrderGroupStep = 100;
-    [SerializeField] private int entranceGuestSortingOrderSlotStep = 10;
-
     [Header("Interactions")]
     [SerializeField] private bool createRuntimeHud = true;
     [SerializeField] private bool createRuntimeClickTargets = true;
@@ -4736,6 +4730,8 @@ public class Chapter1ArrivalController : MonoBehaviour
                 continue;
             }
 
+            renderers[i].spriteSortPoint = SpriteSortPoint.Pivot;
+
             if (preserveAuthoredSorting)
             {
                 continue;
@@ -4805,14 +4801,16 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        int groupIndex = Mathf.Max(0, guestState.GroupIndex);
-        int groupSize = Mathf.Max(1, guestsPerArrivalGroup);
-        int slotIndex = Mathf.Max(0, guestState.GuestIndex) % groupSize;
-        int sortingOrder = entranceGuestSortingOrderBase +
-            groupIndex * Mathf.Max(1, entranceGuestSortingOrderGroupStep) +
-            slotIndex * Mathf.Max(1, entranceGuestSortingOrderSlotStep);
+        ResolveReferences(false);
+
+        if (playerMovement == null)
+        {
+            return;
+        }
+
+        int sortingOrder = GetEntranceHallGuestSortingOrder(guestState, renderers);
         int authoredReferenceOrder = GetGuestRendererReferenceSortingOrder(guestState, renderers);
-        string sortingLayerName = ResolveSortingLayerName(entranceGuestSortingLayerName);
+        string sortingLayerName = playerMovement.CurrentSortingLayerName;
 
         for (int i = 0; i < renderers.Length; i++)
         {
@@ -4826,7 +4824,51 @@ public class Chapter1ArrivalController : MonoBehaviour
             int localOffset = GetCachedSortingOrder(renderer) - authoredReferenceOrder;
             renderer.sortingLayerName = sortingLayerName;
             renderer.sortingOrder = sortingOrder + localOffset;
+
+            if (renderer is SpriteRenderer spriteRenderer)
+            {
+                spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            }
         }
+    }
+
+    private int GetEntranceHallGuestSortingOrder(GuestRuntimeState guestState, Renderer[] renderers)
+    {
+        return playerMovement.GetSortingOrderForFootY(GetEntranceHallGuestFootY(guestState, renderers));
+    }
+
+    private static float GetEntranceHallGuestFootY(GuestRuntimeState guestState, Renderer[] renderers)
+    {
+        if (guestState == null || guestState.GuestObject == null)
+        {
+            return 0f;
+        }
+
+        SpriteRenderer characterRenderer = FindCharacterSpriteRenderer(guestState.GuestObject);
+
+        if (characterRenderer != null && characterRenderer.enabled && characterRenderer.sprite != null)
+        {
+            return characterRenderer.bounds.min.y;
+        }
+
+        float lowestVisibleY = float.PositiveInfinity;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (!(renderers[i] is SpriteRenderer spriteRenderer) ||
+                !spriteRenderer.enabled ||
+                spriteRenderer.sprite == null ||
+                IsCoatVisualTransform(spriteRenderer.transform))
+            {
+                continue;
+            }
+
+            lowestVisibleY = Mathf.Min(lowestVisibleY, spriteRenderer.bounds.min.y);
+        }
+
+        return float.IsPositiveInfinity(lowestVisibleY)
+            ? guestState.GuestObject.transform.position.y
+            : lowestVisibleY;
     }
 
     private void RestoreGuestAuthoredSorting(GuestRuntimeState guestState)
