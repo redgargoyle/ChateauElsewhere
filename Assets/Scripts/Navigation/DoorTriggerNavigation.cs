@@ -32,12 +32,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private const string DefaultDoorOpenSoundCatalogResourcePath = "Audio/DoorOpenSoundCatalog";
     private const string DefaultStairwaySoundCatalogResourcePath = "Audio/StairwaySoundCatalog";
-    private const float ApproachTriggerDistanceWeight = 10f;
-    private const float ApproachPlayerDistanceWeight = 0.01f;
-    private const float ApproachExactPointPenalty = 25f;
-    private const float DuplicateApproachSampleDistance = 1f;
-    private const float ApproachSampleMinimumOffset = 36f;
-
     public static event Action<DoorTriggerNavigation> HoveredTriggerChanged;
     public static DoorTriggerNavigation HoveredTrigger { get; private set; }
 
@@ -89,7 +83,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     private RectTransform rectTransform;
     private readonly Vector3[] triggerWorldCorners = new Vector3[4];
-    private readonly List<Vector2> triggerScreenSamples = new List<Vector2>(16);
     private PointClickPlayerMovement pendingApproachPlayer;
     private int lastPointerActivationFrame = -1;
     private static readonly List<DoorTriggerNavigation> activeTriggers = new List<DoorTriggerNavigation>();
@@ -362,6 +355,14 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         out Vector2 destination,
         Vector2? preferredScreenPosition)
     {
+        if (canonicalPassage != null && canonicalPassage.UsesBestReachableApproachRegion)
+        {
+            return TryFindCanonicalApproachRegionDestination(
+                playerMovement,
+                out destination,
+                preferredScreenPosition);
+        }
+
         if (canonicalPassage == null || !canonicalPassage.UsesAuthoredApproach)
         {
             return TryFindBestApproachDestination(
@@ -372,6 +373,31 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         return TryFindCanonicalApproachDestination(playerMovement, out destination);
+    }
+
+    private bool TryFindCanonicalApproachRegionDestination(
+        PointClickPlayerMovement playerMovement,
+        out Vector2 destination,
+        Vector2? preferredScreenPosition)
+    {
+        destination = Vector2.zero;
+        INavigationService navigationService = navigationManager;
+
+        if (navigationService == null ||
+            !navigationService.CanTraverse(canonicalPassage) ||
+            !canonicalPassage.TryBuildApproachRuntimeRegion(
+                GetCanvasCamera(),
+                out PassageArrivalRuntimeRegion runtimeRegion))
+        {
+            return false;
+        }
+
+        return PassageArrivalResolver.TryResolveBestReachableApproachDestination(
+            runtimeRegion,
+            GetPlayerScreenPosition(),
+            preferredScreenPosition,
+            playerMovement,
+            out destination);
     }
 
     private bool TryFindCanonicalApproachDestination(
@@ -465,66 +491,20 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     {
         destination = Vector2.zero;
 
-        if (playerMovement == null || !TryGetTriggerScreenBounds(out Vector2 min, out Vector2 max))
+        if (playerMovement == null ||
+            !TryGetTriggerScreenBounds(out Vector2 min, out Vector2 max))
         {
             return false;
         }
 
-        Vector2 playerScreenPosition = GetPlayerScreenPosition();
-        CollectTriggerApproachSamples(playerScreenPosition, min, max, preferredScreenPosition);
-
-        bool foundDestination = false;
-        float bestScore = float.MaxValue;
-        Vector2 bestDestination = Vector2.zero;
-
-        for (int i = 0; i < triggerScreenSamples.Count; i++)
-        {
-            Vector2 samplePoint = triggerScreenSamples[i];
-            if (!playerMovement.TryEvaluateMovementAtScreenPoint(samplePoint, true, out PointClickPlayerMovement.MovementTargetQuery movementQuery) ||
-                !movementQuery.HasReachableDestination ||
-                (requireMovement && !movementQuery.WouldMove))
-            {
-                continue;
-            }
-
-            if (!playerMovement.TryGetScreenPointFromLogicalPosition(movementQuery.Destination, out Vector2 destinationScreenPoint))
-            {
-                continue;
-            }
-
-            Vector2 closestTriggerPoint = GetClosestApproachPointInTriggerBounds(destinationScreenPoint, min, max);
-            float triggerDistance = Vector2.Distance(destinationScreenPoint, closestTriggerPoint);
-            float playerDistance = Vector2.Distance(playerScreenPosition, destinationScreenPoint);
-            float score = triggerDistance * ApproachTriggerDistanceWeight +
-                playerDistance * ApproachPlayerDistanceWeight +
-                (movementQuery.ExactPointWalkable ? 0f : ApproachExactPointPenalty);
-
-            if (score >= bestScore)
-            {
-                continue;
-            }
-
-            bestScore = score;
-            bestDestination = movementQuery.Destination;
-            foundDestination = true;
-
-            if (preferredScreenPosition.HasValue &&
-                i == 0 &&
-                movementQuery.ExactPointWalkable &&
-                triggerDistance <= 1f)
-            {
-                destination = bestDestination;
-                return true;
-            }
-        }
-
-        if (!foundDestination)
-        {
-            return false;
-        }
-
-        destination = bestDestination;
-        return true;
+        return PassageArrivalResolver.TryResolveBestReachableApproachDestination(
+            min,
+            max,
+            GetPlayerScreenPosition(),
+            preferredScreenPosition,
+            requireMovement,
+            playerMovement,
+            out destination);
     }
 
     private void LogApproachFailure(string reason)
@@ -636,74 +616,6 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         return true;
-    }
-
-    private void CollectTriggerApproachSamples(
-        Vector2 playerScreenPosition,
-        Vector2 min,
-        Vector2 max,
-        Vector2? preferredScreenPosition)
-    {
-        triggerScreenSamples.Clear();
-
-        float centerX = (min.x + max.x) * 0.5f;
-        float centerY = (min.y + max.y) * 0.5f;
-        float lowerY = min.y;
-        float upperY = max.y;
-        float leftX = min.x;
-        float rightX = max.x;
-
-        if (preferredScreenPosition.HasValue)
-        {
-            AddUniqueApproachSample(GetClosestApproachPointInTriggerBounds(preferredScreenPosition.Value, min, max));
-        }
-
-        AddUniqueApproachSample(GetClosestApproachPointInTriggerBounds(playerScreenPosition, min, max));
-        AddUniqueApproachSample(new Vector2(centerX, lowerY));
-        AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.25f), lowerY));
-        AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.75f), lowerY));
-        AddUniqueApproachSample(new Vector2(leftX, lowerY));
-        AddUniqueApproachSample(new Vector2(rightX, lowerY));
-        AddUniqueApproachSample(new Vector2(centerX, centerY));
-        AddUniqueApproachSample(new Vector2(leftX, centerY));
-        AddUniqueApproachSample(new Vector2(rightX, centerY));
-        AddUniqueApproachSample(new Vector2(centerX, upperY));
-        AddUniqueApproachSample(new Vector2(leftX, upperY));
-        AddUniqueApproachSample(new Vector2(rightX, upperY));
-
-        float width = Mathf.Max(1f, rightX - leftX);
-        float height = Mathf.Max(1f, upperY - lowerY);
-        float offset = Mathf.Max(ApproachSampleMinimumOffset, Mathf.Min(width, height) * 0.35f);
-
-        AddDoorEdgeApproachSamples(leftX, rightX, centerX, lowerY, -offset);
-        AddDoorEdgeApproachSamples(leftX, rightX, centerX, lowerY, -offset * 2f);
-        AddDoorEdgeApproachSamples(leftX, rightX, centerX, upperY, offset);
-        AddDoorEdgeApproachSamples(leftX, rightX, centerX, upperY, offset * 2f);
-        AddUniqueApproachSample(new Vector2(leftX - offset, centerY));
-        AddUniqueApproachSample(new Vector2(leftX - offset * 2f, centerY));
-        AddUniqueApproachSample(new Vector2(rightX + offset, centerY));
-        AddUniqueApproachSample(new Vector2(rightX + offset * 2f, centerY));
-    }
-
-    private void AddDoorEdgeApproachSamples(float leftX, float rightX, float centerX, float edgeY, float yOffset)
-    {
-        float sampleY = edgeY + yOffset;
-        AddUniqueApproachSample(new Vector2(centerX, sampleY));
-        AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.25f), sampleY));
-        AddUniqueApproachSample(new Vector2(Mathf.Lerp(leftX, rightX, 0.75f), sampleY));
-    }
-
-    private void AddUniqueApproachSample(Vector2 sample)
-    {
-        for (int i = 0; i < triggerScreenSamples.Count; i++)
-        {
-            if (Vector2.Distance(triggerScreenSamples[i], sample) <= DuplicateApproachSampleDistance)
-            {
-                return;
-            }
-        }
-
-        triggerScreenSamples.Add(sample);
     }
 
     private static Vector2 GetClosestApproachPointInTriggerBounds(Vector2 screenPosition, Vector2 min, Vector2 max)

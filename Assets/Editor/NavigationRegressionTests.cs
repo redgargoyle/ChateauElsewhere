@@ -420,8 +420,25 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("TryStartPlayerApproach"), "Door triggers should share one approach flow for doors and stairways.");
         Assert.That(triggerText, Does.Contain("GetClosestTriggerScreenPoint"), "Wide hitboxes should measure to the door threshold, not only the center.");
         Assert.That(triggerText, Does.Contain("GetClosestApproachPointInTriggerBounds"), "Door approaches should prefer the lower threshold line so the butler's feet reach the door.");
-        Assert.That(triggerText, Does.Contain("TryFindBestApproachDestination"), "Door approaches should sample the trigger and choose the closest reachable floor point.");
-        Assert.That(triggerText, Does.Contain("CollectTriggerApproachSamples"), "Door approaches should consider trigger edges and bottom points, not a single screen point.");
+        Assert.That(triggerText, Does.Contain("TryFindBestApproachDestination"), "The legacy private approach seam should remain available while delegating selection to the Passage-owned resolver.");
+        Assert.That(triggerText, Does.Contain("PassageArrivalResolver.TryResolveBestReachableApproachDestination"),
+            "Canonical and compatibility approaches should share the Passage-owned deterministic region resolver.");
+        foreach (string retiredTriggerSamplerOwner in new[]
+                 {
+                     "CollectTriggerApproachSamples",
+                     "AddDoorEdgeApproachSamples",
+                     "AddUniqueApproachSample",
+                     "triggerScreenSamples",
+                     "ApproachTriggerDistanceWeight",
+                     "ApproachPlayerDistanceWeight",
+                     "ApproachExactPointPenalty",
+                     "DuplicateApproachSampleDistance",
+                     "ApproachSampleMinimumOffset"
+                 })
+        {
+            Assert.That(triggerText, Does.Not.Contain(retiredTriggerSamplerOwner),
+                $"DoorTriggerNavigation must not retain approach-sampler ownership through '{retiredTriggerSamplerOwner}'.");
+        }
         Assert.That(triggerText, Does.Contain("ActivateDoor(eventData.position)"), "Pointer clicks should pass their exact screen position into broad door/stair trigger approach routing.");
         Assert.That(triggerText, Does.Contain("triggerUnderPointer.ActivateDoor(screenPosition)"), "Fallback trigger clicks should also preserve the clicked screen position.");
         Assert.That(triggerText, Does.Contain("preferredScreenPosition"), "Broad hitboxes should try the clicked point before scanning the whole trigger rectangle.");
@@ -483,6 +500,8 @@ public class NavigationRegressionTests
             "The legacy trigger must not retain a second arrival-sampling algorithm.");
         Assert.That(resolverText, Does.Contain("TryResolveFromOrderedScreenSamples"),
             "The canonical resolver should preserve the ordered reachable screen sampler.");
+        Assert.That(resolverText, Does.Contain("TryResolveBestReachableApproachDestination"),
+            "Approaches should use the same Passage-owned ordered screen sampler without an arrival fallback.");
         Assert.That(resolverText, Does.Contain("TryResolveFromFallbackWorldSamples"),
             "The canonical resolver should retain the seven-point world fallback.");
         Assert.That(resolverText, Does.Contain(
@@ -495,6 +514,8 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("TryFindClosestReachableDestinationToWorldPointTowardRoomCenter"), "Player movement should offer a room-center-biased doorway placement path for arrivals.");
         Assert.That(playerText, Does.Contain("IPassageArrivalQuery"),
             "The movement facade should expose only the typed read/query capability the resolver consumes.");
+        Assert.That(playerText, Does.Contain("legacyQuery.WouldMove"),
+            "The typed resolver query must preserve whether a sampled approach would actually move the player.");
     }
 
     [Test]
@@ -983,6 +1004,9 @@ public class NavigationRegressionTests
         string currentDefinitionBody = ExtractMethodBody(navigationManagerText, "private CanonicalRoomDefinition FindRegisteredRoomDefinition");
         string tryStartApproachBody = ExtractMethodBody(triggerText, "private bool TryStartPlayerApproach");
         string traversalApproachBody = ExtractMethodBody(triggerText, "private bool TryFindTraversalApproachDestination");
+        string canonicalApproachRegionBody = ExtractMethodBody(
+            triggerText,
+            "private bool TryFindCanonicalApproachRegionDestination");
         string canonicalApproachBody = ExtractMethodBody(triggerText, "private bool TryFindCanonicalApproachDestination");
         string legacyApproachBody = ExtractMethodBody(triggerText, "private bool TryFindBestApproachDestination");
         string legacyArrivalBody = ExtractMethodBody(triggerText, "public bool TryFindArrivalDestination");
@@ -1002,6 +1026,10 @@ public class NavigationRegressionTests
             "(approachAnchor.HasValidCoordinateSpace && approachAnchor.HasFiniteAuthoredPosition)"));
         Assert.That(canTraverseBody, Does.Contain(
             "(arrivalAnchor.HasValidCoordinateSpace && arrivalAnchor.HasFiniteAuthoredPosition)"));
+        Assert.That(canTraverseBody, Does.Contain("passage.HasValidApproachPlacementMode"));
+        Assert.That(canTraverseBody, Does.Contain("reverse.HasValidApproachPlacementMode"));
+        Assert.That(canTraverseBody, Does.Contain("passage.UsesBestReachableApproachRegion"));
+        Assert.That(canTraverseBody, Does.Contain("passage.HasMatchingApproachRegionGeometry"));
         Assert.That(canTraverseBody, Does.Contain("passage.HasValidArrivalPlacementMode"));
         Assert.That(canTraverseBody, Does.Contain("arrivalRegion.HasValidRoomViewLocalCorners"));
         Assert.That(Regex.Matches(canonicalMoveBody, @"\bSetCurrentRoom\s*\(").Count, Is.EqualTo(1));
@@ -1074,12 +1102,35 @@ public class NavigationRegressionTests
         Assert.That(tryStartApproachBody, Does.Not.Contain("TryFindBestApproachDestination"));
         Assert.That(tryStartApproachBody, Does.Not.Contain("CanTraverse"));
         Assert.That(traversalApproachBody, Does.Contain(
+            "if (canonicalPassage != null && canonicalPassage.UsesBestReachableApproachRegion)"));
+        Assert.That(traversalApproachBody, Does.Contain(
             "if (canonicalPassage == null || !canonicalPassage.UsesAuthoredApproach)"));
+        Assert.That(
+            traversalApproachBody.IndexOf(
+                "canonicalPassage.UsesBestReachableApproachRegion",
+                System.StringComparison.Ordinal),
+            Is.LessThan(traversalApproachBody.IndexOf(
+                "canonicalPassage == null || !canonicalPassage.UsesAuthoredApproach",
+                System.StringComparison.Ordinal)),
+            "Region-mode canonical Passages must fail closed before the legacy compatibility branch can run.");
+        Assert.That(Regex.Matches(
+            traversalApproachBody,
+            @"\bTryFindCanonicalApproachRegionDestination\s*\(").Count, Is.EqualTo(1));
+        Assert.That(traversalApproachBody, Does.Match(
+            @"TryFindCanonicalApproachRegionDestination\(\s*playerMovement,\s*out destination,\s*preferredScreenPosition\s*\)"));
         Assert.That(Regex.Matches(traversalApproachBody, @"\bTryFindBestApproachDestination\s*\(").Count, Is.EqualTo(1));
         Assert.That(traversalApproachBody, Does.Match(
             @"TryFindBestApproachDestination\(\s*playerMovement,\s*true,\s*out destination,\s*preferredScreenPosition\s*\)"));
         Assert.That(Regex.Matches(traversalApproachBody, @"\bTryFindCanonicalApproachDestination\s*\(").Count, Is.EqualTo(1));
         Assert.That(traversalApproachBody, Does.Not.Contain("ApproachAnchor"));
+        Assert.That(canonicalApproachRegionBody, Does.Contain("navigationService.CanTraverse(canonicalPassage)"));
+        Assert.That(canonicalApproachRegionBody, Does.Contain("canonicalPassage.TryBuildApproachRuntimeRegion"));
+        Assert.That(canonicalApproachRegionBody, Does.Contain(
+            "PassageArrivalResolver.TryResolveBestReachableApproachDestination"));
+        Assert.That(canonicalApproachRegionBody, Does.Contain("preferredScreenPosition"));
+        Assert.That(canonicalApproachRegionBody, Does.Not.Contain("TryFindBestApproachDestination"));
+        Assert.That(canonicalApproachRegionBody, Does.Not.Contain("ApproachAnchor"));
+        Assert.That(canonicalApproachRegionBody, Does.Not.Contain("TryGetTriggerScreenBounds"));
         Assert.That(canonicalApproachBody, Does.Contain("navigationService.CanTraverse(canonicalPassage)"));
         Assert.That(canonicalApproachBody, Does.Contain(
             "approachAnchor.TryResolveLogicalPosition(playerMovement, out Vector2 authoredDestination)"));
@@ -1093,6 +1144,14 @@ public class NavigationRegressionTests
         Assert.That(canonicalApproachBody, Does.Not.Match(@"\bPlay(?:OneShot)?\s*\("));
         Assert.That(canonicalApproachBody, Does.Not.Contain("SetCurrentRoom"));
         Assert.That(canonicalApproachBody, Does.Not.Contain("FindAnyObjectByType"));
+        Assert.That(legacyApproachBody, Does.Contain("TryGetTriggerScreenBounds"));
+        Assert.That(legacyApproachBody, Does.Contain(
+            "PassageArrivalResolver.TryResolveBestReachableApproachDestination"));
+        Assert.That(legacyApproachBody, Does.Contain("preferredScreenPosition"));
+        Assert.That(legacyApproachBody, Does.Contain("requireMovement"));
+        Assert.That(legacyApproachBody, Does.Not.Contain("triggerScreenSamples"));
+        Assert.That(legacyApproachBody, Does.Not.Contain("bestScore"));
+        Assert.That(legacyApproachBody, Does.Not.Contain("movementQuery"));
         Assert.That(legacyApproachBody, Does.Not.Contain("canonicalPassage"));
         Assert.That(legacyApproachBody, Does.Not.Contain("ApproachAnchor"));
         Assert.That(legacyArrivalBody, Does.Contain(

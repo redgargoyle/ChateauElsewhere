@@ -1207,7 +1207,8 @@ public class PointClickPlayerMovement : MonoBehaviour, IRoomViewLocalCoordinateM
 		movementQuery = new PassageArrivalMovementQuery(
 			legacyQuery.Destination,
 			legacyQuery.ExactPointWalkable,
-			legacyQuery.HasReachableDestination);
+			legacyQuery.HasReachableDestination,
+			legacyQuery.WouldMove);
 		return true;
 	}
 

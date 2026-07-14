@@ -17,6 +17,12 @@ namespace Chateau.World.Rooms.Passages
         BestReachableInAuthoredRegion = 1
     }
 
+    public enum PassageApproachPlacementMode
+    {
+        ExactAuthoredPoint = 0,
+        BestReachableInSourceRegion = 1
+    }
+
     [DisallowMultipleComponent]
     [AddComponentMenu("Chateau/World/Rooms/Passages/Passage")]
     public sealed class Passage : RoomElementBase
@@ -27,6 +33,8 @@ namespace Chateau.World.Rooms.Passages
         [SerializeField] private PassageAnchorData approachAnchor;
         [SerializeField] private PassageAnchorData arrivalAnchor;
         [SerializeField] private PassageAnchorMigrationStage anchorMigrationStage = PassageAnchorMigrationStage.LegacySampling;
+        [SerializeField] private PassageApproachPlacementMode approachPlacementMode =
+            PassageApproachPlacementMode.ExactAuthoredPoint;
         [SerializeField] private PassageArrivalPlacementMode arrivalPlacementMode =
             PassageArrivalPlacementMode.ExactAuthoredPoint;
         [SerializeField] private PassageArrivalRegionData arrivalRegion;
@@ -44,6 +52,28 @@ namespace Chateau.World.Rooms.Passages
             anchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors;
         public bool UsesAuthoredApproach =>
             anchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors;
+        public PassageApproachPlacementMode ApproachPlacementMode => approachPlacementMode;
+        public bool HasValidApproachPlacementMode =>
+            approachPlacementMode == PassageApproachPlacementMode.ExactAuthoredPoint ||
+            approachPlacementMode == PassageApproachPlacementMode.BestReachableInSourceRegion;
+        public bool UsesBestReachableApproachRegion =>
+            approachPlacementMode == PassageApproachPlacementMode.BestReachableInSourceRegion;
+        public PassageArrivalRegionData ApproachRegion =>
+            UsesBestReachableApproachRegion && reversePassage != null
+                ? reversePassage.ArrivalRegion
+                : null;
+        public bool HasMatchingApproachRegionGeometry =>
+            anchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors &&
+            UsesBestReachableApproachRegion &&
+            reversePassage != null &&
+            reversePassage != this &&
+            reversePassage.reversePassage == this &&
+            reversePassage.anchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors &&
+            reversePassage.UsesBestReachableArrivalRegion &&
+            PassageArrivalResolver.DoesAuthoredRegionMatchTransform(
+                reversePassage.ArrivalRegion,
+                sourceRoomView,
+                transform as RectTransform);
         public PassageArrivalPlacementMode ArrivalPlacementMode => arrivalPlacementMode;
         public bool HasValidArrivalPlacementMode =>
             arrivalPlacementMode == PassageArrivalPlacementMode.ExactAuthoredPoint ||
@@ -53,6 +83,21 @@ namespace Chateau.World.Rooms.Passages
         public PassageArrivalRegionData ArrivalRegion => arrivalRegion;
         public PassageAnchorData ApproachAnchor => approachAnchor;
         public PassageAnchorData ArrivalAnchor => arrivalAnchor;
+
+        public bool TryBuildApproachRuntimeRegion(
+            Camera canvasCamera,
+            out PassageArrivalRuntimeRegion runtimeRegion)
+        {
+            runtimeRegion = default;
+
+            return HasMatchingApproachRegionGeometry &&
+                PassageArrivalResolver.TryBuildRuntimeRegion(
+                    reversePassage.ArrivalRegion,
+                    sourceRoomView,
+                    transform as RectTransform,
+                    canvasCamera,
+                    out runtimeRegion);
+        }
 
         public override void ValidateConfiguration(ValidationReport report)
         {
@@ -107,6 +152,11 @@ namespace Chateau.World.Rooms.Passages
                     report.AddError("Passage reverse has an unknown arrival placement mode.", this);
                 }
 
+                if (!reversePassage.HasValidApproachPlacementMode)
+                {
+                    report.AddError("Passage reverse has an unknown approach placement mode.", this);
+                }
+
                 if (definition != null && reversePassage.definition != definition.Reverse)
                 {
                     report.AddError("Passage reverse scene definition does not match its definition reverse.", this);
@@ -122,6 +172,54 @@ namespace Chateau.World.Rooms.Passages
             if (!HasValidAnchorMigrationStage)
             {
                 report.AddError("Passage has an unknown anchor migration stage.", this);
+            }
+
+            if (!HasValidApproachPlacementMode)
+            {
+                report.AddError("Passage has an unknown approach placement mode.", this);
+            }
+            else if (UsesBestReachableApproachRegion)
+            {
+                if (anchorMigrationStage != PassageAnchorMigrationStage.AuthoredAnchors)
+                {
+                    report.AddError(
+                        "Passage best-reachable source approach region requires fully authored anchors.",
+                        this);
+                }
+
+                if (reversePassage == null || !reversePassage.UsesBestReachableArrivalRegion)
+                {
+                    report.AddError(
+                        "Passage best-reachable source approach region requires its reverse " +
+                        "Passage to own a best-reachable arrival region.",
+                        this);
+                }
+                else if (reversePassage.ArrivalRegion == null ||
+                    !reversePassage.ArrivalRegion.HasValidRoomViewLocalCorners)
+                {
+                    report.AddError(
+                        "Passage best-reachable source approach region requires finite, " +
+                        "nondegenerate reciprocal RoomView-local corners.",
+                        this);
+                }
+
+                if (!(transform is RectTransform))
+                {
+                    report.AddError(
+                        "Passage best-reachable source approach region requires its own RectTransform.",
+                        this);
+                }
+                else if (reversePassage != null &&
+                    reversePassage.UsesBestReachableArrivalRegion &&
+                    reversePassage.ArrivalRegion != null &&
+                    reversePassage.ArrivalRegion.HasValidRoomViewLocalCorners &&
+                    !HasMatchingApproachRegionGeometry)
+                {
+                    report.AddError(
+                        "Passage best-reachable source approach region must match its own " +
+                        "RectTransform in the source RoomView.",
+                        this);
+                }
             }
 
             if (!HasValidArrivalPlacementMode)
@@ -158,17 +256,20 @@ namespace Chateau.World.Rooms.Passages
                 }
             }
 
-            if (approachAnchor == null)
+            if (!UsesBestReachableApproachRegion)
             {
-                report.AddError("Passage requires authored approach data.", this);
-            }
-            else if (!approachAnchor.HasValidCoordinateSpace)
-            {
-                report.AddError("Passage approach has an unknown coordinate space.", this);
-            }
-            else if (UsesAuthoredApproach && !approachAnchor.HasFiniteAuthoredPosition)
-            {
-                report.AddError("Passage approach requires a finite authored position.", this);
+                if (approachAnchor == null)
+                {
+                    report.AddError("Passage requires authored approach data.", this);
+                }
+                else if (!approachAnchor.HasValidCoordinateSpace)
+                {
+                    report.AddError("Passage approach has an unknown coordinate space.", this);
+                }
+                else if (UsesAuthoredApproach && !approachAnchor.HasFiniteAuthoredPosition)
+                {
+                    report.AddError("Passage approach requires a finite authored position.", this);
+                }
             }
 
             if (!UsesBestReachableArrivalRegion)

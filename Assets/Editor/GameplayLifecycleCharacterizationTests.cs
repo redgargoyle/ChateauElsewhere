@@ -8,6 +8,7 @@ using CanonicalPassage = Chateau.World.Rooms.Passages.Passage;
 using PassageAnchorCoordinateSpace = Chateau.World.Rooms.Passages.PassageAnchorCoordinateSpace;
 using PassageAnchorData = Chateau.World.Rooms.Passages.PassageAnchorData;
 using PassageAnchorMigrationStage = Chateau.World.Rooms.Passages.PassageAnchorMigrationStage;
+using PassageApproachPlacementMode = Chateau.World.Rooms.Passages.PassageApproachPlacementMode;
 using PassageArrivalPlacementMode = Chateau.World.Rooms.Passages.PassageArrivalPlacementMode;
 using PassageArrivalRegionData = Chateau.World.Rooms.Passages.PassageArrivalRegionData;
 using PassageArrivalRegionCorner = Chateau.World.Rooms.Passages.PassageArrivalRegionCorner;
@@ -2147,13 +2148,72 @@ public sealed class GameplayLifecycleCharacterizationTests
             SetPrivateField(forward.ArrivalAnchor, "logicalPosition", authoredForwardArrival);
         }
 
+        PassageApproachPlacementMode originalForwardApproachMode = forward.ApproachPlacementMode;
+        PassageAnchorData originalForwardApproachData = forward.ApproachAnchor;
+        PassageArrivalPlacementMode originalReverseArrivalMode = reverse.ArrivalPlacementMode;
+        PassageArrivalRegionData originalReverseArrivalRegion = reverse.ArrivalRegion;
+        PassageArrivalRegionData matchingSourceRegion = CreateRoomViewLocalRegion(
+            (RectTransform)forward.transform,
+            forward.SourceRoomView);
+        PassageArrivalRegionData mismatchedSourceRegion = CreatePassageArrivalRegion(
+            matchingSourceRegion.BottomLeft + new Vector2(-0.01f, 0f),
+            matchingSourceRegion.TopLeft,
+            matchingSourceRegion.TopRight,
+            matchingSourceRegion.BottomRight);
+
+        try
+        {
+            SetPrivateField(
+                reverse,
+                "arrivalPlacementMode",
+                PassageArrivalPlacementMode.BestReachableInAuthoredRegion);
+            SetPrivateField(reverse, "arrivalRegion", matchingSourceRegion);
+            SetPrivateField(
+                forward,
+                "approachPlacementMode",
+                PassageApproachPlacementMode.BestReachableInSourceRegion);
+            SetPrivateField<PassageAnchorData>(forward, "approachAnchor", null);
+
+            Assert.That(forward.HasMatchingApproachRegionGeometry, Is.True);
+            Assert.That(facade.CanTraverse(forward), Is.True);
+            Assert.That(player.TryWarpToExact(originalForwardApproachData.LogicalPosition), Is.True);
+            Assert.That(InvokePrivateResult<bool>(outboundTrigger, "IsPlayerCloseEnough"), Is.True,
+                "The mismatch regression must exercise the direct near-player traversal path.");
+            Vector2 beforeRejectedRegionTraversal = player.LogicalPosition;
+            SetPrivateField(reverse, "arrivalRegion", mismatchedSourceRegion);
+
+            Assert.That(forward.HasMatchingApproachRegionGeometry, Is.False);
+            Assert.That(facade.CanTraverse(forward), Is.False,
+                "Near traversal must not bypass source-region/RectTransform validation.");
+            Assert.That(facade.TryTraverse(forward), Is.False);
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
+            AssertVector2Within(
+                player.LogicalPosition,
+                beforeRejectedRegionTraversal,
+                0.0001f,
+                "rejected mismatched near source-region traversal");
+            Assert.That(roomEvents, Is.Empty);
+        }
+        finally
+        {
+            SetPrivateField(forward, "approachPlacementMode", originalForwardApproachMode);
+            SetPrivateField(forward, "approachAnchor", originalForwardApproachData);
+            SetPrivateField(reverse, "arrivalPlacementMode", originalReverseArrivalMode);
+            SetPrivateField(reverse, "arrivalRegion", originalReverseArrivalRegion);
+        }
+        Vector2 acceptedPositionAfterRegionValidation = player.LogicalPosition;
+
         Assert.That(facade.CanTraverse(forward), Is.True);
         Assert.That(facade.CanTraverse(reverse), Is.False);
         Assert.That(facade.CanTraverse(null), Is.False);
         Assert.That(facade.TryTraverse(reverse), Is.False);
         Assert.That(facade.TryTraverse(null), Is.False);
         Assert.That(navigation.CurrentRoom, Is.EqualTo(EntranceRoom));
-        AssertVector2Within(player.LogicalPosition, initialPosition, 0.0001f, "rejected facade traversal");
+        AssertVector2Within(
+            player.LogicalPosition,
+            acceptedPositionAfterRegionValidation,
+            0.0001f,
+            "rejected facade traversal");
         Assert.That(roomEvents, Is.Empty);
 
         Assert.That(player.TryWarpToExact(forward.ApproachAnchor.LogicalPosition), Is.True);
@@ -12097,6 +12157,302 @@ public sealed class GameplayLifecycleCharacterizationTests
         InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
     }
 
+    private static void ConfigureTemporarySourceRegionPassage(
+        CanonicalPassage passage,
+        CanonicalRoomView sourceRoomView,
+        CanonicalPassage reversePassage,
+        PassageArrivalRegionData arrivalRegion)
+    {
+        SetPrivateField(passage, "sourceRoomView", sourceRoomView);
+        SetPrivateField(passage, "reversePassage", reversePassage);
+        SetPrivateField<PassageAnchorData>(passage, "approachAnchor", null);
+        SetPrivateField<PassageAnchorData>(passage, "arrivalAnchor", null);
+        SetPrivateField(
+            passage,
+            "anchorMigrationStage",
+            PassageAnchorMigrationStage.AuthoredAnchors);
+        SetPrivateField(
+            passage,
+            "approachPlacementMode",
+            PassageApproachPlacementMode.BestReachableInSourceRegion);
+        SetPrivateField(
+            passage,
+            "arrivalPlacementMode",
+            PassageArrivalPlacementMode.BestReachableInAuthoredRegion);
+        SetPrivateField(passage, "arrivalRegion", arrivalRegion);
+    }
+
+    private static PassageArrivalRegionData CreateRoomViewLocalRegion(
+        RectTransform regionTransform,
+        CanonicalRoomView roomView)
+    {
+        Assert.That(regionTransform, Is.Not.Null);
+        Assert.That(roomView, Is.Not.Null);
+        Assert.That(roomView.Root, Is.Not.Null);
+        Assert.That(regionTransform.IsChildOf(roomView.Root), Is.True);
+
+        Vector3[] worldCorners = new Vector3[4];
+        regionTransform.GetWorldCorners(worldCorners);
+        return CreatePassageArrivalRegion(
+            roomView.Root.InverseTransformPoint(worldCorners[0]),
+            roomView.Root.InverseTransformPoint(worldCorners[1]),
+            roomView.Root.InverseTransformPoint(worldCorners[2]),
+            roomView.Root.InverseTransformPoint(worldCorners[3]));
+    }
+
+    private static PassageArrivalRegionData CreatePassageArrivalRegion(
+        Vector2 bottomLeft,
+        Vector2 topLeft,
+        Vector2 topRight,
+        Vector2 bottomRight)
+    {
+        PassageArrivalRegionData region = new PassageArrivalRegionData();
+        SetPrivateField(region, "bottomLeft", bottomLeft);
+        SetPrivateField(region, "topLeft", topLeft);
+        SetPrivateField(region, "topRight", topRight);
+        SetPrivateField(region, "bottomRight", bottomRight);
+        Assert.That(region.HasValidRoomViewLocalCorners, Is.True);
+        return region;
+    }
+
+    private static void AssertSourceRegionApproachParityFromTwoFarStarts(
+        DoorTriggerNavigation trigger,
+        CanonicalPassage passage,
+        PointClickPlayerMovement player,
+        CameraManager cameraManager,
+        RoomNavigationManager navigation,
+        Vector2[] requestedStarts,
+        string label,
+        bool proveMismatchFailsClosed)
+    {
+        Assert.That(trigger, Is.Not.Null);
+        Assert.That(passage, Is.Not.Null);
+        Assert.That(player, Is.Not.Null);
+        Assert.That(cameraManager, Is.Not.Null);
+        Assert.That(navigation, Is.Not.Null);
+        Assert.That(requestedStarts, Is.Not.Null);
+        Assert.That(requestedStarts.Length, Is.GreaterThanOrEqualTo(2));
+        Assert.That(passage.UsesBestReachableApproachRegion, Is.True);
+        Assert.That(passage.ApproachAnchor, Is.Null,
+            $"{label} must prove source-region ownership without a point anchor.");
+
+        Camera canvasCamera = InvokePrivateResult<Camera>(trigger, "GetCanvasCamera");
+        Assert.That(passage.TryBuildApproachRuntimeRegion(
+            canvasCamera,
+            out PassageArrivalRuntimeRegion runtimeRegion), Is.True,
+            $"{label} canonical source region must match its Passage RectTransform.");
+        Assert.That(runtimeRegion.TryGetScreenBounds(
+            out Vector2 canonicalMin,
+            out Vector2 canonicalMax), Is.True);
+        Assert.That(TryGetTriggerScreenBounds(
+            trigger,
+            out Vector2 legacyMin,
+            out Vector2 legacyMax), Is.True);
+        AssertVector2BitExact(canonicalMin, legacyMin, $"{label} minimum screen bound");
+        AssertVector2BitExact(canonicalMax, legacyMax, $"{label} maximum screen bound");
+
+        List<Vector2> resolvedStarts = new List<Vector2>(2);
+        bool mismatchProofCompleted = false;
+        float activationDistance = GetPrivateValue<float>(trigger, "maxPlayerScreenDistance");
+        for (int requestedIndex = 0;
+            requestedIndex < requestedStarts.Length && resolvedStarts.Count < 2;
+            requestedIndex++)
+        {
+            if (!TryWarpToCharacterizedFarStart(
+                    player,
+                    trigger,
+                    requestedStarts[requestedIndex],
+                    out float screenDistance) ||
+                screenDistance <= activationDistance)
+            {
+                continue;
+            }
+
+            Vector2 resolvedStart = player.LogicalPosition;
+            if (resolvedStarts.Any(existing => Vector2.Distance(existing, resolvedStart) <= 0.5f))
+            {
+                continue;
+            }
+
+            resolvedStarts.Add(resolvedStart);
+            Assert.That(player.HasDestination, Is.False);
+            Vector2?[] preferredScreenPositions =
+            {
+                null,
+                BuildPreferredTriggerClick(legacyMin, legacyMax, 0.15f),
+                BuildPreferredTriggerClick(legacyMin, legacyMax, 0.5f),
+                BuildPreferredTriggerClick(legacyMin, legacyMax, 0.85f)
+            };
+
+            for (int preferenceIndex = 0;
+                preferenceIndex < preferredScreenPositions.Length;
+                preferenceIndex++)
+            {
+                Vector2 beforePosition = player.LogicalPosition;
+                bool beforeHasDestination = player.HasDestination;
+                string beforeRoom = navigation.CurrentRoom;
+                DoorTriggerNavigation beforePending =
+                    GetPrivateStaticField<DoorTriggerNavigation>(
+                        typeof(DoorTriggerNavigation),
+                        "pendingApproachTrigger");
+                AudioSource beforeAudio = GetPrivateStaticField<AudioSource>(
+                    typeof(DoorTriggerNavigation),
+                    "activeNavigationAudioSource");
+                Vector2? preferredScreenPosition = preferredScreenPositions[preferenceIndex];
+
+                bool legacyFound = TryInvokeApproachDestination(
+                    trigger,
+                    player,
+                    true,
+                    out Vector2 legacyDestination,
+                    preferredScreenPosition);
+                bool canonicalFound = PassageArrivalResolver.TryResolveBestReachableApproachDestination(
+                    runtimeRegion,
+                    InvokePrivateResult<Vector2>(trigger, "GetPlayerScreenPosition"),
+                    preferredScreenPosition,
+                    true,
+                    player,
+                    out Vector2 canonicalDestination);
+
+                Assert.That(canonicalFound, Is.EqualTo(legacyFound),
+                    $"{label} start {resolvedStarts.Count - 1} preference {preferenceIndex} result changed.");
+                Assert.That(legacyFound, Is.True,
+                    $"{label} start {resolvedStarts.Count - 1} preference {preferenceIndex} must remain reachable.");
+                AssertVector2BitExact(
+                    canonicalDestination,
+                    legacyDestination,
+                    $"{label} start {resolvedStarts.Count - 1} preference {preferenceIndex} destination");
+                Assert.That(TryMapLogicalPointToActiveRoomStageLocal(
+                    player,
+                    cameraManager,
+                    legacyDestination,
+                    out Vector2 legacyLocal), Is.True);
+                Assert.That(TryMapLogicalPointToActiveRoomStageLocal(
+                    player,
+                    cameraManager,
+                    canonicalDestination,
+                    out Vector2 canonicalLocal), Is.True);
+                AssertVector2BitExact(
+                    canonicalLocal,
+                    legacyLocal,
+                    $"{label} start {resolvedStarts.Count - 1} preference {preferenceIndex} RoomView-local destination");
+                AssertVector2BitExact(
+                    player.LogicalPosition,
+                    beforePosition,
+                    $"{label} resolver must not move the player");
+                Assert.That(player.HasDestination, Is.EqualTo(beforeHasDestination));
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(beforeRoom));
+                Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(
+                    typeof(DoorTriggerNavigation),
+                    "pendingApproachTrigger"), Is.SameAs(beforePending));
+                Assert.That(GetPrivateStaticField<AudioSource>(
+                    typeof(DoorTriggerNavigation),
+                    "activeNavigationAudioSource"), Is.SameAs(beforeAudio));
+            }
+
+            if (proveMismatchFailsClosed && !mismatchProofCompleted)
+            {
+                AssertSourceRegionMismatchFailsClosed(
+                    trigger,
+                    passage,
+                    player,
+                    navigation,
+                    canvasCamera,
+                    $"{label} mismatched source region");
+                mismatchProofCompleted = true;
+            }
+        }
+
+        Assert.That(resolvedStarts, Has.Count.EqualTo(2),
+            $"{label} must prove parity from two distinct far starts.");
+        Assert.That(Vector2.Distance(resolvedStarts[0], resolvedStarts[1]), Is.GreaterThan(0.5f));
+        if (proveMismatchFailsClosed)
+        {
+            Assert.That(mismatchProofCompleted, Is.True,
+                $"{label} must execute its fail-closed source-region proof.");
+        }
+    }
+
+    private static void AssertSourceRegionMismatchFailsClosed(
+        DoorTriggerNavigation trigger,
+        CanonicalPassage passage,
+        PointClickPlayerMovement player,
+        RoomNavigationManager navigation,
+        Camera canvasCamera,
+        string label)
+    {
+        CanonicalPassage sourceRegionOwner = passage.ReversePassage;
+        Assert.That(sourceRegionOwner, Is.Not.Null);
+        PassageArrivalRegionData originalRegion = sourceRegionOwner.ArrivalRegion;
+        Assert.That(originalRegion, Is.Not.Null);
+        PassageArrivalRegionData mismatchedRegion = CreatePassageArrivalRegion(
+            originalRegion.BottomLeft + new Vector2(-0.01f, 0f),
+            originalRegion.TopLeft,
+            originalRegion.TopRight,
+            originalRegion.BottomRight);
+        Vector2 beforePosition = player.LogicalPosition;
+        bool beforeHasDestination = player.HasDestination;
+        string beforeRoom = navigation.CurrentRoom;
+        DoorTriggerNavigation beforePending = GetPrivateStaticField<DoorTriggerNavigation>(
+            typeof(DoorTriggerNavigation),
+            "pendingApproachTrigger");
+        AudioSource beforeAudio = GetPrivateStaticField<AudioSource>(
+            typeof(DoorTriggerNavigation),
+            "activeNavigationAudioSource");
+
+        try
+        {
+            SetPrivateField(sourceRegionOwner, "arrivalRegion", mismatchedRegion);
+            Assert.That(passage.ApproachRegion, Is.SameAs(mismatchedRegion));
+            Assert.That(passage.TryBuildApproachRuntimeRegion(
+                canvasCamera,
+                out PassageArrivalRuntimeRegion rejectedRegion), Is.False,
+                $"{label} must fail rather than using a point or legacy fallback.");
+            Assert.That(rejectedRegion.TryGetScreenBounds(out _, out _), Is.False);
+            Assert.That(TryInvokeApproachDestination(
+                trigger,
+                player,
+                true,
+                out Vector2 legacyDestination), Is.True,
+                $"{label} must prove the unchanged legacy resolver still has a destination.");
+            AssertFinite(legacyDestination, $"{label} legacy destination");
+            AssertVector2BitExact(player.LogicalPosition, beforePosition, $"{label} player position");
+            Assert.That(player.HasDestination, Is.EqualTo(beforeHasDestination));
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(beforeRoom));
+            Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(
+                typeof(DoorTriggerNavigation),
+                "pendingApproachTrigger"), Is.SameAs(beforePending));
+            Assert.That(GetPrivateStaticField<AudioSource>(
+                typeof(DoorTriggerNavigation),
+                "activeNavigationAudioSource"), Is.SameAs(beforeAudio));
+        }
+        finally
+        {
+            SetPrivateField(sourceRegionOwner, "arrivalRegion", originalRegion);
+        }
+
+        Assert.That(passage.ApproachRegion, Is.SameAs(originalRegion));
+        Assert.That(passage.TryBuildApproachRuntimeRegion(
+            canvasCamera,
+            out PassageArrivalRuntimeRegion restoredRegion), Is.True,
+            $"{label} exact authored region must be restored.");
+        Assert.That(restoredRegion.TryGetScreenBounds(out _, out _), Is.True);
+    }
+
+    private static void AssertVector2BitExact(Vector2 actual, Vector2 expected, string label)
+    {
+        AssertFinite(actual, label);
+        AssertFinite(expected, $"{label} expected");
+        Assert.That(
+            System.BitConverter.SingleToInt32Bits(actual.x),
+            Is.EqualTo(System.BitConverter.SingleToInt32Bits(expected.x)),
+            $"{label} x bits changed: actual {actual.x:R}, expected {expected.x:R}.");
+        Assert.That(
+            System.BitConverter.SingleToInt32Bits(actual.y),
+            Is.EqualTo(System.BitConverter.SingleToInt32Bits(expected.y)),
+            $"{label} y bits changed: actual {actual.y:R}, expected {expected.y:R}.");
+    }
+
     private static IEnumerator AssertLibraryBallroomPairLocalNullCallerFallbackRoundTrip(
         RoomNavigationManager navigation,
         PointClickPlayerMovement player,
@@ -13165,6 +13521,261 @@ public sealed class GameplayLifecycleCharacterizationTests
         Debug.Log(canonicalStructureLine);
         Assert.That(observationProfile, Does.Not.Contain("[GrandEntranceRearCanonicalStructure]"),
             "Current canonical structure evidence must remain outside the frozen legacy SHA input.");
+    }
+
+    [UnityTest]
+    public IEnumerator GrandEntranceRearBilliardSourceRegionApproachResolverIsBitExactToLegacyAcrossRenderedAspects()
+    {
+        const string RearDisplayName = "Grand Entrance Hall Rear View";
+        const string RearLegacyName = "Grand Entrance Hall Rear view";
+        const string BilliardRoom = "Billiard Room";
+
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        Button cursorButton = cursorChoice.GetComponent<Button>();
+        Assert.That(cursorButton, Is.Not.Null);
+        cursorButton.onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        PointClickPlayerMovement player = GameObject.Find("Player").GetComponent<PointClickPlayerMovement>();
+        Assert.That(player, Is.Not.Null);
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        ChapterManager chapterManager = RequireExactlyOneInActiveScene<ChapterManager>();
+        DoorTriggerNavigation setupTrigger = null;
+        DoorTriggerNavigation forward = null;
+        DoorTriggerNavigation reverse = null;
+        CanonicalPassage temporaryForwardPassage = null;
+        CanonicalPassage temporaryReversePassage = null;
+        CanonicalPassage originalForwardCaller = null;
+        CanonicalPassage originalReverseCaller = null;
+        Vector2 originalPlayerPosition = player.LogicalPosition;
+        bool originalInputEnabled = player.InputEnabled;
+        bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
+        bool originalZoomRoomWithMouseWheel = cameraManager.zoomRoomWithMouseWheel;
+
+        InvokePrivateMethod(chapterManager, "StopChapterCoroutines");
+        chapterManager.StopActiveDialogueForDebugTransition();
+        player.SetInputEnabled(true);
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+
+        try
+        {
+            cameraManager.ResetRoomLookForPreview();
+            yield return WaitForSettledLayout();
+
+            setupTrigger = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_GEH_toRearView");
+            SetPrivateField(setupTrigger, "lastPointerActivationFrame", -1);
+            setupTrigger.ActivateDoor();
+            yield return WaitForSettledLayout();
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(RearDisplayName));
+            originalPlayerPosition = player.LogicalPosition;
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+
+            forward = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_GEH_Rear_BilliardRoom");
+            reverse = RequireSceneObject<DoorTriggerNavigation>("DoorTrigger_BilliardRoom_GEH");
+            Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(4));
+            Assert.That(forward.GetComponent<CanonicalPassage>(), Is.Null);
+            Assert.That(reverse.GetComponent<CanonicalPassage>(), Is.Null);
+            originalForwardCaller = GetPrivateField<CanonicalPassage>(forward, "canonicalPassage");
+            originalReverseCaller = GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage");
+            Assert.That(originalForwardCaller, Is.Null);
+            Assert.That(originalReverseCaller, Is.Null);
+
+            RectTransform forwardRect = forward.transform as RectTransform;
+            RectTransform reverseRect = reverse.transform as RectTransform;
+            Assert.That(forwardRect, Is.Not.Null);
+            Assert.That(reverseRect, Is.Not.Null);
+            CanonicalRoomView rearRoomView = forward.GetComponentInParent<CanonicalRoomView>(true);
+            CanonicalRoomView billiardRoomView = reverse.GetComponentInParent<CanonicalRoomView>(true);
+            Assert.That(rearRoomView, Is.Not.Null);
+            Assert.That(billiardRoomView, Is.Not.Null);
+            Assert.That(rearRoomView.LegacyContentGroup.RoomName, Is.EqualTo(RearLegacyName));
+            Assert.That(billiardRoomView.LegacyContentGroup.RoomName, Is.EqualTo(BilliardRoom));
+
+            PassageArrivalRegionData forwardArrivalRegion =
+                CreateRoomViewLocalRegion(reverseRect, billiardRoomView);
+            PassageArrivalRegionData reverseArrivalRegion =
+                CreateRoomViewLocalRegion(forwardRect, rearRoomView);
+
+            temporaryForwardPassage = forward.gameObject.AddComponent<CanonicalPassage>();
+            temporaryReversePassage = reverse.gameObject.AddComponent<CanonicalPassage>();
+            ConfigureTemporarySourceRegionPassage(
+                temporaryForwardPassage,
+                rearRoomView,
+                temporaryReversePassage,
+                forwardArrivalRegion);
+            ConfigureTemporarySourceRegionPassage(
+                temporaryReversePassage,
+                billiardRoomView,
+                temporaryForwardPassage,
+                reverseArrivalRegion);
+
+            Assert.That(temporaryForwardPassage.ApproachAnchor, Is.Null,
+                "The source-region prerequisite must not consume an invented point anchor.");
+            Assert.That(temporaryReversePassage.ApproachAnchor, Is.Null,
+                "The reciprocal source-region prerequisite must not consume an invented point anchor.");
+            Assert.That(temporaryForwardPassage.ApproachRegion,
+                Is.SameAs(temporaryReversePassage.ArrivalRegion));
+            Assert.That(temporaryReversePassage.ApproachRegion,
+                Is.SameAs(temporaryForwardPassage.ArrivalRegion));
+
+            Vector2Int[] renderedSizes =
+            {
+                new Vector2Int(1366, 768),
+                new Vector2Int(1440, 1080),
+                new Vector2Int(1920, 1080),
+                new Vector2Int(2560, 1080),
+                new Vector2Int(2560, 1080)
+            };
+            Vector2[] forwardRequestedStarts =
+            {
+                new Vector2(0f, -2f),
+                new Vector2(-4f, -2f),
+                new Vector2(-2f, -3f),
+                new Vector2(2f, -2f),
+                new Vector2(0f, -3f)
+            };
+            Vector2[] reverseRequestedStarts =
+            {
+                new Vector2(0f, -2f),
+                new Vector2(4f, -2f),
+                new Vector2(2f, -3f),
+                new Vector2(-2f, -2f),
+                new Vector2(0f, -3f)
+            };
+
+            for (int profileIndex = 0; profileIndex < renderedSizes.Length; profileIndex++)
+            {
+                Vector2Int renderedSize = renderedSizes[profileIndex];
+                bool maximumZoom = profileIndex == renderedSizes.Length - 1;
+                string profileLabel =
+                    $"{renderedSize.x}x{renderedSize.y}-{(maximumZoom ? "maximum" : "default")}";
+                yield return SetAndWaitForRenderedGameViewResolution(
+                    (uint)renderedSize.x,
+                    (uint)renderedSize.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                if (maximumZoom)
+                {
+                    ApplyMaximumRoomZoom(cameraManager);
+                    yield return WaitForSettledLayout();
+                }
+                Canvas.ForceUpdateCanvases();
+
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(RearDisplayName));
+                AssertSourceRegionApproachParityFromTwoFarStarts(
+                    forward,
+                    temporaryForwardPassage,
+                    player,
+                    cameraManager,
+                    navigation,
+                    forwardRequestedStarts,
+                    $"{profileLabel} Rear-to-Billiard",
+                    proveMismatchFailsClosed: profileIndex == 0);
+
+                Assert.That(navigation.MoveThroughInspectorDoor(
+                    forward.SourceRoom,
+                    forward.DoorName,
+                    forward.DestinationRoom,
+                    true), Is.True);
+                yield return WaitForSettledLayout();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(BilliardRoom));
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                if (maximumZoom)
+                {
+                    ApplyMaximumRoomZoom(cameraManager);
+                    yield return WaitForSettledLayout();
+                }
+                Canvas.ForceUpdateCanvases();
+
+                AssertSourceRegionApproachParityFromTwoFarStarts(
+                    reverse,
+                    temporaryReversePassage,
+                    player,
+                    cameraManager,
+                    navigation,
+                    reverseRequestedStarts,
+                    $"{profileLabel} Billiard-to-Rear",
+                    proveMismatchFailsClosed: profileIndex == 0);
+
+                Assert.That(navigation.MoveThroughInspectorDoor(
+                    reverse.SourceRoom,
+                    reverse.DoorName,
+                    reverse.DestinationRoom,
+                    true), Is.True);
+                yield return WaitForSettledLayout();
+                Assert.That(navigation.CurrentRoom, Is.EqualTo(RearDisplayName));
+                InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            }
+        }
+        finally
+        {
+            if (forward != null)
+            {
+                InvokePrivateMethod(forward, "CancelPendingPlayerApproach");
+                SetPrivateField(forward, "canonicalPassage", originalForwardCaller);
+            }
+            if (reverse != null)
+            {
+                InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+                SetPrivateField(reverse, "canonicalPassage", originalReverseCaller);
+            }
+            if (setupTrigger != null)
+            {
+                InvokePrivateMethod(setupTrigger, "CancelPendingPlayerApproach");
+            }
+            if (player.HasDestination)
+            {
+                InvokePrivateMethod(player, "CancelDestination");
+            }
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+            {
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            }
+            if (navigation.CurrentRoom == BilliardRoom && reverse != null)
+            {
+                navigation.MoveThroughInspectorDoor(
+                    reverse.SourceRoom,
+                    reverse.DoorName,
+                    reverse.DestinationRoom,
+                    true);
+            }
+            if (navigation.CurrentRoom == RearDisplayName)
+            {
+                player.TryWarpTo(originalPlayerPosition, true);
+            }
+            if (temporaryForwardPassage != null)
+            {
+                UnityEngine.Object.DestroyImmediate(temporaryForwardPassage);
+            }
+            if (temporaryReversePassage != null)
+            {
+                UnityEngine.Object.DestroyImmediate(temporaryReversePassage);
+            }
+            player.SetInputEnabled(originalInputEnabled);
+            cameraManager.panRoomWithMouseEdges = originalPanRoomWithMouseEdges;
+            cameraManager.zoomRoomWithMouseWheel = originalZoomRoomWithMouseWheel;
+            cameraManager.ResetRoomLookForPreview();
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+        }
+
+        Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(4));
+        Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(4));
+        Assert.That(forward.GetComponent<CanonicalPassage>(), Is.Null);
+        Assert.That(reverse.GetComponent<CanonicalPassage>(), Is.Null);
+        Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"),
+            Is.SameAs(originalForwardCaller));
+        Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"),
+            Is.SameAs(originalReverseCaller));
     }
 
     [UnityTest]

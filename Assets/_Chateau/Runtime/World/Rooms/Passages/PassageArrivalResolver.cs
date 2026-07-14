@@ -112,15 +112,30 @@ namespace Chateau.World.Rooms.Passages
             Vector2 destination,
             bool exactPointWalkable,
             bool hasReachableDestination)
+            : this(
+                destination,
+                exactPointWalkable,
+                hasReachableDestination,
+                true)
+        {
+        }
+
+        public PassageArrivalMovementQuery(
+            Vector2 destination,
+            bool exactPointWalkable,
+            bool hasReachableDestination,
+            bool wouldMove)
         {
             Destination = destination;
             ExactPointWalkable = exactPointWalkable;
             HasReachableDestination = hasReachableDestination;
+            WouldMove = wouldMove;
         }
 
         public Vector2 Destination { get; }
         public bool ExactPointWalkable { get; }
         public bool HasReachableDestination { get; }
+        public bool WouldMove { get; }
     }
 
     public interface IPassageArrivalQuery
@@ -200,36 +215,16 @@ namespace Chateau.World.Rooms.Passages
         {
             runtimeRegion = default;
 
-            if (authoredRegion == null ||
-                !authoredRegion.HasValidRoomViewLocalCorners ||
-                destinationRoomView == null ||
-                destinationRoomView.Root == null ||
-                destinationRegionTransform == null ||
-                !destinationRegionTransform.IsChildOf(destinationRoomView.Root))
+            if (!TryGetMatchingAuthoredRegionWorldCorners(
+                    authoredRegion,
+                    destinationRoomView,
+                    destinationRegionTransform,
+                    out Vector3[] worldCorners))
             {
                 return false;
             }
 
-            Vector3[] worldCorners = new Vector3[4];
-            destinationRegionTransform.GetWorldCorners(worldCorners);
-
-            if (!MatchesAuthoredRoomViewLocalCorner(
-                    authoredRegion.BottomLeft,
-                    worldCorners[0],
-                    destinationRoomView.Root) ||
-                !MatchesAuthoredRoomViewLocalCorner(
-                    authoredRegion.TopLeft,
-                    worldCorners[1],
-                    destinationRoomView.Root) ||
-                !MatchesAuthoredRoomViewLocalCorner(
-                    authoredRegion.TopRight,
-                    worldCorners[2],
-                    destinationRoomView.Root) ||
-                !MatchesAuthoredRoomViewLocalCorner(
-                    authoredRegion.BottomRight,
-                    worldCorners[3],
-                    destinationRoomView.Root) ||
-                !TryCreateRuntimeCorner(worldCorners[0], canvasCamera, out PassageArrivalRegionCorner bottomLeft) ||
+            if (!TryCreateRuntimeCorner(worldCorners[0], canvasCamera, out PassageArrivalRegionCorner bottomLeft) ||
                 !TryCreateRuntimeCorner(worldCorners[1], canvasCamera, out PassageArrivalRegionCorner topLeft) ||
                 !TryCreateRuntimeCorner(worldCorners[2], canvasCamera, out PassageArrivalRegionCorner topRight) ||
                 !TryCreateRuntimeCorner(worldCorners[3], canvasCamera, out PassageArrivalRegionCorner bottomRight))
@@ -243,6 +238,18 @@ namespace Chateau.World.Rooms.Passages
                 topRight,
                 bottomRight);
             return runtimeRegion.TryGetScreenBounds(out _, out _);
+        }
+
+        internal static bool DoesAuthoredRegionMatchTransform(
+            PassageArrivalRegionData authoredRegion,
+            RoomView destinationRoomView,
+            RectTransform destinationRegionTransform)
+        {
+            return TryGetMatchingAuthoredRegionWorldCorners(
+                authoredRegion,
+                destinationRoomView,
+                destinationRegionTransform,
+                out _);
         }
 
         public static bool TryResolveBestReachableDestination(
@@ -264,6 +271,8 @@ namespace Chateau.World.Rooms.Passages
                 min,
                 max,
                 playerScreenPosition,
+                null,
+                false,
                 query,
                 out destination))
             {
@@ -273,16 +282,95 @@ namespace Chateau.World.Rooms.Passages
             return TryResolveFromFallbackWorldSamples(region, query, out destination);
         }
 
+        public static bool TryResolveBestReachableApproachDestination(
+            PassageArrivalRuntimeRegion region,
+            Vector2 playerScreenPosition,
+            Vector2? preferredScreenPosition,
+            IPassageArrivalQuery query,
+            out Vector2 destination)
+        {
+            return TryResolveBestReachableApproachDestination(
+                region,
+                playerScreenPosition,
+                preferredScreenPosition,
+                true,
+                query,
+                out destination);
+        }
+
+        public static bool TryResolveBestReachableApproachDestination(
+            PassageArrivalRuntimeRegion region,
+            Vector2 playerScreenPosition,
+            Vector2? preferredScreenPosition,
+            bool requireMovement,
+            IPassageArrivalQuery query,
+            out Vector2 destination)
+        {
+            destination = Vector2.zero;
+
+            if (query == null ||
+                !IsFinite(playerScreenPosition) ||
+                !region.TryGetScreenBounds(out Vector2 min, out Vector2 max))
+            {
+                return false;
+            }
+
+            return TryResolveBestReachableApproachDestination(
+                min,
+                max,
+                playerScreenPosition,
+                preferredScreenPosition,
+                requireMovement,
+                query,
+                out destination);
+        }
+
+        public static bool TryResolveBestReachableApproachDestination(
+            Vector2 min,
+            Vector2 max,
+            Vector2 playerScreenPosition,
+            Vector2? preferredScreenPosition,
+            bool requireMovement,
+            IPassageArrivalQuery query,
+            out Vector2 destination)
+        {
+            destination = Vector2.zero;
+
+            if (query == null ||
+                !IsFinite(min) ||
+                !IsFinite(max) ||
+                !IsFinite(playerScreenPosition))
+            {
+                return false;
+            }
+
+            return TryResolveFromOrderedScreenSamples(
+                min,
+                max,
+                playerScreenPosition,
+                preferredScreenPosition,
+                requireMovement,
+                query,
+                out destination);
+        }
+
         private static bool TryResolveFromOrderedScreenSamples(
             Vector2 min,
             Vector2 max,
             Vector2 playerScreenPosition,
+            Vector2? preferredScreenPosition,
+            bool requireMovement,
             IPassageArrivalQuery query,
             out Vector2 destination)
         {
             destination = Vector2.zero;
             List<Vector2> samples = new List<Vector2>(32);
-            CollectOrderedScreenSamples(samples, playerScreenPosition, min, max);
+            CollectOrderedScreenSamples(
+                samples,
+                playerScreenPosition,
+                min,
+                max,
+                preferredScreenPosition);
 
             bool foundDestination = false;
             float bestScore = float.MaxValue;
@@ -295,6 +383,7 @@ namespace Chateau.World.Rooms.Passages
                         samplePoint,
                         out PassageArrivalMovementQuery movementQuery) ||
                     !movementQuery.HasReachableDestination ||
+                    (requireMovement && !movementQuery.WouldMove) ||
                     !IsFinite(movementQuery.Destination) ||
                     !query.TryGetScreenPointFromLogicalPosition(
                         movementQuery.Destination,
@@ -322,6 +411,15 @@ namespace Chateau.World.Rooms.Passages
                 bestScore = score;
                 bestDestination = movementQuery.Destination;
                 foundDestination = true;
+
+                if (preferredScreenPosition.HasValue &&
+                    i == 0 &&
+                    movementQuery.ExactPointWalkable &&
+                    regionDistance <= 1f)
+                {
+                    destination = bestDestination;
+                    return true;
+                }
             }
 
             if (!foundDestination)
@@ -431,7 +529,8 @@ namespace Chateau.World.Rooms.Passages
             List<Vector2> samples,
             Vector2 playerScreenPosition,
             Vector2 min,
-            Vector2 max)
+            Vector2 max,
+            Vector2? preferredScreenPosition)
         {
             float centerX = (min.x + max.x) * 0.5f;
             float centerY = (min.y + max.y) * 0.5f;
@@ -439,6 +538,13 @@ namespace Chateau.World.Rooms.Passages
             float upperY = max.y;
             float leftX = min.x;
             float rightX = max.x;
+
+            if (preferredScreenPosition.HasValue)
+            {
+                AddDistinctSample(
+                    samples,
+                    GetClosestLowerEdgePoint(preferredScreenPosition.Value, min, max));
+            }
 
             AddDistinctSample(samples, GetClosestLowerEdgePoint(playerScreenPosition, min, max));
             AddDistinctSample(samples, new Vector2(centerX, lowerY));
@@ -522,6 +628,44 @@ namespace Chateau.World.Rooms.Passages
             Vector2 roomViewLocalCorner = destinationRoomViewRoot.InverseTransformPoint(worldCorner);
             return IsFinite(roomViewLocalCorner) &&
                 Vector2.Distance(authoredCorner, roomViewLocalCorner) <= RoomViewLocalCornerTolerance;
+        }
+
+        private static bool TryGetMatchingAuthoredRegionWorldCorners(
+            PassageArrivalRegionData authoredRegion,
+            RoomView destinationRoomView,
+            RectTransform destinationRegionTransform,
+            out Vector3[] worldCorners)
+        {
+            worldCorners = null;
+
+            if (authoredRegion == null ||
+                !authoredRegion.HasValidRoomViewLocalCorners ||
+                destinationRoomView == null ||
+                destinationRoomView.Root == null ||
+                destinationRegionTransform == null ||
+                !destinationRegionTransform.IsChildOf(destinationRoomView.Root))
+            {
+                return false;
+            }
+
+            worldCorners = new Vector3[4];
+            destinationRegionTransform.GetWorldCorners(worldCorners);
+            return MatchesAuthoredRoomViewLocalCorner(
+                    authoredRegion.BottomLeft,
+                    worldCorners[0],
+                    destinationRoomView.Root) &&
+                MatchesAuthoredRoomViewLocalCorner(
+                    authoredRegion.TopLeft,
+                    worldCorners[1],
+                    destinationRoomView.Root) &&
+                MatchesAuthoredRoomViewLocalCorner(
+                    authoredRegion.TopRight,
+                    worldCorners[2],
+                    destinationRoomView.Root) &&
+                MatchesAuthoredRoomViewLocalCorner(
+                    authoredRegion.BottomRight,
+                    worldCorners[3],
+                    destinationRoomView.Root);
         }
 
         private static bool TryCreateRuntimeCorner(

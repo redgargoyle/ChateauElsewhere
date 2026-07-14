@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -1881,8 +1882,8 @@ public sealed class CanonicalRoomPassageContractTests
         GameObject house = new GameObject("House");
         GameObject entranceObject = new GameObject("Room_Grand_Entrance_Hall");
         GameObject drawingObject = new GameObject("Room_Drawing_Room");
-        GameObject forwardObject = new GameObject("Passage_GEH_DrawingRoom");
-        GameObject reverseObject = new GameObject("Passage_DrawingRoom_GEH");
+        GameObject forwardObject = new GameObject("Passage_GEH_DrawingRoom", typeof(RectTransform));
+        GameObject reverseObject = new GameObject("Passage_DrawingRoom_GEH", typeof(RectTransform));
 
         try
         {
@@ -1892,6 +1893,10 @@ public sealed class CanonicalRoomPassageContractTests
             drawingObject.transform.SetParent(house.transform, false);
             forwardObject.transform.SetParent(entranceObject.transform, false);
             reverseObject.transform.SetParent(drawingObject.transform, false);
+            RectTransform forwardRect = (RectTransform)forwardObject.transform;
+            RectTransform reverseRect = (RectTransform)reverseObject.transform;
+            forwardRect.sizeDelta = new Vector2(4f, 2f);
+            reverseRect.sizeDelta = new Vector2(4f, 2f);
 
             RoomContentGroup entranceContent = entranceObject.AddComponent<RoomContentGroup>();
             RoomContentGroup drawingContent = drawingObject.AddComponent<RoomContentGroup>();
@@ -1943,6 +1948,22 @@ public sealed class CanonicalRoomPassageContractTests
             Assert.That(forward.HasValidAnchorMigrationStage, Is.True);
             Assert.That(forward.UsesAuthoredArrival, Is.False);
             Assert.That(forward.UsesAuthoredApproach, Is.False);
+            Assert.That(Enum.GetNames(typeof(PassageApproachPlacementMode)), Is.EqualTo(new[]
+            {
+                nameof(PassageApproachPlacementMode.ExactAuthoredPoint),
+                nameof(PassageApproachPlacementMode.BestReachableInSourceRegion)
+            }));
+            Assert.That(Enum.GetValues(typeof(PassageApproachPlacementMode))
+                    .Cast<PassageApproachPlacementMode>()
+                    .Select(value => (int)value),
+                Is.EqualTo(new[] { 0, 1 }));
+            Assert.That(forward.ApproachPlacementMode,
+                Is.EqualTo(PassageApproachPlacementMode.ExactAuthoredPoint));
+            Assert.That(forward.HasValidApproachPlacementMode, Is.True);
+            Assert.That(forward.UsesBestReachableApproachRegion, Is.False);
+            Assert.That(forward.ApproachRegion, Is.Null);
+            Assert.That(forward.TryBuildApproachRuntimeRegion(null, out _), Is.False,
+                "The backward-compatible point policy must not manufacture a source region.");
             Assert.That(forward.ArrivalPlacementMode,
                 Is.EqualTo(PassageArrivalPlacementMode.ExactAuthoredPoint));
             Assert.That(forward.HasValidArrivalPlacementMode, Is.True);
@@ -1962,6 +1983,167 @@ public sealed class CanonicalRoomPassageContractTests
             Assert.That(forward.UsesAuthoredArrival, Is.True);
             Assert.That(forward.UsesAuthoredApproach, Is.True);
 
+            PassageArrivalRegionData validArrivalRegion = CreateArrivalRegion(
+                new Vector2(-2f, -1f),
+                new Vector2(-2f, 1f),
+                new Vector2(2f, 1f),
+                new Vector2(2f, -1f));
+            PassageAnchorData originalForwardApproach = forward.ApproachAnchor;
+            SetPrivateField(
+                reverse,
+                "arrivalPlacementMode",
+                PassageArrivalPlacementMode.BestReachableInAuthoredRegion);
+            SetPrivateField(reverse, "arrivalRegion", validArrivalRegion);
+            SetPrivateField(
+                forward,
+                "approachPlacementMode",
+                PassageApproachPlacementMode.BestReachableInSourceRegion);
+            SetPrivateField<PassageAnchorData>(forward, "approachAnchor", null);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forward.ApproachPlacementMode,
+                Is.EqualTo(PassageApproachPlacementMode.BestReachableInSourceRegion));
+            Assert.That(forward.HasValidApproachPlacementMode, Is.True);
+            Assert.That(forward.UsesBestReachableApproachRegion, Is.True);
+            Assert.That(forward.ApproachRegion, Is.SameAs(validArrivalRegion));
+            Assert.That(forward.HasMatchingApproachRegionGeometry, Is.True);
+            Assert.That(forwardReport.Messages.Any(message =>
+                message.Message.Contains("requires authored approach data")), Is.False,
+                "Source-region placement must not require a misleading unused point anchor.");
+            Assert.That(forwardReport.HasErrors, Is.False);
+            Assert.That(forward.TryBuildApproachRuntimeRegion(
+                null,
+                out PassageArrivalRuntimeRegion sourceRuntimeRegion), Is.True);
+            Assert.That(sourceRuntimeRegion.TryGetScreenBounds(
+                out Vector2 sourceRegionMin,
+                out Vector2 sourceRegionMax), Is.True);
+            Assert.That(sourceRegionMin, Is.EqualTo(new Vector2(-2f, -1f)));
+            Assert.That(sourceRegionMax, Is.EqualTo(new Vector2(2f, 1f)));
+
+            PassageArrivalRegionData mismatchedApproachRegion = CreateArrivalRegion(
+                new Vector2(-2.01f, -1f),
+                new Vector2(-2f, 1f),
+                new Vector2(2f, 1f),
+                new Vector2(2f, -1f));
+            Assert.That(mismatchedApproachRegion.HasValidRoomViewLocalCorners, Is.True);
+            SetPrivateField(reverse, "arrivalRegion", mismatchedApproachRegion);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forward.HasMatchingApproachRegionGeometry, Is.False);
+            Assert.That(forward.TryBuildApproachRuntimeRegion(null, out _), Is.False);
+            Assert.That(forwardReport.Messages.Any(message =>
+                message.Message.Contains("must match its own RectTransform")), Is.True);
+            SetPrivateField(reverse, "arrivalRegion", validArrivalRegion);
+            Assert.That(forward.HasMatchingApproachRegionGeometry, Is.True);
+
+            SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredArrival);
+            Assert.That(forward.HasMatchingApproachRegionGeometry, Is.False,
+                "The source-region API must reject a reciprocal Passage at an earlier migration stage.");
+            Assert.That(forward.TryBuildApproachRuntimeRegion(null, out _), Is.False);
+            SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredAnchors);
+
+            SetPrivateField(forward, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredArrival);
+            SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredArrival);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forwardReport.Messages.Any(message =>
+                message.Message.Contains(
+                    "best-reachable source approach region requires fully authored anchors")), Is.True);
+            Assert.That(forward.HasMatchingApproachRegionGeometry, Is.False);
+            Assert.That(forward.TryBuildApproachRuntimeRegion(null, out _), Is.False,
+                "The public builder must enforce the authored-stage policy as well as validation.");
+            SetPrivateField(forward, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredAnchors);
+            SetPrivateField(reverse, "anchorMigrationStage", PassageAnchorMigrationStage.AuthoredAnchors);
+
+            SetPrivateField(
+                reverse,
+                "arrivalPlacementMode",
+                PassageArrivalPlacementMode.ExactAuthoredPoint);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forwardReport.Messages.Any(message =>
+                message.Message.Contains("reverse Passage to own a best-reachable arrival region")), Is.True);
+            SetPrivateField(
+                reverse,
+                "arrivalPlacementMode",
+                PassageArrivalPlacementMode.BestReachableInAuthoredRegion);
+
+            SetPrivateField<PassageArrivalRegionData>(reverse, "arrivalRegion", null);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forwardReport.Messages.Any(message =>
+                message.Message.Contains("nondegenerate reciprocal RoomView-local corners")), Is.True);
+
+            PassageArrivalRegionData invalidApproachRegion = CreateArrivalRegion(
+                new Vector2(-2f, -1f),
+                new Vector2(2f, -1f),
+                new Vector2(2f, 1f),
+                new Vector2(-2f, 1f));
+            Assert.That(invalidApproachRegion.HasValidRoomViewLocalCorners, Is.False);
+            SetPrivateField(reverse, "arrivalRegion", invalidApproachRegion);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forwardReport.Messages.Any(message =>
+                message.Message.Contains("nondegenerate reciprocal RoomView-local corners")), Is.True);
+            SetPrivateField(reverse, "arrivalRegion", validArrivalRegion);
+
+            SetPrivateField(
+                forward,
+                "approachPlacementMode",
+                (PassageApproachPlacementMode)99);
+            forwardReport = new ValidationReport();
+            forward.ValidateConfiguration(forwardReport);
+            Assert.That(forward.HasValidApproachPlacementMode, Is.False);
+            Assert.That(forwardReport.Messages.Any(message =>
+                message.Message.Contains("unknown approach placement mode")), Is.True);
+            SetPrivateField(
+                forward,
+                "approachPlacementMode",
+                PassageApproachPlacementMode.BestReachableInSourceRegion);
+
+            GameObject nonRectPassageObject = new GameObject("Passage_Without_RectTransform");
+            try
+            {
+                nonRectPassageObject.transform.SetParent(entranceObject.transform, false);
+                Passage nonRectPassage = nonRectPassageObject.AddComponent<Passage>();
+                ConfigurePassage(
+                    nonRectPassage,
+                    forwardDefinition,
+                    entranceView,
+                    reverse,
+                    Vector2.zero,
+                    Vector2.zero);
+                SetPrivateField(
+                    nonRectPassage,
+                    "anchorMigrationStage",
+                    PassageAnchorMigrationStage.AuthoredAnchors);
+                SetPrivateField(
+                    nonRectPassage,
+                    "approachPlacementMode",
+                    PassageApproachPlacementMode.BestReachableInSourceRegion);
+                ValidationReport nonRectReport = new ValidationReport();
+                nonRectPassage.ValidateConfiguration(nonRectReport);
+                Assert.That(nonRectReport.Messages.Any(message =>
+                    message.Message.Contains("requires its own RectTransform")), Is.True);
+                Assert.That(nonRectPassage.HasMatchingApproachRegionGeometry, Is.False);
+                Assert.That(nonRectPassage.TryBuildApproachRuntimeRegion(null, out _), Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(nonRectPassageObject);
+            }
+
+            SetPrivateField(
+                forward,
+                "approachPlacementMode",
+                PassageApproachPlacementMode.ExactAuthoredPoint);
+            SetPrivateField(forward, "approachAnchor", originalForwardApproach);
+            SetPrivateField(
+                reverse,
+                "arrivalPlacementMode",
+                PassageArrivalPlacementMode.ExactAuthoredPoint);
+            SetPrivateField<PassageArrivalRegionData>(reverse, "arrivalRegion", null);
+
             PassageAnchorData originalForwardArrival = forward.ArrivalAnchor;
             SetPrivateField<PassageAnchorData>(forward, "arrivalAnchor", null);
             forwardReport = new ValidationReport();
@@ -1970,11 +2152,6 @@ public sealed class CanonicalRoomPassageContractTests
                 message.Message.Contains("requires authored arrival data")), Is.True,
                 "The default exact-point path must preserve its existing arrival-anchor requirement.");
 
-            PassageArrivalRegionData validArrivalRegion = CreateArrivalRegion(
-                new Vector2(-2f, -1f),
-                new Vector2(-2f, 1f),
-                new Vector2(2f, 1f),
-                new Vector2(2f, -1f));
             SetPrivateField(
                 forward,
                 "arrivalPlacementMode",
@@ -2322,6 +2499,91 @@ public sealed class CanonicalRoomPassageContractTests
             null,
             out _), Is.False);
 
+        PassageArrivalMovementQuery compatibleThreeArgumentQuery =
+            new PassageArrivalMovementQuery(new Vector2(3f, 4f), true, true);
+        PassageArrivalMovementQuery explicitStationaryQuery =
+            new PassageArrivalMovementQuery(new Vector2(3f, 4f), true, true, false);
+        Assert.That(compatibleThreeArgumentQuery.WouldMove, Is.True,
+            "The existing three-argument query API must preserve moving-candidate compatibility.");
+        Assert.That(explicitStationaryQuery.WouldMove, Is.False);
+
+        StubPassageArrivalQuery stationaryApproachQuery = new StubPassageArrivalQuery
+        {
+            WouldMove = false
+        };
+        Assert.That(PassageArrivalResolver.TryResolveBestReachableApproachDestination(
+            runtimeRegion,
+            new Vector2(80f, 75f),
+            null,
+            stationaryApproachQuery,
+            out _), Is.False,
+            "Approach selection must reject a reachable candidate that would not move the actor.");
+        Assert.That(stationaryApproachQuery.ScreenEvaluationCount, Is.EqualTo(28));
+        Assert.That(stationaryApproachQuery.ObservedScreenSamples, Has.Count.EqualTo(28));
+        Assert.That(stationaryApproachQuery.ObservedScreenSamples[0],
+            Is.EqualTo(new Vector2(80f, 0f)));
+        Assert.That(stationaryApproachQuery.FallbackEvaluationCount, Is.Zero,
+            "Approach selection must never enter the arrival-only world fallback.");
+
+        StubPassageArrivalQuery preferredApproachQuery = new StubPassageArrivalQuery();
+        Assert.That(PassageArrivalResolver.TryResolveBestReachableApproachDestination(
+            runtimeRegion,
+            new Vector2(80f, 75f),
+            new Vector2(25f, 10f),
+            preferredApproachQuery,
+            out Vector2 preferredDestination), Is.True);
+        Assert.That(preferredDestination, Is.EqualTo(new Vector2(25f, 0f)));
+        Assert.That(preferredApproachQuery.ScreenEvaluationCount, Is.EqualTo(1),
+            "An exact preferred lower-edge point must retain the legacy immediate acceptance.");
+        Assert.That(preferredApproachQuery.ObservedScreenSamples.Single(),
+            Is.EqualTo(new Vector2(25f, 0f)));
+
+        StubPassageArrivalQuery strictTieApproachQuery = new StubPassageArrivalQuery
+        {
+            ScreenProjection = _ => new Vector2(50f, 0f)
+        };
+        Assert.That(PassageArrivalResolver.TryResolveBestReachableApproachDestination(
+            runtimeRegion,
+            new Vector2(80f, 75f),
+            null,
+            strictTieApproachQuery,
+            out Vector2 strictTieDestination), Is.True);
+        Assert.That(strictTieDestination, Is.EqualTo(new Vector2(80f, 0f)),
+            "Equal scores must preserve the first ordered candidate through the strict comparison.");
+        Assert.That(strictTieApproachQuery.ScreenEvaluationCount, Is.EqualTo(28));
+
+        StubPassageArrivalQuery fullPreferredApproachQuery = new StubPassageArrivalQuery
+        {
+            ExactPointWalkable = false
+        };
+        Assert.That(PassageArrivalResolver.TryResolveBestReachableApproachDestination(
+            runtimeRegion,
+            new Vector2(80f, 75f),
+            new Vector2(10f, 10f),
+            fullPreferredApproachQuery,
+            out _), Is.True);
+        Assert.That(fullPreferredApproachQuery.ScreenEvaluationCount, Is.EqualTo(29),
+            "A distinct non-exact preferred point must precede all 28 legacy ordered samples.");
+        Assert.That(fullPreferredApproachQuery.ObservedScreenSamples, Has.Count.EqualTo(29));
+        Assert.That(fullPreferredApproachQuery.ObservedScreenSamples[0],
+            Is.EqualTo(new Vector2(10f, 0f)));
+        Assert.That(fullPreferredApproachQuery.ObservedScreenSamples[1],
+            Is.EqualTo(new Vector2(80f, 0f)));
+
+        StubPassageArrivalQuery rejectedApproachQuery = new StubPassageArrivalQuery
+        {
+            RejectScreenEvaluations = true
+        };
+        Assert.That(PassageArrivalResolver.TryResolveBestReachableApproachDestination(
+            runtimeRegion,
+            new Vector2(80f, 75f),
+            null,
+            rejectedApproachQuery,
+            out _), Is.False);
+        Assert.That(rejectedApproachQuery.ScreenEvaluationCount, Is.EqualTo(28));
+        Assert.That(rejectedApproachQuery.FallbackEvaluationCount, Is.Zero,
+            "The canonical approach path must fail closed instead of using arrival fallback samples.");
+
         GameObject destinationRoomObject = new GameObject("DestinationRoomView");
         try
         {
@@ -2455,6 +2717,8 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(arrivalResolverText, Does.Not.Contain("RectTransform.GetWorldCorners"));
         Assert.That(arrivalResolverText, Does.Contain("TryBuildRuntimeRegion"));
         Assert.That(arrivalResolverText, Does.Contain("TryResolveBestReachableDestination"));
+        Assert.That(arrivalResolverText, Does.Contain(
+            "TryResolveBestReachableApproachDestination"));
         Assert.That(typeof(RoomView).IsSubclassOf(typeof(RoomElementBase)), Is.True);
         Assert.That(typeof(Passage).IsSubclassOf(typeof(RoomElementBase)), Is.True);
         Assert.That(Enum.GetValues(typeof(PassageAnchorMigrationStage))
@@ -2477,6 +2741,25 @@ public sealed class CanonicalRoomPassageContractTests
             Is.EqualTo(typeof(bool)));
         Assert.That(typeof(Passage).GetProperty("UsesAuthoredArrival")?.PropertyType, Is.EqualTo(typeof(bool)));
         Assert.That(typeof(Passage).GetProperty("UsesAuthoredApproach")?.PropertyType, Is.EqualTo(typeof(bool)));
+        Assert.That(typeof(Passage).GetProperty("ApproachPlacementMode")?.PropertyType,
+            Is.EqualTo(typeof(PassageApproachPlacementMode)));
+        Assert.That(typeof(Passage).GetProperty("HasValidApproachPlacementMode")?.PropertyType,
+            Is.EqualTo(typeof(bool)));
+        Assert.That(typeof(Passage).GetProperty("UsesBestReachableApproachRegion")?.PropertyType,
+            Is.EqualTo(typeof(bool)));
+        Assert.That(typeof(Passage).GetProperty("ApproachRegion")?.PropertyType,
+            Is.EqualTo(typeof(PassageArrivalRegionData)));
+        Assert.That(typeof(Passage).GetProperty("HasMatchingApproachRegionGeometry")?.PropertyType,
+            Is.EqualTo(typeof(bool)));
+        MethodInfo approachRegionBuilder = typeof(Passage).GetMethod("TryBuildApproachRuntimeRegion");
+        Assert.That(approachRegionBuilder, Is.Not.Null);
+        Assert.That(approachRegionBuilder.ReturnType, Is.EqualTo(typeof(bool)));
+        Assert.That(approachRegionBuilder.GetParameters().Select(parameter => parameter.ParameterType),
+            Is.EqualTo(new[]
+            {
+                typeof(Camera),
+                typeof(PassageArrivalRuntimeRegion).MakeByRefType()
+            }));
         Assert.That(typeof(Passage).GetProperty("ArrivalPlacementMode")?.PropertyType,
             Is.EqualTo(typeof(PassageArrivalPlacementMode)));
         Assert.That(typeof(Passage).GetProperty("UsesBestReachableArrivalRegion")?.PropertyType,
@@ -2513,9 +2796,17 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(navigationManagerText, Does.Contain("public bool TryTraverse(Passage passage)"));
         Assert.That(navigationManagerText, Does.Contain("return MoveThroughCanonicalPassage(passage);"));
         Assert.That(navigationManagerText, Does.Contain("passage.HasValidAnchorMigrationStage"));
+        Assert.That(navigationManagerText, Does.Contain("passage.HasValidApproachPlacementMode"));
         Assert.That(navigationManagerText, Does.Contain("reverse.HasValidAnchorMigrationStage"));
+        Assert.That(navigationManagerText, Does.Contain("reverse.HasValidApproachPlacementMode"));
         Assert.That(navigationManagerText, Does.Contain(
             "reverse.AnchorMigrationStage == passage.AnchorMigrationStage"));
+        Assert.That(navigationManagerText, Does.Contain(
+            "passage.UsesBestReachableApproachRegion"));
+        Assert.That(passageText, Does.Contain(
+            "reversePassage.UsesBestReachableArrivalRegion"));
+        Assert.That(navigationManagerText, Does.Contain(
+            "passage.HasMatchingApproachRegionGeometry"));
         Assert.That(navigationManagerText, Does.Contain(
             "passage.ArrivalAnchor.TryResolveLogicalPosition(playerMovement, out Vector2 arrivalPosition)"));
         Assert.That(navigationManagerText, Does.Contain("playerMovement.TryWarpToExact(arrivalPosition)"));
@@ -2534,12 +2825,51 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(doorTriggerText, Does.Contain("navigationService.TryTraverse(canonicalPassage)"));
         Assert.That(doorTriggerText, Does.Contain("TryFindTraversalApproachDestination"));
         Assert.That(doorTriggerText, Does.Contain("TryFindCanonicalApproachDestination"));
+        Assert.That(doorTriggerText, Does.Contain("TryFindCanonicalApproachRegionDestination"));
+        Assert.That(doorTriggerText, Does.Contain(
+            "canonicalPassage.TryBuildApproachRuntimeRegion"));
+        Assert.That(doorTriggerText, Does.Contain(
+            "PassageArrivalResolver.TryResolveBestReachableApproachDestination"));
+        Assert.That(doorTriggerText, Does.Contain(
+            "!TryGetTriggerScreenBounds(out Vector2 min, out Vector2 max)"));
+        Assert.That(arrivalResolverText, Does.Contain(
+            "public static bool TryResolveBestReachableApproachDestination(\n" +
+            "            Vector2 min,\n" +
+            "            Vector2 max,"),
+            "The unmigrated compatibility seam must delegate its original rendered bounds to the shared owner.");
         Assert.That(doorTriggerText, Does.Contain(
             "if (canonicalPassage == null || !canonicalPassage.UsesAuthoredApproach)"));
+        Assert.That(
+            doorTriggerText.IndexOf(
+                "canonicalPassage.UsesBestReachableApproachRegion",
+                StringComparison.Ordinal),
+            Is.LessThan(doorTriggerText.IndexOf(
+                "canonicalPassage == null || !canonicalPassage.UsesAuthoredApproach",
+                StringComparison.Ordinal)),
+            "A declared canonical region must fail closed before the unmigrated compatibility path.");
         Assert.That(passageText, Does.Contain(
             "Passage reciprocal pair must share one anchor migration stage."));
+        Assert.That(passageText, Does.Contain("public bool TryBuildApproachRuntimeRegion("));
+        Assert.That(passageText, Does.Contain("reversePassage.ArrivalRegion"));
+        Assert.That(passageText, Does.Contain("transform as RectTransform"));
         Assert.That(doorTriggerText, Does.Contain(
             "approachAnchor.TryResolveLogicalPosition(playerMovement, out Vector2 authoredDestination)"));
+        foreach (string removedDoorSamplerOwner in new[]
+        {
+            "ApproachTriggerDistanceWeight",
+            "ApproachPlayerDistanceWeight",
+            "ApproachExactPointPenalty",
+            "DuplicateApproachSampleDistance",
+            "ApproachSampleMinimumOffset",
+            "triggerScreenSamples",
+            "CollectTriggerApproachSamples",
+            "AddDoorEdgeApproachSamples",
+            "AddUniqueApproachSample"
+        })
+        {
+            Assert.That(doorTriggerText, Does.Not.Contain(removedDoorSamplerOwner),
+                $"DoorTriggerNavigation must not retain sampler ownership '{removedDoorSamplerOwner}'.");
+        }
         Assert.That(doorTriggerText, Does.Contain(
             "navigationManager.MoveThroughInspectorDoor(SourceRoom, DoorName, DestinationRoom, requirePlayerInSourceRoom)"));
         Assert.That(
@@ -2823,6 +3153,11 @@ public sealed class CanonicalRoomPassageContractTests
     private sealed class StubPassageArrivalQuery : IPassageArrivalQuery
     {
         public bool RejectScreenEvaluations { get; set; }
+        public bool ExactPointWalkable { get; set; } = true;
+        public bool WouldMove { get; set; } = true;
+        public Func<Vector2, Vector2> ScreenDestination { get; set; }
+        public Func<Vector2, Vector2> ScreenProjection { get; set; }
+        public List<Vector2> ObservedScreenSamples { get; } = new List<Vector2>();
         public int ScreenEvaluationCount { get; private set; }
         public int FallbackEvaluationCount { get; private set; }
 
@@ -2831,10 +3166,12 @@ public sealed class CanonicalRoomPassageContractTests
             out PassageArrivalMovementQuery movementQuery)
         {
             ScreenEvaluationCount++;
+            ObservedScreenSamples.Add(screenPosition);
             movementQuery = new PassageArrivalMovementQuery(
-                screenPosition,
-                true,
-                !RejectScreenEvaluations);
+                ScreenDestination != null ? ScreenDestination(screenPosition) : screenPosition,
+                ExactPointWalkable,
+                !RejectScreenEvaluations,
+                WouldMove);
             return !RejectScreenEvaluations;
         }
 
@@ -2842,7 +3179,9 @@ public sealed class CanonicalRoomPassageContractTests
             Vector2 logicalPosition,
             out Vector2 screenPosition)
         {
-            screenPosition = logicalPosition;
+            screenPosition = ScreenProjection != null
+                ? ScreenProjection(logicalPosition)
+                : logicalPosition;
             return true;
         }
 

@@ -155,10 +155,13 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             passage.transform.IsChildOf(passage.SourceRoomView.transform) &&
             passage.SourceRoomView.Definition == currentDefinition &&
             passage.HasValidAnchorMigrationStage &&
+            passage.HasValidApproachPlacementMode &&
             passage.HasValidArrivalPlacementMode &&
-            approachAnchor != null &&
-            (!passage.UsesAuthoredApproach ||
-                (approachAnchor.HasValidCoordinateSpace && approachAnchor.HasFiniteAuthoredPosition)) &&
+            (passage.UsesBestReachableApproachRegion
+                ? passage.HasMatchingApproachRegionGeometry
+                : approachAnchor != null &&
+                    (!passage.UsesAuthoredApproach ||
+                        (approachAnchor.HasValidCoordinateSpace && approachAnchor.HasFiniteAuthoredPosition))) &&
             (passage.UsesBestReachableArrivalRegion
                 ? passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors &&
                     arrivalRegion != null &&
@@ -168,6 +171,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
                         (arrivalAnchor.HasValidCoordinateSpace && arrivalAnchor.HasFiniteAuthoredPosition))) &&
             reverse != passage &&
             reverse.HasValidAnchorMigrationStage &&
+            reverse.HasValidApproachPlacementMode &&
             reverse.HasValidArrivalPlacementMode &&
             reverse.AnchorMigrationStage == passage.AnchorMigrationStage &&
             reverse.ReversePassage == passage &&
