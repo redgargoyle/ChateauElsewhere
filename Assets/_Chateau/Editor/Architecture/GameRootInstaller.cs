@@ -117,7 +117,7 @@ namespace Chateau.Editor.Architecture
             AssignObjectArray(serializedRoot.FindProperty("services"), services);
             AssignObjectArray(serializedRoot.FindProperty("sceneBehaviours"), FilterNonServiceBehaviours(behaviours));
             serializedRoot.FindProperty("initializeOnAwake").boolValue = true;
-            serializedRoot.FindProperty("failStartupOnValidationErrors").boolValue = false;
+            serializedRoot.FindProperty("failStartupOnValidationErrors").boolValue = true;
             serializedRoot.ApplyModifiedPropertiesWithoutUndo();
 
             EditorUtility.SetDirty(gameRoot);
@@ -167,7 +167,13 @@ namespace Chateau.Editor.Architecture
             GameRoot[] roots = FindAllInScene<GameRoot>(scene);
             if (roots.Length == 1)
             {
+                if (!roots[0].FailsStartupOnValidationErrors)
+                {
+                    report.AddError($"Scene '{scene.name}' GameRoot must fail startup on validation errors.", roots[0]);
+                }
+
                 roots[0].ValidateConfiguration(report);
+                ValidateExactRegistrationSets(scene, roots[0], report);
             }
 
             return report;
@@ -292,6 +298,89 @@ namespace Chateau.Editor.Architecture
             }
 
             return filtered.ToArray();
+        }
+
+        private static void ValidateExactRegistrationSets(
+            Scene scene,
+            GameRoot root,
+            ValidationReport report)
+        {
+            GameServiceBase[] sceneServices = FindAllInScene<GameServiceBase>(scene);
+            ChateauBehaviour[] allSceneBehaviours = FindAllInScene<ChateauBehaviour>(scene);
+            MonoBehaviour[] allSceneMonoBehaviours = FindAllInScene<MonoBehaviour>(scene);
+            ChateauBehaviour[] sceneBinders = FilterNonServiceBehaviours(allSceneBehaviours);
+
+            Array.Sort(sceneServices, CompareServices);
+            Array.Sort(sceneBinders, CompareBehaviours);
+
+            SerializedObject serializedRoot = new SerializedObject(root);
+            serializedRoot.UpdateIfRequiredOrScript();
+            ValidateExactSerializedSet(
+                scene,
+                serializedRoot.FindProperty("services"),
+                sceneServices,
+                "service",
+                report);
+            ValidateExactSerializedSet(
+                scene,
+                serializedRoot.FindProperty("sceneBehaviours"),
+                sceneBinders,
+                "scene behaviour",
+                report);
+
+            for (int i = 0; i < allSceneMonoBehaviours.Length; i++)
+            {
+                MonoBehaviour behaviour = allSceneMonoBehaviours[i];
+                if (behaviour is IGameService && !(behaviour is GameServiceBase))
+                {
+                    report.AddError(
+                        $"Scene service '{GetHierarchyPath(behaviour.transform)}' implements IGameService " +
+                        "but does not derive from GameServiceBase, so GameRoot cannot serialize it as a service.",
+                        behaviour);
+                }
+            }
+        }
+
+        private static void ValidateExactSerializedSet<T>(
+            Scene scene,
+            SerializedProperty serializedArray,
+            T[] expectedComponents,
+            string role,
+            ValidationReport report)
+            where T : Component
+        {
+            HashSet<T> expected = new HashSet<T>(expectedComponents);
+            HashSet<T> registered = new HashSet<T>();
+
+            for (int i = 0; i < serializedArray.arraySize; i++)
+            {
+                T component = serializedArray.GetArrayElementAtIndex(i).objectReferenceValue as T;
+                if (component == null)
+                {
+                    continue;
+                }
+
+                registered.Add(component);
+                if (!expected.Contains(component))
+                {
+                    report.AddError(
+                        $"GameRoot serialized {role} '{GetHierarchyPath(component.transform)}' is not an expected " +
+                        $"{role} in scene '{scene.name}'.",
+                        component);
+                }
+            }
+
+            for (int i = 0; i < expectedComponents.Length; i++)
+            {
+                T component = expectedComponents[i];
+                if (!registered.Contains(component))
+                {
+                    report.AddError(
+                        $"Scene {role} '{GetHierarchyPath(component.transform)}' is not serialized in " +
+                        $"GameRoot.{serializedArray.name}.",
+                        component);
+                }
+            }
         }
 
         private static void AssignObjectArray<T>(SerializedProperty arrayProperty, T[] values) where T : UnityEngine.Object

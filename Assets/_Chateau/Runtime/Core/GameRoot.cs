@@ -8,6 +8,14 @@ namespace Chateau.Architecture
     [DisallowMultipleComponent]
     public sealed class GameRoot : MonoBehaviour, IArchitectureValidatable
     {
+        private enum LifecycleState
+        {
+            Uninitialized,
+            Initializing,
+            Initialized,
+            ShuttingDown
+        }
+
         [Header("Composition Root")]
         [SerializeField] private GameDatabase gameDatabase;
         [SerializeField] private List<GameServiceBase> services = new List<GameServiceBase>();
@@ -20,12 +28,13 @@ namespace Chateau.Architecture
 
         private readonly List<GameServiceBase> initializedServices = new List<GameServiceBase>();
         private GameContext context;
-        private bool initialized;
+        private LifecycleState lifecycleState;
 
         public GameContext Context => context;
-        public bool IsInitialized => initialized;
+        public bool IsInitialized => lifecycleState == LifecycleState.Initialized;
         public GameDatabase Database => gameDatabase;
         public IReadOnlyList<GameServiceBase> Services => services;
+        public bool FailsStartupOnValidationErrors => failStartupOnValidationErrors;
 
         private void Awake()
         {
@@ -42,13 +51,31 @@ namespace Chateau.Architecture
 
         public bool InitializeNow()
         {
-            if (initialized)
+            if (lifecycleState == LifecycleState.Initialized)
             {
                 return true;
             }
 
+            if (lifecycleState != LifecycleState.Uninitialized)
+            {
+                throw new InvalidOperationException(
+                    $"GameRoot cannot initialize while it is {lifecycleState}.");
+            }
+
+            lifecycleState = LifecycleState.Initializing;
             ValidationReport report = new ValidationReport();
-            ValidateConfiguration(report);
+
+            try
+            {
+                ValidateConfiguration(report);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+                lifecycleState = LifecycleState.Uninitialized;
+                enabled = false;
+                return false;
+            }
 
             if (report.HasErrors)
             {
@@ -56,23 +83,23 @@ namespace Chateau.Architecture
 
                 if (failStartupOnValidationErrors)
                 {
+                    lifecycleState = LifecycleState.Uninitialized;
                     enabled = false;
                     return false;
                 }
             }
 
-            List<GameServiceBase> orderedServices = BuildOrderedServiceList();
-            List<IGameService> serviceInterfaces = new List<IGameService>(orderedServices.Count);
-
-            for (int i = 0; i < orderedServices.Count; i++)
-            {
-                serviceInterfaces.Add(orderedServices[i]);
-            }
-
             try
             {
+                List<GameServiceBase> orderedServices = BuildOrderedServiceList();
+                List<IGameService> serviceInterfaces = new List<IGameService>(orderedServices.Count);
+
+                for (int i = 0; i < orderedServices.Count; i++)
+                {
+                    serviceInterfaces.Add(orderedServices[i]);
+                }
+
                 context = new GameContext(this, gameDatabase, serviceInterfaces);
-                BindSceneBehaviours();
 
                 for (int i = 0; i < orderedServices.Count; i++)
                 {
@@ -80,23 +107,33 @@ namespace Chateau.Architecture
                     service.Initialize(context);
                     initializedServices.Add(service);
                 }
+
+                BindSceneBehaviours();
             }
             catch (Exception exception)
             {
                 Debug.LogException(exception, this);
-                ShutdownInitializedServices();
+                lifecycleState = LifecycleState.ShuttingDown;
 
-                if (context != null)
+                try
                 {
-                    UnbindSceneBehaviours();
+                    if (context != null)
+                    {
+                        UnbindSceneBehaviours();
+                    }
+                }
+                finally
+                {
+                    ShutdownInitializedServices();
+                    context = null;
+                    lifecycleState = LifecycleState.Uninitialized;
+                    enabled = false;
                 }
 
-                context = null;
-                enabled = false;
                 return false;
             }
 
-            initialized = true;
+            lifecycleState = LifecycleState.Initialized;
 
             if (logSuccessfulInitialization)
             {
@@ -108,18 +145,34 @@ namespace Chateau.Architecture
 
         public void ShutdownNow()
         {
-            if (context == null && initializedServices.Count == 0)
+            if (lifecycleState == LifecycleState.ShuttingDown)
             {
-                initialized = false;
                 return;
             }
 
-            ShutdownInitializedServices();
+            if (lifecycleState == LifecycleState.Initializing)
+            {
+                throw new InvalidOperationException("GameRoot cannot shut down while it is initializing.");
+            }
 
-            UnbindSceneBehaviours();
+            if (context == null && initializedServices.Count == 0)
+            {
+                lifecycleState = LifecycleState.Uninitialized;
+                return;
+            }
 
-            context = null;
-            initialized = false;
+            lifecycleState = LifecycleState.ShuttingDown;
+
+            try
+            {
+                UnbindSceneBehaviours();
+            }
+            finally
+            {
+                ShutdownInitializedServices();
+                context = null;
+                lifecycleState = LifecycleState.Uninitialized;
+            }
         }
 
         public void ValidateConfiguration(ValidationReport report)
@@ -131,7 +184,7 @@ namespace Chateau.Architecture
 
             if (gameDatabase == null)
             {
-                report.AddWarning("GameRoot has no GameDatabase yet. This is allowed during migration but must be resolved before the legacy data paths are removed.", this);
+                report.AddError("GameRoot requires its serialized GameDatabase.", this);
             }
             else
             {
@@ -159,6 +212,17 @@ namespace Chateau.Architecture
                 if (!uniqueServiceTypes.Add(service.GetType()))
                 {
                     report.AddError($"More than one service of type {service.GetType().Name} is registered. One domain must have one owner.", service);
+                }
+
+                if (service.gameObject.scene != gameObject.scene)
+                {
+                    report.AddError($"Service '{service.name}' belongs to another scene.", service);
+                }
+
+                if ((service.IsInitialized || service.HasGameContext) &&
+                    !service.IsBoundToGameContext(context))
+                {
+                    report.AddError($"Service '{service.name}' is already initialized or bound by another GameRoot.", service);
                 }
 
                 service.ValidateConfiguration(report);
@@ -189,13 +253,28 @@ namespace Chateau.Architecture
 
                 if (behaviour == null)
                 {
-                    report.AddWarning($"GameRoot scene-behaviour slot {i} is null.", this);
+                    report.AddError($"GameRoot scene-behaviour slot {i} is null.", this);
                     continue;
                 }
 
                 if (!uniqueBehaviours.Add(behaviour))
                 {
-                    report.AddWarning($"Scene behaviour '{behaviour.name}' appears more than once in GameRoot.", behaviour);
+                    report.AddError($"Scene behaviour '{behaviour.name}' appears more than once in GameRoot.", behaviour);
+                }
+
+                if (behaviour is IGameService)
+                {
+                    report.AddError($"Service '{behaviour.name}' must be registered in services, not scene behaviours.", behaviour);
+                }
+
+                if (behaviour.gameObject.scene != gameObject.scene)
+                {
+                    report.AddError($"Scene behaviour '{behaviour.name}' belongs to another scene.", behaviour);
+                }
+
+                if (behaviour.HasGameContext && !behaviour.IsBoundToGameContext(context))
+                {
+                    report.AddError($"Scene behaviour '{behaviour.name}' is already bound to another GameRoot.", behaviour);
                 }
 
                 behaviour.ValidateConfiguration(report);
@@ -224,7 +303,14 @@ namespace Chateau.Architecture
 
                 if (behaviour != null && !(behaviour is IGameService))
                 {
-                    behaviour.UnbindGameContext(context);
+                    try
+                    {
+                        behaviour.UnbindGameContext(context);
+                    }
+                    catch (Exception exception)
+                    {
+                        Debug.LogException(exception, behaviour);
+                    }
                 }
             }
         }

@@ -115,6 +115,7 @@ Assets/_Chateau/Editor/Architecture/ArchitectureFoundationTests.cs,28d3d987cc6f5
 Assets/_Chateau/Editor/Architecture/CanonicalRoomPassageContractTests.cs,8c843217bb8d4db185b08035f518bf29,0,
 Assets/_Chateau/Editor/Architecture/GameContextContractTests.cs,8d59f2a463a44a67a0305ce6f9b712d4,0,
 Assets/_Chateau/Editor/Architecture/GameRootInstaller.cs,c31a9d8335cc5647aa945c59ce46704d,0,
+Assets/_Chateau/Editor/Architecture/GameRootLifecycleContractTests.cs,4d6f2e7b90314ac18e56b9f0742d31ca,0,
 Assets/_Chateau/Editor/Architecture/PassageMigrationCertificationTests.cs,bc65892aea064d798ffe3236234bdc26,0,
 Assets/_Chateau/Editor/Architecture/SetPieceViewTests.cs,4fa2b1c3d5e6478890a1b2c3d4e5f609,0,
 Assets/_Chateau/Editor/Architecture/StableIdentityContractTests.cs,1f3d4a4dcf954ea614e6c9b2950b80e5,0,

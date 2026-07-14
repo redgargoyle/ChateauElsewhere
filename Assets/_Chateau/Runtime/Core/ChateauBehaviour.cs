@@ -50,13 +50,24 @@ namespace Chateau.Architecture
 
         internal void UnbindGameContext(GameContext context)
         {
-            if (!ReferenceEquals(gameContext, context))
+            if (gameContext == null || !ReferenceEquals(gameContext, context))
             {
                 return;
             }
 
-            OnGameContextUnbinding(context);
-            gameContext = null;
+            try
+            {
+                OnGameContextUnbinding(context);
+            }
+            finally
+            {
+                gameContext = null;
+            }
+        }
+
+        internal bool IsBoundToGameContext(GameContext context)
+        {
+            return gameContext != null && ReferenceEquals(gameContext, context);
         }
 
         protected virtual void OnGameContextBound(GameContext context)

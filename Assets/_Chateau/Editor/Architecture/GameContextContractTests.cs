@@ -198,9 +198,7 @@ public sealed class GameContextContractTests
         UnbindProbe probe = rootObject.AddComponent<UnbindProbe>();
         SetPrivateField(root, "sceneBehaviours", new List<ChateauBehaviour> { probe });
         LogAssert.Expect(LogType.Log, "Chateau GameRoot validation failed.");
-        LogAssert.Expect(
-            LogType.Warning,
-            "GameRoot has no GameDatabase yet. This is allowed during migration but must be resolved before the legacy data paths are removed.");
+        LogAssert.Expect(LogType.Error, "GameRoot requires its serialized GameDatabase.");
         LogAssert.Expect(LogType.Error, new Regex("GameContext is missing required service role"));
         LogAssert.Expect(LogType.Exception, new Regex("ArgumentException: GameContext is missing required service role"));
 

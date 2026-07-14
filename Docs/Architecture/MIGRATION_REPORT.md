@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**The final-overhaul continuation has completed its trustworthy Phase 0 baseline plus the fully passing Phase 1.1 typed-identity and Phase 1.2 typed-`GameContext` slices. Core now defines seven lifecycle-free canonical composition roles and `GameContext` exposes one immutable typed reference for Clock, Scheduler, Camera, Navigation, Lighting, Dialogue, and Game Flow. Its compatibility service snapshot is immutable and deterministically ordered while remaining extensible for transition/future services; legacy `SubtitleService` deliberately remains untyped because final subtitle state belongs to Dialogue. No locator, singleton, string key, consumer-callable lifecycle API, serialized field, scene object, prefab, existing GUID, or gameplay behavior changed. Unity compilation passes; focused context tests pass `7/7`; Core/identity/canonical compatibility passes `41/41`; the rendered cold-start role/order and visual fingerprint gate passes `1/1` at the exact approved digest `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`; architecture, runtime-ledger, GUID, and serialized-reference controls pass at `113` runtime files / `113` exact rows / `160` current scripts / `1,926` serialized references. The exact next architecture slice is strict production `GameRoot` validation and lifecycle characterization.**
+**The final-overhaul continuation has completed its trustworthy Phase 0 baseline and the fully passing Phase 1.1 typed-identity, Phase 1.2 typed-`GameContext`, and Phase 1.3 strict-`GameRoot` slices. Production Gameplay now rejects any root validation error; all eight serialized services initialize in deterministic order before the 31 serialized scene behaviours bind; binders release while services are still alive; and services then shut down in reverse order. Editor validation proves exact, inactive-inclusive serialized membership without repairing or dirtying Gameplay. Lifecycle transitions reject reentry/cross-context ownership and complete rollback even when bind, initialize, unbind, or shutdown callbacks fail. The only serialized gameplay change is the existing strict-startup scalar from `0` to `1`; every existing GUID, file ID, service API, legacy `Awake`/`OnEnable`/`Start` side effect, prefab, and large asset remains unchanged. Unity compilation passes; focused lifecycle tests pass `5/5`; Core/context compatibility passes `29/29`; the rendered cold-start role/order and visual fingerprint gate passes `1/1` at the exact approved digest `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`; architecture, runtime-ledger, GUID, and serialized-reference controls pass at `113` runtime files / `113` exact rows / `161` current scripts / `1,926` serialized references. The exact next architecture slice is Phase 1.4 Clock ownership.**
 
 This report records what is implemented in the repository at this commit. It must be updated after every Unity-validated migration phase.
 
@@ -20,15 +20,23 @@ This report records what is implemented in the repository at this commit. It mus
 - `GameContext.Services` is a copied, read-only snapshot in deterministic context-binding order. Preserved `GameRoot.Services` remains the serialized Inspector registration order. They intentionally answer different questions and no new consumer should enumerate either list as a locator.
 - Additional role-less transition/future services are allowed when the complete snapshot has unique, strictly increasing order values. Required canonical roles remain exactly one each, so missing, duplicate, multi-role, null, tied, or reversed composition fails explicitly without freezing the project at exactly eight services.
 - `SubtitleService` remains the transitional service at order `600`; it is not a permanent Core role. Final `DialogueService` owns subtitle state and `SubtitleScreen` renders it, so later deletion does not require breaking the new context API.
-- The explicit order currently governs context binding and `GameServiceBase.Initialize`, while much legacy side-effect setup still occurs in `Awake`/`OnEnable`/`Start`. Slice 1.2 does not claim full dependency readiness. Slice 1.3 must characterize initialization, reverse shutdown, partial-failure rollback, registration errors, and scene binding before tightening production startup.
+- The explicit order governs context binding and `GameServiceBase.Initialize`, while much legacy side-effect setup still occurs in `Awake`/`OnEnable`/`Start`. Slice 1.3 now certifies deterministic initialization, reverse shutdown, partial-failure rollback, registration errors, and scene binding; it does not claim those independent legacy callbacks have already migrated under Core ownership.
 - The legacy Camera/Navigation coupling remains documented debt. This slice orders Camera before Navigation because Navigation invokes Camera during room application; it does not add a reverse reference, lookup, or parallel system to disguise the later Camera-to-Navigation read.
+
+### Strict-`GameRoot` boundary decisions
+
+- Strictness is production-scene scoped. Gameplay serializes `failStartupOnValidationErrors: 1`, the installer always authors `true`, and editor validation rejects a production root with the flag disabled. The default remains compatibility-safe for temporary migration/test roots until their consumers are migrated.
+- Runtime `GameRoot` validates only serialized registrations and never searches, creates, repairs, or globally registers dependencies. The Editor-only validator compares every inactive-or-active in-scene `GameServiceBase` and non-service `ChateauBehaviour` against the two serialized lists, rejects unsupported direct `IGameService` components, and leaves the scene untouched.
+- Initialization is services `100` through `800`, then scene behaviours in serialized order. Teardown is scene behaviours in reverse serialized order while services remain usable, then services `800` through `100`. Partial failures execute the same reverse rollback and always clear context ownership.
+- `GameRoot` and `GameServiceBase` explicitly reject unsafe reentry and cross-context lifecycle calls. Cleanup continues after individual callback failures, and a primary lifecycle exception is preserved alongside any cleanup exception.
+- Fatal root validation is context-fatal, not yet globally game-fatal: unrelated legacy components can still run their own `Awake`/`OnEnable`/`Start` until later ownership slices migrate them. This slice makes no broader readiness claim.
 
 ## Source baseline
 
 - Unity editor version: `6000.4.10f1`
-- Runtime C# files: 90
-- Runtime C# lines: 49,902
-- Direct `MonoBehaviour` declarations: 63
+- Runtime C# files: 113
+- Runtime C# lines: 49,679
+- Direct `MonoBehaviour` declarations: 48
 - Architecture-smell counts are recorded in `Baseline/architecture_guard_baseline.json`.
 
 ## Implemented and Unity-validated
@@ -36,13 +44,13 @@ This report records what is implemented in the repository at this commit. It mus
 - Added the explicit `GameRoot`/`GameContext` composition spine.
 - Added service, chapter, room, interaction, actor, motor, presenter, UI, definition, story-beat and state-machine bases.
 - Rebased selected major managers/controllers while retaining their existing script filenames and `.meta` GUIDs.
-- Added configuration validation and deterministic service initialization/shutdown.
+- Added strict production configuration validation, deterministic service-before-binder initialization, binder-first reverse teardown, transition guards, and complete partial-failure rollback.
 - Removed the scheduler's global clock search fallback.
 - Added an Editor-only GameRoot installer and active-scene validator.
 - Added static architecture inventory, serialized-reference scan and debt-ceiling guard.
 - Added CI guard workflow.
 - Deleted three proven-unused scripts: `NewBehaviourScript`, `PickupObject`, and the behaviorally-zero `GameClockHandsDisplay` runtime hook.
-- Serialized exactly one `Chateau_GameRoot`, eight unique services, one scene behaviour, and `GameDatabase.asset` in `Gameplay.unity`.
+- Serialized exactly one `Chateau_GameRoot`, eight unique services, 31 unique scene behaviours, and `GameDatabase.asset` in `Gameplay.unity`.
 - Preserved all 5,937 unrelated pre-existing Gameplay YAML documents byte-for-byte during the root graft.
 - Added a real MainMenu-to-Gameplay lifecycle test with an Entrance/Drawing Room round trip and exact-one service assertions.
 - Made that rendered route gate explicit about its Game-view contract: it now uses Unity's public `PlayModeWindow` rendering-resolution API, restores the prior view after every test (including failures), neutralizes headless edge-pan input, and validates the authored `1366x768` reference view instead of accidentally treating the batch runner's `50x29` target as gameplay truth.

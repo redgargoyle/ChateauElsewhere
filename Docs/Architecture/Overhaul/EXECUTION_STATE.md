@@ -3,33 +3,33 @@
 ## Repository
 
 - Branch: `refactor/final-architecture-overhaul`
-- HEAD: `4501c51bb5175f18e56a233a8765631d6cb58986` at slice start
+- HEAD: `0880a998e50ee4e4dd5743142f99d05c1f55adfb` at slice start
 - Unity: `/home/hamzak/Unity/Hub/Editor/6000.4.10f1/Editor/Unity` (`6000.4.10f1`, revision `feeafc12a938`)
 - Working tree clean: yes at slice start
-- Last passing commit: `4501c51bb5175f18e56a233a8765631d6cb58986`
+- Last passing commit: `0880a998e50ee4e4dd5743142f99d05c1f55adfb`
 
 ## Current slice
 
-- Slice ID: `1.2` — make `GameContext` an immutable, typed, non-global composition contract
-- Sole ownership change: Core becomes the sole owner of seven canonical runtime composition roles and their deterministic context-binding order. `GameContext` binds one explicit typed instance per canonical role from an ordered immutable service snapshot while allowing additional transition/future services. Legacy `SubtitleService` remains in the ordered snapshot but is deliberately not promoted to a permanent Core role because final subtitle state belongs to Dialogue. The context remains non-global and exposes no generic, string-keyed, singleton, or consumer-callable lifecycle surface. This slice does not migrate service behavior, consumers, serialized references, or legacy service APIs.
-- Starting commit: `4501c51bb5175f18e56a233a8765631d6cb58986`
-- Allowed files/assets: this execution-state record; `Docs/Architecture/Overhaul/FINAL_RUNTIME_MIGRATION_LEDGER.csv`; `Docs/Architecture/Overhaul/FINAL_EDITOR_TOOL_LEDGER.csv`; the Phase `1.2` migration-report entry; generated architecture evidence; `Assets/_Chateau/Runtime/Core/IGameService.cs`; `Assets/_Chateau/Runtime/Core/GameContext.cs`; `Assets/_Chateau/Runtime/Core/GameRoot.cs`; the eight registered service scripts (`CameraManager`, `ChapterClock`, `ChapterEventScheduler`, `RoomNavigationManager`, `RoomLightingController`, `SubtitleService`, `DialogueSpeechService`, and `ChapterManager`); `Assets/_Chateau/Editor/Architecture/GameRootInstaller.cs` solely to make its exact-count validation include the newly required lighting role; one new focused `GameContextContractTests` EditMode source plus its new `.meta`; and the existing `ArchitectureBaselinePlayModeTests` source. No scene, prefab, ScriptableObject, package, ProjectSettings, large asset, or existing `.meta` may change.
-- Compatibility surface preserved: all eight legacy component class names and public APIs; every serialized field and object/file reference; `GameRoot.Services`; `GameContext.Root`, `Database`, and `Services`; all existing GUIDs; the serialized Inspector registration order; current Awake/Start behavior; and the certified visual fingerprint `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`.
-- Characterization test: focused EditMode coverage must prove exact typed role binding, immutable ordered snapshots, no initialization side effect, rejection of every missing canonical role, null slots, duplicate instances, duplicate role implementations, multi-role implementations, wrong order, and any generic/static/string-key/lifecycle-control surface. It must also prove that additional role-less transition/future services are retained safely when their order is unique. Concrete service order values must be unique and match the declared composition order.
-- Focused test filter and expected count: `GameContextContractTests` must discover and pass exactly `7/7` tests with zero failures or skips. A Core/identity/canonical compatibility filter must retain its expected passing count after discovery is measured. Run each completed batch gate once; do not rerun the full gate for each test-only adjustment.
-- PlayMode/manual/golden gate: compile under Unity `6000.4.10f1`, inspect the complete diff for zero serialized asset mutation, then run the certified cold-start fingerprint exactly once and require `1/1`, the exact seven typed canonical identities plus all eight current scene services in declared order, and digest `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`. Manually confirm the new test `.meta` is the only new GUID and every existing GUID remains unchanged.
-- Rollback commit: `4501c51bb5175f18e56a233a8765631d6cb58986`
+- Slice ID: `1.3` — make production `GameRoot` strict and lifecycle-safe without adding runtime repair
+- Sole ownership change: `GameRoot` becomes the strict owner of composition readiness and teardown sequencing. A valid root initializes every ordered service before binding ordinary scene behaviours; binders unbind while services are still alive; services then shut down in exact reverse order. Production Gameplay and the installer fail startup on any validation error. This slice does not move gameplay state, create services/views, migrate consumers, or change any service's legacy Awake/Start behavior.
+- Starting commit: `0880a998e50ee4e4dd5743142f99d05c1f55adfb`
+- Allowed files/assets: this execution-state record; migration report and final runtime/editor ledgers; generated architecture evidence; `Assets/_Chateau/Runtime/Core/GameRoot.cs`; `Assets/_Chateau/Runtime/Core/GameServiceBase.cs`; `Assets/_Chateau/Runtime/Core/ChateauBehaviour.cs`; `Assets/_Chateau/Editor/Architecture/GameRootInstaller.cs`; the prior `GameContextContractTests` only to update its now-strict missing-database diagnostic; exactly the existing `failStartupOnValidationErrors` scalar in `Assets/Scenes/Gameplay.unity`; one new focused `GameRootLifecycleContractTests` EditMode source plus `.meta`; and, only if needed to assert the production boundary, the existing architecture PlayMode source. No other scene line, prefab, ScriptableObject, package, ProjectSettings, large asset, existing `.meta`, service implementation, or public compatibility API may change.
+- Compatibility surface preserved: all serialized field names and file IDs; all service/component classes and APIs; all existing GUIDs; `GameRoot.Services`; typed `GameContext`; the eight current service registrations and 31 scene-behaviour registrations; every legacy Awake/OnEnable/Start side effect; and visual fingerprint `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`. Only context-ready lifecycle sequencing and fatal production validation change.
+- Characterization test: focused synthetic composition must prove exact initialization order, binders observing all services initialized, binders unbinding before reverse shutdown, partial-initialize rollback, binder-failure cleanup, strict rejection of duplicate/null service and binder registrations, duplicate-root scene validation, and the authored Gameplay fatal flag without any runtime factory/search path.
+- Focused test filter and expected count: `GameRootLifecycleContractTests` must discover and pass exactly `5/5/0/0`; the combined `ArchitectureFoundationTests;GameContextContractTests;GameRootLifecycleContractTests` gate must pass exactly `29/29/0/0`.
+- PlayMode/manual/golden gate: compile under Unity `6000.4.10f1`; inspect the Gameplay diff as exactly one scalar change; run the rendered cold-start fingerprint without `-nographics`; require `1/1`, all eight initialized services, exact typed order, and unchanged digest `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`. Confirm no ignored test scratch scene remains afterward.
+- Rollback commit: `0880a998e50ee4e4dd5743142f99d05c1f55adfb`
 
 ## Evidence
 
-- Static guard: passed for Slice `1.2`; all architecture-tool tests pass `4/4`, the architecture guard reports no debt above the committed baseline, and the generated audit remains at `48` direct `MonoBehaviour` declarations with unchanged smell totals (`106/17/67/51/4/6`).
-- Runtime ledger: passed, `113` runtime files / `113` exact rows and `49,494` runtime lines. All nine declarations in `IGameService.cs`, every modified facade, and the focused Editor test are classified exactly.
-- Unity script integrity: passed, `160` current scripts / `1,926` serialized references / `856` external-package references. The new test GUID `8d59f2a463a44a67a0305ce6f9b712d4` is unique with zero serialized references; every existing GUID remains unchanged.
-- Compile result: Unity `6000.4.10f1` final batch compilation passes with no compiler errors; evidence is `Logs/ArchitectureOverhaul/Slice-1.2/compile-final.log`.
-- EditMode XML: `Logs/ArchitectureOverhaul/Slice-1.2/editmode-focused-certified.xml` is verified at exactly `7/7/0/0`; the combined identity/context/Core/canonical compatibility filter is independently verified at `41/41/0/0` in `editmode-compatibility-certified.xml`.
-- PlayMode XML: the correctly rendered `Logs/ArchitectureOverhaul/Slice-1.2/cold-start-certified.xml` passes exactly `1/1/0/0`, proves the exact seven typed identities plus all eight ordered service instances, and asserts fingerprint SHA-256 `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`.
+- Static guard: passed for Slice `1.3`; all architecture-tool tests pass `4/4`, the architecture guard reports no debt above the committed baseline, and the generated audit remains at `48` direct `MonoBehaviour` declarations with unchanged smell totals (`106/17/67/51/4/6`).
+- Runtime ledger: passed, `113` runtime files / `113` exact rows and `49,679` runtime lines. The three hardened Core files and focused Editor lifecycle test are classified explicitly.
+- Unity script integrity: passed, `161` current scripts / `1,926` serialized references / `856` external-package references. New test GUID `4d6f2e7b90314ac18e56b9f0742d31ca` is unique with zero serialized references; every existing GUID remains unchanged.
+- Compile result: Unity `6000.4.10f1` batch compilation passes with no compiler errors in `Logs/ArchitectureOverhaul/Slice-1.3/compile.log`; the final compatibility and cold-start processes also recompiled the final batch successfully.
+- EditMode XML: `Logs/ArchitectureOverhaul/Slice-1.3/editmode-focused-final.xml` is verified at exactly `5/5/0/0`; `editmode-compatibility-final.xml` independently verifies Foundation `17`, Context `7`, and Lifecycle `5` at exactly `29/29/0/0`. The lifecycle suite also opens Gameplay read-only and requires zero scene-validation errors.
+- PlayMode XML: the display-backed `Logs/ArchitectureOverhaul/Slice-1.3/cold-start.xml` passes exactly `1/1/0/0`, proves all eight services initialize under the strict production root, and asserts fingerprint SHA-256 `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`.
 - Manual/golden result: the certified Butler remains `114.417 px` against the `141.481 px` entrance door (`0.808710` ratio), presentation multiplier `0.7528645`, and sort `1075`; all eight guest scale/sort records remain byte-for-byte represented by the same fingerprint.
-- Scene/prefab diff reviewed: passed; no `.unity`, `.prefab`, `.asset`, package, ProjectSettings, existing `.meta`, serialized field, or large-asset file changed. The focused test `.meta` is the only new metadata; no existing Unity GUID or file ID changed.
+- Scene/prefab diff reviewed: passed; Gameplay changes by exactly one existing scalar (`failStartupOnValidationErrors: 0 -> 1`). No prefab, ScriptableObject, package, ProjectSettings, large asset, existing `.meta`, service registration, scene-behaviour registration, GUID, or file ID changed. The focused test source and its new `.meta` are the only added files.
 
 ## Completed slices
 
@@ -43,6 +43,7 @@
 | `0.4a` | `c86beaea48f4910c2c1937d54574ec7360df8bd5` | Ten cold starts `10 x 1/1`; combined real PlayMode `5/5`; exact fingerprint; static controls pass | Certified deterministic Butler/guest scale and sort without production, editor, scene, prefab, or meta changes. |
 | `0.4b` | `e795181c0e27d1cb9d85eed2694013ac45995b46` | Focused EditMode `62/58/4/0` with the exact four known legacy failures; cold fingerprint `1/1`; static controls pass | Calibration-window reads are non-mutating and intentional reference writes record Unity Undo; approved scale data and output remain exact. |
 | `1.1` | `4501c51bb5175f18e56a233a8765631d6cb58986` | Identity `12/12`; compatibility `34/34`; cold fingerprint `1/1`; static controls pass | Six stable-ID value contracts added without changing any serialized identity storage or compatibility API. |
+| `1.2` | `0880a998e50ee4e4dd5743142f99d05c1f55adfb` | Context `7/7`; compatibility `41/41`; cold fingerprint `1/1`; static controls pass | Seven lifecycle-free typed roles, extensible immutable service order, strict composition validation, and failure cleanup added with no serialized gameplay mutation. |
 
 ## Historical failed-gate audit — Slice `1.1`
 
@@ -59,6 +60,13 @@
 - Repair result: `cold-start-certified.xml` verifies exactly `1/1/0/0`; all seven typed roles and eight ordered scene services match their serialized owners, and the visual digest remains exactly `34ea66772abd7375f965b2277e7342c82dbd853bc1efecc8d82a00e1b403dd96`.
 - Crash cleanup: the aborted runner left one ignored Unity Test Framework `Assets/InitTestScene*.unity` plus `.meta`. Their contents were only the generated `PlaymodeTestsController`; both exact ignored files were removed, and the integrity scan returned from the transient `1927/857` count to the certified `1926/856` baseline. No tracked or authored asset was touched.
 
+## Failed-gate audit within Slice `1.3`
+
+- The first focused runner produced a real `5 total / 0 passed / 5 failed` XML before any test body ran. Every case failed in `SetUp` because Unity refuses `EditorSceneManager.NewScene(..., Additive)` beside the Test Framework's unsaved untitled scene. The second preserved attempt used runtime `SceneManager.CreateScene`, which Unity correctly rejected in EditMode for the same five setup-only failures. Neither attempt executed or disproved a production assertion.
+- Minimal in-scope repair: use the batch runner's existing empty test scene for synthetic inactive objects, destroy every owned fixture object in teardown, and use owned additive loads only for the saved MainMenu/Gameplay validation fixtures. The final focused XML passes exactly `5/5/0/0` and the compatibility XML passes exactly `29/29/0/0`.
+- A later compatibility launch stopped before test discovery because the test used a nonexistent Unity `6000.4.10f1` API, `EditorSceneManager.ClearSceneDirtiness`; no result XML was produced. The unsupported call was removed, while registration-list snapshots, scene dirty-state equivalence, real Gameplay validation, and byte-for-byte Gameplay readback retain the intended read-only proof. The final compatibility rerun passes `29/29/0/0`.
+- All failed logs/XML remain under `Logs/ArchitectureOverhaul/Slice-1.3/`. No failed attempt changed production code, serialized registrations, existing metadata, MainMenu, prefabs, ScriptableObjects, packages, ProjectSettings, or large assets.
+
 ## Remaining adapters and debt
 
 - All migration debt in the final runtime/editor ledgers remains unless explicitly completed above.
@@ -70,12 +78,12 @@
 - `StoryBeatBase(string)` remains a compatibility constructor and reports no valid typed ID for a legacy label. New beat implementations must use `StoryBeatBase(BeatId)`.
 - The seven typed composition interfaces are lifecycle-free markers until each owning slice supplies its real domain contract. Consumers must not cast them back to legacy concrete facades; `INavigationRuntimeService` coexists temporarily with the behavioral `INavigationService` only at composition time.
 - `GameContext.Services` is the immutable dependency-ordered snapshot; `GameRoot.Services` intentionally remains serialized Inspector registration order. Neither list is a new lookup API.
-- Most real setup remains in legacy `Awake`/`OnEnable`/`Start`; Slice `1.2` certifies deterministic composition/context binding, not complete runtime dependency readiness.
-- Until Slice `1.3`, `failStartupOnValidationErrors` remains false and `BuildOrderedServiceList` can normalize an extra null/duplicate registration after reporting it. Strict production-root rejection, duplicate roots, scene registration membership, reverse shutdown, and partial-initialize rollback remain the exact next bounded work.
+- Most real setup remains in legacy `Awake`/`OnEnable`/`Start`; Slice `1.3` certifies strict root-owned composition/context readiness and rollback, not complete game-wide dependency readiness. Independent legacy callbacks must migrate in their owning slices rather than being mistaken for root-owned startup.
+- Gameplay's eight services and 31 scene behaviours are now exact serialized sets. Their legacy domain behavior and public facades remain intentionally unchanged until the relevant Clock, Scheduler, World, Story, Dialogue, UI, and Save ownership slices.
 
 ## Exact next safe slice
 
-- Commit the fully passing Slice `1.2` from rollback commit `4501c51bb5175f18e56a233a8765631d6cb58986`. Then begin Slice `1.3` from that clean commit: make production `GameRoot` validation fatal, characterize exact initialization/reverse-shutdown/partial-failure behavior, reject duplicate roots/services and registration mismatches, and prove scene binders without introducing repair or changing serialized gameplay data.
+- Commit the fully passing Slice `1.3` from rollback commit `0880a998e50ee4e4dd5743142f99d05c1f55adfb`. Then begin Slice `1.4` from that clean commit: characterize `ChapterClock` and `ChapterEventScheduler`, make Clock the sole time owner and Scheduler the sole timed-callback owner, preserve both existing script GUIDs/public compatibility APIs, and migrate no chapter-specific behavior in the same transaction.
 
 ## Resume command
 

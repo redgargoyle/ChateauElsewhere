@@ -71,11 +71,11 @@ Assets/Scripts/UI/SubtitleLine.cs,14,7ce3521c20ebebac91387915ec46b223bcfd8cf6c2d
 Assets/Scripts/UI/SubtitleLineBank.cs,68,942b3e99275114dbe5affdcdae9e0cf9cbe160c11687d0c90f22d1a757a06916,0,0,0,0,0,0,
 Assets/Scripts/UI/SubtitleService.cs,786,4b93a4e98a4f9d540c70d796cb2920e104f5e4e7c56c0defd5b9489b9809206b,2,0,6,2,0,0,
 Assets/Scripts/UrpPostProcessingBootstrap.cs,66,c0c27f893588c90de77680ba418dd6ee13acd7985a7ba099e343202f2b7b15af,1,0,0,1,1,0,
-Assets/_Chateau/Runtime/Core/ChateauBehaviour.cs,78,565840e1e0f4786e36c4aac39ef86655e3c2de7f1462873f90c4dc96d157f7c5,0,0,0,0,0,0,ChateauBehaviour
+Assets/_Chateau/Runtime/Core/ChateauBehaviour.cs,89,ca98b20d10bd893bfda45651caa1ed5b00a2746041b06c7ec82846d7dc466057,0,0,0,0,0,0,ChateauBehaviour
 Assets/_Chateau/Runtime/Core/Contracts/IDs/StableIds.cs,321,ff60cf03bf7fa8e5ef0b23e6d39dccc2d2d646ad4bdb70c5ccda50ab7bc0b971,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Core/GameContext.cs,229,e4b3d5ec2d355387ae36c5ac08211ef95a3c1af2ec46b77bfaf892dd9f52336d,0,0,0,0,0,0,
-Assets/_Chateau/Runtime/Core/GameRoot.cs,279,b5e8251f1c735014037fd1b2bbc55060120c405cdc283698c89e9a7fd61ea31e,0,0,0,0,0,0,GameRoot
-Assets/_Chateau/Runtime/Core/GameServiceBase.cs,66,b4e66a2831dcbeafa8232a86d781fd90f22901c896aeca83c8f318c6a510da55,0,0,0,0,0,0,
+Assets/_Chateau/Runtime/Core/GameRoot.cs,365,e0c689e12c906447220ca80bc7e35f6a2b10602d5da5128ad7c4cac00eff4589,0,0,0,0,0,0,GameRoot
+Assets/_Chateau/Runtime/Core/GameServiceBase.cs,154,1829ec801d199eb40c8fc7b68a6b6eb48f25f15b7ac817dcf85237b0752ef36f,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Core/IGameService.cs,53,ac1b7d52f7180e5dea076e6d0454dd37ae7ee95093878daecf50f193cc1af18d,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Core/StateMachine.cs,62,4e0ce2b3c2774a1191e91420f15776d9a09cad762586a9be1f2920c98798b8e7,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Core/ValidationReport.cs,101,55837cc169746a77d6da17073a34ab903b09da10bec14e71668782a3177c2d0c,0,0,0,0,0,0,

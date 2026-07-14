@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.ExceptionServices;
 
 namespace Chateau.Architecture
 {
@@ -8,12 +9,81 @@ namespace Chateau.Architecture
     /// </summary>
     public abstract class GameServiceBase : ChateauBehaviour, IGameService
     {
+        private bool isInitializing;
+        private bool isShuttingDown;
+
         public virtual int InitializationOrder => 0;
         public bool IsInitialized { get; private set; }
 
         public void Initialize(GameContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (isInitializing || isShuttingDown)
+            {
+                throw new InvalidOperationException(
+                    $"{GetType().Name} cannot initialize while it is " +
+                    (isInitializing ? "initializing." : "shutting down."));
+            }
+
             if (IsInitialized)
+            {
+                if (IsBoundToGameContext(context))
+                {
+                    return;
+                }
+
+                throw new InvalidOperationException(
+                    $"{GetType().Name} is already initialized for a different GameContext.");
+            }
+
+            isInitializing = true;
+
+            try
+            {
+                BindGameContext(context);
+                OnInitialize(context);
+                IsInitialized = true;
+            }
+            catch (Exception initializationException)
+            {
+                try
+                {
+                    UnbindGameContext(context);
+                }
+                catch (Exception unbindingException)
+                {
+                    throw new AggregateException(
+                        $"{GetType().Name} failed to initialize and then failed to release its GameContext.",
+                        initializationException,
+                        unbindingException);
+                }
+
+                throw;
+            }
+            finally
+            {
+                isInitializing = false;
+            }
+        }
+
+        public void Shutdown(GameContext context)
+        {
+            if (isShuttingDown)
+            {
+                return;
+            }
+
+            if (isInitializing)
+            {
+                throw new InvalidOperationException(
+                    $"{GetType().Name} cannot shut down while it is initializing.");
+            }
+
+            if (!IsInitialized)
             {
                 return;
             }
@@ -23,35 +93,53 @@ namespace Chateau.Architecture
                 throw new ArgumentNullException(nameof(context));
             }
 
-            BindGameContext(context);
+            if (!IsBoundToGameContext(context))
+            {
+                throw new InvalidOperationException(
+                    $"{GetType().Name} cannot shut down through a different GameContext.");
+            }
 
-            try
-            {
-                OnInitialize(context);
-                IsInitialized = true;
-            }
-            catch
-            {
-                UnbindGameContext(context);
-                throw;
-            }
-        }
-
-        public void Shutdown(GameContext context)
-        {
-            if (!IsInitialized)
-            {
-                return;
-            }
+            isShuttingDown = true;
+            Exception shutdownException = null;
 
             try
             {
                 OnShutdown(context);
             }
-            finally
+            catch (Exception exception)
+            {
+                shutdownException = exception;
+            }
+
+            try
             {
                 IsInitialized = false;
-                UnbindGameContext(context);
+
+                try
+                {
+                    UnbindGameContext(context);
+                }
+                catch (Exception unbindingException)
+                {
+                    if (shutdownException != null)
+                    {
+                        throw new AggregateException(
+                            $"{GetType().Name} failed to shut down and then failed to release its GameContext.",
+                            shutdownException,
+                            unbindingException);
+                    }
+
+                    throw;
+                }
+
+                if (shutdownException != null)
+                {
+                    ExceptionDispatchInfo.Capture(shutdownException).Throw();
+                }
+            }
+            finally
+            {
+                isShuttingDown = false;
             }
         }
 
