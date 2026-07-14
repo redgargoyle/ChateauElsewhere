@@ -20,6 +20,21 @@ MonoBehaviour:
   - {fileID: 8300000, guid: b4b7000b59187e681842ce176d3af8f1, type: 3}
   - {fileID: 8300000, guid: f4956ecaf6e87b614986f660c1aec946, type: 3}
   - {fileID: 8300000, guid: 49f61a323f4368579841779cab219288, type: 3}
+  clipVolumeAdjustments:
+  - clip: {fileID: 8300000, guid: a1b2828d82903aedfa4febbcd33f12fd, type: 3}
+    volumeMultiplier: 0.875
+  - clip: {fileID: 8300000, guid: 999d7f24b0cd9335d982ef34c7d4d76a, type: 3}
+    volumeMultiplier: 0.5868
+  - clip: {fileID: 8300000, guid: c47e5ffe27e0c63b9b8d17a3fe5cee38, type: 3}
+    volumeMultiplier: 1
+  - clip: {fileID: 8300000, guid: b337aba53e52ef7c18140f57ee4faa93, type: 3}
+    volumeMultiplier: 1
+  - clip: {fileID: 8300000, guid: b4b7000b59187e681842ce176d3af8f1, type: 3}
+    volumeMultiplier: 0.6216
+  - clip: {fileID: 8300000, guid: f4956ecaf6e87b614986f660c1aec946, type: 3}
+    volumeMultiplier: 0.9638
+  - clip: {fileID: 8300000, guid: 49f61a323f4368579841779cab219288, type: 3}
+    volumeMultiplier: 0.691
   baseVolume: 0.36
   highPassCutoffFrequency: 180
   highPassResonanceQ: 1

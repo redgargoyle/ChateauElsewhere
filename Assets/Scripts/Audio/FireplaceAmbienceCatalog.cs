@@ -15,6 +15,7 @@ public sealed class FireplaceAmbienceCatalog : ScriptableObject
 #pragma warning restore 0649
 
     [SerializeField] private AudioClip[] clips = new AudioClip[0];
+    [SerializeField] private AudioClipVolumeAdjustment[] clipVolumeAdjustments = new AudioClipVolumeAdjustment[0];
     [SerializeField] private string[] roomNames = new string[0];
     [SerializeField] private RoomClipAssignment[] roomClipAssignments = new RoomClipAssignment[0];
     [SerializeField, Range(0f, 1f)] private float baseVolume = 0.42f;
@@ -24,6 +25,11 @@ public sealed class FireplaceAmbienceCatalog : ScriptableObject
 
     public float BaseVolume => baseVolume;
     public float FadeSeconds => fadeSeconds;
+
+    public float GetClipVolumeMultiplier(AudioClip clip)
+    {
+        return GameAudioSettings.GetClipVolumeMultiplier(clip, clipVolumeAdjustments);
+    }
 
     public bool HasRoom(string roomName)
     {

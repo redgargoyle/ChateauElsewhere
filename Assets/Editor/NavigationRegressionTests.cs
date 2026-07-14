@@ -86,6 +86,10 @@ public class NavigationRegressionTests
     {
         string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
         string catalogText = File.ReadAllText(DoorOpenSoundCatalogPath);
+        int adjustmentListStart = catalogText.IndexOf("\n  clipVolumeAdjustments:", System.StringComparison.Ordinal);
+        string randomizedClipList = adjustmentListStart >= 0
+            ? catalogText.Substring(0, adjustmentListStart)
+            : catalogText;
 
         Assert.That(triggerText, Does.Contain("DoorOpenSoundCatalog"), "Door triggers should use the shared randomized door sound catalog.");
         Assert.That(triggerText, Does.Contain("TryGetRandomClip"), "Door clicks should pick one door-open clip at random.");
@@ -96,7 +100,7 @@ public class NavigationRegressionTests
         Assert.That(catalogText, Does.Not.Contain("a7718dd1d7db61a4490bf5be4b919568"), "The pot clang should not be part of door-open randomization.");
         Assert.That(catalogText, Does.Not.Contain("2cda7eb569e05e4ae87de22b60ce4fcf"), "Wood tapping should not be part of door-open randomization.");
         Assert.That(catalogText, Does.Not.Contain("95d9163c9d40da015a0afa4a2e8cb915"), "Typo-spaced @hamzak woodcreak files should not be part of door-open randomization.");
-        Assert.That(Regex.Matches(catalogText, "fileID: 8300000").Count, Is.EqualTo(7), "Door-open randomization should only use active @hamzak - woodcreak* clips.");
+        Assert.That(Regex.Matches(randomizedClipList, "fileID: 8300000").Count, Is.EqualTo(7), "Door-open randomization should only use active @hamzak - woodcreak* clips.");
 
         string[] woodClipMetaPaths = Directory.GetFiles("Assets/Audio/Sound Exports", "@hamzak - woodcreak*.wav.meta");
         Assert.That(woodClipMetaPaths.Length, Is.EqualTo(7), "Flatline clips should stay outside the active door-open export folder.");
@@ -1016,6 +1020,71 @@ public class NavigationRegressionTests
         Assert.That(blockerMinY, Is.InRange(-0.5f, -0.35f), "The blocker should stop at the front lip of the opening without swallowing the front carpet.");
         Assert.That(blockerMinX, Is.GreaterThan(-1.25f), "The blocker should not cover the left potted-plant floor area.");
         Assert.That(blockerMaxX, Is.LessThan(1.1f), "The blocker should not cover the right potted-plant floor area.");
+    }
+
+    [Test]
+    public void ButlersPantryBoundaryKeepsSolvedFloorContour()
+    {
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string pantryRoom = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000020");
+        string pantryRoomTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000021");
+        string pantryBoundaryObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &434967045");
+        string pantryBoundaryTransform = ExtractUnityObjectBlock(sceneText, "--- !u!4 &434967046");
+        string pantryBoundary = ExtractUnityObjectBlock(sceneText, "--- !u!60 &434967047");
+        string[] expectedPoints =
+        {
+            "{x: 1.3989857, y: -0.39041296}",
+            "{x: 1.2984887, y: -0.39167893}",
+            "{x: 0.8408081, y: -0.33610678}",
+            "{x: 0.7245249, y: -0.2805776}",
+            "{x: 0.15504713, y: -0.20158814}",
+            "{x: -0.82340187, y: -0.31919816}",
+            "{x: -1.2799948, y: -0.3915833}",
+            "{x: -1.258971, y: -0.5058776}",
+            "{x: -1.2617944, y: -0.53806686}",
+            "{x: -1.2599444, y: -0.5793548}",
+            "{x: -1.3222343, y: -0.617455}",
+            "{x: -1.3581444, y: -0.60379744}",
+            "{x: -1.6604192, y: -0.85168654}",
+            "{x: -1.7134138, y: -0.8598434}",
+            "{x: -1.6885818, y: -0.86119294}",
+            "{x: -0.9024757, y: -0.88556653}",
+            "{x: 0.15770616, y: -0.8845071}",
+            "{x: 0.7483442, y: -0.88464725}",
+            "{x: 1.403542, y: -0.8378832}",
+            "{x: 1.3773865, y: -0.63698727}"
+        };
+        MatchCollection pointMatches = Regex.Matches(
+            pantryBoundary,
+            @"(?m)^\s+- (?:- )?(?<point>\{x: [^,\r\n]+, y: [^}\r\n]+\})\r?$");
+        List<string> actualPoints = new List<string>(pointMatches.Count);
+
+        for (int i = 0; i < pointMatches.Count; i++)
+        {
+            actualPoints.Add(pointMatches[i].Groups["point"].Value);
+        }
+
+        Assert.That(pantryRoom, Does.Contain("m_Name: Room_Butlers_Pantry"));
+        Assert.That(pantryRoom, Does.Contain("- component: {fileID: 2300000021}"));
+        Assert.That(pantryRoomTransform, Does.Contain("m_GameObject: {fileID: 2300000020}"));
+        Assert.That(pantryRoomTransform, Does.Contain("- {fileID: 434967046}"));
+        Assert.That(pantryBoundaryObject, Does.Contain("m_Name: PlayerBoundary"));
+        Assert.That(pantryBoundaryObject, Does.Contain("- component: {fileID: 434967046}"));
+        Assert.That(pantryBoundaryObject, Does.Contain("- component: {fileID: 434967047}"));
+        Assert.That(pantryBoundaryTransform, Does.Contain("m_GameObject: {fileID: 434967045}"));
+        Assert.That(pantryBoundaryTransform, Does.Contain("m_Father: {fileID: 2300000021}"));
+        Assert.That(
+            pantryBoundary,
+            Does.Contain("m_GameObject: {fileID: 434967045}"),
+            "This assertion should target Room_Butlers_Pantry/PlayerBoundary.");
+        Assert.That(
+            Regex.Matches(pantryBoundary, @"(?m)^    - - \{x:").Count,
+            Is.EqualTo(1),
+            "The pantry boundary must remain one ordered polygon path.");
+        Assert.That(
+            actualPoints,
+            Is.EqualTo(expectedPoints),
+            "The pantry boundary must retain the complete solved 20-point contour in historical order.");
     }
 
     [Test]

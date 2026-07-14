@@ -154,7 +154,9 @@ public sealed class FireplaceAmbienceController : MonoBehaviour
             return;
         }
 
-        activeBaseVolume = catalog.BaseVolume * catalog.GetVolumeMultiplierForRoom(roomName);
+        activeBaseVolume = catalog.BaseVolume *
+            catalog.GetVolumeMultiplierForRoom(roomName) *
+            catalog.GetClipVolumeMultiplier(clip);
         audioSource.clip = clip;
         audioSource.pitch = catalog.GetRandomPitch();
         audioSource.time = 0f;

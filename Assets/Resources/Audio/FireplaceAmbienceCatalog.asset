@@ -18,6 +18,17 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 7f79360b8e04c81cf9bcfb3503f9101e, type: 3}
   - {fileID: 8300000, guid: c92033866904fd943b6ddc3be17b2fb0, type: 3}
   - {fileID: 8300000, guid: 8c0717d4e82f95ee9af371344a0d20ea, type: 3}
+  clipVolumeAdjustments:
+  - clip: {fileID: 8300000, guid: 871dcee6ddd561a008bdd7f3a57c8fc5, type: 3}
+    volumeMultiplier: 1
+  - clip: {fileID: 8300000, guid: caab794565df7dce79e93ad3eec4bf7a, type: 3}
+    volumeMultiplier: 1
+  - clip: {fileID: 8300000, guid: 7f79360b8e04c81cf9bcfb3503f9101e, type: 3}
+    volumeMultiplier: 1
+  - clip: {fileID: 8300000, guid: c92033866904fd943b6ddc3be17b2fb0, type: 3}
+    volumeMultiplier: 0.6074
+  - clip: {fileID: 8300000, guid: 8c0717d4e82f95ee9af371344a0d20ea, type: 3}
+    volumeMultiplier: 0.5058
   roomNames:
   - Grand Entrance Hall
   - Grand Entrance Hall Rear view

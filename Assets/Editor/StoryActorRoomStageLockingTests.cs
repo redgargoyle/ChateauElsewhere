@@ -2,6 +2,7 @@ using System.Collections;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityEngine.UI;
 
 public class StoryActorRoomStageLockingTests
@@ -57,8 +58,8 @@ public class StoryActorRoomStageLockingTests
         }
     }
 
-    [Test]
-    public void TransformWaypointMovementReleasesRoomStageBindingBeforeFirstStep()
+    [UnityTest]
+    public IEnumerator TransformWaypointMovementReleasesRoomStageBindingBeforeFirstStep()
     {
         TestRig rig = CreateRig();
         RectTransform exit = new GameObject("Exit", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -80,6 +81,16 @@ public class StoryActorRoomStageLockingTests
             IEnumerator move = mover.MoveToRoutine(exit);
 
             Assert.That(move.MoveNext(), Is.True, "The exit waypoint should require at least one movement step.");
+            Assert.That(
+                ApplyBinding(rig.ActorState),
+                Is.False,
+                "Scripted transform movement must release the passive stage binding before LateUpdate can pin the guest.");
+
+            // EditMode can report a zero delta on the exact tick that starts a manually
+            // advanced coroutine. Give the real movement loop one editor frame before
+            // asserting distance so this test measures movement instead of test-runner timing.
+            yield return null;
+            Assert.That(move.MoveNext(), Is.True, "The exit walk should continue after its first editor frame.");
             Vector3 positionAfterFirstStep = rig.ActorState.transform.position;
             Assert.That(
                 Vector2.Distance(startPosition, positionAfterFirstStep),
@@ -88,11 +99,13 @@ public class StoryActorRoomStageLockingTests
             Assert.That(
                 ApplyBinding(rig.ActorState),
                 Is.False,
-                "Scripted transform movement must release the passive stage binding before LateUpdate can pin the guest.");
+                "The room-stage binding must remain released after the guest physically advances.");
+
+            yield return null;
             Assert.That(
                 rig.ActorState.transform.position,
                 Is.EqualTo(positionAfterFirstStep),
-                "The released binding must not restore the guest to the hide anchor.");
+                "LateUpdate must not restore the moving guest to the released hide anchor.");
 
             mover.StopMoving();
         }

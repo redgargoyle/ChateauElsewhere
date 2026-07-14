@@ -196,6 +196,99 @@ public sealed class AudioMixSafetyRegressionTests
     }
 
     [Test]
+    public void EveryDoorAndFireplaceClipPreservesItsMeteredMultiplier()
+    {
+        DoorOpenSoundCatalog doorCatalog = Resources.Load<DoorOpenSoundCatalog>("Audio/DoorOpenSoundCatalog");
+        FireplaceAmbienceCatalog fireplaceCatalog = Resources.Load<FireplaceAmbienceCatalog>("Audio/FireplaceAmbienceCatalog");
+        Assert.That(doorCatalog, Is.Not.Null);
+        Assert.That(fireplaceCatalog, Is.Not.Null);
+
+        AssertEveryClipMultiplier(
+            doorCatalog,
+            doorCatalog.GetClipVolumeMultiplier,
+            new ExpectedClipMultiplier("@hamzak - woodcreak5", 0.875f),
+            new ExpectedClipMultiplier("@hamzak - woodcreakfast1", 0.5868f),
+            new ExpectedClipMultiplier("@hamzak - woodcreaklong", 1f),
+            new ExpectedClipMultiplier("@hamzak - woodcreaklongreverb", 1f),
+            new ExpectedClipMultiplier("@hamzak - woodcreakreverb", 0.6216f),
+            new ExpectedClipMultiplier("@hamzak - woodcreakreverse1", 0.9638f),
+            new ExpectedClipMultiplier("@hamzak - woodcreaksoundreversedreverb", 0.691f));
+        AssertEveryClipMultiplier(
+            fireplaceCatalog,
+            fireplaceCatalog.GetClipVolumeMultiplier,
+            new ExpectedClipMultiplier("fireplace_01", 1f),
+            new ExpectedClipMultiplier("fireplace_04", 1f),
+            new ExpectedClipMultiplier("08_iron_wood_stove_fire_seed618808_48khz_loop", 1f),
+            new ExpectedClipMultiplier("15_close_intense_log_crackle_seed619095_48khz_loop", 0.6074f),
+            new ExpectedClipMultiplier("10_brick_fireplace_sharp_snaps_seed618890_48khz_loop", 0.5058f));
+    }
+
+    [Test]
+    public void DoorPlaybackPathPassesSelectedCatalogMultiplierToOneShot()
+    {
+        DoorOpenSoundCatalog catalog = Resources.Load<DoorOpenSoundCatalog>("Audio/DoorOpenSoundCatalog");
+        GameObject triggerObject = new GameObject("DoorClipMultiplierPlaybackTest");
+
+        try
+        {
+            Assert.That(catalog, Is.Not.Null);
+            DoorTriggerNavigation trigger = triggerObject.AddComponent<DoorTriggerNavigation>();
+            SetPrivateField(trigger, "doorOpenSoundCatalog", catalog);
+
+            MethodInfo selectClipMethod = typeof(DoorTriggerNavigation).GetMethod(
+                "TryGetNavigationClip",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(selectClipMethod, Is.Not.Null);
+
+            object[] arguments = { null, 1f };
+            Assert.That((bool)selectClipMethod.Invoke(trigger, arguments), Is.True);
+            AudioClip selectedClip = arguments[0] as AudioClip;
+            float selectedMultiplier = (float)arguments[1];
+            Assert.That(selectedClip, Is.Not.Null);
+            Assert.That(
+                selectedMultiplier,
+                Is.EqualTo(catalog.GetClipVolumeMultiplier(selectedClip)).Within(0.0001f),
+                "Door selection must carry the chosen clip's catalog multiplier into the playback path.");
+
+            string runtimeText = File.ReadAllText("Assets/Scripts/Navigation/DoorTriggerNavigation.cs");
+            Assert.That(
+                runtimeText,
+                Does.Match(@"(?s)GameAudioSettings\.TryPlayOneShot\(\s*doorOpenAudioSource,\s*randomClip,\s*clipVolumeMultiplier\s*\)"),
+                "Door playback must pass the selected multiplier to the three-argument one-shot overload.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(triggerObject);
+        }
+    }
+
+    [Test]
+    public void FireplacePlaybackPathIncludesClipMultiplierInActiveBaseVolume()
+    {
+        FireplaceAmbienceCatalog catalog = Resources.Load<FireplaceAmbienceCatalog>("Audio/FireplaceAmbienceCatalog");
+        GameObject audioObject = new GameObject("FireplaceClipMultiplierPlaybackTest");
+
+        try
+        {
+            Assert.That(catalog, Is.Not.Null);
+            AudioSource source = audioObject.AddComponent<AudioSource>();
+            FireplaceAmbienceController controller = audioObject.AddComponent<FireplaceAmbienceController>();
+            SetPrivateField(controller, "catalog", catalog);
+            SetPrivateField(controller, "audioSource", source);
+
+            // Keep the source inactive so HandleRoomChanged reaches the real gain calculation
+            // but exits before starting playback or an EditMode coroutine.
+            audioObject.SetActive(false);
+            AssertFireplacePlaybackVolume(controller, source, catalog, "Library", 0.6074f);
+            AssertFireplacePlaybackVolume(controller, source, catalog, "Ballroom", 0.5058f);
+        }
+        finally
+        {
+            Object.DestroyImmediate(audioObject);
+        }
+    }
+
+    [Test]
     public void EveryPanicScreamIsSharplyCappedAndFilterProtected()
     {
         Chapter2PanicScreamCatalog catalog = Resources.Load<Chapter2PanicScreamCatalog>("Audio/Chapter2PanicScreamCatalog");
@@ -287,6 +380,64 @@ public sealed class AudioMixSafetyRegressionTests
         Assert.That(lowPass.cutoffFrequency, Is.LessThanOrEqualTo(9000f));
     }
 
+    private static void AssertEveryClipMultiplier(
+        object catalog,
+        System.Func<AudioClip, float> getMultiplier,
+        params ExpectedClipMultiplier[] expectedMultipliers)
+    {
+        FieldInfo clipsField = catalog.GetType().GetField("clips", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(clipsField, Is.Not.Null);
+        AudioClip[] clips = clipsField.GetValue(catalog) as AudioClip[];
+        Assert.That(clips, Is.Not.Null);
+        Assert.That(clips.Length, Is.EqualTo(expectedMultipliers.Length));
+
+        var expectedByName = new System.Collections.Generic.Dictionary<string, float>();
+
+        for (int i = 0; i < expectedMultipliers.Length; i++)
+        {
+            expectedByName.Add(expectedMultipliers[i].ClipName, expectedMultipliers[i].Multiplier);
+        }
+
+        for (int i = 0; i < clips.Length; i++)
+        {
+            AudioClip clip = clips[i];
+            Assert.That(clip, Is.Not.Null, $"Catalog clip {i} must not be null.");
+            Assert.That(
+                expectedByName.TryGetValue(clip.name, out float expectedMultiplier),
+                Is.True,
+                $"Catalog contains unexpected or duplicate clip '{clip.name}'.");
+            Assert.That(
+                getMultiplier(clip),
+                Is.EqualTo(expectedMultiplier).Within(0.0001f),
+                $"Clip '{clip.name}' must preserve its measured relative-loudness multiplier.");
+            expectedByName.Remove(clip.name);
+        }
+
+        Assert.That(expectedByName, Is.Empty, "Every expected clip must remain in the catalog.");
+    }
+
+    private static void AssertFireplacePlaybackVolume(
+        FireplaceAmbienceController controller,
+        AudioSource source,
+        FireplaceAmbienceCatalog catalog,
+        string roomName,
+        float expectedClipMultiplier)
+    {
+        InvokePrivate(controller, "HandleRoomChanged", roomName);
+        Assert.That(source.clip, Is.Not.Null, $"{roomName} must resolve an authored fireplace clip.");
+        Assert.That(
+            catalog.GetClipVolumeMultiplier(source.clip),
+            Is.EqualTo(expectedClipMultiplier).Within(0.0001f));
+
+        float expectedBaseVolume = catalog.BaseVolume *
+            catalog.GetVolumeMultiplierForRoom(roomName) *
+            expectedClipMultiplier;
+        Assert.That(
+            GetPrivateField<float>(controller, "activeBaseVolume"),
+            Is.EqualTo(expectedBaseVolume).Within(0.0001f),
+            $"{roomName} playback must include its selected clip's multiplier in the active gain.");
+    }
+
     private static void SetPrivateField<T>(object target, string fieldName, T value)
     {
         FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
@@ -294,10 +445,29 @@ public sealed class AudioMixSafetyRegressionTests
         field.SetValue(target, value);
     }
 
-    private static void InvokePrivate(object target, string methodName)
+    private static T GetPrivateField<T>(object target, string fieldName)
+    {
+        FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null);
+        return (T)field.GetValue(target);
+    }
+
+    private static object InvokePrivate(object target, string methodName, params object[] arguments)
     {
         MethodInfo method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.That(method, Is.Not.Null);
-        method.Invoke(target, null);
+        return method.Invoke(target, arguments);
+    }
+
+    private readonly struct ExpectedClipMultiplier
+    {
+        public ExpectedClipMultiplier(string clipName, float multiplier)
+        {
+            ClipName = clipName;
+            Multiplier = multiplier;
+        }
+
+        public string ClipName { get; }
+        public float Multiplier { get; }
     }
 }

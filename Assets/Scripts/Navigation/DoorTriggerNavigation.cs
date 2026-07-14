@@ -1220,9 +1220,9 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         doorOpenAudioSource.Stop();
         ApplyNavigationAudioMix();
 
-        if (TryGetNavigationClip(out AudioClip randomClip))
+        if (TryGetNavigationClip(out AudioClip randomClip, out float clipVolumeMultiplier))
         {
-            if (GameAudioSettings.TryPlayOneShot(doorOpenAudioSource, randomClip))
+            if (GameAudioSettings.TryPlayOneShot(doorOpenAudioSource, randomClip, clipVolumeMultiplier))
             {
                 return true;
             }
@@ -1278,19 +1278,36 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
     }
 
-    private bool TryGetNavigationClip(out AudioClip clip)
+    private bool TryGetNavigationClip(out AudioClip clip, out float clipVolumeMultiplier)
     {
         clip = null;
+        clipVolumeMultiplier = 1f;
+
+        DoorOpenSoundCatalog activeCatalog;
 
         if (IsStairway)
         {
             ResolveStairwaySoundCatalog();
-            return stairwaySoundCatalog != null && stairwaySoundCatalog.TryGetRandomClip(ref lastStairwayClipIndex, out clip);
+            activeCatalog = stairwaySoundCatalog;
+
+            if (activeCatalog == null || !activeCatalog.TryGetRandomClip(ref lastStairwayClipIndex, out clip))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            ResolveDoorOpenSoundCatalog();
+            activeCatalog = doorOpenSoundCatalog;
+
+            if (activeCatalog == null || !activeCatalog.TryGetRandomClip(ref lastDoorOpenClipIndex, out clip))
+            {
+                return false;
+            }
         }
 
-        ResolveDoorOpenSoundCatalog();
-
-        return doorOpenSoundCatalog != null && doorOpenSoundCatalog.TryGetRandomClip(ref lastDoorOpenClipIndex, out clip);
+        clipVolumeMultiplier = activeCatalog.GetClipVolumeMultiplier(clip);
+        return true;
     }
 
     private void ApplyNavigationAudioMix()

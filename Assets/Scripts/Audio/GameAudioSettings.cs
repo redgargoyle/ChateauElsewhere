@@ -1,6 +1,16 @@
 using System;
 using UnityEngine;
 
+[Serializable]
+public struct AudioClipVolumeAdjustment
+{
+    [SerializeField] private AudioClip clip;
+    [SerializeField, Range(0f, 1f)] private float volumeMultiplier;
+
+    public AudioClip Clip => clip;
+    public float VolumeMultiplier => Mathf.Clamp01(volumeMultiplier);
+}
+
 public static class GameAudioSettings
 {
     private const string PlayerPrefsPrefix = "Dreadforge.Audio.";
@@ -156,6 +166,26 @@ public static class GameAudioSettings
         lowPassFilter.enabled = true;
         lowPassFilter.cutoffFrequency = safeLowPassCutoff;
         lowPassFilter.lowpassResonanceQ = Mathf.Clamp(lowPassResonanceQ, 0.1f, 10f);
+    }
+
+    public static float GetClipVolumeMultiplier(
+        AudioClip clip,
+        AudioClipVolumeAdjustment[] adjustments)
+    {
+        if (clip == null || adjustments == null)
+        {
+            return 1f;
+        }
+
+        for (int i = 0; i < adjustments.Length; i++)
+        {
+            if (adjustments[i].Clip == clip)
+            {
+                return adjustments[i].VolumeMultiplier;
+            }
+        }
+
+        return 1f;
     }
 
     public static float GetCurrentOrBoundBaseVolume(AudioSource source, GameAudioChannel channel)
