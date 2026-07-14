@@ -99,8 +99,7 @@ public sealed class GameDatabaseDefinitionContractTests
             "room.grand-entrance-hall-rear-view",
             "Grand Entrance Hall Rear View",
             new[] { "Grand Entrance Hall Rear view" },
-            "be7b38f2cec9bee98bad55097937c9c6",
-            isDataOnly: true),
+            "be7b38f2cec9bee98bad55097937c9c6"),
         new RoomExpectation(
             "Assets/_Chateau/Data/World/Rooms/Room_Conservatory.asset",
             "room.conservatory",
@@ -201,7 +200,9 @@ public sealed class GameDatabaseDefinitionContractTests
         "Assets/_Chateau/Data/World/Passages/Passage_ServiceCorridor_Kitchen.asset",
         "Assets/_Chateau/Data/World/Passages/Passage_Kitchen_ServiceCorridor.asset",
         "Assets/_Chateau/Data/World/Passages/Passage_ServiceCorridor_Chapel.asset",
-        "Assets/_Chateau/Data/World/Passages/Passage_Chapel_ServiceCorridor.asset"
+        "Assets/_Chateau/Data/World/Passages/Passage_Chapel_ServiceCorridor.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_GrandEntranceHall_GrandEntranceHallRearView.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_GrandEntranceHallRearView_GrandEntranceHall.asset"
     };
 
     private readonly List<UnityEngine.Object> transientObjects = new List<UnityEngine.Object>();
@@ -227,12 +228,12 @@ public sealed class GameDatabaseDefinitionContractTests
         GameDatabase database = LoadDatabase();
 
         Assert.That(rooms, Has.Length.EqualTo(19));
-        Assert.That(database.Definitions, Has.Count.EqualTo(39));
+        Assert.That(database.Definitions, Has.Count.EqualTo(41));
         Assert.That(database.RoomDefinitions, Has.Count.EqualTo(19));
-        Assert.That(database.PassageDefinitions, Has.Count.EqualTo(20));
+        Assert.That(database.PassageDefinitions, Has.Count.EqualTo(22));
         Assert.That(database.PassageDefinitions.Select(definition => AssetDatabase.GetAssetPath(definition)),
             Is.EqualTo(ApprovedPassageAssetPathsInDatabaseOrder),
-            "The canonical directed-passage catalog must remain in migration order through Group09.");
+            "The canonical directed-passage catalog must remain in migration order through Group10.");
         Assert.That(rooms.Select(room => room.StableId),
             Is.EquivalentTo(ApprovedRooms.Select(room => room.StableId)));
 
@@ -279,12 +280,12 @@ public sealed class GameDatabaseDefinitionContractTests
     }
 
     [Test]
-    public void TypedPassageIndexResolvesAllTwentyPassagesAndRejectsUnknownIds()
+    public void TypedPassageIndexResolvesAllTwentyTwoPassagesAndRejectsUnknownIds()
     {
         GameDatabase database = LoadDatabase();
         PassageDefinition[] passages = LoadDefinitions<PassageDefinition>(PassagesFolder);
 
-        Assert.That(passages, Has.Length.EqualTo(20));
+        Assert.That(passages, Has.Length.EqualTo(22));
 
         foreach (PassageDefinition passage in passages)
         {
@@ -436,10 +437,10 @@ public sealed class GameDatabaseDefinitionContractTests
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
 
-        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6038));
+        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6041));
         Assert.That(CountOccurrences(sceneText, $"guid: {RoomContentGroupGuid}"), Is.EqualTo(19));
-        Assert.That(CountOccurrences(sceneText, $"guid: {RoomViewGuid}"), Is.EqualTo(11));
-        Assert.That(CountOccurrences(sceneText, $"guid: {PassageGuid}"), Is.EqualTo(20));
+        Assert.That(CountOccurrences(sceneText, $"guid: {RoomViewGuid}"), Is.EqualTo(12));
+        Assert.That(CountOccurrences(sceneText, $"guid: {PassageGuid}"), Is.EqualTo(22));
         Assert.That(CountOccurrences(sceneText, $"guid: {LegacyDoorTriggerGuid}"), Is.EqualTo(45));
         Assert.That(CountOccurrences(sceneText, $"guid: {GameRootGuid}"), Is.EqualTo(1));
 

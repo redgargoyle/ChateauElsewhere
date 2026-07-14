@@ -8,9 +8,12 @@ using CanonicalPassage = Chateau.World.Rooms.Passages.Passage;
 using PassageAnchorCoordinateSpace = Chateau.World.Rooms.Passages.PassageAnchorCoordinateSpace;
 using PassageAnchorData = Chateau.World.Rooms.Passages.PassageAnchorData;
 using PassageAnchorMigrationStage = Chateau.World.Rooms.Passages.PassageAnchorMigrationStage;
+using PassageArrivalPlacementMode = Chateau.World.Rooms.Passages.PassageArrivalPlacementMode;
+using PassageArrivalRegionData = Chateau.World.Rooms.Passages.PassageArrivalRegionData;
 using PassageArrivalRegionCorner = Chateau.World.Rooms.Passages.PassageArrivalRegionCorner;
 using PassageArrivalResolver = Chateau.World.Rooms.Passages.PassageArrivalResolver;
 using PassageArrivalRuntimeRegion = Chateau.World.Rooms.Passages.PassageArrivalRuntimeRegion;
+using CanonicalPassageDefinition = Chateau.World.Rooms.Passages.PassageDefinition;
 using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
 using CanonicalRoomView = Chateau.World.Rooms.RoomView;
 using NUnit.Framework;
@@ -12669,18 +12672,23 @@ public sealed class GameplayLifecycleCharacterizationTests
         RoomContentGroup rearContent = FindInActiveScene<RoomContentGroup>()
             .Single(item => item.RoomName == RearLegacyName);
         CanonicalRoomView entranceView = entranceContent.GetComponent<CanonicalRoomView>();
+        CanonicalRoomView rearView = rearContent.GetComponent<CanonicalRoomView>();
+        CanonicalPassage forwardPassage = forward.GetComponent<CanonicalPassage>();
+        CanonicalPassage reversePassage = reverse.GetComponent<CanonicalPassage>();
         Assert.That(entranceView, Is.Not.Null);
-        Assert.That(rearContent.GetComponent<CanonicalRoomView>(), Is.Null);
-        Assert.That(forward.GetComponent<CanonicalPassage>(), Is.Null);
-        Assert.That(reverse.GetComponent<CanonicalPassage>(), Is.Null);
-        Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"), Is.Null);
-        Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"), Is.Null);
-        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(11));
-        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(20));
+        Assert.That(rearView, Is.Not.Null);
+        Assert.That(forwardPassage, Is.Not.Null);
+        Assert.That(reversePassage, Is.Not.Null);
+        Assert.That(GetPrivateField<CanonicalPassage>(forward, "canonicalPassage"),
+            Is.SameAs(forwardPassage));
+        Assert.That(GetPrivateField<CanonicalPassage>(reverse, "canonicalPassage"),
+            Is.SameAs(reversePassage));
+        Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(12));
+        Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(22));
         Assert.That(FindInActiveScene<DoorTriggerNavigation>().Count(trigger =>
-            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(20));
+            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") != null), Is.EqualTo(22));
         Assert.That(FindInActiveScene<DoorTriggerNavigation>().Count(trigger =>
-            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(25));
+            GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage") == null), Is.EqualTo(23));
 
         Assert.That(forward.SourceRoom, Is.EqualTo(EntranceRoom));
         Assert.That(forward.DoorName, Is.EqualTo("GEH_GEH_Rear"));
@@ -12691,21 +12699,73 @@ public sealed class GameplayLifecycleCharacterizationTests
 
         Chateau.Architecture.GameRoot gameRoot =
             RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+        CanonicalRoomDefinition entranceDefinition = entranceView.Definition;
         CanonicalRoomDefinition rearDefinition = gameRoot.Context.Database.Definitions
             .OfType<CanonicalRoomDefinition>()
             .Single(item => item.StableId == "room.grand-entrance-hall-rear-view");
+        CanonicalPassageDefinition forwardDefinition = forwardPassage.Definition;
+        CanonicalPassageDefinition reverseDefinition = reversePassage.Definition;
+        Assert.That(gameRoot.Context.Database.Definitions.Count(), Is.EqualTo(41));
+        Assert.That(entranceDefinition.StableId, Is.EqualTo("room.grand-entrance-hall"));
         Assert.That(rearDefinition.DisplayName, Is.EqualTo(RearDisplayName));
         Assert.That(rearDefinition.PrimaryLegacyName, Is.EqualTo(RearLegacyName));
         Assert.That(rearDefinition.LegacyNames, Is.EqualTo(new[] { RearLegacyName }));
         Assert.That(rearDefinition.MatchesLegacyName(RearDisplayName), Is.True);
         Assert.That(rearDefinition.MatchesLegacyName(RearLegacyName), Is.True);
+        Assert.That(rearView.Definition, Is.SameAs(rearDefinition));
+        Assert.That(rearView.LegacyContentGroup, Is.SameAs(rearContent));
+        Assert.That(rearView.Root, Is.SameAs(rearContent.transform));
+        Assert.That(rearView.HasGameContext, Is.True);
+        Assert.That(forwardDefinition.StableId,
+            Is.EqualTo("passage.grand-entrance-hall.grand-entrance-hall-rear-view"));
+        Assert.That(reverseDefinition.StableId,
+            Is.EqualTo("passage.grand-entrance-hall-rear-view.grand-entrance-hall"));
+        Assert.That(forwardDefinition.SourceRoom, Is.SameAs(entranceDefinition));
+        Assert.That(forwardDefinition.DestinationRoom, Is.SameAs(rearDefinition));
+        Assert.That(forwardDefinition.Reverse, Is.SameAs(reverseDefinition));
+        Assert.That(reverseDefinition.SourceRoom, Is.SameAs(rearDefinition));
+        Assert.That(reverseDefinition.DestinationRoom, Is.SameAs(entranceDefinition));
+        Assert.That(reverseDefinition.Reverse, Is.SameAs(forwardDefinition));
+        Assert.That(forwardDefinition.LegacyDoorId, Is.EqualTo("GEH_GEH_Rear"));
+        Assert.That(reverseDefinition.LegacyDoorId, Is.EqualTo("GEH_Rear_GEH_Front"));
+        Assert.That(forwardDefinition.HasExplicitCompatibilityDestinationRoomName, Is.True);
+        Assert.That(forwardDefinition.CompatibilityDestinationRoomName, Is.EqualTo(RearDisplayName));
+        Assert.That(reverseDefinition.HasExplicitCompatibilityDestinationRoomName, Is.False);
+        Assert.That(reverseDefinition.CompatibilityDestinationRoomName, Is.EqualTo(EntranceRoom));
+        Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(forwardDefinition)),
+            Is.EqualTo("aa8a2282356d4ad0aa3c9499a6f6f064"));
+        Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(reverseDefinition)),
+            Is.EqualTo("d57bc53c2dfb4a10bd63739d37028899"));
+
+        AssertCanonicalArrivalRegionPassage(
+            forwardPassage,
+            forwardDefinition,
+            entranceView,
+            reversePassage,
+            new Vector2(0.00030518f, -456.4991f),
+            new Vector2(-764.707458f, -451.0935f),
+            new Vector2(-764.707458f, -423.094452f),
+            new Vector2(785.200256f, -423.094452f),
+            new Vector2(785.200256f, -451.0935f),
+            "Entrance-to-rear canonical Passage");
+        AssertCanonicalArrivalRegionPassage(
+            reversePassage,
+            reverseDefinition,
+            rearView,
+            forwardPassage,
+            new Vector2(10.2463989f, -437.093964f),
+            new Vector2(-835.9997f, -470.4991f),
+            new Vector2(-835.9997f, -442.4991f),
+            new Vector2(836.0003f, -442.4991f),
+            new Vector2(836.0003f, -470.4991f),
+            "Rear-to-Entrance canonical Passage");
 
         RectTransform forwardRect = forward.transform as RectTransform;
         RectTransform reverseRect = reverse.transform as RectTransform;
         Assert.That(forwardRect, Is.Not.Null);
         Assert.That(reverseRect, Is.Not.Null);
-        Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(4));
-        Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(4));
+        Assert.That(forward.GetComponents<Component>(), Has.Length.EqualTo(5));
+        Assert.That(reverse.GetComponents<Component>(), Has.Length.EqualTo(5));
         Assert.That(forwardRect.parent.name, Is.EqualTo("Doors"));
         Assert.That(reverseRect.parent.name, Is.EqualTo("Doors"));
         AssertVector2Within(forwardRect.anchoredPosition, new Vector2(0.00030518f, -456.4991f),
@@ -12737,7 +12797,7 @@ public sealed class GameplayLifecycleCharacterizationTests
         Transform entranceRoot = entranceContent.transform;
         Transform rearRoot = rearContent.transform;
         Assert.That(entranceRoot.GetComponents<Component>(), Has.Length.EqualTo(3));
-        Assert.That(rearRoot.GetComponents<Component>(), Has.Length.EqualTo(2));
+        Assert.That(rearRoot.GetComponents<Component>(), Has.Length.EqualTo(3));
         Assert.That(entranceRoot.childCount, Is.EqualTo(12),
             "The active Entrance contains its eleven authored children plus the shared runtime background.");
         Assert.That(rearRoot.childCount, Is.EqualTo(6));
@@ -12762,17 +12822,72 @@ public sealed class GameplayLifecycleCharacterizationTests
                 GetPrivateField<Texture>(rearContent, "roomBackgroundTexture"))),
             Is.EqualTo("be7b38f2cec9bee98bad55097937c9c6"));
 
+        AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
+            .Single(item => item.gameObject.name == "Audio_DoorOpen");
+        DoorOpenSoundCatalog passageDoorCatalog =
+            GetPrivateField<DoorOpenSoundCatalog>(forward, "doorOpenSoundCatalog");
+        AssertDoorTriggerCompatibilityBindings(
+            forward,
+            reverse,
+            navigation,
+            player.transform,
+            passageAudioSource,
+            passageDoorCatalog);
+
         string projectRoot = System.IO.Directory.GetParent(Application.dataPath).FullName;
         string sceneText = System.IO.File.ReadAllText(System.IO.Path.Combine(projectRoot, GameplayScenePath));
+        string serializedRearView = RequireSerializedUnityDocument(sceneText, "4100000032");
+        string serializedForwardPassage = RequireSerializedUnityDocument(sceneText, "4100000033");
+        string serializedReversePassage = RequireSerializedUnityDocument(sceneText, "4100000034");
         string serializedForward = RequireSerializedUnityDocument(sceneText, "1858342503");
         string serializedReverse = RequireSerializedUnityDocument(sceneText, "70736571");
+        Assert.That(serializedRearView, Does.Contain(
+            "definition: {fileID: 11400000, guid: 64bc36c6e2d546d6bb878373c4e6d0b6, type: 2}"));
+        Assert.That(serializedRearView, Does.Contain("legacyContentGroup: {fileID: 969603170}"));
+        Assert.That(serializedForwardPassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: aa8a2282356d4ad0aa3c9499a6f6f064, type: 2}"));
+        Assert.That(serializedForwardPassage, Does.Contain("sourceRoomView: {fileID: 4100000001}"));
+        Assert.That(serializedForwardPassage, Does.Contain("reversePassage: {fileID: 4100000034}"));
+        Assert.That(serializedForwardPassage, Does.Contain(
+            "roomViewLocalPosition: {x: 0.00030518, y: -456.4991}"));
+        Assert.That(serializedForwardPassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(serializedForwardPassage, Does.Contain("arrivalPlacementMode: 1"));
+        Assert.That(serializedForwardPassage, Does.Contain(
+            "bottomLeft: {x: -764.707458, y: -451.0935}"));
+        Assert.That(serializedForwardPassage, Does.Contain(
+            "topLeft: {x: -764.707458, y: -423.094452}"));
+        Assert.That(serializedForwardPassage, Does.Contain(
+            "topRight: {x: 785.200256, y: -423.094452}"));
+        Assert.That(serializedForwardPassage, Does.Contain(
+            "bottomRight: {x: 785.200256, y: -451.0935}"));
+        Assert.That(serializedForwardPassage, Does.Not.Contain("arrivalAnchor:"));
+        Assert.That(serializedReversePassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: d57bc53c2dfb4a10bd63739d37028899, type: 2}"));
+        Assert.That(serializedReversePassage, Does.Contain("sourceRoomView: {fileID: 4100000032}"));
+        Assert.That(serializedReversePassage, Does.Contain("reversePassage: {fileID: 4100000033}"));
+        Assert.That(serializedReversePassage, Does.Contain(
+            "roomViewLocalPosition: {x: 10.2463989, y: -437.093964}"));
+        Assert.That(serializedReversePassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(serializedReversePassage, Does.Contain("arrivalPlacementMode: 1"));
+        Assert.That(serializedReversePassage, Does.Contain(
+            "bottomLeft: {x: -835.9997, y: -470.4991}"));
+        Assert.That(serializedReversePassage, Does.Contain(
+            "topLeft: {x: -835.9997, y: -442.4991}"));
+        Assert.That(serializedReversePassage, Does.Contain(
+            "topRight: {x: 836.0003, y: -442.4991}"));
+        Assert.That(serializedReversePassage, Does.Contain(
+            "bottomRight: {x: 836.0003, y: -470.4991}"));
+        Assert.That(serializedReversePassage, Does.Not.Contain("arrivalAnchor:"));
+        Assert.That(serializedForward, Does.Contain("navigationManager: {fileID: 1878886997}"));
+        Assert.That(serializedForward, Does.Contain("canonicalPassage: {fileID: 4100000033}"));
+        Assert.That(serializedReverse, Does.Contain("navigationManager: {fileID: 1878886997}"));
+        Assert.That(serializedReverse, Does.Contain("canonicalPassage: {fileID: 4100000034}"));
         foreach (string triggerDocument in new[] { serializedForward, serializedReverse })
         {
-            Assert.That(triggerDocument, Does.Contain("navigationManager: {fileID: 0}"));
-            Assert.That(triggerDocument, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
-            Assert.That(triggerDocument, Does.Contain("player: {fileID: 0}"));
-            Assert.That(triggerDocument, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
-            Assert.That(triggerDocument, Does.Not.Contain("canonicalPassage:"));
+            Assert.That(triggerDocument, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(triggerDocument, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(triggerDocument, Does.Contain(
+                "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
         }
         string legacyDoorData = System.IO.File.ReadAllText(System.IO.Path.Combine(
             projectRoot,
@@ -12780,8 +12895,6 @@ public sealed class GameplayLifecycleCharacterizationTests
         Assert.That(legacyDoorData, Does.Not.Contain("GEH_GEH_Rear"));
         Assert.That(legacyDoorData, Does.Not.Contain("GEH_Rear_GEH_Front"));
 
-        AudioSource passageAudioSource = FindInActiveScene<AudioSource>()
-            .Single(item => item.gameObject.name == "Audio_DoorOpen");
         DoorPromptSequenceController prompts = RequireExactlyOneInActiveScene<DoorPromptSequenceController>();
         TMP_Text passagePromptText = GetPrivateField<TMP_Text>(prompts, "promptText");
         Assert.That(passagePromptText, Is.Not.Null);
@@ -13004,6 +13117,9 @@ public sealed class GameplayLifecycleCharacterizationTests
             InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
         }
 
+        // Preserve the approved pre-authoring structure as immutable before-state evidence.
+        // This sixth line intentionally describes the legacy graph and must not be rewritten
+        // to describe the canonical graph now asserted independently below.
         string structuralLine =
             $"[GrandEntranceRearLegacyStructure] forwardGeometry={FormatVector(forwardRect.anchoredPosition)}/" +
             $"{FormatVector(forwardRect.sizeDelta)}/{FormatVector(new Vector2(forwardRect.localScale.x, forwardRect.localScale.y))} " +
@@ -13020,7 +13136,70 @@ public sealed class GameplayLifecycleCharacterizationTests
         string actualSha256 = ComputeSha256(observationProfile);
         Debug.Log($"[GrandEntranceRearLegacySha256] {actualSha256}");
         Assert.That(actualSha256, Is.EqualTo(ExpectedObservationSha256),
-            "Lock the reviewed six-line Group 10 legacy fingerprint before production authoring.");
+            "The reviewed six-line Group 10 before-state fingerprint must survive canonical authoring unchanged.");
+
+        string canonicalStructureLine =
+            "[GrandEntranceRearCanonicalStructure] roomViews=12 passages=22 callers=22/23 " +
+            "sceneIds=4100000032/4100000033/4100000034 " +
+            "definitions=64bc36c6e2d546d6bb878373c4e6d0b6/" +
+            "aa8a2282356d4ad0aa3c9499a6f6f064/d57bc53c2dfb4a10bd63739d37028899 " +
+            "stages=authored-anchors/authored-anchors modes=region/region " +
+            "serializedDependencies=bound aliases=Grand Entrance Hall Rear View/Grand Entrance Hall Rear view " +
+            "legacyCatalogIds=absent";
+        Debug.Log(canonicalStructureLine);
+        Assert.That(observationProfile, Does.Not.Contain("[GrandEntranceRearCanonicalStructure]"),
+            "Current canonical structure evidence must remain outside the frozen legacy SHA input.");
+    }
+
+    private static void AssertCanonicalArrivalRegionPassage(
+        CanonicalPassage passage,
+        CanonicalPassageDefinition expectedDefinition,
+        CanonicalRoomView expectedSourceRoomView,
+        CanonicalPassage expectedReverse,
+        Vector2 expectedApproach,
+        Vector2 expectedBottomLeft,
+        Vector2 expectedTopLeft,
+        Vector2 expectedTopRight,
+        Vector2 expectedBottomRight,
+        string label)
+    {
+        Assert.That(passage.Definition, Is.SameAs(expectedDefinition), $"{label} definition changed.");
+        Assert.That(passage.SourceRoomView, Is.SameAs(expectedSourceRoomView),
+            $"{label} source RoomView changed.");
+        Assert.That(passage.ReversePassage, Is.SameAs(expectedReverse),
+            $"{label} reciprocal link changed.");
+        Assert.That(passage.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+        Assert.That(passage.HasValidAnchorMigrationStage, Is.True);
+        Assert.That(passage.UsesAuthoredApproach, Is.True);
+        Assert.That(passage.ArrivalPlacementMode,
+            Is.EqualTo(PassageArrivalPlacementMode.BestReachableInAuthoredRegion));
+        Assert.That(passage.HasValidArrivalPlacementMode, Is.True);
+        Assert.That(passage.UsesBestReachableArrivalRegion, Is.True);
+        Assert.That(passage.ApproachAnchor, Is.Not.Null);
+        Assert.That(passage.ApproachAnchor.CoordinateSpace,
+            Is.EqualTo(PassageAnchorCoordinateSpace.RoomViewLocal));
+        Assert.That(passage.ApproachAnchor.LogicalPosition, Is.EqualTo(Vector2.zero));
+        AssertVector2Within(
+            passage.ApproachAnchor.RoomViewLocalPosition,
+            expectedApproach,
+            0.0001f,
+            $"{label} approach");
+        Assert.That(passage.ArrivalAnchor, Is.Not.Null,
+            $"{label} may receive Unity's default missing-field object at runtime.");
+        Assert.That(passage.ArrivalAnchor.LogicalPosition, Is.EqualTo(Vector2.zero));
+        Assert.That(passage.ArrivalAnchor.RoomViewLocalPosition, Is.EqualTo(Vector2.zero));
+
+        PassageArrivalRegionData region = passage.ArrivalRegion;
+        Assert.That(region, Is.Not.Null);
+        Assert.That(region.HasValidRoomViewLocalCorners, Is.True);
+        AssertVector2Within(region.BottomLeft, expectedBottomLeft, 0.0001f, $"{label} bottom-left");
+        AssertVector2Within(region.TopLeft, expectedTopLeft, 0.0001f, $"{label} top-left");
+        AssertVector2Within(region.TopRight, expectedTopRight, 0.0001f, $"{label} top-right");
+        AssertVector2Within(region.BottomRight, expectedBottomRight, 0.0001f, $"{label} bottom-right");
+
+        Chateau.Architecture.ValidationReport report = new Chateau.Architecture.ValidationReport();
+        passage.ValidateConfiguration(report);
+        Assert.That(report.HasErrors, Is.False, $"{label} must pass canonical configuration validation.");
     }
 
     private static void AssertPassageArrivalResolverMatchesLegacyTrigger(

@@ -790,6 +790,206 @@ public sealed class ArchitectureBaselinePlayModeTests
     }
 
     [UnityTest]
+    public IEnumerator GrandEntranceRearViewRoundTripUsesCanonicalDestinationRegions()
+    {
+        const string RearDisplayName = "Grand Entrance Hall Rear View";
+        const string RearLegacyName = "Grand Entrance Hall Rear view";
+        Vector2 entranceStart = new Vector2(0f, -2.2f);
+        Vector2 rearStart = new Vector2(0f, -2f);
+        // Locked by an A/B traversal through the preserved legacy path under this suite's
+        // frozen pan/FOV; the default-preview rendered characterization uses other values.
+        Vector2 expectedRearArrivalLocal = new Vector2(785.5335f, -391.4933f);
+        Vector2 expectedEntranceArrivalLocal = new Vector2(418.3665f, -440.4239f);
+
+        yield return BootGameplayFromRealMenu();
+
+        MonoBehaviour gameRoot = RequireSingleSceneComponent("GameRoot");
+        MonoBehaviour chapter = RequireSingleSceneComponent("ChapterManager");
+        MonoBehaviour navigation = RequireSingleSceneComponent("RoomNavigationManager");
+        MonoBehaviour player = RequireComponentOnGameObject("Player", "PointClickPlayerMovement");
+        MonoBehaviour cameraManager = RequireSingleSceneComponent("CameraManager");
+        MonoBehaviour forwardPassage = RequireComponentOnGameObject(
+            "DoorTrigger_GEH_toRearView",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour reversePassage = RequireComponentOnGameObject(
+            "DoorTrigger_GEH_Rear_GEH_Front",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour forwardTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_GEH_toRearView",
+            "DoorTriggerNavigation");
+        MonoBehaviour reverseTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_GEH_Rear_GEH_Front",
+            "DoorTriggerNavigation");
+        MonoBehaviour entranceView = RequireRoomView("room.grand-entrance-hall");
+        MonoBehaviour rearView = RequireRoomView("room.grand-entrance-hall-rear-view");
+
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(12));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(22));
+        List<MonoBehaviour> triggers = FindSceneComponents("DoorTriggerNavigation");
+        Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") != null),
+            Is.EqualTo(22));
+        Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") == null),
+            Is.EqualTo(23));
+        Assert.That(GetField<MonoBehaviour>(forwardTrigger, "canonicalPassage"), Is.SameAs(forwardPassage));
+        Assert.That(GetField<MonoBehaviour>(reverseTrigger, "canonicalPassage"), Is.SameAs(reversePassage));
+        Assert.That(GetField<MonoBehaviour>(forwardTrigger, "navigationManager"), Is.SameAs(navigation));
+        Assert.That(GetField<MonoBehaviour>(reverseTrigger, "navigationManager"), Is.SameAs(navigation));
+        Assert.That(GetField<Transform>(forwardTrigger, "player"), Is.SameAs(player.transform));
+        Assert.That(GetField<Transform>(reverseTrigger, "player"), Is.SameAs(player.transform));
+        AudioSource passageAudioSource = RequireSceneGameObject("Audio_DoorOpen").GetComponent<AudioSource>();
+        Assert.That(passageAudioSource, Is.Not.Null);
+        Assert.That(GetField<AudioSource>(forwardTrigger, "doorOpenAudioSource"),
+            Is.SameAs(passageAudioSource));
+        Assert.That(GetField<AudioSource>(reverseTrigger, "doorOpenAudioSource"),
+            Is.SameAs(passageAudioSource));
+        UnityEngine.Object doorCatalog = GetField<UnityEngine.Object>(forwardTrigger, "doorOpenSoundCatalog");
+        Assert.That(doorCatalog, Is.Not.Null);
+        Assert.That(GetField<UnityEngine.Object>(reverseTrigger, "doorOpenSoundCatalog"),
+            Is.SameAs(doorCatalog));
+
+        object forwardDefinition = GetProperty<object>(forwardPassage, "Definition");
+        object reverseDefinition = GetProperty<object>(reversePassage, "Definition");
+        object rearDefinition = GetProperty<object>(rearView, "Definition");
+        Assert.That(GetProperty<string>(rearDefinition, "DisplayName"), Is.EqualTo(RearDisplayName));
+        Assert.That(GetProperty<string>(rearDefinition, "PrimaryLegacyName"), Is.EqualTo(RearLegacyName));
+        Assert.That(GetProperty<object>(rearView, "LegacyContentGroup"), Is.Not.Null);
+        Assert.That(GetProperty<string>(GetProperty<object>(rearView, "LegacyContentGroup"), "RoomName"),
+            Is.EqualTo(RearLegacyName));
+        Assert.That(GetProperty<string>(forwardDefinition, "CompatibilityDestinationRoomName"),
+            Is.EqualTo(RearDisplayName));
+        Assert.That(GetProperty<bool>(forwardDefinition, "HasExplicitCompatibilityDestinationRoomName"),
+            Is.True);
+        Assert.That(GetProperty<string>(reverseDefinition, "CompatibilityDestinationRoomName"),
+            Is.EqualTo(EntranceRoomName));
+        Assert.That(GetProperty<bool>(reverseDefinition, "HasExplicitCompatibilityDestinationRoomName"),
+            Is.False);
+
+        object database = GetProperty<object>(gameRoot, "Database");
+        object[] registeredDefinitions = ((IEnumerable)GetProperty<object>(database, "Definitions"))
+            .Cast<object>()
+            .ToArray();
+        Assert.That(registeredDefinitions, Has.Length.EqualTo(41));
+        Assert.That(registeredDefinitions, Does.Contain(forwardDefinition));
+        Assert.That(registeredDefinitions, Does.Contain(reverseDefinition));
+        Assert.That(registeredDefinitions, Does.Contain(rearDefinition));
+
+        AssertCanonicalDestinationRegionPassage(
+            forwardPassage,
+            entranceView,
+            reversePassage,
+            "passage.grand-entrance-hall.grand-entrance-hall-rear-view",
+            "GEH_GEH_Rear",
+            RearDisplayName,
+            new Vector2(0.00030518f, -456.4991f),
+            new Vector2(-764.707458f, -451.0935f),
+            new Vector2(-764.707458f, -423.094452f),
+            new Vector2(785.200256f, -423.094452f),
+            new Vector2(785.200256f, -451.0935f));
+        AssertCanonicalDestinationRegionPassage(
+            reversePassage,
+            rearView,
+            forwardPassage,
+            "passage.grand-entrance-hall-rear-view.grand-entrance-hall",
+            "GEH_Rear_GEH_Front",
+            EntranceRoomName,
+            new Vector2(10.2463989f, -437.093964f),
+            new Vector2(-835.9997f, -470.4991f),
+            new Vector2(-835.9997f, -442.4991f),
+            new Vector2(836.0003f, -442.4991f),
+            new Vector2(836.0003f, -470.4991f));
+
+        Assert.That(GetField<bool>(forwardTrigger, "useBottomScreenEdgeInteraction"), Is.True);
+        Assert.That(GetField<bool>(reverseTrigger, "useBottomScreenEdgeInteraction"), Is.True);
+        Assert.That(GetField<float>(forwardTrigger, "bottomScreenEdgeActivationPixels"), Is.EqualTo(28f));
+        Assert.That(GetField<float>(reverseTrigger, "bottomScreenEdgeActivationPixels"), Is.EqualTo(28f));
+        Assert.That(GetField<bool>(forwardTrigger, "requirePlayerProximity"), Is.False);
+        Assert.That(GetField<bool>(reverseTrigger, "requirePlayerProximity"), Is.False);
+
+        // Isolate this navigation ownership probe from the concurrent Chapter 1 intro input lease.
+        InvokeMethod(chapter, "StopChapterCoroutines");
+        InvokeMethod(chapter, "StopActiveDialogueForDebugTransition");
+        InvokeMethod(player, "SetInputEnabled", true);
+        Assert.That(GetProperty<bool>(player, "InputEnabled"), Is.True);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        int movementArrivals = 0;
+        int movementStops = 0;
+        Action recordArrival = () => movementArrivals++;
+        Action recordMovementStop = () => movementStops++;
+        EventInfo arrivalEvent = player.GetType().GetEvent("ArrivedAtDestination");
+        EventInfo movementStopEvent = player.GetType().GetEvent("MovementStopped");
+        Assert.That(arrivalEvent, Is.Not.Null);
+        Assert.That(movementStopEvent, Is.Not.Null);
+        arrivalEvent.AddEventHandler(player, recordArrival);
+        movementStopEvent.AddEventHandler(player, recordMovementStop);
+
+        try
+        {
+            Assert.That((bool)InvokeMethod(player, "TryWarpTo", entranceStart, true), Is.True);
+            movementArrivals = 0;
+            movementStops = 0;
+            SetField(forwardTrigger, "lastPointerActivationFrame", -1);
+            InvokeMethod(forwardTrigger, "ActivateDoor");
+            yield return WaitForCurrentRoom(navigation, RearDisplayName, 60);
+            FreezeRoomLookForEvidence();
+            yield return null;
+
+            Assert.That(GetProperty<object>(navigation, "CurrentRoomDefinition"), Is.SameAs(rearDefinition));
+            Assert.That(GetProperty<bool>(entranceView, "IsVisible"), Is.False);
+            Assert.That(GetProperty<bool>(rearView, "IsVisible"), Is.True);
+            Assert.That(GetProperty<bool>(player, "HasDestination"), Is.False);
+            Assert.That(GetProperty<bool>(player, "InputEnabled"), Is.True);
+            Assert.That(movementArrivals, Is.Zero);
+            Assert.That(movementStops, Is.Zero);
+            AssertRoomViewLocalPlayerPosition(
+                player,
+                cameraManager,
+                expectedRearArrivalLocal,
+                "Grand Entrance rear canonical region arrival");
+
+            Assert.That((bool)InvokeMethod(player, "TryWarpTo", rearStart, true), Is.True);
+            movementArrivals = 0;
+            movementStops = 0;
+            SetField(reverseTrigger, "lastPointerActivationFrame", -1);
+            InvokeMethod(reverseTrigger, "ActivateDoor");
+            yield return WaitForCurrentRoom(navigation, EntranceRoomName, 60);
+            FreezeRoomLookForEvidence();
+            yield return null;
+
+            Assert.That(GetProperty<bool>(entranceView, "IsVisible"), Is.True);
+            Assert.That(GetProperty<bool>(rearView, "IsVisible"), Is.False);
+            Assert.That(GetProperty<bool>(player, "HasDestination"), Is.False);
+            Assert.That(GetProperty<bool>(player, "InputEnabled"), Is.True);
+            Assert.That(movementArrivals, Is.Zero);
+            Assert.That(movementStops, Is.Zero);
+            AssertRoomViewLocalPlayerPosition(
+                player,
+                cameraManager,
+                expectedEntranceArrivalLocal,
+                "Grand Entrance canonical region return");
+            AssertFixedRenderingResolution();
+        }
+        finally
+        {
+            arrivalEvent.RemoveEventHandler(player, recordArrival);
+            movementStopEvent.RemoveEventHandler(player, recordMovementStop);
+            InvokeMethod(forwardTrigger, "CancelPendingPlayerApproach");
+            InvokeMethod(reverseTrigger, "CancelPendingPlayerApproach");
+            if (GetProperty<bool>(player, "HasDestination"))
+            {
+                InvokeMethod(player, "CancelDestination");
+            }
+        }
+
+        Debug.Log(
+            $"[Slice22Group10PlayMode] resolution={Screen.width}x{Screen.height} " +
+            $"rearLocal={Format(expectedRearArrivalLocal)} entranceLocal={Format(expectedEntranceArrivalLocal)} " +
+            "roomViews=12 passages=22 callers=22/23 stages=authored-anchors " +
+            "placement=best-reachable-region aliases=Grand Entrance Hall Rear View/Grand Entrance Hall Rear view");
+    }
+
+    [UnityTest]
     public IEnumerator Chapter2PanicFrameHasApprovedGuestsAndStableRenderedEvidence()
     {
         yield return BootGameplayFromRealMenu();
@@ -1112,6 +1312,74 @@ public sealed class ArchitectureBaselinePlayModeTests
         List<MonoBehaviour> matches = FindSceneComponents(typeName);
         Assert.That(matches, Has.Count.EqualTo(1), $"Expected one active-scene component '{typeName}'.");
         return matches[0];
+    }
+
+    private static void AssertCanonicalDestinationRegionPassage(
+        MonoBehaviour passage,
+        MonoBehaviour expectedSourceRoomView,
+        MonoBehaviour expectedReversePassage,
+        string expectedStableId,
+        string expectedLegacyDoorId,
+        string expectedCompatibilityDestination,
+        Vector2 expectedApproach,
+        Vector2 expectedBottomLeft,
+        Vector2 expectedTopLeft,
+        Vector2 expectedTopRight,
+        Vector2 expectedBottomRight)
+    {
+        object definition = GetProperty<object>(passage, "Definition");
+        object reverseDefinition = GetProperty<object>(expectedReversePassage, "Definition");
+        object sourceDefinition = GetProperty<object>(expectedSourceRoomView, "Definition");
+        object destinationDefinition = GetProperty<object>(
+            GetProperty<object>(expectedReversePassage, "SourceRoomView"),
+            "Definition");
+        Assert.That(GetProperty<bool>(passage, "HasGameContext"), Is.True);
+        Assert.That(GetProperty<string>(definition, "StableId"), Is.EqualTo(expectedStableId));
+        Assert.That(GetProperty<string>(definition, "LegacyDoorId"), Is.EqualTo(expectedLegacyDoorId));
+        Assert.That(GetProperty<string>(definition, "CompatibilityDestinationRoomName"),
+            Is.EqualTo(expectedCompatibilityDestination));
+        Assert.That(GetProperty<object>(definition, "SourceRoom"), Is.SameAs(sourceDefinition));
+        Assert.That(GetProperty<object>(definition, "DestinationRoom"), Is.SameAs(destinationDefinition));
+        Assert.That(GetProperty<object>(definition, "Reverse"), Is.SameAs(reverseDefinition));
+        Assert.That(GetProperty<object>(passage, "SourceRoomView"), Is.SameAs(expectedSourceRoomView));
+        Assert.That(GetProperty<object>(passage, "ReversePassage"), Is.SameAs(expectedReversePassage));
+        Assert.That(GetProperty<object>(passage, "AnchorMigrationStage").ToString(),
+            Is.EqualTo("AuthoredAnchors"));
+        Assert.That(GetProperty<bool>(passage, "HasValidAnchorMigrationStage"), Is.True);
+        Assert.That(GetProperty<bool>(passage, "UsesAuthoredApproach"), Is.True);
+        Assert.That(GetProperty<object>(passage, "ArrivalPlacementMode").ToString(),
+            Is.EqualTo("BestReachableInAuthoredRegion"));
+        Assert.That(GetProperty<bool>(passage, "HasValidArrivalPlacementMode"), Is.True);
+        Assert.That(GetProperty<bool>(passage, "UsesBestReachableArrivalRegion"), Is.True);
+
+        object approach = GetProperty<object>(passage, "ApproachAnchor");
+        Assert.That(approach, Is.Not.Null);
+        Assert.That(GetProperty<object>(approach, "CoordinateSpace").ToString(),
+            Is.EqualTo("RoomViewLocal"));
+        Assert.That(GetProperty<Vector2>(approach, "LogicalPosition"), Is.EqualTo(Vector2.zero));
+        AssertVector2Within(
+            GetProperty<Vector2>(approach, "RoomViewLocalPosition"),
+            expectedApproach,
+            0.0001f,
+            $"{passage.gameObject.name} approach");
+        object unusedDefaultArrival = GetProperty<object>(passage, "ArrivalAnchor");
+        Assert.That(unusedDefaultArrival, Is.Not.Null,
+            "Unity materializes the omitted serializable class as a default runtime object.");
+        Assert.That(GetProperty<Vector2>(unusedDefaultArrival, "LogicalPosition"), Is.EqualTo(Vector2.zero));
+        Assert.That(GetProperty<Vector2>(unusedDefaultArrival, "RoomViewLocalPosition"), Is.EqualTo(Vector2.zero));
+
+        object region = GetProperty<object>(passage, "ArrivalRegion");
+        Assert.That(region, Is.Not.Null);
+        Assert.That(GetProperty<bool>(region, "HasValidRoomViewLocalCorners"), Is.True);
+        AssertVector2Within(GetProperty<Vector2>(region, "BottomLeft"), expectedBottomLeft, 0.0001f,
+            $"{passage.gameObject.name} bottom-left");
+        AssertVector2Within(GetProperty<Vector2>(region, "TopLeft"), expectedTopLeft, 0.0001f,
+            $"{passage.gameObject.name} top-left");
+        AssertVector2Within(GetProperty<Vector2>(region, "TopRight"), expectedTopRight, 0.0001f,
+            $"{passage.gameObject.name} top-right");
+        AssertVector2Within(GetProperty<Vector2>(region, "BottomRight"), expectedBottomRight, 0.0001f,
+            $"{passage.gameObject.name} bottom-right");
+        Assert.That(passage.GetComponents<Component>(), Has.Length.EqualTo(5));
     }
 
     private static void AssertRoomViewLocalPassageAnchors(

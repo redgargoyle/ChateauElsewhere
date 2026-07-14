@@ -145,6 +145,7 @@ namespace Chateau.World.Rooms.Passages
         public const float ProjectedPointPenalty = 25f;
         public const float DuplicateSampleDistance = 1f;
         public const float MinimumOutwardSampleOffset = 36f;
+        public const float RoomViewLocalCornerTolerance = 0.001f;
 
         public static bool TryBuildRuntimeRegion(
             PassageArrivalRegionData authoredRegion,
@@ -178,6 +179,60 @@ namespace Chateau.World.Rooms.Passages
                     destinationRoomView.Root,
                     canvasCamera,
                     out PassageArrivalRegionCorner bottomRight))
+            {
+                return false;
+            }
+
+            runtimeRegion = new PassageArrivalRuntimeRegion(
+                bottomLeft,
+                topLeft,
+                topRight,
+                bottomRight);
+            return runtimeRegion.TryGetScreenBounds(out _, out _);
+        }
+
+        public static bool TryBuildRuntimeRegion(
+            PassageArrivalRegionData authoredRegion,
+            RoomView destinationRoomView,
+            RectTransform destinationRegionTransform,
+            Camera canvasCamera,
+            out PassageArrivalRuntimeRegion runtimeRegion)
+        {
+            runtimeRegion = default;
+
+            if (authoredRegion == null ||
+                !authoredRegion.HasValidRoomViewLocalCorners ||
+                destinationRoomView == null ||
+                destinationRoomView.Root == null ||
+                destinationRegionTransform == null ||
+                !destinationRegionTransform.IsChildOf(destinationRoomView.Root))
+            {
+                return false;
+            }
+
+            Vector3[] worldCorners = new Vector3[4];
+            destinationRegionTransform.GetWorldCorners(worldCorners);
+
+            if (!MatchesAuthoredRoomViewLocalCorner(
+                    authoredRegion.BottomLeft,
+                    worldCorners[0],
+                    destinationRoomView.Root) ||
+                !MatchesAuthoredRoomViewLocalCorner(
+                    authoredRegion.TopLeft,
+                    worldCorners[1],
+                    destinationRoomView.Root) ||
+                !MatchesAuthoredRoomViewLocalCorner(
+                    authoredRegion.TopRight,
+                    worldCorners[2],
+                    destinationRoomView.Root) ||
+                !MatchesAuthoredRoomViewLocalCorner(
+                    authoredRegion.BottomRight,
+                    worldCorners[3],
+                    destinationRoomView.Root) ||
+                !TryCreateRuntimeCorner(worldCorners[0], canvasCamera, out PassageArrivalRegionCorner bottomLeft) ||
+                !TryCreateRuntimeCorner(worldCorners[1], canvasCamera, out PassageArrivalRegionCorner topLeft) ||
+                !TryCreateRuntimeCorner(worldCorners[2], canvasCamera, out PassageArrivalRegionCorner topRight) ||
+                !TryCreateRuntimeCorner(worldCorners[3], canvasCamera, out PassageArrivalRegionCorner bottomRight))
             {
                 return false;
             }
@@ -456,10 +511,27 @@ namespace Chateau.World.Rooms.Passages
             corner = default;
             Vector3 worldPosition = destinationRoomViewRoot.TransformPoint(
                 new Vector3(roomViewLocalCorner.x, roomViewLocalCorner.y, 0f));
-            Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(
-                canvasCamera,
-                worldPosition);
+            return TryCreateRuntimeCorner(worldPosition, canvasCamera, out corner);
+        }
+
+        private static bool MatchesAuthoredRoomViewLocalCorner(
+            Vector2 authoredCorner,
+            Vector3 worldCorner,
+            Transform destinationRoomViewRoot)
+        {
+            Vector2 roomViewLocalCorner = destinationRoomViewRoot.InverseTransformPoint(worldCorner);
+            return IsFinite(roomViewLocalCorner) &&
+                Vector2.Distance(authoredCorner, roomViewLocalCorner) <= RoomViewLocalCornerTolerance;
+        }
+
+        private static bool TryCreateRuntimeCorner(
+            Vector3 worldPosition,
+            Camera canvasCamera,
+            out PassageArrivalRegionCorner corner)
+        {
+            corner = default;
             Vector2 worldPosition2D = worldPosition;
+            Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(canvasCamera, worldPosition);
 
             if (!IsFinite(worldPosition2D) || !IsFinite(screenPosition))
             {

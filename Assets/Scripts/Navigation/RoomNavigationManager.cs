@@ -596,13 +596,15 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             ? null
             : canvas.worldCamera;
 
-        // Resolve only after destination activation has installed the active stage and walkable floor.
-        Physics2D.SyncTransforms();
+        // Match the approved legacy ordering exactly: destination activation installs the
+        // active stage, then the movement owner refreshes that stage before projection.
+        // Eager physics synchronization here changes boundary-sensitive lane selection.
         playerMovement.RefreshWalkableFloorForCurrentRoom();
 
         if (!PassageArrivalResolver.TryBuildRuntimeRegion(
                 passage.ArrivalRegion,
                 destinationRoomView,
+                passage.ReversePassage.transform as RectTransform,
                 canvasCamera,
                 out PassageArrivalRuntimeRegion runtimeRegion) ||
             !TryGetPassageArrivalPlayerScreenPosition(playerMovement, out Vector2 playerScreenPosition) ||

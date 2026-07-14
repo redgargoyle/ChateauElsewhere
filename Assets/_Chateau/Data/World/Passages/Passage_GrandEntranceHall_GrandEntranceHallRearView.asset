@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca421b4be57a4e08aad75608f76ce6e4, type: 3}
+  m_Name: Passage_GrandEntranceHall_GrandEntranceHallRearView
+  m_EditorClassIdentifier: Assembly-CSharp::Chateau.World.Rooms.Passages.PassageDefinition
+  stableId: passage.grand-entrance-hall.grand-entrance-hall-rear-view
+  schemaVersion: 1
+  sourceRoom: {fileID: 11400000, guid: 5e4e6adcd42c4058867aaa6c47b84de1, type: 2}
+  destinationRoom: {fileID: 11400000, guid: 64bc36c6e2d546d6bb878373c4e6d0b6, type: 2}
+  reverse: {fileID: 11400000, guid: d57bc53c2dfb4a10bd63739d37028899, type: 2}
+  kind: 0
+  promptText: Open Door
+  legacyDoorId: GEH_GEH_Rear
+  compatibilityDestinationRoomName: Grand Entrance Hall Rear View
