@@ -101,7 +101,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         bool hasCurrentRoomStageScale = GuestRoomStageScaleUtility.TryGetActiveRoomStageScale(out float currentRoomStageScale);
         float referenceRoomStageScale = 1f;
         bool hasReferenceRoomStageScale = calibration != null &&
-            calibration.TryGetReferenceRoomStageScale(selectedRoom, out referenceRoomStageScale);
+            calibration.TryGetReferenceRoomStageScaleReadOnly(selectedRoom, out referenceRoomStageScale);
         referenceRoomStageScale = hasReferenceRoomStageScale ? referenceRoomStageScale : 1f;
         float roomStageZoomRatio = hasCurrentRoomStageScale
             ? GuestRoomStageScaleUtility.CalculateRoomStageZoomRatio(currentRoomStageScale, referenceRoomStageScale)
@@ -150,7 +150,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         {
             manualGuestScale = manualSelection.AllGuests
                 ? GetAverageGuestCurrentScale(manualSelection.AllRooms ? guests : roomGuests)
-                : GetGuestCurrentScale(selectedGuest, calibration, selectedRoom);
+                : GetGuestCurrentScale(selectedGuest);
             loadedManualGuestKey = manualSelection.SelectionKey;
         }
 
@@ -350,7 +350,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         if (calibration != null)
         {
-            applier.SetCalibration(calibration);
+            AssignCalibrationWithUndo(applier, calibration, undoName);
         }
 
         List<Transform> scaleRoots = CollectParticipantScaleRoots(selectedRoom);
@@ -368,7 +368,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         PointClickPlayerMovement butler = FindButler();
         GuestRoomScaleCalibration calibration = EnsureCalibration(butler);
         GuestRoomScaleApplier applier = EnsureApplier();
-        applier.SetCalibration(calibration);
+        AssignCalibrationWithUndo(applier, calibration, "Set Up Guest Scaling");
         int removed = RemoveInvalidParticipants();
         int ensured = applier.EnsureParticipantsForSceneGuests();
         int synced = 0;
@@ -400,7 +400,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             manualGuestScale,
             saveManualScale: false,
             selectedScaleMode);
-        applier.SetCalibration(calibration);
+        AssignCalibrationWithUndo(applier, calibration, "Preview Room Guest Size");
 
         List<Transform> scaleRoots = CollectParticipantScaleRoots(selectedRoom);
         RecordScaleRoots(scaleRoots, "Preview Room Guest Size");
@@ -475,7 +475,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         if (calibration != null)
         {
-            applier.SetCalibration(calibration);
+            AssignCalibrationWithUndo(applier, calibration, "Apply Room Guest Size");
         }
 
         int synced = 0;
@@ -512,7 +512,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
                 continue;
             }
 
-            Transform scaleRoot = guest.ResolveScaleRoot();
+            Transform scaleRoot = guest.ResolveScaleRootReadOnly();
 
             if (scaleRoot != null && seen.Add(scaleRoot))
             {
@@ -545,6 +545,21 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
     }
 
+    internal static void AssignCalibrationWithUndo(
+        GuestRoomScaleApplier applier,
+        GuestRoomScaleCalibration calibration,
+        string undoName)
+    {
+        if (applier == null || applier.Calibration == calibration)
+        {
+            return;
+        }
+
+        Undo.RecordObject(applier, undoName);
+        applier.SetCalibration(calibration);
+        EditorUtility.SetDirty(applier);
+    }
+
     private static GuestRoomScaleCalibration EnsureCalibration(PointClickPlayerMovement butler)
     {
         GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
@@ -552,13 +567,16 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         if (calibration == null)
         {
             GameObject calibrationObject = new GameObject("GuestRoomScaleCalibration");
-            calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            Undo.RegisterCreatedObjectUndo(calibrationObject, "Create Guest Room Scale Calibration");
+            calibration = Undo.AddComponent<GuestRoomScaleCalibration>(calibrationObject);
         }
 
         if (butler != null)
         {
+            Undo.RecordObject(calibration, "Configure Guest Room Scale Calibration");
             calibration.InitializeMissingRoomsFromButler(butler);
             calibration.SetButlerScaleSource(butler);
+            EditorUtility.SetDirty(calibration);
         }
 
         return calibration;
@@ -591,7 +609,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         if (calibration != null)
         {
-            applier.SetCalibration(calibration);
+            AssignCalibrationWithUndo(applier, calibration, "Prepare Guest Scale Diagnostics");
         }
 
         GuestScaleParticipant[] guests = FindGuestParticipants();
@@ -890,33 +908,22 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             !guest.IsButler &&
             !GuestRoomScaleApplier.IsGuestScaleInfrastructureObject(guest.gameObject) &&
             GuestRoomScaleApplier.IsManagedGuestParticipant(guest) &&
-            GuestRoomScaleApplier.ShouldApplyParticipantForRoomContext(guest, selectedRoom);
+            GuestRoomScaleCalibration.SameRoom(
+                guest.ResolveRoomIdForScaleContextReadOnly(selectedRoom),
+                selectedRoom);
     }
 
-    private static float GetGuestCurrentScale(
-        GuestScaleParticipant selectedGuest,
-        GuestRoomScaleCalibration calibration,
-        string selectedRoom)
+    private static float GetGuestCurrentScale(GuestScaleParticipant selectedGuest)
     {
         if (selectedGuest != null)
         {
-            Transform scaleRoot = selectedGuest.ResolveScaleRoot();
+            Transform scaleRoot = selectedGuest.ResolveScaleRootReadOnly();
 
             if (scaleRoot != null)
             {
                 return Mathf.Clamp(Mathf.Abs(scaleRoot.localScale.y), MinManualGuestScale, MaxManualGuestScale);
             }
 
-            if (calibration != null &&
-                calibration.TryEvaluateGuestScale(
-                    selectedRoom,
-                    selectedGuest.ResolveRoomLocalY(selectedRoom),
-                    out float evaluatedScale,
-                    out _,
-                    out _))
-            {
-                return Mathf.Clamp(evaluatedScale, MinManualGuestScale, MaxManualGuestScale);
-            }
         }
 
         return 1f;
@@ -929,7 +936,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
         for (int i = 0; roomGuests != null && i < roomGuests.Length; i++)
         {
-            Transform scaleRoot = roomGuests[i] != null ? roomGuests[i].ResolveScaleRoot() : null;
+            Transform scaleRoot = roomGuests[i] != null ? roomGuests[i].ResolveScaleRootReadOnly() : null;
 
             if (scaleRoot == null)
             {
@@ -955,7 +962,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
             return string.Empty;
         }
 
-        Transform scaleRoot = selectedGuest.ResolveScaleRoot();
+        Transform scaleRoot = selectedGuest.ResolveScaleRootReadOnly();
         return GetTransformPath(scaleRoot != null ? scaleRoot : selectedGuest.transform);
     }
 
@@ -1171,7 +1178,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
 
     private static float GetRoomMultiplier(GuestRoomScaleCalibration calibration, string roomId)
     {
-        if (calibration == null || !calibration.TryGetRoom(roomId, out GuestRoomScaleEntry entry))
+        if (calibration == null || !calibration.TryGetRoomReadOnly(roomId, out GuestRoomScaleEntry entry))
         {
             return 1f;
         }
@@ -1369,7 +1376,7 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
         }
 
         float referenceStageScale = calibration != null &&
-            calibration.TryGetReferenceRoomStageScale(roomId, out float savedReferenceScale)
+            calibration.TryGetReferenceRoomStageScaleReadOnly(roomId, out float savedReferenceScale)
                 ? savedReferenceScale
                 : 1f;
         return GuestRoomStageScaleUtility.CalculateRoomStageZoomRatio(

@@ -119,6 +119,17 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
 
     public bool TryGetRoom(string roomId, out GuestRoomScaleEntry entry)
     {
+        if (!TryGetRoomReadOnly(roomId, out entry))
+        {
+            return false;
+        }
+
+        entry.Sanitize();
+        return true;
+    }
+
+    public bool TryGetRoomReadOnly(string roomId, out GuestRoomScaleEntry entry)
+    {
         entry = null;
 
         if (rooms == null || string.IsNullOrWhiteSpace(roomId))
@@ -132,7 +143,6 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
 
             if (candidate != null && candidate.Matches(roomId))
             {
-                candidate.Sanitize();
                 entry = candidate;
                 return true;
             }
@@ -209,6 +219,20 @@ public sealed class GuestRoomScaleCalibration : MonoBehaviour
         stageScale = 1f;
 
         if (!TryGetRoom(roomId, out GuestRoomScaleEntry entry) ||
+            !entry.hasReferenceRoomStageScale)
+        {
+            return false;
+        }
+
+        stageScale = SanitizeRoomStageScale(entry.referenceRoomStageScale);
+        return true;
+    }
+
+    public bool TryGetReferenceRoomStageScaleReadOnly(string roomId, out float stageScale)
+    {
+        stageScale = 1f;
+
+        if (!TryGetRoomReadOnly(roomId, out GuestRoomScaleEntry entry) ||
             !entry.hasReferenceRoomStageScale)
         {
             return false;

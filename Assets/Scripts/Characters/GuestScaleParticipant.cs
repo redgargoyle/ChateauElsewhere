@@ -162,6 +162,12 @@ public sealed class GuestScaleParticipant : MonoBehaviour
 
     public Transform ResolveScaleRoot()
     {
+        scaleRoot = ResolveScaleRootReadOnly();
+        return scaleRoot;
+    }
+
+    public Transform ResolveScaleRootReadOnly()
+    {
         if (IsUsableBodyTransform(scaleRoot))
         {
             return scaleRoot;
@@ -175,8 +181,7 @@ public sealed class GuestScaleParticipant : MonoBehaviour
 
             if (graphic != null && IsUsableBodyTransform(graphic.rectTransform))
             {
-                scaleRoot = graphic.rectTransform;
-                return scaleRoot;
+                return graphic.rectTransform;
             }
         }
 
@@ -186,18 +191,15 @@ public sealed class GuestScaleParticipant : MonoBehaviour
             projectedEntity.Mode == RoomProjectedEntity.ProjectionMode.FloorCharacter &&
             IsUsableBodyTransform(projectedEntity.VisualRoot))
         {
-            scaleRoot = projectedEntity.VisualRoot;
-            return scaleRoot;
+            return projectedEntity.VisualRoot;
         }
 
         if (IsUsableBodyTransform(bodyRoot))
         {
-            scaleRoot = bodyRoot;
-            return scaleRoot;
+            return bodyRoot;
         }
 
-        scaleRoot = transform;
-        return scaleRoot;
+        return transform;
     }
 
     public string ResolveRoomId()
@@ -207,17 +209,21 @@ public sealed class GuestScaleParticipant : MonoBehaviour
 
     public string ResolveRoomIdForScaleContext(string selectedRoom)
     {
-        string cleanSelectedRoom = GuestRoomScaleCalibration.CleanRoomId(selectedRoom);
-
-        if (!Application.isPlaying &&
-            !string.IsNullOrWhiteSpace(cleanSelectedRoom) &&
-            IsActiveVisibleManagedChapterGuest())
+        if (TryResolveRoomIdForScaleContext(selectedRoom, out string roomId, out string source))
         {
-            lastRoomResolutionSource = "SelectedRoomManualContext";
-            return cleanSelectedRoom;
+            lastRoomResolutionSource = source;
+            return roomId;
         }
 
-        return ResolveCurrentRoomId();
+        lastRoomResolutionSource = string.Empty;
+        return string.Empty;
+    }
+
+    public string ResolveRoomIdForScaleContextReadOnly(string selectedRoom)
+    {
+        return TryResolveRoomIdForScaleContext(selectedRoom, out string roomId, out _)
+            ? roomId
+            : string.Empty;
     }
 
     public string ResolveCurrentRoomId()
@@ -328,6 +334,25 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         roomId = string.Empty;
         source = string.Empty;
         return false;
+    }
+
+    private bool TryResolveRoomIdForScaleContext(
+        string selectedRoom,
+        out string roomId,
+        out string source)
+    {
+        string cleanSelectedRoom = GuestRoomScaleCalibration.CleanRoomId(selectedRoom);
+
+        if (!Application.isPlaying &&
+            !string.IsNullOrWhiteSpace(cleanSelectedRoom) &&
+            IsActiveVisibleManagedChapterGuest())
+        {
+            roomId = cleanSelectedRoom;
+            source = "SelectedRoomManualContext";
+            return true;
+        }
+
+        return TryResolveCurrentRoomId(out roomId, out source);
     }
 
     private bool TryResolveExplicitCurrentRoomId(out string roomId)

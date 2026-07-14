@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,6 +20,7 @@ public sealed class GuestRoomScaleRegressionTests
     private const string GuestRoomStageScaleUtilityPath = "Assets/Scripts/Characters/GuestRoomStageScaleUtility.cs";
     private const string GuestPoseScaleOverrideStorePath = "Assets/Scripts/Characters/GuestPoseScaleOverrideStore.cs";
     private const string GuestRoomScaleMasterWindowPath = "Assets/Editor/GuestRoomScaleMasterWindow.cs";
+    private const string ButlerRoomScaleCalibrationWindowPath = "Assets/Editor/ButlerRoomScaleCalibrationWindow.cs";
     private const string GuestScaleAuditPath = "Assets/Editor/GuestScaleAudit.cs";
     private const string Chapter2GuestPanicControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs";
     private const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
@@ -981,6 +983,148 @@ public sealed class GuestRoomScaleRegressionTests
         Assert.That(drawMethod, Does.Not.Contain("RefreshPerspectiveScaleNow"));
         Assert.That(selectMethod, Does.Not.Contain("RefreshPerspectiveScaleNow"));
         Assert.That(selectMethod, Does.Not.Contain("butler.transform"));
+        Assert.That(text, Does.Contain("TryGetReferenceRoomStageScaleReadOnly(selectedRoom"));
+        Assert.That(text, Does.Contain("TryGetRoomReadOnly(roomId"));
+        Assert.That(text, Does.Contain("ResolveRoomIdForScaleContextReadOnly(selectedRoom"));
+        Assert.That(text, Does.Contain("ResolveScaleRootReadOnly()"));
+    }
+
+    [Test]
+    public void ButlerCalibrationSelectionReadDoesNotInitializeSerializedBaseScale()
+    {
+        ButlerRoomScaleCalibrationWindow window = ScriptableObject.CreateInstance<ButlerRoomScaleCalibrationWindow>();
+        GameObject butler = CreatePointClickPlayer("player", new Vector3(1.25f, -0.75f, 1f));
+
+        try
+        {
+            PointClickPlayerMovement movement = butler.GetComponent<PointClickPlayerMovement>();
+            MethodInfo selectMethod = typeof(ButlerRoomScaleCalibrationWindow).GetMethod(
+                "SetSelectedButler",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo previewField = typeof(ButlerRoomScaleCalibrationWindow).GetField(
+                "previewSize",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            string serializedBefore = EditorJsonUtility.ToJson(movement);
+
+            Assert.That(selectMethod, Is.Not.Null);
+            Assert.That(previewField, Is.Not.Null);
+            selectMethod.Invoke(window, new object[] { movement, "Selected for regression test." });
+
+            Assert.That(EditorJsonUtility.ToJson(movement), Is.EqualTo(serializedBefore));
+            Assert.That(movement.HasButlerCalibrationBaseLocalScale, Is.False);
+            Assert.That((float)previewField.GetValue(window), Is.EqualTo(0.75f).Within(0.000001f));
+
+            string windowText = File.ReadAllText(ButlerRoomScaleCalibrationWindowPath);
+            int saveStart = windowText.IndexOf("private void SaveEndpoint", StringComparison.Ordinal);
+            int saveEnd = windowText.IndexOf("private void PreviewCurrentSize", saveStart, StringComparison.Ordinal);
+            string saveMethod = windowText.Substring(saveStart, saveEnd - saveStart);
+            Assert.That(
+                saveMethod.IndexOf("RecordMovementAndTransform", StringComparison.Ordinal),
+                Is.LessThan(saveMethod.IndexOf("EnsureButlerCalibrationBaseScale", StringComparison.Ordinal)));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(butler);
+            UnityEngine.Object.DestroyImmediate(window);
+        }
+    }
+
+    [Test]
+    public void GuestCalibrationReadOnlyQueriesDoNotSanitizeSerializedData()
+    {
+        GameObject calibrationObject = new GameObject("GuestScaleCalibration");
+
+        try
+        {
+            GuestRoomScaleCalibration calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            GuestRoomScaleEntry entry = calibration.GetOrCreateRoom("Drawing Room");
+            entry.roomId = " Drawing Room ";
+            entry.roomGuestScaleMultiplier = 0f;
+            entry.hasReferenceRoomStageScale = true;
+            entry.referenceRoomStageScale = 0f;
+            string serializedBefore = EditorJsonUtility.ToJson(calibration);
+
+            Assert.That(calibration.TryGetRoomReadOnly("Drawing Room", out GuestRoomScaleEntry found), Is.True);
+            Assert.That(found, Is.SameAs(entry));
+            Assert.That(calibration.TryGetReferenceRoomStageScaleReadOnly("Drawing Room", out float stageScale), Is.True);
+            Assert.That(stageScale, Is.EqualTo(0.0001f).Within(0.000001f));
+
+            Assert.That(EditorJsonUtility.ToJson(calibration), Is.EqualTo(serializedBefore));
+            Assert.That(entry.roomId, Is.EqualTo(" Drawing Room "));
+            Assert.That(entry.roomGuestScaleMultiplier, Is.Zero);
+            Assert.That(entry.referenceRoomStageScale, Is.Zero);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(calibrationObject);
+        }
+    }
+
+    [Test]
+    public void GuestParticipantReadOnlyQueriesDoNotCacheSerializedFields()
+    {
+        GameObject guest = new GameObject("Guest 1");
+        GameObject body = new GameObject("Body");
+        body.transform.SetParent(guest.transform, false);
+        body.AddComponent<SpriteRenderer>();
+
+        try
+        {
+            GuestScaleParticipant participant = guest.AddComponent<GuestScaleParticipant>();
+            participant.SetBodyRoot(body.transform);
+            participant.SetCurrentRoomId("Grand Entrance Hall");
+            SerializedObject serializedParticipant = new SerializedObject(participant);
+            serializedParticipant.FindProperty("scaleRoot").objectReferenceValue = null;
+            serializedParticipant.FindProperty("lastRoomResolutionSource").stringValue = "Unchanged";
+            serializedParticipant.ApplyModifiedPropertiesWithoutUndo();
+            string serializedBefore = EditorJsonUtility.ToJson(participant);
+
+            Transform resolvedRoot = participant.ResolveScaleRootReadOnly();
+            string resolvedRoom = participant.ResolveRoomIdForScaleContextReadOnly("Drawing Room");
+
+            Assert.That(resolvedRoot, Is.EqualTo(body.transform));
+            Assert.That(resolvedRoom, Is.EqualTo("Drawing Room"));
+            Assert.That(participant.LastRoomResolutionSource, Is.EqualTo("Unchanged"));
+            Assert.That(EditorJsonUtility.ToJson(participant), Is.EqualTo(serializedBefore));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(guest);
+        }
+    }
+
+    [Test]
+    public void AssigningGuestCalibrationToApplierCanBeUndone()
+    {
+        GameObject firstCalibrationObject = new GameObject("FirstCalibration");
+        GameObject secondCalibrationObject = new GameObject("SecondCalibration");
+        GameObject applierObject = new GameObject("GuestScaleApplier");
+
+        try
+        {
+            GuestRoomScaleCalibration first = firstCalibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            GuestRoomScaleCalibration second = secondCalibrationObject.AddComponent<GuestRoomScaleCalibration>();
+            GuestRoomScaleApplier applier = applierObject.AddComponent<GuestRoomScaleApplier>();
+            applier.SetCalibration(first);
+            Undo.ClearAll();
+
+            GuestRoomScaleMasterWindow.AssignCalibrationWithUndo(
+                applier,
+                second,
+                "Assign Guest Calibration Regression Test");
+            Undo.FlushUndoRecordObjects();
+
+            Assert.That(applier.Calibration, Is.EqualTo(second));
+            Undo.PerformUndo();
+            Assert.That(applier.Calibration, Is.EqualTo(first));
+        }
+        finally
+        {
+            Undo.ClearAll();
+            UnityEngine.Object.DestroyImmediate(applierObject);
+            UnityEngine.Object.DestroyImmediate(secondCalibrationObject);
+            UnityEngine.Object.DestroyImmediate(firstCalibrationObject);
+        }
     }
 
     [Test]
