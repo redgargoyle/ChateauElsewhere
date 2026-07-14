@@ -4,8 +4,12 @@ using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using TMPro;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 public class NavigationRegressionTests
 {
@@ -490,6 +494,83 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void MainMenuUsesLayeredRightRailPresentation()
+    {
+        Scene mainMenuScene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+        GameObject backgroundObject = FindSceneObject(mainMenuScene, "Panel_Background");
+        GameObject titlePlaqueObject = FindSceneObject(mainMenuScene, "Image_TitlePlaque");
+        GameObject titleObject = FindSceneObject(mainMenuScene, "Text_Title");
+        GameObject developerCreditObject = FindSceneObject(mainMenuScene, "Text_DeveloperCredit");
+        GameObject continueObject = FindSceneObject(mainMenuScene, "Button_Continue");
+        string[] buttonNames = { "Button_NewGame", "Button_Settings", "Button_Exit" };
+        string[] expectedLabels = { "Start Game", "Settings", "Exit" };
+        Button[] buttons = FindSceneComponents<Button>(mainMenuScene);
+        List<string> activeButtonLabels = new List<string>();
+
+        Assert.That(backgroundObject, Is.Not.Null, "The redesigned menu needs a background image.");
+        Assert.That(titleObject, Is.Not.Null, "The layered title TMP object is required.");
+        Assert.That(continueObject, Is.Not.Null, "Continue should remain available for saved-game compatibility.");
+
+        TextMeshProUGUI titleText = titleObject.GetComponent<TextMeshProUGUI>();
+        Assert.That(titleText, Is.Not.Null);
+        Assert.That(titleText.text, Is.EqualTo("Chantilly"));
+
+        Assert.That(titlePlaqueObject, Is.Not.Null, "The title needs its own layered plaque image.");
+        Assert.That(developerCreditObject, Is.Not.Null, "The title plaque needs a TMP developer credit.");
+        Assert.That(continueObject.activeSelf, Is.False, "Continue should be hidden from the redesigned three-button rail.");
+
+        TextMeshProUGUI developerCredit = developerCreditObject.GetComponent<TextMeshProUGUI>();
+        Image backgroundImage = backgroundObject.GetComponent<Image>();
+        Image titlePlaqueImage = titlePlaqueObject.GetComponent<Image>();
+
+        Assert.That(developerCredit, Is.Not.Null);
+        Assert.That(developerCredit.text, Is.EqualTo("developed by Kadabra Games"));
+        Assert.That(backgroundImage, Is.Not.Null);
+        Assert.That(backgroundImage.sprite, Is.Not.Null, "The menu background should be a clean layered sprite.");
+        Assert.That(titlePlaqueImage, Is.Not.Null);
+        Assert.That(titlePlaqueImage.sprite, Is.Not.Null, "The title plaque should be a separate blank sprite.");
+        Assert.That(titlePlaqueObject.GetComponent<RectTransform>().anchorMin.x, Is.EqualTo(1f), "The title plaque should anchor to the right rail.");
+        Assert.That(titlePlaqueObject.GetComponent<RectTransform>().anchorMax.x, Is.EqualTo(1f), "The title plaque should anchor to the right rail.");
+        Assert.That(buttons.Length, Is.EqualTo(3), "Only Start Game, Settings, and Exit should be active buttons in the menu scene.");
+
+        Sprite buttonFrame = null;
+
+        for (int i = 0; i < buttonNames.Length; i++)
+        {
+            GameObject buttonObject = FindSceneObject(mainMenuScene, buttonNames[i]);
+            Button button = buttonObject != null ? buttonObject.GetComponent<Button>() : null;
+            Image buttonImage = buttonObject != null ? buttonObject.GetComponent<Image>() : null;
+            TextMeshProUGUI label = buttonObject != null ? buttonObject.GetComponentInChildren<TextMeshProUGUI>(true) : null;
+
+            Assert.That(buttonObject, Is.Not.Null, $"{buttonNames[i]} should reuse its existing menu action object.");
+            Assert.That(buttonObject.activeInHierarchy, Is.True, $"{buttonNames[i]} should be visible in the three-button rail.");
+            Assert.That(button, Is.Not.Null);
+            Assert.That(buttonImage, Is.Not.Null);
+            Assert.That(buttonImage.sprite, Is.Not.Null, $"{buttonNames[i]} should use the shared blank button frame.");
+            Assert.That(label, Is.Not.Null, $"{buttonNames[i]} needs a TMP label instead of baked lettering.");
+            Assert.That(label.text, Is.EqualTo(expectedLabels[i]));
+            Assert.That(buttonObject.GetComponent<RectTransform>().anchorMin.x, Is.EqualTo(1f), $"{buttonNames[i]} should anchor to the right rail.");
+            Assert.That(buttonObject.GetComponent<RectTransform>().anchorMax.x, Is.EqualTo(1f), $"{buttonNames[i]} should anchor to the right rail.");
+
+            if (buttonFrame == null)
+            {
+                buttonFrame = buttonImage.sprite;
+            }
+            else
+            {
+                Assert.That(buttonImage.sprite, Is.SameAs(buttonFrame), "All active menu actions should share one blank frame sprite.");
+            }
+
+            activeButtonLabels.Add(label.text);
+        }
+
+        Assert.That(activeButtonLabels, Is.EquivalentTo(expectedLabels));
+        Assert.That(FindSceneObject(mainMenuScene, "Button_NewGame").GetComponent<Button>().onClick.GetPersistentMethodName(0), Is.EqualTo(nameof(MainMenuController.NewGame)));
+        Assert.That(FindSceneObject(mainMenuScene, "Button_Exit").GetComponent<Button>().onClick.GetPersistentMethodName(0), Is.EqualTo(nameof(MainMenuController.ExitGame)));
+        Assert.That(File.ReadAllText(MainMenuControllerPath), Does.Contain("button.onClick.AddListener(ToggleAudioSettingsPanel)"), "Settings should continue to use MainMenuController's existing audio-settings action.");
+    }
+
+    [Test]
     public void CursorStyleCatalogProvidesGeneratedRuntimeAssets()
     {
         Assert.That(File.Exists(CursorStyleCatalogPath), Is.True, "Cursor styles need one central runtime catalog.");
@@ -585,13 +666,13 @@ public class NavigationRegressionTests
     {
         string mainMenuText = File.ReadAllText(MainMenuControllerPath);
 
-        Assert.That(mainMenuText, Does.Contain("menuSafeMargin"), "The main menu needs a safe margin when the Game view is shorter than the reference frame.");
-        Assert.That(mainMenuText, Does.Contain("minResponsiveLayoutScale"), "Responsive menu scaling should have a floor so the art buttons remain readable.");
-        Assert.That(mainMenuText, Does.Contain("GetResponsiveMenuLayoutScale"), "The menu should compute layout scale from the resolved Canvas size.");
-        Assert.That(mainMenuText, Does.Contain("GetReferenceMenuLayoutExtents"), "The menu should fit the whole authored button stack, including the bottom Exit button.");
-        Assert.That(mainMenuText, Does.Contain("HasMenuLayoutSizeChanged"), "The menu should repair its layout when the Game view size changes after Awake.");
-        Assert.That(mainMenuText, Does.Contain("buttonSpacing * 3f)) * layoutScale"), "The Exit button position must be scaled with the rest of the stack.");
-        Assert.That(mainMenuText, Does.Contain("ApplyResponsiveTitleFont"), "The title should shrink with the menu instead of overflowing a reduced title rect.");
+        Assert.That(mainMenuText, Does.Contain("ApplyRightRailLayout"), "The responsive layout should own a dedicated right-side menu rail.");
+        Assert.That(mainMenuText, Does.Contain("new Vector2(1f, 1f)"), "The title plaque and button stack should anchor to the right side of the canvas.");
+        Assert.That(mainMenuText, Does.Contain("AspectRatioFitter.AspectMode.EnvelopeParent"), "The menu background should aspect-fill every Game view without letterboxing.");
+        Assert.That(mainMenuText, Does.Contain("buttonSpacing * 2f"), "The three visible buttons need consistent Start Game, Settings, Exit spacing.");
+        Assert.That(mainMenuText, Does.Contain("continueButton.gameObject.SetActive(false)"), "Continue should be hidden before the three-button rail is laid out.");
+        Assert.That(mainMenuText, Does.Not.Contain("buttonSpacing * 3f"), "The old four-button stack should not survive the redesigned layout.");
+        Assert.That(mainMenuText, Does.Not.Contain("PinTopLeft(title"), "The title should no longer use the old top-left coordinates.");
     }
 
     [Test]
@@ -1189,6 +1270,64 @@ public class NavigationRegressionTests
 
         Physics2D.SyncTransforms();
         return movement;
+    }
+
+    private static GameObject FindSceneObject(Scene scene, string objectName)
+    {
+        GameObject[] roots = scene.GetRootGameObjects();
+
+        for (int i = 0; i < roots.Length; i++)
+        {
+            Transform match = FindSceneTransform(roots[i].transform, objectName);
+
+            if (match != null)
+            {
+                return match.gameObject;
+            }
+        }
+
+        return null;
+    }
+
+    private static T[] FindSceneComponents<T>(Scene scene) where T : Component
+    {
+        GameObject[] roots = scene.GetRootGameObjects();
+        List<T> components = new List<T>();
+
+        for (int i = 0; i < roots.Length; i++)
+        {
+            T[] rootComponents = roots[i].GetComponentsInChildren<T>(true);
+
+            for (int j = 0; j < rootComponents.Length; j++)
+            {
+                if (rootComponents[j].gameObject.activeInHierarchy)
+                {
+                    components.Add(rootComponents[j]);
+                }
+            }
+        }
+
+        return components.ToArray();
+    }
+
+    private static Transform FindSceneTransform(Transform current, string objectName)
+    {
+        if (current.name == objectName)
+        {
+            return current;
+        }
+
+        for (int i = 0; i < current.childCount; i++)
+        {
+            Transform match = FindSceneTransform(current.GetChild(i), objectName);
+
+            if (match != null)
+            {
+                return match;
+            }
+        }
+
+        return null;
     }
 
     private static PolygonCollider2D CreatePolygonCollider(string name, Vector2[] path, out GameObject owner)
