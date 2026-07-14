@@ -73,7 +73,7 @@ Gameplay contains 45 trigger owners across 23 connectivity groups:
 - 2 one-way triggers blocked by missing reverse owners;
 - 3 GEH/Upper Gallery stair triggers blocked by a two-outbound/one-return shape that the strict one-to-one reverse contract cannot represent.
 
-There are 19 room roots. GEH, Drawing Room, Music Room, Library, Ballroom, Dining Room, and Butlers Pantry now have canonical definitions; the migration order introduces the other 12 exactly once before closing the Nursery/Blue Bedroom cycle. All 45 trigger owners already descend from the matching source room root.
+There are 19 room roots and all 19 now have one canonical RoomDefinition. Eight current roots are bound to passive RoomViews; the other eleven definitions remain data-only until their dedicated pair slices add views and passages. Phase 2 must reuse these definitions rather than create duplicates. All 45 trigger owners already descend from the matching source room root.
 
 Special profiles are part of behavior, not cleanup noise:
 
@@ -83,15 +83,13 @@ Special profiles are part of behavior, not cleanup noise:
 
 The blocked one-way triggers are `1615236111` (GEH Rear -> Library) and `2300000159` (Service Corridor -> Billiard Room). The parallel stair cluster is `106972347`, `2300000069`, and `2300000194`. These five stay on the compatibility path until a separate modeled decision passes characterization; they must never be forced into fabricated reciprocal links.
 
-## Current automated evidence
+## Latest navigation baseline and Slice 1.5 evidence
 
-- Group `06` targeted tests-only characterization proof: `1/1`;
-- focused canonical/manifest gates: `14/14`;
-- combined safety gates: `32/32`;
-- rendered lifecycle: `10/10`;
-- full suite: `264` discovered / `218` passed / the same `46` known failures, failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`;
-- architecture/serialization/Y-axis: `112 / 48,789 / 48 / 155 / zero hard errors / 38 findings`;
-- Gameplay remains 6,026 YAML documents, seven RoomViews, and twelve stage-2 Passages; `GameDatabase` remains 19 definitions; dependencies/callers remain each `12 bound / 33 null`; inventory is 12 complete, 2 characterized, 26 queued, 2 blocked-one-way, and 3 blocked-parallel.
+- the last complete navigation certification remains Group `06` foundation: targeted `1/1`, focused canonical/manifest `14/14`, combined safety `32/32`, rendered lifecycle `10/10`, and historical full suite `264/218/46` with failure-name SHA-256 `544759729ac446b3814a3f206021a23c64fd46cc9edc1e997b179affaa0f69f9`;
+- that navigation checkpoint's architecture/serialization/Y-axis evidence was `112 / 48,789 / 48 / 155 / zero hard errors / 38 findings`;
+- Slice `1.5` independently passes focused canonical/database/navigation evidence `38/38`, rendered cold start `1/1`, and current static evidence `113` runtime files / `50,212` lines / `48` direct MonoBehaviours / `164` current scripts / `1,937` serialized script references;
+- no new complete full-suite run was performed in Slice `1.5`; the `264/218/46` figures above remain an explicitly historical navigation baseline rather than a current discovery claim;
+- Gameplay remains 6,029 YAML documents, eight RoomViews, and fourteen Passages (`12` stage 2 / `2` stage 0); `GameDatabase` now contains 33 definitions (`19` rooms / `14` passages); dependencies are `14 bound / 31 null`, callers are `12 bound / 33 null`, and inventory is 12 complete, 2 dependencies-bound, 26 queued, 2 blocked-one-way, and 3 blocked-parallel. The eleven new RoomDefinitions are passive data and do not change this scene ownership.
 
 The first use of this template completed its characterization gate for group `01`, Drawing Room <-> Music Room, before data authoring. At `1366x768`, the legacy reciprocal room-side samples are Drawing `(-7.106010, -1.508934)` and Music `(-7.737432, -3.180156)`; far/near traversal, event/audio order, camera/background/active-stage ownership, prompt/cursor cleanup, and the Chapter 2 guest-panic left-exit identity all pass without a production or serialized-content change. The four-aspect evidence remains explicitly legacy and viewport-sensitive: `1440x1080` yields Drawing/Music `(-6.152483, -1.306456)` / `(-6.699176, -2.753424)`, `1920x1080` yields `(-7.104277, -1.508566)` / `(-7.735544, -3.179381)`, and `2560x1080` yields forward approach `(-8.188315, -1.742414)`, Music arrival/reverse approach `(-8.932235, -3.671232)`, and reverse arrival `(-8.188308, -1.741942)`. Both rendered aspect probes explicitly synchronize 2D physics after GameView layout changes so their PolygonCollider queries remain deterministic. At that characterization checkpoint, no RoomDefinition, PassageDefinition, RoomView, Passage component, direct edge, canonical caller, or authored anchor existed for group `01`.
 

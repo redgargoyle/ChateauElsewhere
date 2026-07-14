@@ -70,7 +70,7 @@ Their `.meta` files were also removed because no serialized asset referenced the
 | `OdditySpriteAnimator` | No current serialized instance; current requirements do not mention an oddity UI animator | Future chapter intent is unresolved and a regression test explicitly tracks the file |
 | `UrpPostProcessingBootstrap` | Searches cameras and adds URP data at runtime | Render-rig parity has not yet been tested after authoring components in-scene |
 | `PlayerMovement` / `CharacterController2D` | Legacy movement path beside point-click movement | Player and guest prefab bindings must be migrated and tested first |
-| `DoorButton`, `DoorPromptSequenceController`, `DoorDataParser`, `DoorCameraSequence`, `RoomVisualCatalog` | Parallel navigation representations | Route content must first be converted into one canonical passage graph |
+| `DoorButton`, `DoorPromptSequenceController`, `DoorDataParser`, `DoorCameraSequence`, `RoomVisualCatalog` | Parallel navigation representations; Slice 1.5 now places every one of the 19 approved room backgrounds in canonical `RoomDefinition` data | Runtime consumers and all route content must first migrate to the canonical room/passage graph; no legacy file is deleted merely because its replacement data now exists |
 | `StaticNoisePlayer`, `StaticSetImagePlayer`, `StaticSet`, `StaticFrameGroup` | Overlapping frame/static presentation | Serialized content and behavior comparison is still required |
 | guest/player footstep and room ambience pairs | Similar implementations | Data and behavioral differences must be captured before merging |
 

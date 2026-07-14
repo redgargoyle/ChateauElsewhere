@@ -80,7 +80,7 @@ Assets/_Chateau/Runtime/Core/IGameService.cs,128,1c961a9317ed988e529db1b3f57e940
 Assets/_Chateau/Runtime/Core/StateMachine.cs,62,4e0ce2b3c2774a1191e91420f15776d9a09cad762586a9be1f2920c98798b8e7,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Core/ValidationReport.cs,101,55837cc169746a77d6da17073a34ab903b09da10bec14e71668782a3177c2d0c,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Data/DefinitionAssetBase.cs,27,06084c1839309fe191e24e23572b9339d0510aeef79d0ca64af1e6e80bce5163,0,0,0,0,0,0,
-Assets/_Chateau/Runtime/Data/GameDatabase.cs,52,76b69ae34500156a62be031023bad48003ce2658271a08ff6d3978e46a6c7c56,0,0,0,0,0,0,
+Assets/_Chateau/Runtime/Data/GameDatabase.cs,349,98349c1905906c81b36eb246b11f52be1ad76545c2b68ad70799df1e87a8fda8,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Gameplay/ActorControllerBase.cs,6,364fd75172285f905215ca4a1877e222fbb29d77563b62d01d563e03ad708daf,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Gameplay/ActorMotorBase.cs,6,9bce011a0102b1c9e0c8950999f7d01590ecc7e2138f48c714162be4519f55ad,0,0,0,0,0,0,
 Assets/_Chateau/Runtime/Gameplay/ActorPresenterBase.cs,6,3bbd8f29016ec483aa3807fc68ee2baa45db5fb662196dde3d50fe85e25c8e87,0,0,0,0,0,0,

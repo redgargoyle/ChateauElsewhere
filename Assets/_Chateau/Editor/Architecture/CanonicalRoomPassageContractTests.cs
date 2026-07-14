@@ -202,6 +202,25 @@ public sealed class CanonicalRoomPassageContractTests
             Is.EqualTo(BilliardButlersPantryPassageGuid));
         Assert.That(AssetDatabase.AssetPathToGUID(GameDatabasePath), Is.EqualTo("6b7925c3057e11ad688e890ddb547110"));
 
+        string[] completedRoomPaths =
+        {
+            "Assets/_Chateau/Data/World/Rooms/Room_ServiceCorridor.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_Kitchen.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_Chapel.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_GrandEntranceHallRearView.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_Conservatory.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_SideStairMudroom.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_UpperSittingHall.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_UpperGallery.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_MasterBedroomSuite.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_Nursery.asset",
+            "Assets/_Chateau/Data/World/Rooms/Room_BlueBedroom.asset"
+        };
+        CanonicalRoomDefinition[] completedRooms = completedRoomPaths
+            .Select(AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>)
+            .ToArray();
+        Assert.That(completedRooms.All(room => room != null), Is.True);
+
         string[] definitionGuids = new[]
         {
             AssetDatabase.AssetPathToGUID(EntranceRoomPath),
@@ -226,9 +245,9 @@ public sealed class CanonicalRoomPassageContractTests
             AssetDatabase.AssetPathToGUID(BilliardRoomPath),
             AssetDatabase.AssetPathToGUID(ButlersPantryBilliardPassagePath),
             AssetDatabase.AssetPathToGUID(BilliardButlersPantryPassagePath)
-        };
+        }.Concat(completedRoomPaths.Select(AssetDatabase.AssetPathToGUID)).ToArray();
         Assert.That(definitionGuids.All(guid => !string.IsNullOrEmpty(guid)), Is.True);
-        Assert.That(definitionGuids.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(22));
+        Assert.That(definitionGuids.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(33));
 
         Assert.That(entrance.StableId, Is.EqualTo("room.grand-entrance-hall"));
         Assert.That(entrance.SchemaVersion, Is.EqualTo(1));
@@ -432,7 +451,7 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(billiardButlersPantry.PromptText, Is.EqualTo("Open Door"));
         Assert.That(billiardButlersPantry.LegacyDoorId, Is.EqualTo("BilliardRoom_ButlersPantry"));
 
-        Assert.That(database.Definitions, Has.Count.EqualTo(22));
+        Assert.That(database.Definitions, Has.Count.EqualTo(33));
         Assert.That(database.Definitions[0], Is.SameAs(entrance));
         Assert.That(database.Definitions[1], Is.SameAs(drawing));
         Assert.That(database.Definitions[2], Is.SameAs(forward));
@@ -455,6 +474,7 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(database.Definitions[19], Is.SameAs(billiard));
         Assert.That(database.Definitions[20], Is.SameAs(butlersPantryBilliard));
         Assert.That(database.Definitions[21], Is.SameAs(billiardButlersPantry));
+        Assert.That(database.Definitions.Skip(22), Is.EqualTo(completedRooms));
 
         string[] stableIds = database.Definitions.Select(definition => definition.StableId).ToArray();
         Assert.That(stableIds, Is.EqualTo(new[]
@@ -480,9 +500,20 @@ public sealed class CanonicalRoomPassageContractTests
             "passage.butlers-pantry.dining-room",
             "room.billiard-room",
             "passage.butlers-pantry.billiard-room",
-            "passage.billiard-room.butlers-pantry"
+            "passage.billiard-room.butlers-pantry",
+            "room.service-corridor",
+            "room.kitchen",
+            "room.chapel",
+            "room.grand-entrance-hall-rear-view",
+            "room.conservatory",
+            "room.side-stair-mudroom",
+            "room.upper-sitting-hall",
+            "room.upper-gallery",
+            "room.master-bedroom-suite",
+            "room.nursery",
+            "room.blue-bedroom"
         }));
-        Assert.That(stableIds.Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(22));
+        Assert.That(stableIds.Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(33));
 
         string databaseText = File.ReadAllText(GameDatabasePath);
         foreach (string definitionGuid in definitionGuids)

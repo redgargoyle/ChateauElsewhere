@@ -39,6 +39,7 @@ Assets/Editor/SubtitlePresentationRegressionTests.cs,EditMode Test,MOVE_REWRITE,
 Assets/Editor/UnityEditorAudioGuard.cs,Editor Diagnostic,KEEP_NARROW,Editor/Diagnostics/Audio,Keep only if it prevents editor audio side effects.
 Assets/_Chateau/Editor/Architecture/ArchitectureFoundationTests.cs,EditMode Test,MOVE_KEEP,Tests/EditMode/Core,Core architecture contracts.
 Assets/_Chateau/Editor/Architecture/CanonicalRoomPassageContractTests.cs,EditMode Test,MOVE_KEEP,Tests/EditMode/Game/World/Navigation,Canonical data/scene contracts.
+Assets/_Chateau/Editor/Architecture/GameDatabaseDefinitionContractTests.cs,EditMode Test,MOVE_KEEP,Tests/EditMode/Game/World/Data,Retain exact 19-room catalog typed lookup duplicate/alias/reference validation and passive-data scene-boundary coverage.
 Assets/_Chateau/Editor/Architecture/GameRootInstaller.cs,Migration Tool,DELETE_OR_NARROW_AFTER_FINAL_SCENE,Editor/Migration/Core,Delete once final scenes are authored; keep only the read-only validator if useful; Slice 1.3 authors strict startup and proves exact serialized service/binder set equality including inactive objects.
 Assets/_Chateau/Editor/Architecture/PassageMigrationCertificationTests.cs,EditMode Test,MOVE_KEEP_UNTIL_COMPLETE,Tests/EditMode/Game/World/Navigation,Retire migration-stage assertions after all passages canonical; retain final invariants.
 Assets/_Chateau/Editor/Architecture/SetPieceViewTests.cs,EditMode Test,MOVE_KEEP,Tests/EditMode/Game/World/SetPieces,Expand across all rooms.

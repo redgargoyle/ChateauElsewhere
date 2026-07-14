@@ -237,7 +237,18 @@ public sealed class StableIdentityContractTests
             "room.ballroom",
             "room.dining-room",
             "room.butlers-pantry",
-            "room.billiard-room"
+            "room.billiard-room",
+            "room.service-corridor",
+            "room.kitchen",
+            "room.chapel",
+            "room.grand-entrance-hall-rear-view",
+            "room.conservatory",
+            "room.side-stair-mudroom",
+            "room.upper-sitting-hall",
+            "room.upper-gallery",
+            "room.master-bedroom-suite",
+            "room.nursery",
+            "room.blue-bedroom"
         };
         string[] expectedPassageIds =
         {
@@ -272,7 +283,7 @@ public sealed class StableIdentityContractTests
             .Where(definition => definition != null)
             .ToArray();
 
-        Assert.That(rooms, Has.Length.EqualTo(8));
+        Assert.That(rooms, Has.Length.EqualTo(19));
         Assert.That(passages, Has.Length.EqualTo(14));
         Assert.That(rooms.Select(definition => definition.StableId), Is.EquivalentTo(expectedRoomIds));
         Assert.That(passages.Select(definition => definition.StableId), Is.EquivalentTo(expectedPassageIds));

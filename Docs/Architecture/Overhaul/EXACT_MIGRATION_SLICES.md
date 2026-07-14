@@ -134,7 +134,7 @@ Migrate one reciprocal pair per commit:
 2. Service Corridor / Kitchen;
 3. Service Corridor / Chapel.
 
-Each commit creates missing room definition/view, passage definitions, scene passages, callers and tests.
+Each commit reuses the Slice 1.5 canonical RoomDefinitions, creates only the missing RoomView plus passage definitions/scene passages, migrates callers, and adds tests. Never duplicate or replace a room definition that Slice 1.5 already authored.
 
 ### 2.3 Groups 10–12
 
