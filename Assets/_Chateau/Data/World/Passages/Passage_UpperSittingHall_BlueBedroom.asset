@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca421b4be57a4e08aad75608f76ce6e4, type: 3}
+  m_Name: Passage_UpperSittingHall_BlueBedroom
+  m_EditorClassIdentifier: Assembly-CSharp::Chateau.World.Rooms.Passages.PassageDefinition
+  stableId: passage.upper-sitting-hall.blue-bedroom
+  schemaVersion: 1
+  sourceRoom: {fileID: 11400000, guid: 2ce92b6f43ff440e95570359e18cce0f, type: 2}
+  destinationRoom: {fileID: 11400000, guid: 98e71938214a483786829422c9a47278, type: 2}
+  reverse: {fileID: 11400000, guid: 84148ad6c0674b03bbda8bcb0690325d, type: 2}
+  kind: 0
+  promptText: Open Door
+  legacyDoorId: UpperSittingHall_BlueBedroom
