@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -757,6 +758,78 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void MainMenuAudioSettingsSupportsKeyboardAndGamepadNavigation()
+    {
+        Scene mainMenuScene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+        MainMenuController controller = FindSceneComponent<MainMenuController>(mainMenuScene);
+        EventSystem eventSystem = FindSceneComponent<EventSystem>(mainMenuScene);
+        float originalDialogueVolume = GameAudioSettings.GetVolume(GameAudioChannel.Dialogue);
+
+        Assert.That(eventSystem, Is.Not.Null);
+        MethodInfo eventSystemOnEnable = typeof(EventSystem).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(eventSystemOnEnable, Is.Not.Null);
+        eventSystemOnEnable.Invoke(eventSystem, null);
+        Assert.That(EventSystem.current, Is.SameAs(eventSystem));
+
+        try
+        {
+            InvokePrivateInstanceMethod(controller, "Awake");
+            InvokePrivateInstanceMethod(controller, "ToggleAudioSettingsPanel");
+
+            Slider[] sliders =
+            {
+                FindSceneObject(mainMenuScene, "Slider_Dialogue").GetComponent<Slider>(),
+                FindSceneObject(mainMenuScene, "Slider_GameSounds").GetComponent<Slider>(),
+                FindSceneObject(mainMenuScene, "Slider_Atmosphere").GetComponent<Slider>(),
+                FindSceneObject(mainMenuScene, "Slider_Music").GetComponent<Slider>()
+            };
+
+            Assert.That(EventSystem.current.currentSelectedGameObject, Is.SameAs(sliders[0].gameObject), "Opening Settings should focus its first slider.");
+
+            for (int i = 0; i < sliders.Length; i++)
+            {
+                Navigation navigation = sliders[i].navigation;
+                Assert.That(navigation.mode, Is.EqualTo(Navigation.Mode.Explicit));
+                Assert.That(navigation.selectOnUp, Is.SameAs(sliders[(i - 1 + sliders.Length) % sliders.Length]));
+                Assert.That(navigation.selectOnDown, Is.SameAs(sliders[(i + 1) % sliders.Length]));
+                Assert.That(navigation.selectOnLeft, Is.Null, "Left input should adjust the focused slider instead of leaving the modal.");
+                Assert.That(navigation.selectOnRight, Is.Null, "Right input should adjust the focused slider instead of leaving the modal.");
+            }
+
+            sliders[0].SetValueWithoutNotify(0.5f);
+            AxisEventData rightMove = new AxisEventData(eventSystem)
+            {
+                moveDir = MoveDirection.Right,
+                moveVector = Vector2.right
+            };
+            ExecuteEvents.Execute(sliders[0].gameObject, rightMove, ExecuteEvents.moveHandler);
+            Assert.That(sliders[0].value, Is.GreaterThan(0.5f), "Right input should change the focused slider's value.");
+            Assert.That(EventSystem.current.currentSelectedGameObject, Is.SameAs(sliders[0].gameObject));
+
+            AxisEventData downMove = new AxisEventData(eventSystem)
+            {
+                moveDir = MoveDirection.Down,
+                moveVector = Vector2.down
+            };
+            ExecuteEvents.Execute(sliders[0].gameObject, downMove, ExecuteEvents.moveHandler);
+            Assert.That(EventSystem.current.currentSelectedGameObject, Is.SameAs(sliders[1].gameObject), "Down input should focus the next slider.");
+
+            BaseEventData cancelEvent = new BaseEventData(eventSystem);
+            bool cancelHandled = ExecuteEvents.Execute(sliders[1].gameObject, cancelEvent, ExecuteEvents.cancelHandler);
+            RectTransform panel = FindSceneObject(mainMenuScene, "Panel_AudioSettings").GetComponent<RectTransform>();
+            GameObject settingsButton = FindSceneObject(mainMenuScene, "Button_Settings");
+
+            Assert.That(cancelHandled, Is.True, "The selected slider should forward the keyboard/gamepad Cancel event to the menu controller.");
+            Assert.That(panel.gameObject.activeSelf, Is.False, "Cancel should hide the Settings modal.");
+            Assert.That(EventSystem.current.currentSelectedGameObject, Is.SameAs(settingsButton), "Cancel should restore focus to the Settings rail button.");
+        }
+        finally
+        {
+            GameAudioSettings.SetVolume(GameAudioChannel.Dialogue, originalDialogueVolume);
+        }
+    }
+
+    [Test]
     public void PlayerMovementUsesOnlyFloorBoundaryForWalkability()
     {
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
@@ -1437,12 +1510,47 @@ public class NavigationRegressionTests
             text.rectTransform.TransformPoint(new Vector3(textBounds.min.x, textBounds.center.y, 0f)));
         Vector3 textRight = plaque.InverseTransformPoint(
             text.rectTransform.TransformPoint(new Vector3(textBounds.max.x, textBounds.center.y, 0f)));
-        Rect plaqueRect = plaque.rect;
-        float safeLeft = plaqueRect.xMin + plaqueRect.width * 0.26f;
-        float safeRight = plaqueRect.xMin + plaqueRect.width * 0.74f;
+        Rect renderedPlaqueRect = CalculatePreservedAspectRect(plaque);
+        float safeLeft = Mathf.Lerp(renderedPlaqueRect.xMin, renderedPlaqueRect.xMax, 0.17f);
+        float safeRight = Mathf.Lerp(renderedPlaqueRect.xMin, renderedPlaqueRect.xMax, 0.83f);
+        float textCenter = (textLeft.x + textRight.x) * 0.5f;
 
         Assert.That(textLeft.x, Is.GreaterThanOrEqualTo(safeLeft), $"{description} should not overlap the plaque's left ornament.");
         Assert.That(textRight.x, Is.LessThanOrEqualTo(safeRight), $"{description} should not overlap the plaque's right ornament.");
+        Assert.That(
+            textCenter,
+            Is.EqualTo(renderedPlaqueRect.center.x).Within(renderedPlaqueRect.width * 0.04f),
+            $"{description} should be centered on the rendered plaque, including when Preserve Aspect letterboxes its UI rect.");
+    }
+
+    private static Rect CalculatePreservedAspectRect(RectTransform imageRectTransform)
+    {
+        Image image = imageRectTransform.GetComponent<Image>();
+        Rect rect = imageRectTransform.rect;
+
+        Assert.That(image, Is.Not.Null);
+        Assert.That(image.sprite, Is.Not.Null);
+
+        float spriteAspect = image.sprite.rect.width / image.sprite.rect.height;
+        float rectAspect = rect.width / rect.height;
+
+        if (!image.preserveAspect || Mathf.Approximately(spriteAspect, rectAspect))
+        {
+            return rect;
+        }
+
+        if (spriteAspect > rectAspect)
+        {
+            float fittedHeight = rect.width / spriteAspect;
+            rect.y += (rect.height - fittedHeight) * imageRectTransform.pivot.y;
+            rect.height = fittedHeight;
+            return rect;
+        }
+
+        float fittedWidth = rect.height * spriteAspect;
+        rect.x += (rect.width - fittedWidth) * imageRectTransform.pivot.x;
+        rect.width = fittedWidth;
+        return rect;
     }
 
     private static void AssertRectTransformInside(
