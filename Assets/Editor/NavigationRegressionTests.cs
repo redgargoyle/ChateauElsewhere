@@ -809,34 +809,35 @@ public class NavigationRegressionTests
         Assert.That(billiardPantryTrigger, Does.Contain("sourceRoom: Billiard Room"));
         Assert.That(billiardPantryTrigger, Does.Contain("doorName: BilliardRoom_ButlersPantry"));
         Assert.That(billiardPantryTrigger, Does.Contain("destinationRoom: Butlers Pantry"));
-        foreach (string dependenciesBoundTrigger in new[] { pantryBilliardTrigger, billiardPantryTrigger })
+        foreach (string callerBoundTrigger in new[] { pantryBilliardTrigger, billiardPantryTrigger })
         {
-            Assert.That(dependenciesBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain(
+            Assert.That(callerBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(callerBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(callerBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(callerBoundTrigger, Does.Contain(
                 "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
-            Assert.That(dependenciesBoundTrigger, Does.Not.Contain("canonicalPassage:"));
-            Assert.That(dependenciesBoundTrigger, Does.Contain("maxPlayerScreenDistance: 145"));
+            Assert.That(callerBoundTrigger, Does.Contain("maxPlayerScreenDistance: 145"));
         }
+        Assert.That(pantryBilliardTrigger, Does.Contain("canonicalPassage: {fileID: 4100000023}"));
+        Assert.That(billiardPantryTrigger, Does.Contain("canonicalPassage: {fileID: 4100000024}"));
         Assert.That(pantryBilliardPassage, Does.Contain(
             "definition: {fileID: 11400000, guid: 71ea8ce4d4eb8fa7f107abe24d7c903e, type: 2}"));
         Assert.That(pantryBilliardPassage, Does.Contain("sourceRoomView: {fileID: 4100000007}"));
         Assert.That(pantryBilliardPassage, Does.Contain("reversePassage: {fileID: 4100000024}"));
         Assert.That(pantryBilliardPassage, Does.Contain(
-            "approachAnchor:\n    logicalPosition: {x: 2.744461, y: -2.748338}"));
+            "approachAnchor:\n    logicalPosition: {x: 3.244461, y: -3.108338}"));
         Assert.That(pantryBilliardPassage, Does.Contain(
-            "arrivalAnchor:\n    logicalPosition: {x: 6.575521, y: -1.484375}"));
-        Assert.That(pantryBilliardPassage, Does.Contain("anchorMigrationStage: 0"));
+            "arrivalAnchor:\n    logicalPosition: {x: 6.9, y: -1.6}"));
+        Assert.That(pantryBilliardPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(billiardPantryPassage, Does.Contain(
             "definition: {fileID: 11400000, guid: be2f1b94b724dcfa061876e33bce02ca, type: 2}"));
         Assert.That(billiardPantryPassage, Does.Contain("sourceRoomView: {fileID: 4100000008}"));
         Assert.That(billiardPantryPassage, Does.Contain("reversePassage: {fileID: 4100000023}"));
         Assert.That(billiardPantryPassage, Does.Contain(
-            "approachAnchor:\n    logicalPosition: {x: 6.575521, y: -1.484375}"));
+            "approachAnchor:\n    logicalPosition: {x: 6.9, y: -1.6}"));
         Assert.That(billiardPantryPassage, Does.Contain(
-            "arrivalAnchor:\n    logicalPosition: {x: 2.744461, y: -2.748338}"));
-        Assert.That(billiardPantryPassage, Does.Contain("anchorMigrationStage: 0"));
+            "arrivalAnchor:\n    logicalPosition: {x: 3.244461, y: -3.108338}"));
+        Assert.That(billiardPantryPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(legacyDoorDataText, Does.Not.Contain("Butlers_Pantry_BilliardRoom"));
         Assert.That(legacyDoorDataText, Does.Not.Contain("BilliardRoom_ButlersPantry"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));

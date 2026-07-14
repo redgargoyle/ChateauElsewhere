@@ -416,6 +416,97 @@ public sealed class ArchitectureBaselinePlayModeTests
     }
 
     [UnityTest]
+    public IEnumerator ButlersPantryBilliardRoundTripUsesAuthoredCanonicalPassages()
+    {
+        const string DiningRoomName = "Dining Room";
+        const string ButlersPantryRoomName = "Butlers Pantry";
+        const string BilliardRoomName = "Billiard Room";
+        Vector2 pantryAnchor = new Vector2(3.244461f, -3.108338f);
+        Vector2 billiardAnchor = new Vector2(6.9f, -1.6f);
+
+        yield return BootGameplayFromRealMenu();
+
+        MonoBehaviour navigation = RequireSingleSceneComponent("RoomNavigationManager");
+        MonoBehaviour player = RequireComponentOnGameObject("Player", "PointClickPlayerMovement");
+        MonoBehaviour entranceToDining = RequireComponentOnGameObject(
+            "DoorTrigger_GEH_DiningRoom",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour diningToPantry = RequireComponentOnGameObject(
+            "DoorTrigger_DiningRoom_ButlersPantry",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour pantryToBilliard = RequireComponentOnGameObject(
+            "DoorTrigger_Butlers_Pantry_BilliardRoom",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour billiardToPantry = RequireComponentOnGameObject(
+            "DoorTrigger_BilliardRoom_ButlersPantry",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour pantryTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_Butlers_Pantry_BilliardRoom",
+            "DoorTriggerNavigation");
+        MonoBehaviour billiardTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_BilliardRoom_ButlersPantry",
+            "DoorTriggerNavigation");
+        MonoBehaviour pantryView = RequireRoomView("room.butlers-pantry");
+        MonoBehaviour billiardView = RequireRoomView("room.billiard-room");
+
+        Assert.That(GetField<MonoBehaviour>(pantryTrigger, "canonicalPassage"), Is.SameAs(pantryToBilliard));
+        Assert.That(GetField<MonoBehaviour>(billiardTrigger, "canonicalPassage"), Is.SameAs(billiardToPantry));
+        Assert.That(GetField<float>(pantryTrigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+        Assert.That(GetField<float>(billiardTrigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+        Assert.That(GetProperty<object>(pantryToBilliard, "AnchorMigrationStage").ToString(),
+            Is.EqualTo("AuthoredAnchors"));
+        Assert.That(GetProperty<object>(billiardToPantry, "AnchorMigrationStage").ToString(),
+            Is.EqualTo("AuthoredAnchors"));
+        Assert.That(
+            GetProperty<Vector2>(GetProperty<object>(pantryToBilliard, "ApproachAnchor"), "LogicalPosition"),
+            Is.EqualTo(pantryAnchor));
+        Assert.That(
+            GetProperty<Vector2>(GetProperty<object>(pantryToBilliard, "ArrivalAnchor"), "LogicalPosition"),
+            Is.EqualTo(billiardAnchor));
+        Assert.That(
+            GetProperty<Vector2>(GetProperty<object>(billiardToPantry, "ApproachAnchor"), "LogicalPosition"),
+            Is.EqualTo(billiardAnchor));
+        Assert.That(
+            GetProperty<Vector2>(GetProperty<object>(billiardToPantry, "ArrivalAnchor"), "LogicalPosition"),
+            Is.EqualTo(pantryAnchor));
+
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", entranceToDining), Is.True);
+        yield return WaitForCurrentRoom(navigation, DiningRoomName, 60);
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", diningToPantry), Is.True);
+        yield return WaitForCurrentRoom(navigation, ButlersPantryRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<bool>(pantryView, "IsVisible"), Is.True);
+        Assert.That(GetProperty<bool>(billiardView, "IsVisible"), Is.False);
+        InvokeMethod(player, "SetInputEnabled", true);
+        Assert.That((bool)InvokeMethod(player, "TryWarpToExact", pantryAnchor), Is.True);
+        SetField(pantryTrigger, "lastPointerActivationFrame", -1);
+        InvokeMethod(pantryTrigger, "ActivateDoor");
+        yield return WaitForCurrentRoom(navigation, BilliardRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<Vector2>(player, "LogicalPosition"), Is.EqualTo(billiardAnchor));
+        Assert.That(GetProperty<bool>(pantryView, "IsVisible"), Is.False);
+        Assert.That(GetProperty<bool>(billiardView, "IsVisible"), Is.True);
+        SetField(billiardTrigger, "lastPointerActivationFrame", -1);
+        InvokeMethod(billiardTrigger, "ActivateDoor");
+        yield return WaitForCurrentRoom(navigation, ButlersPantryRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<Vector2>(player, "LogicalPosition"), Is.EqualTo(pantryAnchor));
+        Assert.That(GetProperty<bool>(pantryView, "IsVisible"), Is.True);
+        Assert.That(GetProperty<bool>(billiardView, "IsVisible"), Is.False);
+        AssertFixedRenderingResolution();
+        Debug.Log(
+            $"[Slice21ButlersBilliardPlayMode] resolution={Screen.width}x{Screen.height} " +
+            $"pantry={Format(pantryAnchor)} billiard={Format(billiardAnchor)} " +
+            "callers=bound stages=authored-anchors threshold=145");
+    }
+
+    [UnityTest]
     public IEnumerator Chapter2PanicFrameHasApprovedGuestsAndStableRenderedEvidence()
     {
         yield return BootGameplayFromRealMenu();
@@ -783,6 +874,16 @@ public sealed class ArchitectureBaselinePlayModeTests
         Assert.That(property, Is.Not.Null,
             $"Missing property '{propertyName}' on {owner.GetType().FullName}.");
         return (T)property.GetValue(owner);
+    }
+
+    private static T GetField<T>(object owner, string fieldName)
+    {
+        FieldInfo field = owner.GetType().GetField(
+            fieldName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null,
+            $"Missing field '{fieldName}' on {owner.GetType().FullName}.");
+        return (T)field.GetValue(owner);
     }
 
     private static void SetField(object owner, string fieldName, object value)

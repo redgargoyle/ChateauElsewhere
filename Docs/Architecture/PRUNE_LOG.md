@@ -63,6 +63,18 @@ Their `.meta` files were also removed because no serialized asset referenced the
 | Purple-armchair actor projection and blocker-owned sorting | `RoomProjectedEntity` and `ObjectMovementBlocker2D` both rewrote one static chair cutout from incompatible depth spaces | One static `SetPieceView` owns room-local order `8289`; the same blocker/polygon owns navigation only | Before/after writer characterization; in-place three-asset migration with unchanged document IDs/order; bound lifecycle identity; exact art/transform/polygon checks; blocker no-op proof; full Unity gate. |
 | Purple-sofa blocker-owned sorting | `ObjectMovementBlocker2D` derived visual order from collider world bounds for a static sofa with no explicit presentation owner | One static `SetPieceView` owns room-local order `5385`; the same blocker/polygon owns navigation only | Before/after writer characterization; exact three-asset component graft and document-order audit; bound lifecycle identity; exact art/transform/polygon checks; blocker no-op proof; full Unity gate. |
 
+## Slice 2.1 Group 06 no-prune evidence
+
+Group 06 is a compatibility migration of the Butler's Pantry/Billiard Room reciprocal passage pair, not a deletion or final ownership slice. It deliberately deletes no source file, scene document, prefab, asset, `.meta` file, GUID, trigger, collider, blocker, cutout, or legacy navigation representation. The existing trigger and passage documents remain in their original order and retain their identities; the scene change is limited to binding the two existing callers, replacing the four authored anchor coordinates for this pair, and advancing the two existing rollout-stage values.
+
+| Retained candidate / content | Current Slice 2.1 evidence | Why pruning is still unsafe / future gate |
+|---|---|---|
+| `DoorTriggerNavigation`, `RoomNavigationManager`, and `INavigationService` compatibility facade | Gameplay now contains 14 bound canonical callers covering seven reciprocal pairs, including Group 06; 31 of 45 trigger callers remain null and continue through the legacy-compatible route | Retain until all 45 triggers use canonical passages, the target `NavigationService`/`PassageInteraction` owns execution, serialized references are migrated, and every directed transition passes parity tests |
+| Legacy door catalogs, parsers, prompt/camera sequences, and room visual representations | Group 06 certification protects exact passage-definition hashes, reciprocal topology, authored anchors, room visibility, event/audio behavior, and preserved legacy data | Retain until code, serialized, UnityEvent/animation/reflection/resource, and behavioral evidence proves every consumer has moved to the single canonical graph |
+| Billiard Room's three blockers/cutouts and their collision/occlusion data | Group 06 certification records the exact blocker/cutout inventory while the lifecycle gate traverses the calibrated authored arrival | These are required world content, not dead-code candidates; any later `SetPieceView` ownership migration must preserve collision, occlusion, transforms, document IDs, and GUIDs before old writer logic can be removed |
+
+No Group 06 deletion may be inferred from a passing text-reference scan alone. A future pruning slice must fill the deletion-proof template below and commit the removal separately from route migration.
+
 ## Quarantined for review, not deleted
 
 | Candidate | Why it looks redundant | Why deletion is not yet safe |
@@ -70,7 +82,7 @@ Their `.meta` files were also removed because no serialized asset referenced the
 | `OdditySpriteAnimator` | No current serialized instance; current requirements do not mention an oddity UI animator | Future chapter intent is unresolved and a regression test explicitly tracks the file |
 | `UrpPostProcessingBootstrap` | Searches cameras and adds URP data at runtime | Render-rig parity has not yet been tested after authoring components in-scene |
 | `PlayerMovement` / `CharacterController2D` | Legacy movement path beside point-click movement | Player and guest prefab bindings must be migrated and tested first |
-| `DoorButton`, `DoorPromptSequenceController`, `DoorDataParser`, `DoorCameraSequence`, `RoomVisualCatalog` | Parallel navigation representations; Slice 1.5 now places every one of the 19 approved room backgrounds in canonical `RoomDefinition` data | Runtime consumers and all route content must first migrate to the canonical room/passage graph; no legacy file is deleted merely because its replacement data now exists |
+| `DoorTriggerNavigation`, `RoomNavigationManager`, `DoorButton`, `DoorPromptSequenceController`, `DoorDataParser`, `DoorCameraSequence`, `RoomVisualCatalog` | Parallel navigation representations; Slice 1.5 places all 19 approved room backgrounds in canonical `RoomDefinition` data, and Slice 2.1 advances seven reciprocal passage pairs | Only 14 of 45 Gameplay trigger callers are bound and 31 remain legacy/null; runtime consumers, route content, interaction/prompt/audio/camera behavior, and target service ownership must all migrate before any legacy file is deleted |
 | `StaticNoisePlayer`, `StaticSetImagePlayer`, `StaticSet`, `StaticFrameGroup` | Overlapping frame/static presentation | Serialized content and behavior comparison is still required |
 | guest/player footstep and room ambience pairs | Similar implementations | Data and behavioral differences must be captured before merging |
 
