@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using TMPro;
 #if ENABLE_INPUT_SYSTEM
@@ -17,6 +18,7 @@ public class MainMenuController : MonoBehaviour
     private const string DefaultGameplaySceneName = "Gameplay";
     private const string BackgroundImageObjectName = "Panel_Background";
     private const string ButtonOverlayName = "Button_StateOverlay";
+    private const string ButtonLabelBackdropName = "Button_LabelBackdrop";
     private const string ButtonLabelName = "Text_Label";
     private const string TitlePlaqueObjectName = "Image_TitlePlaque";
     private const string DeveloperCreditObjectName = "Text_DeveloperCredit";
@@ -40,6 +42,8 @@ public class MainMenuController : MonoBehaviour
     private static readonly Color Plum = new Color(0.25f, 0.075f, 0.16f, 1f);
     private static readonly Color Parchment = new Color(0.89f, 0.80f, 0.65f, 0.98f);
     private static readonly Color Gold = new Color(0.70f, 0.49f, 0.19f, 1f);
+    private static readonly Dictionary<Font, TMP_FontAsset> RuntimeFontAssetsBySource =
+        new Dictionary<Font, TMP_FontAsset>();
 
     [SerializeField] private string newGameSceneName = DefaultGameplaySceneName;
 
@@ -53,21 +57,32 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Menu Visuals")]
     [SerializeField] private Image backgroundImage;
-    [SerializeField] private Sprite menuBackgroundSprite;
+    [SerializeField] private Sprite primaryMenuBackgroundSprite;
+    [FormerlySerializedAs("menuBackgroundSprite")]
+    [SerializeField] private Sprite legacyMenuBackgroundSprite;
     [SerializeField] private Color backgroundTint = new Color(0.52f, 0.48f, 0.58f, 1f);
-    [SerializeField] private Sprite newGameButtonSprite;
-    [SerializeField] private Sprite continueButtonSprite;
-    [SerializeField] private Sprite settingsButtonSprite;
-    [SerializeField] private Sprite exitButtonSprite;
+    [SerializeField] private Sprite sharedButtonFrameSprite;
+    [FormerlySerializedAs("newGameButtonSprite")]
+    [SerializeField] private Sprite legacyNewGameButtonSprite;
+    [FormerlySerializedAs("continueButtonSprite")]
+    [SerializeField] private Sprite legacyContinueButtonSprite;
+    [FormerlySerializedAs("settingsButtonSprite")]
+    [SerializeField] private Sprite legacySettingsButtonSprite;
+    [FormerlySerializedAs("exitButtonSprite")]
+    [SerializeField] private Sprite legacyExitButtonSprite;
     [SerializeField] private Image titlePlaqueImage;
-    [SerializeField] private Sprite titlePlaqueSprite;
+    [FormerlySerializedAs("titlePlaqueSprite")]
+    [SerializeField] private Sprite primaryTitlePlaqueSprite;
+    [SerializeField] private Sprite legacyTitlePlaqueSprite;
     [SerializeField] private Color buttonOverlayHoverColor = new Color(0.88f, 0.53f, 0.16f, 0.24f);
     [SerializeField] private Color buttonOverlayPressedColor = new Color(0.06f, 0.035f, 0.02f, 0.50f);
 
     [Header("Title Visuals")]
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI developerCreditText;
-    [SerializeField] private Font titleSourceFont;
+    [SerializeField] private Font primaryTitleSourceFont;
+    [FormerlySerializedAs("titleSourceFont")]
+    [SerializeField] private Font legacyTitleSourceFont;
     [SerializeField] private TMP_FontAsset titleFontAsset;
     [SerializeField] private Color titleColor = new Color(0.94f, 0.86f, 0.72f, 1f);
     [SerializeField] private float titleFontSize = 48f;
@@ -99,6 +114,7 @@ public class MainMenuController : MonoBehaviour
     private readonly List<AudioSliderBinding> audioSettingsBindings = new List<AudioSliderBinding>();
     private bool audioSettingsVisible;
     private bool cursorStyleChooserVisible;
+    private TMP_FontAsset resolvedTitleFontAsset;
     private Vector2 lastMenuLayoutSize = new Vector2(-1f, -1f);
 
     private void Reset()
@@ -270,17 +286,16 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        titleSourceFont = ResolveFont(titleSourceFont, TitleFontPath, LegacyTitleFontPath);
+        Font sourceFont = ResolveFont(
+            ref primaryTitleSourceFont,
+            ref legacyTitleSourceFont,
+            TitleFontPath,
+            LegacyTitleFontPath);
+        resolvedTitleFontAsset = ResolveTitleFontAsset(sourceFont);
 
-        if (titleSourceFont != null &&
-            (titleFontAsset == null || titleFontAsset.sourceFontFile != titleSourceFont))
+        if (resolvedTitleFontAsset != null)
         {
-            titleFontAsset = TMP_FontAsset.CreateFontAsset(titleSourceFont);
-        }
-
-        if (titleFontAsset != null)
-        {
-            titleText.font = titleFontAsset;
+            titleText.font = resolvedTitleFontAsset;
         }
 
         titleText.text = MenuTitle;
@@ -326,9 +341,9 @@ public class MainMenuController : MonoBehaviour
         ConfigureMenuPanelVisual();
         ConfigureTitlePlaqueVisual();
         DeactivateContinueButton();
-        ConfigureButtonVisual(newGameButton, ref newGameButtonSprite, LegacyNewGameButtonPath, "Start Game");
-        ConfigureButtonVisual(settingsButton, ref settingsButtonSprite, LegacySettingsButtonPath, "Settings");
-        ConfigureButtonVisual(exitButton, ref exitButtonSprite, LegacyExitButtonPath, "Exit");
+        ConfigureButtonVisual(newGameButton, ref legacyNewGameButtonSprite, LegacyNewGameButtonPath, "Start Game");
+        ConfigureButtonVisual(settingsButton, ref legacySettingsButtonSprite, LegacySettingsButtonPath, "Settings");
+        ConfigureButtonVisual(exitButton, ref legacyExitButtonSprite, LegacyExitButtonPath, "Exit");
         ConfigureSettingsButtonAction();
         ConfigureMainMenuNavigation();
 
@@ -357,7 +372,11 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        menuBackgroundSprite = ResolveSprite(menuBackgroundSprite, MenuBackgroundPath, LegacyMenuBackgroundPath);
+        Sprite menuBackgroundSprite = ResolveSprite(
+            ref primaryMenuBackgroundSprite,
+            ref legacyMenuBackgroundSprite,
+            MenuBackgroundPath,
+            LegacyMenuBackgroundPath);
 
         if (menuBackgroundSprite != null)
         {
@@ -442,7 +461,11 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
-        titlePlaqueSprite = ResolveSprite(titlePlaqueSprite, TitlePlaquePath, string.Empty);
+        Sprite titlePlaqueSprite = ResolveSprite(
+            ref primaryTitlePlaqueSprite,
+            ref legacyTitlePlaqueSprite,
+            TitlePlaquePath,
+            string.Empty);
         titlePlaqueImage.sprite = titlePlaqueSprite;
         titlePlaqueImage.color = Color.white;
         titlePlaqueImage.type = Image.Type.Simple;
@@ -460,7 +483,7 @@ public class MainMenuController : MonoBehaviour
         ConfigurePlaqueTextRect(title, new Vector2(0.12f, 0.43f), new Vector2(0.88f, 0.76f));
         developerCreditText = FindOrCreateTmpText(plaqueRect, DeveloperCreditObjectName, developerCreditText);
         developerCreditText.text = DeveloperCredit;
-        developerCreditText.font = titleFontAsset != null ? titleFontAsset : developerCreditText.font;
+        ApplyMenuFont(developerCreditText);
         developerCreditText.fontSize = 21f;
         developerCreditText.enableAutoSizing = true;
         developerCreditText.fontSizeMin = 13f;
@@ -489,14 +512,19 @@ public class MainMenuController : MonoBehaviour
         textRect.SetAsLastSibling();
     }
 
-    private void ConfigureButtonVisual(RectTransform buttonRect, ref Sprite buttonSprite, string fallbackAssetPath, string labelText)
+    private void ConfigureButtonVisual(RectTransform buttonRect, ref Sprite legacyButtonSprite, string fallbackAssetPath, string labelText)
     {
         if (buttonRect == null)
         {
             return;
         }
 
-        buttonSprite = ResolveSprite(buttonSprite, BlankButtonPath, fallbackAssetPath);
+        Sprite buttonSprite = ResolveSprite(
+            ref sharedButtonFrameSprite,
+            ref legacyButtonSprite,
+            BlankButtonPath,
+            fallbackAssetPath);
+        bool usesLegacyBakedSprite = sharedButtonFrameSprite == null && buttonSprite == legacyButtonSprite;
 
         Button button = buttonRect.GetComponent<Button>();
         Image baseImage = buttonRect.GetComponent<Image>();
@@ -520,7 +548,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         ConfigureButtonCursor(buttonRect, button);
-        ConfigureButtonLabel(buttonRect, labelText);
+        ConfigureButtonLabel(buttonRect, labelText, usesLegacyBakedSprite);
     }
 
     private void DeactivateContinueButton()
@@ -530,7 +558,11 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        continueButtonSprite = ResolveSprite(continueButtonSprite, BlankButtonPath, LegacyContinueButtonPath);
+        ResolveSprite(
+            ref sharedButtonFrameSprite,
+            ref legacyContinueButtonSprite,
+            BlankButtonPath,
+            LegacyContinueButtonPath);
         Button button = continueButton.GetComponent<Button>();
 
         if (button != null)
@@ -544,7 +576,7 @@ public class MainMenuController : MonoBehaviour
         continueButton.gameObject.SetActive(false);
     }
 
-    private void ConfigureButtonLabel(RectTransform buttonRect, string value)
+    private void ConfigureButtonLabel(RectTransform buttonRect, string value, bool usesLegacyBakedSprite)
     {
         TextMeshProUGUI label = FindOrCreateTmpText(buttonRect, ButtonLabelName, null, true);
 
@@ -569,8 +601,9 @@ public class MainMenuController : MonoBehaviour
         }
 
         label.gameObject.SetActive(true);
+        ConfigureButtonLabelBackdrop(buttonRect, usesLegacyBakedSprite);
         label.text = value;
-        label.font = titleFontAsset != null ? titleFontAsset : label.font;
+        ApplyMenuFont(label);
         label.fontSize = 38f;
         label.enableAutoSizing = true;
         label.fontSizeMin = 22f;
@@ -602,6 +635,50 @@ public class MainMenuController : MonoBehaviour
         shadow.effectDistance = new Vector2(1.5f, -1.5f);
         shadow.useGraphicAlpha = true;
         labelRect.SetAsLastSibling();
+    }
+
+    private void ConfigureButtonLabelBackdrop(RectTransform buttonRect, bool visible)
+    {
+        Transform existing = buttonRect.Find(ButtonLabelBackdropName);
+
+        if (!visible && existing == null)
+        {
+            return;
+        }
+
+        Image backdrop;
+
+        if (existing != null)
+        {
+            backdrop = existing.GetComponent<Image>();
+
+            if (backdrop == null)
+            {
+                backdrop = existing.gameObject.AddComponent<Image>();
+            }
+        }
+        else
+        {
+            GameObject backdropObject = new GameObject(
+                ButtonLabelBackdropName,
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image));
+            backdropObject.layer = buttonRect.gameObject.layer;
+            backdropObject.transform.SetParent(buttonRect, false);
+            backdrop = backdropObject.GetComponent<Image>();
+        }
+
+        RectTransform backdropRect = backdrop.rectTransform;
+        backdropRect.anchorMin = Vector2.zero;
+        backdropRect.anchorMax = Vector2.one;
+        backdropRect.pivot = new Vector2(0.5f, 0.5f);
+        backdropRect.offsetMin = new Vector2(66f, 20f);
+        backdropRect.offsetMax = new Vector2(-66f, -20f);
+        backdropRect.localScale = Vector3.one;
+        backdrop.color = visible ? new Color(Parchment.r, Parchment.g, Parchment.b, 0.94f) : Color.clear;
+        backdrop.raycastTarget = false;
+        backdropRect.SetAsLastSibling();
     }
 
     private TextMeshProUGUI FindOrCreateTmpText(
@@ -1080,10 +1157,7 @@ public class MainMenuController : MonoBehaviour
             text = textObject.GetComponent<TMP_Text>();
         }
 
-        if (titleFontAsset != null)
-        {
-            text.font = titleFontAsset;
-        }
+        ApplyMenuFont(text);
 
         text.fontSize = fontSize;
         text.fontStyle = fontStyle;
@@ -1260,7 +1334,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         titleLabel.text = "Audio";
-        titleLabel.font = titleFontAsset != null ? titleFontAsset : titleLabel.font;
+        ApplyMenuFont(titleLabel);
         titleLabel.fontSize = 28f;
         titleLabel.color = Plum;
         titleLabel.alignment = TextAlignmentOptions.Center;
@@ -1329,7 +1403,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         text.text = value;
-        text.font = titleFontAsset != null ? titleFontAsset : text.font;
+        ApplyMenuFont(text);
         text.fontSize = fontSize;
         text.color = Plum;
         text.alignment = alignment;
@@ -1515,46 +1589,129 @@ public class MainMenuController : MonoBehaviour
         return colors;
     }
 
-    private Sprite ResolveSprite(Sprite sprite, string editorAssetPath, string fallbackAssetPath)
+    private void ApplyMenuFont(TMP_Text text)
     {
-#if UNITY_EDITOR
-        if (!string.IsNullOrEmpty(editorAssetPath))
+        if (text == null)
         {
-            Sprite primary = AssetDatabase.LoadAssetAtPath<Sprite>(editorAssetPath);
-
-            if (primary != null)
-            {
-                return primary;
-            }
+            return;
         }
 
-        if (sprite == null && !string.IsNullOrEmpty(fallbackAssetPath))
+        TMP_FontAsset fontAsset = GetMenuFontAsset();
+
+        if (fontAsset != null)
         {
-            sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fallbackAssetPath);
+            text.font = fontAsset;
         }
-#endif
-        return sprite;
     }
 
-    private Font ResolveFont(Font font, string editorAssetPath, string fallbackAssetPath)
+    private TMP_FontAsset GetMenuFontAsset()
+    {
+        if (resolvedTitleFontAsset != null)
+        {
+            return resolvedTitleFontAsset;
+        }
+
+        Font sourceFont = ResolveFont(
+            ref primaryTitleSourceFont,
+            ref legacyTitleSourceFont,
+            TitleFontPath,
+            LegacyTitleFontPath);
+        resolvedTitleFontAsset = ResolveTitleFontAsset(sourceFont);
+        return resolvedTitleFontAsset;
+    }
+
+    private TMP_FontAsset ResolveTitleFontAsset(Font sourceFont)
+    {
+        if (titleFontAsset != null &&
+            (sourceFont == null || titleFontAsset.sourceFontFile == null || titleFontAsset.sourceFontFile == sourceFont))
+        {
+            return titleFontAsset;
+        }
+
+        if (sourceFont != null)
+        {
+            if (RuntimeFontAssetsBySource.TryGetValue(sourceFont, out TMP_FontAsset cachedFontAsset))
+            {
+                if (cachedFontAsset != null)
+                {
+                    return cachedFontAsset;
+                }
+
+                RuntimeFontAssetsBySource.Remove(sourceFont);
+            }
+
+            TMP_FontAsset generatedFontAsset = TMP_FontAsset.CreateFontAsset(sourceFont);
+
+            if (generatedFontAsset != null)
+            {
+                generatedFontAsset.name = $"{sourceFont.name} Main Menu Runtime Font";
+                generatedFontAsset.hideFlags = HideFlags.HideAndDontSave;
+                RuntimeFontAssetsBySource[sourceFont] = generatedFontAsset;
+                return generatedFontAsset;
+            }
+        }
+
+        return titleFontAsset != null ? titleFontAsset : TMP_Settings.defaultFontAsset;
+    }
+
+    private Sprite ResolveSprite(
+        ref Sprite primarySprite,
+        ref Sprite fallbackSprite,
+        string editorAssetPath,
+        string fallbackAssetPath)
     {
 #if UNITY_EDITOR
         if (!string.IsNullOrEmpty(editorAssetPath))
         {
-            Font primary = AssetDatabase.LoadAssetAtPath<Font>(editorAssetPath);
+            Sprite editorPrimary = AssetDatabase.LoadAssetAtPath<Sprite>(editorAssetPath);
 
-            if (primary != null)
+            if (editorPrimary != null)
             {
-                return primary;
+                primarySprite = editorPrimary;
             }
         }
 
-        if (font == null && !string.IsNullOrEmpty(fallbackAssetPath))
+        if (!string.IsNullOrEmpty(fallbackAssetPath))
         {
-            font = AssetDatabase.LoadAssetAtPath<Font>(fallbackAssetPath);
+            Sprite editorFallback = AssetDatabase.LoadAssetAtPath<Sprite>(fallbackAssetPath);
+
+            if (editorFallback != null)
+            {
+                fallbackSprite = editorFallback;
+            }
         }
 #endif
-        return font;
+        return primarySprite != null ? primarySprite : fallbackSprite;
+    }
+
+    private Font ResolveFont(
+        ref Font primaryFont,
+        ref Font fallbackFont,
+        string editorAssetPath,
+        string fallbackAssetPath)
+    {
+#if UNITY_EDITOR
+        if (!string.IsNullOrEmpty(editorAssetPath))
+        {
+            Font editorPrimary = AssetDatabase.LoadAssetAtPath<Font>(editorAssetPath);
+
+            if (editorPrimary != null)
+            {
+                primaryFont = editorPrimary;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(fallbackAssetPath))
+        {
+            Font editorFallback = AssetDatabase.LoadAssetAtPath<Font>(fallbackAssetPath);
+
+            if (editorFallback != null)
+            {
+                fallbackFont = editorFallback;
+            }
+        }
+#endif
+        return primaryFont != null ? primaryFont : fallbackFont;
     }
 
     private void PlayMenuSoundscape()
