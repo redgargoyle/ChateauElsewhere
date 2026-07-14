@@ -676,7 +676,7 @@ public class MainMenuController : MonoBehaviour
         backdropRect.offsetMin = new Vector2(66f, 20f);
         backdropRect.offsetMax = new Vector2(-66f, -20f);
         backdropRect.localScale = Vector3.one;
-        backdrop.color = visible ? new Color(Parchment.r, Parchment.g, Parchment.b, 0.94f) : Color.clear;
+        backdrop.color = visible ? new Color(Parchment.r, Parchment.g, Parchment.b, 1f) : Color.clear;
         backdrop.raycastTarget = false;
         backdropRect.SetAsLastSibling();
     }
