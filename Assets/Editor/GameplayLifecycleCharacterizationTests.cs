@@ -4039,8 +4039,7 @@ public sealed class GameplayLifecycleCharacterizationTests
                 new Chateau.Architecture.ValidationReport();
             libraryRoomView.ValidateConfiguration(libraryViewReport);
             Assert.That(libraryViewReport.Messages, Is.Empty);
-            Chateau.Architecture.GameRoot gameRoot =
-                RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+            Chateau.Architecture.GameRoot gameRoot = RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
             List<Chateau.Architecture.ChateauBehaviour> sceneBehaviours =
                 GetPrivateField<List<Chateau.Architecture.ChateauBehaviour>>(gameRoot, "sceneBehaviours");
             Assert.That(sceneBehaviours.Count(item => item == libraryRoomView), Is.EqualTo(1));
@@ -14035,8 +14034,7 @@ public sealed class GameplayLifecycleCharacterizationTests
             }
 
             string projectRoot = System.IO.Directory.GetParent(Application.dataPath).FullName;
-            string sceneText = System.IO.File.ReadAllText(
-                System.IO.Path.Combine(projectRoot, GameplayScenePath));
+            string sceneText = System.IO.File.ReadAllText(System.IO.Path.Combine(projectRoot, GameplayScenePath));
             string serializedForward = RequireSerializedUnityDocument(sceneText, "357269799");
             string serializedReverse = RequireSerializedUnityDocument(sceneText, "2300000124");
             string serializedForwardRect = RequireSerializedUnityDocument(sceneText, "357269798", "224");
@@ -15236,6 +15234,359 @@ public sealed class GameplayLifecycleCharacterizationTests
             SetPrivateField(player, "moveSpeed", originalMoveSpeed);
             cameraManager.panRoomWithMouseEdges = originalPanRoomWithMouseEdges;
             cameraManager.zoomRoomWithMouseWheel = originalZoomRoomWithMouseWheel;
+            cameraManager.ResetRoomLookForPreview();
+            InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator ServiceCorridorSideStairMudroomLegacyPassagesAreCharacterizedAcrossRenderedAspects()
+    {
+        const string ServiceCorridor = "Service Corridor";
+        const string SideStairDisplay = "Side Stair & Mudroom";
+        const string SideStairLegacy = "Side Stair Mudroom";
+        const string ExpectedObservationSha256 =
+            "14315ebb94e0991564058de63ed42aad056f85b3578c8af626acc4e75c1dab3c";
+        MainMenuController menu = RequireExactlyOneInActiveScene<MainMenuController>();
+        menu.NewGame();
+        yield return null;
+        GameObject cursorChoice = GameObject.Find("Button_CursorStyle_01");
+        Assert.That(cursorChoice, Is.Not.Null);
+        cursorChoice.GetComponent<Button>().onClick.Invoke();
+        yield return SetAndWaitForRenderedGameViewResolution(1366, 768);
+        RoomNavigationManager navigation = RequireExactlyOneInActiveScene<RoomNavigationManager>();
+        INavigationService navigationFacade = navigation;
+        PointClickPlayerMovement player = GameObject.Find("Player").GetComponent<PointClickPlayerMovement>();
+        CameraManager cameraManager = RequireExactlyOneInActiveScene<CameraManager>();
+        ChapterManager chapterManager = RequireExactlyOneInActiveScene<ChapterManager>();
+        bool originalInputEnabled = player.InputEnabled;
+        float originalMoveSpeed = GetPrivateValue<float>(player, "moveSpeed");
+        bool originalPan = cameraManager.panRoomWithMouseEdges;
+        bool originalZoom = cameraManager.zoomRoomWithMouseWheel;
+        DoorTriggerNavigation forward = null;
+        DoorTriggerNavigation reverse = null;
+        List<string> profileLines = new List<string>(6);
+        InvokePrivateMethod(chapterManager, "StopChapterCoroutines");
+        chapterManager.StopActiveDialogueForDebugTransition();
+        player.SetInputEnabled(true);
+        SetPrivateField(player, "moveSpeed", 1000f);
+        cameraManager.panRoomWithMouseEdges = false;
+        cameraManager.zoomRoomWithMouseWheel = false;
+        try
+        {
+            foreach (string setupName in new[]
+            {
+                "DoorTrigger_GEH_DiningRoom",
+                "DoorTrigger_DiningRoom_ButlersPantry",
+                "DoorTrigger_ButlersPantry_ServiceCorridor"
+            })
+            {
+                CanonicalPassage setup = RequireSceneObject<DoorTriggerNavigation>(setupName)
+                    .GetComponent<CanonicalPassage>();
+                Assert.That(setup, Is.Not.Null);
+                Assert.That(setup.AnchorMigrationStage, Is.EqualTo(PassageAnchorMigrationStage.AuthoredAnchors));
+                Assert.That(navigationFacade.TryTraverse(setup), Is.True);
+                yield return WaitForSettledLayout();
+            }
+
+            Assert.That(navigation.CurrentRoom, Is.EqualTo(ServiceCorridor));
+            forward = RequireSceneObject<DoorTriggerNavigation>(
+                "DoorTrigger_ServiceCorridor_SideStairMudroom");
+            reverse = RequireSceneObject<DoorTriggerNavigation>(
+                "DoorTrigger_SideStairMudroom_ServiceCorridor");
+            DoorTriggerNavigation group14 = RequireSceneObject<DoorTriggerNavigation>(
+                "StairwayTrigger_SideStairMudroom_UpperSittingHall");
+            foreach (DoorTriggerNavigation trigger in new[] { forward, reverse, group14 })
+            {
+                Assert.That(trigger.GetComponents<Component>(), Has.Length.EqualTo(4));
+                Assert.That(trigger.GetComponent<CanonicalPassage>(), Is.Null);
+                Assert.That(GetPrivateField<CanonicalPassage>(trigger, "canonicalPassage"), Is.Null);
+            }
+            Assert.That(forward.SourceRoom, Is.EqualTo(ServiceCorridor));
+            Assert.That(forward.DoorName, Is.EqualTo("ServiceCorridor_SideStairMudroom"));
+            Assert.That(forward.DestinationRoom, Is.EqualTo(SideStairDisplay));
+            Assert.That(reverse.SourceRoom, Is.EqualTo(SideStairLegacy));
+            Assert.That(reverse.DoorName, Is.EqualTo("SideStairMudroom_ServiceCorridor"));
+            Assert.That(reverse.DestinationRoom, Is.EqualTo(ServiceCorridor));
+            foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
+            {
+                Assert.That(trigger.UsesCameraSequence, Is.False);
+                Assert.That(trigger.IsStairway, Is.False);
+                Assert.That(GetPrivateValue<bool>(trigger, "requirePlayerInSourceRoom"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "useBottomScreenEdgeInteraction"), Is.False);
+                Assert.That(GetPrivateValue<bool>(trigger, "requirePlayerProximity"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "walkPlayerToTriggerWhenFar"), Is.True);
+                Assert.That(GetPrivateValue<bool>(trigger, "autoActivateAfterApproach"), Is.True);
+                Assert.That(GetPrivateValue<float>(trigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+                Assert.That(GetPrivateValue<bool>(trigger, "playDoorOpenSound"), Is.True);
+                Assert.That(trigger.GetComponent<Image>().raycastTarget, Is.True);
+            }
+            RectTransform forwardRect = (RectTransform)forward.transform;
+            RectTransform reverseRect = (RectTransform)reverse.transform;
+            AssertVector2Within(forwardRect.anchoredPosition, new Vector2(112.84f, 11f), 0.0001f,
+                "Service-to-Side-Stair position");
+            AssertVector2Within(forwardRect.sizeDelta, new Vector2(120f, 355.2437f), 0.0001f, "forward size");
+            AssertVector2Within(reverseRect.anchoredPosition, new Vector2(133.27f, -404.6638f), 0.0001f,
+                "Side-Stair-to-Service position");
+            AssertVector2Within(reverseRect.sizeDelta, new Vector2(1405.5f, 131.6725f), 0.0001f, "reverse size");
+            AssertVector2Within((Vector2)forwardRect.localScale, Vector2.one, 0.0001f, "forward scale");
+            AssertVector2Within((Vector2)reverseRect.localScale, Vector2.one, 0.0001f, "reverse scale");
+            DoorTriggerNavigation[] allTriggers = FindInActiveScene<DoorTriggerNavigation>();
+            Assert.That(allTriggers, Has.Length.EqualTo(45));
+            Assert.That(FindInActiveScene<CanonicalRoomView>(), Has.Length.EqualTo(13));
+            Assert.That(FindInActiveScene<CanonicalPassage>(), Has.Length.EqualTo(26));
+            Assert.That(allTriggers.Count(item =>
+                GetPrivateField<CanonicalPassage>(item, "canonicalPassage") != null), Is.EqualTo(26));
+            Assert.That(allTriggers.Count(item =>
+                GetPrivateField<CanonicalPassage>(item, "canonicalPassage") == null), Is.EqualTo(19));
+            RoomContentGroup serviceContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == ServiceCorridor);
+            RoomContentGroup sideContent = FindInActiveScene<RoomContentGroup>()
+                .Single(item => item.RoomName == SideStairLegacy);
+            Assert.That(serviceContent.GetComponent<CanonicalRoomView>(), Is.Not.Null);
+            Assert.That(sideContent.GetComponent<CanonicalRoomView>(), Is.Null);
+            Assert.That(sideContent.GetComponents<Component>(), Has.Length.EqualTo(2));
+            CollectionAssert.AreEqual(
+                new[] { "PlayerBoundary", "AnimatedPatches", "Lighting", "Doors" },
+                sideContent.transform.Cast<Transform>().Select(item => item.name));
+            Assert.That(forward.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(serviceContent));
+            Assert.That(reverse.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(sideContent));
+            Assert.That(group14.GetComponentInParent<RoomContentGroup>(true), Is.SameAs(sideContent));
+            Assert.That(reverse.transform.parent.childCount, Is.EqualTo(2));
+            PolygonCollider2D serviceBoundary = serviceContent.GetComponentsInChildren<PolygonCollider2D>(true)
+                .Single(item => item.name == "PlayerBoundary" && item.transform.parent == serviceContent.transform);
+            PolygonCollider2D sideBoundary = sideContent.GetComponentsInChildren<PolygonCollider2D>(true)
+                .Single(item => item.name == "PlayerBoundary" && item.transform.parent == sideContent.transform);
+            Assert.That(serviceBoundary.GetPath(0), Has.Length.EqualTo(14));
+            Assert.That(sideBoundary.GetPath(0), Has.Length.EqualTo(19));
+            Dictionary<string, string> servicePairs = new Dictionary<string, string>
+            {
+                { "PlayerBlocker_service_corridor_left_table_0", "service_corridor_left_table_0" },
+                { "PlayerBlocker_service_corridor_right_desk_0", "service_corridor_right_desk_0" }
+            };
+            ObjectMovementBlocker2D[] serviceBlockers = FindInActiveScene<ObjectMovementBlocker2D>()
+                .Where(item => item.GetComponentInParent<RoomContentGroup>(true) == serviceContent).ToArray();
+            CollectionAssert.AreEquivalent(servicePairs.Keys, serviceBlockers.Select(item => item.name));
+            foreach (ObjectMovementBlocker2D blocker in serviceBlockers)
+            {
+                Assert.That(blocker.SourceObjectName, Is.EqualTo(servicePairs[blocker.name]));
+                Assert.That(blocker.SourceObject.name, Is.EqualTo(servicePairs[blocker.name]));
+                Assert.That(blocker.SourceRoomName, Is.EqualTo(ServiceCorridor));
+                Assert.That(blocker.BlockingCollider, Is.TypeOf<PolygonCollider2D>());
+            }
+            Chateau.Architecture.GameRoot gameRoot =
+                RequireExactlyOneInActiveScene<Chateau.Architecture.GameRoot>();
+            Assert.That(gameRoot.Context.Database.Definitions, Has.Count.EqualTo(45));
+            CanonicalRoomDefinition sideDefinition = gameRoot.Context.Database.Definitions
+                .OfType<CanonicalRoomDefinition>().Single(item => item.StableId == "room.side-stair-mudroom");
+            Assert.That(sideDefinition.DisplayName, Is.EqualTo(SideStairDisplay));
+            Assert.That(sideDefinition.LegacyNames,
+                Is.EqualTo(new[] { SideStairDisplay, SideStairLegacy }));
+            Assert.That(sideDefinition.MatchesLegacyName(SideStairDisplay), Is.True);
+            Assert.That(sideDefinition.MatchesLegacyName(SideStairLegacy), Is.True);
+            Assert.That(sideDefinition.BackgroundTexture,
+                Is.SameAs(GetPrivateField<Texture>(sideContent, "roomBackgroundTexture")));
+            Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(sideDefinition)),
+                Is.EqualTo("c5153d08442348c49bf2c92c935d8035"));
+            string projectRoot = System.IO.Directory.GetParent(Application.dataPath).FullName;
+            string sceneText = System.IO.File.ReadAllText(
+                System.IO.Path.Combine(projectRoot, GameplayScenePath));
+            string serializedForwardHost = RequireSerializedUnityDocument(sceneText, "2300000170", "1");
+            string serializedReverseHost = RequireSerializedUnityDocument(sceneText, "2300000180", "1");
+            string serializedForward = RequireSerializedUnityDocument(sceneText, "2300000174");
+            string serializedReverse = RequireSerializedUnityDocument(sceneText, "2300000184");
+            string serializedGroup14 = RequireSerializedUnityDocument(sceneText, "2300000189");
+            string serializedForwardRect = RequireSerializedUnityDocument(sceneText, "2300000171", "224");
+            string serializedReverseRect = RequireSerializedUnityDocument(sceneText, "2300000181", "224");
+            Assert.That(serializedForwardHost,
+                Does.Contain("m_Name: DoorTrigger_ServiceCorridor_SideStairMudroom"));
+            Assert.That(serializedReverseHost,
+                Does.Contain("m_Name: DoorTrigger_SideStairMudroom_ServiceCorridor"));
+            Assert.That(serializedForwardRect, Does.Contain("m_AnchoredPosition: {x: 112.84, y: 11}"));
+            Assert.That(serializedForwardRect, Does.Contain("m_SizeDelta: {x: 120, y: 355.2437}"));
+            Assert.That(serializedReverseRect,
+                Does.Contain("m_AnchoredPosition: {x: 133.27, y: -404.6638}"));
+            Assert.That(serializedReverseRect, Does.Contain("m_SizeDelta: {x: 1405.5, y: 131.6725}"));
+            foreach (string document in new[] { serializedForward, serializedReverse, serializedGroup14 })
+            {
+                Assert.That(document, Does.Contain("navigationManager: {fileID: 0}"));
+                Assert.That(document, Does.Contain("doorOpenAudioSource: {fileID: 0}"));
+                Assert.That(document, Does.Contain("player: {fileID: 0}"));
+                Assert.That(document, Does.Contain("doorOpenSoundCatalog: {fileID: 0}"));
+                Assert.That(document, Does.Not.Contain("canonicalPassage:"));
+            }
+            DoorDataParseResult catalog = DoorDataParser.Parse(System.IO.File.ReadAllText(
+                System.IO.Path.Combine(projectRoot, "Assets/Resources/Navigation/doors.txt")));
+            DoorRoute catalogForward = catalog.RoutesByDoorId["ServiceCorridor_SideStairMudroom"];
+            DoorRoute catalogReverse = catalog.RoutesByDoorId["SideStairMudroom_ServiceCorridor"];
+            Assert.That(catalogForward.SourceRoom, Is.EqualTo(ServiceCorridor));
+            Assert.That(catalogForward.DestinationRoom, Is.EqualTo(SideStairDisplay));
+            Assert.That(catalogReverse.SourceRoom, Is.EqualTo(SideStairDisplay));
+            Assert.That(catalogReverse.DestinationRoom, Is.EqualTo(ServiceCorridor));
+            AudioSource passageAudio = FindInActiveScene<AudioSource>()
+                .Single(item => item.gameObject.name == "Audio_DoorOpen");
+            DoorOpenSoundCatalog soundCatalog = Resources.Load<DoorOpenSoundCatalog>("Audio/DoorOpenSoundCatalog");
+            foreach (DoorTriggerNavigation trigger in new[] { forward, reverse })
+            {
+                InvokePrivateMethod(trigger, "ResolveReferences");
+                InvokePrivateMethod(trigger, "ResolvePlayerReference");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenAudioSource");
+                InvokePrivateMethod(trigger, "ResolveDoorOpenSoundCatalog");
+            }
+            AssertDoorTriggerCompatibilityBindings(
+                forward, reverse, navigation, player.transform, passageAudio, soundCatalog);
+            DoorPromptSequenceController prompts = RequireExactlyOneInActiveScene<DoorPromptSequenceController>();
+            TMP_Text promptText = GetPrivateField<TMP_Text>(prompts, "promptText");
+            forward.OnPointerEnter(null);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(forward));
+            Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController),
+                "doorHoverOwner"), Is.SameAs(forward));
+            Assert.That(promptText.gameObject.activeSelf, Is.True);
+            Assert.That(promptText.text, Is.EqualTo("Open Door"));
+            forward.OnPointerExit(null);
+            Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.Null);
+            Vector2Int[] renderedSizes =
+            {
+                new Vector2Int(1366, 768), new Vector2Int(1440, 1080),
+                new Vector2Int(1920, 1080), new Vector2Int(2560, 1080),
+                new Vector2Int(2560, 1080)
+            };
+            for (int profileIndex = 0; profileIndex < renderedSizes.Length; profileIndex++)
+            {
+                Vector2Int size = renderedSizes[profileIndex];
+                bool maximumZoom = profileIndex == renderedSizes.Length - 1;
+                yield return SetAndWaitForRenderedGameViewResolution((uint)size.x, (uint)size.y);
+                cameraManager.ResetRoomLookForPreview();
+                yield return WaitForSettledLayout();
+                Vector2[] forwardCorners = CaptureRectCornersInRoomRoot(
+                    forwardRect, serviceContent.transform);
+                Vector2[] reverseCorners = CaptureRectCornersInRoomRoot(
+                    reverseRect, sideContent.transform);
+                List<string> events = new List<string>();
+                List<Vector2> stopLocals = new List<Vector2>();
+                System.Action recordArrival = () =>
+                {
+                    events.Add($"arrived:{navigation.CurrentRoom}:" +
+                        (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                            "activeNavigationAudioSource") == null ? "audio-idle" : "audio-started"));
+                    Assert.That(TryMapLogicalPointToActiveRoomStageLocal(
+                        player, cameraManager, player.LogicalPosition, out Vector2 local), Is.True);
+                    stopLocals.Add(local);
+                };
+                System.Action recordStop = () => events.Add($"movement-stopped:{navigation.CurrentRoom}:" +
+                    (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                        "activeNavigationAudioSource") == null ? "audio-idle" : "audio-started"));
+                UnityEngine.Events.UnityAction<string> recordRoom = room =>
+                    events.Add($"room-changed:{room}:" +
+                        (GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                            "activeNavigationAudioSource") == passageAudio ? "audio-started" : "audio-idle"));
+                player.ArrivedAtDestination += recordArrival;
+                player.MovementStopped += recordStop;
+                navigation.OnCurrentRoomChanged.AddListener(recordRoom);
+                DoorRoundTripObservation observation = null;
+                try
+                {
+                    IEnumerator routine = ObserveDoorRoundTrip(
+                        navigation, player, cameraManager, forward, reverse,
+                        ServiceCorridor, SideStairDisplay,
+                        new Vector2(-7f, -2f), new Vector2(0f, 0f),
+                        false, maximumZoom, value => observation = value,
+                        destinationContentRoom: SideStairLegacy);
+                    while (routine.MoveNext())
+                    {
+                        yield return routine.Current;
+                    }
+                }
+                finally
+                {
+                    player.ArrivedAtDestination -= recordArrival;
+                    player.MovementStopped -= recordStop;
+                    navigation.OnCurrentRoomChanged.RemoveListener(recordRoom);
+                }
+                Assert.That(observation, Is.Not.Null);
+                Assert.That(observation.HasForwardArrivalRoomViewLocal &&
+                    observation.HasReverseArrivalRoomViewLocal, Is.True);
+                AssertVector2BitExact(observation.ForwardDispatch, observation.ForwardNull,
+                    $"profile {profileIndex} forward legacy dispatch");
+                AssertVector2BitExact(observation.ReverseDispatch, observation.ReverseNull,
+                    $"profile {profileIndex} reverse legacy dispatch");
+                AssertVector2Within(observation.ForwardProductionApproach,
+                    observation.ForwardDispatch, 0.0001f, "forward production approach");
+                AssertVector2Within(observation.ReverseProductionApproach,
+                    observation.ReverseDispatch, 0.0001f, "reverse production approach");
+                Assert.That(stopLocals, Has.Count.EqualTo(2));
+                Assert.That(events, Is.EqualTo(new[]
+                {
+                    $"arrived:{ServiceCorridor}:audio-idle",
+                    $"movement-stopped:{ServiceCorridor}:audio-idle",
+                    $"room-changed:{SideStairDisplay}:audio-started",
+                    $"arrived:{SideStairDisplay}:audio-idle",
+                    $"movement-stopped:{SideStairDisplay}:audio-idle",
+                    $"room-changed:{ServiceCorridor}:audio-started"
+                }));
+                if (DoorTriggerNavigation.HoveredTrigger != null)
+                    DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+                Assert.That(GetPrivateStaticField<DoorTriggerNavigation>(typeof(DoorTriggerNavigation),
+                    "pendingApproachTrigger"), Is.Null);
+                Assert.That(GetPrivateField<PointClickPlayerMovement>(forward,
+                    "pendingApproachPlayer"), Is.Null);
+                Assert.That(GetPrivateField<PointClickPlayerMovement>(reverse,
+                    "pendingApproachPlayer"), Is.Null);
+                Assert.That(GetPrivateStaticField<AudioSource>(typeof(DoorTriggerNavigation),
+                    "activeNavigationAudioSource"), Is.Null);
+                Assert.That(GetPrivateStaticField<object>(typeof(NavigationCursorController),
+                    "doorHoverOwner"), Is.Null);
+                Assert.That(promptText.gameObject.activeSelf, Is.False);
+                string profileLine =
+                    $"[ServiceSideStairLegacyProfile] viewport={size.x}x{size.y} " +
+                    $"zoom={(maximumZoom ? "maximum" : "default")} events={string.Join("|", events)} " +
+                    $"forwardCorners={FormatCornerQuadFingerprint(forwardCorners)} " +
+                    $"reverseCorners={FormatCornerQuadFingerprint(reverseCorners)} " +
+                    $"forwardStopLocal={FormatVectorFingerprint(stopLocals[0])} " +
+                    $"sideLandingLocal={FormatVectorFingerprint(observation.ForwardArrivalRoomViewLocal)} " +
+                    $"reverseStopLocal={FormatVectorFingerprint(stopLocals[1])} " +
+                    $"serviceLandingLocal={FormatVectorFingerprint(observation.ReverseArrivalRoomViewLocal)} " +
+                    FormatDoorRoundTripObservation(observation, false);
+                profileLines.Add(profileLine);
+                Debug.Log(profileLine);
+            }
+            string structuralLine =
+                "[ServiceSideStairLegacyStructure] ids=2300000170/171/174/2300000180/181/184 " +
+                "names=DoorTrigger_ServiceCorridor_SideStairMudroom/" +
+                "DoorTrigger_SideStairMudroom_ServiceCorridor aliases=Side Stair & Mudroom/" +
+                "Side Stair Mudroom geometry=112.84,11/120,355.2437/133.27,-404.6638/1405.5,131.6725 " +
+                "components=4/4 profile=standard-proximity145-autowalk " +
+                "serializedDependencies=null/null callers=null/null counts=45/13/26/26/19/45 " +
+                "roomViews=service-present/side-absent boundaries=14/19 serviceCutoutBlockerPairs=2 " +
+                "group14=2300000189-isolated definition=c5153d08442348c49bf2c92c935d8035 " +
+                "catalog=Service Corridor->Side Stair & Mudroom/Side Stair & Mudroom->Service Corridor";
+            profileLines.Add(structuralLine);
+            Debug.Log(structuralLine);
+            Assert.That(profileLines, Has.Count.EqualTo(6));
+            string observationProfile = string.Join("\n", profileLines);
+            Assert.That(observationProfile.EndsWith("\n", System.StringComparison.Ordinal), Is.False);
+            string actualSha256 = ComputeSha256(observationProfile);
+            Debug.Log($"[ServiceSideStairLegacySha256] {actualSha256}");
+            Assert.That(actualSha256, Is.EqualTo(ExpectedObservationSha256),
+                "The reviewed six-line Group13 legacy-route fingerprint must remain exact.");
+        }
+        finally
+        {
+            if (forward != null) InvokePrivateMethod(forward, "CancelPendingPlayerApproach");
+            if (reverse != null) InvokePrivateMethod(reverse, "CancelPendingPlayerApproach");
+            if (player.HasDestination) InvokePrivateMethod(player, "CancelDestination");
+            if (navigation.CurrentRoom == SideStairDisplay && reverse != null)
+            {
+                navigation.MoveThroughInspectorDoor(
+                    SideStairLegacy, reverse.DoorName, ServiceCorridor, false);
+            }
+            InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
+            if (DoorTriggerNavigation.HoveredTrigger != null)
+                DoorTriggerNavigation.HoveredTrigger.OnPointerExit(null);
+            player.SetInputEnabled(originalInputEnabled);
+            SetPrivateField(player, "moveSpeed", originalMoveSpeed);
+            cameraManager.panRoomWithMouseEdges = originalPan;
+            cameraManager.zoomRoomWithMouseWheel = originalZoom;
             cameraManager.ResetRoomLookForPreview();
             InvokePrivateMethod(cameraManager, "ApplyBackgroundLayout");
         }
