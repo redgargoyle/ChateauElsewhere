@@ -5,8 +5,10 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using TMPro;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -15,6 +17,7 @@ public class NavigationRegressionTests
 {
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
+    private const string MainMenuBlankButtonSpritePath = "Assets/Art/MainMenuRedesign/MainMenu_ButtonBlank.png";
     private const string NavigationManagerPath = "Assets/Scripts/Navigation/RoomNavigationManager.cs";
     private const string NavigationBootstrapPath = "Assets/Scripts/Navigation/RoomNavigationBootstrap.cs";
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
@@ -506,6 +509,7 @@ public class NavigationRegressionTests
         string[] expectedLabels = { "Start Game", "Settings", "Exit" };
         Button[] buttons = FindSceneComponents<Button>(mainMenuScene);
         List<string> activeButtonLabels = new List<string>();
+        Sprite blankButtonFrame = AssetDatabase.LoadAssetAtPath<Sprite>(MainMenuBlankButtonSpritePath);
 
         Assert.That(backgroundObject, Is.Not.Null, "The redesigned menu needs a background image.");
         Assert.That(titleObject, Is.Not.Null, "The layered title TMP object is required.");
@@ -529,11 +533,8 @@ public class NavigationRegressionTests
         Assert.That(backgroundImage.sprite, Is.Not.Null, "The menu background should be a clean layered sprite.");
         Assert.That(titlePlaqueImage, Is.Not.Null);
         Assert.That(titlePlaqueImage.sprite, Is.Not.Null, "The title plaque should be a separate blank sprite.");
-        Assert.That(titlePlaqueObject.GetComponent<RectTransform>().anchorMin.x, Is.EqualTo(1f), "The title plaque should anchor to the right rail.");
-        Assert.That(titlePlaqueObject.GetComponent<RectTransform>().anchorMax.x, Is.EqualTo(1f), "The title plaque should anchor to the right rail.");
         Assert.That(buttons.Length, Is.EqualTo(3), "Only Start Game, Settings, and Exit should be active buttons in the menu scene.");
-
-        Sprite buttonFrame = null;
+        Assert.That(blankButtonFrame, Is.Not.Null, $"The designated blank button frame should exist at {MainMenuBlankButtonSpritePath}.");
 
         for (int i = 0; i < buttonNames.Length; i++)
         {
@@ -547,27 +548,38 @@ public class NavigationRegressionTests
             Assert.That(button, Is.Not.Null);
             Assert.That(buttonImage, Is.Not.Null);
             Assert.That(buttonImage.sprite, Is.Not.Null, $"{buttonNames[i]} should use the shared blank button frame.");
+            Assert.That(buttonImage.sprite, Is.SameAs(blankButtonFrame), $"{buttonNames[i]} should use the designated blank button frame, not a legacy baked-label sprite.");
+            Assert.That(AssetDatabase.GetAssetPath(buttonImage.sprite), Is.EqualTo(MainMenuBlankButtonSpritePath));
             Assert.That(label, Is.Not.Null, $"{buttonNames[i]} needs a TMP label instead of baked lettering.");
+            Assert.That(label.gameObject.activeInHierarchy, Is.True, $"{buttonNames[i]}'s TMP label object should be active.");
+            Assert.That(label.isActiveAndEnabled, Is.True, $"{buttonNames[i]}'s TMP label should be enabled.");
             Assert.That(label.text, Is.EqualTo(expectedLabels[i]));
-            Assert.That(buttonObject.GetComponent<RectTransform>().anchorMin.x, Is.EqualTo(1f), $"{buttonNames[i]} should anchor to the right rail.");
-            Assert.That(buttonObject.GetComponent<RectTransform>().anchorMax.x, Is.EqualTo(1f), $"{buttonNames[i]} should anchor to the right rail.");
-
-            if (buttonFrame == null)
-            {
-                buttonFrame = buttonImage.sprite;
-            }
-            else
-            {
-                Assert.That(buttonImage.sprite, Is.SameAs(buttonFrame), "All active menu actions should share one blank frame sprite.");
-            }
 
             activeButtonLabels.Add(label.text);
         }
 
         Assert.That(activeButtonLabels, Is.EquivalentTo(expectedLabels));
-        Assert.That(FindSceneObject(mainMenuScene, "Button_NewGame").GetComponent<Button>().onClick.GetPersistentMethodName(0), Is.EqualTo(nameof(MainMenuController.NewGame)));
-        Assert.That(FindSceneObject(mainMenuScene, "Button_Exit").GetComponent<Button>().onClick.GetPersistentMethodName(0), Is.EqualTo(nameof(MainMenuController.ExitGame)));
-        Assert.That(File.ReadAllText(MainMenuControllerPath), Does.Contain("button.onClick.AddListener(ToggleAudioSettingsPanel)"), "Settings should continue to use MainMenuController's existing audio-settings action.");
+    }
+
+    [Test]
+    public void MainMenuButtonsKeepExistingControllerHandlers()
+    {
+        Scene mainMenuScene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+        MainMenuController controller = FindSceneComponent<MainMenuController>(mainMenuScene);
+        Button startGameButton = FindSceneObject(mainMenuScene, "Button_NewGame").GetComponent<Button>();
+        Button settingsButton = FindSceneObject(mainMenuScene, "Button_Settings").GetComponent<Button>();
+        Button exitButton = FindSceneObject(mainMenuScene, "Button_Exit").GetComponent<Button>();
+
+        Assert.That(controller, Is.Not.Null, "The menu actions should stay owned by the existing MainMenuController.");
+        AssertPersistentButtonHandler(startGameButton, controller, nameof(MainMenuController.NewGame));
+        AssertPersistentButtonHandler(exitButton, controller, nameof(MainMenuController.ExitGame));
+        Assert.That(settingsButton.onClick.GetPersistentEventCount(), Is.EqualTo(0), "Settings should have no duplicate serialized action before MainMenuController initializes its existing runtime handler.");
+
+        InvokePrivateInstanceMethod(controller, "Awake");
+
+        Assert.That(GetRuntimeListeners(startGameButton.onClick), Is.Empty, "Start Game should not gain duplicate runtime handlers.");
+        AssertRuntimeButtonHandler(settingsButton, controller, "ToggleAudioSettingsPanel");
+        Assert.That(GetRuntimeListeners(exitButton.onClick), Is.Empty, "Exit should not gain duplicate runtime handlers.");
     }
 
     [Test]
@@ -664,15 +676,30 @@ public class NavigationRegressionTests
     [Test]
     public void MainMenuLayoutScalesToShortGameViews()
     {
-        string mainMenuText = File.ReadAllText(MainMenuControllerPath);
+        Scene mainMenuScene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+        GameObject backgroundObject = FindSceneObject(mainMenuScene, "Panel_Background");
+        GameObject titlePlaqueObject = FindSceneObject(mainMenuScene, "Image_TitlePlaque");
+        GameObject continueObject = FindSceneObject(mainMenuScene, "Button_Continue");
+        RectTransform startGameRect = FindSceneObject(mainMenuScene, "Button_NewGame").GetComponent<RectTransform>();
+        RectTransform settingsRect = FindSceneObject(mainMenuScene, "Button_Settings").GetComponent<RectTransform>();
+        RectTransform exitRect = FindSceneObject(mainMenuScene, "Button_Exit").GetComponent<RectTransform>();
 
-        Assert.That(mainMenuText, Does.Contain("ApplyRightRailLayout"), "The responsive layout should own a dedicated right-side menu rail.");
-        Assert.That(mainMenuText, Does.Contain("new Vector2(1f, 1f)"), "The title plaque and button stack should anchor to the right side of the canvas.");
-        Assert.That(mainMenuText, Does.Contain("AspectRatioFitter.AspectMode.EnvelopeParent"), "The menu background should aspect-fill every Game view without letterboxing.");
-        Assert.That(mainMenuText, Does.Contain("buttonSpacing * 2f"), "The three visible buttons need consistent Start Game, Settings, Exit spacing.");
-        Assert.That(mainMenuText, Does.Contain("continueButton.gameObject.SetActive(false)"), "Continue should be hidden before the three-button rail is laid out.");
-        Assert.That(mainMenuText, Does.Not.Contain("buttonSpacing * 3f"), "The old four-button stack should not survive the redesigned layout.");
-        Assert.That(mainMenuText, Does.Not.Contain("PinTopLeft(title"), "The title should no longer use the old top-left coordinates.");
+        Assert.That(backgroundObject, Is.Not.Null, "The responsive layout needs a background image.");
+        AspectRatioFitter backgroundFitter = backgroundObject.GetComponent<AspectRatioFitter>();
+
+        Assert.That(titlePlaqueObject, Is.Not.Null, "The right rail needs a title plaque.");
+        AssertRightAnchored(titlePlaqueObject.GetComponent<RectTransform>(), "The title plaque should anchor to the right rail.");
+        AssertRightAnchored(startGameRect, "Start Game should anchor to the right rail.");
+        AssertRightAnchored(settingsRect, "Settings should anchor to the right rail.");
+        AssertRightAnchored(exitRect, "Exit should anchor to the right rail.");
+        Assert.That(backgroundFitter, Is.Not.Null, "The background should use a component that preserves aspect ratio.");
+        Assert.That(backgroundFitter.aspectMode, Is.EqualTo(AspectRatioFitter.AspectMode.EnvelopeParent), "The background should aspect-fill the viewport.");
+        Assert.That(startGameRect.anchoredPosition.y, Is.GreaterThan(settingsRect.anchoredPosition.y), "Start Game should be above Settings.");
+        Assert.That(settingsRect.anchoredPosition.y, Is.GreaterThan(exitRect.anchoredPosition.y), "Settings should be above Exit.");
+        Assert.That(Mathf.Abs(startGameRect.anchoredPosition.y - settingsRect.anchoredPosition.y), Is.GreaterThan(0f), "The visible actions need vertical separation.");
+        Assert.That(Mathf.Abs(startGameRect.anchoredPosition.y - settingsRect.anchoredPosition.y), Is.EqualTo(Mathf.Abs(settingsRect.anchoredPosition.y - exitRect.anchoredPosition.y)).Within(0.01f), "The three visible actions should have even vertical spacing.");
+        Assert.That(continueObject, Is.Not.Null);
+        Assert.That(continueObject.activeSelf, Is.False, "Continue should be inactive outside the three-button rail.");
     }
 
     [Test]
@@ -1289,6 +1316,14 @@ public class NavigationRegressionTests
         return null;
     }
 
+    private static T FindSceneComponent<T>(Scene scene) where T : Component
+    {
+        T[] components = FindSceneComponents<T>(scene);
+
+        Assert.That(components.Length, Is.EqualTo(1), $"The menu scene should have exactly one active {typeof(T).Name}.");
+        return components[0];
+    }
+
     private static T[] FindSceneComponents<T>(Scene scene) where T : Component
     {
         GameObject[] roots = scene.GetRootGameObjects();
@@ -1327,6 +1362,92 @@ public class NavigationRegressionTests
             }
         }
 
+        return null;
+    }
+
+    private static void AssertRightAnchored(RectTransform rectTransform, string message)
+    {
+        Assert.That(rectTransform, Is.Not.Null, message);
+        Assert.That(rectTransform.anchorMin.x, Is.EqualTo(1f), message);
+        Assert.That(rectTransform.anchorMax.x, Is.EqualTo(1f), message);
+    }
+
+    private static void AssertPersistentButtonHandler(Button button, MainMenuController controller, string expectedMethodName)
+    {
+        Assert.That(button, Is.Not.Null);
+        Assert.That(button.onClick.GetPersistentEventCount(), Is.EqualTo(1), $"{button.name} should have exactly one serialized controller action.");
+        Assert.That(button.onClick.GetPersistentTarget(0), Is.SameAs(controller), $"{button.name} should target this scene's MainMenuController, not another component with the same method name.");
+        Assert.That(button.onClick.GetPersistentTarget(0), Is.TypeOf<MainMenuController>());
+        Assert.That(button.onClick.GetPersistentMethodName(0), Is.EqualTo(expectedMethodName));
+    }
+
+    private static void AssertRuntimeButtonHandler(Button button, MainMenuController controller, string expectedMethodName)
+    {
+        System.Delegate[] listeners = GetRuntimeListeners(button.onClick);
+
+        Assert.That(listeners.Length, Is.EqualTo(1), $"{button.name} should have exactly one runtime controller action.");
+        Assert.That(listeners[0].Target, Is.SameAs(controller), $"{button.name} should target this scene's MainMenuController, not another component with the same method name.");
+        Assert.That(listeners[0].Target, Is.TypeOf<MainMenuController>());
+        Assert.That(listeners[0].Method.Name, Is.EqualTo(expectedMethodName));
+    }
+
+    private static void InvokePrivateInstanceMethod(object target, string methodName)
+    {
+        MethodInfo method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.That(method, Is.Not.Null, $"Expected {target.GetType().Name}.{methodName} to initialize the existing menu actions.");
+        method.Invoke(target, null);
+    }
+
+    private static System.Delegate[] GetRuntimeListeners(UnityEventBase unityEvent)
+    {
+        FieldInfo callsField = typeof(UnityEventBase).GetField("m_Calls", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(callsField, Is.Not.Null, "UnityEventBase should retain its runtime listeners for menu wiring verification.");
+
+        object calls = callsField.GetValue(unityEvent);
+        Assert.That(calls, Is.Not.Null, "The button event should have an invokable-call list.");
+
+        FieldInfo runtimeCallsField = calls.GetType().GetField("m_RuntimeCalls", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(runtimeCallsField, Is.Not.Null, "The button event should expose runtime listeners separately from serialized listeners.");
+
+        System.Collections.IList runtimeCalls = runtimeCallsField.GetValue(calls) as System.Collections.IList;
+        Assert.That(runtimeCalls, Is.Not.Null, "The button event should keep its runtime listener collection.");
+
+        List<System.Delegate> listeners = new List<System.Delegate>();
+
+        for (int i = 0; i < runtimeCalls.Count; i++)
+        {
+            System.Delegate listener = GetInvokableCallDelegate(runtimeCalls[i]);
+            Assert.That(listener, Is.Not.Null, "Each runtime button listener should retain its delegate target.");
+            listeners.Add(listener);
+        }
+
+        return listeners.ToArray();
+    }
+
+    private static System.Delegate GetInvokableCallDelegate(object invokableCall)
+    {
+        for (System.Type type = invokableCall.GetType(); type != null; type = type.BaseType)
+        {
+            PropertyInfo delegateProperty = type.GetProperty("Delegate", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+
+            if (delegateProperty != null && typeof(System.Delegate).IsAssignableFrom(delegateProperty.PropertyType))
+            {
+                return delegateProperty.GetValue(invokableCall) as System.Delegate;
+            }
+
+            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                if (typeof(System.Delegate).IsAssignableFrom(fields[i].FieldType))
+                {
+                    return fields[i].GetValue(invokableCall) as System.Delegate;
+                }
+            }
+        }
+
+        Assert.Fail($"Could not resolve the delegate behind runtime listener type {invokableCall.GetType().FullName}.");
         return null;
     }
 
