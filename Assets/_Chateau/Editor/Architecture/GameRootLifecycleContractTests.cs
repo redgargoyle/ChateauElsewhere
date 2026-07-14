@@ -411,9 +411,9 @@ public sealed class GameRootLifecycleContractTests
         Assert.That(serviceReferences.Count, Is.EqualTo(8));
         Assert.That(serviceReferences.Cast<Match>().All(match => match.Groups["id"].Value != "0"), Is.True);
         Assert.That(serviceReferences.Cast<Match>().Select(match => match.Groups["id"].Value).Distinct().Count(), Is.EqualTo(8));
-        Assert.That(binderReferences.Count, Is.EqualTo(37));
+        Assert.That(binderReferences.Count, Is.EqualTo(40));
         Assert.That(binderReferences.Cast<Match>().All(match => match.Groups["id"].Value != "0"), Is.True);
-        Assert.That(binderReferences.Cast<Match>().Select(match => match.Groups["id"].Value).Distinct().Count(), Is.EqualTo(37));
+        Assert.That(binderReferences.Cast<Match>().Select(match => match.Groups["id"].Value).Distinct().Count(), Is.EqualTo(40));
         Assert.That(
             installerSource,
             Does.Contain("serializedRoot.FindProperty(\"failStartupOnValidationErrors\").boolValue = true;"));

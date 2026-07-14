@@ -694,6 +694,102 @@ public sealed class ArchitectureBaselinePlayModeTests
     }
 
     [UnityTest]
+    public IEnumerator ServiceCorridorChapelRoundTripUsesRoomViewLocalCanonicalPassages()
+    {
+        const string DiningRoomName = "Dining Room";
+        const string ButlersPantryRoomName = "Butlers Pantry";
+        const string ServiceCorridorRoomName = "Service Corridor";
+        const string ChapelRoomName = "Chapel";
+        Vector2 serviceAnchor = new Vector2(-133.2642f, -171.8258f);
+        Vector2 chapelAnchor = new Vector2(461.4019f, -190.7613f);
+
+        yield return BootGameplayFromRealMenu();
+
+        MonoBehaviour navigation = RequireSingleSceneComponent("RoomNavigationManager");
+        MonoBehaviour player = RequireComponentOnGameObject("Player", "PointClickPlayerMovement");
+        MonoBehaviour cameraManager = RequireSingleSceneComponent("CameraManager");
+        MonoBehaviour entranceToDining = RequireComponentOnGameObject(
+            "DoorTrigger_GEH_DiningRoom",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour diningToPantry = RequireComponentOnGameObject(
+            "DoorTrigger_DiningRoom_ButlersPantry",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour pantryToService = RequireComponentOnGameObject(
+            "DoorTrigger_ButlersPantry_ServiceCorridor",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour serviceToChapel = RequireComponentOnGameObject(
+            "DoorTrigger_ServiceCorridor_Chapel",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour chapelToService = RequireComponentOnGameObject(
+            "DoorTrigger_Chapel_ServiceCorridor",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour serviceTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_ServiceCorridor_Chapel",
+            "DoorTriggerNavigation");
+        MonoBehaviour chapelTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_Chapel_ServiceCorridor",
+            "DoorTriggerNavigation");
+        MonoBehaviour serviceView = RequireRoomView("room.service-corridor");
+        MonoBehaviour chapelView = RequireRoomView("room.chapel");
+
+        Assert.That(GetField<MonoBehaviour>(serviceTrigger, "canonicalPassage"), Is.SameAs(serviceToChapel));
+        Assert.That(GetField<MonoBehaviour>(chapelTrigger, "canonicalPassage"), Is.SameAs(chapelToService));
+        Assert.That(GetField<float>(serviceTrigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+        Assert.That(GetField<float>(chapelTrigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+        Assert.That(GetProperty<object>(serviceToChapel, "AnchorMigrationStage").ToString(),
+            Is.EqualTo("AuthoredAnchors"));
+        Assert.That(GetProperty<object>(chapelToService, "AnchorMigrationStage").ToString(),
+            Is.EqualTo("AuthoredAnchors"));
+        AssertRoomViewLocalPassageAnchors(serviceToChapel, serviceAnchor, chapelAnchor);
+        AssertRoomViewLocalPassageAnchors(chapelToService, chapelAnchor, serviceAnchor);
+
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", entranceToDining), Is.True);
+        yield return WaitForCurrentRoom(navigation, DiningRoomName, 60);
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", diningToPantry), Is.True);
+        yield return WaitForCurrentRoom(navigation, ButlersPantryRoomName, 60);
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", pantryToService), Is.True);
+        yield return WaitForCurrentRoom(navigation, ServiceCorridorRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<bool>(serviceView, "IsVisible"), Is.True);
+        Assert.That(GetProperty<bool>(chapelView, "IsVisible"), Is.False);
+        InvokeMethod(player, "SetInputEnabled", true);
+        Vector2 serviceApproach = ResolvePassageAnchorLogicalPosition(
+            serviceToChapel,
+            "ApproachAnchor",
+            player);
+        Assert.That((bool)InvokeMethod(player, "TryWarpToExact", serviceApproach), Is.True);
+        yield return null;
+        AssertRoomViewLocalPlayerPosition(player, cameraManager, serviceAnchor, "Service approach");
+
+        SetField(serviceTrigger, "lastPointerActivationFrame", -1);
+        InvokeMethod(serviceTrigger, "ActivateDoor");
+        yield return WaitForCurrentRoom(navigation, ChapelRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<bool>(serviceView, "IsVisible"), Is.False);
+        Assert.That(GetProperty<bool>(chapelView, "IsVisible"), Is.True);
+        AssertRoomViewLocalPlayerPosition(player, cameraManager, chapelAnchor, "Chapel arrival");
+
+        SetField(chapelTrigger, "lastPointerActivationFrame", -1);
+        InvokeMethod(chapelTrigger, "ActivateDoor");
+        yield return WaitForCurrentRoom(navigation, ServiceCorridorRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<bool>(serviceView, "IsVisible"), Is.True);
+        Assert.That(GetProperty<bool>(chapelView, "IsVisible"), Is.False);
+        AssertRoomViewLocalPlayerPosition(player, cameraManager, serviceAnchor, "Service return arrival");
+        AssertFixedRenderingResolution();
+        Debug.Log(
+            $"[Slice22Group09PlayMode] resolution={Screen.width}x{Screen.height} " +
+            $"serviceLocal={Format(serviceAnchor)} chapelLocal={Format(chapelAnchor)} " +
+            "callers=bound stages=authored-anchors space=room-view-local threshold=145 blockers=2/3");
+    }
+
+    [UnityTest]
     public IEnumerator Chapter2PanicFrameHasApprovedGuestsAndStableRenderedEvidence()
     {
         yield return BootGameplayFromRealMenu();

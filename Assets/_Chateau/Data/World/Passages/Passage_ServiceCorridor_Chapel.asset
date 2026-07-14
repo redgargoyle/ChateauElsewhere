@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca421b4be57a4e08aad75608f76ce6e4, type: 3}
+  m_Name: Passage_ServiceCorridor_Chapel
+  m_EditorClassIdentifier: Assembly-CSharp::Chateau.World.Rooms.Passages.PassageDefinition
+  stableId: passage.service-corridor.chapel
+  schemaVersion: 1
+  sourceRoom: {fileID: 11400000, guid: 85d51b6fcb4840458d45f66bbf6c233b, type: 2}
+  destinationRoom: {fileID: 11400000, guid: e3102dbfecc44551b6443ca88625a924, type: 2}
+  reverse: {fileID: 11400000, guid: 47e06869bf2b47a2980b0d02a53ee1df, type: 2}
+  kind: 0
+  promptText: Open Door
+  legacyDoorId: ServiceCorridor_Chapel

@@ -30,6 +30,8 @@ public sealed class CanonicalRoomPassageContractTests
         "Assets/_Chateau/Data/World/Rooms/Room_ServiceCorridor.asset";
     private const string KitchenRoomPath =
         "Assets/_Chateau/Data/World/Rooms/Room_Kitchen.asset";
+    private const string ChapelRoomPath =
+        "Assets/_Chateau/Data/World/Rooms/Room_Chapel.asset";
     private const string ForwardPassagePath = "Assets/_Chateau/Data/World/Passages/Passage_GEH_DrawingRoom.asset";
     private const string ReversePassagePath = "Assets/_Chateau/Data/World/Passages/Passage_DrawingRoom_GEH.asset";
     private const string DrawingMusicPassagePath =
@@ -64,6 +66,10 @@ public sealed class CanonicalRoomPassageContractTests
         "Assets/_Chateau/Data/World/Passages/Passage_ServiceCorridor_Kitchen.asset";
     private const string KitchenServiceCorridorPassagePath =
         "Assets/_Chateau/Data/World/Passages/Passage_Kitchen_ServiceCorridor.asset";
+    private const string ServiceCorridorChapelPassagePath =
+        "Assets/_Chateau/Data/World/Passages/Passage_ServiceCorridor_Chapel.asset";
+    private const string ChapelServiceCorridorPassagePath =
+        "Assets/_Chateau/Data/World/Passages/Passage_Chapel_ServiceCorridor.asset";
     private const string GameDatabasePath = "Assets/_Chateau/Data/GameDatabase.asset";
     private const string LibraryRoomGuid = "8da3a3e936712e7b9f534786110323e4";
     private const string MusicLibraryPassageGuid = "aefe77f20874eb81b83fccb6ff5b8046";
@@ -86,9 +92,12 @@ public sealed class CanonicalRoomPassageContractTests
     private const string KitchenRoomGuid = "70531cbf9a67476f81f54b528029132e";
     private const string ServiceCorridorKitchenPassageGuid = "2985cbdd527b4faaec13ff03091dbcd1";
     private const string KitchenServiceCorridorPassageGuid = "453ad73cf2df1107f56be7a00daa3145";
+    private const string ChapelRoomGuid = "e3102dbfecc44551b6443ca88625a924";
+    private const string ServiceCorridorChapelPassageGuid = "fc2a0af2de3f4ade831c53f64fe0271b";
+    private const string ChapelServiceCorridorPassageGuid = "47e06869bf2b47a2980b0d02a53ee1df";
 
     [Test]
-    public void CanonicalRouteDataViewsPassagesAndGroup08CompleteCertificationAreExact()
+    public void CanonicalRouteDataViewsPassagesAndGroup09CompleteCertificationAreExact()
     {
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(EntranceRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(DrawingRoomPath), Is.EqualTo(typeof(CanonicalRoomDefinition)));
@@ -103,6 +112,8 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ServiceCorridorRoomPath),
             Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(KitchenRoomPath),
+            Is.EqualTo(typeof(CanonicalRoomDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ChapelRoomPath),
             Is.EqualTo(typeof(CanonicalRoomDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ForwardPassagePath), Is.EqualTo(typeof(PassageDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ReversePassagePath), Is.EqualTo(typeof(PassageDefinition)));
@@ -136,6 +147,10 @@ public sealed class CanonicalRoomPassageContractTests
             Is.EqualTo(typeof(PassageDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(KitchenServiceCorridorPassagePath),
             Is.EqualTo(typeof(PassageDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ServiceCorridorChapelPassagePath),
+            Is.EqualTo(typeof(PassageDefinition)));
+        Assert.That(AssetDatabase.GetMainAssetTypeAtPath(ChapelServiceCorridorPassagePath),
+            Is.EqualTo(typeof(PassageDefinition)));
         Assert.That(AssetDatabase.GetMainAssetTypeAtPath(GameDatabasePath), Is.EqualTo(typeof(GameDatabase)));
 
         CanonicalRoomDefinition entrance = AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(EntranceRoomPath);
@@ -152,6 +167,8 @@ public sealed class CanonicalRoomPassageContractTests
             AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(ServiceCorridorRoomPath);
         CanonicalRoomDefinition kitchen =
             AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(KitchenRoomPath);
+        CanonicalRoomDefinition chapel =
+            AssetDatabase.LoadAssetAtPath<CanonicalRoomDefinition>(ChapelRoomPath);
         PassageDefinition forward = AssetDatabase.LoadAssetAtPath<PassageDefinition>(ForwardPassagePath);
         PassageDefinition reverse = AssetDatabase.LoadAssetAtPath<PassageDefinition>(ReversePassagePath);
         PassageDefinition drawingMusic = AssetDatabase.LoadAssetAtPath<PassageDefinition>(DrawingMusicPassagePath);
@@ -182,6 +199,10 @@ public sealed class CanonicalRoomPassageContractTests
             AssetDatabase.LoadAssetAtPath<PassageDefinition>(ServiceCorridorKitchenPassagePath);
         PassageDefinition kitchenServiceCorridor =
             AssetDatabase.LoadAssetAtPath<PassageDefinition>(KitchenServiceCorridorPassagePath);
+        PassageDefinition serviceCorridorChapel =
+            AssetDatabase.LoadAssetAtPath<PassageDefinition>(ServiceCorridorChapelPassagePath);
+        PassageDefinition chapelServiceCorridor =
+            AssetDatabase.LoadAssetAtPath<PassageDefinition>(ChapelServiceCorridorPassagePath);
         GameDatabase database = AssetDatabase.LoadAssetAtPath<GameDatabase>(GameDatabasePath);
 
         Assert.That(entrance, Is.Not.Null);
@@ -194,6 +215,7 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(billiard, Is.Not.Null);
         Assert.That(serviceCorridor, Is.Not.Null);
         Assert.That(kitchen, Is.Not.Null);
+        Assert.That(chapel, Is.Not.Null);
         Assert.That(forward, Is.Not.Null);
         Assert.That(reverse, Is.Not.Null);
         Assert.That(drawingMusic, Is.Not.Null);
@@ -212,6 +234,8 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(serviceCorridorButlersPantry, Is.Not.Null);
         Assert.That(serviceCorridorKitchen, Is.Not.Null);
         Assert.That(kitchenServiceCorridor, Is.Not.Null);
+        Assert.That(serviceCorridorChapel, Is.Not.Null);
+        Assert.That(chapelServiceCorridor, Is.Not.Null);
         Assert.That(database, Is.Not.Null);
 
         Assert.That(AssetDatabase.AssetPathToGUID(EntranceRoomPath), Is.EqualTo("5e4e6adcd42c4058867aaa6c47b84de1"));
@@ -258,6 +282,11 @@ public sealed class CanonicalRoomPassageContractTests
             Is.EqualTo(ServiceCorridorKitchenPassageGuid));
         Assert.That(AssetDatabase.AssetPathToGUID(KitchenServiceCorridorPassagePath),
             Is.EqualTo(KitchenServiceCorridorPassageGuid));
+        Assert.That(AssetDatabase.AssetPathToGUID(ChapelRoomPath), Is.EqualTo(ChapelRoomGuid));
+        Assert.That(AssetDatabase.AssetPathToGUID(ServiceCorridorChapelPassagePath),
+            Is.EqualTo(ServiceCorridorChapelPassageGuid));
+        Assert.That(AssetDatabase.AssetPathToGUID(ChapelServiceCorridorPassagePath),
+            Is.EqualTo(ChapelServiceCorridorPassageGuid));
         Assert.That(AssetDatabase.AssetPathToGUID(GameDatabasePath), Is.EqualTo("6b7925c3057e11ad688e890ddb547110"));
 
         string[] completedRoomPaths =
@@ -306,10 +335,12 @@ public sealed class CanonicalRoomPassageContractTests
             AssetDatabase.AssetPathToGUID(ButlersPantryServiceCorridorPassagePath),
             AssetDatabase.AssetPathToGUID(ServiceCorridorButlersPantryPassagePath),
             AssetDatabase.AssetPathToGUID(ServiceCorridorKitchenPassagePath),
-            AssetDatabase.AssetPathToGUID(KitchenServiceCorridorPassagePath)
+            AssetDatabase.AssetPathToGUID(KitchenServiceCorridorPassagePath),
+            AssetDatabase.AssetPathToGUID(ServiceCorridorChapelPassagePath),
+            AssetDatabase.AssetPathToGUID(ChapelServiceCorridorPassagePath)
         }.Concat(completedRoomPaths.Select(AssetDatabase.AssetPathToGUID)).ToArray();
         Assert.That(definitionGuids.All(guid => !string.IsNullOrEmpty(guid)), Is.True);
-        Assert.That(definitionGuids.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(37));
+        Assert.That(definitionGuids.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(39));
 
         Assert.That(entrance.StableId, Is.EqualTo("room.grand-entrance-hall"));
         Assert.That(entrance.SchemaVersion, Is.EqualTo(1));
@@ -573,7 +604,36 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(kitchenServiceCorridor.PromptText, Is.EqualTo("Open Door"));
         Assert.That(kitchenServiceCorridor.LegacyDoorId, Is.EqualTo("Kitchen_ServiceCorridor"));
 
-        Assert.That(database.Definitions, Has.Count.EqualTo(37));
+        Assert.That(chapel.StableId, Is.EqualTo("room.chapel"));
+        Assert.That(chapel.SchemaVersion, Is.EqualTo(1));
+        Assert.That(chapel.DisplayName, Is.EqualTo("Chapel"));
+        Assert.That(chapel.LegacyNames, Is.EqualTo(new[] { "Chapel" }));
+        Assert.That(
+            AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(chapel.BackgroundTexture)),
+            Is.EqualTo("d40ce95937763bcddb24975fe9c6ec20"));
+        Assert.That(chapel.PerspectiveProfile, Is.Null);
+
+        Assert.That(serviceCorridorChapel.StableId,
+            Is.EqualTo("passage.service-corridor.chapel"));
+        Assert.That(serviceCorridorChapel.SchemaVersion, Is.EqualTo(1));
+        Assert.That(serviceCorridorChapel.SourceRoom, Is.SameAs(serviceCorridor));
+        Assert.That(serviceCorridorChapel.DestinationRoom, Is.SameAs(chapel));
+        Assert.That(serviceCorridorChapel.Reverse, Is.SameAs(chapelServiceCorridor));
+        Assert.That(serviceCorridorChapel.Kind, Is.EqualTo(PassageKind.Door));
+        Assert.That(serviceCorridorChapel.PromptText, Is.EqualTo("Open Door"));
+        Assert.That(serviceCorridorChapel.LegacyDoorId, Is.EqualTo("ServiceCorridor_Chapel"));
+
+        Assert.That(chapelServiceCorridor.StableId,
+            Is.EqualTo("passage.chapel.service-corridor"));
+        Assert.That(chapelServiceCorridor.SchemaVersion, Is.EqualTo(1));
+        Assert.That(chapelServiceCorridor.SourceRoom, Is.SameAs(chapel));
+        Assert.That(chapelServiceCorridor.DestinationRoom, Is.SameAs(serviceCorridor));
+        Assert.That(chapelServiceCorridor.Reverse, Is.SameAs(serviceCorridorChapel));
+        Assert.That(chapelServiceCorridor.Kind, Is.EqualTo(PassageKind.Door));
+        Assert.That(chapelServiceCorridor.PromptText, Is.EqualTo("Open Door"));
+        Assert.That(chapelServiceCorridor.LegacyDoorId, Is.EqualTo("Chapel_ServiceCorridor"));
+
+        Assert.That(database.Definitions, Has.Count.EqualTo(39));
         Assert.That(database.Definitions[0], Is.SameAs(entrance));
         Assert.That(database.Definitions[1], Is.SameAs(drawing));
         Assert.That(database.Definitions[2], Is.SameAs(forward));
@@ -602,7 +662,10 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(database.Definitions[25], Is.SameAs(kitchen));
         Assert.That(database.Definitions[26], Is.SameAs(serviceCorridorKitchen));
         Assert.That(database.Definitions[27], Is.SameAs(kitchenServiceCorridor));
-        Assert.That(database.Definitions.Skip(28), Is.EqualTo(completedRooms.Skip(2)));
+        Assert.That(database.Definitions[28], Is.SameAs(chapel));
+        Assert.That(database.Definitions[29], Is.SameAs(serviceCorridorChapel));
+        Assert.That(database.Definitions[30], Is.SameAs(chapelServiceCorridor));
+        Assert.That(database.Definitions.Skip(31), Is.EqualTo(completedRooms.Skip(3)));
 
         string[] stableIds = database.Definitions.Select(definition => definition.StableId).ToArray();
         Assert.That(stableIds, Is.EqualTo(new[]
@@ -636,6 +699,8 @@ public sealed class CanonicalRoomPassageContractTests
             "passage.service-corridor.kitchen",
             "passage.kitchen.service-corridor",
             "room.chapel",
+            "passage.service-corridor.chapel",
+            "passage.chapel.service-corridor",
             "room.grand-entrance-hall-rear-view",
             "room.conservatory",
             "room.side-stair-mudroom",
@@ -645,7 +710,7 @@ public sealed class CanonicalRoomPassageContractTests
             "room.nursery",
             "room.blue-bedroom"
         }));
-        Assert.That(stableIds.Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(37));
+        Assert.That(stableIds.Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(39));
 
         string databaseText = File.ReadAllText(GameDatabasePath);
         foreach (string definitionGuid in definitionGuids)
@@ -659,7 +724,7 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(report.HasErrors, Is.False, string.Join("\n", report.Messages.Select(message => message.ToString())));
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
-        Assert.That(CountOccurrences(gameplayText, "\n--- !u!"), Is.EqualTo(6035));
+        Assert.That(CountOccurrences(gameplayText, "\n--- !u!"), Is.EqualTo(6038));
         Assert.That(CountOccurrences(gameplayText, $"guid: {LibraryRoomGuid}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameplayText, $"guid: {MusicLibraryPassageGuid}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameplayText, $"guid: {LibraryMusicPassageGuid}"), Is.EqualTo(1));
@@ -687,6 +752,11 @@ public sealed class CanonicalRoomPassageContractTests
             Is.EqualTo(1));
         Assert.That(CountOccurrences(gameplayText, $"guid: {KitchenServiceCorridorPassageGuid}"),
             Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameplayText, $"guid: {ChapelRoomGuid}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameplayText, $"guid: {ServiceCorridorChapelPassageGuid}"),
+            Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameplayText, $"guid: {ChapelServiceCorridorPassageGuid}"),
+            Is.EqualTo(1));
         string entranceRoomObject = ExtractDocument(gameplayText, "--- !u!1 &567115833");
         string drawingRoomObject = ExtractDocument(gameplayText, "--- !u!1 &2300000005");
         string musicRoomObject = ExtractDocument(gameplayText, "--- !u!1 &354156755");
@@ -711,6 +781,9 @@ public sealed class CanonicalRoomPassageContractTests
         string kitchenRoomTransform = ExtractDocument(gameplayText, "--- !u!224 &1541978211");
         string kitchenRoomContent = ExtractDocument(gameplayText, "--- !u!114 &2102000004");
         string kitchenView = ExtractDocument(gameplayText, "--- !u!114 &4100000010");
+        string chapelRoomObject = ExtractDocument(gameplayText, "--- !u!1 &2300000030");
+        string chapelRoomContent = ExtractDocument(gameplayText, "--- !u!114 &2300000032");
+        string chapelView = ExtractDocument(gameplayText, "--- !u!114 &4100000029");
         string gameRoot = ExtractDocument(gameplayText, "--- !u!114 &1878886998");
         string outboundObject = ExtractDocument(gameplayText, "--- !u!1 &109889176");
         string outboundTrigger = ExtractDocument(gameplayText, "--- !u!114 &109889178");
@@ -772,20 +845,26 @@ public sealed class CanonicalRoomPassageContractTests
         string kitchenServiceImage = ExtractDocument(gameplayText, "--- !u!114 &802263368");
         string kitchenServiceTrigger = ExtractDocument(gameplayText, "--- !u!114 &802263367");
         string kitchenServicePassage = ExtractDocument(gameplayText, "--- !u!114 &4100000028");
+        string serviceChapelObject = ExtractDocument(gameplayText, "--- !u!1 &2300000165");
+        string serviceChapelTrigger = ExtractDocument(gameplayText, "--- !u!114 &2300000169");
+        string serviceChapelPassage = ExtractDocument(gameplayText, "--- !u!114 &4100000030");
+        string chapelServiceObject = ExtractDocument(gameplayText, "--- !u!1 &2300000175");
+        string chapelServiceTrigger = ExtractDocument(gameplayText, "--- !u!114 &2300000179");
+        string chapelServicePassage = ExtractDocument(gameplayText, "--- !u!114 &4100000031");
         string playerTransform = ExtractDocument(gameplayText, "--- !u!4 &81962843 stripped");
 
-        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(10),
-            "Exactly the ten staged rooms through Kitchen may own passive RoomViews.");
-        Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(18),
-            "The nine introduced reciprocal pairs must be the only Passages at this gate.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage:"), Is.EqualTo(18),
+        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(11),
+            "Exactly the eleven staged rooms through Chapel may own passive RoomViews.");
+        Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(20),
+            "The ten introduced reciprocal pairs must be the only Passages at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage:"), Is.EqualTo(20),
             "Every staged Passage must serialize exactly one explicit anchor-ownership mode.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 0"), Is.Zero,
             "No completed reciprocal pair may retain legacy sampling.");
         Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 1"), Is.Zero,
             "No completed reciprocal pair may retain legacy approach sampling.");
-        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(18),
-            "All nine completed reciprocal pairs must own their authored approach and arrival anchors.");
+        Assert.That(CountOccurrences(gameplayText, "anchorMigrationStage: 2"), Is.EqualTo(20),
+            "All ten completed reciprocal pairs must own their authored approach and arrival anchors.");
         Assert.That(CountOccurrences(gameplayText, "maxPlayerScreenDistance: 145"), Is.EqualTo(44),
             "Every trigger except the calibrated Library-to-Music endpoint must retain the legacy threshold.");
         Assert.That(CountOccurrences(gameplayText, "maxPlayerScreenDistance: 149"), Is.EqualTo(1),
@@ -901,6 +980,21 @@ public sealed class CanonicalRoomPassageContractTests
             $"definition: {{fileID: 11400000, guid: {KitchenRoomGuid}, type: 2}}"));
         Assert.That(kitchenView, Does.Contain("legacyContentGroup: {fileID: 2102000004}"));
 
+        Assert.That(chapelRoomObject, Does.Contain("m_Name: Room_Chapel"));
+        Assert.That(chapelRoomObject, Does.Contain("m_IsActive: 0"));
+        Assert.That(chapelRoomObject, Does.Contain("- component: {fileID: 2300000031}"));
+        Assert.That(chapelRoomObject, Does.Contain("- component: {fileID: 2300000032}"));
+        Assert.That(chapelRoomObject, Does.Contain("- component: {fileID: 4100000029}"));
+        Assert.That(CountOccurrences(chapelRoomObject, "- component:"), Is.EqualTo(3));
+        Assert.That(chapelRoomContent, Does.Contain("roomName: Chapel"));
+        Assert.That(chapelRoomContent, Does.Contain(
+            "roomBackgroundTexture: {fileID: 2800000, guid: d40ce95937763bcddb24975fe9c6ec20, type: 3}"));
+        Assert.That(chapelRoomContent, Does.Contain("perspectiveProfile: {fileID: 0}"));
+        Assert.That(chapelView, Does.Contain("m_GameObject: {fileID: 2300000030}"));
+        Assert.That(chapelView, Does.Contain(
+            $"definition: {{fileID: 11400000, guid: {ChapelRoomGuid}, type: 2}}"));
+        Assert.That(chapelView, Does.Contain("legacyContentGroup: {fileID: 2300000032}"));
+
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000001}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000002}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000003}"), Is.EqualTo(1));
@@ -929,8 +1023,11 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000026}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000027}"), Is.EqualTo(1));
         Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000028}"), Is.EqualTo(1));
-        Assert.That(CountOccurrences(gameRoot, "  - {fileID:"), Is.EqualTo(45),
-            "GameRoot must retain eight services and exactly thirty-seven registered scene behaviours.");
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000029}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000030}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameRoot, "- {fileID: 4100000031}"), Is.EqualTo(1));
+        Assert.That(CountOccurrences(gameRoot, "  - {fileID:"), Is.EqualTo(48),
+            "GameRoot must retain eight services and exactly forty registered scene behaviours.");
         Assert.That(gameRoot, Does.Contain(
             "  - {fileID: 4100000015}\n" +
             "  - {fileID: 4100000016}\n" +
@@ -945,8 +1042,11 @@ public sealed class CanonicalRoomPassageContractTests
             "  - {fileID: 4100000025}\n" +
             "  - {fileID: 4100000026}\n" +
             "  - {fileID: 4100000027}\n" +
-            "  - {fileID: 4100000028}"),
-            "The completed Group 08 pair must follow all previously certified Passages.");
+            "  - {fileID: 4100000028}\n" +
+            "  - {fileID: 4100000029}\n" +
+            "  - {fileID: 4100000030}\n" +
+            "  - {fileID: 4100000031}"),
+            "The completed Group 09 room and pair must follow all previously certified Passages.");
         Assert.That(gameRoot, Does.Contain(
             "  - {fileID: 4100000003}\n" +
             "  - {fileID: 4100000004}\n" +
@@ -974,8 +1074,8 @@ public sealed class CanonicalRoomPassageContractTests
             "The Butlers Pantry RoomView should occur only on its owner, header, GameRoot, and three source Passages.");
         Assert.That(CountOccurrences(gameplayText, "4100000008"), Is.EqualTo(4),
             "The Billiard RoomView should occur only on its owner, header, GameRoot, and source Passage.");
-        Assert.That(CountOccurrences(gameplayText, "4100000009"), Is.EqualTo(5),
-            "The Service Corridor RoomView should occur only on its owner, header, GameRoot, and two source Passages.");
+        Assert.That(CountOccurrences(gameplayText, "4100000009"), Is.EqualTo(6),
+            "The Service Corridor RoomView should occur only on its owner, header, GameRoot, and three source Passages.");
         Assert.That(CountOccurrences(gameplayText, "4100000010"), Is.EqualTo(4),
             "The Kitchen RoomView should occur only on its owner, header, GameRoot, and source Passage.");
         Assert.That(outboundObject, Does.Contain("- component: {fileID: 4100000011}"));
@@ -1026,6 +1126,8 @@ public sealed class CanonicalRoomPassageContractTests
         Assert.That(CountOccurrences(serviceCorridorPantryObject, "- component:"), Is.EqualTo(5));
         Assert.That(CountOccurrences(serviceKitchenObject, "- component:"), Is.EqualTo(5));
         Assert.That(CountOccurrences(kitchenServiceObject, "- component:"), Is.EqualTo(5));
+        Assert.That(CountOccurrences(serviceChapelObject, "- component:"), Is.EqualTo(5));
+        Assert.That(CountOccurrences(chapelServiceObject, "- component:"), Is.EqualTo(5));
         Assert.That(pantryServiceCorridorTransform, Does.Contain("m_Father: {fileID: 2300000024}"));
         Assert.That(pantryServiceCorridorTransform, Does.Contain(
             "m_AnchoredPosition: {x: 591.2165, y: 33.108276}"));
@@ -1100,12 +1202,16 @@ public sealed class CanonicalRoomPassageContractTests
             "The Service-to-Kitchen Passage should occur only on its owner, header, GameRoot, reverse link, and caller.");
         Assert.That(CountOccurrences(gameplayText, "4100000028"), Is.EqualTo(5),
             "The Kitchen-to-Service Passage should occur only on its owner, header, GameRoot, reverse link, and caller.");
-        Assert.That(CountOccurrences(gameplayText, "canonicalPassage: {fileID:"), Is.EqualTo(18),
-            "All nine certified reciprocal routes must use canonical identity at this gate.");
-        Assert.That(CountOccurrences(gameplayText, "player: {fileID: 81962843}"), Is.EqualTo(18),
-            "Exactly the nine dependency-bound reciprocal pairs may bind the Player transform at this gate.");
-        Assert.That(CountOccurrences(gameplayText, "81962843"), Is.EqualTo(19),
-            "The Player Transform proxy should occur only in its header and eighteen trigger bindings.");
+        Assert.That(CountOccurrences(gameplayText, "4100000030"), Is.EqualTo(5),
+            "The Service-to-Chapel Passage should occur only on its owner, header, GameRoot, reverse link, and caller.");
+        Assert.That(CountOccurrences(gameplayText, "4100000031"), Is.EqualTo(5),
+            "The Chapel-to-Service Passage should occur only on its owner, header, GameRoot, reverse link, and caller.");
+        Assert.That(CountOccurrences(gameplayText, "canonicalPassage: {fileID:"), Is.EqualTo(20),
+            "All ten certified reciprocal routes must use canonical identity at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "player: {fileID: 81962843}"), Is.EqualTo(20),
+            "Exactly the ten dependency-bound reciprocal pairs may bind the Player transform at this gate.");
+        Assert.That(CountOccurrences(gameplayText, "81962843"), Is.EqualTo(21),
+            "The Player Transform proxy should occur only in its header and twenty trigger bindings.");
         string[] legacyTriggerDocuments = gameplayText
             .Split(new[] { "\n--- !u!" }, StringSplitOptions.None)
             .Where(document => document.Contains("guid: 7e419b0f8f26d4f2d8d03e567fef4c52"))
@@ -1117,15 +1223,15 @@ public sealed class CanonicalRoomPassageContractTests
                 document.Contains("doorOpenAudioSource: {fileID: 2201000013}") &&
                 document.Contains("player: {fileID: 81962843}") &&
                 document.Contains("doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}")),
-            Is.EqualTo(18),
-            "Exactly the nine dependency-bound reciprocal routes may receive direct compatibility bindings at this gate.");
+            Is.EqualTo(20),
+            "Exactly the ten dependency-bound reciprocal routes may receive direct compatibility bindings at this gate.");
         Assert.That(
             legacyTriggerDocuments.Count(document =>
                 document.Contains("navigationManager: {fileID: 0}") &&
                 document.Contains("doorOpenAudioSource: {fileID: 0}") &&
                 document.Contains("player: {fileID: 0}") &&
                 document.Contains("doorOpenSoundCatalog: {fileID: 0}")),
-            Is.EqualTo(27),
+            Is.EqualTo(25),
             "Every trigger before its dependency slice must remain byte-semantically unbound.");
         Assert.That(
             legacyTriggerDocuments.All(document => document.Contains("stairwaySoundCatalog: {fileID: 0}")),
@@ -1133,10 +1239,10 @@ public sealed class CanonicalRoomPassageContractTests
             "The door-only binding slice must not mutate stairway audio ownership.");
         Assert.That(
             legacyTriggerDocuments.Count(document => document.Contains("canonicalPassage: {fileID:")),
-            Is.EqualTo(18));
+            Is.EqualTo(20));
         Assert.That(
             legacyTriggerDocuments.Count(document => !document.Contains("canonicalPassage:")),
-            Is.EqualTo(27),
+            Is.EqualTo(25),
             "Every trigger before its caller slice must deserialize a null canonical edge and retain the fallback.");
         Assert.That(playerTransform, Does.Contain(
             "m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
@@ -1305,6 +1411,24 @@ public sealed class CanonicalRoomPassageContractTests
             "{x: -478.36285, y: -156.76599}",
             "{x: 589.9897, y: -419.25894}",
             PassageAnchorMigrationStage.AuthoredAnchors);
+        AssertRoomViewLocalPassageDocument(
+            serviceChapelPassage,
+            "2300000165",
+            ServiceCorridorChapelPassageGuid,
+            "4100000009",
+            "4100000031",
+            "{x: -133.2642, y: -171.8258}",
+            "{x: 461.4019, y: -190.7613}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
+        AssertRoomViewLocalPassageDocument(
+            chapelServicePassage,
+            "2300000175",
+            ChapelServiceCorridorPassageGuid,
+            "4100000029",
+            "4100000030",
+            "{x: 461.4019, y: -190.7613}",
+            "{x: -133.2642, y: -171.8258}",
+            PassageAnchorMigrationStage.AuthoredAnchors);
 
         AssertLegacyDoorTriggerCallerBound(
             serviceKitchenTrigger, "2300000160", "Service Corridor",
@@ -1312,6 +1436,12 @@ public sealed class CanonicalRoomPassageContractTests
         AssertLegacyDoorTriggerCallerBound(
             kitchenServiceTrigger, "802263365", "Kitchen",
             "Kitchen_ServiceCorridor", "Service Corridor", "802263368", "4100000028");
+        AssertLegacyDoorTriggerCallerBound(
+            serviceChapelTrigger, "2300000165", "Service Corridor",
+            "ServiceCorridor_Chapel", "Chapel", "2300000168", "4100000030");
+        AssertLegacyDoorTriggerCallerBound(
+            chapelServiceTrigger, "2300000175", "Chapel",
+            "Chapel_ServiceCorridor", "Service Corridor", "2300000178", "4100000031");
 
         AssertLegacyDoorTriggerCallerBound(
             pantryServiceCorridorTrigger, "2300000145", "Butlers Pantry",
@@ -1761,6 +1891,8 @@ public sealed class CanonicalRoomPassageContractTests
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
         string serviceKitchenPassage = ExtractDocument(gameplayText, "--- !u!114 &4100000027");
         string kitchenServicePassage = ExtractDocument(gameplayText, "--- !u!114 &4100000028");
+        string serviceChapelPassage = ExtractDocument(gameplayText, "--- !u!114 &4100000030");
+        string chapelServicePassage = ExtractDocument(gameplayText, "--- !u!114 &4100000031");
         string[] passageDocuments = gameplayText
             .Split(new[] { "\n--- !u!" }, StringSplitOptions.None)
             .Where(document => document.Contains(
@@ -1769,22 +1901,30 @@ public sealed class CanonicalRoomPassageContractTests
         string[] legacyLogicalPassageDocuments = passageDocuments
             .Where(document =>
                 !document.Contains($"guid: {ServiceCorridorKitchenPassageGuid}") &&
-                !document.Contains($"guid: {KitchenServiceCorridorPassageGuid}"))
+                !document.Contains($"guid: {KitchenServiceCorridorPassageGuid}") &&
+                !document.Contains($"guid: {ServiceCorridorChapelPassageGuid}") &&
+                !document.Contains($"guid: {ChapelServiceCorridorPassageGuid}"))
             .ToArray();
 
-        Assert.That(passageDocuments, Has.Length.EqualTo(18));
+        Assert.That(passageDocuments, Has.Length.EqualTo(20));
         Assert.That(legacyLogicalPassageDocuments, Has.Length.EqualTo(16));
         Assert.That(legacyLogicalPassageDocuments.All(document =>
             !document.Contains("coordinateSpace:") &&
             !document.Contains("roomViewLocalPosition:")), Is.True,
             "The sixteen previously certified Passages must retain their backward-compatible legacy-logical serialization.");
-        Assert.That(passageDocuments.Count(document => document.Contains("coordinateSpace: 1")), Is.EqualTo(2),
-            "Only the Group 08 reciprocal pair may serialize RoomView-local coordinates.");
-        Assert.That(CountOccurrences(gameplayText, "coordinateSpace: 1"), Is.EqualTo(4));
+        Assert.That(passageDocuments.Count(document => document.Contains("coordinateSpace: 1")), Is.EqualTo(4),
+            "Exactly the Group 08 and Group 09 reciprocal pairs may serialize RoomView-local coordinates.");
+        Assert.That(CountOccurrences(gameplayText, "coordinateSpace: 1"), Is.EqualTo(8));
         Assert.That(CountOccurrences(gameplayText, "coordinateSpace: 0"), Is.Zero);
-        Assert.That(CountOccurrences(gameplayText, "logicalPosition: {x: 0, y: 0}"), Is.EqualTo(4));
-        Assert.That(CountOccurrences(gameplayText, "roomViewLocalPosition:"), Is.EqualTo(4));
-        foreach (string roomViewLocalPassage in new[] { serviceKitchenPassage, kitchenServicePassage })
+        Assert.That(CountOccurrences(gameplayText, "logicalPosition: {x: 0, y: 0}"), Is.EqualTo(8));
+        Assert.That(CountOccurrences(gameplayText, "roomViewLocalPosition:"), Is.EqualTo(8));
+        foreach (string roomViewLocalPassage in new[]
+        {
+            serviceKitchenPassage,
+            kitchenServicePassage,
+            serviceChapelPassage,
+            chapelServicePassage
+        })
         {
             Assert.That(CountOccurrences(roomViewLocalPassage, "coordinateSpace: 1"), Is.EqualTo(2));
             Assert.That(CountOccurrences(roomViewLocalPassage,
@@ -1935,8 +2075,8 @@ public sealed class CanonicalRoomPassageContractTests
         }
 
         string gameplayText = File.ReadAllText("Assets/Scenes/Gameplay.unity");
-        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(10));
-        Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(18));
+        Assert.That(CountOccurrences(gameplayText, "guid: ccd2f3bd803e45aa8a1174cc881d6dc0"), Is.EqualTo(11));
+        Assert.That(CountOccurrences(gameplayText, "guid: 518dad8adf634786a103bf4e76aa0881"), Is.EqualTo(20));
     }
 
     private static void AssertPassivePassageDocument(

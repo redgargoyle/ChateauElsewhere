@@ -1142,13 +1142,13 @@ public class NavigationRegressionTests
 
         Assert.That(ReadGuid(forwardDefinitionPath + ".meta"), Is.EqualTo(forwardDefinitionGuid));
         Assert.That(ReadGuid(reverseDefinitionPath + ".meta"), Is.EqualTo(reverseDefinitionGuid));
-        Assert.That(Regex.Matches(sceneText, $"guid: {roomViewGuid}").Count, Is.EqualTo(10));
-        Assert.That(Regex.Matches(sceneText, $"guid: {passageGuid}").Count, Is.EqualTo(18));
+        Assert.That(Regex.Matches(sceneText, $"guid: {roomViewGuid}").Count, Is.EqualTo(11));
+        Assert.That(Regex.Matches(sceneText, $"guid: {passageGuid}").Count, Is.EqualTo(20));
         Assert.That(Regex.Matches(sceneText, $"guid: {doorTriggerGuid}").Count, Is.EqualTo(45));
         Assert.That(
             Regex.Matches(databaseText,
                 @"(?m)^  - \{fileID: 11400000, guid: [0-9a-f]{32}, type: 2\}$").Count,
-            Is.EqualTo(37));
+            Is.EqualTo(39));
         Assert.That(Regex.Matches(databaseText, $"guid: {forwardDefinitionGuid}").Count, Is.EqualTo(1));
         Assert.That(Regex.Matches(databaseText, $"guid: {reverseDefinitionGuid}").Count, Is.EqualTo(1));
 
@@ -1159,7 +1159,7 @@ public class NavigationRegressionTests
         string sceneBehaviours = gameRoot.Substring(
             sceneBehavioursStart,
             sceneBehavioursEnd - sceneBehavioursStart);
-        Assert.That(Regex.Matches(sceneBehaviours, @"(?m)^  - \{fileID:").Count, Is.EqualTo(37));
+        Assert.That(Regex.Matches(sceneBehaviours, @"(?m)^  - \{fileID:").Count, Is.EqualTo(40));
         foreach (string registeredFileId in new[] { "4100000010", "4100000027", "4100000028" })
         {
             Assert.That(
@@ -1265,6 +1265,158 @@ public class NavigationRegressionTests
         Assert.That(reverseDefinition, Does.Contain("legacyDoorId: Kitchen_ServiceCorridor"));
         Assert.That(legacyDoorDataText, Does.Contain("ServiceCorridor_Kitchen: Kitchen"));
         Assert.That(legacyDoorDataText, Does.Contain("Kitchen_ServiceCorridor: Service Corridor"));
+    }
+
+    [Test]
+    public void ServiceCorridorChapelRoomLocalPassagePairIsExact()
+    {
+        const string passageGuid = "518dad8adf634786a103bf4e76aa0881";
+        const string roomViewGuid = "ccd2f3bd803e45aa8a1174cc881d6dc0";
+        const string doorTriggerGuid = "7e419b0f8f26d4f2d8d03e567fef4c52";
+        const string forwardDefinitionGuid = "fc2a0af2de3f4ade831c53f64fe0271b";
+        const string reverseDefinitionGuid = "47e06869bf2b47a2980b0d02a53ee1df";
+        const string serviceRoomGuid = "85d51b6fcb4840458d45f66bbf6c233b";
+        const string chapelRoomGuid = "e3102dbfecc44551b6443ca88625a924";
+        const string forwardDefinitionPath =
+            "Assets/_Chateau/Data/World/Passages/Passage_ServiceCorridor_Chapel.asset";
+        const string reverseDefinitionPath =
+            "Assets/_Chateau/Data/World/Passages/Passage_Chapel_ServiceCorridor.asset";
+
+        string sceneText = File.ReadAllText(GameplayScenePath);
+        string databaseText = File.ReadAllText("Assets/_Chateau/Data/GameDatabase.asset");
+        string legacyDoorDataText = File.ReadAllText("Assets/Resources/Navigation/doors.txt");
+        string forwardDefinition = File.ReadAllText(forwardDefinitionPath);
+        string reverseDefinition = File.ReadAllText(reverseDefinitionPath);
+        string gameRoot = ExtractUnityObjectBlock(sceneText, "--- !u!114 &1878886998");
+        string chapelObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000030");
+        string chapelTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000031");
+        string chapelContent = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000032");
+        string chapelDoorsObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000033");
+        string chapelDoorsTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000034");
+        string chapelView = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000029");
+        string forwardObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000165");
+        string forwardTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000166");
+        string forwardTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000169");
+        string forwardPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000030");
+        string reverseObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000175");
+        string reverseTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000176");
+        string reverseTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000179");
+        string reversePassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000031");
+
+        Assert.That(ReadGuid(forwardDefinitionPath + ".meta"), Is.EqualTo(forwardDefinitionGuid));
+        Assert.That(ReadGuid(reverseDefinitionPath + ".meta"), Is.EqualTo(reverseDefinitionGuid));
+        Assert.That(Regex.Matches(sceneText, $"guid: {roomViewGuid}").Count, Is.EqualTo(11));
+        Assert.That(Regex.Matches(sceneText, $"guid: {passageGuid}").Count, Is.EqualTo(20));
+        Assert.That(Regex.Matches(sceneText, $"guid: {doorTriggerGuid}").Count, Is.EqualTo(45));
+        Assert.That(Regex.Matches(databaseText,
+            @"(?m)^  - \{fileID: 11400000, guid: [0-9a-f]{32}, type: 2\}$").Count,
+            Is.EqualTo(39));
+
+        int sceneBehavioursStart = gameRoot.IndexOf("sceneBehaviours:", System.StringComparison.Ordinal);
+        int sceneBehavioursEnd = gameRoot.IndexOf("initializeOnAwake:", System.StringComparison.Ordinal);
+        Assert.That(sceneBehavioursStart, Is.GreaterThanOrEqualTo(0));
+        Assert.That(sceneBehavioursEnd, Is.GreaterThan(sceneBehavioursStart));
+        string sceneBehaviours = gameRoot.Substring(
+            sceneBehavioursStart,
+            sceneBehavioursEnd - sceneBehavioursStart);
+        Assert.That(Regex.Matches(sceneBehaviours, @"(?m)^  - \{fileID:").Count, Is.EqualTo(40));
+        foreach (string registeredFileId in new[] { "4100000029", "4100000030", "4100000031" })
+        {
+            Assert.That(Regex.Matches(sceneBehaviours,
+                $@"(?m)^  - \{{fileID: {registeredFileId}\}}$").Count, Is.EqualTo(1));
+        }
+
+        Assert.That(chapelObject, Does.Contain("m_Name: Room_Chapel"));
+        Assert.That(chapelObject, Does.Contain("m_IsActive: 0"));
+        Assert.That(Regex.Matches(chapelObject, @"(?m)^  - component:").Count, Is.EqualTo(3));
+        Assert.That(chapelObject, Does.Contain("- component: {fileID: 2300000031}"));
+        Assert.That(chapelObject, Does.Contain("- component: {fileID: 2300000032}"));
+        Assert.That(chapelObject, Does.Contain("- component: {fileID: 4100000029}"));
+        Assert.That(chapelTransform, Does.Contain("m_Father: {fileID: 668915133}"));
+        Assert.That(chapelTransform, Does.Contain("m_SizeDelta: {x: 1672, y: 941}"));
+        Assert.That(Regex.Matches(chapelTransform, @"(?m)^  - \{fileID:").Count, Is.EqualTo(14));
+        Assert.That(chapelContent, Does.Contain("roomName: Chapel"));
+        Assert.That(chapelContent, Does.Contain(
+            "roomBackgroundTexture: {fileID: 2800000, guid: d40ce95937763bcddb24975fe9c6ec20, type: 3}"));
+        Assert.That(chapelContent, Does.Contain("perspectiveProfile: {fileID: 0}"));
+        Assert.That(chapelDoorsObject, Does.Contain("m_Name: Doors"));
+        Assert.That(chapelDoorsTransform, Does.Contain("m_Father: {fileID: 2300000031}"));
+        Assert.That(chapelDoorsTransform, Does.Contain("- {fileID: 2300000176}"));
+        Assert.That(chapelView, Does.Contain("m_GameObject: {fileID: 2300000030}"));
+        Assert.That(chapelView, Does.Contain(
+            $"definition: {{fileID: 11400000, guid: {chapelRoomGuid}, type: 2}}"));
+        Assert.That(chapelView, Does.Contain("legacyContentGroup: {fileID: 2300000032}"));
+
+        Assert.That(Regex.Matches(forwardObject, @"(?m)^  - component:").Count, Is.EqualTo(5));
+        Assert.That(Regex.Matches(reverseObject, @"(?m)^  - component:").Count, Is.EqualTo(5));
+        Assert.That(forwardObject, Does.Contain("m_Name: DoorTrigger_ServiceCorridor_Chapel"));
+        Assert.That(reverseObject, Does.Contain("m_Name: DoorTrigger_Chapel_ServiceCorridor"));
+        Assert.That(forwardObject, Does.Contain("- component: {fileID: 4100000030}"));
+        Assert.That(reverseObject, Does.Contain("- component: {fileID: 4100000031}"));
+        Assert.That(forwardTransform, Does.Contain("m_Father: {fileID: 2300000029}"));
+        Assert.That(forwardTransform, Does.Contain("m_AnchoredPosition: {x: -204.79747, y: 53.84522}"));
+        Assert.That(forwardTransform, Does.Contain("m_SizeDelta: {x: 135.9724, y: 358.7524}"));
+        Assert.That(reverseTransform, Does.Contain("m_Father: {fileID: 2300000034}"));
+        Assert.That(reverseTransform, Does.Contain("m_AnchoredPosition: {x: 501.5676, y: -28.297081}"));
+        Assert.That(reverseTransform, Does.Contain("m_SizeDelta: {x: 66.7197, y: 293.4059}"));
+
+        foreach (string trigger in new[] { forwardTrigger, reverseTrigger })
+        {
+            Assert.That(trigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(trigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(trigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(trigger, Does.Contain(
+                "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
+            Assert.That(trigger, Does.Contain("maxPlayerScreenDistance: 145"));
+        }
+        Assert.That(forwardTrigger, Does.Contain("canonicalPassage: {fileID: 4100000030}"));
+        Assert.That(reverseTrigger, Does.Contain("canonicalPassage: {fileID: 4100000031}"));
+
+        AssertRoomViewLocalPassageDocument(
+            forwardPassage,
+            forwardDefinitionGuid,
+            "4100000009",
+            "4100000031",
+            "{x: -133.2642, y: -171.8258}",
+            "{x: 461.4019, y: -190.7613}");
+        AssertRoomViewLocalPassageDocument(
+            reversePassage,
+            reverseDefinitionGuid,
+            "4100000029",
+            "4100000030",
+            "{x: 461.4019, y: -190.7613}",
+            "{x: -133.2642, y: -171.8258}");
+
+        Assert.That(forwardDefinition, Does.Contain("stableId: passage.service-corridor.chapel"));
+        Assert.That(forwardDefinition, Does.Contain(
+            $"sourceRoom: {{fileID: 11400000, guid: {serviceRoomGuid}, type: 2}}"));
+        Assert.That(forwardDefinition, Does.Contain(
+            $"destinationRoom: {{fileID: 11400000, guid: {chapelRoomGuid}, type: 2}}"));
+        Assert.That(forwardDefinition, Does.Contain(
+            $"reverse: {{fileID: 11400000, guid: {reverseDefinitionGuid}, type: 2}}"));
+        Assert.That(reverseDefinition, Does.Contain("stableId: passage.chapel.service-corridor"));
+        Assert.That(reverseDefinition, Does.Contain(
+            $"sourceRoom: {{fileID: 11400000, guid: {chapelRoomGuid}, type: 2}}"));
+        Assert.That(reverseDefinition, Does.Contain(
+            $"destinationRoom: {{fileID: 11400000, guid: {serviceRoomGuid}, type: 2}}"));
+        Assert.That(reverseDefinition, Does.Contain(
+            $"reverse: {{fileID: 11400000, guid: {forwardDefinitionGuid}, type: 2}}"));
+        Assert.That(legacyDoorDataText, Does.Contain("ServiceCorridor_Chapel: Chapel"));
+        Assert.That(legacyDoorDataText, Does.Contain("Chapel_ServiceCorridor: Service Corridor"));
+        foreach (string preservedName in new[]
+        {
+            "chapel_bench_0",
+            "chapel_bench_right1_0",
+            "chapel_bench_right_2_0",
+            "PlayerBlocker_chapel_bench_0",
+            "PlayerBlocker_chapel_bench_right1_0",
+            "PlayerBlocker_chapel_bench_right_2_0",
+            "Ch2_Hide_Guest06"
+        })
+        {
+            Assert.That(Regex.Matches(sceneText, $@"(?m)^  m_Name: {Regex.Escape(preservedName)}$").Count,
+                Is.EqualTo(1), preservedName);
+        }
     }
 
     [Test]
