@@ -703,6 +703,60 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void MainMenuPlaqueCopyStaysInsideTheParchmentInterior()
+    {
+        Scene mainMenuScene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+        MainMenuController controller = FindSceneComponent<MainMenuController>(mainMenuScene);
+
+        InvokePrivateInstanceMethod(controller, "Awake");
+        Canvas.ForceUpdateCanvases();
+
+        RectTransform plaque = FindSceneObject(mainMenuScene, "Image_TitlePlaque").GetComponent<RectTransform>();
+        TextMeshProUGUI titleText = FindSceneObject(mainMenuScene, "Text_Title").GetComponent<TextMeshProUGUI>();
+        TextMeshProUGUI creditText = FindSceneObject(mainMenuScene, "Text_DeveloperCredit").GetComponent<TextMeshProUGUI>();
+
+        AssertTmpTextFitsPlaqueInterior(plaque, titleText, "Chantilly");
+        AssertTmpTextFitsPlaqueInterior(plaque, creditText, "The developer credit");
+    }
+
+    [Test]
+    public void MainMenuAudioSettingsKeepsEverySliderInsideTheModal()
+    {
+        Scene mainMenuScene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+        MainMenuController controller = FindSceneComponent<MainMenuController>(mainMenuScene);
+
+        InvokePrivateInstanceMethod(controller, "Awake");
+        InvokePrivateInstanceMethod(controller, "ToggleAudioSettingsPanel");
+
+        RectTransform panel = FindSceneObject(mainMenuScene, "Panel_AudioSettings").GetComponent<RectTransform>();
+        VerticalLayoutGroup panelLayout = panel.GetComponent<VerticalLayoutGroup>();
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(panel);
+        Canvas.ForceUpdateCanvases();
+
+        Assert.That(panel.gameObject.activeInHierarchy, Is.True);
+        Assert.That(panelLayout.childControlHeight, Is.True, "The modal must honor each row's LayoutElement height.");
+
+        string[] rowNames = { "Row_Dialogue", "Row_GameSounds", "Row_Atmosphere", "Row_Music" };
+
+        for (int i = 0; i < rowNames.Length; i++)
+        {
+            RectTransform row = panel.Find(rowNames[i]) as RectTransform;
+            Assert.That(row, Is.Not.Null, $"The modal should include {rowNames[i]}.");
+
+            HorizontalLayoutGroup rowLayout = row.GetComponent<HorizontalLayoutGroup>();
+            Assert.That(rowLayout.childControlWidth, Is.True, $"{rowNames[i]} must honor its slider's preferred width.");
+            Assert.That(rowLayout.childControlHeight, Is.True, $"{rowNames[i]} must honor its slider's preferred height.");
+
+            Slider slider = row.GetComponentInChildren<Slider>(true);
+            Assert.That(slider, Is.Not.Null, $"{rowNames[i]} should include its audio slider.");
+            Assert.That(slider.GetComponent<RectTransform>().rect.width, Is.GreaterThanOrEqualTo(220f), $"{rowNames[i]}'s slider should render horizontally.");
+            Assert.That(slider.GetComponent<RectTransform>().rect.height, Is.LessThanOrEqualTo(48f), $"{rowNames[i]}'s slider should not become a vertical block.");
+            AssertRectTransformInside(panel, row, $"{rowNames[i]} should stay inside the modal.");
+        }
+    }
+
+    [Test]
     public void PlayerMovementUsesOnlyFloorBoundaryForWalkability()
     {
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
@@ -1370,6 +1424,40 @@ public class NavigationRegressionTests
         Assert.That(rectTransform, Is.Not.Null, message);
         Assert.That(rectTransform.anchorMin.x, Is.EqualTo(1f), message);
         Assert.That(rectTransform.anchorMax.x, Is.EqualTo(1f), message);
+    }
+
+    private static void AssertTmpTextFitsPlaqueInterior(
+        RectTransform plaque,
+        TextMeshProUGUI text,
+        string description)
+    {
+        text.ForceMeshUpdate(false, true);
+        Bounds textBounds = text.textBounds;
+        Vector3 textLeft = plaque.InverseTransformPoint(
+            text.rectTransform.TransformPoint(new Vector3(textBounds.min.x, textBounds.center.y, 0f)));
+        Vector3 textRight = plaque.InverseTransformPoint(
+            text.rectTransform.TransformPoint(new Vector3(textBounds.max.x, textBounds.center.y, 0f)));
+        Rect plaqueRect = plaque.rect;
+        float safeLeft = plaqueRect.xMin + plaqueRect.width * 0.26f;
+        float safeRight = plaqueRect.xMin + plaqueRect.width * 0.74f;
+
+        Assert.That(textLeft.x, Is.GreaterThanOrEqualTo(safeLeft), $"{description} should not overlap the plaque's left ornament.");
+        Assert.That(textRight.x, Is.LessThanOrEqualTo(safeRight), $"{description} should not overlap the plaque's right ornament.");
+    }
+
+    private static void AssertRectTransformInside(
+        RectTransform container,
+        RectTransform content,
+        string message)
+    {
+        Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(container, content);
+        Rect containerRect = container.rect;
+        const float tolerance = 0.5f;
+
+        Assert.That(bounds.min.x, Is.GreaterThanOrEqualTo(containerRect.xMin - tolerance), message);
+        Assert.That(bounds.max.x, Is.LessThanOrEqualTo(containerRect.xMax + tolerance), message);
+        Assert.That(bounds.min.y, Is.GreaterThanOrEqualTo(containerRect.yMin - tolerance), message);
+        Assert.That(bounds.max.y, Is.LessThanOrEqualTo(containerRect.yMax + tolerance), message);
     }
 
     private static void AssertPersistentButtonHandler(Button button, MainMenuController controller, string expectedMethodName)
