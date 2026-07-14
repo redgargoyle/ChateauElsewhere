@@ -415,72 +415,46 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     {
         ResolveReferences();
 
-        if (TryFindBestApproachDestination(playerMovement, false, out destination))
+        if (playerMovement == null ||
+            !TryGetArrivalRuntimeRegion(out PassageArrivalRuntimeRegion runtimeRegion))
         {
-            return true;
+            destination = Vector2.zero;
+            return false;
         }
 
-        return TryFindClosestReachableArrivalDestination(playerMovement, out destination);
+        return PassageArrivalResolver.TryResolveBestReachableDestination(
+            runtimeRegion,
+            GetPlayerScreenPosition(),
+            playerMovement,
+            out destination);
     }
 
-    private bool TryFindClosestReachableArrivalDestination(PointClickPlayerMovement playerMovement, out Vector2 destination)
+    private bool TryGetArrivalRuntimeRegion(out PassageArrivalRuntimeRegion runtimeRegion)
     {
-        destination = Vector2.zero;
+        runtimeRegion = default;
 
-        if (playerMovement == null || rectTransform == null)
+        if (rectTransform == null)
         {
             return false;
         }
 
         Camera canvasCamera = GetCanvasCamera();
         rectTransform.GetWorldCorners(triggerWorldCorners);
-
-        bool foundDestination = false;
-        float bestScore = float.MaxValue;
-        Vector2 bestDestination = Vector2.zero;
-
-        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[0] + triggerWorldCorners[3]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
-        TryScoreArrivalWorldPoint(playerMovement, Vector3.Lerp(triggerWorldCorners[0], triggerWorldCorners[3], 0.25f), canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
-        TryScoreArrivalWorldPoint(playerMovement, Vector3.Lerp(triggerWorldCorners[0], triggerWorldCorners[3], 0.75f), canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
-        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[1] + triggerWorldCorners[2]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
-        TryScoreArrivalWorldPoint(playerMovement, (triggerWorldCorners[0] + triggerWorldCorners[2]) * 0.5f, canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
-        TryScoreArrivalWorldPoint(playerMovement, triggerWorldCorners[0], canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
-        TryScoreArrivalWorldPoint(playerMovement, triggerWorldCorners[3], canvasCamera, ref foundDestination, ref bestScore, ref bestDestination);
-
-        if (!foundDestination)
-        {
-            return false;
-        }
-
-        destination = bestDestination;
-        return true;
+        runtimeRegion = new PassageArrivalRuntimeRegion(
+            CreateArrivalRegionCorner(triggerWorldCorners[0], canvasCamera),
+            CreateArrivalRegionCorner(triggerWorldCorners[1], canvasCamera),
+            CreateArrivalRegionCorner(triggerWorldCorners[2], canvasCamera),
+            CreateArrivalRegionCorner(triggerWorldCorners[3], canvasCamera));
+        return runtimeRegion.TryGetScreenBounds(out _, out _);
     }
 
-    private void TryScoreArrivalWorldPoint(
-        PointClickPlayerMovement playerMovement,
-        Vector3 triggerWorldPoint,
-        Camera canvasCamera,
-        ref bool foundDestination,
-        ref float bestScore,
-        ref Vector2 bestDestination)
+    private static PassageArrivalRegionCorner CreateArrivalRegionCorner(
+        Vector3 worldPosition,
+        Camera canvasCamera)
     {
-        if (!playerMovement.TryFindClosestReachableDestinationToWorldPointTowardRoomCenter(triggerWorldPoint, out Vector2 candidateDestination) ||
-            !playerMovement.TryGetScreenPointFromLogicalPosition(candidateDestination, out Vector2 candidateScreenPoint))
-        {
-            return;
-        }
-
-        Vector2 triggerScreenPoint = RectTransformUtility.WorldToScreenPoint(canvasCamera, triggerWorldPoint);
-        float score = Vector2.SqrMagnitude(candidateScreenPoint - triggerScreenPoint);
-
-        if (foundDestination && score >= bestScore)
-        {
-            return;
-        }
-
-        foundDestination = true;
-        bestScore = score;
-        bestDestination = candidateDestination;
+        return new PassageArrivalRegionCorner(
+            worldPosition,
+            RectTransformUtility.WorldToScreenPoint(canvasCamera, worldPosition));
     }
 
     private bool TryFindBestApproachDestination(

@@ -8,6 +8,9 @@ using CanonicalPassage = Chateau.World.Rooms.Passages.Passage;
 using PassageAnchorCoordinateSpace = Chateau.World.Rooms.Passages.PassageAnchorCoordinateSpace;
 using PassageAnchorData = Chateau.World.Rooms.Passages.PassageAnchorData;
 using PassageAnchorMigrationStage = Chateau.World.Rooms.Passages.PassageAnchorMigrationStage;
+using PassageArrivalRegionCorner = Chateau.World.Rooms.Passages.PassageArrivalRegionCorner;
+using PassageArrivalResolver = Chateau.World.Rooms.Passages.PassageArrivalResolver;
+using PassageArrivalRuntimeRegion = Chateau.World.Rooms.Passages.PassageArrivalRuntimeRegion;
 using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
 using CanonicalRoomView = Chateau.World.Rooms.RoomView;
 using NUnit.Framework;
@@ -12782,10 +12785,18 @@ public sealed class GameplayLifecycleCharacterizationTests
         DoorPromptSequenceController prompts = RequireExactlyOneInActiveScene<DoorPromptSequenceController>();
         TMP_Text passagePromptText = GetPrivateField<TMP_Text>(prompts, "promptText");
         Assert.That(passagePromptText, Is.Not.Null);
+        ChapterManager chapterManager = RequireExactlyOneInActiveScene<ChapterManager>();
         bool originalInputEnabled = player.InputEnabled;
         bool originalPanRoomWithMouseEdges = cameraManager.panRoomWithMouseEdges;
         bool originalZoomRoomWithMouseWheel = cameraManager.zoomRoomWithMouseWheel;
+
+        // This navigation characterization deliberately owns the input lease for its duration.
+        // Stop the still-running intro before the long multi-resolution probe so Story cannot
+        // change that lease midway through a passage transition and invalidate the hover signal.
+        InvokePrivateMethod(chapterManager, "StopChapterCoroutines");
+        chapterManager.StopActiveDialogueForDebugTransition();
         player.SetInputEnabled(true);
+        Assert.That(player.InputEnabled, Is.True);
         cameraManager.panRoomWithMouseEdges = false;
         cameraManager.zoomRoomWithMouseWheel = false;
 
@@ -12883,8 +12894,11 @@ public sealed class GameplayLifecycleCharacterizationTests
                     Assert.That(rearContent.gameObject.activeInHierarchy, Is.True);
                     Assert.That(entranceContent.gameObject.activeInHierarchy, Is.False);
                     Assert.That(player.HasDestination, Is.False);
+                    Assert.That(player.InputEnabled, Is.True,
+                        "The isolated navigation probe must retain its input lease.");
+                    Assert.That(DoorTriggerNavigation.IsPointerOverActiveTrigger(bottomPoint), Is.True);
                     Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(reverse),
-                        "A pointer retained at the bottom edge must transfer hover to the active reciprocal exit.");
+                        "A retained bottom-edge pointer must automatically transfer to the active reciprocal exit.");
                     Assert.That(passagePromptText.gameObject.activeSelf, Is.True);
                     Assert.That(passagePromptText.text, Is.EqualTo("Open Door"));
                     Vector2 rearArrival = player.LogicalPosition;
@@ -12895,6 +12909,10 @@ public sealed class GameplayLifecycleCharacterizationTests
                         out Vector2 rearArrivalLocal), Is.True);
                     AssertFinite(rearArrival, $"profile {profileIndex} lane {laneIndex} rear arrival");
                     AssertFinite(rearArrivalLocal, $"profile {profileIndex} lane {laneIndex} rear local arrival");
+                    AssertPassageArrivalResolverMatchesLegacyTrigger(
+                        reverse,
+                        player,
+                        $"profile {profileIndex} lane {laneIndex} active rear arrival region");
                     InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
 
                     Assert.That(player.TryWarpTo(requestedRearStarts[laneIndex], true), Is.True);
@@ -12911,8 +12929,11 @@ public sealed class GameplayLifecycleCharacterizationTests
                     Assert.That(entranceContent.gameObject.activeInHierarchy, Is.True);
                     Assert.That(rearContent.gameObject.activeInHierarchy, Is.False);
                     Assert.That(player.HasDestination, Is.False);
+                    Assert.That(player.InputEnabled, Is.True,
+                        "The isolated navigation probe must retain its input lease.");
+                    Assert.That(DoorTriggerNavigation.IsPointerOverActiveTrigger(bottomPoint), Is.True);
                     Assert.That(DoorTriggerNavigation.HoveredTrigger, Is.SameAs(forward),
-                        "Returning through the bottom edge must transfer hover back to the active reciprocal exit.");
+                        "Returning with a retained bottom-edge pointer must automatically transfer to the active reciprocal exit.");
                     Assert.That(passagePromptText.gameObject.activeSelf, Is.True);
                     Vector2 entranceArrival = player.LogicalPosition;
                     Assert.That(TryMapLogicalPointToActiveRoomStageLocal(
@@ -12923,6 +12944,10 @@ public sealed class GameplayLifecycleCharacterizationTests
                     AssertFinite(entranceArrival, $"profile {profileIndex} lane {laneIndex} Entrance arrival");
                     AssertFinite(entranceArrivalLocal,
                         $"profile {profileIndex} lane {laneIndex} Entrance local arrival");
+                    AssertPassageArrivalResolverMatchesLegacyTrigger(
+                        forward,
+                        player,
+                        $"profile {profileIndex} lane {laneIndex} active Entrance arrival region");
                     InvokePrivateStaticMethod(typeof(DoorTriggerNavigation), "StopCurrentNavigationSound");
 
                     laneObservations.Add(
@@ -12996,6 +13021,68 @@ public sealed class GameplayLifecycleCharacterizationTests
         Debug.Log($"[GrandEntranceRearLegacySha256] {actualSha256}");
         Assert.That(actualSha256, Is.EqualTo(ExpectedObservationSha256),
             "Lock the reviewed six-line Group 10 legacy fingerprint before production authoring.");
+    }
+
+    private static void AssertPassageArrivalResolverMatchesLegacyTrigger(
+        DoorTriggerNavigation activeTrigger,
+        PointClickPlayerMovement player,
+        string label)
+    {
+        Assert.That(activeTrigger, Is.Not.Null, $"{label}: active trigger is required.");
+        Assert.That(activeTrigger.isActiveAndEnabled, Is.True,
+            $"{label}: parity must use the destination room's active trigger.");
+        Assert.That(player, Is.Not.Null, $"{label}: Player is required.");
+        Assert.That(player.HasDestination, Is.False,
+            $"{label}: parity must sample the same settled player state.");
+
+        RectTransform triggerRect = activeTrigger.transform as RectTransform;
+        Assert.That(triggerRect, Is.Not.Null, $"{label}: trigger requires its RectTransform region.");
+        Vector3[] worldCorners = new Vector3[4];
+        triggerRect.GetWorldCorners(worldCorners);
+        Canvas canvas = activeTrigger.GetComponentInParent<Canvas>();
+        Camera canvasCamera = canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null
+            : canvas.worldCamera;
+        PassageArrivalRuntimeRegion runtimeRegion = new PassageArrivalRuntimeRegion(
+            CreatePassageArrivalRegionCorner(worldCorners[0], canvasCamera),
+            CreatePassageArrivalRegionCorner(worldCorners[1], canvasCamera),
+            CreatePassageArrivalRegionCorner(worldCorners[2], canvasCamera),
+            CreatePassageArrivalRegionCorner(worldCorners[3], canvasCamera));
+        Assert.That(runtimeRegion.TryGetScreenBounds(out _, out _), Is.True,
+            $"{label}: trigger corners must form one finite rendered region.");
+        Assert.That(player.TryGetScreenPointFromLogicalPosition(
+            player.LogicalPosition,
+            out Vector2 playerScreenPosition), Is.True,
+            $"{label}: Player logical position must project into the active room.");
+
+        bool legacyResolved = activeTrigger.TryFindArrivalDestination(
+            player,
+            out Vector2 legacyDestination);
+        bool canonicalResolved = PassageArrivalResolver.TryResolveBestReachableDestination(
+            runtimeRegion,
+            playerScreenPosition,
+            player,
+            out Vector2 canonicalDestination);
+        Assert.That(canonicalResolved, Is.EqualTo(legacyResolved),
+            $"{label}: canonical and delegating legacy resolution success must match.");
+        Assert.That(legacyResolved, Is.True,
+            $"{label}: the characterized destination region must remain reachable.");
+        AssertVector2Within(
+            canonicalDestination,
+            legacyDestination,
+            0.0001f,
+            $"{label} canonical/legacy destination parity");
+        Assert.That(player.HasDestination, Is.False,
+            $"{label}: arrival queries must not dispatch movement.");
+    }
+
+    private static PassageArrivalRegionCorner CreatePassageArrivalRegionCorner(
+        Vector3 worldPosition,
+        Camera canvasCamera)
+    {
+        return new PassageArrivalRegionCorner(
+            worldPosition,
+            RectTransformUtility.WorldToScreenPoint(canvasCamera, worldPosition));
     }
 
     private static IEnumerator WaitForSettledLayout()

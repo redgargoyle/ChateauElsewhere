@@ -14,6 +14,7 @@ namespace Chateau.World.Rooms.Passages
         [SerializeField] private PassageKind kind = PassageKind.Door;
         [SerializeField] private string promptText = "Open Door";
         [SerializeField] private string legacyDoorId = string.Empty;
+        [SerializeField] private string compatibilityDestinationRoomName = string.Empty;
 
         public RoomDefinition SourceRoom => sourceRoom;
         public RoomDefinition DestinationRoom => destinationRoom;
@@ -21,6 +22,22 @@ namespace Chateau.World.Rooms.Passages
         public PassageKind Kind => kind;
         public string PromptText => Clean(promptText);
         public string LegacyDoorId => Clean(legacyDoorId);
+        public bool HasExplicitCompatibilityDestinationRoomName =>
+            !string.IsNullOrEmpty(Clean(compatibilityDestinationRoomName));
+        public string CompatibilityDestinationRoomName
+        {
+            get
+            {
+                string explicitName = Clean(compatibilityDestinationRoomName);
+
+                if (!string.IsNullOrEmpty(explicitName))
+                {
+                    return explicitName;
+                }
+
+                return destinationRoom != null ? destinationRoom.PrimaryLegacyName : string.Empty;
+            }
+        }
         public PassageId Id => PassageId.Parse(StableId);
 
         public bool TryGetId(out PassageId id)
@@ -56,6 +73,17 @@ namespace Chateau.World.Rooms.Passages
             else if (destinationRoom == sourceRoom)
             {
                 report.AddError($"PassageDefinition '{name}' source and destination rooms must differ.", this);
+            }
+
+            string explicitCompatibilityDestination = Clean(compatibilityDestinationRoomName);
+            if (!string.IsNullOrEmpty(explicitCompatibilityDestination) &&
+                destinationRoom != null &&
+                !destinationRoom.MatchesLegacyName(explicitCompatibilityDestination))
+            {
+                report.AddError(
+                    $"PassageDefinition '{name}' compatibility destination " +
+                    $"'{explicitCompatibilityDestination}' must match its destination room.",
+                    this);
             }
 
             if (!Enum.IsDefined(typeof(PassageKind), kind))

@@ -9,6 +9,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
+using CanonicalRoomView = Chateau.World.Rooms.RoomView;
 
 public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavigationService, INavigationRuntimeService
 {
@@ -138,6 +139,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
         CanonicalRoomDefinition currentDefinition = CurrentRoomDefinition;
         PassageAnchorData approachAnchor = passage.ApproachAnchor;
         PassageAnchorData arrivalAnchor = passage.ArrivalAnchor;
+        PassageArrivalRegionData arrivalRegion = passage.ArrivalRegion;
 
         return definition != null &&
             reverse != null &&
@@ -146,21 +148,27 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             definition.SourceRoom == currentDefinition &&
             definition.DestinationRoom != null &&
             !string.IsNullOrEmpty(definition.SourceRoom.PrimaryLegacyName) &&
-            !string.IsNullOrEmpty(definition.DestinationRoom.PrimaryLegacyName) &&
+            !string.IsNullOrEmpty(definition.CompatibilityDestinationRoomName) &&
             !string.IsNullOrEmpty(definition.LegacyDoorId) &&
             passage.SourceRoomView != null &&
             passage.transform != passage.SourceRoomView.transform &&
             passage.transform.IsChildOf(passage.SourceRoomView.transform) &&
             passage.SourceRoomView.Definition == currentDefinition &&
             passage.HasValidAnchorMigrationStage &&
+            passage.HasValidArrivalPlacementMode &&
             approachAnchor != null &&
             (!passage.UsesAuthoredApproach ||
                 (approachAnchor.HasValidCoordinateSpace && approachAnchor.HasFiniteAuthoredPosition)) &&
-            arrivalAnchor != null &&
-            (!passage.UsesAuthoredArrival ||
-                (arrivalAnchor.HasValidCoordinateSpace && arrivalAnchor.HasFiniteAuthoredPosition)) &&
+            (passage.UsesBestReachableArrivalRegion
+                ? passage.AnchorMigrationStage == PassageAnchorMigrationStage.AuthoredAnchors &&
+                    arrivalRegion != null &&
+                    arrivalRegion.HasValidRoomViewLocalCorners
+                : arrivalAnchor != null &&
+                    (!passage.UsesAuthoredArrival ||
+                        (arrivalAnchor.HasValidCoordinateSpace && arrivalAnchor.HasFiniteAuthoredPosition))) &&
             reverse != passage &&
             reverse.HasValidAnchorMigrationStage &&
+            reverse.HasValidArrivalPlacementMode &&
             reverse.AnchorMigrationStage == passage.AnchorMigrationStage &&
             reverse.ReversePassage == passage &&
             definition.Reverse != null &&
@@ -520,12 +528,16 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
     {
         PassageDefinition definition = passage.Definition;
 
-        if (!SetCurrentRoom(definition.DestinationRoom.PrimaryLegacyName, false, true))
+        if (!SetCurrentRoom(definition.CompatibilityDestinationRoomName, false, true))
         {
             return false;
         }
 
-        if (passage.UsesAuthoredArrival)
+        if (passage.UsesBestReachableArrivalRegion)
+        {
+            PlacePlayerAtCanonicalArrivalRegion(passage);
+        }
+        else if (passage.UsesAuthoredArrival)
         {
             PlacePlayerAtCanonicalArrival(passage);
         }
@@ -534,7 +546,7 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
             PlacePlayerAtDestinationDoor(
                 definition.SourceRoom.PrimaryLegacyName,
                 definition.LegacyDoorId,
-                definition.DestinationRoom.PrimaryLegacyName);
+                definition.CompatibilityDestinationRoomName);
         }
 
         return true;
@@ -564,6 +576,81 @@ public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavi
         {
             Warn($"Player rejected authored arrival {arrivalPosition} for canonical passage '{passage.Definition.StableId}'.");
         }
+    }
+
+    private void PlacePlayerAtCanonicalArrivalRegion(Passage passage)
+    {
+        PointClickPlayerMovement playerMovement = FindPlayerMovement();
+
+        if (playerMovement == null)
+        {
+            Warn($"Canonical passage '{passage.Definition.StableId}' could not find the Player for destination-region placement.");
+            return;
+        }
+
+        CanonicalRoomView destinationRoomView = passage.ReversePassage.SourceRoomView;
+        Canvas canvas = destinationRoomView != null
+            ? destinationRoomView.GetComponentInParent<Canvas>()
+            : null;
+        Camera canvasCamera = canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null
+            : canvas.worldCamera;
+
+        // Resolve only after destination activation has installed the active stage and walkable floor.
+        Physics2D.SyncTransforms();
+        playerMovement.RefreshWalkableFloorForCurrentRoom();
+
+        if (!PassageArrivalResolver.TryBuildRuntimeRegion(
+                passage.ArrivalRegion,
+                destinationRoomView,
+                canvasCamera,
+                out PassageArrivalRuntimeRegion runtimeRegion) ||
+            !TryGetPassageArrivalPlayerScreenPosition(playerMovement, out Vector2 playerScreenPosition) ||
+            !PassageArrivalResolver.TryResolveBestReachableDestination(
+                runtimeRegion,
+                playerScreenPosition,
+                playerMovement,
+                out Vector2 arrivalDestination))
+        {
+            Warn($"Canonical passage '{passage.Definition.StableId}' could not resolve its authored destination region.");
+            return;
+        }
+
+        if (!playerMovement.TryWarpTo(arrivalDestination, false) &&
+            !playerMovement.TryWarpTo(arrivalDestination, true))
+        {
+            Warn($"Player rejected destination-region arrival {arrivalDestination} for canonical passage '{passage.Definition.StableId}'.");
+        }
+    }
+
+    private static bool TryGetPassageArrivalPlayerScreenPosition(
+        PointClickPlayerMovement playerMovement,
+        out Vector2 playerScreenPosition)
+    {
+        playerScreenPosition = Vector2.zero;
+
+        if (playerMovement == null)
+        {
+            return false;
+        }
+
+        if (playerMovement.TryGetScreenPointFromLogicalPosition(
+            playerMovement.LogicalPosition,
+            out playerScreenPosition))
+        {
+            return true;
+        }
+
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null)
+        {
+            return false;
+        }
+
+        playerScreenPosition = RectTransformUtility.WorldToScreenPoint(
+            mainCamera,
+            playerMovement.transform.position);
+        return PassageArrivalResolver.IsFinite(playerScreenPosition);
     }
 
     private CanonicalRoomDefinition FindRegisteredRoomDefinition(string legacyRoomName)

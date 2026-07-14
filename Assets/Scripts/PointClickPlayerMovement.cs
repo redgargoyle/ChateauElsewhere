@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Animator))]
-public class PointClickPlayerMovement : MonoBehaviour, IRoomViewLocalCoordinateMapper
+public class PointClickPlayerMovement : MonoBehaviour, IRoomViewLocalCoordinateMapper, IPassageArrivalQuery
 {
 	private const string DiagnosticPrefix = "[Ch2ClickDiag]";
 	private const float MovementEpsilon = 0.0001f;
@@ -1188,6 +1188,27 @@ public class PointClickPlayerMovement : MonoBehaviour, IRoomViewLocalCoordinateM
 	public bool TryEvaluateMovementAtScreenPoint(Vector2 screenPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)
 	{
 		return TryEvaluateMovementAtScreenPoint(screenPosition, clampToWalkableArea, true, out movementQuery);
+	}
+
+	public bool TryEvaluateReachableDestinationAtScreenPoint(
+		Vector2 screenPosition,
+		out PassageArrivalMovementQuery movementQuery)
+	{
+		movementQuery = default;
+
+		if (!TryEvaluateMovementAtScreenPoint(
+			screenPosition,
+			true,
+			out MovementTargetQuery legacyQuery))
+		{
+			return false;
+		}
+
+		movementQuery = new PassageArrivalMovementQuery(
+			legacyQuery.Destination,
+			legacyQuery.ExactPointWalkable,
+			legacyQuery.HasReachableDestination);
+		return true;
 	}
 
 	private bool TryEvaluateMovementAtScreenPoint(
