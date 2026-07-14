@@ -823,13 +823,13 @@ public sealed class ArchitectureBaselinePlayModeTests
         MonoBehaviour entranceView = RequireRoomView("room.grand-entrance-hall");
         MonoBehaviour rearView = RequireRoomView("room.grand-entrance-hall-rear-view");
 
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(15));
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(30));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(16));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(32));
         List<MonoBehaviour> triggers = FindSceneComponents("DoorTriggerNavigation");
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") != null),
-            Is.EqualTo(30));
+            Is.EqualTo(32));
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") == null),
-            Is.EqualTo(15));
+            Is.EqualTo(13));
         Assert.That(GetField<MonoBehaviour>(forwardTrigger, "canonicalPassage"), Is.SameAs(forwardPassage));
         Assert.That(GetField<MonoBehaviour>(reverseTrigger, "canonicalPassage"), Is.SameAs(reversePassage));
         Assert.That(GetField<MonoBehaviour>(forwardTrigger, "navigationManager"), Is.SameAs(navigation));
@@ -868,7 +868,7 @@ public sealed class ArchitectureBaselinePlayModeTests
         object[] registeredDefinitions = ((IEnumerable)GetProperty<object>(database, "Definitions"))
             .Cast<object>()
             .ToArray();
-        Assert.That(registeredDefinitions, Has.Length.EqualTo(49));
+        Assert.That(registeredDefinitions, Has.Length.EqualTo(51));
         Assert.That(registeredDefinitions, Does.Contain(forwardDefinition));
         Assert.That(registeredDefinitions, Does.Contain(reverseDefinition));
         Assert.That(registeredDefinitions, Does.Contain(rearDefinition));
@@ -985,7 +985,7 @@ public sealed class ArchitectureBaselinePlayModeTests
         Debug.Log(
             $"[Slice22Group10PlayMode] resolution={Screen.width}x{Screen.height} " +
             $"rearLocal={Format(expectedRearArrivalLocal)} entranceLocal={Format(expectedEntranceArrivalLocal)} " +
-            "roomViews=15 passages=30 callers=30/15 stages=authored-anchors " +
+            "roomViews=16 passages=32 callers=32/13 stages=authored-anchors " +
             "placement=best-reachable-region aliases=Grand Entrance Hall Rear View/Grand Entrance Hall Rear view");
     }
 
@@ -1027,14 +1027,14 @@ public sealed class ArchitectureBaselinePlayModeTests
         MonoBehaviour rearView = RequireRoomView("room.grand-entrance-hall-rear-view");
         MonoBehaviour billiardView = RequireRoomView("room.billiard-room");
 
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(15));
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(30));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(16));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(32));
         List<MonoBehaviour> triggers = FindSceneComponents("DoorTriggerNavigation");
         Assert.That(triggers, Has.Count.EqualTo(45));
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") != null),
-            Is.EqualTo(30));
+            Is.EqualTo(32));
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") == null),
-            Is.EqualTo(15));
+            Is.EqualTo(13));
         Assert.That(GetField<MonoBehaviour>(forwardTrigger, "canonicalPassage"), Is.SameAs(forwardPassage));
         Assert.That(GetField<MonoBehaviour>(reverseTrigger, "canonicalPassage"), Is.SameAs(reversePassage));
         Assert.That(GetField<MonoBehaviour>(forwardTrigger, "navigationManager"), Is.SameAs(navigation));
@@ -1080,7 +1080,7 @@ public sealed class ArchitectureBaselinePlayModeTests
         object[] registeredDefinitions = ((IEnumerable)GetProperty<object>(database, "Definitions"))
             .Cast<object>()
             .ToArray();
-        Assert.That(registeredDefinitions, Has.Length.EqualTo(49));
+        Assert.That(registeredDefinitions, Has.Length.EqualTo(51));
         Assert.That(registeredDefinitions, Does.Contain(forwardDefinition));
         Assert.That(registeredDefinitions, Does.Contain(reverseDefinition));
         Assert.That(registeredDefinitions, Does.Contain(rearDefinition));
@@ -1225,7 +1225,7 @@ public sealed class ArchitectureBaselinePlayModeTests
             $"[Slice22Group11PlayMode] resolution={Screen.width}x{Screen.height} " +
             $"billiardLocal={Format(billiardLandingLocal)} rearLocal={Format(rearLandingLocal)} " +
             $"forwardStop={Format(approachStops[0])} reverseStop={Format(approachStops[1])} " +
-            "roomViews=15 passages=30 callers=30/15 stages=authored-anchors " +
+            "roomViews=16 passages=32 callers=32/13 stages=authored-anchors " +
             "placement=source-region/destination-region " +
             "compatibilityDestination=Grand Entrance Hall Rear View");
     }
@@ -1264,14 +1264,14 @@ public sealed class ArchitectureBaselinePlayModeTests
         MonoBehaviour rearView = RequireRoomView("room.grand-entrance-hall-rear-view");
         MonoBehaviour conservatoryView = RequireRoomView("room.conservatory");
 
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(15));
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(30));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(16));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(32));
         List<MonoBehaviour> triggers = FindSceneComponents("DoorTriggerNavigation");
         Assert.That(triggers, Has.Count.EqualTo(45));
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") != null),
-            Is.EqualTo(30));
+            Is.EqualTo(32));
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") == null),
-            Is.EqualTo(15));
+            Is.EqualTo(13));
         Assert.That(GetField<MonoBehaviour>(forwardTrigger, "canonicalPassage"), Is.SameAs(forwardPassage));
         Assert.That(GetField<MonoBehaviour>(reverseTrigger, "canonicalPassage"), Is.SameAs(reversePassage));
         Assert.That(GetField<MonoBehaviour>(forwardTrigger, "navigationManager"), Is.SameAs(navigation));
@@ -1300,7 +1300,7 @@ public sealed class ArchitectureBaselinePlayModeTests
         object[] registeredDefinitions = ((IEnumerable)GetProperty<object>(database, "Definitions"))
             .Cast<object>()
             .ToArray();
-        Assert.That(registeredDefinitions, Has.Length.EqualTo(49));
+        Assert.That(registeredDefinitions, Has.Length.EqualTo(51));
         Assert.That(registeredDefinitions, Does.Contain(forwardDefinition));
         Assert.That(registeredDefinitions, Does.Contain(reverseDefinition));
         Assert.That(registeredDefinitions, Does.Contain(conservatoryDefinition));
@@ -1441,7 +1441,7 @@ public sealed class ArchitectureBaselinePlayModeTests
             $"[Slice22Group12PlayMode] resolution={Screen.width}x{Screen.height} " +
             $"conservatoryLocal={Format(conservatoryLandingLocal)} rearLocal={Format(rearLandingLocal)} " +
             $"forwardStop={Format(approachStops[0])} " +
-            "roomViews=15 passages=30 callers=30/15 stages=authored-anchors " +
+            "roomViews=16 passages=32 callers=32/13 stages=authored-anchors " +
             "placement=source-region/destination-region profile=standard/bottom-edge " +
             "compatibilityDestination=Grand Entrance Hall Rear View");
     }
@@ -1481,14 +1481,14 @@ public sealed class ArchitectureBaselinePlayModeTests
         MonoBehaviour serviceView = RequireRoomView("room.service-corridor");
         MonoBehaviour sideView = RequireRoomView("room.side-stair-mudroom");
 
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(15));
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(30));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(16));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(32));
         List<MonoBehaviour> triggers = FindSceneComponents("DoorTriggerNavigation");
         Assert.That(triggers, Has.Count.EqualTo(45));
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") != null),
-            Is.EqualTo(30));
+            Is.EqualTo(32));
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") == null),
-            Is.EqualTo(15));
+            Is.EqualTo(13));
         Assert.That(GetField<MonoBehaviour>(forwardTrigger, "canonicalPassage"), Is.SameAs(forwardPassage));
         Assert.That(GetField<MonoBehaviour>(reverseTrigger, "canonicalPassage"), Is.SameAs(reversePassage));
         Assert.That(GetField<MonoBehaviour>(group14ForwardTrigger, "canonicalPassage"),
@@ -1515,7 +1515,7 @@ public sealed class ArchitectureBaselinePlayModeTests
         Assert.That(GetProperty<object>(reverseDefinition, "Reverse"), Is.SameAs(forwardDefinition));
         object[] registered = ((IEnumerable)GetProperty<object>(GetProperty<object>(gameRoot, "Database"),
             "Definitions")).Cast<object>().ToArray();
-        Assert.That(registered, Has.Length.EqualTo(49));
+        Assert.That(registered, Has.Length.EqualTo(51));
 
         AssertCanonicalSourceAndDestinationRegionPassage(
             forwardPassage, serviceView, reversePassage,
@@ -1607,7 +1607,7 @@ public sealed class ArchitectureBaselinePlayModeTests
 
         Debug.Log($"[Slice22Group13PlayMode] sideLocal={Format(sideLanding)} " +
             $"serviceLocal={Format(serviceLanding)} forwardStop={Format(approachStops[0])} " +
-            $"reverseStop={Format(approachStops[1])} roomViews=15 passages=30 callers=30/15 " +
+            $"reverseStop={Format(approachStops[1])} roomViews=16 passages=32 callers=32/13 " +
             "placement=source-region/destination-region aliases=Side Stair & Mudroom/Side Stair Mudroom");
     }
 
@@ -1638,14 +1638,14 @@ public sealed class ArchitectureBaselinePlayModeTests
         MonoBehaviour sideView = RequireRoomView("room.side-stair-mudroom");
         MonoBehaviour upperView = RequireRoomView("room.upper-sitting-hall");
 
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(15));
-        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(30));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(16));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(32));
         List<MonoBehaviour> triggers = FindSceneComponents("DoorTriggerNavigation");
         Assert.That(triggers, Has.Count.EqualTo(45));
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") != null),
-            Is.EqualTo(30));
+            Is.EqualTo(32));
         Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") == null),
-            Is.EqualTo(15));
+            Is.EqualTo(13));
         Assert.That(forwardTrigger.GetComponents<Component>(), Has.Length.EqualTo(5));
         Assert.That(reverseTrigger.GetComponents<Component>(), Has.Length.EqualTo(5));
         Assert.That(GetField<MonoBehaviour>(forwardTrigger, "canonicalPassage"),
@@ -1722,7 +1722,7 @@ public sealed class ArchitectureBaselinePlayModeTests
             Is.True);
         object[] registered = ((IEnumerable)GetProperty<object>(GetProperty<object>(gameRoot, "Database"),
             "Definitions")).Cast<object>().ToArray();
-        Assert.That(registered, Has.Length.EqualTo(49));
+        Assert.That(registered, Has.Length.EqualTo(51));
         Assert.That(registered, Does.Contain(forwardDefinition));
         Assert.That(registered, Does.Contain(reverseDefinition));
 
@@ -1827,8 +1827,215 @@ public sealed class ArchitectureBaselinePlayModeTests
 
         Debug.Log($"[Slice22Group14PlayMode] upperLocal={Format(upperLanding)} " +
             $"sideLocal={Format(sideLanding)} forwardStop={Format(approachStops[0])} " +
-            $"reverseStop={Format(approachStops[1])} roomViews=15 passages=30 callers=30/15 " +
+            $"reverseStop={Format(approachStops[1])} roomViews=16 passages=32 callers=32/13 " +
             "profile=inferred-stairway-up/standard-door aliases=Side Stair & Mudroom/Side Stair Mudroom");
+    }
+
+    [UnityTest]
+    public IEnumerator UpperSittingHallUpperGalleryFarRoundTripUsesCanonicalReciprocalRegions()
+    {
+        const string UpperRoom = "Upper Sitting Hall";
+        const string GalleryRoom = "Upper Gallery";
+
+        yield return BootGameplayFromRealMenu();
+
+        MonoBehaviour gameRoot = RequireSingleSceneComponent("GameRoot");
+        MonoBehaviour chapter = RequireSingleSceneComponent("ChapterManager");
+        MonoBehaviour navigation = RequireSingleSceneComponent("RoomNavigationManager");
+        MonoBehaviour player = RequireComponentOnGameObject("Player", "PointClickPlayerMovement");
+        MonoBehaviour cameraManager = RequireSingleSceneComponent("CameraManager");
+        MonoBehaviour forwardTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_UpperSittingHall_UpperGallery", "DoorTriggerNavigation");
+        MonoBehaviour reverseTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_UpperGallery_UpperSittingHall", "DoorTriggerNavigation");
+        MonoBehaviour forwardPassage = RequireComponentOnGameObject(
+            "DoorTrigger_UpperSittingHall_UpperGallery",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour reversePassage = RequireComponentOnGameObject(
+            "DoorTrigger_UpperGallery_UpperSittingHall",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour upperView = RequireRoomView("room.upper-sitting-hall");
+        MonoBehaviour galleryView = RequireRoomView("room.upper-gallery");
+
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.RoomView"), Has.Count.EqualTo(16));
+        Assert.That(FindSceneComponents("Chateau.World.Rooms.Passages.Passage"), Has.Count.EqualTo(32));
+        List<MonoBehaviour> triggers = FindSceneComponents("DoorTriggerNavigation");
+        Assert.That(triggers, Has.Count.EqualTo(45));
+        Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") != null),
+            Is.EqualTo(32));
+        Assert.That(triggers.Count(trigger => GetField<MonoBehaviour>(trigger, "canonicalPassage") == null),
+            Is.EqualTo(13));
+        Assert.That(forwardTrigger.GetComponents<Component>(), Has.Length.EqualTo(5));
+        Assert.That(reverseTrigger.GetComponents<Component>(), Has.Length.EqualTo(5));
+        Assert.That(GetField<MonoBehaviour>(forwardTrigger, "canonicalPassage"),
+            Is.SameAs(forwardPassage));
+        Assert.That(GetField<MonoBehaviour>(reverseTrigger, "canonicalPassage"),
+            Is.SameAs(reversePassage));
+        foreach (MonoBehaviour trigger in new[] { forwardTrigger, reverseTrigger })
+        {
+            Assert.That(GetField<MonoBehaviour>(trigger, "navigationManager"), Is.SameAs(navigation));
+            Assert.That(GetField<Transform>(trigger, "player"), Is.SameAs(player.transform));
+            Assert.That(GetField<object>(trigger, "triggerKind").ToString(), Is.EqualTo("Door"));
+            Assert.That(GetField<bool>(trigger, "requirePlayerProximity"), Is.True);
+            Assert.That(GetField<bool>(trigger, "walkPlayerToTriggerWhenFar"), Is.True);
+            Assert.That(GetField<bool>(trigger, "autoActivateAfterApproach"), Is.True);
+            Assert.That(GetField<float>(trigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+            Assert.That(GetProperty<bool>(trigger, "IsStairway"), Is.False);
+            Assert.That(GetProperty<string>(trigger, "InteractionLabel"), Is.EqualTo("Door"));
+            Assert.That(InvokeMethod(trigger, "GetNavigationCursorIcon").ToString(), Is.EqualTo("Door"));
+        }
+        Assert.That(GetProperty<string>(forwardTrigger, "SourceRoom"), Is.EqualTo(UpperRoom));
+        Assert.That(GetProperty<string>(forwardTrigger, "DoorName"),
+            Is.EqualTo("UpperSittingHall_UpperGallery"));
+        Assert.That(GetProperty<string>(forwardTrigger, "DestinationRoom"), Is.EqualTo(GalleryRoom));
+        Assert.That(GetProperty<string>(reverseTrigger, "SourceRoom"), Is.EqualTo(GalleryRoom));
+        Assert.That(GetProperty<string>(reverseTrigger, "DoorName"),
+            Is.EqualTo("UpperGallery_UpperSittingHall"));
+        Assert.That(GetProperty<string>(reverseTrigger, "DestinationRoom"), Is.EqualTo(UpperRoom));
+
+        AudioSource passageAudio = RequireSceneGameObject("Audio_DoorOpen").GetComponent<AudioSource>();
+        UnityEngine.Object forwardCatalog = GetField<UnityEngine.Object>(forwardTrigger,
+            "doorOpenSoundCatalog");
+        Assert.That(forwardCatalog, Is.Not.Null);
+        Assert.That(GetField<UnityEngine.Object>(reverseTrigger, "doorOpenSoundCatalog"),
+            Is.SameAs(forwardCatalog));
+        Assert.That(GetField<AudioSource>(forwardTrigger, "doorOpenAudioSource"), Is.SameAs(passageAudio));
+        Assert.That(GetField<AudioSource>(reverseTrigger, "doorOpenAudioSource"), Is.SameAs(passageAudio));
+        Assert.That(GetField<UnityEngine.Object>(forwardTrigger, "stairwaySoundCatalog"), Is.Null);
+        Assert.That(GetField<UnityEngine.Object>(reverseTrigger, "stairwaySoundCatalog"), Is.Null);
+
+        object upperDefinition = GetProperty<object>(upperView, "Definition");
+        object galleryDefinition = GetProperty<object>(galleryView, "Definition");
+        object forwardDefinition = GetProperty<object>(forwardPassage, "Definition");
+        object reverseDefinition = GetProperty<object>(reversePassage, "Definition");
+        Assert.That(GetProperty<string>(upperDefinition, "DisplayName"), Is.EqualTo(UpperRoom));
+        Assert.That(GetProperty<string>(galleryDefinition, "DisplayName"), Is.EqualTo(GalleryRoom));
+        Assert.That(GetProperty<object>(forwardDefinition, "Kind").ToString(), Is.EqualTo("Door"));
+        Assert.That(GetProperty<object>(reverseDefinition, "Kind").ToString(), Is.EqualTo("Door"));
+        Assert.That(GetProperty<string>(forwardDefinition, "PromptText"), Is.EqualTo("Open Door"));
+        Assert.That(GetProperty<string>(reverseDefinition, "PromptText"), Is.EqualTo("Open Door"));
+        object[] registered = ((IEnumerable)GetProperty<object>(GetProperty<object>(gameRoot, "Database"),
+            "Definitions")).Cast<object>().ToArray();
+        Assert.That(registered, Has.Length.EqualTo(51));
+        Assert.That(registered, Does.Contain(forwardDefinition));
+        Assert.That(registered, Does.Contain(reverseDefinition));
+
+        AssertCanonicalSourceAndDestinationRegionPassage(
+            forwardPassage, upperView, reversePassage,
+            "passage.upper-sitting-hall.upper-gallery",
+            "UpperSittingHall_UpperGallery", GalleryRoom, false,
+            new Vector2(587.2802124f, -69.99983978f),
+            new Vector2(587.2802124f, 225.1838379f),
+            new Vector2(710.7197876f, 225.1838379f),
+            new Vector2(710.7197876f, -69.99983978f));
+        AssertCanonicalSourceAndDestinationRegionPassage(
+            reversePassage, galleryView, forwardPassage,
+            "passage.upper-gallery.upper-sitting-hall",
+            "UpperGallery_UpperSittingHall", UpperRoom, false,
+            new Vector2(-174.1340942f, -42.82170105f),
+            new Vector2(-174.1340942f, 207.995697f),
+            new Vector2(-135.8659058f, 207.995697f),
+            new Vector2(-135.8659058f, -42.82170105f));
+
+        InvokeMethod(chapter, "StopChapterCoroutines");
+        InvokeMethod(chapter, "StopActiveDialogueForDebugTransition");
+        InvokeMethod(player, "SetInputEnabled", true);
+        float originalMoveSpeed = GetField<float>(player, "moveSpeed");
+        SetField(player, "moveSpeed", 1000f);
+        FreezeRoomLookForEvidence();
+        List<Vector2> approachStops = new List<Vector2>(2);
+        List<string> approachRooms = new List<string>(2);
+        int movementStops = 0;
+        Action arrived = () =>
+        {
+            approachStops.Add(GetProperty<Vector2>(player, "LogicalPosition"));
+            approachRooms.Add(GetProperty<string>(navigation, "CurrentRoom"));
+        };
+        Action stopped = () => movementStops++;
+        EventInfo arrivalEvent = player.GetType().GetEvent("ArrivedAtDestination");
+        EventInfo stoppedEvent = player.GetType().GetEvent("MovementStopped");
+        arrivalEvent.AddEventHandler(player, arrived);
+        stoppedEvent.AddEventHandler(player, stopped);
+        Vector2 galleryLanding = Vector2.zero;
+        Vector2 upperLanding = Vector2.zero;
+        try
+        {
+            string[] setupNames =
+            {
+                "DoorTrigger_GEH_DiningRoom",
+                "DoorTrigger_DiningRoom_ButlersPantry",
+                "DoorTrigger_ButlersPantry_ServiceCorridor",
+                "DoorTrigger_ServiceCorridor_SideStairMudroom"
+            };
+            string[] setupRooms =
+                { "Dining Room", "Butlers Pantry", "Service Corridor", "Side Stair & Mudroom" };
+            for (int i = 0; i < setupNames.Length; i++)
+            {
+                MonoBehaviour setupPassage = RequireComponentOnGameObject(
+                    setupNames[i], "Chateau.World.Rooms.Passages.Passage");
+                Assert.That((bool)InvokeMethod(navigation, "TryTraverse", setupPassage), Is.True);
+                yield return WaitForCurrentRoom(navigation, setupRooms[i], 60);
+            }
+            Assert.That((bool)InvokeMethod(navigation, "MoveToRoom", "Side Stair Mudroom"), Is.True);
+            yield return WaitForCurrentRoom(navigation, "Side Stair Mudroom", 60);
+            MonoBehaviour upperSetup = RequireComponentOnGameObject(
+                "StairwayTrigger_SideStairMudroom_UpperSittingHall",
+                "Chateau.World.Rooms.Passages.Passage");
+            Assert.That((bool)InvokeMethod(navigation, "TryTraverse", upperSetup), Is.True);
+            yield return WaitForCurrentRoom(navigation, UpperRoom, 60);
+
+            Assert.That((bool)InvokeMethod(player, "TryWarpTo", new Vector2(5f, -2f), true), Is.True);
+            Assert.That((float)InvokeMethod(forwardTrigger, "GetPlayerScreenDistanceToTrigger"),
+                Is.GreaterThan(145f));
+            SetField(forwardTrigger, "lastPointerActivationFrame", -1);
+            InvokeMethod(forwardTrigger, "ActivateDoor");
+            Assert.That(GetProperty<bool>(player, "HasDestination"), Is.True);
+            yield return WaitForCurrentRoom(navigation, GalleryRoom, 240);
+            FreezeRoomLookForEvidence();
+            yield return null;
+            Assert.That(GetProperty<object>(navigation, "CurrentRoomDefinition"),
+                Is.SameAs(galleryDefinition));
+            Assert.That(GetProperty<bool>(galleryView, "IsVisible"), Is.True);
+            galleryLanding = GetRoomViewLocalPlayerPosition(player, cameraManager,
+                "Upper Gallery landing");
+
+            Assert.That((bool)InvokeMethod(player, "TryWarpTo", new Vector2(-5f, -2f), true), Is.True);
+            Assert.That((float)InvokeMethod(reverseTrigger, "GetPlayerScreenDistanceToTrigger"),
+                Is.GreaterThan(145f));
+            SetField(reverseTrigger, "lastPointerActivationFrame", -1);
+            InvokeMethod(reverseTrigger, "ActivateDoor");
+            Assert.That(GetProperty<bool>(player, "HasDestination"), Is.True);
+            yield return WaitForCurrentRoom(navigation, UpperRoom, 240);
+            FreezeRoomLookForEvidence();
+            yield return null;
+            Assert.That(GetProperty<object>(navigation, "CurrentRoomDefinition"),
+                Is.SameAs(upperDefinition));
+            Assert.That(GetProperty<bool>(upperView, "IsVisible"), Is.True);
+            upperLanding = GetRoomViewLocalPlayerPosition(player, cameraManager,
+                "Upper Sitting Hall landing");
+            Assert.That(approachStops, Has.Count.EqualTo(2));
+            Assert.That(approachRooms, Is.EqualTo(new[] { UpperRoom, GalleryRoom }));
+            Assert.That(movementStops, Is.EqualTo(2));
+            AssertFinite(approachStops[0], "Upper Sitting source-region approach stop");
+            AssertFinite(approachStops[1], "Upper Gallery source-region approach stop");
+            AssertFinite(galleryLanding, "Upper Gallery destination-region landing");
+            AssertFinite(upperLanding, "Upper Sitting destination-region landing");
+            AssertFixedRenderingResolution();
+        }
+        finally
+        {
+            arrivalEvent.RemoveEventHandler(player, arrived);
+            stoppedEvent.RemoveEventHandler(player, stopped);
+            SetField(player, "moveSpeed", originalMoveSpeed);
+            InvokeMethod(forwardTrigger, "CancelPendingPlayerApproach");
+            InvokeMethod(reverseTrigger, "CancelPendingPlayerApproach");
+            if (GetProperty<bool>(player, "HasDestination")) InvokeMethod(player, "CancelDestination");
+        }
+
+        Debug.Log($"[Slice22Group15PlayMode] galleryLocal={Format(galleryLanding)} " +
+            $"upperLocal={Format(upperLanding)} forwardStop={Format(approachStops[0])} " +
+            $"reverseStop={Format(approachStops[1])} roomViews=16 passages=32 callers=32/13 " +
+            "profile=standard-door/standard-door protected=gallery-boundary/stairwell/content");
     }
 
     [UnityTest]
