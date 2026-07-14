@@ -1789,7 +1789,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 #endif
 	}
 
-	private static bool IsPointerOverBlockingUi(Vector2 screenPosition)
+	public static bool IsPointerOverBlockingUi(Vector2 screenPosition)
 	{
 		EventSystem eventSystem = EventSystem.current;
 		if (eventSystem == null)

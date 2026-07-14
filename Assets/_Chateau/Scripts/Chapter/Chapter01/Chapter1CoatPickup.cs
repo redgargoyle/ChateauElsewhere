@@ -44,6 +44,12 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
 
     private void OnMouseDown()
     {
+        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
+            PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        {
+            return;
+        }
+
         TryPickUp();
     }
 
@@ -60,6 +66,12 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
     private void Update()
     {
         if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition))
+        {
+            SetCoatCursorHover(false);
+            return;
+        }
+
+        if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
         {
             SetCoatCursorHover(false);
             return;

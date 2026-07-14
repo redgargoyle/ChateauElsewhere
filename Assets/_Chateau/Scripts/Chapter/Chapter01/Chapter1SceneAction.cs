@@ -79,6 +79,12 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void OnMouseDown()
     {
+        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
+            PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        {
+            return;
+        }
+
         PerformAction();
     }
 
@@ -102,6 +108,12 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         }
 
         if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition))
+        {
+            SetDoorCursorHover(false);
+            return;
+        }
+
+        if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
         {
             SetDoorCursorHover(false);
             return;

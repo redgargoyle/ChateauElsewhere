@@ -219,6 +219,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
             return false;
         }
 
+        if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        {
+            return false;
+        }
+
         return FindTopmostTriggerAtScreenPoint(screenPosition) != null;
     }
 
@@ -855,6 +860,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         if (!TryGetPointerPosition(out Vector2 screenPosition))
+        {
+            ClearActiveDoorHover(fallbackHoveredTrigger);
+            return;
+        }
+
+        if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
         {
             ClearActiveDoorHover(fallbackHoveredTrigger);
             return;

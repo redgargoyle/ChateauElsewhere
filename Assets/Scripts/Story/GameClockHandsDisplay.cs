@@ -121,7 +121,10 @@ public sealed class GameClockHandsDisplay : MonoBehaviour
     {
         ResolveReferences();
 
-        if (Input.GetMouseButtonDown(0) && PointerCanToggleClock() && IsPointerOverClock())
+        if (Input.GetMouseButtonDown(0) &&
+            !PointClickPlayerMovement.IsPointerOverBlockingUi(Input.mousePosition) &&
+            PointerCanToggleClock() &&
+            IsPointerOverClock())
         {
             ToggleFromClick();
         }

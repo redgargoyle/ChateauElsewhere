@@ -141,6 +141,12 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
 
     private void OnMouseDown()
     {
+        if (TryGetMouseScreenPosition(out Vector2 screenPosition) &&
+            PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        {
+            return;
+        }
+
         LogDiagnostic("OnMouseDown");
         TryStartGuestConversation();
     }
@@ -177,6 +183,12 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
         lastManualPointerFrame = Time.frameCount;
 
         if (!TryGetMouseScreenPosition(out Vector2 screenPosition))
+        {
+            SetManualHoveredAction(null);
+            return;
+        }
+
+        if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
         {
             SetManualHoveredAction(null);
             return;
