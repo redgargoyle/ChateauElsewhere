@@ -75,6 +75,19 @@ Group 06 is a compatibility migration of the Butler's Pantry/Billiard Room recip
 
 No Group 06 deletion may be inferred from a passing text-reference scan alone. A future pruning slice must fill the deletion-proof template below and commit the removal separately from route migration.
 
+## Slice 2.2-07 Group 07 no-prune evidence
+
+Group07 completes the Butler's Pantry/Service Corridor reciprocal passage ownership seam; it is not a deletion slice. No source, scene document, prefab, existing `.meta`/GUID, legacy catalog entry, room prop, collider, blocker, floor boundary, presentation owner, or compatibility API was removed. The accepted state is Gameplay `6,032` documents / nine RoomViews / sixteen stage-2 Passages / 45 triggers, `GameDatabase 35` (`19` rooms / `16` passages), dependencies/callers `16 bound / 29 null`, and inventory `16 complete / 24 queued / 2 blocked-one-way / 3 blocked-parallel`.
+
+| Retained candidate / content | Current Slice 2.2-07 evidence | Why pruning is still unsafe / future gate |
+|---|---|---|
+| `DoorTriggerNavigation`, `RoomNavigationManager`, and `INavigationService` compatibility facade | Group07 certification advances canonical callers to `16 bound / 29 null`; authored profile `7cc7c8706a02443b30c91c7a3cdcce40b7c04fec2f54e3f2eb7d5acad7058ea9` preserves far/near traversal, event/audio order, prompt/cursor cleanup, camera, and visibility | Retain until all 45 triggers use canonical passages, target navigation/interaction owners replace compatibility execution, all serialized consumers are migrated, and every directed transition passes parity gates |
+| `Assets/Resources/Navigation/doors.txt` Group07 entries | The file remains byte-identical at `8dc956b84e8436054a8835a7fa7f12f0aa2ce14d1d9a90701e8d98c3f001798e` and intentionally retains `ButlersPantry_ServiceCorridor` and `ServiceCorridor_ButlersPantry` | The legacy parser/catalog remains active for unmigrated routes and compatibility behavior; remove entries only with consumer-zero proof in a separate prune commit |
+| `service_corridor_left_table_0` and `service_corridor_right_desk_0` cutouts | Static and rendered characterization preserve both SpriteRenderers, their art/transform/sort behavior, and their Service Corridor ownership | These are required physical-world presentation, not dead code; any later presentation-owner migration must preserve occlusion, identity, transforms, asset GUIDs, and rendered parity |
+| `PlayerBlocker_service_corridor_left_table_0`, `PlayerBlocker_service_corridor_right_desk_0`, and `PlayerBoundary` | Navigation characterization preserves both exact prop collision owners and the room's walkable boundary while both authored anchors remain exact/path-reachable/non-projected | These colliders define approved collision and traversal space; they may be replaced only by an explicitly serialized, behaviorally equivalent world-ownership migration |
+
+Group07 deletion cannot be inferred from canonical route success or text-reference scans. Exact evidence hashes are scene `c48e6f4a68cd311e958677136b572e06c05266ca556153dafd8e2656ffb1d30c`, inventory `47440df151a302a10493d14f2258c470a4a07d8683b858caf73f1c82e07c8c15`, and GameDatabase `155e065c03ec20c6b7d5f8e0a8e1746d1da166d74dc8d8c4214db8f7446989f1`. Static/serialization/GUID/meta and compilation gates pass; relevant EditMode execution accounts for 71 passing cases, and real Group07/cold-start PlayMode each pass `1/1`. Human review remains for both doorway landings, camera/active-room visibility, prompt/cursor clearing, and both Service Corridor cutout/blocker relationships. The next safe migration is tests-first Group08 Service Corridor <-> Kitchen characterization, not pruning.
+
 ## Quarantined for review, not deleted
 
 | Candidate | Why it looks redundant | Why deletion is not yet safe |

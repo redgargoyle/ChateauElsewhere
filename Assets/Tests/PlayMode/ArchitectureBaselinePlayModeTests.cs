@@ -507,6 +507,97 @@ public sealed class ArchitectureBaselinePlayModeTests
     }
 
     [UnityTest]
+    public IEnumerator ButlersPantryServiceCorridorRoundTripUsesAuthoredCanonicalPassages()
+    {
+        const string DiningRoomName = "Dining Room";
+        const string ButlersPantryRoomName = "Butlers Pantry";
+        const string ServiceCorridorRoomName = "Service Corridor";
+        Vector2 pantryAnchor = new Vector2(7f, -2.8f);
+        Vector2 serviceAnchor = new Vector2(4.2f, -3.3f);
+
+        yield return BootGameplayFromRealMenu();
+
+        MonoBehaviour navigation = RequireSingleSceneComponent("RoomNavigationManager");
+        MonoBehaviour player = RequireComponentOnGameObject("Player", "PointClickPlayerMovement");
+        MonoBehaviour entranceToDining = RequireComponentOnGameObject(
+            "DoorTrigger_GEH_DiningRoom",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour diningToPantry = RequireComponentOnGameObject(
+            "DoorTrigger_DiningRoom_ButlersPantry",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour pantryToService = RequireComponentOnGameObject(
+            "DoorTrigger_ButlersPantry_ServiceCorridor",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour serviceToPantry = RequireComponentOnGameObject(
+            "DoorTrigger_ServiceCorridor_ButlersPantry",
+            "Chateau.World.Rooms.Passages.Passage");
+        MonoBehaviour pantryTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_ButlersPantry_ServiceCorridor",
+            "DoorTriggerNavigation");
+        MonoBehaviour serviceTrigger = RequireComponentOnGameObject(
+            "DoorTrigger_ServiceCorridor_ButlersPantry",
+            "DoorTriggerNavigation");
+        MonoBehaviour pantryView = RequireRoomView("room.butlers-pantry");
+        MonoBehaviour serviceView = RequireRoomView("room.service-corridor");
+
+        Assert.That(GetField<MonoBehaviour>(pantryTrigger, "canonicalPassage"), Is.SameAs(pantryToService));
+        Assert.That(GetField<MonoBehaviour>(serviceTrigger, "canonicalPassage"), Is.SameAs(serviceToPantry));
+        Assert.That(GetField<float>(pantryTrigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+        Assert.That(GetField<float>(serviceTrigger, "maxPlayerScreenDistance"), Is.EqualTo(145f));
+        Assert.That(GetProperty<object>(pantryToService, "AnchorMigrationStage").ToString(),
+            Is.EqualTo("AuthoredAnchors"));
+        Assert.That(GetProperty<object>(serviceToPantry, "AnchorMigrationStage").ToString(),
+            Is.EqualTo("AuthoredAnchors"));
+        Assert.That(
+            GetProperty<Vector2>(GetProperty<object>(pantryToService, "ApproachAnchor"), "LogicalPosition"),
+            Is.EqualTo(pantryAnchor));
+        Assert.That(
+            GetProperty<Vector2>(GetProperty<object>(pantryToService, "ArrivalAnchor"), "LogicalPosition"),
+            Is.EqualTo(serviceAnchor));
+        Assert.That(
+            GetProperty<Vector2>(GetProperty<object>(serviceToPantry, "ApproachAnchor"), "LogicalPosition"),
+            Is.EqualTo(serviceAnchor));
+        Assert.That(
+            GetProperty<Vector2>(GetProperty<object>(serviceToPantry, "ArrivalAnchor"), "LogicalPosition"),
+            Is.EqualTo(pantryAnchor));
+
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", entranceToDining), Is.True);
+        yield return WaitForCurrentRoom(navigation, DiningRoomName, 60);
+        Assert.That((bool)InvokeMethod(navigation, "TryTraverse", diningToPantry), Is.True);
+        yield return WaitForCurrentRoom(navigation, ButlersPantryRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<bool>(pantryView, "IsVisible"), Is.True);
+        Assert.That(GetProperty<bool>(serviceView, "IsVisible"), Is.False);
+        InvokeMethod(player, "SetInputEnabled", true);
+        Assert.That((bool)InvokeMethod(player, "TryWarpToExact", pantryAnchor), Is.True);
+        SetField(pantryTrigger, "lastPointerActivationFrame", -1);
+        InvokeMethod(pantryTrigger, "ActivateDoor");
+        yield return WaitForCurrentRoom(navigation, ServiceCorridorRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<Vector2>(player, "LogicalPosition"), Is.EqualTo(serviceAnchor));
+        Assert.That(GetProperty<bool>(pantryView, "IsVisible"), Is.False);
+        Assert.That(GetProperty<bool>(serviceView, "IsVisible"), Is.True);
+        SetField(serviceTrigger, "lastPointerActivationFrame", -1);
+        InvokeMethod(serviceTrigger, "ActivateDoor");
+        yield return WaitForCurrentRoom(navigation, ButlersPantryRoomName, 60);
+        FreezeRoomLookForEvidence();
+        yield return null;
+
+        Assert.That(GetProperty<Vector2>(player, "LogicalPosition"), Is.EqualTo(pantryAnchor));
+        Assert.That(GetProperty<bool>(pantryView, "IsVisible"), Is.True);
+        Assert.That(GetProperty<bool>(serviceView, "IsVisible"), Is.False);
+        AssertFixedRenderingResolution();
+        Debug.Log(
+            $"[Slice22Group07PlayMode] resolution={Screen.width}x{Screen.height} " +
+            $"pantry={Format(pantryAnchor)} service={Format(serviceAnchor)} " +
+            "callers=bound stages=authored-anchors threshold=145 blockers=2");
+    }
+
+    [UnityTest]
     public IEnumerator Chapter2PanicFrameHasApprovedGuestsAndStableRenderedEvidence()
     {
         yield return BootGameplayFromRealMenu();

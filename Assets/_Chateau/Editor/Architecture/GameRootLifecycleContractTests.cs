@@ -334,9 +334,10 @@ public sealed class GameRootLifecycleContractTests
                 message.Message.Contains("Scene scene behaviour 'OmittedBinder' is not serialized in GameRoot.sceneBehaviours")),
             Is.EqualTo(1));
 
-        Scene foreignScene = EditorSceneManager.OpenScene(
-            "Assets/Scenes/MainMenu.unity",
-            OpenSceneMode.Additive);
+        string foreignScenePath = fixtureScene.path == "Assets/Scenes/MainMenu.unity"
+            ? "Assets/Scenes/Gameplay.unity"
+            : "Assets/Scenes/MainMenu.unity";
+        Scene foreignScene = EditorSceneManager.OpenScene(foreignScenePath, OpenSceneMode.Additive);
         fixtureScenes.Add(foreignScene);
         LifecycleUnownedService foreignService = CreateInactiveObject("ForeignService", foreignScene)
             .AddComponent<LifecycleUnownedService>();
@@ -410,9 +411,9 @@ public sealed class GameRootLifecycleContractTests
         Assert.That(serviceReferences.Count, Is.EqualTo(8));
         Assert.That(serviceReferences.Cast<Match>().All(match => match.Groups["id"].Value != "0"), Is.True);
         Assert.That(serviceReferences.Cast<Match>().Select(match => match.Groups["id"].Value).Distinct().Count(), Is.EqualTo(8));
-        Assert.That(binderReferences.Count, Is.EqualTo(31));
+        Assert.That(binderReferences.Count, Is.EqualTo(34));
         Assert.That(binderReferences.Cast<Match>().All(match => match.Groups["id"].Value != "0"), Is.True);
-        Assert.That(binderReferences.Cast<Match>().Select(match => match.Groups["id"].Value).Distinct().Count(), Is.EqualTo(31));
+        Assert.That(binderReferences.Cast<Match>().Select(match => match.Groups["id"].Value).Distinct().Count(), Is.EqualTo(34));
         Assert.That(
             installerSource,
             Does.Contain("serializedRoot.FindProperty(\"failStartupOnValidationErrors\").boolValue = true;"));

@@ -611,6 +611,19 @@ public class NavigationRegressionTests
         string billiardPantryTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000131");
         string billiardPantryTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000134");
         string billiardPantryPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000024");
+        string serviceCorridorObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000025");
+        string serviceCorridorTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000026");
+        string serviceCorridorContent = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000027");
+        string serviceCorridorView = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000009");
+        string serviceCorridorDoorsTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000029");
+        string pantryServiceCorridorObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000145");
+        string pantryServiceCorridorTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000146");
+        string pantryServiceCorridorTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000149");
+        string pantryServiceCorridorPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000025");
+        string serviceCorridorPantryObject = ExtractUnityObjectBlock(sceneText, "--- !u!1 &2300000150");
+        string serviceCorridorPantryTransform = ExtractUnityObjectBlock(sceneText, "--- !u!224 &2300000151");
+        string serviceCorridorPantryTrigger = ExtractUnityObjectBlock(sceneText, "--- !u!114 &2300000154");
+        string serviceCorridorPantryPassage = ExtractUnityObjectBlock(sceneText, "--- !u!114 &4100000026");
         string playerTransform = ExtractUnityObjectBlock(sceneText, "--- !u!4 &81962843 stripped");
 
         Assert.That(drawingRoomObject, Does.Contain("m_Name: Room_Drawing_Room"));
@@ -838,8 +851,101 @@ public class NavigationRegressionTests
         Assert.That(billiardPantryPassage, Does.Contain(
             "arrivalAnchor:\n    logicalPosition: {x: 3.244461, y: -3.108338}"));
         Assert.That(billiardPantryPassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(serviceCorridorObject, Does.Contain("m_Name: Room_Service_Corridor"));
+        Assert.That(serviceCorridorObject, Does.Contain("m_IsActive: 0"));
+        Assert.That(serviceCorridorObject, Does.Contain("- component: {fileID: 2300000026}"));
+        Assert.That(serviceCorridorObject, Does.Contain("- component: {fileID: 2300000027}"));
+        Assert.That(serviceCorridorObject, Does.Contain("- component: {fileID: 4100000009}"));
+        Assert.That(Regex.Matches(serviceCorridorObject, @"(?m)^  - component:").Count, Is.EqualTo(3));
+        Assert.That(serviceCorridorTransform, Does.Contain("m_Father: {fileID: 668915133}"));
+        Assert.That(Regex.Matches(serviceCorridorTransform, @"(?m)^  - \{fileID:").Count, Is.EqualTo(40),
+            "Canonical ownership must not alter the Service Corridor presentation hierarchy.");
+        foreach (string preservedChildFileId in new[]
+                 {
+                     "21631085", "461008708", "297820109", "334646579", "839535681", "2300000029"
+                 })
+        {
+            Assert.That(serviceCorridorTransform, Does.Contain($"- {{fileID: {preservedChildFileId}}}"),
+                $"Service Corridor prop, floor, or blocker {preservedChildFileId} must remain under the room.");
+        }
+        Assert.That(serviceCorridorContent, Does.Contain("roomName: Service Corridor"));
+        Assert.That(serviceCorridorContent, Does.Contain(
+            "roomBackgroundTexture: {fileID: 2800000, guid: 63139e8fe55e5e00f97b08fe5f2b145b, type: 3}"));
+        Assert.That(serviceCorridorContent, Does.Contain("perspectiveProfile: {fileID: 0}"));
+        Assert.That(serviceCorridorView, Does.Contain("m_GameObject: {fileID: 2300000025}"));
+        Assert.That(serviceCorridorView, Does.Contain(
+            "definition: {fileID: 11400000, guid: 85d51b6fcb4840458d45f66bbf6c233b, type: 2}"));
+        Assert.That(serviceCorridorView, Does.Contain("legacyContentGroup: {fileID: 2300000027}"));
+        Assert.That(Regex.Matches(serviceCorridorDoorsTransform, @"(?m)^  - \{fileID:").Count, Is.EqualTo(5));
+        foreach (string preservedDoorTransformId in new[]
+                 {
+                     "2300000151", "2300000156", "2300000161", "2300000166", "2300000171"
+                 })
+        {
+            Assert.That(serviceCorridorDoorsTransform, Does.Contain($"- {{fileID: {preservedDoorTransformId}}}"));
+        }
+        Assert.That(pantryServiceCorridorObject, Does.Contain("- component: {fileID: 4100000025}"));
+        Assert.That(serviceCorridorPantryObject, Does.Contain("- component: {fileID: 4100000026}"));
+        foreach (string passageBoundTriggerObject in new[]
+                 {
+                     pantryServiceCorridorObject, serviceCorridorPantryObject
+                 })
+        {
+            Assert.That(Regex.Matches(passageBoundTriggerObject, @"(?m)^  - component:").Count,
+                Is.EqualTo(5));
+        }
+        Assert.That(pantryServiceCorridorTransform, Does.Contain("m_Father: {fileID: 2300000024}"));
+        Assert.That(pantryServiceCorridorTransform, Does.Contain(
+            "m_AnchoredPosition: {x: 591.2165, y: 33.108276}"));
+        Assert.That(pantryServiceCorridorTransform, Does.Contain(
+            "m_SizeDelta: {x: 188.3424, y: 453.9467}"));
+        Assert.That(serviceCorridorPantryTransform, Does.Contain("m_Father: {fileID: 2300000029}"));
+        Assert.That(serviceCorridorPantryTransform, Does.Contain("m_AnchoredPosition: {x: 352, y: 28}"));
+        Assert.That(serviceCorridorPantryTransform, Does.Contain(
+            "m_SizeDelta: {x: 124.2894, y: 524.2852}"));
+        Assert.That(pantryServiceCorridorTrigger, Does.Contain("sourceRoom: Butlers Pantry"));
+        Assert.That(pantryServiceCorridorTrigger, Does.Contain("doorName: ButlersPantry_ServiceCorridor"));
+        Assert.That(pantryServiceCorridorTrigger, Does.Contain("destinationRoom: Service Corridor"));
+        Assert.That(serviceCorridorPantryTrigger, Does.Contain("sourceRoom: Service Corridor"));
+        Assert.That(serviceCorridorPantryTrigger, Does.Contain("doorName: ServiceCorridor_ButlersPantry"));
+        Assert.That(serviceCorridorPantryTrigger, Does.Contain("destinationRoom: Butlers Pantry"));
+        foreach (string callerBoundTrigger in new[]
+                 {
+                     pantryServiceCorridorTrigger, serviceCorridorPantryTrigger
+                 })
+        {
+            Assert.That(callerBoundTrigger, Does.Contain("navigationManager: {fileID: 1878886997}"));
+            Assert.That(callerBoundTrigger, Does.Contain("doorOpenAudioSource: {fileID: 2201000013}"));
+            Assert.That(callerBoundTrigger, Does.Contain("player: {fileID: 81962843}"));
+            Assert.That(callerBoundTrigger, Does.Contain(
+                "doorOpenSoundCatalog: {fileID: 11400000, guid: 9a77542e25184fbc945d6a79f77007e7, type: 2}"));
+            Assert.That(callerBoundTrigger, Does.Contain("stairwaySoundCatalog: {fileID: 0}"));
+            Assert.That(callerBoundTrigger, Does.Contain("maxPlayerScreenDistance: 145"));
+        }
+        Assert.That(pantryServiceCorridorTrigger, Does.Contain("canonicalPassage: {fileID: 4100000025}"));
+        Assert.That(serviceCorridorPantryTrigger, Does.Contain("canonicalPassage: {fileID: 4100000026}"));
+        Assert.That(pantryServiceCorridorPassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: 1b2d5f64523942a08e10402e24e88738, type: 2}"));
+        Assert.That(pantryServiceCorridorPassage, Does.Contain("sourceRoomView: {fileID: 4100000007}"));
+        Assert.That(pantryServiceCorridorPassage, Does.Contain("reversePassage: {fileID: 4100000026}"));
+        Assert.That(pantryServiceCorridorPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: 7, y: -2.8}"));
+        Assert.That(pantryServiceCorridorPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: 4.2, y: -3.3}"));
+        Assert.That(pantryServiceCorridorPassage, Does.Contain("anchorMigrationStage: 2"));
+        Assert.That(serviceCorridorPantryPassage, Does.Contain(
+            "definition: {fileID: 11400000, guid: b485e8a6f574414a84f77437e02147f1, type: 2}"));
+        Assert.That(serviceCorridorPantryPassage, Does.Contain("sourceRoomView: {fileID: 4100000009}"));
+        Assert.That(serviceCorridorPantryPassage, Does.Contain("reversePassage: {fileID: 4100000025}"));
+        Assert.That(serviceCorridorPantryPassage, Does.Contain(
+            "approachAnchor:\n    logicalPosition: {x: 4.2, y: -3.3}"));
+        Assert.That(serviceCorridorPantryPassage, Does.Contain(
+            "arrivalAnchor:\n    logicalPosition: {x: 7, y: -2.8}"));
+        Assert.That(serviceCorridorPantryPassage, Does.Contain("anchorMigrationStage: 2"));
         Assert.That(legacyDoorDataText, Does.Not.Contain("Butlers_Pantry_BilliardRoom"));
         Assert.That(legacyDoorDataText, Does.Not.Contain("BilliardRoom_ButlersPantry"));
+        Assert.That(legacyDoorDataText, Does.Contain("ButlersPantry_ServiceCorridor: Service Corridor"));
+        Assert.That(legacyDoorDataText, Does.Contain("ServiceCorridor_ButlersPantry: Butler's Pantry"));
         Assert.That(playerTransform, Does.Contain("m_CorrespondingSourceObject: {fileID: 7967904164350347880, guid: 3c2a23f8d68b2d05cace0338fba9a1d1, type: 3}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabInstance: {fileID: 81962841}"));
         Assert.That(playerTransform, Does.Contain("m_PrefabAsset: {fileID: 0}"));
@@ -1445,8 +1551,33 @@ public class NavigationRegressionTests
 
         Assert.That(File.Exists("Assets/Art/Objects/service_corridor_left_table.png"), Is.True, "The service corridor left table sprite asset should stay in the project.");
         Assert.That(File.Exists("Assets/Art/Objects/service_corridor_right_desk.png"), Is.True, "The service corridor right desk sprite asset should stay in the project.");
-        AssertScenePropSorting(sceneText, "service_corridor_left_table_0", 1480);
-        AssertScenePropSorting(sceneText, "service_corridor_right_desk_0", 1512);
+        string leftTableRenderer = ExtractUnityObjectBlock(sceneText, "--- !u!212 &21631086");
+        string rightDeskRenderer = ExtractUnityObjectBlock(sceneText, "--- !u!212 &461008709");
+        string floorBoundary = ExtractUnityObjectBlock(sceneText, "--- !u!1 &297820108");
+        string leftTableBlocker = ExtractUnityObjectBlock(sceneText, "--- !u!1 &334646578");
+        string leftTableBlockerBehavior = ExtractUnityObjectBlock(sceneText, "--- !u!114 &334646580");
+        string rightDeskBlocker = ExtractUnityObjectBlock(sceneText, "--- !u!1 &839535680");
+        string rightDeskBlockerBehavior = ExtractUnityObjectBlock(sceneText, "--- !u!114 &839535682");
+        Assert.That(leftTableRenderer, Does.Contain("m_GameObject: {fileID: 21631084}"));
+        Assert.That(leftTableRenderer, Does.Contain("m_SortingLayer: 2"));
+        Assert.That(leftTableRenderer, Does.Contain("m_SortingOrder: 1000"));
+        Assert.That(rightDeskRenderer, Does.Contain("m_GameObject: {fileID: 461008707}"));
+        Assert.That(rightDeskRenderer, Does.Contain("m_SortingLayer: 2"));
+        Assert.That(rightDeskRenderer, Does.Contain("m_SortingOrder: 1000"));
+        Assert.That(floorBoundary, Does.Contain("m_Name: PlayerBoundary"));
+        Assert.That(floorBoundary, Does.Contain("- component: {fileID: 297820110}"));
+        Assert.That(leftTableBlocker, Does.Contain("m_Name: PlayerBlocker_service_corridor_left_table_0"));
+        Assert.That(leftTableBlocker, Does.Contain("- component: {fileID: 334646581}"));
+        Assert.That(rightDeskBlocker, Does.Contain("m_Name: PlayerBlocker_service_corridor_right_desk_0"));
+        Assert.That(rightDeskBlocker, Does.Contain("- component: {fileID: 839535683}"));
+        foreach (string blockerBehavior in new[] { leftTableBlockerBehavior, rightDeskBlockerBehavior })
+        {
+            Assert.That(blockerBehavior, Does.Contain("sortSourceRenderers: 1"));
+            Assert.That(blockerBehavior, Does.Contain("sourceSortingLayerName: People"));
+            Assert.That(blockerBehavior, Does.Contain("sourceSortingOrderBase: 1000"));
+            Assert.That(blockerBehavior, Does.Contain("sourceSortingOrderPerYUnit: 100"));
+            Assert.That(blockerBehavior, Does.Contain("forceSourcePivotSortPoint: 1"));
+        }
     }
 
     [Test]

@@ -81,8 +81,7 @@ public sealed class GameDatabaseDefinitionContractTests
             "room.service-corridor",
             "Service Corridor",
             new[] { "Service Corridor" },
-            "63139e8fe55e5e00f97b08fe5f2b145b",
-            isDataOnly: true),
+            "63139e8fe55e5e00f97b08fe5f2b145b"),
         new RoomExpectation(
             "Assets/_Chateau/Data/World/Rooms/Room_Kitchen.asset",
             "room.kitchen",
@@ -206,9 +205,9 @@ public sealed class GameDatabaseDefinitionContractTests
         GameDatabase database = LoadDatabase();
 
         Assert.That(rooms, Has.Length.EqualTo(19));
-        Assert.That(database.Definitions, Has.Count.EqualTo(33));
+        Assert.That(database.Definitions, Has.Count.EqualTo(35));
         Assert.That(database.RoomDefinitions, Has.Count.EqualTo(19));
-        Assert.That(database.PassageDefinitions, Has.Count.EqualTo(14));
+        Assert.That(database.PassageDefinitions, Has.Count.EqualTo(16));
         Assert.That(rooms.Select(room => room.StableId),
             Is.EquivalentTo(ApprovedRooms.Select(room => room.StableId)));
 
@@ -255,12 +254,12 @@ public sealed class GameDatabaseDefinitionContractTests
     }
 
     [Test]
-    public void TypedPassageIndexResolvesAllFourteenPassagesAndRejectsUnknownIds()
+    public void TypedPassageIndexResolvesAllSixteenPassagesAndRejectsUnknownIds()
     {
         GameDatabase database = LoadDatabase();
         PassageDefinition[] passages = LoadDefinitions<PassageDefinition>(PassagesFolder);
 
-        Assert.That(passages, Has.Length.EqualTo(14));
+        Assert.That(passages, Has.Length.EqualTo(16));
 
         foreach (PassageDefinition passage in passages)
         {
@@ -412,10 +411,10 @@ public sealed class GameDatabaseDefinitionContractTests
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
 
-        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6029));
+        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6032));
         Assert.That(CountOccurrences(sceneText, $"guid: {RoomContentGroupGuid}"), Is.EqualTo(19));
-        Assert.That(CountOccurrences(sceneText, $"guid: {RoomViewGuid}"), Is.EqualTo(8));
-        Assert.That(CountOccurrences(sceneText, $"guid: {PassageGuid}"), Is.EqualTo(14));
+        Assert.That(CountOccurrences(sceneText, $"guid: {RoomViewGuid}"), Is.EqualTo(9));
+        Assert.That(CountOccurrences(sceneText, $"guid: {PassageGuid}"), Is.EqualTo(16));
         Assert.That(CountOccurrences(sceneText, $"guid: {LegacyDoorTriggerGuid}"), Is.EqualTo(45));
         Assert.That(CountOccurrences(sceneText, $"guid: {GameRootGuid}"), Is.EqualTo(1));
 
