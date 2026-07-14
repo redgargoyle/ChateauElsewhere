@@ -1,7 +1,9 @@
 using System.IO;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ObjectCollisionBoxRegressionTests
 {
@@ -9,6 +11,9 @@ public class ObjectCollisionBoxRegressionTests
     private const string MarkerPath = "Assets/Scripts/Navigation/ObjectMovementBlocker2D.cs";
     private const string AuthoringPath = "Assets/Editor/ObjectCollisionBoxAuthoringWindow.cs";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
+    private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
+    private const string DrawingRoomChairName = "drawing_room_red_chair_guest6";
+    private const string DrawingRoomChairSpritePath = "Assets/Art/Objects/purple_armchair_front.png";
 
     [Test]
     public void ChairBlockerUsesLowerFootprintInsteadOfWholeImage()
@@ -129,6 +134,110 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
+    public void DrawingRoomPurpleArmchairUsesLowerFootprintWithoutTakingOverProjectedSorting()
+    {
+        SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
+
+        try
+        {
+            Scene scene = EditorSceneManager.OpenScene(GameplayScenePath, OpenSceneMode.Single);
+            Transform room = FindTransformInScene(scene, "Room_Drawing_Room");
+            Transform chair = FindDescendant(room, DrawingRoomChairName);
+
+            Assert.That(room, Is.Not.Null, "The authored Drawing Room should exist in Gameplay.unity.");
+            Assert.That(chair, Is.Not.Null, "The purple front armchair should remain authored under the Drawing Room.");
+
+            SpriteRenderer chairRenderer = chair.GetComponent<SpriteRenderer>();
+            RoomProjectedEntity projectedEntity = chair.GetComponent<RoomProjectedEntity>();
+
+            Assert.That(chairRenderer, Is.Not.Null);
+            Assert.That(AssetDatabase.GetAssetPath(chairRenderer.sprite), Is.EqualTo(DrawingRoomChairSpritePath));
+            Assert.That(projectedEntity, Is.Not.Null, "The chair must keep the shared Drawing Room y-axis occlusion component.");
+            Assert.That(projectedEntity.Mode, Is.EqualTo(RoomProjectedEntity.ProjectionMode.ForegroundOccluder));
+            Assert.That(projectedEntity.RoomLocalFootPoint, Is.EqualTo(new Vector2(59f, -208.5f)));
+            Assert.That(chairRenderer.sortingOrder, Is.EqualTo(800), "The seated guest's authored chair layering should remain unchanged.");
+
+            SerializedObject serializedProjection = new SerializedObject(projectedEntity);
+            Assert.That(serializedProjection.FindProperty("applySorting").boolValue, Is.True);
+            Assert.That(serializedProjection.FindProperty("sortingOffset").intValue, Is.EqualTo(-5776));
+
+            Transform blockerTransform = FindDescendant(room, $"PlayerBlocker_{DrawingRoomChairName}");
+            Assert.That(blockerTransform, Is.Not.Null, "The purple front armchair needs a separate movement footprint.");
+
+            ObjectMovementBlocker2D marker = blockerTransform.GetComponent<ObjectMovementBlocker2D>();
+            PolygonCollider2D blocker = blockerTransform.GetComponent<PolygonCollider2D>();
+
+            Assert.That(marker, Is.Not.Null);
+            Assert.That(marker.SourceObject, Is.SameAs(chair.gameObject));
+            Assert.That(marker.SourceRoomName, Is.EqualTo("Drawing Room"));
+            Assert.That(marker.Category, Is.EqualTo(ObjectCollisionBoxCategory.Chair.ToString()));
+            Assert.That(marker.FootprintHeightFraction, Is.EqualTo(0.3f).Within(0.001f));
+            Assert.That(marker.GeneratedByCollisionBoxTool, Is.False,
+                "This explicitly authored exception must survive generated-blocker cleanup because the broad scanner skips projected guest-named props.");
+            Assert.That(marker.SortSourceRenderers, Is.False,
+                "RoomProjectedEntity must remain the chair's only sorting owner so the seated guest layering is not disturbed.");
+
+            Assert.That(blocker, Is.Not.Null);
+            Assert.That(blocker.enabled, Is.True);
+            Assert.That(blocker.isTrigger, Is.True);
+            Assert.That(blocker.offset, Is.EqualTo(Vector2.zero));
+            Assert.That(blocker.pathCount, Is.EqualTo(1));
+            Assert.That(blocker.GetPath(0), Has.Length.EqualTo(4));
+
+            Assert.That(
+                ObjectCollisionBoxAuthoring.TryCreateFootprintFromBounds("Purple Armchair", chairRenderer.bounds, out ObjectCollisionFootprint expectedFootprint),
+                Is.True);
+
+            Vector2[] points = blocker.GetPath(0);
+            Vector2 actualMin = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            Vector2 actualMax = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+
+            for (int pointIndex = 0; pointIndex < points.Length; pointIndex++)
+            {
+                Vector3 worldPoint = blocker.transform.TransformPoint(points[pointIndex]);
+                actualMin = Vector2.Min(actualMin, worldPoint);
+                actualMax = Vector2.Max(actualMax, worldPoint);
+            }
+
+            Rect expected = expectedFootprint.WorldRect;
+            const float BoundsTolerance = 0.05f;
+
+            Assert.That(actualMin.x, Is.EqualTo(expected.xMin).Within(BoundsTolerance));
+            Assert.That(actualMax.x, Is.EqualTo(expected.xMax).Within(BoundsTolerance));
+            Assert.That(actualMin.y, Is.EqualTo(expected.yMin).Within(BoundsTolerance));
+            Assert.That(actualMax.y, Is.EqualTo(expected.yMax).Within(BoundsTolerance));
+            Assert.That(actualMax.y - actualMin.y, Is.LessThan(chairRenderer.bounds.size.y * 0.31f),
+                "The collider should cover only the chair's lower legs/seat footprint, not the seated woman or chair back.");
+
+            bool roomWasActive = room.gameObject.activeSelf;
+
+            try
+            {
+                room.gameObject.SetActive(true);
+                Physics2D.SyncTransforms();
+
+                Assert.That(blocker.gameObject.activeInHierarchy, Is.True,
+                    "The chair blocker should become active with the current Drawing Room.");
+                Assert.That(blocker.OverlapPoint(expected.center), Is.True,
+                    "The active Physics2D trigger should cover the authored chair footprint.");
+                Assert.That(chairRenderer.sortingOrder, Is.EqualTo(800),
+                    "Activating the movement blocker must not take over the chair's seated-guest sorting.");
+            }
+            finally
+            {
+                room.gameObject.SetActive(roomWasActive);
+            }
+        }
+        finally
+        {
+            if (previousSceneSetup.Length > 0)
+            {
+                EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
+            }
+        }
+    }
+
+    [Test]
     public void PointClickMovementCollectsExplicitObjectMovementBlockers()
     {
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
@@ -154,5 +263,42 @@ public class ObjectCollisionBoxRegressionTests
         Assert.That(authoringText, Does.Contain("Dry Run"));
         Assert.That(planText, Does.Contain("physical blocker equals floor-contact footprint"));
         Assert.That(planText, Does.Contain("Codex implementation prompt"));
+    }
+
+    private static Transform FindTransformInScene(Scene scene, string objectName)
+    {
+        GameObject[] roots = scene.GetRootGameObjects();
+
+        for (int rootIndex = 0; rootIndex < roots.Length; rootIndex++)
+        {
+            Transform match = FindDescendant(roots[rootIndex].transform, objectName);
+
+            if (match != null)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+
+    private static Transform FindDescendant(Transform root, string objectName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        Transform[] descendants = root.GetComponentsInChildren<Transform>(true);
+
+        for (int index = 0; index < descendants.Length; index++)
+        {
+            if (descendants[index].name == objectName)
+            {
+                return descendants[index];
+            }
+        }
+
+        return null;
     }
 }
