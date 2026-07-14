@@ -13,8 +13,10 @@ using UnityEditor.SceneManagement;
 
 [ExecuteAlways]
 [DefaultExecutionOrder(-40)]
-public sealed class RoomLightingController : Chateau.Architecture.GameServiceBase
+public sealed class RoomLightingController : Chateau.Architecture.GameServiceBase, Chateau.Architecture.ILightingService
 {
+    public override int InitializationOrder => Chateau.Architecture.GameServiceInitializationOrder.Lighting;
+
     private const string DefaultPresetResourcePath = "Lighting/RoomLightingPreset";
     private const string LightingRootName = "Lighting";
     private const string TrueParticleFireRootName = "TrueParticleFire";

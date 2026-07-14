@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase
+public class ChapterEventScheduler : Chateau.Architecture.GameServiceBase, Chateau.Architecture.ISchedulerService
 {
+    public override int InitializationOrder => Chateau.Architecture.GameServiceInitializationOrder.Scheduler;
+
     private sealed class ScheduledChapterEvent
     {
         public string EventId;

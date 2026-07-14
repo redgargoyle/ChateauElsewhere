@@ -16,8 +16,10 @@ public enum ChapterPhase
 [RequireComponent(typeof(ChapterClock))]
 [RequireComponent(typeof(ChapterEventScheduler))]
 [RequireComponent(typeof(ChapterIntroUI))]
-public class ChapterManager : Chateau.Architecture.GameServiceBase
+public class ChapterManager : Chateau.Architecture.GameServiceBase, Chateau.Architecture.IGameFlowService
 {
+    public override int InitializationOrder => Chateau.Architecture.GameServiceInitializationOrder.GameFlow;
+
     public const string Chapter1Id = "chapter_01_arrivals";
     public const string Chapter2Id = "chapter_02_guest_search";
     public const string Chapter3PendingId = "chapter_03_dinner_pending";

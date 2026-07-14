@@ -1,8 +1,10 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class ChapterClock : Chateau.Architecture.GameServiceBase
+public class ChapterClock : Chateau.Architecture.GameServiceBase, Chateau.Architecture.IClockService
 {
+    public override int InitializationOrder => Chateau.Architecture.GameServiceInitializationOrder.Clock;
+
     [Header("Game Time")]
     [SerializeField, Range(1f, 300f)] private float secondsPerGameMinute = 5f;
     [SerializeField, Range(0, 23)] private int startHour = 17;

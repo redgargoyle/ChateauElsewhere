@@ -3,8 +3,10 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
-public class CameraManager : Chateau.Architecture.GameServiceBase
+public class CameraManager : Chateau.Architecture.GameServiceBase, Chateau.Architecture.ICameraService
 {
+    public override int InitializationOrder => Chateau.Architecture.GameServiceInitializationOrder.Camera;
+
     public RawImage cameraBackground;
     public bool resizeBackgroundToScreen = true;
     public bool fitBackgroundToRoomAspect = true;

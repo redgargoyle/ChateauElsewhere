@@ -180,13 +180,49 @@ public sealed class ArchitectureBaselinePlayModeTests
     {
         yield return BootGameplayFromRealMenu();
 
+        MonoBehaviour gameRoot = RequireSingleSceneComponent("GameRoot");
+        MonoBehaviour clock = RequireSingleSceneComponent("ChapterClock");
+        MonoBehaviour scheduler = RequireSingleSceneComponent("ChapterEventScheduler");
+        MonoBehaviour cameraService = RequireSingleSceneComponent("CameraManager");
         MonoBehaviour navigation = RequireSingleSceneComponent("RoomNavigationManager");
+        MonoBehaviour lighting = RequireSingleSceneComponent("RoomLightingController");
+        MonoBehaviour subtitles = RequireSingleSceneComponent("SubtitleService");
+        MonoBehaviour dialogue = RequireSingleSceneComponent("DialogueSpeechService");
         MonoBehaviour chapter = RequireSingleSceneComponent("ChapterManager");
         MonoBehaviour arrival = RequireSingleSceneComponent("Chapter1ArrivalController");
         MonoBehaviour player = RequireComponentOnGameObject("Player", "PointClickPlayerMovement");
         SpriteRenderer playerRenderer = player.GetComponent<SpriteRenderer>();
         SpriteRenderer doorRenderer = RequireSceneGameObject("Door_answer_trigger").GetComponent<SpriteRenderer>();
         Camera camera = Camera.main;
+
+        object context = GetProperty<object>(gameRoot, "Context");
+        object[] contextServices = ((IEnumerable)GetProperty<object>(context, "Services"))
+            .Cast<object>()
+            .ToArray();
+        object[] expectedServices =
+        {
+            clock,
+            scheduler,
+            cameraService,
+            navigation,
+            lighting,
+            subtitles,
+            dialogue,
+            chapter
+        };
+
+        Assert.That(GetProperty<object>(context, "Clock"), Is.SameAs(clock));
+        Assert.That(GetProperty<object>(context, "Scheduler"), Is.SameAs(scheduler));
+        Assert.That(GetProperty<object>(context, "Camera"), Is.SameAs(cameraService));
+        Assert.That(GetProperty<object>(context, "Navigation"), Is.SameAs(navigation));
+        Assert.That(GetProperty<object>(context, "Lighting"), Is.SameAs(lighting));
+        Assert.That(GetProperty<object>(context, "Dialogue"), Is.SameAs(dialogue));
+        Assert.That(GetProperty<object>(context, "GameFlow"), Is.SameAs(chapter));
+        Assert.That(contextServices, Is.EqualTo(expectedServices));
+        Assert.That(
+            contextServices.Select(service => GetProperty<int>(service, "InitializationOrder")),
+            Is.EqualTo(new[] { 100, 200, 300, 400, 500, 600, 700, 800 }));
+        Assert.That(contextServices.All(service => GetProperty<bool>(service, "IsInitialized")), Is.True);
 
         Assert.That(playerRenderer, Is.Not.Null);
         Assert.That(doorRenderer, Is.Not.Null);

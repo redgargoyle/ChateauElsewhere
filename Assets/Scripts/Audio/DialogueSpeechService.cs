@@ -3,8 +3,10 @@ using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase
+public sealed class DialogueSpeechService : Chateau.Architecture.GameServiceBase, Chateau.Architecture.IDialogueService
 {
+    public override int InitializationOrder => Chateau.Architecture.GameServiceInitializationOrder.Dialogue;
+
     private const float CharactersPerSecond = 24f;
     private const float MinimumReadSeconds = 1.25f;
     private const float MaximumReadSeconds = 6f;

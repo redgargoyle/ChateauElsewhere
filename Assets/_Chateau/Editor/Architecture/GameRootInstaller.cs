@@ -157,6 +157,7 @@ namespace Chateau.Editor.Architecture
             RequireExactlyOne<ChapterEventScheduler>(scene, report, "chapter scheduler");
             RequireExactlyOne<CameraManager>(scene, report, "camera service");
             RequireExactlyOne<RoomNavigationManager>(scene, report, "room navigation owner");
+            RequireExactlyOne<RoomLightingController>(scene, report, "lighting service");
             RequireExactlyOne<DoorPromptSequenceController>(scene, report, "door prompt presenter");
             RequireExactlyOne<SubtitleService>(scene, report, "subtitle service");
             RequireExactlyOne<DialogueSpeechService>(scene, report, "dialogue/voice service");

@@ -9,6 +9,9 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class SubtitleService : Chateau.Architecture.GameServiceBase
 {
+    public override int InitializationOrder =>
+        Chateau.Architecture.GameServiceInitializationOrder.TransitionalSubtitlePresentation;
+
     private const string CanvasName = "Canvas_Subtitles";
     private const string PanelName = "Panel_Subtitle";
     private const string PanelInteriorName = "Image_SubtitleInterior";

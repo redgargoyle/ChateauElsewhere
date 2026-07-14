@@ -10,8 +10,10 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using CanonicalRoomDefinition = Chateau.World.Rooms.RoomDefinition;
 
-public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavigationService
+public class RoomNavigationManager : Chateau.Architecture.GameServiceBase, INavigationService, INavigationRuntimeService
 {
+    public override int InitializationOrder => GameServiceInitializationOrder.Navigation;
+
     private const string RoomRootName = "Rooms";
     private const string LegacyRoomObjectsRootName = "RoomObjects";
     private const string DoorButtonsRootName = "DoorButtons";

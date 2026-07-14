@@ -69,10 +69,9 @@ namespace Chateau.Architecture
                 serviceInterfaces.Add(orderedServices[i]);
             }
 
-            context = new GameContext(this, gameDatabase, serviceInterfaces);
-
             try
             {
+                context = new GameContext(this, gameDatabase, serviceInterfaces);
                 BindSceneBehaviours();
 
                 for (int i = 0; i < orderedServices.Count; i++)
@@ -86,7 +85,12 @@ namespace Chateau.Architecture
             {
                 Debug.LogException(exception, this);
                 ShutdownInitializedServices();
-                UnbindSceneBehaviours();
+
+                if (context != null)
+                {
+                    UnbindSceneBehaviours();
+                }
+
                 context = null;
                 enabled = false;
                 return false;
@@ -158,6 +162,23 @@ namespace Chateau.Architecture
                 }
 
                 service.ValidateConfiguration(report);
+            }
+
+            List<GameServiceBase> orderedServices = BuildOrderedServiceList();
+            List<IGameService> serviceInterfaces = new List<IGameService>(orderedServices.Count);
+
+            for (int i = 0; i < orderedServices.Count; i++)
+            {
+                serviceInterfaces.Add(orderedServices[i]);
+            }
+
+            try
+            {
+                _ = new GameContext(this, gameDatabase, serviceInterfaces);
+            }
+            catch (ArgumentException exception)
+            {
+                report.AddError(exception.Message, this);
             }
 
             HashSet<ChateauBehaviour> uniqueBehaviours = new HashSet<ChateauBehaviour>();
