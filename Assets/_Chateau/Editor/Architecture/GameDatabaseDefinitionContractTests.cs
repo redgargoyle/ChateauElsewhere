@@ -105,8 +105,7 @@ public sealed class GameDatabaseDefinitionContractTests
             "room.conservatory",
             "Conservatory",
             new[] { "Conservatory" },
-            "b86ab0433400447849c3249e0a503052",
-            isDataOnly: true),
+            "b86ab0433400447849c3249e0a503052"),
         new RoomExpectation(
             "Assets/_Chateau/Data/World/Rooms/Room_SideStairMudroom.asset",
             "room.side-stair-mudroom",
@@ -204,7 +203,9 @@ public sealed class GameDatabaseDefinitionContractTests
         "Assets/_Chateau/Data/World/Passages/Passage_GrandEntranceHall_GrandEntranceHallRearView.asset",
         "Assets/_Chateau/Data/World/Passages/Passage_GrandEntranceHallRearView_GrandEntranceHall.asset",
         "Assets/_Chateau/Data/World/Passages/Passage_GrandEntranceHallRearView_BilliardRoom.asset",
-        "Assets/_Chateau/Data/World/Passages/Passage_BilliardRoom_GrandEntranceHallRearView.asset"
+        "Assets/_Chateau/Data/World/Passages/Passage_BilliardRoom_GrandEntranceHallRearView.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_GrandEntranceHallRearView_Conservatory.asset",
+        "Assets/_Chateau/Data/World/Passages/Passage_Conservatory_GrandEntranceHallRearView.asset"
     };
 
     private readonly List<UnityEngine.Object> transientObjects = new List<UnityEngine.Object>();
@@ -230,12 +231,12 @@ public sealed class GameDatabaseDefinitionContractTests
         GameDatabase database = LoadDatabase();
 
         Assert.That(rooms, Has.Length.EqualTo(19));
-        Assert.That(database.Definitions, Has.Count.EqualTo(43));
+        Assert.That(database.Definitions, Has.Count.EqualTo(45));
         Assert.That(database.RoomDefinitions, Has.Count.EqualTo(19));
-        Assert.That(database.PassageDefinitions, Has.Count.EqualTo(24));
+        Assert.That(database.PassageDefinitions, Has.Count.EqualTo(26));
         Assert.That(database.PassageDefinitions.Select(definition => AssetDatabase.GetAssetPath(definition)),
             Is.EqualTo(ApprovedPassageAssetPathsInDatabaseOrder),
-            "The canonical directed-passage catalog must remain in migration order through Group11.");
+            "The canonical directed-passage catalog must remain in migration order through Group12.");
         Assert.That(rooms.Select(room => room.StableId),
             Is.EquivalentTo(ApprovedRooms.Select(room => room.StableId)));
 
@@ -282,12 +283,12 @@ public sealed class GameDatabaseDefinitionContractTests
     }
 
     [Test]
-    public void TypedPassageIndexResolvesAllTwentyFourPassagesAndRejectsUnknownIds()
+    public void TypedPassageIndexResolvesAllTwentySixPassagesAndRejectsUnknownIds()
     {
         GameDatabase database = LoadDatabase();
         PassageDefinition[] passages = LoadDefinitions<PassageDefinition>(PassagesFolder);
 
-        Assert.That(passages, Has.Length.EqualTo(24));
+        Assert.That(passages, Has.Length.EqualTo(26));
 
         foreach (PassageDefinition passage in passages)
         {
@@ -435,14 +436,14 @@ public sealed class GameDatabaseDefinitionContractTests
     }
 
     [Test]
-    public void DataOnlyDefinitionsLeaveLegacySceneRoomAndRouteOwnershipExact()
+    public void RemainingDataOnlyDefinitionsLeaveSceneRoomAndRouteOwnershipExact()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
 
-        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6043));
+        Assert.That(CountOccurrences(sceneText, "\n--- !u!"), Is.EqualTo(6046));
         Assert.That(CountOccurrences(sceneText, $"guid: {RoomContentGroupGuid}"), Is.EqualTo(19));
-        Assert.That(CountOccurrences(sceneText, $"guid: {RoomViewGuid}"), Is.EqualTo(12));
-        Assert.That(CountOccurrences(sceneText, $"guid: {PassageGuid}"), Is.EqualTo(24));
+        Assert.That(CountOccurrences(sceneText, $"guid: {RoomViewGuid}"), Is.EqualTo(13));
+        Assert.That(CountOccurrences(sceneText, $"guid: {PassageGuid}"), Is.EqualTo(26));
         Assert.That(CountOccurrences(sceneText, $"guid: {LegacyDoorTriggerGuid}"), Is.EqualTo(45));
         Assert.That(CountOccurrences(sceneText, $"guid: {GameRootGuid}"), Is.EqualTo(1));
 
