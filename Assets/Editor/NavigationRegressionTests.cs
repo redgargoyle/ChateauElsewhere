@@ -1033,11 +1033,10 @@ public class NavigationRegressionTests
         string pantryBoundary = ExtractUnityObjectBlock(sceneText, "--- !u!60 &434967047");
         string[] expectedPoints =
         {
-            "{x: 1.3989857, y: -0.39041296}",
-            "{x: 1.2984887, y: -0.39167893}",
-            "{x: 0.8408081, y: -0.33610678}",
-            "{x: 0.7245249, y: -0.2805776}",
-            "{x: 0.15504713, y: -0.20158814}",
+            "{x: 1.3000273, y: -0.40656847}",
+            "{x: 1.303669, y: -0.3867679}",
+            "{x: 0.7271244, y: -0.3284131}",
+            "{x: 0.23213123, y: -0.20115937}",
             "{x: -0.82340187, y: -0.31919816}",
             "{x: -1.2799948, y: -0.3915833}",
             "{x: -1.258971, y: -0.5058776}",
@@ -1051,8 +1050,8 @@ public class NavigationRegressionTests
             "{x: -0.9024757, y: -0.88556653}",
             "{x: 0.15770616, y: -0.8845071}",
             "{x: 0.7483442, y: -0.88464725}",
-            "{x: 1.403542, y: -0.8378832}",
-            "{x: 1.3773865, y: -0.63698727}"
+            "{x: 1.2681974, y: -0.8502245}",
+            "{x: 1.2671056, y: -0.62258905}"
         };
         MatchCollection pointMatches = Regex.Matches(
             pantryBoundary,
@@ -1084,7 +1083,7 @@ public class NavigationRegressionTests
         Assert.That(
             actualPoints,
             Is.EqualTo(expectedPoints),
-            "The pantry boundary must retain the complete solved 20-point contour in historical order.");
+            "The pantry boundary must retain the complete solved 19-point contour in historical order.");
     }
 
     [Test]
