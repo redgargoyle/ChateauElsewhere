@@ -17,15 +17,29 @@ public class MainMenuController : MonoBehaviour
     private const string DefaultGameplaySceneName = "Gameplay";
     private const string BackgroundImageObjectName = "Panel_Background";
     private const string ButtonOverlayName = "Button_StateOverlay";
-    private const string MenuBackgroundPath = "Assets/Art/Final Images (DO NOT EDIT)/kitchen 2.png";
-    private const string NewGameButtonPath = "Assets/Art/MainMenuButtons/MainMenu_NewGame.png";
-    private const string ContinueButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Continue.png";
-    private const string SettingsButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Settings.png";
-    private const string ExitButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Exit.png";
-    private const string TitleFontPath = "Assets/Art/UI/Fonts/LiberationSerif-Bold.ttf";
+    private const string ButtonLabelName = "Text_Label";
+    private const string TitlePlaqueObjectName = "Image_TitlePlaque";
+    private const string DeveloperCreditObjectName = "Text_DeveloperCredit";
+    private const string MenuBackgroundPath = "Assets/Art/MainMenuRedesign/MainMenu_Background.png";
+    private const string LegacyMenuBackgroundPath = "Assets/Art/Final Images (DO NOT EDIT)/kitchen 2.png";
+    private const string BlankButtonPath = "Assets/Art/MainMenuRedesign/MainMenu_ButtonBlank.png";
+    private const string LegacyNewGameButtonPath = "Assets/Art/MainMenuButtons/MainMenu_NewGame.png";
+    private const string LegacyContinueButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Continue.png";
+    private const string LegacySettingsButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Settings.png";
+    private const string LegacyExitButtonPath = "Assets/Art/MainMenuButtons/MainMenu_Exit.png";
+    private const string TitlePlaquePath = "Assets/Art/MainMenuRedesign/MainMenu_TitlePlaque.png";
+    private const string TitleFontPath = "Assets/Art/UI/Fonts/NotoSerifDisplay-Medium.ttf";
+    private const string LegacyTitleFontPath = "Assets/Art/UI/Fonts/LiberationSerif-Bold.ttf";
     private const string AudioSettingsPanelName = "Panel_AudioSettings";
     private const string CursorStylePanelName = "Panel_CursorStyleChooser";
     private const string CursorStyleFrameName = "Frame_CursorStyleChooser";
+    private const string MenuTitle = "Chantilly";
+    private const string DeveloperCredit = "developed by Kadabra Games";
+
+    private static readonly Vector2 RightRailReferenceResolution = new Vector2(1920f, 1080f);
+    private static readonly Color Plum = new Color(0.25f, 0.075f, 0.16f, 1f);
+    private static readonly Color Parchment = new Color(0.89f, 0.80f, 0.65f, 0.98f);
+    private static readonly Color Gold = new Color(0.70f, 0.49f, 0.19f, 1f);
 
     [SerializeField] private string newGameSceneName = DefaultGameplaySceneName;
 
@@ -45,11 +59,14 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Sprite continueButtonSprite;
     [SerializeField] private Sprite settingsButtonSprite;
     [SerializeField] private Sprite exitButtonSprite;
+    [SerializeField] private Image titlePlaqueImage;
+    [SerializeField] private Sprite titlePlaqueSprite;
     [SerializeField] private Color buttonOverlayHoverColor = new Color(0.88f, 0.53f, 0.16f, 0.24f);
     [SerializeField] private Color buttonOverlayPressedColor = new Color(0.06f, 0.035f, 0.02f, 0.50f);
 
     [Header("Title Visuals")]
     [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private TextMeshProUGUI developerCreditText;
     [SerializeField] private Font titleSourceFont;
     [SerializeField] private TMP_FontAsset titleFontAsset;
     [SerializeField] private Color titleColor = new Color(0.94f, 0.86f, 0.72f, 1f);
@@ -57,10 +74,10 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Responsive Layout")]
     public bool configureCanvasScaling = true;
-    public Vector2 referenceResolution = new Vector2(1366f, 768f);
+    public Vector2 referenceResolution = new Vector2(1920f, 1080f);
     [Range(0f, 1f)]
     public float matchWidthOrHeight = 0.5f;
-    public bool pinMenuToTopLeft = true;
+    public bool applyRightRailLayout = true;
     public bool applyLayoutEveryFrame = false;
     public RectTransform menuPanel;
     public RectTransform title;
@@ -68,12 +85,12 @@ public class MainMenuController : MonoBehaviour
     public RectTransform continueButton;
     public RectTransform settingsButton;
     public RectTransform exitButton;
-    public Vector2 titlePosition = new Vector2(104f, -38f);
-    public Vector2 titleSize = new Vector2(430f, 112f);
-    public Vector2 buttonStartPosition = new Vector2(16f, -116f);
-    public Vector2 buttonSize = new Vector2(960f, 240f);
-    public float buttonSpacing = 128f;
-    public Vector2 menuSafeMargin = new Vector2(16f, 16f);
+    public Vector2 titlePlaquePosition = new Vector2(-64f, -64f);
+    public Vector2 titlePlaqueSize = new Vector2(500f, 395f);
+    public Vector2 rightRailButtonStartPosition = new Vector2(-72f, -478f);
+    public Vector2 rightRailButtonSize = new Vector2(500f, 128f);
+    public float rightRailButtonSpacing = 154f;
+    public Vector2 menuSafeMargin = new Vector2(36f, 36f);
     [Range(0.35f, 1f)]
     public float minResponsiveLayoutScale = 0.55f;
 
@@ -98,8 +115,8 @@ public class MainMenuController : MonoBehaviour
         ConfigureTitleVisual();
         CacheSoundscapeReference();
         ConfigureMenuSoundscape();
-        ApplyPinnedMenuLayout();
         ApplyMenuVisuals();
+        ApplyRightRailLayout();
     }
 
     private void OnEnable()
@@ -114,9 +131,9 @@ public class MainMenuController : MonoBehaviour
 
     private void Start()
     {
-        ApplyPinnedMenuLayout();
         ApplyMenuVisuals();
         ConfigureTitleVisual();
+        ApplyRightRailLayout();
 
         if (playSoundscapeOnStart)
         {
@@ -128,7 +145,7 @@ public class MainMenuController : MonoBehaviour
     {
         if (applyLayoutEveryFrame || HasMenuLayoutSizeChanged())
         {
-            ApplyPinnedMenuLayout();
+            ApplyRightRailLayout();
         }
 
         if (cursorStyleChooserVisible && WasCancelPressed())
@@ -227,6 +244,18 @@ public class MainMenuController : MonoBehaviour
                 backgroundImage = backgroundObject.GetComponent<Image>();
             }
         }
+
+        if (titlePlaqueImage == null && menuPanel != null)
+        {
+            Transform plaque = menuPanel.Find(TitlePlaqueObjectName);
+            titlePlaqueImage = plaque != null ? plaque.GetComponent<Image>() : null;
+        }
+
+        if (developerCreditText == null && titlePlaqueImage != null)
+        {
+            Transform credit = titlePlaqueImage.transform.Find(DeveloperCreditObjectName);
+            developerCreditText = credit != null ? credit.GetComponent<TextMeshProUGUI>() : null;
+        }
     }
 
     private void ConfigureTitleVisual()
@@ -241,9 +270,10 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        titleSourceFont = ResolveFont(titleSourceFont, TitleFontPath);
+        titleSourceFont = ResolveFont(titleSourceFont, TitleFontPath, LegacyTitleFontPath);
 
-        if (titleFontAsset == null && titleSourceFont != null)
+        if (titleSourceFont != null &&
+            (titleFontAsset == null || titleFontAsset.sourceFontFile != titleSourceFont))
         {
             titleFontAsset = TMP_FontAsset.CreateFontAsset(titleSourceFont);
         }
@@ -253,12 +283,14 @@ public class MainMenuController : MonoBehaviour
             titleText.font = titleFontAsset;
         }
 
+        titleText.text = MenuTitle;
         titleText.fontSize = titleFontSize;
         titleText.enableAutoSizing = true;
-        titleText.fontSizeMin = 30f;
-        titleText.fontSizeMax = titleFontSize;
-        titleText.color = titleColor;
-        titleText.alignment = TextAlignmentOptions.TopLeft;
+        titleText.fontSizeMin = 28f;
+        titleText.fontSizeMax = Mathf.Max(titleFontSize, 58f);
+        titleText.color = Plum;
+        titleText.alignment = TextAlignmentOptions.Center;
+        titleText.fontStyle = FontStyles.Normal;
         titleText.raycastTarget = false;
         ApplyResponsiveTitleFont(GetResponsiveMenuLayoutScale());
     }
@@ -291,15 +323,28 @@ public class MainMenuController : MonoBehaviour
     private void ApplyMenuVisuals()
     {
         ApplyBackgroundVisual();
-        ConfigureButtonVisual(newGameButton, ref newGameButtonSprite, NewGameButtonPath);
-        ConfigureButtonVisual(continueButton, ref continueButtonSprite, ContinueButtonPath);
-        ConfigureButtonVisual(settingsButton, ref settingsButtonSprite, SettingsButtonPath);
-        ConfigureButtonVisual(exitButton, ref exitButtonSprite, ExitButtonPath);
+        ConfigureMenuPanelVisual();
+        ConfigureTitlePlaqueVisual();
+        DeactivateContinueButton();
+        ConfigureButtonVisual(newGameButton, ref newGameButtonSprite, LegacyNewGameButtonPath, "Start Game");
+        ConfigureButtonVisual(settingsButton, ref settingsButtonSprite, LegacySettingsButtonPath, "Settings");
+        ConfigureButtonVisual(exitButton, ref exitButtonSprite, LegacyExitButtonPath, "Exit");
         ConfigureSettingsButtonAction();
+        ConfigureMainMenuNavigation();
 
         if (menuPanel != null)
         {
             menuPanel.SetAsLastSibling();
+        }
+
+        if (audioSettingsVisible && audioSettingsPanel != null)
+        {
+            audioSettingsPanel.SetAsLastSibling();
+        }
+
+        if (cursorStyleChooserVisible && cursorStylePanel != null)
+        {
+            cursorStylePanel.SetAsLastSibling();
         }
     }
 
@@ -312,14 +357,14 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        menuBackgroundSprite = ResolveSprite(menuBackgroundSprite, MenuBackgroundPath);
+        menuBackgroundSprite = ResolveSprite(menuBackgroundSprite, MenuBackgroundPath, LegacyMenuBackgroundPath);
 
         if (menuBackgroundSprite != null)
         {
             backgroundImage.sprite = menuBackgroundSprite;
         }
 
-        backgroundImage.color = backgroundTint;
+        backgroundImage.color = Color.white;
         backgroundImage.raycastTarget = false;
         backgroundImage.type = Image.Type.Simple;
         backgroundImage.preserveAspect = false;
@@ -328,19 +373,130 @@ public class MainMenuController : MonoBehaviour
 
         if (backgroundRect != null)
         {
-            PinStretch(backgroundRect);
+            backgroundRect.anchorMin = new Vector2(0.5f, 0.5f);
+            backgroundRect.anchorMax = new Vector2(0.5f, 0.5f);
+            backgroundRect.pivot = new Vector2(0.5f, 0.5f);
+            backgroundRect.anchoredPosition = Vector2.zero;
+            backgroundRect.localScale = Vector3.one;
+
+            AspectRatioFitter fitter = backgroundRect.GetComponent<AspectRatioFitter>();
+
+            if (fitter == null)
+            {
+                fitter = backgroundRect.gameObject.AddComponent<AspectRatioFitter>();
+            }
+
+            if (menuBackgroundSprite != null && menuBackgroundSprite.rect.height > 0f)
+            {
+                fitter.aspectRatio = menuBackgroundSprite.rect.width / menuBackgroundSprite.rect.height;
+            }
+
+            fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
             backgroundRect.SetAsFirstSibling();
         }
     }
 
-    private void ConfigureButtonVisual(RectTransform buttonRect, ref Sprite buttonSprite, string editorAssetPath)
+    private void ConfigureMenuPanelVisual()
+    {
+        if (menuPanel == null)
+        {
+            return;
+        }
+
+        PinStretch(menuPanel);
+        Image panelImage = menuPanel.GetComponent<Image>();
+
+        if (panelImage != null)
+        {
+            panelImage.color = Color.clear;
+            panelImage.raycastTarget = false;
+        }
+    }
+
+    private void ConfigureTitlePlaqueVisual()
+    {
+        if (menuPanel == null)
+        {
+            return;
+        }
+
+        if (titlePlaqueImage == null)
+        {
+            Transform existing = menuPanel.Find(TitlePlaqueObjectName);
+
+            if (existing != null)
+            {
+                titlePlaqueImage = existing.GetComponent<Image>();
+
+                if (titlePlaqueImage == null)
+                {
+                    titlePlaqueImage = existing.gameObject.AddComponent<Image>();
+                }
+            }
+            else
+            {
+                GameObject plaqueObject = new GameObject(TitlePlaqueObjectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                plaqueObject.layer = menuPanel.gameObject.layer;
+                plaqueObject.transform.SetParent(menuPanel, false);
+                titlePlaqueImage = plaqueObject.GetComponent<Image>();
+            }
+        }
+
+        titlePlaqueSprite = ResolveSprite(titlePlaqueSprite, TitlePlaquePath, string.Empty);
+        titlePlaqueImage.sprite = titlePlaqueSprite;
+        titlePlaqueImage.color = Color.white;
+        titlePlaqueImage.type = Image.Type.Simple;
+        titlePlaqueImage.preserveAspect = true;
+        titlePlaqueImage.raycastTarget = false;
+
+        RectTransform plaqueRect = titlePlaqueImage.rectTransform;
+
+        if (title != null && title.parent != plaqueRect)
+        {
+            title.SetParent(plaqueRect, false);
+        }
+
+        ConfigureTitleVisual();
+        ConfigurePlaqueTextRect(title, new Vector2(0.12f, 0.43f), new Vector2(0.88f, 0.76f));
+        developerCreditText = FindOrCreateTmpText(plaqueRect, DeveloperCreditObjectName, developerCreditText);
+        developerCreditText.text = DeveloperCredit;
+        developerCreditText.font = titleFontAsset != null ? titleFontAsset : developerCreditText.font;
+        developerCreditText.fontSize = 21f;
+        developerCreditText.enableAutoSizing = true;
+        developerCreditText.fontSizeMin = 13f;
+        developerCreditText.fontSizeMax = 21f;
+        developerCreditText.color = Plum;
+        developerCreditText.alignment = TextAlignmentOptions.Center;
+        developerCreditText.fontStyle = FontStyles.Italic;
+        developerCreditText.textWrappingMode = TextWrappingModes.NoWrap;
+        developerCreditText.raycastTarget = false;
+        ConfigurePlaqueTextRect(developerCreditText.rectTransform, new Vector2(0.10f, 0.27f), new Vector2(0.90f, 0.43f));
+    }
+
+    private void ConfigurePlaqueTextRect(RectTransform textRect, Vector2 anchorMin, Vector2 anchorMax)
+    {
+        if (textRect == null)
+        {
+            return;
+        }
+
+        textRect.anchorMin = anchorMin;
+        textRect.anchorMax = anchorMax;
+        textRect.pivot = new Vector2(0.5f, 0.5f);
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+        textRect.localScale = Vector3.one;
+        textRect.SetAsLastSibling();
+    }
+
+    private void ConfigureButtonVisual(RectTransform buttonRect, ref Sprite buttonSprite, string fallbackAssetPath, string labelText)
     {
         if (buttonRect == null)
         {
             return;
         }
 
-        buttonSprite = ResolveSprite(buttonSprite, editorAssetPath);
+        buttonSprite = ResolveSprite(buttonSprite, BlankButtonPath, fallbackAssetPath);
 
         Button button = buttonRect.GetComponent<Button>();
         Image baseImage = buttonRect.GetComponent<Image>();
@@ -364,7 +520,165 @@ public class MainMenuController : MonoBehaviour
         }
 
         ConfigureButtonCursor(buttonRect, button);
-        HideLegacyButtonText(buttonRect);
+        ConfigureButtonLabel(buttonRect, labelText);
+    }
+
+    private void DeactivateContinueButton()
+    {
+        if (continueButton == null)
+        {
+            return;
+        }
+
+        continueButtonSprite = ResolveSprite(continueButtonSprite, BlankButtonPath, LegacyContinueButtonPath);
+        Button button = continueButton.GetComponent<Button>();
+
+        if (button != null)
+        {
+            Navigation navigation = button.navigation;
+            navigation.mode = Navigation.Mode.None;
+            button.navigation = navigation;
+            button.interactable = false;
+        }
+
+        continueButton.gameObject.SetActive(false);
+    }
+
+    private void ConfigureButtonLabel(RectTransform buttonRect, string value)
+    {
+        TextMeshProUGUI label = FindOrCreateTmpText(buttonRect, ButtonLabelName, null, true);
+
+        if (label == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < buttonRect.childCount; i++)
+        {
+            Transform child = buttonRect.GetChild(i);
+
+            if (child == label.transform)
+            {
+                continue;
+            }
+
+            if (child.GetComponent<TMP_Text>() != null || child.GetComponent<UnityEngine.UI.Text>() != null)
+            {
+                child.gameObject.SetActive(false);
+            }
+        }
+
+        label.gameObject.SetActive(true);
+        label.text = value;
+        label.font = titleFontAsset != null ? titleFontAsset : label.font;
+        label.fontSize = 38f;
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 22f;
+        label.fontSizeMax = 38f;
+        label.color = Plum;
+        label.alignment = TextAlignmentOptions.Center;
+        label.fontStyle = FontStyles.Normal;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
+        label.outlineColor = new Color(0.96f, 0.84f, 0.58f, 0.55f);
+        label.outlineWidth = 0.08f;
+        label.raycastTarget = false;
+
+        RectTransform labelRect = label.rectTransform;
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.pivot = new Vector2(0.5f, 0.5f);
+        labelRect.offsetMin = new Vector2(44f, 14f);
+        labelRect.offsetMax = new Vector2(-44f, -14f);
+        labelRect.localScale = Vector3.one;
+
+        Shadow shadow = label.GetComponent<Shadow>();
+
+        if (shadow == null)
+        {
+            shadow = label.gameObject.AddComponent<Shadow>();
+        }
+
+        shadow.effectColor = new Color(0.16f, 0.035f, 0.09f, 0.28f);
+        shadow.effectDistance = new Vector2(1.5f, -1.5f);
+        shadow.useGraphicAlpha = true;
+        labelRect.SetAsLastSibling();
+    }
+
+    private TextMeshProUGUI FindOrCreateTmpText(
+        RectTransform parent,
+        string objectName,
+        TextMeshProUGUI preferred,
+        bool reuseExistingChild = false)
+    {
+        TextMeshProUGUI text = preferred;
+
+        if (text == null)
+        {
+            Transform existing = parent.Find(objectName);
+            text = existing != null ? existing.GetComponent<TextMeshProUGUI>() : null;
+        }
+
+        if (text == null && reuseExistingChild)
+        {
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                text = parent.GetChild(i).GetComponent<TextMeshProUGUI>();
+
+                if (text != null)
+                {
+                    break;
+                }
+            }
+        }
+
+        if (text == null)
+        {
+            GameObject textObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            textObject.layer = parent.gameObject.layer;
+            textObject.transform.SetParent(parent, false);
+            text = textObject.GetComponent<TextMeshProUGUI>();
+        }
+        else if (text.transform.parent != parent)
+        {
+            text.transform.SetParent(parent, false);
+        }
+
+        text.gameObject.name = objectName;
+        return text;
+    }
+
+    private void ConfigureMainMenuNavigation()
+    {
+        Button startButton = newGameButton != null ? newGameButton.GetComponent<Button>() : null;
+        Button settingsMenuButton = settingsButton != null ? settingsButton.GetComponent<Button>() : null;
+        Button exitMenuButton = exitButton != null ? exitButton.GetComponent<Button>() : null;
+
+        if (startButton == null || settingsMenuButton == null || exitMenuButton == null)
+        {
+            return;
+        }
+
+        SetExplicitNavigation(startButton, null, settingsMenuButton);
+        SetExplicitNavigation(settingsMenuButton, startButton, exitMenuButton);
+        SetExplicitNavigation(exitMenuButton, settingsMenuButton, null);
+
+        if (EventSystem.current != null &&
+            (EventSystem.current.currentSelectedGameObject == null ||
+             EventSystem.current.currentSelectedGameObject == continueButton?.gameObject))
+        {
+            startButton.Select();
+        }
+    }
+
+    private static void SetExplicitNavigation(Selectable selectable, Selectable up, Selectable down)
+    {
+        Navigation navigation = selectable.navigation;
+        navigation.mode = Navigation.Mode.Explicit;
+        navigation.selectOnUp = up;
+        navigation.selectOnDown = down;
+        navigation.selectOnLeft = null;
+        navigation.selectOnRight = null;
+        selectable.navigation = navigation;
     }
 
     private void ConfigureSettingsButtonAction()
@@ -862,11 +1176,6 @@ public class MainMenuController : MonoBehaviour
 
     private void EnsureAudioSettingsPanel()
     {
-        if (audioSettingsPanel != null)
-        {
-            return;
-        }
-
         RectTransform parent = menuPanel != null && menuPanel.parent is RectTransform menuParent
             ? menuParent
             : transform as RectTransform;
@@ -876,8 +1185,11 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        Transform existing = parent.Find(AudioSettingsPanelName);
-        audioSettingsPanel = existing as RectTransform;
+        if (audioSettingsPanel == null)
+        {
+            Transform existing = parent.Find(AudioSettingsPanelName);
+            audioSettingsPanel = existing as RectTransform;
+        }
 
         if (audioSettingsPanel == null)
         {
@@ -886,26 +1198,39 @@ public class MainMenuController : MonoBehaviour
             audioSettingsPanel.SetParent(parent, false);
         }
 
-        audioSettingsPanel.anchorMin = new Vector2(0f, 1f);
-        audioSettingsPanel.anchorMax = new Vector2(0f, 1f);
-        audioSettingsPanel.pivot = new Vector2(0f, 1f);
-        audioSettingsPanel.anchoredPosition = new Vector2(610f, -132f);
-        audioSettingsPanel.sizeDelta = new Vector2(360f, 236f);
+        float modalScale = Mathf.Clamp(GetResponsiveMenuLayoutScale(), 0.72f, 1f);
+        audioSettingsPanel.anchorMin = new Vector2(0.5f, 0.5f);
+        audioSettingsPanel.anchorMax = new Vector2(0.5f, 0.5f);
+        audioSettingsPanel.pivot = new Vector2(0.5f, 0.5f);
+        audioSettingsPanel.anchoredPosition = Vector2.zero;
+        audioSettingsPanel.sizeDelta = new Vector2(620f, 380f);
+        audioSettingsPanel.localScale = Vector3.one * modalScale;
 
         Image panelImage = audioSettingsPanel.GetComponent<Image>();
 
         if (panelImage != null)
         {
-            panelImage.color = new Color(0.02f, 0.018f, 0.014f, 0.9f);
+            panelImage.color = Parchment;
             panelImage.raycastTarget = true;
         }
+
+        Outline outline = audioSettingsPanel.GetComponent<Outline>();
+
+        if (outline == null)
+        {
+            outline = audioSettingsPanel.gameObject.AddComponent<Outline>();
+        }
+
+        outline.effectColor = Gold;
+        outline.effectDistance = new Vector2(3f, -3f);
+        outline.useGraphicAlpha = true;
 
         VerticalLayoutGroup layout = audioSettingsPanel.GetComponent<VerticalLayoutGroup>();
 
         if (layout != null)
         {
-            layout.padding = new RectOffset(16, 16, 14, 14);
-            layout.spacing = 10f;
+            layout.padding = new RectOffset(32, 32, 26, 26);
+            layout.spacing = 14f;
             layout.childControlWidth = true;
             layout.childControlHeight = false;
             layout.childForceExpandWidth = true;
@@ -919,6 +1244,7 @@ public class MainMenuController : MonoBehaviour
         CreateAudioSettingsSlider(audioSettingsPanel, GameAudioChannel.Atmosphere);
         CreateAudioSettingsSlider(audioSettingsPanel, GameAudioChannel.Music);
         audioSettingsPanel.gameObject.SetActive(audioSettingsVisible);
+        audioSettingsPanel.SetAsLastSibling();
     }
 
     private void CreateAudioSettingsTitle(RectTransform parent)
@@ -934,16 +1260,17 @@ public class MainMenuController : MonoBehaviour
         }
 
         titleLabel.text = "Audio";
-        titleLabel.fontSize = 20f;
-        titleLabel.color = titleColor;
-        titleLabel.alignment = TextAlignmentOptions.Left;
+        titleLabel.font = titleFontAsset != null ? titleFontAsset : titleLabel.font;
+        titleLabel.fontSize = 28f;
+        titleLabel.color = Plum;
+        titleLabel.alignment = TextAlignmentOptions.Center;
         titleLabel.raycastTarget = false;
 
         LayoutElement layoutElement = titleLabel.GetComponent<LayoutElement>();
 
         if (layoutElement != null)
         {
-            layoutElement.preferredHeight = 28f;
+            layoutElement.preferredHeight = 46f;
         }
     }
 
@@ -964,8 +1291,8 @@ public class MainMenuController : MonoBehaviour
 
         if (rowLayout != null)
         {
-            rowLayout.preferredHeight = 32f;
-            rowLayout.minHeight = 32f;
+            rowLayout.preferredHeight = 48f;
+            rowLayout.minHeight = 42f;
         }
 
         HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
@@ -980,9 +1307,9 @@ public class MainMenuController : MonoBehaviour
             layout.childForceExpandHeight = false;
         }
 
-        TMP_Text label = FindOrCreateAudioPanelText(row, "Text_Label", GameAudioSettings.GetDisplayName(channel), 14f, TextAlignmentOptions.MidlineLeft, 108f);
+        TMP_Text label = FindOrCreateAudioPanelText(row, "Text_Label", GameAudioSettings.GetDisplayName(channel), 18f, TextAlignmentOptions.MidlineLeft, 150f);
         Slider slider = FindOrCreateAudioPanelSlider(row, "Slider_" + channel);
-        TMP_Text valueLabel = FindOrCreateAudioPanelText(row, "Text_Value", string.Empty, 13f, TextAlignmentOptions.MidlineRight, 40f);
+        TMP_Text valueLabel = FindOrCreateAudioPanelText(row, "Text_Value", string.Empty, 17f, TextAlignmentOptions.MidlineRight, 48f);
 
         AudioSliderBinding binding = new AudioSliderBinding(channel, slider, valueLabel);
         binding.Refresh();
@@ -1002,8 +1329,9 @@ public class MainMenuController : MonoBehaviour
         }
 
         text.text = value;
+        text.font = titleFontAsset != null ? titleFontAsset : text.font;
         text.fontSize = fontSize;
-        text.color = Color.white;
+        text.color = Plum;
         text.alignment = alignment;
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.raycastTarget = false;
@@ -1041,9 +1369,9 @@ public class MainMenuController : MonoBehaviour
 
         if (layoutElement != null)
         {
-            layoutElement.preferredWidth = 154f;
-            layoutElement.minWidth = 154f;
-            layoutElement.preferredHeight = 26f;
+            layoutElement.preferredWidth = 300f;
+            layoutElement.minWidth = 220f;
+            layoutElement.preferredHeight = 34f;
         }
 
         Image hitArea = slider.GetComponent<Image>();
@@ -1054,16 +1382,16 @@ public class MainMenuController : MonoBehaviour
             hitArea.raycastTarget = true;
         }
 
-        Image background = FindOrCreateSliderPart(sliderRect, "Background", new Color(0.18f, 0.16f, 0.13f, 1f), new Vector2(0f, 0.35f), new Vector2(1f, 0.65f));
-        Image fill = FindOrCreateSliderPart(sliderRect, "Fill", new Color(0.72f, 0.54f, 0.28f, 1f), new Vector2(0f, 0.35f), new Vector2(1f, 0.65f));
-        Image handle = FindOrCreateSliderPart(sliderRect, "Handle", new Color(0.96f, 0.82f, 0.55f, 1f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f));
+        Image background = FindOrCreateSliderPart(sliderRect, "Background", new Color(0.31f, 0.12f, 0.20f, 0.55f), new Vector2(0f, 0.35f), new Vector2(1f, 0.65f));
+        Image fill = FindOrCreateSliderPart(sliderRect, "Fill", Gold, new Vector2(0f, 0.35f), new Vector2(1f, 0.65f));
+        Image handle = FindOrCreateSliderPart(sliderRect, "Handle", Plum, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f));
 
         background.raycastTarget = false;
         fill.raycastTarget = false;
         handle.raycastTarget = false;
 
         RectTransform handleRect = handle.GetComponent<RectTransform>();
-        handleRect.sizeDelta = new Vector2(12f, 22f);
+        handleRect.sizeDelta = new Vector2(14f, 28f);
 
         slider.minValue = 0f;
         slider.maxValue = 1f;
@@ -1187,36 +1515,43 @@ public class MainMenuController : MonoBehaviour
         return colors;
     }
 
-    private void HideLegacyButtonText(RectTransform buttonRect)
-    {
-        for (int i = 0; i < buttonRect.childCount; i++)
-        {
-            Transform child = buttonRect.GetChild(i);
-
-            if (child != null && child.name.StartsWith("Text", System.StringComparison.OrdinalIgnoreCase))
-            {
-                child.gameObject.SetActive(false);
-            }
-        }
-    }
-
-    private Sprite ResolveSprite(Sprite sprite, string editorAssetPath)
+    private Sprite ResolveSprite(Sprite sprite, string editorAssetPath, string fallbackAssetPath)
     {
 #if UNITY_EDITOR
-        if (sprite == null && !string.IsNullOrEmpty(editorAssetPath))
+        if (!string.IsNullOrEmpty(editorAssetPath))
         {
-            sprite = AssetDatabase.LoadAssetAtPath<Sprite>(editorAssetPath);
+            Sprite primary = AssetDatabase.LoadAssetAtPath<Sprite>(editorAssetPath);
+
+            if (primary != null)
+            {
+                return primary;
+            }
+        }
+
+        if (sprite == null && !string.IsNullOrEmpty(fallbackAssetPath))
+        {
+            sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fallbackAssetPath);
         }
 #endif
         return sprite;
     }
 
-    private Font ResolveFont(Font font, string editorAssetPath)
+    private Font ResolveFont(Font font, string editorAssetPath, string fallbackAssetPath)
     {
 #if UNITY_EDITOR
-        if (font == null && !string.IsNullOrEmpty(editorAssetPath))
+        if (!string.IsNullOrEmpty(editorAssetPath))
         {
-            font = AssetDatabase.LoadAssetAtPath<Font>(editorAssetPath);
+            Font primary = AssetDatabase.LoadAssetAtPath<Font>(editorAssetPath);
+
+            if (primary != null)
+            {
+                return primary;
+            }
+        }
+
+        if (font == null && !string.IsNullOrEmpty(fallbackAssetPath))
+        {
+            font = AssetDatabase.LoadAssetAtPath<Font>(fallbackAssetPath);
         }
 #endif
         return font;
@@ -1287,6 +1622,7 @@ public class MainMenuController : MonoBehaviour
     private void ConfigureCanvasScalers()
     {
         transform.localScale = Vector3.one;
+        referenceResolution = RightRailReferenceResolution;
 
         if (!configureCanvasScaling)
         {
@@ -1311,9 +1647,9 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private void ApplyPinnedMenuLayout()
+    private void ApplyRightRailLayout()
     {
-        if (!pinMenuToTopLeft)
+        if (!applyRightRailLayout)
         {
             return;
         }
@@ -1330,12 +1666,34 @@ public class MainMenuController : MonoBehaviour
             menuPanel.localScale = Vector3.one;
         }
 
-        PinTopLeft(title, titlePosition * layoutScale, titleSize * layoutScale);
-        PinTopLeft(newGameButton, buttonStartPosition * layoutScale, buttonSize * layoutScale);
-        PinTopLeft(continueButton, (buttonStartPosition + new Vector2(0f, -buttonSpacing)) * layoutScale, buttonSize * layoutScale);
-        PinTopLeft(settingsButton, (buttonStartPosition + new Vector2(0f, -buttonSpacing * 2f)) * layoutScale, buttonSize * layoutScale);
-        PinTopLeft(exitButton, (buttonStartPosition + new Vector2(0f, -buttonSpacing * 3f)) * layoutScale, buttonSize * layoutScale);
+        RectTransform plaqueRect = titlePlaqueImage != null ? titlePlaqueImage.rectTransform : null;
+        PinTopRight(plaqueRect, ScaleRightRailPosition(titlePlaquePosition, layoutScale), titlePlaqueSize * layoutScale);
+        PinTopRight(
+            newGameButton,
+            ScaleRightRailPosition(rightRailButtonStartPosition, layoutScale),
+            rightRailButtonSize * layoutScale);
+        PinTopRight(
+            settingsButton,
+            ScaleRightRailPosition(rightRailButtonStartPosition + new Vector2(0f, -rightRailButtonSpacing), layoutScale),
+            rightRailButtonSize * layoutScale);
+        PinTopRight(
+            exitButton,
+            ScaleRightRailPosition(rightRailButtonStartPosition + new Vector2(0f, -rightRailButtonSpacing * 2f), layoutScale),
+            rightRailButtonSize * layoutScale);
         ApplyResponsiveTitleFont(layoutScale);
+
+        if (developerCreditText != null)
+        {
+            developerCreditText.fontSizeMax = Mathf.Max(13f, 21f * layoutScale);
+            developerCreditText.fontSizeMin = Mathf.Min(13f, developerCreditText.fontSizeMax);
+        }
+
+        if (audioSettingsPanel != null)
+        {
+            audioSettingsPanel.localScale = Vector3.one * Mathf.Clamp(layoutScale, 0.72f, 1f);
+            audioSettingsPanel.anchoredPosition = Vector2.zero;
+        }
+
         lastMenuLayoutSize = GetMenuLayoutViewportSize();
     }
 
@@ -1348,36 +1706,21 @@ public class MainMenuController : MonoBehaviour
             return 1f;
         }
 
-        Vector2 referenceExtents = GetReferenceMenuLayoutExtents();
-
-        if (referenceExtents.x <= 0f || referenceExtents.y <= 0f)
-        {
-            return 1f;
-        }
-
         float availableWidth = Mathf.Max(1f, viewportSize.x - Mathf.Max(0f, menuSafeMargin.x) * 2f);
         float availableHeight = Mathf.Max(1f, viewportSize.y - Mathf.Max(0f, menuSafeMargin.y) * 2f);
-        float widthScale = availableWidth / referenceExtents.x;
-        float heightScale = availableHeight / referenceExtents.y;
+        float referenceWidth = Mathf.Max(1f, RightRailReferenceResolution.x - Mathf.Max(0f, menuSafeMargin.x) * 2f);
+        float referenceHeight = Mathf.Max(1f, RightRailReferenceResolution.y - Mathf.Max(0f, menuSafeMargin.y) * 2f);
+        float widthScale = availableWidth / referenceWidth;
+        float heightScale = availableHeight / referenceHeight;
         float scale = Mathf.Min(1f, Mathf.Min(widthScale, heightScale));
         return Mathf.Clamp(scale, Mathf.Clamp01(minResponsiveLayoutScale), 1f);
     }
 
-    private Vector2 GetReferenceMenuLayoutExtents()
+    private Vector2 ScaleRightRailPosition(Vector2 authoredPosition, float layoutScale)
     {
-        Vector2 extents = Vector2.zero;
-        EncapsulateTopLeftLayout(ref extents, titlePosition, titleSize);
-        EncapsulateTopLeftLayout(ref extents, buttonStartPosition, buttonSize);
-        EncapsulateTopLeftLayout(ref extents, buttonStartPosition + new Vector2(0f, -buttonSpacing), buttonSize);
-        EncapsulateTopLeftLayout(ref extents, buttonStartPosition + new Vector2(0f, -buttonSpacing * 2f), buttonSize);
-        EncapsulateTopLeftLayout(ref extents, buttonStartPosition + new Vector2(0f, -buttonSpacing * 3f), buttonSize);
-        return extents;
-    }
-
-    private void EncapsulateTopLeftLayout(ref Vector2 extents, Vector2 anchoredPosition, Vector2 size)
-    {
-        extents.x = Mathf.Max(extents.x, anchoredPosition.x + size.x);
-        extents.y = Mathf.Max(extents.y, -anchoredPosition.y + size.y);
+        float x = -Mathf.Max(Mathf.Max(0f, menuSafeMargin.x), Mathf.Abs(authoredPosition.x) * layoutScale);
+        float y = -Mathf.Max(Mathf.Max(0f, menuSafeMargin.y), Mathf.Abs(authoredPosition.y) * layoutScale);
+        return new Vector2(x, y);
     }
 
     private Vector2 GetMenuLayoutViewportSize()
@@ -1426,27 +1769,23 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        titleText.fontSizeMax = Mathf.Max(18f, titleFontSize * layoutScale);
-        titleText.fontSizeMin = Mathf.Min(30f, titleText.fontSizeMax);
+        titleText.fontSizeMax = Mathf.Max(24f, Mathf.Max(titleFontSize, 58f) * layoutScale);
+        titleText.fontSizeMin = Mathf.Min(28f, titleText.fontSizeMax);
     }
 
-    private void PinTopLeft(RectTransform rectTransform, Vector2 anchoredPosition, Vector2? size)
+    private void PinTopRight(RectTransform rectTransform, Vector2 anchoredPosition, Vector2 size)
     {
         if (rectTransform == null)
         {
             return;
         }
 
-        rectTransform.anchorMin = new Vector2(0f, 1f);
-        rectTransform.anchorMax = new Vector2(0f, 1f);
-        rectTransform.pivot = new Vector2(0f, 1f);
+        rectTransform.anchorMin = new Vector2(1f, 1f);
+        rectTransform.anchorMax = new Vector2(1f, 1f);
+        rectTransform.pivot = new Vector2(1f, 1f);
         rectTransform.anchoredPosition = anchoredPosition;
         rectTransform.localScale = Vector3.one;
-
-        if (size.HasValue)
-        {
-            rectTransform.sizeDelta = size.Value;
-        }
+        rectTransform.sizeDelta = size;
     }
 
     private void PinStretch(RectTransform rectTransform)
