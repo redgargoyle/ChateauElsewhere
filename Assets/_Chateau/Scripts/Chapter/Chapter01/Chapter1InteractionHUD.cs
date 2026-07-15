@@ -9,8 +9,6 @@ public class Chapter1InteractionHUD : MonoBehaviour
     [SerializeField] private bool showButtonPrompts = true;
 
     private Chapter1ArrivalController arrivalController;
-    private GrandfatherClockInteraction clockInteraction;
-    private ChapterClock chapterClock;
     private Canvas canvas;
     private TMP_Text statusText;
 
@@ -27,14 +25,9 @@ public class Chapter1InteractionHUD : MonoBehaviour
         statusText.gameObject.SetActive(!string.IsNullOrWhiteSpace(statusText.text));
     }
 
-    public void Initialize(
-        Chapter1ArrivalController controller,
-        ChapterClock clock,
-        GrandfatherClockInteraction clockView)
+    public void Initialize(Chapter1ArrivalController controller)
     {
         arrivalController = controller;
-        chapterClock = clock;
-        clockInteraction = clockView;
         EnsureUI();
     }
 
@@ -135,7 +128,6 @@ public class Chapter1InteractionHUD : MonoBehaviour
 
         RemoveDebugActionButton(root, "Button_AnswerFrontDoor");
         RemoveDebugActionButton(root, "Button_HangCoat");
-        RemoveDebugActionButton(root, "Button_InspectClock");
     }
 
     private TMP_Text CreateText(string objectName, Transform parent, float fontSize, TextAlignmentOptions alignment)
