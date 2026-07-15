@@ -91,12 +91,13 @@ public sealed class SubtitlePresentationRegressionTests
     {
         string serviceText = File.ReadAllText(SubtitleServicePath);
 
-        Assert.That(serviceText, Does.Contain("new Vector2(98f, 206f)"), "The portrait frame should match the decorative character-card aspect ratio so no empty frame box shows.");
+        Assert.That(serviceText, Does.Contain("new Vector2(98f, 205f)"), "The portrait frame should leave equal ten-pixel top and bottom margins inside the 225-pixel card.");
         Assert.That(serviceText, Does.Contain("RemoveOutline(portraitFrame.gameObject)"), "The portrait should rely on the illustrated gold border instead of an extra UI outline.");
         Assert.That(serviceText, Does.Not.Contain("ApplyOutline(portraitFrame.gameObject"), "The extra portrait-frame outline should not be visible around the illustrated card.");
         Assert.That(serviceText, Does.Not.Contain("new Vector2(112f, 192f)"), "The previous portrait frame still left a visible box around the art.");
         Assert.That(serviceText, Does.Not.Contain("new Vector2(-8f, -8f)"), "The portrait image should fill the frame bounds instead of shrinking inward.");
         Assert.That(serviceText, Does.Not.Contain("new Vector2(140f, 178f)"), "The old portrait frame made the character art too small.");
+        Assert.That(serviceText, Does.Not.Contain("new Vector2(98f, 206f)"), "The previous portrait height left unequal top and bottom margins.");
         Assert.That(serviceText, Does.Not.Contain("new Vector2(-20f, -18f)"), "The old portrait inset made the card sit too far inside the frame.");
 
         string[] portraitAssetNames =
@@ -121,6 +122,59 @@ public sealed class SubtitlePresentationRegressionTests
 
             Assert.That(height, Is.LessThanOrEqualTo(590), $"The generated portrait should crop out the bottom name plaque: {portraitPath}.");
             Assert.That((float)width / height, Is.GreaterThan(0.45f), $"The plaque-free portrait card should be less tall and fill the UI frame better: {portraitPath}.");
+        }
+    }
+
+    [Test]
+    public void SharedPortraitViewportUsesEvenMarginsAndClipsEverySpeakerWithoutGaps()
+    {
+        string[] speakerLineIds =
+        {
+            "SUB_CH01_BUTLER_WELCOME_001",
+            "SUB_CH01_G01_GREETING_001",
+            "SUB_CH01_G02_GREETING_001",
+            "SUB_CH01_G03_GREETING_001",
+            "SUB_CH01_G04_GREETING_001",
+            "SUB_CH01_G05_GREETING_001",
+            "SUB_CH01_G06_GREETING_001",
+            "SUB_CH01_G07_GREETING_001",
+            "SUB_CH01_G08_GREETING_001"
+        };
+        GameObject serviceObject = new GameObject("Test_SubtitleService", typeof(SubtitleService));
+
+        try
+        {
+            SubtitleService service = serviceObject.GetComponent<SubtitleService>();
+
+            foreach (string lineId in speakerLineIds)
+            {
+                service.ShowPersistentLine(lineId, "Speaker", "Portrait layout check.");
+                Canvas.ForceUpdateCanvases();
+
+                RectTransform panel = GameObject.Find("Panel_Subtitle").GetComponent<RectTransform>();
+                RectTransform viewport = GameObject.Find("Frame_SubtitleSpeakerPortrait").GetComponent<RectTransform>();
+                RectTransform portrait = GameObject.Find("Image_SubtitleSpeakerPortrait").GetComponent<RectTransform>();
+                AspectRatioFitter fitter = portrait.GetComponent<AspectRatioFitter>();
+
+                LayoutRebuilder.ForceRebuildLayoutImmediate(viewport);
+                Canvas.ForceUpdateCanvases();
+
+                float leftMargin = viewport.anchoredPosition.x;
+                float topMargin = -viewport.anchoredPosition.y;
+                float bottomMargin = panel.rect.height - topMargin - viewport.rect.height;
+
+                Assert.That(viewport.GetComponent<RectMask2D>(), Is.Not.Null, $"{lineId} should be clipped to the shared rectangular portrait viewport.");
+                Assert.That(leftMargin, Is.EqualTo(topMargin).Within(0.01f), $"{lineId} should have equal left and top margins.");
+                Assert.That(bottomMargin, Is.EqualTo(topMargin).Within(0.01f), $"{lineId} should have equal top and bottom margins.");
+                Assert.That(fitter, Is.Not.Null, $"{lineId} should use the shared non-distorting portrait fitter.");
+                Assert.That(fitter.aspectMode, Is.EqualTo(AspectRatioFitter.AspectMode.EnvelopeParent));
+                Assert.That(portrait.rect.width, Is.GreaterThanOrEqualTo(viewport.rect.width - 0.01f), $"{lineId} left a horizontal gap in the portrait viewport.");
+                Assert.That(portrait.rect.height, Is.GreaterThanOrEqualTo(viewport.rect.height - 0.01f), $"{lineId} left a vertical gap in the portrait viewport.");
+            }
+        }
+        finally
+        {
+            DestroyDialogueTestObjects(serviceObject);
         }
     }
 
