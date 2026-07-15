@@ -29,6 +29,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public GameObject GuestObject;
         public Chapter1CoatPickup CoatPickup;
         public NPCWaypointMover Mover;
+        public Transform DrawingRoomDepartureTarget;
         public ActorRoomState ActorState;
         public RoomProjectedEntity Projection;
         public GuestFootstepAudio Footsteps;
@@ -157,7 +158,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const int EntranceHallGuestSpotCount = 8;
     private const int EntranceDeparturePairSize = 2;
     private const string FrontDoorGuestSpawnAnchorId = "GuestArrival_Door";
-    private const string EntranceHallGuestSpotPrefix = "EntranceGuestSpot_";
     private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
     private const string DrawingRoomSideButlerSpotAnchorId = "DrawingRoomSideButlerSpot";
     private const string LegacyButlerGreetingSpotAnchorId = "ButlerGreetingSpot";
@@ -2142,6 +2142,21 @@ public class Chapter1ArrivalController : MonoBehaviour
             yield return SpeakGuestLine(group.Guests[i], "TO_DRAWING_ROOM", null);
         }
 
+        // Fire-and-forget entry and coat lines can still be waiting in the shared
+        // dialogue queue after the two departure lines finish. A queued guest line
+        // owns a movement-pause lease, so do not arm either partner until every
+        // outstanding lease for this pair has drained.
+        while (HasEntranceGroupSpeechPause(group))
+        {
+            if (group == null || group.Complete)
+            {
+                ClearEntranceGroupMovementPausePartners(group);
+                yield break;
+            }
+
+            yield return null;
+        }
+
         if (!CanMoveEntranceGroupToDrawingRoom(group))
         {
             group.MovingToDrawingRoom = false;
@@ -2150,10 +2165,16 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         BeginEntranceGroupMoveToDrawingRoom(group);
 
+        if (!group.MovingToDrawingRoom)
+        {
+            yield break;
+        }
+
         while (!HasEntranceGroupReachedDrawingRoomExit(group))
         {
             if (group.Complete)
             {
+                ClearEntranceGroupMovementPausePartners(group);
                 yield break;
             }
 
@@ -2181,16 +2202,43 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             GuestRuntimeState guest = group.Guests[i];
             targets[i] = ResolveDrawingRoomEntryPointForGuest(guest, group);
-            distances[i] = GetGuestMoveDistanceToTarget(guest, targets[i]);
 
-            if (guest != null && guest.Mover != null)
+            if (guest == null ||
+                guest.Config == null ||
+                guest.GuestObject == null ||
+                guest.Mover == null ||
+                targets[i] == null)
             {
-                float defaultSpeed = GetMoveSpeedForGuestObject(guest.GuestObject);
-                sharedTravelDuration = Mathf.Max(
-                    sharedTravelDuration,
-                    distances[i] / defaultSpeed);
+                Debug.LogError(
+                    $"[Chapter1] Guest pair {group.GroupIndex + 1} cannot depart because both authored guests, movers, and targets are required.",
+                    this);
+                group.MovingToDrawingRoom = false;
+                return;
             }
+
+            distances[i] = GetGuestMoveDistanceToTarget(guest, targets[i]);
+            float defaultSpeed = GetMoveSpeedForGuestObject(guest.GuestObject);
+            sharedTravelDuration = Mathf.Max(
+                sharedTravelDuration,
+                distances[i] / defaultSpeed);
         }
+
+        if (group.Guests[0] == group.Guests[1] ||
+            group.Guests[0].Mover == group.Guests[1].Mover)
+        {
+            Debug.LogError(
+                $"[Chapter1] Guest pair {group.GroupIndex + 1} must contain two distinct guests and movers.",
+                this);
+            group.MovingToDrawingRoom = false;
+            return;
+        }
+
+        for (int i = 0; i < guestCount; i++)
+        {
+            group.Guests[i].DrawingRoomDepartureTarget = targets[i];
+        }
+
+        PairEntranceGroupMovementPausePartners(group);
 
         for (int i = 0; i < guestCount; i++)
         {
@@ -2202,6 +2250,59 @@ public class Chapter1ArrivalController : MonoBehaviour
                 defaultSpeed);
             MoveGuestToDrawingRoom(guest, targets[i], synchronizedSpeed);
         }
+    }
+
+    private static bool HasEntranceGroupSpeechPause(GuestGroupRuntimeState group)
+    {
+        if (group == null || group.Guests.Count != EntranceDeparturePairSize)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            NPCWaypointMover mover = group.Guests[i] != null ? group.Guests[i].Mover : null;
+
+            if (mover != null && mover.IsSpeechPaused)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void PairEntranceGroupMovementPausePartners(GuestGroupRuntimeState group)
+    {
+        if (group == null || group.Guests.Count != EntranceDeparturePairSize)
+        {
+            return;
+        }
+
+        NPCWaypointMover firstMover = group.Guests[0] != null ? group.Guests[0].Mover : null;
+        NPCWaypointMover secondMover = group.Guests[1] != null ? group.Guests[1].Mover : null;
+
+        if (firstMover == null || secondMover == null || firstMover == secondMover)
+        {
+            return;
+        }
+
+        firstMover.SetMovementPausePartner(secondMover);
+        secondMover.SetMovementPausePartner(firstMover);
+    }
+
+    private static void ClearEntranceGroupMovementPausePartners(GuestGroupRuntimeState group)
+    {
+        if (group == null || group.Guests.Count != EntranceDeparturePairSize)
+        {
+            return;
+        }
+
+        NPCWaypointMover firstMover = group.Guests[0] != null ? group.Guests[0].Mover : null;
+        NPCWaypointMover secondMover = group.Guests[1] != null ? group.Guests[1].Mover : null;
+
+        firstMover?.ClearMovementPausePartner(secondMover);
+        secondMover?.ClearMovementPausePartner(firstMover);
     }
 
     private static float CalculateSynchronizedMoveSpeed(
@@ -2285,9 +2386,14 @@ public class Chapter1ArrivalController : MonoBehaviour
                 return false;
             }
 
-            if (guest.Mover != null &&
-                guest.Mover.IsMoving &&
-                !ShouldFinishDrawingRoomMoveOffscreen(guest))
+            if (ShouldFinishDrawingRoomMoveOffscreen(guest))
+            {
+                continue;
+            }
+
+            if (guest.Mover == null ||
+                guest.DrawingRoomDepartureTarget == null ||
+                !guest.Mover.HasReachedTarget(guest.DrawingRoomDepartureTarget))
             {
                 return false;
             }
@@ -2309,7 +2415,9 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             if (guest != null &&
                 guest.MovingToDrawingRoom &&
-                (guest.Mover == null || !guest.Mover.IsMoving))
+                (ShouldFinishDrawingRoomMoveOffscreen(guest) ||
+                    (guest.Mover != null &&
+                        guest.Mover.HasReachedTarget(guest.DrawingRoomDepartureTarget))))
             {
                 StopGuestFootsteps(guest);
             }
@@ -2340,6 +2448,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
+        ClearEntranceGroupMovementPausePartners(group);
+
         for (int i = 0; i < group.Guests.Count; i++)
         {
             GuestRuntimeState guest = group.Guests[i];
@@ -2351,6 +2461,8 @@ public class Chapter1ArrivalController : MonoBehaviour
             {
                 guest.Mover.MoveSpeed = GetMoveSpeedForGuestObject(guest.GuestObject);
             }
+
+            guest.DrawingRoomDepartureTarget = null;
         }
 
         for (int i = 0; i < group.Guests.Count; i++)
@@ -5435,40 +5547,17 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Transform GetEntranceHallGuestSpot(GuestRuntimeState guestState)
     {
-        ResolveEntranceHallGuestSpots();
         int guestIndex = guestState != null ? guestState.GuestIndex : -1;
 
-        if (guestIndex < 0 || guestIndex >= entranceHallGuestSpots.Length)
+        if (entranceHallGuestSpots == null ||
+            entranceHallGuestSpots.Length != EntranceHallGuestSpotCount ||
+            guestIndex < 0 ||
+            guestIndex >= EntranceHallGuestSpotCount)
         {
             return null;
         }
 
         return entranceHallGuestSpots[guestIndex];
-    }
-
-    private void ResolveEntranceHallGuestSpots()
-    {
-        if (entranceHallGuestSpots == null || entranceHallGuestSpots.Length != EntranceHallGuestSpotCount)
-        {
-            Array.Resize(ref entranceHallGuestSpots, EntranceHallGuestSpotCount);
-        }
-
-        for (int i = 0; i < EntranceHallGuestSpotCount; i++)
-        {
-            if (entranceHallGuestSpots[i] != null)
-            {
-                continue;
-            }
-
-            string anchorId = $"{EntranceHallGuestSpotPrefix}{i + 1:00}";
-            entranceHallGuestSpots[i] = FindAnchor(anchorId, entryRoomId);
-
-            if (entranceHallGuestSpots[i] == null)
-            {
-                GameObject anchorObject = FindSceneObjectByExactName(anchorId);
-                entranceHallGuestSpots[i] = anchorObject != null ? anchorObject.transform : null;
-            }
-        }
     }
 
     private Vector3 GetWorldDoorArrivalBasePosition(GuestRuntimeState guestState)
@@ -6318,8 +6407,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             frontDoorArrivalPoint = FindAnchor(FrontDoorGuestSpawnAnchorId, entryRoomId);
         }
-
-        ResolveEntranceHallGuestSpots();
 
         if (drawingRoomSideButlerSpot == null)
         {

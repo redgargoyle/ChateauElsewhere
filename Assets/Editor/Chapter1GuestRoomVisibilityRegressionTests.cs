@@ -252,7 +252,6 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string sceneText = File.ReadAllText(GameplayScenePath);
         string admitMethodBody = ExtractDeclaredMethodBody(controllerText, "AdmitGuestToEntranceHall");
         string lookupMethodBody = ExtractDeclaredMethodBody(controllerText, "GetEntranceHallGuestSpot");
-        string resolveMethodBody = ExtractDeclaredMethodBody(controllerText, "ResolveEntranceHallGuestSpots");
 
         Assert.That(controllerText, Does.Contain("private const int EntranceHallGuestSpotCount = 8"), "The authored Entrance Hall formation should have one stable spot per guest.");
         Assert.That(controllerText, Does.Contain("private Transform[] entranceHallGuestSpots"), "The eight physical spots should be serialized and directly editable.");
@@ -260,8 +259,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(admitMethodBody, Does.Not.Contain("CreateRuntimeAnchor"), "Entrance waiting should not recreate calculated runtime targets.");
         Assert.That(lookupMethodBody, Does.Contain("guestState.GuestIndex"), "A guest's stable roster index should select its authored spot.");
         Assert.That(lookupMethodBody, Does.Contain("entranceHallGuestSpots[guestIndex]"), "Each guest should map directly to one serialized anchor.");
-        Assert.That(resolveMethodBody, Does.Contain("EntranceHallGuestSpotCount"), "Anchor resolution should enforce exactly eight spots.");
-        Assert.That(resolveMethodBody, Does.Contain("FindAnchor(anchorId, entryRoomId)"), "Missing serialized references should recover from RoomAnchor ids.");
+        Assert.That(lookupMethodBody, Does.Not.Contain("FindAnchor"), "Entrance waiting must not repair or replace a manually authored spot at runtime.");
+        Assert.That(lookupMethodBody, Does.Not.Contain("FindSceneObjectByExactName"), "Entrance waiting must not substitute a name-based scene object for a manually authored spot.");
+        Assert.That(controllerText, Does.Not.Contain("ResolveEntranceHallGuestSpots"), "Runtime code must not rewrite the serialized entrance spot array.");
+        Assert.That(controllerText, Does.Not.Contain("EntranceHallGuestSpotPrefix"), "Runtime code must not retain a name-based entrance spot repair path.");
 
         string[] legacyNames =
         {
@@ -282,7 +283,31 @@ public class Chapter1GuestRoomVisibilityRegressionTests
 
         MatchCollection sceneSpotNames = Regex.Matches(sceneText, @"m_Name: EntranceGuestSpot_(\d{2})");
         Assert.That(sceneSpotNames.Count, Is.EqualTo(8), "Gameplay should contain exactly eight Entrance Hall guest spot objects.");
+        Assert.That(
+            sceneText,
+            Does.Contain(
+                "entranceHallGuestSpots:\n" +
+                "  - {fileID: 3501000031}\n" +
+                "  - {fileID: 3501000034}\n" +
+                "  - {fileID: 3501000037}\n" +
+                "  - {fileID: 3501000040}\n" +
+                "  - {fileID: 3501000043}\n" +
+                "  - {fileID: 3501000046}\n" +
+                "  - {fileID: 3501000049}\n" +
+                "  - {fileID: 3501000052}"),
+            "Guest roster order must keep its direct serialized reference to each hand-authored spot.");
 
+        float[,] expectedPositions =
+        {
+            { 111.4f, -143.7f },
+            { 159.9f, -143.6f },
+            { 80.8f, -194.6f },
+            { 130.6f, -194.6f },
+            { 48.4f, -246.4f },
+            { 101.3f, -245.5f },
+            { 14.2f, -297.4f },
+            { 66.5f, -297.4f }
+        };
         HashSet<string> positions = new HashSet<string>();
 
         for (int i = 1; i <= 8; i++)
@@ -294,8 +319,13 @@ public class Chapter1GuestRoomVisibilityRegressionTests
             Assert.That(spotBlock, Does.Contain($"anchorId: {spotName}"), $"{spotName} should be a physical RoomAnchor.");
             Assert.That(spotBlock, Does.Contain("roomId: Grand Entrance Hall"), $"{spotName} should belong to the Entrance Hall stage.");
             Assert.That(spotBlock, Does.Contain("showSceneGizmo: 1"), $"{spotName} should be visible and draggable in the Scene view.");
+            Assert.That(spotBlock, Does.Contain("m_LocalScale: {x: 1, y: 1, z: 1}"), $"{spotName} must keep its authored scale.");
+            Assert.That(spotBlock, Does.Contain("m_Father: {fileID: 3501000001}"), $"{spotName} must remain under the Entrance Hall Anchors container.");
             Assert.That(position.Success, Is.True, $"{spotName} should have an authored local position.");
             Assert.That(positions.Add(position.Value), Is.True, $"{spotName} should not overlap another waiting spot.");
+            Assert.That(float.Parse(position.Groups[1].Value, CultureInfo.InvariantCulture), Is.EqualTo(expectedPositions[i - 1, 0]).Within(0.001f), $"{spotName} x must remain at Hamza's recovered hand-authored value.");
+            Assert.That(float.Parse(position.Groups[2].Value, CultureInfo.InvariantCulture), Is.EqualTo(expectedPositions[i - 1, 1]).Within(0.001f), $"{spotName} y must remain at Hamza's recovered hand-authored value.");
+            Assert.That(float.Parse(position.Groups[3].Value, CultureInfo.InvariantCulture), Is.EqualTo(-7691.114f).Within(0.001f), $"{spotName} z must remain on the Entrance Hall anchor plane.");
         }
 
         Assert.That(sceneText, Does.Not.Contain("m_Name: EntranceHallGuestAnchor"), "The old single formation anchor should be removed from Gameplay.");

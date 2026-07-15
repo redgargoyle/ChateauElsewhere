@@ -12,6 +12,7 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
     private const string PendingCaptureAutoApplySessionKey = "Dreadforge.PlayModeLayoutCapture.AutoApply";
     private const string DiningRoomId = "Dining Room";
     private const string DiningSeatPrefix = "Ch2_DiningSeat_";
+    private const string ProtectedEntranceGuestSpotPrefix = "EntranceGuestSpot_";
     private const string PlayModeApplyBlockedMessage =
         "Captured layout is pending. Stop Play Mode to apply it to the edit-time scene; Unity does not allow scene writes while the game is running.";
 
@@ -275,6 +276,12 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
             return false;
         }
 
+        if (IsProtectedEntranceGuestSpot(target))
+        {
+            Debug.LogWarning($"Skipped protected entrance wait spot '{target.name}'. Its edit-time transform is the only source of truth.");
+            return false;
+        }
+
         RectTransform rectTransform = target as RectTransform;
         RoomAnchor roomAnchor = target.GetComponent<RoomAnchor>();
 
@@ -338,17 +345,31 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
 
         int appliedCount = 0;
         int missingCount = 0;
+        int protectedCount = 0;
         HashSet<Scene> dirtyScenes = new HashSet<Scene>();
 
         for (int i = 0; i < payload.Items.Count; i++)
         {
             PlayModeLayoutCaptureItem item = payload.Items[i];
+
+            if (IsProtectedEntranceGuestSpot(item))
+            {
+                protectedCount++;
+                continue;
+            }
+
             Transform target = ResolveCapturedTransform(item);
 
             if (target == null)
             {
                 missingCount++;
                 Debug.LogWarning($"Could not resolve captured layout object '{item.ObjectName}' at '{item.HierarchyPath}'.");
+                continue;
+            }
+
+            if (IsProtectedEntranceGuestSpot(target))
+            {
+                protectedCount++;
                 continue;
             }
 
@@ -375,7 +396,7 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
             EditorSceneManager.SaveOpenScenes();
         }
 
-        bool complete = appliedCount > 0 && missingCount == 0;
+        bool complete = missingCount == 0 && (appliedCount > 0 || protectedCount > 0);
 
         if (complete && clearOnComplete)
         {
@@ -383,15 +404,23 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
         }
 
         string saveSuffix = saveScenes && appliedCount > 0 ? " Saved open scenes." : string.Empty;
+        string protectedSuffix = protectedCount > 0
+            ? $" Ignored {protectedCount} protected entrance wait spot(s)."
+            : string.Empty;
         message = missingCount == 0
-            ? $"Applied {appliedCount} captured layout object(s).{saveSuffix}"
-            : $"Applied {appliedCount} captured layout object(s), but {missingCount} could not be found. Pending capture was kept.";
+            ? $"Applied {appliedCount} captured layout object(s).{protectedSuffix}{saveSuffix}"
+            : $"Applied {appliedCount} captured layout object(s), but {missingCount} could not be found.{protectedSuffix} Pending capture was kept.";
 
         return complete;
     }
 
     private static void ApplyCaptureItem(Transform target, PlayModeLayoutCaptureItem item)
     {
+        if (IsProtectedEntranceGuestSpot(target))
+        {
+            return;
+        }
+
         RectTransform rectTransform = target as RectTransform;
 
         if (item.IsRectTransform && rectTransform != null)
@@ -744,6 +773,25 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
     {
         return !string.IsNullOrWhiteSpace(value) &&
                value.Trim().StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsProtectedEntranceGuestSpot(Transform target)
+    {
+        if (target == null)
+        {
+            return false;
+        }
+
+        RoomAnchor roomAnchor = target.GetComponent<RoomAnchor>();
+        return StartsWithPrefix(target.name, ProtectedEntranceGuestSpotPrefix) ||
+               (roomAnchor != null && StartsWithPrefix(roomAnchor.AnchorId, ProtectedEntranceGuestSpotPrefix));
+    }
+
+    private static bool IsProtectedEntranceGuestSpot(PlayModeLayoutCaptureItem item)
+    {
+        return item != null &&
+               (StartsWithPrefix(item.ObjectName, ProtectedEntranceGuestSpotPrefix) ||
+                StartsWithPrefix(item.RoomAnchorId, ProtectedEntranceGuestSpotPrefix));
     }
 
     private static bool SameRoom(string left, string right)
