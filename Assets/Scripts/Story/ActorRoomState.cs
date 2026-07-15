@@ -207,7 +207,7 @@ public class ActorRoomState : MonoBehaviour
         sample = default;
 
         if (source == null ||
-            !TryGetButlerScaleRoomAndFootPoint(out string roomId, out Vector2 roomLocalFootPoint))
+            !TryGetRoomLocalFootPoint(out string roomId, out Vector2 roomLocalFootPoint))
         {
             return false;
         }
@@ -765,7 +765,8 @@ public class ActorRoomState : MonoBehaviour
             return false;
         }
 
-        Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+        GameObject targetObject = actorObject != null ? actorObject : gameObject;
+        Transform targetTransform = targetObject != null ? targetObject.transform : transform;
 
         if (targetTransform == null ||
             targetTransform is RectTransform ||
@@ -822,10 +823,17 @@ public class ActorRoomState : MonoBehaviour
                 : boundLocalScale;
         }
 
+        if (CharacterFootPositionUtility.TryGetWorldPoint(targetObject, true, false, out Vector3 feetWorldPoint))
+        {
+            Vector3 footCorrection = worldPoint - feetWorldPoint;
+            footCorrection.z = 0f;
+            targetTransform.position += footCorrection;
+        }
+
         return true;
     }
 
-    private bool TryGetButlerScaleRoomAndFootPoint(out string roomId, out Vector2 roomLocalFootPoint)
+    public bool TryGetRoomLocalFootPoint(out string roomId, out Vector2 roomLocalFootPoint)
     {
         roomId = string.Empty;
         roomLocalFootPoint = Vector2.zero;
@@ -859,11 +867,18 @@ public class ActorRoomState : MonoBehaviour
         }
 
         ResolveReferences();
-        Transform targetTransform = actorObject != null ? actorObject.transform : transform;
+        GameObject targetObject = actorObject != null ? actorObject : gameObject;
+        Transform targetTransform = targetObject != null ? targetObject.transform : transform;
+        Vector3 footWorldPoint;
+
+        if (!CharacterFootPositionUtility.TryGetWorldPoint(targetObject, true, false, out footWorldPoint))
+        {
+            footWorldPoint = targetTransform != null ? targetTransform.position : transform.position;
+        }
 
         if (cameraManager != null &&
             targetTransform != null &&
-            cameraManager.TryGetActiveRoomStageLocalPoint(targetTransform.position, out roomLocalFootPoint))
+            cameraManager.TryGetActiveRoomStageLocalPoint(footWorldPoint, out roomLocalFootPoint))
         {
             return !string.IsNullOrWhiteSpace(roomId);
         }

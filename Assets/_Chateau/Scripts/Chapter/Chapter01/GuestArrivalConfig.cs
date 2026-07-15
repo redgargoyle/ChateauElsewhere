@@ -14,7 +14,6 @@ public class GuestArrivalConfig
     [SerializeField] private float arrivalIntervalSeconds = 15f;
 
     [Header("Waypoints")]
-    [SerializeField] private Transform frontDoorArrivalPoint;
     [SerializeField] private Transform drawingRoomEntryPoint;
     [SerializeField] private Transform assignedSeat;
 
@@ -33,7 +32,6 @@ public class GuestArrivalConfig
     public GameObject GuestObject => guestObject;
     public ActorRoomState ActorState => actorState;
     public float ArrivalIntervalSeconds => Mathf.Max(0f, arrivalIntervalSeconds);
-    public Transform FrontDoorArrivalPoint => frontDoorArrivalPoint;
     public Transform DrawingRoomEntryPoint => drawingRoomEntryPoint;
     public Transform AssignedSeat => assignedSeat;
     public string GreetingLine => greetingLine;
@@ -45,7 +43,6 @@ public class GuestArrivalConfig
         string id,
         string displayName,
         GameObject runtimeGuestObject,
-        Transform runtimeFrontDoorArrivalPoint,
         Transform runtimeDrawingRoomEntryPoint,
         Transform runtimeAssignedSeat,
         string runtimeGreetingLine,
@@ -56,7 +53,6 @@ public class GuestArrivalConfig
         guestDisplayName = displayName;
         guestObject = runtimeGuestObject;
         actorState = runtimeGuestObject != null ? runtimeGuestObject.GetComponent<ActorRoomState>() : null;
-        frontDoorArrivalPoint = runtimeFrontDoorArrivalPoint;
         drawingRoomEntryPoint = runtimeDrawingRoomEntryPoint;
         assignedSeat = runtimeAssignedSeat;
         greetingLine = runtimeGreetingLine;
@@ -112,11 +108,6 @@ public class GuestArrivalConfig
         }
 
         return guestObject;
-    }
-
-    public Transform GetFrontDoorArrivalPoint(Transform fallback)
-    {
-        return frontDoorArrivalPoint != null ? frontDoorArrivalPoint : fallback;
     }
 
     public Transform GetDrawingRoomEntryPoint(Transform fallback)
