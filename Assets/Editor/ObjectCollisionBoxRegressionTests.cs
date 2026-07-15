@@ -20,6 +20,9 @@ public class ObjectCollisionBoxRegressionTests
     private const string DrawingRoomChairName = "drawing_room_red_chair_guest6";
     private const string DrawingRoomTeaTableName = "tea_service_table";
     private const string DrawingRoomChairSpritePath = "Assets/Art/Objects/purple_armchair_front.png";
+    private const string LibraryFlowerSideTableName = "library_flower_side_table_0";
+    private const string LibraryFlowerSideTableSpritePath = "Assets/Art/Objects/library_flower_side_table.png";
+    private const string LibraryBackgroundPath = "Assets/Art/Final Images (DO NOT EDIT)/library.png";
 
     [Test]
     public void ChairBlockerUsesLowerFootprintInsteadOfWholeImage()
@@ -430,6 +433,181 @@ public class ObjectCollisionBoxRegressionTests
             {
                 EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
             }
+        }
+    }
+
+    [Test]
+    public void LibraryFlowerSideTableUsesLowerBoxFootprintForSharedButlerYSort()
+    {
+        SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
+
+        try
+        {
+            Scene scene = EditorSceneManager.OpenScene(GameplayScenePath, OpenSceneMode.Single);
+            Transform room = FindTransformInScene(scene, "Room_Library");
+            Transform table = FindDescendant(room, LibraryFlowerSideTableName);
+            Transform blockerTransform = FindDescendant(room, $"PlayerBlocker_{LibraryFlowerSideTableName}");
+
+            Assert.That(room, Is.Not.Null, "The authored Library should exist in Gameplay.unity.");
+            Assert.That(table, Is.Not.Null, "The flower side table should remain authored under the Library.");
+            Assert.That(blockerTransform, Is.Not.Null, "The Library flower side table needs a physical lower-footprint blocker.");
+
+            SpriteRenderer tableRenderer = table.GetComponent<SpriteRenderer>();
+            ObjectMovementBlocker2D marker = blockerTransform.GetComponent<ObjectMovementBlocker2D>();
+            BoxCollider2D blocker = blockerTransform.GetComponent<BoxCollider2D>();
+
+            Assert.That(tableRenderer, Is.Not.Null);
+            Assert.That(AssetDatabase.GetAssetPath(tableRenderer.sprite), Is.EqualTo(LibraryFlowerSideTableSpritePath));
+            Assert.That(table.localPosition.x, Is.EqualTo(-306f).Within(0.1f),
+                "The cutout must remain registered over the painted Library side table.");
+            Assert.That(table.localPosition.y, Is.EqualTo(-261.5f).Within(0.1f),
+                "The cutout's floor contact must remain aligned to the painted table feet.");
+            Assert.That(table.localScale.x, Is.EqualTo(100f).Within(0.001f));
+            Assert.That(table.localScale.y, Is.EqualTo(100f).Within(0.001f));
+            Assert.That(tableRenderer.sprite.rect.size, Is.EqualTo(new Vector2(180f, 264f)),
+                "The prop must be a 1:1 pixel extraction from the original Library background, not a regenerated illustration.");
+            Assert.That(table.GetComponent<WorldYSortSpriteRenderer>(), Is.Null,
+                "The lower-footprint blocker is the table's sole y-axis sorting writer.");
+
+            Assert.That(marker, Is.Not.Null);
+            Assert.That(marker.SourceObject, Is.SameAs(table.gameObject));
+            Assert.That(marker.SourceRoomName, Is.EqualTo("Library"));
+            Assert.That(marker.Category, Is.EqualTo(ObjectCollisionBoxCategory.Table.ToString()));
+            Assert.That(marker.FootprintHeightFraction, Is.EqualTo(0.3f).Within(0.001f));
+            Assert.That(marker.GeneratedByCollisionBoxTool, Is.False);
+            Assert.That(marker.SortSourceRenderers, Is.True,
+                "The physical lower edge must drive the same y-axis sorting formula as the Butler.");
+
+            Assert.That(blocker, Is.Not.Null);
+            Assert.That(blocker.enabled, Is.True);
+            Assert.That(blocker.isTrigger, Is.True);
+            Assert.That(blocker.offset, Is.EqualTo(new Vector2(-310f, -222f)));
+            Assert.That(blocker.size, Is.EqualTo(new Vector2(125f, 35f)),
+                "The collision footprint must stay in the bottom leg area instead of reaching up into the table opening.");
+
+            bool roomWasActive = room.gameObject.activeSelf;
+
+            try
+            {
+                room.gameObject.SetActive(true);
+                Physics2D.SyncTransforms();
+
+                Assert.That(blocker.gameObject.activeInHierarchy, Is.True);
+                Assert.That(blocker.OverlapPoint(blocker.bounds.center), Is.True,
+                    "The active trigger must cover the lower legs/shelf footprint used for pathing.");
+                Assert.That(blocker.bounds.size.y, Is.LessThan(tableRenderer.bounds.size.y * 0.31f),
+                    "Collision must remain in the lower portion of the table, leaving the vase and flowers pass-through.");
+
+                marker.ApplySourceSortingNow();
+                int expectedTableOrder = 1000 - Mathf.RoundToInt(blocker.bounds.min.y * 100f);
+                int butlerOrderJustBehindTable = 1000 - Mathf.RoundToInt((blocker.bounds.min.y + 0.1f) * 100f);
+                int butlerOrderJustInFrontOfTable = 1000 - Mathf.RoundToInt((blocker.bounds.min.y - 0.1f) * 100f);
+
+                Assert.That(tableRenderer.sortingOrder, Is.EqualTo(expectedTableOrder));
+                Assert.That(tableRenderer.sortingOrder, Is.EqualTo(marker.CurrentSortingOrder));
+                Assert.That(butlerOrderJustBehindTable, Is.LessThan(tableRenderer.sortingOrder),
+                    "Butler feet above the table's lower edge must render behind it.");
+                Assert.That(butlerOrderJustInFrontOfTable, Is.GreaterThan(tableRenderer.sortingOrder),
+                    "Butler feet below the table's lower edge must render in front of it.");
+            }
+            finally
+            {
+                room.gameObject.SetActive(roomWasActive);
+            }
+        }
+        finally
+        {
+            if (previousSceneSetup.Length > 0)
+            {
+                EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
+            }
+        }
+    }
+
+    [Test]
+    public void LibraryFlowerSideTableUsesExactSourcePixelsAndKeepsEveryFloorGapTransparent()
+    {
+        const int sourceLeft = 440;
+        const int sourceTop = 468;
+        const int expectedWidth = 180;
+        const int expectedHeight = 264;
+
+        Texture2D libraryTexture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        Texture2D tableTexture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+
+        try
+        {
+            Assert.That(ImageConversion.LoadImage(libraryTexture, File.ReadAllBytes(LibraryBackgroundPath)), Is.True);
+            Assert.That(ImageConversion.LoadImage(tableTexture, File.ReadAllBytes(LibraryFlowerSideTableSpritePath)), Is.True);
+            Assert.That(tableTexture.width, Is.EqualTo(expectedWidth));
+            Assert.That(tableTexture.height, Is.EqualTo(expectedHeight));
+
+            Color32[] libraryPixels = libraryTexture.GetPixels32();
+            Color32[] tablePixels = tableTexture.GetPixels32();
+
+            for (int topY = 0; topY < expectedHeight; topY++)
+            {
+                int tableBottomY = expectedHeight - 1 - topY;
+                int libraryBottomY = libraryTexture.height - 1 - (sourceTop + topY);
+
+                for (int x = 0; x < expectedWidth; x++)
+                {
+                    Color32 source = libraryPixels[(libraryBottomY * libraryTexture.width) + sourceLeft + x];
+                    Color32 cutout = tablePixels[(tableBottomY * expectedWidth) + x];
+
+                    if (source.r == cutout.r && source.g == cutout.g && source.b == cutout.b)
+                    {
+                        continue;
+                    }
+
+                    Assert.Fail($"The Library table must retain the exact source RGB at top-left pixel ({x}, {topY}); regenerated color or geometry cannot be registered pixel-perfectly over the room.");
+                }
+            }
+
+            Vector2Int[] transparentFloorSamples =
+            {
+                new Vector2Int(25, 190), // Outside the rear-left leg.
+                new Vector2Int(43, 175), // Between the two left legs.
+                new Vector2Int(45, 195), // Lower gap between the two left legs.
+                new Vector2Int(70, 190), // Open floor between the front-left leg and books.
+                new Vector2Int(80, 190), // Same opening, nearer its center.
+                new Vector2Int(85, 205), // Open floor immediately left of the lower books.
+                new Vector2Int(110, 170), // Open space below the apron and above the books.
+                new Vector2Int(90, 235), // Floor below the shelf center.
+                new Vector2Int(110, 235), // Floor below the right side of the shelf.
+                new Vector2Int(125, 235), // Floor between the shelf and foreground desk.
+            };
+
+            for (int i = 0; i < transparentFloorSamples.Length; i++)
+            {
+                Vector2Int point = transparentFloorSamples[i];
+                byte alpha = tablePixels[((expectedHeight - 1 - point.y) * expectedWidth) + point.x].a;
+                Assert.That(alpha, Is.EqualTo(0),
+                    $"Floor/open-space pixel ({point.x}, {point.y}) must be fully transparent so a character behind the table remains visible.");
+            }
+
+            Vector2Int[] opaqueFurnitureSamples =
+            {
+                new Vector2Int(90, 155), // Tabletop/apron.
+                new Vector2Int(33, 190), // Rear-left leg.
+                new Vector2Int(55, 190), // Front-left leg.
+                new Vector2Int(120, 200), // Books.
+                new Vector2Int(80, 215), // Lower shelf.
+                new Vector2Int(55, 240), // Front-left foot.
+            };
+
+            for (int i = 0; i < opaqueFurnitureSamples.Length; i++)
+            {
+                Vector2Int point = opaqueFurnitureSamples[i];
+                byte alpha = tablePixels[((expectedHeight - 1 - point.y) * expectedWidth) + point.x].a;
+                Assert.That(alpha, Is.GreaterThanOrEqualTo(240),
+                    $"Furniture pixel ({point.x}, {point.y}) must remain opaque while the surrounding floor is removed.");
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(libraryTexture);
+            Object.DestroyImmediate(tableTexture);
         }
     }
 
