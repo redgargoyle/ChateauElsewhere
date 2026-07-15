@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(20000)]
 [ExecuteAlways]
 [DisallowMultipleComponent]
 [AddComponentMenu("Dreadforge/Characters/World Y Sort Sprite Renderer")]
@@ -20,6 +22,12 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
     private RoomProjectedEntity roomProjection;
     private YSortSolidObstacle2D solidObstacle;
     private PointClickPlayerMovement player;
+    private PointClickPlayerMovement actorSortingSource;
+    private SpriteRenderer actorFootRenderer;
+    private readonly Dictionary<SpriteRenderer, int> actorRendererOffsets = new Dictionary<SpriteRenderer, int>();
+
+    public bool IsConfiguredForActor => actorSortingSource != null;
+    public SpriteRenderer ActorFootRenderer => actorFootRenderer;
 
     private void Reset()
     {
@@ -58,7 +66,7 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
     {
         ResolveOptionalReferences();
 
-        if (roomProjection != null && roomProjection.IsProjectionActive)
+        if (actorSortingSource == null && roomProjection != null && roomProjection.OwnsProjectedSorting)
         {
             return;
         }
@@ -74,9 +82,14 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
         }
 
         Transform reference = yReference != null ? yReference : transform;
-        string layerName = GetSortingLayerName(sortingLayerName);
-        float sortingY = GetSortingY(reference);
-        int sortingOrder = sortingOrderBase - Mathf.RoundToInt(sortingY * sortingOrderPerYUnit) + sortingOrderOffset;
+        bool sortActorFromVisibleFeet = actorSortingSource != null;
+        string layerName = sortActorFromVisibleFeet
+            ? actorSortingSource.CurrentSortingLayerName
+            : GetSortingLayerName(sortingLayerName);
+        float sortingY = sortActorFromVisibleFeet ? GetActorFootY() : GetSortingY(reference);
+        int sortingOrder = sortActorFromVisibleFeet
+            ? actorSortingSource.GetSortingOrderForFootY(sortingY) + sortingOrderOffset
+            : sortingOrderBase - Mathf.RoundToInt(sortingY * sortingOrderPerYUnit) + sortingOrderOffset;
         sortingOrder = ResolveOcclusionSafeSortingOrder(sortingOrder);
 
         for (int i = 0; i < spriteRenderers.Length; i++)
@@ -89,11 +102,47 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
             }
 
             spriteRenderer.sortingLayerName = layerName;
-            spriteRenderer.sortingOrder = sortingOrder;
+            spriteRenderer.sortingOrder = sortingOrder + GetActorRendererOffset(spriteRenderer);
 
             if (forcePivotSortPoint)
             {
                 spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            }
+        }
+    }
+
+    public void ConfigureForActor(PointClickPlayerMovement sortingSource, SpriteRenderer footRenderer)
+    {
+        actorSortingSource = sortingSource;
+        actorFootRenderer = footRenderer;
+        RefreshActorSortingTargets();
+        ApplySorting();
+    }
+
+    public void RefreshActorSortingTargets()
+    {
+        RefreshRenderers();
+        actorRendererOffsets.Clear();
+
+        if (spriteRenderers == null || spriteRenderers.Length == 0)
+        {
+            return;
+        }
+
+        if (actorFootRenderer == null)
+        {
+            actorFootRenderer = spriteRenderers[0];
+        }
+
+        int referenceOrder = actorFootRenderer != null ? actorFootRenderer.sortingOrder : 0;
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = spriteRenderers[i];
+
+            if (spriteRenderer != null)
+            {
+                actorRendererOffsets[spriteRenderer] = spriteRenderer.sortingOrder - referenceOrder;
             }
         }
     }
@@ -103,6 +152,38 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
         spriteRenderers = includeChildren
             ? GetComponentsInChildren<SpriteRenderer>(true)
             : GetComponents<SpriteRenderer>();
+    }
+
+    private float GetActorFootY()
+    {
+        if (actorFootRenderer != null && actorFootRenderer.sprite != null)
+        {
+            return actorFootRenderer.bounds.min.y;
+        }
+
+        float lowestVisibleY = float.PositiveInfinity;
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = spriteRenderers[i];
+
+            if (spriteRenderer != null && spriteRenderer.enabled && spriteRenderer.sprite != null)
+            {
+                lowestVisibleY = Mathf.Min(lowestVisibleY, spriteRenderer.bounds.min.y);
+            }
+        }
+
+        Transform reference = yReference != null ? yReference : transform;
+        return float.IsPositiveInfinity(lowestVisibleY) ? reference.position.y : lowestVisibleY;
+    }
+
+    private int GetActorRendererOffset(SpriteRenderer spriteRenderer)
+    {
+        return actorSortingSource != null &&
+            spriteRenderer != null &&
+            actorRendererOffsets.TryGetValue(spriteRenderer, out int offset)
+                ? offset
+                : 0;
     }
 
     private void ResolveOptionalReferences()

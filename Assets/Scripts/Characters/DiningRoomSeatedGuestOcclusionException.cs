@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
+[DefaultExecutionOrder(21000)]
 [DisallowMultipleComponent]
 [AddComponentMenu("Dreadforge/Characters/Dining Room Seated Guest Occlusion Exception")]
 public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
@@ -61,12 +62,31 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         string targetDiningRoomName,
         string targetButlerExclusionObjectName)
     {
+        ActivateForSeat(
+            targetActorState,
+            seatAnchor,
+            chairObject,
+            chairRenderer,
+            tableRenderer,
+            targetDiningRoomName,
+            targetButlerExclusionObjectName);
+    }
+
+    public void ActivateForSeat(
+        ActorRoomState targetActorState,
+        RoomAnchor seatAnchor,
+        GameObject chairObject,
+        SpriteRenderer chairRenderer,
+        SpriteRenderer tableRenderer,
+        string targetRoomName,
+        string targetButlerExclusionObjectName)
+    {
         actorState = targetActorState != null ? targetActorState : actorState;
         assignedSeat = seatAnchor;
         assignedChair = chairObject;
         assignedChairRenderer = chairRenderer;
         diningTableRenderer = tableRenderer;
-        diningRoomName = string.IsNullOrWhiteSpace(targetDiningRoomName) ? "Dining Room" : targetDiningRoomName.Trim();
+        diningRoomName = string.IsNullOrWhiteSpace(targetRoomName) ? "Dining Room" : targetRoomName.Trim();
         butlerExclusionObjectName = string.IsNullOrWhiteSpace(targetButlerExclusionObjectName)
             ? "Butler"
             : targetButlerExclusionObjectName.Trim();
@@ -77,12 +97,22 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
 
     public void DeactivateForDiningSeat()
     {
+        DeactivateForSeat();
+    }
+
+    public void DeactivateForSeat()
+    {
         assignedSeat = null;
         assignedChair = null;
         assignedChairRenderer = null;
         diningTableRenderer = null;
         loggedInvalidOrder = false;
         RestoreNormalSorting();
+    }
+
+    public void ApplyOcclusionNow()
+    {
+        ApplyOrRestore();
     }
 
     private void ApplyOrRestore()

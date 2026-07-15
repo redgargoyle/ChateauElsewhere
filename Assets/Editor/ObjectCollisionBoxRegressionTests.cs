@@ -1,9 +1,13 @@
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
 
 public class ObjectCollisionBoxRegressionTests
 {
@@ -12,7 +16,9 @@ public class ObjectCollisionBoxRegressionTests
     private const string AuthoringPath = "Assets/Editor/ObjectCollisionBoxAuthoringWindow.cs";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
+    private const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
     private const string DrawingRoomChairName = "drawing_room_red_chair_guest6";
+    private const string DrawingRoomTeaTableName = "tea_service_table";
     private const string DrawingRoomChairSpritePath = "Assets/Art/Objects/purple_armchair_front.png";
 
     [Test]
@@ -134,6 +140,184 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
+    public void ActorYSorterTracksVisibleFeetAndPreservesRendererOffsets()
+    {
+        GameObject sortingSourceObject = null;
+        GameObject actorObject = null;
+        Texture2D texture = null;
+        Sprite sprite = null;
+        RoomPerspectiveProfile projectionProfile = null;
+
+        try
+        {
+            sortingSourceObject = new GameObject("ButlerSortingSource");
+            PointClickPlayerMovement sortingSource = sortingSourceObject.AddComponent<PointClickPlayerMovement>();
+
+            actorObject = new GameObject("Guest");
+            SpriteRenderer bodyRenderer = actorObject.AddComponent<SpriteRenderer>();
+            GameObject coatObject = new GameObject("GuestCoat");
+            coatObject.transform.SetParent(actorObject.transform, false);
+            SpriteRenderer coatRenderer = coatObject.AddComponent<SpriteRenderer>();
+            texture = new Texture2D(8, 8);
+            sprite = Sprite.Create(texture, new Rect(0f, 0f, 8f, 8f), new Vector2(0.5f, 0.5f), 8f);
+            bodyRenderer.sprite = sprite;
+            coatRenderer.sprite = sprite;
+
+            RoomProjectedEntity projection = actorObject.AddComponent<RoomProjectedEntity>();
+            projectionProfile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
+            projectionProfile.ConfigureDrawingRoomDefaults();
+            SerializedObject serializedProjection = new SerializedObject(projection);
+            serializedProjection.FindProperty("roomProfile").objectReferenceValue = projectionProfile;
+            serializedProjection.FindProperty("applyPosition").boolValue = false;
+            serializedProjection.FindProperty("applyScale").boolValue = false;
+            serializedProjection.FindProperty("applyTint").boolValue = false;
+            serializedProjection.FindProperty("applySorting").boolValue = true;
+            serializedProjection.FindProperty("requireActorRoomMatch").boolValue = false;
+            serializedProjection.ApplyModifiedPropertiesWithoutUndo();
+            projection.RefreshVisualTargets();
+
+            WorldYSortSpriteRenderer sorter = actorObject.AddComponent<WorldYSortSpriteRenderer>();
+            bodyRenderer.sortingOrder = 120;
+            coatRenderer.sortingOrder = 123;
+            sorter.ConfigureForActor(sortingSource, bodyRenderer);
+
+            Assert.That(projection.OwnsProjectedSorting, Is.True, "The characterization must exercise a genuinely active legacy projection writer.");
+            int firstExpectedOrder = sortingSource.GetSortingOrderForFootY(bodyRenderer.bounds.min.y);
+            Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(firstExpectedOrder));
+            Assert.That(coatRenderer.sortingOrder, Is.EqualTo(firstExpectedOrder + 3), "Coat/body layering should survive continuous depth updates.");
+
+            actorObject.transform.position = new Vector3(0f, 2f, 0f);
+            projection.ApplyProjection();
+            sorter.ApplySorting();
+
+            int movedExpectedOrder = sortingSource.GetSortingOrderForFootY(bodyRenderer.bounds.min.y);
+            Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(movedExpectedOrder));
+            Assert.That(bodyRenderer.sortingOrder, Is.Not.EqualTo(firstExpectedOrder));
+            Assert.That(coatRenderer.sortingOrder, Is.EqualTo(movedExpectedOrder + 3));
+        }
+        finally
+        {
+            if (actorObject != null)
+            {
+                Object.DestroyImmediate(actorObject);
+            }
+
+            if (sortingSourceObject != null)
+            {
+                Object.DestroyImmediate(sortingSourceObject);
+            }
+
+            if (sprite != null)
+            {
+                Object.DestroyImmediate(sprite);
+            }
+
+            if (texture != null)
+            {
+                Object.DestroyImmediate(texture);
+            }
+
+            if (projectionProfile != null)
+            {
+                Object.DestroyImmediate(projectionProfile);
+            }
+        }
+    }
+
+    [Test]
+    public void SeatedGuestOverrideIsAboveChairAndBelowTableThenRestoresYSorting()
+    {
+        GameObject roomObject = null;
+        GameObject actorObject = null;
+        GameObject chairObject = null;
+        GameObject tableObject = null;
+
+        try
+        {
+            roomObject = new GameObject("Room_Drawing_Room");
+            RoomContentGroup room = roomObject.AddComponent<RoomContentGroup>();
+            room.SetRoomName("Drawing Room");
+            GameObject seatObject = new GameObject("DrawingRoomGuestPoint_01");
+            seatObject.transform.SetParent(roomObject.transform, false);
+            RoomAnchor seat = seatObject.AddComponent<RoomAnchor>();
+            seat.RefreshFromHierarchy();
+
+            actorObject = new GameObject("Guest1");
+            actorObject.AddComponent<SpriteRenderer>();
+            ActorRoomState actorState = actorObject.AddComponent<ActorRoomState>();
+            SerializedObject serializedActor = new SerializedObject(actorState);
+            serializedActor.FindProperty("restrictVisibilityToCurrentRoom").boolValue = false;
+            serializedActor.ApplyModifiedPropertiesWithoutUndo();
+            actorState.SetCurrentRoom("Drawing Room");
+            actorState.SetAvailableInCurrentChapter(true);
+            actorState.SetVisibleByChapterState(true);
+            actorState.SetSeated(true);
+
+            chairObject = new GameObject("purple_sofa");
+            SpriteRenderer chairRenderer = chairObject.AddComponent<SpriteRenderer>();
+            chairRenderer.sortingLayerName = "People";
+            chairRenderer.sortingOrder = 1200;
+            tableObject = new GameObject("tea_service_table");
+            SpriteRenderer tableRenderer = tableObject.AddComponent<SpriteRenderer>();
+            tableRenderer.sortingLayerName = "People";
+            tableRenderer.sortingOrder = 1800;
+
+            DiningRoomSeatedGuestOcclusionException seatedException =
+                actorObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
+            seatedException.ActivateForSeat(
+                actorState,
+                seat,
+                chairObject,
+                chairRenderer,
+                tableRenderer,
+                "Drawing Room",
+                "Butler");
+
+            SortingGroup group = actorObject.GetComponent<SortingGroup>();
+            Assert.That(seatedException.IsExceptionActive, Is.True);
+            Assert.That(group, Is.Not.Null);
+            Assert.That(group.enabled, Is.True);
+            Assert.That(group.sortingOrder, Is.GreaterThan(chairRenderer.sortingOrder));
+            Assert.That(group.sortingOrder, Is.LessThan(tableRenderer.sortingOrder));
+
+            actorState.SetSeated(false);
+            seatedException.ActivateForSeat(
+                actorState,
+                seat,
+                chairObject,
+                chairRenderer,
+                tableRenderer,
+                "Drawing Room",
+                "Butler");
+
+            Assert.That(seatedException.IsExceptionActive, Is.False);
+            Assert.That(group.enabled, Is.False, "Standing again should return external depth ownership to ordinary Y sorting.");
+        }
+        finally
+        {
+            if (tableObject != null)
+            {
+                Object.DestroyImmediate(tableObject);
+            }
+
+            if (chairObject != null)
+            {
+                Object.DestroyImmediate(chairObject);
+            }
+
+            if (actorObject != null)
+            {
+                Object.DestroyImmediate(actorObject);
+            }
+
+            if (roomObject != null)
+            {
+                Object.DestroyImmediate(roomObject);
+            }
+        }
+    }
+
+    [Test]
     public void DrawingRoomPurpleArmchairUsesLowerFootprintForSharedButlerYSort()
     {
         SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
@@ -250,6 +434,333 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
+    public void DrawingRoomTeaTableKeepsButlerOcclusionAcrossVerticalCameraPan()
+    {
+        SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
+
+        try
+        {
+            Scene scene = EditorSceneManager.OpenScene(GameplayScenePath, OpenSceneMode.Single);
+            Transform room = FindTransformInScene(scene, "Room_Drawing_Room");
+            Transform table = FindDescendant(room, DrawingRoomTeaTableName);
+            Transform blockerTransform = FindDescendant(room, $"PlayerBlocker_{DrawingRoomTeaTableName}");
+
+            Assert.That(room, Is.Not.Null, "The authored Drawing Room should exist in Gameplay.unity.");
+            Assert.That(table, Is.Not.Null, "The Drawing Room tea table should remain authored in Gameplay.unity.");
+            Assert.That(blockerTransform, Is.Not.Null, "The Drawing Room tea table needs its physical movement footprint.");
+
+            SpriteRenderer tableRenderer = table.GetComponent<SpriteRenderer>();
+            RoomProjectedEntity projectedEntity = table.GetComponent<RoomProjectedEntity>();
+            ObjectMovementBlocker2D marker = blockerTransform.GetComponent<ObjectMovementBlocker2D>();
+            PolygonCollider2D blocker = blockerTransform.GetComponent<PolygonCollider2D>();
+            RoomContentGroup roomContent = room.GetComponent<RoomContentGroup>();
+            CameraManager cameraManager = FindComponentInScene<CameraManager>(scene);
+            PointClickPlayerMovement playerMovement = FindComponentInScene<PointClickPlayerMovement>(scene);
+
+            Assert.That(tableRenderer, Is.Not.Null);
+            Assert.That(projectedEntity, Is.Not.Null);
+            Assert.That(projectedEntity.Mode, Is.EqualTo(RoomProjectedEntity.ProjectionMode.ForegroundOccluder));
+            Assert.That(projectedEntity.RoomLocalFootPoint, Is.EqualTo(new Vector2(-80.26f, -211.67f)));
+            Assert.That(marker, Is.Not.Null);
+            Assert.That(marker.SourceObject, Is.SameAs(table.gameObject));
+            Assert.That(marker.SortSourceRenderers, Is.True,
+                "The table's lower physical footprint must be its sole Butler-compatible sorting owner.");
+            Assert.That(blocker, Is.Not.Null);
+            Assert.That(roomContent, Is.Not.Null);
+            Assert.That(cameraManager, Is.Not.Null);
+            Assert.That(playerMovement, Is.Not.Null);
+
+            SerializedObject serializedProjection = new SerializedObject(projectedEntity);
+            Assert.That(serializedProjection.FindProperty("applySorting").boolValue, Is.False,
+                "RoomProjectedEntity must not race the table's physical-footprint sorter every LateUpdate.");
+
+            bool roomWasActive = room.gameObject.activeSelf;
+            RectTransform roomStage = room as RectTransform;
+            Vector2 originalRoomPosition = roomStage.anchoredPosition;
+            Vector2 originalRoomSize = roomStage.sizeDelta;
+            Vector3 originalRoomScale = roomStage.localScale;
+            Vector2 originalRoomAnchorMin = roomStage.anchorMin;
+            Vector2 originalRoomAnchorMax = roomStage.anchorMax;
+            Vector2 originalRoomPivot = roomStage.pivot;
+
+            try
+            {
+                room.gameObject.SetActive(true);
+                cameraManager.SetActiveRoomContent(roomContent, false);
+
+                float[] verticalPans = { -1f, 0f, 1f };
+                int[] tableOrders = new int[verticalPans.Length];
+
+                for (int panIndex = 0; panIndex < verticalPans.Length; panIndex++)
+                {
+                    cameraManager.SetRoomLookForPreview(0f, verticalPans[panIndex], cameraManager.defaultRoomFov);
+                    Canvas.ForceUpdateCanvases();
+                    Physics2D.SyncTransforms();
+                    marker.ApplySourceSortingNow();
+
+                    float physicalFrontEdgeY = blocker.bounds.min.y;
+                    int expectedTableOrder = playerMovement.GetSortingOrderForFootY(physicalFrontEdgeY);
+                    int butlerOrderBehindTable = playerMovement.GetSortingOrderForFootY(physicalFrontEdgeY + 0.1f);
+                    int butlerOrderInFrontOfTable = playerMovement.GetSortingOrderForFootY(physicalFrontEdgeY - 0.1f);
+
+                    tableOrders[panIndex] = tableRenderer.sortingOrder;
+                    Assert.That(tableRenderer.sortingOrder, Is.EqualTo(marker.CurrentSortingOrder));
+                    Assert.That(tableRenderer.sortingOrder, Is.EqualTo(expectedTableOrder),
+                        $"The table and Butler should share one world-feet sorting formula at vertical pan {verticalPans[panIndex]}.");
+                    Assert.That(butlerOrderBehindTable, Is.LessThan(tableRenderer.sortingOrder),
+                        $"The Butler should render behind the table above its front edge at vertical pan {verticalPans[panIndex]}.");
+                    Assert.That(butlerOrderInFrontOfTable, Is.GreaterThan(tableRenderer.sortingOrder),
+                        $"The Butler should render in front of the table below its front edge at vertical pan {verticalPans[panIndex]}.");
+
+                    projectedEntity.ApplyProjection();
+                    Assert.That(tableRenderer.sortingOrder, Is.EqualTo(expectedTableOrder),
+                        "Applying the retained projection metadata must not overwrite the physical occlusion result.");
+                }
+
+                Assert.That(tableOrders[0], Is.Not.EqualTo(tableOrders[2]),
+                    "The regression must exercise two genuinely different room-stage positions.");
+            }
+            finally
+            {
+                cameraManager.SetActiveRoomContent(null, false);
+                roomStage.anchoredPosition = originalRoomPosition;
+                roomStage.sizeDelta = originalRoomSize;
+                roomStage.localScale = originalRoomScale;
+                roomStage.anchorMin = originalRoomAnchorMin;
+                roomStage.anchorMax = originalRoomAnchorMax;
+                roomStage.pivot = originalRoomPivot;
+                room.gameObject.SetActive(roomWasActive);
+            }
+        }
+        finally
+        {
+            if (previousSceneSetup.Length > 0)
+            {
+                EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
+            }
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator Chapter2SkipStagesEveryGuestWithCanonicalOcclusion()
+    {
+        SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
+        EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+        Selection.activeObject = null;
+
+        yield return new EnterPlayMode();
+
+        MainMenuController mainMenu = Object.FindAnyObjectByType<MainMenuController>(FindObjectsInactive.Include);
+        Assert.That(mainMenu, Is.Not.Null, "The runtime regression must enter Gameplay through the real Main Menu bootstrap.");
+        mainMenu.ContinueGame();
+
+        for (int frame = 0; frame < 30 && SceneManager.GetActiveScene().name != "Gameplay"; frame++)
+        {
+            yield return null;
+        }
+
+        Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo("Gameplay"));
+        yield return null;
+
+        ChapterManager chapterManager = Object.FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include);
+        Assert.That(chapterManager, Is.Not.Null);
+        chapterManager.SkipToChapter2ForTesting();
+
+        for (int frame = 0; frame < 5; frame++)
+        {
+            yield return null;
+        }
+
+        RoomNavigationManager navigation = Object.FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        PointClickPlayerMovement playerMovement = Object.FindAnyObjectByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
+        CameraManager cameraManager = Object.FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
+        Transform room = FindTransformInScene(SceneManager.GetActiveScene(), "Room_Drawing_Room");
+        Transform table = FindDescendant(room, DrawingRoomTeaTableName);
+        Transform blockerTransform = FindDescendant(room, $"PlayerBlocker_{DrawingRoomTeaTableName}");
+        Transform greenChair = FindDescendant(room, "drawingroomgreenchair_0");
+        SpriteRenderer tableRenderer = table != null ? table.GetComponent<SpriteRenderer>() : null;
+        SpriteRenderer greenChairRenderer = greenChair != null ? greenChair.GetComponent<SpriteRenderer>() : null;
+        WorldYSortSpriteRenderer greenChairSorter = greenChair != null
+            ? greenChair.GetComponent<WorldYSortSpriteRenderer>()
+            : null;
+        ObjectMovementBlocker2D tableMarker = blockerTransform != null
+            ? blockerTransform.GetComponent<ObjectMovementBlocker2D>()
+            : null;
+        PolygonCollider2D tableBlocker = blockerTransform != null
+            ? blockerTransform.GetComponent<PolygonCollider2D>()
+            : null;
+
+        Assert.That(navigation, Is.Not.Null);
+        Assert.That(navigation.CurrentRoom, Is.EqualTo("Drawing Room").IgnoreCase);
+        Assert.That(playerMovement, Is.Not.Null);
+        Assert.That(cameraManager, Is.Not.Null);
+        Assert.That(room, Is.Not.Null);
+        Assert.That(tableRenderer, Is.Not.Null);
+        Assert.That(tableMarker, Is.Not.Null);
+        Assert.That(tableBlocker, Is.Not.Null);
+        Assert.That(greenChairRenderer, Is.Not.Null);
+        Assert.That(greenChairSorter, Is.Not.Null);
+
+        ActorRoomState[] actorStates = Object.FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
+        List<ActorRoomState> drawingRoomGuests = new List<ActorRoomState>();
+
+        for (int i = 0; i < actorStates.Length; i++)
+        {
+            ActorRoomState actor = actorStates[i];
+
+            if (actor != null &&
+                string.Equals(actor.CurrentRoomId, "Drawing Room", System.StringComparison.OrdinalIgnoreCase) &&
+                actor.ActorId.IndexOf("Guest", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                drawingRoomGuests.Add(actor);
+            }
+        }
+
+        Assert.That(drawingRoomGuests.Count, Is.EqualTo(8), "Skip to Chapter 2 should stage the complete guest roster.");
+
+        float[] verticalPans = { -1f, 0f, 1f };
+
+        for (int panIndex = 0; panIndex < verticalPans.Length; panIndex++)
+        {
+            cameraManager.SetRoomLookForPreview(0f, verticalPans[panIndex], cameraManager.defaultRoomFov);
+            yield return null;
+            yield return null;
+            Physics2D.SyncTransforms();
+            tableMarker.ApplySourceSortingNow();
+            greenChairSorter.ApplySorting();
+            yield return null;
+            yield return null;
+
+            Assert.That(
+                greenChairRenderer.sortingOrder,
+                Is.EqualTo(playerMovement.GetSortingOrderForFootY(greenChair.position.y)),
+                "The full green chair must use the same world-Y order space as every standing actor.");
+
+            int seatedCount = 0;
+            int standingCount = 0;
+            ActorRoomState standingProbe = null;
+            SpriteRenderer standingProbeRenderer = null;
+            WorldYSortSpriteRenderer standingProbeSorter = null;
+
+            for (int guestIndex = 0; guestIndex < drawingRoomGuests.Count; guestIndex++)
+            {
+                ActorRoomState guest = drawingRoomGuests[guestIndex];
+                WorldYSortSpriteRenderer sorter = guest.GetComponent<WorldYSortSpriteRenderer>();
+                DiningRoomSeatedGuestOcclusionException seatedException =
+                    guest.GetComponent<DiningRoomSeatedGuestOcclusionException>();
+
+                Assert.That(sorter, Is.Not.Null, $"{guest.ActorId} should retain the shared actor sorter after the skip.");
+                Assert.That(sorter.IsConfiguredForActor, Is.True);
+                sorter.ApplySorting();
+
+                if (guest.IsSeated)
+                {
+                    seatedCount++;
+                    Assert.That(seatedException, Is.Not.Null);
+                    seatedException.ApplyOcclusionNow();
+                    Assert.That(seatedException.IsExceptionActive, Is.True);
+                    SortingGroup group = guest.GetComponentInChildren<SortingGroup>(true);
+                    SpriteRenderer chairRenderer = seatedException.AssignedChair != null
+                        ? seatedException.AssignedChair.GetComponent<SpriteRenderer>()
+                        : null;
+                    Assert.That(group, Is.Not.Null);
+                    Assert.That(chairRenderer, Is.Not.Null);
+                    Assert.That(group.sortingOrder, Is.GreaterThan(chairRenderer.sortingOrder));
+                    Assert.That(group.sortingOrder, Is.LessThan(tableRenderer.sortingOrder));
+                }
+                else
+                {
+                    standingCount++;
+                    Assert.That(seatedException == null || !seatedException.IsExceptionActive, Is.True);
+                    SpriteRenderer characterRenderer = sorter.ActorFootRenderer != null
+                        ? sorter.ActorFootRenderer
+                        : FindVisibleCharacterRenderer(guest.gameObject);
+                    Assert.That(characterRenderer, Is.Not.Null);
+                    standingProbe ??= guest;
+                    standingProbeRenderer ??= characterRenderer;
+                    standingProbeSorter ??= sorter;
+                    Assert.That(
+                        characterRenderer.sortingOrder,
+                        Is.EqualTo(playerMovement.GetSortingOrderForFootY(characterRenderer.bounds.min.y)),
+                        $"{guest.ActorId} should continuously sort from visible feet at pan {verticalPans[panIndex]}.");
+
+                    if (characterRenderer.bounds.min.y > tableBlocker.bounds.min.y)
+                    {
+                        Assert.That(characterRenderer.sortingOrder, Is.LessThan(tableRenderer.sortingOrder),
+                            $"{guest.ActorId} should render behind the tea table when its feet are above the table edge.");
+                    }
+                }
+            }
+
+            Assert.That(seatedCount, Is.EqualTo(5));
+            Assert.That(standingCount, Is.EqualTo(3));
+            Assert.That(standingProbe, Is.Not.Null);
+            Assert.That(standingProbeRenderer, Is.Not.Null);
+            Assert.That(standingProbeSorter, Is.Not.Null);
+
+            Vector3 originalProbePosition = standingProbe.transform.position;
+            float behindTableFootY = tableBlocker.bounds.min.y + 0.5f;
+            standingProbe.transform.position += Vector3.up * (behindTableFootY - standingProbeRenderer.bounds.min.y);
+            yield return null;
+            yield return null;
+            standingProbe.transform.position += Vector3.up * (behindTableFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ApplySorting();
+
+            Assert.That(
+                standingProbeRenderer.sortingOrder,
+                Is.EqualTo(playerMovement.GetSortingOrderForFootY(standingProbeRenderer.bounds.min.y)));
+            Assert.That(standingProbeRenderer.sortingOrder, Is.LessThan(tableRenderer.sortingOrder),
+                $"A real standing guest must render behind the table above its front edge at pan {verticalPans[panIndex]}.");
+
+            float inFrontOfTableFootY = tableBlocker.bounds.min.y - 0.5f;
+            standingProbe.transform.position += Vector3.up * (inFrontOfTableFootY - standingProbeRenderer.bounds.min.y);
+            yield return null;
+            yield return null;
+            standingProbe.transform.position += Vector3.up * (inFrontOfTableFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ApplySorting();
+
+            Assert.That(
+                standingProbeRenderer.sortingOrder,
+                Is.EqualTo(playerMovement.GetSortingOrderForFootY(standingProbeRenderer.bounds.min.y)));
+            Assert.That(standingProbeRenderer.sortingOrder, Is.GreaterThan(tableRenderer.sortingOrder),
+                $"A real standing guest must render in front of the table below its front edge at pan {verticalPans[panIndex]}.");
+
+            standingProbe.transform.position = originalProbePosition;
+            yield return null;
+            yield return null;
+
+            float behindGreenChairFootY = greenChair.position.y + 0.5f;
+            standingProbe.transform.position += Vector3.up * (behindGreenChairFootY - standingProbeRenderer.bounds.min.y);
+            yield return null;
+            yield return null;
+            standingProbe.transform.position += Vector3.up * (behindGreenChairFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ApplySorting();
+            Assert.That(standingProbeRenderer.sortingOrder, Is.LessThan(greenChairRenderer.sortingOrder),
+                $"A real standing guest must render behind the green chair above its Y edge at pan {verticalPans[panIndex]}.");
+
+            float inFrontOfGreenChairFootY = greenChair.position.y - 0.5f;
+            standingProbe.transform.position += Vector3.up * (inFrontOfGreenChairFootY - standingProbeRenderer.bounds.min.y);
+            yield return null;
+            yield return null;
+            standingProbe.transform.position += Vector3.up * (inFrontOfGreenChairFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ApplySorting();
+            Assert.That(standingProbeRenderer.sortingOrder, Is.GreaterThan(greenChairRenderer.sortingOrder),
+                $"A real standing guest must render in front of the green chair below its Y edge at pan {verticalPans[panIndex]}.");
+
+            standingProbe.transform.position = originalProbePosition;
+            yield return null;
+            yield return null;
+        }
+
+        yield return new ExitPlayMode();
+
+        if (previousSceneSetup != null && previousSceneSetup.Length > 0)
+        {
+            EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
+        }
+    }
+
+    [Test]
     public void PointClickMovementCollectsExplicitObjectMovementBlockers()
     {
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
@@ -294,6 +805,23 @@ public class ObjectCollisionBoxRegressionTests
         return null;
     }
 
+    private static T FindComponentInScene<T>(Scene scene) where T : Component
+    {
+        GameObject[] roots = scene.GetRootGameObjects();
+
+        for (int rootIndex = 0; rootIndex < roots.Length; rootIndex++)
+        {
+            T match = roots[rootIndex].GetComponentInChildren<T>(true);
+
+            if (match != null)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+
     private static Transform FindDescendant(Transform root, string objectName)
     {
         if (root == null)
@@ -308,6 +836,31 @@ public class ObjectCollisionBoxRegressionTests
             if (descendants[index].name == objectName)
             {
                 return descendants[index];
+            }
+        }
+
+        return null;
+    }
+
+    private static SpriteRenderer FindVisibleCharacterRenderer(GameObject actorObject)
+    {
+        if (actorObject == null)
+        {
+            return null;
+        }
+
+        SpriteRenderer[] renderers = actorObject.GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+
+            if (renderer != null &&
+                renderer.enabled &&
+                renderer.sprite != null &&
+                renderer.name.IndexOf("coat", System.StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return renderer;
             }
         }
 
