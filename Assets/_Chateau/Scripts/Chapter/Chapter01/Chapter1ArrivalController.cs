@@ -571,7 +571,10 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        DialogueSpeechService.SpeechInterruption speechInterruption = CancelSpeechForCoatPickup();
+        DialogueSpeechService service = ResolveSpeechService();
+        DialogueSpeechService.SpeechInterruption speechInterruption = service != null
+            ? service.GetCurrentSpeech()
+            : default;
 
         guestState.CoatTaken = true;
         butlerCarryingCoat = true;
@@ -579,12 +582,15 @@ public class Chapter1ArrivalController : MonoBehaviour
         carriedCoatGuest = guestState;
         SetGuestState(guestState, GuestArrivalState.CoatTaken);
 
-        if (speechInterruption.HadActiveSpeech &&
-            TryFindGuestForSpeechInterruption(speechInterruption, out GuestRuntimeState interruptedGuest))
-        {
-            QueueGuestLine(interruptedGuest, "INTERRUPTED", GuestInterruptedLineText);
-        }
-        else if (!speechInterruption.HadAnySpeech)
+        bool interruptedGuestSpeech = speechInterruption.HadActiveSpeech &&
+            TryFindGuestForSpeechInterruption(speechInterruption, out GuestRuntimeState interruptedGuest) &&
+            service != null &&
+            service.InterruptCurrentSpeechAndResume(
+                GetChapter1GuestLineId(interruptedGuest.GuestIndex, "INTERRUPTED"),
+                interruptedGuest.Config.GuestDisplayName,
+                GuestInterruptedLineText);
+
+        if (!interruptedGuestSpeech)
         {
             QueueButlerLine("SUB_CH01_BUTLER_TAKE_COAT_001");
             QueueGuestLine(guestState, "COAT_HANDOFF", null);
@@ -3515,12 +3521,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         DialogueSpeechService service = ResolveSpeechService();
         service?.BeginSpeakLine(lineId, "Butler", null, false, false);
-    }
-
-    private DialogueSpeechService.SpeechInterruption CancelSpeechForCoatPickup()
-    {
-        DialogueSpeechService service = ResolveSpeechService();
-        return service != null ? service.CancelQueuedSpeech() : default;
     }
 
     private bool TryFindGuestForSpeechInterruption(

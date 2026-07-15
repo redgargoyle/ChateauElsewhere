@@ -25,16 +25,24 @@ public sealed class DialogueSpeechService : MonoBehaviour
 
     private bool normalSpeechActive;
     private bool skipRequested;
+    private bool speechInterruptionActive;
+    private bool activeSpeechPaused;
+    private bool interruptionSkipRequested;
     private int activeSpeechToken;
     private int speechQueueToken;
+    private int speechInterruptionToken;
     private int pendingNormalSpeechCount;
     private string activeLineId = string.Empty;
     private string activeSpeakerId = string.Empty;
     private string activeSpeakerDisplayName = string.Empty;
     private string activeText = string.Empty;
+    private bool activeShowSubtitleOverlay;
+    private RoomNavigationManager navigationManager;
+    private bool subscribedToRoomChanges;
     private readonly List<GuestMovementPauseLease> guestMovementPauseLeases = new List<GuestMovementPauseLease>();
 
     public bool IsNormalSpeechActive => normalSpeechActive;
+    public bool IsSpeechInterruptionActive => speechInterruptionActive;
 
     public struct SpeechInterruption
     {
@@ -113,6 +121,13 @@ public sealed class DialogueSpeechService : MonoBehaviour
 
     public void SkipCurrentSpeech()
     {
+        if (speechInterruptionActive)
+        {
+            interruptionSkipRequested = true;
+            voicePlayback?.StopOverlappingLines();
+            return;
+        }
+
         RequestSkip(activeSpeechToken);
     }
 
@@ -123,21 +138,16 @@ public sealed class DialogueSpeechService : MonoBehaviour
 
     public SpeechInterruption CancelQueuedSpeech()
     {
+        SpeechInterruption interruption = GetCurrentSpeech();
         activeSpeechToken++;
         speechQueueToken++;
+        speechInterruptionToken++;
         ReleaseAllGuestMovementPauses();
 
-        bool hadActiveSpeech = normalSpeechActive || !string.IsNullOrWhiteSpace(activeLineId);
-        bool hadQueuedSpeech = pendingNormalSpeechCount > (normalSpeechActive ? 1 : 0);
-        SpeechInterruption interruption = new SpeechInterruption(
-            hadActiveSpeech,
-            hadQueuedSpeech,
-            activeLineId,
-            activeSpeakerId,
-            activeSpeakerDisplayName,
-            activeText);
-
         skipRequested = false;
+        interruptionSkipRequested = false;
+        speechInterruptionActive = false;
+        activeSpeechPaused = false;
         normalSpeechActive = false;
         voicePlayback?.StopCurrentLine();
         subtitleService?.HideCurrent();
@@ -146,6 +156,71 @@ public sealed class DialogueSpeechService : MonoBehaviour
         ClearActiveSpeechInfo();
 
         return interruption;
+    }
+
+    public SpeechInterruption GetCurrentSpeech()
+    {
+        bool hadActiveSpeech = normalSpeechActive || !string.IsNullOrWhiteSpace(activeLineId);
+        bool hadQueuedSpeech = pendingNormalSpeechCount > (normalSpeechActive ? 1 : 0);
+        return new SpeechInterruption(
+            hadActiveSpeech,
+            hadQueuedSpeech,
+            activeLineId,
+            activeSpeakerId,
+            activeSpeakerDisplayName,
+            activeText);
+    }
+
+    public bool InterruptCurrentSpeechAndResume(
+        string interruptionLineId,
+        string interruptionSpeakerId,
+        string interruptionFallbackText,
+        bool showSubtitleOverlay = true,
+        Action<string, string> onInterruptionStarted = null)
+    {
+        ResolveReferences();
+
+        if (speechInterruptionActive ||
+            !normalSpeechActive ||
+            string.IsNullOrWhiteSpace(activeText) ||
+            subtitleService == null ||
+            !subtitleService.TryResolveSpeechLine(
+                interruptionLineId,
+                interruptionSpeakerId,
+                interruptionFallbackText,
+                out string interruptionSpeaker,
+                out string interruptionText,
+                out float minDuration,
+                out float maxDuration))
+        {
+            return false;
+        }
+
+        SpeechInterruption interruptedSpeech = GetCurrentSpeech();
+        int originalSpeechToken = activeSpeechToken;
+        int originalQueueToken = speechQueueToken;
+        int interruptionToken = ++speechInterruptionToken;
+
+        speechInterruptionActive = true;
+        activeSpeechPaused = true;
+        interruptionSkipRequested = false;
+        voicePlayback?.PauseCurrentLine();
+        subtitleService.HideCurrent();
+        speakingIndicator?.HideForSpeechToken(originalSpeechToken);
+
+        StartCoroutine(InterruptionSpeechRoutine(
+            interruptionLineId,
+            interruptionSpeaker,
+            interruptionText,
+            minDuration,
+            maxDuration,
+            showSubtitleOverlay,
+            onInterruptionStarted,
+            interruptedSpeech,
+            originalSpeechToken,
+            originalQueueToken,
+            interruptionToken));
+        return true;
     }
 
     private IEnumerator SpeakLineRoutine(
@@ -216,7 +291,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
         if (!allowOverlap)
         {
             normalSpeechActive = true;
-            SetActiveSpeechInfo(lineId, speakerId, speaker, text);
+            SetActiveSpeechInfo(lineId, speakerId, speaker, text, showSubtitleOverlay);
         }
 
         PointClickPlayerMovement blockedMovement = null;
@@ -260,6 +335,12 @@ public sealed class DialogueSpeechService : MonoBehaviour
 
         while (speechToken == activeSpeechToken && queueToken == speechQueueToken && elapsed < duration)
         {
+            if (!allowOverlap && activeSpeechPaused)
+            {
+                yield return null;
+                continue;
+            }
+
             if (skipRequested)
             {
                 break;
@@ -308,16 +389,109 @@ public sealed class DialogueSpeechService : MonoBehaviour
         CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete, guestMovementPauseLease);
     }
 
+    private IEnumerator InterruptionSpeechRoutine(
+        string lineId,
+        string speaker,
+        string text,
+        float minDuration,
+        float maxDuration,
+        bool showSubtitleOverlay,
+        Action<string, string> onInterruptionStarted,
+        SpeechInterruption interruptedSpeech,
+        int originalSpeechToken,
+        int originalQueueToken,
+        int interruptionToken)
+    {
+        int indicatorToken = unchecked(int.MinValue + interruptionToken);
+        onInterruptionStarted?.Invoke(speaker, text);
+        speakingIndicator?.ShowForSpeechLine(indicatorToken, lineId, speaker, text);
+
+        if (showSubtitleOverlay)
+        {
+            subtitleService.ShowSpeechLine(
+                lineId,
+                speaker,
+                text,
+                true,
+                () => RequestInterruptionSkip(interruptionToken));
+        }
+
+        float voiceDuration = voicePlayback != null
+            ? voicePlayback.PlayForDialogue(lineId, speaker, text, true)
+            : 0f;
+        float duration = voiceDuration > 0f
+            ? voiceDuration + VoiceTailSeconds
+            : GetReadDuration(text, minDuration, maxDuration);
+        float elapsed = 0f;
+
+        while (interruptionToken == speechInterruptionToken &&
+               originalSpeechToken == activeSpeechToken &&
+               originalQueueToken == speechQueueToken &&
+               elapsed < duration)
+        {
+            if (interruptionSkipRequested)
+            {
+                break;
+            }
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (interruptionToken != speechInterruptionToken ||
+            originalSpeechToken != activeSpeechToken ||
+            originalQueueToken != speechQueueToken ||
+            !normalSpeechActive)
+        {
+            if (interruptionToken == speechInterruptionToken)
+            {
+                CancelQueuedSpeech();
+            }
+
+            yield break;
+        }
+
+        voicePlayback?.StopOverlappingLines();
+
+        if (showSubtitleOverlay)
+        {
+            subtitleService.HideCurrent();
+        }
+
+        speakingIndicator?.HideForSpeechToken(indicatorToken);
+        speechInterruptionActive = false;
+        interruptionSkipRequested = false;
+
+        if (activeShowSubtitleOverlay)
+        {
+            subtitleService.ShowSpeechLine(
+                interruptedSpeech.LineId,
+                interruptedSpeech.SpeakerDisplayName,
+                interruptedSpeech.Text,
+                true,
+                () => RequestSkip(originalSpeechToken));
+        }
+
+        speakingIndicator?.ShowForSpeechLine(
+            originalSpeechToken,
+            interruptedSpeech.LineId,
+            interruptedSpeech.SpeakerDisplayName,
+            interruptedSpeech.Text);
+        voicePlayback?.ResumeCurrentLine();
+        activeSpeechPaused = false;
+    }
+
     private void Update()
     {
         if (normalSpeechActive && Input.GetKeyDown(KeyCode.Escape))
         {
-            RequestSkip(activeSpeechToken);
+            SkipCurrentSpeech();
         }
     }
 
     private void OnDisable()
     {
+        UnregisterRoomChangeHandler();
         ReleaseAllGuestMovementPauses();
     }
 
@@ -337,6 +511,45 @@ public sealed class DialogueSpeechService : MonoBehaviour
         {
             speakingIndicator = SpeakingCharacterIndicator.FindOrCreate();
         }
+
+        ResolveRoomNavigation();
+        RegisterRoomChangeHandler();
+    }
+
+    private void ResolveRoomNavigation()
+    {
+        if (navigationManager == null)
+        {
+            navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+    }
+
+    private void RegisterRoomChangeHandler()
+    {
+        if (navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        navigationManager.OnCurrentRoomChanged.AddListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = true;
+    }
+
+    private void UnregisterRoomChangeHandler()
+    {
+        if (!subscribedToRoomChanges || navigationManager == null)
+        {
+            return;
+        }
+
+        navigationManager.OnCurrentRoomChanged.RemoveListener(HandleCurrentRoomChanged);
+        subscribedToRoomChanges = false;
+    }
+
+    private void HandleCurrentRoomChanged(string roomName)
+    {
+        CancelQueuedSpeech();
     }
 
     private void RequestSkip(int speechToken)
@@ -347,12 +560,29 @@ public sealed class DialogueSpeechService : MonoBehaviour
         }
     }
 
-    private void SetActiveSpeechInfo(string lineId, string speakerId, string speakerDisplayName, string text)
+    private void RequestInterruptionSkip(int interruptionToken)
+    {
+        if (!speechInterruptionActive || interruptionToken != speechInterruptionToken)
+        {
+            return;
+        }
+
+        interruptionSkipRequested = true;
+        voicePlayback?.StopOverlappingLines();
+    }
+
+    private void SetActiveSpeechInfo(
+        string lineId,
+        string speakerId,
+        string speakerDisplayName,
+        string text,
+        bool showSubtitleOverlay)
     {
         activeLineId = string.IsNullOrWhiteSpace(lineId) ? string.Empty : lineId.Trim();
         activeSpeakerId = string.IsNullOrWhiteSpace(speakerId) ? string.Empty : speakerId.Trim();
         activeSpeakerDisplayName = string.IsNullOrWhiteSpace(speakerDisplayName) ? string.Empty : speakerDisplayName.Trim();
         activeText = string.IsNullOrWhiteSpace(text) ? string.Empty : text.Trim();
+        activeShowSubtitleOverlay = showSubtitleOverlay;
     }
 
     private void ClearActiveSpeechInfo()
@@ -361,6 +591,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
         activeSpeakerId = string.Empty;
         activeSpeakerDisplayName = string.Empty;
         activeText = string.Empty;
+        activeShowSubtitleOverlay = false;
     }
 
     private GuestMovementPauseLease TryAcquireGuestMovementPause(string lineId, string speakerId)

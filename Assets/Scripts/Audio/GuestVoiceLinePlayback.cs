@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -13,9 +14,11 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
     [SerializeField] private bool logMissingVoiceLines;
 
     private AudioSource audioSource;
+    private readonly List<AudioSource> overlappingSources = new List<AudioSource>();
     private RoomNavigationManager navigationManager;
     private bool subscribedToRoomChanges;
     private string playbackRoom = string.Empty;
+    private bool currentLinePaused;
 
     public bool IsPlaying => audioSource != null && audioSource.isPlaying;
 
@@ -70,6 +73,7 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
         float sourceBaseVolume = Mathf.Clamp01(baseVolume) * Mathf.Clamp01(lineVolume);
         audioSource.Stop();
         audioSource.clip = clip;
+        currentLinePaused = false;
         audioSource.loop = false;
         audioSource.playOnAwake = false;
         audioSource.spatialBlend = 0f;
@@ -104,7 +108,49 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
             audioSource.clip = null;
         }
 
+        currentLinePaused = false;
+        StopOverlappingLines();
         playbackRoom = string.Empty;
+    }
+
+    public void PauseCurrentLine()
+    {
+        if (audioSource == null || audioSource.clip == null || !audioSource.isPlaying)
+        {
+            return;
+        }
+
+        audioSource.Pause();
+        currentLinePaused = true;
+    }
+
+    public void ResumeCurrentLine()
+    {
+        if (audioSource == null || audioSource.clip == null || !currentLinePaused)
+        {
+            return;
+        }
+
+        audioSource.UnPause();
+        currentLinePaused = false;
+    }
+
+    public void StopOverlappingLines()
+    {
+        for (int i = overlappingSources.Count - 1; i >= 0; i--)
+        {
+            AudioSource source = overlappingSources[i];
+
+            if (source == null)
+            {
+                continue;
+            }
+
+            source.Stop();
+            Destroy(source.gameObject);
+        }
+
+        overlappingSources.Clear();
     }
 
     public static void StopAnyCurrentLine()
@@ -161,6 +207,7 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
             return 0f;
         }
 
+        overlappingSources.RemoveAll(source => source == null);
         GameObject overlapObject = new GameObject($"{PlayerObjectName}_Overlap");
         AudioSource overlapSource = overlapObject.AddComponent<AudioSource>();
         float sourceBaseVolume = Mathf.Clamp01(baseVolume) * Mathf.Clamp01(lineVolume);
@@ -176,6 +223,7 @@ public sealed class GuestVoiceLinePlayback : MonoBehaviour
             return 0f;
         }
 
+        overlappingSources.Add(overlapSource);
         Destroy(overlapObject, clip.length + 0.25f);
         return clip.length;
     }
