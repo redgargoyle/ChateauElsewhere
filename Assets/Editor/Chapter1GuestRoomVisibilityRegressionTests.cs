@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
@@ -28,12 +29,13 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string methodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
+        string groupCompletionBody = ExtractMethodBody(controllerText, "CompleteEntranceGroupDrawingRoomArrival");
 
         Assert.That(methodBody, Does.Contain("SetCurrentRoom(drawingRoomId)"), "Guests should logically move to the Drawing Room.");
         Assert.That(methodBody, Does.Contain("SetAvailableInCurrentChapter(true)"), "Guests in the Drawing Room should remain available in Chapter 1.");
         Assert.That(methodBody, Does.Contain("SetVisibleByChapterState(true)"), "Room visibility, not chapter invisibility, should decide whether Drawing Room guests render.");
         Assert.That(methodBody, Does.Contain("ApplyDrawingRoomWaitingPose(guest)"), "Guests should get their drawing-room waiting pose when they enter.");
-        Assert.That(methodBody, Does.Contain("guest.Seated = true"), "Guests should still be marked as waiting/seated for chapter progression.");
+        Assert.That(groupCompletionBody, Does.Contain("guest.Seated = true"), "Both guests should be marked waiting/seated together before Drawing Room presentation runs.");
         Assert.That(methodBody, Does.Contain("SetInteractable(false)"), "Guests should not become interactive just because they are visible in the Drawing Room.");
     }
 
@@ -117,6 +119,18 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(sceneText, Does.Contain("m_Name: GuestDrawingRoomDoorTarget"), "Gameplay should expose an editable Entrance Hall target for the Drawing Room guest walk path.");
         Assert.That(sceneText, Does.Contain("anchorId: GuestDrawingRoomDoorTarget"), "The editable Drawing Room guest walk target should have a RoomAnchor id.");
         Assert.That(sceneText, Does.Contain("roomId: Grand Entrance Hall"), "The editable Drawing Room guest walk target should belong to the Entrance Hall.");
+        Assert.That(sceneText, Does.Contain("guestGroupCount: 4"), "Chapter 1 should retain four arrival groups.");
+        Assert.That(sceneText, Does.Contain("guestsPerArrivalGroup: 2"), "Every Chapter 1 arrival/departure group must remain a pair.");
+
+        Match targetPositionMatch = Regex.Match(
+            sceneText,
+            @"m_Name: GuestDrawingRoomDoorTarget[\s\S]{0,600}?m_LocalPosition: \{x: (?<x>-?[\d.]+), y: (?<y>-?[\d.]+), z:");
+        Assert.That(targetPositionMatch.Success, Is.True, "The Drawing Room departure target position should remain serialized and testable.");
+        float targetX = float.Parse(targetPositionMatch.Groups["x"].Value, CultureInfo.InvariantCulture);
+        float targetY = float.Parse(targetPositionMatch.Groups["y"].Value, CultureInfo.InvariantCulture);
+        Assert.That(targetX, Is.EqualTo(-704f).Within(0.01f), "The departure route should still end at the left Drawing Room passage.");
+        Assert.That(targetY, Is.EqualTo(-210f).Within(0.01f), "Guest feet should follow the lower floor route instead of crossing the rear wall.");
+        Assert.That(targetY, Is.LessThan(-156.5f), "The route target must stay below the Drawing Room threshold and inside the Entrance Hall walkable floor.");
     }
 
     [Test]
@@ -238,7 +252,6 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string sceneText = File.ReadAllText(GameplayScenePath);
         string admitMethodBody = ExtractDeclaredMethodBody(controllerText, "AdmitGuestToEntranceHall");
         string lookupMethodBody = ExtractDeclaredMethodBody(controllerText, "GetEntranceHallGuestSpot");
-        string resolveMethodBody = ExtractDeclaredMethodBody(controllerText, "ResolveEntranceHallGuestSpots");
 
         Assert.That(controllerText, Does.Contain("private const int EntranceHallGuestSpotCount = 8"), "The authored Entrance Hall formation should have one stable spot per guest.");
         Assert.That(controllerText, Does.Contain("private Transform[] entranceHallGuestSpots"), "The eight physical spots should be serialized and directly editable.");
@@ -246,8 +259,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(admitMethodBody, Does.Not.Contain("CreateRuntimeAnchor"), "Entrance waiting should not recreate calculated runtime targets.");
         Assert.That(lookupMethodBody, Does.Contain("guestState.GuestIndex"), "A guest's stable roster index should select its authored spot.");
         Assert.That(lookupMethodBody, Does.Contain("entranceHallGuestSpots[guestIndex]"), "Each guest should map directly to one serialized anchor.");
-        Assert.That(resolveMethodBody, Does.Contain("EntranceHallGuestSpotCount"), "Anchor resolution should enforce exactly eight spots.");
-        Assert.That(resolveMethodBody, Does.Contain("FindAnchor(anchorId, entryRoomId)"), "Missing serialized references should recover from RoomAnchor ids.");
+        Assert.That(lookupMethodBody, Does.Not.Contain("FindAnchor"), "Entrance waiting must not repair or replace a manually authored spot at runtime.");
+        Assert.That(lookupMethodBody, Does.Not.Contain("FindSceneObjectByExactName"), "Entrance waiting must not substitute a name-based scene object for a manually authored spot.");
+        Assert.That(controllerText, Does.Not.Contain("ResolveEntranceHallGuestSpots"), "Runtime code must not rewrite the serialized entrance spot array.");
+        Assert.That(controllerText, Does.Not.Contain("EntranceHallGuestSpotPrefix"), "Runtime code must not retain a name-based entrance spot repair path.");
 
         string[] legacyNames =
         {
@@ -268,7 +283,31 @@ public class Chapter1GuestRoomVisibilityRegressionTests
 
         MatchCollection sceneSpotNames = Regex.Matches(sceneText, @"m_Name: EntranceGuestSpot_(\d{2})");
         Assert.That(sceneSpotNames.Count, Is.EqualTo(8), "Gameplay should contain exactly eight Entrance Hall guest spot objects.");
+        Assert.That(
+            sceneText,
+            Does.Contain(
+                "entranceHallGuestSpots:\n" +
+                "  - {fileID: 3501000031}\n" +
+                "  - {fileID: 3501000034}\n" +
+                "  - {fileID: 3501000037}\n" +
+                "  - {fileID: 3501000040}\n" +
+                "  - {fileID: 3501000043}\n" +
+                "  - {fileID: 3501000046}\n" +
+                "  - {fileID: 3501000049}\n" +
+                "  - {fileID: 3501000052}"),
+            "Guest roster order must keep its direct serialized reference to each hand-authored spot.");
 
+        float[,] expectedPositions =
+        {
+            { 111.4f, -143.7f },
+            { 159.9f, -143.6f },
+            { 80.8f, -194.6f },
+            { 130.6f, -194.6f },
+            { 48.4f, -246.4f },
+            { 101.3f, -245.5f },
+            { 14.2f, -297.4f },
+            { 66.5f, -297.4f }
+        };
         HashSet<string> positions = new HashSet<string>();
 
         for (int i = 1; i <= 8; i++)
@@ -280,8 +319,13 @@ public class Chapter1GuestRoomVisibilityRegressionTests
             Assert.That(spotBlock, Does.Contain($"anchorId: {spotName}"), $"{spotName} should be a physical RoomAnchor.");
             Assert.That(spotBlock, Does.Contain("roomId: Grand Entrance Hall"), $"{spotName} should belong to the Entrance Hall stage.");
             Assert.That(spotBlock, Does.Contain("showSceneGizmo: 1"), $"{spotName} should be visible and draggable in the Scene view.");
+            Assert.That(spotBlock, Does.Contain("m_LocalScale: {x: 1, y: 1, z: 1}"), $"{spotName} must keep its authored scale.");
+            Assert.That(spotBlock, Does.Contain("m_Father: {fileID: 3501000001}"), $"{spotName} must remain under the Entrance Hall Anchors container.");
             Assert.That(position.Success, Is.True, $"{spotName} should have an authored local position.");
             Assert.That(positions.Add(position.Value), Is.True, $"{spotName} should not overlap another waiting spot.");
+            Assert.That(float.Parse(position.Groups[1].Value, CultureInfo.InvariantCulture), Is.EqualTo(expectedPositions[i - 1, 0]).Within(0.001f), $"{spotName} x must remain at Hamza's recovered hand-authored value.");
+            Assert.That(float.Parse(position.Groups[2].Value, CultureInfo.InvariantCulture), Is.EqualTo(expectedPositions[i - 1, 1]).Within(0.001f), $"{spotName} y must remain at Hamza's recovered hand-authored value.");
+            Assert.That(float.Parse(position.Groups[3].Value, CultureInfo.InvariantCulture), Is.EqualTo(-7691.114f).Within(0.001f), $"{spotName} z must remain on the Entrance Hall anchor plane.");
         }
 
         Assert.That(sceneText, Does.Not.Contain("m_Name: EntranceHallGuestAnchor"), "The old single formation anchor should be removed from Gameplay.");
@@ -503,6 +547,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string completeMethodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
+        string groupCompletionBody = ExtractMethodBody(controllerText, "CompleteEntranceGroupDrawingRoomArrival");
         string skipStageMethodBody = ExtractMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
         string poseMethodBody = ExtractMethodBody(controllerText, "ApplyDrawingRoomWaitingPose");
         string standingRuleBody = ExtractMethodBody(controllerText, "ShouldUseStandingDrawingRoomPose");
@@ -513,7 +558,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(standingRuleBody, Does.Contain("guest.GuestIndex == 2"), "Guest 3 should stand in the Drawing Room.");
         Assert.That(standingRuleBody, Does.Contain("guest.GuestIndex == 4"), "Guest 5 should stand in the Drawing Room.");
         Assert.That(standingRuleBody, Does.Contain("guest.GuestIndex == 6"), "Guest 7 should stand in the Drawing Room.");
-        Assert.That(completeMethodBody, Does.Contain("guest.Seated = true"), "Visual standing should not break normal Chapter 1 progression.");
+        Assert.That(groupCompletionBody, Does.Contain("guest.Seated = true"), "Atomic pair completion should still mark normal Chapter 1 guests as waiting/seated.");
         Assert.That(skipStageMethodBody, Does.Contain("guest.Seated = true"), "Visual standing should not break Chapter 2 skip progression.");
     }
 

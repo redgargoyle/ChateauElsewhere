@@ -1455,6 +1455,7 @@ public class NavigationRegressionTests
         string triggerText = File.ReadAllText(DoorTriggerNavigationPath);
         string cameraManagerText = File.ReadAllText(CameraManagerPath);
         string editorToolsText = File.ReadAllText(NavigationEditorToolsPath);
+        string selectedRoomMethodBody = ExtractMethodBody(editorToolsText, "public static RoomContentGroup FindSelectedRoomContentGroup");
         string gameplaySceneText = File.ReadAllText(GameplayScenePath);
         string mainMenuSceneText = File.ReadAllText(MainMenuScenePath);
 
@@ -1466,6 +1467,7 @@ public class NavigationRegressionTests
         Assert.That(triggerText, Does.Contain("InferSourceRoomFromHierarchy(transform)"), "Door source rooms should come from the Room_* hierarchy by default.");
         Assert.That(cameraManagerText, Does.Contain("AttachBackgroundToRoomStage"), "CameraManager should put the background under the same room stage as the hitboxes.");
         Assert.That(editorToolsText, Does.Match(@"RoomAnchor selectedRoomAnchor[\s\S]*FindRoomContentGroupForRoom\(selectedRoomAnchor\.RoomId\)"), "Selecting Ch2_Hide_* RoomAnchor objects should preview their authored room for placement.");
+        Assert.That(selectedRoomMethodBody, Does.Match(@"selectedRoomAnchor != null[\s\S]*!IsChapter2HideAnchor\(selectedRoomAnchor\)[\s\S]*return null;[\s\S]*FindRoomContentGroupForRoom"), "Selecting an ordinary authored RoomAnchor must not auto-fit or rewrite its parent room stage; only the explicit Ch2_Hide placement workflow may do that.");
         Assert.That(editorToolsText, Does.Contain("ShouldForcePreviewSelectedRoom"), "Selecting a Room_* object should switch the edit preview to that room even if generic auto-preview is off.");
         Assert.That(editorToolsText, Does.Match(@"GetComponent<RoomContentGroup>\(\) != null[\s\S]*IsSelectedChapter2HideAnchor\(\)"), "Explicit room selections and Ch2_Hide_* anchors should force room preview.");
         Assert.That(editorToolsText, Does.Contain("IsSelectedChapter2HideAnchor"), "Chapter 2 hide-anchor placement should not depend on the generic room auto-preview preference.");

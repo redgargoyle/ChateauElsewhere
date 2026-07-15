@@ -18,12 +18,18 @@ public class NPCWaypointMover : MonoBehaviour
     private Coroutine moveRoutine;
     private bool isMoving;
     private int speechPauseCount;
+    private NPCWaypointMover movementPausePartner;
+    private Transform activeTarget;
+    private bool reachedActiveTarget;
+    private bool movementPauseApplied;
     private bool restoreAmbientWalkerAfterSpeechPause;
     private CharacterAnimatorDriver.ParameterCache animatorParameters;
     private CharacterWalkDirection walkDirection = CharacterWalkDirection.Down;
 
     public bool IsMoving => isMoving;
     public bool IsSpeechPaused => speechPauseCount > 0;
+    public bool IsMovementPaused => IsSpeechPaused ||
+        (movementPausePartner != null && movementPausePartner.IsSpeechPaused);
     public bool AlignVisibleFeetToWaypoints
     {
         get => alignVisibleFeetToWaypoints;
@@ -56,12 +62,16 @@ public class NPCWaypointMover : MonoBehaviour
 
         if (!isActiveAndEnabled)
         {
+            activeTarget = target;
+            reachedActiveTarget = false;
+
             if (!TryPlaceProjectedAtTarget(target))
             {
                 ReleaseRoomStageBindingForTransformMotion();
                 transform.position = GetTargetPosition(target);
             }
 
+            reachedActiveTarget = true;
             return null;
         }
 
@@ -84,6 +94,8 @@ public class NPCWaypointMover : MonoBehaviour
         }
 
         ResolveReferences();
+        activeTarget = target;
+        reachedActiveTarget = false;
 
         if (ambientWalker != null)
         {
@@ -108,9 +120,8 @@ public class NPCWaypointMover : MonoBehaviour
                 break;
             }
 
-            if (IsSpeechPaused)
+            if (TryApplyMovementPause())
             {
-                ApplySpeechPauseIdle();
                 yield return null;
                 continue;
             }
@@ -133,6 +144,7 @@ public class NPCWaypointMover : MonoBehaviour
         UpdateAnimator(Vector2.zero, false);
         isMoving = false;
         moveRoutine = null;
+        reachedActiveTarget = target != null;
     }
 
     private IEnumerator MoveProjectedToRoutine(Vector2 targetFootPoint)
@@ -142,9 +154,8 @@ public class NPCWaypointMover : MonoBehaviour
         while (roomProjection != null &&
             Vector2.Distance(roomProjection.RoomLocalFootPoint, targetFootPoint) > stopDistance)
         {
-            if (IsSpeechPaused)
+            if (TryApplyMovementPause())
             {
-                ApplySpeechPauseIdle();
                 yield return null;
                 continue;
             }
@@ -167,10 +178,13 @@ public class NPCWaypointMover : MonoBehaviour
         UpdateAnimator(Vector2.zero, false);
         isMoving = false;
         moveRoutine = null;
+        reachedActiveTarget = roomProjection != null;
     }
 
     public void StopMoving()
     {
+        bool interruptedMove = isMoving;
+
         if (moveRoutine != null)
         {
             StopCoroutine(moveRoutine);
@@ -178,7 +192,43 @@ public class NPCWaypointMover : MonoBehaviour
         }
 
         isMoving = false;
+        movementPauseApplied = false;
+
+        if (interruptedMove)
+        {
+            reachedActiveTarget = false;
+        }
+
         UpdateAnimator(Vector2.zero, false);
+    }
+
+    public bool HasReachedTarget(Transform target)
+    {
+        return target != null &&
+            activeTarget == target &&
+            reachedActiveTarget &&
+            !isMoving;
+    }
+
+    public void SetMovementPausePartner(NPCWaypointMover partner)
+    {
+        movementPausePartner = partner != this ? partner : null;
+
+        if (IsMovementPaused)
+        {
+            ApplyMovementPauseIdle();
+        }
+    }
+
+    public void ClearMovementPausePartner(NPCWaypointMover expectedPartner = null)
+    {
+        if (expectedPartner != null && movementPausePartner != expectedPartner)
+        {
+            return;
+        }
+
+        movementPausePartner = null;
+        ResumeMovementAfterPauseIfReady();
     }
 
     public void AcquireSpeechPause()
@@ -198,7 +248,7 @@ public class NPCWaypointMover : MonoBehaviour
             ambientWalker.enabled = false;
         }
 
-        ApplySpeechPauseIdle();
+        ApplyMovementPauseIdle();
     }
 
     public void ReleaseSpeechPause()
@@ -223,10 +273,7 @@ public class NPCWaypointMover : MonoBehaviour
             ambientWalker.enabled = true;
         }
 
-        if (isMoving)
-        {
-            footstepAudio?.PlayWalking();
-        }
+        ResumeMovementAfterPauseIfReady();
     }
 
     public void SetAmbientWalkerEnabled(bool value)
@@ -304,10 +351,38 @@ public class NPCWaypointMover : MonoBehaviour
         animatorParameters = CharacterAnimatorDriver.ParameterCache.FromAnimator(animator);
     }
 
-    private void ApplySpeechPauseIdle()
+    private bool TryApplyMovementPause()
     {
+        if (!IsMovementPaused)
+        {
+            ResumeMovementAfterPauseIfReady();
+            return false;
+        }
+
+        ApplyMovementPauseIdle();
+        return true;
+    }
+
+    private void ApplyMovementPauseIdle()
+    {
+        movementPauseApplied = true;
         footstepAudio?.StopWalking();
         UpdateAnimator(Vector2.zero, false);
+    }
+
+    private void ResumeMovementAfterPauseIfReady()
+    {
+        if (!movementPauseApplied || IsMovementPaused)
+        {
+            return;
+        }
+
+        movementPauseApplied = false;
+
+        if (isMoving)
+        {
+            footstepAudio?.PlayWalking();
+        }
     }
 
     private bool TryPlaceProjectedAtTarget(Transform target)

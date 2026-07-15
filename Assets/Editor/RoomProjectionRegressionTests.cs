@@ -115,6 +115,9 @@ public class RoomProjectionRegressionTests
     public void PlayModeLayoutCaptureCanPersistRuntimeAnchorTuning()
     {
         string captureWindowText = File.ReadAllText(PlayModeLayoutCaptureWindowPath);
+        string captureItemBody = ExtractMethodBody(captureWindowText, "private static bool TryCreateCaptureItem");
+        string applyCaptureBody = ExtractMethodBody(captureWindowText, "private static bool ApplyPendingCapture");
+        string applyCaptureItemBody = ExtractMethodBody(captureWindowText, "private static void ApplyCaptureItem");
 
         Assert.That(captureWindowText, Does.Contain("PlayModeStateChange.EnteredEditMode"), "Captured play-mode edits should be reapplied after Unity returns to edit mode.");
         Assert.That(captureWindowText, Does.Contain("SessionState.SetString"), "Captured transform data should survive the play/edit transition within the editor session.");
@@ -124,6 +127,11 @@ public class RoomProjectionRegressionTests
         Assert.That(captureWindowText, Does.Contain("Apply + Save Scenes"), "Artists should have a one-click path to apply captured data and save the edited scene.");
         Assert.That(captureWindowText, Does.Contain("Application.isPlaying"), "The apply action should not try to write edit-time scene data while Unity is still in Play Mode.");
         Assert.That(captureWindowText, Does.Contain("Stop Play Mode And Apply"), "The tool should make the play-to-edit apply handoff explicit.");
+        Assert.That(captureWindowText, Does.Contain("ProtectedEntranceGuestSpotPrefix = \"EntranceGuestSpot_\""), "The eight hand-authored entrance wait spots should be explicitly protected from layout capture.");
+        Assert.That(captureItemBody, Does.Contain("IsProtectedEntranceGuestSpot(target)"), "New captures must exclude protected entrance wait spots.");
+        Assert.That(applyCaptureBody, Does.Contain("IsProtectedEntranceGuestSpot(item)"), "Old pending captures must not be able to resolve and overwrite protected entrance wait spots.");
+        Assert.That(applyCaptureBody, Does.Contain("IsProtectedEntranceGuestSpot(target)"), "The resolved transform must be checked again before any Undo or transform write occurs.");
+        Assert.That(applyCaptureItemBody, Does.Match(@"IsProtectedEntranceGuestSpot\(target\)[\s\S]*return;[\s\S]*target\.localPosition ="), "The transform writer itself must reject a protected entrance wait spot before its first position assignment.");
     }
 
     [Test]
