@@ -1,6 +1,10 @@
+using System;
 using System.IO;
 using NUnit.Framework;
+using TMPro;
 using UnityEditor;
+using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class SubtitlePresentationRegressionTests
 {
@@ -130,5 +134,116 @@ public sealed class SubtitlePresentationRegressionTests
         Assert.That(serviceText, Does.Contain("TextAlignmentOptions.Left"), "Dialogue text should be left-aligned beside the portrait for faster scanning.");
         Assert.That(serviceText, Does.Contain("skipButton"), "The skippable speech affordance should survive the visual redesign.");
         Assert.That(serviceText, Does.Contain("ConfigureSkipButton"), "Existing skip behavior should remain wired through the subtitle service.");
+    }
+
+    [Test]
+    public void SharedConversationUsesCanonicalCardAndSeparateChoiceRail()
+    {
+        GameObject serviceObject = new GameObject("Test_SubtitleService", typeof(SubtitleService));
+
+        try
+        {
+            SubtitleService service = serviceObject.GetComponent<SubtitleService>();
+            service.ShowConversationLine("", "Butler", "Choose how to address the guests.");
+            service.SetConversationChoices(
+                "Ask supper preference", () => { },
+                "Ask drink preference", () => { },
+                "Ask smoke preference", () => { });
+            service.SetConversationSkipAction(() => { });
+            Canvas.ForceUpdateCanvases();
+
+            RectTransform panel = GameObject.Find("Panel_Subtitle").GetComponent<RectTransform>();
+            RectTransform rail = GameObject.Find("Rect_SubtitleChoices").GetComponent<RectTransform>();
+            RectTransform line = GameObject.Find("Text_SubtitleLine").GetComponent<RectTransform>();
+            RectTransform skip = GameObject.Find("Button_SubtitleSkip").GetComponent<RectTransform>();
+
+            AssertVector2(panel.anchoredPosition, new Vector2(32f, -150f));
+            AssertVector2(panel.sizeDelta, new Vector2(780f, 225f));
+            AssertVector2(rail.anchoredPosition, new Vector2(32f, -387f));
+            AssertVector2(rail.sizeDelta, new Vector2(780f, 48f));
+            Assert.That(RectTransformOverlaps(line, skip), Is.False);
+            Assert.That(GameObject.Find("Button_SubtitleChoice1").activeSelf, Is.True);
+            Assert.That(GameObject.Find("Button_SubtitleChoice2").activeSelf, Is.True);
+            Assert.That(GameObject.Find("Button_SubtitleChoice3").activeSelf, Is.True);
+        }
+        finally
+        {
+            DestroyDialogueTestObjects(serviceObject);
+        }
+    }
+
+    [Test]
+    public void SharedConversationCleanupRemovesCallbacksAndVisibility()
+    {
+        GameObject serviceObject = new GameObject("Test_SubtitleService", typeof(SubtitleService));
+
+        try
+        {
+            int choiceInvocations = 0;
+            int skipInvocations = 0;
+            SubtitleService service = serviceObject.GetComponent<SubtitleService>();
+            service.ShowConversationLine("", "Butler", "Choose.");
+            service.SetConversationChoices("Continue", () => choiceInvocations++);
+            service.SetConversationSkipAction(() => skipInvocations++);
+
+            Button choice = GameObject.Find("Button_SubtitleChoice1").GetComponent<Button>();
+            Button skip = GameObject.Find("Button_SubtitleSkip").GetComponent<Button>();
+            GameObject panel = GameObject.Find("Panel_Subtitle");
+            GameObject rail = GameObject.Find("Rect_SubtitleChoices");
+            choice.onClick.Invoke();
+            skip.onClick.Invoke();
+            Assert.That(choiceInvocations, Is.EqualTo(1));
+            Assert.That(skipInvocations, Is.EqualTo(1));
+
+            service.ClearConversation();
+            choice.onClick.Invoke();
+            skip.onClick.Invoke();
+
+            Assert.That(choiceInvocations, Is.EqualTo(1));
+            Assert.That(skipInvocations, Is.EqualTo(1));
+            Assert.That(panel.activeSelf, Is.False);
+            Assert.That(rail.activeSelf, Is.False);
+        }
+        finally
+        {
+            DestroyDialogueTestObjects(serviceObject);
+        }
+    }
+
+    private static void AssertVector2(Vector2 actual, Vector2 expected)
+    {
+        Assert.That(actual.x, Is.EqualTo(expected.x).Within(0.01f));
+        Assert.That(actual.y, Is.EqualTo(expected.y).Within(0.01f));
+    }
+
+    private static bool RectTransformOverlaps(RectTransform first, RectTransform second)
+    {
+        Vector3[] firstCorners = new Vector3[4];
+        Vector3[] secondCorners = new Vector3[4];
+        first.GetWorldCorners(firstCorners);
+        second.GetWorldCorners(secondCorners);
+        Rect firstRect = Rect.MinMaxRect(firstCorners[0].x, firstCorners[0].y, firstCorners[2].x, firstCorners[2].y);
+        Rect secondRect = Rect.MinMaxRect(secondCorners[0].x, secondCorners[0].y, secondCorners[2].x, secondCorners[2].y);
+        return firstRect.Overlaps(secondRect);
+    }
+
+    private static void DestroyDialogueTestObjects(GameObject serviceObject)
+    {
+        if (serviceObject != null)
+        {
+            UnityEngine.Object.DestroyImmediate(serviceObject);
+        }
+
+        GameObject canvas = GameObject.Find("Canvas_Subtitles");
+        if (canvas != null)
+        {
+            UnityEngine.Object.DestroyImmediate(canvas);
+        }
+
+        GameObject eventSystem = GameObject.Find("EventSystem");
+        if (eventSystem != null)
+        {
+            UnityEngine.Object.DestroyImmediate(eventSystem);
+        }
     }
 }

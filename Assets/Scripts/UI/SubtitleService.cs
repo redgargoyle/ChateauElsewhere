@@ -21,8 +21,12 @@ public sealed class SubtitleService : MonoBehaviour
     private const string LineTextName = "Text_SubtitleLine";
     private const string SkipButtonName = "Button_SubtitleSkip";
     private const string SkipButtonLabelName = "Text_SubtitleSkip";
+    private const string ConversationChoiceRailName = "Rect_SubtitleChoices";
+    private const string ConversationChoiceButtonNamePrefix = "Button_SubtitleChoice";
+    private const string ConversationChoiceLabelName = "Text_SubtitleChoice";
     private const string DefaultLineBankResourcePath = "UI/SubtitleLineBank";
     private const float CharactersPerSecond = 24f;
+    private const int ConversationChoiceCount = 3;
 
     private struct QueuedSubtitle
     {
@@ -48,11 +52,16 @@ public sealed class SubtitleService : MonoBehaviour
     private TMP_Text lineText;
     private Button skipButton;
     private TMP_Text skipButtonLabel;
+    private RectTransform conversationChoiceRail;
+    private readonly Button[] conversationChoiceButtons = new Button[ConversationChoiceCount];
+    private readonly TMP_Text[] conversationChoiceLabels = new TMP_Text[ConversationChoiceCount];
+    private readonly Action[] conversationChoiceCallbacks = new Action[ConversationChoiceCount];
     private Action skipCallback;
     private Coroutine autoHideRoutine;
     private bool showingPersistentLine;
     private bool skipCurrentLineRequested;
     private bool subscribedToRoomChanges;
+    private bool conversationChoicesInteractable = true;
 
     public static SubtitleService FindOrCreate()
     {
@@ -173,6 +182,61 @@ public sealed class SubtitleService : MonoBehaviour
         ConfigureSkipButton(showSkipButton, onSkip);
     }
 
+    public void ShowConversationLine(string lineId, string speaker, string text)
+    {
+        ResolveReferences();
+        queuedSubtitles.Clear();
+        showingPersistentLine = true;
+
+        if (autoHideRoutine != null)
+        {
+            StopCoroutine(autoHideRoutine);
+            autoHideRoutine = null;
+        }
+
+        ShowNow(lineId, ResolveSpeakerId(lineId, speaker), speaker, text ?? string.Empty);
+    }
+
+    public void SetConversationChoices(
+        string firstLabel,
+        Action firstCallback,
+        string secondLabel = null,
+        Action secondCallback = null,
+        string thirdLabel = null,
+        Action thirdCallback = null)
+    {
+        ResolveReferences();
+        SetConversationChoice(0, firstLabel, firstCallback);
+        SetConversationChoice(1, secondLabel, secondCallback);
+        SetConversationChoice(2, thirdLabel, thirdCallback);
+        LayoutConversationChoices();
+    }
+
+    public void SetConversationChoicesInteractable(bool interactable)
+    {
+        conversationChoicesInteractable = interactable;
+
+        for (int i = 0; i < conversationChoiceButtons.Length; i++)
+        {
+            Button button = conversationChoiceButtons[i];
+            if (button != null && button.gameObject.activeSelf)
+            {
+                button.interactable = interactable && conversationChoiceCallbacks[i] != null;
+            }
+        }
+    }
+
+    public void SetConversationSkipAction(Action callback)
+    {
+        ConfigureSkipButton(callback != null, callback);
+    }
+
+    public void ClearConversation()
+    {
+        ClearConversationChoices();
+        HideCurrent();
+    }
+
     public void HideCurrent()
     {
         showingPersistentLine = false;
@@ -191,6 +255,8 @@ public sealed class SubtitleService : MonoBehaviour
     {
         queuedSubtitles.Clear();
         skipCurrentLineRequested = false;
+        ClearConversationChoices();
+        ConfigureSkipButton(false, null);
         HideCurrent();
         SpeakingCharacterIndicator.HideAnyCurrent();
         voicePlayback?.StopCurrentLine();
@@ -222,6 +288,8 @@ public sealed class SubtitleService : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearConversationChoices();
+        ConfigureSkipButton(false, null);
         UnregisterRoomChangeHandler();
     }
 
@@ -232,7 +300,8 @@ public sealed class SubtitleService : MonoBehaviour
             speakerPortraitImage != null &&
             speakerText != null &&
             lineText != null &&
-            skipButton != null)
+            skipButton != null &&
+            ConversationChoiceReferencesReady())
         {
             return;
         }
@@ -349,6 +418,8 @@ public sealed class SubtitleService : MonoBehaviour
             FontStyles.Bold,
             TextAlignmentOptions.Left);
         speakerText.color = new Color(1f, 0.9f, 0.68f, 1f);
+        speakerText.textWrappingMode = TextWrappingModes.NoWrap;
+        speakerText.overflowMode = TextOverflowModes.Ellipsis;
 
         lineText = FindOrCreateText(
             panelObject.transform,
@@ -362,9 +433,96 @@ public sealed class SubtitleService : MonoBehaviour
             FontStyles.Normal,
             TextAlignmentOptions.TopLeft);
         lineText.color = new Color(0.96f, 0.9f, 0.78f, 1f);
+        lineText.enableAutoSizing = true;
+        lineText.fontSizeMin = 18f;
+        lineText.fontSizeMax = 25f;
+        lineText.textWrappingMode = TextWrappingModes.Normal;
 
         skipButton = FindOrCreateSkipButton(panelObject.transform);
+        EnsureConversationChoiceRail(canvas.transform);
+        ClearConversationChoices();
         SetVisible(false);
+    }
+
+    private bool ConversationChoiceReferencesReady()
+    {
+        if (conversationChoiceRail == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < conversationChoiceButtons.Length; i++)
+        {
+            if (conversationChoiceButtons[i] == null || conversationChoiceLabels[i] == null)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void EnsureConversationChoiceRail(Transform canvasTransform)
+    {
+        Transform existingRail = canvasTransform.Find(ConversationChoiceRailName);
+        GameObject railObject = existingRail != null ? existingRail.gameObject : null;
+
+        if (railObject == null)
+        {
+            railObject = new GameObject(ConversationChoiceRailName, typeof(RectTransform));
+            railObject.transform.SetParent(canvasTransform, false);
+        }
+
+        conversationChoiceRail = railObject.GetComponent<RectTransform>();
+        conversationChoiceRail.anchorMin = new Vector2(0f, 1f);
+        conversationChoiceRail.anchorMax = new Vector2(0f, 1f);
+        conversationChoiceRail.pivot = new Vector2(0f, 1f);
+        conversationChoiceRail.anchoredPosition = new Vector2(32f, -387f);
+        conversationChoiceRail.sizeDelta = new Vector2(780f, 48f);
+
+        for (int i = 0; i < conversationChoiceButtons.Length; i++)
+        {
+            conversationChoiceButtons[i] = FindOrCreateConversationChoiceButton(conversationChoiceRail, i);
+        }
+    }
+
+    private Button FindOrCreateConversationChoiceButton(Transform parent, int index)
+    {
+        string objectName = $"{ConversationChoiceButtonNamePrefix}{index + 1}";
+        Transform existing = parent.Find(objectName);
+        GameObject buttonObject = existing != null ? existing.gameObject : null;
+
+        if (buttonObject == null)
+        {
+            buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(parent, false);
+        }
+
+        Image image = buttonObject.GetComponent<Image>();
+        image.color = new Color(0.18f, 0.105f, 0.075f, 0.96f);
+        image.raycastTarget = true;
+        ApplyOutline(buttonObject, new Color(0.9f, 0.64f, 0.24f, 0.95f), new Vector2(1.5f, -1.5f));
+
+        Button button = buttonObject.GetComponent<Button>();
+        button.transition = Selectable.Transition.ColorTint;
+
+        TMP_Text label = FindOrCreateText(
+            buttonObject.transform,
+            ConversationChoiceLabelName,
+            Vector2.zero,
+            Vector2.one,
+            new Vector2(0.5f, 0.5f),
+            Vector2.zero,
+            new Vector2(-16f, -8f),
+            18f,
+            FontStyles.Bold);
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 13f;
+        label.fontSizeMax = 18f;
+        label.textWrappingMode = TextWrappingModes.Normal;
+        label.overflowMode = TextOverflowModes.Ellipsis;
+        conversationChoiceLabels[index] = label;
+        return button;
     }
 
     private Canvas FindSubtitleCanvas()
@@ -625,6 +783,8 @@ public sealed class SubtitleService : MonoBehaviour
         queuedSubtitles.Clear();
         skipCurrentLineRequested = false;
         showingPersistentLine = false;
+        ClearConversationChoices();
+        ConfigureSkipButton(false, null);
 
         if (autoHideRoutine != null)
         {
@@ -719,6 +879,95 @@ public sealed class SubtitleService : MonoBehaviour
     private void HandleSkipButtonClicked()
     {
         skipCallback?.Invoke();
+    }
+
+    private void SetConversationChoice(int index, string label, Action callback)
+    {
+        Button button = conversationChoiceButtons[index];
+        TMP_Text choiceLabel = conversationChoiceLabels[index];
+        bool visible = !string.IsNullOrWhiteSpace(label);
+
+        conversationChoiceCallbacks[index] = visible ? callback : null;
+        button.onClick.RemoveAllListeners();
+
+        if (visible && callback != null)
+        {
+            int choiceIndex = index;
+            button.onClick.AddListener(() => conversationChoiceCallbacks[choiceIndex]?.Invoke());
+        }
+
+        choiceLabel.text = visible ? label.Trim() : string.Empty;
+        button.interactable = visible && conversationChoicesInteractable && callback != null;
+        button.gameObject.SetActive(visible);
+    }
+
+    private void LayoutConversationChoices()
+    {
+        int activeCount = 0;
+        for (int i = 0; i < conversationChoiceButtons.Length; i++)
+        {
+            if (conversationChoiceButtons[i] != null && conversationChoiceButtons[i].gameObject.activeSelf)
+            {
+                activeCount++;
+            }
+        }
+
+        conversationChoiceRail.gameObject.SetActive(activeCount > 0);
+        if (activeCount == 0)
+        {
+            return;
+        }
+
+        const float gap = 12f;
+        float width = (780f - (gap * (activeCount - 1))) / activeCount;
+        int visibleIndex = 0;
+
+        for (int i = 0; i < conversationChoiceButtons.Length; i++)
+        {
+            Button button = conversationChoiceButtons[i];
+            if (button == null || !button.gameObject.activeSelf)
+            {
+                continue;
+            }
+
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.anchoredPosition = new Vector2(visibleIndex * (width + gap), 0f);
+            rect.sizeDelta = new Vector2(width, 0f);
+            visibleIndex++;
+        }
+    }
+
+    private void ClearConversationChoices()
+    {
+        for (int i = 0; i < conversationChoiceButtons.Length; i++)
+        {
+            conversationChoiceCallbacks[i] = null;
+            Button button = conversationChoiceButtons[i];
+
+            if (button == null)
+            {
+                continue;
+            }
+
+            button.onClick.RemoveAllListeners();
+            button.interactable = false;
+            button.gameObject.SetActive(false);
+
+            if (conversationChoiceLabels[i] != null)
+            {
+                conversationChoiceLabels[i].text = string.Empty;
+            }
+        }
+
+        conversationChoicesInteractable = true;
+
+        if (conversationChoiceRail != null)
+        {
+            conversationChoiceRail.gameObject.SetActive(false);
+        }
     }
 
     private Button FindOrCreateSkipButton(Transform parent)
