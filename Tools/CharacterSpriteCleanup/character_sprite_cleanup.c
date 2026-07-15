@@ -18,6 +18,7 @@ typedef struct {
 
 typedef enum {
     HOLE_CUT_ALPHA,
+    HOLE_CUT_ALPHA_ALL,
     HOLE_INPAINT_DARK
 } HoleMode;
 
@@ -257,7 +258,6 @@ static size_t clean_boundary(
         Rgb reference;
         double reference_luma;
         double excess;
-        double strength;
         int suspicious;
 
         if (alpha <= 8 || distance[index] < 1 || distance[index] > 2) {
@@ -276,25 +276,44 @@ static size_t clean_boundary(
 
         reference_luma = ((double)reference.r + reference.g + reference.b) / 3.0;
         excess = source_luma - reference_luma;
-        suspicious =
-            (alpha < 240 && excess >= 24.0 && source_luma >= 135.0)
-            || (alpha >= 240 && excess >= 42.0 && source_luma >= 155.0
-                && (int)maximum - minimum <= 52)
-            || (minimum >= 238 && excess >= 24.0);
-        if (!suspicious) {
+
+        /*
+         * The source sprites were cut from artwork composited over white.  Their
+         * antialiased edge RGB therefore still contains that white matte even
+         * though the alpha channel was later restored.  Reverse the white
+         * composite for translucent boundary pixels.  This keeps alpha and the
+         * silhouette unchanged, and naturally leaves a genuinely white shirt or
+         * cuff white.
+         */
+        if (alpha < 240) {
+            int channel;
+
+            for (channel = 0; channel < 3; ++channel) {
+                const int unmatted = 255
+                    - ((255 - (int)pixel[channel]) * 255 + alpha / 2) / alpha;
+                target[channel] = (uint8_t)(unmatted < 0 ? 0 : unmatted);
+            }
+            if (memcmp(pixel, target, 3) != 0) {
+                ++changed;
+            }
             continue;
         }
 
-        strength = (excess - 15.0) / 90.0;
-        if (strength < 0.65) {
-            strength = 0.65;
+        /*
+         * A small number of matte flecks are fully opaque.  Recolour only
+         * neutral, boundary-adjacent pixels that are materially brighter than
+         * their inward neighbours.  Intentional white details remain protected
+         * because their inward reference is also light.
+         */
+        suspicious = excess >= 24.0
+            && source_luma >= 105.0
+            && (int)maximum - minimum <= 52;
+        if (!suspicious) {
+            continue;
         }
-        if (strength > 1.0) {
-            strength = 1.0;
-        }
-        target[0] = (uint8_t)lround(pixel[0] * (1.0 - strength) + reference.r * strength);
-        target[1] = (uint8_t)lround(pixel[1] * (1.0 - strength) + reference.g * strength);
-        target[2] = (uint8_t)lround(pixel[2] * (1.0 - strength) + reference.b * strength);
+        target[0] = reference.r;
+        target[1] = reference.g;
+        target[2] = reference.b;
         ++changed;
     }
 
@@ -314,6 +333,10 @@ static int pixel_is_seed(const uint8_t *pixel, HoleMode mode)
     if (mode == HOLE_INPAINT_DARK) {
         return pixel[3] >= 240 && minimum >= 225 && (int)maximum - minimum <= 22;
     }
+    if (mode == HOLE_CUT_ALPHA_ALL) {
+        const int luma = ((int)pixel[0] + pixel[1] + pixel[2]) / 3;
+        return pixel[3] > 16 && luma >= 45 && (int)maximum - minimum < 60;
+    }
     return pixel[3] > 51 && minimum > 140 && (int)maximum - minimum < 31;
 }
 
@@ -330,6 +353,9 @@ static int pixel_is_eligible(const uint8_t *pixel, HoleMode mode)
 
     if (mode == HOLE_INPAINT_DARK) {
         return pixel[3] >= 240 && chroma <= 22 && luma >= 95;
+    }
+    if (mode == HOLE_CUT_ALPHA_ALL) {
+        return pixel[3] > 16 && luma >= 45 && chroma < 60;
     }
     return pixel[3] > 51 && minimum > 102 && chroma < 46;
 }
@@ -425,9 +451,39 @@ static int apply_hole_rule(
         for (x = rule->x0; x < rule->x1; ++x) {
             const size_t index = y * width + x;
             const uint8_t *pixel = rgba + index * 4;
+            int seed = 0;
 
             eligible[index] = (uint8_t)pixel_is_eligible(pixel, rule->mode);
-            if (!pixel_is_seed(pixel, rule->mode)) {
+            if (rule->mode == HOLE_CUT_ALPHA_ALL && eligible[index]) {
+                int dy;
+                int dx;
+                const int luma = ((int)pixel[0] + pixel[1] + pixel[2]) / 3;
+
+                /* A bright neutral island inside a reviewed gap may be fully
+                 * enclosed by darker matte remnants.  It is still a valid
+                 * starting point; the flood then follows only neutral pixels. */
+                seed = luma >= 105;
+
+                for (dy = -1; dy <= 1 && !seed; ++dy) {
+                    for (dx = -1; dx <= 1; ++dx) {
+                        const long nx = (long)x + dx;
+                        const long ny = (long)y + dy;
+
+                        if ((dx == 0 && dy == 0)
+                            || nx < 0 || ny < 0
+                            || nx >= (long)width || ny >= (long)height) {
+                            continue;
+                        }
+                        if (rgba[((size_t)ny * width + (size_t)nx) * 4 + 3] <= 8) {
+                            seed = 1;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                seed = pixel_is_seed(pixel, rule->mode);
+            }
+            if (!seed) {
                 continue;
             }
             selected[index] = 1;
@@ -477,7 +533,7 @@ static int apply_hole_rule(
         goto cleanup;
     }
 
-    if (rule->mode == HOLE_CUT_ALPHA) {
+    if (rule->mode == HOLE_CUT_ALPHA || rule->mode == HOLE_CUT_ALPHA_ALL) {
         for (head = 0; head < tail; ++head) {
             uint8_t *pixel = rgba + queue[head] * 4;
             if (pixel[3] != 0) {
@@ -575,6 +631,8 @@ static int load_hole_rules(const char *path, HoleRules *rules)
         rule.y1 = (size_t)strtoul(fields[6], NULL, 10);
         if (strcmp(fields[7], "alpha") == 0) {
             rule.mode = HOLE_CUT_ALPHA;
+        } else if (strcmp(fields[7], "alpha-all") == 0) {
+            rule.mode = HOLE_CUT_ALPHA_ALL;
         } else if (strcmp(fields[7], "inpaint") == 0) {
             rule.mode = HOLE_INPAINT_DARK;
         } else {
