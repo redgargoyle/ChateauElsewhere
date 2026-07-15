@@ -155,6 +155,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
     private const int EntranceHallGuestSpotCount = 8;
+    private const int EntranceDeparturePairSize = 2;
     private const string FrontDoorGuestSpawnAnchorId = "GuestArrival_Door";
     private const string EntranceHallGuestSpotPrefix = "EntranceGuestSpot_";
     private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
@@ -2102,7 +2103,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private bool CanMoveEntranceGroupToDrawingRoom(GuestGroupRuntimeState group)
     {
-        if (group == null || group.Guests.Count == 0)
+        if (group == null || group.Guests.Count != EntranceDeparturePairSize)
         {
             return false;
         }
@@ -2138,18 +2139,40 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         for (int i = 0; i < group.Guests.Count; i++)
         {
-            QueueGuestLine(group.Guests[i], "TO_DRAWING_ROOM", null);
-            StartCoroutine(MoveGuestToDrawingRoom(group.Guests[i], group));
+            yield return SpeakGuestLine(group.Guests[i], "TO_DRAWING_ROOM", null);
         }
 
-        yield return null;
+        if (!CanMoveEntranceGroupToDrawingRoom(group))
+        {
+            group.MovingToDrawingRoom = false;
+            yield break;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            MoveGuestToDrawingRoom(group.Guests[i], group);
+        }
+
+        while (!HasEntranceGroupReachedDrawingRoomExit(group))
+        {
+            if (group.Complete)
+            {
+                yield break;
+            }
+
+            StopFootstepsForGuestsAtDrawingRoomExit(group);
+            yield return null;
+        }
+
+        StopFootstepsForGuestsAtDrawingRoomExit(group);
+        CompleteEntranceGroupDrawingRoomArrival(group);
     }
 
-    private IEnumerator MoveGuestToDrawingRoom(GuestRuntimeState guest, GuestGroupRuntimeState group)
+    private void MoveGuestToDrawingRoom(GuestRuntimeState guest, GuestGroupRuntimeState group)
     {
         if (!CanMoveGuestToDrawingRoom(guest))
         {
-            yield break;
+            return;
         }
 
         guest.MovingToDrawingRoom = true;
@@ -2158,18 +2181,53 @@ public class Chapter1ArrivalController : MonoBehaviour
         SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to drawing room door.", this);
         BeginGuestMoveTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
+    }
 
-        while (guest.Mover != null && guest.Mover.IsMoving)
+    private bool HasEntranceGroupReachedDrawingRoomExit(GuestGroupRuntimeState group)
+    {
+        if (group == null || group.Guests.Count != EntranceDeparturePairSize)
         {
-            if (ShouldFinishDrawingRoomMoveOffscreen(guest))
-            {
-                break;
-            }
-
-            yield return null;
+            return false;
         }
 
-        CompleteGuestDrawingRoomArrival(guest, group);
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            GuestRuntimeState guest = group.Guests[i];
+
+            if (guest == null || !guest.MovingToDrawingRoom)
+            {
+                return false;
+            }
+
+            if (guest.Mover != null &&
+                guest.Mover.IsMoving &&
+                !ShouldFinishDrawingRoomMoveOffscreen(guest))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void StopFootstepsForGuestsAtDrawingRoomExit(GuestGroupRuntimeState group)
+    {
+        if (group == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            GuestRuntimeState guest = group.Guests[i];
+
+            if (guest != null &&
+                guest.MovingToDrawingRoom &&
+                (guest.Mover == null || !guest.Mover.IsMoving))
+            {
+                StopGuestFootsteps(guest);
+            }
+        }
     }
 
     private bool ShouldFinishDrawingRoomMoveOffscreen(GuestRuntimeState guest)
@@ -2189,9 +2247,34 @@ public class Chapter1ArrivalController : MonoBehaviour
             !SameRoom(navigationManager.CurrentRoom, entryRoomId);
     }
 
-    private void CompleteGuestDrawingRoomArrival(GuestRuntimeState guest, GuestGroupRuntimeState group)
+    private void CompleteEntranceGroupDrawingRoomArrival(GuestGroupRuntimeState group)
     {
-        if (guest == null || (guest.Seated && !guest.MovingToDrawingRoom))
+        if (group == null || group.Complete || !HasEntranceGroupReachedDrawingRoomExit(group))
+        {
+            return;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            GuestRuntimeState guest = group.Guests[i];
+            guest.MovingToDrawingRoom = false;
+            guest.Seated = true;
+            guest.Handled = true;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            CompleteGuestDrawingRoomArrival(group.Guests[i]);
+        }
+
+        TryCompleteEntranceGroup(group);
+        RefreshInteractionState();
+        CheckChapterCompletionGate();
+    }
+
+    private void CompleteGuestDrawingRoomArrival(GuestRuntimeState guest)
+    {
+        if (guest == null)
         {
             return;
         }
@@ -2218,16 +2301,9 @@ public class Chapter1ArrivalController : MonoBehaviour
         RefreshGuestScalingNow();
         ApplyDrawingRoomSeatedOcclusion(guest, drawingRoomSpot);
 
-        guest.MovingToDrawingRoom = false;
-        guest.Seated = true;
-        guest.Handled = true;
         SetGuestState(guest, GuestArrivalState.Seated);
         SetGuestState(guest, GuestArrivalState.Handled);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} entered the drawing room and is waiting there.", this);
-
-        TryCompleteEntranceGroup(group);
-        RefreshInteractionState();
-        CheckChapterCompletionGate();
     }
 
     private GuestFootstepAudio ConfigureGuestFootsteps(GameObject guestObject, int guestNumber)
@@ -2382,14 +2458,22 @@ public class Chapter1ArrivalController : MonoBehaviour
                 continue;
             }
 
+            bool completeMovingPair = group.Guests.Count == EntranceDeparturePairSize;
+
             for (int guestIndex = 0; guestIndex < group.Guests.Count; guestIndex++)
             {
                 GuestRuntimeState guest = group.Guests[guestIndex];
 
-                if (guest != null && guest.MovingToDrawingRoom)
+                if (guest == null || !guest.MovingToDrawingRoom)
                 {
-                    CompleteGuestDrawingRoomArrival(guest, group);
+                    completeMovingPair = false;
+                    break;
                 }
+            }
+
+            if (completeMovingPair)
+            {
+                CompleteEntranceGroupDrawingRoomArrival(group);
             }
         }
     }
@@ -3510,6 +3594,27 @@ public class Chapter1ArrivalController : MonoBehaviour
         string lineId = GetChapter1GuestLineId(guestState.GuestIndex, lineKind);
         DialogueSpeechService service = ResolveSpeechService();
         service?.BeginSpeakLine(lineId, guestState.Config.GuestDisplayName, text, false, false);
+    }
+
+    private IEnumerator SpeakGuestLine(GuestRuntimeState guestState, string lineKind, string text)
+    {
+        if (guestState == null || guestState.Config == null)
+        {
+            yield break;
+        }
+
+        string lineId = GetChapter1GuestLineId(guestState.GuestIndex, lineKind);
+        DialogueSpeechService service = ResolveSpeechService();
+
+        if (service != null)
+        {
+            yield return service.SpeakLine(
+                lineId,
+                guestState.Config.GuestDisplayName,
+                text,
+                false,
+                false);
+        }
     }
 
     private void QueueButlerLine(string lineId)

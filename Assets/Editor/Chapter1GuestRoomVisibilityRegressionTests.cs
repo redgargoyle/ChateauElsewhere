@@ -28,12 +28,13 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string methodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
+        string groupCompletionBody = ExtractMethodBody(controllerText, "CompleteEntranceGroupDrawingRoomArrival");
 
         Assert.That(methodBody, Does.Contain("SetCurrentRoom(drawingRoomId)"), "Guests should logically move to the Drawing Room.");
         Assert.That(methodBody, Does.Contain("SetAvailableInCurrentChapter(true)"), "Guests in the Drawing Room should remain available in Chapter 1.");
         Assert.That(methodBody, Does.Contain("SetVisibleByChapterState(true)"), "Room visibility, not chapter invisibility, should decide whether Drawing Room guests render.");
         Assert.That(methodBody, Does.Contain("ApplyDrawingRoomWaitingPose(guest)"), "Guests should get their drawing-room waiting pose when they enter.");
-        Assert.That(methodBody, Does.Contain("guest.Seated = true"), "Guests should still be marked as waiting/seated for chapter progression.");
+        Assert.That(groupCompletionBody, Does.Contain("guest.Seated = true"), "Both guests should be marked waiting/seated together before Drawing Room presentation runs.");
         Assert.That(methodBody, Does.Contain("SetInteractable(false)"), "Guests should not become interactive just because they are visible in the Drawing Room.");
     }
 
@@ -503,6 +504,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string completeMethodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
+        string groupCompletionBody = ExtractMethodBody(controllerText, "CompleteEntranceGroupDrawingRoomArrival");
         string skipStageMethodBody = ExtractMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
         string poseMethodBody = ExtractMethodBody(controllerText, "ApplyDrawingRoomWaitingPose");
         string standingRuleBody = ExtractMethodBody(controllerText, "ShouldUseStandingDrawingRoomPose");
@@ -513,7 +515,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(standingRuleBody, Does.Contain("guest.GuestIndex == 2"), "Guest 3 should stand in the Drawing Room.");
         Assert.That(standingRuleBody, Does.Contain("guest.GuestIndex == 4"), "Guest 5 should stand in the Drawing Room.");
         Assert.That(standingRuleBody, Does.Contain("guest.GuestIndex == 6"), "Guest 7 should stand in the Drawing Room.");
-        Assert.That(completeMethodBody, Does.Contain("guest.Seated = true"), "Visual standing should not break normal Chapter 1 progression.");
+        Assert.That(groupCompletionBody, Does.Contain("guest.Seated = true"), "Atomic pair completion should still mark normal Chapter 1 guests as waiting/seated.");
         Assert.That(skipStageMethodBody, Does.Contain("guest.Seated = true"), "Visual standing should not break Chapter 2 skip progression.");
     }
 

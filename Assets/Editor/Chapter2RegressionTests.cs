@@ -574,6 +574,9 @@ public class Chapter2RegressionTests
         string guestLineIdBody = ExtractMethodBody(chapter1Text, "private static string GetChapter1GuestLineId");
         string checkActiveGroupsBody = ExtractMethodBody(chapter1Text, "private void CheckActiveGroupsReadyForDrawingRoom");
         string moveEntranceGroupBody = ExtractMethodBody(chapter1Text, "private IEnumerator MoveEntranceGroupToDrawingRoom");
+        string moveGuestBody = ExtractMethodBody(chapter1Text, "private void MoveGuestToDrawingRoom");
+        string completeEntranceGroupBody = ExtractMethodBody(chapter1Text, "private void CompleteEntranceGroupDrawingRoomArrival");
+        string completeOffscreenMovesBody = ExtractMethodBody(chapter1Text, "private void CompleteOffscreenDrawingRoomMoves");
         string tryCompleteGroupBody = ExtractMethodBody(chapter1Text, "private void TryCompleteEntranceGroup");
         string fastForwardDoorbellBody = ExtractMethodBody(chapter1Text, "private void TryFastForwardNextDoorbellIfEntranceClear");
         string ambientBody = ExtractMethodBody(chapter1Text, "private void StartAmbientConversation");
@@ -603,9 +606,31 @@ public class Chapter2RegressionTests
         Assert.That(canMoveGuestBody, Does.Contain("guest.CoatStored"), "Guest pairs should not depart before their coats have actually been stored.");
         Assert.That(guestLineIdBody, Does.Contain("CH1_G{guestNumber:00}_ENTRY"), "Entry speech should use generated voice line IDs.");
         Assert.That(guestLineIdBody, Does.Contain("CH1_G{guestNumber:00}_DELAYED"), "Delayed speech should use generated voice line IDs.");
+        Assert.That(chapter1Text, Does.Contain("private const int EntranceDeparturePairSize = 2"), "Entrance departures must remain strict two-guest pairs.");
         Assert.That(checkActiveGroupsBody, Does.Contain("CanMoveEntranceGroupToDrawingRoom(group)"), "Guests should leave the entrance by group after all coats are stored.");
         Assert.That(moveEntranceGroupBody, Does.Contain("yield return SpeakButlerLine(\"SUB_CH01_BUTLER_THIS_WAY_001\")"), "The Butler's Drawing Room line should finish before the pair starts moving.");
-        Assert.That(moveEntranceGroupBody, Does.Contain("QueueGuestLine(group.Guests[i], \"TO_DRAWING_ROOM\", null)"), "Guest Drawing Room lines should be queued as the group departs.");
+        Assert.That(
+            moveEntranceGroupBody,
+            Does.Contain("yield return SpeakGuestLine(group.Guests[i], \"TO_DRAWING_ROOM\", null)"),
+            "Both guests' Drawing Room lines must finish before either guest walks.");
+        Assert.That(moveEntranceGroupBody, Does.Not.Contain("QueueGuestLine(group.Guests[i], \"TO_DRAWING_ROOM\""), "Departure dialogue must not run concurrently with pair movement.");
+        Assert.That(moveEntranceGroupBody, Does.Not.Contain("StartCoroutine(MoveGuestToDrawingRoom"), "Pair movement must be coordinated by one group-owned coroutine.");
+        Assert.That(moveEntranceGroupBody, Does.Contain("MoveGuestToDrawingRoom(group.Guests[i], group)"), "Both pair movers should be armed in one non-yielding loop.");
+        Assert.That(moveEntranceGroupBody, Does.Contain("while (!HasEntranceGroupReachedDrawingRoomExit(group))"), "The faster guest must wait until its partner reaches the exit.");
+        Assert.That(moveEntranceGroupBody, Does.Contain("CompleteEntranceGroupDrawingRoomArrival(group)"), "The full pair should transfer rooms through one atomic finalizer.");
+        int guestDialogueIndex = moveEntranceGroupBody.IndexOf("yield return SpeakGuestLine", System.StringComparison.Ordinal);
+        int beginPairMovementIndex = moveEntranceGroupBody.IndexOf("MoveGuestToDrawingRoom(group.Guests[i], group)", System.StringComparison.Ordinal);
+        int pairBarrierIndex = moveEntranceGroupBody.IndexOf("while (!HasEntranceGroupReachedDrawingRoomExit(group))", System.StringComparison.Ordinal);
+        int pairFinalizerIndex = moveEntranceGroupBody.LastIndexOf("CompleteEntranceGroupDrawingRoomArrival(group)", System.StringComparison.Ordinal);
+        Assert.That(guestDialogueIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(beginPairMovementIndex, Is.GreaterThan(guestDialogueIndex), "Movement must begin only after both sequential guest lines finish.");
+        Assert.That(pairBarrierIndex, Is.GreaterThan(beginPairMovementIndex), "Pair completion must wait behind the shared exit barrier.");
+        Assert.That(pairFinalizerIndex, Is.GreaterThan(pairBarrierIndex), "Room transfer must happen only after both guests reach the exit.");
+        Assert.That(moveGuestBody, Does.Not.Contain("CompleteGuestDrawingRoomArrival"), "An individual mover must never transfer one guest ahead of its partner.");
+        Assert.That(completeEntranceGroupBody, Does.Match(@"guest\.MovingToDrawingRoom = false;[\s\S]*guest\.Seated = true;[\s\S]*guest\.Handled = true;[\s\S]*CompleteGuestDrawingRoomArrival"), "Both logical guest states must flip before any per-guest presentation callback can observe an odd hall count.");
+        Assert.That(completeEntranceGroupBody, Does.Match(@"for \(int i = 0; i < group\.Guests\.Count; i\+\+\)[\s\S]*CompleteGuestDrawingRoomArrival\(group\.Guests\[i\]\)[\s\S]*TryCompleteEntranceGroup\(group\)[\s\S]*RefreshInteractionState\(\)[\s\S]*CheckChapterCompletionGate\(\)"), "Both guest states must change before observers refresh the hall/drawing-room counts.");
+        Assert.That(completeOffscreenMovesBody, Does.Contain("CompleteEntranceGroupDrawingRoomArrival(group)"), "Leaving the room mid-walk must still transfer the whole pair atomically.");
+        Assert.That(completeOffscreenMovesBody, Does.Not.Contain("CompleteGuestDrawingRoomArrival(guest"), "Offscreen completion must never transfer one guest independently.");
         Assert.That(tryCompleteGroupBody, Does.Contain("TryFastForwardNextDoorbellIfEntranceClear()"), "The next doorbell should accelerate once the entrance is clear.");
         Assert.That(fastForwardDoorbellBody, Does.Contain("HandleScheduledDoorbell(nextGroup)"), "Doorbell acceleration should reuse the normal scheduled doorbell path.");
         Assert.That(ambientBody, Does.Contain("ShowGuestSubtitle(guestState, \"AMBIENT\""), "Ambient captions should only come from the existing ambient hook.");
