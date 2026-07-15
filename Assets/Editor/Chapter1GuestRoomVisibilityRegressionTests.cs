@@ -8,8 +8,6 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string Chapter1SceneActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
-    private const string DrawingRoomPrefabPath = "Assets/Prefabs/Room_Drawing_Room.prefab";
-    private const string DrawingRoomPerspectivePrefabPath = "Assets/Prefabs/Room_Drawing_Room_Perspective.prefab";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
 
@@ -358,7 +356,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void SceneGuestsPreserveAuthoredSortingInPlayMode()
+    public void SceneGuestsPreserveAuthoredRendererOffsetsWhenContinuousYSortingStarts()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string playerMovementText = File.ReadAllText(PointClickPlayerMovementPath);
@@ -368,6 +366,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string prepareMethodBody = ExtractMethodBody(controllerText, "PrepareSceneGuestObject");
         string disablePlayerMethodBody = ExtractMethodBody(controllerText, "DisablePlayerOnlyComponents");
         string preserveMethodBody = ExtractMethodBody(controllerText, "ShouldPreserveAuthoredGuestSorting");
+        string ensureSorterBody = ExtractMethodBody(controllerText, "EnsureGuestYSorter");
 
         Assert.That(playerMovementText, Does.Contain("applyPlayerSorting"), "Player movement should have an explicit switch for runtime y-axis sorting.");
         Assert.That(awakeMethodBody, Does.Match(@"CacheReferences\(\);[\s\S]*CaptureAuthoredRendererSortingIfNeeded\(\);[\s\S]*InitializeVisualStateFromTransform\(\);"), "Player movement must capture Edit Mode sorting before its Awake-time y-sort can overwrite it.");
@@ -379,84 +378,61 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(preserveMethodBody, Does.Contain("guestObject.scene.IsValid()"), "Sorting preservation should only apply to real scene objects.");
         Assert.That(preserveMethodBody, Does.Contain("guestObject.scene.isLoaded"), "Sorting preservation should only apply to loaded scene objects.");
         Assert.That(preserveMethodBody, Does.Contain("!runtimeGeneratedGuestObjects.Contains(guestObject)"), "Runtime-generated fallback guests still need generated sorting.");
+        Assert.That(ensureSorterBody, Does.Match(@"authoredOrders\[i\] = authoredRenderers\[i\]\.sortingOrder[\s\S]*AddComponent<WorldYSortSpriteRenderer>[\s\S]*authoredRenderers\[i\]\.sortingOrder = authoredOrders\[i\]"), "Attaching the continuous sorter must preserve authored child-renderer offsets through AddComponent.OnEnable.");
+        Assert.That(ensureSorterBody, Does.Contain("ConfigureForActor(playerMovement, FindCharacterSpriteRenderer"), "Every guest should be configured against the Butler's canonical y-sort source.");
     }
 
     [Test]
-    public void EntranceHallGuestsUseSharedFootDepthSortingAndPivotSortPoints()
+    public void AllChapterGuestsUseOneContinuousSharedFootDepthSorter()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string playerMovementText = File.ReadAllText(PointClickPlayerMovementPath);
-        string prepareMethodBody = ExtractDeclaredMethodBody(controllerText, "PrepareSceneGuestObject");
+        string resetMethodBody = ExtractDeclaredMethodBody(controllerText, "ResetGuestStates");
         string activateMethodBody = ExtractDeclaredMethodBody(controllerText, "ActivateAuthoredChapterGuestObject");
         string forceVisibleMethodBody = ExtractDeclaredMethodBody(controllerText, "ForceGuestVisibleForDoorFlow");
-        string applyMethodBody = ExtractDeclaredMethodBody(controllerText, "ApplyEntranceHallGuestSorting");
-        string footPointMethodBody = ExtractDeclaredMethodBody(controllerText, "GetEntranceHallGuestFootY");
-        string sortingMethodBody = ExtractDeclaredMethodBody(controllerText, "GetEntranceHallGuestSortingOrder");
+        string ensureSorterBody = ExtractDeclaredMethodBody(controllerText, "EnsureGuestYSorter");
         string playerSortingMethodBody = ExtractDeclaredMethodBody(playerMovementText, "ApplyPlayerSorting");
         string coatSortingMethodBody = ExtractDeclaredMethodBody(controllerText, "ConfigureAssignedCoatSorting");
-        string cacheCoatSortingMethodBody = ExtractDeclaredMethodBody(controllerText, "CacheConfiguredCoatSorting");
         string moveMethodBody = ExtractDeclaredMethodBody(controllerText, "MoveGuestToDrawingRoom");
-        string banisterSafeWalkMethodBody = ExtractDeclaredMethodBody(controllerText, "ApplyEntranceBanisterSafeWalkingSorting");
-        string completeMethodBody = ExtractDeclaredMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
-        string skipStageMethodBody = ExtractDeclaredMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
 
-        Assert.That(controllerText, Does.Contain("authoredGuestRendererSorting"), "The temporary entrance override should preserve drawing-room authored sorting.");
-        Assert.That(prepareMethodBody, Does.Contain("CacheGuestAuthoredSorting(guestObject)"), "Guest preparation should cache the drawing-room-authored sort order before hallway overrides.");
-        Assert.That(activateMethodBody, Does.Contain("ApplyEntranceHallGuestSorting(guestState)"), "Authored scene guests should receive the entrance hallway pair order when admitted.");
-        Assert.That(forceVisibleMethodBody, Does.Contain("ApplyEntranceHallGuestSorting(guestState)"), "Door-flow visibility refreshes should reapply the entrance pair order after movement/state changes.");
         Assert.That(playerMovementText, Does.Contain("public int GetSortingOrderForFootY(float footY)"), "The butler should expose the same foot-Y sorting calculation used for player occlusion.");
         Assert.That(playerSortingMethodBody, Does.Contain("GetSortingOrderForFootY(sortingY)"), "The shared sorting helper must remain the butler's authoritative ordering path.");
-        Assert.That(applyMethodBody, Does.Contain("GetEntranceHallGuestSortingOrder"), "Entrance guests should derive their order from their physical foot position.");
-        Assert.That(applyMethodBody, Does.Not.Contain("entranceGuestSortingOrderBase"), "Entrance guests must not remain in a fixed high sorting band above the player.");
-        Assert.That(applyMethodBody, Does.Not.Contain("entranceGuestSortingOrderGroupStep"), "Arrival grouping must not override physical Y occlusion.");
-        Assert.That(footPointMethodBody, Does.Contain("spriteRenderer.bounds.min.y"), "Guest depth should be measured from visible feet, not from a centered transform.");
-        Assert.That(sortingMethodBody, Does.Contain("playerMovement.GetSortingOrderForFootY"), "Guests should reuse the butler's sorting scale instead of duplicating a second Y-sort formula.");
-        Assert.That(applyMethodBody, Does.Contain("spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot"), "Guest renderers should use their bottom sprite pivots for transparent sorting.");
-        Assert.That(applyMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - authoredReferenceOrder"), "Coat/body renderer offsets should survive the temporary hallway override.");
-        Assert.That(coatSortingMethodBody, Does.Contain("CacheConfiguredCoatSorting(coatRenderer)"), "Coat sorting should refresh the cached renderer order after being moved in front of the guest.");
-        Assert.That(cacheCoatSortingMethodBody, Does.Contain("authoredGuestRendererSorting[coatRenderer]"), "Coat cache refresh should replace stale scene coat ordering, not preserve order zero behind the guest.");
-        Assert.That(applyMethodBody, Does.Contain("guestState.MovingToDrawingRoom"), "Guests walking to the Drawing Room should not regain the high entrance-hall sorting override.");
-        Assert.That(moveMethodBody, Does.Match(@"RestoreGuestAuthoredSorting\(guest\)[\s\S]*ApplyEntranceBanisterSafeWalkingSorting\(guest\)[\s\S]*BeginGuestMoveTo\(guest, drawingRoomEntry"), "Guests should switch from the high entrance override to banister-safe sorting before walking to the Drawing Room door.");
-        Assert.That(banisterSafeWalkMethodBody, Does.Contain("EntranceBanisterSafeWalkingSortingOrder"), "The drawing-room walk should use a transition-only order below the front banister.");
-        Assert.That(banisterSafeWalkMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - referenceOrder"), "The banister-safe walk should preserve local body/coat renderer offsets.");
-        Assert.That(completeMethodBody, Does.Match(@"RestoreGuestAuthoredSorting\(guest\)[\s\S]*PlaceGuestAt\(guest, drawingRoomSpot"), "Normal Drawing Room entry should restore authored sort order before placement.");
-        Assert.That(skipStageMethodBody, Does.Match(@"RestoreGuestAuthoredSorting\(guest\)[\s\S]*PlaceGuestAt\(guest, drawingRoomSpot"), "Chapter 2 skip staging should also restore authored sort order before Drawing Room placement.");
+        Assert.That(resetMethodBody, Does.Contain("runtimeState.YSorter = EnsureGuestYSorter(runtimeState)"), "Normal play and every debug skip should install the same persistent guest sorter while rebuilding runtime state.");
+        Assert.That(ensureSorterBody, Does.Contain("ConfigureForActor(playerMovement, FindCharacterSpriteRenderer"), "Guests should reuse the Butler's sorting layer and foot-Y formula.");
+        Assert.That(activateMethodBody, Does.Contain("guestState.YSorter?.ApplySorting()"), "Entrance activation should apply the persistent sorter immediately.");
+        Assert.That(forceVisibleMethodBody, Does.Contain("guestState.YSorter?.ApplySorting()"), "Door-flow visibility refresh should use the same persistent sorter.");
+        Assert.That(coatSortingMethodBody, Does.Contain("RefreshGuestYSorter(guest)"), "Adding or moving a coat should refresh relative renderer offsets on the same sorter.");
+        Assert.That(moveMethodBody, Does.Not.Contain("sortingOrder"), "The Drawing Room transition must not install a fixed banister sorting override.");
+        Assert.That(controllerText, Does.Not.Contain("ApplyEntranceBanisterSafeWalkingSorting"), "The obsolete fixed-order banister path must stay deleted.");
+        Assert.That(controllerText, Does.Not.Contain("ApplyDrawingRoomGuestDepthSorting"), "The broken one-shot profile path must stay deleted.");
     }
 
     [Test]
-    public void DrawingRoomGuestsAndFurnitureUsePerspectiveDepthSorting()
+    public void DrawingRoomUsesContinuousYSortingWithOnlySeatedOverrides()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string completeMethodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
         string skipStageMethodBody = ExtractMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
-        string depthSortMethodBody = ExtractMethodBody(controllerText, "private void ApplyDrawingRoomGuestDepthSorting");
+        string seatedMethodBody = ExtractMethodBody(controllerText, "ApplyDrawingRoomSeatedOcclusion");
+        string chairMapMethodBody = ExtractMethodBody(controllerText, "GetDrawingRoomChairRenderer");
         string gameplaySceneText = File.ReadAllText(GameplayScenePath);
-        string drawingRoomPrefabText = File.ReadAllText(DrawingRoomPrefabPath);
-        string drawingRoomPerspectivePrefabText = File.ReadAllText(DrawingRoomPerspectivePrefabPath);
 
-        Assert.That(completeMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomGuestDepthSorting\(guest, drawingRoomSpot\)"), "Normal Drawing Room arrivals should sort guests from their actual room-local foot anchor.");
-        Assert.That(skipStageMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomGuestDepthSorting\(guest, drawingRoomSpot\)"), "Chapter 2 skip staging should use the same Drawing Room depth sorting as normal play.");
-        Assert.That(depthSortMethodBody, Does.Contain("TryGetRoomLocalFootPoint(drawingRoomSpot"), "Guest sorting should use the Drawing Room anchor's local foot point.");
-        Assert.That(depthSortMethodBody, Does.Contain("TryGetPerspectiveProfileForTarget(drawingRoomSpot"), "Guest sorting should come from the target room profile, not a fixed order.");
-        Assert.That(depthSortMethodBody, Does.Contain("profile.GetSortingOrder(roomLocalFootPoint)"), "Guest sorting should use y-axis depth from the room profile.");
-        Assert.That(depthSortMethodBody, Does.Contain("GetCachedSortingOrder(renderer) - referenceOrder"), "Depth sorting should preserve local renderer offsets such as coats or layered bodies.");
-        Assert.That(depthSortMethodBody, Does.Not.Contain("9000"), "Drawing Room depth sorting should not reuse the entrance fallback sorting band.");
-
-        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "tea_service_table", "roomLocalFootPoint: {x: -80.26, y: -211.67}", "m_SortingOrder: 6627");
+        Assert.That(completeMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomSeatedOcclusion\(guest, drawingRoomSpot\)"), "Normal arrivals should use continuous Y sorting plus the narrow seated exception.");
+        Assert.That(skipStageMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomSeatedOcclusion\(guest, drawingRoomSpot\)"), "Chapter 2 skip staging should use the identical sorting path.");
+        Assert.That(seatedMethodBody, Does.Contain("ShouldUseStandingDrawingRoomPose(guestState)"), "Standing guests must remain on ordinary Y sorting.");
+        Assert.That(seatedMethodBody, Does.Contain("ActivateForSeat"), "Only seated guests should receive the chair/table ordering bracket.");
+        Assert.That(chairMapMethodBody, Does.Match(@"case 0:[\s\S]*case 1:[\s\S]*case 3:[\s\S]*drawingRoomSofaRenderer"));
+        Assert.That(chairMapMethodBody, Does.Match(@"case 5:[\s\S]*drawingRoomRedChairRenderer"));
+        Assert.That(chairMapMethodBody, Does.Match(@"case 7:[\s\S]*drawingRoomGreenChairRenderer"));
+        Assert.That(gameplaySceneText, Does.Contain("drawingRoomTeaTableRenderer: {fileID: 2088426359}"));
+        Assert.That(gameplaySceneText, Does.Contain("drawingRoomSofaRenderer: {fileID: 496480228}"));
+        Assert.That(gameplaySceneText, Does.Contain("drawingRoomRedChairRenderer: {fileID: 3602000202}"));
+        Assert.That(gameplaySceneText, Does.Contain("drawingRoomGreenChairRenderer: {fileID: 362573330}"));
+        AssertDrawingRoomTableUsesSharedButlerYSort(gameplaySceneText);
         AssertDrawingRoomChairUsesSharedButlerYSort(gameplaySceneText);
-        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
-        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -479.54, y: -281.56}", "m_SortingOrder: 7745");
-        AssertDrawingRoomProjectedOccluderDepth(gameplaySceneText, "drawingroomgreenchair[_0", "roomLocalFootPoint: {x: -408.72, y: -261.91}", "m_SortingOrder: 7431");
-
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "tea_service_table", "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "drawing_room_red_chair_guest6", "roomLocalFootPoint: {x: 59, y: -208.5}", "m_SortingOrder: 800", "sortingOffset: -5776");
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPrefabText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -490.46, y: -282.58}", "m_SortingOrder: 7761");
-
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "tea_service_table", "roomLocalFootPoint: {x: -77.23, y: -208.14}", "m_SortingOrder: 6570");
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "drawing_room_red_chair_guest6", "roomLocalFootPoint: {x: 59, y: -208.5}", "m_SortingOrder: 800", "sortingOffset: -5776");
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "purple_armchair_back", "roomLocalFootPoint: {x: 243.62, y: -315.58}", "m_SortingOrder: 8289");
-        AssertDrawingRoomProjectedOccluderDepth(drawingRoomPerspectivePrefabText, "drawingroomgreenchair_0", "roomLocalFootPoint: {x: -490.46, y: -282.58}", "m_SortingOrder: 7761");
+        AssertDrawingRoomWorldYOccluder(gameplaySceneText, "drawingroomgreenchair_0", "yReference: {fileID: 1850905445}");
+        AssertDrawingRoomPhysicalOccluderHasOneWriter(gameplaySceneText, "purple_armchair_back", "PlayerBlocker_purple_armchair_back");
+        AssertDrawingRoomPhysicalOccluderHasOneWriter(gameplaySceneText, "drawingroomgreenchair[_0", "PlayerBlocker_drawingroomgreenchair_0");
     }
 
     [Test]
@@ -478,22 +454,16 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(skipStageMethodBody, Does.Contain("guest.Seated = true"), "Visual standing should not break Chapter 2 skip progression.");
     }
 
-    private static void AssertDrawingRoomProjectedOccluderDepth(string assetText, string objectName, string expectedFootPoint, string expectedSortingOrder, string expectedSortingOffset = null)
+    private static void AssertDrawingRoomWorldYOccluder(string assetText, string objectName, string expectedYReference)
     {
         string objectBlock = ExtractObjectBlock(assetText, objectName);
 
-        Assert.That(objectBlock, Does.Contain("guid: 361e3658088b41ab98d330ae6457640b"), $"The Drawing Room object '{objectName}' should use RoomProjectedEntity for depth sorting.");
-        Assert.That(objectBlock, Does.Contain("roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267"), $"The Drawing Room object '{objectName}' should sort against the Drawing Room perspective profile.");
-        Assert.That(objectBlock, Does.Contain(expectedFootPoint), $"The Drawing Room object '{objectName}' sort point should match the authored floor/occlusion point.");
-        Assert.That(objectBlock, Does.Contain("applyPosition: 0"), $"The Drawing Room object '{objectName}' projection must not move authored art.");
-        Assert.That(objectBlock, Does.Contain("applyScale: 0"), $"The Drawing Room object '{objectName}' projection must not resize authored art.");
-        Assert.That(objectBlock, Does.Contain("applyTint: 0"), $"The Drawing Room object '{objectName}' projection must not recolor authored art.");
-        Assert.That(objectBlock, Does.Contain("applySorting: 1"), $"The Drawing Room object '{objectName}' projection should only own sorting.");
-        Assert.That(objectBlock, Does.Contain(expectedSortingOrder), $"The Drawing Room object '{objectName}' serialized order should match its profile-derived y depth.");
-        if (!string.IsNullOrEmpty(expectedSortingOffset))
-        {
-            Assert.That(objectBlock, Does.Contain(expectedSortingOffset), $"The Drawing Room object '{objectName}' should keep its authored projection sorting offset.");
-        }
+        Assert.That(objectBlock, Does.Contain("guid: 361e3658088b41ab98d330ae6457640b"));
+        Assert.That(objectBlock, Does.Contain("applySorting: 0"), $"'{objectName}' must not retain the incompatible perspective-profile order scale.");
+        Assert.That(objectBlock, Does.Contain("guid: 75f090bb68ab450d9703d9581c5c543a"), $"'{objectName}' should use the same world-Y order scale as the Butler.");
+        Assert.That(objectBlock, Does.Contain("sortingOrderBase: 1000"));
+        Assert.That(objectBlock, Does.Contain("sortingOrderPerYUnit: 100"));
+        Assert.That(objectBlock, Does.Contain(expectedYReference));
     }
 
     private static void AssertDrawingRoomChairUsesSharedButlerYSort(string assetText)
@@ -509,15 +479,40 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 1"), "The chair should use its lower movement footprint as the shared y-axis sort edge.");
     }
 
+    private static void AssertDrawingRoomTableUsesSharedButlerYSort(string assetText)
+    {
+        string tableBlock = ExtractObjectBlock(assetText, "tea_service_table");
+        string blockerBlock = ExtractObjectBlock(assetText, "PlayerBlocker_tea_service_table");
+
+        Assert.That(tableBlock, Does.Contain("roomLocalFootPoint: {x: -80.26, y: -211.67}"));
+        Assert.That(tableBlock, Does.Contain("applySorting: 0"), "The table must not compete with the shared Butler y-axis sorter.");
+        Assert.That(tableBlock, Does.Contain("sortingOffset: 0"));
+        Assert.That(blockerBlock, Does.Contain("sourceObjectName: tea_service_table"));
+        Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 1"), "The table should use its lower physical footprint as the shared y-axis sort edge.");
+    }
+
+    private static void AssertDrawingRoomPhysicalOccluderHasOneWriter(
+        string assetText,
+        string sourceObjectName,
+        string blockerObjectName)
+    {
+        string sourceBlock = ExtractObjectBlock(assetText, sourceObjectName);
+        string blockerBlock = ExtractObjectBlock(assetText, blockerObjectName);
+
+        Assert.That(sourceBlock, Does.Contain("applySorting: 0"), $"'{sourceObjectName}' must not keep a competing projection sorter.");
+        Assert.That(blockerBlock, Does.Contain($"sourceObjectName: {sourceObjectName}"));
+        Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 1"), $"'{sourceObjectName}' should have exactly one physical-footprint sorting owner.");
+    }
+
     private static string ExtractObjectBlock(string assetText, string objectName)
     {
         int nameIndex = assetText.IndexOf($"m_Name: {objectName}", StringComparison.Ordinal);
         Assert.That(nameIndex, Is.GreaterThanOrEqualTo(0), $"Could not find object '{objectName}'.");
 
-        int blockStart = assetText.LastIndexOf("--- !u!1", nameIndex, StringComparison.Ordinal);
+        int blockStart = assetText.LastIndexOf("--- !u!1 &", nameIndex, StringComparison.Ordinal);
         Assert.That(blockStart, Is.GreaterThanOrEqualTo(0), $"Could not find object block start for '{objectName}'.");
 
-        int blockEnd = assetText.IndexOf("--- !u!1", nameIndex + objectName.Length, StringComparison.Ordinal);
+        int blockEnd = assetText.IndexOf("--- !u!1 &", nameIndex + objectName.Length, StringComparison.Ordinal);
         return blockEnd >= 0
             ? assetText.Substring(blockStart, blockEnd - blockStart)
             : assetText.Substring(blockStart);
@@ -558,6 +553,11 @@ public class Chapter1GuestRoomVisibilityRegressionTests
 
     private static string ExtractMethodBody(string sourceText, string methodName)
     {
+        if (!methodName.Contains(" "))
+        {
+            return ExtractDeclaredMethodBody(sourceText, methodName);
+        }
+
         int methodIndex = sourceText.IndexOf(methodName, StringComparison.Ordinal);
         Assert.That(methodIndex, Is.GreaterThanOrEqualTo(0), $"Could not find method '{methodName}'.");
 

@@ -33,6 +33,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public RoomProjectedEntity Projection;
         public GuestFootstepAudio Footsteps;
         public GuestScaleParticipant ScaleParticipant;
+        public WorldYSortSpriteRenderer YSorter;
     }
 
     private sealed class GuestGroupRuntimeState
@@ -47,12 +48,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         public bool Complete;
         public float QueuedAtGameMinute;
         public readonly List<GuestRuntimeState> Guests = new List<GuestRuntimeState>();
-    }
-
-    private sealed class RendererSortingState
-    {
-        public string LayerName;
-        public int Order;
     }
 
     [Header("References")]
@@ -82,6 +77,12 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private Transform drawingRoomSeat01;
     [SerializeField] private Transform drawingRoomSeat02;
     [SerializeField] private Transform drawingRoomSeat03;
+
+    [Header("Drawing Room Seated Occlusion")]
+    [SerializeField] private SpriteRenderer drawingRoomTeaTableRenderer;
+    [SerializeField] private SpriteRenderer drawingRoomSofaRenderer;
+    [SerializeField] private SpriteRenderer drawingRoomRedChairRenderer;
+    [SerializeField] private SpriteRenderer drawingRoomGreenChairRenderer;
 
     [Header("Clock Timeline")]
     [SerializeField, Range(0, 23)] private int firstArrivalHour = 18;
@@ -130,7 +131,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     private readonly List<GuestGroupRuntimeState> activeEntranceGroups = new List<GuestGroupRuntimeState>();
     private readonly List<Transform> runtimeSeatAnchors = new List<Transform>();
     private readonly HashSet<GameObject> runtimeGeneratedGuestObjects = new HashSet<GameObject>();
-    private readonly Dictionary<Renderer, RendererSortingState> authoredGuestRendererSorting = new Dictionary<Renderer, RendererSortingState>();
     private readonly Dictionary<string, Sprite> guestCoatSpriteCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
     private int currentGuestIndex = -1;
     private bool sequenceActive;
@@ -164,7 +164,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const float EntranceWaitDepthStepMultiplier = 0.32f;
     private const float EntranceWaitSlotSpacingMultiplier = 1.3f;
     private const float EntranceWaitGroupSideStepMultiplier = -0.32f;
-    private const int EntranceBanisterSafeWalkingSortingOrder = 1599;
     private const string GuestEntranceSpawnPlacemarkId = "Placemark_guests_entrance";
     private const string FrontDoorGuestSpawnAnchorId = "GuestArrival_Door";
     private const string EntranceHallGuestAnchorId = "EntranceHallGuestAnchor";
@@ -1387,7 +1386,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         pendingGuestGroups.Clear();
         activeEntranceGroups.Clear();
         guestGroups.Clear();
-        authoredGuestRendererSorting.Clear();
 
         if (coatCloset != null)
         {
@@ -1448,6 +1446,8 @@ public class Chapter1ArrivalController : MonoBehaviour
                 Footsteps = footsteps,
                 Seat = ResolveSeatForGuest(i)
             };
+
+            runtimeState.YSorter = EnsureGuestYSorter(runtimeState);
 
             config.SetAssignedSeat(runtimeState.Seat);
 
@@ -1974,7 +1974,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             coatRenderer.sortingLayerName = projection.GetSortingLayerName();
             coatRenderer.sortingOrder = projection.GetSortingOrder(coatSortingOffset);
             coatRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
-            CacheConfiguredCoatSorting(coatRenderer);
+            RefreshGuestYSorter(guest);
             return;
         }
 
@@ -1984,29 +1984,13 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             coatRenderer.sortingLayerID = guestRenderer.sortingLayerID;
             coatRenderer.sortingOrder = guestRenderer.sortingOrder + 1;
-            CacheConfiguredCoatSorting(coatRenderer);
+            RefreshGuestYSorter(guest);
             return;
         }
 
         coatRenderer.sortingLayerName = "People";
         coatRenderer.sortingOrder = 9000 + (guest != null ? guest.GuestIndex : 0) + 1;
-        CacheConfiguredCoatSorting(coatRenderer);
-    }
-
-    private void CacheConfiguredCoatSorting(Renderer coatRenderer)
-    {
-        if (coatRenderer == null)
-        {
-            return;
-        }
-
-        authoredGuestRendererSorting[coatRenderer] = new RendererSortingState
-        {
-            LayerName = coatRenderer.sortingLayerName,
-            Order = coatRenderer.sortingOrder
-        };
-
-        RemoveDestroyedGuestSortingCacheEntries();
+        RefreshGuestYSorter(guest);
     }
 
     private Sprite ResolveGuestCoatSprite(GuestRuntimeState guest)
@@ -2297,8 +2281,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         Transform drawingRoomEntry = ResolveDrawingRoomEntryPointForGuest(guest, group);
 
         SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
-        RestoreGuestAuthoredSorting(guest);
-        ApplyEntranceBanisterSafeWalkingSorting(guest);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to drawing room door.", this);
         BeginGuestMoveTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
 
@@ -2341,7 +2323,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
 
-        RestoreGuestAuthoredSorting(guest);
         DisableGuestMovement(guest);
         MoveGuestObjectToRoomContent(guest, drawingRoomId);
         SetGuestVisibleAfterDrawingRoomExit(guest, true);
@@ -2360,7 +2341,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
         RefreshGuestScalingNow();
-        ApplyDrawingRoomGuestDepthSorting(guest, drawingRoomSpot);
+        ApplyDrawingRoomSeatedOcclusion(guest, drawingRoomSpot);
 
         guest.MovingToDrawingRoom = false;
         guest.Seated = true;
@@ -2581,7 +2562,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         Transform drawingRoomSpot = ResolveDrawingRoomSpotForGuest(guest);
 
-        RestoreGuestAuthoredSorting(guest);
         MoveGuestObjectToRoomContent(guest, drawingRoomId);
         SetGuestVisibleAfterDrawingRoomExit(guest, true);
         PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
@@ -2606,7 +2586,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
         RefreshGuestScalingNow();
         HideGuestCoatVisualsForChapter2Skip(guest);
-        ApplyDrawingRoomGuestDepthSorting(guest, drawingRoomSpot);
+        ApplyDrawingRoomSeatedOcclusion(guest, drawingRoomSpot);
 
         guest.WaitingOutside = false;
         guest.EnteredEntranceHall = true;
@@ -3096,7 +3076,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             ForceRenderersAndCollidersOn(guestObject);
         }
 
-        ApplyEntranceHallGuestSorting(guestState);
+        guestState.YSorter?.ApplySorting();
         Debug.Log($"Scene guest activated: {guestObject.name}", this);
     }
 
@@ -3418,7 +3398,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             ForceRenderersAndCollidersOn(guestState.GuestObject);
         }
 
-        ApplyEntranceHallGuestSorting(guestState);
+        guestState.YSorter?.ApplySorting();
         RefreshCoatPickupVisibilityForCurrentRoom(guestState);
     }
 
@@ -4717,7 +4697,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (projection != null && projection.IsProjectionActive)
         {
-            CacheGuestAuthoredSorting(guestObject);
             projection.RefreshVisualTargets();
             projection.ApplyProjection();
             return;
@@ -4740,8 +4719,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             renderers[i].sortingLayerName = "People";
             renderers[i].sortingOrder = 9000 + index;
         }
-
-        CacheGuestAuthoredSorting(guestObject);
     }
 
     private bool ShouldPreserveAuthoredGuestSorting(GameObject guestObject)
@@ -4752,352 +4729,130 @@ public class Chapter1ArrivalController : MonoBehaviour
             !runtimeGeneratedGuestObjects.Contains(guestObject);
     }
 
-    private void CacheGuestAuthoredSorting(GameObject guestObject)
+    private WorldYSortSpriteRenderer EnsureGuestYSorter(GuestRuntimeState guestState)
     {
-        Renderer[] renderers = GetGuestRenderers(guestObject);
-
-        for (int i = 0; i < renderers.Length; i++)
+        if (guestState == null || guestState.GuestObject == null)
         {
-            Renderer renderer = renderers[i];
-
-            if (renderer == null || authoredGuestRendererSorting.ContainsKey(renderer))
-            {
-                continue;
-            }
-
-            authoredGuestRendererSorting.Add(renderer, new RendererSortingState
-            {
-                LayerName = renderer.sortingLayerName,
-                Order = renderer.sortingOrder
-            });
-        }
-
-        RemoveDestroyedGuestSortingCacheEntries();
-    }
-
-    private void ApplyEntranceHallGuestSorting(GuestRuntimeState guestState)
-    {
-        if (guestState == null ||
-            guestState.GuestObject == null ||
-            guestState.MovingToDrawingRoom ||
-            guestState.Seated ||
-            HasActiveProjection(guestState))
-        {
-            return;
-        }
-
-        if (guestState.ActorState != null &&
-            !SameRoom(guestState.ActorState.CurrentRoomId, entryRoomId))
-        {
-            return;
-        }
-
-        CacheGuestAuthoredSorting(guestState.GuestObject);
-
-        Renderer[] renderers = GetGuestRenderers(guestState);
-
-        if (renderers.Length == 0)
-        {
-            return;
+            return null;
         }
 
         ResolveReferences(false);
 
         if (playerMovement == null)
         {
-            return;
+            Debug.LogError($"Guest '{guestState.GuestObject.name}' cannot use y-axis sorting because the Butler sorting source is missing.", this);
+            return null;
         }
 
-        int sortingOrder = GetEntranceHallGuestSortingOrder(guestState, renderers);
-        int authoredReferenceOrder = GetGuestRendererReferenceSortingOrder(guestState, renderers);
-        string sortingLayerName = playerMovement.CurrentSortingLayerName;
+        WorldYSortSpriteRenderer sorter = guestState.GuestObject.GetComponent<WorldYSortSpriteRenderer>();
 
-        for (int i = 0; i < renderers.Length; i++)
+        if (sorter == null)
         {
-            Renderer renderer = renderers[i];
+            SpriteRenderer[] authoredRenderers = guestState.GuestObject.GetComponentsInChildren<SpriteRenderer>(true);
+            int[] authoredLayerIds = new int[authoredRenderers.Length];
+            int[] authoredOrders = new int[authoredRenderers.Length];
 
-            if (renderer == null)
+            for (int i = 0; i < authoredRenderers.Length; i++)
             {
-                continue;
+                if (authoredRenderers[i] == null)
+                {
+                    continue;
+                }
+
+                authoredLayerIds[i] = authoredRenderers[i].sortingLayerID;
+                authoredOrders[i] = authoredRenderers[i].sortingOrder;
             }
 
-            int localOffset = GetCachedSortingOrder(renderer) - authoredReferenceOrder;
-            renderer.sortingLayerName = sortingLayerName;
-            renderer.sortingOrder = sortingOrder + localOffset;
+            sorter = guestState.GuestObject.AddComponent<WorldYSortSpriteRenderer>();
 
-            if (renderer is SpriteRenderer spriteRenderer)
+            for (int i = 0; i < authoredRenderers.Length; i++)
             {
-                spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+                if (authoredRenderers[i] == null)
+                {
+                    continue;
+                }
+
+                authoredRenderers[i].sortingLayerID = authoredLayerIds[i];
+                authoredRenderers[i].sortingOrder = authoredOrders[i];
             }
         }
+
+        sorter.ConfigureForActor(playerMovement, FindCharacterSpriteRenderer(guestState.GuestObject));
+        return sorter;
     }
 
-    private int GetEntranceHallGuestSortingOrder(GuestRuntimeState guestState, Renderer[] renderers)
+    private void RefreshGuestYSorter(GuestRuntimeState guestState)
     {
-        return playerMovement.GetSortingOrderForFootY(GetEntranceHallGuestFootY(guestState, renderers));
-    }
-
-    private static float GetEntranceHallGuestFootY(GuestRuntimeState guestState, Renderer[] renderers)
-    {
-        if (guestState == null || guestState.GuestObject == null)
-        {
-            return 0f;
-        }
-
-        SpriteRenderer characterRenderer = FindCharacterSpriteRenderer(guestState.GuestObject);
-
-        if (characterRenderer != null && characterRenderer.enabled && characterRenderer.sprite != null)
-        {
-            return characterRenderer.bounds.min.y;
-        }
-
-        float lowestVisibleY = float.PositiveInfinity;
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            if (!(renderers[i] is SpriteRenderer spriteRenderer) ||
-                !spriteRenderer.enabled ||
-                spriteRenderer.sprite == null ||
-                IsCoatVisualTransform(spriteRenderer.transform))
-            {
-                continue;
-            }
-
-            lowestVisibleY = Mathf.Min(lowestVisibleY, spriteRenderer.bounds.min.y);
-        }
-
-        return float.IsPositiveInfinity(lowestVisibleY)
-            ? guestState.GuestObject.transform.position.y
-            : lowestVisibleY;
-    }
-
-    private void RestoreGuestAuthoredSorting(GuestRuntimeState guestState)
-    {
-        Renderer[] renderers = GetGuestRenderers(guestState);
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-
-            if (renderer == null ||
-                !authoredGuestRendererSorting.TryGetValue(renderer, out RendererSortingState originalSorting))
-            {
-                continue;
-            }
-
-            renderer.sortingLayerName = originalSorting.LayerName;
-            renderer.sortingOrder = originalSorting.Order;
-        }
-
-        RemoveDestroyedGuestSortingCacheEntries();
-    }
-
-    private void ApplyDrawingRoomGuestDepthSorting(GuestRuntimeState guestState, Transform drawingRoomSpot)
-    {
-        if (guestState == null ||
-            guestState.GuestObject == null ||
-            drawingRoomSpot == null ||
-            HasActiveProjection(guestState) ||
-            !TryGetRoomLocalFootPoint(drawingRoomSpot, out Vector2 roomLocalFootPoint) ||
-            !TryGetPerspectiveProfileForTarget(drawingRoomSpot, out RoomPerspectiveProfile profile))
+        if (guestState == null)
         {
             return;
         }
 
-        CacheGuestAuthoredSorting(guestState.GuestObject);
-        Renderer[] renderers = GetGuestRenderers(guestState);
+        if (guestState.YSorter == null)
+        {
+            guestState.YSorter = EnsureGuestYSorter(guestState);
+        }
 
-        if (renderers.Length == 0)
+        guestState.YSorter?.RefreshActorSortingTargets();
+        guestState.YSorter?.ApplySorting();
+    }
+
+    private void ApplyDrawingRoomSeatedOcclusion(GuestRuntimeState guestState, Transform drawingRoomSpot)
+    {
+        if (guestState == null || guestState.ActorState == null)
         {
             return;
         }
 
-        int depthSortingOrder = profile.GetSortingOrder(roomLocalFootPoint);
-        int referenceOrder = GetGuestRendererReferenceSortingOrder(guestState, renderers);
-        string sortingLayerName = profile.SortingLayerName;
+        DiningRoomSeatedGuestOcclusionException seatedException =
+            guestState.ActorState.GetComponent<DiningRoomSeatedGuestOcclusionException>();
 
-        for (int i = 0; i < renderers.Length; i++)
+        if (ShouldUseStandingDrawingRoomPose(guestState))
         {
-            Renderer renderer = renderers[i];
-
-            if (renderer == null)
-            {
-                continue;
-            }
-
-            int localOffset = GetCachedSortingOrder(renderer) - referenceOrder;
-            renderer.sortingLayerName = sortingLayerName;
-            renderer.sortingOrder = depthSortingOrder + localOffset;
-        }
-    }
-
-    private static bool TryGetPerspectiveProfileForTarget(Transform target, out RoomPerspectiveProfile profile)
-    {
-        profile = null;
-
-        if (target == null)
-        {
-            return false;
-        }
-
-        RoomContentGroup roomContent = target.GetComponentInParent<RoomContentGroup>(true);
-        return roomContent != null && roomContent.TryGetPerspectiveProfile(out profile);
-    }
-
-    private static bool TryGetRoomLocalFootPoint(Transform target, out Vector2 roomLocalFootPoint)
-    {
-        roomLocalFootPoint = Vector2.zero;
-
-        if (target == null)
-        {
-            return false;
-        }
-
-        RoomContentGroup roomContent = target.GetComponentInParent<RoomContentGroup>(true);
-
-        if (roomContent != null)
-        {
-            Vector3 localPoint = roomContent.transform.InverseTransformPoint(target.position);
-            roomLocalFootPoint = new Vector2(localPoint.x, localPoint.y);
-            return true;
-        }
-
-        if (target is RectTransform targetRectTransform)
-        {
-            roomLocalFootPoint = targetRectTransform.anchoredPosition;
-            return true;
-        }
-
-        roomLocalFootPoint = new Vector2(target.localPosition.x, target.localPosition.y);
-        return true;
-    }
-
-    private void ApplyEntranceBanisterSafeWalkingSorting(GuestRuntimeState guestState)
-    {
-        if (guestState == null ||
-            guestState.GuestObject == null ||
-            HasActiveProjection(guestState))
-        {
+            seatedException?.DeactivateForSeat();
             return;
         }
 
-        CacheGuestAuthoredSorting(guestState.GuestObject);
-        Renderer[] renderers = GetGuestRenderers(guestState);
+        RoomAnchor seatAnchor = drawingRoomSpot != null ? drawingRoomSpot.GetComponent<RoomAnchor>() : null;
+        SpriteRenderer chairRenderer = GetDrawingRoomChairRenderer(guestState.GuestIndex);
 
-        if (renderers.Length == 0)
+        if (seatAnchor == null || chairRenderer == null || drawingRoomTeaTableRenderer == null)
         {
+            Debug.LogError($"Drawing Room seated occlusion is not fully wired for guest {guestState.GuestIndex + 1}.", this);
+            seatedException?.DeactivateForSeat();
             return;
         }
 
-        int referenceOrder = GetGuestRendererReferenceSortingOrder(guestState, renderers);
-
-        if (referenceOrder <= EntranceBanisterSafeWalkingSortingOrder)
+        if (seatedException == null)
         {
-            return;
+            seatedException = guestState.ActorState.gameObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
         }
 
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-
-            if (renderer == null)
-            {
-                continue;
-            }
-
-            int localOffset = GetCachedSortingOrder(renderer) - referenceOrder;
-            renderer.sortingOrder = EntranceBanisterSafeWalkingSortingOrder + localOffset;
-        }
+        seatedException.ActivateForSeat(
+            guestState.ActorState,
+            seatAnchor,
+            chairRenderer.gameObject,
+            chairRenderer,
+            drawingRoomTeaTableRenderer,
+            drawingRoomId,
+            "Butler");
     }
 
-    private int GetGuestRendererReferenceSortingOrder(GuestRuntimeState guestState, Renderer[] renderers)
+    private SpriteRenderer GetDrawingRoomChairRenderer(int guestIndex)
     {
-        SpriteRenderer characterRenderer = guestState != null ? FindCharacterSpriteRenderer(guestState.GuestObject) : null;
-
-        if (characterRenderer != null)
+        switch (guestIndex)
         {
-            return GetCachedSortingOrder(characterRenderer);
+            case 0:
+            case 1:
+            case 3:
+                return drawingRoomSofaRenderer;
+            case 5:
+                return drawingRoomRedChairRenderer;
+            case 7:
+                return drawingRoomGreenChairRenderer;
+            default:
+                return null;
         }
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            if (renderers[i] != null)
-            {
-                return GetCachedSortingOrder(renderers[i]);
-            }
-        }
-
-        return 0;
-    }
-
-    private int GetCachedSortingOrder(Renderer renderer)
-    {
-        return renderer != null &&
-            authoredGuestRendererSorting.TryGetValue(renderer, out RendererSortingState originalSorting)
-                ? originalSorting.Order
-                : renderer != null
-                    ? renderer.sortingOrder
-                    : 0;
-    }
-
-    private static Renderer[] GetGuestRenderers(GuestRuntimeState guestState)
-    {
-        return GetGuestRenderers(guestState != null ? guestState.GuestObject : null);
-    }
-
-    private static Renderer[] GetGuestRenderers(GameObject guestObject)
-    {
-        return guestObject != null
-            ? guestObject.GetComponentsInChildren<Renderer>(true)
-            : Array.Empty<Renderer>();
-    }
-
-    private void RemoveDestroyedGuestSortingCacheEntries()
-    {
-        if (authoredGuestRendererSorting.Count == 0)
-        {
-            return;
-        }
-
-        List<Renderer> destroyedRenderers = null;
-
-        foreach (Renderer renderer in authoredGuestRendererSorting.Keys)
-        {
-            if (renderer != null)
-            {
-                continue;
-            }
-
-            if (destroyedRenderers == null)
-            {
-                destroyedRenderers = new List<Renderer>();
-            }
-
-            destroyedRenderers.Add(renderer);
-        }
-
-        if (destroyedRenderers == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < destroyedRenderers.Count; i++)
-        {
-            authoredGuestRendererSorting.Remove(destroyedRenderers[i]);
-        }
-    }
-
-    private static string ResolveSortingLayerName(string sortingLayerName)
-    {
-        if (string.IsNullOrWhiteSpace(sortingLayerName))
-        {
-            return "Default";
-        }
-
-        return string.Equals(sortingLayerName, "Default", StringComparison.OrdinalIgnoreCase) ||
-            SortingLayer.NameToID(sortingLayerName) != 0
-                ? sortingLayerName
-                : "Default";
     }
 
     private void DisableAmbientWalkers(GameObject guestObject)
