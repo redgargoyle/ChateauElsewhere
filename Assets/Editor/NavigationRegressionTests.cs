@@ -68,6 +68,7 @@ public class NavigationRegressionTests
     private const string Chapter2MonsterStingerControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2MonsterStingerController.cs";
     private const string GameplayPlayModeGuardPath = "Assets/Editor/GameplayPlayModeGuard.cs";
     private const string ButlerIdleFolderPath = "Assets/Art/Characters/butler/butler_idle";
+    private const string ButlerCanonicalStandingFramePath = "Assets/Art/Characters/butler/butler_classic_walk_01_r01_c01.png";
     private const string PlayerIdleClipPath = "Assets/Animation/Player/Player_Idle.anim";
     private const string ButlerClassicIdleClipPath = "Assets/Animation/ButlerClassic/ButlerClassic_Idle.anim";
     private const string RoomContentGroupGuid = "d0ea47fd950844bcacb0fd5556a9d880";
@@ -1525,8 +1526,9 @@ public class NavigationRegressionTests
             Assert.That(frameMetaText, Does.Contain("alphaIsTransparency: 1"), $"{framePath} should preserve transparent-background import behavior.");
         }
 
-        AssertButlerIdleClipReferences(PlayerIdleClipPath, expectedFrameGuids, 1);
-        AssertButlerIdleClipReferences(ButlerClassicIdleClipPath, expectedFrameGuids, 2);
+        AssertButlerIdleFramesKeepFeetPlanted(expectedFrameGuids.Length);
+        AssertButlerIdleClipReferences(PlayerIdleClipPath, expectedFrameGuids, 1, 4, 3);
+        AssertButlerIdleClipReferences(ButlerClassicIdleClipPath, expectedFrameGuids, 2, 12, 1);
     }
 
     private static PointClickPlayerMovement CreateConfiguredPointClickMovement(
@@ -1933,12 +1935,87 @@ public class NavigationRegressionTests
         Assert.That(triggerBlock, Does.Contain("walkPlayerToTriggerWhenFar: 0"), $"{triggerName} should not path the butler to the old floor-covering rectangle.");
     }
 
-    private static void AssertButlerIdleClipReferences(string clipPath, string[] expectedFrameGuids, int expectedCurveCount)
+    private static void AssertButlerIdleFramesKeepFeetPlanted(int frameCount)
+    {
+        const int plantedRowCount = 64;
+        Color32[] canonicalPixels = ReadPngPixels(
+            ButlerCanonicalStandingFramePath,
+            out int canonicalWidth,
+            out int canonicalHeight);
+
+        Assert.That(canonicalWidth, Is.EqualTo(168));
+        Assert.That(canonicalHeight, Is.EqualTo(299));
+
+        for (int frameIndex = 0; frameIndex < frameCount; frameIndex++)
+        {
+            string framePath = $"{ButlerIdleFolderPath}/butler_idle_{frameIndex + 1:00}.png";
+            Color32[] framePixels = ReadPngPixels(framePath, out int width, out int height);
+
+            Assert.That(width, Is.EqualTo(canonicalWidth), $"{framePath} should preserve the canonical canvas width.");
+            Assert.That(height, Is.EqualTo(canonicalHeight), $"{framePath} should preserve the canonical canvas height.");
+
+            for (int y = 0; y < plantedRowCount; y++)
+            {
+                for (int x = 0; x < canonicalWidth; x++)
+                {
+                    int pixelIndex = y * canonicalWidth + x;
+                    Assert.That(
+                        framePixels[pixelIndex],
+                        Is.EqualTo(canonicalPixels[pixelIndex]),
+                        $"{framePath} should keep planted lower-body pixel ({x}, {y}) identical to the canonical standing pose.");
+                }
+            }
+
+            if (frameIndex != 0 && frameIndex != 6)
+            {
+                bool upperBodyChanges = false;
+                for (int pixelIndex = plantedRowCount * canonicalWidth;
+                     pixelIndex < canonicalPixels.Length;
+                     pixelIndex++)
+                {
+                    if (!framePixels[pixelIndex].Equals(canonicalPixels[pixelIndex]))
+                    {
+                        upperBodyChanges = true;
+                        break;
+                    }
+                }
+
+                Assert.That(upperBodyChanges, Is.True, $"{framePath} should retain visible breathing above the planted lower body.");
+            }
+        }
+    }
+
+    private static Color32[] ReadPngPixels(string path, out int width, out int height)
+    {
+        Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+
+        try
+        {
+            Assert.That(
+                ImageConversion.LoadImage(texture, File.ReadAllBytes(path), false),
+                Is.True,
+                $"{path} should decode as a PNG.");
+            width = texture.width;
+            height = texture.height;
+            return texture.GetPixels32();
+        }
+        finally
+        {
+            Object.DestroyImmediate(texture);
+        }
+    }
+
+    private static void AssertButlerIdleClipReferences(
+        string clipPath,
+        string[] expectedFrameGuids,
+        int expectedCurveCount,
+        int expectedSampleRate,
+        int expectedStopTime)
     {
         string clipText = File.ReadAllText(clipPath);
 
-        Assert.That(clipText, Does.Contain("m_SampleRate: 12"), $"{clipPath} should play the soft idle loop at 12 fps.");
-        Assert.That(clipText, Does.Contain("m_StopTime: 1"), $"{clipPath} should cover the full 12-frame loop.");
+        Assert.That(clipText, Does.Contain($"m_SampleRate: {expectedSampleRate}"), $"{clipPath} should keep its authored idle playback rate.");
+        Assert.That(clipText, Does.Contain($"m_StopTime: {expectedStopTime}"), $"{clipPath} should cover the full 12-frame loop.");
         Assert.That(clipText, Does.Contain("m_LoopTime: 1"), $"{clipPath} should loop cleanly.");
 
         for (int index = 0; index < expectedFrameGuids.Length; index++)
