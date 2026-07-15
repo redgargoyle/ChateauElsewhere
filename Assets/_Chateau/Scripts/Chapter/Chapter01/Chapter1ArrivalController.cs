@@ -2148,10 +2148,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             yield break;
         }
 
-        for (int i = 0; i < group.Guests.Count; i++)
-        {
-            MoveGuestToDrawingRoom(group.Guests[i], group);
-        }
+        BeginEntranceGroupMoveToDrawingRoom(group);
 
         while (!HasEntranceGroupReachedDrawingRoomExit(group))
         {
@@ -2168,7 +2165,97 @@ public class Chapter1ArrivalController : MonoBehaviour
         CompleteEntranceGroupDrawingRoomArrival(group);
     }
 
-    private void MoveGuestToDrawingRoom(GuestRuntimeState guest, GuestGroupRuntimeState group)
+    private void BeginEntranceGroupMoveToDrawingRoom(GuestGroupRuntimeState group)
+    {
+        if (group == null || group.Guests.Count != EntranceDeparturePairSize)
+        {
+            return;
+        }
+
+        int guestCount = group.Guests.Count;
+        Transform[] targets = new Transform[guestCount];
+        float[] distances = new float[guestCount];
+        float sharedTravelDuration = 0f;
+
+        for (int i = 0; i < guestCount; i++)
+        {
+            GuestRuntimeState guest = group.Guests[i];
+            targets[i] = ResolveDrawingRoomEntryPointForGuest(guest, group);
+            distances[i] = GetGuestMoveDistanceToTarget(guest, targets[i]);
+
+            if (guest != null && guest.Mover != null)
+            {
+                float defaultSpeed = GetMoveSpeedForGuestObject(guest.GuestObject);
+                sharedTravelDuration = Mathf.Max(
+                    sharedTravelDuration,
+                    distances[i] / defaultSpeed);
+            }
+        }
+
+        for (int i = 0; i < guestCount; i++)
+        {
+            GuestRuntimeState guest = group.Guests[i];
+            float defaultSpeed = GetMoveSpeedForGuestObject(guest != null ? guest.GuestObject : null);
+            float synchronizedSpeed = CalculateSynchronizedMoveSpeed(
+                distances[i],
+                sharedTravelDuration,
+                defaultSpeed);
+            MoveGuestToDrawingRoom(guest, targets[i], synchronizedSpeed);
+        }
+    }
+
+    private static float CalculateSynchronizedMoveSpeed(
+        float distance,
+        float sharedTravelDuration,
+        float defaultSpeed)
+    {
+        float safeDefaultSpeed = Mathf.Max(0.01f, defaultSpeed);
+        return sharedTravelDuration > 0f && distance > 0f
+            ? Mathf.Max(0.01f, distance / sharedTravelDuration)
+            : safeDefaultSpeed;
+    }
+
+    private float GetGuestMoveDistanceToTarget(GuestRuntimeState guest, Transform target)
+    {
+        if (guest == null || target == null)
+        {
+            return 0f;
+        }
+
+        RoomProjectedEntity projection = ResolveGuestProjection(guest);
+
+        if (projection != null)
+        {
+            projection.UseProfileFromRoomTarget(target);
+
+            if (NPCWaypointMover.CanUseProjectionAsMotionOwner(projection) &&
+                projection.CanProjectTarget(target) &&
+                projection.TryGetRoomLocalFootPointForTarget(target, out Vector2 targetFootPoint))
+            {
+                return Vector2.Distance(projection.RoomLocalFootPoint, targetFootPoint);
+            }
+        }
+
+        if (guest.GuestObject == null)
+        {
+            return 0f;
+        }
+
+        Vector3 startPosition = guest.GuestObject.transform.position;
+
+        if (CharacterFootPositionUtility.TryGetWorldPoint(
+            guest.GuestObject,
+            true,
+            false,
+            out Vector3 feetPosition))
+        {
+            startPosition = feetPosition;
+        }
+
+        return Vector2.Distance(startPosition, target.position);
+    }
+
+    private void MoveGuestToDrawingRoom(GuestRuntimeState guest, Transform target, float moveSpeed)
     {
         if (!CanMoveGuestToDrawingRoom(guest))
         {
@@ -2176,11 +2263,10 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         guest.MovingToDrawingRoom = true;
-        Transform drawingRoomEntry = ResolveDrawingRoomEntryPointForGuest(guest, group);
 
         SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to drawing room door.", this);
-        BeginGuestMoveTo(guest, drawingRoomEntry, "drawingRoomEntryPoint");
+        BeginGuestMoveTo(guest, target, "drawingRoomEntryPoint", moveSpeed);
     }
 
     private bool HasEntranceGroupReachedDrawingRoomExit(GuestGroupRuntimeState group)
@@ -2260,6 +2346,11 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.MovingToDrawingRoom = false;
             guest.Seated = true;
             guest.Handled = true;
+
+            if (guest.Mover != null)
+            {
+                guest.Mover.MoveSpeed = GetMoveSpeedForGuestObject(guest.GuestObject);
+            }
         }
 
         for (int i = 0; i < group.Guests.Count; i++)
@@ -3487,7 +3578,11 @@ public class Chapter1ArrivalController : MonoBehaviour
         RefreshGuestScalingNow();
     }
 
-    private void BeginGuestMoveTo(GuestRuntimeState guestState, Transform target, string fieldName)
+    private void BeginGuestMoveTo(
+        GuestRuntimeState guestState,
+        Transform target,
+        string fieldName,
+        float moveSpeed)
     {
         if (guestState == null)
         {
@@ -3509,7 +3604,9 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         mover.enabled = true;
-        mover.MoveSpeed = GetMoveSpeedForGuestObject(guestState.GuestObject);
+        mover.MoveSpeed = moveSpeed > 0f
+            ? moveSpeed
+            : GetMoveSpeedForGuestObject(guestState.GuestObject);
         StartGuestFootsteps(guestState);
         mover.MoveTo(target);
     }

@@ -574,6 +574,7 @@ public class Chapter2RegressionTests
         string guestLineIdBody = ExtractMethodBody(chapter1Text, "private static string GetChapter1GuestLineId");
         string checkActiveGroupsBody = ExtractMethodBody(chapter1Text, "private void CheckActiveGroupsReadyForDrawingRoom");
         string moveEntranceGroupBody = ExtractMethodBody(chapter1Text, "private IEnumerator MoveEntranceGroupToDrawingRoom");
+        string beginEntranceGroupMoveBody = ExtractMethodBody(chapter1Text, "private void BeginEntranceGroupMoveToDrawingRoom");
         string moveGuestBody = ExtractMethodBody(chapter1Text, "private void MoveGuestToDrawingRoom");
         string completeEntranceGroupBody = ExtractMethodBody(chapter1Text, "private void CompleteEntranceGroupDrawingRoomArrival");
         string completeOffscreenMovesBody = ExtractMethodBody(chapter1Text, "private void CompleteOffscreenDrawingRoomMoves");
@@ -615,11 +616,15 @@ public class Chapter2RegressionTests
             "Both guests' Drawing Room lines must finish before either guest walks.");
         Assert.That(moveEntranceGroupBody, Does.Not.Contain("QueueGuestLine(group.Guests[i], \"TO_DRAWING_ROOM\""), "Departure dialogue must not run concurrently with pair movement.");
         Assert.That(moveEntranceGroupBody, Does.Not.Contain("StartCoroutine(MoveGuestToDrawingRoom"), "Pair movement must be coordinated by one group-owned coroutine.");
-        Assert.That(moveEntranceGroupBody, Does.Contain("MoveGuestToDrawingRoom(group.Guests[i], group)"), "Both pair movers should be armed in one non-yielding loop.");
+        Assert.That(moveEntranceGroupBody, Does.Contain("BeginEntranceGroupMoveToDrawingRoom(group)"), "Both pair movers should be armed through one synchronized, non-yielding operation.");
+        Assert.That(beginEntranceGroupMoveBody, Does.Contain("sharedTravelDuration"), "Unequal pair routes should use one shared travel duration.");
+        Assert.That(beginEntranceGroupMoveBody, Does.Contain("distances[i] / defaultSpeed"), "The longest normal-speed route should determine pair travel time.");
+        Assert.That(beginEntranceGroupMoveBody, Does.Contain("CalculateSynchronizedMoveSpeed"), "Each guest should receive the speed needed to finish with their partner.");
+        Assert.That(beginEntranceGroupMoveBody, Does.Contain("MoveGuestToDrawingRoom(guest, targets[i], synchronizedSpeed)"), "Both synchronized movers should start in the same frame.");
         Assert.That(moveEntranceGroupBody, Does.Contain("while (!HasEntranceGroupReachedDrawingRoomExit(group))"), "The faster guest must wait until its partner reaches the exit.");
         Assert.That(moveEntranceGroupBody, Does.Contain("CompleteEntranceGroupDrawingRoomArrival(group)"), "The full pair should transfer rooms through one atomic finalizer.");
         int guestDialogueIndex = moveEntranceGroupBody.IndexOf("yield return SpeakGuestLine", System.StringComparison.Ordinal);
-        int beginPairMovementIndex = moveEntranceGroupBody.IndexOf("MoveGuestToDrawingRoom(group.Guests[i], group)", System.StringComparison.Ordinal);
+        int beginPairMovementIndex = moveEntranceGroupBody.IndexOf("BeginEntranceGroupMoveToDrawingRoom(group)", System.StringComparison.Ordinal);
         int pairBarrierIndex = moveEntranceGroupBody.IndexOf("while (!HasEntranceGroupReachedDrawingRoomExit(group))", System.StringComparison.Ordinal);
         int pairFinalizerIndex = moveEntranceGroupBody.LastIndexOf("CompleteEntranceGroupDrawingRoomArrival(group)", System.StringComparison.Ordinal);
         Assert.That(guestDialogueIndex, Is.GreaterThanOrEqualTo(0));

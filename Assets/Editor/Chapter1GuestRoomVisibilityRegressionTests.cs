@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
@@ -118,6 +119,18 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(sceneText, Does.Contain("m_Name: GuestDrawingRoomDoorTarget"), "Gameplay should expose an editable Entrance Hall target for the Drawing Room guest walk path.");
         Assert.That(sceneText, Does.Contain("anchorId: GuestDrawingRoomDoorTarget"), "The editable Drawing Room guest walk target should have a RoomAnchor id.");
         Assert.That(sceneText, Does.Contain("roomId: Grand Entrance Hall"), "The editable Drawing Room guest walk target should belong to the Entrance Hall.");
+        Assert.That(sceneText, Does.Contain("guestGroupCount: 4"), "Chapter 1 should retain four arrival groups.");
+        Assert.That(sceneText, Does.Contain("guestsPerArrivalGroup: 2"), "Every Chapter 1 arrival/departure group must remain a pair.");
+
+        Match targetPositionMatch = Regex.Match(
+            sceneText,
+            @"m_Name: GuestDrawingRoomDoorTarget[\s\S]{0,600}?m_LocalPosition: \{x: (?<x>-?[\d.]+), y: (?<y>-?[\d.]+), z:");
+        Assert.That(targetPositionMatch.Success, Is.True, "The Drawing Room departure target position should remain serialized and testable.");
+        float targetX = float.Parse(targetPositionMatch.Groups["x"].Value, CultureInfo.InvariantCulture);
+        float targetY = float.Parse(targetPositionMatch.Groups["y"].Value, CultureInfo.InvariantCulture);
+        Assert.That(targetX, Is.EqualTo(-704f).Within(0.01f), "The departure route should still end at the left Drawing Room passage.");
+        Assert.That(targetY, Is.EqualTo(-210f).Within(0.01f), "Guest feet should follow the lower floor route instead of crossing the rear wall.");
+        Assert.That(targetY, Is.LessThan(-156.5f), "The route target must stay below the Drawing Room threshold and inside the Entrance Hall walkable floor.");
     }
 
     [Test]
