@@ -178,6 +178,158 @@ public class StoryActorRoomStageLockingTests
     }
 
     [Test]
+    public void RoomStageBindingAndGuestScalingKeepVisibleFeetOnTheAnchor()
+    {
+        TestRig rig = CreateRig();
+        Texture2D bodyTexture = new Texture2D(20, 40);
+        Sprite bodySprite = Sprite.Create(
+            bodyTexture,
+            new Rect(0f, 0f, bodyTexture.width, bodyTexture.height),
+            new Vector2(0.5f, 0.5f),
+            20f);
+        SpriteRenderer bodyRenderer = rig.ActorState.GetComponent<SpriteRenderer>();
+        bodyRenderer.sprite = bodySprite;
+
+        try
+        {
+            GuestScaleParticipant participant = rig.ActorState.gameObject.AddComponent<GuestScaleParticipant>();
+            participant.SetCharacterId("guest_1");
+            participant.SetCurrentRoomId(rig.RoomContent.RoomName);
+            participant.ResolveScaleRoot();
+            participant.CaptureBaseScale(true);
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            rig.ActorState.PlaceAt(rig.Anchor);
+            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "initial foot binding");
+
+            participant.ApplyFinalScale(1.6f);
+            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "guest scale refresh");
+
+            rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
+            rig.CameraManager.SetRoomLookForPreview(0.6f, -0.25f, 0.8f);
+            Assert.That(ApplyBinding(rig.ActorState), Is.True);
+            participant.ApplyFinalScale(1.9f);
+            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "pan, zoom, and scale refresh");
+        }
+        finally
+        {
+            Object.DestroyImmediate(bodySprite);
+            Object.DestroyImmediate(bodyTexture);
+            rig.Destroy();
+        }
+    }
+
+    [Test]
+    public void GuestScaleDepthUsesTheActorsBoundRoomStageFootPoint()
+    {
+        TestRig rig = CreateRig();
+
+        try
+        {
+            GuestScaleParticipant participant = rig.ActorState.gameObject.AddComponent<GuestScaleParticipant>();
+            participant.SetCharacterId("guest_1");
+            participant.SetCurrentRoomId(rig.RoomContent.RoomName);
+            participant.ResolveScaleRoot();
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            rig.ActorState.PlaceAt(rig.Anchor);
+
+            Assert.That(
+                participant.ResolveRoomLocalY(rig.RoomContent.RoomName),
+                Is.EqualTo(rig.Anchor.localPosition.y).Within(0.001f),
+                "Guest scaling should sample the same room-local foot point that keeps the actor attached to its physical anchor.");
+        }
+        finally
+        {
+            rig.Destroy();
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator TransformWaypointMovementFollowsAnchorMovedDuringWalk()
+    {
+        TestRig rig = CreateRig();
+        RectTransform destination = new GameObject("MovingDestination", typeof(RectTransform)).GetComponent<RectTransform>();
+        destination.SetParent(rig.Stage, false);
+        destination.anchoredPosition = rig.Anchor.anchoredPosition + new Vector2(180f, 0f);
+
+        try
+        {
+            NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.MoveSpeed = 1000000f;
+            IEnumerator move = mover.MoveToRoutine(destination);
+
+            Assert.That(move.MoveNext(), Is.True, "The transform waypoint should begin with a movement frame.");
+            destination.anchoredPosition += new Vector2(140f, -70f);
+
+            int guard = 0;
+
+            while (move.MoveNext() && guard++ < 120)
+            {
+                yield return null;
+            }
+
+            Assert.That(guard, Is.LessThan(120), "The moving-anchor regression should finish promptly.");
+            Assert.That(
+                Vector2.Distance(rig.ActorState.transform.position, destination.position),
+                Is.LessThan(0.001f),
+                "A transform-based guest must finish at the physical anchor's current position after camera-stage movement.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(destination.gameObject);
+            rig.Destroy();
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator VisibleFeetWaypointMovementEndsOnTheLivePhysicalAnchor()
+    {
+        TestRig rig = CreateRig();
+        Texture2D bodyTexture = new Texture2D(20, 40);
+        Sprite bodySprite = Sprite.Create(
+            bodyTexture,
+            new Rect(0f, 0f, bodyTexture.width, bodyTexture.height),
+            new Vector2(0.5f, 0.5f),
+            20f);
+        SpriteRenderer bodyRenderer = rig.ActorState.GetComponent<SpriteRenderer>();
+        bodyRenderer.sprite = bodySprite;
+        RectTransform destination = new GameObject("MovingFootDestination", typeof(RectTransform)).GetComponent<RectTransform>();
+        destination.SetParent(rig.Stage, false);
+        destination.anchoredPosition = rig.Anchor.anchoredPosition + new Vector2(180f, 0f);
+
+        try
+        {
+            NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.MoveSpeed = 1000000f;
+            mover.AlignVisibleFeetToWaypoints = true;
+            IEnumerator move = mover.MoveToRoutine(destination);
+
+            Assert.That(move.MoveNext(), Is.True, "The foot-aligned waypoint should begin with a movement frame.");
+            destination.anchoredPosition += new Vector2(140f, -70f);
+
+            int guard = 0;
+
+            while (move.MoveNext() && guard++ < 120)
+            {
+                yield return null;
+            }
+
+            Vector2 visibleFeet = new Vector2(bodyRenderer.bounds.center.x, bodyRenderer.bounds.min.y);
+            Assert.That(guard, Is.LessThan(120), "The foot-aligned movement should finish promptly.");
+            Assert.That(
+                Vector2.Distance(visibleFeet, destination.position),
+                Is.LessThan(0.001f),
+                "The guest's visible feet, rather than its transform center, should finish on the anchor's current position.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(destination.gameObject);
+            Object.DestroyImmediate(bodySprite);
+            Object.DestroyImmediate(bodyTexture);
+            rig.Destroy();
+        }
+    }
+
+    [Test]
     public void WorldActorBindingUsesRoomPerspectiveProfileScale()
     {
         TestRig rig = CreateRig();
@@ -301,6 +453,14 @@ public class StoryActorRoomStageLockingTests
         Vector2 actorScreen = rig.Camera.WorldToScreenPoint(rig.ActorState.transform.position);
         Vector2 anchorScreen = RectTransformUtility.WorldToScreenPoint(null, rig.Anchor.position);
         Assert.That(Vector2.Distance(actorScreen, anchorScreen), Is.LessThanOrEqualTo(ScreenLockTolerance), context);
+    }
+
+    private static void AssertVisibleFeetLockedToAnchor(TestRig rig, SpriteRenderer renderer, string context)
+    {
+        Vector3 feetWorld = new Vector3(renderer.bounds.center.x, renderer.bounds.min.y, renderer.bounds.center.z);
+        Vector2 feetScreen = rig.Camera.WorldToScreenPoint(feetWorld);
+        Vector2 anchorScreen = RectTransformUtility.WorldToScreenPoint(null, rig.Anchor.position);
+        Assert.That(Vector2.Distance(feetScreen, anchorScreen), Is.LessThanOrEqualTo(ScreenLockTolerance), context);
     }
 
     private sealed class TestRig

@@ -75,7 +75,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     [Header("Required Anchors")]
     [SerializeField] private Transform frontDoorArrivalPoint;
-    [SerializeField] private Transform entranceHallGuestAnchor;
+    [SerializeField] private Transform[] entranceHallGuestSpots = new Transform[EntranceHallGuestSpotCount];
     [SerializeField, FormerlySerializedAs("butlerDoorSpot")] private Transform drawingRoomSideButlerSpot;
     [SerializeField] private Transform closetPoint;
     [SerializeField] private Transform drawingRoomEntryPoint;
@@ -95,10 +95,8 @@ public class Chapter1ArrivalController : MonoBehaviour
     [Header("Guests")]
     [SerializeField] private List<GuestArrivalConfig> guests = new List<GuestArrivalConfig>();
     [SerializeField] private bool useExistingSceneGuestsFirst = true;
-    [SerializeField] private float entranceGuestSpacing = 95f;
     [SerializeField] private float drawingRoomSeatSpacing = 86f;
     [SerializeField] private float guestMoveSpeed = 180f;
-    [SerializeField] private float worldEntranceGuestSpacing = 0.65f;
     [SerializeField] private float worldDrawingRoomSeatSpacing = 0.75f;
     [SerializeField] private float worldGuestMoveSpeed = 2.2f;
 
@@ -110,7 +108,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     [Header("Interactions")]
     [SerializeField] private bool createRuntimeHud = true;
     [SerializeField] private bool createRuntimeClickTargets = true;
-    [SerializeField] private bool snapGuestsIntoEntranceForFirstVisualPass = true;
     [SerializeField] private bool autoStoreCoatIfClosetMissing = false;
     [SerializeField] private float coatOffsetX = 34f;
     [SerializeField] private float coatOffsetY = 42f;
@@ -149,25 +146,19 @@ public class Chapter1ArrivalController : MonoBehaviour
     private Sprite runtimeCoatSprite;
     private Sprite runtimeGuestSprite;
     private bool subscribedToRoomChanges;
-    private bool hasWorldDoorCenterPosition;
-    private Vector3 worldDoorCenterPosition;
     private bool hasFrontDoorAnswerSpot;
     private Vector2 frontDoorAnswerSpot;
     private Coroutine guestRoomVisibilityRefreshRoutine;
-    private Transform guestEntranceSpawnPlacemark;
 
     private const string DoorAnswerTriggerName = "Door_answer_trigger";
     private const float CoatPickupReadyScreenDistance = 90f;
     private const float ClosetStorageReadyScreenDistance = 90f;
     private const float FrontDoorReadyScreenDistance = 90f;
     private const float FrontDoorApproachSampleRadius = 160f;
-    private const float EntranceWaitDepthStepMultiplier = 0.32f;
-    private const float EntranceWaitSlotSpacingMultiplier = 1.3f;
-    private const float EntranceWaitGroupSideStepMultiplier = -0.32f;
     private const int EntranceBanisterSafeWalkingSortingOrder = 1599;
-    private const string GuestEntranceSpawnPlacemarkId = "Placemark_guests_entrance";
+    private const int EntranceHallGuestSpotCount = 8;
     private const string FrontDoorGuestSpawnAnchorId = "GuestArrival_Door";
-    private const string EntranceHallGuestAnchorId = "EntranceHallGuestAnchor";
+    private const string EntranceHallGuestSpotPrefix = "EntranceGuestSpot_";
     private const string DrawingRoomDoorTargetAnchorId = "GuestDrawingRoomDoorTarget";
     private const string DrawingRoomSideButlerSpotAnchorId = "DrawingRoomSideButlerSpot";
     private const string LegacyButlerGreetingSpotAnchorId = "ButlerGreetingSpot";
@@ -227,6 +218,11 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void Awake()
     {
         ResolveReferences(false);
+    }
+
+    private void LateUpdate()
+    {
+        RefreshEntranceHallGuestDepthSorting();
     }
 
     private void OnEnable()
@@ -866,127 +862,11 @@ public class Chapter1ArrivalController : MonoBehaviour
         bool includeInactiveRenderers,
         out Vector3 feetWorldPoint)
     {
-        feetWorldPoint = Vector3.zero;
-
-        if (root == null)
-        {
-            return false;
-        }
-
-        Bounds combinedBounds = default;
-        bool hasBounds = false;
-
-        AccumulateGuestRendererBounds(root, ignoreCoatRenderers, includeInactiveRenderers, ref combinedBounds, ref hasBounds);
-
-        if (!hasBounds && ignoreCoatRenderers)
-        {
-            AccumulateGuestRendererBounds(root, false, includeInactiveRenderers, ref combinedBounds, ref hasBounds);
-        }
-
-        AccumulateGuestGraphicBounds(root, includeInactiveRenderers, ref combinedBounds, ref hasBounds);
-
-        if (!hasBounds)
-        {
-            return false;
-        }
-
-        feetWorldPoint = new Vector3(combinedBounds.center.x, combinedBounds.min.y, combinedBounds.center.z);
-        return true;
-    }
-
-    private static void AccumulateVisibleRendererBounds(
-        GameObject root,
-        bool ignoreCoatRenderers,
-        ref Bounds combinedBounds,
-        ref bool hasBounds)
-    {
-        AccumulateGuestRendererBounds(root, ignoreCoatRenderers, false, ref combinedBounds, ref hasBounds);
-    }
-
-    private static void AccumulateGuestRendererBounds(
-        GameObject root,
-        bool ignoreCoatRenderers,
-        bool includeInactiveRenderers,
-        ref Bounds combinedBounds,
-        ref bool hasBounds)
-    {
-        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-
-            if (renderer == null ||
-                (ignoreCoatRenderers && IsCoatVisualTransform(renderer.transform)))
-            {
-                continue;
-            }
-
-            if (!includeInactiveRenderers &&
-                (!renderer.enabled || !renderer.gameObject.activeInHierarchy))
-            {
-                continue;
-            }
-
-            IncludeBounds(renderer.bounds, ref combinedBounds, ref hasBounds);
-        }
-    }
-
-    private static void AccumulateVisibleGraphicBounds(
-        GameObject root,
-        ref Bounds combinedBounds,
-        ref bool hasBounds)
-    {
-        AccumulateGuestGraphicBounds(root, false, ref combinedBounds, ref hasBounds);
-    }
-
-    private static void AccumulateGuestGraphicBounds(
-        GameObject root,
-        bool includeInactiveRenderers,
-        ref Bounds combinedBounds,
-        ref bool hasBounds)
-    {
-        Graphic[] graphics = root.GetComponentsInChildren<Graphic>(true);
-        Vector3[] corners = new Vector3[4];
-
-        for (int i = 0; i < graphics.Length; i++)
-        {
-            Graphic graphic = graphics[i];
-
-            if (graphic == null ||
-                graphic.rectTransform == null)
-            {
-                continue;
-            }
-
-            if (!includeInactiveRenderers &&
-                (!graphic.enabled || !graphic.gameObject.activeInHierarchy))
-            {
-                continue;
-            }
-
-            graphic.rectTransform.GetWorldCorners(corners);
-            Bounds graphicBounds = new Bounds(corners[0], Vector3.zero);
-
-            for (int cornerIndex = 1; cornerIndex < corners.Length; cornerIndex++)
-            {
-                graphicBounds.Encapsulate(corners[cornerIndex]);
-            }
-
-            IncludeBounds(graphicBounds, ref combinedBounds, ref hasBounds);
-        }
-    }
-
-    private static void IncludeBounds(Bounds bounds, ref Bounds combinedBounds, ref bool hasBounds)
-    {
-        if (!hasBounds)
-        {
-            combinedBounds = bounds;
-            hasBounds = true;
-            return;
-        }
-
-        combinedBounds.Encapsulate(bounds);
+        return CharacterFootPositionUtility.TryGetWorldPoint(
+            root,
+            ignoreCoatRenderers,
+            includeInactiveRenderers,
+            out feetWorldPoint);
     }
 
     public void HandleClosetClicked()
@@ -1380,8 +1260,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         CancelPendingCoatPickup();
         CancelPendingClosetStorage();
         currentGuestIndex = -1;
-        hasWorldDoorCenterPosition = false;
-        worldDoorCenterPosition = Vector3.zero;
         hasFrontDoorAnswerSpot = false;
         frontDoorAnswerSpot = Vector2.zero;
         pendingGuestGroups.Clear();
@@ -1428,6 +1306,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             if (mover != null)
             {
                 mover.MoveSpeed = GetMoveSpeedForGuestObject(guestObject);
+                mover.AlignVisibleFeetToWaypoints = true;
                 mover.enabled = true;
             }
 
@@ -1611,9 +1490,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             yield break;
         }
 
-        int totalGuestBatchCount = CountGuestsInGroups(groupsToAdmit);
-        int entranceGuestSlotCount = Mathf.Max(GetRequestedGuestCount(), totalGuestBatchCount);
-
         int startedGuestCount = 0;
         bool queuedWelcome = false;
 
@@ -1644,7 +1520,7 @@ public class Chapter1ArrivalController : MonoBehaviour
                     queuedWelcome = true;
                 }
 
-                StartCoroutine(AdmitGuestToEntranceHall(guest, guest.GuestIndex, entranceGuestSlotCount));
+                StartCoroutine(AdmitGuestToEntranceHall(guest));
                 startedGuestCount++;
             }
         }
@@ -1658,7 +1534,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         CheckActiveGroupsReadyForDrawingRoom();
     }
 
-    private IEnumerator AdmitGuestToEntranceHall(GuestRuntimeState guest, int indexInDoorBatch, int batchCount)
+    private IEnumerator AdmitGuestToEntranceHall(GuestRuntimeState guest)
     {
         if (guest == null)
         {
@@ -1666,9 +1542,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         EnsureGuestHiddenBeforeArrival(guest);
-        bool useWorldSafePlacement = IsWorldSpaceGuestObject(guest.GuestObject);
-        PlaceGuestAtDoorArrival(guest, indexInDoorBatch, batchCount);
-
         if (guest.ActorState != null)
         {
             guest.ActorState.SetCurrentRoom(entryRoomId);
@@ -1676,8 +1549,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.SetInteractable(false);
         }
 
-        EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing);
-        RefreshGuestScalingNow();
+        PrepareGuestAtDoorArrival(guest);
         PrepareGuestCoatForArrival(guest);
         SetGuestState(guest, GuestArrivalState.Arriving);
         ForceGuestVisibleForDoorFlow(guest);
@@ -1690,21 +1562,12 @@ public class Chapter1ArrivalController : MonoBehaviour
             QueueGuestLine(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
         }
 
-        Transform waitSpot;
+        Transform waitSpot = GetEntranceHallGuestSpot(guest);
 
-        if (useWorldSafePlacement)
+        if (waitSpot == null)
         {
-            waitSpot = CreateRuntimeAnchor(
-                $"EntranceWait_{guest.Config.GuestId}",
-                GetWorldEntranceWaitPosition(guest, indexInDoorBatch, batchCount),
-                null);
-        }
-        else
-        {
-            waitSpot = CreateRuntimeAnchor(
-                $"EntranceWait_{guest.Config.GuestId}",
-                GetEntranceWaitPosition(guest, indexInDoorBatch, batchCount),
-                frontDoorArrivalPoint);
+            Debug.LogError($"[Chapter1] Missing authored Entrance Hall spot for guest index {guest.GuestIndex}.", this);
+            yield break;
         }
 
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to entrance wait spot.", this);
@@ -1720,6 +1583,18 @@ public class Chapter1ArrivalController : MonoBehaviour
         RefreshGuestScalingNow();
         OfferGuestCoat(guest);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance wait spot.", this);
+    }
+
+    private void PrepareGuestAtDoorArrival(GuestRuntimeState guest)
+    {
+        if (guest == null)
+        {
+            return;
+        }
+
+        PlaceGuestAtDoorArrival(guest);
+        EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing);
+        PlaceGuestAtDoorArrival(guest);
     }
 
     private void PrepareGuestCoatForArrival(GuestRuntimeState guest)
@@ -3055,71 +2930,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
-    private void ActivateAuthoredChapterGuestObject(GuestRuntimeState guestState, int index, int batchCount)
-    {
-        GameObject guestObject = guestState != null ? guestState.GuestObject : null;
-
-        if (guestObject == null)
-        {
-            return;
-        }
-
-        DisableAmbientWalkers(guestObject);
-        guestObject.SetActive(true);
-
-        if (guestObject.transform is RectTransform)
-        {
-            PlaceChapterSceneGuestAtEntrance(guestState, index, batchCount);
-        }
-
-        DisableAmbientWalkers(guestObject);
-
-        ActorRoomState actorState = guestState != null ? guestState.ActorState : null;
-
-        if (actorState == null)
-        {
-            actorState = guestObject.GetComponent<ActorRoomState>();
-        }
-
-        if (actorState != null)
-        {
-            actorState.enabled = true;
-            actorState.SetCurrentRoom(entryRoomId);
-            actorState.SetAvailableInCurrentChapter(true);
-            actorState.SetVisibleByChapterState(true);
-            actorState.SetInteractable(false);
-            actorState.ApplyState();
-        }
-
-        if (actorState == null)
-        {
-            ForceRenderersAndCollidersOn(guestObject);
-        }
-
-        ApplyEntranceHallGuestSorting(guestState);
-        Debug.Log($"Scene guest activated: {guestObject.name}", this);
-    }
-
-    private void PlaceChapterSceneGuestAtEntrance(GuestRuntimeState guestState, int index, int batchCount)
-    {
-        GameObject guestObject = guestState != null ? guestState.GuestObject : null;
-
-        if (guestObject == null)
-        {
-            return;
-        }
-
-        RectTransform rectTransform = guestObject.transform as RectTransform;
-
-        if (rectTransform != null)
-        {
-            rectTransform.anchoredPosition = GetEntranceWaitAnchoredPosition(guestState, index, batchCount);
-            return;
-        }
-
-        guestObject.transform.position = GetEntranceWaitPosition(guestState, index, batchCount);
-    }
-
     private void PlaceGuestAt(GuestRuntimeState guestState, Transform target, string fieldName)
     {
         if (guestState == null)
@@ -3202,30 +3012,25 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
-    private void PlaceGuestAtDoorArrival(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
+    private void PlaceGuestAtDoorArrival(GuestRuntimeState guestState)
     {
         if (guestState == null)
         {
             return;
         }
 
-        Transform profileTarget = GetWorldDoorArrivalTarget(guestState);
-        Vector2 roomLocalPairOffset = GetDoorArrivalPairSlotOffset(
-            guestState,
-            fallbackIndex,
-            fallbackCount,
-            entranceGuestSpacing * 0.55f);
+        Transform profileTarget = GetWorldDoorArrivalTarget();
 
-        if (TryPlaceProjectedGuestFeetAtTarget(guestState, profileTarget, roomLocalPairOffset))
+        if (TryPlaceProjectedGuestFeetAtTarget(guestState, profileTarget))
         {
             return;
         }
 
-        Vector3 feetPosition = GetWorldDoorArrivalPosition(guestState, fallbackIndex, fallbackCount);
+        Vector3 feetPosition = GetWorldDoorArrivalBasePosition(guestState);
         PlaceGuestFeetAtPosition(guestState, feetPosition, profileTarget);
     }
 
-    private bool TryPlaceProjectedGuestFeetAtTarget(GuestRuntimeState guestState, Transform target, Vector2 roomLocalPairOffset)
+    private bool TryPlaceProjectedGuestFeetAtTarget(GuestRuntimeState guestState, Transform target)
     {
         if (target == null)
         {
@@ -3247,7 +3052,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             return false;
         }
 
-        projection.SetRoomLocalFootPoint(footPoint + roomLocalPairOffset);
+        projection.SetRoomLocalFootPoint(footPoint);
         ClearGuestRoomStagePointBinding(guestState);
         return true;
     }
@@ -3280,7 +3085,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             targetPosition.z = guestTransform.position.z;
             guestTransform.position = targetPosition;
-            ClearGuestRoomStagePointBinding(guestState);
+            BindGuestToRoomStagePoint(guestState, profileTarget);
             return;
         }
 
@@ -3360,7 +3165,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             {
                 if (pointClickMovements[i] != null)
                 {
-                    pointClickMovements[i].SetPerspectiveScaleEnabled(false);
+                    pointClickMovements[i].SetPerspectiveScaleEnabled(false, false);
                 }
             }
         }
@@ -4292,7 +4097,6 @@ public class Chapter1ArrivalController : MonoBehaviour
                     MakeGuestId(guestObject.name, insertIndex),
                     displayName,
                     guestObject,
-                    frontDoorArrivalPoint,
                     drawingRoomEntryPoint,
                     ResolveSeatForGuest(insertIndex),
                     GetDefaultGreeting(insertIndex),
@@ -4311,7 +4115,6 @@ public class Chapter1ArrivalController : MonoBehaviour
                 MakeGuestId(guestObject.name, insertIndex),
                 newDisplayName,
                 guestObject,
-                frontDoorArrivalPoint,
                 drawingRoomEntryPoint,
                 ResolveSeatForGuest(insertIndex),
                 GetDefaultGreeting(insertIndex),
@@ -4370,7 +4173,6 @@ public class Chapter1ArrivalController : MonoBehaviour
                 guestId,
                 displayName,
                 guestObject,
-                frontDoorArrivalPoint,
                 drawingRoomEntryPoint,
                 ResolveSeatForGuest(i),
                 GetDefaultGreeting(i),
@@ -4416,7 +4218,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         string guestName = GetChapterGuestObjectName(index);
         GameObject template = FindRuntimeGuestTemplate();
-        Vector3 startPosition = GetWorldEntranceWaitPosition(index % Mathf.Max(1, guestsPerArrivalGroup), Mathf.Max(1, guestsPerArrivalGroup));
+        Vector3 startPosition = GetWorldDoorArrivalBasePosition(null);
         GameObject guestObject;
 
         if (template != null)
@@ -4505,7 +4307,6 @@ public class Chapter1ArrivalController : MonoBehaviour
                 MakeGuestId(candidate.name, nextIndex),
                 displayName,
                 candidate,
-                frontDoorArrivalPoint,
                 drawingRoomEntryPoint,
                 ResolveSeatForGuest(nextIndex),
                 GetDefaultGreeting(nextIndex),
@@ -4801,11 +4602,14 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        ResolveReferences(false);
-
         if (playerMovement == null)
         {
-            return;
+            ResolveReferences(false);
+
+            if (playerMovement == null)
+            {
+                return;
+            }
         }
 
         int sortingOrder = GetEntranceHallGuestSortingOrder(guestState, renderers);
@@ -4829,6 +4633,36 @@ public class Chapter1ArrivalController : MonoBehaviour
             {
                 spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
             }
+        }
+    }
+
+    private void RefreshEntranceHallGuestDepthSorting()
+    {
+        if (!sequenceActive)
+        {
+            return;
+        }
+
+        if (playerMovement == null)
+        {
+            ResolveReferences(false);
+
+            if (playerMovement == null)
+            {
+                return;
+            }
+        }
+
+        for (int i = 0; i < guestStates.Count; i++)
+        {
+            GuestRuntimeState guestState = guestStates[i];
+
+            if (guestState == null || !guestState.EnteredEntranceHall)
+            {
+                continue;
+            }
+
+            ApplyEntranceHallGuestSorting(guestState);
         }
     }
 
@@ -5689,121 +5523,47 @@ public class Chapter1ArrivalController : MonoBehaviour
             : Mathf.Max(0.01f, guestMoveSpeed);
     }
 
-    private Vector3 GetEntranceWaitPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
+    private Transform GetEntranceHallGuestSpot(GuestRuntimeState guestState)
     {
-        Vector3 basePosition = GetEntranceWaitBasePosition();
-        Vector2 offset = GetEntranceGroupOffset(
-            guestState,
-            fallbackIndex,
-            fallbackCount,
-            entranceGuestSpacing,
-            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
-        return basePosition + new Vector3(offset.x, offset.y, 0f);
-    }
+        ResolveEntranceHallGuestSpots();
+        int guestIndex = guestState != null ? guestState.GuestIndex : -1;
 
-    private Vector3 GetEntranceWaitPosition(int indexInBatch, int batchCount)
-    {
-        Vector3 basePosition = GetEntranceWaitBasePosition();
-        Vector2 offset = GetEntranceGroupOffset(
-            null,
-            indexInBatch,
-            batchCount,
-            entranceGuestSpacing,
-            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
-        return basePosition + new Vector3(offset.x, offset.y, 0f);
-    }
-
-    private Vector3 GetEntranceWaitBasePosition()
-    {
-        Transform anchor = GetEntranceHallGuestAnchor();
-
-        if (anchor != null)
+        if (guestIndex < 0 || guestIndex >= entranceHallGuestSpots.Length)
         {
-            if (TryGetEntranceHallGuestAnchorWorldPosition(null, out Vector3 anchorPosition))
+            return null;
+        }
+
+        return entranceHallGuestSpots[guestIndex];
+    }
+
+    private void ResolveEntranceHallGuestSpots()
+    {
+        if (entranceHallGuestSpots == null || entranceHallGuestSpots.Length != EntranceHallGuestSpotCount)
+        {
+            Array.Resize(ref entranceHallGuestSpots, EntranceHallGuestSpotCount);
+        }
+
+        for (int i = 0; i < EntranceHallGuestSpotCount; i++)
+        {
+            if (entranceHallGuestSpots[i] != null)
             {
-                return anchorPosition;
+                continue;
             }
 
-            return anchor.position;
+            string anchorId = $"{EntranceHallGuestSpotPrefix}{i + 1:00}";
+            entranceHallGuestSpots[i] = FindAnchor(anchorId, entryRoomId);
+
+            if (entranceHallGuestSpots[i] == null)
+            {
+                GameObject anchorObject = FindSceneObjectByExactName(anchorId);
+                entranceHallGuestSpots[i] = anchorObject != null ? anchorObject.transform : null;
+            }
         }
-
-        Vector3 basePosition = frontDoorArrivalPoint != null
-            ? frontDoorArrivalPoint.position
-            : transform.position;
-
-        if (!snapGuestsIntoEntranceForFirstVisualPass)
-        {
-            return basePosition;
-        }
-
-        if (playerButlerReference != null)
-        {
-            return playerButlerReference.transform.position;
-        }
-
-        return basePosition;
-    }
-
-    private Vector3 GetWorldDoorArrivalPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
-    {
-        Vector3 basePosition = GetWorldDoorArrivalBasePosition(guestState);
-        Vector2 pairOffset = GetDoorArrivalPairSlotOffset(
-            guestState,
-            fallbackIndex,
-            fallbackCount,
-            worldEntranceGuestSpacing * 0.55f);
-        return basePosition + new Vector3(pairOffset.x, pairOffset.y, 0f);
-    }
-
-    private Vector3 GetWorldDoorArrivalPosition(int indexInBatch, int batchCount)
-    {
-        Vector3 basePosition = GetWorldDoorArrivalBasePosition(null);
-        Vector2 pairOffset = GetDoorArrivalPairSlotOffset(
-            null,
-            indexInBatch,
-            batchCount,
-            worldEntranceGuestSpacing * 0.55f);
-        return basePosition + new Vector3(pairOffset.x, pairOffset.y, 0f);
-    }
-
-    private Vector2 GetDoorArrivalPairSlotOffset(
-        GuestRuntimeState guestState,
-        int fallbackIndex,
-        int fallbackCount,
-        float spacing)
-    {
-        GetEntranceGroupSlot(guestState, fallbackIndex, fallbackCount, out int slotInGroup, out _, out int groupSize);
-        float centeredSlot = slotInGroup - (groupSize - 1) * 0.5f;
-        return new Vector2(centeredSlot * spacing, 0f);
-    }
-
-    private Vector3 GetWorldEntranceWaitPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
-    {
-        Vector3 basePosition = GetWorldEntranceCenterPosition(guestState);
-        Vector2 offset = GetWorldEntranceGroupOffset(
-            guestState,
-            fallbackIndex,
-            fallbackCount,
-            worldEntranceGuestSpacing,
-            GetWorldEntranceWaitBaseYOffset());
-        return basePosition + new Vector3(offset.x, offset.y, 0f);
-    }
-
-    private Vector3 GetWorldEntranceWaitPosition(int indexInBatch, int batchCount)
-    {
-        Vector3 basePosition = GetWorldEntranceCenterPosition();
-        Vector2 offset = GetWorldEntranceGroupOffset(
-            null,
-            indexInBatch,
-            batchCount,
-            worldEntranceGuestSpacing,
-            GetWorldEntranceWaitBaseYOffset());
-        return basePosition + new Vector3(offset.x, offset.y, 0f);
     }
 
     private Vector3 GetWorldDoorArrivalBasePosition(GuestRuntimeState guestState)
     {
-        Transform doorAnchor = GetWorldDoorArrivalTarget(guestState);
+        Transform doorAnchor = GetWorldDoorArrivalTarget();
 
         if (TryGetWorldPositionForGuestTarget(GetWorldPlacementDepthReference(guestState), doorAnchor, out Vector3 doorPosition))
         {
@@ -5815,40 +5575,19 @@ public class Chapter1ArrivalController : MonoBehaviour
             return answerSpotPosition;
         }
 
-        return GetWorldEntranceCenterPosition(guestState);
+        Transform depthReference = GetWorldPlacementDepthReference(guestState);
+        return depthReference != null ? depthReference.position : transform.position;
     }
 
-    private Transform GetWorldDoorArrivalTarget(GuestRuntimeState guestState)
+    private Transform GetWorldDoorArrivalTarget()
     {
-        Transform placemark = GetGuestEntranceSpawnPlacemark();
-
-        if (placemark != null)
+        if (frontDoorArrivalPoint != null)
         {
-            return placemark;
+            return frontDoorArrivalPoint;
         }
 
-        return guestState != null && guestState.Config != null
-            ? guestState.Config.GetFrontDoorArrivalPoint(frontDoorArrivalPoint)
-            : frontDoorArrivalPoint;
-    }
-
-    private Transform GetGuestEntranceSpawnPlacemark()
-    {
-        if (guestEntranceSpawnPlacemark != null)
-        {
-            return guestEntranceSpawnPlacemark;
-        }
-
-        guestEntranceSpawnPlacemark = FindAnchor(GuestEntranceSpawnPlacemarkId, entryRoomId);
-
-        if (guestEntranceSpawnPlacemark != null)
-        {
-            return guestEntranceSpawnPlacemark;
-        }
-
-        GameObject placemarkObject = FindSceneObjectByExactName(GuestEntranceSpawnPlacemarkId);
-        guestEntranceSpawnPlacemark = placemarkObject != null ? placemarkObject.transform : null;
-        return guestEntranceSpawnPlacemark;
+        frontDoorArrivalPoint = FindAnchor(FrontDoorGuestSpawnAnchorId, entryRoomId);
+        return frontDoorArrivalPoint;
     }
 
     private bool TryGetWorldFrontDoorAnswerSpot(out Vector3 answerSpotPosition)
@@ -5903,7 +5642,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         Transform entryAnchor = guestState != null && guestState.Config != null
             ? guestState.Config.GetDrawingRoomEntryPoint(drawingRoomEntryPoint)
             : drawingRoomEntryPoint;
-        return GetWorldVisibleAnchorPosition(guestState, entryAnchor, GetWorldEntranceCenterPosition(guestState));
+        Vector3 fallbackPosition = depthReference != null ? depthReference.position : transform.position;
+        return GetWorldVisibleAnchorPosition(guestState, entryAnchor, fallbackPosition);
     }
 
     private Vector3 GetWorldVisibleAnchorPosition(GuestRuntimeState guestState, Transform anchor, Vector3 fallbackPosition)
@@ -6001,225 +5741,12 @@ public class Chapter1ArrivalController : MonoBehaviour
         return new Vector2(centeredColumn * spacing, -row * spacing * 0.8f);
     }
 
-    private Vector2 GetWorldEntranceGroupOffset(
-        GuestRuntimeState guestState,
-        int fallbackIndex,
-        int fallbackCount,
-        float spacing,
-        float baseY)
-    {
-        GetEntranceGroupSlot(guestState, fallbackIndex, fallbackCount, out int slotInGroup, out int groupIndex, out int groupSize);
-        float centeredSlot = slotInGroup - (groupSize - 1) * 0.5f;
-        return new Vector2(
-            centeredSlot * spacing * EntranceWaitSlotSpacingMultiplier +
-                groupIndex * spacing * EntranceWaitGroupSideStepMultiplier,
-            baseY - groupIndex * spacing * EntranceWaitDepthStepMultiplier);
-    }
-
-    private Vector3 GetWorldEntranceCenterPosition()
-    {
-        return GetWorldEntranceCenterPosition(null);
-    }
-
-    private Vector3 GetWorldEntranceCenterPosition(GuestRuntimeState guestState)
-    {
-        if (TryGetEntranceHallGuestAnchorWorldPosition(guestState, out Vector3 anchorPosition))
-        {
-            return anchorPosition;
-        }
-
-        if (hasWorldDoorCenterPosition)
-        {
-            return worldDoorCenterPosition;
-        }
-
-        if (TryGetAverageAuthoredChapterGuestPosition(out Vector3 averagePosition))
-        {
-            worldDoorCenterPosition = averagePosition;
-            hasWorldDoorCenterPosition = true;
-            return averagePosition;
-        }
-
-        if (playerButlerReference != null)
-        {
-            worldDoorCenterPosition = playerButlerReference.transform.position + new Vector3(0f, 1.15f, 0f);
-            hasWorldDoorCenterPosition = true;
-            return worldDoorCenterPosition;
-        }
-
-        worldDoorCenterPosition = transform.position;
-        hasWorldDoorCenterPosition = true;
-        return worldDoorCenterPosition;
-    }
-
-    private bool TryGetEntranceHallGuestAnchorWorldPosition(GuestRuntimeState guestState, out Vector3 worldPosition)
-    {
-        worldPosition = Vector3.zero;
-        Transform anchor = GetEntranceHallGuestAnchor();
-
-        if (anchor == null)
-        {
-            return false;
-        }
-
-        if (TryGetWorldPositionForGuestTarget(GetWorldPlacementDepthReference(guestState), anchor, out worldPosition))
-        {
-            return true;
-        }
-
-        if (anchor.GetComponentInParent<RoomContentGroup>(true) == null && !(anchor is RectTransform))
-        {
-            worldPosition = anchor.position;
-            return true;
-        }
-
-        return false;
-    }
-
-    private Transform GetEntranceHallGuestAnchor()
-    {
-        if (entranceHallGuestAnchor != null)
-        {
-            return entranceHallGuestAnchor;
-        }
-
-        entranceHallGuestAnchor = FindAnchor(EntranceHallGuestAnchorId, entryRoomId);
-
-        if (entranceHallGuestAnchor != null)
-        {
-            return entranceHallGuestAnchor;
-        }
-
-        GameObject anchorObject = FindSceneObjectByExactName(EntranceHallGuestAnchorId);
-        entranceHallGuestAnchor = anchorObject != null ? anchorObject.transform : null;
-        return entranceHallGuestAnchor;
-    }
-
     private Vector3 GetWorldDrawingRoomCenterPosition()
     {
-        return GetWorldEntranceCenterPosition() + new Vector3(0f, 0.35f, 0f);
-    }
-
-    private bool TryGetAverageAuthoredChapterGuestPosition(out Vector3 averagePosition)
-    {
-        Vector3 sum = Vector3.zero;
-        int count = 0;
-
-        for (int i = 0; i < ChapterGuestNameAliases.Length; i++)
-        {
-            GameObject guestObject = FindChapterGuestObjectByIndex(i);
-
-            if (guestObject == null || runtimeGeneratedGuestObjects.Contains(guestObject))
-            {
-                continue;
-            }
-
-            sum += guestObject.transform.position;
-            count++;
-        }
-
-        if (count == 0)
-        {
-            averagePosition = Vector3.zero;
-            return false;
-        }
-
-        averagePosition = sum / count;
-        return true;
-    }
-
-    private Vector2 GetEntranceWaitAnchoredPosition(GuestRuntimeState guestState, int fallbackIndex, int fallbackCount)
-    {
-        Vector2 basePosition = GetEntranceWaitBaseAnchoredPosition();
-        return basePosition + GetEntranceGroupOffset(
-            guestState,
-            fallbackIndex,
-            fallbackCount,
-            entranceGuestSpacing,
-            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
-    }
-
-    private Vector2 GetEntranceWaitAnchoredPosition(int indexInBatch, int batchCount)
-    {
-        Vector2 basePosition = GetEntranceWaitBaseAnchoredPosition();
-        float centeredIndex = indexInBatch - (batchCount - 1) * 0.5f;
-        Vector2 offset = new Vector2(
-            centeredIndex * entranceGuestSpacing,
-            GetEntranceWaitBaseYOffset(entranceGuestSpacing));
-        return basePosition + offset;
-    }
-
-    private Vector2 GetEntranceWaitBaseAnchoredPosition()
-    {
-        Transform anchor = GetEntranceHallGuestAnchor();
-
-        if (anchor != null)
-        {
-            return new Vector2(anchor.localPosition.x, anchor.localPosition.y);
-        }
-
-        return frontDoorArrivalPoint != null
-            ? new Vector2(frontDoorArrivalPoint.localPosition.x, frontDoorArrivalPoint.localPosition.y)
-            : Vector2.zero;
-    }
-
-    private float GetEntranceWaitBaseYOffset(float spacing)
-    {
-        if (GetEntranceHallGuestAnchor() != null)
-        {
-            return 0f;
-        }
-
-        return snapGuestsIntoEntranceForFirstVisualPass ? spacing * 0.65f : -spacing * 0.55f;
-    }
-
-    private float GetWorldEntranceWaitBaseYOffset()
-    {
-        return GetEntranceHallGuestAnchor() != null ? 0f : -worldEntranceGuestSpacing * 1.5f;
-    }
-
-    private Vector2 GetEntranceGroupOffset(
-        GuestRuntimeState guestState,
-        int fallbackIndex,
-        int fallbackCount,
-        float spacing)
-    {
-        return GetEntranceGroupOffset(
-            guestState,
-            fallbackIndex,
-            fallbackCount,
-            spacing,
-            GetEntranceWaitBaseYOffset(spacing));
-    }
-
-    private Vector2 GetEntranceGroupOffset(
-        GuestRuntimeState guestState,
-        int fallbackIndex,
-        int fallbackCount,
-        float spacing,
-        float baseY)
-    {
-        GetEntranceGroupSlot(guestState, fallbackIndex, fallbackCount, out int slotInGroup, out int groupIndex, out int groupSize);
-        float centeredSlot = slotInGroup - (groupSize - 1) * 0.5f;
-        return new Vector2(
-            centeredSlot * spacing * EntranceWaitSlotSpacingMultiplier +
-                groupIndex * spacing * EntranceWaitGroupSideStepMultiplier,
-            baseY - groupIndex * spacing * EntranceWaitDepthStepMultiplier);
-    }
-
-    private void GetEntranceGroupSlot(
-        GuestRuntimeState guestState,
-        int fallbackIndex,
-        int fallbackCount,
-        out int slotInGroup,
-        out int groupIndex,
-        out int groupSize)
-    {
-        groupSize = Mathf.Max(1, guestsPerArrivalGroup);
-        int safeFallbackIndex = Mathf.Clamp(fallbackIndex, 0, Mathf.Max(0, fallbackCount - 1));
-        int guestIndex = guestState != null ? Mathf.Max(0, guestState.GuestIndex) : safeFallbackIndex;
-        slotInGroup = guestIndex % groupSize;
-        groupIndex = guestState != null ? Mathf.Max(0, guestState.GroupIndex) : guestIndex / groupSize;
+        Vector3 fallbackPosition = playerButlerReference != null
+            ? playerButlerReference.transform.position
+            : transform.position;
+        return GetWorldVisibleAnchorPosition(null, drawingRoomEntryPoint, fallbackPosition) + new Vector3(0f, 0.35f, 0f);
     }
 
     private bool TryGetAnchoredPositionForGuestTarget(GuestRuntimeState guestState, Transform target, out Vector2 anchoredPosition)
@@ -6567,26 +6094,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         return count;
     }
 
-    private static int CountGuestsInGroups(List<GuestGroupRuntimeState> groups)
-    {
-        int count = 0;
-
-        if (groups == null)
-        {
-            return count;
-        }
-
-        for (int i = 0; i < groups.Count; i++)
-        {
-            if (groups[i] != null)
-            {
-                count += groups[i].Guests.Count;
-            }
-        }
-
-        return count;
-    }
-
     private string GetDefaultGreeting(int index)
     {
         switch (Mathf.Clamp(index, 0, 7))
@@ -6915,15 +6422,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             frontDoorArrivalPoint = FindAnchor(FrontDoorGuestSpawnAnchorId, entryRoomId);
         }
 
-        if (guestEntranceSpawnPlacemark == null)
-        {
-            guestEntranceSpawnPlacemark = FindAnchor(GuestEntranceSpawnPlacemarkId, entryRoomId);
-        }
-
-        if (entranceHallGuestAnchor == null)
-        {
-            entranceHallGuestAnchor = FindAnchor(EntranceHallGuestAnchorId, entryRoomId);
-        }
+        ResolveEntranceHallGuestSpots();
 
         if (drawingRoomSideButlerSpot == null)
         {

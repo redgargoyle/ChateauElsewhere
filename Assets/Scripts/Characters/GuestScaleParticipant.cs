@@ -698,6 +698,16 @@ public sealed class GuestScaleParticipant : MonoBehaviour
             return projectedEntity.RoomLocalFootPoint.y;
         }
 
+        ActorRoomState actorState = GetComponent<ActorRoomState>();
+        actorState ??= GetComponentInParent<ActorRoomState>(true);
+
+        if (actorState != null &&
+            actorState.TryGetRoomLocalFootPoint(out string actorRoomId, out Vector2 actorFootPoint) &&
+            (string.IsNullOrWhiteSpace(roomContext) || GuestRoomScaleCalibration.SameRoom(actorRoomId, roomContext)))
+        {
+            return actorFootPoint.y;
+        }
+
         Transform root = ResolveScaleRoot();
         RoomContentGroup roomContent = root != null ? root.GetComponentInParent<RoomContentGroup>(true) : null;
 
@@ -786,8 +796,35 @@ public sealed class GuestScaleParticipant : MonoBehaviour
             signedTargetY,
             referenceScale.z);
         bool changed = (root.localScale - targetScale).sqrMagnitude > 0.000001f;
+        GameObject footprintRoot = ResolveFootprintRoot(root);
+        Vector3 feetBeforeScale = Vector3.zero;
+        bool hasFeetBeforeScale = changed && CharacterFootPositionUtility.TryGetWorldPoint(
+            footprintRoot,
+            true,
+            false,
+            out feetBeforeScale);
         root.localScale = targetScale;
+
+        if (hasFeetBeforeScale &&
+            CharacterFootPositionUtility.TryGetWorldPoint(footprintRoot, true, false, out Vector3 feetAfterScale))
+        {
+            Vector3 footCorrection = feetBeforeScale - feetAfterScale;
+            footCorrection.z = 0f;
+            root.position += footCorrection;
+        }
+
         return changed;
+    }
+
+    private GameObject ResolveFootprintRoot(Transform scaleTransform)
+    {
+        ActorRoomState actorState = GetComponent<ActorRoomState>();
+        actorState ??= GetComponentInParent<ActorRoomState>(true);
+        return actorState != null
+            ? actorState.gameObject
+            : scaleTransform != null
+            ? scaleTransform.gameObject
+            : gameObject;
     }
 
     public static bool NameLooksExcludedFromBodyScale(string value)

@@ -7,6 +7,7 @@ public class NPCWaypointMover : MonoBehaviour
     [SerializeField] private float moveSpeed = 2.2f;
     [SerializeField] private float stopDistance = 0.03f;
     [SerializeField] private bool preserveStartingZ = true;
+    [SerializeField] private bool alignVisibleFeetToWaypoints;
     [SerializeField, Range(0.1f, 1f)] private float horizontalDirectionThreshold = 0.55f;
     [SerializeField] private RoomPersonWalker2D ambientWalker;
     [SerializeField] private RoomProjectedEntity roomProjection;
@@ -23,6 +24,11 @@ public class NPCWaypointMover : MonoBehaviour
 
     public bool IsMoving => isMoving;
     public bool IsSpeechPaused => speechPauseCount > 0;
+    public bool AlignVisibleFeetToWaypoints
+    {
+        get => alignVisibleFeetToWaypoints;
+        set => alignVisibleFeetToWaypoints = value;
+    }
     public float MoveSpeed
     {
         get => moveSpeed;
@@ -92,10 +98,16 @@ public class NPCWaypointMover : MonoBehaviour
 
         ReleaseRoomStageBindingForTransformMotion();
         isMoving = true;
-        Vector3 targetPosition = GetTargetPosition(target);
 
-        while (Vector2.Distance(transform.position, targetPosition) > stopDistance)
+        while (target != null)
         {
+            Vector3 targetPosition = GetTargetPosition(target);
+
+            if (Vector2.Distance(transform.position, targetPosition) <= stopDistance)
+            {
+                break;
+            }
+
             if (IsSpeechPaused)
             {
                 ApplySpeechPauseIdle();
@@ -113,7 +125,11 @@ public class NPCWaypointMover : MonoBehaviour
             yield return null;
         }
 
-        transform.position = targetPosition;
+        if (target != null)
+        {
+            transform.position = GetTargetPosition(target);
+        }
+
         UpdateAnimator(Vector2.zero, false);
         isMoving = false;
         moveRoutine = null;
@@ -241,6 +257,14 @@ public class NPCWaypointMover : MonoBehaviour
     private Vector3 GetTargetPosition(Transform target)
     {
         Vector3 targetPosition = target.position;
+
+        if (alignVisibleFeetToWaypoints &&
+            CharacterFootPositionUtility.TryGetWorldPoint(gameObject, true, false, out Vector3 feetWorldPoint))
+        {
+            Vector3 feetOffset = feetWorldPoint - transform.position;
+            targetPosition.x -= feetOffset.x;
+            targetPosition.y -= feetOffset.y;
+        }
 
         if (preserveStartingZ)
         {
