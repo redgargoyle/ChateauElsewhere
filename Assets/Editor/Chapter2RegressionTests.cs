@@ -563,6 +563,7 @@ public class Chapter2RegressionTests
     {
         string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
         string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
+        string hudText = File.ReadAllText(Chapter2InteractionHUDPath);
         string searchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
         string introText = File.ReadAllText(ChapterIntroUIPath);
         string chapterManagerText = File.ReadAllText(ChapterManagerPath);
@@ -614,15 +615,20 @@ public class Chapter2RegressionTests
         Assert.That(chapter1Text, Does.Contain("At last. I had begun composing my obituary in the frost."), "Chapter 1 delayed fallback lines should match the generated voice script.");
         Assert.That(chapter1Text, Does.Contain("It is rather cold out there, and colder still when one is expected."), "Chapter 1 delayed fallback lines should match the generated voice script.");
 
-        Assert.That(chapter2Text, Does.Contain("ShowGuestConversationWithSubtitle"), "Chapter 2 should preserve the existing dialogue panel and choices.");
-        Assert.That(holdChoicesBody, Does.Contain("SetDialogueSkipAction(service.SkipCurrentSpeech)"), "Interactive dialog should expose skip on the dialogue panel.");
+        Assert.That(chapter2Text, Does.Contain("ShowConversationLine"), "Chapter 2 dialogue should render through SubtitleService.");
+        Assert.That(chapter2Text, Does.Contain("SetConversationChoices"), "Chapter 2 choices should render through SubtitleService.");
+        Assert.That(holdChoicesBody, Does.Contain("SetConversationSkipAction(service.SkipCurrentSpeech)"), "Interactive dialogue should expose Skip on the shared card.");
+        Assert.That(holdChoicesBody, Does.Contain("SetConversationChoicesInteractable(false)"), "Choices should remain locked while their prompt is speaking.");
         Assert.That(holdChoicesBody, Does.Contain("showSubtitleOverlay: false"), "Interactive dialog should not also show the subtitle overlay.");
         Assert.That(openingSpeechBody, Does.Contain("const string openingSpeechLineId = \"SUB_CH02_BUTLER_ADDRESS_GUESTS_001\""), "Address Guests should keep the interrupted Butler line ID explicit.");
-        Assert.That(openingSpeechBody, Does.Contain("yield return SpeakLineInDialoguePanel(openingSpeechLineId, \"Butler\", line, false, true)"), "Address Guests should use the shared speech API through the dialogue panel and block input.");
-        Assert.That(openingSpeechBody, Does.Match(@"SpeakLineInDialoguePanel\(openingSpeechLineId[\s\S]*ClearDialogue\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "The dialogue panel should clear before the monster stinger.");
+        Assert.That(openingSpeechBody, Does.Contain("yield return SpeakLineInDialoguePanel(openingSpeechLineId, \"Butler\", line, false, true)"), "Address Guests should use the shared speech API through the conversation card and block input.");
+        Assert.That(openingSpeechBody, Does.Match(@"SpeakLineInDialoguePanel\(openingSpeechLineId[\s\S]*ClearDialoguePanel\(\)[\s\S]*SetPhase\(Chapter2Phase\.MonsterStinger\)"), "The shared conversation card should clear before the monster stinger.");
         Assert.That(chapter2ResolveBody, Does.Not.Contain("ResolveSubtitleService();"), "Subtitle UI should be created lazily, not during chapter intro/reference resolution.");
-        Assert.That(chapter2Text, Does.Contain("SetDialoguePanelSpeechLine"), "Chapter 2 interactive speech should render resolved subtitles in the dialogue panel.");
-        Assert.That(chapter2Text, Does.Contain("onSpeechLineStarted: SetDialoguePanelSpeechLine"), "Dialogue-panel speech should show the exact line resolved by the speech service.");
+        Assert.That(chapter2Text, Does.Contain("SetDialoguePanelSpeechLine"), "Chapter 2 interactive speech should render resolved subtitles in the shared conversation card.");
+        Assert.That(chapter2Text, Does.Contain("SetDialoguePanelSpeechLine(lineId, resolvedSpeaker, resolvedText)"), "Conversation speech should retain the line ID resolved by the speech service.");
+        Assert.That(hudText, Does.Not.Contain("Panel_Chapter2Dialogue"), "Chapter 2 must not create a second dialogue panel.");
+        Assert.That(hudText, Does.Not.Contain("Text_Chapter2DialogueSpeaker"), "Chapter 2 must not own separate speaker text.");
+        Assert.That(hudText, Does.Not.Contain("Button_Chapter2DialogueSkip"), "Chapter 2 must not own a separate Skip button.");
         Assert.That(startConversationBody, Does.Contain("ShowButlerFoundLine(guest)"), "Hidden guest conversations should begin with the Butler found line, not an extra prompt gate.");
         Assert.That(searchText, Does.Not.Contain("ShowGuestFoundStart"), "Hidden guest conversations should not require the old found-start/Announce dinner click gate.");
         Assert.That(butlerFoundBody, Does.Contain("spec.ButlerFoundLineId"), "Found subtitles should follow the clicked guest identity.");
@@ -652,6 +658,32 @@ public class Chapter2RegressionTests
         Assert.That(searchText, Does.Contain("foundGuestIdsInOrder.Add(GetGuestIdForOrderList(guest))"));
         Assert.That(introText, Does.Contain("Time.unscaledDeltaTime"), "Chapter intro fades should not freeze when gameplay is paused.");
         Assert.That(chapterManagerText, Does.Contain("WaitForSecondsRealtime(GetIntroTitleHoldSeconds())"), "Chapter title holds should not freeze when gameplay is paused.");
+    }
+
+    [Test]
+    public void Chapter2ConversationChoicesRemainAvailableWhenPassiveSubtitlesAreDisabled()
+    {
+        string chapter2Text = File.ReadAllText(Chapter2ControllerPath);
+        string subtitleResolverBody = ExtractMethodBody(chapter2Text, "private SubtitleService ResolveSubtitleService");
+
+        Assert.That(
+            chapter2Text,
+            Does.Contain("private SubtitleService ResolveConversationPresenter()"),
+            "Interactive conversations need a presenter resolver that is independent of the passive-subtitle toggle.");
+
+        string conversationResolverBody = ExtractMethodBody(chapter2Text, "private SubtitleService ResolveConversationPresenter");
+        string showConversationBody = ExtractMethodBody(chapter2Text, "private void ShowGuestConversationInternal");
+        string speakInPanelBody = ExtractMethodBody(chapter2Text, "private IEnumerator SpeakLineInDialoguePanel");
+        string holdChoicesBody = ExtractMethodBody(chapter2Text, "private void HoldDialogueChoicesForSpeech");
+        string setSpeechLineBody = ExtractMethodBody(chapter2Text, "private void SetDialoguePanelSpeechLine");
+
+        Assert.That(subtitleResolverBody, Does.Contain("!enableSubtitles"), "The passive subtitle resolver should still honor the subtitle toggle.");
+        Assert.That(conversationResolverBody, Does.Not.Contain("!enableSubtitles"), "Disabling passive subtitles must not remove Chapter 2 choices.");
+        Assert.That(conversationResolverBody, Does.Contain("SubtitleService.FindOrCreate()"), "Conversation presentation should reuse the shared SubtitleService path.");
+        Assert.That(showConversationBody, Does.Contain("ResolveConversationPresenter()"));
+        Assert.That(speakInPanelBody, Does.Contain("ResolveConversationPresenter()"));
+        Assert.That(holdChoicesBody, Does.Contain("ResolveConversationPresenter()"));
+        Assert.That(setSpeechLineBody, Does.Contain("ResolveConversationPresenter()?.ShowConversationLine"));
     }
 
     [Test]
@@ -727,9 +759,9 @@ public class Chapter2RegressionTests
         Assert.That(speakingIndicatorText, Does.Contain("GuestDisplayNames"), "Display-name dialogue should map back to the correct guest actor.");
         Assert.That(speakingIndicatorText, Does.Contain("bounds.max.y + verticalDistance"), "The marker should sit above the actor bounds without covering the head.");
         Assert.That(speakingIndicatorText, Does.Contain("sortingOrder + sortingOrderOffset"), "The marker should render above the speaking actor.");
-        Assert.That(chapter2Text, Does.Contain("ShowGuestConversation(\"Butler\", string.Empty, \"Address Guests\", HandleAddressGuestsPrompt)"), "Address Guests should appear as a dialogue-panel choice, not a separate primary action.");
-        Assert.That(chapter2Text, Does.Contain("yield return SpeakLineInDialoguePanel(openingSpeechLineId, \"Butler\", line, false, true)"), "The Butler opening speech should show subtitles in the dialogue panel and wait on the shared speech API.");
-        Assert.That(chapter2Text, Does.Contain("interactionHUD.ClearDialogue();"), "The Chapter 2 dialogue panel should clear before the monster stinger takes over.");
+        Assert.That(chapter2Text, Does.Contain("ShowGuestConversation(\"Butler\", string.Empty, \"Address Guests\", HandleAddressGuestsPrompt)"), "Address Guests should appear as a shared conversation choice, not a separate primary action.");
+        Assert.That(chapter2Text, Does.Contain("yield return SpeakLineInDialoguePanel(openingSpeechLineId, \"Butler\", line, false, true)"), "The Butler opening speech should show in the shared conversation card and wait on the shared speech API.");
+        Assert.That(chapter2Text, Does.Contain("ClearDialoguePanel();"), "The shared Chapter 2 conversation card should clear before the monster stinger takes over.");
     }
 
     [Test]
@@ -1374,6 +1406,7 @@ public class Chapter2RegressionTests
         string controllerText = File.ReadAllText(Chapter2ControllerPath);
         string guestSearchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
         string showConversationBody = ExtractMethodBody(controllerText, "public void ShowGuestConversation");
+        string showConversationInternalBody = ExtractMethodBody(controllerText, "private void ShowGuestConversationInternal");
         string controllerRoomChangedBody = ExtractMethodBody(controllerText, "private void HandleCurrentRoomChanged");
         string startConversationBody = ExtractMethodBody(guestSearchText, "public bool TryStartGuestConversation");
         string roomChangedBody = ExtractMethodBody(guestSearchText, "private void HandleCurrentRoomChanged");
@@ -1403,7 +1436,8 @@ public class Chapter2RegressionTests
         Assert.That(finishBody, Does.Contain("activeConversationResumeStep = GuestConversationResumeStep.None"), "Finishing a guest conversation should clear the resume cursor.");
         Assert.That(controllerRoomChangedBody, Does.Contain("currentPhase == Chapter2Phase.GuestSearch"));
         Assert.That(controllerRoomChangedBody, Does.Contain("SetGuestConversationInputEnabled(true)"), "Leaving a guest-search room should restore movement until a visible interrupted conversation resumes.");
-        Assert.That(showConversationBody, Does.Contain("SetDialogueChoicesInteractable(true)"), "Non-audio resume states should restore clickable choices immediately.");
+        Assert.That(showConversationBody, Does.Contain("ShowGuestConversationInternal"), "The public guest-conversation API should route through the shared presenter helper.");
+        Assert.That(showConversationInternalBody, Does.Contain("SetConversationChoicesInteractable(true)"), "Non-audio resume states should restore clickable choices immediately.");
     }
 
     [Test]
@@ -1623,14 +1657,16 @@ public class Chapter2RegressionTests
         Assert.That(hudText, Does.Match(@"\bSetObjective\s*\("));
         Assert.That(hudText, Does.Match(@"\bSetPrimaryAction\s*\("));
         Assert.That(hudText, Does.Match(@"\bClearPrimaryAction\s*\("));
-        Assert.That(hudText, Does.Match(@"\bSetDialogue\s*\("));
-        Assert.That(hudText, Does.Match(@"\bSetDialogueChoices\s*\("));
-        Assert.That(hudText, Does.Match(@"\bClearDialogue\s*\("));
+        Assert.That(hudText, Does.Not.Match(@"\bSetDialogue\s*\("));
+        Assert.That(hudText, Does.Not.Match(@"\bSetDialogueChoices\s*\("));
+        Assert.That(hudText, Does.Not.Match(@"\bClearDialogue\s*\("));
         Assert.That(hudText, Does.Match(@"\bShowClockStrike\s*\("));
         Assert.That(hudText, Does.Match(@"\bClearClockStrike\s*\("));
         Assert.That(hudText, Does.Match(@"\bSetFoundGuests\s*\("));
         Assert.That(hudText, Does.Contain("Text_Chapter2FoundList"));
-        Assert.That(hudText, Does.Contain("Panel_Chapter2Dialogue"));
+        Assert.That(hudText, Does.Not.Contain("Panel_Chapter2Dialogue"));
+        Assert.That(hudText, Does.Not.Contain("Text_Chapter2DialogueSpeaker"));
+        Assert.That(hudText, Does.Not.Contain("Button_Chapter2DialogueSkip"));
         Assert.That(hudText, Does.Contain("Panel_Chapter2ClockStrike"));
         Assert.That(hudText, Does.Contain("ClockStrikeSecondHandName"), "The 7:00 clock-strike close-up should draw a runtime second hand.");
         Assert.That(hudText, Does.Contain("ClockStrikeSecondTailName"), "The second hand should have a visible counterweight so it reads as a designed hand, not a plain debug line.");
@@ -1653,7 +1689,6 @@ public class Chapter2RegressionTests
         Assert.That(hudText, Does.Contain("radius * 0.45f"), "The minute hand should fit within the clock-face circle.");
         Assert.That(hudText, Does.Contain("radius * 0.52f"), "The ticking second hand should fit within the clock-face circle.");
         Assert.That(hudText, Does.Contain("IReadOnlyList<string>"));
-        Assert.That(hudText, Does.Match(@"(?s)\bSetDialogueChoices\s*\([^)]*\)\s*\{.*EnsureUI\s*\(\s*\).*dialoguePanel\.SetActive\(true\).*SetDialogueChoice\(0"), "The first visible guest dialogue should not be hidden by EnsureUI before choices are installed.");
     }
 
     [Test]

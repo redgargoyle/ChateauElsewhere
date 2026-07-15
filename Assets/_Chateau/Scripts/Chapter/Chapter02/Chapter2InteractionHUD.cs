@@ -13,13 +13,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private const string ObjectiveTextName = "Text_Chapter2Objective";
     private const string StatusTextName = "Text_Chapter2Status";
     private const string FoundListTextName = "Text_Chapter2FoundList";
-    private const string DialoguePanelName = "Panel_Chapter2Dialogue";
-    private const string DialogueSpeakerTextName = "Text_Chapter2DialogueSpeaker";
-    private const string DialogueLineTextName = "Text_Chapter2DialogueLine";
-    private const string DialogueSkipButtonName = "Button_Chapter2DialogueSkip";
-    private const string DialogueSkipLabelName = "Text_Chapter2DialogueSkip";
-    private const string DialogueChoiceButtonNamePrefix = "Button_Chapter2DialogueChoice";
-    private const string DialogueChoiceLabelName = "Text_Chapter2DialogueChoice";
     private const string ClockStrikePanelName = "Panel_Chapter2ClockStrike";
     private const string ClockStrikeImageName = "Image_Chapter2ClockStrikeFace";
     private const string ClockStrikeTextName = "Text_Chapter2ClockStrike";
@@ -35,7 +28,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private const string SevenOClockClockFaceResourceName = "clockcutout7oclock";
     private const string PrimaryButtonName = "Button_Chapter2PrimaryAction";
     private const string PrimaryButtonLabelName = "Text_Chapter2PrimaryAction";
-    private const int DialogueChoiceCount = 3;
     private const float ClockStrikeFaceCenterYOffset = 0.267f;
     private const float ClockStrikeHandsDiameterScale = 0.22f;
     private const float ClockStrikeRealtimeSecondsPerTick = 1f;
@@ -46,9 +38,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private TMP_Text objectiveText;
     private TMP_Text statusText;
     private TMP_Text foundListText;
-    private GameObject dialoguePanel;
-    private TMP_Text dialogueSpeakerText;
-    private TMP_Text dialogueLineText;
     private GameObject clockStrikePanel;
     [SerializeField] private Sprite clockStrikeClockFaceSprite;
     private Image clockStrikeImage;
@@ -61,16 +50,10 @@ public class Chapter2InteractionHUD : MonoBehaviour
     private RectTransform clockStrikeSecondHand;
     private RectTransform clockStrikeSecondTail;
     private RectTransform clockStrikeCenterPin;
-    private readonly Button[] dialogueChoiceButtons = new Button[DialogueChoiceCount];
-    private readonly TMP_Text[] dialogueChoiceLabels = new TMP_Text[DialogueChoiceCount];
-    private readonly Action[] dialogueChoiceCallbacks = new Action[DialogueChoiceCount];
-    private Button dialogueSkipButton;
-    private Action dialogueSkipCallback;
     private Button primaryButton;
     private TMP_Text primaryButtonLabel;
     private Action primaryActionCallback;
     private string statusOverrideText;
-    private bool dialogueChoicesInteractable = true;
     private float clockStrikeStartedAt;
     private static Sprite clockStrikeHandSprite;
     private static Sprite clockStrikePinSprite;
@@ -140,114 +123,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
         {
             primaryButton.onClick.RemoveAllListeners();
             primaryButton.gameObject.SetActive(false);
-        }
-    }
-
-    public void SetDialogue(string speaker, string line)
-    {
-        EnsureUI();
-
-        if (dialoguePanel != null)
-        {
-            dialoguePanel.SetActive(true);
-        }
-
-        if (dialogueSpeakerText != null)
-        {
-            dialogueSpeakerText.text = speaker ?? string.Empty;
-            dialogueSpeakerText.gameObject.SetActive(!string.IsNullOrWhiteSpace(dialogueSpeakerText.text));
-        }
-
-        if (dialogueLineText != null)
-        {
-            dialogueLineText.text = line ?? string.Empty;
-            dialogueLineText.gameObject.SetActive(!string.IsNullOrWhiteSpace(dialogueLineText.text));
-        }
-    }
-
-    public void SetDialogueChoices(
-        string firstLabel,
-        Action firstCallback,
-        string secondLabel = null,
-        Action secondCallback = null,
-        string thirdLabel = null,
-        Action thirdCallback = null)
-    {
-        EnsureUI();
-
-        if (dialoguePanel != null)
-        {
-            dialoguePanel.SetActive(true);
-        }
-
-        SetDialogueChoice(0, firstLabel, firstCallback);
-        SetDialogueChoice(1, secondLabel, secondCallback);
-        SetDialogueChoice(2, thirdLabel, thirdCallback);
-    }
-
-    public void SetDialogueChoicesInteractable(bool interactable)
-    {
-        dialogueChoicesInteractable = interactable;
-
-        for (int i = 0; i < dialogueChoiceButtons.Length; i++)
-        {
-            Button button = dialogueChoiceButtons[i];
-
-            if (button != null && button.gameObject.activeSelf)
-            {
-                button.interactable = interactable && dialogueChoiceCallbacks[i] != null;
-            }
-        }
-    }
-
-    public void SetDialogueSkipAction(Action callback)
-    {
-        EnsureUI();
-        dialogueSkipCallback = callback;
-
-        if (dialogueSkipButton == null)
-        {
-            return;
-        }
-
-        dialogueSkipButton.onClick.RemoveAllListeners();
-
-        if (callback != null)
-        {
-            dialogueSkipButton.onClick.AddListener(HandleDialogueSkipClicked);
-        }
-
-        dialogueSkipButton.gameObject.SetActive(callback != null);
-    }
-
-    public void ClearDialogue()
-    {
-        dialogueChoicesInteractable = true;
-        dialogueSkipCallback = null;
-
-        for (int i = 0; i < dialogueChoiceCallbacks.Length; i++)
-        {
-            dialogueChoiceCallbacks[i] = null;
-        }
-
-        if (dialoguePanel != null)
-        {
-            dialoguePanel.SetActive(false);
-        }
-
-        if (dialogueSkipButton != null)
-        {
-            dialogueSkipButton.onClick.RemoveAllListeners();
-            dialogueSkipButton.gameObject.SetActive(false);
-        }
-
-        for (int i = 0; i < dialogueChoiceButtons.Length; i++)
-        {
-            if (dialogueChoiceButtons[i] != null)
-            {
-                dialogueChoiceButtons[i].onClick.RemoveAllListeners();
-                dialogueChoiceButtons[i].gameObject.SetActive(false);
-            }
         }
     }
 
@@ -334,11 +209,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
         primaryActionCallback?.Invoke();
     }
 
-    private void HandleDialogueSkipClicked()
-    {
-        dialogueSkipCallback?.Invoke();
-    }
-
     private void EnsureUI()
     {
         GameObject canvasObject = GameObject.Find(CanvasName);
@@ -386,51 +256,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
         foundListRect.pivot = new Vector2(1f, 1f);
         foundListRect.anchoredPosition = new Vector2(-24f, -150f);
         foundListRect.sizeDelta = new Vector2(360f, 220f);
-
-        dialoguePanel = FindOrCreatePanel(root, DialoguePanelName, new Color(0.03f, 0.025f, 0.02f, 0.9f));
-        RectTransform dialogueRect = dialoguePanel.GetComponent<RectTransform>();
-        dialogueRect.anchorMin = new Vector2(0.5f, 0f);
-        dialogueRect.anchorMax = new Vector2(0.5f, 0f);
-        dialogueRect.pivot = new Vector2(0.5f, 0f);
-        dialogueRect.anchoredPosition = new Vector2(0f, 128f);
-        dialogueRect.sizeDelta = new Vector2(820f, 190f);
-
-        dialogueSpeakerText = FindOrCreateText(dialogueRect, DialogueSpeakerTextName, 20f, TextAlignmentOptions.Left);
-        RectTransform speakerRect = dialogueSpeakerText.GetComponent<RectTransform>();
-        speakerRect.anchorMin = new Vector2(0f, 1f);
-        speakerRect.anchorMax = new Vector2(1f, 1f);
-        speakerRect.pivot = new Vector2(0f, 1f);
-        speakerRect.offsetMin = new Vector2(24f, -42f);
-        speakerRect.offsetMax = new Vector2(-24f, -12f);
-
-        dialogueLineText = FindOrCreateText(dialogueRect, DialogueLineTextName, 18f, TextAlignmentOptions.TopLeft);
-        RectTransform lineRect = dialogueLineText.GetComponent<RectTransform>();
-        lineRect.anchorMin = new Vector2(0f, 0f);
-        lineRect.anchorMax = new Vector2(1f, 1f);
-        lineRect.pivot = new Vector2(0.5f, 0.5f);
-        lineRect.offsetMin = new Vector2(24f, 66f);
-        lineRect.offsetMax = new Vector2(-24f, -48f);
-
-        dialogueSkipButton = FindOrCreateDialogueSkipButton(dialogueRect);
-        RectTransform skipRect = dialogueSkipButton.GetComponent<RectTransform>();
-        skipRect.anchorMin = new Vector2(1f, 0f);
-        skipRect.anchorMax = new Vector2(1f, 0f);
-        skipRect.pivot = new Vector2(1f, 0f);
-        skipRect.anchoredPosition = new Vector2(-18f, 18f);
-        skipRect.sizeDelta = new Vector2(78f, 30f);
-        dialogueSkipButton.gameObject.SetActive(dialogueSkipCallback != null);
-
-        for (int i = 0; i < DialogueChoiceCount; i++)
-        {
-            dialogueChoiceButtons[i] = FindOrCreateDialogueButton(dialogueRect, i);
-            RectTransform choiceRect = dialogueChoiceButtons[i].GetComponent<RectTransform>();
-            choiceRect.anchorMin = new Vector2(0f, 0f);
-            choiceRect.anchorMax = new Vector2(0f, 0f);
-            choiceRect.pivot = new Vector2(0f, 0f);
-            choiceRect.anchoredPosition = new Vector2(24f + (i * 256f), 16f);
-            choiceRect.sizeDelta = new Vector2(236f, 42f);
-            dialogueChoiceButtons[i].gameObject.SetActive(false);
-        }
 
         clockStrikePanel = FindOrCreatePanel(root, ClockStrikePanelName, new Color(0f, 0f, 0f, 0.78f));
 
@@ -480,10 +305,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
             primaryButton.gameObject.SetActive(false);
         }
 
-        if (dialogueChoiceCallbacks[0] == null && dialoguePanel != null)
-        {
-            dialoguePanel.SetActive(false);
-        }
     }
 
     private void UpdateStatusText()
@@ -893,124 +714,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
         return button;
     }
 
-    private Button FindOrCreateDialogueButton(Transform root, int index)
-    {
-        string objectName = DialogueChoiceButtonNamePrefix + (index + 1);
-        Transform existing = root.Find(objectName);
-        Button button = existing != null
-            ? existing.GetComponent<Button>()
-            : null;
-
-        if (button == null)
-        {
-            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
-            buttonRect.SetParent(root, false);
-
-            Image buttonImage = buttonObject.GetComponent<Image>();
-            buttonImage.color = new Color(0.12f, 0.1f, 0.08f, 0.95f);
-
-            button = buttonObject.GetComponent<Button>();
-            ColorBlock colors = button.colors;
-            colors.normalColor = new Color(0.12f, 0.1f, 0.08f, 0.95f);
-            colors.highlightedColor = new Color(0.2f, 0.16f, 0.12f, 1f);
-            colors.pressedColor = new Color(0.05f, 0.04f, 0.03f, 1f);
-            colors.selectedColor = colors.highlightedColor;
-            button.colors = colors;
-        }
-
-        dialogueChoiceLabels[index] = FindOrCreateDialogueButtonLabel(button.transform);
-        return button;
-    }
-
-    private Button FindOrCreateDialogueSkipButton(Transform root)
-    {
-        Transform existing = root.Find(DialogueSkipButtonName);
-        Button button = existing != null
-            ? existing.GetComponent<Button>()
-            : null;
-
-        if (button == null)
-        {
-            GameObject buttonObject = new GameObject(DialogueSkipButtonName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
-            buttonRect.SetParent(root, false);
-
-            Image buttonImage = buttonObject.GetComponent<Image>();
-            buttonImage.color = new Color(0.08f, 0.07f, 0.06f, 0.94f);
-
-            button = buttonObject.GetComponent<Button>();
-            ColorBlock colors = button.colors;
-            colors.normalColor = new Color(0.08f, 0.07f, 0.06f, 0.94f);
-            colors.highlightedColor = new Color(0.18f, 0.14f, 0.1f, 1f);
-            colors.pressedColor = new Color(0.03f, 0.025f, 0.02f, 1f);
-            colors.selectedColor = colors.highlightedColor;
-            button.colors = colors;
-        }
-
-        FindOrCreateSkipButtonLabel(button.transform);
-        return button;
-    }
-
-    private TMP_Text FindOrCreateDialogueButtonLabel(Transform buttonRoot)
-    {
-        Transform existing = buttonRoot.Find(DialogueChoiceLabelName);
-        TMP_Text label = existing != null
-            ? existing.GetComponent<TMP_Text>()
-            : null;
-
-        if (label != null)
-        {
-            return label;
-        }
-
-        GameObject labelObject = new GameObject(DialogueChoiceLabelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-        RectTransform labelRect = labelObject.GetComponent<RectTransform>();
-        labelRect.SetParent(buttonRoot, false);
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = new Vector2(10f, 0f);
-        labelRect.offsetMax = new Vector2(-10f, 0f);
-
-        label = labelObject.GetComponent<TMP_Text>();
-        label.fontSize = 16f;
-        label.color = Color.white;
-        label.alignment = TextAlignmentOptions.Center;
-        label.textWrappingMode = TextWrappingModes.Normal;
-        label.raycastTarget = false;
-        return label;
-    }
-
-    private static TMP_Text FindOrCreateSkipButtonLabel(Transform buttonRoot)
-    {
-        Transform existing = buttonRoot.Find(DialogueSkipLabelName);
-        TMP_Text label = existing != null
-            ? existing.GetComponent<TMP_Text>()
-            : null;
-
-        if (label != null)
-        {
-            return label;
-        }
-
-        GameObject labelObject = new GameObject(DialogueSkipLabelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-        RectTransform labelRect = labelObject.GetComponent<RectTransform>();
-        labelRect.SetParent(buttonRoot, false);
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = new Vector2(8f, 0f);
-        labelRect.offsetMax = new Vector2(-8f, 0f);
-
-        label = labelObject.GetComponent<TMP_Text>();
-        label.text = "Skip";
-        label.fontSize = 14f;
-        label.color = Color.white;
-        label.alignment = TextAlignmentOptions.Center;
-        label.textWrappingMode = TextWrappingModes.NoWrap;
-        label.raycastTarget = false;
-        return label;
-    }
-
     private static GameObject FindOrCreatePanel(Transform root, string objectName, Color color)
     {
         Transform existing = root.Find(objectName);
@@ -1028,40 +731,6 @@ public class Chapter2InteractionHUD : MonoBehaviour
         image.color = color;
         image.raycastTarget = false;
         return panelObject;
-    }
-
-    private void SetDialogueChoice(int index, string label, Action callback)
-    {
-        if (index < 0 || index >= dialogueChoiceButtons.Length)
-        {
-            return;
-        }
-
-        dialogueChoiceCallbacks[index] = callback;
-        Button button = dialogueChoiceButtons[index];
-
-        if (button == null)
-        {
-            return;
-        }
-
-        button.onClick.RemoveAllListeners();
-
-        if (callback == null || string.IsNullOrWhiteSpace(label))
-        {
-            button.gameObject.SetActive(false);
-            return;
-        }
-
-        int callbackIndex = index;
-        button.onClick.AddListener(() => dialogueChoiceCallbacks[callbackIndex]?.Invoke());
-        button.interactable = dialogueChoicesInteractable;
-        button.gameObject.SetActive(true);
-
-        if (dialogueChoiceLabels[index] != null)
-        {
-            dialogueChoiceLabels[index].text = label.Trim();
-        }
     }
 
     private static TMP_Text FindOrCreateButtonLabel(Transform buttonRoot)

@@ -187,10 +187,10 @@ public class Chapter2Controller : MonoBehaviour
 
         allGuestsFoundHandled = true;
         dinnerSeatingHandled = true;
+        ClearDialoguePanel();
 
         if (interactionHUD != null)
         {
-            interactionHUD.ClearDialogue();
             interactionHUD.ClearClockStrike();
             interactionHUD.ClearPrimaryAction();
             interactionHUD.ClearStatus();
@@ -240,10 +240,10 @@ public class Chapter2Controller : MonoBehaviour
 
         allGuestsFoundHandled = false;
         dinnerSeatingHandled = false;
+        ClearDialoguePanel();
 
         if (interactionHUD != null)
         {
-            interactionHUD.ClearDialogue();
             interactionHUD.ClearClockStrike();
             interactionHUD.ClearPrimaryAction();
             interactionHUD.ClearStatus();
@@ -280,10 +280,10 @@ public class Chapter2Controller : MonoBehaviour
         dinnerSeatingHandled = false;
         currentPhase = Chapter2Phase.NotStarted;
         debugTeleportToDrawingRoomOnStart = true;
+        ClearDialoguePanel();
 
         if (interactionHUD != null)
         {
-            interactionHUD.ClearDialogue();
             interactionHUD.ClearClockStrike();
             interactionHUD.ClearPrimaryAction();
             interactionHUD.ClearStatus();
@@ -311,26 +311,44 @@ public class Chapter2Controller : MonoBehaviour
         string thirdChoice = null,
         System.Action thirdCallback = null)
     {
-        if (interactionHUD == null)
-        {
-            ResolveReferences();
-            InitializeInteractionHUD();
-        }
-
-        if (interactionHUD == null)
-        {
-            return;
-        }
-
-        interactionHUD.SetDialogue(speaker, line);
-        interactionHUD.SetDialogueChoices(
+        ShowGuestConversationInternal(
+            string.Empty,
+            speaker,
+            line,
             firstChoice,
             firstCallback,
             secondChoice,
             secondCallback,
             thirdChoice,
             thirdCallback);
-        interactionHUD.SetDialogueChoicesInteractable(true);
+    }
+
+    private void ShowGuestConversationInternal(
+        string lineId,
+        string speaker,
+        string line,
+        string firstChoice,
+        System.Action firstCallback,
+        string secondChoice,
+        System.Action secondCallback,
+        string thirdChoice,
+        System.Action thirdCallback)
+    {
+        SubtitleService service = ResolveConversationPresenter();
+        if (service == null)
+        {
+            return;
+        }
+
+        service.ShowConversationLine(lineId, speaker, line);
+        service.SetConversationChoices(
+            firstChoice,
+            firstCallback,
+            secondChoice,
+            secondCallback,
+            thirdChoice,
+            thirdCallback);
+        service.SetConversationChoicesInteractable(true);
     }
 
     public void ShowGuestConversationWithSubtitle(
@@ -344,7 +362,8 @@ public class Chapter2Controller : MonoBehaviour
         string thirdChoice = null,
         System.Action thirdCallback = null)
     {
-        ShowGuestConversation(
+        ShowGuestConversationInternal(
+            subtitleLineId,
             speaker,
             line,
             firstChoice,
@@ -364,9 +383,14 @@ public class Chapter2Controller : MonoBehaviour
         string line,
         System.Action onComplete = null)
     {
-        ShowGuestConversation(
+        ShowGuestConversationInternal(
+            subtitleLineId,
             speaker,
             line,
+            null,
+            null,
+            null,
+            null,
             null,
             null);
 
@@ -377,11 +401,7 @@ public class Chapter2Controller : MonoBehaviour
     public void ClearGuestConversation()
     {
         StopDialogueChoiceHold();
-
-        if (interactionHUD != null)
-        {
-            interactionHUD.ClearDialogue();
-        }
+        ClearDialoguePanel();
 
         ClearSubtitles();
     }
@@ -403,10 +423,10 @@ public class Chapter2Controller : MonoBehaviour
         SetDinnerClockAndStop();
         PrepareGuestsForDiningTransfer();
         UpdateFoundGuestsHud();
+        ClearDialoguePanel();
 
         if (interactionHUD != null)
         {
-            interactionHUD.ClearDialogue();
             interactionHUD.ClearPrimaryAction();
             interactionHUD.ClearStatus();
             interactionHUD.SetObjective(string.Empty);
@@ -447,13 +467,22 @@ public class Chapter2Controller : MonoBehaviour
 
     private IEnumerator RunOpeningSpeechRoutine()
     {
+        ShowGuestConversationInternal(
+            string.Empty,
+            "Butler",
+            string.Empty,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
+
         if (interactionHUD != null)
         {
             interactionHUD.ClearPrimaryAction();
             interactionHUD.ClearStatus();
             interactionHUD.SetObjective(string.Empty);
-            interactionHUD.SetDialogue("Butler", string.Empty);
-            interactionHUD.SetDialogueChoices(null, null);
         }
 
         if (openingSpeechLines != null)
@@ -474,10 +503,10 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         openingSpeechRoutine = null;
+        ClearDialoguePanel();
 
         if (interactionHUD != null)
         {
-            interactionHUD.ClearDialogue();
             interactionHUD.ClearPrimaryAction();
             interactionHUD.ClearStatus();
             interactionHUD.SetObjective("A terrible sound cuts through the room...");
@@ -1128,7 +1157,17 @@ public class Chapter2Controller : MonoBehaviour
 
     private SubtitleService ResolveSubtitleService()
     {
-        if (!enableSubtitles || !Application.isPlaying)
+        if (!enableSubtitles)
+        {
+            return null;
+        }
+
+        return ResolveConversationPresenter();
+    }
+
+    private SubtitleService ResolveConversationPresenter()
+    {
+        if (!Application.isPlaying)
         {
             return null;
         }
@@ -1172,20 +1211,12 @@ public class Chapter2Controller : MonoBehaviour
 
     private IEnumerator SpeakLineInDialoguePanel(string lineId, string speaker, string text, bool allowOverlap = false, bool blockInput = false)
     {
-        if (interactionHUD == null)
-        {
-            ResolveReferences();
-            InitializeInteractionHUD();
-        }
-
         DialogueSpeechService service = ResolveSpeechService();
+        SubtitleService presenter = ResolveConversationPresenter();
 
         if (service != null)
         {
-            if (interactionHUD != null)
-            {
-                interactionHUD.SetDialogueSkipAction(service.SkipCurrentSpeech);
-            }
+            presenter?.SetConversationSkipAction(service.SkipCurrentSpeech);
 
             yield return service.SpeakLine(
                 lineId,
@@ -1194,17 +1225,15 @@ public class Chapter2Controller : MonoBehaviour
                 allowOverlap,
                 blockInput,
                 showSubtitleOverlay: false,
-                onSpeechLineStarted: SetDialoguePanelSpeechLine);
+                onSpeechLineStarted: (resolvedSpeaker, resolvedText) =>
+                    SetDialoguePanelSpeechLine(lineId, resolvedSpeaker, resolvedText));
 
-            if (interactionHUD != null)
-            {
-                interactionHUD.SetDialogueSkipAction(null);
-            }
+            presenter?.SetConversationSkipAction(null);
 
             yield break;
         }
 
-        SetDialoguePanelSpeechLine(speaker, text);
+        SetDialoguePanelSpeechLine(lineId, speaker, text);
         yield return WaitForDialogueReadOrSkip(text, GetSpeechLineSeconds());
     }
 
@@ -1222,8 +1251,9 @@ public class Chapter2Controller : MonoBehaviour
     private void HoldDialogueChoicesForSpeech(string lineId, string speaker, string text, System.Action onComplete = null)
     {
         StopDialogueChoiceHold();
+        SubtitleService presenter = ResolveConversationPresenter();
 
-        if (interactionHUD == null)
+        if (presenter == null)
         {
             return;
         }
@@ -1232,13 +1262,13 @@ public class Chapter2Controller : MonoBehaviour
 
         if (service == null)
         {
-            interactionHUD.SetDialogueChoicesInteractable(true);
+            presenter.SetConversationChoicesInteractable(true);
             onComplete?.Invoke();
             return;
         }
 
-        interactionHUD.SetDialogueChoicesInteractable(false);
-        interactionHUD.SetDialogueSkipAction(service.SkipCurrentSpeech);
+        presenter.SetConversationChoicesInteractable(false);
+        presenter.SetConversationSkipAction(service.SkipCurrentSpeech);
         dialogueVoiceChoiceRoutine = service.BeginSpeakLine(
             lineId,
             speaker,
@@ -1247,27 +1277,28 @@ public class Chapter2Controller : MonoBehaviour
             false,
             () =>
             {
-                if (interactionHUD != null)
+                if (presenter != null)
                 {
-                    interactionHUD.SetDialogueSkipAction(null);
-                    interactionHUD.SetDialogueChoicesInteractable(true);
+                    presenter.SetConversationSkipAction(null);
+                    presenter.SetConversationChoicesInteractable(true);
                 }
 
                 dialogueVoiceChoiceRoutine = null;
                 onComplete?.Invoke();
             },
             showSubtitleOverlay: false,
-            onSpeechLineStarted: SetDialoguePanelSpeechLine);
+            onSpeechLineStarted: (resolvedSpeaker, resolvedText) =>
+                SetDialoguePanelSpeechLine(lineId, resolvedSpeaker, resolvedText));
     }
 
-    private void SetDialoguePanelSpeechLine(string speaker, string text)
+    private void SetDialoguePanelSpeechLine(string lineId, string speaker, string text)
     {
-        if (interactionHUD == null)
-        {
-            return;
-        }
+        ResolveConversationPresenter()?.ShowConversationLine(lineId, speaker, text);
+    }
 
-        interactionHUD.SetDialogue(speaker, text);
+    private void ClearDialoguePanel()
+    {
+        subtitleService?.ClearConversation();
     }
 
     private void StopDialogueChoiceHold()
@@ -1279,8 +1310,8 @@ public class Chapter2Controller : MonoBehaviour
             dialogueVoiceChoiceRoutine = null;
         }
 
-        interactionHUD?.SetDialogueSkipAction(null);
-        interactionHUD?.SetDialogueChoicesInteractable(true);
+        subtitleService?.SetConversationSkipAction(null);
+        subtitleService?.SetConversationChoicesInteractable(true);
     }
 
     private void RegisterRoomChangeHandler()
@@ -1314,11 +1345,7 @@ public class Chapter2Controller : MonoBehaviour
     private void HandleCurrentRoomChanged(string roomName)
     {
         StopDialogueChoiceHold();
-
-        if (interactionHUD != null)
-        {
-            interactionHUD.ClearDialogue();
-        }
+        ClearDialoguePanel();
 
         ClearSubtitles();
 
