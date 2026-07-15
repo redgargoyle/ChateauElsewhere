@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 public sealed class DialogueSpeechMovementRegressionTests
 {
@@ -158,6 +160,146 @@ public sealed class DialogueSpeechMovementRegressionTests
             Object.DestroyImmediate(targetObject);
             Object.DestroyImmediate(guestObject);
         }
+    }
+
+    [UnityTest]
+    public IEnumerator GuestInterruptionPausesActiveLineAndPreservesQueuedDialogue()
+    {
+        yield return new EnterPlayMode();
+
+        GameObject speechObject = new GameObject("DialogueSpeechService_InterruptionTest");
+        DialogueSpeechService speechService = null;
+
+        try
+        {
+            speechService = speechObject.AddComponent<DialogueSpeechService>();
+            SubtitleService subtitleService = speechObject.AddComponent<SubtitleService>();
+            GuestVoiceLinePlayback voicePlayback = speechObject.AddComponent<GuestVoiceLinePlayback>();
+            SpeakingCharacterIndicator speakingIndicator = speechObject.AddComponent<SpeakingCharacterIndicator>();
+            SetPrivateField(speechService, "subtitleService", subtitleService);
+            SetPrivateField(speechService, "voicePlayback", voicePlayback);
+            SetPrivateField(speechService, "speakingIndicator", speakingIndicator);
+
+            List<string> startedLines = new List<string>();
+            int originalCompletions = 0;
+
+            speechService.BeginSpeakLine(
+                "TEST_GUEST_ORIGINAL",
+                "Guest01",
+                "ORIGINAL",
+                onComplete: () => originalCompletions++,
+                showSubtitleOverlay: false,
+                onSpeechLineStarted: (_, text) => startedLines.Add(text));
+            yield return null;
+
+            speechService.BeginSpeakLine(
+                "TEST_GUEST_QUEUED",
+                "Guest02",
+                "QUEUED",
+                showSubtitleOverlay: false,
+                onSpeechLineStarted: (_, text) => startedLines.Add(text));
+            yield return null;
+
+            CollectionAssert.AreEqual(new[] { "ORIGINAL" }, startedLines);
+            DialogueSpeechService.SpeechInterruption activeSpeech = speechService.GetCurrentSpeech();
+            Assert.That(activeSpeech.HadActiveSpeech, Is.True);
+            Assert.That(activeSpeech.HadQueuedSpeech, Is.True);
+            Assert.That(activeSpeech.LineId, Is.EqualTo("TEST_GUEST_ORIGINAL"));
+            Assert.That(activeSpeech.SpeakerId, Is.EqualTo("Guest01"));
+            Assert.That(activeSpeech.SpeakerDisplayName, Is.EqualTo("Guest01"));
+            Assert.That(activeSpeech.Text, Is.EqualTo("ORIGINAL"));
+
+            bool interruptionStarted = speechService.InterruptCurrentSpeechAndResume(
+                "TEST_GUEST_INTERRUPTED",
+                "Guest01",
+                "INTERRUPTED",
+                showSubtitleOverlay: false,
+                onInterruptionStarted: (_, text) => startedLines.Add(text));
+
+            Assert.That(interruptionStarted, Is.True);
+            Assert.That(speechService.IsSpeechInterruptionActive, Is.True);
+            Assert.That(speechService.GetCurrentSpeech().LineId, Is.EqualTo("TEST_GUEST_ORIGINAL"));
+            Assert.That(speechService.GetCurrentSpeech().SpeakerId, Is.EqualTo("Guest01"));
+            CollectionAssert.AreEqual(new[] { "ORIGINAL", "INTERRUPTED" }, startedLines);
+
+            yield return null;
+            Assert.That(originalCompletions, Is.Zero, "Pausing for the interruption must not complete the original line.");
+            CollectionAssert.AreEqual(
+                new[] { "ORIGINAL", "INTERRUPTED" },
+                startedLines,
+                "Queued dialogue must remain blocked while the interruption line is active.");
+
+            speechService.SkipCurrentSpeech();
+            yield return null;
+
+            Assert.That(speechService.IsSpeechInterruptionActive, Is.False);
+            Assert.That(speechService.IsNormalSpeechActive, Is.True);
+            Assert.That(speechService.GetCurrentSpeech().LineId, Is.EqualTo("TEST_GUEST_ORIGINAL"));
+            Assert.That(originalCompletions, Is.Zero, "The original line must resume instead of restarting or completing.");
+
+            speechService.SkipCurrentSpeech();
+
+            for (int frame = 0; frame < 5 && !startedLines.Contains("QUEUED"); frame++)
+            {
+                yield return null;
+            }
+
+            Assert.That(originalCompletions, Is.EqualTo(1));
+            CollectionAssert.AreEqual(
+                new[] { "ORIGINAL", "INTERRUPTED", "QUEUED" },
+                startedLines,
+                "The pending line must follow the resumed original line without being discarded.");
+
+            speechService.CancelQueuedSpeech();
+            yield return null;
+            startedLines.Clear();
+
+            speechService.BeginSpeakLine(
+                "TEST_CANCELLED_ORIGINAL",
+                "Guest01",
+                "CANCELLED ORIGINAL",
+                showSubtitleOverlay: false,
+                onSpeechLineStarted: (_, text) => startedLines.Add(text));
+            yield return null;
+            speechService.BeginSpeakLine(
+                "TEST_CANCELLED_QUEUED",
+                "Guest02",
+                "CANCELLED QUEUED",
+                showSubtitleOverlay: false,
+                onSpeechLineStarted: (_, text) => startedLines.Add(text));
+            yield return null;
+
+            Assert.That(
+                speechService.InterruptCurrentSpeechAndResume(
+                    "TEST_CANCELLED_INTERRUPTION",
+                    "Guest01",
+                    "CANCELLED INTERRUPTION",
+                    showSubtitleOverlay: false,
+                    onInterruptionStarted: (_, text) => startedLines.Add(text)),
+                Is.True);
+            MethodInfo roomChangeHandler = typeof(DialogueSpeechService).GetMethod(
+                "HandleCurrentRoomChanged",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(roomChangeHandler, Is.Not.Null);
+            roomChangeHandler.Invoke(speechService, new object[] { "Drawing Room" });
+            yield return null;
+            yield return null;
+
+            CollectionAssert.AreEqual(
+                new[] { "CANCELLED ORIGINAL", "CANCELLED INTERRUPTION" },
+                startedLines,
+                "Changing rooms must not resurrect the paused or pending dialogue in the new room.");
+            Assert.That(speechService.IsSpeechInterruptionActive, Is.False);
+            Assert.That(speechService.IsNormalSpeechActive, Is.False);
+        }
+        finally
+        {
+            speechService?.CancelQueuedSpeech();
+            Object.Destroy(speechObject);
+        }
+
+        yield return null;
+        yield return new ExitPlayMode();
     }
 
     private static IEnumerator GetInnerSpeechRoutine(
