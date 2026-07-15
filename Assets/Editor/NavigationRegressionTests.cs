@@ -1513,16 +1513,18 @@ public class NavigationRegressionTests
             Assert.That(File.Exists(frameMetaPath), Is.True, $"{frameMetaPath} should exist.");
 
             ReadPngDimensions(framePath, out int width, out int height);
-            Assert.That(width, Is.EqualTo(168), $"{framePath} should keep the normal butler sprite canvas width.");
-            Assert.That(height, Is.EqualTo(299), $"{framePath} should keep the normal butler sprite canvas height.");
+            Assert.That(width, Is.EqualTo(336), $"{framePath} should use the reviewed 2x Butler canvas width.");
+            Assert.That(height, Is.EqualTo(598), $"{framePath} should use the reviewed 2x Butler canvas height.");
 
             string frameMetaText = File.ReadAllText(frameMetaPath);
             Assert.That(frameMetaText, Does.Contain($"guid: {expectedFrameGuids[index]}"), $"{framePath} should keep its expected sprite GUID.");
             Assert.That(frameMetaText, Does.Contain("textureType: 8"), $"{framePath} should import as a Sprite.");
             Assert.That(frameMetaText, Does.Contain("spriteMode: 1"), $"{framePath} should import as a single sprite.");
-            Assert.That(frameMetaText, Does.Contain("spritePixelsToUnits: 100"), $"{framePath} should match the existing butler PPU.");
-            Assert.That(frameMetaText, Does.Contain("spritePivot: {x: 0.5, y: 0}"), $"{framePath} should stay bottom-centered to keep feet anchored.");
-            Assert.That(frameMetaText, Does.Contain("filterMode: 1"), $"{framePath} should keep the existing point-filtered pixel-art import.");
+            Assert.That(frameMetaText, Does.Contain("spritePixelsToUnits: 200"), $"{framePath} should double PPU with resolution so world size stays unchanged.");
+            Assert.That(frameMetaText, Does.Contain("alignment: 0"), $"{framePath} should preserve its centered importer alignment.");
+            Assert.That(frameMetaText, Does.Contain("spritePivot: {x: 0.5, y: 0}"), $"{framePath} should preserve serialized compatibility pivot data.");
+            Assert.That(frameMetaText, Does.Contain("filterMode: 1"), $"{framePath} should use bilinear sampling for smooth subpixel movement.");
+            Assert.That(frameMetaText, Does.Contain("textureCompression: 0"), $"{framePath} should remain uncompressed so close-up detail is not softened.");
             Assert.That(frameMetaText, Does.Contain("alphaIsTransparency: 1"), $"{framePath} should preserve transparent-background import behavior.");
         }
 
@@ -1937,14 +1939,14 @@ public class NavigationRegressionTests
 
     private static void AssertButlerIdleFramesKeepFeetPlanted(int frameCount)
     {
-        const int plantedRowCount = 64;
+        const int plantedRowCount = 128;
         Color32[] canonicalPixels = ReadPngPixels(
             ButlerCanonicalStandingFramePath,
             out int canonicalWidth,
             out int canonicalHeight);
 
-        Assert.That(canonicalWidth, Is.EqualTo(168));
-        Assert.That(canonicalHeight, Is.EqualTo(299));
+        Assert.That(canonicalWidth, Is.EqualTo(336));
+        Assert.That(canonicalHeight, Is.EqualTo(598));
 
         for (int frameIndex = 0; frameIndex < frameCount; frameIndex++)
         {

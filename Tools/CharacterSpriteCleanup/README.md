@@ -12,13 +12,20 @@ Unity `.meta` files.
 
 ## Safety model
 
-- Boundary cleanup changes RGB only. Alpha and silhouette geometry stay unchanged.
+- Boundary cleanup reverses white-matte contamination in translucent RGB while
+  preserving alpha and silhouette geometry.
 - Internal alpha cuts require an exact path, expected dimensions, and reviewed ROI in
   `reviewed_internal_masks.csv`.
 - A reviewed ROI must contain a strict near-white seed. The run fails if the seed is
   absent, dimensions differ, or a flood exceeds 350 pixels.
-- `runtime_character_sprites.txt` contains only PNGs reached by the Gameplay actor
-  controllers or `PanicAnimationLibrary` at the time of this cleanup.
+- `alpha-all` rules are reserved for reviewed negative-space gaps. They start only
+  from bright islands or pixels touching existing transparency, then follow neutral
+  matte inside the hard ROI.
+- `runtime_character_sprites.txt` contains the non-Butler PNGs reached by the
+  Gameplay actor controllers or `PanicAnimationLibrary` at the time of this cleanup.
+- `butler_sprites.txt` is the complete playable and compatibility Butler set used by
+  the second-pass polish workflow.  Its 168x299 cleanup step is reproducible from
+  the pre-polish commit; the checked-in 336x598 output must not be upscaled again.
 
 ## Build and dry-run
 
