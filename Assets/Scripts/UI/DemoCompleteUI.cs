@@ -18,6 +18,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
     private const string ButtonLabelObjectName = "Text_Label";
 
     private static readonly Color Plum = new Color(0.25f, 0.075f, 0.16f, 1f);
+    private static readonly Color Parchment = new Color(0.89f, 0.8f, 0.65f, 0.98f);
     private static readonly Color MessageColor = new Color(0.94f, 0.86f, 0.72f, 1f);
     private static readonly Color ButtonHoverColor = new Color(0.88f, 0.53f, 0.16f, 0.24f);
     private static readonly Color ButtonPressedColor = new Color(0.06f, 0.035f, 0.02f, 0.5f);
@@ -45,6 +46,16 @@ public sealed class DemoCompleteUI : MonoBehaviour
     private Button restartButton;
     private Button mainMenuButton;
     private Coroutine messageFadeRoutine;
+    private CompletionState completionState;
+    private bool warnedMissingMenuFont;
+    private bool warnedMissingButtonFrame;
+
+    private enum CompletionState
+    {
+        Hidden,
+        Fading,
+        Revealed
+    }
 
     private void Awake()
     {
@@ -63,6 +74,11 @@ public sealed class DemoCompleteUI : MonoBehaviour
 
     public void BeginFade(float duration)
     {
+        if (completionState != CompletionState.Hidden)
+        {
+            return;
+        }
+
         EnsureUI();
         StopActiveFade();
 
@@ -72,6 +88,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
             return;
         }
 
+        completionState = CompletionState.Fading;
         root.gameObject.SetActive(true);
         root.SetAsLastSibling();
         completionText.gameObject.SetActive(true);
@@ -96,6 +113,11 @@ public sealed class DemoCompleteUI : MonoBehaviour
 
     public void RevealActions()
     {
+        if (completionState == CompletionState.Revealed)
+        {
+            return;
+        }
+
         EnsureUI();
         StopActiveFade();
 
@@ -105,6 +127,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
             return;
         }
 
+        completionState = CompletionState.Revealed;
         root.gameObject.SetActive(true);
         root.SetAsLastSibling();
         completionText.gameObject.SetActive(true);
@@ -146,6 +169,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
 
     private void EnsureUI()
     {
+        ValidateStyleAssets();
         canvas = FindOrCreateCanvas();
 
         if (canvas == null)
@@ -227,7 +251,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
         rect.localScale = Vector3.one;
 
         text.text = completionMessage;
-        text.font = menuFontAsset;
+        text.font = ResolveMenuFontAsset();
         text.fontSize = messageFontSize;
         text.enableAutoSizing = true;
         text.fontSizeMin = 34f;
@@ -274,7 +298,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
 
         Image baseImage = buttonObject.GetComponent<Image>();
         baseImage.sprite = buttonFrameSprite;
-        baseImage.color = Color.white;
+        baseImage.color = buttonFrameSprite != null ? Color.white : Parchment;
         baseImage.type = Image.Type.Simple;
         baseImage.preserveAspect = false;
         baseImage.raycastTarget = true;
@@ -288,7 +312,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
 
         TextMeshProUGUI label = FindOrCreateButtonLabel(rect);
         label.text = labelValue;
-        label.font = menuFontAsset;
+        label.font = ResolveMenuFontAsset();
         label.fontSize = buttonFontSize;
         label.enableAutoSizing = true;
         label.fontSizeMin = 22f;
@@ -489,6 +513,30 @@ public sealed class DemoCompleteUI : MonoBehaviour
         }
 
         new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+    }
+
+    private void ValidateStyleAssets()
+    {
+        if (menuFontAsset == null && !warnedMissingMenuFont)
+        {
+            Debug.LogWarning(
+                "DemoCompleteUI is missing the main-menu TMP font. Using the TMP default font.",
+                this);
+            warnedMissingMenuFont = true;
+        }
+
+        if (buttonFrameSprite == null && !warnedMissingButtonFrame)
+        {
+            Debug.LogWarning(
+                "DemoCompleteUI is missing the main-menu button sprite. Using a parchment rectangle fallback.",
+                this);
+            warnedMissingButtonFrame = true;
+        }
+    }
+
+    private TMP_FontAsset ResolveMenuFontAsset()
+    {
+        return menuFontAsset != null ? menuFontAsset : TMP_Settings.defaultFontAsset;
     }
 
     private void StopActiveFade()

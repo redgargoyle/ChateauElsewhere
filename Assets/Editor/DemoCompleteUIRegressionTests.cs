@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -7,7 +8,9 @@ using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
 using UnityEngine.UI;
 
 public class DemoCompleteUIRegressionTests
@@ -21,6 +24,12 @@ public class DemoCompleteUIRegressionTests
     [TearDown]
     public void TearDown()
     {
+        if (Application.isPlaying)
+        {
+            EditorApplication.isPlaying = false;
+            return;
+        }
+
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
     }
 
@@ -81,6 +90,11 @@ public class DemoCompleteUIRegressionTests
         Assert.That(restartButton.navigation.selectOnDown, Is.SameAs(mainMenuButton));
         Assert.That(mainMenuButton.navigation.mode, Is.EqualTo(Navigation.Mode.Explicit));
         Assert.That(mainMenuButton.navigation.selectOnUp, Is.SameAs(restartButton));
+
+        Invoke(controller, "BeginFade", 1f);
+
+        Assert.That(message.alpha, Is.EqualTo(1f), "A duplicate fade request must not move a revealed message backward.");
+        Assert.That(actions.activeSelf, Is.True, "A duplicate fade request must not hide revealed actions.");
     }
 
     [Test]
@@ -95,8 +109,139 @@ public class DemoCompleteUIRegressionTests
         Assert.That(restartBody, Does.Contain("LoadScene(gameplaySceneName, \"Restart Game\")"));
         Assert.That(mainMenuBody, Does.Contain("LoadScene(mainMenuSceneName, \"Main Menu\")"));
         Assert.That(loadBody, Does.Contain("Application.CanStreamedLevelBeLoaded(sceneName)"));
-        Assert.That(loadBody.IndexOf("GameplayRuntimeState.ResetForNewGame()", StringComparison.Ordinal),
-            Is.LessThan(loadBody.IndexOf("SceneManager.LoadScene(sceneName, LoadSceneMode.Single)", StringComparison.Ordinal)));
+        int resetIndex = loadBody.IndexOf("GameplayRuntimeState.ResetForNewGame()", StringComparison.Ordinal);
+        int loadIndex = loadBody.IndexOf("SceneManager.LoadScene(sceneName, LoadSceneMode.Single)", StringComparison.Ordinal);
+
+        Assert.That(resetIndex, Is.GreaterThanOrEqualTo(0), "Completion actions must reset transient runtime state.");
+        Assert.That(loadIndex, Is.GreaterThanOrEqualTo(0), "Completion actions must load the configured scene.");
+        Assert.That(resetIndex, Is.LessThan(loadIndex), "Runtime state must reset before the scene load.");
+    }
+
+    [Test]
+    public void MissingStyleReferencesWarnAndKeepTheCompletionActionsReadable()
+    {
+        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        Type demoType = FindDemoCompleteType();
+        GameObject owner = new GameObject("DemoCompleteUI_MissingStyleTest");
+        Component controller = owner.AddComponent(demoType);
+
+        LogAssert.Expect(
+            LogType.Warning,
+            "DemoCompleteUI is missing the main-menu TMP font. Using the TMP default font.");
+        LogAssert.Expect(
+            LogType.Warning,
+            "DemoCompleteUI is missing the main-menu button sprite. Using a parchment rectangle fallback.");
+
+        Invoke(controller, "BeginFade", 1f);
+        Invoke(controller, "RevealActions");
+
+        TextMeshProUGUI message = FindSceneObject(scene, "Text_DemoCompleteMessage")
+            .GetComponent<TextMeshProUGUI>();
+        Button restartButton = FindSceneObject(scene, "Button_RestartGame").GetComponent<Button>();
+        Image restartImage = restartButton.GetComponent<Image>();
+        TextMeshProUGUI restartLabel = restartButton.GetComponentsInChildren<TextMeshProUGUI>(true)
+            .Single(candidate => candidate.name == "Text_Label");
+
+        Assert.That(message.font, Is.SameAs(TMP_Settings.defaultFontAsset));
+        Assert.That(restartLabel.font, Is.SameAs(TMP_Settings.defaultFontAsset));
+        Assert.That(restartImage.sprite, Is.Null);
+        Assert.That(restartImage.color, Is.EqualTo(new Color(0.89f, 0.8f, 0.65f, 0.98f)));
+        Assert.That(restartLabel.text, Is.EqualTo("Restart Game"));
+    }
+
+    [UnityTest]
+    public IEnumerator ChapterManagerRunsTheRealCompletionFadeBeforeRevealingFocusedActions()
+    {
+        SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
+        EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity", OpenSceneMode.Single);
+
+        yield return new EnterPlayMode();
+
+        MainMenuController mainMenu = UnityEngine.Object.FindAnyObjectByType<MainMenuController>(FindObjectsInactive.Include);
+        Assert.That(mainMenu, Is.Not.Null);
+        mainMenu.ContinueGame();
+
+        for (int frame = 0; frame < 60 && SceneManager.GetActiveScene().name != "Gameplay"; frame++)
+        {
+            yield return null;
+        }
+
+        Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo("Gameplay"));
+        yield return null;
+
+        ChapterManager chapterManager = UnityEngine.Object.FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include);
+        ChapterIntroUI introUI = UnityEngine.Object.FindAnyObjectByType<ChapterIntroUI>(FindObjectsInactive.Include);
+        DemoCompleteUI demoUI = UnityEngine.Object.FindAnyObjectByType<DemoCompleteUI>(FindObjectsInactive.Include);
+
+        Assert.That(chapterManager, Is.Not.Null);
+        Assert.That(introUI, Is.Not.Null);
+        Assert.That(demoUI, Is.Not.Null);
+        Assert.That(
+            UnityEngine.Object.FindObjectsByType<ChapterManager>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
+            Is.EqualTo(1));
+        Assert.That(
+            UnityEngine.Object.FindObjectsByType<ChapterIntroUI>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
+            Is.EqualTo(1));
+        Assert.That(
+            UnityEngine.Object.FindObjectsByType<DemoCompleteUI>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
+            Is.EqualTo(1));
+        Assert.That(GetPrivateField<ChapterIntroUI>(chapterManager, "introUI"), Is.SameAs(introUI));
+        Assert.That(GetPrivateField<DemoCompleteUI>(chapterManager, "demoCompleteUI"), Is.SameAs(demoUI));
+
+        TMP_FontAsset menuFont = GetPrivateField<TMP_FontAsset>(demoUI, "menuFontAsset");
+        TMP_FontAsset runtimeFont = TMP_FontAsset.CreateFontAsset(menuFont.sourceFontFile);
+        Assert.That(runtimeFont, Is.Not.Null, "The lifecycle test needs an isolated runtime font atlas.");
+        SetPrivateField(demoUI, "menuFontAsset", runtimeFont);
+        TextMeshProUGUI message = GetPrivateField<TextMeshProUGUI>(demoUI, "completionText");
+        message.font = runtimeFont;
+
+        chapterManager.StopAllCoroutines();
+        introUI.HideOverlay();
+        SetPrivateField(chapterManager, "currentChapterId", ChapterManager.Chapter2Id);
+        chapterManager.CompleteChapterAndTriggerNextChapter(ChapterManager.Chapter3PendingId);
+
+        Image blackFade = GetPrivateField<Image>(introUI, "fadeImage");
+        GameObject actions = GetPrivateField<RectTransform>(demoUI, "actionsRoot").gameObject;
+        bool sampledMidFade = false;
+        float midFadeDeadline = Time.realtimeSinceStartup + 3f;
+
+        while (Time.realtimeSinceStartup < midFadeDeadline)
+        {
+            float blackAlpha = blackFade.color.a;
+
+            if (blackAlpha > 0.05f && blackAlpha < 0.95f)
+            {
+                sampledMidFade = true;
+                Assert.That(message.alpha, Is.GreaterThan(0f));
+                Assert.That(Mathf.Abs(message.alpha - blackAlpha), Is.LessThan(0.2f));
+                Assert.That(actions.activeSelf, Is.False);
+                break;
+            }
+
+            yield return new WaitForSecondsRealtime(0.01f);
+        }
+
+        Assert.That(sampledMidFade, Is.True, "The real fade should expose an in-progress frame for synchronized UI.");
+        float completionDeadline = Time.realtimeSinceStartup + 3f;
+
+        while (!actions.activeSelf && Time.realtimeSinceStartup < completionDeadline)
+        {
+            yield return new WaitForSecondsRealtime(0.01f);
+        }
+
+        Assert.That(actions.activeSelf, Is.True, "The completion actions should appear before the transition timeout.");
+        Assert.That(blackFade.color.a, Is.EqualTo(1f).Within(0.001f));
+        Assert.That(message.alpha, Is.EqualTo(1f).Within(0.001f));
+        Assert.That(EventSystem.current, Is.Not.Null);
+        Assert.That(EventSystem.current.currentSelectedGameObject, Is.Not.Null);
+        Assert.That(EventSystem.current.currentSelectedGameObject.name, Is.EqualTo("Button_RestartGame"));
+
+        yield return new ExitPlayMode();
+
+        if (previousSceneSetup != null && previousSceneSetup.Length > 0)
+        {
+            EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
+        }
     }
 
     [Test]
@@ -231,5 +376,21 @@ public class DemoCompleteUIRegressionTests
         }
 
         return count;
+    }
+
+    private static void SetPrivateField(object target, string fieldName, object value)
+    {
+        FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"Missing private field: {fieldName}");
+        field.SetValue(target, value);
+    }
+
+    private static T GetPrivateField<T>(object target, string fieldName) where T : class
+    {
+        FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"Missing private field: {fieldName}");
+        T value = field.GetValue(target) as T;
+        Assert.That(value, Is.Not.Null, $"Private field '{fieldName}' should be initialized.");
+        return value;
     }
 }
