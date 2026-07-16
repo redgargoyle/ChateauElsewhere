@@ -403,6 +403,11 @@ public static class NavigationEditorTools
 
         if (selectedRoomAnchor != null)
         {
+            if (!IsChapter2HideAnchor(selectedRoomAnchor))
+            {
+                return null;
+            }
+
             RoomContentGroup anchorRoomContentGroup = FindRoomContentGroupForRoom(selectedRoomAnchor.RoomId);
 
             if (anchorRoomContentGroup != null)

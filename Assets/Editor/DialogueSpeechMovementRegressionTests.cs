@@ -1,12 +1,472 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Object = UnityEngine.Object;
 
 public sealed class DialogueSpeechMovementRegressionTests
 {
+    [Test]
+    public void AllFourConfiguredEntrancePairsCompleteWithoutOddHallCounts()
+    {
+        GameObject controllerObject = new GameObject("Chapter1ArrivalController_AllPairsTest");
+
+        try
+        {
+            Chapter1ArrivalController controller = controllerObject.AddComponent<Chapter1ArrivalController>();
+            Type controllerType = typeof(Chapter1ArrivalController);
+            Type guestType = controllerType.GetNestedType("GuestRuntimeState", BindingFlags.NonPublic);
+            Type groupType = controllerType.GetNestedType("GuestGroupRuntimeState", BindingFlags.NonPublic);
+            Assert.That(guestType, Is.Not.Null);
+            Assert.That(groupType, Is.Not.Null);
+
+            FieldInfo guestStatesField = controllerType.GetField("guestStates", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo guestGroupsField = controllerType.GetField("guestGroups", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo configField = guestType.GetField("Config", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo guestIndexField = guestType.GetField("GuestIndex", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo enteredHallField = guestType.GetField("EnteredEntranceHall", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo coatStoredField = guestType.GetField("CoatStored", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo movingField = guestType.GetField("MovingToDrawingRoom", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo seatedField = guestType.GetField("Seated", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo handledField = guestType.GetField("Handled", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo groupGuestsField = groupType.GetField("Guests", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo emptyRingField = groupType.GetField("EmptyRing", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo groupMovingField = groupType.GetField("MovingToDrawingRoom", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo groupCompleteField = groupType.GetField("Complete", BindingFlags.Instance | BindingFlags.Public);
+            MethodInfo buildGroups = controllerType.GetMethod("BuildGuestGroups", BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo canMovePair = controllerType.GetMethod("CanMoveEntranceGroupToDrawingRoom", BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo completePair = controllerType.GetMethod("CompleteEntranceGroupDrawingRoomArrival", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(guestStatesField, Is.Not.Null);
+            Assert.That(guestGroupsField, Is.Not.Null);
+            Assert.That(configField, Is.Not.Null);
+            Assert.That(guestIndexField, Is.Not.Null);
+            Assert.That(enteredHallField, Is.Not.Null);
+            Assert.That(coatStoredField, Is.Not.Null);
+            Assert.That(movingField, Is.Not.Null);
+            Assert.That(seatedField, Is.Not.Null);
+            Assert.That(handledField, Is.Not.Null);
+            Assert.That(groupGuestsField, Is.Not.Null);
+            Assert.That(emptyRingField, Is.Not.Null);
+            Assert.That(groupMovingField, Is.Not.Null);
+            Assert.That(groupCompleteField, Is.Not.Null);
+            Assert.That(buildGroups, Is.Not.Null);
+            Assert.That(canMovePair, Is.Not.Null);
+            Assert.That(completePair, Is.Not.Null);
+
+            IList guestStates = (IList)guestStatesField.GetValue(controller);
+
+            for (int guestIndex = 0; guestIndex < 8; guestIndex++)
+            {
+                GuestArrivalConfig config = new GuestArrivalConfig();
+                config.ConfigureRuntime(
+                    $"guest_{guestIndex + 1}",
+                    $"Guest {guestIndex + 1}",
+                    null,
+                    null,
+                    null,
+                    string.Empty,
+                    null,
+                    $"guest_{guestIndex + 1}_coat");
+                object guest = Activator.CreateInstance(guestType, true);
+                configField.SetValue(guest, config);
+                guestIndexField.SetValue(guest, guestIndex);
+                enteredHallField.SetValue(guest, true);
+                coatStoredField.SetValue(guest, true);
+                guestStates.Add(guest);
+            }
+
+            buildGroups.Invoke(controller, null);
+            IList groups = (IList)guestGroupsField.GetValue(controller);
+            Assert.That(groups.Count, Is.EqualTo(5), "Four guest pairs should be followed only by the authored empty doorbell ring.");
+            Assert.That((bool)emptyRingField.GetValue(groups[4]), Is.True);
+
+            for (int pairIndex = 0; pairIndex < 4; pairIndex++)
+            {
+                object pair = groups[pairIndex];
+                IList pairGuests = (IList)groupGuestsField.GetValue(pair);
+                Assert.That(pairGuests.Count, Is.EqualTo(2));
+                Assert.That((int)guestIndexField.GetValue(pairGuests[0]), Is.EqualTo(pairIndex * 2));
+                Assert.That((int)guestIndexField.GetValue(pairGuests[1]), Is.EqualTo(pairIndex * 2 + 1));
+                Assert.That((bool)canMovePair.Invoke(controller, new[] { pair }), Is.True);
+
+                movingField.SetValue(pairGuests[0], true);
+                movingField.SetValue(pairGuests[1], true);
+                groupMovingField.SetValue(pair, true);
+                completePair.Invoke(controller, new[] { pair });
+
+                Assert.That((bool)seatedField.GetValue(pairGuests[0]), Is.True);
+                Assert.That((bool)seatedField.GetValue(pairGuests[1]), Is.True);
+                Assert.That((bool)handledField.GetValue(pairGuests[0]), Is.True);
+                Assert.That((bool)handledField.GetValue(pairGuests[1]), Is.True);
+                Assert.That((bool)groupCompleteField.GetValue(pair), Is.True);
+
+                int expectedDrawingRoomCount = (pairIndex + 1) * 2;
+                int expectedHallCount = 8 - expectedDrawingRoomCount;
+                string hudState = controller.BuildShortHudState("Test");
+                Assert.That(
+                    hudState,
+                    Does.Contain($"Hall: {expectedHallCount}  Drawing Room: {expectedDrawingRoomCount}"),
+                    $"Completing pair {pairIndex + 1} must change the hall count by exactly two.");
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(controllerObject);
+        }
+    }
+
+    [Test]
+    public void LowerEntranceTargetUsesLargerCalibratedScale()
+    {
+        GameObject movementObject = new GameObject("EntranceTargetScaleTest");
+
+        try
+        {
+            PointClickPlayerMovement movement = movementObject.AddComponent<PointClickPlayerMovement>();
+            movement.SetButlerFrontFinalLocalScaleForRoom("Grand Entrance Hall", -381.67844f, 2.1461537f, false);
+            movement.SetButlerBackFinalLocalScaleForRoom("Grand Entrance Hall", -98.47123f, 0.661823f, false);
+
+            Assert.That(
+                movement.TryEvaluateButlerCharacterScale(
+                    "Grand Entrance Hall",
+                    new Vector2(-704f, -116f),
+                    out PointClickPlayerMovement.ButlerCharacterScaleSample oldTargetSample),
+                Is.True);
+            Assert.That(
+                movement.TryEvaluateButlerCharacterScale(
+                    "Grand Entrance Hall",
+                    new Vector2(-704f, -210f),
+                    out PointClickPlayerMovement.ButlerCharacterScaleSample floorTargetSample),
+                Is.True);
+
+            Assert.That(floorTargetSample.Depth01, Is.LessThan(oldTargetSample.Depth01));
+            Assert.That(
+                floorTargetSample.ButlerFinalLocalScaleY,
+                Is.GreaterThan(oldTargetSample.ButlerFinalLocalScaleY * 1.5f),
+                "Moving the passage target onto the foreground floor should materially enlarge characters through the existing Y-depth scale curve.");
+
+            MethodInfo getPairOffset = typeof(Chapter1ArrivalController).GetMethod(
+                "GetWorldGuestGridOffset",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(getPairOffset, Is.Not.Null);
+            Vector2 firstOffset = (Vector2)getPairOffset.Invoke(
+                movementObject.AddComponent<Chapter1ArrivalController>(),
+                new object[] { 0, 2, 0.75f });
+            Vector2 secondOffset = (Vector2)getPairOffset.Invoke(
+                movementObject.GetComponent<Chapter1ArrivalController>(),
+                new object[] { 1, 2, 0.75f });
+            Assert.That(firstOffset.y, Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(secondOffset.y, Is.EqualTo(0f).Within(0.0001f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(movementObject);
+        }
+    }
+
+    [Test]
+    public void UnequalEntrancePairRoutesUseOneTravelDuration()
+    {
+        MethodInfo calculateSpeed = typeof(Chapter1ArrivalController).GetMethod(
+            "CalculateSynchronizedMoveSpeed",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.That(calculateSpeed, Is.Not.Null);
+
+        const float guestFiveDistance = 742.9f;
+        const float guestSixDistance = 946.3f;
+        const float defaultSpeed = 2.2f;
+        float sharedDuration = guestSixDistance / defaultSpeed;
+        float guestFiveSpeed = (float)calculateSpeed.Invoke(
+            null,
+            new object[] { guestFiveDistance, sharedDuration, defaultSpeed });
+        float guestSixSpeed = (float)calculateSpeed.Invoke(
+            null,
+            new object[] { guestSixDistance, sharedDuration, defaultSpeed });
+
+        Assert.That(guestFiveSpeed, Is.LessThan(guestSixSpeed), "The nearer guest should slow down instead of reaching the passage alone.");
+        Assert.That(
+            guestFiveDistance / guestFiveSpeed,
+            Is.EqualTo(guestSixDistance / guestSixSpeed).Within(0.001f),
+            "Guests 5 and 6 should reach the passage together despite unequal route lengths.");
+    }
+
+    [Test]
+    public void EntrancePairWaitsUntilBothCoatsAreStored()
+    {
+        GameObject controllerObject = new GameObject("Chapter1ArrivalController_PairGateTest");
+
+        try
+        {
+            Chapter1ArrivalController controller = controllerObject.AddComponent<Chapter1ArrivalController>();
+            Type controllerType = typeof(Chapter1ArrivalController);
+            Type guestType = controllerType.GetNestedType("GuestRuntimeState", BindingFlags.NonPublic);
+            Type groupType = controllerType.GetNestedType("GuestGroupRuntimeState", BindingFlags.NonPublic);
+            Assert.That(guestType, Is.Not.Null);
+            Assert.That(groupType, Is.Not.Null);
+
+            object firstGuest = Activator.CreateInstance(guestType, true);
+            object secondGuest = Activator.CreateInstance(guestType, true);
+            object pair = Activator.CreateInstance(groupType, true);
+            FieldInfo coatStoredField = guestType.GetField("CoatStored", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo guestsField = groupType.GetField("Guests", BindingFlags.Instance | BindingFlags.Public);
+            MethodInfo canMovePair = controllerType.GetMethod(
+                "CanMoveEntranceGroupToDrawingRoom",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(coatStoredField, Is.Not.Null);
+            Assert.That(guestsField, Is.Not.Null);
+            Assert.That(canMovePair, Is.Not.Null);
+
+            IList pairGuests = (IList)guestsField.GetValue(pair);
+            pairGuests.Add(firstGuest);
+            coatStoredField.SetValue(firstGuest, true);
+
+            Assert.That(
+                (bool)canMovePair.Invoke(controller, new[] { pair }),
+                Is.False,
+                "A malformed one-guest group must never depart and leave an odd hall count.");
+
+            pairGuests.Add(secondGuest);
+            coatStoredField.SetValue(secondGuest, false);
+            Assert.That(
+                (bool)canMovePair.Invoke(controller, new[] { pair }),
+                Is.False,
+                "Returning only one coat must not release either member of the pair.");
+
+            coatStoredField.SetValue(secondGuest, true);
+            Assert.That(
+                (bool)canMovePair.Invoke(controller, new[] { pair }),
+                Is.True,
+                "The pair should be released together once both coats are stored.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(controllerObject);
+        }
+    }
+
+    [Test]
+    public void GuestFourCoatReturnedLastKeepsGuestsThreeAndFourTogether()
+    {
+        GameObject controllerObject = new GameObject("Chapter1ArrivalController_Guest34PauseTest");
+        GameObject guestThreeObject = new GameObject("Guest3");
+        GameObject guestFourObject = new GameObject("Guest4");
+        GameObject guestThreeTarget = new GameObject("Guest3DrawingRoomTarget");
+        GameObject guestFourTarget = new GameObject("Guest4DrawingRoomTarget");
+
+        try
+        {
+            Chapter1ArrivalController controller = controllerObject.AddComponent<Chapter1ArrivalController>();
+            NPCWaypointMover guestThreeMover = guestThreeObject.AddComponent<NPCWaypointMover>();
+            NPCWaypointMover guestFourMover = guestFourObject.AddComponent<NPCWaypointMover>();
+            guestThreeMover.MoveSpeed = 1f;
+            guestFourMover.MoveSpeed = 1f;
+            guestThreeTarget.transform.position = new Vector3(10f, 0f, 0f);
+            guestFourTarget.transform.position = new Vector3(10f, 0f, 0f);
+
+            Type controllerType = typeof(Chapter1ArrivalController);
+            Type guestType = controllerType.GetNestedType("GuestRuntimeState", BindingFlags.NonPublic);
+            Type groupType = controllerType.GetNestedType("GuestGroupRuntimeState", BindingFlags.NonPublic);
+            Assert.That(guestType, Is.Not.Null);
+            Assert.That(groupType, Is.Not.Null);
+
+            object guestThree = Activator.CreateInstance(guestType, true);
+            object guestFour = Activator.CreateInstance(guestType, true);
+            object pair = Activator.CreateInstance(groupType, true);
+            FieldInfo guestIndexField = guestType.GetField("GuestIndex", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo coatStoredField = guestType.GetField("CoatStored", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo moverField = guestType.GetField("Mover", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo guestsField = groupType.GetField("Guests", BindingFlags.Instance | BindingFlags.Public);
+            MethodInfo canMovePair = controllerType.GetMethod(
+                "CanMoveEntranceGroupToDrawingRoom",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo hasPairSpeechPause = controllerType.GetMethod(
+                "HasEntranceGroupSpeechPause",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            MethodInfo pairMovementPauses = controllerType.GetMethod(
+                "PairEntranceGroupMovementPausePartners",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            MethodInfo clearMovementPauses = controllerType.GetMethod(
+                "ClearEntranceGroupMovementPausePartners",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(guestIndexField, Is.Not.Null);
+            Assert.That(coatStoredField, Is.Not.Null);
+            Assert.That(moverField, Is.Not.Null);
+            Assert.That(guestsField, Is.Not.Null);
+            Assert.That(canMovePair, Is.Not.Null);
+            Assert.That(hasPairSpeechPause, Is.Not.Null);
+            Assert.That(pairMovementPauses, Is.Not.Null);
+            Assert.That(clearMovementPauses, Is.Not.Null);
+
+            guestIndexField.SetValue(guestThree, 2);
+            guestIndexField.SetValue(guestFour, 3);
+            moverField.SetValue(guestThree, guestThreeMover);
+            moverField.SetValue(guestFour, guestFourMover);
+            IList pairGuests = (IList)guestsField.GetValue(pair);
+            pairGuests.Add(guestThree);
+            pairGuests.Add(guestFour);
+
+            // Reproduce the reported order: Guest 3's coat is already stored and
+            // Guest 4's coat is returned last while Guest 4 still owns a queued
+            // dialogue pause.
+            coatStoredField.SetValue(guestThree, true);
+            coatStoredField.SetValue(guestFour, false);
+            Assert.That((bool)canMovePair.Invoke(controller, new[] { pair }), Is.False);
+            coatStoredField.SetValue(guestFour, true);
+            Assert.That((bool)canMovePair.Invoke(controller, new[] { pair }), Is.True);
+
+            guestFourMover.AcquireSpeechPause();
+            Assert.That((bool)hasPairSpeechPause.Invoke(null, new[] { pair }), Is.True);
+            pairMovementPauses.Invoke(null, new[] { pair });
+            Assert.That(guestThreeMover.IsMovementPaused, Is.True, "Guest 3 must share Guest 4's queued-dialogue pause.");
+            Assert.That(guestFourMover.IsMovementPaused, Is.True);
+
+            IEnumerator guestThreeMove = guestThreeMover.MoveToRoutine(guestThreeTarget.transform);
+            IEnumerator guestFourMove = guestFourMover.MoveToRoutine(guestFourTarget.transform);
+            Vector3 guestThreeBeforePause = guestThreeObject.transform.position;
+            Vector3 guestFourBeforePause = guestFourObject.transform.position;
+            Assert.That(guestThreeMove.MoveNext(), Is.True);
+            Assert.That(guestFourMove.MoveNext(), Is.True);
+            Assert.That(guestThreeObject.transform.position, Is.EqualTo(guestThreeBeforePause));
+            Assert.That(guestFourObject.transform.position, Is.EqualTo(guestFourBeforePause));
+
+            guestFourMover.ReleaseSpeechPause();
+            Assert.That((bool)hasPairSpeechPause.Invoke(null, new[] { pair }), Is.False);
+            Assert.That(guestThreeMover.IsMovementPaused, Is.False);
+            Assert.That(guestFourMover.IsMovementPaused, Is.False);
+            Assert.That(guestThreeMove.MoveNext(), Is.True);
+            Assert.That(guestFourMove.MoveNext(), Is.True);
+            Assert.That(guestThreeObject.transform.position.x, Is.GreaterThan(guestThreeBeforePause.x));
+            Assert.That(
+                guestThreeObject.transform.position.x,
+                Is.EqualTo(guestFourObject.transform.position.x).Within(0.0001f),
+                "The pair must resume with equal route progress.");
+
+            guestThreeMover.AcquireSpeechPause();
+            Vector3 guestThreeBeforeMidRoutePause = guestThreeObject.transform.position;
+            Vector3 guestFourBeforeMidRoutePause = guestFourObject.transform.position;
+            Assert.That(guestThreeMove.MoveNext(), Is.True);
+            Assert.That(guestFourMove.MoveNext(), Is.True);
+            Assert.That(guestThreeObject.transform.position, Is.EqualTo(guestThreeBeforeMidRoutePause));
+            Assert.That(
+                guestFourObject.transform.position,
+                Is.EqualTo(guestFourBeforeMidRoutePause),
+                "A pause affecting either partner must stop both partners.");
+
+            guestThreeMover.ReleaseSpeechPause();
+            Assert.That(guestThreeMove.MoveNext(), Is.True);
+            Assert.That(guestFourMove.MoveNext(), Is.True);
+            Assert.That(
+                guestThreeObject.transform.position.x,
+                Is.EqualTo(guestFourObject.transform.position.x).Within(0.0001f));
+
+            clearMovementPauses.Invoke(null, new[] { pair });
+        }
+        finally
+        {
+            Object.DestroyImmediate(guestFourTarget);
+            Object.DestroyImmediate(guestThreeTarget);
+            Object.DestroyImmediate(guestFourObject);
+            Object.DestroyImmediate(guestThreeObject);
+            Object.DestroyImmediate(controllerObject);
+        }
+    }
+
+    [Test]
+    public void EntrancePairExitBarrierWaitsForBothMovers()
+    {
+        GameObject controllerObject = new GameObject("Chapter1ArrivalController_PairBarrierTest");
+        GameObject firstGuestObject = new GameObject("PairBarrierGuest01");
+        GameObject secondGuestObject = new GameObject("PairBarrierGuest02");
+        GameObject firstTargetObject = new GameObject("PairBarrierTarget01");
+        GameObject secondTargetObject = new GameObject("PairBarrierTarget02");
+
+        try
+        {
+            Chapter1ArrivalController controller = controllerObject.AddComponent<Chapter1ArrivalController>();
+            NPCWaypointMover firstMover = firstGuestObject.AddComponent<NPCWaypointMover>();
+            NPCWaypointMover secondMover = secondGuestObject.AddComponent<NPCWaypointMover>();
+            Type controllerType = typeof(Chapter1ArrivalController);
+            Type guestType = controllerType.GetNestedType("GuestRuntimeState", BindingFlags.NonPublic);
+            Type groupType = controllerType.GetNestedType("GuestGroupRuntimeState", BindingFlags.NonPublic);
+            Assert.That(guestType, Is.Not.Null);
+            Assert.That(groupType, Is.Not.Null);
+
+            object firstGuest = Activator.CreateInstance(guestType, true);
+            object secondGuest = Activator.CreateInstance(guestType, true);
+            object pair = Activator.CreateInstance(groupType, true);
+            FieldInfo guestObjectField = guestType.GetField("GuestObject", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo moverField = guestType.GetField("Mover", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo departureTargetField = guestType.GetField("DrawingRoomDepartureTarget", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo movingField = guestType.GetField("MovingToDrawingRoom", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo guestsField = groupType.GetField("Guests", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo moverIsMovingField = typeof(NPCWaypointMover).GetField("isMoving", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo moverActiveTargetField = typeof(NPCWaypointMover).GetField("activeTarget", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo moverReachedTargetField = typeof(NPCWaypointMover).GetField("reachedActiveTarget", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo navigationManagerField = controllerType.GetField("navigationManager", BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo pairReachedExit = controllerType.GetMethod(
+                "HasEntranceGroupReachedDrawingRoomExit",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(guestObjectField, Is.Not.Null);
+            Assert.That(moverField, Is.Not.Null);
+            Assert.That(departureTargetField, Is.Not.Null);
+            Assert.That(movingField, Is.Not.Null);
+            Assert.That(guestsField, Is.Not.Null);
+            Assert.That(moverIsMovingField, Is.Not.Null);
+            Assert.That(moverActiveTargetField, Is.Not.Null);
+            Assert.That(moverReachedTargetField, Is.Not.Null);
+            Assert.That(navigationManagerField, Is.Not.Null);
+            Assert.That(pairReachedExit, Is.Not.Null);
+
+            navigationManagerField.SetValue(controller, null);
+
+            guestObjectField.SetValue(firstGuest, firstGuestObject);
+            guestObjectField.SetValue(secondGuest, secondGuestObject);
+            moverField.SetValue(firstGuest, firstMover);
+            moverField.SetValue(secondGuest, secondMover);
+            departureTargetField.SetValue(firstGuest, firstTargetObject.transform);
+            departureTargetField.SetValue(secondGuest, secondTargetObject.transform);
+            movingField.SetValue(firstGuest, true);
+            movingField.SetValue(secondGuest, true);
+            IList pairGuests = (IList)guestsField.GetValue(pair);
+            pairGuests.Add(firstGuest);
+            pairGuests.Add(secondGuest);
+
+            moverIsMovingField.SetValue(firstMover, false);
+            moverActiveTargetField.SetValue(firstMover, firstTargetObject.transform);
+            moverReachedTargetField.SetValue(firstMover, true);
+            moverIsMovingField.SetValue(secondMover, true);
+            moverActiveTargetField.SetValue(secondMover, secondTargetObject.transform);
+            moverReachedTargetField.SetValue(secondMover, false);
+            Assert.That(
+                (bool)pairReachedExit.Invoke(controller, new[] { pair }),
+                Is.False,
+                "The faster guest reaching the exit must not transfer without its partner.");
+
+            moverIsMovingField.SetValue(secondMover, false);
+            Assert.That(
+                (bool)pairReachedExit.Invoke(controller, new[] { pair }),
+                Is.False,
+                "A stopped mover that never reached its assigned target must not be treated as having arrived.");
+
+            moverReachedTargetField.SetValue(secondMover, true);
+            Assert.That(
+                (bool)pairReachedExit.Invoke(controller, new[] { pair }),
+                Is.True,
+                "The pair may transfer only after both movers have reached the exit.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(secondTargetObject);
+            Object.DestroyImmediate(firstTargetObject);
+            Object.DestroyImmediate(secondGuestObject);
+            Object.DestroyImmediate(firstGuestObject);
+            Object.DestroyImmediate(controllerObject);
+        }
+    }
+
     [Test]
     public void GuestSpeakerResolutionDoesNotSelectDifferentGuest()
     {
