@@ -11,6 +11,9 @@ public class StoryActorRoomStageLockingTests
     private static readonly MethodInfo ApplyBindingMethod = typeof(ActorRoomState).GetMethod(
         "TryApplyRoomStageLocalBindingIfNeeded",
         BindingFlags.Instance | BindingFlags.NonPublic);
+    private static readonly FieldInfo CameraManagerField = typeof(ActorRoomState).GetField(
+        "cameraManager",
+        BindingFlags.Instance | BindingFlags.NonPublic);
 
     [Test]
     public void WorldActorBindingStaysLockedAcrossPanZoomAndResize()
@@ -445,6 +448,9 @@ public class StoryActorRoomStageLockingTests
         actor.transform.SetParent(root.transform, false);
         actor.transform.position = Vector3.zero;
         actor.transform.localScale = new Vector3(1.2f, 0.8f, 1f);
+        ActorRoomState actorState = actor.GetComponent<ActorRoomState>();
+        Assert.That(CameraManagerField, Is.Not.Null, "ActorRoomState must retain its explicit CameraManager dependency seam.");
+        CameraManagerField.SetValue(actorState, cameraManager);
 
         return new TestRig
         {
@@ -456,7 +462,7 @@ public class StoryActorRoomStageLockingTests
             Stage = stage,
             RoomContent = roomContent,
             Anchor = anchor,
-            ActorState = actor.GetComponent<ActorRoomState>(),
+            ActorState = actorState,
             PreviousMainCameras = previousMainCameras
         };
     }
