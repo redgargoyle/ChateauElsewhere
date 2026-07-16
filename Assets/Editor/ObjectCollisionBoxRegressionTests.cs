@@ -149,7 +149,6 @@ public class ObjectCollisionBoxRegressionTests
         GameObject actorObject = null;
         Texture2D texture = null;
         Sprite sprite = null;
-        RoomPerspectiveProfile projectionProfile = null;
 
         try
         {
@@ -166,31 +165,16 @@ public class ObjectCollisionBoxRegressionTests
             bodyRenderer.sprite = sprite;
             coatRenderer.sprite = sprite;
 
-            RoomProjectedEntity projection = actorObject.AddComponent<RoomProjectedEntity>();
-            projectionProfile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
-            projectionProfile.ConfigureDrawingRoomDefaults();
-            SerializedObject serializedProjection = new SerializedObject(projection);
-            serializedProjection.FindProperty("roomProfile").objectReferenceValue = projectionProfile;
-            serializedProjection.FindProperty("applyPosition").boolValue = false;
-            serializedProjection.FindProperty("applyScale").boolValue = false;
-            serializedProjection.FindProperty("applyTint").boolValue = false;
-            serializedProjection.FindProperty("applySorting").boolValue = true;
-            serializedProjection.FindProperty("requireActorRoomMatch").boolValue = false;
-            serializedProjection.ApplyModifiedPropertiesWithoutUndo();
-            projection.RefreshVisualTargets();
-
             WorldYSortSpriteRenderer sorter = actorObject.AddComponent<WorldYSortSpriteRenderer>();
             bodyRenderer.sortingOrder = 120;
             coatRenderer.sortingOrder = 123;
             sorter.ConfigureForActor(sortingSource, bodyRenderer);
 
-            Assert.That(projection.OwnsProjectedSorting, Is.True, "The characterization must exercise a genuinely active legacy projection writer.");
             int firstExpectedOrder = sortingSource.GetSortingOrderForFootY(bodyRenderer.bounds.min.y);
             Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(firstExpectedOrder));
             Assert.That(coatRenderer.sortingOrder, Is.EqualTo(firstExpectedOrder + 3), "Coat/body layering should survive continuous depth updates.");
 
             actorObject.transform.position = new Vector3(0f, 2f, 0f);
-            projection.ApplyProjection();
             sorter.ApplySorting();
 
             int movedExpectedOrder = sortingSource.GetSortingOrderForFootY(bodyRenderer.bounds.min.y);
@@ -220,10 +204,6 @@ public class ObjectCollisionBoxRegressionTests
                 Object.DestroyImmediate(texture);
             }
 
-            if (projectionProfile != null)
-            {
-                Object.DestroyImmediate(projectionProfile);
-            }
         }
     }
 
@@ -335,19 +315,8 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(chair, Is.Not.Null, "The purple front armchair should remain authored under the Drawing Room.");
 
             SpriteRenderer chairRenderer = chair.GetComponent<SpriteRenderer>();
-            RoomProjectedEntity projectedEntity = chair.GetComponent<RoomProjectedEntity>();
-
             Assert.That(chairRenderer, Is.Not.Null);
             Assert.That(AssetDatabase.GetAssetPath(chairRenderer.sprite), Is.EqualTo(DrawingRoomChairSpritePath));
-            Assert.That(projectedEntity, Is.Not.Null, "The chair must keep the shared Drawing Room y-axis occlusion component.");
-            Assert.That(projectedEntity.Mode, Is.EqualTo(RoomProjectedEntity.ProjectionMode.ForegroundOccluder));
-            Assert.That(projectedEntity.RoomLocalFootPoint, Is.EqualTo(new Vector2(59f, -208.5f)));
-
-            SerializedObject serializedProjection = new SerializedObject(projectedEntity);
-            Assert.That(serializedProjection.FindProperty("applySorting").boolValue, Is.False,
-                "The chair must not fight the shared Butler/furniture y-axis sorter with a second sorting writer.");
-            Assert.That(serializedProjection.FindProperty("sortingOffset").intValue, Is.Zero,
-                "The legacy seated-guest offset must not bypass the shared y-axis sorter.");
 
             Transform blockerTransform = FindDescendant(room, $"PlayerBlocker_{DrawingRoomChairName}");
             Assert.That(blockerTransform, Is.Not.Null, "The purple front armchair needs a separate movement footprint.");
@@ -361,7 +330,7 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(marker.Category, Is.EqualTo(ObjectCollisionBoxCategory.Chair.ToString()));
             Assert.That(marker.FootprintHeightFraction, Is.EqualTo(0.3f).Within(0.001f));
             Assert.That(marker.GeneratedByCollisionBoxTool, Is.False,
-                "This explicitly authored exception must survive generated-blocker cleanup because the broad scanner skips projected guest-named props.");
+                "This explicitly authored exception must survive generated-blocker cleanup.");
             Assert.That(marker.SortSourceRenderers, Is.True,
                 "The chair must use the same lower-footprint y-axis sorter as the Butler and other furniture.");
 
@@ -628,7 +597,6 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(blockerTransform, Is.Not.Null, "The Drawing Room tea table needs its physical movement footprint.");
 
             SpriteRenderer tableRenderer = table.GetComponent<SpriteRenderer>();
-            RoomProjectedEntity projectedEntity = table.GetComponent<RoomProjectedEntity>();
             ObjectMovementBlocker2D marker = blockerTransform.GetComponent<ObjectMovementBlocker2D>();
             PolygonCollider2D blocker = blockerTransform.GetComponent<PolygonCollider2D>();
             RoomContentGroup roomContent = room.GetComponent<RoomContentGroup>();
@@ -636,9 +604,6 @@ public class ObjectCollisionBoxRegressionTests
             PointClickPlayerMovement playerMovement = FindComponentInScene<PointClickPlayerMovement>(scene);
 
             Assert.That(tableRenderer, Is.Not.Null);
-            Assert.That(projectedEntity, Is.Not.Null);
-            Assert.That(projectedEntity.Mode, Is.EqualTo(RoomProjectedEntity.ProjectionMode.ForegroundOccluder));
-            Assert.That(projectedEntity.RoomLocalFootPoint, Is.EqualTo(new Vector2(-80.26f, -211.67f)));
             Assert.That(marker, Is.Not.Null);
             Assert.That(marker.SourceObject, Is.SameAs(table.gameObject));
             Assert.That(marker.SortSourceRenderers, Is.True,
@@ -647,10 +612,6 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(roomContent, Is.Not.Null);
             Assert.That(cameraManager, Is.Not.Null);
             Assert.That(playerMovement, Is.Not.Null);
-
-            SerializedObject serializedProjection = new SerializedObject(projectedEntity);
-            Assert.That(serializedProjection.FindProperty("applySorting").boolValue, Is.False,
-                "RoomProjectedEntity must not race the table's physical-footprint sorter every LateUpdate.");
 
             bool roomWasActive = room.gameObject.activeSelf;
             RectTransform roomStage = room as RectTransform;
@@ -690,9 +651,9 @@ public class ObjectCollisionBoxRegressionTests
                     Assert.That(butlerOrderInFrontOfTable, Is.GreaterThan(tableRenderer.sortingOrder),
                         $"The Butler should render in front of the table below its front edge at vertical pan {verticalPans[panIndex]}.");
 
-                    projectedEntity.ApplyProjection();
+                    marker.ApplySourceSortingNow();
                     Assert.That(tableRenderer.sortingOrder, Is.EqualTo(expectedTableOrder),
-                        "Applying the retained projection metadata must not overwrite the physical occlusion result.");
+                        "The physical-footprint sorter must remain the table's sole occlusion owner.");
                 }
 
                 Assert.That(tableOrders[0], Is.Not.EqualTo(tableOrders[2]),
@@ -728,14 +689,26 @@ public class ObjectCollisionBoxRegressionTests
 
         yield return new EnterPlayMode();
 
-        MainMenuController mainMenu = Object.FindAnyObjectByType<MainMenuController>(FindObjectsInactive.Include);
-        Assert.That(mainMenu, Is.Not.Null, "The runtime regression must enter Gameplay through the real Main Menu bootstrap.");
-        mainMenu.ContinueGame();
+        GameplayRuntimeState.ResetForNewGame();
+        SceneManager.sceneLoaded += ConfigureHeadlessTestCameras;
 
-        for (int frame = 0; frame < 30 && SceneManager.GetActiveScene().name != "Gameplay"; frame++)
+        try
         {
-            yield return null;
+            AsyncOperation gameplayLoad = SceneManager.LoadSceneAsync("Gameplay", LoadSceneMode.Single);
+            Assert.That(gameplayLoad, Is.Not.Null, "The live occlusion regression must be able to load the Gameplay build scene.");
+
+            while (!gameplayLoad.isDone)
+            {
+                yield return null;
+            }
         }
+        finally
+        {
+            SceneManager.sceneLoaded -= ConfigureHeadlessTestCameras;
+        }
+
+        ConfigureHeadlessTestCameras(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+        yield return null;
 
         Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo("Gameplay"));
         yield return null;
@@ -935,6 +908,19 @@ public class ObjectCollisionBoxRegressionTests
         if (previousSceneSetup != null && previousSceneSetup.Length > 0)
         {
             EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
+        }
+    }
+
+    private static void ConfigureHeadlessTestCameras(Scene scene, LoadSceneMode mode)
+    {
+        Camera[] cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        for (int i = 0; i < cameras.Length; i++)
+        {
+            if (cameras[i] != null && (cameras[i].pixelWidth <= 1 || cameras[i].pixelHeight <= 1))
+            {
+                cameras[i].pixelRect = new Rect(0f, 0f, 800f, 450f);
+            }
         }
     }
 

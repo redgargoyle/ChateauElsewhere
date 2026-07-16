@@ -72,7 +72,7 @@ public class CharacterRegressionTests
     private const string AnimationFolder = "Assets/Animation";
 
     [Test]
-    public void RoomPeopleAreEditableDepthScaledSceneObjects()
+    public void RoomPeopleAreEditableStaticScaleSceneObjects()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
         string walkerText = File.ReadAllText(WalkerPath);
@@ -94,8 +94,11 @@ public class CharacterRegressionTests
         Assert.That(animatorDriverText, Does.Contain("IsFacingUp"), "The shared character animation driver should also expose persistent facing booleans for directional idle states.");
         Assert.That(animatorDriverText, Does.Contain("!Application.isPlaying && !animator.isInitialized"), "Edit-time validation must not query Animator parameters before Unity initializes the Animator.");
         Assert.That(animatorDriverText, Does.Contain("DetermineDirection"), "Player and NPCs should share averaged direction selection.");
-        Assert.That(walkerText, Does.Contain("Mathf.InverseLerp(nearY, farY"), "Walkers should scale/tint from front to back of the painted room.");
-        Assert.That(walkerText, Does.Contain("rectTransform.localScale = scale"), "Perspective scale should affect the whole character card.");
+        Assert.That(walkerText, Does.Not.Match(@"\.localScale\s*="), "Walkers must leave authored character body scale untouched.");
+        Assert.That(walkerText, Does.Not.Contain("nearScale"));
+        Assert.That(walkerText, Does.Not.Contain("farScale"));
+        Assert.That(walkerText, Does.Not.Contain("nearTint"));
+        Assert.That(walkerText, Does.Not.Contain("farTint"));
         Assert.That(walkerText, Does.Contain("targetGraphic.raycastTarget = false"), "Characters must not block door hitboxes.");
 
         Assert.That(sceneText, Does.Contain("m_Name: People"));
@@ -108,17 +111,17 @@ public class CharacterRegressionTests
         Assert.That(sceneText, Does.Contain("snapToWholePixels: 0"), "The first walkers should use smooth subpixel motion while the room stage pans and scales.");
         Assert.That(sceneText, Does.Contain("endpointPauseSeconds: 0.75"), "Example walkers should briefly idle at path endpoints.");
         Assert.That(sceneText, Does.Contain("m_Pivot: {x: 0.5, y: 0.035}"), "Walker cards should pivot close to the normalized foot baseline.");
-        Assert.That(sceneText, Does.Contain("farY: -90"), "The example people paths should stay on the Grand Entrance Hall floor plane.");
         Assert.That(sceneText, Does.Contain("guid: 1b45edb93a9b42e58fa4cad7d4de84ce"), "Gameplay walkers should use RoomPersonWalker2D.");
         Assert.That(sceneText, Does.Contain("guid: 8f8728ad492a40d08efef615688bea56"), "The gentleman Image should start on a generated sprite frame.");
         Assert.That(sceneText, Does.Contain("guid: 5b37355315364217b2e5185b619c748d"), "The lady Image should start on a generated sprite frame.");
         Assert.That(Directory.GetFiles(AnimationFolder, "*.overrideController", SearchOption.AllDirectories).Length, Is.GreaterThanOrEqualTo(8), "Each character folder should have a generated Animator override controller.");
         Assert.That(Directory.GetFiles(AnimationFolder, "*_Walk_*.anim", SearchOption.AllDirectories).Length, Is.GreaterThanOrEqualTo(32), "Characters should expose editable directional walk clips under Assets/Animation.");
         AssertCharacterArtRootIsGuestAndButlerFoldersOnly();
-        Assert.That(readmeText, Does.Contain("Unity Animator"));
+        Assert.That(readmeText, Does.Contain("Animator parameters"));
         Assert.That(readmeText, Does.Contain("SpriteRenderer"));
-        Assert.That(readmeText, Does.Contain("foot baseline"));
-        Assert.That(readmeText, Does.Contain("prototype walking NPCs are currently disabled"));
+        Assert.That(readmeText, Does.Contain("bottom-center foot pivots"));
+        Assert.That(readmeText, Does.Contain("CharacterScaleCatalog"));
+        Assert.That(readmeText, Does.Contain("CharacterAnimationDisplay"));
     }
 
     [Test]
@@ -206,8 +209,8 @@ public class CharacterRegressionTests
         Assert.That(guestThreeBlock, Is.Not.Null, "Guest 3 should remain a named scene prefab instance.");
         Assert.That(guestThreeBlock, Does.Contain(firstMisterFlorianFrameGuid), "Guest 3 should preview with the forward-facing Mister Florian frame.");
         Assert.That(guestThreeBlock, Does.Contain(misterFlorianControllerGuid), "Guest 3 should use the Mister Florian override controller.");
-        Assert.That(guestThreeBlock, Does.Contain("propertyPath: m_LocalScale.x"), "Guest 3 should keep the same root scale treatment as Guest 4.");
-        Assert.That(sceneText, Does.Not.Contain("m_EditorClassIdentifier: Assembly-CSharp::RoomProjectedEntity"), "Gameplay's authored Player/Guest scene instances should not carry RoomProjectedEntity components; ActorRoomState and PointClickPlayerMovement own their room scaling.");
+        Assert.That(guestThreeBlock, Does.Not.Contain("propertyPath: m_LocalScale."), "Guest 3 must inherit the unit actor root; CharacterAnimationDisplay owns size.");
+        Assert.That(sceneText, Does.Not.Contain("m_EditorClassIdentifier: Assembly-CSharp::RoomProjectedEntity"), "Gameplay should not carry the deleted projection component.");
 
         Assert.That(arrivalControllerText, Does.Contain("ShouldUseAuthoredMisterFlorianGuestAnimation"), "Runtime guest setup should preserve Guest 3's authored Mister Florian animation.");
         Assert.That(arrivalControllerText, Does.Contain("index == 2 && MatchesSceneGuestName(guestObject, ChapterGuestNameAliases[2])"), "Only the authored Guest 3 object should keep Mister Florian animation.");
@@ -865,7 +868,7 @@ public class CharacterRegressionTests
         Assert.That(guestBlock, Does.Contain("propertyPath: m_IsActive"), $"Guest {guestNumber} should keep the inactive scene-authored arrival setup.");
         Assert.That(guestBlock, Does.Contain("propertyPath: walkableFloor"), $"Guest {guestNumber} should keep the same walkable floor binding as earlier guests.");
         Assert.That(guestBlock, Does.Contain("objectReference: {fileID: 551531667}"), $"Guest {guestNumber} should use the same walkable floor object as earlier guests.");
-        Assert.That(guestBlock, Does.Contain("propertyPath: m_LocalScale.x"), $"Guest {guestNumber} should keep the same root scale treatment as Guest 3 and Guest 4.");
+        Assert.That(guestBlock, Does.Not.Contain("propertyPath: m_LocalScale."), $"Guest {guestNumber} must inherit the unit actor root; CharacterAnimationDisplay owns size.");
         Assert.That(guestBlock, Does.Contain("m_AddedGameObjects:"), $"Guest {guestNumber} should keep the carried-coat child visual setup.");
     }
 
@@ -1049,10 +1052,12 @@ public class CharacterRegressionTests
             "guest2",
             "guest3",
             "guest4",
+            "guest4_no_white_artifacts",
             "guest5",
             "guest6",
             "guest7",
-            "guest8"
+            "guest8",
+            "guest8_no_white_artifacts"
         };
         string[] actualFolders = Directory.GetDirectories(CharacterArtRoot)
             .Select(Path.GetFileName)
@@ -1065,12 +1070,15 @@ public class CharacterRegressionTests
         for (int i = 0; i < expectedFolders.Length; i++)
         {
             string folderPath = $"{CharacterArtRoot}/{expectedFolders[i]}";
-            Assert.That(Directory.GetFiles(folderPath, "*.png").Length, Is.GreaterThan(0), $"{expectedFolders[i]} should contain the images used by its animations.");
+            Assert.That(Directory.GetFiles(folderPath, "*.png", SearchOption.AllDirectories).Length, Is.GreaterThan(0), $"{expectedFolders[i]} should contain the images used by its animations.");
 
             foreach (string filePath in Directory.GetFiles(folderPath))
             {
                 string extension = Path.GetExtension(filePath);
-                Assert.That(extension == ".png" || extension == ".meta", Is.True, $"{expectedFolders[i]} should contain only sprite images and Unity meta files.");
+                Assert.That(
+                    extension == ".png" || extension == ".png_original" || extension == ".meta",
+                    Is.True,
+                    $"{expectedFolders[i]} should contain only sprite images, preserved source images, and Unity meta files.");
             }
         }
     }

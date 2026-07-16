@@ -31,9 +31,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public NPCWaypointMover Mover;
         public Transform DrawingRoomDepartureTarget;
         public ActorRoomState ActorState;
-        public RoomProjectedEntity Projection;
         public GuestFootstepAudio Footsteps;
-        public GuestScaleParticipant ScaleParticipant;
         public WorldYSortSpriteRenderer YSorter;
     }
 
@@ -161,6 +159,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const string GuestCoatResourceFolder = "Chapter1/GuestCoats";
     private const string DefaultGuestFootstepCatalogResourcePath = "Audio/GuestFootstepCatalog";
     private const string GuestInterruptedLineText = "You inturrupted me.";
+    private const float RuntimeGuestPixelsPerUnit = 200f / 3f;
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
     private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
@@ -406,7 +405,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         Camera mainCamera = Camera.main;
 
-        if (mainCamera == null)
+        if (mainCamera == null || mainCamera.pixelWidth <= 1 || mainCamera.pixelHeight <= 1)
         {
             return false;
         }
@@ -598,7 +597,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             DisableCoatPickupInteraction(guestState.CoatPickup);
         }
 
-        RefreshGuestScalingNow();
         Debug.Log($"Coat taken from guest: {carriedCoatId}", this);
         RefreshInteractionState();
         CheckActiveGroupsReadyForDrawingRoom();
@@ -821,14 +819,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (mainCamera == null)
         {
             return false;
-        }
-
-        RoomProjectedEntity projection = ResolveGuestProjection(guestState);
-
-        if (projection != null && projection.IsProjectionActive)
-        {
-            screenPosition = mainCamera.WorldToScreenPoint(projection.transform.position);
-            return true;
         }
 
         if (TryGetVisibleFeetWorldPoint(guestState.GuestObject, true, out Vector3 feetWorldPoint))
@@ -1070,7 +1060,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             carriedCoatVisual = null;
         }
 
-        RefreshGuestScalingNow();
         butlerCarryingCoat = false;
         carriedCoatId = string.Empty;
         carriedCoatGuest = null;
@@ -1274,7 +1263,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             ActorRoomState actorState = config.ResolveActorState();
             GameObject guestObject = config.ResolveGuestObject();
             NPCWaypointMover mover = guestObject != null ? guestObject.GetComponent<NPCWaypointMover>() : null;
-            RoomProjectedEntity projection = ResolveGuestProjection(guestObject, actorState);
             GuestFootstepAudio footsteps = ConfigureGuestFootsteps(guestObject, i + 1);
 
             if (mover == null && guestObject != null)
@@ -1302,7 +1290,6 @@ public class Chapter1ArrivalController : MonoBehaviour
                 Seated = false,
                 Mover = mover,
                 ActorState = actorState,
-                Projection = projection,
                 Footsteps = footsteps,
                 Seat = ResolveSeatForGuest(i)
             };
@@ -1321,8 +1308,6 @@ public class Chapter1ArrivalController : MonoBehaviour
                 actorState.SetSeated(false);
             }
 
-            runtimeState.ScaleParticipant = EnsureGuestScaleParticipant(runtimeState, entryRoomId, CharacterPose.Standing);
-
             if (runtimeState.CoatPickup != null)
             {
                 runtimeState.CoatPickup.gameObject.SetActive(false);
@@ -1330,8 +1315,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             guestStates.Add(runtimeState);
         }
-
-        RefreshGuestScalingNow();
     }
 
     private void BuildGuestGroups()
@@ -1560,8 +1543,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         ForceGuestVisibleForDoorFlow(guest);
-        EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing);
-        RefreshGuestScalingNow();
         OfferGuestCoat(guest);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance wait spot.", this);
     }
@@ -1573,8 +1554,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        PlaceGuestAtDoorArrival(guest);
-        EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing);
         PlaceGuestAtDoorArrival(guest);
     }
 
@@ -1819,18 +1798,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         if (coatRenderer == null)
         {
-            return;
-        }
-
-        RoomProjectedEntity projection = ResolveGuestProjection(guest);
-
-        if (projection != null && projection.IsProjectionActive)
-        {
-            int coatSortingOffset = projection.VisualProfile != null ? projection.VisualProfile.CoatSortingOffset : 1;
-            coatRenderer.sortingLayerName = projection.GetSortingLayerName();
-            coatRenderer.sortingOrder = projection.GetSortingOrder(coatSortingOffset);
-            coatRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
-            RefreshGuestYSorter(guest);
             return;
         }
 
@@ -2303,20 +2270,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             return 0f;
         }
 
-        RoomProjectedEntity projection = ResolveGuestProjection(guest);
-
-        if (projection != null)
-        {
-            projection.UseProfileFromRoomTarget(target);
-
-            if (NPCWaypointMover.CanUseProjectionAsMotionOwner(projection) &&
-                projection.CanProjectTarget(target) &&
-                projection.TryGetRoomLocalFootPointForTarget(target, out Vector2 targetFootPoint))
-            {
-                return Vector2.Distance(projection.RoomLocalFootPoint, targetFootPoint);
-            }
-        }
-
         if (guest.GuestObject == null)
         {
             return 0f;
@@ -2479,8 +2432,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.ApplyState();
         }
 
-        EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
-        RefreshGuestScalingNow();
         PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
         ApplyDrawingRoomSeatedOcclusion(guest, drawingRoomSpot);
 
@@ -2724,8 +2675,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.ApplyState();
         }
 
-        EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
-        RefreshGuestScalingNow();
         HideGuestCoatVisualsForChapter2Skip(guest);
         PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
         ApplyDrawingRoomSeatedOcclusion(guest, drawingRoomSpot);
@@ -3184,21 +3133,11 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        string targetRoomId = GetRoomForTransform(target);
-        PreserveGuestAuthoredScale(guestState);
-
-        if (TryPlaceProjectedGuestAtTarget(guestState, target))
-        {
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
-            return;
-        }
-
         if (guestState.GuestObject != null &&
             guestState.GuestObject.transform is RectTransform rectTransform &&
             TryGetAnchoredPositionForGuestTarget(guestState, target, out Vector2 anchoredPosition))
         {
             rectTransform.anchoredPosition = anchoredPosition;
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
             return;
         }
 
@@ -3207,14 +3146,12 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             guestState.GuestObject.transform.position = worldPosition;
             BindGuestToRoomStagePoint(guestState, target);
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
             return;
         }
 
         if (guestState.ActorState != null)
         {
             guestState.ActorState.PlaceAt(target);
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
             return;
         }
 
@@ -3224,7 +3161,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             targetPosition.z = guestState.GuestObject.transform.position.z;
             guestState.GuestObject.transform.position = targetPosition;
             BindGuestToRoomStagePoint(guestState, target);
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
         }
     }
 
@@ -3234,8 +3170,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             return;
         }
-
-        PreserveGuestAuthoredScale(guestState);
 
         if (guestState.GuestObject != null)
         {
@@ -3260,54 +3194,14 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        Transform profileTarget = GetWorldDoorArrivalTarget();
-
-        if (TryPlaceProjectedGuestFeetAtTarget(guestState, profileTarget))
-        {
-            return;
-        }
-
+        Transform doorTarget = GetWorldDoorArrivalTarget();
         Vector3 feetPosition = GetWorldDoorArrivalBasePosition(guestState);
-        PlaceGuestFeetAtPosition(guestState, feetPosition, profileTarget);
+        PlaceGuestFeetAtPosition(guestState, feetPosition, doorTarget);
     }
 
-    private bool TryPlaceProjectedGuestFeetAtTarget(GuestRuntimeState guestState, Transform target)
-    {
-        if (target == null)
-        {
-            return false;
-        }
-
-        RoomProjectedEntity projection = ResolveGuestProjection(guestState);
-
-        if (projection == null)
-        {
-            return false;
-        }
-
-        projection.UseProfileFromRoomTarget(target);
-
-        if (!projection.HasUsableProfile ||
-            !projection.TryGetRoomLocalFootPointForTarget(target, out Vector2 footPoint))
-        {
-            return false;
-        }
-
-        projection.SetRoomLocalFootPoint(footPoint);
-        ClearGuestRoomStagePointBinding(guestState);
-        return true;
-    }
-
-    private void PlaceGuestFeetAtPosition(GuestRuntimeState guestState, Vector3 feetPosition, Transform profileTarget)
+    private void PlaceGuestFeetAtPosition(GuestRuntimeState guestState, Vector3 feetPosition, Transform roomStageTarget)
     {
         if (guestState == null)
-        {
-            return;
-        }
-
-        PreserveGuestAuthoredScale(guestState);
-
-        if (TryPlaceProjectedGuestFeetAtPosition(guestState, feetPosition, profileTarget))
         {
             return;
         }
@@ -3326,7 +3220,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             targetPosition.z = guestTransform.position.z;
             guestTransform.position = targetPosition;
-            BindGuestToRoomStagePoint(guestState, profileTarget);
+            BindGuestToRoomStagePoint(guestState, roomStageTarget);
             return;
         }
 
@@ -3337,84 +3231,16 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
-    private bool TryPlaceProjectedGuestFeetAtPosition(GuestRuntimeState guestState, Vector3 feetPosition, Transform profileTarget)
-    {
-        RoomProjectedEntity projection = ResolveGuestProjection(guestState);
-
-        if (projection == null)
-        {
-            return false;
-        }
-
-        if (profileTarget != null)
-        {
-            projection.UseProfileFromRoomTarget(profileTarget);
-        }
-
-        if (!projection.HasUsableProfile)
-        {
-            return false;
-        }
-
-        if (cameraManager == null)
-        {
-            cameraManager = FindAnyObjectByType<CameraManager>(FindObjectsInactive.Include);
-        }
-
-        if (cameraManager == null ||
-            !cameraManager.TryGetActiveRoomStageLocalPoint(feetPosition, out Vector2 roomLocalFootPoint))
-        {
-            return false;
-        }
-
-        projection.SetRoomLocalFootPoint(roomLocalFootPoint);
-        ClearGuestRoomStagePointBinding(guestState);
-        return projection.IsProjectionActive;
-    }
-
     private void BindGuestToRoomStagePoint(GuestRuntimeState guestState, Transform target)
     {
         if (guestState == null ||
             guestState.ActorState == null ||
-            !IsWorldSpaceGuestObject(guestState.GuestObject) ||
-            HasActiveProjection(guestState))
+            !IsWorldSpaceGuestObject(guestState.GuestObject))
         {
             return;
         }
 
-        PreserveGuestAuthoredScale(guestState);
         guestState.ActorState.BindToRoomStagePoint(target);
-    }
-
-    private void PreserveGuestAuthoredScale(GuestRuntimeState guestState)
-    {
-        if (guestState == null)
-        {
-            return;
-        }
-
-        PreserveGuestAuthoredScale(guestState.GuestObject, guestState.ActorState);
-    }
-
-    private void PreserveGuestAuthoredScale(GameObject guestObject, ActorRoomState actorState)
-    {
-        if (guestObject != null && guestObject != playerButlerReference)
-        {
-            PointClickPlayerMovement[] pointClickMovements = guestObject.GetComponentsInChildren<PointClickPlayerMovement>(true);
-
-            for (int i = 0; i < pointClickMovements.Length; i++)
-            {
-                if (pointClickMovements[i] != null)
-                {
-                    pointClickMovements[i].SetPerspectiveScaleEnabled(false, false);
-                }
-            }
-        }
-
-        if (actorState != null)
-        {
-            actorState.SetScaleWithRoomStageMotion(true);
-        }
     }
 
     private void ClearGuestRoomStagePointBinding(GuestRuntimeState guestState)
@@ -3643,8 +3469,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (mover == null)
         {
             PlaceGuestAt(guestState, target, fieldName);
-            EnsureGuestScaleParticipant(guestState, ResolveGuestScaleRoomId(guestState), ResolveGuestScalePose(guestState));
-            RefreshGuestScalingNow();
             yield break;
         }
 
@@ -3660,8 +3484,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         StopGuestFootsteps(guestState);
         BindGuestToRoomStagePoint(guestState, target);
-        EnsureGuestScaleParticipant(guestState, ResolveGuestScaleRoomId(guestState), ResolveGuestScalePose(guestState));
-        RefreshGuestScalingNow();
     }
 
     private void BeginGuestMoveTo(
@@ -4480,14 +4302,13 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (template != null)
         {
             guestObject = Instantiate(template, startPosition, template.transform.rotation, template.transform.parent);
-            guestObject.transform.localScale = template.transform.localScale;
             guestObject.name = guestName;
         }
         else
         {
             guestObject = new GameObject(guestName);
             guestObject.transform.position = startPosition;
-            SpriteRenderer renderer = CreateRuntimeVisual(guestObject.transform, "Visual_Guest", GetRuntimeGuestSprite(), 0.03f);
+            SpriteRenderer renderer = CreateRuntimeVisual(guestObject.transform, "AnimationDisplay", GetRuntimeGuestSprite());
             renderer.sortingLayerName = "People";
             renderer.sortingOrder = 9000 + index;
 
@@ -4751,9 +4572,9 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         DisablePlayerOnlyComponents(guestObject);
-        Vector3 authoredGuestScale = guestObject.transform.localScale;
         DisableAmbientWalkers(guestObject);
         ConfigureGuestPhysicsForScriptedMovement(guestObject);
+        CharacterAnimationDisplay.EnsureForActor(guestObject);
         ConfigureGuestAnimatorForIndex(guestObject, index);
 
         ActorRoomState actorState = guestObject.GetComponent<ActorRoomState>();
@@ -4764,20 +4585,10 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         actorState.SetActorId(MakeGuestId(guestObject.name, index));
-        actorState.SetScaleWithRoomStageMotion(true);
-        guestObject.transform.localScale = authoredGuestScale;
-        RoomProjectedEntity projection = ResolveGuestProjection(guestObject, actorState);
         ConfigureGuestFootsteps(guestObject, index + 1);
 
         bool preserveAuthoredSorting = ShouldPreserveAuthoredGuestSorting(guestObject);
         SpriteRenderer[] renderers = guestObject.GetComponentsInChildren<SpriteRenderer>(true);
-
-        if (projection != null && projection.IsProjectionActive)
-        {
-            projection.RefreshVisualTargets();
-            projection.ApplyProjection();
-            return;
-        }
 
         for (int i = 0; i < renderers.Length; i++)
         {
@@ -4956,7 +4767,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             if (pointClickMovements[i] != null)
             {
-                pointClickMovements[i].SetPerspectiveScaleEnabled(false);
                 pointClickMovements[i].SetPlayerSortingEnabled(false);
                 pointClickMovements[i].enabled = false;
             }
@@ -5066,7 +4876,11 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (guestAnimator == null)
         {
-            guestAnimator = guestObject.AddComponent<Animator>();
+            CharacterAnimationDisplay animationDisplay = CharacterAnimationDisplay.EnsureForActor(guestObject);
+            GameObject animatorHost = animationDisplay != null && animationDisplay.AnimationDisplay != null
+                ? animationDisplay.AnimationDisplay.gameObject
+                : guestObject;
+            guestAnimator = animatorHost.AddComponent<Animator>();
         }
 
         guestAnimator.runtimeAnimatorController = sourceAnimator.runtimeAnimatorController;
@@ -5302,187 +5116,9 @@ public class Chapter1ArrivalController : MonoBehaviour
         return guestObject != null && !(guestObject.transform is RectTransform);
     }
 
-    private bool TryPlaceProjectedGuestAtTarget(GuestRuntimeState guestState, Transform target)
-    {
-        RoomProjectedEntity projection = ResolveGuestProjection(guestState);
-
-        if (projection == null)
-        {
-            return false;
-        }
-
-        projection.UseProfileFromRoomTarget(target);
-
-        if (!projection.HasUsableProfile)
-        {
-            return false;
-        }
-
-        return projection.TrySetRoomLocalFootPointFromTarget(target);
-    }
-
-    private bool HasActiveProjection(GuestRuntimeState guestState)
-    {
-        RoomProjectedEntity projection = ResolveGuestProjection(guestState);
-        return projection != null && projection.IsProjectionActive;
-    }
-
-    private bool HasActiveProjection(GameObject guestObject)
-    {
-        RoomProjectedEntity projection = ResolveGuestProjection(guestObject, guestObject != null ? guestObject.GetComponent<ActorRoomState>() : null);
-        return projection != null && projection.IsProjectionActive;
-    }
-
-    private RoomProjectedEntity ResolveGuestProjection(GuestRuntimeState guestState)
-    {
-        if (guestState == null)
-        {
-            return null;
-        }
-
-        if (guestState.Projection == null)
-        {
-            guestState.Projection = ResolveGuestProjection(guestState.GuestObject, guestState.ActorState);
-        }
-
-        return guestState.Projection;
-    }
-
-    private static RoomProjectedEntity ResolveGuestProjection(GameObject guestObject, ActorRoomState actorState)
-    {
-        if (actorState != null && actorState.Projection != null)
-        {
-            return actorState.Projection;
-        }
-
-        return guestObject != null ? guestObject.GetComponentInChildren<RoomProjectedEntity>(true) : null;
-    }
-
-    private GuestScaleParticipant EnsureGuestScaleParticipant(
-        GuestRuntimeState guestState,
-        string roomId,
-        CharacterPose pose)
-    {
-        if (guestState == null || guestState.GuestObject == null)
-        {
-            return null;
-        }
-
-        GuestRoomScaleApplier applier = EnsureGuestScaleApplier();
-        GuestScaleParticipant participant = GuestRoomScaleApplier.EnsureParticipantForGuestObject(
-            guestState.GuestObject,
-            guestState.Config != null ? guestState.Config.GuestId : guestState.GuestObject.name,
-            roomId,
-            pose,
-            true);
-
-        if (participant == null)
-        {
-            return null;
-        }
-
-        participant.SetCurrentRoomId(roomId);
-        participant.SetIsButler(false);
-        participant.ResolveScaleRoot();
-        participant.CaptureBaseScale(false);
-        guestState.ScaleParticipant = participant;
-        applier.RefreshParticipantNow(participant);
-        return participant;
-    }
-
-    private void SyncGuestScaleParticipantCurrentRoom(GuestRuntimeState guestState, string roomId)
-    {
-        if (guestState == null || string.IsNullOrWhiteSpace(roomId))
-        {
-            return;
-        }
-
-        GuestScaleParticipant participant = guestState.ScaleParticipant;
-
-        if (participant == null && guestState.GuestObject != null)
-        {
-            participant = guestState.GuestObject.GetComponent<GuestScaleParticipant>();
-        }
-
-        participant?.SetCurrentRoomId(roomId);
-    }
-
-    private GuestRoomScaleApplier EnsureGuestScaleApplier()
-    {
-        GuestRoomScaleApplier applier = GuestRoomScaleApplier.EnsureInScene();
-        applier.SetCalibration(EnsureGuestScaleCalibration());
-        return applier;
-    }
-
-    private GuestRoomScaleCalibration EnsureGuestScaleCalibration()
-    {
-        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
-
-        if (calibration == null)
-        {
-            GameObject calibrationObject = new GameObject("GuestRoomScaleCalibration");
-            calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
-        }
-
-        ResolveReferences(false);
-        PointClickPlayerMovement butler = playerMovement != null ? playerMovement : FindPlayerMovement();
-
-        if (butler != null)
-        {
-            calibration.InitializeMissingRoomsFromButler(butler);
-            calibration.SetButlerScaleSource(butler);
-        }
-
-        return calibration;
-    }
-
-    private void RefreshGuestScalingNow()
-    {
-        GuestRoomScaleApplier applier = EnsureGuestScaleApplier();
-        applier.RefreshAllNow();
-    }
-
-    private string ResolveGuestScaleRoomId(GuestRuntimeState guestState)
-    {
-        if (guestState == null)
-        {
-            return entryRoomId;
-        }
-
-        if (guestState.ActorState != null && !string.IsNullOrWhiteSpace(guestState.ActorState.CurrentRoomId))
-        {
-            return guestState.ActorState.CurrentRoomId;
-        }
-
-        if (guestState.Seated || guestState.MovingToDrawingRoom)
-        {
-            return drawingRoomId;
-        }
-
-        return entryRoomId;
-    }
-
-    private CharacterPose ResolveGuestScalePose(GuestRuntimeState guestState)
-    {
-        if (guestState == null)
-        {
-            return CharacterPose.Standing;
-        }
-
-        if (SameRoom(ResolveGuestScaleRoomId(guestState), drawingRoomId) &&
-            !ShouldUseStandingDrawingRoomPose(guestState))
-        {
-            return CharacterPose.Seated;
-        }
-
-        return guestState.Seated ? CharacterPose.Seated : CharacterPose.Standing;
-    }
-
     private float GetMoveSpeedForGuestObject(GameObject guestObject)
     {
-        return HasActiveProjection(guestObject)
-            ? Mathf.Max(0.01f, guestMoveSpeed)
-            : IsWorldSpaceGuestObject(guestObject)
+        return IsWorldSpaceGuestObject(guestObject)
             ? Mathf.Max(0.01f, worldGuestMoveSpeed)
             : Mathf.Max(0.01f, guestMoveSpeed);
     }
@@ -5720,7 +5356,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         Camera mainCamera = Camera.main;
         Transform depthReference = guestTransform != null ? guestTransform : GetWorldPlacementDepthReference(null);
 
-        if (mainCamera == null)
+        if (mainCamera == null || mainCamera.pixelWidth <= 1 || mainCamera.pixelHeight <= 1)
         {
             return false;
         }
@@ -6073,19 +5709,24 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         if (runtimeGuestSprite == null)
         {
-            runtimeGuestSprite = CreateSolidSprite("RuntimeGuestSprite", new Color(0.18f, 0.24f, 0.36f, 1f), 48, 96, new Vector2(0.5f, 0.08f), 2f);
+            runtimeGuestSprite = CreateSolidSprite(
+                "RuntimeGuestSprite",
+                new Color(0.18f, 0.24f, 0.36f, 1f),
+                48,
+                96,
+                new Vector2(0.5f, 0.08f),
+                RuntimeGuestPixelsPerUnit);
         }
 
         return runtimeGuestSprite;
     }
 
-    private SpriteRenderer CreateRuntimeVisual(Transform parent, string objectName, Sprite sprite, float visualScale)
+    private SpriteRenderer CreateRuntimeVisual(Transform parent, string objectName, Sprite sprite)
     {
         GameObject visualObject = new GameObject(objectName);
         visualObject.transform.SetParent(parent, false);
         visualObject.transform.localPosition = Vector3.zero;
         visualObject.transform.localRotation = Quaternion.identity;
-        visualObject.transform.localScale = Vector3.one * visualScale;
 
         SpriteRenderer renderer = visualObject.AddComponent<SpriteRenderer>();
         renderer.sprite = sprite;
@@ -6447,8 +6088,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             return;
         }
-
-        SyncGuestScaleParticipantCurrentRoom(guest, roomId);
 
         if (guest.ActorState != null || IsChapterSceneGuest(guest.GuestObject))
         {

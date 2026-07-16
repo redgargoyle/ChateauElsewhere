@@ -195,7 +195,11 @@ public class CameraManager : MonoBehaviour
         stageScale = 1f;
 
         Camera mainCamera = Camera.main;
-        if (!UsesRoomStageLayout() || activeRoomStage == null || mainCamera == null)
+        if (!UsesRoomStageLayout() ||
+            activeRoomStage == null ||
+            mainCamera == null ||
+            mainCamera.pixelWidth <= 1 ||
+            mainCamera.pixelHeight <= 1)
         {
             return false;
         }
@@ -214,28 +218,6 @@ public class CameraManager : MonoBehaviour
         worldPoint = mainCamera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, safeDepth));
         stageScale = Mathf.Max(0.0001f, activeRoomStage.lossyScale.x);
         return true;
-    }
-
-    public bool TryGetActiveRoomStageLocalPoint(Vector3 worldPoint, out Vector2 roomStageLocalPoint)
-    {
-        roomStageLocalPoint = Vector2.zero;
-
-        Camera mainCamera = Camera.main;
-        if (!UsesRoomStageLayout() || activeRoomStage == null || mainCamera == null)
-        {
-            return false;
-        }
-
-        Canvas canvas = activeRoomStage.GetComponentInParent<Canvas>();
-        Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? canvas.worldCamera
-            : null;
-        Vector2 screenPoint = mainCamera.WorldToScreenPoint(worldPoint);
-        return RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            activeRoomStage,
-            screenPoint,
-            canvasCamera,
-            out roomStageLocalPoint);
     }
 
     private void Reset()

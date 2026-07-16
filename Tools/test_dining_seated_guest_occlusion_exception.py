@@ -15,7 +15,6 @@ CONTROLLER_SCRIPT_PATH = ROOT / "Assets/Scripts/Characters/DiningRoomSeatedGuest
 
 WORLD_Y_SORT_GUID = "75f090bb68ab450d9703d9581c5c543a"
 OBJECT_BLOCKER_GUID = "b95469e02af64fee8b29689edb9b583a"
-ROOM_PROJECTED_ENTITY_GUID = "361e3658088b41ab98d330ae6457640b"
 CONTROLLER_GUID = "a7ef8aa1178e4cd38ac4fd89669b9e29"
 
 DINING_ROOM = "Dining Room"
@@ -103,6 +102,11 @@ def assert_contains(text: str, needle: str, description: str) -> None:
         fail(f"{description} does not contain {needle!r}")
 
 
+def assert_not_contains(text: str, needle: str, description: str) -> None:
+    if needle in text:
+        fail(f"{description} unexpectedly contains {needle!r}")
+
+
 def field_ref(block: str, field_name: str) -> int | None:
     match = re.search(rf"^  {re.escape(field_name)}: \{{fileID: (-?\d+)\}}$", block, re.MULTILINE)
     return int(match.group(1)) if match else None
@@ -122,12 +126,23 @@ def main() -> None:
     assert_contains(exception_text, "ActorRoomState", EXCEPTION_NAME)
     assert_contains(exception_text, "IsSeated", EXCEPTION_NAME)
     assert_contains(exception_text, "CurrentRoomId", EXCEPTION_NAME)
-    assert_contains(exception_text, "SetProjectedSortingSuppressed", EXCEPTION_NAME)
-    assert_contains(exception_text, "RoomProjectedEntity", EXCEPTION_NAME)
     assert_contains(exception_text, "guestOrder = tableOrder - 1", EXCEPTION_NAME)
     assert_contains(exception_text, "guestOrder <= chairOrder", EXCEPTION_NAME)
     assert_contains(exception_text, "Dining seat occlusion order invalid", EXCEPTION_NAME)
     assert_contains(exception_text, "RestoreNormalSorting", EXCEPTION_NAME)
+    assert_contains(exception_text, "targetGroup.sortingLayerName", EXCEPTION_NAME)
+    assert_contains(exception_text, "targetGroup.sortingOrder", EXCEPTION_NAME)
+
+    for presentation_mutation in (
+        "localScale",
+        "localPosition",
+        "anchoredPosition",
+        ".position =",
+        ".color =",
+        "material.color",
+    ):
+        assert_not_contains(exception_text, presentation_mutation, EXCEPTION_NAME)
+
     assert_contains(controller_text, "Ch2_DiningSeat_", CONTROLLER_NAME)
     assert_contains(controller_text, "DiningRoomSeatedGuestOcclusionException", CONTROLLER_NAME)
     assert_contains(controller_text, "ActivateForGuest", CONTROLLER_NAME)
@@ -239,9 +254,6 @@ def main() -> None:
 
     if "ApplyDiningRoomGuestSorting" in (ROOT / "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs").read_text():
         fail("Dining seating should use the explicit exception component, not ApplyDiningRoomGuestSorting")
-
-    if re.search(r"DiningRoom.*sortingOffset: -?\d+", scene_text):
-        fail("Dining seated guest occlusion must not use RoomProjectedEntity sortingOffset as the solution")
 
     dining_blockers = [
         block

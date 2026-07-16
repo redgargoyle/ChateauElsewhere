@@ -19,6 +19,7 @@ public class CharacterController2D : MonoBehaviour
 	const float k_CeilingRadius = .2f; // Radius of the overlap circle to determine if the player can stand up
 	private Rigidbody2D m_Rigidbody2D;
 	private Collider2D m_Collider2D;
+	private SpriteRenderer[] m_SpriteRenderers;
 	private bool m_FacingRight = true;  // For determining which way the player is currently facing.
 	private Vector3 m_Velocity = Vector3.zero;
 	private float m_IgnoreGroundCheckTimer;
@@ -46,6 +47,8 @@ public class CharacterController2D : MonoBehaviour
 		m_Collider2D = GetComponent<Collider2D>();
 		if (m_Collider2D == null)
 			m_Collider2D = gameObject.AddComponent<BoxCollider2D>();
+
+		m_SpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
 
 		if (OnLandEvent == null)
 			OnLandEvent = new UnityEvent();
@@ -213,9 +216,15 @@ public class CharacterController2D : MonoBehaviour
 		// Switch the way the player is labelled as facing.
 		m_FacingRight = !m_FacingRight;
 
-		// Multiply the player's x local scale by -1.
-		Vector3 theScale = transform.localScale;
-		theScale.x *= -1;
-		transform.localScale = theScale;
+		// Mirroring is a renderer concern; CharacterAnimationDisplay alone owns body size.
+		if (m_SpriteRenderers == null || m_SpriteRenderers.Length == 0)
+			m_SpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+		for (int i = 0; i < m_SpriteRenderers.Length; i++)
+		{
+			SpriteRenderer targetRenderer = m_SpriteRenderers[i];
+			if (targetRenderer != null)
+				targetRenderer.flipX = !targetRenderer.flipX;
+		}
 	}
 }

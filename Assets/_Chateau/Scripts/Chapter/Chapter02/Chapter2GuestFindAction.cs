@@ -33,7 +33,7 @@ public class Chapter2GuestFindAction : MonoBehaviour, IPointerClickHandler, IPoi
         Camera mainCamera = Camera.main;
         action = null;
 
-        if (mainCamera == null)
+        if (mainCamera == null || mainCamera.pixelWidth <= 1 || mainCamera.pixelHeight <= 1)
         {
             return false;
         }

@@ -115,7 +115,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(entryBaseMethodBody, Does.Contain("GetWorldVisibleAnchorPosition"), "World-space guest movement should convert room-stage anchors into guest world coordinates.");
         Assert.That(doorLookupMethodBody, Does.Contain("activeInHierarchy"), "Drawing Room movement should prefer the active Grand Entrance Hall door trigger over inactive duplicate room views.");
         Assert.That(entryMethodBody, Does.Not.Contain("GetEntranceDrawingRoomExitPosition"), "World-space guest movement must not chase a UI/RectTransform Drawing Room door coordinate.");
-        Assert.That(spotMethodBody, Does.Contain("GetWorldDrawingRoomSeatPosition"), "World-space guests should receive world-space Drawing Room waiting spots.");
+        Assert.That(spotMethodBody, Does.Contain("FindDrawingRoomGuestPoint(guest.GuestIndex)"), "Every guest should use the same authored Drawing Room anchor source.");
+        Assert.That(spotMethodBody, Does.Not.Contain("GetWorldDrawingRoomSeatPosition"), "Drawing Room placement should not synthesize a second world-space seat position.");
         Assert.That(sceneText, Does.Contain("m_Name: GuestDrawingRoomDoorTarget"), "Gameplay should expose an editable Entrance Hall target for the Drawing Room guest walk path.");
         Assert.That(sceneText, Does.Contain("anchorId: GuestDrawingRoomDoorTarget"), "The editable Drawing Room guest walk target should have a RoomAnchor id.");
         Assert.That(sceneText, Does.Contain("roomId: Grand Entrance Hall"), "The editable Drawing Room guest walk target should belong to the Entrance Hall.");
@@ -140,7 +141,6 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string sceneText = File.ReadAllText(GameplayScenePath);
         string admitBody = ExtractDeclaredMethodBody(controllerText, "AdmitGuestToEntranceHall");
         string placeDoorBody = ExtractDeclaredMethodBody(controllerText, "PlaceGuestAtDoorArrival");
-        string projectedDoorBody = ExtractDeclaredMethodBody(controllerText, "TryPlaceProjectedGuestFeetAtTarget");
         string placeFeetBody = ExtractDeclaredMethodBody(controllerText, "PlaceGuestFeetAtPosition");
         string doorArrivalBaseBody = ExtractDeclaredMethodBody(controllerText, "GetWorldDoorArrivalBasePosition");
         string doorArrivalTargetBody = ExtractDeclaredMethodBody(controllerText, "GetWorldDoorArrivalTarget");
@@ -154,18 +154,16 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string drawingRoomDoorTriggerBlock = ExtractObjectBlock(sceneText, "DoorTrigger_GEH_DrawingRoom");
 
         Assert.That(controllerText, Does.Contain("FrontDoorGuestSpawnAnchorId"), "Front-door guest spawning should have a named anchor separate from drawing-room door targets.");
-        Assert.That(admitBody, Does.Contain("PrepareGuestAtDoorArrival(guest)"), "The initial door spawn should use the shared feet-and-scale preparation path.");
+        Assert.That(admitBody, Does.Contain("PrepareGuestAtDoorArrival(guest)"), "The initial door spawn should use the shared feet-aware placement path.");
         Assert.That(admitBody, Does.Contain("GetEntranceHallGuestSpot(guest)"), "The walk inward should target the guest's authored physical anchor.");
         Assert.That(admitBody, Does.Not.Contain("PlaceGuestAt(guest, arrivalPoint"), "UI guests should not bypass feet-aware door spawning by placing their transform directly on the front-door anchor.");
         Assert.That(admitBody, Does.Not.Contain("CreateRuntimeAnchor"), "Entrance waiting should not calculate a replacement runtime target.");
         Assert.That(placeDoorBody, Does.Contain("PlaceGuestFeetAtPosition"), "Door arrival should place the guest by feet, not by transform center.");
-        Assert.That(placeDoorBody, Does.Contain("TryPlaceProjectedGuestFeetAtTarget"), "Projected door arrival should set the projection foot point directly from the door-base target.");
-        Assert.That(projectedDoorBody, Does.Contain("TryGetRoomLocalFootPointForTarget(target"), "Projected guests should spawn from the door-base anchor's room-local foot point.");
-        Assert.That(projectedDoorBody, Does.Contain("SetRoomLocalFootPoint(footPoint)"), "Projected door spawning should align every guest directly to the same door-foot anchor.");
+        Assert.That(placeDoorBody, Does.Not.Contain("RoomProjectedEntity"), "Door arrival should have one authored placement path, not a projection-side relocation path.");
         Assert.That(placeFeetBody, Does.Contain("TryGetGuestFeetWorldPoint"), "Door arrival should compensate for the guest's visible foot offset.");
         Assert.That(placeFeetBody, Does.Contain("targetPosition.x -= feetOffset.x"), "Door arrival should align the guest feet horizontally with the door answer spot.");
         Assert.That(placeFeetBody, Does.Contain("targetPosition.y -= feetOffset.y"), "Door arrival should align the guest feet vertically with the door answer spot.");
-        Assert.That(placeFeetBody, Does.Contain("BindGuestToRoomStagePoint(guestState, profileTarget)"), "World guests should remain locked to the door anchor until movement begins.");
+        Assert.That(placeFeetBody, Does.Contain("BindGuestToRoomStagePoint(guestState, roomStageTarget)"), "World guests should remain locked to the door anchor until movement begins.");
         Assert.That(placeDoorBody, Does.Contain("GetWorldDoorArrivalBasePosition(guestState)"), "World-space door spawning should begin at the same shared front-door foot point.");
         Assert.That(placeDoorBody, Does.Not.Contain("GetWorldGuestGridOffset"), "Door-answer spawning should not use batch/grid offsets.");
         Assert.That(controllerText, Does.Not.Contain("GetDoorArrivalPairSlotOffset"), "Door spawning should not retain a second pair-offset pathway.");
@@ -191,44 +189,36 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void EntranceDoorSpawnAlignsEveryGuestToOneFootAnchorAfterScaling()
+    public void EntranceDoorSpawnAlignsEveryGuestToOneFootAnchorAtAuthoredScale()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string prepareMethodBody = ExtractDeclaredMethodBody(controllerText, "PrepareGuestAtDoorArrival");
         string placeMethodBody = ExtractDeclaredMethodBody(controllerText, "PlaceGuestAtDoorArrival");
-        string projectedMethodBody = ExtractDeclaredMethodBody(controllerText, "TryPlaceProjectedGuestFeetAtTarget");
         string basePositionMethodBody = ExtractDeclaredMethodBody(controllerText, "GetWorldDoorArrivalBasePosition");
 
         int firstPlacementIndex = prepareMethodBody.IndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
-        int scaleIndex = prepareMethodBody.IndexOf("EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing)", StringComparison.Ordinal);
         int finalPlacementIndex = prepareMethodBody.LastIndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
 
-        Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "Entrance guests should first be aligned to the door so scaling samples its exact foot depth.");
-        Assert.That(scaleIndex, Is.GreaterThan(firstPlacementIndex), "The shared Butler scale should be applied at the door depth.");
-        Assert.That(finalPlacementIndex, Is.GreaterThan(scaleIndex), "Door feet must be realigned after scaling changes sprite bounds.");
+        Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "Entrance guests should be aligned to the authored door-foot anchor.");
+        Assert.That(finalPlacementIndex, Is.EqualTo(firstPlacementIndex), "Static-scale guests need one placement pass, not a scale-and-realign cycle.");
         Assert.That(placeMethodBody, Does.Contain("GetWorldDoorArrivalTarget()"), "Door placement should resolve the one authoritative GuestArrival_Door anchor.");
         Assert.That(placeMethodBody, Does.Contain("GetWorldDoorArrivalBasePosition(guestState)"), "World-space guests should use that same shared door-foot point.");
         Assert.That(placeMethodBody, Does.Not.Contain("GetDoorArrivalPairSlotOffset"), "All guests should begin at the exact same door-foot point; spacing belongs only to their later wait formation.");
-        Assert.That(projectedMethodBody, Does.Contain("projection.SetRoomLocalFootPoint(footPoint)"), "Projected guests should bind their feet directly to GuestArrival_Door.");
-        Assert.That(projectedMethodBody, Does.Not.Contain("roomLocalPairOffset"), "Projected door placement should not add a per-guest spawn offset.");
+        Assert.That(prepareMethodBody, Does.Not.Match(@"\.localScale\s*="), "Door preparation must not resize a guest body.");
         Assert.That(controllerText, Does.Not.Contain("GetDoorArrivalPairSlotOffset"), "There should be one door spawn path, without a second pair-offset pathway.");
         Assert.That(basePositionMethodBody, Does.Contain("TryGetWorldPositionForGuestTarget"), "World placement should retain room-stage conversion so camera pan and zoom cannot move the spawn point relative to the door.");
     }
 
     [Test]
-    public void GuestArrivalDoorIsTheOnlyEditableFootSpawnAndUsesButlerScale()
+    public void GuestArrivalDoorIsTheOnlyEditableFootSpawnAndKeepsAuthoredScale()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string sceneText = File.ReadAllText(GameplayScenePath);
         string targetMethodBody = ExtractDeclaredMethodBody(controllerText, "GetWorldDoorArrivalTarget");
         string prepareMethodBody = ExtractDeclaredMethodBody(controllerText, "PrepareGuestAtDoorArrival");
         string placeFeetMethodBody = ExtractDeclaredMethodBody(controllerText, "PlaceGuestFeetAtPosition");
-        string preserveScaleMethodBody = ExtractMethodBody(
-            controllerText,
-            "private void PreserveGuestAuthoredScale(GameObject guestObject");
 
         int firstPlacementIndex = prepareMethodBody.IndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
-        int scaleIndex = prepareMethodBody.IndexOf("EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing)", StringComparison.Ordinal);
         int finalPlacementIndex = prepareMethodBody.LastIndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
 
         Assert.That(targetMethodBody, Does.Match(@"frontDoorArrivalPoint[\s\S]*return frontDoorArrivalPoint[\s\S]*FindAnchor\(FrontDoorGuestSpawnAnchorId, entryRoomId\)"), "Door spawning should resolve the serialized GuestArrival_Door first and retain its RoomAnchor lookup fallback.");
@@ -237,12 +227,11 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(controllerText, Does.Not.Contain("guestEntranceSpawnPlacemark"), "The removed door placemark must not remain cached at runtime.");
         Assert.That(sceneText, Does.Not.Contain("m_Name: Placemark_guests_entrance"), "Gameplay should expose only GuestArrival_Door for guest foot spawning.");
         Assert.That(sceneText, Does.Match(@"anchorId: GuestArrival_Door\s+roomId: Grand Entrance Hall\s+showSceneGizmo: 1"), "GuestArrival_Door should be visible and easy to drag in the Scene view.");
-        Assert.That(sceneText, Does.Match(@"roomId: Grand Entrance Hall\s+enabled: 1\s+roomGuestScaleMultiplier: 1(?:\.0+)?\s"), "Entrance guests should use the Butler's calibrated scale without the old 2.2 enlargement.");
-        Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "The guest must first be placed at GuestArrival_Door so scaling samples that exact foot depth.");
-        Assert.That(scaleIndex, Is.GreaterThan(firstPlacementIndex), "The shared Butler scale should be evaluated after the guest reaches the door-foot depth.");
-        Assert.That(finalPlacementIndex, Is.GreaterThan(scaleIndex), "Feet should be realigned after scaling changes sprite bounds.");
-        Assert.That(placeFeetMethodBody, Does.Contain("BindGuestToRoomStagePoint(guestState, profileTarget)"), "A spawned world guest should remain attached to GuestArrival_Door until walking begins.");
-        Assert.That(preserveScaleMethodBody, Does.Contain("SetPerspectiveScaleEnabled(false, false)"), "Repeated foot placement must not let an inherited player component restore over the shared Butler-derived guest scale.");
+        Assert.That(sceneText, Does.Not.Contain("roomGuestScaleMultiplier"), "Legacy per-room guest scale data should be removed with its component.");
+        Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "The guest must be placed at GuestArrival_Door.");
+        Assert.That(finalPlacementIndex, Is.EqualTo(firstPlacementIndex), "The door flow should not repeat placement around a hidden scale mutation.");
+        Assert.That(placeFeetMethodBody, Does.Contain("BindGuestToRoomStagePoint(guestState, roomStageTarget)"), "A spawned world guest should remain attached to GuestArrival_Door until walking begins.");
+        Assert.That(placeFeetMethodBody, Does.Not.Match(@"\.localScale\s*="), "Feet-aware placement must leave authored body scale untouched.");
     }
 
     [Test]
@@ -362,8 +351,9 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string placeMethodBody = ExtractMethodBody(controllerText, "PlaceGuestAt");
 
         Assert.That(controllerText, Does.Contain("DrawingRoomGuestPointPrefix"), "Chapter 1 should name editable Drawing Room guest points consistently.");
-        Assert.That(spotMethodBody, Does.Match(@"FindDrawingRoomGuestPoint\(guest\.GuestIndex\)[\s\S]*IsWorldSpaceGuestObject"), "Guests should prefer editable Drawing Room points before generated world-space seats.");
-        Assert.That(seatMethodBody, Does.Match(@"FindDrawingRoomGuestPoint\(index\)[\s\S]*drawingRoomSeat01"), "Assigned seats should prefer editable Drawing Room points before old fallback seats.");
+        Assert.That(spotMethodBody, Does.Contain("FindDrawingRoomGuestPoint(guest.GuestIndex)"), "Guests should use the editable Drawing Room points directly.");
+        Assert.That(spotMethodBody, Does.Not.Contain("IsWorldSpaceGuestObject"), "Anchor selection should not split into competing UI/world presentation paths.");
+        Assert.That(seatMethodBody, Does.Contain("return FindDrawingRoomGuestPoint(index);"), "Assigned seats should use the same editable Drawing Room point source.");
         Assert.That(controllerText, Does.Match(@"FindDrawingRoomGuestPoint\s*\([^)]*\)\s*\{[\s\S]*FindAnchor\(pointName, drawingRoomId\)[\s\S]*FindSceneObjectByExactName\(pointName\)"), "Editable guest points should fall back to the physical scene object name if RoomAnchor data is stale.");
         Assert.That(placeMethodBody, Does.Match(@"TryGetWorldPositionForGuestTarget[\s\S]*ActorState\.PlaceAt"), "World-space guests should convert UI room-stage points before falling back to raw Transform placement.");
         Assert.That(controllerText, Does.Contain("RectTransformUtility.ScreenPointToLocalPointInRectangle"), "UI guests should convert Drawing Room points into their parent RectTransform space.");
@@ -437,31 +427,23 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void Chapter1GuestsUseAuthoredScaleAsRoomZoomBaseline()
+    public void Chapter1GuestsKeepAuthoredStaticScaleWhileUsingRoomAnchors()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string playerMovementText = File.ReadAllText(PointClickPlayerMovementPath);
         string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
-        string playerPerspectiveScaleBody = ExtractDeclaredMethodBody(playerMovementText, "ApplyPerspectiveScale");
-        string playerPerspectiveCalculationBody = ExtractDeclaredMethodBody(playerMovementText, "CalculateExistingPerspectiveScale");
         string prepareMethodBody = ExtractMethodBody(controllerText, "PrepareSceneGuestObject");
         string disablePlayerMethodBody = ExtractMethodBody(controllerText, "DisablePlayerOnlyComponents");
         string placeMethodBody = ExtractMethodBody(controllerText, "PlaceGuestAt");
 
-        Assert.That(playerMovementText, Does.Contain("applyPerspectiveScale"), "Player movement should have an explicit switch for runtime perspective scale.");
-        Assert.That(playerMovementText, Does.Contain("SetPerspectiveScaleEnabled"), "Guests cloned from the player prefab need a public way to opt out of player depth scaling.");
-        Assert.That(playerMovementText, Does.Match(@"if \(!applyPerspectiveScale\)[\s\S]*return;"), "Disabled perspective scale should stop PointClickPlayerMovement from writing transform.localScale.");
-        Assert.That(playerMovementText, Does.Contain("authoredPerspectiveScaleReference"), "The butler should keep the Edit Mode transform scale as the baseline at its authored depth.");
-        Assert.That(playerMovementText, Does.Contain("GetPerspectiveScaleForY"), "Perspective scaling should compare the current room depth against the authored depth.");
-        Assert.That(playerPerspectiveCalculationBody, Does.Contain("depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference)"), "Play Mode perspective scaling should be relative to the Edit Mode depth, not an absolute replacement.");
-        Assert.That(playerPerspectiveScaleBody, Does.Contain("authoredLocalScale.x * scale"), "Play Mode should multiply the artist-authored butler X scale instead of replacing it.");
-        Assert.That(playerPerspectiveScaleBody, Does.Contain("authoredLocalScale.y * scale"), "Play Mode should multiply the artist-authored butler Y scale instead of replacing it.");
-        Assert.That(playerPerspectiveScaleBody, Does.Contain("currentRoomStageScaleRatio"), "The authored-scale fix must keep room-stage zoom scaling.");
-        Assert.That(actorRoomStateText, Does.Contain("scaleWithRoomStageMotion"), "ActorRoomState should be able to scale a bound actor from its authored base scale.");
-        Assert.That(prepareMethodBody, Does.Contain("authoredGuestScale"), "Scene guest preparation should capture the scale restored from player movement before other setup.");
-        Assert.That(prepareMethodBody, Does.Contain("SetScaleWithRoomStageMotion(true)"), "Chapter 1 guests should follow room-stage zoom from their authored base scale, matching the butler.");
-        Assert.That(disablePlayerMethodBody, Does.Contain("SetPerspectiveScaleEnabled(false)"), "Scene guests should turn off inherited player perspective scaling before disabling player-only movement.");
-        Assert.That(placeMethodBody, Does.Contain("PreserveGuestAuthoredScale(guestState)"), "Drawing room placement and skip staging should preserve the scale artists set in Edit Mode before room zoom is applied.");
+        Assert.That(playerMovementText, Does.Not.Match(@"\.localScale\s*="), "Point-click movement must not write the Butler body scale.");
+        Assert.That(actorRoomStateText, Does.Not.Match(@"\.localScale\s*="), "Room-stage binding must not write guest body scale.");
+        Assert.That(prepareMethodBody, Does.Not.Match(@"\.localScale\s*="), "Scene guest preparation must keep the authored scale.");
+        Assert.That(prepareMethodBody, Does.Not.Contain("GuestScale"));
+        Assert.That(disablePlayerMethodBody, Does.Contain("pointClickMovements[i].enabled = false"), "Guest clones should still disable player-only input.");
+        Assert.That(disablePlayerMethodBody, Does.Not.Contain("PerspectiveScale"));
+        Assert.That(placeMethodBody, Does.Contain("BindGuestToRoomStagePoint"), "World guests should remain attached to their authored room anchors.");
+        Assert.That(placeMethodBody, Does.Not.Match(@"\.localScale\s*="), "Authored placement must not resize guests.");
     }
 
     [Test]
@@ -566,8 +548,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     {
         string objectBlock = ExtractObjectBlock(assetText, objectName);
 
-        Assert.That(objectBlock, Does.Contain("guid: 361e3658088b41ab98d330ae6457640b"));
-        Assert.That(objectBlock, Does.Contain("applySorting: 0"), $"'{objectName}' must not retain the incompatible perspective-profile order scale.");
+        Assert.That(objectBlock, Does.Not.Contain("guid: 361e3658088b41ab98d330ae6457640b"), $"'{objectName}' must not retain the deleted projection component.");
         Assert.That(objectBlock, Does.Contain("guid: 75f090bb68ab450d9703d9581c5c543a"), $"'{objectName}' should use the same world-Y order scale as the Butler.");
         Assert.That(objectBlock, Does.Contain("sortingOrderBase: 1000"));
         Assert.That(objectBlock, Does.Contain("sortingOrderPerYUnit: 100"));
@@ -579,10 +560,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string chairBlock = ExtractObjectBlock(assetText, "drawing_room_red_chair_guest6");
         string blockerBlock = ExtractObjectBlock(assetText, "PlayerBlocker_drawing_room_red_chair_guest6");
 
-        Assert.That(chairBlock, Does.Contain("roomLocalFootPoint: {x: 59, y: -208.5}"));
-        Assert.That(chairBlock, Does.Contain("applySorting: 0"), "The chair must not compete with the shared Butler y-axis sorter.");
-        Assert.That(chairBlock, Does.Contain("sortingOffset: 0"), "The old forced-low chair order must remain removed.");
-        Assert.That(chairBlock, Does.Not.Contain("sortingOffset: -5776"));
+        Assert.That(chairBlock, Does.Not.Contain("guid: 361e3658088b41ab98d330ae6457640b"), "The chair must not retain projection metadata.");
+        Assert.That(chairBlock, Does.Not.Contain("roomLocalFootPoint:"));
+        Assert.That(chairBlock, Does.Not.Contain("applySorting:"));
+        Assert.That(chairBlock, Does.Not.Contain("sortingOffset:"));
         Assert.That(blockerBlock, Does.Contain("sourceObjectName: drawing_room_red_chair_guest6"));
         Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 1"), "The chair should use its lower movement footprint as the shared y-axis sort edge.");
     }
@@ -592,9 +573,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string tableBlock = ExtractObjectBlock(assetText, "tea_service_table");
         string blockerBlock = ExtractObjectBlock(assetText, "PlayerBlocker_tea_service_table");
 
-        Assert.That(tableBlock, Does.Contain("roomLocalFootPoint: {x: -80.26, y: -211.67}"));
-        Assert.That(tableBlock, Does.Contain("applySorting: 0"), "The table must not compete with the shared Butler y-axis sorter.");
-        Assert.That(tableBlock, Does.Contain("sortingOffset: 0"));
+        Assert.That(tableBlock, Does.Not.Contain("guid: 361e3658088b41ab98d330ae6457640b"), "The table must not retain projection metadata.");
+        Assert.That(tableBlock, Does.Not.Contain("roomLocalFootPoint:"));
+        Assert.That(tableBlock, Does.Not.Contain("applySorting:"));
+        Assert.That(tableBlock, Does.Not.Contain("sortingOffset:"));
         Assert.That(blockerBlock, Does.Contain("sourceObjectName: tea_service_table"));
         Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 1"), "The table should use its lower physical footprint as the shared y-axis sort edge.");
     }
@@ -607,7 +589,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string sourceBlock = ExtractObjectBlock(assetText, sourceObjectName);
         string blockerBlock = ExtractObjectBlock(assetText, blockerObjectName);
 
-        Assert.That(sourceBlock, Does.Contain("applySorting: 0"), $"'{sourceObjectName}' must not keep a competing projection sorter.");
+        Assert.That(sourceBlock, Does.Not.Contain("guid: 361e3658088b41ab98d330ae6457640b"), $"'{sourceObjectName}' must not keep a competing projection component.");
+        Assert.That(sourceBlock, Does.Not.Contain("applySorting:"));
         Assert.That(blockerBlock, Does.Contain($"sourceObjectName: {sourceObjectName}"));
         Assert.That(blockerBlock, Does.Contain("sortSourceRenderers: 1"), $"'{sourceObjectName}' should have exactly one physical-footprint sorting owner.");
     }

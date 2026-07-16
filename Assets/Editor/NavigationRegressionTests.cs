@@ -924,7 +924,8 @@ public class NavigationRegressionTests
         Assert.That(playerText, Does.Contain("CanShowWalkCursor"), "The cursor should show blocked state for out-of-bounds pointer positions.");
         Assert.That(playerText, Does.Contain("TryBuildMovementPathFromNearbyStart"), "Routes should recover when the Butler is standing on a thin authored boundary edge.");
         Assert.That(playerText, Does.Match(@"LogicalToWalkableWorldPoint\s*\([^)]*\)[\s\S]*referenceOffset \* currentRoomStageScaleRatio"), "Player logical-to-world mapping must include room-stage scale, not translation only.");
-        Assert.That(playerText, Does.Match(@"ApplyPerspectiveScale\s*\([^)]*\)[\s\S]*currentRoomStageScaleRatio"), "Player sprite scale should grow and shrink with the room stage just like room objects.");
+        Assert.That(playerText, Does.Not.Contain("ApplyPerspectiveScale"), "Room-stage zoom must not be converted into a Butler body-scale write.");
+        Assert.That(playerText, Does.Not.Match(@"\.localScale\s*="), "Point-click movement must leave the Butler's authored body scale untouched.");
         Assert.That(playerText, Does.Contain("GetCurrentVisibleMovementWorldPoint"), "Player logical movement should anchor to the visible feet rather than the transform origin.");
         Assert.That(playerText, Does.Contain("GetVisibleFeetOffsetY"), "Applying the player visual position should offset the transform so the feet land on the clicked point.");
         Assert.That(playerText, Does.Contain("visualPoint.y - feetOffsetY"), "The butler's visible feet, not his chest pivot, should end at the movement destination.");
@@ -1179,10 +1180,10 @@ public class NavigationRegressionTests
         string cameraManagerText = File.ReadAllText(CameraManagerPath);
         string chapter1ArrivalText = File.ReadAllText(Chapter1ArrivalControllerPath);
 
-        Assert.That(actorRoomStateText, Does.Contain("followRoomStageMotion"), "Room-scoped actors should opt into following the active room stage pan.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("followRoomStageMotion"), "The old generic screen-delta follower must stay removed.");
         Assert.That(actorRoomStateText, Does.Contain("LateUpdate"), "Actor room-state visuals should be corrected after CameraManager updates the room stage.");
-        Assert.That(actorRoomStateText, Does.Contain("TryGetRoomStageScreenTransform"), "Actor room-state visuals should use the room stage's screen transform, not only world pan.");
-        Assert.That(actorRoomStateText, Does.Contain("lastRoomStageScreenScale"), "Actor room-state visuals must apply room zoom scale as well as pan.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("TryGetRoomStageScreenTransform"), "Only explicit authored anchor bindings should relocate actors.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("lastRoomStageScreenScale"), "Actor binding must not retain the old zoom/scale compensation state.");
         Assert.That(cameraManagerText, Does.Contain("TryGetActiveRoomStageWorldPoint"), "CameraManager should expose active room-stage local point conversion for world actors.");
         Assert.That(cameraManagerText, Does.Contain("activeRoomStage.TransformPoint"), "The conversion should start from active room-stage local space.");
         Assert.That(cameraManagerText, Does.Contain("RectTransformUtility.WorldToScreenPoint"), "The conversion should go through screen space so Canvas resize and camera setup are respected.");
@@ -1190,17 +1191,19 @@ public class NavigationRegressionTests
         Assert.That(actorRoomStateText, Does.Contain("hasRoomStageLocalBinding"), "World actors need an explicit room-stage local binding instead of inferred screen drift.");
         Assert.That(actorRoomStateText, Does.Contain("roomStageLocalPoint"), "ActorRoomState should store the room-stage local coordinate it is locked to.");
         Assert.That(actorRoomStateText, Does.Contain("boundWorldZ"), "ActorRoomState should preserve the actor's world depth while following the room stage.");
-        Assert.That(actorRoomStateText, Does.Contain("boundLocalScale"), "ActorRoomState should preserve the actor's baseline scale when binding to a room-stage point.");
-        Assert.That(actorRoomStateText, Does.Contain("boundRoomStageScale"), "ActorRoomState should scale bound world actors by the room-stage zoom ratio.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("boundLocalScale"));
+        Assert.That(actorRoomStateText, Does.Not.Contain("boundRoomStageScale"));
         Assert.That(actorRoomStateText, Does.Contain("BindToRoomStagePoint"), "Chapter systems need a public API to bind world actors to room-stage targets.");
-        Assert.That(actorRoomStateText, Does.Contain("TryApplyRoomStageLocalBindingIfNeeded"), "Bound actors should use the local binding path before legacy delta fallback.");
-        Assert.That(actorRoomStateText, Does.Contain("ScaleXY"), "World actors should visually scale with the room stage instead of shrinking against the painted room.");
-        Assert.That(actorRoomStateText, Does.Match(@"hasRoomStageLocalBinding[\s\S]*TryApplyRoomStageLocalBindingIfNeeded\(\)[\s\S]*return;"), "Bound actors must not fall through to the translation/scale delta fallback.");
+        Assert.That(actorRoomStateText, Does.Contain("TryApplyRoomStageLocalBindingIfNeeded"), "Bound actors should use one explicit local-to-world binding path.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("ScaleXY"), "Room-stage following must never resize a character body.");
+        Assert.That(actorRoomStateText, Does.Contain("targetTransform.position = worldPoint"), "Every refresh should recompute an absolute position from the authored anchor.");
+        Assert.That(actorRoomStateText, Does.Contain("CharacterFootPositionUtility.TryGetWorldPoint"), "The authored anchor should remain aligned to visible feet without changing scale.");
         Assert.That(actorRoomStateText, Does.Contain("GetComponentInParent<RoomContentGroup>(true)"), "Actors already under a RoomContentGroup must not receive duplicate world-space following.");
         Assert.That(chapter1ArrivalText, Does.Contain("BindGuestToRoomStagePoint(guestState, target)"), "Chapter 1 placement should bind world-space guests to their room-stage target.");
         Assert.That(chapter1ArrivalText, Does.Contain("guestState.ActorState.BindToRoomStagePoint(target)"), "Chapter 1 should use the ActorRoomState binding API, not guest-specific animation exceptions.");
         Assert.That(chapter1ArrivalText, Does.Contain("ClearGuestRoomStagePointBinding"), "Raw world placements should clear stale room-stage bindings.");
-        Assert.That(actorRoomStateText, Does.Not.Contain("targetTransform.position +="), "Bound actors should recompute from room-stage local points, not accumulate position deltas.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("lastRoomStageScreenCenter"), "Bound actors should not accumulate screen-space deltas.");
+        Assert.That(actorRoomStateText, Does.Not.Match(@"\.localScale\s*="), "Actor room binding must preserve authored static scale.");
         Assert.That(actorRoomStateText, Does.Not.Contain("SetParent("), "Guests should not be fixed by reparenting them under room presentation roots.");
     }
 

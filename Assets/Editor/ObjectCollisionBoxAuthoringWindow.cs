@@ -400,7 +400,6 @@ public static class ObjectCollisionBoxAuthoring
 
         blockerObject.transform.localPosition = Vector3.zero;
         blockerObject.transform.localRotation = Quaternion.identity;
-        blockerObject.transform.localScale = Vector3.one;
 
         PolygonCollider2D collider = blockerObject.GetComponent<PolygonCollider2D>();
 
@@ -548,9 +547,11 @@ public static class ObjectCollisionBoxAuthoring
             return false;
         }
 
-        if (source.GetComponentInParent<RoomProjectedEntity>() != null)
+        if (source.GetComponentInParent<ActorRoomState>() != null ||
+            source.GetComponentInParent<PointClickPlayerMovement>() != null ||
+            source.GetComponentInParent<RoomPersonWalker2D>() != null)
         {
-            reason = "projected actor";
+            reason = "actor";
             return false;
         }
 

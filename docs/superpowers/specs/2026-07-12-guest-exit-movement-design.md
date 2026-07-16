@@ -1,5 +1,8 @@
 # Guest Exit Movement Design
 
+> [!IMPORTANT]
+> **Superseded historical design.** Phase 1 removed the projection/scale architecture described below. Do not recreate its components, APIs, or tests. The current static-scale ownership contract and migration outcome are recorded in [Character Presentation Legacy Removal Audit](../../../Docs/CharacterPresentationLegacyRemovalAudit.md).
+
 ## Goal
 
 After a Chapter 2 guest finishes giving their order, keep the guest visible while they walk to the authored door on the route toward the Dining Room, then hide and stage them for the Dining Room reveal.
@@ -15,36 +18,28 @@ After a Chapter 2 guest finishes giving their order, keep the guest visible whil
 
 This flow must remain the only Chapter 2 guest-order departure pathway.
 
-## Root Cause
+## Historical Root Cause
 
-Chapter 2 moves non-UI guest roots out of their `RoomContentGroup` and under `ChapterActors_Runtime` so room activation does not destroy or hide persistent actor state. Their `RoomProjectedEntity` remains active and continues to own the visible position through `roomLocalFootPoint`; `ActorRoomState.PlaceAt` already relies on this behavior for detached guests.
+Chapter 2 moved non-UI guest roots out of their `RoomContentGroup` and under `ChapterActors_Runtime` so room activation would not destroy or hide persistent actor state. At the time, a now-deleted projection component could remain active on those detached actors and own their visible position through a separate room-local foot point.
 
-`NPCWaypointMover` must only select a projection that owns visible position. An active projection with `applyPosition` disabled still accepts room-local foot-point updates, but never applies them to its visible transform; selecting it therefore leaves the visible actor behind. Detached projections with active positional ownership, by contrast, must remain valid motion owners even without a `RoomContentGroup` parent.
+The historical bug came from `NPCWaypointMover` selecting a presentation path that accepted logical point updates without applying them to the visible transform. This explained why the route completed logically while the detached actor appeared stationary.
 
 ## Approaches Considered
 
-1. **Use any active position-owning projection as the shared mover's motion owner.** This matches `ActorRoomState.PlaceAt`, preserves projected scale/sorting, and fixes all callers of `NPCWaypointMover` without adding a departure implementation. This is the selected approach.
+1. **Use an active position-owning projection as the shared mover's motion owner.** This was selected for the pre-cleanup architecture but was later superseded and removed.
 2. **Reparent the guest into the source room for departure.** This adds Chapter 2-specific hierarchy changes and risks room-visibility and persistent-actor regressions.
-3. **Disable projection during departure and move the actor transform.** This requires restoring projection state and can disrupt projected position, scale, tint, and sorting.
+3. **Move the actor transform directly.** This became the current solution after passive room-anchor binding was made explicit and the competing presentation stack was removed.
 
-## Design
+## Historical Design and Current Disposition
 
-Expose `RoomProjectedEntity.OwnsProjectedPosition`, defined as `applyPosition && IsProjectionActive`. `NPCWaypointMover.CanUseProjectionAsMotionOwner` consumes that property, making the helper the sole owner of the projection-active positional criterion. `TryGetProjectedTarget` and `TryPlaceProjectedAtTarget` retain their `CanProjectTarget` checks but do not repeat active-projection checks.
+The superseded implementation introduced a projection ownership predicate and a projected movement routine. Those APIs and their regression fixture were deleted during the Phase 1 cleanup.
 
-Keep `MoveProjectedToRoutine`, controller routing, timeout, pending-exit gate, and Dining Room staging behavior unchanged.
+The useful gameplay flow remains, but movement now has one direct transform owner:
 
-The visible movement remains:
-
-`order complete -> authored route door -> NPCWaypointMover -> RoomProjectedEntity.roomLocalFootPoint -> arrival -> Dining Room staging`
+`order complete -> authored route door -> NPCWaypointMover -> actor transform -> arrival -> Dining Room staging`
 
 If no valid door exists or movement exceeds the existing timeout, the current warning and fallback staging behavior remains intact.
 
 ## Testing
 
-Add EditMode regressions for:
-
-1. An active projection with `applyPosition=false` cannot own waypoint motion.
-2. A detached actor root with a child position-owning projection moves its projected foot point and visible projected transform to a compatible same-room target, does not move the actor root as fallback, and finishes movement.
-3. Matching-room targets remain projectable and wrong-room targets remain rejected by `CanProjectTarget`.
-
-Verify both ownership and coroutine behavior regressions fail before the production correction and pass afterward. Then run the focused Chapter 2 exit regression plus the complete `RoomProjectionRegressionTests` and `Chapter2RegressionTests` suites, recording unrelated existing failures separately.
+Current regressions should verify that the shared mover releases passive room-stage binding before direct transform movement, reaches the authored exit, and leaves character scale untouched. Do not restore the deleted projection-specific tests.

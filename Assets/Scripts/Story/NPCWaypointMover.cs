@@ -10,7 +10,6 @@ public class NPCWaypointMover : MonoBehaviour
     [SerializeField] private bool alignVisibleFeetToWaypoints;
     [SerializeField, Range(0.1f, 1f)] private float horizontalDirectionThreshold = 0.55f;
     [SerializeField] private RoomPersonWalker2D ambientWalker;
-    [SerializeField] private RoomProjectedEntity roomProjection;
     [SerializeField] private ActorRoomState actorRoomState;
     [SerializeField] private Animator animator;
     [SerializeField] private GuestFootstepAudio footstepAudio;
@@ -64,13 +63,8 @@ public class NPCWaypointMover : MonoBehaviour
         {
             activeTarget = target;
             reachedActiveTarget = false;
-
-            if (!TryPlaceProjectedAtTarget(target))
-            {
-                ReleaseRoomStageBindingForTransformMotion();
-                transform.position = GetTargetPosition(target);
-            }
-
+            ReleaseRoomStageBindingForTransformMotion();
+            transform.position = GetTargetPosition(target);
             reachedActiveTarget = true;
             return null;
         }
@@ -100,12 +94,6 @@ public class NPCWaypointMover : MonoBehaviour
         if (ambientWalker != null)
         {
             ambientWalker.enabled = false;
-        }
-
-        if (TryGetProjectedTarget(target, out Vector2 projectedTarget))
-        {
-            yield return MoveProjectedToRoutine(projectedTarget);
-            yield break;
         }
 
         ReleaseRoomStageBindingForTransformMotion();
@@ -145,40 +133,6 @@ public class NPCWaypointMover : MonoBehaviour
         isMoving = false;
         moveRoutine = null;
         reachedActiveTarget = target != null;
-    }
-
-    private IEnumerator MoveProjectedToRoutine(Vector2 targetFootPoint)
-    {
-        isMoving = true;
-
-        while (roomProjection != null &&
-            Vector2.Distance(roomProjection.RoomLocalFootPoint, targetFootPoint) > stopDistance)
-        {
-            if (TryApplyMovementPause())
-            {
-                yield return null;
-                continue;
-            }
-
-            Vector2 previousPosition = roomProjection.RoomLocalFootPoint;
-            Vector2 nextPosition = Vector2.MoveTowards(
-                previousPosition,
-                targetFootPoint,
-                moveSpeed * Time.deltaTime);
-            roomProjection.SetRoomLocalFootPoint(nextPosition);
-            UpdateAnimator(nextPosition - previousPosition, true);
-            yield return null;
-        }
-
-        if (roomProjection != null)
-        {
-            roomProjection.SetRoomLocalFootPoint(targetFootPoint);
-        }
-
-        UpdateAnimator(Vector2.zero, false);
-        isMoving = false;
-        moveRoutine = null;
-        reachedActiveTarget = roomProjection != null;
     }
 
     public void StopMoving()
@@ -286,11 +240,6 @@ public class NPCWaypointMover : MonoBehaviour
         }
     }
 
-    public static bool CanUseProjectionAsMotionOwner(RoomProjectedEntity projection)
-    {
-        return projection != null && projection.OwnsProjectedPosition;
-    }
-
     private void ReleaseRoomStageBindingForTransformMotion()
     {
         ResolveReferences();
@@ -326,11 +275,6 @@ public class NPCWaypointMover : MonoBehaviour
         if (ambientWalker == null)
         {
             ambientWalker = GetComponent<RoomPersonWalker2D>();
-        }
-
-        if (roomProjection == null)
-        {
-            roomProjection = GetComponentInChildren<RoomProjectedEntity>(true);
         }
 
         if (actorRoomState == null)
@@ -383,37 +327,6 @@ public class NPCWaypointMover : MonoBehaviour
         {
             footstepAudio?.PlayWalking();
         }
-    }
-
-    private bool TryPlaceProjectedAtTarget(Transform target)
-    {
-        ResolveReferences();
-
-        if (roomProjection == null)
-        {
-            return false;
-        }
-
-        roomProjection.UseProfileFromRoomTarget(target);
-        return CanUseProjectionAsMotionOwner(roomProjection) &&
-            roomProjection.CanProjectTarget(target) &&
-            roomProjection.TrySetRoomLocalFootPointFromTarget(target);
-    }
-
-    private bool TryGetProjectedTarget(Transform target, out Vector2 targetFootPoint)
-    {
-        targetFootPoint = Vector2.zero;
-        ResolveReferences();
-
-        if (roomProjection == null)
-        {
-            return false;
-        }
-
-        roomProjection.UseProfileFromRoomTarget(target);
-        return CanUseProjectionAsMotionOwner(roomProjection) &&
-            roomProjection.CanProjectTarget(target) &&
-            roomProjection.TryGetRoomLocalFootPointForTarget(target, out targetFootPoint);
     }
 
     private void UpdateAnimator(Vector2 movement, bool isWalking)

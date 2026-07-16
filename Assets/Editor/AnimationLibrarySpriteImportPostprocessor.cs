@@ -4,7 +4,6 @@ using UnityEngine;
 public sealed class AnimationLibrarySpriteImportPostprocessor : AssetPostprocessor
 {
     private const string LibraryRoot = "Assets/Art/Library/AnimationLibrary/";
-    private const float PixelsPerUnit = 100f;
 
     private void OnPreprocessTexture()
     {
@@ -17,8 +16,9 @@ public sealed class AnimationLibrarySpriteImportPostprocessor : AssetPostprocess
 
         TextureImporter importer = (TextureImporter)assetImporter;
         importer.textureType = TextureImporterType.Sprite;
-        importer.spriteImportMode = SpriteImportMode.Single;
-        importer.spritePixelsPerUnit = PixelsPerUnit;
+        // Sprite mode and PPU are authored presentation data. In particular,
+        // Chapter 2 panic frames use fixed per-character PPU values, and run
+        // frames retain their cropped sub-sprite IDs. Do not overwrite either.
         importer.spritePivot = new Vector2(0.5f, 0f);
         importer.mipmapEnabled = false;
         importer.alphaIsTransparency = true;
