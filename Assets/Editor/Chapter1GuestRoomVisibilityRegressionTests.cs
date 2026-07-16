@@ -191,7 +191,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void EntranceDoorSpawnAlignsEveryGuestToOneFootAnchorAfterScaling()
+    public void EntranceDoorSpawnPlacesEveryGuestOnceAtTheAuthoredFootAnchor()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string prepareMethodBody = ExtractDeclaredMethodBody(controllerText, "PrepareGuestAtDoorArrival");
@@ -200,12 +200,11 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string basePositionMethodBody = ExtractDeclaredMethodBody(controllerText, "GetWorldDoorArrivalBasePosition");
 
         int firstPlacementIndex = prepareMethodBody.IndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
-        int scaleIndex = prepareMethodBody.IndexOf("EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing)", StringComparison.Ordinal);
         int finalPlacementIndex = prepareMethodBody.LastIndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
 
-        Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "Entrance guests should first be aligned to the door so scaling samples its exact foot depth.");
-        Assert.That(scaleIndex, Is.GreaterThan(firstPlacementIndex), "The shared Butler scale should be applied at the door depth.");
-        Assert.That(finalPlacementIndex, Is.GreaterThan(scaleIndex), "Door feet must be realigned after scaling changes sprite bounds.");
+        Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "Entrance guests should be aligned to the authored door foot point.");
+        Assert.That(finalPlacementIndex, Is.EqualTo(firstPlacementIndex), "Door placement should happen once because Chapter 1 no longer resizes actors between placement passes.");
+        Assert.That(prepareMethodBody, Does.Not.Contain("Scale"));
         Assert.That(placeMethodBody, Does.Contain("GetWorldDoorArrivalTarget()"), "Door placement should resolve the one authoritative GuestArrival_Door anchor.");
         Assert.That(placeMethodBody, Does.Contain("GetWorldDoorArrivalBasePosition(guestState)"), "World-space guests should use that same shared door-foot point.");
         Assert.That(placeMethodBody, Does.Not.Contain("GetDoorArrivalPairSlotOffset"), "All guests should begin at the exact same door-foot point; spacing belongs only to their later wait formation.");
@@ -216,19 +215,15 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void GuestArrivalDoorIsTheOnlyEditableFootSpawnAndUsesButlerScale()
+    public void GuestArrivalDoorIsTheOnlyEditablePositionOnlyFootSpawn()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string sceneText = File.ReadAllText(GameplayScenePath);
         string targetMethodBody = ExtractDeclaredMethodBody(controllerText, "GetWorldDoorArrivalTarget");
         string prepareMethodBody = ExtractDeclaredMethodBody(controllerText, "PrepareGuestAtDoorArrival");
         string placeFeetMethodBody = ExtractDeclaredMethodBody(controllerText, "PlaceGuestFeetAtPosition");
-        string preserveScaleMethodBody = ExtractMethodBody(
-            controllerText,
-            "private void PreserveGuestAuthoredScale(GameObject guestObject");
 
         int firstPlacementIndex = prepareMethodBody.IndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
-        int scaleIndex = prepareMethodBody.IndexOf("EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing)", StringComparison.Ordinal);
         int finalPlacementIndex = prepareMethodBody.LastIndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
 
         Assert.That(targetMethodBody, Does.Match(@"frontDoorArrivalPoint[\s\S]*return frontDoorArrivalPoint[\s\S]*FindAnchor\(FrontDoorGuestSpawnAnchorId, entryRoomId\)"), "Door spawning should resolve the serialized GuestArrival_Door first and retain its RoomAnchor lookup fallback.");
@@ -237,12 +232,11 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(controllerText, Does.Not.Contain("guestEntranceSpawnPlacemark"), "The removed door placemark must not remain cached at runtime.");
         Assert.That(sceneText, Does.Not.Contain("m_Name: Placemark_guests_entrance"), "Gameplay should expose only GuestArrival_Door for guest foot spawning.");
         Assert.That(sceneText, Does.Match(@"anchorId: GuestArrival_Door\s+roomId: Grand Entrance Hall\s+showSceneGizmo: 1"), "GuestArrival_Door should be visible and easy to drag in the Scene view.");
-        Assert.That(sceneText, Does.Match(@"roomId: Grand Entrance Hall\s+enabled: 1\s+roomGuestScaleMultiplier: 1(?:\.0+)?\s"), "Entrance guests should use the Butler's calibrated scale without the old 2.2 enlargement.");
-        Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "The guest must first be placed at GuestArrival_Door so scaling samples that exact foot depth.");
-        Assert.That(scaleIndex, Is.GreaterThan(firstPlacementIndex), "The shared Butler scale should be evaluated after the guest reaches the door-foot depth.");
-        Assert.That(finalPlacementIndex, Is.GreaterThan(scaleIndex), "Feet should be realigned after scaling changes sprite bounds.");
+        Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "The guest must be placed at GuestArrival_Door.");
+        Assert.That(finalPlacementIndex, Is.EqualTo(firstPlacementIndex), "Position-only placement should not run a second pass after a scale calculation.");
         Assert.That(placeFeetMethodBody, Does.Contain("BindGuestToRoomStagePoint(guestState, profileTarget)"), "A spawned world guest should remain attached to GuestArrival_Door until walking begins.");
-        Assert.That(preserveScaleMethodBody, Does.Contain("SetPerspectiveScaleEnabled(false, false)"), "Repeated foot placement must not let an inherited player component restore over the shared Butler-derived guest scale.");
+        Assert.That(controllerText, Does.Not.Contain("PreserveGuestAuthoredScale"));
+        Assert.That(controllerText, Does.Not.Contain("EnsureGuestScale"));
     }
 
     [Test]
@@ -437,31 +431,22 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void Chapter1GuestsUseAuthoredScaleAsRoomZoomBaseline()
+    public void Chapter1GuestPlacementAndPoseDoNotOwnCharacterScale()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
-        string playerMovementText = File.ReadAllText(PointClickPlayerMovementPath);
-        string actorRoomStateText = File.ReadAllText(ActorRoomStatePath);
-        string playerPerspectiveScaleBody = ExtractDeclaredMethodBody(playerMovementText, "ApplyPerspectiveScale");
-        string playerPerspectiveCalculationBody = ExtractDeclaredMethodBody(playerMovementText, "CalculateExistingPerspectiveScale");
         string prepareMethodBody = ExtractMethodBody(controllerText, "PrepareSceneGuestObject");
         string disablePlayerMethodBody = ExtractMethodBody(controllerText, "DisablePlayerOnlyComponents");
         string placeMethodBody = ExtractMethodBody(controllerText, "PlaceGuestAt");
 
-        Assert.That(playerMovementText, Does.Contain("applyPerspectiveScale"), "Player movement should have an explicit switch for runtime perspective scale.");
-        Assert.That(playerMovementText, Does.Contain("SetPerspectiveScaleEnabled"), "Guests cloned from the player prefab need a public way to opt out of player depth scaling.");
-        Assert.That(playerMovementText, Does.Match(@"if \(!applyPerspectiveScale\)[\s\S]*return;"), "Disabled perspective scale should stop PointClickPlayerMovement from writing transform.localScale.");
-        Assert.That(playerMovementText, Does.Contain("authoredPerspectiveScaleReference"), "The butler should keep the Edit Mode transform scale as the baseline at its authored depth.");
-        Assert.That(playerMovementText, Does.Contain("GetPerspectiveScaleForY"), "Perspective scaling should compare the current room depth against the authored depth.");
-        Assert.That(playerPerspectiveCalculationBody, Does.Contain("depthScale / Mathf.Max(0.0001f, authoredPerspectiveScaleReference)"), "Play Mode perspective scaling should be relative to the Edit Mode depth, not an absolute replacement.");
-        Assert.That(playerPerspectiveScaleBody, Does.Contain("authoredLocalScale.x * scale"), "Play Mode should multiply the artist-authored butler X scale instead of replacing it.");
-        Assert.That(playerPerspectiveScaleBody, Does.Contain("authoredLocalScale.y * scale"), "Play Mode should multiply the artist-authored butler Y scale instead of replacing it.");
-        Assert.That(playerPerspectiveScaleBody, Does.Contain("currentRoomStageScaleRatio"), "The authored-scale fix must keep room-stage zoom scaling.");
-        Assert.That(actorRoomStateText, Does.Contain("scaleWithRoomStageMotion"), "ActorRoomState should be able to scale a bound actor from its authored base scale.");
-        Assert.That(prepareMethodBody, Does.Contain("authoredGuestScale"), "Scene guest preparation should capture the scale restored from player movement before other setup.");
-        Assert.That(prepareMethodBody, Does.Contain("SetScaleWithRoomStageMotion(true)"), "Chapter 1 guests should follow room-stage zoom from their authored base scale, matching the butler.");
-        Assert.That(disablePlayerMethodBody, Does.Contain("SetPerspectiveScaleEnabled(false)"), "Scene guests should turn off inherited player perspective scaling before disabling player-only movement.");
-        Assert.That(placeMethodBody, Does.Contain("PreserveGuestAuthoredScale(guestState)"), "Drawing room placement and skip staging should preserve the scale artists set in Edit Mode before room zoom is applied.");
+        Assert.That(controllerText, Does.Not.Contain("GuestRoomScale"));
+        Assert.That(controllerText, Does.Not.Contain("GuestScaleParticipant"));
+        Assert.That(controllerText, Does.Not.Contain("SetPerspectiveScaleEnabled"));
+        Assert.That(controllerText, Does.Not.Contain("SetScaleWithRoomStageMotion"));
+        Assert.That(prepareMethodBody, Does.Not.Contain("localScale"));
+        Assert.That(disablePlayerMethodBody, Does.Not.Contain("localScale"));
+        Assert.That(placeMethodBody, Does.Not.Contain("localScale"));
+        Assert.That(placeMethodBody, Does.Contain("transform.position"));
+        Assert.That(placeMethodBody, Does.Contain("BindGuestToRoomStagePoint"));
     }
 
     [Test]
@@ -483,10 +468,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(playerSortingSetterBody, Does.Contain("RestoreAuthoredRendererSorting()"), "Guests cloned from the player prefab need their Edit Mode sorting restored after player sorting is disabled.");
         Assert.That(disablePlayerMethodBody, Does.Contain("SetPlayerSortingEnabled(false)"), "Scene guests should turn off inherited player y-sorting before player-only movement is disabled.");
         Assert.That(prepareMethodBody, Does.Contain("ShouldPreserveAuthoredGuestSorting(guestObject)"), "Scene-authored guests should not have their Edit Mode sprite order overwritten at runtime.");
-        Assert.That(prepareMethodBody, Does.Match(@"if \(preserveAuthoredSorting\)[\s\S]*continue;[\s\S]*sortingLayerName = \""People\""[\s\S]*sortingOrder = 9000 \+ index"), "Only runtime fallback guests should receive generated People/9000 sorting.");
+        Assert.That(prepareMethodBody, Does.Match(@"if \(preserveAuthoredSorting\)[\s\S]*continue;[\s\S]*sortingLayerName = \""People\""[\s\S]*sortingOrder = 9000 \+ index"), "Authored scene guests should keep their renderer offsets; non-scene configuration retains a defensive sorting fallback.");
         Assert.That(preserveMethodBody, Does.Contain("guestObject.scene.IsValid()"), "Sorting preservation should only apply to real scene objects.");
         Assert.That(preserveMethodBody, Does.Contain("guestObject.scene.isLoaded"), "Sorting preservation should only apply to loaded scene objects.");
-        Assert.That(preserveMethodBody, Does.Contain("!runtimeGeneratedGuestObjects.Contains(guestObject)"), "Runtime-generated fallback guests still need generated sorting.");
+        Assert.That(preserveMethodBody, Does.Not.Contain("runtimeGeneratedGuestObjects"), "Missing guests must never be synthesized and classified through a runtime-generated set.");
         Assert.That(ensureSorterBody, Does.Match(@"authoredOrders\[i\] = authoredRenderers\[i\]\.sortingOrder[\s\S]*AddComponent<WorldYSortSpriteRenderer>[\s\S]*authoredRenderers\[i\]\.sortingOrder = authoredOrders\[i\]"), "Attaching the continuous sorter must preserve authored child-renderer offsets through AddComponent.OnEnable.");
         Assert.That(ensureSorterBody, Does.Contain("ConfigureForActor(playerMovement, FindCharacterSpriteRenderer"), "Every guest should be configured against the Butler's canonical y-sort source.");
     }

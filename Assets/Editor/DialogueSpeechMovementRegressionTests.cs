@@ -119,51 +119,31 @@ public sealed class DialogueSpeechMovementRegressionTests
     }
 
     [Test]
-    public void LowerEntranceTargetUsesLargerCalibratedScale()
+    public void LowerEntranceTargetKeepsEachGuestPairOnOneHorizontalTravelLine()
     {
-        GameObject movementObject = new GameObject("EntranceTargetScaleTest");
+        GameObject controllerObject = new GameObject("EntranceTargetPlacementTest");
 
         try
         {
-            PointClickPlayerMovement movement = movementObject.AddComponent<PointClickPlayerMovement>();
-            movement.SetButlerFrontFinalLocalScaleForRoom("Grand Entrance Hall", -381.67844f, 2.1461537f, false);
-            movement.SetButlerBackFinalLocalScaleForRoom("Grand Entrance Hall", -98.47123f, 0.661823f, false);
-
-            Assert.That(
-                movement.TryEvaluateButlerCharacterScale(
-                    "Grand Entrance Hall",
-                    new Vector2(-704f, -116f),
-                    out PointClickPlayerMovement.ButlerCharacterScaleSample oldTargetSample),
-                Is.True);
-            Assert.That(
-                movement.TryEvaluateButlerCharacterScale(
-                    "Grand Entrance Hall",
-                    new Vector2(-704f, -210f),
-                    out PointClickPlayerMovement.ButlerCharacterScaleSample floorTargetSample),
-                Is.True);
-
-            Assert.That(floorTargetSample.Depth01, Is.LessThan(oldTargetSample.Depth01));
-            Assert.That(
-                floorTargetSample.ButlerFinalLocalScaleY,
-                Is.GreaterThan(oldTargetSample.ButlerFinalLocalScaleY * 1.5f),
-                "Moving the passage target onto the foreground floor should materially enlarge characters through the existing Y-depth scale curve.");
-
+            Chapter1ArrivalController controller = controllerObject.AddComponent<Chapter1ArrivalController>();
             MethodInfo getPairOffset = typeof(Chapter1ArrivalController).GetMethod(
                 "GetWorldGuestGridOffset",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(getPairOffset, Is.Not.Null);
             Vector2 firstOffset = (Vector2)getPairOffset.Invoke(
-                movementObject.AddComponent<Chapter1ArrivalController>(),
+                controller,
                 new object[] { 0, 2, 0.75f });
             Vector2 secondOffset = (Vector2)getPairOffset.Invoke(
-                movementObject.GetComponent<Chapter1ArrivalController>(),
+                controller,
                 new object[] { 1, 2, 0.75f });
             Assert.That(firstOffset.y, Is.EqualTo(0f).Within(0.0001f));
             Assert.That(secondOffset.y, Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(firstOffset.x, Is.EqualTo(-0.375f).Within(0.0001f));
+            Assert.That(secondOffset.x, Is.EqualTo(0.375f).Within(0.0001f));
         }
         finally
         {
-            Object.DestroyImmediate(movementObject);
+            Object.DestroyImmediate(controllerObject);
         }
     }
 

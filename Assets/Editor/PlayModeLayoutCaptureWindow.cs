@@ -282,6 +282,12 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
             return false;
         }
 
+        if (IsManagedCharacterTransform(target))
+        {
+            Debug.LogWarning($"Skipped character transform '{target.name}'. Character body transforms are not layout-capture targets.");
+            return false;
+        }
+
         RectTransform rectTransform = target as RectTransform;
         RoomAnchor roomAnchor = target.GetComponent<RoomAnchor>();
 
@@ -373,6 +379,13 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
                 continue;
             }
 
+            if (IsManagedCharacterTransform(target))
+            {
+                protectedCount++;
+                Debug.LogWarning($"Ignored captured character transform '{target.name}'. Character body transforms cannot be applied by layout capture.");
+                continue;
+            }
+
             Undo.RecordObject(target, "Apply Play Mode Layout Capture");
             ApplyCaptureItem(target, item);
             EditorUtility.SetDirty(target);
@@ -416,7 +429,7 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
 
     private static void ApplyCaptureItem(Transform target, PlayModeLayoutCaptureItem item)
     {
-        if (IsProtectedEntranceGuestSpot(target))
+        if (IsProtectedEntranceGuestSpot(target) || IsManagedCharacterTransform(target))
         {
             return;
         }
@@ -792,6 +805,13 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
         return item != null &&
                (StartsWithPrefix(item.ObjectName, ProtectedEntranceGuestSpotPrefix) ||
                 StartsWithPrefix(item.RoomAnchorId, ProtectedEntranceGuestSpotPrefix));
+    }
+
+    private static bool IsManagedCharacterTransform(Transform target)
+    {
+        return target != null &&
+               (target.GetComponentInParent<PointClickPlayerMovement>(true) != null ||
+                target.GetComponentInParent<ActorRoomState>(true) != null);
     }
 
     private static bool SameRoom(string left, string right)

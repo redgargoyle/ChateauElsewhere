@@ -129,9 +129,13 @@ public class RoomProjectionRegressionTests
         Assert.That(captureWindowText, Does.Contain("Stop Play Mode And Apply"), "The tool should make the play-to-edit apply handoff explicit.");
         Assert.That(captureWindowText, Does.Contain("ProtectedEntranceGuestSpotPrefix = \"EntranceGuestSpot_\""), "The eight hand-authored entrance wait spots should be explicitly protected from layout capture.");
         Assert.That(captureItemBody, Does.Contain("IsProtectedEntranceGuestSpot(target)"), "New captures must exclude protected entrance wait spots.");
+        Assert.That(captureItemBody, Does.Contain("IsManagedCharacterTransform(target)"), "New captures must reject Butler/guest roots and descendants structurally.");
         Assert.That(applyCaptureBody, Does.Contain("IsProtectedEntranceGuestSpot(item)"), "Old pending captures must not be able to resolve and overwrite protected entrance wait spots.");
         Assert.That(applyCaptureBody, Does.Contain("IsProtectedEntranceGuestSpot(target)"), "The resolved transform must be checked again before any Undo or transform write occurs.");
+        Assert.That(applyCaptureBody, Does.Contain("IsManagedCharacterTransform(target)"), "Old pending captures must not mutate a resolved Butler/guest root or descendant.");
         Assert.That(applyCaptureItemBody, Does.Match(@"IsProtectedEntranceGuestSpot\(target\)[\s\S]*return;[\s\S]*target\.localPosition ="), "The transform writer itself must reject a protected entrance wait spot before its first position assignment.");
+        Assert.That(applyCaptureItemBody, Does.Match(@"IsManagedCharacterTransform\(target\)[\s\S]*return;[\s\S]*target\.localPosition ="), "The direct transform writer must independently reject Butler/guest roots and descendants.");
+        Assert.That(captureWindowText, Does.Match(@"IsManagedCharacterTransform\s*\([^)]*\)[\s\S]*GetComponentInParent<PointClickPlayerMovement>\(true\)[\s\S]*GetComponentInParent<ActorRoomState>\(true\)"), "Actor protection must use component ancestry rather than object names.");
     }
 
     [Test]

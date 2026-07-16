@@ -38,7 +38,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     [SerializeField, Min(1f)] private float scriptedGuestRunDistancePixels = 500f;
     [SerializeField, Min(1f)] private float scriptedGuestMoveSpeedPixels = 560f;
     [SerializeField, Min(0.1f)] private float scriptedGuestWalkAnimationSpeed = 2f;
-    [SerializeField, Min(0.1f)] private float scriptedGuestPanicSpriteScaleMultiplier = 1f;
     [SerializeField, Min(0f)] private float scriptedGuestShakePixels = 5f;
     [SerializeField, Min(0.1f)] private float scriptedGuestShakeCyclesPerSecond = 8f;
     [SerializeField] private PointClickPlayerMovement routePlanner;
@@ -658,7 +657,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             float shake = Mathf.Sin(elapsedSeconds * scriptedGuestShakeCyclesPerSecond * Mathf.PI * 2f) *
                 Mathf.Max(0f, scriptedGuestShakePixels);
 
-            participant.SetSprite(panicSprite, scriptedGuestPanicSpriteScaleMultiplier);
+            participant.SetSprite(panicSprite);
             participant.ApplyPanicVisualOffset(baseOffset + new Vector2(shake, 0f), worldUnitsPerRoomPixel);
             elapsedSeconds += deltaTime;
             yield return null;
@@ -1328,14 +1327,10 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private RectTransform rectTransform;
         private RoomProjectedEntity projection;
         private bool usesProjection;
-        private bool guestScaleApplierOwnsScale;
         private Vector2 originalProjectionFootPoint;
         private Vector2 originalAnchoredPosition;
         private Vector3 originalPosition;
         private Vector3 originalLocalPosition;
-        private Vector3 originalLocalScale;
-        private Vector2 originalSpriteLocalSize;
-        private bool hasOriginalSpriteLocalSize;
         private string originalRoomId;
         private bool originalAvailable;
         private bool originalVisible;
@@ -1357,8 +1352,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private bool useRouteLogicalMotion;
         private readonly List<Vector2> currentRouteOffsets = new List<Vector2>();
         private int currentRouteOffsetIndex;
-        private Sprite currentPanicSprite;
-        private float currentPanicSpriteScaleMultiplier = 1f;
         private PanicAction currentRunAction = PanicAction.PanicRunDown;
         private PanicAction currentStopAction = PanicAction.PanicHandsUp;
         private int guestNumber;
@@ -1383,7 +1376,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             GameObject root = nextActorState != null ? nextActorState.gameObject : null;
             Transform rootTransform = root != null ? root.transform : null;
             RoomProjectedEntity nextProjection = nextActorState != null ? nextActorState.Projection : null;
-            GuestScaleParticipant scaleParticipant = FindGuestScaleParticipant(root);
             PanicParticipant participant = new PanicParticipant
             {
                 actorState = nextActorState,
@@ -1397,12 +1389,10 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 rectTransform = rootTransform as RectTransform,
                 projection = nextProjection,
                 usesProjection = nextProjection != null && nextProjection.IsProjectionActive,
-                guestScaleApplierOwnsScale = GuestRoomScaleApplier.IsManagedGuestParticipant(scaleParticipant),
                 originalProjectionFootPoint = nextProjection != null ? nextProjection.RoomLocalFootPoint : Vector2.zero,
                 originalAnchoredPosition = rootTransform is RectTransform rt ? rt.anchoredPosition : Vector2.zero,
                 originalPosition = rootTransform != null ? rootTransform.position : Vector3.zero,
                 originalLocalPosition = rootTransform != null ? rootTransform.localPosition : Vector3.zero,
-                originalLocalScale = rootTransform != null ? rootTransform.localScale : Vector3.one,
                 originalRoomId = nextActorState != null ? nextActorState.CurrentRoomId : string.Empty,
                 originalAvailable = nextActorState == null || nextActorState.IsAvailableInCurrentChapter,
                 originalVisible = nextActorState == null || nextActorState.IsVisibleByChapterState,
@@ -1430,7 +1420,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
             participant.originalRendererSprite = participant.spriteRenderer != null ? participant.spriteRenderer.sprite : null;
             participant.originalImageSprite = participant.image != null ? participant.image.sprite : null;
-            participant.CaptureOriginalSpriteLocalSize();
 
             if (participant.rigidbody2D != null)
             {
@@ -1440,28 +1429,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 participant.originalRigidbodyAngularVelocity = participant.rigidbody2D.angularVelocity;
                 participant.originalRigidbodyGravityScale = participant.rigidbody2D.gravityScale;
                 participant.originalRigidbodySimulated = participant.rigidbody2D.simulated;
-            }
-
-            return participant;
-        }
-
-        private static GuestScaleParticipant FindGuestScaleParticipant(GameObject root)
-        {
-            if (root == null)
-            {
-                return null;
-            }
-
-            GuestScaleParticipant participant = root.GetComponent<GuestScaleParticipant>();
-
-            if (participant == null)
-            {
-                participant = root.GetComponentInChildren<GuestScaleParticipant>(true);
-            }
-
-            if (participant == null)
-            {
-                participant = root.GetComponentInParent<GuestScaleParticipant>(true);
             }
 
             return participant;
@@ -1841,14 +1808,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         public bool BeginAnimatorWalk(PanicAction runAction, float animationSpeed)
         {
-            currentPanicSprite = null;
-            currentPanicSpriteScaleMultiplier = 1f;
             SetCurrentRunAction(runAction);
-
-            if (targetTransform != null)
-            {
-                RestoreOriginalLocalScale();
-            }
 
             PlayFootsteps();
             usingAnimatorWalk = UpdateAnimatorWalk(runAction, animationSpeed);
@@ -2221,24 +2181,15 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         public void ReapplyPanicVisualOffset(float worldUnitsPerPixel)
         {
-            ApplySpriteScale(currentPanicSprite, currentPanicSpriteScaleMultiplier);
             ApplyVisualOffset(currentVisualOffset, worldUnitsPerPixel);
         }
 
         public void SetSprite(Sprite sprite)
         {
-            SetSprite(sprite, 1f);
-        }
-
-        public void SetSprite(Sprite sprite, float scaleMultiplier)
-        {
             if (sprite == null)
             {
                 return;
             }
-
-            currentPanicSprite = sprite;
-            currentPanicSpriteScaleMultiplier = Mathf.Max(0.1f, scaleMultiplier);
 
             if (spriteRenderer != null)
             {
@@ -2249,63 +2200,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             {
                 image.sprite = sprite;
             }
-
-            ApplySpriteScale(sprite, currentPanicSpriteScaleMultiplier);
-        }
-
-        private void CaptureOriginalSpriteLocalSize()
-        {
-            Sprite sprite = originalRendererSprite != null ? originalRendererSprite : originalImageSprite;
-
-            if (TryGetSpriteLocalSize(sprite, out originalSpriteLocalSize))
-            {
-                hasOriginalSpriteLocalSize = true;
-            }
-        }
-
-        private void ApplySpriteScale(Sprite sprite, float scaleMultiplier = 1f)
-        {
-            if (targetTransform == null ||
-                guestScaleApplierOwnsScale ||
-                !hasOriginalSpriteLocalSize ||
-                !TryGetSpriteLocalSize(sprite, out Vector2 spriteLocalSize))
-            {
-                return;
-            }
-
-            float scale = GetSpriteScaleMultiplier(originalSpriteLocalSize, spriteLocalSize) * Mathf.Max(0.1f, scaleMultiplier);
-            targetTransform.localScale = new Vector3(
-                originalLocalScale.x * scale,
-                originalLocalScale.y * scale,
-                originalLocalScale.z);
-        }
-
-        private static bool TryGetSpriteLocalSize(Sprite sprite, out Vector2 size)
-        {
-            size = Vector2.zero;
-
-            if (sprite == null)
-            {
-                return false;
-            }
-
-            size = sprite.bounds.size;
-            return size.x > 0.0001f || size.y > 0.0001f;
-        }
-
-        private static float GetSpriteScaleMultiplier(Vector2 originalSize, Vector2 nextSize)
-        {
-            if (originalSize.y > 0.0001f && nextSize.y > 0.0001f)
-            {
-                return originalSize.y / nextSize.y;
-            }
-
-            if (originalSize.x > 0.0001f && nextSize.x > 0.0001f)
-            {
-                return originalSize.x / nextSize.x;
-            }
-
-            return 1f;
         }
 
         public void ApplyVisualOffset(Vector2 roomPixelOffset, float worldUnitsPerPixel)
@@ -2601,7 +2495,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             {
                 targetTransform.position = originalPosition;
                 targetTransform.localPosition = originalLocalPosition;
-                RestoreOriginalLocalScale();
             }
 
             currentPanicOffset = Vector2.zero;
@@ -2614,8 +2507,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             useRouteLogicalMotion = false;
             currentRouteOffsets.Clear();
             currentRouteOffsetIndex = 0;
-            currentPanicSprite = null;
-            currentPanicSpriteScaleMultiplier = 1f;
             controlledByScript = false;
             usingAnimatorWalk = false;
             hiddenAfterExitArrival = false;
@@ -2799,14 +2690,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 {
                     drivers.Add(components[i]);
                 }
-            }
-        }
-
-        private void RestoreOriginalLocalScale()
-        {
-            if (targetTransform != null && !guestScaleApplierOwnsScale)
-            {
-                targetTransform.localScale = originalLocalScale;
             }
         }
 

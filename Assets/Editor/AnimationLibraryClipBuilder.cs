@@ -14,6 +14,15 @@ public static class AnimationLibraryClipBuilder
     [MenuItem("Dreadforge/Animation Library/Rebuild Approved Full-Body Clips")]
     public static void RebuildApprovedFullBodyClips()
     {
+        if (!EditorUtility.DisplayDialog(
+            "Rebuild Approved Full-Body Clips?",
+            "This rebuild clears and rewrites generated animation curves in the approved full-body clip library.",
+            "Rebuild",
+            "Cancel"))
+        {
+            return;
+        }
+
         if (!AssetDatabase.IsValidFolder(LibraryRoot))
         {
             Debug.LogWarning($"Animation library folder does not exist: {LibraryRoot}");

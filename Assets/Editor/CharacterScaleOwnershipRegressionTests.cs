@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public sealed class CharacterScaleOwnershipRegressionTests
 {
@@ -13,6 +17,9 @@ public sealed class CharacterScaleOwnershipRegressionTests
     private const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
     private const string DrawingRoomProfilePath = "Assets/ScriptableObjects/Rooms/DrawingRoomPerspectiveProfile.asset";
     private const string DiningRoomProfilePath = "Assets/ScriptableObjects/Rooms/DiningRoomPerspectiveProfile.asset";
+    private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string PanicControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs";
+    private const string LayoutCaptureWindowPath = "Assets/Editor/PlayModeLayoutCaptureWindow.cs";
 
     private static readonly object[] GuestSittingRoster =
     {
@@ -105,6 +112,321 @@ public sealed class CharacterScaleOwnershipRegressionTests
                 Is.False,
                 clipPath);
         }
+    }
+
+    [Test]
+    public void CharacterControllerFacingFlipsRenderersWithoutChangingRootScale()
+    {
+        GameObject actor = new GameObject("FacingActor");
+        GameObject visual = new GameObject("Visual");
+
+        try
+        {
+            visual.transform.SetParent(actor.transform, false);
+            SpriteRenderer renderer = visual.AddComponent<SpriteRenderer>();
+            renderer.flipX = true;
+            CharacterController2D controller = actor.AddComponent<CharacterController2D>();
+            typeof(CharacterController2D).GetMethod(
+                "Awake",
+                BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(controller, null);
+            Vector3 before = new Vector3(1.4f, 2.1f, 1f);
+            actor.transform.localScale = before;
+
+            MethodInfo flip = typeof(CharacterController2D).GetMethod(
+                "Flip",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Assert.That(flip, Is.Not.Null);
+            FieldInfo facingRight = typeof(CharacterController2D).GetField(
+                "m_FacingRight",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(facingRight, Is.Not.Null);
+            Assert.That(facingRight.GetValue(controller), Is.False, "An authored flipX actor starts facing left.");
+
+            flip.Invoke(controller, null);
+
+            Assert.That(actor.transform.localScale, Is.EqualTo(before));
+            Assert.That(renderer.flipX, Is.False);
+            Assert.That(facingRight.GetValue(controller), Is.True);
+
+            flip.Invoke(controller, null);
+
+            Assert.That(actor.transform.localScale, Is.EqualTo(before));
+            Assert.That(renderer.flipX, Is.True);
+            Assert.That(facingRight.GetValue(controller), Is.False);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void ChapterOneOwnsPlacementAndPoseButNoCharacterScaleOrRuntimeGuestSynthesis()
+    {
+        string source = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string[] prohibitedSymbols =
+        {
+            "EnsureGuestScale",
+            "GuestRoomScale",
+            "GuestScaleParticipant",
+            "PreserveGuestAuthoredScale",
+            "SetPerspectiveScaleEnabled",
+            "SyncGuestScaleParticipant",
+            "ResolveGuestScaleRoomId",
+            "ResolveGuestScalePose",
+            "runtimeGeneratedGuestObjects",
+            "runtimeGuestSprite",
+            "FindRuntimeGuestTemplate",
+            "CreateRuntimeGuestObject",
+            "CreateRuntimeVisual"
+        };
+
+        for (int i = 0; i < prohibitedSymbols.Length; i++)
+        {
+            Assert.That(
+                source,
+                Does.Not.Contain(prohibitedSymbols[i]),
+                $"Chapter 1 must not retain the legacy scale/fallback symbol '{prohibitedSymbols[i]}'.");
+        }
+
+        Assert.That(source, Does.Contain("Missing authored guest reference"));
+        Assert.That(source, Does.Not.Contain("Runtime placeholder guests will be created"));
+        Assert.That(source, Does.Not.Contain("Missing guests will be created at runtime"));
+        Assert.That(
+            ExtractMethodBody(source, "EnsureGuestConfigs"),
+            Does.Contain("throw new InvalidOperationException"),
+            "Chapter 1 must stop immediately when a required authored actor is missing.");
+        Assert.That(source, Does.Contain("ApplyDrawingRoomWaitingPose"));
+        Assert.That(source, Does.Contain("ApplyDrawingRoomSeatedOcclusion"));
+        Assert.That(source, Does.Contain("CreateCoatPickup"));
+    }
+
+    [Test]
+    public void SeatedAndChapterOneCoatTransitionsDoNotResizeActorRoots()
+    {
+        GameObject actor = new GameObject("SeatedScaleInvariantActor");
+
+        try
+        {
+            Vector3 authoredScale = new Vector3(1.25f, 1.6f, 1f);
+            actor.transform.localScale = authoredScale;
+            ActorRoomState actorState = actor.AddComponent<ActorRoomState>();
+
+            actorState.SetSeated(true);
+            Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale));
+            actorState.SetSeated(false);
+            Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale));
+
+            string chapterOneSource = File.ReadAllText(Chapter1ArrivalControllerPath);
+            string takeCoatBody = ExtractMethodBody(chapterOneSource, "TakeGuestCoat");
+            string storeCoatBody = ExtractMethodBody(chapterOneSource, "StoreCarriedCoatInCloset");
+
+            Assert.That(takeCoatBody, Does.Not.Contain("localScale"));
+            Assert.That(storeCoatBody, Does.Not.Contain("localScale"));
+            Assert.That(takeCoatBody, Does.Not.Contain("RefreshGuestScaling"));
+            Assert.That(storeCoatBody, Does.Not.Contain("RefreshGuestScaling"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void PanicPresentationContainsNoActorRootScaleOwnership()
+    {
+        string source = File.ReadAllText(PanicControllerPath);
+
+        Assert.That(source, Does.Not.Contain("originalLocalScale"));
+        Assert.That(source, Does.Not.Contain("originalSpriteLocalSize"));
+        Assert.That(source, Does.Not.Contain("CaptureOriginalSpriteLocalSize"));
+        Assert.That(source, Does.Not.Contain("GetSpriteScaleMultiplier"));
+        Assert.That(source, Does.Not.Contain("ApplySpriteScale"));
+        Assert.That(source, Does.Not.Contain("GuestRoomScaleApplier"));
+        Assert.That(source, Does.Not.Contain("GuestScaleParticipant"));
+        Assert.That(source, Does.Not.Contain("targetTransform.localScale"));
+        Assert.That(source, Does.Contain("spriteRenderer.sprite = sprite"));
+        Assert.That(source, Does.Contain("image.sprite = sprite"));
+    }
+
+    [Test]
+    public void LayoutCaptureRejectsManagedActorRootsAndDescendantsAtEveryWriteBoundary()
+    {
+        const string temporaryScenePath = "Assets/__CharacterScaleLayoutCaptureRegression.unity";
+        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+        try
+        {
+            EditorSceneManager.SetActiveScene(scene);
+
+            GameObject butler = new GameObject("ButlerActor");
+            butler.AddComponent<PointClickPlayerMovement>();
+            GameObject butlerVisual = new GameObject("ButlerVisual");
+            butlerVisual.transform.SetParent(butler.transform, false);
+
+            GameObject guest = new GameObject("GuestActor");
+            guest.AddComponent<ActorRoomState>();
+            GameObject guestVisual = new GameObject("GuestVisual");
+            guestVisual.transform.SetParent(guest.transform, false);
+            guestVisual.transform.localScale = new Vector3(1.3f, 1.4f, 1f);
+
+            GameObject anchorObject = new GameObject("OrdinaryRoomAnchor");
+            anchorObject.AddComponent<RoomAnchor>();
+
+            Assert.That(EditorSceneManager.SaveScene(scene, temporaryScenePath), Is.True);
+
+            MethodInfo tryCreate = typeof(PlayModeLayoutCaptureWindow).GetMethod(
+                "TryCreateCaptureItem",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            MethodInfo applyItem = typeof(PlayModeLayoutCaptureWindow).GetMethod(
+                "ApplyCaptureItem",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(tryCreate, Is.Not.Null);
+            Assert.That(applyItem, Is.Not.Null);
+
+            bool butlerRootAccepted = InvokeTryCreateCaptureItem(tryCreate, butler.transform, out _);
+            bool butlerChildAccepted = InvokeTryCreateCaptureItem(tryCreate, butlerVisual.transform, out _);
+            bool guestRootAccepted = InvokeTryCreateCaptureItem(tryCreate, guest.transform, out _);
+            bool guestChildAccepted = InvokeTryCreateCaptureItem(tryCreate, guestVisual.transform, out _);
+            bool anchorAccepted = InvokeTryCreateCaptureItem(tryCreate, anchorObject.transform, out object anchorItem);
+
+            Assert.That(anchorItem, Is.Not.Null);
+            FieldInfo localScaleField = anchorItem.GetType().GetField(
+                "LocalScale",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(localScaleField, Is.Not.Null);
+            localScaleField.SetValue(anchorItem, new Vector3(9f, 8f, 7f));
+
+            Vector3 guestVisualScaleBeforeApply = guestVisual.transform.localScale;
+            applyItem.Invoke(null, new[] { guestVisual.transform, anchorItem });
+
+            string source = File.ReadAllText(LayoutCaptureWindowPath);
+            string applyPendingBody = ExtractMethodBody(source, "ApplyPendingCapture");
+
+            bool allBoundariesProtected =
+                !butlerRootAccepted &&
+                !butlerChildAccepted &&
+                !guestRootAccepted &&
+                !guestChildAccepted &&
+                anchorAccepted &&
+                guestVisual.transform.localScale == guestVisualScaleBeforeApply &&
+                applyPendingBody.Contains("IsManagedCharacterTransform(target)");
+
+            Assert.That(
+                allBoundariesProtected,
+                Is.True,
+                $"capture results were Butler root/child={butlerRootAccepted}/{butlerChildAccepted}, " +
+                $"Guest root/child={guestRootAccepted}/{guestChildAccepted}, anchor={anchorAccepted}, " +
+                $"direct apply scale={guestVisual.transform.localScale}.");
+        }
+        finally
+        {
+            if (scene.IsValid() && scene.isLoaded)
+            {
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            }
+
+            AssetDatabase.DeleteAsset(temporaryScenePath);
+        }
+    }
+
+    [TestCase("Assets/Editor/CharacterAnimationAssetBuilder.cs", "RebuildAllCharacterAnimationAssets", "BuildCharacter(characterFolder")]
+    [TestCase("Assets/Editor/Guest2ButlerAnimationAssetBuilder.cs", "RebuildGuest2ButlerAnimation", "EnsureFolder(OutputFolder)")]
+    [TestCase("Assets/Editor/AnimationLibraryClipBuilder.cs", "RebuildApprovedFullBodyClips", "CreateSpriteClip(")]
+    [TestCase("Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs", "RebuildPanicAnimationLibrary", "EnsureFolder(OutputFolder)")]
+    public void DestructiveAnimationBuildersRequireConfirmationBeforeFirstWrite(
+        string sourcePath,
+        string methodName,
+        string firstWriteMarker)
+    {
+        string methodBody = ExtractMethodBody(File.ReadAllText(sourcePath), methodName);
+        int confirmationIndex = methodBody.IndexOf("EditorUtility.DisplayDialog", StringComparison.Ordinal);
+        int firstWriteIndex = methodBody.IndexOf(firstWriteMarker, StringComparison.Ordinal);
+
+        Assert.That(confirmationIndex, Is.GreaterThanOrEqualTo(0), sourcePath);
+        Assert.That(firstWriteIndex, Is.GreaterThan(confirmationIndex), sourcePath);
+    }
+
+    [Test]
+    public void PanicBuilderValidatesEveryInputBeforeCreatingOrRewritingAssets()
+    {
+        string source = File.ReadAllText("Assets/Editor/Chapter2PanicAnimationLibraryBuilder.cs");
+        string rebuildBody = ExtractMethodBody(source, "RebuildPanicAnimationLibrary");
+        int validationIndex = rebuildBody.IndexOf("CollectValidatedBuildInputs", StringComparison.Ordinal);
+        int errorExitIndex = rebuildBody.IndexOf("errors.Count", StringComparison.Ordinal);
+        int firstWriteIndex = rebuildBody.IndexOf("EnsureFolder(OutputFolder)", StringComparison.Ordinal);
+
+        Assert.That(validationIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(errorExitIndex, Is.GreaterThan(validationIndex));
+        Assert.That(firstWriteIndex, Is.GreaterThan(errorExitIndex));
+    }
+
+    [Test]
+    public void GuestTwoBuilderDoesNotOpenOrSaveGameplayOrMutateSceneComponents()
+    {
+        string source = File.ReadAllText("Assets/Editor/Guest2ButlerAnimationAssetBuilder.cs");
+
+        Assert.That(source, Does.Not.Contain("EditorSceneManager"));
+        Assert.That(source, Does.Not.Contain("GameplayScenePath"));
+        Assert.That(source, Does.Not.Contain("ApplyToGuest2"));
+        Assert.That(source, Does.Not.Contain("AddComponent<Animator>"));
+        Assert.That(source, Does.Contain("\"Player_Croutch\" => sittingClip"));
+    }
+
+    [Test]
+    public void GlobalCharacterBuilderPreservesAuthoredSittingOverrideWithoutFallbackSubstitution()
+    {
+        string source = File.ReadAllText("Assets/Editor/CharacterAnimationAssetBuilder.cs");
+        string buildBody = ExtractMethodBody(source, "BuildCharacter");
+        string methodBody = ExtractMethodBody(source, "CreateOverrideController");
+
+        Assert.That(buildBody, Does.Contain("{characterName}_Sitting.anim"));
+        Assert.That(buildBody, Does.Contain("LoadAssetAtPath<AnimationClip>"));
+        Assert.That(methodBody, Does.Contain("GetOverrides"));
+        Assert.That(methodBody, Does.Contain("existingCrouchClip"));
+        Assert.That(methodBody, Does.Contain("sittingClip"));
+        Assert.That(methodBody, Does.Contain("Debug.LogWarning"));
+        Assert.That(methodBody, Does.Not.Contain("existingCrouchClip : baseClip"));
+    }
+
+    private static bool InvokeTryCreateCaptureItem(MethodInfo method, Transform target, out object captureItem)
+    {
+        object[] arguments = { target, null };
+        bool accepted = (bool)method.Invoke(null, arguments);
+        captureItem = arguments[1];
+        return accepted;
+    }
+
+    private static string ExtractMethodBody(string source, string methodName)
+    {
+        Match declaration = Regex.Match(
+            source,
+            $@"(?m)^[ \t]*(?:(?:public|private|protected|internal|static|virtual|override|sealed|async|new)[ \t]+)*[A-Za-z_][A-Za-z0-9_<>,\[\]?]*[ \t]+{Regex.Escape(methodName)}[ \t]*\(");
+        Assert.That(declaration.Success, Is.True, $"Could not find method '{methodName}'.");
+        int bodyStart = source.IndexOf('{', declaration.Index);
+        Assert.That(bodyStart, Is.GreaterThanOrEqualTo(0), $"Could not find body for '{methodName}'.");
+        int depth = 0;
+
+        for (int i = bodyStart; i < source.Length; i++)
+        {
+            if (source[i] == '{')
+            {
+                depth++;
+            }
+            else if (source[i] == '}')
+            {
+                depth--;
+
+                if (depth == 0)
+                {
+                    return source.Substring(bodyStart, i - bodyStart + 1);
+                }
+            }
+        }
+
+        Assert.Fail($"Could not find end of method '{methodName}'.");
+        return string.Empty;
     }
 
     [Serializable]

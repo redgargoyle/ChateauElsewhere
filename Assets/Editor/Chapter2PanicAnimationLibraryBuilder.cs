@@ -36,12 +36,107 @@ public static class Chapter2PanicAnimationLibraryBuilder
     [MenuItem("Dreadforge/Chapter 2/Rebuild Panic Animation Library")]
     public static void RebuildPanicAnimationLibrary()
     {
+        if (!EditorUtility.DisplayDialog(
+            "Rebuild Chapter 2 Panic Animation Library?",
+            "This rebuild clears and rewrites generated panic clips and the runtime panic animation library.",
+            "Rebuild",
+            "Cancel"))
+        {
+            return;
+        }
+
+        List<PanicBuildInput> buildInputs = CollectValidatedBuildInputs(out List<string> errors);
+
+        if (errors.Count > 0)
+        {
+            string message = "Chapter 2 panic animation rebuild was canceled before writing assets because inputs are incomplete:\n" +
+                string.Join("\n", errors);
+            Debug.LogError(message);
+            throw new InvalidOperationException(message);
+        }
+
         EnsureFolder(OutputFolder);
         EnsureFolder(PanicClipRoot);
         AssetDatabase.Refresh();
 
-        List<Chapter2PanicCharacterAnimation> characterAnimations = new List<Chapter2PanicCharacterAnimation>();
-        List<string> errors = new List<string>();
+        List<Chapter2PanicCharacterAnimation> characterAnimations =
+            new List<Chapter2PanicCharacterAnimation>(buildInputs.Count);
+
+        for (int i = 0; i < buildInputs.Count; i++)
+        {
+            PanicBuildInput input = buildInputs[i];
+            string clipFolder = $"{PanicClipRoot}/{input.GuestFolder.clipFolderName}";
+            EnsureFolder(clipFolder);
+            CreateSpriteClip(
+                $"{input.GuestFolder.clipFolderName}_PanicHandsUp",
+                clipFolder,
+                input.HandsUpSprites,
+                false,
+                ClipFrameRate);
+            CreateSpriteClip(
+                $"{input.GuestFolder.clipFolderName}_PanicPop",
+                clipFolder,
+                input.PanicPopSprites,
+                false,
+                ClipFrameRate);
+            CreateSpriteClip(
+                $"{input.GuestFolder.clipFolderName}_PanicRunDown",
+                clipFolder,
+                input.RunDownSprites,
+                true,
+                ClipFrameRate);
+            CreateSpriteClip(
+                $"{input.GuestFolder.clipFolderName}_PanicRunLeft",
+                clipFolder,
+                input.RunLeftSprites,
+                true,
+                ClipFrameRate);
+            CreateSpriteClip(
+                $"{input.GuestFolder.clipFolderName}_PanicRunRight",
+                clipFolder,
+                input.RunRightSprites,
+                true,
+                ClipFrameRate);
+            CreateSpriteClip(
+                $"{input.GuestFolder.clipFolderName}_PanicRunUp",
+                clipFolder,
+                input.RunUpSprites,
+                true,
+                ClipFrameRate);
+
+            Chapter2PanicCharacterAnimation animation = new Chapter2PanicCharacterAnimation();
+            animation.Configure(
+                input.CharacterId,
+                input.DisplayName,
+                input.HandsUpSprites,
+                input.PanicPopSprites,
+                input.RunDownSprites,
+                input.RunLeftSprites,
+                input.RunRightSprites,
+                input.RunUpSprites);
+            characterAnimations.Add(animation);
+        }
+
+        Chapter2PanicAnimationLibrary library = AssetDatabase.LoadAssetAtPath<Chapter2PanicAnimationLibrary>(OutputPath);
+
+        if (library == null)
+        {
+            library = ScriptableObject.CreateInstance<Chapter2PanicAnimationLibrary>();
+            AssetDatabase.CreateAsset(library, OutputPath);
+        }
+
+        library.Configure(characterAnimations.ToArray());
+        EditorUtility.SetDirty(library);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        Debug.Log($"Built Chapter 2 panic animation library at {OutputPath}.");
+    }
+
+    private static List<PanicBuildInput> CollectValidatedBuildInputs(out List<string> errors)
+    {
+        errors = new List<string>();
+        List<PanicBuildInput> inputs = new List<PanicBuildInput>(Chapter2PanicRoster.CharacterIds.Length);
 
         for (int i = 0; i < Chapter2PanicRoster.CharacterIds.Length; i++)
         {
@@ -49,9 +144,8 @@ public static class Chapter2PanicAnimationLibraryBuilder
             string displayName = i < Chapter2PanicRoster.DisplayNames.Length
                 ? Chapter2PanicRoster.DisplayNames[i]
                 : characterId;
-            bool hasGuestFolder = TryGetGuestFolder(characterId, out GuestFolderSpec guestFolder);
 
-            if (!hasGuestFolder)
+            if (!TryGetGuestFolder(characterId, out GuestFolderSpec guestFolder))
             {
                 errors.Add($"{characterId}: missing guest folder mapping");
                 continue;
@@ -80,84 +174,19 @@ public static class Chapter2PanicAnimationLibraryBuilder
             AppendCountError(errors, characterId, "panic_run_right", runRightSprites, 4, "normal walk_right references");
             AppendCountError(errors, characterId, "panic_run_up", runUpSprites, 4, "normal walk_up references");
 
-            string clipFolder = $"{PanicClipRoot}/{guestFolder.clipFolderName}";
-            EnsureFolder(clipFolder);
-            CreateSpriteClip(
-                $"{guestFolder.clipFolderName}_PanicHandsUp",
-                clipFolder,
-                handsUpSprites,
-                false,
-                ClipFrameRate);
-
-            if (panicPopSprites.Length > 0)
-            {
-                CreateSpriteClip(
-                    $"{guestFolder.clipFolderName}_PanicPop",
-                    clipFolder,
-                    panicPopSprites,
-                    false,
-                    ClipFrameRate);
-            }
-
-            CreateSpriteClip(
-                $"{guestFolder.clipFolderName}_PanicRunDown",
-                clipFolder,
-                runDownSprites,
-                true,
-                ClipFrameRate);
-            CreateSpriteClip(
-                $"{guestFolder.clipFolderName}_PanicRunLeft",
-                clipFolder,
-                runLeftSprites,
-                true,
-                ClipFrameRate);
-            CreateSpriteClip(
-                $"{guestFolder.clipFolderName}_PanicRunRight",
-                clipFolder,
-                runRightSprites,
-                true,
-                ClipFrameRate);
-            CreateSpriteClip(
-                $"{guestFolder.clipFolderName}_PanicRunUp",
-                clipFolder,
-                runUpSprites,
-                true,
-                ClipFrameRate);
-
-            Chapter2PanicCharacterAnimation animation = new Chapter2PanicCharacterAnimation();
-            animation.Configure(
+            inputs.Add(new PanicBuildInput(
                 characterId,
                 displayName,
+                guestFolder,
                 handsUpSprites,
                 panicPopSprites,
                 runDownSprites,
                 runLeftSprites,
                 runRightSprites,
-                runUpSprites);
-            characterAnimations.Add(animation);
+                runUpSprites));
         }
 
-        Chapter2PanicAnimationLibrary library = AssetDatabase.LoadAssetAtPath<Chapter2PanicAnimationLibrary>(OutputPath);
-
-        if (library == null)
-        {
-            library = ScriptableObject.CreateInstance<Chapter2PanicAnimationLibrary>();
-            AssetDatabase.CreateAsset(library, OutputPath);
-        }
-
-        library.Configure(characterAnimations.ToArray());
-        EditorUtility.SetDirty(library);
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-
-        if (errors.Count > 0)
-        {
-            string message = "Built Chapter 2 panic animation library with missing frames:\n" + string.Join("\n", errors);
-            Debug.LogError(message);
-            throw new InvalidOperationException(message);
-        }
-
-        Debug.Log($"Built Chapter 2 panic animation library at {OutputPath}.");
+        return inputs;
     }
 
     private static bool TryGetGuestFolder(string characterId, out GuestFolderSpec guestFolder)
@@ -248,7 +277,6 @@ public static class Chapter2PanicAnimationLibraryBuilder
 
         for (int i = 0; i < paths.Length; i++)
         {
-            AssetDatabase.ImportAsset(paths[i], ImportAssetOptions.ForceSynchronousImport);
             Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(paths[i]);
 
             if (sprite != null)
@@ -364,6 +392,41 @@ public static class Chapter2PanicAnimationLibraryBuilder
         }
 
         AssetDatabase.CreateFolder(string.IsNullOrWhiteSpace(parent) ? "Assets" : parent, folderName);
+    }
+
+    private sealed class PanicBuildInput
+    {
+        public readonly string CharacterId;
+        public readonly string DisplayName;
+        public readonly GuestFolderSpec GuestFolder;
+        public readonly Sprite[] HandsUpSprites;
+        public readonly Sprite[] PanicPopSprites;
+        public readonly Sprite[] RunDownSprites;
+        public readonly Sprite[] RunLeftSprites;
+        public readonly Sprite[] RunRightSprites;
+        public readonly Sprite[] RunUpSprites;
+
+        public PanicBuildInput(
+            string characterId,
+            string displayName,
+            GuestFolderSpec guestFolder,
+            Sprite[] handsUpSprites,
+            Sprite[] panicPopSprites,
+            Sprite[] runDownSprites,
+            Sprite[] runLeftSprites,
+            Sprite[] runRightSprites,
+            Sprite[] runUpSprites)
+        {
+            CharacterId = characterId;
+            DisplayName = displayName;
+            GuestFolder = guestFolder;
+            HandsUpSprites = handsUpSprites;
+            PanicPopSprites = panicPopSprites;
+            RunDownSprites = runDownSprites;
+            RunLeftSprites = runLeftSprites;
+            RunRightSprites = runRightSprites;
+            RunUpSprites = runUpSprites;
+        }
     }
 
     private readonly struct GuestFolderSpec

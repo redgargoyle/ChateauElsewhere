@@ -19,6 +19,7 @@ public class CharacterController2D : MonoBehaviour
 	const float k_CeilingRadius = .2f; // Radius of the overlap circle to determine if the player can stand up
 	private Rigidbody2D m_Rigidbody2D;
 	private Collider2D m_Collider2D;
+	private SpriteRenderer[] m_FacingRenderers;
 	private bool m_FacingRight = true;  // For determining which way the player is currently facing.
 	private Vector3 m_Velocity = Vector3.zero;
 	private float m_IgnoreGroundCheckTimer;
@@ -52,6 +53,10 @@ public class CharacterController2D : MonoBehaviour
 
 		if (OnCrouchEvent == null)
 			OnCrouchEvent = new BoolEvent();
+
+		CacheFacingRenderers();
+		if (m_FacingRenderers.Length > 0 && m_FacingRenderers[0] != null)
+			m_FacingRight = !m_FacingRenderers[0].flipX;
 	}
 
 	private void FixedUpdate()
@@ -213,9 +218,18 @@ public class CharacterController2D : MonoBehaviour
 		// Switch the way the player is labelled as facing.
 		m_FacingRight = !m_FacingRight;
 
-		// Multiply the player's x local scale by -1.
-		Vector3 theScale = transform.localScale;
-		theScale.x *= -1;
-		transform.localScale = theScale;
+		if (m_FacingRenderers == null || m_FacingRenderers.Length == 0)
+			CacheFacingRenderers();
+
+		for (int i = 0; i < m_FacingRenderers.Length; i++)
+		{
+			if (m_FacingRenderers[i] != null)
+				m_FacingRenderers[i].flipX = !m_FacingRenderers[i].flipX;
+		}
+	}
+
+	private void CacheFacingRenderers()
+	{
+		m_FacingRenderers = GetComponentsInChildren<SpriteRenderer>(true);
 	}
 }

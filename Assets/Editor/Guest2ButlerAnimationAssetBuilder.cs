@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Animations;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +13,6 @@ public static class Guest2ButlerAnimationAssetBuilder
 	private const string SittingSpriteSheetPath = "Assets/Art/Characters/guest2/butlerspritesit.png";
 	private const string OutputFolder = "Assets/Animation/ButlerGuest";
 	private const string ControllerPath = OutputFolder + "/ButlerGuest.overrideController";
-	private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
 	private const string BaseControllerPath = "Assets/Animation/Player/Player.controller";
 	private const float WalkFrameRate = 12f;
 	private const float SittingFrameRate = 4f;
@@ -34,7 +32,14 @@ public static class Guest2ButlerAnimationAssetBuilder
 	[MenuItem("Dreadforge/Characters/Rebuild Guest 2 Butler Animation")]
 	public static void RebuildGuest2ButlerAnimation()
 	{
-		EnsureFolder(OutputFolder);
+		if (!EditorUtility.DisplayDialog(
+			"Rebuild Guest 2 Animation Assets?",
+			"This rebuild clears and rewrites the generated Guest 2 animation clips and override controller.",
+			"Rebuild",
+			"Cancel"))
+		{
+			return;
+		}
 
 		Sprite[] frames = LoadButlerSprites();
 		if (frames.Length < 32)
@@ -48,6 +53,8 @@ public static class Guest2ButlerAnimationAssetBuilder
 			throw new InvalidOperationException($"Expected at least 4 sliced sprites in {SittingSpriteSheetPath}, but found {sittingFrames.Length}.");
 		}
 
+		EnsureFolder(OutputFolder);
+
 		AnimationClip idleClip = CreateSpriteClip("ButlerGuest_Idle", new[] { frames[0] }, false);
 		AnimationClip walkDownClip = CreateSpriteClip("ButlerGuest_Walk_Down", frames.Skip(0).Take(8).ToArray(), true);
 		AnimationClip walkLeftClip = CreateSpriteClip("ButlerGuest_Walk_Left", frames.Skip(8).Take(8).ToArray(), true);
@@ -59,15 +66,13 @@ public static class Guest2ButlerAnimationAssetBuilder
 			true,
 			SittingFrameRate);
 
-		AnimatorOverrideController controller = CreateOverrideController(
+		CreateOverrideController(
 			idleClip,
 			walkDownClip,
 			walkUpClip,
 			walkLeftClip,
 			walkRightClip,
 			sittingClip);
-
-		ApplyToGuest2(controller, frames[0]);
 
 		AssetDatabase.SaveAssets();
 		AssetDatabase.Refresh();
@@ -190,74 +195,6 @@ public static class Guest2ButlerAnimationAssetBuilder
 			EditorUtility.SetDirty(controller);
 
 		return controller;
-	}
-
-	private static void ApplyToGuest2(RuntimeAnimatorController controller, Sprite previewSprite)
-	{
-		EditorSceneManager.OpenScene(GameplayScenePath, OpenSceneMode.Single);
-		GameObject guest2 = FindSceneObjectByName("Guest 2");
-		if (guest2 == null)
-			throw new InvalidOperationException("Could not find Guest 2 in Gameplay.unity.");
-
-		Animator animator = guest2.GetComponentInChildren<Animator>(true);
-		if (animator == null)
-			animator = guest2.AddComponent<Animator>();
-
-		animator.runtimeAnimatorController = controller;
-		EditorUtility.SetDirty(animator);
-		PrefabUtility.RecordPrefabInstancePropertyModifications(animator);
-
-		SpriteRenderer renderer = guest2.GetComponentsInChildren<SpriteRenderer>(true)
-			.FirstOrDefault(candidate => !IsCoatVisualTransform(candidate.transform));
-		if (renderer != null)
-		{
-			renderer.sprite = previewSprite;
-			EditorUtility.SetDirty(renderer);
-			PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
-		}
-
-		EditorSceneManager.MarkSceneDirty(guest2.scene);
-		EditorSceneManager.SaveScene(guest2.scene);
-	}
-
-	private static bool IsCoatVisualTransform(Transform transform)
-	{
-		while (transform != null)
-		{
-			if (transform.name.IndexOf("coat", StringComparison.OrdinalIgnoreCase) >= 0)
-				return true;
-
-			transform = transform.parent;
-		}
-
-		return false;
-	}
-
-	private static GameObject FindSceneObjectByName(string objectName)
-	{
-		foreach (GameObject root in EditorSceneManager.GetActiveScene().GetRootGameObjects())
-		{
-			GameObject match = FindInChildren(root.transform, objectName);
-			if (match != null)
-				return match;
-		}
-
-		return null;
-	}
-
-	private static GameObject FindInChildren(Transform transform, string objectName)
-	{
-		if (transform.name == objectName)
-			return transform.gameObject;
-
-		for (int i = 0; i < transform.childCount; i++)
-		{
-			GameObject match = FindInChildren(transform.GetChild(i), objectName);
-			if (match != null)
-				return match;
-		}
-
-		return null;
 	}
 
 	private static void EnsureFolder(string folderPath)

@@ -29,6 +29,15 @@ public static class CharacterAnimationAssetBuilder
 	[MenuItem("Dreadforge/Characters/Rebuild Character Animation Assets")]
 	public static void RebuildAllCharacterAnimationAssets()
 	{
+		if (!EditorUtility.DisplayDialog(
+			"Rebuild Character Animation Assets?",
+			"This rebuild clears and rewrites generated character animation curves. Existing authored sitting overrides will be preserved.",
+			"Rebuild",
+			"Cancel"))
+		{
+			return;
+		}
+
 		AnimatorController baseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(BaseControllerPath);
 		if (baseController == null)
 		{
@@ -76,6 +85,8 @@ public static class CharacterAnimationAssetBuilder
 		AnimationClip walkUpClip = CreateSpriteClip($"{characterName}_Walk_Up", outputFolder, upFrames, true);
 		AnimationClip walkLeftClip = CreateSpriteClip($"{characterName}_Walk_Left", outputFolder, leftFrames, true);
 		AnimationClip walkRightClip = CreateSpriteClip($"{characterName}_Walk_Right", outputFolder, rightFrames, true);
+		AnimationClip sittingClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(
+			$"{outputFolder}/{characterName}_Sitting.anim");
 
 		CreateOverrideController(
 			characterName,
@@ -85,7 +96,8 @@ public static class CharacterAnimationAssetBuilder
 			walkDownClip,
 			walkUpClip,
 			walkLeftClip,
-			walkRightClip);
+			walkRightClip,
+			sittingClip);
 	}
 
 	private static string GetBestAlignedFrameFolder(string characterFolder)
@@ -210,7 +222,8 @@ public static class CharacterAnimationAssetBuilder
 		AnimationClip walkDownClip,
 		AnimationClip walkUpClip,
 		AnimationClip walkLeftClip,
-		AnimationClip walkRightClip)
+		AnimationClip walkRightClip,
+		AnimationClip sittingClip)
 	{
 		string assetPath = $"{outputFolder}/{characterName}.overrideController";
 		AnimatorOverrideController overrideController = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(assetPath);
@@ -220,13 +233,31 @@ public static class CharacterAnimationAssetBuilder
 			overrideController = new AnimatorOverrideController(baseController);
 		}
 
+		AnimationClip existingCrouchClip = null;
+		if (!isNewAsset)
+		{
+			var existingOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
+			overrideController.GetOverrides(existingOverrides);
+			existingCrouchClip = existingOverrides
+				.FirstOrDefault(pair => pair.Key != null && pair.Key.name == "Player_Croutch")
+				.Value;
+		}
+
 		overrideController.name = characterName;
 		overrideController.runtimeAnimatorController = baseController;
+		AnimationClip crouchClip = sittingClip != null ? sittingClip : existingCrouchClip;
+		if (crouchClip == null)
+		{
+			Debug.LogWarning(
+				$"Kept {characterName}'s Player_Croutch slot unchanged because no authored sitting clip or existing override was found.");
+		}
 
 		List<KeyValuePair<AnimationClip, AnimationClip>> overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
 		foreach (AnimationClip baseClip in baseController.animationClips)
 		{
 			if (baseClip == null || !BaseClipNames.Contains(baseClip.name))
+				continue;
+			if (baseClip.name == "Player_Croutch" && crouchClip == null)
 				continue;
 
 			AnimationClip replacement = baseClip.name switch
@@ -236,6 +267,7 @@ public static class CharacterAnimationAssetBuilder
 				"Player_Walk_Left" => walkLeftClip,
 				"Player_Walk_Right" => walkRightClip,
 				"Player_Climb" => walkUpClip,
+				"Player_Croutch" => crouchClip,
 				_ => idleClip
 			};
 
