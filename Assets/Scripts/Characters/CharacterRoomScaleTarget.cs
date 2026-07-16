@@ -34,7 +34,6 @@ public sealed class CharacterRoomScaleTarget : MonoBehaviour
     [SerializeField] private Transform bodyRoot;
     [SerializeField] private bool excludeFromRoomScaling;
     [SerializeField] private CharacterScaleProfile scaleProfile = CharacterScaleProfile.Auto;
-    [SerializeField, Min(0.001f)] private float displaySizeMultiplier = 1f;
     [SerializeField] private Vector3 capturedBaseScale = Vector3.one;
     [SerializeField] private bool hasCapturedBaseScale;
     [NonSerialized] private int runtimeRevision;
@@ -49,7 +48,6 @@ public sealed class CharacterRoomScaleTarget : MonoBehaviour
     public bool ExcludeFromRoomScaling => excludeFromRoomScaling;
     public CharacterScaleProfile ScaleProfile => scaleProfile;
     public CharacterScaleProfile ResolvedScaleProfile => ResolveScaleProfile();
-    public float DisplaySizeMultiplier => Mathf.Max(0.001f, displaySizeMultiplier);
     public Vector3 CapturedBaseScale => capturedBaseScale;
     public bool HasCapturedBaseScale => hasCapturedBaseScale;
     public int RuntimeRevision => runtimeRevision;
@@ -98,7 +96,6 @@ public sealed class CharacterRoomScaleTarget : MonoBehaviour
 
     private void OnValidate()
     {
-        displaySizeMultiplier = Mathf.Max(0.001f, displaySizeMultiplier);
         NotifyRuntimeStateChanged();
     }
 
@@ -206,19 +203,6 @@ public sealed class CharacterRoomScaleTarget : MonoBehaviour
         }
 
         scaleProfile = value;
-        NotifyRuntimeStateChanged();
-    }
-
-    public void SetDisplaySizeMultiplier(float value)
-    {
-        float safeValue = Mathf.Max(0.001f, value);
-
-        if (Mathf.Approximately(displaySizeMultiplier, safeValue))
-        {
-            return;
-        }
-
-        displaySizeMultiplier = safeValue;
         NotifyRuntimeStateChanged();
     }
 

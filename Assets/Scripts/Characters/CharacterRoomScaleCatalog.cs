@@ -22,11 +22,9 @@ public sealed class CharacterRoomScaleEntry
     public float frontRoomLocalFootY;
     public float backRoomLocalFootY;
 
-    [Header("Final displayed local scale Y")]
-    [Min(MinimumScale)] public float butlerFrontLocalScaleY = 1f;
-    [Min(MinimumScale)] public float butlerBackLocalScaleY = 1f;
-    [Min(MinimumScale)] public float guestFrontLocalScaleY = 1f;
-    [Min(MinimumScale)] public float guestBackLocalScaleY = 1f;
+    [Header("Butler-calibrated final displayed local scale Y")]
+    [Min(MinimumScale)] public float frontFinalLocalScaleY = 1f;
+    [Min(MinimumScale)] public float backFinalLocalScaleY = 1f;
 
     [Tooltip("Maps the normalized front-to-back room depth before the endpoint sizes are interpolated.")]
     public AnimationCurve scaleFunction = AnimationCurve.Linear(0f, 0f, 1f, 1f);
@@ -53,52 +51,29 @@ public sealed class CharacterRoomScaleEntry
     public bool HasUsableEndpoints =>
         Mathf.Abs(frontRoomLocalFootY - backRoomLocalFootY) >= MinimumEndpointDistance;
 
-    public float GetFrontScale(CharacterScaleProfile profile)
+    public float GetFrontScale()
     {
-        return profile == CharacterScaleProfile.Guest
-            ? Mathf.Max(MinimumScale, guestFrontLocalScaleY)
-            : Mathf.Max(MinimumScale, butlerFrontLocalScaleY);
+        return Mathf.Max(MinimumScale, frontFinalLocalScaleY);
     }
 
-    public float GetBackScale(CharacterScaleProfile profile)
+    public float GetBackScale()
     {
-        return profile == CharacterScaleProfile.Guest
-            ? Mathf.Max(MinimumScale, guestBackLocalScaleY)
-            : Mathf.Max(MinimumScale, butlerBackLocalScaleY);
+        return Mathf.Max(MinimumScale, backFinalLocalScaleY);
     }
 
-    public void SetFront(CharacterScaleProfile profile, float roomLocalFootY, float finalLocalScaleY)
+    public void SetFront(float roomLocalFootY, float finalLocalScaleY)
     {
         frontRoomLocalFootY = roomLocalFootY;
-        float safeScale = Mathf.Max(MinimumScale, Mathf.Abs(finalLocalScaleY));
-
-        if (profile == CharacterScaleProfile.Guest)
-        {
-            guestFrontLocalScaleY = safeScale;
-        }
-        else
-        {
-            butlerFrontLocalScaleY = safeScale;
-        }
+        frontFinalLocalScaleY = Mathf.Max(MinimumScale, Mathf.Abs(finalLocalScaleY));
     }
 
-    public void SetBack(CharacterScaleProfile profile, float roomLocalFootY, float finalLocalScaleY)
+    public void SetBack(float roomLocalFootY, float finalLocalScaleY)
     {
         backRoomLocalFootY = roomLocalFootY;
-        float safeScale = Mathf.Max(MinimumScale, Mathf.Abs(finalLocalScaleY));
-
-        if (profile == CharacterScaleProfile.Guest)
-        {
-            guestBackLocalScaleY = safeScale;
-        }
-        else
-        {
-            butlerBackLocalScaleY = safeScale;
-        }
+        backFinalLocalScaleY = Mathf.Max(MinimumScale, Mathf.Abs(finalLocalScaleY));
     }
 
     public bool TryEvaluate(
-        CharacterScaleProfile profile,
         float roomLocalFootY,
         out float finalLocalScaleY,
         out float frontToBack01)
@@ -116,7 +91,7 @@ public sealed class CharacterRoomScaleEntry
         float curvedDepth = scaleFunction != null && scaleFunction.length > 0
             ? Mathf.Clamp01(scaleFunction.Evaluate(frontToBack01))
             : frontToBack01;
-        finalLocalScaleY = Mathf.Lerp(GetFrontScale(profile), GetBackScale(profile), curvedDepth);
+        finalLocalScaleY = Mathf.Lerp(GetFrontScale(), GetBackScale(), curvedDepth);
         finalLocalScaleY = Mathf.Max(MinimumScale, finalLocalScaleY);
         return true;
     }
@@ -124,10 +99,8 @@ public sealed class CharacterRoomScaleEntry
     public void Sanitize()
     {
         roomId = CharacterRoomScaleCatalog.CleanRoomId(roomId);
-        butlerFrontLocalScaleY = Mathf.Max(MinimumScale, Mathf.Abs(butlerFrontLocalScaleY));
-        butlerBackLocalScaleY = Mathf.Max(MinimumScale, Mathf.Abs(butlerBackLocalScaleY));
-        guestFrontLocalScaleY = Mathf.Max(MinimumScale, Mathf.Abs(guestFrontLocalScaleY));
-        guestBackLocalScaleY = Mathf.Max(MinimumScale, Mathf.Abs(guestBackLocalScaleY));
+        frontFinalLocalScaleY = Mathf.Max(MinimumScale, Mathf.Abs(frontFinalLocalScaleY));
+        backFinalLocalScaleY = Mathf.Max(MinimumScale, Mathf.Abs(backFinalLocalScaleY));
         referenceRoomStageScale = hasReferenceRoomStageScale
             ? Mathf.Max(0.0001f, referenceRoomStageScale)
             : 1f;
@@ -255,7 +228,7 @@ public sealed class CharacterRoomScaleCatalog : MonoBehaviour
 
         if (!enableCharacterRoomScaling ||
             !TryGetRoom(roomId, out CharacterRoomScaleEntry entry) ||
-            !entry.TryEvaluate(ResolveConcreteProfile(profile), roomLocalFootY, out float scaleY, out float depth01))
+            !entry.TryEvaluate(roomLocalFootY, out float scaleY, out float depth01))
         {
             return false;
         }
@@ -271,24 +244,22 @@ public sealed class CharacterRoomScaleCatalog : MonoBehaviour
 
     public void SetFront(
         string roomId,
-        CharacterScaleProfile profile,
         float roomLocalFootY,
         float finalLocalScaleY)
     {
         CharacterRoomScaleEntry entry = GetOrCreateRoom(roomId);
-        entry.SetFront(ResolveConcreteProfile(profile), roomLocalFootY, finalLocalScaleY);
+        entry.SetFront(roomLocalFootY, finalLocalScaleY);
         entry.enabled = true;
         MarkChanged();
     }
 
     public void SetBack(
         string roomId,
-        CharacterScaleProfile profile,
         float roomLocalFootY,
         float finalLocalScaleY)
     {
         CharacterRoomScaleEntry entry = GetOrCreateRoom(roomId);
-        entry.SetBack(ResolveConcreteProfile(profile), roomLocalFootY, finalLocalScaleY);
+        entry.SetBack(roomLocalFootY, finalLocalScaleY);
         entry.enabled = true;
         MarkChanged();
     }

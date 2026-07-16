@@ -9,7 +9,6 @@ public readonly struct CharacterRoomScaleComputation
         Vector2 roomLocalFootPoint,
         float frontToBack01,
         float catalogLocalScaleY,
-        float displaySizeMultiplier,
         float roomStageZoomRatio,
         float inheritedRoomStageZoomRatio,
         float targetLocalScaleY)
@@ -19,7 +18,6 @@ public readonly struct CharacterRoomScaleComputation
         RoomLocalFootPoint = roomLocalFootPoint;
         FrontToBack01 = frontToBack01;
         CatalogLocalScaleY = catalogLocalScaleY;
-        DisplaySizeMultiplier = displaySizeMultiplier;
         RoomStageZoomRatio = roomStageZoomRatio;
         InheritedRoomStageZoomRatio = inheritedRoomStageZoomRatio;
         TargetLocalScaleY = targetLocalScaleY;
@@ -30,7 +28,6 @@ public readonly struct CharacterRoomScaleComputation
     public Vector2 RoomLocalFootPoint { get; }
     public float FrontToBack01 { get; }
     public float CatalogLocalScaleY { get; }
-    public float DisplaySizeMultiplier { get; }
     public float RoomStageZoomRatio { get; }
     public float InheritedRoomStageZoomRatio { get; }
     public float TargetLocalScaleY { get; }
@@ -314,8 +311,7 @@ public sealed class CharacterRoomScaleController : MonoBehaviour
             return false;
         }
 
-        float sizeMultiplier = target.DisplaySizeMultiplier;
-        float calibratedScale = sample.FinalLocalScaleY * sizeMultiplier;
+        float calibratedScale = sample.FinalLocalScaleY;
         float roomStageZoomRatio = CharacterRoomStageScaleUtility.GetCurrentZoomRatio(catalog, roomId);
         float inheritedRoomStageZoomRatio = CharacterRoomStageScaleUtility.GetInheritedZoomRatio(
             target,
@@ -332,7 +328,6 @@ public sealed class CharacterRoomScaleController : MonoBehaviour
             roomLocalFootPoint,
             sample.FrontToBack01,
             sample.FinalLocalScaleY,
-            sizeMultiplier,
             roomStageZoomRatio,
             inheritedRoomStageZoomRatio,
             targetLocalScaleY);

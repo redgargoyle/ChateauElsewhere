@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ public sealed class CharacterRoomScaleRegressionTests
     private const string TargetGuid = "b099f2b1c3494d8fa900d71915c16f31";
 
     [Test]
-    public void CatalogInterpolatesButlerAndGuestFromTheSameRoomDepth()
+    public void CatalogUsesButlerCalibrationForEveryCharacterProfileAtTheSameRoomLocalFootY()
     {
         GameObject catalogObject = new GameObject("CharacterRoomScaleCatalog_Test");
 
@@ -23,10 +24,8 @@ public sealed class CharacterRoomScaleRegressionTests
             CharacterRoomScaleEntry entry = catalog.GetOrCreateRoom("Drawing Room");
             entry.frontRoomLocalFootY = -400f;
             entry.backRoomLocalFootY = -100f;
-            entry.butlerFrontLocalScaleY = 2f;
-            entry.butlerBackLocalScaleY = 1f;
-            entry.guestFrontLocalScaleY = 3f;
-            entry.guestBackLocalScaleY = 1.5f;
+            entry.frontFinalLocalScaleY = 2f;
+            entry.backFinalLocalScaleY = 1f;
             entry.scaleFunction = AnimationCurve.Linear(0f, 0f, 1f, 1f);
 
             Assert.That(
@@ -38,7 +37,8 @@ public sealed class CharacterRoomScaleRegressionTests
             Assert.That(butler.FrontToBack01, Is.EqualTo(0.5f).Within(0.0001f));
             Assert.That(guest.FrontToBack01, Is.EqualTo(butler.FrontToBack01).Within(0.0001f));
             Assert.That(butler.FinalLocalScaleY, Is.EqualTo(1.5f).Within(0.0001f));
-            Assert.That(guest.FinalLocalScaleY, Is.EqualTo(2.25f).Within(0.0001f));
+            Assert.That(guest.FinalLocalScaleY, Is.EqualTo(butler.FinalLocalScaleY).Within(0.0001f),
+                "At the same room-local foot Y, every managed character must use the Butler-calibrated size.");
         }
         finally
         {
@@ -57,8 +57,8 @@ public sealed class CharacterRoomScaleRegressionTests
             CharacterRoomScaleEntry entry = catalog.GetOrCreateRoom("Library");
             entry.frontRoomLocalFootY = -10f;
             entry.backRoomLocalFootY = 10f;
-            entry.butlerFrontLocalScaleY = 2f;
-            entry.butlerBackLocalScaleY = 1f;
+            entry.frontFinalLocalScaleY = 2f;
+            entry.backFinalLocalScaleY = 1f;
             entry.scaleFunction = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
             Assert.That(
@@ -76,6 +76,21 @@ public sealed class CharacterRoomScaleRegressionTests
     }
 
     [Test]
+    public void EverySerializedRoomUsesOneButlerCalibratedEndpointPair()
+    {
+        string text = File.ReadAllText(GameplayScenePath);
+        MatchCollection rooms = Regex.Matches(
+            text,
+            @"  - roomId: (?<room>[^\r\n]+)\r?\n    enabled: [^\r\n]+\r?\n    frontRoomLocalFootY: [^\r\n]+\r?\n    backRoomLocalFootY: [^\r\n]+\r?\n    frontFinalLocalScaleY: [^\r\n]+\r?\n    backFinalLocalScaleY: [^\r\n]+");
+
+        Assert.That(rooms.Count, Is.EqualTo(19));
+        Assert.That(text, Does.Not.Contain("guestFrontLocalScaleY"));
+        Assert.That(text, Does.Not.Contain("guestBackLocalScaleY"));
+        Assert.That(text, Does.Not.Contain("butlerFrontLocalScaleY"));
+        Assert.That(text, Does.Not.Contain("butlerBackLocalScaleY"));
+    }
+
+    [Test]
     public void ControllerChangesOnlyTargetLocalScale()
     {
         GameObject catalogObject = new GameObject("CharacterRoomScaleCatalog_Test");
@@ -88,10 +103,8 @@ public sealed class CharacterRoomScaleRegressionTests
             CharacterRoomScaleEntry entry = catalog.GetOrCreateRoom("Grand Entrance Hall");
             entry.frontRoomLocalFootY = -10f;
             entry.backRoomLocalFootY = 10f;
-            entry.butlerFrontLocalScaleY = 2f;
-            entry.butlerBackLocalScaleY = 1f;
-            entry.guestFrontLocalScaleY = 2f;
-            entry.guestBackLocalScaleY = 1f;
+            entry.frontFinalLocalScaleY = 2f;
+            entry.backFinalLocalScaleY = 1f;
             entry.scaleFunction = AnimationCurve.Linear(0f, 0f, 1f, 1f);
 
             CharacterRoomScaleController controller = controllerObject.AddComponent<CharacterRoomScaleController>();
@@ -239,6 +252,7 @@ public sealed class CharacterRoomScaleRegressionTests
         Assert.That(Count(text, "scaleProfile: 2"), Is.EqualTo(8));
         Assert.That(Count(text, "characterId: Player"), Is.EqualTo(1));
         Assert.That(Count(text, "characterId: Guest"), Is.EqualTo(8));
+        Assert.That(text, Does.Not.Contain("displaySizeMultiplier"));
         Assert.That(text, Does.Not.Contain("Assembly-CSharp::GuestRoomScaleCalibration"));
         Assert.That(text, Does.Not.Contain("Assembly-CSharp::GuestRoomScaleApplier"));
         Assert.That(text, Does.Not.Contain("Assembly-CSharp::GuestScaleParticipant"));
@@ -331,12 +345,16 @@ public sealed class CharacterRoomScaleRegressionTests
 
         Assert.That(catalog, Does.Contain("frontRoomLocalFootY"));
         Assert.That(catalog, Does.Contain("backRoomLocalFootY"));
-        Assert.That(catalog, Does.Contain("butlerFrontLocalScaleY"));
-        Assert.That(catalog, Does.Contain("guestFrontLocalScaleY"));
+        Assert.That(catalog, Does.Contain("frontFinalLocalScaleY"));
+        Assert.That(catalog, Does.Contain("backFinalLocalScaleY"));
+        Assert.That(catalog, Does.Not.Contain("guestFrontLocalScaleY"));
+        Assert.That(catalog, Does.Not.Contain("butlerFrontLocalScaleY"));
         Assert.That(catalog, Does.Contain("scaleFunction"));
         Assert.That(controller, Does.Contain("catalog.TryEvaluate"));
+        Assert.That(controller, Does.Not.Contain("DisplaySizeMultiplier"));
         Assert.That(controller, Does.Contain("CharacterRoomStageScaleUtility.CalculateTargetLocalScale"));
         Assert.That(controller, Does.Contain("target.ApplyFinalScale"));
+        Assert.That(target, Does.Not.Contain("displaySizeMultiplier"));
         Assert.That(target, Does.Not.Contain("frontRoomLocalFootY"));
         Assert.That(target, Does.Not.Contain("backRoomLocalFootY"));
         Assert.That(target, Does.Not.Contain("AnimationCurve"));

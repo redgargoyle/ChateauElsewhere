@@ -7,9 +7,9 @@ using UnityEngine;
 public sealed class CharacterRoomScaleCatalogWindow : EditorWindow
 {
     private string selectedRoomId = string.Empty;
-    private CharacterScaleProfile selectedProfile = CharacterScaleProfile.Butler;
     private Vector2 scroll;
 
+    [MenuItem("Tools/Butler/Room Scale Calibration")]
     [MenuItem("Tools/Characters/Character Room Scale Catalog")]
     public static void Open()
     {
@@ -24,7 +24,7 @@ public sealed class CharacterRoomScaleCatalogWindow : EditorWindow
 
         EditorGUILayout.LabelField("Character Room Scale", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "This catalog is the sole room-dependent size source for Butler and Guest animation displays. " +
+            "Each room has one Butler-calibrated foot-Y range, curve, and display-size endpoints shared by every Butler and Guest. " +
             "It changes localScale only; movement, position, sorting, tint, animation, and gameplay remain outside this module.",
             MessageType.Info);
 
@@ -66,12 +66,6 @@ public sealed class CharacterRoomScaleCatalogWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
         selectedIndex = EditorGUILayout.Popup("Room", selectedIndex, roomOptions);
-        selectedProfile = (CharacterScaleProfile)EditorGUILayout.EnumPopup("Character Profile", selectedProfile);
-
-        if (selectedProfile == CharacterScaleProfile.Auto)
-        {
-            selectedProfile = CharacterScaleProfile.Butler;
-        }
 
         if (EditorGUI.EndChangeCheck())
         {
@@ -96,17 +90,12 @@ public sealed class CharacterRoomScaleCatalogWindow : EditorWindow
         entry.enabled = EditorGUILayout.Toggle("Enabled", entry.enabled);
         entry.frontRoomLocalFootY = EditorGUILayout.FloatField("Front Foot Y", entry.frontRoomLocalFootY);
         entry.backRoomLocalFootY = EditorGUILayout.FloatField("Back Foot Y", entry.backRoomLocalFootY);
-
-        if (selectedProfile == CharacterScaleProfile.Guest)
-        {
-            entry.guestFrontLocalScaleY = EditorGUILayout.FloatField("Front Display Size", entry.guestFrontLocalScaleY);
-            entry.guestBackLocalScaleY = EditorGUILayout.FloatField("Back Display Size", entry.guestBackLocalScaleY);
-        }
-        else
-        {
-            entry.butlerFrontLocalScaleY = EditorGUILayout.FloatField("Front Display Size", entry.butlerFrontLocalScaleY);
-            entry.butlerBackLocalScaleY = EditorGUILayout.FloatField("Back Display Size", entry.butlerBackLocalScaleY);
-        }
+        entry.frontFinalLocalScaleY = EditorGUILayout.FloatField(
+            "Front Display Size (All Characters)",
+            entry.frontFinalLocalScaleY);
+        entry.backFinalLocalScaleY = EditorGUILayout.FloatField(
+            "Back Display Size (All Characters)",
+            entry.backFinalLocalScaleY);
 
         entry.scaleFunction = EditorGUILayout.CurveField("Scale Function", entry.scaleFunction);
         entry.hasReferenceRoomStageScale = EditorGUILayout.Toggle(
@@ -168,19 +157,31 @@ public sealed class CharacterRoomScaleCatalogWindow : EditorWindow
             EditorGUILayout.FloatField("Displayed Local Scale Y", currentLocalScaleY);
         }
 
-        EditorGUILayout.BeginHorizontal();
+        bool isButlerTarget = target.ResolvedScaleProfile == CharacterScaleProfile.Butler;
 
-        if (GUILayout.Button("Capture As Front"))
+        if (!isButlerTarget)
         {
-            CaptureEndpoint(catalog, target, true);
+            EditorGUILayout.HelpBox(
+                "Select the Butler to capture room endpoints. Guests always use the resulting shared calibration.",
+                MessageType.Info);
         }
 
-        if (GUILayout.Button("Capture As Back"))
+        using (new EditorGUI.DisabledScope(!isButlerTarget))
         {
-            CaptureEndpoint(catalog, target, false);
-        }
+            EditorGUILayout.BeginHorizontal();
 
-        EditorGUILayout.EndHorizontal();
+            if (GUILayout.Button("Capture Butler As Front"))
+            {
+                CaptureEndpoint(catalog, target, true);
+            }
+
+            if (GUILayout.Button("Capture Butler As Back"))
+            {
+                CaptureEndpoint(catalog, target, false);
+            }
+
+            EditorGUILayout.EndHorizontal();
+        }
 
         using (new EditorGUI.DisabledScope(scaleRoot == null))
         {
@@ -212,6 +213,12 @@ public sealed class CharacterRoomScaleCatalogWindow : EditorWindow
         CharacterRoomScaleTarget target,
         bool front)
     {
+        if (target.ResolvedScaleProfile != CharacterScaleProfile.Butler)
+        {
+            Debug.LogWarning("Only the Butler can capture the shared room-scale calibration.", target);
+            return;
+        }
+
         if (!target.TryResolveRoomScaleContext(
                 selectedRoomId,
                 true,
@@ -233,22 +240,19 @@ public sealed class CharacterRoomScaleCatalogWindow : EditorWindow
         float currentZoom = CharacterRoomStageScaleUtility.GetCurrentZoomRatio(catalog, roomId);
         float inheritedZoom = CharacterRoomStageScaleUtility.GetInheritedZoomRatio(target, roomId, currentZoom);
         float calibratedScale = Mathf.Abs(root.localScale.y) * inheritedZoom /
-            Mathf.Max(0.0001f, currentZoom) /
-            target.DisplaySizeMultiplier;
-        CharacterScaleProfile profile = target.ResolvedScaleProfile;
+            Mathf.Max(0.0001f, currentZoom);
         Undo.RecordObject(catalog, front ? "Capture Character Front Scale" : "Capture Character Back Scale");
 
         if (front)
         {
-            catalog.SetFront(roomId, profile, roomLocalFootPoint.y, calibratedScale);
+            catalog.SetFront(roomId, roomLocalFootPoint.y, calibratedScale);
         }
         else
         {
-            catalog.SetBack(roomId, profile, roomLocalFootPoint.y, calibratedScale);
+            catalog.SetBack(roomId, roomLocalFootPoint.y, calibratedScale);
         }
 
         selectedRoomId = roomId;
-        selectedProfile = profile;
         EditorUtility.SetDirty(catalog);
         MarkSceneDirty(catalog);
     }

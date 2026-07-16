@@ -229,8 +229,9 @@ public class RoomProjectionRegressionTests
         Assert.That(movementText, Does.Contain("preferCurrentTransformInEditMode"));
         Assert.That(movementText, Does.Contain("TryEvaluateButlerCalibratedFinalLocalScale"));
 
-        Assert.That(catalogText, Does.Contain("butlerFrontLocalScaleY"), "The new managed-character catalog should store final Butler local size endpoints.");
-        Assert.That(catalogText, Does.Contain("guestFrontLocalScaleY"), "The same catalog should store final Guest local size endpoints.");
+        Assert.That(catalogText, Does.Contain("frontFinalLocalScaleY"), "The managed-character catalog should store one Butler-calibrated front size endpoint.");
+        Assert.That(catalogText, Does.Contain("backFinalLocalScaleY"), "The managed-character catalog should store one Butler-calibrated back size endpoint.");
+        Assert.That(catalogText, Does.Not.Contain("guestFrontLocalScaleY"), "Guests must not retain a separate room-size endpoint path.");
         Assert.That(windowText, Does.Contain("Displayed Local Scale Y"), "The replacement editor should use explicit final displayed-size wording.");
         Assert.That(windowText, Does.Not.Contain("Preview Butler Size Here"));
     }
@@ -328,18 +329,19 @@ public class RoomProjectionRegressionTests
 
         string windowText = File.ReadAllText(CharacterRoomScaleCatalogWindowPath);
 
+        Assert.That(windowText, Does.Contain("[MenuItem(\"Tools/Butler/Room Scale Calibration\")]"));
         Assert.That(windowText, Does.Contain("[MenuItem(\"Tools/Characters/Character Room Scale Catalog\")]"));
         Assert.That(windowText, Does.Contain("Character Room Scale"));
-        Assert.That(windowText, Does.Contain("Character Profile"));
         Assert.That(windowText, Does.Contain("Front Foot Y"));
         Assert.That(windowText, Does.Contain("Back Foot Y"));
-        Assert.That(windowText, Does.Contain("Front Display Size"));
-        Assert.That(windowText, Does.Contain("Back Display Size"));
+        Assert.That(windowText, Does.Contain("Front Display Size (All Characters)"));
+        Assert.That(windowText, Does.Contain("Back Display Size (All Characters)"));
         Assert.That(windowText, Does.Contain("Scale Function"));
-        Assert.That(windowText, Does.Contain("Capture As Front"));
-        Assert.That(windowText, Does.Contain("Capture As Back"));
+        Assert.That(windowText, Does.Contain("Capture Butler As Front"));
+        Assert.That(windowText, Does.Contain("Capture Butler As Back"));
         Assert.That(windowText, Does.Contain("Apply Catalog Preview To Selected Character"));
         Assert.That(windowText, Does.Contain("CharacterRoomScaleController"), "Editor preview must use the runtime controller rather than duplicate its formula.");
+        Assert.That(windowText, Does.Not.Contain("Character Profile"));
         Assert.That(windowText, Does.Not.Contain("Guest Size Master"));
         Assert.That(windowText, Does.Not.Contain("Preview FRONT Size"));
         Assert.That(windowText, Does.Not.Contain("Preview BACK Size"));
