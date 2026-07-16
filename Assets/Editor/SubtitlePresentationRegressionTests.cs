@@ -99,9 +99,10 @@ public sealed class SubtitlePresentationRegressionTests
     }
 
     [Test]
-    public void SubtitlePortraitSlicesMatchTheProvidedCompleteCards()
+    public void SubtitlePortraitSlicesMatchTheLatestProvidedCards()
     {
-        int[] expectedWidths = { 284, 277, 276, 285, 284, 277, 276, 285 };
+        int[] expectedWidths = { 284, 277, 276, 285, 284, 273, 276, 285 };
+        int[] expectedHeights = { 586, 589, 590, 590, 586, 585, 586, 586 };
         string[] portraitPaths = GetGuestPortraitPaths();
 
         for (int i = 0; i < portraitPaths.Length; i++)
@@ -111,7 +112,7 @@ public sealed class SubtitlePresentationRegressionTests
             Assert.That(importer, Is.Not.Null, $"Missing portrait importer for {portraitPath}.");
             importer.GetSourceTextureWidthAndHeight(out int width, out int height);
             Assert.That(width, Is.EqualTo(expectedWidths[i]), $"Guest{i + 1} should use the supplied card without resizing: {portraitPath}.");
-            Assert.That(height, Is.EqualTo(701), $"Guest{i + 1} should retain the supplied name plaque: {portraitPath}.");
+            Assert.That(height, Is.EqualTo(expectedHeights[i]), $"Guest{i + 1} should use the supplied card without resizing: {portraitPath}.");
         }
     }
 
