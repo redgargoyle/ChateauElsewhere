@@ -497,7 +497,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         currentRoomStageScaleMultiplier = GetRoomStageScaleMultiplier();
         currentSortingOrder = roomProfile.GetSortingOrder(roomLocalFootPoint, sortingOffset);
 
-        if (normalizeLogicalRootScale && VisualRoot != transform)
+        if (normalizeLogicalRootScale &&
+            VisualRoot != transform &&
+            !HasActiveCharacterRoomScaleTarget(transform))
         {
             transform.localScale = logicalRootScale;
         }
@@ -673,7 +675,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             return;
         }
 
-        if (HasActiveGuestScaleParticipant(targetRoot))
+        if (HasActiveCharacterRoomScaleTarget(targetRoot))
         {
             return;
         }
@@ -690,16 +692,16 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         targetRoot.localScale = projectedScale;
     }
 
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
+    [Obsolete("Guest body scale is now applied by CharacterRoomScaleController.")]
     public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source = null)
     {
         ApplyButlerCharacterScaleNow(source, 1f);
     }
 
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
+    [Obsolete("Guest body scale is now applied by CharacterRoomScaleController.")]
     public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier)
     {
-        if (HasActiveGuestScaleParticipant(VisualRoot))
+        if (HasActiveCharacterRoomScaleTarget(VisualRoot))
         {
             ClearButlerCharacterScaleDebug();
             return;
@@ -729,14 +731,14 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return TryGetButlerCharacterScaleForThisEntity(out sample);
     }
 
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
+    [Obsolete("Guest body scale is now applied by CharacterRoomScaleController.")]
     private void ForceApplyButlerCharacterScale(
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,
         float debugScaleMultiplier)
     {
         Transform targetRoot = VisualRoot;
 
-        if (targetRoot == null || HasActiveGuestScaleParticipant(targetRoot))
+        if (targetRoot == null || HasActiveCharacterRoomScaleTarget(targetRoot))
         {
             return;
         }
@@ -994,7 +996,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     {
         sample = default;
 
-        if (HasActiveGuestScaleParticipant(VisualRoot))
+        if (HasActiveCharacterRoomScaleTarget(VisualRoot))
         {
             return false;
         }
@@ -1017,38 +1019,11 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             source.TryEvaluateButlerCharacterScale(roomId, roomLocalFootPoint, out sample);
     }
 
-    private bool HasActiveGuestScaleParticipant(Transform targetRoot)
+    private bool HasActiveCharacterRoomScaleTarget(Transform targetRoot)
     {
-        GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
-
-        if (participant == null)
-        {
-            participant = GetComponentInParent<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null)
-        {
-            participant = GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null && targetRoot != null)
-        {
-            participant = targetRoot.GetComponentInParent<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null && targetRoot != null)
-        {
-            participant = targetRoot.GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null ||
-            participant.ExcludeFromGuestScaling ||
-            participant.IsButler)
-        {
-            return false;
-        }
-
-        return true;
+        CharacterRoomScaleTarget target = CharacterRoomScaleTarget.FindForTransform(
+            targetRoot != null ? targetRoot : transform);
+        return target != null && !target.ExcludeFromRoomScaling;
     }
 
     private PointClickPlayerMovement ResolveButlerScaleSource()

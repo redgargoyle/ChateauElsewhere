@@ -192,7 +192,7 @@ public class StoryActorRoomStageLockingTests
 
         try
         {
-            GuestScaleParticipant participant = rig.ActorState.gameObject.AddComponent<GuestScaleParticipant>();
+            CharacterRoomScaleTarget participant = rig.ActorState.gameObject.AddComponent<CharacterRoomScaleTarget>();
             participant.SetCharacterId("guest_1");
             participant.SetCurrentRoomId(rig.RoomContent.RoomName);
             participant.ResolveScaleRoot();
@@ -225,7 +225,7 @@ public class StoryActorRoomStageLockingTests
 
         try
         {
-            GuestScaleParticipant participant = rig.ActorState.gameObject.AddComponent<GuestScaleParticipant>();
+            CharacterRoomScaleTarget participant = rig.ActorState.gameObject.AddComponent<CharacterRoomScaleTarget>();
             participant.SetCharacterId("guest_1");
             participant.SetCurrentRoomId(rig.RoomContent.RoomName);
             participant.ResolveScaleRoot();

@@ -307,6 +307,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	public void RestoreButlerCalibrationBaseScalePreview()
 	{
+		if (HasActiveCharacterRoomScaleTarget())
+		{
+			return;
+		}
+
 		EnsureButlerCalibrationBaseScale();
 		transform.localScale = butlerCalibrationBaseLocalScale;
 	}
@@ -318,6 +323,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	public void ApplyButlerFinalLocalScalePreview(float finalLocalScaleY)
 	{
+		if (HasActiveCharacterRoomScaleTarget())
+		{
+			return;
+		}
+
 		EnsureButlerCalibrationBaseScale();
 		transform.localScale = BuildButlerFinalLocalScale(finalLocalScaleY);
 	}
@@ -580,6 +590,22 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return !string.IsNullOrWhiteSpace(roomId);
 	}
 
+	/// <summary>
+	/// Exposes the movement system's room-local visible foot point without giving it any scale authority.
+	/// CharacterRoomScaleController uses this context and remains the sole room-dependent size authority.
+	/// </summary>
+	public bool TryGetCharacterRoomScaleContext(
+		string preferredRoomId,
+		out string roomId,
+		out Vector2 roomLocalFootPoint)
+	{
+		return TryGetButlerCalibrationContext(
+			preferredRoomId,
+			!Application.isPlaying,
+			out roomId,
+			out roomLocalFootPoint);
+	}
+
 	public bool InitializeButlerScaleOverrideForRoomFromCurrentPerspective(string roomId, bool applyImmediately = true)
 	{
 		if (!TryGetExistingPerspectiveEndpointsForRoom(roomId, out float frontY, out float frontScale, out float backY, out float backScale))
@@ -838,7 +864,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 	private void RestoreAuthoredLocalScale()
 	{
-		if (!hasAuthoredLocalScale)
+		if (!hasAuthoredLocalScale || HasActiveCharacterRoomScaleTarget())
 		{
 			return;
 		}
@@ -2038,7 +2064,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 		}
 
-		if (HasActiveGuestScaleParticipant())
+		if (HasActiveCharacterRoomScaleTarget())
 		{
 			return;
 		}
@@ -2063,23 +2089,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 			authoredLocalScale.z);
 	}
 
-	private bool HasActiveGuestScaleParticipant()
+	private bool HasActiveCharacterRoomScaleTarget()
 	{
-		GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
-
-		if (participant == null)
-		{
-			participant = GetComponentInParent<GuestScaleParticipant>(true);
-		}
-
-		if (participant == null)
-		{
-			participant = GetComponentInChildren<GuestScaleParticipant>(true);
-		}
-
-		return participant != null &&
-			!participant.ExcludeFromGuestScaling &&
-			!participant.IsButler;
+		return CharacterRoomScaleTarget.OwnsScaleFor(transform);
 	}
 
 	private bool TryEvaluateButlerCalibratedFinalLocalScale(out Vector3 finalLocalScale)

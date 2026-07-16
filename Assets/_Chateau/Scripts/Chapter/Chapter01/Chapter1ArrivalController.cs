@@ -33,7 +33,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public ActorRoomState ActorState;
         public RoomProjectedEntity Projection;
         public GuestFootstepAudio Footsteps;
-        public GuestScaleParticipant ScaleParticipant;
+        public CharacterRoomScaleTarget ScaleParticipant;
         public WorldYSortSpriteRenderer YSorter;
     }
 
@@ -1321,7 +1321,7 @@ public class Chapter1ArrivalController : MonoBehaviour
                 actorState.SetSeated(false);
             }
 
-            runtimeState.ScaleParticipant = EnsureGuestScaleParticipant(runtimeState, entryRoomId, CharacterPose.Standing);
+            runtimeState.ScaleParticipant = EnsureCharacterRoomScaleTarget(runtimeState, entryRoomId, CharacterPose.Standing);
 
             if (runtimeState.CoatPickup != null)
             {
@@ -1560,7 +1560,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         ForceGuestVisibleForDoorFlow(guest);
-        EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing);
+        EnsureCharacterRoomScaleTarget(guest, entryRoomId, CharacterPose.Standing);
         RefreshGuestScalingNow();
         OfferGuestCoat(guest);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance wait spot.", this);
@@ -1574,7 +1574,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         PlaceGuestAtDoorArrival(guest);
-        EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing);
+        EnsureCharacterRoomScaleTarget(guest, entryRoomId, CharacterPose.Standing);
         PlaceGuestAtDoorArrival(guest);
     }
 
@@ -2479,7 +2479,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.ApplyState();
         }
 
-        EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
+        EnsureCharacterRoomScaleTarget(guest, drawingRoomId, CharacterPose.Seated);
         RefreshGuestScalingNow();
         PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
         ApplyDrawingRoomSeatedOcclusion(guest, drawingRoomSpot);
@@ -2724,7 +2724,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             guest.ActorState.ApplyState();
         }
 
-        EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
+        EnsureCharacterRoomScaleTarget(guest, drawingRoomId, CharacterPose.Seated);
         RefreshGuestScalingNow();
         HideGuestCoatVisualsForChapter2Skip(guest);
         PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
@@ -3189,7 +3189,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (TryPlaceProjectedGuestAtTarget(guestState, target))
         {
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
+            SyncCharacterRoomScaleTargetCurrentRoom(guestState, targetRoomId);
             return;
         }
 
@@ -3198,7 +3198,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             TryGetAnchoredPositionForGuestTarget(guestState, target, out Vector2 anchoredPosition))
         {
             rectTransform.anchoredPosition = anchoredPosition;
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
+            SyncCharacterRoomScaleTargetCurrentRoom(guestState, targetRoomId);
             return;
         }
 
@@ -3207,14 +3207,14 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             guestState.GuestObject.transform.position = worldPosition;
             BindGuestToRoomStagePoint(guestState, target);
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
+            SyncCharacterRoomScaleTargetCurrentRoom(guestState, targetRoomId);
             return;
         }
 
         if (guestState.ActorState != null)
         {
             guestState.ActorState.PlaceAt(target);
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
+            SyncCharacterRoomScaleTargetCurrentRoom(guestState, targetRoomId);
             return;
         }
 
@@ -3224,7 +3224,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             targetPosition.z = guestState.GuestObject.transform.position.z;
             guestState.GuestObject.transform.position = targetPosition;
             BindGuestToRoomStagePoint(guestState, target);
-            SyncGuestScaleParticipantCurrentRoom(guestState, targetRoomId);
+            SyncCharacterRoomScaleTargetCurrentRoom(guestState, targetRoomId);
         }
     }
 
@@ -3643,7 +3643,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (mover == null)
         {
             PlaceGuestAt(guestState, target, fieldName);
-            EnsureGuestScaleParticipant(guestState, ResolveGuestScaleRoomId(guestState), ResolveGuestScalePose(guestState));
+            EnsureCharacterRoomScaleTarget(guestState, ResolveGuestScaleRoomId(guestState), ResolveGuestScalePose(guestState));
             RefreshGuestScalingNow();
             yield break;
         }
@@ -3660,7 +3660,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         StopGuestFootsteps(guestState);
         BindGuestToRoomStagePoint(guestState, target);
-        EnsureGuestScaleParticipant(guestState, ResolveGuestScaleRoomId(guestState), ResolveGuestScalePose(guestState));
+        EnsureCharacterRoomScaleTarget(guestState, ResolveGuestScaleRoomId(guestState), ResolveGuestScalePose(guestState));
         RefreshGuestScalingNow();
     }
 
@@ -4480,7 +4480,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (template != null)
         {
             guestObject = Instantiate(template, startPosition, template.transform.rotation, template.transform.parent);
-            guestObject.transform.localScale = template.transform.localScale;
             guestObject.name = guestName;
         }
         else
@@ -4765,7 +4764,12 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         actorState.SetActorId(MakeGuestId(guestObject.name, index));
         actorState.SetScaleWithRoomStageMotion(true);
-        guestObject.transform.localScale = authoredGuestScale;
+
+        if (!CharacterRoomScaleTarget.OwnsScaleFor(guestObject.transform))
+        {
+            guestObject.transform.localScale = authoredGuestScale;
+        }
+
         RoomProjectedEntity projection = ResolveGuestProjection(guestObject, actorState);
         ConfigureGuestFootsteps(guestObject, index + 1);
 
@@ -5358,7 +5362,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         return guestObject != null ? guestObject.GetComponentInChildren<RoomProjectedEntity>(true) : null;
     }
 
-    private GuestScaleParticipant EnsureGuestScaleParticipant(
+    private CharacterRoomScaleTarget EnsureCharacterRoomScaleTarget(
         GuestRuntimeState guestState,
         string roomId,
         CharacterPose pose)
@@ -5368,12 +5372,13 @@ public class Chapter1ArrivalController : MonoBehaviour
             return null;
         }
 
-        GuestRoomScaleApplier applier = EnsureGuestScaleApplier();
-        GuestScaleParticipant participant = GuestRoomScaleApplier.EnsureParticipantForGuestObject(
+        CharacterRoomScaleController controller = EnsureCharacterRoomScaleController();
+        CharacterRoomScaleTarget participant = CharacterRoomScaleController.EnsureTargetForCharacterObject(
             guestState.GuestObject,
             guestState.Config != null ? guestState.Config.GuestId : guestState.GuestObject.name,
             roomId,
             pose,
+            CharacterScaleProfile.Guest,
             true);
 
         if (participant == null)
@@ -5382,55 +5387,46 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         participant.SetCurrentRoomId(roomId);
-        participant.SetIsButler(false);
+        participant.SetScaleProfile(CharacterScaleProfile.Guest);
         participant.ResolveScaleRoot();
         participant.CaptureBaseScale(false);
         guestState.ScaleParticipant = participant;
-        applier.RefreshParticipantNow(participant);
+        controller.RefreshTargetNow(participant);
         return participant;
     }
 
-    private void SyncGuestScaleParticipantCurrentRoom(GuestRuntimeState guestState, string roomId)
+    private void SyncCharacterRoomScaleTargetCurrentRoom(GuestRuntimeState guestState, string roomId)
     {
         if (guestState == null || string.IsNullOrWhiteSpace(roomId))
         {
             return;
         }
 
-        GuestScaleParticipant participant = guestState.ScaleParticipant;
+        CharacterRoomScaleTarget participant = guestState.ScaleParticipant;
 
         if (participant == null && guestState.GuestObject != null)
         {
-            participant = guestState.GuestObject.GetComponent<GuestScaleParticipant>();
+            participant = guestState.GuestObject.GetComponent<CharacterRoomScaleTarget>();
         }
 
         participant?.SetCurrentRoomId(roomId);
     }
 
-    private GuestRoomScaleApplier EnsureGuestScaleApplier()
+    private CharacterRoomScaleController EnsureCharacterRoomScaleController()
     {
-        GuestRoomScaleApplier applier = GuestRoomScaleApplier.EnsureInScene();
-        applier.SetCalibration(EnsureGuestScaleCalibration());
-        return applier;
+        CharacterRoomScaleController controller = CharacterRoomScaleController.EnsureInScene();
+        controller.SetCatalog(EnsureCharacterRoomScaleCatalog());
+        return controller;
     }
 
-    private GuestRoomScaleCalibration EnsureGuestScaleCalibration()
+    private CharacterRoomScaleCatalog EnsureCharacterRoomScaleCatalog()
     {
-        GuestRoomScaleCalibration calibration = FindAnyObjectByType<GuestRoomScaleCalibration>(FindObjectsInactive.Include);
+        CharacterRoomScaleCatalog calibration = FindAnyObjectByType<CharacterRoomScaleCatalog>(FindObjectsInactive.Include);
 
         if (calibration == null)
         {
-            GameObject calibrationObject = new GameObject("GuestRoomScaleCalibration");
-            calibration = calibrationObject.AddComponent<GuestRoomScaleCalibration>();
-        }
-
-        ResolveReferences(false);
-        PointClickPlayerMovement butler = playerMovement != null ? playerMovement : FindPlayerMovement();
-
-        if (butler != null)
-        {
-            calibration.InitializeMissingRoomsFromButler(butler);
-            calibration.SetButlerScaleSource(butler);
+            GameObject calibrationObject = new GameObject("CharacterRoomScaleCatalog");
+            calibration = calibrationObject.AddComponent<CharacterRoomScaleCatalog>();
         }
 
         return calibration;
@@ -5438,8 +5434,8 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void RefreshGuestScalingNow()
     {
-        GuestRoomScaleApplier applier = EnsureGuestScaleApplier();
-        applier.RefreshAllNow();
+        CharacterRoomScaleController controller = EnsureCharacterRoomScaleController();
+        controller.RefreshAllNow();
     }
 
     private string ResolveGuestScaleRoomId(GuestRuntimeState guestState)
@@ -6448,7 +6444,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        SyncGuestScaleParticipantCurrentRoom(guest, roomId);
+        SyncCharacterRoomScaleTargetCurrentRoom(guest, roomId);
 
         if (guest.ActorState != null || IsChapterSceneGuest(guest.GuestObject))
         {

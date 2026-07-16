@@ -14,16 +14,60 @@ public sealed class RoomProjectedEntityEditor : Editor
         "roomVisualScaleOverrides"
     };
 
+    private static readonly string[] HiddenManagedCharacterScaleFields =
+    {
+        "m_Script",
+        "useButlerCharacterScaleRules",
+        "butlerScaleSource",
+        "ignoreRoomVisualScaleOverridesWhenUsingButlerRules",
+        "useButlerRulesOnlyForFloorCharacters",
+        "editorSelectedVisualScaleRoomId",
+        "roomVisualScaleOverrides"
+    };
+
     public override void OnInspectorGUI()
     {
+        bool managedCharacter = targets.Length == 1 &&
+            IsManagedCharacterEntity((RoomProjectedEntity)target);
+
         serializedObject.Update();
-        DrawPropertiesExcluding(serializedObject, HiddenRoomScaleFields);
+        DrawPropertiesExcluding(
+            serializedObject,
+            managedCharacter ? HiddenManagedCharacterScaleFields : HiddenRoomScaleFields);
         serializedObject.ApplyModifiedProperties();
 
         EditorGUILayout.Space(8f);
+
+        if (managedCharacter)
+        {
+            EditorGUILayout.LabelField("Character Display Size", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "This component still owns projection position, tint, and sorting. " +
+                "CharacterRoomScaleController is the only system allowed to set this character's displayed size.",
+                MessageType.Info);
+
+            if (GUILayout.Button("Open Character Room Scale Catalog"))
+            {
+                CharacterRoomScaleCatalogWindow.Open();
+            }
+
+            return;
+        }
+
         DrawRoomVisualScaleControls();
         EditorGUILayout.Space(8f);
         DrawSharedCharacterScaleDiagnostics();
+    }
+
+    private static bool IsManagedCharacterEntity(RoomProjectedEntity entity)
+    {
+        if (entity == null || entity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
+        {
+            return false;
+        }
+
+        Transform candidate = entity.VisualRoot != null ? entity.VisualRoot : entity.transform;
+        return CharacterRoomScaleTarget.OwnsScaleFor(candidate);
     }
 
     private void DrawRoomVisualScaleControls()

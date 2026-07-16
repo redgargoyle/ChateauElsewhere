@@ -125,23 +125,23 @@ public class ActorRoomState : MonoBehaviour
         }
 
         currentRoomId = cleanRoomId;
-        SyncGuestScaleParticipantRoomId(cleanRoomId);
+        SyncCharacterRoomScaleTargetRoomId(cleanRoomId);
         ApplyState();
         GetRoomProjection()?.ApplyProjection();
     }
 
-    private void SyncGuestScaleParticipantRoomId(string cleanRoomId)
+    private void SyncCharacterRoomScaleTargetRoomId(string cleanRoomId)
     {
-        GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
+        CharacterRoomScaleTarget participant = GetComponent<CharacterRoomScaleTarget>();
 
         if (participant == null)
         {
-            participant = GetComponentInChildren<GuestScaleParticipant>(true);
+            participant = GetComponentInChildren<CharacterRoomScaleTarget>(true);
         }
 
         if (participant == null)
         {
-            participant = GetComponentInParent<GuestScaleParticipant>(true);
+            participant = GetComponentInParent<CharacterRoomScaleTarget>(true);
         }
 
         participant?.SetCurrentRoomId(cleanRoomId);
@@ -215,7 +215,7 @@ public class ActorRoomState : MonoBehaviour
         return source.TryEvaluateButlerCharacterScale(roomId, roomLocalFootPoint, out sample);
     }
 
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
+    [Obsolete("Guest body scale is now applied by CharacterRoomScaleController.")]
     public bool ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier = 1f)
     {
         if (HasActiveProjection())
@@ -226,7 +226,7 @@ public class ActorRoomState : MonoBehaviour
 
         Transform targetTransform = actorObject != null ? actorObject.transform : transform;
 
-        if (targetTransform == null || targetTransform is RectTransform || HasActiveGuestScaleParticipant(targetTransform))
+        if (targetTransform == null || targetTransform is RectTransform || HasActiveCharacterRoomScaleTarget(targetTransform))
         {
             ClearButlerCharacterScaleDebug();
             return false;
@@ -685,7 +685,7 @@ public class ActorRoomState : MonoBehaviour
 
             if (scaleWithRoomStageMotion &&
                 !Mathf.Approximately(scaleRatio, 1f) &&
-                !HasActiveGuestScaleParticipant(targetTransform))
+                !HasActiveCharacterRoomScaleTarget(targetTransform))
             {
                 targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio);
             }
@@ -816,14 +816,14 @@ public class ActorRoomState : MonoBehaviour
             ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
             : 1f;
         float perspectiveScale = GetBoundRoomPerspectiveScale();
-        if (!HasActiveGuestScaleParticipant(targetTransform))
+        if (!HasActiveCharacterRoomScaleTarget(targetTransform))
         {
             targetTransform.localScale = scaleWithRoomStageMotion
                 ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
                 : boundLocalScale;
         }
 
-        if (!HasActiveGuestScaleParticipant(targetTransform) &&
+        if (!HasManagedGuestScaleTarget(targetTransform) &&
             CharacterFootPositionUtility.TryGetWorldPoint(targetObject, true, false, out Vector3 feetWorldPoint))
         {
             Vector3 footCorrection = worldPoint - feetWorldPoint;
@@ -887,7 +887,7 @@ public class ActorRoomState : MonoBehaviour
         return false;
     }
 
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
+    [Obsolete("Guest body scale is now applied by CharacterRoomScaleController.")]
     private static Vector3 BuildButlerActorScale(
         Vector3 baseScale,
         PointClickPlayerMovement.ButlerCharacterScaleSample sample,
@@ -946,35 +946,28 @@ public class ActorRoomState : MonoBehaviour
             targetTransform.GetComponentInParent<RoomContentGroup>(true) != null;
     }
 
-    private bool HasActiveGuestScaleParticipant(Transform targetTransform)
+    private bool HasActiveCharacterRoomScaleTarget(Transform targetTransform)
     {
-        GuestScaleParticipant participant = targetTransform != null
-            ? targetTransform.GetComponentInParent<GuestScaleParticipant>(true)
-            : GetComponentInParent<GuestScaleParticipant>(true);
+        Transform candidate = targetTransform != null
+            ? targetTransform
+            : actorObject != null
+                ? actorObject.transform
+                : transform;
+        CharacterRoomScaleTarget target = CharacterRoomScaleTarget.FindForTransform(candidate);
+        return target != null && !target.ExcludeFromRoomScaling;
+    }
 
-        if (participant == null && targetTransform != null)
-        {
-            participant = targetTransform.GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null && actorObject != null)
-        {
-            participant = actorObject.GetComponentInParent<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null && actorObject != null)
-        {
-            participant = actorObject.GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null)
-        {
-            participant = GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        return participant != null &&
-            !participant.ExcludeFromGuestScaling &&
-            !participant.IsButler;
+    private bool HasManagedGuestScaleTarget(Transform targetTransform)
+    {
+        Transform candidate = targetTransform != null
+            ? targetTransform
+            : actorObject != null
+                ? actorObject.transform
+                : transform;
+        CharacterRoomScaleTarget target = CharacterRoomScaleTarget.FindForTransform(candidate);
+        return target != null &&
+            !target.ExcludeFromRoomScaling &&
+            target.ResolvedScaleProfile == CharacterScaleProfile.Guest;
     }
 
     private static Vector3 ScaleXY(Vector3 scale, float ratio)

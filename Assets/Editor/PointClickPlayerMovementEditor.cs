@@ -5,30 +5,37 @@ using UnityEngine;
 [CanEditMultipleObjects]
 public sealed class PointClickPlayerMovementEditor : Editor
 {
-    private static readonly string[] HiddenButlerScaleFields =
+    private static readonly string[] HiddenLegacyScaleFields =
     {
+        "nearY",
+        "farY",
+        "nearScale",
+        "farScale",
+        "useRoomPerspectiveProfileScale",
         "useButlerRoomScaleOverrides",
         "hasButlerCalibrationBaseLocalScale",
         "butlerCalibrationBaseLocalScale",
         "editorSelectedButlerScaleRoomId",
-        "butlerRoomScaleOverrides"
+        "butlerRoomScaleOverrides",
+        "applyPerspectiveScale"
     };
 
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
-        DrawPropertiesExcluding(serializedObject, HiddenButlerScaleFields);
+        DrawPropertiesExcluding(serializedObject, HiddenLegacyScaleFields);
         serializedObject.ApplyModifiedProperties();
 
         EditorGUILayout.Space(8f);
-        EditorGUILayout.LabelField("Butler Room Scale Calibration", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Character Display Size", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Use the step-based window for Butler/player room scale calibration. Guests are still calibrated through RoomProjectedEntity.",
+            "PointClickPlayerMovement owns movement and supplies the Butler's room-local foot position. " +
+            "CharacterRoomScaleController is the only system allowed to set the displayed character size.",
             MessageType.Info);
 
-        if (GUILayout.Button("Open Butler Room Scale Calibration Window"))
+        if (GUILayout.Button("Open Character Room Scale Catalog"))
         {
-            ButlerRoomScaleCalibrationWindow.Open();
+            CharacterRoomScaleCatalogWindow.Open();
         }
     }
 }

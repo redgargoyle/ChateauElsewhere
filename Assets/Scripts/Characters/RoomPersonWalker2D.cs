@@ -165,16 +165,16 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		RefreshDepthVisualsNow();
 	}
 
-	[Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
+	[Obsolete("Guest body scale is now applied by CharacterRoomScaleController.")]
 	public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source = null)
 	{
 		ApplyButlerCharacterScaleNow(source, 1f);
 	}
 
-	[Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
+	[Obsolete("Guest body scale is now applied by CharacterRoomScaleController.")]
 	public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier)
 	{
-		if (HasActiveGuestScaleParticipant())
+		if (HasActiveCharacterRoomScaleTarget())
 		{
 			ClearButlerCharacterScaleDebug();
 			return;
@@ -487,7 +487,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		{
 			rectTransform.anchoredPosition = GetRenderedPosition(currentPosition + GetMotionOffset());
 
-			if (!HasActiveGuestScaleParticipant())
+			if (!HasActiveCharacterRoomScaleTarget())
 			{
 				rectTransform.localScale = BuildDepthScaleVector(GetDepthScale(), isUsingButlerCharacterScaleRules, 1f);
 			}
@@ -527,7 +527,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 	private float GetDepthScale()
 	{
-		if (HasActiveGuestScaleParticipant())
+		if (HasActiveCharacterRoomScaleTarget())
 		{
 			ClearButlerCharacterScaleDebug();
 
@@ -568,7 +568,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 
 	private void ApplyButlerScaleSample(PointClickPlayerMovement.ButlerCharacterScaleSample sample, float debugScaleMultiplier)
 	{
-		if (HasActiveGuestScaleParticipant())
+		if (HasActiveCharacterRoomScaleTarget())
 		{
 			ClearButlerCharacterScaleDebug();
 			return;
@@ -585,7 +585,7 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	{
 		sample = default;
 
-		if (HasActiveGuestScaleParticipant())
+		if (HasActiveCharacterRoomScaleTarget())
 		{
 			return false;
 		}
@@ -690,41 +690,11 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 		return butlerScaleSource;
 	}
 
-	private bool HasActiveGuestScaleParticipant()
+	private bool HasActiveCharacterRoomScaleTarget()
 	{
-		GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
-
-		if (participant == null)
-		{
-			participant = GetComponentInParent<GuestScaleParticipant>(true);
-		}
-
-		if (participant == null)
-		{
-			participant = GetComponentInChildren<GuestScaleParticipant>(true);
-		}
-
-		if (participant == null && targetGraphic != null)
-		{
-			participant = targetGraphic.GetComponentInParent<GuestScaleParticipant>(true);
-		}
-
-		if (participant == null && targetGraphic != null)
-		{
-			participant = targetGraphic.GetComponentInChildren<GuestScaleParticipant>(true);
-		}
-
-		if (participant == null ||
-			participant.ExcludeFromGuestScaling ||
-			participant.IsButler)
-		{
-			return false;
-		}
-
-		Transform participantRoot = participant.ResolveScaleRoot();
-		return participantRoot == transform ||
-			(rectTransform != null && participantRoot == rectTransform) ||
-			(targetGraphic != null && participantRoot == targetGraphic.rectTransform);
+		Transform candidate = targetGraphic != null ? targetGraphic.rectTransform : transform;
+		CharacterRoomScaleTarget target = CharacterRoomScaleTarget.FindForTransform(candidate);
+		return target != null && !target.ExcludeFromRoomScaling;
 	}
 
 	private Color GetDepthTint()

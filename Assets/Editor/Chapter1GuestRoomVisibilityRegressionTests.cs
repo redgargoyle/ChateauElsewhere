@@ -200,7 +200,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string basePositionMethodBody = ExtractDeclaredMethodBody(controllerText, "GetWorldDoorArrivalBasePosition");
 
         int firstPlacementIndex = prepareMethodBody.IndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
-        int scaleIndex = prepareMethodBody.IndexOf("EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing)", StringComparison.Ordinal);
+        int scaleIndex = prepareMethodBody.IndexOf("EnsureCharacterRoomScaleTarget(guest, entryRoomId, CharacterPose.Standing)", StringComparison.Ordinal);
         int finalPlacementIndex = prepareMethodBody.LastIndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
 
         Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "Entrance guests should first be aligned to the door so scaling samples its exact foot depth.");
@@ -228,7 +228,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
             "private void PreserveGuestAuthoredScale(GameObject guestObject");
 
         int firstPlacementIndex = prepareMethodBody.IndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
-        int scaleIndex = prepareMethodBody.IndexOf("EnsureGuestScaleParticipant(guest, entryRoomId, CharacterPose.Standing)", StringComparison.Ordinal);
+        int scaleIndex = prepareMethodBody.IndexOf("EnsureCharacterRoomScaleTarget(guest, entryRoomId, CharacterPose.Standing)", StringComparison.Ordinal);
         int finalPlacementIndex = prepareMethodBody.LastIndexOf("PlaceGuestAtDoorArrival(guest)", StringComparison.Ordinal);
 
         Assert.That(targetMethodBody, Does.Match(@"frontDoorArrivalPoint[\s\S]*return frontDoorArrivalPoint[\s\S]*FindAnchor\(FrontDoorGuestSpawnAnchorId, entryRoomId\)"), "Door spawning should resolve the serialized GuestArrival_Door first and retain its RoomAnchor lookup fallback.");
@@ -237,7 +237,11 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(controllerText, Does.Not.Contain("guestEntranceSpawnPlacemark"), "The removed door placemark must not remain cached at runtime.");
         Assert.That(sceneText, Does.Not.Contain("m_Name: Placemark_guests_entrance"), "Gameplay should expose only GuestArrival_Door for guest foot spawning.");
         Assert.That(sceneText, Does.Match(@"anchorId: GuestArrival_Door\s+roomId: Grand Entrance Hall\s+showSceneGizmo: 1"), "GuestArrival_Door should be visible and easy to drag in the Scene view.");
-        Assert.That(sceneText, Does.Match(@"roomId: Grand Entrance Hall\s+enabled: 1\s+roomGuestScaleMultiplier: 1(?:\.0+)?\s"), "Entrance guests should use the Butler's calibrated scale without the old 2.2 enlargement.");
+        Assert.That(
+            sceneText,
+            Does.Match(@"roomId: Grand Entrance Hall\s+enabled: 1\s+frontRoomLocalFootY: -381\.67844\s+backRoomLocalFootY: -98\.47123\s+butlerFrontLocalScaleY: 2\.1461537\s+butlerBackLocalScaleY: 0\.661823\s+guestFrontLocalScaleY: 2\.1461537\s+guestBackLocalScaleY: 0\.661823\s"),
+            "Entrance guests should use the matching CharacterRoomScaleCatalog Butler/Guest endpoints without the old 2.2 enlargement.");
+        Assert.That(sceneText, Does.Not.Contain("roomGuestScaleMultiplier"), "The retired guest room multiplier must not remain serialized in the migrated scene.");
         Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "The guest must first be placed at GuestArrival_Door so scaling samples that exact foot depth.");
         Assert.That(scaleIndex, Is.GreaterThan(firstPlacementIndex), "The shared Butler scale should be evaluated after the guest reaches the door-foot depth.");
         Assert.That(finalPlacementIndex, Is.GreaterThan(scaleIndex), "Feet should be realigned after scaling changes sprite bounds.");

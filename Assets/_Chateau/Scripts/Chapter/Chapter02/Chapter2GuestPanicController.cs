@@ -1328,7 +1328,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private RectTransform rectTransform;
         private RoomProjectedEntity projection;
         private bool usesProjection;
-        private bool guestScaleApplierOwnsScale;
+        private bool characterRoomScaleControllerOwnsScale;
         private Vector2 originalProjectionFootPoint;
         private Vector2 originalAnchoredPosition;
         private Vector3 originalPosition;
@@ -1383,7 +1383,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             GameObject root = nextActorState != null ? nextActorState.gameObject : null;
             Transform rootTransform = root != null ? root.transform : null;
             RoomProjectedEntity nextProjection = nextActorState != null ? nextActorState.Projection : null;
-            GuestScaleParticipant scaleParticipant = FindGuestScaleParticipant(root);
+            CharacterRoomScaleTarget scaleParticipant = FindCharacterRoomScaleTarget(root);
             PanicParticipant participant = new PanicParticipant
             {
                 actorState = nextActorState,
@@ -1397,7 +1397,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 rectTransform = rootTransform as RectTransform,
                 projection = nextProjection,
                 usesProjection = nextProjection != null && nextProjection.IsProjectionActive,
-                guestScaleApplierOwnsScale = GuestRoomScaleApplier.IsManagedGuestParticipant(scaleParticipant),
+                characterRoomScaleControllerOwnsScale =
+                    scaleParticipant != null && CharacterRoomScaleTarget.OwnsScaleFor(rootTransform),
                 originalProjectionFootPoint = nextProjection != null ? nextProjection.RoomLocalFootPoint : Vector2.zero,
                 originalAnchoredPosition = rootTransform is RectTransform rt ? rt.anchoredPosition : Vector2.zero,
                 originalPosition = rootTransform != null ? rootTransform.position : Vector3.zero,
@@ -1445,23 +1446,23 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             return participant;
         }
 
-        private static GuestScaleParticipant FindGuestScaleParticipant(GameObject root)
+        private static CharacterRoomScaleTarget FindCharacterRoomScaleTarget(GameObject root)
         {
             if (root == null)
             {
                 return null;
             }
 
-            GuestScaleParticipant participant = root.GetComponent<GuestScaleParticipant>();
+            CharacterRoomScaleTarget participant = root.GetComponent<CharacterRoomScaleTarget>();
 
             if (participant == null)
             {
-                participant = root.GetComponentInChildren<GuestScaleParticipant>(true);
+                participant = root.GetComponentInChildren<CharacterRoomScaleTarget>(true);
             }
 
             if (participant == null)
             {
-                participant = root.GetComponentInParent<GuestScaleParticipant>(true);
+                participant = root.GetComponentInParent<CharacterRoomScaleTarget>(true);
             }
 
             return participant;
@@ -2266,7 +2267,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         private void ApplySpriteScale(Sprite sprite, float scaleMultiplier = 1f)
         {
             if (targetTransform == null ||
-                guestScaleApplierOwnsScale ||
+                characterRoomScaleControllerOwnsScale ||
                 !hasOriginalSpriteLocalSize ||
                 !TryGetSpriteLocalSize(sprite, out Vector2 spriteLocalSize))
             {
@@ -2804,7 +2805,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
 
         private void RestoreOriginalLocalScale()
         {
-            if (targetTransform != null && !guestScaleApplierOwnsScale)
+            if (targetTransform != null && !characterRoomScaleControllerOwnsScale)
             {
                 targetTransform.localScale = originalLocalScale;
             }
