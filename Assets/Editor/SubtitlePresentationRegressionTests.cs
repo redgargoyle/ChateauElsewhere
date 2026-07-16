@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using NUnit.Framework;
 using TMPro;
@@ -59,7 +58,7 @@ public sealed class SubtitlePresentationRegressionTests
     }
 
     [Test]
-    public void SubtitleLineBankUsesTwoByFourGuestPortraitSheetSlices()
+    public void SubtitleLineBankUsesProvidedGuestPortraitCards()
     {
         string assetText = File.ReadAllText(SubtitleLineBankAssetPath);
         string[] portraitAssetNames =
@@ -79,15 +78,15 @@ public sealed class SubtitlePresentationRegressionTests
             string portraitPath = $"{SubtitlePortraitRoot}/{portraitAssetNames[i]}";
             string portraitGuid = AssetDatabase.AssetPathToGUID(portraitPath);
 
-            Assert.That(File.Exists(portraitPath), Is.True, $"Missing generated subtitle portrait slice at {portraitPath}.");
-            Assert.That(portraitGuid, Is.Not.Empty, $"Unity should know the generated subtitle portrait slice at {portraitPath}.");
+            Assert.That(File.Exists(portraitPath), Is.True, $"Missing provided subtitle portrait card at {portraitPath}.");
+            Assert.That(portraitGuid, Is.Not.Empty, $"Unity should know the provided subtitle portrait card at {portraitPath}.");
             Assert.That(assetText, Does.Contain($"speakerId: Guest{i + 1}"));
-            Assert.That(assetText, Does.Contain($"guid: {portraitGuid}"), $"Guest{i + 1} should use the generated sheet slice {portraitAssetNames[i]}.");
+            Assert.That(assetText, Does.Contain($"guid: {portraitGuid}"), $"Guest{i + 1} should use the provided card {portraitAssetNames[i]}.");
         }
     }
 
     [Test]
-    public void SubtitlePortraitsRemovePlaqueNamesAndFillTheFrame()
+    public void SubtitlePortraitsUseCompleteProvidedCardsWithoutExtraUiOutline()
     {
         string serviceText = File.ReadAllText(SubtitleServicePath);
 
@@ -95,76 +94,29 @@ public sealed class SubtitlePresentationRegressionTests
         Assert.That(serviceText, Does.Contain("RemoveOutline(portraitFrame.gameObject)"), "The portrait should rely on the illustrated gold border instead of an extra UI outline.");
         Assert.That(serviceText, Does.Not.Contain("ApplyOutline(portraitFrame.gameObject"), "The extra portrait-frame outline should not be visible around the illustrated card.");
         Assert.That(serviceText, Does.Not.Contain("new Vector2(112f, 192f)"), "The previous portrait frame still left a visible box around the art.");
-        Assert.That(serviceText, Does.Not.Contain("new Vector2(-8f, -8f)"), "The portrait image should fill the frame bounds instead of shrinking inward.");
         Assert.That(serviceText, Does.Not.Contain("new Vector2(140f, 178f)"), "The old portrait frame made the character art too small.");
         Assert.That(serviceText, Does.Not.Contain("new Vector2(98f, 206f)"), "The previous portrait height left unequal top and bottom margins.");
-        Assert.That(serviceText, Does.Not.Contain("new Vector2(-20f, -18f)"), "The old portrait inset made the card sit too far inside the frame.");
-
-        string[] portraitAssetNames =
-        {
-            "Guest1_MissIsoldeWren.png",
-            "Guest2_ProfessorLucienVale.png",
-            "Guest3_MisterFlorianKnell.png",
-            "Guest4_CountessElowenDusk.png",
-            "Guest5_BaronHectorGlass.png",
-            "Guest6_LadySabineMarrow.png",
-            "Guest7_LordAmbroseVeil.png",
-            "Guest8_MadameCoralieThread.png"
-        };
-
-        foreach (string portraitAssetName in portraitAssetNames)
-        {
-            string portraitPath = $"{SubtitlePortraitRoot}/{portraitAssetName}";
-            TextureImporter importer = AssetImporter.GetAtPath(portraitPath) as TextureImporter;
-
-            Assert.That(importer, Is.Not.Null, $"Missing texture importer for generated subtitle portrait at {portraitPath}.");
-            importer.GetSourceTextureWidthAndHeight(out int width, out int height);
-
-            Assert.That(height, Is.LessThanOrEqualTo(590), $"The generated portrait should crop out the bottom name plaque: {portraitPath}.");
-            Assert.That((float)width / height, Is.GreaterThan(0.45f), $"The plaque-free portrait card should be less tall and fill the UI frame better: {portraitPath}.");
-        }
     }
 
     [Test]
-    public void SubtitlePortraitSlicesUseIdenticalDimensions()
+    public void SubtitlePortraitSlicesMatchTheProvidedCompleteCards()
     {
-        foreach (string portraitPath in GetGuestPortraitPaths())
+        int[] expectedWidths = { 284, 277, 276, 285, 284, 277, 276, 285 };
+        string[] portraitPaths = GetGuestPortraitPaths();
+
+        for (int i = 0; i < portraitPaths.Length; i++)
         {
+            string portraitPath = portraitPaths[i];
             TextureImporter importer = AssetImporter.GetAtPath(portraitPath) as TextureImporter;
             Assert.That(importer, Is.Not.Null, $"Missing portrait importer for {portraitPath}.");
             importer.GetSourceTextureWidthAndHeight(out int width, out int height);
-            Assert.That(width, Is.EqualTo(280), $"Every portrait slice must use the same width: {portraitPath}.");
-            Assert.That(height, Is.EqualTo(590), $"Every portrait slice must use the same height: {portraitPath}.");
+            Assert.That(width, Is.EqualTo(expectedWidths[i]), $"Guest{i + 1} should use the supplied card without resizing: {portraitPath}.");
+            Assert.That(height, Is.EqualTo(701), $"Guest{i + 1} should retain the supplied name plaque: {portraitPath}.");
         }
     }
 
     [Test]
-    public void SubtitlePortraitSlicesExcludeSheetDividerLines()
-    {
-        foreach (string portraitPath in GetGuestPortraitPaths())
-        {
-            Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-
-            try
-            {
-                Assert.That(texture.LoadImage(File.ReadAllBytes(portraitPath)), Is.True, $"Could not read {portraitPath}.");
-                Color32[] pixels = texture.GetPixels32();
-
-                for (int edgeOffset = 0; edgeOffset < 8; edgeOffset++)
-                {
-                    AssertColumnIsNotSheetDivider(pixels, texture.width, texture.height, edgeOffset, portraitPath);
-                    AssertColumnIsNotSheetDivider(pixels, texture.width, texture.height, texture.width - 1 - edgeOffset, portraitPath);
-                }
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(texture);
-            }
-        }
-    }
-
-    [Test]
-    public void SharedPortraitViewportUsesEvenMarginsAndClipsEverySpeakerWithoutGaps()
+    public void SharedPortraitViewportUsesEvenMarginsAndCentersEveryCompleteCard()
     {
         string[] speakerLineIds =
         {
@@ -208,9 +160,10 @@ public sealed class SubtitlePresentationRegressionTests
                 Assert.That(bottomMargin, Is.EqualTo(topMargin).Within(0.01f), $"{lineId} should have equal top and bottom margins.");
                 Assert.That(rightMargin, Is.EqualTo(leftMargin).Within(0.01f), $"{lineId} should have equal space on both sides of the portrait.");
                 Assert.That(fitter, Is.Not.Null, $"{lineId} should use the shared non-distorting portrait fitter.");
-                Assert.That(fitter.aspectMode, Is.EqualTo(AspectRatioFitter.AspectMode.EnvelopeParent));
-                Assert.That(portrait.rect.width, Is.GreaterThanOrEqualTo(viewport.rect.width - 0.01f), $"{lineId} left a horizontal gap in the portrait viewport.");
-                Assert.That(portrait.rect.height, Is.GreaterThanOrEqualTo(viewport.rect.height - 0.01f), $"{lineId} left a vertical gap in the portrait viewport.");
+                Assert.That(fitter.aspectMode, Is.EqualTo(AspectRatioFitter.AspectMode.FitInParent));
+                AssertVector2(portrait.anchoredPosition, Vector2.zero);
+                Assert.That(portrait.rect.width, Is.LessThanOrEqualTo(viewport.rect.width + 0.01f), $"{lineId} should not be horizontally cropped.");
+                Assert.That(portrait.rect.height, Is.LessThanOrEqualTo(viewport.rect.height + 0.01f), $"{lineId} should not be vertically cropped.");
             }
         }
         finally
@@ -324,30 +277,6 @@ public sealed class SubtitlePresentationRegressionTests
             $"{SubtitlePortraitRoot}/Guest7_LordAmbroseVeil.png",
             $"{SubtitlePortraitRoot}/Guest8_MadameCoralieThread.png"
         };
-    }
-
-    private static void AssertColumnIsNotSheetDivider(Color32[] pixels, int width, int height, int x, string portraitPath)
-    {
-        double luminanceSum = 0d;
-        double luminanceSquaredSum = 0d;
-
-        for (int y = 0; y < height; y++)
-        {
-            Color32 pixel = pixels[(y * width) + x];
-            double luminance = (0.2126d * pixel.r) + (0.7152d * pixel.g) + (0.0722d * pixel.b);
-            luminanceSum += luminance;
-            luminanceSquaredSum += luminance * luminance;
-        }
-
-        double mean = luminanceSum / height;
-        double variance = Math.Max(0d, (luminanceSquaredSum / height) - (mean * mean));
-        double standardDeviation = Math.Sqrt(variance);
-        bool looksLikeDivider = mean < 200d && standardDeviation < 15d;
-
-        Assert.That(
-            looksLikeDivider,
-            Is.False,
-            $"{portraitPath} still contains a sheet-divider line at boundary column {x} (mean {mean:F1}, deviation {standardDeviation:F1}).");
     }
 
     private static bool RectTransformOverlaps(RectTransform first, RectTransform second)

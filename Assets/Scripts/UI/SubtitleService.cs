@@ -394,7 +394,7 @@ public sealed class SubtitleService : MonoBehaviour
         {
             speakerPortraitAspectFitter = speakerPortraitImage.gameObject.AddComponent<AspectRatioFitter>();
         }
-        speakerPortraitAspectFitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+        speakerPortraitAspectFitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
         speakerPortraitAspectFitter.aspectRatio = speakerPortraitFrame.rect.width / speakerPortraitFrame.rect.height;
 
         Image speakerNameplate = FindOrCreateImage(
