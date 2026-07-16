@@ -48,6 +48,7 @@ public sealed class SubtitleService : MonoBehaviour
     private RectTransform panelRect;
     private RectTransform speakerPortraitFrame;
     private Image speakerPortraitImage;
+    private AspectRatioFitter speakerPortraitAspectFitter;
     private TMP_Text speakerText;
     private TMP_Text lineText;
     private Button skipButton;
@@ -298,6 +299,7 @@ public sealed class SubtitleService : MonoBehaviour
         if (panelRect != null &&
             speakerPortraitFrame != null &&
             speakerPortraitImage != null &&
+            speakerPortraitAspectFitter != null &&
             speakerText != null &&
             lineText != null &&
             skipButton != null &&
@@ -366,23 +368,34 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
-            new Vector2(22f, -10f),
-            new Vector2(98f, 206f),
+            new Vector2(10f, -10f),
+            new Vector2(98f, 205f),
             new Color(1f, 1f, 1f, 0f));
         RemoveOutline(portraitFrame.gameObject);
         speakerPortraitFrame = portraitFrame.GetComponent<RectTransform>();
+        if (portraitFrame.GetComponent<RectMask2D>() == null)
+        {
+            portraitFrame.gameObject.AddComponent<RectMask2D>();
+        }
 
         speakerPortraitImage = FindOrCreateImage(
             portraitFrame.transform,
             PortraitImageName,
-            Vector2.zero,
-            Vector2.one,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f),
             new Vector2(0.5f, 0.5f),
             Vector2.zero,
             Vector2.zero,
             Color.white);
-        speakerPortraitImage.preserveAspect = true;
+        speakerPortraitImage.preserveAspect = false;
         speakerPortraitImage.raycastTarget = false;
+        speakerPortraitAspectFitter = speakerPortraitImage.GetComponent<AspectRatioFitter>();
+        if (speakerPortraitAspectFitter == null)
+        {
+            speakerPortraitAspectFitter = speakerPortraitImage.gameObject.AddComponent<AspectRatioFitter>();
+        }
+        speakerPortraitAspectFitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        speakerPortraitAspectFitter.aspectRatio = speakerPortraitFrame.rect.width / speakerPortraitFrame.rect.height;
 
         Image speakerNameplate = FindOrCreateImage(
             panelObject.transform,
@@ -390,8 +403,8 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
-            new Vector2(146f, -24f),
-            new Vector2(598f, 38f),
+            new Vector2(118f, -24f),
+            new Vector2(626f, 38f),
             new Color(0.36f, 0.16f, 0.13f, 0.94f));
         ApplyOutline(speakerNameplate.gameObject, new Color(0.96f, 0.78f, 0.34f, 0.9f), new Vector2(1.5f, -1.5f));
 
@@ -401,8 +414,8 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 0.5f),
-            new Vector2(146f, -78f),
-            new Vector2(598f, 2f),
+            new Vector2(118f, -78f),
+            new Vector2(626f, 2f),
             new Color(0.86f, 0.61f, 0.27f, 0.88f));
         dividerLine.raycastTarget = false;
 
@@ -412,8 +425,8 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
-            new Vector2(164f, -29f),
-            new Vector2(562f, 28f),
+            new Vector2(136f, -29f),
+            new Vector2(590f, 28f),
             23f,
             FontStyles.Bold,
             TextAlignmentOptions.Left);
@@ -427,8 +440,8 @@ public sealed class SubtitleService : MonoBehaviour
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
-            new Vector2(146f, -94f),
-            new Vector2(598f, 82f),
+            new Vector2(118f, -94f),
+            new Vector2(626f, 82f),
             25f,
             FontStyles.Normal,
             TextAlignmentOptions.TopLeft);
@@ -732,6 +745,11 @@ public sealed class SubtitleService : MonoBehaviour
         speakerPortraitImage.sprite = hasPortrait ? portrait : null;
         speakerPortraitImage.enabled = hasPortrait;
         speakerPortraitImage.color = Color.white;
+
+        if (hasPortrait && speakerPortraitAspectFitter != null && portrait.rect.height > 0f)
+        {
+            speakerPortraitAspectFitter.aspectRatio = portrait.rect.width / portrait.rect.height;
+        }
     }
 
     private void SetVisible(bool visible)
