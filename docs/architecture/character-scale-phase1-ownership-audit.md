@@ -1,0 +1,108 @@
+# Character Scale Phase 1 Ownership Audit
+
+## Scope and ownership rule
+
+Phase 1 removes every evaluator, writer, factory, editor, and serialized store that can change the Butler or Guest 1-8 body-root scale at runtime. It preserves authored static root scales, room-stage position conversion, room-stage zoom, movement, animation, facing, sorting, tint, shadows, visibility, interactions, anchors, seats, occlusion, coats, held items, click targets, and speech bubbles.
+
+The body-scale ownership boundary is the Butler/guest actor root or an explicitly selected character visual root. Scale writes to room-stage parents, props, UI, effects, shadows, click targets, speech bubbles, and presentation-only children are not body-size ownership and remain in scope for their existing systems.
+
+Status terms:
+
+- **Active**: runs or can run in the current authored Gameplay scene.
+- **Guarded**: current `GuestScaleParticipant` checks suppress a competing writer for the eight guests; deleting the guard first would reactivate it.
+- **Dormant**: serialized configuration or callable tooling exists, but the current authored scene does not exercise the writer.
+- **Dead**: no live asset/reference was found.
+
+## Frozen baseline evidence
+
+| Evidence | Baseline result |
+|---|---|
+| Git source baseline | `2a92396176c2baa6310e42f9ee906ee846d94e03` |
+| Unity | `6000.4.10f1` |
+| Full EditMode baseline | 279 total, 226 passed, 53 failed |
+| Baseline XML | `/tmp/character-size-phase1-baseline-editmode.xml` |
+| Baseline log | `/tmp/character-size-phase1-baseline-editmode.log` |
+| Canonical migration evidence | `docs/migrations/character-scale/legacy-character-scale-snapshot.json`, schema version 1 |
+
+The baseline XML was read directly and reports `testcasecount="279" total="279" passed="226" failed="53"`. This task does not change runtime behavior and does not claim to repair those 53 pre-existing failures.
+
+Primary source hashes frozen in the snapshot:
+
+| Path | GUID | SHA-256 |
+|---|---|---|
+| `Assets/Scenes/Gameplay.unity` | `8c9cfa26abfee488c85f1582747f6a02` | `1099b1469437d46f5c45b7b8041e50977817112a7ec65027d10899222d2bd17d` |
+| `Assets/Prefabs/Player.prefab` | `3c2a23f8d68b2d05cace0338fba9a1d1` | `fcc64c863c1101340cf4cb96d91389af679e7a7fea8f6bdcb2d1c0e6101b3f71` |
+| `Assets/ScriptableObjects/Rooms/DrawingRoomPerspectiveProfile.asset` | `426f8e326a60b3a0eaeb540d7d670267` | `96a746b728e0048deec1f4df782ca3e79a67ab11137a887130d91f9fe53c2032` |
+| `Assets/ScriptableObjects/Rooms/DiningRoomPerspectiveProfile.asset` | `a63248cfbd6b4a72af45c62cff7e94d0` | `aca70313aa7fc8a5568a54e9c0955517cfc84b477d00b765e2c48b148804db7a` |
+
+Snapshot integrity counts are 4 sources, 19 Butler room records, 19 guest calibration rows, 8 guest participant records, 8 sitting mappings, 2 room perspective profiles, 8 Drawing Room assignments, 8 Dining Room assignments, and 8 Dining Room occlusion bindings. All captured serialized datum objects carry `propertyPath`, invariant-culture `rawValue`, and asset/object provenance.
+
+## Runtime ownership matrix
+
+| Path / component | Actor scope | Trigger / order | Property written | Responsibility | Serialized data | Status | Decision | Regression proof |
+|---|---|---|---|---|---|---|---|---|
+| `Assets/Scripts/PointClickPlayerMovement.cs` / `PointClickPlayerMovement` | Butler; inherited by all eight Player-prefab guests | initialization, room change, movement update, calibration preview | actor-root `transform.localScale`; Butler calibration fields | movement, floor constraints, room-stage coordinate conversion, sorting, and legacy Butler perspective size | Player fallback `nearY/farY/nearScale/farScale`; Gameplay 19-room override array, selected room, captured-base flag | **Active** for Butler; **Guarded** for guests | **Keep and decouple**: retain movement/position/sorting and `currentRoomStageScaleRatio`; remove body-scale evaluation/writes/stores | snapshot locks all 19 rows, fallback, root scale, aliases, and source hash; later sole-writer tests remove scale symbols |
+| `Assets/Scripts/Characters/GuestRoomScaleCalibration.cs` / `GuestRoomScaleCalibration` | Guest 1-8 | read by applier; editor mutation and `OnValidate` | no transform directly; owns evaluated room scale | legacy room multiplier and Butler-curve store | Gameplay fileID `1844861547`, 19 enabled rows and reference stage scales | **Active** | **Delete** after snapshot and callers are removed | snapshot asserts 19 rows and preserves every field/provenance |
+| `Assets/Scripts/Characters/GuestRoomScaleApplier.cs` / `GuestRoomScaleApplier` | Guest 1-8 | execution order 10000; `LateUpdate`; explicit refresh calls | participant scale root through `ApplyFinalScale` | sole current guest room/depth/zoom evaluator; runtime factories for applier and participants | Gameplay fileID `86244178`, calibration reference, include-inactive and diagnostic flags | **Active** | **Delete** after competing writers are neutralized | snapshot preserves applier/calibration wiring; later behavior and prohibited-factory tests |
+| `Assets/Scripts/Characters/GuestScaleParticipant.cs` / `GuestScaleParticipant` | one per Guest 1-8 | lifecycle events, room/pose changes, capture/restore, applier call | `scaleRoot.localScale`; captured base fields | identity/room/pose input, base-scale cache, body-root selection, guard against secondary writers | eight added components; identity, room, pose, roots, fine tune, captured base | **Active** and also the current **guard** | **Delete last** among guest scale owners; do not treat captured bases as Phase 2 authority | snapshot asserts eight records and records every captured-base/root mismatch |
+| `Assets/Scripts/Characters/GuestRoomStageScaleUtility.cs` | Guest 1-8 | called during applier computation | no transform; contributes zoom ratio to target scale | reads active/inherited room-stage scale and legacy reference stage scales | reference values live in calibration rows | **Active evaluator** | **Delete** with guest scale stack; room-stage position conversion remains elsewhere | snapshot preserves 19 reference-stage values; later symbol/file guard |
+| `Assets/Scripts/Story/ActorRoomState.cs` / `ActorRoomState` | world-space story actors including Guest 1-8 | room binding, stage motion/zoom, `ApplyState` | actor/visual root `localScale`, bound scale caches | identity, room, visibility, seating, room-stage position binding, plus legacy scale compensation | authored/bound local scale, stage scale, profile reference, scale-with-motion flag | **Guarded** for participants; callable for unguarded actors | **Keep and decouple**: retain state/visibility/position; remove body-scale capture and writes | later room/stage-motion invariance tests and rewritten locking tests |
+| `Assets/Scripts/Characters/RoomProjectedEntity.cs` / `RoomProjectedEntity` | generic projected entities; possible character visual roots | projection refresh, room/profile changes, obsolete Butler apply APIs | selected visual-root `localScale` | projected position, tint, sorting, shadow, plus legacy character scaling | profile, visual profile, apply-scale flags, room overrides, captured scales | current 13 live instances have `applyScale: 0`; character path **Guarded/Dormant** | **Keep and decouple**: retain non-character projection; remove managed-character size fields/APIs | snapshot/source audit records 13 disabled instances; later prop-only projection tests |
+| `Assets/Scripts/Characters/RoomPersonWalker2D.cs` / `RoomPersonWalker2D` | UI/room walkers and possible guests | visual refresh and obsolete Butler-scale calls | walker `RectTransform.localScale` | walker movement, animation and tint, plus legacy depth/body scale | near/far scale, authored scale, profile/Butler references | **Guarded** for guest participants; otherwise active | **Keep and decouple**: retain walker motion/animation/tint; remove body scale | later prop/walker and sole-writer tests |
+| `Assets/Scripts/Characters/RoomPerspectiveProfile.cs` / `RoomPerspectiveProfile` | room-wide consumers | profile evaluation by movement/projection/state | no transform directly; supplies `scaleByDepth` | depth normalization, tint, sorting, shadow, floor polygon, and legacy scale curve | Drawing `(0,1.2),(1,0.6)` over `-360..140`; Dining `(0,1.3),(1,0.7)` over `-200..-2` | **Active serialized owner** | **Keep and decouple**: retain non-size room data; remove character-size consumers before considering scale-field removal | snapshot preserves both complete curves, key fields, infinity modes, rotation order, and hashes |
+| `Assets/Scripts/Characters/CharacterVisualProfile.cs` / `CharacterVisualProfile` | projected characters | consumed by projected scale path | multiplier contributes to visual-root scale | legacy height multiplier and renderer offsets | no assets or live references found | **Dead** | **Delete** after compile-time consumers/editor creator are removed | later file/type/GUID absence guard |
+| `Assets/Scripts/CharacterController2D.cs` / `CharacterController2D.Flip` | Butler/Player-prefab actors using controller | facing change | root `transform.localScale.x` sign | movement facing | none specific | **Active competing writer** | **Keep and decouple**: move orientation to renderer-only flip without changing magnitude | later facing-magnitude invariant test |
+| `Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs` | Guest 1-8 | chapter setup, room transitions, seating, runtime fallback creation | guest-root scale copies/restores; participant/applier mutation and refresh | Chapter 1 arrival, coats, movement, placement, pose and occlusion plus legacy scale orchestration | authored guest refs/config; runtime-created participant state | **Active** | **Keep and decouple**: preserve story/pose/placement; remove factories, inference, scale capture/restore/refresh | snapshot locks Drawing assignments/standing set; later coat/seated/room-motion invariants |
+| `Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs` | Guest 1-8 | panic begin/update/stop | panic target/actor-root `localScale`, original scale restore | panic movement/presentation and legacy sprite-size compensation | runtime scale snapshots | **Active during panic** | **Keep and decouple**: preserve motion/presentation; remove actor-root scale compensation | later panic scale-invariance tests |
+| `Assets/Map/CameraManager.cs` / room-stage transform | room-stage parent, not actor body | pan/zoom and room activation | `activeRoomStage.localScale` | camera/room-stage zoom and coordinate system | room-stage layout state | **Active, permitted boundary** | **Keep**; actor bodies may inherit stage scale naturally, but no body-root compensation writer remains | rewritten room-stage tests distinguish parent zoom from body scale |
+| `Assets/Scripts/Characters/DiningRoomSeatedGuestOcclusionController.cs` | seated Dining guests | seating activation/deactivation | sorting/occlusion only; no body scale | table/chair occlusion | controller fileID `3920000002`, eight seat bindings | **Active, not a size owner** | **Keep** | snapshot locks all eight bindings and Dining assignments |
+
+## Editor and authoring ownership matrix
+
+| Path / component | Actor scope | Trigger / order | Property written | Responsibility | Serialized data | Status | Decision | Regression proof |
+|---|---|---|---|---|---|---|---|---|
+| `Assets/Editor/GuestRoomScaleMasterWindow.cs` | Guest 1-8 and calibration scene objects | manual menu `Tools/Characters/Guest Size Master`; preview/save | participant roots, calibration rows, applier/participant components; saves open scenes | legacy all-guest calibration workflow | Gameplay calibration/applier/participants and scene scale | **Active manual writer** | **Delete** | snapshot freezes all inputs before deletion; later editor menu/file guard |
+| `Assets/Editor/ButlerRoomScaleCalibrationWindow.cs` | Butler | manual menu `Tools/Butler/Room Scale Calibration`; preview/reset/save | Butler root `localScale`, endpoint records, base capture; saves Gameplay | Butler room calibration | 19 prefab-instance records, stale aliases | **Active manual writer** | **Delete** | snapshot locks endpoints/base/root/aliases |
+| `Assets/Editor/PointClickPlayerMovementEditor.cs` | Butler inspector | Inspector draw | exposes/opens old calibration workflow; hides legacy fields | custom movement inspector | Butler scale serialized fields | **Active entry point** | **Delete** with calibration UI unless a scale-free inspector is justified | later menu/type absence guard |
+| `Assets/Editor/RoomProjectedEntityEditor.cs` | projected entities/possible characters | Inspector buttons | captures current visual-root scale and per-room overrides | legacy projection scale authoring | captured authored scales and room visual scale overrides | **Active manual writer** | **Delete**, or replace only with proven prop-only inspection | later prop-only projection tests and prohibited-field guard |
+| `Assets/Editor/RoomPerspectiveProfileEditor.cs` | all profile consumers | profile Inspector changes and refresh | `scaleByDepth`, then refreshes Butler/guest/character visuals | profile authoring for depth/tint/sort/shadow/floor plus character size | profile curve endpoints/multiplier | **Active manual writer** | **Keep and decouple** to non-character responsibilities | snapshot locks current curves; later editor-label/consumer tests |
+| `Assets/Editor/RoomProjectionCalibrationWindow.cs` | scene rooms, projected props and characters | manual projection menus | creates profiles/visual profile and applies projection previews | room projection authoring | room profiles and dead standard-adult profile path | **Active manual writer** | **Keep only prop/tint/sorting authoring**; remove adult-height and managed-character scale actions | later no-character-profile/menu guard |
+| `Assets/Editor/PlayModeLayoutCaptureWindow.cs` | arbitrary selected transforms, including possible roster roots | capture in Play Mode, apply in Edit Mode, save open scenes | captured target `localScale` along with position/rotation | useful anchor/layout persistence; hidden body-scale path | pending capture items | **Active manual competing writer** | **Keep and constrain**: reject Butler/guest actor/body transforms; retain RoomAnchor/layout capture | later roster-transform rejection test |
+| `Assets/Editor/GuestScaleAudit.cs` | guest scale stack | manual audit menu | report only, but encodes legacy owner/guard assumptions | diagnostics | reads all legacy types/fields | **Active read-only, coupled** | **Rewrite** as non-repairing ownership audit for prohibited writers/GUIDs/factories/curves | later audit behavior and absence guards |
+| `Assets/Editor/CharacterAnimationAssetBuilder.cs` | all override-controller characters | manual rebuild | override-controller clip mapping; currently can replace crouch slot with idle | animation asset generation | eight-map override controllers | **Active manual serialized writer** | **Keep and harden** so `Player_Croutch` preserves authored sitting mappings | eight parameterized mapping tests in `CharacterScaleOwnershipRegressionTests` |
+| `Assets/Editor/Guest2ButlerAnimationAssetBuilder.cs` | Guest 2 | manual rebuild; opens Gameplay, adds Animator if missing, saves scene | override controller and scene Animator/controller assignment | one-off Guest 2 animation generation and wiring | Guest 2 controller/Gameplay mutation | **Active manual serialized writer** | **Separate asset generation from scene mutation or delete completed one-off** | Guest 2 mapping test plus later scene-wiring guard |
+
+## Serialized ownership matrix
+
+| Path / component | Actor scope | Trigger / order | Property written | Responsibility | Serialized data | Status | Decision | Regression proof |
+|---|---|---|---|---|---|---|---|---|
+| `Assets/Prefabs/Player.prefab` / `PointClickPlayerMovement` | Butler and inherited guest prefab instances | prefab load | feeds runtime root scale | fallback perspective scale | `nearY=-4.25`, `farY=-2.25`, `nearScale=1`, `farScale=0.58` | **Active** | remove scale fields while retaining movement component | four-source hash and fallback records in snapshot |
+| `Assets/Scenes/Gameplay.unity` / Butler prefab instance `81962841` | Butler | scene load and movement/calibration | root X/Y scale and 19-room evaluator data | calibrated Butler size | root `2.150601,2.150601,1`; 19 front/back rows; selected room; captured-base flag | **Active** | migrate/remove scale property modifications through Unity prefab APIs | snapshot length/hash and per-datum provenance |
+| `Assets/Scenes/Gameplay.unity` / stale Butler aliases | Butler | unknown/stale prefab modifications | obsolete Drawing Room front/back values | no current code owner | `frontScale=2.0664465`, `backScale=1.1154557`, conflicting with current final values | **Dead stale data** | delete after snapshot | snapshot warnings preserve both conflicts |
+| `Assets/Scenes/Gameplay.unity` / calibration `1844861547` and applier `86244178` | Guest 1-8 | scene load | feeds active guest writer | global guest-size infrastructure | 19 rows, Butler source, applier reference/config | **Active** | destroy exact standalone GameObjects through Unity APIs after callers are gone | snapshot IDs, rows and wiring |
+| `Assets/Scenes/Gameplay.unity` / eight added `GuestScaleParticipant`s | Guest 1-8 | scene load | feeds/writes each selected scale root | guest identity/room/pose/base state and writer guard | eight participant/gameObject/scale-root IDs; pose 1; Dining current room; fine tune 1; captured bases | **Active** | remove exact added components through Unity APIs only after secondary writers are neutralized | snapshot asserts eight and preserves every serialized field |
+| `Assets/Scenes/Gameplay.unity` / eight Player prefab root overrides | Guest 1-8 | scene load | authored static root scale | current authored appearance baseline | all X/Y `1.42`; Z `1`, `1.12`, or `1.3` by guest | **Active authored state** | **Keep in Phase 1**; do not replace with captured-base values | snapshot records every property modification and mismatch warning |
+| Drawing/Dining `RoomPerspectiveProfile` assets | room consumers | asset load | feeds character scale and non-size projection | room depth/tint/sort/shadow/floor profile | two complete `scaleByDepth` curves and Y ranges | **Active mixed responsibility** | keep assets; decouple character-size consumers first | snapshot curve/key/infinity/rotation data plus source hashes |
+| Gameplay and Drawing prefabs / `RoomProjectedEntity` serialized state | projected entities | scene/prefab load | would feed visual-root scale if enabled | generic projection with legacy scale fields | 13 instances; all `applyScale=0`, empty room overrides; five scene instances retain stale Butler/captured fields | **Dormant/stale for character scale** | remove scale-only fields while preserving component and projection data | later serialized field/GUID guard and prop-only tests |
+| Eight guest `.overrideController` assets | Guest 1-8 | Animator load or builder rebuild | animation clip replacement, not transform scale | authored per-guest animation/pose | common base controller; crouch slot maps to eight distinct sitting clips | **Active preserved state** | **Keep** | eight parameterized `Player_Croutch` mapping tests |
+| 197 `.anim` assets under `Assets` | all animated objects | Animator playback | animation bindings | animation motion/sprites | no `m_LocalScale*` binding found | **Clean** | keep clean; prohibit transform-scale curves | repository-wide `AnimationUtility.GetCurveBindings` test |
+| Gameplay Drawing/Dining anchor and occlusion records | Guest 1-8 | Chapter 1 placement and Chapter 2 numeric/name sorting | position, pose assignment and sorting/occlusion; no body scale | authored placement and visibility layering | 8 Drawing anchors, standing Guests 3/5/7, 8 Dining anchors, 8 seat/chair bindings | **Active preserved state** | **Keep** | snapshot locks both anchor sets, assignment rules and bindings |
+
+## Known inconsistencies and risks
+
+- The stale Drawing Room Butler aliases conflict with current final fields: front `2.0664465` versus `2.057692`, and back `1.1154557` versus `1.3752748`. They are evidence only.
+- Every guest participant's captured base differs from at least one live scene-root override component. Captured bases are historical calibration state and must not become Phase 2 authored baselines.
+- Removing `GuestScaleParticipant` before neutralizing `PointClickPlayerMovement`, `ActorRoomState`, `RoomProjectedEntity`, and `RoomPersonWalker2D` would reactivate guarded body-scale writes.
+- `PlayModeLayoutCaptureWindow` can silently reapply any selected transform's scale unless roster/body transforms are explicitly rejected.
+- Animation builders can destroy sitting mappings even though no animation clip currently contains transform-scale curves.
+- Profiles mix character scale with retained tint/sorting/shadow/floor data; deleting the profile assets wholesale would break non-size responsibilities.
+
+## Task 1 regression proof
+
+`CharacterScaleOwnershipRegressionTests` establishes three guardrails without changing runtime behavior:
+
+1. the schema/version/source/hash/count snapshot contract;
+2. eight explicit `Player_Croutch` to authored sitting-clip mappings;
+3. a scan of every `.anim` asset using `AnimationUtility.GetCurveBindings`, rejecting any property beginning with `m_LocalScale`.
+
+Task 1 focused result: 10 tests, 10 passed, 0 failed. Later tasks extend this fixture with behavior invariants and prohibited owner/GUID/factory checks before deleting production types or serialized owners.
