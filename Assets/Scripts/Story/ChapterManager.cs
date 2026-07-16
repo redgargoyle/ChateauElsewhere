@@ -53,6 +53,7 @@ public class ChapterManager : MonoBehaviour
     [SerializeField] private ChapterIntroUI introUI;
     [SerializeField] private Chapter1ArrivalController chapter1ArrivalController;
     [SerializeField] private Chapter2Controller chapter2Controller;
+    [SerializeField] private DemoCompleteUI demoCompleteUI;
 
     private Coroutine chapterRoutine;
     private Coroutine chapterCompleteRoutine;
@@ -506,6 +507,9 @@ public class ChapterManager : MonoBehaviour
         SetPlayerInputEnabled(false);
         bool delayBeforeFadeOut = IsCurrentChapter(Chapter1Id);
         SetPhase(ChapterPhase.Complete);
+        string cleanNextChapterId = NormalizeNextChapterId(nextChapterId);
+        bool isDemoCompletion = IsChapter3Request(cleanNextChapterId);
+        float fadeSeconds = GetIntroFadeSeconds();
 
         if (delayBeforeFadeOut)
         {
@@ -517,17 +521,34 @@ public class ChapterManager : MonoBehaviour
             }
         }
 
+        if (isDemoCompletion)
+        {
+            demoCompleteUI = ResolveDemoCompleteUI(false);
+
+            if (demoCompleteUI != null)
+            {
+                demoCompleteUI.BeginFade(fadeSeconds);
+            }
+            else
+            {
+                Debug.LogWarning("Demo completion requested, but DemoCompleteUI is missing.", this);
+            }
+        }
+
         if (introUI != null)
         {
-            yield return introUI.FadeToBlack(GetIntroFadeSeconds());
+            yield return introUI.FadeToBlack(fadeSeconds);
+        }
+
+        if (isDemoCompletion && demoCompleteUI != null)
+        {
+            demoCompleteUI.RevealActions();
         }
 
         if (chapterClock != null)
         {
             chapterClock.StopClock();
         }
-
-        string cleanNextChapterId = NormalizeNextChapterId(nextChapterId);
 
         if (IsChapter2Request(cleanNextChapterId))
         {
@@ -564,6 +585,12 @@ public class ChapterManager : MonoBehaviour
         return string.Equals(nextChapterId, Chapter2Id, System.StringComparison.OrdinalIgnoreCase) ||
             string.Equals(nextChapterId, "chapter_02_pending", System.StringComparison.OrdinalIgnoreCase) ||
             (!string.IsNullOrWhiteSpace(nextChapterId) && nextChapterId.StartsWith("chapter_02", System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsChapter3Request(string nextChapterId)
+    {
+        return string.Equals(nextChapterId, Chapter3PendingId, System.StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrWhiteSpace(nextChapterId) && nextChapterId.StartsWith("chapter_03", System.StringComparison.OrdinalIgnoreCase));
     }
 
     private static string GetChapterTitle(string chapterId)
@@ -619,6 +646,26 @@ public class ChapterManager : MonoBehaviour
         }
 
         return chapter2Controller;
+    }
+
+    private DemoCompleteUI ResolveDemoCompleteUI(bool logIfMissing)
+    {
+        if (demoCompleteUI == null)
+        {
+            demoCompleteUI = GetComponent<DemoCompleteUI>();
+        }
+
+        if (demoCompleteUI == null)
+        {
+            demoCompleteUI = FindAnyObjectByType<DemoCompleteUI>(FindObjectsInactive.Include);
+        }
+
+        if (demoCompleteUI == null && logIfMissing)
+        {
+            Debug.LogWarning("ChapterManager could not resolve DemoCompleteUI.", this);
+        }
+
+        return demoCompleteUI;
     }
 
     private void SetPlayerInputEnabled(bool enabled)
@@ -729,6 +776,7 @@ public class ChapterManager : MonoBehaviour
         }
 
         ResolveChapter2Controller(false);
+        ResolveDemoCompleteUI(false);
 
         ResolvePlayerReference();
 

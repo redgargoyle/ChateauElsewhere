@@ -280,7 +280,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
         baseImage.raycastTarget = true;
 
         Button button = buttonObject.GetComponent<Button>();
-        Image stateOverlay = FindOrCreateStateOverlay(rect);
+        Image stateOverlay = FindOrCreateStateOverlay(rect, buttonFrameSprite);
         button.transition = Selectable.Transition.ColorTint;
         button.targetGraphic = stateOverlay;
         button.colors = CreateButtonColors();
@@ -313,7 +313,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
         return button;
     }
 
-    private static Image FindOrCreateStateOverlay(RectTransform parent)
+    private static Image FindOrCreateStateOverlay(RectTransform parent, Sprite buttonSprite)
     {
         Transform existing = parent.Find(ButtonOverlayObjectName);
         Image overlay;
@@ -334,6 +334,7 @@ public sealed class DemoCompleteUI : MonoBehaviour
         }
 
         StretchToParent(overlay.rectTransform);
+        overlay.sprite = buttonSprite;
         overlay.color = Color.clear;
         overlay.raycastTarget = false;
         overlay.type = Image.Type.Simple;

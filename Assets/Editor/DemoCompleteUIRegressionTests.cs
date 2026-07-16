@@ -16,6 +16,7 @@ public class DemoCompleteUIRegressionTests
     private const string MenuFontPath = "Assets/Art/UI/Fonts/NotoSerifDisplay-Medium SDF.asset";
     private const string MenuButtonPath = "Assets/Art/MainMenuRedesign/MainMenu_ButtonBlank.png";
     private const string DemoCompleteUIPath = "Assets/Scripts/UI/DemoCompleteUI.cs";
+    private const string ChapterManagerPath = "Assets/Scripts/Story/ChapterManager.cs";
 
     [TearDown]
     public void TearDown()
@@ -72,6 +73,7 @@ public class DemoCompleteUIRegressionTests
         Sprite expectedFrame = AssetDatabase.LoadAssetAtPath<Sprite>(MenuButtonPath);
 
         Assert.That(message.alpha, Is.EqualTo(1f));
+        Assert.That(message.font, Is.SameAs(expectedFont));
         Assert.That(actions.activeSelf, Is.True);
         AssertStyledButton(restartButton, "Restart Game", expectedFont, expectedFrame);
         AssertStyledButton(mainMenuButton, "Main Menu", expectedFont, expectedFrame);
@@ -95,6 +97,36 @@ public class DemoCompleteUIRegressionTests
         Assert.That(loadBody, Does.Contain("Application.CanStreamedLevelBeLoaded(sceneName)"));
         Assert.That(loadBody.IndexOf("GameplayRuntimeState.ResetForNewGame()", StringComparison.Ordinal),
             Is.LessThan(loadBody.IndexOf("SceneManager.LoadScene(sceneName, LoadSceneMode.Single)", StringComparison.Ordinal)));
+    }
+
+    [Test]
+    public void ChapterManagerSynchronizesDemoMessageAndActionsAroundTheExistingBlackFade()
+    {
+        string source = File.ReadAllText(ChapterManagerPath);
+        string completeRoutine = ExtractMethodBody(source, "private IEnumerator CompleteChapterRoutine");
+        int normalizeIndex = completeRoutine.IndexOf(
+            "string cleanNextChapterId = NormalizeNextChapterId(nextChapterId)",
+            StringComparison.Ordinal);
+        int requestIndex = completeRoutine.IndexOf(
+            "bool isDemoCompletion = IsChapter3Request(cleanNextChapterId)",
+            StringComparison.Ordinal);
+        int beginIndex = completeRoutine.IndexOf(
+            "demoCompleteUI.BeginFade(fadeSeconds)",
+            StringComparison.Ordinal);
+        int fadeIndex = completeRoutine.IndexOf(
+            "yield return introUI.FadeToBlack(fadeSeconds)",
+            StringComparison.Ordinal);
+        int revealIndex = completeRoutine.IndexOf(
+            "demoCompleteUI.RevealActions()",
+            StringComparison.Ordinal);
+
+        Assert.That(normalizeIndex, Is.GreaterThanOrEqualTo(0), "The next chapter must be normalized before fade routing.");
+        Assert.That(requestIndex, Is.GreaterThan(normalizeIndex), "Only the Chapter 3 pending request should activate demo UI.");
+        Assert.That(beginIndex, Is.GreaterThan(requestIndex), "The message should begin after identifying the demo boundary.");
+        Assert.That(fadeIndex, Is.GreaterThan(beginIndex), "The message must begin on the first fade-to-black frame.");
+        Assert.That(revealIndex, Is.GreaterThan(fadeIndex), "Actions must wait until the black fade coroutine completes.");
+        Assert.That(CountOccurrences(completeRoutine, "demoCompleteUI.BeginFade(fadeSeconds)"), Is.EqualTo(1));
+        Assert.That(source, Does.Contain("private static bool IsChapter3Request(string nextChapterId)"));
     }
 
     private static Type FindDemoCompleteType()
@@ -152,6 +184,7 @@ public class DemoCompleteUIRegressionTests
         Assert.That(label.color.g, Is.EqualTo(0.075f).Within(0.001f));
         Assert.That(label.color.b, Is.EqualTo(0.16f).Within(0.001f));
         Assert.That(button.targetGraphic.name, Is.EqualTo("Button_StateOverlay"));
+        Assert.That(((Image)button.targetGraphic).sprite, Is.SameAs(expectedFrame));
         Assert.That(button.colors.highlightedColor, Is.EqualTo(new Color(0.88f, 0.53f, 0.16f, 0.24f)));
         Assert.That(button.colors.pressedColor, Is.EqualTo(new Color(0.06f, 0.035f, 0.02f, 0.5f)));
         Assert.That(button.GetComponent<NavigationCursorHoverTarget>(), Is.Not.Null);
@@ -184,5 +217,19 @@ public class DemoCompleteUIRegressionTests
 
         Assert.Fail($"Method body did not close: {signature}");
         return string.Empty;
+    }
+
+    private static int CountOccurrences(string source, string value)
+    {
+        int count = 0;
+        int startIndex = 0;
+
+        while ((startIndex = source.IndexOf(value, startIndex, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            startIndex += value.Length;
+        }
+
+        return count;
     }
 }
